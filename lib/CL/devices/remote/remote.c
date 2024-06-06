@@ -2283,6 +2283,7 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
   _cl_command_t *cmd = &node->command;
   cl_event event = node->sync.event.event;
   cl_command_queue cq = node->sync.event.event->queue;
+
   if (*(cq->device->available) == CL_FALSE)
     {
       pocl_update_event_device_lost (event);
@@ -2310,14 +2311,14 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
                   region[1] = 1;
                 size_t origin[3] = { 0, 0, 0 };
                 r = pocl_remote_async_read_image_rect (
-                    d, node, m, cmd->migrate.mem_id, m->mem_host_ptr, NULL,
-                    origin, region, 0, 0, 0);
+                  d, node, m, &m->device_ptrs[node->device->global_mem_id],
+                  m->mem_host_ptr, NULL, origin, region, 0, 0, 0);
               }
             else
               {
-                r = pocl_remote_async_read (d, node, m->mem_host_ptr,
-                                            cmd->migrate.mem_id, m, 0,
-                                            m->size);
+                r = pocl_remote_async_read (
+                  d, node, m->mem_host_ptr,
+                  &m->device_ptrs[node->device->global_mem_id], m, 0, m->size);
               }
             assert (r == 0);
             break;
@@ -2337,14 +2338,15 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
                 size_t origin[3] = { 0, 0, 0 };
                 /* TODO: truncate region if it exceeds content size? */
                 r = pocl_remote_async_write_image_rect (
-                    d, node, m, cmd->migrate.mem_id, m->mem_host_ptr, NULL,
-                    origin, region, 0, 0, 0);
+                  d, node, m, &m->device_ptrs[node->device->global_mem_id],
+                  m->mem_host_ptr, NULL, origin, region, 0, 0, 0);
               }
             else
               {
-                r = pocl_remote_async_write (d, node, m->mem_host_ptr,
-                                             cmd->migrate.mem_id, m, 0,
-                                             cmd->migrate.migration_size);
+                r = pocl_remote_async_write (
+                  d, node, m->mem_host_ptr,
+                  &m->device_ptrs[node->device->global_mem_id], m, 0,
+                  cmd->migrate.migration_size);
               }
             assert (r == 0);
             break;
@@ -2353,9 +2355,9 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
           {
             cl_device_id dev = cmd->migrate.src_device;
             assert (dev);
-            pocl_remote_async_migrate_d2d (d, dev->data, node,
-                                           node->migr_infos->buffer,
-                                           cmd->migrate.src_id);
+            pocl_remote_async_migrate_d2d (
+              d, dev->data, node, node->migr_infos->buffer,
+              &node->migr_infos->buffer->device_ptrs[dev->global_mem_id]);
             break;
           }
         case ENQUEUE_MIGRATE_TYPE_NOP:
@@ -2366,28 +2368,33 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
       return;
 
     case CL_COMMAND_READ_BUFFER:
-      pocl_remote_async_read (d, node, cmd->read.dst_host_ptr,
-                              cmd->read.src_mem_id, cmd->read.src,
-                              cmd->read.offset, cmd->read.size);
+      pocl_remote_async_read (
+        d, node, cmd->read.dst_host_ptr,
+        &cmd->read.src->device_ptrs[node->device->global_mem_id],
+        cmd->read.src, cmd->read.offset, cmd->read.size);
       return;
 
     case CL_COMMAND_WRITE_BUFFER:
-      pocl_remote_async_write (d, node, cmd->write.src_host_ptr,
-                               cmd->write.dst_mem_id, cmd->write.dst,
-                               cmd->write.offset, cmd->write.size);
+      pocl_remote_async_write (
+        d, node, cmd->write.src_host_ptr,
+        &cmd->write.dst->device_ptrs[node->device->global_mem_id],
+        cmd->write.dst, cmd->write.offset, cmd->write.size);
       return;
 
     case CL_COMMAND_COPY_BUFFER:
-      if (pocl_remote_async_copy (d, node, cmd->copy.dst_mem_id, cmd->copy.dst,
-                                  cmd->copy.src_mem_id, cmd->copy.src,
-                                  cmd->copy.dst_offset, cmd->copy.src_offset,
-                                  cmd->copy.size))
+      if (pocl_remote_async_copy (
+            d, node, &cmd->copy.dst->device_ptrs[node->device->global_mem_id],
+            cmd->copy.dst,
+            &cmd->copy.dst->device_ptrs[node->device->global_mem_id],
+            cmd->copy.src, cmd->copy.dst_offset, cmd->copy.src_offset,
+            cmd->copy.size))
         goto EARLY_FINISH;
       return;
 
     case CL_COMMAND_READ_BUFFER_RECT:
       pocl_remote_async_read_rect (
-        d, node, cmd->read_rect.dst_host_ptr, cmd->read_rect.src_mem_id,
+        d, node, cmd->read_rect.dst_host_ptr,
+        &cmd->read_rect.src->device_ptrs[node->device->global_mem_id],
         cmd->read_rect.src, cmd->read_rect.buffer_origin,
         cmd->read_rect.host_origin, cmd->read_rect.region,
         cmd->read_rect.buffer_row_pitch, cmd->read_rect.buffer_slice_pitch,
@@ -2396,7 +2403,8 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
 
     case CL_COMMAND_WRITE_BUFFER_RECT:
       pocl_remote_async_write_rect (
-        d, node, cmd->write_rect.src_host_ptr, cmd->write_rect.dst_mem_id,
+        d, node, cmd->write_rect.src_host_ptr,
+        &cmd->write_rect.dst->device_ptrs[node->device->global_mem_id],
         cmd->write_rect.dst, cmd->write_rect.buffer_origin,
         cmd->write_rect.host_origin, cmd->write_rect.region,
         cmd->write_rect.buffer_row_pitch, cmd->write_rect.buffer_slice_pitch,
@@ -2405,24 +2413,29 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
 
     case CL_COMMAND_COPY_BUFFER_RECT:
       if (pocl_remote_async_copy_rect (
-              d, node, cmd->copy_rect.dst_mem_id, cmd->copy_rect.dst,
-              cmd->copy_rect.src_mem_id, cmd->copy_rect.src,
-              cmd->copy_rect.dst_origin, cmd->copy_rect.src_origin,
-              cmd->copy_rect.region, cmd->copy_rect.dst_row_pitch,
-              cmd->copy_rect.dst_slice_pitch, cmd->copy_rect.src_row_pitch,
-              cmd->copy_rect.src_slice_pitch))
+            d, node,
+            &cmd->copy_rect.dst->device_ptrs[node->device->global_mem_id],
+            cmd->copy_rect.dst,
+            &cmd->copy_rect.src->device_ptrs[node->device->global_mem_id],
+            cmd->copy_rect.src, cmd->copy_rect.dst_origin,
+            cmd->copy_rect.src_origin, cmd->copy_rect.region,
+            cmd->copy_rect.dst_row_pitch, cmd->copy_rect.dst_slice_pitch,
+            cmd->copy_rect.src_row_pitch, cmd->copy_rect.src_slice_pitch))
         goto EARLY_FINISH;
       return;
 
     case CL_COMMAND_FILL_BUFFER:
       pocl_remote_async_memfill (
-        d, node, cmd->memfill.dst_mem_id, cmd->memfill.dst, cmd->memfill.size,
-        cmd->memfill.offset, cmd->memfill.pattern, cmd->memfill.pattern_size);
+        d, node, &cmd->memfill.dst->device_ptrs[node->device->global_mem_id],
+        cmd->memfill.dst, cmd->memfill.size, cmd->memfill.offset,
+        cmd->memfill.pattern, cmd->memfill.pattern_size);
       return;
 
     case CL_COMMAND_MAP_BUFFER:
-      if (pocl_remote_async_map_mem (d, node, cmd->map.mem_id, cmd->map.buffer,
-                                     cmd->map.mapping))
+      if (pocl_remote_async_map_mem (
+            d, node,
+            &cmd->map.buffer->device_ptrs[node->device->global_mem_id],
+            cmd->map.buffer, cmd->map.mapping))
         goto EARLY_FINISH;
       return;
 
@@ -2431,16 +2444,19 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
       if (cmd->unmap.buffer->is_image == CL_FALSE
           || IS_IMAGE1D_BUFFER (cmd->unmap.buffer))
         {
-          if (pocl_remote_async_unmap_mem (d, node, cmd->unmap.mem_id,
-                                           cmd->unmap.mapping)
+          if (pocl_remote_async_unmap_mem (
+                d, node,
+                &cmd->unmap.buffer->device_ptrs[node->device->global_mem_id],
+                cmd->unmap.mapping)
               > 0)
             goto EARLY_FINISH;
         }
       else
         {
-          if (pocl_remote_async_unmap_image (d, node, cmd->unmap.mem_id,
-                                             cmd->unmap.buffer,
-                                             cmd->unmap.mapping)
+          if (pocl_remote_async_unmap_image (
+                d, node,
+                &cmd->unmap.buffer->device_ptrs[node->device->global_mem_id],
+                cmd->unmap.buffer, cmd->unmap.mapping)
               > 0)
             goto EARLY_FINISH;
         }
@@ -2454,53 +2470,64 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
 
     case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
       pocl_remote_async_read_image_rect (
-          d, node, cmd->read_image.src, cmd->read_image.src_mem_id, NULL,
-          cmd->read_image.dst_mem_id, cmd->read_image.origin,
-          cmd->read_image.region, cmd->read_image.dst_row_pitch,
-          cmd->read_image.dst_slice_pitch, cmd->read_image.dst_offset);
+        d, node, cmd->read_image.src,
+        &cmd->read_image.src->device_ptrs[node->device->global_mem_id], NULL,
+        &cmd->read_image.dst->device_ptrs[node->device->global_mem_id],
+        cmd->read_image.origin, cmd->read_image.region,
+        cmd->read_image.dst_row_pitch, cmd->read_image.dst_slice_pitch,
+        cmd->read_image.dst_offset);
       return;
 
     case CL_COMMAND_READ_IMAGE:
       pocl_remote_async_read_image_rect (
-          d, node, cmd->read_image.src, cmd->read_image.src_mem_id,
-          cmd->read_image.dst_host_ptr, NULL, cmd->read_image.origin,
-          cmd->read_image.region, cmd->read_image.dst_row_pitch,
-          cmd->read_image.dst_slice_pitch, cmd->read_image.dst_offset);
+        d, node, cmd->read_image.src,
+        &cmd->read_image.src->device_ptrs[node->device->global_mem_id],
+        cmd->read_image.dst_host_ptr, NULL, cmd->read_image.origin,
+        cmd->read_image.region, cmd->read_image.dst_row_pitch,
+        cmd->read_image.dst_slice_pitch, cmd->read_image.dst_offset);
       return;
 
     case CL_COMMAND_COPY_BUFFER_TO_IMAGE:
       pocl_remote_async_write_image_rect (
-          d, node, cmd->write_image.dst, cmd->write_image.dst_mem_id, NULL,
-          cmd->write_image.src_mem_id, cmd->write_image.origin,
-          cmd->write_image.region, cmd->write_image.src_row_pitch,
-          cmd->write_image.src_slice_pitch, cmd->write_image.src_offset);
+        d, node, cmd->write_image.dst,
+        &cmd->write_image.dst->device_ptrs[node->device->global_mem_id], NULL,
+        &cmd->write_image.src->device_ptrs[node->device->global_mem_id],
+        cmd->write_image.origin, cmd->write_image.region,
+        cmd->write_image.src_row_pitch, cmd->write_image.src_slice_pitch,
+        cmd->write_image.src_offset);
       return;
 
     case CL_COMMAND_WRITE_IMAGE:
       pocl_remote_async_write_image_rect (
-          d, node, cmd->write_image.dst, cmd->write_image.dst_mem_id,
-          cmd->write_image.src_host_ptr, NULL, cmd->write_image.origin,
-          cmd->write_image.region, cmd->write_image.src_row_pitch,
-          cmd->write_image.src_slice_pitch, cmd->write_image.src_offset);
+        d, node, cmd->write_image.dst,
+        &cmd->write_image.dst->device_ptrs[node->device->global_mem_id],
+        cmd->write_image.src_host_ptr, NULL, cmd->write_image.origin,
+        cmd->write_image.region, cmd->write_image.src_row_pitch,
+        cmd->write_image.src_slice_pitch, cmd->write_image.src_offset);
       return;
 
     case CL_COMMAND_COPY_IMAGE:
       pocl_remote_async_copy_image_rect (
-          d, node, cmd->copy_image.src, cmd->copy_image.dst,
-          cmd->copy_image.src_mem_id, cmd->copy_image.dst_mem_id,
-          cmd->copy_image.src_origin, cmd->copy_image.dst_origin,
-          cmd->copy_image.region);
+        d, node, cmd->copy_image.src, cmd->copy_image.dst,
+        &cmd->copy_image.src->device_ptrs[node->device->global_mem_id],
+        &cmd->copy_image.dst->device_ptrs[node->device->global_mem_id],
+        cmd->copy_image.src_origin, cmd->copy_image.dst_origin,
+        cmd->copy_image.region);
       return;
 
     case CL_COMMAND_FILL_IMAGE:
       pocl_remote_async_fill_image (
-          d, node, cmd->fill_image.mem_id, cmd->fill_image.origin,
-          cmd->fill_image.region, &cmd->fill_image.orig_pixel);
+        d, node,
+        &cmd->fill_image.dst->device_ptrs[node->device->global_mem_id],
+        cmd->fill_image.origin, cmd->fill_image.region,
+        &cmd->fill_image.orig_pixel);
       return;
 
     case CL_COMMAND_MAP_IMAGE:
-      if (pocl_remote_async_map_image (d, node, cmd->map.mem_id,
-                                       cmd->map.buffer, cmd->map.mapping))
+      if (pocl_remote_async_map_image (
+            d, node,
+            &cmd->map.buffer->device_ptrs[node->device->global_mem_id],
+            cmd->map.buffer, cmd->map.mapping))
         goto EARLY_FINISH;
       return;
 

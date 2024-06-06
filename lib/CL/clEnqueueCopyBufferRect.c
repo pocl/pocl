@@ -69,11 +69,7 @@ pocl_copy_buffer_rect_common (cl_command_buffer_khr command_buffer,
   _cl_command_node *c = *cmd;
   cl_device_id dev = command_queue->device;
 
-  c->command.copy_rect.src_mem_id
-      = &src_buffer->device_ptrs[dev->global_mem_id];
   c->command.copy_rect.src = src_buffer;
-  c->command.copy_rect.dst_mem_id
-      = &dst_buffer->device_ptrs[dev->global_mem_id];
   c->command.copy_rect.dst = dst_buffer;
 
   c->command.copy_rect.src_origin[0] = src_offset + src_origin[0];

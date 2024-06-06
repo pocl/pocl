@@ -35,11 +35,7 @@ pocl_copy_image_common (cl_command_buffer_khr command_buffer,
 
   _cl_command_node *c = *cmd;
   cl_device_id dev = command_queue->device;
-  c->command.copy_image.src_mem_id
-      = &src_image->device_ptrs[dev->global_mem_id];
   c->command.copy_image.src = src_image;
-  c->command.copy_image.dst_mem_id
-      = &dst_image->device_ptrs[dev->global_mem_id];
   c->command.copy_image.dst = dst_image;
   c->command.copy_image.src_origin[0] = src_origin[0];
   c->command.copy_image.src_origin[1] = src_origin[1];

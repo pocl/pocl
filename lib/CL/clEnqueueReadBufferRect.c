@@ -147,8 +147,6 @@ pocl_read_buffer_rect_common (cl_command_buffer_khr command_buffer,
 
   _cl_command_node *c = *cmd;
 
-  c->command.read_rect.src_mem_id
-      = &buffer->device_ptrs[device->global_mem_id];
   c->command.read_rect.dst_host_ptr = ptr;
   c->command.read_rect.host_origin[0] = host_origin[0];
   c->command.read_rect.host_origin[1] = host_origin[1];

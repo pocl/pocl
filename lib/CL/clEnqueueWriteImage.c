@@ -119,11 +119,8 @@ pocl_write_image_common (cl_command_buffer_khr command_buffer,
 
   _cl_command_node *c = *cmd;
 
-  c->command.write_image.dst_mem_id
-      = &image->device_ptrs[device->global_mem_id];
   c->command.write_image.dst = image;
   c->command.write_image.src_host_ptr = ptr;
-  c->command.write_image.src_mem_id = NULL;
   c->command.write_image.origin[0] = origin[0];
   c->command.write_image.origin[1] = origin[1];
   c->command.write_image.origin[2] = origin[2];

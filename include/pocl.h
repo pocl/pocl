@@ -197,7 +197,6 @@ typedef struct
 typedef struct
 {
   void *__restrict__ dst_host_ptr;
-  pocl_mem_identifier *src_mem_id;
   pocl_mem_identifier *src_content_size_mem_id;
   size_t offset;
   size_t size;
@@ -209,7 +208,6 @@ typedef struct
 typedef struct
 {
   const void *__restrict__ src_host_ptr;
-  pocl_mem_identifier *dst_mem_id;
   size_t offset;
   size_t size;
   cl_mem dst;
@@ -218,8 +216,6 @@ typedef struct
 /* For clEnqueueCopyBuffer(). */
 typedef struct
 {
-  pocl_mem_identifier *src_mem_id;
-  pocl_mem_identifier *dst_mem_id;
   pocl_mem_identifier *src_content_size_mem_id;
   cl_mem src;
   cl_mem src_content_size;
@@ -233,7 +229,6 @@ typedef struct
 typedef struct
 {
   void *__restrict__ dst_host_ptr;
-  pocl_mem_identifier *src_mem_id;
   size_t buffer_origin[3];
   size_t host_origin[3];
   size_t region[3];
@@ -248,7 +243,6 @@ typedef struct
 typedef struct
 {
   const void *__restrict__ src_host_ptr;
-  pocl_mem_identifier *dst_mem_id;
   size_t buffer_origin[3];
   size_t host_origin[3];
   size_t region[3];
@@ -262,8 +256,6 @@ typedef struct
 /* For clEnqueueCopyBufferRect(). */
 typedef struct
 {
-  pocl_mem_identifier *src_mem_id;
-  pocl_mem_identifier *dst_mem_id;
   cl_mem src;
   cl_mem dst;
   size_t dst_origin[3];
@@ -278,7 +270,6 @@ typedef struct
 /* For clEnqueueMapBuffer(). */
 typedef struct
 {
-  pocl_mem_identifier *mem_id;
   mem_mapping_t *mapping;
   cl_mem buffer;
 } _cl_command_map;
@@ -286,7 +277,6 @@ typedef struct
 /* For clEnqueueUnMapMemObject(). */
 typedef struct
 {
-  pocl_mem_identifier *mem_id;
   mem_mapping_t *mapping;
   cl_mem buffer;
 } _cl_command_unmap;
@@ -294,7 +284,6 @@ typedef struct
 /* For clEnqueueFillBuffer(). */
 typedef struct
 {
-  pocl_mem_identifier *dst_mem_id;
   size_t size;
   size_t offset;
   void *__restrict__ pattern;
@@ -305,8 +294,6 @@ typedef struct
 /* For clEnqueue(Write/Read)Image(). */
 typedef struct
 {
-  pocl_mem_identifier *src_mem_id;
-  pocl_mem_identifier *dst_mem_id;
   void *__restrict__ dst_host_ptr;
   cl_mem src;
   cl_mem dst;
@@ -319,8 +306,6 @@ typedef struct
 
 typedef struct
 {
-  pocl_mem_identifier *dst_mem_id;
-  pocl_mem_identifier *src_mem_id;
   const void *__restrict__ src_host_ptr;
   cl_mem src;
   cl_mem dst;
@@ -333,8 +318,6 @@ typedef struct
 
 typedef struct
 {
-  pocl_mem_identifier *src_mem_id;
-  pocl_mem_identifier *dst_mem_id;
   cl_mem src;
   cl_mem dst;
   size_t dst_origin[3];
@@ -348,7 +331,6 @@ typedef struct
   pixel_t fill_pixel;
   cl_uint4 orig_pixel;
   size_t pixel_size;
-  pocl_mem_identifier *mem_id;
   size_t origin[3];
   size_t region[3];
   cl_mem dst;
@@ -376,9 +358,6 @@ typedef struct
 {
   pocl_migration_type_t type;
   cl_device_id src_device;
-  pocl_mem_identifier *src_id;
-  pocl_mem_identifier *dst_id;
-  pocl_mem_identifier *mem_id;
   /** For migrating a buffer that has a size buffer as per
    * cl_pocl_content_size */
   uint64_t migration_size;

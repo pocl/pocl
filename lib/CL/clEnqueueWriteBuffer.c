@@ -119,7 +119,6 @@ pocl_write_buffer_common (cl_command_buffer_khr command_buffer,
   _cl_command_node *c = *cmd;
 
   c->command.write.src_host_ptr = ptr;
-  c->command.write.dst_mem_id = &buffer->device_ptrs[device->global_mem_id];
   c->command.write.offset = offset;
   c->command.write.size = size;
   c->command.write.dst = buffer;

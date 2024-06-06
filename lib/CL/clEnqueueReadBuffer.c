@@ -113,7 +113,6 @@ pocl_read_buffer_common (cl_command_buffer_khr command_buffer,
   _cl_command_node *c = *cmd;
 
   c->command.read.dst_host_ptr = ptr;
-  c->command.read.src_mem_id = &buffer->device_ptrs[device->global_mem_id];
   c->command.read.offset = offset;
   c->command.read.size = size;
   c->command.read.src = buffer;

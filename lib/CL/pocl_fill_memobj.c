@@ -116,8 +116,6 @@ pocl_fill_buffer_common (cl_command_buffer_khr command_buffer,
     return errcode;
 
   _cl_command_node *c = *cmd;
-  c->command.memfill.dst_mem_id
-      = &buffer->device_ptrs[command_queue->device->global_mem_id];
   c->command.memfill.size = size;
   c->command.memfill.offset = offset;
   void *p = pocl_aligned_malloc (pattern_size, pattern_size);
@@ -240,8 +238,6 @@ pocl_fill_image_common (cl_command_buffer_khr command_buffer,
   memcpy (c->command.fill_image.fill_pixel, fill_pattern, 16);
   c->command.fill_image.orig_pixel = fill_color_vec;
   c->command.fill_image.pixel_size = px;
-  c->command.fill_image.mem_id
-      = &image->device_ptrs[command_queue->device->global_mem_id];
   c->command.fill_image.origin[0] = origin[0];
   c->command.fill_image.origin[1] = origin[1];
   c->command.fill_image.origin[2] = origin[2];

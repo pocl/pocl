@@ -960,8 +960,6 @@ FINISH_VER_SETUP:
       if (do_need_hostptr)
         ev_export->release_mem_host_ptr_after = 1;
 
-      cmd_export->command.migrate.mem_id
-          = &mem->device_ptrs[ex_dev->global_mem_id];
       cmd_export->command.migrate.type = ENQUEUE_MIGRATE_TYPE_D2H;
       cmd_export->command.migrate.implicit = 1;
       cmd_export->command.migrate.migration_size = migration_size;
@@ -1002,10 +1000,6 @@ FINISH_VER_SETUP:
           cmd_import->command.migrate.type = ENQUEUE_MIGRATE_TYPE_D2D;
           cmd_import->command.migrate.implicit = 1;
           cmd_import->command.migrate.src_device = ex_dev;
-          cmd_import->command.migrate.src_id
-              = &mem->device_ptrs[ex_dev->global_mem_id];
-          cmd_import->command.migrate.dst_id
-              = &mem->device_ptrs[dev->global_mem_id];
           if (mem->size_buffer != NULL)
             cmd_import->command.migrate.src_content_size_mem_id
                 = &mem->size_buffer->device_ptrs[ex_dev->global_mem_id];
@@ -1014,8 +1008,6 @@ FINISH_VER_SETUP:
         {
           cmd_import->command.migrate.type = ENQUEUE_MIGRATE_TYPE_H2D;
           cmd_import->command.migrate.implicit = 1;
-          cmd_import->command.migrate.mem_id
-              = &mem->device_ptrs[dev->global_mem_id];
           cmd_import->command.migrate.migration_size = migration_size;
         }
       cmd_import->command.migrate.num_buffers = 1;

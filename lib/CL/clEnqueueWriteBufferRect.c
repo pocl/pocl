@@ -140,8 +140,6 @@ pocl_write_buffer_rect_common (cl_command_buffer_khr command_buffer,
 
   _cl_command_node *c = *cmd;
 
-  c->command.write_rect.dst_mem_id
-      = &buffer->device_ptrs[device->global_mem_id];
   c->command.write_rect.src_host_ptr = ptr;
   c->command.write_rect.host_origin[0] = host_origin[0];
   c->command.write_rect.host_origin[1] = host_origin[1];

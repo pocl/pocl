@@ -134,7 +134,6 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
       goto ERROR;
 
-  cmd->command.map.mem_id = mem_id;
   cmd->command.map.mapping = mapping_info;
   cmd->command.map.buffer = buffer;
 

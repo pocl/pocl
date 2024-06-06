@@ -184,7 +184,6 @@ CL_API_SUFFIX__VERSION_1_0
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  cmd->command.map.mem_id = mem_id;
   cmd->command.map.mapping = mapping_info;
   cmd->command.map.buffer = image;
 

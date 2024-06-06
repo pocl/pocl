@@ -93,13 +93,9 @@ pocl_copy_image_to_buffer_common (
 
   _cl_command_node *c = *cmd;
   cl_device_id dev = command_queue->device;
-  c->command.read_image.src_mem_id
-      = &src_image->device_ptrs[dev->global_mem_id];
   c->command.read_image.src = src_image;
   c->command.read_image.dst_host_ptr = ((void *)0);
   c->command.read_image.dst = dst_buffer;
-  c->command.read_image.dst_mem_id
-      = &dst_buffer->device_ptrs[dev->global_mem_id];
   c->command.read_image.origin[0] = src_origin[0];
   c->command.read_image.origin[1] = src_origin[1];
   c->command.read_image.origin[2] = src_origin[2];

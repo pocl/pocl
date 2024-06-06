@@ -133,11 +133,9 @@ pocl_copy_buffer_common (cl_command_buffer_khr command_buffer,
 
   _cl_command_node *c = *cmd;
 
-  c->command.copy.src_mem_id = &src_buffer->device_ptrs[device->global_mem_id];
   c->command.copy.src_offset = src_offset;
   c->command.copy.src = src_buffer;
 
-  c->command.copy.dst_mem_id = &dst_buffer->device_ptrs[device->global_mem_id];
   c->command.copy.dst_offset = dst_offset;
   c->command.copy.dst = dst_buffer;
 
