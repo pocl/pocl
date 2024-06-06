@@ -23,8 +23,9 @@
 
 #include "pocl_cl.h"
 #include "pocl_image_util.h"
-#include "pocl_util.h"
+#include "pocl_mem_management.h"
 #include "pocl_shared.h"
+#include "pocl_util.h"
 
 cl_int
 pocl_validate_fill_buffer (cl_command_queue command_queue, cl_mem buffer,

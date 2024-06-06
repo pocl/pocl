@@ -1,6 +1,7 @@
 /* OpenCL runtime library: clEnqueueNativeKernel()
 
    Copyright (c) 2010-2023 PoCL developers
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -23,9 +24,9 @@
 
 #include "config.h"
 #include "pocl_cl.h"
+#include "pocl_mem_management.h"
 #include "pocl_util.h"
 #include "string.h"
-#include "pocl_cl.h"
 #include "utlist.h"
 
 #include <limits.h>

@@ -111,6 +111,17 @@ cl_int pocl_create_command (_cl_command_node **cmd,
                             const cl_event *wait_list,
                             pocl_buffer_migration_info *migration_infos);
 
+cl_int
+pocl_create_command_struct (_cl_command_node **cmd,
+                            cl_command_queue command_queue,
+                            cl_command_type command_type,
+                            cl_event *event_p,
+                            cl_uint num_events,
+                            const cl_event *wait_list,
+                            pocl_buffer_migration_info *migration_infos);
+
+int pocl_create_event_sync (cl_event waiting_event, cl_event notifier_event);
+
 cl_int pocl_create_command_migrate (
   _cl_command_node **cmd,
   cl_command_queue command_queue,
@@ -365,14 +376,6 @@ char *pocl_strcatdup_v (size_t num_strs, const char **strs);
  * NULL is returned and dst is unchanged. */
 POCL_EXPORT
 const char *pocl_str_append (const char **dst, const char *src);
-
-POCL_EXPORT
-pocl_buffer_migration_info *pocl_append_unique_migration_info (
-  pocl_buffer_migration_info *list, cl_mem buffer, char read_only);
-
-POCL_EXPORT
-pocl_buffer_migration_info *
-pocl_deep_copy_migration_info_list (pocl_buffer_migration_info *list);
 
 #ifdef __cplusplus
 }

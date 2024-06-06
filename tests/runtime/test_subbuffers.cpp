@@ -82,6 +82,8 @@ int TestOutputDataDecomposition() {
     const size_t NumData = (NumParallelQueues + 1) * WorkShare;
 
     std::cerr << "Number of devices: " << Devices.size() << std::endl;
+    std::cerr << "Number of parallel queues: " << NumParallelQueues
+              << std::endl;
     std::cerr << "Total data (bytes) == " << NumData * sizeof(cl_int)
               << std::endl;
     std::cerr << "WorkShare (bytes) == " << WorkShare * sizeof(cl_int)
@@ -97,16 +99,15 @@ int TestOutputDataDecomposition() {
     for (size_t i = 0; i < NumData; ++i) {
       HostBufA.push_back(i);
       HostBufB.push_back(2);
-      HostBufC.push_back(1);
+      HostBufC.push_back(3);
     }
 
     cl::Buffer ABuffer =
         cl::Buffer(Context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                    sizeof(cl_int) * NumData, HostBufA.data());
 
-    cl::Buffer BBuffer =
-        cl::Buffer(Context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                   sizeof(cl_int) * NumData, HostBufB.data());
+    cl::Buffer BBuffer = cl::Buffer(Context, CL_MEM_READ_ONLY,
+                                    sizeof(cl_int) * NumData, nullptr);
 
     cl::Buffer CBuffer =
         cl::Buffer(Context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
@@ -147,9 +148,22 @@ int TestOutputDataDecomposition() {
       SubBuffers.push_back(BSubBuffer);
       SubBuffers.push_back(CSubBuffer);
 
+      // Initialize the sub-buffers using fillbuffer, just to test it out.
+      cl::Event FEv1, FEv2;
+
+      Queue.enqueueFillBuffer(BSubBuffer, (cl_int)2, 0,
+                              WorkShare * sizeof(cl_int), nullptr, &FEv1);
+
+      Queue.enqueueFillBuffer(CSubBuffer, (cl_int)1, 0,
+                              WorkShare * sizeof(cl_int), nullptr, &FEv2);
+
+      cl::vector<cl::Event> Deps;
+      Deps.push_back(FEv1);
+      Deps.push_back(FEv2);
+
       cl::Event Ev;
       Queue.enqueueNDRangeKernel(VecAddKernel, cl::NullRange,
-                                 cl::NDRange(WorkShare), cl::NullRange, nullptr,
+                                 cl::NDRange(WorkShare), cl::NullRange, &Deps,
                                  &Ev);
       KernelEvents.push_back(Ev);
     }
@@ -209,9 +223,9 @@ int TestOutputDataDecomposition() {
         }
       } else {
         // The last part should remain untouched.
-        if (AfterSubBufCContents[i] != 1) {
+        if (AfterSubBufCContents[i] != 3) {
           std::cerr << "ERROR: after sub-bufs the last part " << i << " was "
-                    << AfterSubBufCContents[i] << " expected 1\n";
+                    << AfterSubBufCContents[i] << " expected 3\n";
           AllOK = false;
           break;
         }
@@ -229,9 +243,9 @@ int TestOutputDataDecomposition() {
         }
       } else {
         // The last part should remain untouched.
-        if (NewBufCContents[i] != 1) {
+        if (NewBufCContents[i] != 3) {
           std::cerr << "ERROR: " << i << " was " << NewBufCContents[i]
-                    << " expected 1\n";
+                    << " expected 3\n";
           AllOK = false;
           break;
         }
@@ -257,9 +271,9 @@ int TestOutputDataDecomposition() {
         }
       } else {
         // The very last part should still remain untouched.
-        if (FinalBufCContents[i] != 1) {
+        if (FinalBufCContents[i] != 3) {
           std::cerr << "ERROR: final last part " << i << " was "
-                    << FinalBufCContents[i] << " expected 1\n";
+                    << FinalBufCContents[i] << " expected 3\n";
           AllOK = false;
           break;
         }

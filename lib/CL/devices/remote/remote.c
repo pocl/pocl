@@ -2385,7 +2385,7 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
       if (pocl_remote_async_copy (
             d, node, &cmd->copy.dst->device_ptrs[node->device->global_mem_id],
             cmd->copy.dst,
-            &cmd->copy.dst->device_ptrs[node->device->global_mem_id],
+            &cmd->copy.src->device_ptrs[node->device->global_mem_id],
             cmd->copy.src, cmd->copy.dst_offset, cmd->copy.src_offset,
             cmd->copy.size))
         goto EARLY_FINISH;

@@ -1,6 +1,7 @@
 /* pocl_mem_management.c - manage allocation of runtime objects
 
    Copyright (c) 2014 Ville Korhonen
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -64,12 +65,12 @@ cl_event pocl_mem_manager_new_event ();
         {                                                                     \
           POCL_MEM_FREE ((cmd)->sync.syncpoint.sync_point_wait_list);         \
         }                                                                     \
-      pocl_buffer_migration_info *mi, *tmp;                             \
+      pocl_buffer_migration_info *mi, *tmp;                                   \
       LL_FOREACH_SAFE ((cmd)->migr_infos, mi, tmp)                            \
-      {                                                                       \
-        POname (clReleaseMemObject (mi->buffer));                             \
-        POCL_MEM_FREE (mi);                                                   \
-      }                                                                       \
+        {                                                                     \
+          POname (clReleaseMemObject (mi->buffer));                           \
+          POCL_MEM_FREE (mi);                                                 \
+        }                                                                     \
     }                                                                         \
   POCL_MEM_FREE ((cmd));
 
@@ -78,6 +79,33 @@ cl_event pocl_mem_manager_new_event ();
 
 #define pocl_mem_manager_free_event_node(en) POCL_MEM_FREE(en)
 
+pocl_buffer_migration_info *pocl_append_unique_migration_info (
+  pocl_buffer_migration_info *list, cl_mem buffer, char read_only);
+
+pocl_buffer_migration_info *
+pocl_deep_copy_migration_info_list (pocl_buffer_migration_info *list);
+
+int pocl_create_migration_commands (cl_device_id dev,
+                                    cl_event *ev_export_p,
+                                    cl_event user_cmd,
+                                    cl_mem mem,
+                                    pocl_mem_identifier *gmem,
+                                    const char readonly,
+                                    cl_command_type command_type,
+                                    cl_mem_migration_flags mig_flags,
+                                    uint64_t migration_size);
+
+/* Increments a buffer's reference counter as well as its parents',
+   if it's a sub-buffer. The object and the parent itself are assumed
+   to be locked for writing. */
+#define POCL_RETAIN_BUFFER_UNLOCKED(__OBJ__)                                  \
+  do                                                                          \
+    {                                                                         \
+      ++((__OBJ__)->pocl_refcount);                                           \
+      if (__OBJ__->parent != NULL)                                            \
+        ++((__OBJ__->parent)->pocl_refcount);                                 \
+    }                                                                         \
+  while (0)
 
 #endif
 

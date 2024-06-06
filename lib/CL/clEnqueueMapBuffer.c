@@ -23,10 +23,11 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_mem_management.h"
+#include "pocl_shared.h"
+#include "pocl_util.h"
 #include "utlist.h"
 #include <assert.h>
-#include "pocl_util.h"
-#include "pocl_shared.h"
 
 CL_API_ENTRY void * CL_API_CALL
 POname(clEnqueueMapBuffer)(cl_command_queue command_queue,

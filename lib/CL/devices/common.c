@@ -424,15 +424,17 @@ pocl_exec_command (_cl_command_node *node)
                 size_t origin[3] = { 0, 0, 0 };
                 assert (dev->ops->read_image_rect);
                 dev->ops->read_image_rect (
-                  dev->data, mem, &mem->device_ptrs[dev->global_mem_id],
+                  dev->data, mem,
+                  &node->migr_infos->buffer->device_ptrs[dev->global_mem_id],
                   mem->mem_host_ptr, NULL, origin, region, 0, 0, 0);
               }
             else
               {
                 assert (dev->ops->read);
-                dev->ops->read (dev->data, mem->mem_host_ptr,
-                                &mem->device_ptrs[dev->global_mem_id], mem, 0,
-                                mem->size);
+                dev->ops->read (
+                  dev->data, mem->mem_host_ptr,
+                  &node->migr_infos->buffer->device_ptrs[dev->global_mem_id],
+                  mem, 0, mem->size);
               }
             break;
           }
@@ -449,15 +451,17 @@ pocl_exec_command (_cl_command_node *node)
                 size_t origin[3] = { 0, 0, 0 };
                 assert (dev->ops->write_image_rect);
                 dev->ops->write_image_rect (
-                  dev->data, mem, &mem->device_ptrs[dev->global_mem_id],
+                  dev->data, mem,
+                  &node->migr_infos->buffer->device_ptrs[dev->global_mem_id],
                   mem->mem_host_ptr, NULL, origin, region, 0, 0, 0);
               }
             else
               {
                 assert (dev->ops->write);
-                dev->ops->write (dev->data, mem->mem_host_ptr,
-                                 &mem->device_ptrs[dev->global_mem_id], mem, 0,
-                                 mem->size);
+                dev->ops->write (
+                  dev->data, mem->mem_host_ptr,
+                  &node->migr_infos->buffer->device_ptrs[dev->global_mem_id],
+                  mem, 0, mem->size);
               }
             break;
           }
@@ -467,8 +471,9 @@ pocl_exec_command (_cl_command_node *node)
             assert (dev->ops->migrate_d2d);
             dev->ops->migrate_d2d (
               cmd->migrate.src_device, dev, mem,
-              &mem->device_ptrs[cmd->migrate.src_device->global_mem_id],
-              &mem->device_ptrs[dev->global_mem_id]);
+              &node->migr_infos->buffer
+                 ->device_ptrs[cmd->migrate.src_device->global_mem_id],
+              &node->migr_infos->buffer->device_ptrs[dev->global_mem_id]);
             break;
           }
         case ENQUEUE_MIGRATE_TYPE_NOP:

@@ -119,6 +119,19 @@ POname (clCreateSubBuffer) (cl_mem parent,
   mem->context = parent->context;
   mem->parent = parent;
   mem->latest_version = parent->latest_version;
+
+  /* Initially the sub-buffer's latest contents are in the same memory where
+     the parent's latest contents are due to aliasing. */
+  for (int i = 0; i < mem->context->num_devices; ++i)
+    {
+      cl_device_id d = mem->context->devices[i];
+      if (parent->device_ptrs[d->global_mem_id].version == mem->latest_version)
+        {
+          mem->device_ptrs[d->global_mem_id].version = mem->latest_version;
+          break;
+        }
+    }
+
   mem->mem_host_ptr_version = parent->mem_host_ptr_version;
   mem->type = CL_MEM_OBJECT_BUFFER;
   mem->size = info->size;
@@ -180,7 +193,7 @@ POname (clCreateSubBuffer) (cl_mem parent,
   return mem;
 
 ERROR:
-  if (mem->device_ptrs)
+  if (mem != NULL && mem->device_ptrs)
     {
       for (int i = 0; i < parent->context->num_devices; ++i)
         {
