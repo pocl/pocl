@@ -370,6 +370,7 @@ void Level0Program::setupSpecConsts(uint32_t NumSpecs, const uint32_t *SpecIDs,
 
   ConstantIds.resize(NumSpecs);
   ConstantValues.resize(NumSpecs);
+  ConstantVoidPtrs.resize(NumSpecs);
   for (uint32_t i = 0; i < NumSpecs; ++i) {
     ConstantIds[i] = SpecIDs[i];
     ConstantValues[i].resize(SpecValSizes[i]);
