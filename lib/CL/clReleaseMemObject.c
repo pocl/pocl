@@ -88,6 +88,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 
       if (memobj->is_image && (memobj->type == CL_MEM_OBJECT_IMAGE1D_BUFFER))
         {
+          /* Free the backing buffer for the Image1D object. */
           cl_mem b = memobj->buffer;
           assert (b);
           err = POname (clReleaseMemObject) (b);

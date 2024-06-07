@@ -120,6 +120,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
     errcode = device->ops->get_mapping_ptr (device->data, mem_id, buffer,
                                           mapping_info);
   DL_APPEND (buffer->mappings, mapping_info);
+
   ++buffer->map_count;
   POCL_UNLOCK_OBJ (buffer);
 

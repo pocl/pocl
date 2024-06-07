@@ -67,6 +67,9 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
                         "CL_MEM_HOST_WRITE_ONLY or CL_MEM_HOST_NO_ACCESS and "
                         "CL_MAP_READ is set in map_flags\n");
 
+  /* With 1D buffers we should deal with the backing-store buffer. */
+  memobj = POCL_MEM_BS (memobj);
+
   POCL_LOCK_OBJ (memobj);
   DL_FOREACH (memobj->mappings, mapping)
     {
@@ -80,8 +83,9 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   if (mapping)
     mapping->unmap_requested = 1;
   POCL_UNLOCK_OBJ (memobj);
-  POCL_RETURN_ERROR_ON((mapping == NULL), CL_INVALID_VALUE,
-      "Could not find mapping of this memobj\n");
+  POCL_RETURN_ERROR_ON ((mapping == NULL), CL_INVALID_VALUE,
+                        "Could not find a mapping for this memobj (id %zu)\n",
+                        memobj->id);
 
   char rdonly = (mapping->map_flags & CL_MAP_READ);
 

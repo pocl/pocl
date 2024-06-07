@@ -872,8 +872,7 @@ pocl_create_command_full (_cl_command_node **cmd,
       pocl_buffer_migration_info *migr_info = NULL;
       LL_FOREACH (buffer_usage, migr_info)
         {
-          if (migr_info->buffer->buffer != NULL)
-            migr_info->buffer = migr_info->buffer->buffer;
+          migr_info->buffer = POCL_MEM_BS (migr_info->buffer);
         }
 
       if (!preallocate_buffers (dev, buffer_usage))
@@ -1342,8 +1341,8 @@ pocl_unmap_command_finished (cl_event event, _cl_command_t *cmd)
   cl_device_id dev = event->queue->device;
   pocl_mem_identifier *mem_id = NULL;
   cl_mem mem = NULL;
-  mem = cmd->unmap.buffer;
-  mem_id = &mem->device_ptrs[dev->global_mem_id];
+  mem = POCL_MEM_BS (cmd->unmap.buffer);
+  mem_id = &POCL_MEM_BS (mem)->device_ptrs[dev->global_mem_id];
 
   mem_mapping_t *map = cmd->unmap.mapping;
   POCL_LOCK_OBJ (mem);

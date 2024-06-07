@@ -1656,6 +1656,7 @@ struct _cl_mem {
   size_t                  image_channels;
   cl_uint                 num_mip_levels;
   cl_uint                 num_samples;
+  /* This points to the backing storage cl_mem in case of images. */
   cl_mem                  buffer;
   cl_uint                 is_gl_acquired;
 
@@ -1664,6 +1665,10 @@ struct _cl_mem {
   size_t                  pipe_packet_size;
   size_t                  pipe_max_packets;
 };
+
+/** Returns the backing store cl_mem for an image, otherwise the cl_mem
+    itself (for regular buffers). */
+#define POCL_MEM_BS(BUF) (BUF->buffer != NULL ? BUF->buffer : BUF)
 
 struct _cl_mem_list_item_t
 {
