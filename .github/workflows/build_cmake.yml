@@ -608,7 +608,12 @@ jobs:
           mkdir ${{ github.workspace }}/build
           mkdir -p ${EXAMPLES_DIR}/build_level0
           mkdir -p ${EXAMPLES_DIR}/source
-          runCMake -DENABLE_TESTSUITES=conformance -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_level0 -DENABLE_LEVEL0=1 -DENABLE_HOST_CPU_DEVICES=0 -DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }}
+          # test both with and without ENABLE_CONFORMANCE
+          if [ ${{ matrix.llvm }} -eq 17 ]; then
+            runCMake -DENABLE_LEVEL0=1 -DENABLE_HOST_CPU_DEVICES=0 -DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }}
+          else
+            runCMake -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_level0 -DENABLE_LEVEL0=1 -DENABLE_HOST_CPU_DEVICES=0 -DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }}
+          fi
 
       - name: Run Build
         id: build
@@ -617,6 +622,7 @@ jobs:
 
       - name: Build Examples
         id: build_examples
+        if: ${{ matrix.llvm == 18 }}
         timeout-minutes: 120
         run: |
           cd ${{ github.workspace }}/build/examples/conformance && make -j4 conformance
