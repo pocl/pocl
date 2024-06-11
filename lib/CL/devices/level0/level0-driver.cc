@@ -1897,6 +1897,7 @@ bool Level0Device::setupModuleProperties(bool &SupportsInt64Atomics,
   SupportsInt64Atomics = (ModuleProperties.flags &
                           ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS) != 0u;
   KernelUUID = ModuleProperties.nativeKernelSupported;
+
 //  POCL_MSG_PRINT_LEVEL0("Using KernelUUID: %s\n", KernelUUID);
   if (HasFloatAtomics) {
     ClDev->single_fp_atomic_caps = convertZeAtomicFlags(FloatProperties.fp32Flags, "fp32", Features);
@@ -2203,7 +2204,9 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 
   setupCacheProperties();
 
+#ifndef ENABLE_CONFORMANCE
   setupImageProperties();
+#endif
 
   Extensions = std::string("cl_khr_byte_addressable_store"
                            " cl_khr_global_int32_base_atomics"
@@ -2211,31 +2214,32 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                            " cl_khr_local_int32_base_atomics"
                            " cl_khr_local_int32_extended_atomics"
                            " cl_khr_il_program"
-                           " cl_khr_3d_image_writes"
-
                            " cl_intel_spirv_subgroups"
                            " cl_khr_spirv_no_integer_wrap_decoration"
 #ifdef ENABLE_LEVEL0_EXTRA_FEATURES
                            " cl_intel_split_work_group_barrier"
 #endif
-
 #ifdef ENABLE_ICD
                            " cl_khr_icd"
 #endif
   );
 
-
-  OpenCL30Features = std::string("__opencl_c_images"
-                                 " __opencl_c_read_write_images"
-                                 " __opencl_c_3d_image_writes"
-                                 " __opencl_c_atomic_order_acq_rel"
+  OpenCL30Features = std::string("__opencl_c_atomic_order_acq_rel"
                                  " __opencl_c_atomic_order_seq_cst"
                                  " __opencl_c_atomic_scope_device"
                                  " __opencl_c_atomic_scope_all_devices"
                                  " __opencl_c_program_scope_global_variables"
                                  " __opencl_c_generic_address_space"
-                               );
+                                );
 
+#ifndef ENABLE_CONFORMANCE
+  if (ClDev->image_support != CL_FALSE) {
+    Extensions += " cl_khr_3d_image_writes";
+    OpenCL30Features += " __opencl_c_images"
+                        " __opencl_c_read_write_images"
+                        " __opencl_c_3d_image_writes";
+  }
+#endif
 
   if (Drv->hasExtension("ZE_extension_linkonce_odr")) {
     Extensions.append(" cl_khr_spirv_linkonce_odr");
@@ -2245,14 +2249,17 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     Extensions.append(" cl_khr_int64_base_atomics"
                       " cl_khr_int64_extended_atomics");
   }
+
   if (ClDev->half_fp_config != 0u) {
     Extensions.append(" cl_khr_fp16");
     OpenCL30Features.append(" __opencl_c_fp16");
   }
+
   if (ClDev->double_fp_config != 0u) {
     Extensions.append(" cl_khr_fp64");
     OpenCL30Features.append(" __opencl_c_fp64");
   }
+#ifndef ENABLE_CONFORMANCE
   if (ClDev->max_num_sub_groups > 0) {
     Extensions.append(" cl_khr_subgroups"
 #ifdef ENABLE_LEVEL0_EXTRA_FEATURES
@@ -2278,9 +2285,12 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                             " __opencl_c_work_group_collective_functions"
 #endif
                             );
-  }
+  } else
+#else
+  ClDev->max_num_sub_groups = 0;
+#endif
+
   if (ClDev->has_64bit_long != 0) {
-    Extensions.append(" cl_khr_int64");
     OpenCL30Features.append(" __opencl_c_int64");
   }
 
