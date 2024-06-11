@@ -1013,4 +1013,3 @@ add_cts_micro_tests("conformance_suite_micro_spirv" "_spirv"
 endif()
 
 #################################################################################
-
