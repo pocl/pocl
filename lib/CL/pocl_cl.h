@@ -313,11 +313,11 @@ extern uint64_t last_object_id;
 #define POCL_GVAR_INIT_KERNEL_NAME "pocl.gvar.init"
 
 typedef struct pocl_argument {
-  uint64_t size;
+  size_t size;
   /* The "offset" is used to simplify subbuffer handling.
    * At enqueue time, subbuffers are converted to buffers + offset into them.
    */
-  uint64_t offset;
+  size_t offset;
   void *value;
   /* 1 if this argument has been set by clSetKernelArg */
   char is_set;
