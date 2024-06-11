@@ -53,7 +53,6 @@ POname (clSetKernelArgDevicePointerEXT) (cl_kernel kernel, cl_uint arg_index,
       (!found_supported_dev), CL_INVALID_OPERATION,
       "None of the devices in this context supports 'cl_ext_buffer_device_address'\n");
 
-  assert (sizeof (void *) == sizeof (dev_addr));
   return pocl_set_kernel_arg_pointer (kernel, arg_index, (void *)dev_addr);
 }
 POsym(clSetKernelArgDevicePointerEXT)

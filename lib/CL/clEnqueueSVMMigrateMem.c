@@ -54,19 +54,33 @@ pocl_svm_migrate_mem_common (cl_command_type command_type,
   POCL_RETURN_ERROR_ON ((flags & not_valid_flags), CL_INVALID_VALUE,
                         "invalid flags given\n");
 
+  size_t *actual_sizes = calloc (num_svm_pointers, sizeof (size_t));
+  if (sizes)
+    memcpy (actual_sizes, sizes, num_svm_pointers * sizeof (size_t));
+  void **ptrs = malloc (num_svm_pointers * sizeof (void *));
+  memcpy (ptrs, svm_pointers, num_svm_pointers * sizeof (void *));
+
   for (i = 0; i < num_svm_pointers; ++i)
     {
       POCL_RETURN_ERROR_COND ((svm_pointers[i] == NULL), CL_INVALID_VALUE);
-      size_t size = sizes ? sizes[i] : 1;
-      errcode = pocl_svm_check_pointer (context, svm_pointers[i], size, NULL);
+      if (sizes && sizes[i]) {
+        errcode = pocl_svm_check_pointer (context, svm_pointers[i], sizes[i], NULL);
+      } else {
+        size_t size = 0;
+        void* ptr = NULL;
+        errcode = pocl_svm_check_get_pointer (context, svm_pointers[i], 1,
+                                              &size, &ptr);
+        actual_sizes[i] = size;
+        ptrs[i] = ptr;
+      }
       if (errcode != CL_SUCCESS)
-        return errcode;
+        goto ERROR;
     }
 
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
                                         event_wait_list);
   if (errcode != CL_SUCCESS)
-    return errcode;
+    goto ERROR;
 
   _cl_command_node *cmd = NULL;
   errcode = pocl_create_command (&cmd, command_queue, command_type, event,
@@ -74,28 +88,21 @@ pocl_svm_migrate_mem_common (cl_command_type command_type,
                                  NULL, NULL);
 
   if (errcode != CL_SUCCESS)
-    {
-      POCL_MEM_FREE (cmd);
-      return errcode;
-    }
+    goto ERROR;
 
-  if (sizes)
-    {
-      size_t *s = malloc (num_svm_pointers * sizeof (size_t));
-      memcpy (s, sizes, num_svm_pointers * sizeof (size_t));
-      cmd->command.svm_migrate.sizes = s;
-    }
-  else
-    cmd->command.svm_migrate.sizes = NULL;
-
-  void **p = malloc (num_svm_pointers * sizeof (void *));
-  memcpy (p, svm_pointers, num_svm_pointers * sizeof (void *));
-  cmd->command.svm_migrate.svm_pointers = p;
+  cmd->command.svm_migrate.svm_pointers = ptrs;
   cmd->command.svm_migrate.num_svm_pointers = num_svm_pointers;
+  cmd->command.svm_migrate.sizes = actual_sizes;
 
   pocl_command_enqueue (command_queue, cmd);
 
   return CL_SUCCESS;
+
+ERROR:
+  POCL_MEM_FREE (cmd);
+  POCL_MEM_FREE (ptrs);
+  POCL_MEM_FREE (actual_sizes);
+  return errcode;
 }
 
 CL_API_ENTRY cl_int CL_API_CALL

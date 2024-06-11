@@ -100,9 +100,6 @@ Known issues related to CTS
 - a few tests from ``basic/test_basic`` may fail / segfault because they
   request a huge amount of memory for buffers.
 
-- some tests from ``relationals/test_relationals`` can fail with specific
-  LLVM versions, this is an LLVM bug, fixed in LLVM 13.
-
 - a few tests may run much faster if you limit the reported Global memory size
   with POCL_MEMORY_LIMIT env var. In particular, "kernel_image_methods" test
   with "max_images" argument.

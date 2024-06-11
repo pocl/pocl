@@ -49,8 +49,6 @@ OpenCL 3.0 support
 If you want PoCL built with ICD and OpenCL 3.0 support at platform level, you will
 need sufficiently new ocl-icd (2.3.x). For Ubuntu, it can be installed from
 this PPA: https://launchpad.net/~ocl-icd/+archive/ubuntu/ppa
-Additionally, if you want the CPU device to report as 3.0 OpenCL,
-you will need LLVM 14 or newer.
 
 Note: PoCL assumes that the OpenCL development headers and the ICD loader
 (if present on your system) are version compatible.

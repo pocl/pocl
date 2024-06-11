@@ -13,7 +13,7 @@ Installation
 
 Required:
 
- * Clang+LLVM: 14 and 15 should work, older may work but are untested
+ * Clang+LLVM: 17 and 18 should work, older may work but are untested.
  * Level Zero ICD + development files (level-zero and level-zero-devel)
  * Level Zero drivers (on Ubuntu, intel-level-zero-gpu)
  * SPIRV-LLVM-Translator from Khronos (https://github.com/KhronosGroup/SPIRV-LLVM-Translator)
@@ -22,12 +22,16 @@ Required:
    otherwise PoCL's CMake could pick up a different (wrong) `llvm-spirv`.
  * SPIR-V tools (in particular, `spirv-link`)
 
-The ICD + headers must support at least Level Zero specification version 1.3;
+The libze_loader + headers should support at least Level Zero specification version 1.11;
 older may work but are untested.
 
-To build the Level Zero driver driver::
+To build the Level Zero driver driver (with recommended options)::
 
-    cmake -DENABLE_LEVEL0=1 -DENABLE_LLVM=1 -DWITH_LLVM_CONFIG=/path/to/bin/llvm-config <path-to-pocl-source-dir>
+    cmake -DENABLE_LEVEL0=1 -DENABLE_LLVM=1 -DSTATIC_LLVM=ON -DWITH_LLVM_CONFIG=/path/to/bin/llvm-config -DLLVM_SPIRV=/path/to/llvm-spirv <path-to-pocl-source-dir>
+
+Using STATIC_LLVM is recommended to avoid problems with symbol conflicts
+(the LevelZero driver uses its own version of LLVM), even though some
+LLVM versions might work when linked as shared libraries.
 
 For additional CMake variables see :ref:`pocl-cmake-variables`.
 
@@ -65,7 +69,6 @@ Unfinished / non-optimal
 Doesnt work / missing
 -----------------------
 
- * ``ZE_MEMORY_ADVICE_SET_READ_MOSTLY`` optimization
  * support for row_pitch/slice_pitch arguments of Image APIs
    ... there are actually two Level0 extension APIs that have the row/pitch arguments,
    but they currently return ``ZE_RESULT_ERROR_UNSUPPORTED_FEATURE``

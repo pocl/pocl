@@ -1037,7 +1037,7 @@ set(CTS_LEVEL0_LIST
   #conformance_main_api_micro_ocl_30
   #conformance_main_basic_micro_other_ocl_30
   conformance_main_SVM_micro_1
-  #conformance_main_SVM_micro_2     ### SEGFAULT
+  conformance_main_SVM_micro_2
 
   #conformance_main_allocations_micro_buffer
   conformance_main_allocations_micro_image
