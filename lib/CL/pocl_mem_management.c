@@ -249,13 +249,7 @@ pocl_create_migration_commands (cl_device_id dev,
      The symmetric releases as are in pocl_mem_manager_free_command().
   */
 
-  if (mem->parent != NULL)
-    POCL_LOCK_OBJ (mem->parent);
-
   POCL_RETAIN_BUFFER_UNLOCKED (mem);
-
-  if (mem->parent != NULL)
-    POCL_UNLOCK_OBJ (mem->parent);
 
   /* Save buffer's current last_event as previous last_event,
    * then set the last_event pointer to the actual command's event

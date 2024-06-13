@@ -95,15 +95,11 @@ int pocl_create_migration_commands (cl_device_id dev,
                                     cl_mem_migration_flags mig_flags,
                                     uint64_t migration_size);
 
-/* Increments a buffer's reference counter as well as its parents',
-   if it's a sub-buffer. The object and the parent itself are assumed
-   to be locked for writing. */
+/* Increments a buffer's reference counter. */
 #define POCL_RETAIN_BUFFER_UNLOCKED(__OBJ__)                                  \
   do                                                                          \
     {                                                                         \
       ++((__OBJ__)->pocl_refcount);                                           \
-      if (__OBJ__->parent != NULL)                                            \
-        ++((__OBJ__->parent)->pocl_refcount);                                 \
     }                                                                         \
   while (0)
 
