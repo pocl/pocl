@@ -94,6 +94,11 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
     num_events_in_wait_list, event_wait_list,
     pocl_append_unique_migration_info (NULL, memobj, rdonly));
 
+  /* Release the "mapping reference" which keeps the buffer alive until the
+     mapping is on. The command execution should also retain/release. */
+  int newrefc;
+  POCL_RELEASE_OBJECT (memobj, newrefc);
+
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
