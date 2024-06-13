@@ -93,10 +93,11 @@ set(LLVMPASSES_SOURCES "AllocasToEntry.cc"
                        "WorkitemReplication.cc"
                        "WorkitemReplication.h")
 
-if (LLVM_MAJOR GREATER_EQUAL MIN_LLVM_NEW_PASSMANAGER)
-list(APPEND LLVMPASSES_SOURCES
-  "SVMOffset.cc"
-  "SVMOffset.hh")
+if ((LLVM_MAJOR GREATER_EQUAL MIN_LLVM_NEW_PASSMANAGER)
+    AND ENABLE_REMOTE_SERVER)
+  list(APPEND LLVMPASSES_SOURCES
+    "SVMOffset.cc"
+    "SVMOffset.hh")
 endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LLVM_CFLAGS}")
