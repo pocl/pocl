@@ -156,7 +156,7 @@ public:
 static void finalizeKernelCommand(kernel_run_command *RunCmd) {
   pocl_free_kernel_arg_array(RunCmd);
 
-  pocl_release_dlhandle_cache(RunCmd->cmd);
+  pocl_release_dlhandle_cache(RunCmd->cmd->command.run.device_data);
 
   POCL_UPDATE_EVENT_COMPLETE_MSG(RunCmd->cmd->sync.event.event,
                                  "NDRange Kernel        ");
@@ -191,7 +191,8 @@ prepareKernelCommand(pocl_tbb_scheduler_data *SchedData,
 
   char *SavedName = NULL;
   pocl_sanitize_builtin_kernel_name(Kernel, &SavedName);
-  pocl_check_kernel_dlhandle_cache(Cmd, 1, 1);
+  void *ci = pocl_check_kernel_dlhandle_cache(Cmd, CL_TRUE, CL_TRUE);
+  Cmd->command.run.device_data = ci;
   pocl_restore_builtin_kernel_name(Kernel, SavedName);
 
   RunCmd = new_kernel_run_command();
