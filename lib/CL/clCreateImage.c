@@ -186,8 +186,11 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
                               "pocl does not support Image 1D"
                               " Buffer over SubBuffers\n");
 
-        POCL_GOTO_ERROR_COND ((image_desc->buffer->size < size),
-                              CL_INVALID_MEM_OBJECT);
+        POCL_GOTO_ERROR_ON ((image_desc->buffer->size < size),
+                            CL_INVALID_MEM_OBJECT,
+                            "Invalid buffer sizes: image_desc->buffer->size"
+                            " %zu || Required size: %zu\n",
+                            image_desc->buffer->size, size);
 
         mem = (cl_mem) calloc (1, sizeof (struct _cl_mem));
         POCL_GOTO_ERROR_COND ((mem == NULL), CL_OUT_OF_HOST_MEMORY);
