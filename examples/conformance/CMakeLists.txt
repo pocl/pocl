@@ -162,9 +162,14 @@ set(EXTRA_ARGS ${ARGN})
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_allocations"
          COMMAND "${TS_BUILDDIR}/allocations/test_allocations" ${EXTRA_ARGS})
 
-if(HOST_CPU_CORECOUNT GREATER 4)
-  set(PAR_ARG "--num-worker-threads" ${HOST_CPU_CORECOUNT})
+set(TEST_THREADS ${HOST_CPU_CORECOUNT})
+if(HOST_CPU_CORECOUNT LESS 4)
+  set(TEST_THREADS 4)
 endif()
+if(HOST_CPU_CORECOUNT GREATER 8)
+  set(TEST_THREADS 8)
+endif()
+set(PAR_ARG "--num-worker-threads" ${TEST_THREADS})
 
 # TODO fix this in pocl's fork:::
 # on recent LLVMs, run all tests except the get_kernel_arg_info.
