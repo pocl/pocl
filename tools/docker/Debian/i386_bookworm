@@ -1,0 +1,20 @@
+FROM i386/debian:bookworm
+
+ARG GIT_COMMIT=main
+ARG LLVM_VERSION=16
+
+LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Debian version=1.0
+
+RUN apt update
+RUN apt upgrade -y
+RUN apt install -y build-essential ocl-icd-libopencl1 cmake git gcc g++ libhwloc-dev pkg-config libclang-${LLVM_VERSION}-dev libclang-cpp${LLVM_VERSION}-dev  clang-${LLVM_VERSION} llvm-${LLVM_VERSION}-dev make ninja-build  ocl-icd-dev ocl-icd-opencl-dev opencl-headers zlib1g zlib1g-dev
+
+# RUN ln -s /usr/lib/x86_64-linux-gnu/libOpenCL.so.1 /usr/lib/x86_64-linux-gnu/libOpenCL.so
+
+RUN cd /home ; git clone https://github.com/pocl/pocl.git ; cd /home/pocl ; git checkout $GIT_COMMIT
+RUN cd /home/pocl ; mkdir b ; cd b; linux32 cmake -G Ninja ..
+RUN cd /home/pocl/b ; ninja
+
+ENV OCL_ICD_VENDORS=/home/pocl/b/ocl-vendors
+ENV POCL_BUILDING=1
+CMD cd /home/pocl/b ; ctest -j4 --output-on-failure -L internal
