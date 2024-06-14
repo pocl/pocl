@@ -64,9 +64,6 @@ POname(clGetDeviceInfo)(cl_device_id   device,
 {
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (device)), CL_INVALID_DEVICE);
 
-  POCL_RETURN_ERROR_COND ((*(device->available) == CL_FALSE),
-                          CL_DEVICE_NOT_AVAILABLE);
-
   switch (param_name)
   {
   case CL_DEVICE_IMAGE_SUPPORT:
