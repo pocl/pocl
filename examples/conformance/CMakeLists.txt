@@ -84,7 +84,7 @@ if(CUSTOM_CTS_GIT_TAG)
   set(CTS_GIT_TAG "${CUSTOM_CTS_GIT_TAG}")
 else()
   # Use PoCL's fork which has pending fixes.
-  set(CTS_GIT_TAG "v2024.05.23")
+  set(CTS_GIT_TAG "v2024.06.15")
 endif()
 
 set(TS_BUILDDIR "${TS_BUILDDIR}/test_conformance")
