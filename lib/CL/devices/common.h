@@ -88,12 +88,12 @@ POCL_EXPORT
 size_t pocl_cmd_max_grid_dim_width (_cl_command_run *cmd);
 
 POCL_EXPORT
-void pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
-                                       int retain,
-                                       int specialize);
+void *pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
+                                        int retain,
+                                        int specialize);
 
 POCL_EXPORT
-void pocl_release_dlhandle_cache (_cl_command_node *cmd);
+void pocl_release_dlhandle_cache (void *dlhandle_cache_item);
 
 POCL_EXPORT
 void pocl_setup_device_for_system_memory(cl_device_id device);

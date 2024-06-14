@@ -413,7 +413,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
       }
   free (arguments);
 
-  pocl_release_dlhandle_cache (cmd);
+  pocl_release_dlhandle_cache (cmd->command.run.device_data);
 }
 
 void
@@ -492,7 +492,10 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
   pocl_basic_data_t *d = node->device->data;
 
   if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_check_kernel_dlhandle_cache (node, CL_TRUE, CL_TRUE);
+    {
+      node->command.run.device_data
+        = pocl_check_kernel_dlhandle_cache (node, CL_TRUE, CL_TRUE);
+    }
 
   node->ready = 1;
   POCL_LOCK (d->cq_lock);

@@ -426,7 +426,7 @@ finalize_kernel_command (struct pool_thread_data *thread_data,
 
   pocl_free_kernel_arg_array (k);
 
-  pocl_release_dlhandle_cache (k->cmd);
+  pocl_release_dlhandle_cache (k->cmd->command.run.device_data);
 
   POCL_UPDATE_EVENT_COMPLETE_MSG (k->cmd->sync.event.event,
                                   "NDRange Kernel        ");
@@ -462,7 +462,8 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
 
   char *saved_name = NULL;
   pocl_sanitize_builtin_kernel_name (kernel, &saved_name);
-  pocl_check_kernel_dlhandle_cache (cmd, CL_TRUE, CL_TRUE);
+  void *ci = pocl_check_kernel_dlhandle_cache (cmd, CL_TRUE, CL_TRUE);
+  cmd->command.run.device_data = ci;
   pocl_restore_builtin_kernel_name (kernel, saved_name);
 
   run_cmd = new_kernel_run_command ();
