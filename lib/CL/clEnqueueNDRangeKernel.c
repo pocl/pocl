@@ -38,7 +38,7 @@
 #include <sys/stat.h>
 #include <string.h>
 
-//#define DEBUG_NDRANGE
+/* #define DEBUG_NDRANGE */
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,

@@ -149,11 +149,25 @@
     }                                                                         \
   while (0)
 
+#define POCL_LOCK_OBJ_NO_CHECK(__OBJ__)                                       \
+  do                                                                          \
+    {                                                                         \
+      POCL_LOCK ((__OBJ__)->pocl_lock);                                       \
+    }                                                                         \
+  while (0)
+
 #define POCL_UNLOCK_OBJ(__OBJ__)                                              \
   do                                                                          \
     {                                                                         \
-      CHECK_VALIDITY_MARKERS(__OBJ__);                                        \
+      CHECK_VALIDITY_MARKERS (__OBJ__);                                       \
       assert ((__OBJ__)->pocl_refcount >= 0);                                 \
+      POCL_UNLOCK ((__OBJ__)->pocl_lock);                                     \
+    }                                                                         \
+  while (0)
+
+#define POCL_UNLOCK_OBJ_NO_CHECK(__OBJ__)                                     \
+  do                                                                          \
+    {                                                                         \
       POCL_UNLOCK ((__OBJ__)->pocl_lock);                                     \
     }                                                                         \
   while (0)

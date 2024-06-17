@@ -246,12 +246,12 @@ pocl_create_migration_commands (cl_device_id dev,
   POCL_LOCK_OBJ (mem);
 
   /* Retain the migrated buffer for the duration of the command.
-     The symmetric releases as are in pocl_mem_manager_free_command().
+     The symmetric releases are in pocl_mem_manager_free_command().
   */
 
   POCL_RETAIN_BUFFER_UNLOCKED (mem);
 
-  /* Save buffer's current last_event as previous last_event,
+  /* Save the buffer's current last_event as previous last_event,
    * then set the last_event pointer to the actual command's event
    * (user_cmd).
    *

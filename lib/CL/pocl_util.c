@@ -671,6 +671,16 @@ add_unique_implicit_sub_buffer (cl_mem parent, size_t origin, size_t size)
   cl_mem sub_buf = POname (clCreateSubBuffer) (
     parent, 0, CL_BUFFER_CREATE_TYPE_REGION, &Region, &err);
 
+  /* The implicit sub-buffers should not keep the parent buffer
+     or the context alive, but just get cleaned up silently when
+     the parent buffer is (in clReleaseBuffer()). Release the refs
+     created in clCreateSubBuffer() here. */
+  int newrefc;
+  POCL_RELEASE_OBJECT (sub_buf->parent, newrefc);
+  assert (newrefc > 0);
+  POCL_RELEASE_OBJECT (sub_buf->context, newrefc);
+  assert (newrefc > 0);
+
   if (err != CL_SUCCESS)
     {
       return err;
@@ -797,6 +807,10 @@ generate_implicit_sub_buffers (cl_mem parent)
   size_t chunk_size = parent->size - pos;
   if (chunk_size > 0)
     add_unique_implicit_sub_buffer (parent, pos, chunk_size);
+
+  struct buf_usage *tmp = NULL;
+  LL_FOREACH_SAFE (usage, buf_usage, tmp)
+    free (usage);
 }
 
 
@@ -996,11 +1010,13 @@ pocl_create_command_full (_cl_command_node **cmd,
           &mi->buffer->device_ptrs[dev->global_mem_id], mi->read_only,
           command_type, mig_flags, migration_size);
 
+#if 0
         /* Hold the last updater events of the parent buffers so we can refer
            to the event in the possible patch sub-buffers. These will point to
            the potential new migration commands.  */
         if (mi->buffer->parent != NULL)
           POname (clRetainEvent) (mi->buffer->last_updater);
+#endif
         ++i;
       }
 
@@ -1127,8 +1143,7 @@ pocl_cmdbuf_get_property (cl_command_buffer_khr command_buffer,
 }
 
 /**
- * Create a command buffered command node which has multiple buffers
- * associated with it.
+ * Create a command buffered command node.
  */
 cl_int
 pocl_create_recorded_command (_cl_command_node **cmd,
@@ -1189,14 +1204,10 @@ pocl_create_recorded_command (_cl_command_node **cmd,
     }
 
   (*cmd)->migr_infos = buffer_usage;
-
   pocl_buffer_migration_info *migr_info = NULL;
   LL_FOREACH (buffer_usage, migr_info)
     POname (clRetainMemObject) (migr_info->buffer);
   return CL_SUCCESS;
-
-  pocl_mem_manager_free_command (*cmd);
-  return errcode;
 }
 
 cl_int
