@@ -267,9 +267,9 @@ pocl.
  (see :ref:`pocl-level0-driver` for details)
  Accepted values: {0,1,auto}
 
-   *   0 = always disable JIT
-   *   1 = always use JIT,
-   *   auto (default) = guess based on program's kernel count & SPIR-V size.
+ *   0 = always disable JIT
+ *   1 = always use JIT,
+ *   auto (default) = guess based on program's kernel count & SPIR-V size.
 
 - **POCL_LLVM_VERIFY**
 
@@ -335,25 +335,26 @@ pocl.
  complete and running events POCL_TRACING_FILTER should be set
  to "complete,running". Default behavior is to trace all events.
 
-    cq -- Dumps a simple per-kernel execution time statistics at the
+ * **cq** -- Dumps a simple per-kernel execution time statistics at the
           program exit time which is collected from command queue
           start and finish time stamps. Useful for quick and easy profiling
           purposes with accurate kernel execution time stamps produced
           in a per device way. Currently only tracks kernel timings, and
           POCL_TRACING_FILTER has no effect.
-    text   -- Basic text logger for each events state
+ * **text** -- Basic text logger for each events state
               Use POCL_TRACING_OPT=<file> to set the
               output file. If not specified, it defaults to
               pocl_trace_event.log
-    lttng  -- LTTNG tracepoint support. Requires pocl to be built with ``-DENABLE_LTTNG=YES``.
+ * **lttng** -- LTTNG tracepoint support. Requires pocl to be built with ``-DENABLE_LTTNG=YES``.
               When activated, a lttng session must be started.
               The following tracepoints are available:
-               - pocl_trace:ndrange_kernel -> Kernel execution
-               - pocl_trace:read_buffer    -> Read buffer
-               - pocl_trace:write_buffer   -> Write buffer
-               - pocl_trace:copy_buffer    -> Copy buffer
-               - pocl_trace:map            -> Map image/buffer
-               - pocl_trace:command        -> other commands
+
+              * pocl_trace:ndrange_kernel -> Kernel execution
+              * pocl_trace:read_buffer    -> Read buffer
+              * pocl_trace:write_buffer   -> Write buffer
+              * pocl_trace:copy_buffer    -> Copy buffer
+              * pocl_trace:map            -> Map image/buffer
+              * pocl_trace:command        -> other commands
 
               For more information, please see lttng documentation:
               http://lttng.org/docs/#doc-tracing-your-own-user-application
@@ -374,14 +375,14 @@ pocl.
  The kernel compiler method to produce the work group functions from
  multiple work items. Legal values:
 
-    auto   -- Choose the best available method depending on the
+ * **auto**   -- Choose the best available method depending on the
               kernel and the work group size. Use
               POCL_FULL_REPLICATION_THRESHOLD=N to set the
               maximum local size for a work group to be
               replicated fully with 'repl'. Otherwise,
               'loops' is used.
 
-    loops  -- Create for-loops that execute the work items
+ * **loops**  -- Create for-loops that execute the work items
               (under stabilization). The drawback is the
               need to save the thread contexts in arrays.
 
@@ -390,18 +391,18 @@ pocl.
               POCL_WILOOPS_MAX_UNROLL_COUNT=N environment
               variable (default is to not perform unrolling).
 
-    loopvec -- Create work-item for-loops (see 'loops') and execute
+ * **loopvec** -- Create work-item for-loops (see 'loops') and execute
                the LLVM LoopVectorizer. The loops are not unrolled
                but the unrolling decision is left to the generic
                LLVM passes (the default).
 
-    repl   -- Replicate and chain all work items. This results
+ * **repl**   -- Replicate and chain all work items. This results
               in more easily scalarizable private variables, thus
               might avoid storing work-item context to memory.
               However, the code bloat is increased with larger
               WG sizes.
     
-    cbs    -- Use continuation-based synchronization to execute work-items
+ * **cbs**    -- Use continuation-based synchronization to execute work-items
               on non-SPMD devices.
               CBS is expected to work for kernels that 'loops' does not support.
               For most other kernels it is expected to perform slightly worse.
