@@ -1010,13 +1010,12 @@ pocl_create_command_full (_cl_command_node **cmd,
           &mi->buffer->device_ptrs[dev->global_mem_id], mi->read_only,
           command_type, mig_flags, migration_size);
 
-#if 0
         /* Hold the last updater events of the parent buffers so we can refer
            to the event in the possible patch sub-buffers. These will point to
-           the potential new migration commands.  */
+           the potential new migration commands.  TODO: This is not released
+           properly currently. It leaks. */
         if (mi->buffer->parent != NULL)
           POname (clRetainEvent) (mi->buffer->last_updater);
-#endif
         ++i;
       }
 
@@ -1026,11 +1025,8 @@ pocl_create_command_full (_cl_command_node **cmd,
            sub-buffer references to the events should hold them alive. */
         if (mi->buffer->parent == NULL && mi->buffer->sub_buffers != NULL)
           {
-            int new_ref;
-            POCL_RELEASE_OBJECT_UNLOCKED (mi->buffer->parent->last_updater,
-                                          new_ref);
-            if (new_ref == 0)
-              mi->buffer->parent->last_updater = NULL;
+            POname (clReleaseEvent) (mi->buffer->parent->last_updater);
+            mi->buffer->parent->last_updater = NULL;
           }
       }
 
