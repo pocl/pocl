@@ -84,7 +84,7 @@ if(CUSTOM_CTS_GIT_TAG)
   set(CTS_GIT_TAG "${CUSTOM_CTS_GIT_TAG}")
 else()
   # Use PoCL's fork which has pending fixes.
-  set(CTS_GIT_TAG "v2024.05.23")
+  set(CTS_GIT_TAG "v2024.06.15")
 endif()
 
 set(TS_BUILDDIR "${TS_BUILDDIR}/test_conformance")
@@ -162,9 +162,14 @@ set(EXTRA_ARGS ${ARGN})
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_allocations"
          COMMAND "${TS_BUILDDIR}/allocations/test_allocations" ${EXTRA_ARGS})
 
-if(HOST_CPU_CORECOUNT GREATER 4)
-  set(PAR_ARG "--num-worker-threads" ${HOST_CPU_CORECOUNT})
+set(TEST_THREADS ${HOST_CPU_CORECOUNT})
+if(HOST_CPU_CORECOUNT LESS 4)
+  set(TEST_THREADS 4)
 endif()
+if(HOST_CPU_CORECOUNT GREATER 8)
+  set(TEST_THREADS 8)
+endif()
+set(PAR_ARG "--num-worker-threads" ${TEST_THREADS})
 
 # TODO fix this in pocl's fork:::
 # on recent LLVMs, run all tests except the get_kernel_arg_info.

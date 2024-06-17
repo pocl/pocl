@@ -957,27 +957,24 @@ get_new_dlhandle_cache_item ()
 }
 
 void
-pocl_release_dlhandle_cache (_cl_command_node *cmd)
+pocl_release_dlhandle_cache (void *dlhandle_cache_item)
 {
-  pocl_dlhandle_cache_item *ci = NULL, *found = NULL;
+  pocl_dlhandle_cache_item *tmp = NULL, *ci = dlhandle_cache_item;
 
   POCL_LOCK (pocl_dlhandle_lock);
-  DL_FOREACH (pocl_dlhandle_cache, ci)
+  int found = CL_FALSE;
+  DL_FOREACH (pocl_dlhandle_cache, tmp)
   {
-    if ((memcmp (ci->hash, cmd->command.run.hash, sizeof (pocl_kernel_hash_t))
-         == 0)
-        && (ci->local_wgs[0] == cmd->command.run.pc.local_size[0])
-        && (ci->local_wgs[1] == cmd->command.run.pc.local_size[1])
-        && (ci->local_wgs[2] == cmd->command.run.pc.local_size[2]))
+    if (tmp == ci)
       {
-        found = ci;
+        found = CL_TRUE;
         break;
       }
   }
 
-  assert (found != NULL);
-  assert (found->ref_count > 0);
-  --found->ref_count;
+  assert (found == CL_TRUE);
+  assert (ci->ref_count > 0);
+  --ci->ref_count;
   POCL_UNLOCK (pocl_dlhandle_lock);
 }
 
@@ -1103,11 +1100,12 @@ fetch_dlhandle_cache_item (_cl_command_run *run_cmd, int specialize)
  * This can be useful in case we're just pre-compiling kernels
  * (or compiling them for binaries), and not actually need them immediately.
  *
- * TODO: This function is really specific to CPU (host) drivers since dlhandles
- * imply program loading to the same process as the host. Move to basic.c? */
-void
+ * Returns: a dlhandle cache item as void*; this needs to be given
+ * to pocl_release_dlhandle_cache(), if it was retained */
+void *
 pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
-                                  int retain, int specialize)
+                                  int retain,
+                                  int specialize)
 {
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   pocl_dlhandle_cache_item *ci = NULL;
@@ -1125,7 +1123,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
     {
       if (retain) ++ci->ref_count;
       POCL_UNLOCK (pocl_dlhandle_lock);
-      return;
+      return ci;
     }
 
   /* Not found, build a new kernel and cache its dlhandle. */
@@ -1182,6 +1180,8 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 
   POCL_UNLOCK (pocl_dlhandle_lock);
   POCL_MEM_FREE (module_fn);
+
+  return ci;
 }
 
 #endif

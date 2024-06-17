@@ -95,6 +95,12 @@ set(LLVMPASSES_SOURCES "AllocasToEntry.cc"
                        "WorkitemReplication.cc"
                        "WorkitemReplication.h")
 
+if (ENABLE_REMOTE_SERVER)
+  list(APPEND LLVMPASSES_SOURCES
+    "SVMOffset.cc"
+    "SVMOffset.hh")
+endif()
+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LLVM_CFLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}")
 
