@@ -17,6 +17,10 @@ the version control system:</p>
 
 <ul>
 
+<li><b>Version 6.0:</b> Supports LLVM versions 14.0 to 18.0.
+            <a href="https://github.com/pocl/pocl/releases/tag/v6.0">download</a>,
+            <a href="http://portablecl.org/docs/html/notes_6_0.html">release notes</a></li>
+
 <li><b>Version 5.0:</b> Supports LLVM versions 10.0 to 17.0.
             <a href="https://github.com/pocl/pocl/releases/tag/v5.0">download</a>,
             <a href="http://portablecl.org/docs/html/notes_5_0.html">release notes</a></li>
