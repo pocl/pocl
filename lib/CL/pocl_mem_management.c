@@ -585,16 +585,19 @@ FINISH_VER_SETUP:
 /**
  * Creates a deep copy of the migration info list.
  *
- * Also retains the memobjects so they can be released per list reference.
+ * @param retain If set to non-zero, also retains the memobjects so they can
+ * be released per list reference.
  */
 pocl_buffer_migration_info *
-pocl_deep_copy_migration_info_list (pocl_buffer_migration_info *list)
+pocl_deep_copy_migration_info_list (pocl_buffer_migration_info *list,
+                                    int retain)
 {
   pocl_buffer_migration_info *new_list = NULL;
   pocl_buffer_migration_info *mi;
   LL_FOREACH (list, mi)
     {
-      POname (clRetainMemObject (mi->buffer));
+      if (retain)
+        POname (clRetainMemObject (mi->buffer));
       new_list = pocl_append_unique_migration_info (new_list, mi->buffer,
                                                     mi->read_only);
     }

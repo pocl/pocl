@@ -166,9 +166,17 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
           }
 
         _cl_command_node *node = NULL;
-        errcode = pocl_create_command (&node, used_queues[cmd->queue_idx],
-                                       cmd->type, &syncpoints[sync_id], j,
-                                       deps, cmd->migr_infos);
+        /* The migration infos in the recorded command should not be touched.
+           When executing we clone them in order for the implicit migration
+           code to be able to insert new implicit sub-buffers and to make the
+           list freeable (and its buffers releasable) after the copied command
+           instance finishes.  The recorded command's migration infos are
+           released in clReleaseCommandBufferKHR's
+           pocl_mem_manager_free_command call. */
+
+        errcode = pocl_create_command (
+          &node, used_queues[cmd->queue_idx], cmd->type, &syncpoints[sync_id],
+          j, deps, pocl_deep_copy_migration_info_list (cmd->migr_infos, 0));
         ++sync_id;
 
         if (errcode != CL_SUCCESS)

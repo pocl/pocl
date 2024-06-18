@@ -810,7 +810,7 @@ generate_implicit_sub_buffers (cl_mem parent)
 
   struct buf_usage *tmp = NULL;
   LL_FOREACH_SAFE (usage, buf_usage, tmp)
-    free (usage);
+    free (buf_usage);
 }
 
 
@@ -910,8 +910,8 @@ pocl_create_command_full (_cl_command_node **cmd,
   cl_event final_event = (*cmd)->sync.event.event;
 
   /* Retain once for every buffer. This is because we set every buffer's
-   * "last event" to this, and then some next command enqueue
-   * (or clReleaseMemObject) will release it.
+   * "last event" to this, and then a next command enqueue that changes
+   * the last event to something else or clReleaseMemObject will release it.
    */
   size_t num_buffers = 0;
   pocl_buffer_migration_info *mi = NULL;
@@ -920,9 +920,15 @@ pocl_create_command_full (_cl_command_node **cmd,
       ++num_buffers;
     }
 
-  POCL_LOCK_OBJ (final_event);
-  final_event->pocl_refcount += num_buffers;
-  POCL_UNLOCK_OBJ (final_event);
+  if (num_buffers > 0)
+    {
+      POCL_LOCK_OBJ (final_event);
+      final_event->pocl_refcount += num_buffers;
+      POCL_MSG_PRINT_REFCOUNTS (
+        "Event %zu refcount now %zu due to %zu buffer(s) referring to it.\n",
+        final_event->id, final_event->pocl_refcount, num_buffers);
+      POCL_UNLOCK_OBJ (final_event);
+    }
 
   cl_event *size_events = NULL;
   /* Temporary copy of the buffer list just for keeping track of which buffers
@@ -1011,10 +1017,9 @@ pocl_create_command_full (_cl_command_node **cmd,
           command_type, mig_flags, migration_size);
 
         /* Hold the last updater events of the parent buffers so we can refer
-           to the event in the possible patch sub-buffers. These will point to
-           the potential new migration commands.  TODO: This is not released
-           properly currently. It leaks. */
-        if (mi->buffer->parent != NULL)
+           to the event in potential implicit sub-buffer migrations. */
+        if (mi->buffer->parent == NULL && mi->buffer->sub_buffers != NULL
+            && mi->buffer->last_updater != NULL)
           POname (clRetainEvent) (mi->buffer->last_updater);
         ++i;
       }
@@ -1023,10 +1028,11 @@ pocl_create_command_full (_cl_command_node **cmd,
       {
         /* The last events of the parent buffers can be now released as the
            sub-buffer references to the events should hold them alive. */
-        if (mi->buffer->parent == NULL && mi->buffer->sub_buffers != NULL)
+        if (mi->buffer->parent == NULL && mi->buffer->sub_buffers != NULL
+            && mi->buffer->parent->last_updater != NULL)
           {
-            POname (clReleaseEvent) (mi->buffer->parent->last_updater);
-            mi->buffer->parent->last_updater = NULL;
+            POname (clReleaseEvent) (mi->buffer->last_updater);
+            mi->buffer->last_updater = NULL;
           }
       }
 
@@ -1140,6 +1146,9 @@ pocl_cmdbuf_get_property (cl_command_buffer_khr command_buffer,
 
 /**
  * Create a command buffered command node.
+ *
+ * The node contains the minimum information to "clone" launchable
+ * commands in clEnqueueCommandBufferKHR.c.
  */
 cl_int
 pocl_create_recorded_command (_cl_command_node **cmd,
@@ -1201,8 +1210,15 @@ pocl_create_recorded_command (_cl_command_node **cmd,
 
   (*cmd)->migr_infos = buffer_usage;
   pocl_buffer_migration_info *migr_info = NULL;
+
+  /* We need to retain the buffers as we expect them to be executed
+     later. They are retained again for each executed instance in
+     pocl_create_migration_commands() and those references are freed
+     after the executed instance is freed.  This one is freed at
+     command buffer free time. */
   LL_FOREACH (buffer_usage, migr_info)
     POname (clRetainMemObject) (migr_info->buffer);
+
   return CL_SUCCESS;
 }
 
@@ -2184,7 +2200,7 @@ pocl_update_event_running (cl_event event)
   POCL_UNLOCK_OBJ (event);
 }
 
-/* Note: this must be kept in sync with pocl_copy_event_node */
+/* Note: this must be kept in sync with pocl_copy_command_node */
 static void pocl_free_event_node (cl_event event)
 {
   _cl_command_node *node = event->command;
@@ -2225,15 +2241,20 @@ static void pocl_free_event_node (cl_event event)
 }
 
 /**
- * Copies a command node (mostly) for command buffering purposes.
+ * Copies relevant parts of a command node for command buffer execution
+ * purposes.
  *
- * Doesn't touch the next/prev pointers, for instance.
+ * The "relevant parts" include the information needed for execution and
+ * independent freeing of the command node resources after finishing. Doesn't
+ * touch the next/prev pointers, for instance. The command buffer (default)
+ * execution happens in clEnqueueCommandBufferKHR.
  */
 int
 pocl_copy_command_node (_cl_command_node *dst_node, _cl_command_node *src_node)
 {
   memcpy (&dst_node->command, &src_node->command, sizeof (_cl_command_t));
   dst_node->program_device_i = src_node->program_device_i;
+
   /* Copy variables that are freed when the command finishes. */
   switch (src_node->type)
     {
@@ -2285,8 +2306,6 @@ pocl_copy_command_node (_cl_command_node *dst_node, _cl_command_node *src_node)
       break;
     }
 
-  dst_node->migr_infos
-    = pocl_deep_copy_migration_info_list (src_node->migr_infos);
   return CL_SUCCESS;
 }
 

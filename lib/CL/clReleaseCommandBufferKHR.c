@@ -119,6 +119,7 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
             }
 
           _cl_command_node *next = cmd->next;
+
           pocl_mem_manager_free_command (cmd);
           cmd = next;
         }

@@ -40,6 +40,18 @@ extern unsigned long context_c;
 extern unsigned cl_context_count;
 extern pocl_lock_t pocl_context_handling_lock;
 
+extern unsigned long buffer_c;
+extern unsigned long svm_buffer_c;
+extern unsigned long usm_buffer_c;
+extern unsigned long queue_c;
+extern unsigned long context_c;
+extern unsigned long image_c;
+extern unsigned long kernel_c;
+extern unsigned long program_c;
+extern unsigned long sampler_c;
+extern unsigned long uevent_c;
+extern unsigned long event_c;
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
 {
@@ -158,7 +170,30 @@ pocl_check_uninit_devices ()
 #endif
     }
   else
-    POCL_MSG_ERR ("Contexts remaining!! \n");
+    {
+      POCL_MSG_ERR ("Alive contexts remaining, cannot uninit. \n");
+      POCL_MSG_ERR ("Contexts alive: %zu\n", context_c);
+      if (queue_c > 0)
+        POCL_MSG_ERR ("Queues alive: %zu\n", queue_c);
+      if (buffer_c > 0)
+        POCL_MSG_ERR ("Buffers alive: %zu\n", buffer_c);
+      if (svm_buffer_c > 0)
+        POCL_MSG_ERR ("SVM buffers alive: %zu\n", svm_buffer_c);
+      if (usm_buffer_c > 0)
+        POCL_MSG_ERR ("USM buffers alive: %zu\n", usm_buffer_c);
+      if (image_c > 0)
+        POCL_MSG_ERR ("Images alive: %zu\n", image_c);
+      if (program_c > 0)
+        POCL_MSG_ERR ("Programs alive: %zu\n", program_c);
+      if (kernel_c > 0)
+        POCL_MSG_ERR ("Kernels alive: %zu\n", kernel_c);
+      if (sampler_c > 0)
+        POCL_MSG_ERR ("Samplers alive: %zu\n", sampler_c);
+      if (event_c > 0)
+        POCL_MSG_ERR ("Command events alive: %zu\n", event_c);
+      if (uevent_c > 0)
+        POCL_MSG_ERR ("User events alive: %zu\n", uevent_c);
+    }
 
   POCL_UNLOCK (pocl_context_handling_lock);
 }

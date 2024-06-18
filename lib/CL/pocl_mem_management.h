@@ -83,7 +83,8 @@ pocl_buffer_migration_info *pocl_append_unique_migration_info (
   pocl_buffer_migration_info *list, cl_mem buffer, char read_only);
 
 pocl_buffer_migration_info *
-pocl_deep_copy_migration_info_list (pocl_buffer_migration_info *list);
+pocl_deep_copy_migration_info_list (pocl_buffer_migration_info *list,
+                                    int retain);
 
 int pocl_create_migration_commands (cl_device_id dev,
                                     cl_event *ev_export_p,
