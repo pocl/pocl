@@ -128,7 +128,8 @@ typedef struct rdma_buffer_info_s
   uint32_t mem_id;
   uint32_t remote_rkey;
   uint64_t remote_vaddr;
-  UT_hash_handle hh; // To make this struct usable with uthash
+  /* To make this struct usable with uthash */
+  UT_hash_handle hh;
 } rdma_buffer_info_t;
 #endif
 
@@ -186,7 +187,7 @@ typedef struct socket_data_s
 
 #define INITIAL_ARRAY_CAP 1024
 
-// in nanoseconds
+/** How long until we should give up reconnecting, in nanoseconds */
 #define POCL_REMOTE_RECONNECT_TIMEOUT_NS 60 * 1000000000L
 
 typedef struct remote_server_data_s
@@ -213,7 +214,7 @@ typedef struct remote_server_data_s
   uint32_t num_devices;
   uint32_t *platform_devices;
 
-  // network handling threads / ids
+  /* network handling threads / ids */
   socket_data_t slow_socket;
   socket_data_t fast_socket;
   network_queue *slow_read_queue;
@@ -225,8 +226,8 @@ typedef struct remote_server_data_s
   network_queue *rdma_read_queue;
   network_queue *rdma_write_queue;
   rdma_data_t rdma_data;
-  rdma_buffer_info_t *rdma_keys; // needs to be initialized to NULL, but we
-                                 // memset(0) the whole struct anyway
+  /*needs to be initialized to NULL, but we memset(0) the whole struct anyway*/
+  rdma_buffer_info_t *rdma_keys;
   uint8_t use_rdma;
 #endif
 #ifdef ENABLE_TRAFFIC_MONITOR
@@ -237,9 +238,11 @@ typedef struct remote_server_data_s
   uint64_t tx_bytes_confirmed;
 #endif
 
-  // ID maps.
-  // TODO locking required ??? prolly not, because all create/release are
-  // called sequentially
+  /* ID maps.
+   *
+   * TODO locking required ??? prolly not, because all create/release are
+   * called sequentially
+   */
 
   SMALL_VECTOR_DEFINE (uint32_t, buffer_ids, INITIAL_ARRAY_CAP);
 
@@ -311,9 +314,7 @@ typedef struct program_data_s
   size_t refcount;
 } program_data_t;
 
-// ##################################################################################
-// ##################################################################################
-// ##################################################################################
+/****************************************************************************/
 
 cl_int pocl_network_init_device (cl_device_id device,
                                  remote_device_data_t *ddata, int dev_idx,
@@ -377,9 +378,7 @@ cl_int pocl_network_create_image (remote_device_data_t *ddata, cl_mem image);
 cl_int pocl_network_free_image (remote_device_data_t *ddata,
                                 uint32_t image_id);
 
-// ##################################################################################
-// ##################################################################################
-// ##################################################################################
+/****************************************************************************/
 
 cl_int pocl_network_migrate_d2d (
     uint32_t cq_id, uint32_t mem_id, uint32_t size_id, unsigned mem_is_image,
