@@ -185,8 +185,10 @@ POname (clCreateSubBuffer) (cl_mem parent,
   if (parent->mem_host_ptr != NULL)
     mem->mem_host_ptr = parent->mem_host_ptr + info->origin;
 
-  POCL_MSG_PRINT_MEMORY ("Created sub-buffer %zu (%p), parent %zu (%p)\n",
-                         mem->id, mem, mem->parent->id, mem->parent);
+  POCL_MSG_PRINT_MEMORY ("Created sub-buffer %zu (%p) with size %zu, origin "
+                         "%zu and parent %zu (%p)\n",
+                         mem->id, mem, info->size, info->origin,
+                         mem->parent->id, mem->parent);
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;

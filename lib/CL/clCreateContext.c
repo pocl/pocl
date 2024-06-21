@@ -206,6 +206,8 @@ POname(clCreateContext)(const cl_context_properties * properties,
           "Device unavailable and offline compilation "
           "disabled: %s\n",
           dev->long_name);
+      context->mem_base_addr_align
+        = max (dev->mem_base_addr_align, context->mem_base_addr_align);
     }
 
   pocl_init_mem_manager ();

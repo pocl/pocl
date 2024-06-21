@@ -1400,6 +1400,10 @@ struct _cl_context {
    * required for clMemBlockingFreeINTEL */
   struct _cl_command_queue *command_queues;
 
+  /* The maximum of CL_DEVICE_MEM_BASE_ADDR_ALIGN across the devices in the
+   * context. */
+  cl_uint mem_base_addr_align;
+
 #ifdef ENABLE_LLVM
   void *llvm_context_data;
 #endif
@@ -1578,6 +1582,10 @@ struct _cl_mem {
   /* The implicit sub-buffers covering the empty region.  These will be added
      on-demand when optimizing the migrations. */
   cl_mem_list_item_t *implicit_sub_buffers;
+
+  /* Set to 1 for implicit sub-buffers, to differentiate from user-defined
+     sub-buffers. */
+  int implicit_sub_buffer;
 
   /* cl_pocl_content_size: If set to nonzero, it defines the size of the
      defined content in bytes, which can be used to avoid transferring
