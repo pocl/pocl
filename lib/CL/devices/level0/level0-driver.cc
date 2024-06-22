@@ -1013,7 +1013,13 @@ void Level0Queue::mapImage(pocl_mem_identifier *MemId,
     return;
   }
 
-  assert(Map->host_ptr == (SrcImgPtr + Map->offset));
+  // Device vs Shared allocated memory
+  if (Map->host_ptr == (SrcImgPtr + Map->offset)) {
+    // shared mem, nothing to do
+  } else {
+    SrcImgPtr = static_cast<char *>(SrcImage->mem_host_ptr);
+    assert(Map->host_ptr == (SrcImgPtr + Map->offset));
+  }
 
   readImageRect(SrcImage, MemId, SrcImgPtr, nullptr, Map->origin, Map->region,
                 Map->row_pitch, Map->slice_pitch, Map->offset);
@@ -1031,7 +1037,13 @@ void Level0Queue::unmapImage(pocl_mem_identifier *MemId,
     return;
   }
 
-  assert(Map->host_ptr == (DstImgPtr + Map->offset));
+  // Device vs Shared allocated memory
+  if (Map->host_ptr == (DstImgPtr + Map->offset)) {
+    // nothing to do
+  } else {
+    DstImgPtr = static_cast<char *>(DstImage->mem_host_ptr);
+    assert(Map->host_ptr == (DstImgPtr + Map->offset));
+  }
 
   writeImageRect(DstImage, MemId, DstImgPtr, nullptr, Map->origin, Map->region,
                  Map->row_pitch, Map->slice_pitch, Map->offset);
@@ -1600,167 +1612,17 @@ ze_event_handle_t Level0EventPool::getEvent() {
   return AvailableEvents[LastIdx++];
 }
 
-Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
-                           cl_device_id dev, const char *Parameters)
-    : ClDev(dev), DeviceHandle(DeviceH), Driver(Drv),
-      MemfillProgram(nullptr), ImagefillProgram(nullptr) {
-
-  SETUP_DEVICE_CL_VERSION(dev, 3, 0);
-
-  ClDev->available = &this->Available;
-  ContextHandle = Drv->getContextHandle();
-  assert(DeviceHandle);
-  assert(ContextHandle);
+bool Level0Device::setupDeviceProperties() {
   ze_result_t Res = ZE_RESULT_SUCCESS;
-  HasGOffsets = Drv->hasExtension("ZE_experimental_global_offset");
-  HasCompression = Drv->hasExtension("ZE_extension_memory_compression_hints");
 
   ze_device_properties_t DeviceProperties{};
   DeviceProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2;
   DeviceProperties.pNext = nullptr;
   Res = zeDeviceGetProperties(DeviceHandle, &DeviceProperties);
   if (Res != ZE_RESULT_SUCCESS) {
-    return;
+    POCL_MSG_ERR("Level Zero: zeDeviceGetProperties() failed\n");
+    return false;
   }
-
-  ze_device_compute_properties_t ComputeProperties{};
-  ComputeProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_PROPERTIES;
-  ComputeProperties.pNext = nullptr;
-  Res = zeDeviceGetComputeProperties(DeviceHandle, &ComputeProperties);
-  if (Res != ZE_RESULT_SUCCESS) {
-    return;
-  }
-
-  ze_device_module_properties_t ModuleProperties{};
-  ModuleProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES;
-  ModuleProperties.pNext = nullptr;
-  Res = zeDeviceGetModuleProperties(DeviceHandle, &ModuleProperties);
-  if (Res != ZE_RESULT_SUCCESS) {
-    return;
-  }
-
-  uint32_t QGroupPropCount = MaxPropertyEntries;
-  ze_command_queue_group_properties_t QGroupProps[MaxPropertyEntries];
-  for (uint32_t i = 0; i < MaxPropertyEntries; ++i) {
-    QGroupProps[i].pNext = nullptr;
-    QGroupProps[i].stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_GROUP_PROPERTIES;
-  }
-  Res = zeDeviceGetCommandQueueGroupProperties(DeviceHandle, &QGroupPropCount,
-                                               QGroupProps);
-  if (Res != ZE_RESULT_SUCCESS) {
-    return;
-  }
-
-  uint32_t MemPropCount = MaxPropertyEntries;
-  ze_device_memory_properties_t MemProps[MaxPropertyEntries];
-  for (uint32_t i = 0; i < MaxPropertyEntries; ++i) {
-    MemProps[i].pNext = nullptr;
-    MemProps[i].stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_PROPERTIES;
-  }
-  Res = zeDeviceGetMemoryProperties(DeviceHandle, &MemPropCount, MemProps);
-  if (Res != ZE_RESULT_SUCCESS) {
-    return;
-  }
-
-  ze_device_memory_access_properties_t MemAccessProperties{};
-  MemAccessProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_ACCESS_PROPERTIES;
-  MemAccessProperties.pNext = nullptr;
-  Res = zeDeviceGetMemoryAccessProperties(DeviceHandle, &MemAccessProperties);
-  if (Res != ZE_RESULT_SUCCESS) {
-    return;
-  }
-
-  uint32_t CachePropCount = MaxPropertyEntries;
-  ze_device_cache_properties_t CacheProperties[MaxPropertyEntries];
-  for (uint32_t i = 0; i < MaxPropertyEntries; ++i) {
-    CacheProperties[i].pNext = nullptr;
-    CacheProperties[i].stype = ZE_STRUCTURE_TYPE_DEVICE_CACHE_PROPERTIES;
-  }
-  Res = zeDeviceGetCacheProperties(DeviceHandle, &CachePropCount,
-                                   CacheProperties);
-  if (Res != ZE_RESULT_SUCCESS) {
-    return;
-  }
-
-  ze_device_image_properties_t ImageProperties{};
-  ImageProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_IMAGE_PROPERTIES;
-  ImageProperties.pNext = nullptr;
-  Res = zeDeviceGetImageProperties(DeviceHandle, &ImageProperties);
-  if (Res != ZE_RESULT_SUCCESS) {
-    return;
-  }
-
-  ze_device_external_memory_properties_t ExternalMemProperties{};
-  ExternalMemProperties.stype =
-      ZE_STRUCTURE_TYPE_DEVICE_EXTERNAL_MEMORY_PROPERTIES;
-  ExternalMemProperties.pNext = nullptr;
-  Res =
-      zeDeviceGetExternalMemoryProperties(DeviceHandle, &ExternalMemProperties);
-  if (Res != ZE_RESULT_SUCCESS) {
-    return;
-  }
-
-  POCL_MSG_PRINT_LEVEL0("all device info collected\n");
-
-  // TODO
-  ClDev->profiling_timer_resolution = 1;
-
-  // Fixed props
-  ClDev->compiler_available = CL_TRUE;
-  ClDev->linker_available = CL_TRUE;
-  ClDev->has_own_timer = CL_FALSE;
-  ClDev->use_only_clang_opencl_headers = CL_TRUE;
-
-  ClDev->local_as_id = SPIR_ADDRESS_SPACE_LOCAL;
-  ClDev->constant_as_id = SPIR_ADDRESS_SPACE_CONSTANT;
-  ClDev->global_as_id = SPIR_ADDRESS_SPACE_GLOBAL;
-
-  // TODO the values here are copied from the Intel NEO.
-  // we need a way to figure out the suitable values for
-  // the real underlying device.
-  ClDev->preferred_vector_width_char = 16;
-  ClDev->preferred_vector_width_short = 8;
-  ClDev->preferred_vector_width_int = 4;
-  ClDev->preferred_vector_width_long = 1;
-  ClDev->preferred_vector_width_float = 1;
-  ClDev->preferred_vector_width_double = 1;
-  ClDev->preferred_vector_width_half = 8;
-  ClDev->native_vector_width_char = 16;
-  ClDev->native_vector_width_short = 8;
-  ClDev->native_vector_width_int = 4;
-  ClDev->native_vector_width_long = 1;
-  ClDev->native_vector_width_float = 1;
-  ClDev->native_vector_width_double = 1;
-  ClDev->native_vector_width_half = 8;
-
-  ClDev->has_64bit_long = CL_TRUE;
-
-  ClDev->endian_little = CL_TRUE;
-  ClDev->parent_device = NULL;
-  ClDev->max_sub_devices = 0;
-  ClDev->num_partition_properties = 0;
-  ClDev->partition_properties = NULL;
-  ClDev->num_partition_types = 0;
-  ClDev->partition_type = NULL;
-  ClDev->max_constant_args = 8;
-  ClDev->host_unified_memory = Integrated ? CL_TRUE : CL_FALSE;
-  ClDev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT;
-  ClDev->global_var_max_size = 64 * 1024;
-
-  ClDev->execution_capabilities = CL_EXEC_KERNEL;
-  ClDev->address_bits = 64;
-  ClDev->vendor = "Intel Corporation";
-  ClDev->vendor_id = 0x8086;
-  ClDev->profile = "FULL_PROFILE";
-
-  ClDev->num_serialize_entries = 2;
-  ClDev->serialize_entries = LEVEL0_SERIALIZE_ENTRIES;
-  ClDev->llvm_cpu = nullptr;
-  ClDev->llvm_target_triplet = "spir64-unknown-unknown";
-  ClDev->generic_as_support = CL_TRUE;
-  ClDev->supported_spir_v_versions = "SPIR-V_1.2";
-  ClDev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
-  ClDev->version_of_latest_passed_cts = "v2000-00-00-00";
 
   // deviceProperties
   switch (DeviceProperties.type) {
@@ -1770,41 +1632,99 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   case ZE_DEVICE_TYPE_GPU:
     ClDev->type = CL_DEVICE_TYPE_GPU;
     break;
-  default:
+  case ZE_DEVICE_TYPE_VPU:
     ClDev->type = CL_DEVICE_TYPE_CUSTOM;
-    // we don't know how to handle Custom devices yet
-    // returning here leaves ClDev->available = CL_FALSE;
-    return;
+    break;
+  case ZE_DEVICE_TYPE_FPGA:
+  default:
+    ClDev->type = CL_DEVICE_TYPE_ACCELERATOR;
+    POCL_MSG_ERR("Level Zero: don't know how to handle FPGA devices yet");
+    return false;
   }
 
-  // ClDev->vendor_id = deviceProperties.vendorId;
-  ClDev->short_name = ClDev->long_name = strdup(DeviceProperties.name);
-  UUID = DeviceProperties.uuid;
-
+  bool Integrated = false;
   // ze_device_property_flags_t
-  if ((DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED) != 0u) {
+  if (DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED) {
     Integrated = true;
   }
-  if ((DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_ECC) != 0u) {
+  if (DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_ECC) {
     ClDev->error_correction_support = CL_TRUE;
   }
-  if ((DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING) !=
-      0u) {
+  if (DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING) {
     OndemandPaging = true;
   }
 
+  // common to all dev types
+  ClDev->endian_little = CL_TRUE;
+  ClDev->parent_device = NULL;
+  ClDev->max_sub_devices = 0;
+  ClDev->num_partition_properties = 0;
+  ClDev->partition_properties = NULL;
+  ClDev->num_partition_types = 0;
+  ClDev->partition_type = NULL;
+  ClDev->short_name = ClDev->long_name = strdup(DeviceProperties.name);
+  UUID = DeviceProperties.uuid;
+  ClDev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT;
+  // TODO externalMemProperties
+  ClDev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
+  ClDev->host_unified_memory = Integrated ? CL_TRUE : CL_FALSE;
   ClDev->max_clock_frequency = DeviceProperties.coreClockRate;
+
+  ClDev->max_mem_alloc_size = ClDev->max_constant_buffer_size =
+      ClDev->global_var_pref_size = DeviceProperties.maxMemAllocSize;
+  Supports64bitBuffers = (ClDev->max_mem_alloc_size > UINT32_MAX);
+
+  if (DeviceProperties.type == ZE_DEVICE_TYPE_GPU ||
+      DeviceProperties.type == ZE_DEVICE_TYPE_CPU) {
+    ClDev->compiler_available = CL_TRUE;
+    ClDev->linker_available = CL_TRUE;
+    ClDev->has_own_timer = CL_FALSE;
+    ClDev->use_only_clang_opencl_headers = CL_TRUE;
+
+    ClDev->local_as_id = SPIR_ADDRESS_SPACE_LOCAL;
+    ClDev->constant_as_id = SPIR_ADDRESS_SPACE_CONSTANT;
+    ClDev->global_as_id = SPIR_ADDRESS_SPACE_GLOBAL;
+
+    // TODO the values here are copied from the Intel NEO.
+    // we need a way to figure out the suitable values for
+    // the real underlying device.
+    ClDev->preferred_vector_width_char = 16;
+    ClDev->preferred_vector_width_short = 8;
+    ClDev->preferred_vector_width_int = 4;
+    ClDev->preferred_vector_width_long = 1;
+    ClDev->preferred_vector_width_float = 1;
+    ClDev->preferred_vector_width_double = 1;
+    ClDev->preferred_vector_width_half = 8;
+    ClDev->native_vector_width_char = 16;
+    ClDev->native_vector_width_short = 8;
+    ClDev->native_vector_width_int = 4;
+    ClDev->native_vector_width_long = 1;
+    ClDev->native_vector_width_float = 1;
+    ClDev->native_vector_width_double = 1;
+    ClDev->native_vector_width_half = 8;
+
+    ClDev->has_64bit_long = CL_TRUE;
+
+    ClDev->max_constant_args = 8;
+    ClDev->global_var_max_size = 64 * 1024;
+
+    ClDev->num_serialize_entries = 2;
+    ClDev->serialize_entries = LEVEL0_SERIALIZE_ENTRIES;
+    ClDev->llvm_cpu = nullptr;
+    ClDev->llvm_target_triplet = "spir64-unknown-unknown";
+    ClDev->generic_as_support = CL_TRUE;
+    ClDev->supported_spir_v_versions = "SPIR-V_1.2";
+    ClDev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
+    ClDev->version_of_latest_passed_cts = "v2000-00-00-00";
+  }
 
   MaxCommandQueuePriority = DeviceProperties.maxCommandQueuePriority;
 
   ClDev->max_compute_units = DeviceProperties.numSlices *
-                             DeviceProperties.numSubslicesPerSlice *
-                             DeviceProperties.numEUsPerSubslice;
+      DeviceProperties.numSubslicesPerSlice *
+      DeviceProperties.numEUsPerSubslice;
 
-  ClDev->preferred_wg_size_multiple =
-      64; // deviceProperties.physicalEUSimdWidth;
-
-  ClDev->profiling_timer_resolution = 1; // always one nanosecond
+  ClDev->preferred_wg_size_multiple = 64; // props.physicalEUSimdWidth;
 
   /// When stype==::ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES the
   ///< units are in nanoseconds. When
@@ -1812,18 +1732,38 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   ///< cycles/sec
   TimerFrequency = (double)DeviceProperties.timerResolution;
   TimerNsPerCycle = 1000000000.0 / TimerFrequency;
+  ClDev->profiling_timer_resolution = (size_t)TimerNsPerCycle;
+  if (ClDev->profiling_timer_resolution == 0)
+    ClDev->profiling_timer_resolution = 1;
 
   TSBits = DeviceProperties.timestampValidBits;
   KernelTSBits = DeviceProperties.kernelTimestampValidBits;
 
-#if 0
-  /// support for subdevices. Currently unimplemented
-  deviceProperties.subdeviceId  ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE
-  uint32_t subDeviceCount = 0;
-  zeDeviceGetSubDevices(device, &subDeviceCount, nullptr);
-  ze_device_handle_t subDevices[2] = {};
-  zeDeviceGetSubDevices(device, &subDeviceCount, subDevices);
-#endif
+  return true;
+}
+
+bool Level0Device::setupComputeProperties() {
+  ze_result_t Res = ZE_RESULT_SUCCESS;
+  ze_device_compute_properties_t ComputeProperties{};
+  ComputeProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_PROPERTIES;
+  ComputeProperties.pNext = nullptr;
+  Res = zeDeviceGetComputeProperties(DeviceHandle, &ComputeProperties);
+  if (Res != ZE_RESULT_SUCCESS) {
+    POCL_MSG_PRINT_LEVEL0("%s: zeDeviceGetComputeProperties failed\n",
+                          ClDev->short_name);
+    // some defaults
+    ClDev->max_work_group_size =  128;
+    ClDev->max_work_item_dimensions = 3;
+    ClDev->max_work_item_sizes[0] =
+          ClDev->max_work_item_sizes[1] =
+          ClDev->max_work_item_sizes[2] = 128;
+
+      ClDev->local_mem_type = CL_GLOBAL;
+      ClDev->local_mem_size = 65536;
+      ClDev->max_num_sub_groups = 0;
+      MaxWGCount[0] = MaxWGCount[1] =  MaxWGCount[2] = 65536;
+    return false;
+  }
 
   // computeProperties
   ClDev->max_work_group_size = ComputeProperties.maxTotalGroupSize;
@@ -1836,8 +1776,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   MaxWGCount[0] = ComputeProperties.maxGroupCountX;
   MaxWGCount[1] = ComputeProperties.maxGroupCountY;
   MaxWGCount[2] = ComputeProperties.maxGroupCountZ;
-  POCL_MSG_PRINT_LEVEL0("Device Max WG counts: %u | %u | %u\n", MaxWGCount[0],
-                        MaxWGCount[1], MaxWGCount[2]);
 
   ClDev->local_mem_type = CL_LOCAL;
   ClDev->local_mem_size = ComputeProperties.maxSharedLocalMemory;
@@ -1857,249 +1795,133 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     }
   }
 
-  // moduleProperties
+  POCL_MSG_PRINT_LEVEL0("Device Max WG SIZE %zu ||| WG counts: %u | %u | %u\n",
+      ClDev->max_work_group_size, MaxWGCount[0],
+      MaxWGCount[1], MaxWGCount[2]);
+  return true;
+}
 
+static cl_device_fp_config convertZeFPFlags(ze_device_fp_flags_t FPFlags) {
+  cl_device_fp_config FPConfig = 0;
+  if ((FPFlags & ZE_DEVICE_FP_FLAG_DENORM) != 0u) {
+    FPConfig |= CL_FP_DENORM;
+  }
+  if ((FPFlags & ZE_DEVICE_FP_FLAG_INF_NAN) != 0u) {
+    FPConfig |= CL_FP_INF_NAN;
+  }
+  if ((FPFlags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST) != 0u) {
+    FPConfig |= CL_FP_ROUND_TO_NEAREST;
+  }
+  if ((FPFlags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF) != 0u) {
+    FPConfig |= CL_FP_ROUND_TO_INF;
+  }
+  if ((FPFlags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO) != 0u) {
+    FPConfig |= CL_FP_ROUND_TO_ZERO;
+  }
+  if ((FPFlags & ZE_DEVICE_FP_FLAG_FMA) != 0u) {
+    FPConfig |= CL_FP_FMA;
+  }
+  if ((FPFlags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT) != 0u) {
+    FPConfig |= CL_FP_SOFT_FLOAT;
+  }
+  return FPConfig;
+}
+
+static cl_device_fp_atomic_capabilities_ext convertZeAtomicFlags(
+    ze_device_fp_atomic_ext_flags_t FPFlags, std::string Prefix,
+    std::string &OclFeatures) {
+
+  cl_device_fp_atomic_capabilities_ext FPAtomicCaps = 0;
+  if (FPFlags& ZE_DEVICE_FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE) {
+    FPAtomicCaps |=CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT;
+    OclFeatures += " __opencl_c_ext_" + Prefix + "_global_atomic_load_store";
+  }
+  if (FPFlags& ZE_DEVICE_FP_ATOMIC_EXT_FLAG_GLOBAL_ADD) {
+    FPAtomicCaps |=CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT;
+    OclFeatures += " __opencl_c_ext_" + Prefix + "_global_atomic_add";
+  }
+  if (FPFlags& ZE_DEVICE_FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX) {
+    FPAtomicCaps |=CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT;
+    OclFeatures += " __opencl_c_ext_" + Prefix + "_global_atomic_min_max";
+  }
+
+  if (FPFlags& ZE_DEVICE_FP_ATOMIC_EXT_FLAG_LOCAL_LOAD_STORE) {
+    FPAtomicCaps |=CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT;
+    OclFeatures += " __opencl_c_ext_" + Prefix + "_local_atomic_load_store";
+  }
+  if (FPFlags& ZE_DEVICE_FP_ATOMIC_EXT_FLAG_LOCAL_ADD) {
+    FPAtomicCaps |=CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT;
+    OclFeatures += " __opencl_c_ext_" + Prefix + "_local_atomic_add";
+  }
+  if (FPFlags& ZE_DEVICE_FP_ATOMIC_EXT_FLAG_LOCAL_MIN_MAX) {
+    FPAtomicCaps |=CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT;
+    OclFeatures += " __opencl_c_ext_" + Prefix + "_local_atomic_min_max";
+  }
+
+  return FPAtomicCaps;
+}
+
+bool Level0Device::setupModuleProperties(bool &SupportsInt64Atomics,
+                                         bool HasFloatAtomics,
+                                         std::string &Features) {
+
+  ze_device_module_properties_t ModuleProperties{};
+  ze_float_atomic_ext_properties_t FloatProperties{};
+  ModuleProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES;
+  ModuleProperties.pNext = HasFloatAtomics ? &FloatProperties : nullptr;
+  FloatProperties.stype = ZE_STRUCTURE_TYPE_FLOAT_ATOMIC_EXT_PROPERTIES;
+  FloatProperties.pNext = nullptr;
+  ze_result_t Res = zeDeviceGetModuleProperties(DeviceHandle, &ModuleProperties);
+  if (Res != ZE_RESULT_SUCCESS) {
+    POCL_MSG_PRINT_LEVEL0("%s zeDeviceGetModuleProperties() failed\n",
+                          ClDev->short_name);
+    SupportsInt64Atomics = false;
+    ClDev->device_side_printf = 0;
+    ClDev->printf_buffer_size = 0;
+    ClDev->max_parameter_size = 8; // TODO
+    return false;
+  }
+
+  ClDev->single_fp_config = convertZeFPFlags(ModuleProperties.fp32flags);
   if ((ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_FP64) != 0u) {
-    if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_DENORM) != 0u) {
-      ClDev->double_fp_config |= CL_FP_DENORM;
-    }
-    if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_INF_NAN) != 0u) {
-      ClDev->double_fp_config |= CL_FP_INF_NAN;
-    }
-    if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST) !=
-        0u) {
-      ClDev->double_fp_config |= CL_FP_ROUND_TO_NEAREST;
-    }
-    if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF) != 0u) {
-      ClDev->double_fp_config |= CL_FP_ROUND_TO_INF;
-    }
-    if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO) !=
-        0u) {
-      ClDev->double_fp_config |= CL_FP_ROUND_TO_ZERO;
-    }
-    if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_FMA) != 0u) {
-      ClDev->double_fp_config |= CL_FP_FMA;
-    }
-    if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT) != 0u) {
-      ClDev->double_fp_config |= CL_FP_SOFT_FLOAT;
-    }
-  } else {
-    ClDev->double_fp_config = 0;
+    ClDev->double_fp_config = convertZeFPFlags(ModuleProperties.fp64flags);
   }
-
   if ((ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_FP16) != 0u) {
-    if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_DENORM) != 0u) {
-      ClDev->half_fp_config |= CL_FP_DENORM;
-    }
-    if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_INF_NAN) != 0u) {
-      ClDev->half_fp_config |= CL_FP_INF_NAN;
-    }
-    if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST) !=
-        0u) {
-      ClDev->half_fp_config |= CL_FP_ROUND_TO_NEAREST;
-    }
-    if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF) != 0u) {
-      ClDev->half_fp_config |= CL_FP_ROUND_TO_INF;
-    }
-    if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO) !=
-        0u) {
-      ClDev->half_fp_config |= CL_FP_ROUND_TO_ZERO;
-    }
-    if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_FMA) != 0u) {
-      ClDev->half_fp_config |= CL_FP_FMA;
-    }
-    if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT) != 0u) {
-      ClDev->half_fp_config |= CL_FP_SOFT_FLOAT;
-    }
-  } else {
-    ClDev->half_fp_config = 0;
+    ClDev->half_fp_config = convertZeFPFlags(ModuleProperties.fp16flags);
   }
 
-  // single FP config
-  {
-    ClDev->single_fp_config = 0;
-    if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_DENORM) != 0u) {
-      ClDev->single_fp_config |= CL_FP_DENORM;
-    }
-    if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_INF_NAN) != 0u) {
-      ClDev->single_fp_config |= CL_FP_INF_NAN;
-    }
-    if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST) !=
-        0u) {
-      ClDev->single_fp_config |= CL_FP_ROUND_TO_NEAREST;
-    }
-    if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF) != 0u) {
-      ClDev->single_fp_config |= CL_FP_ROUND_TO_INF;
-    }
-    if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO) !=
-        0u) {
-      ClDev->single_fp_config |= CL_FP_ROUND_TO_ZERO;
-    }
-    if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_FMA) != 0u) {
-      ClDev->single_fp_config |= CL_FP_FMA;
-    }
-    if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT) != 0u) {
-      ClDev->single_fp_config |= CL_FP_SOFT_FLOAT;
-    }
-  }
-
+  SupportsInt64Atomics = (ModuleProperties.flags &
+                          ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS) != 0u;
   KernelUUID = ModuleProperties.nativeKernelSupported;
-
-  std::string Extensions("cl_khr_byte_addressable_store"
-                         " cl_khr_global_int32_base_atomics"
-                         " cl_khr_global_int32_extended_atomics"
-                         " cl_khr_local_int32_base_atomics"
-                         " cl_khr_local_int32_extended_atomics"
-                         " cl_khr_il_program"
-                         " cl_khr_3d_image_writes");
-
-  std::string OpenCL30Features("__opencl_c_images"
-                               " __opencl_c_read_write_images"
-                               " __opencl_c_3d_image_writes"
-                               " __opencl_c_atomic_order_acq_rel"
-                               " __opencl_c_atomic_order_seq_cst"
-                               " __opencl_c_atomic_scope_device"
-                               " __opencl_c_program_scope_global_variables"
-                               " __opencl_c_generic_address_space");
-
-  if ((ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS) != 0u) {
-    Extensions.append(" cl_khr_int64_base_atomics"
-                      " cl_khr_int64_extended_atomics");
-  }
-  if (ClDev->half_fp_config != 0u) {
-    Extensions.append(" cl_khr_fp16");
-    OpenCL30Features.append(" __opencl_c_fp16");
-  }
-  if (ClDev->double_fp_config != 0u) {
-    Extensions.append(" cl_khr_fp64");
-    OpenCL30Features.append(" __opencl_c_fp64");
-  }
-  if (ClDev->max_num_sub_groups > 0) {
-    Extensions.append(" cl_khr_subgroups");
-    OpenCL30Features.append(" __opencl_c_subgroups");
-    OpenCL30Features.append(" __opencl_c_work_group_collective_functions");
-  }
-  if (ClDev->has_64bit_long != 0) {
-    Extensions.append(" cl_khr_int64");
-    OpenCL30Features.append(" __opencl_c_int64");
+//  POCL_MSG_PRINT_LEVEL0("Using KernelUUID: %s\n", KernelUUID);
+  if (HasFloatAtomics) {
+    ClDev->single_fp_atomic_caps = convertZeAtomicFlags(FloatProperties.fp32Flags, "fp32", Features);
+    ClDev->double_fp_atomic_caps = convertZeAtomicFlags(FloatProperties.fp64Flags, "fp64", Features);
+    ClDev->half_fp_atomic_caps = convertZeAtomicFlags(FloatProperties.fp16Flags, "fp16", Features);
   }
 
   ClDev->device_side_printf = 0;
   ClDev->printf_buffer_size = ModuleProperties.printfBufferSize;
   ClDev->max_parameter_size = ModuleProperties.maxArgumentsSize;
+  return true;
+}
 
-  // memProps
-  for (uint32_t i = 0; i < MemPropCount; ++i) {
-    if (ClDev->global_mem_size < MemProps[i].totalSize) {
-      ClDev->global_mem_size = MemProps[i].totalSize;
-      GlobalMemOrd = i;
-    }
+bool Level0Device::setupQueueGroupProperties() {
+  ze_result_t Res = ZE_RESULT_SUCCESS;
+  uint32_t QGroupPropCount = MaxPropertyEntries;
+  ze_command_queue_group_properties_t QGroupProps[MaxPropertyEntries];
+  for (uint32_t i = 0; i < MaxPropertyEntries; ++i) {
+    QGroupProps[i].pNext = nullptr;
+    QGroupProps[i].stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_GROUP_PROPERTIES;
   }
-  if (int MemLimit = pocl_get_int_option("POCL_MEMORY_LIMIT", 0)) {
-    ClDev->global_mem_size = (size_t)MemLimit << 30;
+  Res = zeDeviceGetCommandQueueGroupProperties(DeviceHandle, &QGroupPropCount,
+                                               QGroupProps);
+  if (Res != ZE_RESULT_SUCCESS) {
+    POCL_MSG_ERR("Level Zero: %s"
+                 "zeDeviceGetCommandQueueGroupProperties() failed\n",
+                 ClDev->short_name);
+    return false;
   }
-
-  if (Driver->hasExtension("ZE_experimental_relaxed_allocation_limits")
-      && ClDev->global_mem_size > UINT32_MAX) {
-    // allow allocating 85% of total memory in a single buffer
-    ClDev->max_mem_alloc_size = ClDev->global_mem_size * 85 / 100;
-    // TODO: figure out if relaxed limits also apply to these
-    ClDev->max_constant_buffer_size = ClDev->global_var_pref_size =
-        std::min (DeviceProperties.maxMemAllocSize, ClDev->max_mem_alloc_size);
-    Supports64bitBuffers = true;
-    NeedsRelaxedLimits = true;
-  } else {
-    ClDev->max_mem_alloc_size = ClDev->max_constant_buffer_size =
-        ClDev->global_var_pref_size =
-        std::min (DeviceProperties.maxMemAllocSize, ClDev->global_mem_size);
-    Supports64bitBuffers = (ClDev->max_mem_alloc_size > UINT32_MAX);
-  }
-
-  // memAccessProperties
-  if ((MemAccessProperties.sharedSingleDeviceAllocCapabilities &
-       (ZE_MEMORY_ACCESS_CAP_FLAG_RW | ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC)) !=
-      0u) {
-    ClDev->svm_allocation_priority = 2;
-    ClDev->atomic_memory_capabilities =
-        CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
-        CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP |
-        CL_DEVICE_ATOMIC_SCOPE_DEVICE;
-    ClDev->atomic_fence_capabilities =
-        CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
-        CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM |
-        CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
-    // OpenCL 2.0 properties
-    ClDev->svm_caps =
-        CL_DEVICE_SVM_COARSE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
-  } else {
-    POCL_MSG_PRINT_LEVEL0("SVM disabled for device\n");
-  }
-
-  ClDev->host_usm_capabs = HostMemCaps =
-      convertZeAllocCaps(MemAccessProperties.hostAllocCapabilities);
-  ClDev->device_usm_capabs = DeviceMemCaps =
-      convertZeAllocCaps(MemAccessProperties.deviceAllocCapabilities);
-  ClDev->single_shared_usm_capabs = SingleSharedCaps = convertZeAllocCaps(
-      MemAccessProperties.sharedSingleDeviceAllocCapabilities);
-  CrossSharedCaps = convertZeAllocCaps(
-      MemAccessProperties.sharedCrossDeviceAllocCapabilities);
-  SystemSharedCaps =
-      convertZeAllocCaps(MemAccessProperties.sharedSystemAllocCapabilities);
-
-  // the minimum capability required for USM
-  if (DeviceMemCaps & ZE_MEMORY_ACCESS_CAP_FLAG_RW) {
-    Extensions.append(" cl_intel_unified_shared_memory");
-  }
-
-  if (supportsDeviceUSM())
-    Extensions.append(" cl_ext_buffer_device_address");
-
-  ClDev->extensions = strdup(Extensions.c_str());
-  ClDev->features = strdup(OpenCL30Features.c_str());
-
-  pocl_setup_opencl_c_with_version(ClDev, CL_TRUE);
-  pocl_setup_features_with_version(ClDev);
-  pocl_setup_extensions_with_version(ClDev);
-  pocl_setup_builtin_kernels_with_version(ClDev);
-  pocl_setup_ils_with_version(ClDev);
-
-  // cacheProperties
-  for (uint32_t i = 0; i < CachePropCount; ++i) {
-    // find largest cache that is not user-controlled
-    if ((CacheProperties[i].flags &
-         ZE_DEVICE_CACHE_PROPERTY_FLAG_USER_CONTROL) != 0u) {
-      continue;
-    }
-    if (ClDev->global_mem_cache_size < CacheProperties[i].cacheSize) {
-      ClDev->global_mem_cache_size = CacheProperties[i].cacheSize;
-    }
-  }
-  ClDev->global_mem_cacheline_size = HOST_CPU_CACHELINE_SIZE;
-  ClDev->global_mem_cache_type = CL_READ_WRITE_CACHE;
-
-  // externalMemProperties
-  ClDev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
-
-  // imageProperties
-  ClDev->max_read_image_args = ImageProperties.maxReadImageArgs;
-  ClDev->max_read_write_image_args = ImageProperties.maxWriteImageArgs;
-  ClDev->max_write_image_args = ImageProperties.maxWriteImageArgs;
-  ClDev->max_samplers = ImageProperties.maxSamplers;
-
-  ClDev->image_max_array_size = ImageProperties.maxImageArraySlices;
-  ClDev->image_max_buffer_size = ImageProperties.maxImageBufferSize;
-
-  ClDev->image2d_max_height = ClDev->image2d_max_width =
-      ImageProperties.maxImageDims2D;
-  ClDev->image3d_max_depth = ClDev->image3d_max_height =
-      ClDev->image3d_max_width = ImageProperties.maxImageDims3D;
-
-  for (unsigned i = 0; i < NUM_OPENCL_IMAGE_TYPES; ++i) {
-    ClDev->num_image_formats[i] = NumSupportedImageFormats;
-    ClDev->image_formats[i] = SupportedImageFormats;
-  }
-
-  ClDev->image_support = CL_TRUE;
 
   // QGroupProps
   uint32_t UniversalQueueOrd = UINT32_MAX;
@@ -2133,27 +1955,342 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   if (UniversalQueueOrd == UINT32_MAX &&
       (ComputeQueueOrd == UINT32_MAX || CopyQueueOrd == UINT32_MAX)) {
     POCL_MSG_ERR(
-        "No universal queue and either of copy/compute queue are missing\n");
-    return;
+          "No universal queue and either of copy/compute queue are missing\n");
+    return false;
   }
-
-  uint32_t_3 DeviceMaxWGs = {MaxWGCount[0], MaxWGCount[1], MaxWGCount[2]};
-
-  uint64_t *CopyTimestamps = nullptr;
-  uint64_t *ComputeTimestamps = nullptr;
-  uint64_t *UniversalTimestamps = nullptr;
 
   // create specialized queues
-  if (ComputeQueueOrd != UINT32_MAX && CopyQueueOrd != UINT32_MAX) {
+  if (ComputeQueueOrd != UINT32_MAX) {
     ComputeQueues.init(ComputeQueueOrd, NumComputeQueues, this);
+  }
+  if (CopyQueueOrd != UINT32_MAX) {
     CopyQueues.init(CopyQueueOrd, NumCopyQueues, this);
   }
-
   // always create universal queues, if available
   if (UniversalQueueOrd != UINT32_MAX) {
     uint32_t num = std::max(1U, NumUniversalQueues);
     UniversalQueues.init(UniversalQueueOrd, num, this);
   }
+
+  return true;
+}
+
+bool Level0Device::setupMemoryProperties(bool &HasUSMCapability) {
+  ze_result_t Res1 = ZE_RESULT_SUCCESS;
+  ze_result_t Res2 = ZE_RESULT_SUCCESS;
+
+  uint32_t MemPropCount = MaxPropertyEntries;
+  ze_device_memory_properties_t MemProps[MaxPropertyEntries];
+  for (uint32_t i = 0; i < MaxPropertyEntries; ++i) {
+    MemProps[i].pNext = nullptr;
+    MemProps[i].stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_PROPERTIES;
+  }
+  Res1 = zeDeviceGetMemoryProperties(DeviceHandle, &MemPropCount, MemProps);
+
+  ze_device_memory_access_properties_t MemAccessProperties{};
+  MemAccessProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_ACCESS_PROPERTIES;
+  MemAccessProperties.pNext = nullptr;
+  Res2 = zeDeviceGetMemoryAccessProperties(DeviceHandle, &MemAccessProperties);
+
+  if (Res1 != ZE_RESULT_SUCCESS || Res2 != ZE_RESULT_SUCCESS) {
+    // ClDev->max_mem_alloc_size was setup in setupDeviceProperties()
+    POCL_MSG_PRINT_LEVEL0("%s: zeDeviceGetMemoryProperties() failed\n",
+                          ClDev->short_name);
+    ClDev->global_mem_size = ClDev->max_mem_alloc_size;
+    HasUSMCapability = false;
+    return false;
+  }
+
+  // memProps
+  for (uint32_t i = 0; i < MemPropCount; ++i) {
+    if (ClDev->global_mem_size < MemProps[i].totalSize) {
+      ClDev->global_mem_size = MemProps[i].totalSize;
+      GlobalMemOrd = i;
+    }
+  }
+
+  if (int MemLimit = pocl_get_int_option("POCL_MEMORY_LIMIT", 0)) {
+    uint64_t MemInGBytes = std::max((ClDev->global_mem_size >> 30), 1UL);
+    if (MemLimit > 0 && MemLimit <= MemInGBytes) {
+      ClDev->global_mem_size = (size_t)MemLimit << 30;
+    }
+  }
+
+  // memAccessProperties
+  if (MemAccessProperties.sharedSingleDeviceAllocCapabilities &
+      (ZE_MEMORY_ACCESS_CAP_FLAG_RW | ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC)) {
+    ClDev->svm_allocation_priority = 2;
+    ClDev->atomic_memory_capabilities =
+        CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
+        CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP |
+        CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+    ClDev->atomic_fence_capabilities =
+        CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
+        CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM |
+        CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+    // OpenCL 2.0 properties
+    ClDev->svm_caps =
+        CL_DEVICE_SVM_COARSE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
+  } else {
+    POCL_MSG_PRINT_LEVEL0("SVM disabled for device\n");
+  }
+
+  ClDev->host_usm_capabs =
+      convertZeAllocCaps(MemAccessProperties.hostAllocCapabilities);
+  ClDev->device_usm_capabs =
+      convertZeAllocCaps(MemAccessProperties.deviceAllocCapabilities);
+  ClDev->single_shared_usm_capabs = convertZeAllocCaps(
+        MemAccessProperties.sharedSingleDeviceAllocCapabilities);
+  ClDev->cross_shared_usm_capabs = convertZeAllocCaps(
+        MemAccessProperties.sharedCrossDeviceAllocCapabilities);
+  ClDev->system_shared_usm_capabs =
+      convertZeAllocCaps(MemAccessProperties.sharedSystemAllocCapabilities);
+
+  POCL_MSG_PRINT_LEVEL0("Device: %u || SingleShared: %u || CrossShared: %u || SystemShared: %u\n",
+                        MemAccessProperties.deviceAllocCapabilities,
+                        MemAccessProperties.sharedSingleDeviceAllocCapabilities,
+                        MemAccessProperties.sharedCrossDeviceAllocCapabilities,
+                        MemAccessProperties.sharedSystemAllocCapabilities);
+
+  // the minimum capability required for USM
+  HasUSMCapability =
+      ClDev->device_usm_capabs & CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL;
+
+  return true;
+}
+
+bool Level0Device::setupCacheProperties() {
+  ze_result_t Res = ZE_RESULT_SUCCESS;
+
+  uint32_t CachePropCount = MaxPropertyEntries;
+  ze_device_cache_properties_t CacheProperties[MaxPropertyEntries];
+  for (uint32_t i = 0; i < MaxPropertyEntries; ++i) {
+    CacheProperties[i].pNext = nullptr;
+    CacheProperties[i].stype = ZE_STRUCTURE_TYPE_DEVICE_CACHE_PROPERTIES;
+  }
+  Res = zeDeviceGetCacheProperties(DeviceHandle, &CachePropCount,
+                                   CacheProperties);
+  if (Res != ZE_RESULT_SUCCESS) {
+    POCL_MSG_PRINT_LEVEL0("%s: zeDeviceGetCacheProperties() failed\n",
+                          ClDev->short_name);
+    ClDev->global_mem_cacheline_size = 0;
+    ClDev->global_mem_cache_type = CL_NONE;
+    return false;
+  }
+
+  // cacheProperties
+  for (uint32_t i = 0; i < CachePropCount; ++i) {
+    // find largest cache that is not user-controlled
+    if ((CacheProperties[i].flags &
+         ZE_DEVICE_CACHE_PROPERTY_FLAG_USER_CONTROL) != 0u) {
+      continue;
+    }
+    if (ClDev->global_mem_cache_size < CacheProperties[i].cacheSize) {
+      ClDev->global_mem_cache_size = CacheProperties[i].cacheSize;
+    }
+  }
+  ClDev->global_mem_cacheline_size = HOST_CPU_CACHELINE_SIZE;
+  ClDev->global_mem_cache_type = CL_READ_WRITE_CACHE;
+
+  return true;
+}
+
+bool Level0Device::setupImageProperties() {
+  ze_result_t Res = ZE_RESULT_SUCCESS;
+
+  ze_device_image_properties_t ImageProperties{};
+  ImageProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_IMAGE_PROPERTIES;
+  ImageProperties.pNext = nullptr;
+  Res = zeDeviceGetImageProperties(DeviceHandle, &ImageProperties);
+
+  if (Res != ZE_RESULT_SUCCESS) {
+    POCL_MSG_PRINT_LEVEL0("%s: zeDeviceGetImageProperties() failed\n",
+                          ClDev->short_name);
+    ClDev->image_support = CL_FALSE;
+    return false;
+  }
+
+  // imageProperties
+  ClDev->max_read_image_args = ImageProperties.maxReadImageArgs;
+  ClDev->max_read_write_image_args = ImageProperties.maxWriteImageArgs;
+  ClDev->max_write_image_args = ImageProperties.maxWriteImageArgs;
+  ClDev->max_samplers = ImageProperties.maxSamplers;
+
+  ClDev->image_max_array_size = ImageProperties.maxImageArraySlices;
+  ClDev->image_max_buffer_size = ImageProperties.maxImageBufferSize;
+
+  ClDev->image2d_max_height = ClDev->image2d_max_width =
+      ImageProperties.maxImageDims2D;
+  ClDev->image3d_max_depth = ClDev->image3d_max_height =
+      ClDev->image3d_max_width = ImageProperties.maxImageDims3D;
+
+  for (unsigned i = 0; i < NUM_OPENCL_IMAGE_TYPES; ++i) {
+    ClDev->num_image_formats[i] = NumSupportedImageFormats;
+    ClDev->image_formats[i] = SupportedImageFormats;
+  }
+  ClDev->image_support = CL_TRUE;
+
+  return true;
+}
+
+// dev -> Dev
+Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
+                           cl_device_id dev, const char *Parameters)
+    : Driver(Drv), ClDev(dev), DeviceHandle(DeviceH),
+      MemfillProgram(nullptr), ImagefillProgram(nullptr) {
+
+  SETUP_DEVICE_CL_VERSION(dev, 3, 0);
+
+  ClDev->execution_capabilities = CL_EXEC_KERNEL;
+  ClDev->address_bits = 64;
+  ClDev->vendor = "Intel Corporation";
+  ClDev->vendor_id = 0x8086;
+  ClDev->profile = "FULL_PROFILE";
+
+  ClDev->available = &this->Available;
+  ContextHandle = Drv->getContextHandle();
+  assert(DeviceHandle);
+  assert(ContextHandle);
+  HasGOffsets = Drv->hasExtension("ZE_experimental_global_offset");
+  HasCompression = Drv->hasExtension("ZE_extension_memory_compression_hints");
+
+  // both of these are mandatory, the rest are optional
+  if (!setupDeviceProperties()) {
+    return;
+  }
+  if (!setupQueueGroupProperties()) {
+    return;
+  }
+
+/*
+#if 0
+  // support for importing external memory, currently not implemented
+  ze_device_external_memory_properties_t ExternalMemProperties{};
+  ExternalMemProperties.stype =
+      ZE_STRUCTURE_TYPE_DEVICE_EXTERNAL_MEMORY_PROPERTIES;
+  ExternalMemProperties.pNext = nullptr;
+  Res =
+      zeDeviceGetExternalMemoryProperties(DeviceHandle, &ExternalMemProperties);
+  if (Res != ZE_RESULT_SUCCESS) {
+    return;
+  }
+#endif
+
+#if 0
+  /// support for subdevices. Currently unimplemented
+  deviceProperties.subdeviceId  ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE
+  uint32_t subDeviceCount = 0;
+  zeDeviceGetSubDevices(device, &subDeviceCount, nullptr);
+  ze_device_handle_t subDevices[2] = {};
+  zeDeviceGetSubDevices(device, &subDeviceCount, subDevices);
+#endif
+*/
+
+  setupComputeProperties();
+
+  bool Supports64bitIntAtomics = false;
+  std::string FPAtomicFeatures;
+  setupModuleProperties(Supports64bitIntAtomics,
+                        Drv->hasExtension("ZE_extension_float_atomics"),
+                        FPAtomicFeatures);
+
+  bool HasUsmCapability = false;
+  setupMemoryProperties(HasUsmCapability);
+
+  setupCacheProperties();
+
+  setupImageProperties();
+
+  Extensions = std::string("cl_khr_byte_addressable_store"
+                         " cl_khr_global_int32_base_atomics"
+                         " cl_khr_global_int32_extended_atomics"
+                         " cl_khr_local_int32_base_atomics"
+                         " cl_khr_local_int32_extended_atomics"
+                         " cl_khr_il_program"
+                         " cl_khr_3d_image_writes");
+
+  OpenCL30Features = std::string("__opencl_c_images"
+                               " __opencl_c_read_write_images"
+                               " __opencl_c_3d_image_writes"
+                               " __opencl_c_atomic_order_acq_rel"
+                               " __opencl_c_atomic_order_seq_cst"
+                               " __opencl_c_atomic_scope_device"
+                               " __opencl_c_program_scope_global_variables"
+                               " __opencl_c_generic_address_space");
+
+
+  if (Drv->hasExtension("ZE_extension_linkonce_odr")) {
+    Extensions.append(" cl_khr_spirv_linkonce_odr");
+  }
+
+  if (Supports64bitIntAtomics) {
+    Extensions.append(" cl_khr_int64_base_atomics"
+                      " cl_khr_int64_extended_atomics");
+  }
+  if (ClDev->half_fp_config != 0u) {
+    Extensions.append(" cl_khr_fp16");
+    OpenCL30Features.append(" __opencl_c_fp16");
+  }
+  if (ClDev->double_fp_config != 0u) {
+    Extensions.append(" cl_khr_fp64");
+    OpenCL30Features.append(" __opencl_c_fp64");
+  }
+  if (ClDev->max_num_sub_groups > 0) {
+    Extensions.append(" cl_khr_subgroups");
+    OpenCL30Features.append(" __opencl_c_subgroups");
+    OpenCL30Features.append(" __opencl_c_work_group_collective_functions");
+  }
+  if (ClDev->has_64bit_long != 0) {
+    Extensions.append(" cl_khr_int64");
+    OpenCL30Features.append(" __opencl_c_int64");
+  }
+
+  if (HasUsmCapability) {
+    Extensions.append(" cl_intel_unified_shared_memory");
+  }
+
+  if (supportsDeviceUSM()) {
+    Extensions.append(" cl_ext_buffer_device_address");
+  }
+
+  if (Drv->hasExtension("ZE_extension_float_atomics")) {
+    Extensions.append(" cl_ext_float_atomics");
+    OpenCL30Features.append(FPAtomicFeatures);
+  }
+
+  if (ClDev->type == CL_DEVICE_TYPE_CPU
+      || ClDev->type == CL_DEVICE_TYPE_GPU) {
+    ClDev->extensions = Extensions.c_str();
+    ClDev->features = OpenCL30Features.c_str();
+
+    pocl_setup_opencl_c_with_version(ClDev, CL_TRUE);
+    pocl_setup_features_with_version(ClDev);
+    pocl_setup_extensions_with_version(ClDev);
+    pocl_setup_ils_with_version(ClDev);
+  }
+
+  if (Driver->hasExtension("ZE_experimental_relaxed_allocation_limits")
+      && ClDev->global_mem_size > UINT32_MAX) {
+    // allow allocating 85% of total memory in a single buffer
+    ClDev->max_mem_alloc_size = ClDev->global_mem_size * 85 / 100;
+    // TODO: figure out if relaxed limits also apply to these
+    // for now, assume it doesn't and leave it at DevProps.maxMemAlloc
+//    ClDev->max_constant_buffer_size =
+//    ClDev->global_var_pref_size = ClDev->max_mem_alloc_size;
+    Supports64bitBuffers = true;
+    NeedsRelaxedLimits = true;
+  } else {
+    // DeviceProperties.maxMemAllocSize from setupDeviceProperties
+    cl_ulong DevMaxMemAllocSize = ClDev->max_mem_alloc_size;
+
+    ClDev->max_mem_alloc_size = ClDev->max_constant_buffer_size =
+        ClDev->global_var_pref_size =
+        std::min (DevMaxMemAllocSize, ClDev->global_mem_size);
+    if (ClDev->global_mem_size > UINT32_MAX) {
+      Supports64bitBuffers = true;
+    }
+  }
+
 
   // calculate KernelCacheHash
   //
@@ -2172,11 +2309,11 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   pocl_SHA1_Update(&HashCtx, (const uint8_t *)&DrvVersion,
                    sizeof(DrvVersion));
 
-  pocl_SHA1_Update(&HashCtx, (const uint8_t *)&DeviceProperties.type,
-                   sizeof(DeviceProperties.type));
+  pocl_SHA1_Update(&HashCtx, (const uint8_t *)&ClDev->type,
+                   sizeof(ClDev->type));
 
-  pocl_SHA1_Update(&HashCtx, (const uint8_t *)&DeviceProperties.vendorId,
-                   sizeof(DeviceProperties.vendorId));
+  pocl_SHA1_Update(&HashCtx, (const uint8_t *)&ClDev->vendor_id,
+                   sizeof(ClDev->vendor_id));
   // not reliable
   // pocl_SHA1_Update(&HashCtx,
   //                 (const uint8_t*)&deviceProperties.uuid,
@@ -2193,12 +2330,19 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   SStream.flush();
   KernelCacheHash = SStream.str();
 
-  initHelperKernels();
+  if (ClDev->compiler_available != CL_FALSE) {
+    initHelperKernels();
+  }
 
   for (unsigned i = 0; i < 4; ++i)
     EventPools.emplace_back(this, EventPoolSize);
 
+  POCL_MSG_PRINT_LEVEL0("Device %s initialized & available\n", ClDev->short_name);
   this->Available = CL_TRUE;
+}
+
+Level0CompilationJobScheduler &Level0Device::getJobSched() {
+  return Driver->getJobSched();
 }
 
 Level0Device::~Level0Device() {
@@ -2887,15 +3031,15 @@ bool Level0Device::getImagefillKernel(cl_channel_type ChType,
 cl_bitfield Level0Device::getMemCaps(cl_device_info Type) {
   switch (Type) {
   case CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL:
-    return HostMemCaps;
+    return ClDev->host_usm_capabs;
   case CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL:
-    return DeviceMemCaps;
+    return ClDev->device_usm_capabs;
   case CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
-    return SingleSharedCaps;
+    return ClDev->single_shared_usm_capabs;
   case CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
-    return CrossSharedCaps;
+    return ClDev->cross_shared_usm_capabs;
   case CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL:
-    return SystemSharedCaps;
+    return ClDev->system_shared_usm_capabs;
   default:
     assert(0 && "unhandled switch value");
   }

@@ -2013,6 +2013,12 @@ static const cl_name_version OPENCL_C_FEATURES[] = {
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp16_local_atomic_min_max" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp32_local_atomic_min_max" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp64_local_atomic_min_max" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp16_global_atomic_load_store" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp32_global_atomic_load_store" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp64_global_atomic_load_store" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp16_local_atomic_load_store" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp32_local_atomic_load_store" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp64_local_atomic_load_store" },
 };
 
 const size_t OPENCL_C_FEATURES_NUM
