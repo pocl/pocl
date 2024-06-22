@@ -790,7 +790,8 @@ static int convertBCorSPV(char *InputPath,
   "--spirv-ext=+SPV_INTEL_subgroups,+SPV_INTEL_usm_storage_classes,+SPV_"      \
   "INTEL_arbitrary_precision_integers,+SPV_INTEL_arbitrary_precision_fixed_"   \
   "point,+SPV_INTEL_arbitrary_precision_floating_point,+SPV_INTEL_kernel_"     \
-  "attributes,+SPV_KHR_no_integer_wrap_decoration"
+  "attributes,+SPV_KHR_no_integer_wrap_decoration,+SPV_EXT_shader_atomic_"     \
+  "float_add,+SPV_INTEL_function_pointers"
   /*
   possibly useful:
     "+SPV_INTEL_unstructured_loop_controls,"
