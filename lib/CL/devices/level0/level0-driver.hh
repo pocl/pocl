@@ -264,7 +264,7 @@ class Level0Device {
 
 public:
   Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
-               cl_device_id dev, const char *Parameters);
+               cl_device_id Dev, const char *Parameters);
   ~Level0Device();
 
   Level0Device(Level0Device const &) = delete;
@@ -328,15 +328,23 @@ public:
   ze_event_handle_t getNewEvent();
   ze_device_handle_t getDeviceHandle() { return DeviceHandle; }
   ze_context_handle_t getContextHandle() { return ContextHandle; }
+  Level0CompilationJobScheduler &getJobSched();
+  Level0Driver *getDriver() const { return Driver; }
   void getTimingInfo(uint32_t &TS, uint32_t &KernelTS, double &TimerFreq,
                      double &NsPerCycle);
   void getMaxWGs(uint32_t_3 *MaxWGs);
   uint32_t getMaxWGSize() { return ClDev->max_work_group_size; }
-  bool supportsHostUSM() { return HostMemCaps != 0; }
-  bool supportsDeviceUSM() { return DeviceMemCaps != 0; }
-  bool supportsSingleSharedUSM() { return SingleSharedCaps != 0; }
-  bool supportsCrossSharedUSM() { return CrossSharedCaps != 0; }
-  bool supportsSystemSharedUSM() { return SystemSharedCaps != 0; }
+  bool supportsHostUSM() { return ClDev->host_usm_capabs != 0; }
+  bool supportsDeviceUSM() { return ClDev->device_usm_capabs != 0; }
+  bool supportsSingleSharedUSM() {
+    return ClDev->single_shared_usm_capabs != 0;
+  }
+  bool supportsCrossSharedUSM() {
+    return ClDev->cross_shared_usm_capabs != 0;
+  }
+  bool supportsSystemSharedUSM() {
+    return ClDev->system_shared_usm_capabs != 0;
+  }
   bool supportsOndemandPaging() { return OndemandPaging; }
   bool supportsGlobalOffsets() { return HasGOffsets; }
   bool supportsCompression() { return HasCompression; }
@@ -352,6 +360,16 @@ private:
   std::map<std::string, Level0Kernel *> MemfillKernels;
   std::map<std::string, Level0Kernel *> ImagefillKernels;
 
+  Level0Driver *Driver;
+  cl_device_id ClDev;
+  ze_device_handle_t DeviceHandle;
+  ze_context_handle_t ContextHandle;
+  std::string Extensions;
+  std::string OpenCL30Features;
+  std::string BuiltinKernels;
+  unsigned NumBuiltinKernels = 0;
+
+
   Level0Program *MemfillProgram;
   Level0Program *ImagefillProgram;
 
@@ -360,12 +378,8 @@ private:
   // TODO: it seems libze just returs zeroes for KernelUUID
   ze_native_kernel_uuid_t KernelUUID;
   std::string KernelCacheHash;
-  cl_device_id ClDev;
-  ze_device_handle_t DeviceHandle;
-  ze_context_handle_t ContextHandle;
-  Level0Driver *Driver;
+
   cl_bool Available = CL_FALSE;
-  bool Integrated = false;
   bool OndemandPaging = false;
   bool Supports64bitBuffers = false;
   bool NeedsRelaxedLimits = false;
@@ -380,20 +394,25 @@ private:
   uint32_t MaxMemoryFillPatternSize = 0;
   uint32_t GlobalMemOrd = UINT32_MAX;
   std::vector<size_t> SupportedSubgroupSizes;
-  cl_device_unified_shared_memory_capabilities_intel HostMemCaps = 0;
-  cl_device_unified_shared_memory_capabilities_intel DeviceMemCaps = 0;
-  cl_device_unified_shared_memory_capabilities_intel SingleSharedCaps = 0;
-  cl_device_unified_shared_memory_capabilities_intel CrossSharedCaps = 0;
-  cl_device_unified_shared_memory_capabilities_intel SystemSharedCaps = 0;
 
   /// initializes kernels used internally by the driver
   /// to implement functionality missing in the Level Zero API,
   /// e.g. FillImage, FillBuffer with large patterns etc
   bool initHelperKernels();
   void destroyHelperKernels();
+
+  bool setupDeviceProperties();
+  bool setupComputeProperties();
+  bool setupModuleProperties(bool &SupportsInt64Atomics, bool HasFloatAtomics, std::string &Features);
+  bool setupQueueGroupProperties();
+  bool setupMemoryProperties(bool &HasUSMCapability);
+  bool setupCacheProperties();
+  bool setupImageProperties();
 };
 
 typedef std::unique_ptr<Level0Device> Level0DeviceUPtr;
+
+
 
 class Level0Driver {
 
@@ -424,8 +443,8 @@ public:
 private:
   ze_driver_handle_t DriverH = nullptr;
   std::vector<ze_device_handle_t> DeviceHandles;
-  std::set<std::string> ExtensionSet;
   std::vector<Level0DeviceUPtr> Devices;
+  std::set<std::string> ExtensionSet;
   std::map<ze_device_handle_t, cl_device_id> HandleToIDMap;
   ze_context_handle_t ContextH = nullptr;
   // TODO: doesn't seem reliably the same between runs
