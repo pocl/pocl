@@ -1863,8 +1863,15 @@ pocl_setup_opencl_c_with_version (cl_device_id dev, int supports_30)
 static const cl_name_version OPENCL_EXTENSIONS[]
   = { { CL_MAKE_VERSION (1, 0, 0), "cl_intel_required_subgroup_size" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_subgroups" },
+      { CL_MAKE_VERSION (1, 0, 0), "cl_intel_subgroups_char" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_subgroups_short" },
+      { CL_MAKE_VERSION (1, 0, 0), "cl_intel_subgroups_long" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_unified_shared_memory" },
+      { CL_MAKE_VERSION (1, 0, 0), "cl_intel_split_work_group_barrier" },
+      { CL_MAKE_VERSION (1, 0, 0), "cl_intel_subgroup_local_block_io" },
+      { CL_MAKE_VERSION (1, 0, 0), "cl_intel_spirv_subgroups" },
+      { CL_MAKE_VERSION (1, 0, 0), "cl_khr_spirv_no_integer_wrap_decoration" },
+
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_byte_addressable_store" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_global_int32_base_atomics" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_global_int32_extended_atomics" },
