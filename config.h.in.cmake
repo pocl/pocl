@@ -174,6 +174,8 @@
 
 #define LLVM_SPIRV "@LLVM_SPIRV@"
 
+#cmakedefine ENABLE_LEVEL0_EXTRA_FEATURES
+
 #endif
 
 
