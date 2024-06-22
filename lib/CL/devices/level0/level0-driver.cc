@@ -1713,7 +1713,11 @@ bool Level0Device::setupDeviceProperties() {
     ClDev->llvm_cpu = nullptr;
     ClDev->llvm_target_triplet = "spir64-unknown-unknown";
     ClDev->generic_as_support = CL_TRUE;
-    ClDev->supported_spir_v_versions = "SPIR-V_1.2";
+#ifdef ENABLE_LEVEL0_EXTRA_FEATURES
+    ClDev->supported_spir_v_versions = "SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
+#else
+    ClDev->supported_spir_v_versions = "SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
+#endif
     ClDev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
     ClDev->version_of_latest_passed_cts = "v2000-00-00-00";
   }
@@ -2202,21 +2206,35 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   setupImageProperties();
 
   Extensions = std::string("cl_khr_byte_addressable_store"
-                         " cl_khr_global_int32_base_atomics"
-                         " cl_khr_global_int32_extended_atomics"
-                         " cl_khr_local_int32_base_atomics"
-                         " cl_khr_local_int32_extended_atomics"
-                         " cl_khr_il_program"
-                         " cl_khr_3d_image_writes");
+                           " cl_khr_global_int32_base_atomics"
+                           " cl_khr_global_int32_extended_atomics"
+                           " cl_khr_local_int32_base_atomics"
+                           " cl_khr_local_int32_extended_atomics"
+                           " cl_khr_il_program"
+                           " cl_khr_3d_image_writes"
+
+                           " cl_intel_spirv_subgroups"
+                           " cl_khr_spirv_no_integer_wrap_decoration"
+#ifdef ENABLE_LEVEL0_EXTRA_FEATURES
+                           " cl_intel_split_work_group_barrier"
+#endif
+
+#ifdef ENABLE_ICD
+                           " cl_khr_icd"
+#endif
+  );
+
 
   OpenCL30Features = std::string("__opencl_c_images"
-                               " __opencl_c_read_write_images"
-                               " __opencl_c_3d_image_writes"
-                               " __opencl_c_atomic_order_acq_rel"
-                               " __opencl_c_atomic_order_seq_cst"
-                               " __opencl_c_atomic_scope_device"
-                               " __opencl_c_program_scope_global_variables"
-                               " __opencl_c_generic_address_space");
+                                 " __opencl_c_read_write_images"
+                                 " __opencl_c_3d_image_writes"
+                                 " __opencl_c_atomic_order_acq_rel"
+                                 " __opencl_c_atomic_order_seq_cst"
+                                 " __opencl_c_atomic_scope_device"
+                                 " __opencl_c_atomic_scope_all_devices"
+                                 " __opencl_c_program_scope_global_variables"
+                                 " __opencl_c_generic_address_space"
+                               );
 
 
   if (Drv->hasExtension("ZE_extension_linkonce_odr")) {
@@ -2236,9 +2254,30 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     OpenCL30Features.append(" __opencl_c_fp64");
   }
   if (ClDev->max_num_sub_groups > 0) {
-    Extensions.append(" cl_khr_subgroups");
-    OpenCL30Features.append(" __opencl_c_subgroups");
-    OpenCL30Features.append(" __opencl_c_work_group_collective_functions");
+    Extensions.append(" cl_khr_subgroups"
+#ifdef ENABLE_LEVEL0_EXTRA_FEATURES
+                           " cl_khr_subgroup_shuffle"
+                           " cl_khr_subgroup_shuffle_relative"
+                           " cl_khr_subgroup_extended_types"
+                           " cl_khr_subgroup_non_uniform_arithmetic"
+                           " cl_khr_subgroup_non_uniform_vote"
+                           " cl_khr_subgroup_ballot"
+                           " cl_khr_subgroup_clustered_reduce"
+
+                           " cl_intel_subgroups"
+                           " cl_intel_subgroups_char"
+                           " cl_intel_subgroups_short"
+                           " cl_intel_subgroups_long"
+                           " cl_intel_subgroup_local_block_io"
+                           " cl_intel_required_subgroup_size"
+#endif
+                      );
+
+    OpenCL30Features.append(" __opencl_c_subgroups"
+#ifdef ENABLE_LEVEL0_EXTRA_FEATURES
+                            " __opencl_c_work_group_collective_functions"
+#endif
+                            );
   }
   if (ClDev->has_64bit_long != 0) {
     Extensions.append(" cl_khr_int64");

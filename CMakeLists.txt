@@ -1736,6 +1736,8 @@ if (ENABLE_LEVEL0)
   endif()
   pkg_check_modules(LEVEL0 REQUIRED level-zero>=1.3)
 
+  option(ENABLE_LEVEL0_EXTRA_FEATURES "enables extra opencl extensions & features in LevelZero device. these are not checked at runtime for presence " OFF)
+
   if(NOT ENABLE_LLVM)
     message(FATAL_ERROR "Level Zero requires LLVM/Clang")
   endif()
