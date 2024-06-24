@@ -92,6 +92,8 @@ pocl_pthread_probe (struct pocl_device_ops *ops)
 {
   int env_count = pocl_device_get_env_count(ops->device_name);
 
+  pocl_cpu_probe ();
+
   /* for backwards compatibility */
   if (env_count <= 0)
     env_count = pocl_device_get_env_count("pthread");

@@ -28,10 +28,16 @@
 #include "common.h"
 #include "common_utils.h"
 #include "cpuinfo.h"
+#include "pocl_builtin_kernels.h"
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
+#include "pocl_tensor_util.h"
 #include "topology/pocl_topology.h"
 #include "utlist.h"
+
+#ifdef HAVE_LIBXSMM
+#include <libxsmm.h>
+#endif
 
 /* NOTE: k->lock is probably unnecessary for the tbb device */
 #ifdef USE_POCL_MEMMANAGER
@@ -128,6 +134,23 @@ pocl_cpu_init_common (cl_device_id device)
       /* Just an arbitrary number here based on assumption of SG size 32. */
       device->max_num_sub_groups = device->max_work_group_size / 32;
     }
+
+#ifdef HAVE_LIBXSMM
+  if (device->builtin_kernel_list
+      && strstr (HOST_DEVICE_EXTENSIONS, "cl_exp_defined_builtin_kernels")
+           != NULL)
+    {
+      POCL_MEM_FREE (device->builtin_kernel_list);
+      device->builtin_kernel_list
+        = strdup ("pocl.add.i8;"
+                  "org.khronos.openvx.scale_image.nn.u8;"
+                  "org.khronos.openvx.scale_image.bl.u8;"
+                  "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32;"
+                  "khr_gemm;"
+                  "khr_matmul;");
+      device->num_builtin_kernels = 6;
+    }
+#endif
 
   /* 0 is the host memory shared with all drivers that use it */
   device->global_mem_id = 0;
@@ -460,3 +483,410 @@ pocl_free_kernel_arg_array_with_locals (void **arguments, void **arguments2,
       arguments2[meta->num_args + i] = NULL;
     }
 }
+
+/***************************************************************************/
+
+
+#ifdef HAVE_LIBXSMM
+
+static libxsmm_datatype
+pocl_convert_to_libxsmm_type (cl_tensor_datatype T)
+{
+  switch (T)
+    {
+    case CL_TENSOR_DTYPE_FP64:
+      return LIBXSMM_DATATYPE_F64;
+    case CL_TENSOR_DTYPE_FP32:
+      return LIBXSMM_DATATYPE_F32;
+    case CL_TENSOR_DTYPE_FP16:
+      return LIBXSMM_DATATYPE_F16;
+    case CL_TENSOR_DTYPE_FP8:
+      return LIBXSMM_DATATYPE_HF8;
+
+    case CL_TENSOR_DTYPE_INT64:
+      return LIBXSMM_DATATYPE_I64;
+    case CL_TENSOR_DTYPE_UINT64:
+      return LIBXSMM_DATATYPE_U64;
+    case CL_TENSOR_DTYPE_INT32:
+      return LIBXSMM_DATATYPE_I32;
+    case CL_TENSOR_DTYPE_UINT32:
+      return LIBXSMM_DATATYPE_U32;
+    case CL_TENSOR_DTYPE_INT16:
+      return LIBXSMM_DATATYPE_I16;
+    case CL_TENSOR_DTYPE_UINT16:
+      return LIBXSMM_DATATYPE_U16;
+    case CL_TENSOR_DTYPE_INT8:
+      return LIBXSMM_DATATYPE_I8;
+    case CL_TENSOR_DTYPE_UINT8:
+      return LIBXSMM_DATATYPE_U8;
+    case CL_TENSOR_DTYPE_INT4:
+      return LIBXSMM_DATATYPE_IMPLICIT;
+    case CL_TENSOR_DTYPE_UINT4:
+      return LIBXSMM_DATATYPE_IMPLICIT;
+
+    default:
+      return LIBXSMM_DATATYPE_UNSUPPORTED;
+    }
+}
+
+int
+pocl_cpu_validate_khr_gemm (cl_bool TransA,
+                            cl_bool TransB,
+                            const cl_tensor_desc *TenA,
+                            const cl_tensor_desc *TenB,
+                            const cl_tensor_desc *TenCIOpt,
+                            const cl_tensor_desc *TenCOut,
+                            const cl_tensor_datatype_union *Alpha,
+                            const cl_tensor_datatype_union *Beta)
+{
+  /* TODO: We probably need to have support for mixed input/output
+   * precisions to be able to fit results of large, low precision input
+   * matrices. precision inputs. E.g.
+   *
+   *  * i8 x i8   --> i32
+   *  * f16 x f16 --> f32
+   */
+
+  /* datatype match between A&B and CIopt&COut already checked in
+   * initial validation (pocl_validate_khr_gemm) */
+
+  /* currently FP 16-64 and INT 8-64 are supported */
+  POCL_RETURN_ERROR_ON ((TenA->dtype == CL_TENSOR_DTYPE_FP8
+                         || TenA->dtype == CL_TENSOR_DTYPE_INT4
+                         || TenCOut->dtype == CL_TENSOR_DTYPE_FP8
+                         || TenCOut->dtype == CL_TENSOR_DTYPE_INT4),
+                        CL_INVALID_DBK_DATATYPE,
+                        "Datatype support not yet implemented. CPU supports "
+                        "only FP16/32/64 and INT8/16/32/64 currently\n");
+
+  /* type mixing check */
+  POCL_RETURN_ERROR_ON ((pocl_tensor_type_is_int (TenA->dtype)
+                         != pocl_tensor_type_is_int (TenCOut->dtype)),
+                        CL_INVALID_DBK_DATATYPE,
+                        "Datatype mixing (INT/FP) not supported");
+
+  POCL_RETURN_ERROR_ON ((pocl_tensor_type_size (TenA->dtype)
+                         > pocl_tensor_type_size (TenCOut->dtype)),
+                        CL_INVALID_DBK_DATATYPE,
+                        "Datatype of C is smaller than A");
+
+  /* TODO check the value in respective type */
+  if (Alpha)
+    {
+      POCL_RETURN_ERROR_ON (Alpha->f != 1.0f, CL_INVALID_DBK_ATTRIBUTE,
+                            "CPU supports only Alpha == 1.0\n");
+    }
+  if (Beta)
+    {
+      POCL_RETURN_ERROR_ON ((Beta->f != 0.0f && Beta->f != 1.0f),
+                            CL_INVALID_DBK_ATTRIBUTE,
+                            "CPU supports only Beta == 0.0 or 1.0\n");
+    }
+
+  /* TODO: check validity of data layouts of the tensors. Now assume
+   * they are correct and they are using BLAS-like layout. */
+
+  return CL_SUCCESS;
+}
+#endif
+
+int
+pocl_cpu_supports_dbk (cl_device_id device,
+                       BuiltinKernelId kernel_id,
+                       const void *kernel_attributes)
+{
+#ifdef HAVE_LIBXSMM
+  /* the following code checks for LIBXSMM specific requirements on Tensors */
+  return pocl_validate_dbk_attributes (kernel_id, kernel_attributes,
+                                       pocl_cpu_validate_khr_gemm);
+#else
+  POCL_RETURN_ERROR_ON (1, CL_UNSUPPORTED_DBK,
+                        "The CPU driver must be compiled with libxsmm "
+                        "to support tensor DBKs\n");
+#endif
+}
+
+void
+pocl_cpu_probe ()
+{
+#ifdef HAVE_LIBXSMM
+  libxsmm_init ();
+#endif
+}
+
+int
+pocl_cpu_build_defined_builtin (cl_program program, cl_uint device_i)
+{
+#ifdef HAVE_LIBXSMM
+  /* TODO perhaps prebuild something here ? */
+  return CL_SUCCESS;
+#else
+  POCL_RETURN_ERROR_ON (1, CL_BUILD_PROGRAM_FAILURE,
+                        "The CPU driver must be compiled with libxsmm "
+                        "to support tensor DBKs\n");
+#endif
+}
+
+#ifdef HAVE_LIBXSMM
+
+static cl_bool
+tensor_is_blas_row_major (const cl_tensor_desc *A)
+{
+  assert (A);
+  assert (A->layout && "Does not have data layout!");
+  assert (
+    A->layout_type == CL_TENSOR_LAYOUT_BLAS
+    && "The method must not be called for tensors with non-BLAS data layouts");
+  const cl_tensor_layout_blas *BL = (const cl_tensor_layout_blas *)A->layout;
+  assert (A->rank >= 2 && "Not a (batched) matrix!");
+
+  return BL->leading_dims[0] == (A->rank - 1u) ? CL_TRUE : CL_FALSE;
+}
+
+static unsigned
+tensor_get_trailing_dim (const cl_tensor_desc *A,
+                         const cl_tensor_layout_blas *BL)
+{
+  assert (A);
+  assert ((A->rank < (sizeof (unsigned) * 8))
+          && "Too many dimensions for the bitset.");
+
+  unsigned DimSet = (1u << A->rank) - 1;
+  for (unsigned I = 0; I < A->rank - 1; I++)
+    DimSet &= ~(1u << BL->leading_dims[I]);
+
+  assert (__builtin_popcount (DimSet) == 1 && "Invalid data layout?");
+  unsigned TrailingDim = __builtin_ctz (DimSet);
+  assert (TrailingDim < A->rank);
+  return TrailingDim;
+}
+
+static cl_tensor_stride
+tensor_get_blas_stride_in_elements (const cl_tensor_desc *A, unsigned Dim)
+{
+  assert (A);
+  assert (A->rank >= 2);
+  assert (A->layout && "Does not have data layout!");
+  assert (
+    A->layout_type == CL_TENSOR_LAYOUT_BLAS
+    && "The method must not be called for tensors with non-BLAS data layouts");
+  const cl_tensor_layout_blas *BL = (const cl_tensor_layout_blas *)A->layout;
+  if (Dim < (A->rank - 1))
+    return BL->leading_strides[Dim];
+  else
+    return BL->leading_strides[A->rank - 1] * tensor_get_trailing_dim (A, BL);
+}
+
+static int
+pocl_cpu_execute_gemm_anytype (char *Aptr,
+                               char *Bptr,
+                               char *COut,
+                               char *CIopt,
+                               libxsmm_datatype InElemType,
+                               size_t InElemSize,
+                               libxsmm_datatype OutElemType,
+                               size_t OutElemSize,
+                               cl_bool TransposeA,
+                               cl_bool TransposeB,
+                               const cl_tensor_desc *TenA,
+                               const cl_tensor_desc *TenB,
+                               const cl_tensor_desc *TenCout,
+                               const cl_tensor_desc *TenCIOpt,
+                               float Alpha,
+                               float Beta)
+{
+  libxsmm_datatype CompElemType = OutElemType;
+  size_t CompElemSize = OutElemSize;
+
+  size_t BatchDims = TenA->rank - 2;
+  size_t Am = TenA->shape[BatchDims + 0];
+  size_t Ak = TenA->shape[BatchDims + 1];
+  if (TransposeA)
+    {
+      size_t Temp = Am;
+      Am = Ak;
+      Ak = Temp;
+    }
+
+  size_t Bk = TenB->shape[BatchDims + 0];
+  size_t Bn = TenB->shape[BatchDims + 1];
+  if (TransposeB)
+    {
+      size_t Temp = Bk;
+      Bk = Bn;
+      Bn = Temp;
+    }
+
+  size_t COm = TenCout->shape[BatchDims + 0];
+  size_t COn = TenCout->shape[BatchDims + 1];
+
+  assert (Ak == Bk);
+  assert (Am == COm);
+  assert (Bn == COn);
+
+  size_t Lda = tensor_get_blas_stride_in_elements (TenA, 0);
+  size_t Ldb = tensor_get_blas_stride_in_elements (TenB, 0);
+  size_t Ldc = tensor_get_blas_stride_in_elements (TenCout, 0);
+  size_t ABatchStrideInElts = tensor_get_blas_stride_in_elements (TenA, 1);
+  size_t BBatchStrideInElts = tensor_get_blas_stride_in_elements (TenB, 1);
+  size_t CBatchStrideInElts = tensor_get_blas_stride_in_elements (TenCout, 1);
+
+  /* libxsmm expects data in column-major format but we can feed it
+   * row-major data by transposing the inputs and and the output. */
+  cl_bool LibTransposeA = TransposeA ^ tensor_is_blas_row_major (TenA);
+  cl_bool LibTransposeB = TransposeB ^ tensor_is_blas_row_major (TenB);
+
+  int flags_trans = (LibTransposeA ? LIBXSMM_GEMM_FLAG_TRANS_A : 0)
+                    | (LibTransposeB ? LIBXSMM_GEMM_FLAG_TRANS_B : 0);
+  int flags_ab = (LIBXSMM_NEQ (0.0f, Beta) ? 0 : LIBXSMM_GEMM_FLAG_BETA_0);
+
+  /*    POCL_MSG_WARN( "Trans_A: %u Trans_B: %u Alpha: %f Beta: %f\n",
+                      LibTransposeA, LibTransposeB, Alpha, Beta);
+  */
+
+  /* determine matrix shape and precision */
+  const libxsmm_gemm_shape gemm_shape = libxsmm_create_gemm_shape (
+    COm, COn, Ak,
+    // m /*lda*/, k /*ldb*/, m /*ldc*/,
+    Lda, Ldb, Ldc, InElemType, InElemType, OutElemType, CompElemType);
+
+  /* generate and dispatch a matrix multiplication kernel */
+  const libxsmm_gemmfunction kernel = libxsmm_dispatch_gemm (
+    gemm_shape, (libxsmm_bitfield)(flags_trans | flags_ab),
+    (libxsmm_bitfield)LIBXSMM_GEMM_PREFETCH_NONE);
+  assert (NULL != kernel && "LIBXSMM: JIT generation of kernel failed");
+
+  libxsmm_gemm_param gemm_param
+    = { 0 }; /* collect call-arguments into single structure */
+
+  size_t BatchSize = TenA->rank > 2 ? TenA->shape[0] : 1;
+
+  for (size_t BatchIndex = 0; BatchIndex < BatchSize; ++BatchIndex)
+    {
+
+      char *Src = &CIopt[BatchIndex * CBatchStrideInElts * OutElemSize];
+      char *Dst = &COut[BatchIndex * CBatchStrideInElts * OutElemSize];
+
+      if (TenCIOpt && Beta != 0.0f)
+        {
+          if (tensor_is_blas_row_major (TenCIOpt))
+            {
+              /* Need to convert C input to column-major. */
+              libxsmm_otrans (Dst, Src, OutElemSize, COm, COn, Ldc, COm);
+            }
+          else
+            {
+              /* copy CIn to COut */
+              libxsmm_matcopy (Dst, Src, OutElemSize, COm, COn, Ldc, COm);
+            }
+        }
+      else
+        {
+          /* Zero-initialize. */
+          libxsmm_matcopy (Dst, NULL, OutElemSize, COm, COn, Ldc, COm);
+        }
+
+      gemm_param.a.primary
+        = &Aptr[BatchIndex * ABatchStrideInElts * InElemSize];
+      gemm_param.b.primary
+        = &Bptr[BatchIndex * BBatchStrideInElts * InElemSize];
+      gemm_param.c.primary
+        = &COut[BatchIndex * CBatchStrideInElts * OutElemSize];
+      kernel (&gemm_param);
+
+      if (tensor_is_blas_row_major (TenCout))
+        {
+          /* Results are always in column-major. */
+          libxsmm_itrans (Dst, OutElemSize, COm, COn, COm, Ldc);
+        }
+    }
+
+  return CL_SUCCESS;
+}
+
+static void *
+pocl_cpu_get_ptr (struct pocl_argument *arg, unsigned global_mem_id)
+{
+  if (arg->value == NULL)
+    return NULL;
+
+  if (arg->is_raw_ptr)
+    return *(void **)arg->value;
+
+  cl_mem mem = *(cl_mem *)(arg->value);
+  char *ptr = (char *)(mem->device_ptrs[global_mem_id].mem_ptr);
+  ptr += arg->offset;
+  return (void *)ptr;
+}
+
+int
+pocl_cpu_execute_dbk (cl_program program,
+                      cl_kernel kernel,
+                      pocl_kernel_metadata_t *meta,
+                      cl_uint dev_i,
+                      struct pocl_argument *arguments)
+{
+  cl_device_id dev = program->devices[dev_i];
+  unsigned mem_id = dev->global_mem_id;
+  void *A = pocl_cpu_get_ptr (&arguments[0], mem_id);
+  void *B = pocl_cpu_get_ptr (&arguments[1], mem_id);
+  void *Cin = NULL;
+  void *Cout = pocl_cpu_get_ptr (&arguments[2], mem_id);
+  float Alpha = 1.0f, Beta = 0.0f;
+  cl_tensor_datatype InDtype, OutDtype;
+  cl_bool TransposeA, TransposeB;
+  const cl_tensor_desc *TenA;
+  const cl_tensor_desc *TenB;
+  const cl_tensor_desc *TenCout;
+  const cl_tensor_desc *TenCIOpt;
+
+  switch (meta->builtin_kernel_id)
+    {
+    case POCL_CDBI_DBK_KHR_GEMM:
+      {
+        const cl_dbk_attributes_khr_gemm *Attrs
+          = (const cl_dbk_attributes_khr_gemm *)meta->builtin_kernel_attrs;
+        void *Cin = pocl_cpu_get_ptr (&arguments[2], mem_id);
+        void *Cout = pocl_cpu_get_ptr (&arguments[3], mem_id);
+        memcpy (&Alpha, arguments[4].value, sizeof (float));
+        memcpy (&Beta, arguments[5].value, sizeof (float));
+        InDtype = Attrs->a.dtype;
+        OutDtype = Attrs->c_out.dtype;
+        TransposeA = Attrs->trans_a;
+        TransposeB = Attrs->trans_b;
+        TenA = &Attrs->a;
+        TenB = &Attrs->b;
+        TenCout = &Attrs->c_out;
+        TenCIOpt = &Attrs->c_in;
+        break;
+      }
+    case POCL_CDBI_DBK_KHR_MATMUL:
+      {
+        const cl_dbk_attributes_khr_matmul *Attrs
+          = (const cl_dbk_attributes_khr_matmul *)meta->builtin_kernel_attrs;
+        InDtype = Attrs->a.dtype;
+        OutDtype = Attrs->c.dtype;
+        TransposeA = Attrs->trans_a;
+        TransposeB = Attrs->trans_b;
+        TenA = &Attrs->a;
+        TenB = &Attrs->b;
+        TenCout = &Attrs->c;
+        TenCIOpt = NULL;
+        break;
+      }
+    default:
+      POCL_ABORT_UNIMPLEMENTED ("this code path should have "
+                                "been eliminated earlier");
+    }
+
+  libxsmm_datatype InElemType = pocl_convert_to_libxsmm_type (InDtype);
+  size_t InElemSize = pocl_tensor_type_size (InDtype);
+  libxsmm_datatype OutElemType = pocl_convert_to_libxsmm_type (OutDtype);
+  size_t OutElemSize = pocl_tensor_type_size (OutDtype);
+
+  return pocl_cpu_execute_gemm_anytype (
+    A, B, Cout, Cin, InElemType, InElemSize, OutElemType, OutElemSize,
+    TransposeA, TransposeB, TenA, TenB, TenCout, TenCIOpt, Alpha, Beta);
+}
+
+#endif

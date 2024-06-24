@@ -36,9 +36,11 @@
 typedef struct kernel_run_command kernel_run_command;
 struct kernel_run_command
 {
+  POCL_FAST_LOCK_T lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   void *data;
   cl_kernel kernel;
   cl_device_id device;
+  struct pocl_context pc __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   _cl_command_node *cmd;
   pocl_workgroup_func workgroup;
   struct pocl_argument *kernel_args;
@@ -52,12 +54,8 @@ struct kernel_run_command
   /* this is required b/c there's an additional level of indirection */
   void **arguments2;
 
-  POCL_FAST_LOCK_T lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   size_t remaining_wgs;
   size_t wgs_dealt;
-
-  struct pocl_context pc __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-
 } __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
 #ifdef __cplusplus
@@ -83,6 +81,23 @@ POCL_EXPORT
 cl_int pocl_cpu_init_common (cl_device_id device);
 
 POCL_EXPORT
+int pocl_cpu_supports_dbk (cl_device_id device,
+                           BuiltinKernelId kernel_id,
+                           const void *kernel_attributes);
+POCL_EXPORT
+int pocl_cpu_build_defined_builtin (cl_program program, cl_uint device_i);
+
+POCL_EXPORT
+int pocl_cpu_execute_dbk (cl_program program,
+                          cl_kernel kernel,
+                          pocl_kernel_metadata_t *meta,
+                          cl_uint dev_i,
+                          struct pocl_argument *arguments);
+
+POCL_EXPORT
+void pocl_cpu_probe ();
+
+POCL_EXPORT
 void pocl_setup_kernel_arg_array (kernel_run_command *k);
 
 POCL_EXPORT
@@ -90,6 +105,12 @@ void pocl_setup_kernel_arg_array_with_locals (void **arguments, void **arguments
                                          kernel_run_command *k,
                                          char *local_mem,
                                          size_t local_mem_size);
+
+POCL_EXPORT
+int pocl_tensor_type_size (cl_tensor_datatype T);
+
+POCL_EXPORT
+int pocl_tensor_type_is_int (cl_tensor_datatype T);
 
 POCL_EXPORT
 void pocl_free_kernel_arg_array (kernel_run_command *k);

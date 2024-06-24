@@ -34,6 +34,6 @@ if(OCL_ICD_INCLUDE_DIRS)
   target_include_directories("pocl-devices-topology" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
 endif()
 
-if(Hwloc_FOUND)
-  target_include_directories("pocl-devices-topology" SYSTEM PUBLIC ${Hwloc_INCLUDE_DIRS})
+if(ENABLE_HWLOC)
+  target_link_libraries("pocl-devices-topology" PRIVATE PkgConfig::HWLOC)
 endif()

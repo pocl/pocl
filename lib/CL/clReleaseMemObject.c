@@ -231,7 +231,7 @@ POsym (clReleaseMemObject)
 {
   /* It's a sub-buffer. Some devices might have resources associated to
    * them. */
-  for (int i = 0; i < memobj->context->num_devices; ++i)
+  for (unsigned i = 0; i < memobj->context->num_devices; ++i)
     {
       cl_device_id dev = memobj->context->devices[i];
       if (dev->ops->free_subbuffer != NULL)

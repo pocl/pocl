@@ -75,10 +75,10 @@ POname(clGetKernelWorkGroupInfo)
       {
         /* this parameter is only for custom devices & builtin kernels. */
         POCL_RETURN_ERROR_ON (
-            (!kernel->meta->builtin_kernel
-             && (device->type != CL_DEVICE_TYPE_CUSTOM)),
-            CL_INVALID_VALUE,
-            "only valid for custom devices or builtin kernels\n");
+          ((kernel->meta->builtin_kernel_id == 0)
+           || (device->type != CL_DEVICE_TYPE_CUSTOM)),
+          CL_INVALID_VALUE,
+          "only valid for custom devices or builtin kernels\n");
         POCL_RETURN_GETINFO (size_t_3, kernel->meta->builtin_max_global_work);
       }
     case CL_KERNEL_WORK_GROUP_SIZE:

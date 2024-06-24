@@ -44,6 +44,7 @@
 
 #include "common.h"
 #include "devices.h"
+#include "pocl_builtin_kernels.h"
 #include "pocl_cache.h"
 #include "pocl_debug.h"
 #include "pocl_export.h"
@@ -51,7 +52,6 @@
 #include "pocl_shared.h"
 #include "pocl_tracing.h"
 #include "pocl_util.h"
-#include "pocl_export.h"
 #include "pocl_version.h"
 
 #include "utlist_addon.h"
@@ -554,6 +554,8 @@ pocl_init_devices ()
 
   POCL_GOTO_ERROR_ON ((pocl_cache_init_topdir ()), CL_DEVICE_NOT_FOUND,
                       "Cache directory initialization failed");
+
+  pocl_init_builtin_kernel_metadata ();
 
   pocl_event_tracing_init ();
 
