@@ -57,6 +57,7 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clCreateProgramWithBinary.c"
                    "clCreateProgramWithIL.c"
                    "clCreateProgramWithBuiltInKernels.c"
+                   "clCreateProgramWithDefinedBuiltInKernels.c"
                    "clReleaseProgram.c"
                    "clRetainProgram.c"
                    "clBuildProgram.c"
@@ -139,6 +140,7 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clSetProgramSpecializationConstant.c"
                    "clCloneKernel.c"
                    "clEnqueueSVMMigrateMem.c"
+                   "pocl_builtin_kernels.c" "pocl_builtin_kernels.h"
                    "pocl_cl.h" "pocl_util.h" "pocl_util.c"
                    "pocl_image_util.c" "pocl_image_util.h"
                    "pocl_img_buf_cpy.c"
@@ -151,6 +153,7 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "pocl_hash.c" "pocl_file_util.c"
                    "pocl_debug.h" "pocl_debug.c" "pocl_timing.c"
                    "pocl_timing.h" "pocl_threads.h" "pocl_threads.c"
+                   "pocl_tensor_util.h" "pocl_tensor_util.c"
                    "clSVMAlloc.c" "clSVMFree.c" "clEnqueueSVMFree.c"
                    "clEnqueueSVMMap.c" "clEnqueueSVMUnmap.c"
                    "clEnqueueSVMMemcpy.c" "clEnqueueSVMMemFill.c"
@@ -196,7 +199,6 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clEnqueueSVMMemcpyRectPOCL.c"
                    "clEnqueueSVMMemfillRectPOCL.c"
                    "clSetKernelArgDevicePointer.c"
-                   "clCreateBuiltinKernelWithAttributes.cc"
 )
 
 if(ANDROID)
@@ -213,13 +215,6 @@ set(LIBPOCL_OBJS "$<TARGET_OBJECTS:libpocl_unlinked_objs>"
 if(ENABLE_HOST_CPU_DEVICES)
   # always link into libpocl if any CPU device is enabled
   list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:pocl-devices-topology>")
-  if(Hwloc_FOUND)
-    if(Hwloc_LDFLAGS)
-      list(APPEND POCL_DEVICES_LINK_LIST ${Hwloc_LDFLAGS})
-    else()
-      list(APPEND POCL_DEVICES_LINK_LIST ${Hwloc_LIBRARIES})
-    endif()
-  endif()
 endif()
 
 if(ENABLE_LOADABLE_DRIVERS)
@@ -286,11 +281,6 @@ endif(MSVC)
 # this is so that we don't compile twice when building both libpocl and libOpenCL
 add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
 
-# TEMPORARY HACK:
-set(LIBXSMM_DIR "/mnt/md1/linehill/pocl-space/install-libxsmm")
-target_include_directories(libpocl_unlinked_objs
-  PRIVATE "${LIBXSMM_DIR}/include")
-
 harden("libpocl_unlinked_objs")
 
 #################################################################
@@ -332,17 +322,6 @@ if(ANDROID)
 endif()
 
 list(APPEND POCL_PRIVATE_LINK_LIST ${LIBMATH} ${CMAKE_DL_LIBS} ${PTHREAD_LIBRARY})
-
-# TEMPORARY HACK:
-set(LIBXSMM "${LIBXSMM_DIR}/lib/libxsmm.a")
-
-# Link a BLAS library for xsmm
-#
-# TODO: BLAS is optional for libxsmm but what limitations would be
-#       imposed if the BLAS is dropped?
-find_library(LIBBLAS NAMES blas REQUIRED)
-
-list(APPEND POCL_PRIVATE_LINK_LIST ${LIBXSMM} ${LIBBLAS})
 
 # see lib/CMakeLists.txt
 set(POCL_TRANSITIVE_LIBS ${POCL_PRIVATE_LINK_LIST} PARENT_SCOPE)

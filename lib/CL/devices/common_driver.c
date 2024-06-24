@@ -36,13 +36,9 @@
 // for pocl_aligned_malloc
 #include "pocl_util.h"
 #include "pocl_file_util.h"
-
 // for SPIR-V handling
 #include "pocl_cache.h"
-#include "pocl_file_util.h"
 
-// sanitize kernel name
-#include "builtin_kernels.hh"
 #include "pocl_workgroup_func.h"
 
 int pocl_setup_builtin_metadata (cl_device_id device, cl_program program,
@@ -1091,7 +1087,7 @@ pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i)
   cl_device_id dev = program->devices[device_i];
 
   if (dev->compiler_available == CL_FALSE || dev->llvm_cpu == NULL)
-    return 0;
+    return CL_BUILD_PROGRAM_FAILURE;
 
 // TODO this should probably be outside
 #ifdef ENABLE_LLVM

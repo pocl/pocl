@@ -2331,7 +2331,7 @@ parse_new_kernel (pocl_kernel_metadata_t *p, char *line)
   p->total_argument_storage_size = 0;
   p->data = NULL;
   p->build_hash = NULL;
-  p->builtin_kernel = POCL_NON_BIK;
+  p->builtin_kernel_id = 0;
 
   if (p->arg_info == NULL || p->name == NULL) return -1;
   return 0;

@@ -24,12 +24,12 @@
 */
 
 #include "basic.h"
-#include "builtin_kernels.hh"
 #include "common.h"
 #include "config.h"
 #include "config2.h"
 #include "cpuinfo.h"
 #include "devices.h"
+#include "pocl_builtin_kernels.h"
 #include "pocl_local_size.h"
 #include "pocl_util.h"
 #include "topology/pocl_topology.h"
@@ -121,6 +121,8 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->build_poclbinary = pocl_driver_build_poclbinary;
   ops->compile_kernel = pocl_basic_compile_kernel;
   ops->build_builtin = pocl_driver_build_opencl_builtins;
+  ops->build_defined_builtin = pocl_cpu_build_defined_builtin;
+  ops->supports_dbk = pocl_cpu_supports_dbk;
 
   ops->join = pocl_basic_join;
   ops->submit = pocl_basic_submit;
@@ -167,6 +169,8 @@ unsigned int
 pocl_basic_probe(struct pocl_device_ops *ops)
 {
   int env_count = pocl_device_get_env_count(ops->device_name);
+
+  pocl_cpu_probe ();
 
   /* for backwards compatibility */
   if (env_count <= 0)
@@ -223,21 +227,27 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 void
 pocl_basic_run (void *data, _cl_command_node *cmd)
 {
-  cl_kernel kernel = cmd->command.run.kernel;
-  if (kernel->custom_runner)
-    {
-      kernel->custom_runner (cmd, kernel->custom_runner_data);
-      return;
-    }
-
   pocl_basic_data_t *d = (pocl_basic_data_t *)data;
   struct pocl_argument *al = NULL;
   size_t x, y, z;
   unsigned i;
+  cl_kernel kernel = cmd->command.run.kernel;
   cl_program program = kernel->program;
   pocl_kernel_metadata_t *meta = kernel->meta;
   struct pocl_context *pc = &cmd->command.run.pc;
   cl_uint dev_i = cmd->program_device_i;
+
+  if (program->builtin_kernel_attributes)
+    {
+      assert (meta->builtin_kernel_id != 0);
+#ifdef HAVE_LIBXSMM
+      pocl_cpu_execute_dbk (program, kernel, meta, dev_i,
+                            cmd->command.run.arguments);
+#else
+      POCL_MSG_ERR ("PoCL compiled without libxsmm - cannot execute DBK\n");
+#endif
+      return;
+    }
 
   pocl_driver_build_gvar_init_kernel (program, dev_i, cmd->device,
                                       pocl_cpu_gvar_init_callback);
@@ -502,8 +512,13 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
 
   if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
     {
-      node->command.run.device_data
-        = pocl_check_kernel_dlhandle_cache (node, CL_TRUE, CL_TRUE);
+      cl_kernel kernel = node->command.run.kernel;
+      cl_program program = kernel->program;
+      if (!program->builtin_kernel_attributes)
+        {
+          node->command.run.device_data
+            = pocl_check_kernel_dlhandle_cache (node, CL_TRUE, CL_TRUE);
+        }
     }
 
   node->ready = 1;
@@ -796,6 +811,7 @@ pocl_basic_fill_image (void *data, cl_mem image,
 }
 
 /***************************************************************************/
+
 void
 pocl_basic_svm_free (cl_device_id dev, void *svm_ptr)
 {
@@ -824,7 +840,6 @@ pocl_basic_usm_alloc (cl_device_id dev, unsigned alloc_type,
 
   ptr = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, size);
 
-ERROR:
   if (err_code)
     *err_code = errcode;
 

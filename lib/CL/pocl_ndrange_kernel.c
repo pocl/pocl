@@ -51,11 +51,6 @@ pocl_kernel_calc_wg_size (cl_command_queue command_queue, cl_kernel kernel,
    * since we are going to access them repeatedly */
   size_t max_group_size;
 
-  // Skip workgroup size calculation for DBKs. The sizes are baked in
-  // the kernels at clCreateBuiltinKernelWithAttributesEXP() time.
-  if (kernel->meta->builtin_kernel == POCL_DBK)
-    goto SKIP_WG_SIZE_CALCULATION;
-
   POCL_RETURN_ERROR_COND ((work_dim < 1), CL_INVALID_WORK_DIMENSION);
   POCL_RETURN_ERROR_ON (
       (work_dim > command_queue->device->max_work_item_dimensions),
