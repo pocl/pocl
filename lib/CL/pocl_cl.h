@@ -355,6 +355,7 @@ typedef enum
   POCL_ARG_TYPE_IMAGE = 2,
   POCL_ARG_TYPE_SAMPLER = 3,
   POCL_ARG_TYPE_PIPE = 4,
+  POCL_ARG_TYPE_MUTABLE = 0, /* POD type with mutable size, only used by DBKs */
 } pocl_argument_type;
 
 #define ARG_IS_LOCAL(a) (a.address_qualifier == CL_KERNEL_ARG_ADDRESS_LOCAL)
@@ -362,8 +363,8 @@ typedef enum
 
 /* Kernel argument metadata. */
 typedef struct pocl_argument_info {
-  char* type_name;
-  char* name;
+  char *type_name;
+  char *name;
   cl_kernel_arg_address_qualifier address_qualifier;
   cl_kernel_arg_access_qualifier access_qualifier;
   cl_kernel_arg_type_qualifier type_qualifier;
@@ -737,6 +738,9 @@ struct pocl_device_ops {
   /** Build a program with builtin kernels. */
   int (*build_builtin) (cl_program program, cl_uint device_i);
 
+  /* build a program with defined builtin kernels (DBKs). */
+  int (*build_defined_builtin) (cl_program program, cl_uint device_i);
+
   int (*link_program) (cl_program program, cl_uint device_i,
 
                        cl_uint num_input_programs,
@@ -782,6 +786,16 @@ struct pocl_device_ops {
    * device. */
   int (*supports_binary) (cl_device_id device, const size_t length,
                           const char *binary);
+
+  /* determine DefinedBuiltinKernel support. Driver should examine the
+   * kernel_id and the content of kernel_attributes and return CL_SUCCESS
+   * if it supports the required kernel+attributes combination. If it does not,
+   * it should return an error indicating which attribute is the problem.
+   * Note: the attributes have been already validated by runtime at this point
+   */
+  int (*supports_dbk) (cl_device_id device,
+                       BuiltinKernelId kernel_id,
+                       const void *kernel_attributes);
 
   /** Optional: If the driver needs to use hardware resources
    * for command queues, it should use these callbacks */
@@ -1716,7 +1730,11 @@ struct _cl_mem {
 
   /* Tensor Properties */
   cl_bool is_tensor;
-  cl_tensor_desc *tensor_desc; /* Lifetime: this struct. */
+  cl_uint tensor_rank;
+  cl_tensor_shape tensor_shape[CL_MEM_MAX_TENSOR_RANK];
+  cl_tensor_datatype tensor_dtype;
+  cl_tensor_layout_type tensor_layout_type;
+  void *tensor_layout;
 };
 
 /** Returns the backing store cl_mem for an image, otherwise the cl_mem
@@ -1730,13 +1748,6 @@ struct _cl_mem_list_item_t
 };
 
 typedef uint8_t SHA1_digest_t[SHA1_DIGEST_SIZE * 2 + 1];
-
-typedef enum
-{
-  POCL_NON_BIK = 0,
-  POCL_BIK, /* Built-in kernel. */
-  POCL_DBK  /* Defined builtin kernel. */
-} BIKType;
 
 typedef struct pocl_kernel_metadata_s
 {
@@ -1776,10 +1787,10 @@ typedef struct pocl_kernel_metadata_s
   /* per-device array of hashes */
   pocl_kernel_hash_t *build_hash;
 
-  /* If this is a built-in kernel descriptor (= non-zero), they are
-     statically defined in the custom device driver, thus should not
-     be freed. */
-  cl_bitfield builtin_kernel;
+  /* enum BuiltinKernelId */
+  unsigned builtin_kernel_id;
+  /* only for defined builtin kernels */
+  void *builtin_kernel_attrs;
   /* maximum global work size usable with the kernel.
    * Only applies to builtin kernels */
   size_t_3 builtin_max_global_work;
@@ -1821,8 +1832,13 @@ struct _cl_program {
   /* If this is a program with built-in kernels, this is the list of kernel
      names it contains. */
   size_t num_builtin_kernels;
+  /* Names of builtin kernels, as array of char*,
+   * and also as semicolon-separated string. */
   char **builtin_kernel_names;
   char *concated_builtin_names;
+  // relevant only for DefinedBuiltinKernels:
+  BuiltinKernelId *builtin_kernel_ids;
+  void **builtin_kernel_attributes;
 
   /* Poclcc binary format.  */
   /* per-device poclbinary-format binaries.  */
@@ -1876,9 +1892,6 @@ struct _pocl_ptr_list_node
   struct _pocl_ptr_list_node *prev, *next;
 };
 
-typedef void (*pocl_custom_kernel_runner_fn) (_cl_command_node *cmd,
-                                              void *data);
-typedef void (*pocl_release_kernel_runner_data_fn) (void *data);
 
 struct _cl_kernel {
   POCL_ICD_OBJECT
@@ -1924,16 +1937,6 @@ struct _cl_kernel {
      We should ensure at enqueue time that all of the known raw buffers
      will be synchronized to the device. */
   char can_access_all_raw_buffers_indirectly;
-
-  /* Custom kernel runner (a host function). Used for kernels not
-     built from sources. For instance, DBKs whose execution might be
-     delegated to external libraries, like LIBXSMM. */
-  pocl_custom_kernel_runner_fn custom_runner;
-
-  /* Data passed to custom_host_runner. Pointed data is owned by this
-   * struct and released via release_kernel_runner_data(). */
-  void *custom_runner_data;
-  pocl_release_kernel_runner_data_fn release_custom_runner_data;
 
   /* for program's linked list of kernels */
   struct _cl_kernel *next;

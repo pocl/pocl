@@ -444,22 +444,13 @@ endif()
 
 find_package(PkgConfig MODULE)
 
-if(NOT DEFINED DEFAULT_ENABLE_HWLOC)
-  find_package(Hwloc)
+if(PKG_CONFIG_FOUND)
+  pkg_check_modules(HWLOC IMPORTED_TARGET hwloc>=1.0)
 
-  if(NOT Hwloc_FOUND)
-   message(STATUS "hwloc package not found")
-   set(DEFAULT_ENABLE_HWLOC OFF CACHE INTERNAL "default hwloc")
+  if(NOT HWLOC_FOUND)
+    set(DEFAULT_ENABLE_HWLOC OFF CACHE INTERNAL "default hwloc")
   else()
-     if("${Hwloc_VERSION}" VERSION_LESS "1.0")
-       message(FATAL_ERROR "Hwloc version must be >= 1.0 !")
-     endif()
-
-     message(STATUS "Hwloc_VERSION ${Hwloc_VERSION}")
-     message(STATUS "Hwloc_LIBRARIES ${Hwloc_LIBRARIES}")
-     message(STATUS "Hwloc_INCLUDE_DIRS ${Hwloc_INCLUDE_DIRS}")
-
-     set(DEFAULT_ENABLE_HWLOC ON CACHE INTERNAL "default hwloc")
+    set(DEFAULT_ENABLE_HWLOC ON CACHE INTERNAL "default hwloc")
   endif()
 endif()
 
@@ -1026,7 +1017,7 @@ if(ENABLE_LTTNG)
     message(FATAL_ERROR "ENABLE_LTTNG enabled, but is only available on Unix")
   endif()
 
-  if(PKG_CONFIG_EXECUTABLE)
+  if(PKG_CONFIG_FOUND)
     pkg_check_modules(LTTNG_UST lttng-ust>=2.7)
   endif()
   if(LTTNG_UST_FOUND)
@@ -1044,6 +1035,29 @@ endif()
 if(ENABLE_RDMA)
   find_package(RDMAcm MODULE REQUIRED)
   find_package(Verbs MODULE REQUIRED)
+endif()
+
+######################################################################################
+
+if(ENABLE_HOST_CPU_DEVICES AND PKG_CONFIG_FOUND AND NOT ENABLE_CONFORMANCE)
+  if(BUILD_SHARED_LIBS)
+    pkg_check_modules(LIBXSMM IMPORTED_TARGET libxsmm-shared>=1.15)
+  endif()
+  if(NOT LIBXSMM_FOUND)
+    pkg_check_modules(LIBXSMM IMPORTED_TARGET libxsmm-static>=1.15)
+  endif()
+
+  # libxsmm needs BLAS as fallback
+  if(LIBXSMM_FOUND)
+    find_package(BLAS)
+  endif()
+endif()
+
+if(LIBXSMM_FOUND AND TARGET BLAS::BLAS)
+  set(HAVE_LIBXSMM 1)
+else()
+  set(HAVE_LIBXSMM 0)
+  message(STATUS "libxsmm or libblas not found, disabled")
 endif()
 
 ######################################################################################
@@ -1299,8 +1313,7 @@ set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_ba
 cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
 cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes \
 cl_khr_command_buffer cl_khr_command_buffer_multi_device cl_khr_subgroups \
-cl_intel_unified_shared_memory cl_ext_buffer_device_address \
-cl_exp_tensor cl_exp_defined_builtin_kernels")
+cl_intel_unified_shared_memory cl_ext_buffer_device_address")
 
 # Host CPU device: list of OpenCL 3.0 features that are always enabled
 # TODO: __opencl_c_atomic_scope_all_devices works with CPU device but not others
@@ -1318,6 +1331,11 @@ if(NOT ENABLE_CONFORMANCE)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} \
       cl_pocl_svm_rect cl_pocl_command_buffer_svm \
       cl_pocl_command_buffer_host_buffer")
+
+  if (HAVE_LIBXSMM)
+    set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} \
+      cl_exp_tensor cl_exp_defined_builtin_kernels")
+  endif()
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroup_ballot \
 cl_khr_subgroup_shuffle cl_intel_subgroups cl_intel_subgroups_short cl_intel_subgroups_char \
 cl_ext_float_atomics cl_intel_required_subgroup_size")
@@ -2231,6 +2249,7 @@ MESSAGE(STATUS " ")
 
 MESSAGE(STATUS "HAVE_CLOCK_GETTIME: ${HAVE_CLOCK_GETTIME}")
 MESSAGE(STATUS "HAVE_GLEW: ${HAVE_GLEW}")
+MESSAGE(STATUS "HAVE_LIBXSMM: ${HAVE_LIBXSMM}")
 MESSAGE(STATUS "HOST_AS_FLAGS: ${HOST_AS_FLAGS}")
 MESSAGE(STATUS "HOST_CLANG_FLAGS: ${HOST_CLANG_FLAGS}")
 MESSAGE(STATUS "HOST_LD_FLAGS: ${HOST_LD_FLAGS}")

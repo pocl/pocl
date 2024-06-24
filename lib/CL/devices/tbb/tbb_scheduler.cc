@@ -39,10 +39,10 @@
 #include <tbb/partitioner.h>
 #include <tbb/task_arena.h>
 
-#include "builtin_kernels.hh"
 #include "common.h"
 #include "common_driver.h"
 #include "common_utils.h"
+#include "pocl_builtin_kernels.h"
 #include "pocl_cl.h"
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"

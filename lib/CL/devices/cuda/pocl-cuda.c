@@ -26,13 +26,13 @@
 
 #include "config.h"
 
-#include "builtin_kernels.hh"
 #include "common.h"
 #include "common_driver.h"
 #include "devices.h"
 #include "pocl-cuda.h"
 #include "pocl-ptx-gen.h"
 #include "pocl.h"
+#include "pocl_builtin_kernels.h"
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
 #include "pocl_llvm.h"

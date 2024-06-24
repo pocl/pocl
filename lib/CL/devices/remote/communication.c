@@ -1910,7 +1910,7 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
   device->supported_spir_v_versions
       = GET_STRING (devinfo->supported_spir_v_versions);
 
-  if (devinfo->builtin_kernels != POCL_NON_BIK)
+  if (devinfo->builtin_kernels)
     device->builtin_kernel_list = GET_STRING (devinfo->builtin_kernels);
 
   // This one is deprecated (and seems to be always 128)

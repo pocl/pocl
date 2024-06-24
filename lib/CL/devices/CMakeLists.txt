@@ -90,6 +90,7 @@ if(ENABLE_HOST_CPU_DEVICES)
   if((NOT ENABLE_LOADABLE_DRIVERS) AND ENABLE_HOST_CPU_DEVICES_OPENMP)
     list(APPEND POCL_DEVICES_LINK_LIST OpenMP::OpenMP_C)
   endif()
+
 endif()
 
 if(ENABLE_TCE)
@@ -162,11 +163,16 @@ set(POCL_DEVICES_SOURCES
   common.h  common.c
   pocl_local_size.h  pocl_local_size.c
   common_driver.h  common_driver.c
-  builtin_kernels.cc builtin_kernels.hh
   spirv.hh  spirv_parser.hh  spirv_parser.cc
   cpuinfo.c  cpuinfo.h)
 
 if(ENABLE_HOST_CPU_DEVICES)
+  if(HAVE_LIBXSMM)
+    list(APPEND POCL_DEVICES_LINK_LIST PkgConfig::LIBXSMM BLAS::BLAS)
+  endif()
+  if(ENABLE_HWLOC)
+    list(APPEND POCL_DEVICES_LINK_LIST PkgConfig::HWLOC)
+  endif()
   list(APPEND POCL_DEVICES_SOURCES common_utils.h common_utils.c)
 endif()
 
@@ -181,6 +187,10 @@ add_library("pocl-devices" OBJECT ${POCL_DEVICES_SOURCES})
 if(OCL_ICD_INCLUDE_DIRS)
   target_include_directories("pocl-devices" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
 endif()
+if(HAVE_LIBXSMM) # for includedir flags
+  target_link_libraries("pocl-devices" PRIVATE PkgConfig::LIBXSMM)
+endif()
+
 set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
     "$<TARGET_OBJECTS:pocl-devices>")
 harden("pocl-devices")

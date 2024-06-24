@@ -78,11 +78,8 @@ public:
   TensorLayoutBLAS(std::initializer_list<cl_tensor_dim> TheLeadingDims,
                    std::initializer_list<size_t> TheLeadingStrides)
       : LeadingDims(TheLeadingDims), LeadingStrides(TheLeadingStrides) {
-    Layout.stype = CL_TENSOR_LAYOUT_BLAS;
-    Layout.next = nullptr;
-    Layout.leading_dims = LeadingDims.data();
-    Layout.leading_strides = LeadingStrides.data();
-    Layout.base_alignment = 0;
+    memcpy(Layout.leading_dims, LeadingDims.data(), LeadingDims.size()*sizeof(cl_tensor_dim) );
+    memcpy(Layout.leading_strides, LeadingStrides.data(), LeadingStrides.size()*sizeof(size_t) );
   }
 
   const cl_tensor_layout_blas *get() const noexcept { return &Layout; }
@@ -107,12 +104,14 @@ public:
     assert(Layout.getNumLeadingDims() == 0 ||
            Layout.getNumLeadingDims() == Shape.size() - 1);
 
-    Desc.stype = CL_TENSOR_DESC_BASE;
-    Desc.next = nullptr;
     Desc.rank = Shape.size();
-    Desc.shape = Shape.data();
+    assert(Desc.rank <= CL_MEM_MAX_TENSOR_RANK);
+    memset(Desc.shape, 0, sizeof(Desc.shape));
+    memcpy(Desc.shape, Shape.data(), Shape.size() * sizeof(cl_tensor_shape));
+
     Desc.dtype = DType;
     Desc.layout = nullptr;
+    Desc.layout_type = CL_TENSOR_LAYOUT_BLAS;
 
     if (Layout.getNumLeadingDims())
       Desc.layout = Layout.get();
@@ -124,8 +123,16 @@ public:
 
   // In bytes.
   unsigned elementSize() const noexcept {
-    assert(Desc.dtype == CL_TENSOR_FLOAT && "TODO: Other types.");
-    return 4;
+    switch (Desc.dtype) {
+    case CL_TENSOR_DTYPE_FP64:
+      return 8;
+    case CL_TENSOR_DTYPE_FP32:
+      return 4;
+    case CL_TENSOR_DTYPE_FP16:
+      return 2;
+    default:
+      return 1;
+    }
   }
 
   size_t getStorageSize() const noexcept {
@@ -161,9 +168,9 @@ static cl::Buffer createTensor(cl::Context &Ctx, const TensorDesc &TDesc,
 cl::Platform Platform;
 cl::Device Dev;
 cl::Context Ctx;
-cl::Program MatmulProg;
 cl::CommandQueue CmdQ;
-clCreateBuiltinKernelWithAttributesEXP_fn createBuiltinKernelWithAttributes;
+clCreateProgramWithDefinedBuiltInKernels_fn createProgramWithDBKs;
+cl_dbk_attributes_khr_matmul MatmulAttrs;
 
 void doFloatMatmul(bool ColumnMajor, unsigned Transpose, unsigned M, unsigned N,
                    unsigned K, std::initializer_list<float> AData, unsigned Lda,
@@ -177,21 +184,33 @@ void doFloatMatmul(bool ColumnMajor, unsigned Transpose, unsigned M, unsigned N,
   TensorLayoutBLAS BTLayout = TensorLayoutBLAS({ColumnMajor ? 0u : 1u}, {Ldb});
   TensorLayoutBLAS CTLayout = TensorLayoutBLAS({ColumnMajor ? 0u : 1u}, {Ldc});
 
-  TensorDesc ATDesc({M, K}, CL_TENSOR_FLOAT, ATLayout);
-  TensorDesc BTDesc({K, N}, CL_TENSOR_FLOAT, BTLayout);
-  TensorDesc CTDesc({M, N}, CL_TENSOR_FLOAT, CTLayout);
+  TensorDesc ATDesc({M, K}, CL_TENSOR_DTYPE_FP32, ATLayout);
+  TensorDesc BTDesc({K, N}, CL_TENSOR_DTYPE_FP32, BTLayout);
+  TensorDesc CTDesc({M, N}, CL_TENSOR_DTYPE_FP32, CTLayout);
 
-  cl_dbk_attributes_khr_matmul MatmulAttrs;
-  MatmulAttrs.a = ATDesc.get();
-  MatmulAttrs.b = BTDesc.get();
-  MatmulAttrs.c = CTDesc.get();
+  memcpy(&MatmulAttrs.a, ATDesc.get(), sizeof(cl_tensor_desc));
+  memcpy(&MatmulAttrs.b, BTDesc.get(), sizeof(cl_tensor_desc));
+  memcpy(&MatmulAttrs.c, CTDesc.get(), sizeof(cl_tensor_desc));
   MatmulAttrs.trans_a = !!(Transpose & TRANSPOSE_A);
   MatmulAttrs.trans_b = !!(Transpose & TRANSPOSE_B);
-  MatmulAttrs.kernel_props = nullptr;
+  memset(MatmulAttrs.kernel_props, 0, sizeof(MatmulAttrs.kernel_props));
 
   cl_int Status;
-  auto MatmulKernel = cl::Kernel(createBuiltinKernelWithAttributes(
-      MatmulProg.get(), "khr_matmul", &MatmulAttrs, &Status));
+  cl_device_id Devices[1] = {Dev()};
+  BuiltinKernelId IDs[1] = {BuiltinKernelId::POCL_CDBI_DBK_KHR_MATMUL};
+  const char *Names[1] = {"khr_matmul"};
+  cl_int DeviceStatus[1] = {0};
+  cl_dbk_attributes_khr_matmul *Attrs[1] = {&MatmulAttrs};
+  cl_program Yolo =
+      createProgramWithDBKs(Ctx(), 1, Devices, 1, IDs, Names,
+                            (const void **)Attrs, DeviceStatus, &Status);
+  EXPECT(Status == CL_SUCCESS);
+  cl::Program MatmulProg(Yolo);
+
+  Status = MatmulProg.build();
+  EXPECT(Status == CL_SUCCESS);
+
+  auto MatmulKernel = cl::Kernel(MatmulProg, Names[0], &Status);
   EXPECT(Status == CL_SUCCESS);
 
   auto ATensor = createTensor(Ctx, ATDesc, AData.begin(), &Status);
@@ -204,15 +223,10 @@ void doFloatMatmul(bool ColumnMajor, unsigned Transpose, unsigned M, unsigned N,
   MatmulKernel.setArg(1, BTensor);
   MatmulKernel.setArg(2, CTensor);
 
-  // Notice the grid is NullRange. Idea is that the grid is implied by the
-  // DBK.
-  Status = CmdQ.enqueueNDRangeKernel(MatmulKernel, cl::NullRange, cl::NullRange,
-                                     cl::NullRange);
+  Status = CmdQ.enqueueNDRangeKernel(MatmulKernel, cl::NullRange,
+                                     cl::NDRange{1, 1}, cl::NullRange);
   EXPECT(Status == CL_SUCCESS);
-  CmdQ.enqueueMapBuffer(CTensor, false, CL_MAP_READ, 0, M * N, nullptr, nullptr,
-                        &Status);
-  EXPECT(Status == CL_SUCCESS);
-  Status = CmdQ.flush();
+  Status = CmdQ.finish();
   EXPECT(Status == CL_SUCCESS);
 }
 
@@ -252,20 +266,13 @@ int main() {
   std::tie(Platform, Dev) = findDeviceWithMatmulDBK();
   Ctx = cl::Context(Dev);
 
-  cl_int Status;
-  MatmulProg = cl::Program(Ctx, {Dev}, "khr_matmul", &Status);
-  EXPECT(Status == CL_SUCCESS);
+  cl_int Status = CL_SUCCESS;
+  createProgramWithDBKs = (clCreateProgramWithDefinedBuiltInKernels_fn)
+      clGetExtensionFunctionAddressForPlatform(
+          Platform(), "clCreateProgramWithDefinedBuiltInKernels");
+  EXPECT(createProgramWithDBKs != nullptr);
 
-  Status = MatmulProg.build();
-  EXPECT(Status == CL_SUCCESS);
-
-  createBuiltinKernelWithAttributes =
-      (clCreateBuiltinKernelWithAttributesEXP_fn)
-          clGetExtensionFunctionAddressForPlatform(
-              Platform(), "clCreateBuiltinKernelWithAttributesEXP");
-  EXPECT(createBuiltinKernelWithAttributes != nullptr);
-
-  CmdQ = cl::CommandQueue(Ctx, Status);
+  CmdQ = cl::CommandQueue(Ctx, 0, &Status);
   EXPECT(Status == CL_SUCCESS);
 
   std::vector<float> Result;
