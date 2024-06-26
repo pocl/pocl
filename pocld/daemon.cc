@@ -50,7 +50,7 @@
 #include "daemon.hh"
 
 #ifndef POLLRDHUP
-#define PULLRDHUP 0
+#define POLLRDHUP 0
 #endif
 #define POLLFD_ERROR_BITS (POLLHUP | POLLERR | POLLNVAL | POLLRDHUP)
 
