@@ -36,11 +36,6 @@
 #include <map>
 #include <random>
 
-#define DUMP_TASK_GRAPHS 0
-#if DUMP_TASK_GRAPHS == 1
-#include "poclu.h"
-#endif
-
 static char VecAddSrc[] = R"raw(
   __kernel void vecadd (__global int *A, __global int *B,
                         __global int *C) {
@@ -204,10 +199,6 @@ int TestOutputDataDecomposition() {
 
     Queues[0].enqueueReadBuffer(CBuffer, CL_FALSE, 0, sizeof(cl_int) * NumData,
                                 FinalBufCContents.data());
-
-#if DUMP_TASK_GRAPHS == 1
-    poclu_dump_dot_task_graph(Context.get(), "task_graph.dot");
-#endif
 
     Queues[0].finish();
 

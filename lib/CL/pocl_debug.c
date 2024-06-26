@@ -40,6 +40,9 @@ int pocl_stderr_is_a_tty;
 
 static pocl_lock_t console_mutex;
 
+pocl_lock_t pocl_tg_dump_lock = POCL_LOCK_INITIALIZER;
+pocl_cond_t pocl_tg_dump_cond;
+
 void pocl_debug_output_lock(void) { POCL_LOCK(console_mutex); }
 
 void pocl_debug_output_unlock(void) { POCL_UNLOCK(console_mutex); }
@@ -240,8 +243,13 @@ dump_dot_command_queue (FILE *f,
       LL_FOREACH (e->command->migr_infos, mi)
         {
           if (mi->buffer->parent != NULL)
-            fprintf (f, "sbuf#%zu/#%zu", mi->buffer->id,
-                     mi->buffer->parent->id);
+            {
+              fprintf (f, "sbuf#%zu/#%zu", mi->buffer->id,
+                       mi->buffer->parent->id);
+              if (e->command_type == CL_COMMAND_MIGRATE_MEM_OBJECTS)
+                fprintf (f, "\\ns:%zu\\ne:%zu", mi->buffer->origin,
+                         mi->buffer->origin + mi->buffer->size);
+            }
           else
             fprintf (f, "buf#%zu", mi->buffer->id);
           if (mi->read_only)

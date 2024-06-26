@@ -27,6 +27,7 @@
 #include "devices.h"
 #include "pocl_cache.h"
 #include "pocl_cl.h"
+#include "pocl_debug.h"
 #include "pocl_llvm.h"
 #include "pocl_spir.h"
 #include "pocl_timing.h"
@@ -72,6 +73,13 @@ void Level0Queue::runThread() {
 
   bool ShouldExit = false;
   _cl_command_node *Command = nullptr;
+
+  /* See clFinish.c for the explanation. */
+  if (pocl_get_bool_option("POCL_DUMP_TASK_GRAPHS", 0) == 1) {
+    POCL_FAST_LOCK(pocl_tg_dump_lock);
+    pthread_cond_wait(&pocl_tg_dump_cond, &pocl_tg_dump_lock);
+  }
+
   do {
     BatchType WorkBatch;
     ShouldExit = WorkHandler->getWorkOrWait(&Command, WorkBatch);

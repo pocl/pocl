@@ -46,6 +46,7 @@
 
 #include "CL/cl.h"
 #include "pocl_export.h"
+#include "pocl_threads.h"
 
 // size_t print spec
 #ifndef PRIuS
@@ -559,6 +560,16 @@ const char *pocl_command_type_to_str (cl_command_type cmd, int shortened);
 POCL_EXPORT
 void pocl_dump_dot_task_graph (cl_context context, const char *file_name);
 
+/* Some of the device drivers can wait until clFinish() is called to allow
+   a full task graph dumped to disk of the accumulated commands. The lock and
+   the condition variable are used to synchronize the
+   "clFinish() -> dump -> asynch execution in drivers" cycle with the condition
+   variable holding the asynch execution until after we have dumped the
+   graph. */
+POCL_EXPORT
+extern pocl_lock_t pocl_tg_dump_lock;
+POCL_EXPORT
+extern pocl_cond_t pocl_tg_dump_cond;
 #ifdef __cplusplus
 }
 #endif
