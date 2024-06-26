@@ -207,7 +207,7 @@ int TestOutputDataDecomposition() {
       if (i < (WorkShare * NumParallelQueues)) {
         if (AfterSubBufCContents[i] != i + 2) {
           std::cerr << "ERROR: after sub-bufs " << i << " was "
-                    << AfterSubBufCContents[i] << " expected " << i + 2 + 2
+                    << AfterSubBufCContents[i] << " expected " << i + 2
                     << std::endl;
           AllOK = false;
           break;
