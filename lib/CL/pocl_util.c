@@ -935,8 +935,7 @@ convert_to_subbuffer_migrations (pocl_buffer_migration_info *buffer_usage,
           if (sub_buf->mem->implicit_sub_buffer)
             continue;
 
-          size_t next_start_addr
-            = sub_buf->mem->origin + sub_buf->mem->size + 1;
+          size_t next_start_addr = sub_buf->mem->origin + sub_buf->mem->size;
           assert (sub_buf->mem->origin % align == 0);
           if (next_start_addr % align == 0)
             /* There should be an implicit aligned sub-buffer covering the next
