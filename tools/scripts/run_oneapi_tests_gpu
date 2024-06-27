@@ -36,6 +36,11 @@ unset OCL_ICD_FILENAMES
 # set in CTestCustom.cmake
 unset OCL_ICD_VENDORS
 
+# enable FP64 support. Without this, LevelZero (and PoCL) will not
+# expose FP64 in device properties
+export OverrideDefaultFP64Settings=1
+export IGC_EnableDPEmulation=1
+
 # check that OCL-ICD still loads PoCL
 ctest --output-on-failure -R pocl_version_check || exit 1
 
