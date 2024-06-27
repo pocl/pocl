@@ -169,6 +169,7 @@ set_tests_properties( "kernel/test_sampler_address_clamp_${VARIANT}"
   PROPERTIES
     COST 4.0
     PASS_REGULAR_EXPRESSION "\nOK\n"
+    SKIP_REGULAR_EXPRESSION "SKIP\n"
     PROCESSORS 1
     DEPENDS "pocl_version_check"
     LABELS "internal;kernel")
@@ -177,6 +178,7 @@ set_tests_properties( "kernel/test_image_query_funcs_${VARIANT}"
   PROPERTIES
     COST 4.0
     PASS_REGULAR_EXPRESSION "read imag1: 2,9,11,7\nread imag2: 2,9,11,7\n.*OK\n"
+    SKIP_REGULAR_EXPRESSION "SKIP\n"
     PROCESSORS 1
     DEPENDS "pocl_version_check"
     LABELS "internal;kernel")
