@@ -759,7 +759,7 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_vectors_micro"
          COMMAND "${TS_BUILDDIR}/vectors/test_vectors" ${EXTRA_ARGS} vec_align_array  step_type step_var step_typedef_type step_typedef_var)
 
 
-if(HAVE_SPIRV_TOOLS)
+if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_0"
          COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS} decorate_restrict  decorate_aliased  decorate_alignment  decorate_constant  decorate_cpacked decorate_saturated_conversion_float_to_char decorate_saturated_conversion_float_to_short decorate_saturated_conversion_double_to_int decorate_fp_rounding_mode_rte_float_int  decorate_fp_rounding_mode_rtz_double_long get_program_il  linkage_export_function_compile  linkage_import_function_compile  linkage_import_function_link  op_atomic_inc_global  op_atomic_dec_global  op_label_simple  op_branch_simple  op_unreachable_simple  op_branch_conditional  op_branch_conditional_weighted  op_composite_construct_int4  op_composite_construct_struct
@@ -900,7 +900,7 @@ set(OCL_30_TESTS_MICRO
     "${TS_NAME}${TS_SUFFIX}_SVM_micro_2"
 )
 
-if(HAVE_SPIRV_TOOLS)
+if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
   list(APPEND OCL_30_TESTS_MICRO
     "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_0"
     "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_1"
@@ -1066,15 +1066,18 @@ set(CTS_LEVEL0_LIST
   conformance_main_buffers_micro_map_write
   conformance_main_vectors_micro
 
-  #conformance_main_spirv_new_micro_0    ### SEGFAULT
-  conformance_main_spirv_new_micro_1
-  #conformance_main_spirv_new_micro_2    ### SEGFAULT
-
   conformance_main_c11_atomics_micro_1
   conformance_main_c11_atomics_micro_2
   conformance_main_c11_atomics_micro_3
   conformance_main_c11_atomics_micro_4
 )
+
+if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
+  #"conformance_main_spirv_new_micro_0"
+  #"conformance_main_spirv_new_micro_2"
+  list(APPEND CTS_LEVEL0_LIST
+    "conformance_main_spirv_new_micro_1")
+endif()
 
 foreach(CTSTEST IN LISTS CTS_LEVEL0_LIST)
   set_property(TEST ${CTSTEST}
