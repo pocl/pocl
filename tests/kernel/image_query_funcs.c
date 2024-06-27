@@ -70,6 +70,16 @@ int main(int argc, char **argv)
   TEST_ASSERT( device );
   TEST_ASSERT( queue );
 
+  cl_bool SupportsImgs = CL_FALSE;
+  err = clGetDeviceInfo (device, CL_DEVICE_IMAGE_SUPPORT, sizeof (cl_bool),
+                         &SupportsImgs, NULL);
+  CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo CL_DEVICE_IMAGE_SUPPORT\n");
+  if (SupportsImgs == CL_FALSE)
+    {
+      puts ("Selected device doesn't support images, skipping test. SKIP");
+      return 77;
+    }
+
   cl_sampler external_sampler = clCreateSampler (
       context, CL_FALSE, CL_ADDRESS_NONE, CL_FILTER_NEAREST, &err);
   CHECK_OPENCL_ERROR_IN ("clCreateSampler");
