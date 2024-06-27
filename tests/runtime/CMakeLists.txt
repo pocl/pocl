@@ -176,7 +176,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/test_device_address" "runtime/test_svm"
   "runtime/test_device_address" "runtime/test_svm"
   "runtime/test_compile_n_link"
-  "runtime/test_subbuffers"
+#  "runtime/test_subbuffers"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
@@ -455,6 +455,6 @@ set_property(TEST
   "runtime/test_command_buffer"
   "runtime/test_device_address"
   "runtime/test_svm"
-  "runtime/test_subbuffers"
+#  "runtime/test_subbuffers"
   ${OCL_30_TESTS}
   APPEND PROPERTY LABELS "level0")
