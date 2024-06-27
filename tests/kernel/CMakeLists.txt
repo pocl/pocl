@@ -379,6 +379,8 @@ set_property(TEST
 #  Test  #40: kernel/test_printf_vectors_ulongn
 # kernel/test_fabs (incorrect values)
 # kernel/test_ilogb (crash)
+# works on iGPU but crashes in driver on Arc A750 (driver issue?):
+#  "kernel/test_sampler_address_clamp_loopvec"
 set_property(TEST
   "kernel/test_local_struct_array_loopvec"
   "kernel/test_shuffle_char_loopvec"
@@ -408,6 +410,5 @@ set_property(TEST
   "kernel/test_short16_loopvec"
   "kernel/test_sizeof_uint_loopvec"
   "kernel/test_ucharn_loopvec"
-  "kernel/test_sampler_address_clamp_loopvec"
   "kernel/test_image_query_funcs_loopvec"
   APPEND PROPERTY LABELS "level0")
