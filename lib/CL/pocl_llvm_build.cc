@@ -358,6 +358,11 @@ int pocl_llvm_build_program(cl_program program,
 
   if (device->image_support)
     ss << "-D__IMAGE_SUPPORT__=1 ";
+  else {
+    // workaround for a bug in Clang. It unconditionally predefines this macro
+    // when compiling for SPIR or SPIRV target
+    ss << "-U__IMAGE_SUPPORT__ ";
+  }
 
   ss << "-DCL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE=" << device->global_var_max_size << " ";
 
