@@ -169,6 +169,7 @@ set_tests_properties( "kernel/test_sampler_address_clamp_${VARIANT}"
   PROPERTIES
     COST 4.0
     PASS_REGULAR_EXPRESSION "\nOK\n"
+    SKIP_REGULAR_EXPRESSION "SKIP\n"
     PROCESSORS 1
     DEPENDS "pocl_version_check"
     LABELS "internal;kernel")
@@ -177,6 +178,7 @@ set_tests_properties( "kernel/test_image_query_funcs_${VARIANT}"
   PROPERTIES
     COST 4.0
     PASS_REGULAR_EXPRESSION "read imag1: 2,9,11,7\nread imag2: 2,9,11,7\n.*OK\n"
+    SKIP_REGULAR_EXPRESSION "SKIP\n"
     PROCESSORS 1
     DEPENDS "pocl_version_check"
     LABELS "internal;kernel")
@@ -377,6 +379,8 @@ set_property(TEST
 #  Test  #40: kernel/test_printf_vectors_ulongn
 # kernel/test_fabs (incorrect values)
 # kernel/test_ilogb (crash)
+# works on iGPU but crashes in driver on Arc A750 (driver issue?):
+#  "kernel/test_sampler_address_clamp_loopvec"
 set_property(TEST
   "kernel/test_local_struct_array_loopvec"
   "kernel/test_shuffle_char_loopvec"
@@ -406,6 +410,5 @@ set_property(TEST
   "kernel/test_short16_loopvec"
   "kernel/test_sizeof_uint_loopvec"
   "kernel/test_ucharn_loopvec"
-  "kernel/test_sampler_address_clamp_loopvec"
   "kernel/test_image_query_funcs_loopvec"
   APPEND PROPERTY LABELS "level0")

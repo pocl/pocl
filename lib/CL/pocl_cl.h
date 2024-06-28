@@ -313,11 +313,11 @@ extern uint64_t last_object_id;
 #define POCL_GVAR_INIT_KERNEL_NAME "pocl.gvar.init"
 
 typedef struct pocl_argument {
-  uint64_t size;
+  size_t size;
   /* The "offset" is used to simplify subbuffer handling.
    * At enqueue time, subbuffers are converted to buffers + offset into them.
    */
-  uint64_t offset;
+  size_t offset;
   void *value;
   /* 1 if this argument has been set by clSetKernelArg */
   char is_set;
@@ -1765,6 +1765,10 @@ struct _cl_event {
   POCL_OBJECT;
   cl_context context;
   cl_command_queue queue;
+  /* note: this is not necessarily the same as command->type. User events
+   * do not have a *command, and in some cases the actual command is different
+   * than the one enqueued by the user (e.g. SVMMemcpy can be translated
+   * to other commands) */
   cl_command_type command_type;
   _cl_command_node *command;
 

@@ -22,7 +22,7 @@ int main(int argc, char **argv)
   cl_program program = NULL;
   cl_kernel kernel = NULL;
   cl_mem image = NULL;
-  cl_int result;
+  cl_int err;
   int retval = -1;
 
   /* image parameters */
@@ -72,24 +72,36 @@ int main(int argc, char **argv)
     }
 
   size_t device_id_size = 0;
-  result = clGetContextInfo (context, CL_CONTEXT_DEVICES, 0, NULL,
-                             &device_id_size);
-  if (result != CL_SUCCESS)
-    {
-      puts ("clGetContextInfo call failed while fetching size\n");
-      goto error;
-    }
+  err
+    = clGetContextInfo (context, CL_CONTEXT_DEVICES, 0, NULL, &device_id_size);
+  CHECK_OPENCL_ERROR_IN ("clGetContextInfo");
+
   cl_device_id *devices = malloc (device_id_size);
   TEST_ASSERT (devices != NULL && "out of host memory\n");
-  result = clGetContextInfo (context, CL_CONTEXT_DEVICES, device_id_size,
-                             devices, NULL);
-  if (result != CL_SUCCESS)
+  err = clGetContextInfo (context, CL_CONTEXT_DEVICES, device_id_size, devices,
+                          NULL);
+  CHECK_OPENCL_ERROR_IN ("clGetContextInfo");
+
+  cl_device_id SelectedDev = NULL;
+  for (unsigned i = 0; i < (device_id_size / sizeof (cl_device_id)); ++i)
     {
-      puts ("clGetContextInfo call failed\n");
-      goto error;
+      cl_bool SupportsImgs = CL_FALSE;
+      err = clGetDeviceInfo (devices[i], CL_DEVICE_IMAGE_SUPPORT,
+                             sizeof (cl_bool), &SupportsImgs, NULL);
+      CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo CL_DEVICE_IMAGE_SUPPORT\n");
+      if (SupportsImgs != CL_FALSE)
+        {
+          SelectedDev = devices[i];
+          break;
+        }
+    }
+  if (SelectedDev == NULL)
+    {
+      puts ("No devices in context support images, skipping test. SKIP");
+      return 77;
     }
 
-  queue = clCreateCommandQueue(context, devices[0], 0, NULL); 
+  queue = clCreateCommandQueue (context, SelectedDev, 0, NULL);
   if (!queue) 
     {
       puts("clCreateCommandQueue call failed\n");
@@ -99,8 +111,8 @@ int main(int argc, char **argv)
   /* Create image */
 
   image = clCreateImage (context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                         &image_format, &image_desc, imageData, &result);
-  if (result != CL_SUCCESS)
+                         &image_format, &image_desc, imageData, &err);
+  if (err != CL_SUCCESS)
     {
       puts("image creation failed\n");
       goto error;
@@ -116,8 +128,8 @@ int main(int argc, char **argv)
       goto error;
     }
 
-  result = clBuildProgram(program, 0, NULL, NULL, NULL, NULL); 
-  if (result != CL_SUCCESS) 
+  err = clBuildProgram (program, 0, NULL, NULL, NULL, NULL);
+  if (err != CL_SUCCESS)
     {
       puts("clBuildProgram call failed\n");
       goto error;
@@ -131,23 +143,23 @@ int main(int argc, char **argv)
       goto error;
     }
 
-   result = clSetKernelArg( kernel, 0, sizeof(cl_mem), &image);
-   if (result)
-     {
-       puts("clSetKernelArg failed\n");
-       goto error;
-     }
+  err = clSetKernelArg (kernel, 0, sizeof (cl_mem), &image);
+  if (err)
+    {
+      puts ("clSetKernelArg failed\n");
+      goto error;
+    }
 
-  result = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, global_work_size, 
-                                  local_work_size, 0, NULL, NULL); 
-  if (result != CL_SUCCESS) 
+  err = clEnqueueNDRangeKernel (queue, kernel, 1, NULL, global_work_size,
+                                local_work_size, 0, NULL, NULL);
+  if (err != CL_SUCCESS)
     {
       puts("clEnqueueNDRangeKernel call failed\n");
       goto error;
     }
 
-  result = clFinish(queue);
-  if (result == CL_SUCCESS)
+  err = clFinish (queue);
+  if (err == CL_SUCCESS)
     retval = 0;
 
 error:
