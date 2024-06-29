@@ -1,6 +1,7 @@
 /* pocl_mem_management.c - manage allocation of runtime objects
 
    Copyright (c) 2014 Ville Korhonen
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -22,6 +23,7 @@
 */
 
 #include "pocl_cl.h"
+#include "utlist.h"
 
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
@@ -54,6 +56,8 @@ cl_event pocl_mem_manager_new_event ();
 #define pocl_mem_manager_new_command() \
   (_cl_command_node*) calloc (1, sizeof (_cl_command_node))
 
+/* TODO: Should we free the migr_infos here or in the event? For user events
+   there are no commands. */
 #define pocl_mem_manager_free_command(cmd)                                    \
   if ((cmd))                                                                  \
     {                                                                         \
@@ -61,8 +65,12 @@ cl_event pocl_mem_manager_new_event ();
         {                                                                     \
           POCL_MEM_FREE ((cmd)->sync.syncpoint.sync_point_wait_list);         \
         }                                                                     \
-      POCL_MEM_FREE ((cmd)->memobj_list);                                     \
-      POCL_MEM_FREE ((cmd)->readonly_flag_list);                              \
+      pocl_buffer_migration_info *mi, *tmp;                                   \
+      LL_FOREACH_SAFE ((cmd)->migr_infos, mi, tmp)                            \
+        {                                                                     \
+          POname (clReleaseMemObject (mi->buffer));                           \
+          POCL_MEM_FREE (mi);                                                 \
+        }                                                                     \
     }                                                                         \
   POCL_MEM_FREE ((cmd));
 
@@ -71,6 +79,35 @@ cl_event pocl_mem_manager_new_event ();
 
 #define pocl_mem_manager_free_event_node(en) POCL_MEM_FREE(en)
 
+pocl_buffer_migration_info *pocl_append_unique_migration_info (
+  pocl_buffer_migration_info *list, cl_mem buffer, char read_only);
+
+pocl_buffer_migration_info *
+pocl_deep_copy_migration_info_list (pocl_buffer_migration_info *list,
+                                    int retain);
+
+int pocl_create_migration_commands (cl_device_id dev,
+                                    cl_event *ev_export_p,
+                                    cl_event user_cmd,
+                                    cl_mem mem,
+                                    pocl_mem_identifier *gmem,
+                                    const char readonly,
+                                    cl_command_type command_type,
+                                    cl_mem_migration_flags mig_flags,
+                                    uint64_t migration_size,
+                                    cl_event *prev_migr_event);
+
+pocl_buffer_migration_info *
+pocl_convert_to_subbuffer_migrations (pocl_buffer_migration_info *buffer_usage,
+                                      cl_int *err);
+
+/* Increments a buffer's reference counter. */
+#define POCL_RETAIN_BUFFER_UNLOCKED(__OBJ__)                                  \
+  do                                                                          \
+    {                                                                         \
+      ++((__OBJ__)->pocl_refcount);                                           \
+    }                                                                         \
+  while (0)
 
 #endif
 

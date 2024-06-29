@@ -1,4 +1,4 @@
-/* pocl_remote.h - some configuration defines for the remote backend
+/* pocl_remote.h - configuration defines for the remote backend
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
 
@@ -21,6 +21,9 @@
    IN THE SOFTWARE.
 */
 
+#ifndef POCL_REMOTE_SHARED_H
+#define POCL_REMOTE_SHARED_H
+
 #define DEFAULT_POCL_REMOTE_PORT 10998
 
 #define MAX_REMOTE_BUILDPROGRAM_SIZE (16 << 20)
@@ -28,3 +31,5 @@
 #define MAX_REMOTE_DEVICES 512
 
 #define MAX_REMOTE_PARAM_LENGTH 256
+
+#endif

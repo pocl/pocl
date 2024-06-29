@@ -2,12 +2,13 @@
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
                  2011-2019 Pekka Jääskeläinen
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -17,9 +18,9 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 /**
@@ -32,6 +33,12 @@
  */
 #ifndef POCL_H
 #define POCL_H
+
+#include <stdint.h>
+
+/* The running number used for identifying PoCL runtime allocated objects.
+   0 marks an invalid/undefined object. */
+typedef uint64_t pocl_obj_id_t;
 
 #ifndef CL_TARGET_OPENCL_VERSION
 #define CL_TARGET_OPENCL_VERSION 220
@@ -84,13 +91,16 @@ typedef struct mem_mapping
   size_t slice_pitch;
 } mem_mapping_t;
 
-/* memory identifier:  */
+/* A single buffer can and will be allocated in
+   multiple different devices which might or might not share the global memory.
+   This struct captures a single buffer to global memory allocation's
+   properties.
+*/
 typedef struct pocl_mem_identifier
 {
-  /* global-memory-specific pointer
-     to hardware resource that represents memory. This may be anything, but
-     must be non-NULL while the memory is actually allocated, and NULL when
-     it's not */
+  /* Global-memory-specific pointer to hardware resource that represents
+     memory. This may be anything, but must be non-NULL while the memory is
+     actually allocated, and NULL when it's not */
   void *mem_ptr;
 
   /* If mem_ptr represents an address in the device global memory which
@@ -103,27 +113,26 @@ typedef struct pocl_mem_identifier
 
   /* Content version tracking. Every write use (clEnqWriteBuffer,
    * clMapBuffer(CL_MAP_WRITE), write_only image, read/write buffers as kernel
-   * args etc) increases the version; read uses do not. At command enqueue
-   * time, the last version across all global mems AND mem_host_ptr
-   * is found and migrated to the destination device's global mem.
+   * args etc) increases the version; read uses do not. This version is used in
+   * implicit migrations to find the latest copy of the data.
    *
-   * In theory, a simple bool of "valid/invalid could be used;
-   * the only difference is that version saves history
-   * (so we could in future do semi-intelligent memory GC, as in "i see the
-   * buffer on this device hasn't been used for 100 versions, i can free it").
+   * In theory, a simple bool of "valid/invalid" could be used;
+   * the only difference is that a version numbering scheme saves history,
+   * which could be useful for LRU global memory garbage collection among other
+   * things in the future.
    */
   uint64_t version;
 
-  /* Extra pointer for drivers to use for anything
+  /* Extra pointer for drivers to use for anything.
    *
    * Currently CUDA uses it to track ALLOC_HOST_PTR allocations.
-   * Vulkan uses it to store host-mapped staging memory
+   * Vulkan uses it to store host-mapped staging memory.
    */
   void *extra_ptr;
 
-  /* Extra integer for drivers to use for anything
+  /* Extra integer for drivers to use for anything.
    *
-   * Currently Vulkan uses it to track vulkan memory requirements
+   * Currently Vulkan uses it to track vulkan memory requirements.
    */
   uint64_t extra;
 
@@ -151,7 +160,7 @@ struct _build_program_callback
 #define POCL_KERNEL_DIGEST_SIZE 20
 typedef uint8_t pocl_kernel_hash_t[POCL_KERNEL_DIGEST_SIZE];
 
-// clEnqueueNDRangeKernel
+/* For clEnqueueNDRangeKernel(). */
 typedef struct
 {
   void *hash;
@@ -168,46 +177,45 @@ typedef struct
   int force_large_grid_wg_func;
 } _cl_command_run;
 
-// clEnqueueCommandBufferKHR
+/* For clEnqueueCommandBufferKHR(). */
 typedef struct
 {
   cl_command_buffer_khr buffer;
 } _cl_command_replay;
 
-// clEnqueueNativeKernel
+/* For clEnqueueNativeKernel(). */
 typedef struct
 {
   void *args;
   size_t cb_args;
+  /* The argument buffers are stored in _cl_command's migr_info list. */
   void **arg_locs;
   void(CL_CALLBACK *user_func) (void *);
 } _cl_command_native;
 
-// clEnqueueReadBuffer
+/* For clEnqueueReadBuffer(). */
 typedef struct
 {
   void *__restrict__ dst_host_ptr;
-  pocl_mem_identifier *src_mem_id;
   pocl_mem_identifier *src_content_size_mem_id;
   size_t offset;
   size_t size;
   size_t *content_size;
+  cl_mem src;
 } _cl_command_read;
 
-// clEnqueueWriteBuffer
+/* For clEnqueueWriteBuffer(). */
 typedef struct
 {
   const void *__restrict__ src_host_ptr;
-  pocl_mem_identifier *dst_mem_id;
   size_t offset;
   size_t size;
+  cl_mem dst;
 } _cl_command_write;
 
-// clEnqueueCopyBuffer
+/* For clEnqueueCopyBuffer(). */
 typedef struct
 {
-  pocl_mem_identifier *src_mem_id;
-  pocl_mem_identifier *dst_mem_id;
   pocl_mem_identifier *src_content_size_mem_id;
   cl_mem src;
   cl_mem src_content_size;
@@ -217,11 +225,10 @@ typedef struct
   size_t size;
 } _cl_command_copy;
 
-// clEnqueueReadBufferRect
+/* For clEnqueueReadBufferRect(). */
 typedef struct
 {
   void *__restrict__ dst_host_ptr;
-  pocl_mem_identifier *src_mem_id;
   size_t buffer_origin[3];
   size_t host_origin[3];
   size_t region[3];
@@ -229,13 +236,13 @@ typedef struct
   size_t buffer_slice_pitch;
   size_t host_row_pitch;
   size_t host_slice_pitch;
+  cl_mem src;
 } _cl_command_read_rect;
 
-// clEnqueueWriteBufferRect
+/* For clEnqueueWriteBufferRect(). */
 typedef struct
 {
   const void *__restrict__ src_host_ptr;
-  pocl_mem_identifier *dst_mem_id;
   size_t buffer_origin[3];
   size_t host_origin[3];
   size_t region[3];
@@ -243,13 +250,12 @@ typedef struct
   size_t buffer_slice_pitch;
   size_t host_row_pitch;
   size_t host_slice_pitch;
+  cl_mem dst;
 } _cl_command_write_rect;
 
-// clEnqueueCopyBufferRect
+/* For clEnqueueCopyBufferRect(). */
 typedef struct
 {
-  pocl_mem_identifier *src_mem_id;
-  pocl_mem_identifier *dst_mem_id;
   cl_mem src;
   cl_mem dst;
   size_t dst_origin[3];
@@ -261,35 +267,33 @@ typedef struct
   size_t dst_slice_pitch;
 } _cl_command_copy_rect;
 
-// clEnqueueMapBuffer
+/* For clEnqueueMapBuffer(). */
 typedef struct
 {
-  pocl_mem_identifier *mem_id;
   mem_mapping_t *mapping;
+  cl_mem buffer;
 } _cl_command_map;
 
-/* clEnqueueUnMapMemObject */
+/* For clEnqueueUnMapMemObject(). */
 typedef struct
 {
-  pocl_mem_identifier *mem_id;
   mem_mapping_t *mapping;
+  cl_mem buffer;
 } _cl_command_unmap;
 
-/* clEnqueueFillBuffer */
+/* For clEnqueueFillBuffer(). */
 typedef struct
 {
-  pocl_mem_identifier *dst_mem_id;
   size_t size;
   size_t offset;
   void *__restrict__ pattern;
   size_t pattern_size;
+  cl_mem dst;
 } _cl_command_fill_mem;
 
-/* clEnqueue(Write/Read)Image */
+/* For clEnqueue(Write/Read)Image(). */
 typedef struct
 {
-  pocl_mem_identifier *src_mem_id;
-  pocl_mem_identifier *dst_mem_id;
   void *__restrict__ dst_host_ptr;
   cl_mem src;
   cl_mem dst;
@@ -302,8 +306,6 @@ typedef struct
 
 typedef struct
 {
-  pocl_mem_identifier *dst_mem_id;
-  pocl_mem_identifier *src_mem_id;
   const void *__restrict__ src_host_ptr;
   cl_mem src;
   cl_mem dst;
@@ -316,8 +318,6 @@ typedef struct
 
 typedef struct
 {
-  pocl_mem_identifier *src_mem_id;
-  pocl_mem_identifier *dst_mem_id;
   cl_mem src;
   cl_mem dst;
   size_t dst_origin[3];
@@ -325,25 +325,25 @@ typedef struct
   size_t region[3];
 } _cl_command_copy_image;
 
-/* clEnqueueFillImage */
+/* For clEnqueueFillImage(). */
 typedef struct
 {
   pixel_t fill_pixel;
   cl_uint4 orig_pixel;
   size_t pixel_size;
-  pocl_mem_identifier *mem_id;
   size_t origin[3];
   size_t region[3];
+  cl_mem dst;
 } _cl_command_fill_image;
 
-/* clEnqueueMarkerWithWaitlist */
+/* For clEnqueueMarkerWithWaitlist(). */
 typedef struct
 {
   void *data;
   int has_wait_list;
 } _cl_command_marker;
 
-/* clEnqueueBarrierWithWaitlist */
+/* For clEnqueueBarrierWithWaitlist(). */
 typedef _cl_command_marker _cl_command_barrier;
 
 typedef enum pocl_migration_type_e {
@@ -353,18 +353,21 @@ typedef enum pocl_migration_type_e {
   ENQUEUE_MIGRATE_TYPE_D2D
 } pocl_migration_type_t;
 
-/* clEnqueueMigrateMemObjects */
+/* For clEnqueueMigrateMemObjects(). */
 typedef struct
 {
   pocl_migration_type_t type;
   cl_device_id src_device;
-  pocl_mem_identifier *src_id;
-  pocl_mem_identifier *dst_id;
-  pocl_mem_identifier *mem_id;
   /** For migrating a buffer that has a size buffer as per
    * cl_pocl_content_size */
   uint64_t migration_size;
   pocl_mem_identifier *src_content_size_mem_id;
+  /* Number of buffers to migrate. The actual buffers are in migr_info in
+     the _cl_command_node. */
+  size_t num_buffers;
+  /* Set to 1 if this is a migration command generated by the runtime to
+     ensure coherence for the input buffers of commands. */
+  char implicit;
 } _cl_command_migrate;
 
 typedef struct
@@ -483,7 +486,10 @@ typedef union
   _cl_command_svm_memadvise mem_advise;
 } _cl_command_t;
 
-// one item in the command queue or command buffer
+typedef struct _pocl_buffer_migration_info
+  pocl_buffer_migration_info;
+
+/* One item in a command queue or a command buffer. */
 typedef struct _cl_command_node _cl_command_node;
 struct _cl_command_node
 {
@@ -518,15 +524,13 @@ struct _cl_command_node
   unsigned program_device_i;
   cl_int ready;
 
-  /* fields needed by buffered commands only */
+  /* Fields needed by buffered commands only: */
 
   /* Which of the command queues in the command buffer's queue list
    * this command was recorded for. */
   cl_uint queue_idx;
   /* List of buffers this command accesses, used for inserting migrations */
-  cl_uint memobj_count;
-  cl_mem *memobj_list;
-  char *readonly_flag_list;
+  pocl_buffer_migration_info *migr_infos;
 };
 
 /**

@@ -118,11 +118,8 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
               break;
             }
 
-          for (unsigned i = 0; i < cmd->memobj_count; ++i)
-            {
-              POname (clReleaseMemObject) (cmd->memobj_list[i]);
-            }
           _cl_command_node *next = cmd->next;
+
           pocl_mem_manager_free_command (cmd);
           cmd = next;
         }

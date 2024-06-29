@@ -74,8 +74,7 @@ set +e
 
 RESULT=3
 WAIT=1
-while [ $WAIT -le 10 ]; do
-  echo "waiting for $BUILD_DIR/$TEST_BINARY.."
+while [ $WAIT -le 1000 ]; do
   if [ ! -e "/proc/$EXAMPLE_PID" ]; then
     echo "..finished"
     wait $EXAMPLE_PID
@@ -83,7 +82,7 @@ while [ $WAIT -le 10 ]; do
     break
   fi
   WAIT=$((WAIT + 1))
-  sleep 1
+  sleep 0.1
 done
 
 echo "DONE"
@@ -97,8 +96,6 @@ if [ -z "$POCLD_PORT" ]; then
      kill "$POCLD_PID"
   fi
 fi
-
-sleep 2
 
 kill -9 $EXAMPLE_PID 1>/dev/null 2>&1
 

@@ -23,6 +23,7 @@
 
 #include "pocl_cl.h"
 #include "pocl_image_util.h"
+#include "pocl_mem_management.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
@@ -103,25 +104,24 @@ pocl_write_image_common (cl_command_buffer_khr command_buffer,
       if (errcode != CL_SUCCESS)
         return errcode;
       errcode = pocl_create_command (
-          cmd, command_queue, CL_COMMAND_WRITE_IMAGE, event,
-          num_items_in_wait_list, event_wait_list, 1, &image, &rdonly);
+        cmd, command_queue, CL_COMMAND_WRITE_IMAGE, event,
+        num_items_in_wait_list, event_wait_list,
+        pocl_append_unique_migration_info (NULL, image, rdonly));
     }
   else
     {
       errcode = pocl_create_recorded_command (
-          cmd, command_buffer, command_queue, CL_COMMAND_WRITE_IMAGE,
-          num_items_in_wait_list, sync_point_wait_list, 1, &image, &rdonly);
+        cmd, command_buffer, command_queue, CL_COMMAND_WRITE_IMAGE,
+        num_items_in_wait_list, sync_point_wait_list,
+        pocl_append_unique_migration_info (NULL, image, rdonly));
     }
   if (errcode != CL_SUCCESS)
     return errcode;
 
   _cl_command_node *c = *cmd;
 
-  c->command.write_image.dst_mem_id
-      = &image->device_ptrs[device->global_mem_id];
   c->command.write_image.dst = image;
   c->command.write_image.src_host_ptr = ptr;
-  c->command.write_image.src_mem_id = NULL;
   c->command.write_image.origin[0] = origin[0];
   c->command.write_image.origin[1] = origin[1];
   c->command.write_image.origin[2] = origin[2];

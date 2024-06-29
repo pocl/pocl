@@ -137,7 +137,7 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
 
       errcode = pocl_create_command (cmd, command_queue, CL_COMMAND_SVM_MEMCPY,
                                      event, num_items_in_wait_list,
-                                     event_wait_list, 0, NULL, NULL);
+                                     event_wait_list, NULL);
 
       if (errcode != CL_SUCCESS)
         return errcode;

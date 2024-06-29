@@ -371,6 +371,7 @@ set_property(TEST
   "runtime/test_device_address"
   "runtime/test_compile_n_link"
   "runtime/test_svm"
+  "runtime/test_subbuffers"
   ${OCL_30_TESTS}
   APPEND PROPERTY LABELS "cuda")
 
@@ -458,3 +459,10 @@ set_property(TEST
   "runtime/test_subbuffers"
   ${OCL_30_TESTS}
   APPEND PROPERTY LABELS "level0")
+
+if(ENABLE_LEVEL0 AND ENABLE_HOST_CPU_DEVICES)
+  add_test(NAME "runtime/test_subbuffers_multidevice" COMMAND "test_subbuffers")
+  set_property(TEST "runtime/test_subbuffers_multidevice"
+    APPEND PROPERTY ENVIRONMENT "POCL_DEVICES=level0 cpu")
+
+endif()

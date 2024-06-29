@@ -110,14 +110,14 @@ pocl_svm_memfill_rect_common (cl_command_buffer_khr command_buffer,
       if (errcode != CL_SUCCESS)
         return errcode;
       errcode = pocl_create_command (
-          cmd, command_queue, CL_COMMAND_SVM_MEMFILL_RECT_POCL, event,
-          num_items_in_wait_list, event_wait_list, 0, NULL, NULL);
+        cmd, command_queue, CL_COMMAND_SVM_MEMFILL_RECT_POCL, event,
+        num_items_in_wait_list, event_wait_list, NULL);
     }
   else
     {
       errcode = pocl_create_recorded_command (
-          cmd, command_buffer, command_queue, CL_COMMAND_SVM_MEMFILL_RECT_POCL,
-          num_items_in_wait_list, sync_point_wait_list, 0, NULL, NULL);
+        cmd, command_buffer, command_queue, CL_COMMAND_SVM_MEMFILL_RECT_POCL,
+        num_items_in_wait_list, sync_point_wait_list, NULL);
     }
   if (errcode != CL_SUCCESS)
     return errcode;

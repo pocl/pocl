@@ -35,6 +35,7 @@
 #include "pocl_cache.h"
 #include "pocl_binary.h"
 #include "pocl_util.h"
+#include "utlist.h"
 
 extern unsigned long kernel_c;
 

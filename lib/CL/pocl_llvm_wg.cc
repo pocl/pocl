@@ -70,6 +70,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "LLVMUtils.h"
 POP_COMPILER_DIAGS
 
+#include "common.h"
 #include "pocl.h"
 #include "pocl_cache.h"
 #include "pocl_file_util.h"

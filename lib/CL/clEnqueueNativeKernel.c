@@ -1,6 +1,7 @@
 /* OpenCL runtime library: clEnqueueNativeKernel()
 
    Copyright (c) 2010-2023 PoCL developers
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -23,9 +24,9 @@
 
 #include "config.h"
 #include "pocl_cl.h"
+#include "pocl_mem_management.h"
 #include "pocl_util.h"
 #include "string.h"
-#include "pocl_cl.h"
 #include "utlist.h"
 
 #include <limits.h>
@@ -74,6 +75,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   if (errcode != CL_SUCCESS)
     return errcode;
 
+  pocl_buffer_migration_info *migr_infos = NULL;
   char *rdonly = (char *)alloca (num_mem_objects);
   cl_mem *ml = (cl_mem *)alloca (num_mem_objects * sizeof (cl_mem));
   memcpy (ml, mem_list, num_mem_objects * sizeof (cl_mem));
@@ -84,10 +86,8 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
                             CL_INVALID_MEM_OBJECT,
                             "The %i-th mem object is invalid\n", i);
 
-      if (ml[i]->parent != NULL)
-        ml[i] = ml[i]->parent;
-
-      rdonly[i] = (ml[i]->flags & CL_MEM_READ_ONLY) ? 1 : 0;
+      migr_infos = pocl_append_unique_migration_info (
+        migr_infos, ml[i], !!(ml[i]->flags & CL_MEM_READ_ONLY));
     }
 
   /* Specification specifies that args passed to user_func is a copy of the
@@ -117,8 +117,8 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
     }
 
   errcode = pocl_create_command (
-      &command_node, command_queue, CL_COMMAND_NATIVE_KERNEL, event,
-      num_events_in_wait_list, event_wait_list, num_mem_objects, ml, rdonly);
+    &command_node, command_queue, CL_COMMAND_NATIVE_KERNEL, event,
+    num_events_in_wait_list, event_wait_list, migr_infos);
 
   if (errcode != CL_SUCCESS)
     return errcode;

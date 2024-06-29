@@ -1,26 +1,30 @@
 /* OpenCL runtime library: clEnqueueReadImage()
 
+   Copyright (c) 2010- PoCL developers
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #include "pocl_cl.h"
 #include "pocl_image_util.h"
+#include "pocl_mem_management.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
@@ -108,26 +112,25 @@ pocl_read_image_common (cl_command_buffer_khr command_buffer,
           command_queue, num_items_in_wait_list, event_wait_list);
       if (errcode != CL_SUCCESS)
         return errcode;
-      errcode = pocl_create_command (cmd, command_queue, CL_COMMAND_READ_IMAGE,
-                                     event, num_items_in_wait_list,
-                                     event_wait_list, 1, &image, &rdonly);
+      errcode = pocl_create_command (
+        cmd, command_queue, CL_COMMAND_READ_IMAGE, event,
+        num_items_in_wait_list, event_wait_list,
+        pocl_append_unique_migration_info (NULL, image, rdonly));
     }
   else
     {
       errcode = pocl_create_recorded_command (
-          cmd, command_buffer, command_queue, CL_COMMAND_READ_IMAGE,
-          num_items_in_wait_list, sync_point_wait_list, 1, &image, &rdonly);
+        cmd, command_buffer, command_queue, CL_COMMAND_READ_IMAGE,
+        num_items_in_wait_list, sync_point_wait_list,
+        pocl_append_unique_migration_info (NULL, image, rdonly));
     }
   if (errcode != CL_SUCCESS)
     return errcode;
 
   _cl_command_node *c = *cmd;
 
-  c->command.read_image.src_mem_id
-      = &image->device_ptrs[device->global_mem_id];
   c->command.read_image.src = image;
   c->command.read_image.dst_host_ptr = ptr;
-  c->command.read_image.dst_mem_id = NULL;
   c->command.read_image.origin[0] = origin[0];
   c->command.read_image.origin[1] = origin[1];
   c->command.read_image.origin[2] = origin[2];

@@ -1,17 +1,18 @@
 /* OpenCL runtime library: clEnqueueMapBuffer()
 
    Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
-   
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,10 +23,11 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_mem_management.h"
+#include "pocl_shared.h"
+#include "pocl_util.h"
 #include "utlist.h"
 #include <assert.h>
-#include "pocl_util.h"
-#include "pocl_shared.h"
 
 CL_API_ENTRY void * CL_API_CALL
 POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
@@ -85,8 +87,6 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
 
   POCL_CHECK_DEV_IN_CMDQ;
 
-  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
-
   POCL_GOTO_ERROR_ON((buffer->size > command_queue->device->max_mem_alloc_size),
                         CL_OUT_OF_RESOURCES,
                         "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
@@ -96,7 +96,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   pocl_mem_identifier *mem_id = &buffer->device_ptrs[device->global_mem_id];
 
   POCL_LOCK_OBJ (buffer);
-  /* increment refcount, actually twice (one happens in pocl_create_command):
+  /* Increment refcount, actually twice (one happens in pocl_create_command):
      one is for duration of Map command, and is implicitly decreased
      after EnqueueMap is finished; the other one is for the duration
      of mapping, and is decreased by UnMap. */
@@ -107,7 +107,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   mapping_info->offset = offset;
   mapping_info->size = size;
 
-  /* because cl_mems are per-context, PoCL delays allocation of
+  /* Because cl_mems are per-context, PoCL delays allocation of
    * cl_mem backing memory until it knows which device will need it,
    * so the cl_mem might not yet be allocated on this device. However,
    * some drivers can avoid unnecessary host memory usage if we
@@ -120,6 +120,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
     errcode = device->ops->get_mapping_ptr (device->data, mem_id, buffer,
                                           mapping_info);
   DL_APPEND (buffer->mappings, mapping_info);
+
   ++buffer->map_count;
   POCL_UNLOCK_OBJ (buffer);
 
@@ -128,15 +129,15 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
 
   char rdonly = (map_flags & CL_MAP_READ);
 
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_BUFFER,
-                                 event, num_events_in_wait_list,
-                                 event_wait_list, 1, &buffer, &rdonly);
+  errcode = pocl_create_command (
+    &cmd, command_queue, CL_COMMAND_MAP_BUFFER, event, num_events_in_wait_list,
+    event_wait_list, pocl_append_unique_migration_info (NULL, buffer, rdonly));
 
   if (errcode != CL_SUCCESS)
       goto ERROR;
 
-  cmd->command.map.mem_id = mem_id;
   cmd->command.map.mapping = mapping_info;
+  cmd->command.map.buffer = buffer;
 
   POCL_MSG_PRINT_MEMORY ("Buffer %p New Mapping: host_ptr %p offset %zu\n",
                          buffer, mapping_info->host_ptr, mapping_info->offset);

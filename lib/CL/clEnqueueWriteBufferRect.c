@@ -1,27 +1,28 @@
 /* OpenCL runtime library: clEnqueueWriteBufferRect()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
-   
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #include "pocl_cl.h"
+#include "pocl_mem_management.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
@@ -110,7 +111,6 @@ pocl_write_buffer_rect_common (cl_command_buffer_khr command_buffer,
     return errcode;
 
   size_t dst_offset = 0;
-  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, dst_offset);
 
   POCL_RETURN_ERROR_ON((buffer->size > command_queue->device->max_mem_alloc_size),
                         CL_OUT_OF_RESOURCES,
@@ -125,22 +125,22 @@ pocl_write_buffer_rect_common (cl_command_buffer_khr command_buffer,
       if (errcode != CL_SUCCESS)
         return errcode;
       errcode = pocl_create_command (
-          cmd, command_queue, CL_COMMAND_WRITE_BUFFER_RECT, event,
-          num_items_in_wait_list, event_wait_list, 1, &buffer, &rdonly);
+        cmd, command_queue, CL_COMMAND_WRITE_BUFFER_RECT, event,
+        num_items_in_wait_list, event_wait_list,
+        pocl_append_unique_migration_info (NULL, buffer, rdonly));
     }
   else
     {
       errcode = pocl_create_recorded_command (
-          cmd, command_buffer, command_queue, CL_COMMAND_WRITE_BUFFER_RECT,
-          num_items_in_wait_list, sync_point_wait_list, 1, &buffer, &rdonly);
+        cmd, command_buffer, command_queue, CL_COMMAND_WRITE_BUFFER_RECT,
+        num_items_in_wait_list, sync_point_wait_list,
+        pocl_append_unique_migration_info (NULL, buffer, rdonly));
     }
   if (errcode != CL_SUCCESS)
     return errcode;
 
   _cl_command_node *c = *cmd;
 
-  c->command.write_rect.dst_mem_id
-      = &buffer->device_ptrs[device->global_mem_id];
   c->command.write_rect.src_host_ptr = ptr;
   c->command.write_rect.host_origin[0] = host_origin[0];
   c->command.write_rect.host_origin[1] = host_origin[1];
@@ -155,6 +155,7 @@ pocl_write_buffer_rect_common (cl_command_buffer_khr command_buffer,
   c->command.write_rect.host_slice_pitch = host_slice_pitch;
   c->command.write_rect.buffer_row_pitch = buffer_row_pitch;
   c->command.write_rect.buffer_slice_pitch = buffer_slice_pitch;
+  c->command.write_rect.dst = buffer;
 
   return CL_SUCCESS;
 }

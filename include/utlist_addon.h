@@ -76,4 +76,13 @@ IN THE SOFTWARE.
 #define LL_FOREACH_ATOMIC(head, el)                                                  \
   for (el = head; el; el = __atomic_load_n (&(el->next), __ATOMIC_SEQ_CST))
 
+#define LL_BACK(head, el)                                                     \
+  do                                                                          \
+    {                                                                         \
+      el = head;                                                              \
+      while (el->next != NULL)                                                \
+        el = el->next;                                                        \
+    }                                                                         \
+  while (0)
+
 #endif

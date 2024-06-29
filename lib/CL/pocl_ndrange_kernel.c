@@ -1,6 +1,7 @@
 /* pocl_ndrange_kernel.c: helpers for NDRange Kernel commands
 
    Copyright (c) 2022-2024 Jan Solanti / Tampere University
+                 2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -209,15 +210,18 @@ SKIP_WG_SIZE_CALCULATION:
   return CL_SUCCESS;
 }
 
+/**
+ * Collect the kernel's buffer usage for implicit migration.
+ */
 static cl_int
-pocl_kernel_collect_mem_objs (cl_command_queue command_queue,
-                              cl_kernel kernel,
-                              struct pocl_argument *src_arguments,
-                              cl_uint *memobj_count,
-                              cl_mem *memobj_list,
-                              char *readonly_flag_list)
+pocl_kernel_collect_mem_objs (
+  cl_command_queue command_queue,
+  cl_kernel kernel,
+  struct pocl_argument *src_arguments,
+  pocl_buffer_migration_info **dst_migr_infos)
 {
   cl_device_id realdev = pocl_real_dev (command_queue->device);
+  pocl_buffer_migration_info *migr_infos = NULL;
 
   for (unsigned i = 0; i < kernel->meta->num_args; ++i)
     {
@@ -266,15 +270,12 @@ pocl_kernel_collect_mem_objs (cl_command_queue command_queue,
             }
           else
             {
-              /* subbuffers are handled in clSetKernelArg */
-              assert (buf->parent == NULL);
-
-              if (al->offset > 0)
+              if (buf->origin > 0)
                 POCL_RETURN_ERROR_ON (
-                    (!buf->has_device_address
-                     && al->offset % realdev->mem_base_addr_align != 0),
-                    CL_MISALIGNED_SUB_BUFFER_OFFSET,
-                    "SubBuffer is not properly aligned for this device");
+                  (!buf->has_device_address
+                   && buf->origin % realdev->mem_base_addr_align != 0),
+                  CL_MISALIGNED_SUB_BUFFER_OFFSET,
+                  "SubBuffer is not properly aligned for this device");
 
               POCL_RETURN_ERROR_ON ((buf->size > realdev->max_mem_alloc_size),
                                     CL_OUT_OF_RESOURCES,
@@ -283,17 +284,16 @@ pocl_kernel_collect_mem_objs (cl_command_queue command_queue,
                                     i);
             }
 
+          char read_only = 0;
           if (al->is_readonly || (buf->flags & CL_MEM_READ_ONLY))
             {
               if (al->is_readonly == 0)
                 POCL_MSG_WARN ("readonly buffer used as kernel arg, but arg "
                                "type is not const\n");
-              readonly_flag_list[*memobj_count] = 1;
+              read_only = 1;
             }
-          else
-            readonly_flag_list[*memobj_count] = 0;
-
-          memobj_list[(*memobj_count)++] = buf;
+          migr_infos
+            = pocl_append_unique_migration_info (migr_infos, buf, read_only);
         }
     }
 
@@ -305,17 +305,8 @@ pocl_kernel_collect_mem_objs (cl_command_queue command_queue,
       struct _pocl_raw_ptr *ptr;
       DL_FOREACH (kernel->context->raw_ptrs, ptr)
       {
-        int found = 0;
-        /* Ensure we do not add the argument buffers again. */
-        for (cl_uint i = 0; i < *memobj_count; ++i)
-          if (memobj_list[i] == ptr->shadow_cl_mem)
-            {
-              found = 1;
-              break;
-            }
-        if (found)
-          continue;
-        memobj_list[(*memobj_count)++] = ptr->shadow_cl_mem;
+        migr_infos = pocl_append_unique_migration_info (migr_infos,
+                                                        ptr->shadow_cl_mem, 0);
       }
     }
   else
@@ -335,9 +326,12 @@ pocl_kernel_collect_mem_objs (cl_command_queue command_queue,
                                    "assuming system SVM.\n");
             continue;
           }
-        memobj_list[(*memobj_count)++] = svm_ptr->shadow_cl_mem;
+
+        migr_infos = pocl_append_unique_migration_info (
+          migr_infos, svm_ptr->shadow_cl_mem, 0);
       }
     }
+  *dst_migr_infos = migr_infos;
   return CL_SUCCESS;
 }
 
@@ -363,7 +357,7 @@ pocl_kernel_copy_args (cl_kernel kernel,
         {
           size_t arg_alloc_size = arg->size;
           assert (arg_alloc_size > 0);
-          /* FIXME: this is a cludge to determine an acceptable alignment,
+          /* FIXME: this is a kludge to determine an acceptable alignment,
            * we should probably extract the argument alignment from the
            * LLVM bytecode during kernel header generation. */
           size_t arg_alignment = pocl_size_ceil2 (arg_alloc_size);
@@ -487,20 +481,10 @@ pocl_ndrange_kernel_common (
 
   int errcode = 0;
 
-  cl_uint memobj_count = 0;
-
   size_t raw_ptr_count = 0;
 
-  /* At the worst case, we need to synchronize all raw buffers. */
-  struct _pocl_raw_ptr *ptr;
-  DL_FOREACH (kernel->context->raw_ptrs, ptr)
-    {
-      ++raw_ptr_count;
-    }
-
-  /* The list of memobjects to implicitly synchronize at kernel exec. */
-  cl_mem memobj_list[kernel->meta->num_args + raw_ptr_count];
-  char readonly_flag_list[kernel->meta->num_args];
+  /* A linked list of memobjects implicit migration data. */
+  pocl_buffer_migration_info *buf_migrations = NULL;
 
   assert (command_buffer == NULL
           || (event_wait_list == NULL && event_p == NULL));
@@ -536,24 +520,21 @@ pocl_ndrange_kernel_common (
                         "Error calculating wg size\n");
 
   errcode = pocl_kernel_collect_mem_objs (command_queue, kernel, src_arguments,
-                                          &memobj_count, memobj_list,
-                                          readonly_flag_list);
+                                          &buf_migrations);
   POCL_RETURN_ERROR_ON (errcode != CL_SUCCESS, errcode,
                         "Error collecting mem objects for kernel arguments\n");
 
   if (command_buffer == NULL)
     {
       errcode = pocl_create_command (
-          cmd, command_queue, CL_COMMAND_NDRANGE_KERNEL, event_p,
-          num_items_in_wait_list, event_wait_list, memobj_count, memobj_list,
-          readonly_flag_list);
+        cmd, command_queue, CL_COMMAND_NDRANGE_KERNEL, event_p,
+        num_items_in_wait_list, event_wait_list, buf_migrations);
     }
   else
     {
       errcode = pocl_create_recorded_command (
-          cmd, command_buffer, command_queue, CL_COMMAND_NDRANGE_KERNEL,
-          num_items_in_wait_list, sync_point_wait_list, memobj_count,
-          memobj_list, readonly_flag_list);
+        cmd, command_buffer, command_queue, CL_COMMAND_NDRANGE_KERNEL,
+        num_items_in_wait_list, sync_point_wait_list, buf_migrations);
     }
 
   POCL_RETURN_ERROR_ON (errcode != CL_SUCCESS, errcode,

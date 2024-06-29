@@ -291,7 +291,7 @@ pocl_setup_kernel_arg_array (kernel_run_command *k)
                   cl_mem m = (*(cl_mem *)(al->value));
                   ptr = m->device_ptrs[k->device->global_mem_id].mem_ptr;
                 }
-              arguments2[i] = (char *)ptr + al->offset;
+              arguments2[i] = (char *)ptr;
             }
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)

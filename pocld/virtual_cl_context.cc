@@ -651,8 +651,8 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
   TP_CREATE_BUFFER(req->req.msg_id, req->req.client_did, id);
 
   uint64_t devaddr;
-  FOR_EACH_CONTEXT_DO(
-      createBuffer(id, m.size, m.flags, (void *)m.host_ptr, (void **)&devaddr));
+  FOR_EACH_CONTEXT_DO(createBuffer(id, m.size, m.flags, (void *)m.host_ptr,
+                                   m.parent_id, m.origin, (void **)&devaddr));
   // Do not pass pointer to device_addr directly above since
   // it's a packed struct and the address might be unaligned.
   rep->rep.m.create_buffer.device_addr = devaddr;

@@ -32,6 +32,8 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreatePipe) (
     cl_uint pipe_max_packets, const cl_pipe_properties *properties,
     cl_int *errcode_ret) CL_API_SUFFIX__VERSION_2_0
 {
+  cl_mem mem = NULL;
+
   if (!IS_CL_OBJECT_VALID (context))
     {
       POCL_ERROR (CL_INVALID_CONTEXT);
@@ -73,7 +75,6 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreatePipe) (
       POCL_ERROR (CL_INVALID_VALUE);
     }
 
-  cl_mem mem = NULL;
   mem = pocl_create_memobject (context, flags, pipe_max_packets,
                                CL_MEM_OBJECT_PIPE, NULL, NULL, 0, &errcode);
   if (mem == NULL)

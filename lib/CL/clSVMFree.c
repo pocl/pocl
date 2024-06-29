@@ -23,6 +23,7 @@
 
 #include "pocl_util.h"
 #include "pocl_debug.h"
+#include "utlist.h"
 
 extern unsigned long svm_buffer_c;
 

@@ -24,6 +24,7 @@
 
 #include "pocl_debug.h"
 #include "pocl_util.h"
+#include "utlist.h"
 
 extern unsigned long usm_buffer_c;
 

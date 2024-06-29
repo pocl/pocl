@@ -27,6 +27,7 @@
 #include "devices.h"
 #include "pocl_cache.h"
 #include "pocl_cl.h"
+#include "pocl_debug.h"
 #include "pocl_llvm.h"
 #include "pocl_spir.h"
 #include "pocl_timing.h"
@@ -72,6 +73,13 @@ void Level0Queue::runThread() {
 
   bool ShouldExit = false;
   _cl_command_node *Command = nullptr;
+
+  /* See clFinish.c for the explanation. */
+  if (pocl_get_bool_option("POCL_DUMP_TASK_GRAPHS", 0) == 1) {
+    POCL_FAST_LOCK(pocl_tg_dump_lock);
+    pthread_cond_wait(&pocl_tg_dump_cond, &pocl_tg_dump_lock);
+  }
+
   do {
     BatchType WorkBatch;
     ShouldExit = WorkHandler->getWorkOrWait(&Command, WorkBatch);
@@ -92,77 +100,80 @@ void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg) {
   cl_event event = Cmd->sync.event.event;
   cl_device_id dev = Cmd->device;
   _cl_command_t *cmd = &Cmd->command;
-  cl_mem mem = nullptr;
-  if (event->num_buffers > 0) {
-    mem = event->mem_objs[0];
-    assert(mem);
-  }
+
+  cl_mem Mem = Cmd->migr_infos != nullptr ? Cmd->migr_infos->buffer : nullptr;
 
   switch (Cmd->type) {
   case CL_COMMAND_READ_BUFFER:
-    read(cmd->read.dst_host_ptr, cmd->read.src_mem_id, mem, cmd->read.offset,
-         cmd->read.size);
+    read(cmd->read.dst_host_ptr,
+         &cmd->read.src->device_ptrs[dev->global_mem_id], cmd->read.src,
+         cmd->read.offset, cmd->read.size);
     *Msg = "Event Read Buffer           ";
     break;
 
   case CL_COMMAND_WRITE_BUFFER:
-    write(cmd->write.src_host_ptr, cmd->write.dst_mem_id, mem,
+    write(cmd->write.src_host_ptr,
+          &cmd->write.dst->device_ptrs[dev->global_mem_id], cmd->write.dst,
           cmd->write.offset, cmd->write.size);
-    syncUseMemHostPtr(cmd->write.dst_mem_id, mem, cmd->write.offset,
-                      cmd->write.size);
+    syncUseMemHostPtr(&cmd->write.dst->device_ptrs[dev->global_mem_id],
+                      cmd->write.dst, cmd->write.offset, cmd->write.size);
     *Msg = "Event Write Buffer          ";
     break;
 
   case CL_COMMAND_COPY_BUFFER:
-    copy(cmd->copy.dst_mem_id, cmd->copy.dst, cmd->copy.src_mem_id,
-         cmd->copy.src, cmd->copy.dst_offset, cmd->copy.src_offset,
-         cmd->copy.size);
-    syncUseMemHostPtr(cmd->copy.dst_mem_id, cmd->copy.dst, cmd->copy.dst_offset,
-                      cmd->copy.size);
+    copy(&cmd->copy.dst->device_ptrs[dev->global_mem_id], cmd->copy.dst,
+         &cmd->copy.src->device_ptrs[dev->global_mem_id], cmd->copy.src,
+         cmd->copy.dst_offset, cmd->copy.src_offset, cmd->copy.size);
+    syncUseMemHostPtr(&cmd->copy.dst->device_ptrs[dev->global_mem_id],
+                      cmd->copy.dst, cmd->copy.dst_offset, cmd->copy.size);
     *Msg = "Event Copy Buffer           ";
     break;
 
   case CL_COMMAND_FILL_BUFFER:
-    memFill(cmd->memfill.dst_mem_id, mem, cmd->memfill.size,
-            cmd->memfill.offset, cmd->memfill.pattern,
-            cmd->memfill.pattern_size);
-    syncUseMemHostPtr(cmd->memfill.dst_mem_id, mem, cmd->memfill.offset,
-                      cmd->memfill.size);
+    memFill(&cmd->memfill.dst->device_ptrs[dev->global_mem_id],
+            cmd->memfill.dst, cmd->memfill.size, cmd->memfill.offset,
+            cmd->memfill.pattern, cmd->memfill.pattern_size);
+    syncUseMemHostPtr(&cmd->memfill.dst->device_ptrs[dev->global_mem_id],
+                      cmd->memfill.dst, cmd->memfill.offset, cmd->memfill.size);
     *Msg = "Event Fill Buffer           ";
     break;
 
   case CL_COMMAND_READ_BUFFER_RECT:
-    readRect(cmd->read_rect.dst_host_ptr, cmd->read_rect.src_mem_id, mem,
-             cmd->read_rect.buffer_origin, cmd->read_rect.host_origin,
-             cmd->read_rect.region, cmd->read_rect.buffer_row_pitch,
-             cmd->read_rect.buffer_slice_pitch, cmd->read_rect.host_row_pitch,
-             cmd->read_rect.host_slice_pitch);
+    readRect(cmd->read_rect.dst_host_ptr,
+             &cmd->read_rect.src->device_ptrs[dev->global_mem_id],
+             cmd->read_rect.src, cmd->read_rect.buffer_origin,
+             cmd->read_rect.host_origin, cmd->read_rect.region,
+             cmd->read_rect.buffer_row_pitch, cmd->read_rect.buffer_slice_pitch,
+             cmd->read_rect.host_row_pitch, cmd->read_rect.host_slice_pitch);
     *Msg = "Event Read Buffer Rect      ";
     break;
 
   case CL_COMMAND_COPY_BUFFER_RECT:
-    copyRect(cmd->copy_rect.dst_mem_id, cmd->copy_rect.dst,
-             cmd->copy_rect.src_mem_id, cmd->copy_rect.src,
-             cmd->copy_rect.dst_origin, cmd->copy_rect.src_origin,
-             cmd->copy_rect.region, cmd->copy_rect.dst_row_pitch,
-             cmd->copy_rect.dst_slice_pitch, cmd->copy_rect.src_row_pitch,
-             cmd->copy_rect.src_slice_pitch);
-    syncUseMemHostPtr(cmd->copy_rect.dst_mem_id, cmd->copy_rect.dst,
-                      cmd->copy_rect.dst_origin, cmd->copy_rect.region,
-                      cmd->copy_rect.dst_row_pitch,
+    copyRect(&cmd->copy_rect.dst->device_ptrs[dev->global_mem_id],
+             cmd->copy_rect.dst,
+             &cmd->copy_rect.src->device_ptrs[dev->global_mem_id],
+             cmd->copy_rect.src, cmd->copy_rect.dst_origin,
+             cmd->copy_rect.src_origin, cmd->copy_rect.region,
+             cmd->copy_rect.dst_row_pitch, cmd->copy_rect.dst_slice_pitch,
+             cmd->copy_rect.src_row_pitch, cmd->copy_rect.src_slice_pitch);
+    syncUseMemHostPtr(&cmd->copy_rect.dst->device_ptrs[dev->global_mem_id],
+                      cmd->copy_rect.dst, cmd->copy_rect.dst_origin,
+                      cmd->copy_rect.region, cmd->copy_rect.dst_row_pitch,
                       cmd->copy_rect.dst_slice_pitch);
     *Msg = "Event Copy Buffer Rect      ";
     break;
 
   case CL_COMMAND_WRITE_BUFFER_RECT:
-    writeRect(cmd->write_rect.src_host_ptr, cmd->write_rect.dst_mem_id, mem,
-              cmd->write_rect.buffer_origin, cmd->write_rect.host_origin,
-              cmd->write_rect.region, cmd->write_rect.buffer_row_pitch,
+    writeRect(cmd->write_rect.src_host_ptr,
+              &cmd->write_rect.dst->device_ptrs[dev->global_mem_id],
+              cmd->write_rect.dst, cmd->write_rect.buffer_origin,
+              cmd->write_rect.host_origin, cmd->write_rect.region,
+              cmd->write_rect.buffer_row_pitch,
               cmd->write_rect.buffer_slice_pitch,
               cmd->write_rect.host_row_pitch, cmd->write_rect.host_slice_pitch);
-    syncUseMemHostPtr(cmd->write_rect.dst_mem_id, mem,
-                      cmd->write_rect.buffer_origin, cmd->write_rect.region,
-                      cmd->write_rect.buffer_row_pitch,
+    syncUseMemHostPtr(&cmd->write_rect.dst->device_ptrs[dev->global_mem_id],
+                      cmd->write_rect.dst, cmd->write_rect.buffer_origin,
+                      cmd->write_rect.region, cmd->write_rect.buffer_row_pitch,
                       cmd->write_rect.buffer_slice_pitch);
     *Msg = "Event Write Buffer Rect     ";
     break;
@@ -170,9 +181,9 @@ void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg) {
   case CL_COMMAND_MIGRATE_MEM_OBJECTS:
     switch (cmd->migrate.type) {
     case ENQUEUE_MIGRATE_TYPE_D2H: {
-      if (mem->is_image != 0u) {
-        size_t region[3] = {mem->image_width, mem->image_height,
-                            mem->image_depth};
+      if (Mem->is_image != 0u) {
+        size_t region[3] = {Mem->image_width, Mem->image_height,
+                            Mem->image_depth};
         if (region[2] == 0) {
           region[2] = 1;
         }
@@ -180,17 +191,20 @@ void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg) {
           region[1] = 1;
         }
         size_t origin[3] = {0, 0, 0};
-        readImageRect(mem, cmd->migrate.mem_id, mem->mem_host_ptr, nullptr,
-                      origin, region, 0, 0, 0);
+        readImageRect(Mem,
+                      &Cmd->migr_infos->buffer->device_ptrs[dev->global_mem_id],
+                      Mem->mem_host_ptr, nullptr, origin, region, 0, 0, 0);
       } else {
-        read(mem->mem_host_ptr, cmd->migrate.mem_id, mem, 0, mem->size);
+        read(Mem->mem_host_ptr,
+             &Cmd->migr_infos->buffer->device_ptrs[dev->global_mem_id], Mem, 0,
+             Mem->size);
       }
       break;
     }
     case ENQUEUE_MIGRATE_TYPE_H2D: {
-      if (mem->is_image != 0u) {
-        size_t region[3] = {mem->image_width, mem->image_height,
-                            mem->image_depth};
+      if (Mem->is_image != 0u) {
+        size_t region[3] = {Mem->image_width, Mem->image_height,
+                            Mem->image_depth};
         if (region[2] == 0) {
           region[2] = 1;
         }
@@ -198,18 +212,24 @@ void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg) {
           region[1] = 1;
         }
         size_t origin[3] = {0, 0, 0};
-        writeImageRect(mem, cmd->migrate.mem_id, mem->mem_host_ptr, nullptr,
-                       origin, region, 0, 0, 0);
+        writeImageRect(
+            Mem, &Cmd->migr_infos->buffer->device_ptrs[dev->global_mem_id],
+            Mem->mem_host_ptr, nullptr, origin, region, 0, 0, 0);
       } else {
-        write(mem->mem_host_ptr, cmd->migrate.mem_id, mem, 0, mem->size);
+        write(Mem->mem_host_ptr,
+              &Cmd->migr_infos->buffer->device_ptrs[dev->global_mem_id], Mem, 0,
+              Mem->size);
       }
       break;
     }
     case ENQUEUE_MIGRATE_TYPE_D2D: {
       assert(dev->ops->can_migrate_d2d);
       assert(dev->ops->migrate_d2d);
-      dev->ops->migrate_d2d(cmd->migrate.src_device, dev, mem,
-                            cmd->migrate.src_id, cmd->migrate.dst_id);
+      dev->ops->migrate_d2d(
+          cmd->migrate.src_device, dev, Mem,
+          &Cmd->migr_infos->buffer
+               ->device_ptrs[cmd->migrate.src_device->global_mem_id],
+          &Cmd->migr_infos->buffer->device_ptrs[dev->global_mem_id]);
       break;
     }
     case ENQUEUE_MIGRATE_TYPE_NOP: {
@@ -221,20 +241,24 @@ void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg) {
     break;
 
   case CL_COMMAND_MAP_BUFFER:
-    mapMem(cmd->map.mem_id, mem, cmd->map.mapping);
+    mapMem(&cmd->map.buffer->device_ptrs[dev->global_mem_id], cmd->map.buffer,
+           cmd->map.mapping);
     *Msg = "Event Map Buffer            ";
     break;
 
   case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
-    readImageRect(cmd->read_image.src, cmd->read_image.src_mem_id, NULL,
-                  cmd->read_image.dst_mem_id, cmd->read_image.origin,
-                  cmd->read_image.region, cmd->read_image.dst_row_pitch,
+    readImageRect(cmd->read_image.src,
+                  &cmd->read_image.src->device_ptrs[dev->global_mem_id], NULL,
+                  &cmd->read_image.dst->device_ptrs[dev->global_mem_id],
+                  cmd->read_image.origin, cmd->read_image.region,
+                  cmd->read_image.dst_row_pitch,
                   cmd->read_image.dst_slice_pitch, cmd->read_image.dst_offset);
     *Msg = "Event CopyImageToBuffer       ";
     break;
 
   case CL_COMMAND_READ_IMAGE:
-    readImageRect(cmd->read_image.src, cmd->read_image.src_mem_id,
+    readImageRect(cmd->read_image.src,
+                  &cmd->read_image.src->device_ptrs[dev->global_mem_id],
                   cmd->read_image.dst_host_ptr, NULL, cmd->read_image.origin,
                   cmd->read_image.region, cmd->read_image.dst_row_pitch,
                   cmd->read_image.dst_slice_pitch, cmd->read_image.dst_offset);
@@ -242,16 +266,19 @@ void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg) {
     break;
 
   case CL_COMMAND_COPY_BUFFER_TO_IMAGE:
-    writeImageRect(cmd->write_image.dst, cmd->write_image.dst_mem_id, NULL,
-                   cmd->write_image.src_mem_id, cmd->write_image.origin,
-                   cmd->write_image.region, cmd->write_image.src_row_pitch,
+    writeImageRect(cmd->write_image.dst,
+                   &cmd->write_image.dst->device_ptrs[dev->global_mem_id], NULL,
+                   &cmd->write_image.src->device_ptrs[dev->global_mem_id],
+                   cmd->write_image.origin, cmd->write_image.region,
+                   cmd->write_image.src_row_pitch,
                    cmd->write_image.src_slice_pitch,
                    cmd->write_image.src_offset);
     *Msg = "Event CopyBufferToImage       ";
     break;
 
   case CL_COMMAND_WRITE_IMAGE:
-    writeImageRect(cmd->write_image.dst, cmd->write_image.dst_mem_id,
+    writeImageRect(cmd->write_image.dst,
+                   &cmd->write_image.dst->device_ptrs[dev->global_mem_id],
                    cmd->write_image.src_host_ptr, NULL, cmd->write_image.origin,
                    cmd->write_image.region, cmd->write_image.src_row_pitch,
                    cmd->write_image.src_slice_pitch,
@@ -261,33 +288,40 @@ void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg) {
 
   case CL_COMMAND_COPY_IMAGE:
     copyImageRect(cmd->copy_image.src, cmd->copy_image.dst,
-                  cmd->copy_image.src_mem_id, cmd->copy_image.dst_mem_id,
+                  &cmd->copy_image.src->device_ptrs[dev->global_mem_id],
+                  &cmd->copy_image.dst->device_ptrs[dev->global_mem_id],
                   cmd->copy_image.src_origin, cmd->copy_image.dst_origin,
                   cmd->copy_image.region);
     *Msg = "Event Copy Image            ";
     break;
 
   case CL_COMMAND_FILL_IMAGE:
-    fillImage(mem, cmd->fill_image.mem_id, cmd->fill_image.origin,
-              cmd->fill_image.region, cmd->fill_image.orig_pixel,
-              cmd->fill_image.fill_pixel, cmd->fill_image.pixel_size);
+    fillImage(cmd->fill_image.dst,
+              &cmd->fill_image.dst->device_ptrs[dev->global_mem_id],
+              cmd->fill_image.origin, cmd->fill_image.region,
+              cmd->fill_image.orig_pixel, cmd->fill_image.fill_pixel,
+              cmd->fill_image.pixel_size);
     *Msg = "Event Fill Image            ";
     break;
 
   case CL_COMMAND_MAP_IMAGE:
-    mapImage(cmd->map.mem_id, mem, cmd->map.mapping);
+    mapImage(&cmd->map.buffer->device_ptrs[dev->global_mem_id], cmd->map.buffer,
+             cmd->map.mapping);
     *Msg = "Event Map Image             ";
     break;
 
   case CL_COMMAND_UNMAP_MEM_OBJECT:
-    if (mem->is_image == CL_FALSE || IS_IMAGE1D_BUFFER(mem)) {
-      unmapMem(cmd->unmap.mem_id, mem, cmd->unmap.mapping);
+    if (cmd->unmap.buffer->is_image == CL_FALSE || IS_IMAGE1D_BUFFER(cmd->unmap.buffer)) {
+      unmapMem(&cmd->unmap.buffer->device_ptrs[dev->global_mem_id],
+               cmd->unmap.buffer, cmd->unmap.mapping);
       if (cmd->unmap.mapping->map_flags & CL_MAP_WRITE) {
-        syncUseMemHostPtr(cmd->unmap.mem_id, mem, cmd->unmap.mapping->offset,
+        syncUseMemHostPtr(&cmd->unmap.buffer->device_ptrs[dev->global_mem_id],
+                          cmd->unmap.buffer, cmd->unmap.mapping->offset,
                           cmd->unmap.mapping->size);
       }
     } else {
-      unmapImage(cmd->unmap.mem_id, mem, cmd->unmap.mapping);
+      unmapImage(&cmd->unmap.buffer->device_ptrs[dev->global_mem_id],
+                 cmd->unmap.buffer, cmd->unmap.mapping);
     }
     *Msg = "Unmap Mem obj         ";
     break;
@@ -295,18 +329,18 @@ void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg) {
   case CL_COMMAND_NDRANGE_KERNEL:
     run(Cmd);
     // synchronize content of writable USE_HOST_PTR buffers with the host
-    if (event->num_buffers != 0u) {
-      for (size_t i = 0; i < event->num_buffers; ++i) {
-        mem = event->mem_objs[i];
-        if ((mem->flags & CL_MEM_READ_ONLY) != 0u) {
-          continue;
-        }
-        if ((mem->flags & CL_MEM_HOST_NO_ACCESS) != 0u) {
-          continue;
-        }
-        pocl_mem_identifier *mem_id = &mem->device_ptrs[dev->global_mem_id];
-        syncUseMemHostPtr(mem_id, mem, 0, mem->size);
+    pocl_buffer_migration_info *MI;
+    LL_FOREACH (Cmd->migr_infos, MI) {
+      cl_mem MigratedBuf = MI->buffer;
+      if ((MigratedBuf->flags & CL_MEM_READ_ONLY) != 0u) {
+        continue;
       }
+      if ((MigratedBuf->flags & CL_MEM_HOST_NO_ACCESS) != 0u) {
+        continue;
+      }
+      pocl_mem_identifier *MemId =
+          &MigratedBuf->device_ptrs[dev->global_mem_id];
+      syncUseMemHostPtr(MemId, MigratedBuf, 0, MigratedBuf->size);
     }
     *Msg = "Event Enqueue NDRange       ";
     break;
@@ -1155,7 +1189,7 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
       } else {
         cl_mem arg_buf = (*(cl_mem *)(PoclArg[i].value));
         pocl_mem_identifier *memid = &arg_buf->device_ptrs[Dev->global_mem_id];
-        void *MemPtr = (char*)memid->mem_ptr + PoclArg[i].offset;
+        void *MemPtr = memid->mem_ptr;
         Res = zeKernelSetArgumentValue(KernelH, i, sizeof(void *), &MemPtr);
         LEVEL0_CHECK_ABORT(Res);
         // optimization for read-only buffers
@@ -1215,8 +1249,9 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   Level0Kernel *L0Kernel = (Level0Kernel *)Kernel->data[DeviceI];
 
   bool Needs64bitPtrs = false;
-  for (size_t i = 0; i < Event->num_buffers; ++i) {
-    if (Event->mem_objs[i]->size > UINT32_MAX) {
+  pocl_buffer_migration_info *MI;
+  LL_FOREACH (Cmd->migr_infos, MI) {
+    if (MI->buffer->size > UINT32_MAX) {
       Needs64bitPtrs = true;
       break;
     }

@@ -191,7 +191,7 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
         {
           cl_device_id dev = context->devices[i];
           assert (dev->ops->alloc_mem_obj != NULL);
-          // skip already allocated
+          /* skip already allocated */
           if (mem->device_ptrs[dev->global_mem_id].mem_ptr != NULL)
             continue;
           int err = dev->ops->alloc_mem_obj (dev, mem, host_ptr);
@@ -261,8 +261,8 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
         }
     }
 
-  /* if COPY_HOST_PTR is present but no copying happened,
-   * do the copy here */
+  /* If COPY_HOST_PTR is present but no copying happened,
+     do the copy here. */
   if ((flags & CL_MEM_COPY_HOST_PTR) && (mem->mem_host_ptr_version == 0))
     {
       POCL_GOTO_ERROR_ON ((pocl_alloc_or_retain_mem_host_ptr (mem) != 0),

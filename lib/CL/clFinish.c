@@ -33,6 +33,15 @@
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
+  if (pocl_get_bool_option ("POCL_DUMP_TASK_GRAPHS", 0) == 1)
+    {
+      pocl_dump_dot_task_graph (command_queue->context, "pocl-task-graph.dot");
+      /* Snapshot dumped. Now let the drivers supporting task graph dumping
+         execute finish executing their queues asynchronously. The condition
+         wait is per clFinish(). The drivers should take care of waiting for it
+         in the correct spot. */
+      pthread_cond_broadcast (&pocl_tg_dump_cond);
+    }
   /* Flush all pending commands */
   int err = POname (clFlush) (command_queue);
   if (err != CL_SUCCESS)

@@ -97,37 +97,52 @@ void pocl_lock_events_inorder (cl_event ev1, cl_event ev2);
 void pocl_unlock_events_inorder (cl_event ev1, cl_event ev2);
 
 /* Function for creating events */
-cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
-                          cl_command_type command_type, size_t num_buffers,
-                          const cl_mem* buffers, cl_context context);
+cl_int pocl_create_event (cl_event *event,
+                          cl_command_queue command_queue,
+                          cl_command_type command_type,
+                          pocl_buffer_migration_info *migration_infos,
+                          cl_context context);
 
 cl_int pocl_create_command (_cl_command_node **cmd,
                             cl_command_queue command_queue,
-                            cl_command_type command_type, cl_event *event,
-                            cl_uint num_events, const cl_event *wait_list,
-                            size_t num_buffers, cl_mem *buffers,
-                            char *readonly_flags);
+                            cl_command_type command_type,
+                            cl_event *event_p,
+                            cl_uint num_events,
+                            const cl_event *wait_list,
+                            pocl_buffer_migration_info *migration_infos);
 
-cl_int pocl_create_command_migrate (_cl_command_node **cmd,
-                                    cl_command_queue command_queue,
-                                    cl_mem_migration_flags flags,
-                                    cl_event *event_p,
-                                    cl_uint num_events,
-                                    const cl_event *wait_list,
-                                    size_t num_buffers,
-                                    cl_mem *buffers,
-                                    char *readonly_flags);
+cl_int
+pocl_create_command_struct (_cl_command_node **cmd,
+                            cl_command_queue command_queue,
+                            cl_command_type command_type,
+                            cl_event *event_p,
+                            cl_uint num_events,
+                            const cl_event *wait_list,
+                            pocl_buffer_migration_info *migration_infos);
+
+int pocl_create_event_sync (cl_event waiting_event, cl_event notifier_event);
+
+cl_int pocl_create_command_migrate (
+  _cl_command_node **cmd,
+  cl_command_queue command_queue,
+  cl_mem_migration_flags flags,
+  cl_event *event_p,
+  cl_uint num_events,
+  const cl_event *wait_list,
+  pocl_buffer_migration_info *migration_infos);
 
 cl_int pocl_command_record (cl_command_buffer_khr command_buffer,
                             _cl_command_node *cmd,
                             cl_sync_point_khr *sync_point);
 
-cl_int pocl_create_recorded_command (
-    _cl_command_node **cmd, cl_command_buffer_khr command_buffer,
-    cl_command_queue command_queue, cl_command_type command_type,
-    cl_uint num_sync_points_in_wait_list,
-    const cl_sync_point_khr *sync_point_wait_list, size_t num_buffers,
-    cl_mem *buffers, char *readonly_flags);
+cl_int
+pocl_create_recorded_command (_cl_command_node **cmd,
+                              cl_command_buffer_khr command_buffer,
+                              cl_command_queue command_queue,
+                              cl_command_type command_type,
+                              cl_uint num_sync_points_in_wait_list,
+                              const cl_sync_point_khr *sync_point_wait_list,
+                              pocl_buffer_migration_info *migration_infos);
 
 void pocl_command_enqueue (cl_command_queue command_queue,
                           _cl_command_node *node);
@@ -265,8 +280,8 @@ void pocl_update_event_complete (const char *func, unsigned line,
                                  cl_event event, const char *msg);
 
 POCL_EXPORT
-int pocl_copy_event_node (_cl_command_node *dst_node,
-                          _cl_command_node *src_node);
+int pocl_copy_command_node (_cl_command_node *dst_node,
+                            _cl_command_node *src_node);
 
 #define POCL_UPDATE_EVENT_COMPLETE_MSG(__event, msg)                          \
   pocl_update_event_complete (__func__, __LINE__, (__event), msg)

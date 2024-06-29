@@ -24,7 +24,7 @@ trap 'rm -f $PATCHY' EXIT
 git diff main -U0 --no-color >"$PATCHY"
 
 "$RELPATH"/clang-format-diff.py -regex '.*(\.h$|\.c$|\.cl$)' -i -p1 -style=file:"$RELPATH/style.GNU" <"$PATCHY"
-"$RELPATH"/clang-format-diff.py -regex '(.*(\.hpp$|\.hh$|\.cc$|\.cpp$))|(lib/llvmopencl/.*)|(lib/CL/devices/tce/.*)' -i -p1 -style LLVM <"$PATCHY"
+"$RELPATH"/clang-format-diff.py -regex '(.*(\.hpp$|\.hh$|\.cc$|\.cpp$))|(lib/llvmopencl/.*)|(lib/CL/devices/tce/.*)' -i -p1 -style=file:"$RELPATH/style.CPP" <"$PATCHY"
 
 # cd back whence we were previously
 popd > /dev/null || exit 1

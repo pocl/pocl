@@ -401,11 +401,12 @@ struct EventPair {
 
 std::string hexdigits(std::string, uint8_t);
 
-// Type for the buffer allocation identifier, a running number starting from
-// 0. Note: In some parts functions, the input can be declared as a buffer
-// id which might be treated as a raw 64b SVM pointer instead of a cl_mem
-// buffer identifier, in case referring to SVM buffers.
-typedef uint64_t BufferId_t;
+/// Type for the buffer allocation identifier, a running number starting from
+/// 0 with 0 denoting a NULL/illegal buffer.
+/// Note: Currently in some parts functions, the input can be declared as
+/// a buffer id which might be treated as a raw 64b SVM pointer instead of
+/// a cl_mem buffer identifier, in case referring to SVM buffers (WiP).
+typedef pocl_obj_id_t BufferId_t;
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

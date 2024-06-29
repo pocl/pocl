@@ -1,17 +1,18 @@
 /* OpenCL runtime library: clEnqueueUnmapMemObject()
 
    Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
-   
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,9 +23,10 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_mem_management.h"
+#include "pocl_util.h"
 #include "utlist.h"
 #include <assert.h>
-#include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
@@ -65,8 +67,8 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
                         "CL_MEM_HOST_WRITE_ONLY or CL_MEM_HOST_NO_ACCESS and "
                         "CL_MAP_READ is set in map_flags\n");
 
-  if (memobj->parent)
-    memobj = memobj->parent;
+  /* With 1D buffers we should deal with the backing-store buffer. */
+  memobj = POCL_MEM_BS (memobj);
 
   POCL_LOCK_OBJ (memobj);
   DL_FOREACH (memobj->mappings, mapping)
@@ -81,20 +83,27 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   if (mapping)
     mapping->unmap_requested = 1;
   POCL_UNLOCK_OBJ (memobj);
-  POCL_RETURN_ERROR_ON((mapping == NULL), CL_INVALID_VALUE,
-      "Could not find mapping of this memobj\n");
+  POCL_RETURN_ERROR_ON ((mapping == NULL), CL_INVALID_VALUE,
+                        "Could not find a mapping for this memobj (id %zu)\n",
+                        memobj->id);
 
   char rdonly = (mapping->map_flags & CL_MAP_READ);
 
   errcode = pocl_create_command (
-      &cmd, command_queue, CL_COMMAND_UNMAP_MEM_OBJECT, event,
-      num_events_in_wait_list, event_wait_list, 1, &memobj, &rdonly);
+    &cmd, command_queue, CL_COMMAND_UNMAP_MEM_OBJECT, event,
+    num_events_in_wait_list, event_wait_list,
+    pocl_append_unique_migration_info (NULL, memobj, rdonly));
+
+  /* Release the "mapping reference" which keeps the buffer alive until the
+     mapping is on. The command execution should also retain/release. */
+  int newrefc;
+  POCL_RELEASE_OBJECT (memobj, newrefc);
 
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
   cmd->command.unmap.mapping = mapping;
-  cmd->command.unmap.mem_id = &memobj->device_ptrs[device->global_mem_id];
+  cmd->command.unmap.buffer = memobj;
 
   pocl_command_enqueue(command_queue, cmd);
 

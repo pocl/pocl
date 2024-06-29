@@ -11,7 +11,7 @@ POname(clCreateUserEvent)(cl_context     context ,
 
   POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
 
-  errcode = pocl_create_event (&event, 0, CL_COMMAND_USER, 0, NULL, context);
+  errcode = pocl_create_event (&event, 0, CL_COMMAND_USER, NULL, context);
 
   if (errcode != CL_SUCCESS)
     {
