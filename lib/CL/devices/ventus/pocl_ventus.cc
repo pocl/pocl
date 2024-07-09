@@ -1176,15 +1176,16 @@ pocl_ventus_read_rect (void *data, void *__restrict__ const host_ptr,
                        size_t const host_row_pitch,
                        size_t const host_slice_pitch)
 {
-    cl_mem_flags flags = src_buf->flags;
+    vt_device_data_t *d = (vt_device_data_t *)data;
     void *__restrict__ device_ptr = src_mem_id->mem_ptr;
+    uint64_t src_addr = (uint64_t)(*(uint64_t *)device_ptr);
 
-    if (flags & CL_MEM_USE_HOST_PTR) {
-        device_ptr = src_buf->mem_host_ptr;
-    }
+    char *buff = (char *)malloc(src_buf->size);
+    int err = vt_copy_from_dev(d->vt_device, src_addr, buff, src_buf->size, 0, 0);
+    assert(0 == err);
 
     char const *__restrict const adjusted_device_ptr
-        = (char const *)device_ptr + buffer_origin[2] * buffer_slice_pitch
+        = buff + buffer_origin[2] * buffer_slice_pitch
         + buffer_origin[1] * buffer_row_pitch + buffer_origin[0];
     char *__restrict__ const adjusted_host_ptr
         = (char *)host_ptr + host_origin[2] * host_slice_pitch
@@ -1204,6 +1205,7 @@ pocl_ventus_read_rect (void *data, void *__restrict__ const host_ptr,
                         adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
                         region[0]);
     }
+    free(buff);
 }
 
 void
