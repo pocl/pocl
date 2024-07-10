@@ -1430,7 +1430,7 @@ int pocl_ventus_post_build_program (cl_program program, cl_uint device_i) {
   ss_cmd << " -D__opencl_c_generic_address_space=1 -D__opencl_c_named_address_space_builtins=1 ";
   ss_cmd << " -D__OPENCL_VERSION__=" << device->version_as_int << " ";
 	ss_cmd << program->compiler_options << std::endl;
-	POCL_MSG_PRINT_LLVM("running \"%s\"\n", ss_cmd.str().c_str());
+	POCL_MSG_PRINT_VENTUS("running \"%s\"\n", ss_cmd.str().c_str());
 
 	FILE *fp = popen(ss_cmd.str().c_str(), "r");
 	if(fp == NULL) {
@@ -1448,7 +1448,7 @@ int pocl_ventus_post_build_program (cl_program program, cl_uint device_i) {
         perror("pclose() failed");
         exit(EXIT_FAILURE);
     } else {
-        POCL_MSG_PRINT_LLVM("after calling clang, the output is : \"%s\"\n", ss_out.str().c_str());
+        POCL_MSG_PRINT_VENTUS("after calling clang, the output is : \"%s\"\n", ss_out.str().c_str());
     }
 
 
