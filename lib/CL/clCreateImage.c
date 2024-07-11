@@ -165,15 +165,17 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
     if (image_desc->image_type == CL_MEM_OBJECT_IMAGE2D)
       size = row_pitch * image_desc->image_height;
 
+    /* "For a 1D image buffer created from a buffer object, the
+        image_width * size of element in bytes must be <= size of the buffer
+        object. The image data in the buffer object is stored as a single
+        scanline which is a linear sequence of adjacent elements." */
     if (image_desc->image_type == CL_MEM_OBJECT_IMAGE1D
         || image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
-      size = row_pitch;
+      size = image_desc->image_width * elem_bytes;
 
     if (image_desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY
         || image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
-      {
-        size = slice_pitch * image_desc->image_array_size;
-      }
+      size = slice_pitch * image_desc->image_array_size;
 
     /* Create buffer and fill in missing parts */
     if (image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
