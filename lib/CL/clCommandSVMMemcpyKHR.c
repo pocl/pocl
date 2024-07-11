@@ -39,6 +39,12 @@ POname (clCommandSVMMemcpyKHR) (
 
   CMDBUF_VALIDATE_COMMON_HANDLES;
 
+  if (command_queue != NULL
+      && strstr (command_buffer->queues[0]->device->extensions,
+                 "cl_khr_command_buffer_multi_device")
+           == NULL)
+    return CL_INVALID_COMMAND_QUEUE;
+
   return pocl_svm_memcpy_common (command_buffer, command_queue,
                                  CL_COMMAND_SVM_MEMCPY, dst_ptr, src_ptr, size,
                                  num_sync_points_in_wait_list, NULL, NULL,

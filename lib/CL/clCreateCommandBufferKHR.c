@@ -35,6 +35,11 @@ POname (clCreateCommandBufferKHR) (
   int errcode = 0;
   cl_command_buffer_khr cmdbuf = NULL;
 
+  POCL_GOTO_ERROR_COND ((num_queues > 1
+                         && strstr (queues[0]->device->extensions,
+                                    "cl_khr_command_buffer_multi_device")
+                              == NULL),
+                        CL_INVALID_VALUE);
   POCL_GOTO_ERROR_COND ((num_queues == 0), CL_INVALID_VALUE);
   POCL_GOTO_ERROR_COND ((queues == NULL), CL_INVALID_VALUE);
 
