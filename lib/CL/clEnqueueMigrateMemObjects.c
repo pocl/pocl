@@ -1,27 +1,29 @@
 /* OpenCL runtime library: clEnqueueMigrateMemObjects()
 
    Copyright (c) 2013 Ville Korhonen / Tampere Univ. of Tech.
-   
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #include "pocl_cl.h"
+#include "pocl_mem_management.h"
 #include "pocl_util.h"
 #include <string.h>
 
@@ -37,7 +39,6 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
   unsigned i;
   int errcode;
   _cl_command_node *cmd = NULL;
-  cl_mem *new_mem_objects = NULL;
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
@@ -57,9 +58,7 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  new_mem_objects = (cl_mem *)calloc (sizeof (cl_mem), num_mem_objects);
-
-  char *rdonly = (char*)alloca (num_mem_objects);
+  pocl_buffer_migration_info *migr_infos = NULL;
 
   for (i = 0; i < num_mem_objects; ++i)
     {
@@ -72,22 +71,15 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
 
       POCL_GOTO_ERROR_ON ((mem_objects[i]->is_gl_texture),
                           CL_INVALID_MEM_OBJECT, "mem_obj is a GL texture\n");
+      cl_mem buf = mem_objects[i];
+      IMAGE1D_TO_BUFFER (buf);
 
-      if (mem_objects[i]->parent == NULL)
-        new_mem_objects[i] = mem_objects[i];
-      else
-        new_mem_objects[i] = mem_objects[i]->parent;
-
-      IMAGE1D_TO_BUFFER (new_mem_objects[i]);
-
-      rdonly[i] = 1;
+      migr_infos = pocl_append_unique_migration_info (migr_infos, buf, 1);
     }
 
-  errcode = pocl_create_command_migrate (
-      &cmd, command_queue, flags, event, num_events_in_wait_list,
-      event_wait_list, num_mem_objects, new_mem_objects, rdonly);
-
-  POCL_MEM_FREE (new_mem_objects);
+  errcode = pocl_create_command_migrate (&cmd, command_queue, flags, event,
+                                         num_events_in_wait_list,
+                                         event_wait_list, migr_infos);
 
   if (errcode != CL_SUCCESS)
     goto ERROR;
@@ -95,13 +87,13 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
   /* This is an empty command, because the actual migrations are created in
    * the pocl_create_command above, for each buffer separately. */
   cmd->command.migrate.type = ENQUEUE_MIGRATE_TYPE_NOP;
+  cmd->command.migrate.num_buffers = num_mem_objects;
 
   pocl_command_enqueue (command_queue, cmd);
 
   return CL_SUCCESS;
 
 ERROR:
-  POCL_MEM_FREE (new_mem_objects);
   return errcode;
 }
 POsym(clEnqueueMigrateMemObjects)

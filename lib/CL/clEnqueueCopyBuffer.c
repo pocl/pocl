@@ -3,26 +3,28 @@
    Copyright (c) 2011-2015 Universidad Rey Juan Carlos and
                            Pekka Jääskeläinen / Tampere Univ. of Tech.
                            Ville Korhonen / Tampere Univ. of Tech.
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
+#include "pocl_mem_management.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
 #include "utlist.h"
@@ -89,7 +91,6 @@ pocl_copy_buffer_common (cl_command_buffer_khr command_buffer,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  POCL_CONVERT_SUBBUFFER_OFFSET (src_buffer, src_offset);
   POCL_RETURN_ERROR_ON (
       (src_buffer->size > command_queue->device->max_mem_alloc_size),
       CL_OUT_OF_RESOURCES, "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
@@ -97,7 +98,7 @@ pocl_copy_buffer_common (cl_command_buffer_khr command_buffer,
                                size)
       != CL_SUCCESS)
     return CL_INVALID_VALUE;
-  POCL_CONVERT_SUBBUFFER_OFFSET (dst_buffer, dst_offset);
+
   POCL_RETURN_ERROR_ON (
       (dst_buffer->size > command_queue->device->max_mem_alloc_size),
       CL_OUT_OF_RESOURCES, "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
@@ -106,14 +107,12 @@ pocl_copy_buffer_common (cl_command_buffer_khr command_buffer,
       != CL_SUCCESS)
     return CL_MEM_COPY_OVERLAP;
 
-  cl_mem buffers[3] = { src_buffer, dst_buffer, NULL };
-  char rdonly[] = { 1, 0, 1 };
-  int n_bufs = 2;
+  pocl_buffer_migration_info *migr_infos
+    = pocl_append_unique_migration_info (NULL, src_buffer, 1);
+  pocl_append_unique_migration_info (migr_infos, dst_buffer, 0);
+
   if (src_buffer->size_buffer != NULL)
-    {
-      n_bufs = 3;
-      buffers[2] = src_buffer->size_buffer;
-    }
+    pocl_append_unique_migration_info (migr_infos, src_buffer->size_buffer, 1);
 
   if (command_buffer == NULL)
     {
@@ -122,26 +121,23 @@ pocl_copy_buffer_common (cl_command_buffer_khr command_buffer,
       if (errcode != CL_SUCCESS)
         return errcode;
       errcode = pocl_create_command (
-          cmd, command_queue, CL_COMMAND_COPY_BUFFER, event,
-          num_items_in_wait_list, event_wait_list, n_bufs, buffers, rdonly);
+        cmd, command_queue, CL_COMMAND_COPY_BUFFER, event,
+        num_items_in_wait_list, event_wait_list, migr_infos);
     }
   else
     {
       errcode = pocl_create_recorded_command (
-          cmd, command_buffer, command_queue, CL_COMMAND_COPY_BUFFER,
-          num_items_in_wait_list, sync_point_wait_list, n_bufs, buffers,
-          rdonly);
+        cmd, command_buffer, command_queue, CL_COMMAND_COPY_BUFFER,
+        num_items_in_wait_list, sync_point_wait_list, migr_infos);
     }
   if (errcode != CL_SUCCESS)
     return errcode;
 
   _cl_command_node *c = *cmd;
 
-  c->command.copy.src_mem_id = &src_buffer->device_ptrs[device->global_mem_id];
   c->command.copy.src_offset = src_offset;
   c->command.copy.src = src_buffer;
 
-  c->command.copy.dst_mem_id = &dst_buffer->device_ptrs[device->global_mem_id];
   c->command.copy.dst_offset = dst_offset;
   c->command.copy.dst = dst_buffer;
 
@@ -184,7 +180,7 @@ CL_API_SUFFIX__VERSION_1_0
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  pocl_command_enqueue(command_queue, cmd);
+  pocl_command_enqueue (command_queue, cmd);
 
   return CL_SUCCESS;
 }

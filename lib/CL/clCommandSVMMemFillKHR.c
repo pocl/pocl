@@ -41,6 +41,12 @@ POname (clCommandSVMMemFillKHR) (
 
   CMDBUF_VALIDATE_COMMON_HANDLES;
 
+  if (command_queue != NULL
+      && strstr (command_buffer->queues[0]->device->extensions,
+                 "cl_khr_command_buffer_multi_device")
+           == NULL)
+    return CL_INVALID_COMMAND_QUEUE;
+
   return pocl_svm_memfill_common (
       command_buffer, command_queue, CL_COMMAND_SVM_MEMFILL, svm_ptr, size,
       pattern, pattern_size, num_sync_points_in_wait_list, NULL, NULL,

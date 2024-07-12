@@ -46,9 +46,9 @@ CL_API_SUFFIX__VERSION_1_2
     return errcode;
 
   /* Even if we do not need to create a full command, the runtime requires it */
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_BARRIER,
-                                 event, num_events_in_wait_list,
-                                 event_wait_list, 0, NULL, NULL);
+  errcode
+    = pocl_create_command (&cmd, command_queue, CL_COMMAND_BARRIER, event,
+                           num_events_in_wait_list, event_wait_list, NULL);
 
   if (errcode != CL_SUCCESS)
     goto ERROR;

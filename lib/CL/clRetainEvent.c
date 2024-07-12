@@ -24,9 +24,10 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-POname(clRetainEvent)(cl_event  event ) CL_API_SUFFIX__VERSION_1_0
+POname (clRetainEvent) (cl_event event) CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (event)), CL_INVALID_EVENT);
+  if (!IS_CL_OBJECT_VALID (event))
+    return CL_INVALID_EVENT;
 
   int refc;
   POCL_RETAIN_OBJECT_REFCOUNT (event, refc);

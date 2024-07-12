@@ -40,6 +40,12 @@ POname (clCommandNDRangeKernelKHR) (
   cl_int errcode = CL_SUCCESS;
   _cl_command_node *cmd = NULL;
 
+  if (command_queue != NULL
+      && strstr (command_buffer->queues[0]->device->extensions,
+                 "cl_khr_command_buffer_multi_device")
+           == NULL)
+    return CL_INVALID_COMMAND_QUEUE;
+
   CMDBUF_VALIDATE_COMMON_HANDLES;
 
   return pocl_record_ndrange_kernel (

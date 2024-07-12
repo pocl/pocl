@@ -1,6 +1,7 @@
 /* prototypes.inc - macros for generating the driver layer function prototypes
 
    Copyright (c) 2012-2019 Pekka Jääskeläinen
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -41,6 +42,7 @@
   unsigned int pocl_##__DRV__##_probe (struct pocl_device_ops *ops);          \
   cl_int pocl_##__DRV__##_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, \
                                          void *host_ptr);                     \
+  cl_int pocl_##__DRV__##_alloc_subbuffer (cl_device_id device, cl_mem sub_buf); \
   void pocl_##__DRV__##_free (cl_device_id device, cl_mem mem_obj);           \
   int pocl_##__DRV__##_can_migrate_d2d (cl_device_id dest,                    \
                                         cl_device_id source);                 \

@@ -40,9 +40,8 @@ const char *PoclGVarMDName = "program.scope.var.size";
 
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wno-maybe-uninitialized"
 #include <llvm/ADT/StringRef.h>
 #include <llvm/ADT/StringSet.h>
 #include <llvm/IR/Constants.h>

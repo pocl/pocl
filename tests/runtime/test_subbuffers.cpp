@@ -29,6 +29,7 @@
 #include "../../include/CL/cl_ext_pocl.h"
 #include <CL/opencl.hpp>
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -36,15 +37,22 @@
 #include <random>
 
 static char VecAddSrc[] = R"raw(
-
-  __kernel void vecadd (__global int *A, __global int *B,
+  __kernel void vecadd (const __global int *A, const __global int *B,
                         __global int *C) {
     C[get_global_id(0)] = A[get_global_id(0)] + B[get_global_id(0)];
   }
 )raw";
 
+#if 0
+    printf("gid %u A %d B %d C %d\n",
+            get_global_id (0), A[get_global_id(0)], B[get_global_id(0)],
+            C[get_global_id(0)]);
+#endif
+
 // Split a buffer to N subbuffers which are concurrently processed
 // by multiple kernel commands in different command queues.
+// Ideally the sub-buffers are processed in parallel since there are
+// no dependencies communicated by the client code to the runtime.
 int TestOutputDataDecomposition() {
 
   unsigned Errors = 0;
@@ -66,27 +74,35 @@ int TestOutputDataDecomposition() {
       return EXIT_FAILURE;
     }
 
-    const size_t NumParallelQueues = 8;
+    const size_t NumParallelQueues = std::max((size_t)2, Devices.size());
     const size_t WorkShare =
       (Devices[0].getInfo<CL_DEVICE_MEM_BASE_ADDR_ALIGN>() / sizeof(cl_int)) *
       4;
+    // Leave uncovered space at the end of subbuffer to make the end address
+    // unaligned to regression test the corner case of user subbuffer uncovered
+    // parts ending before an unaligned address.
+    const size_t Uncovered = 13;
     // Leave one chunk of the data untouched so we can check that
     // the migrations are done at subbuffer level.
     const size_t NumData = (NumParallelQueues + 1) * WorkShare;
 
     std::cerr << "Number of devices: " << Devices.size() << std::endl;
-    std::cerr << "NumData == " << NumData << std::endl;
-    std::cerr << "WorkShare == " << WorkShare << std::endl;
-    std::cerr << "Processing data before " << NumParallelQueues * WorkShare
+    std::cerr << "Total data (bytes) == " << NumData * sizeof(cl_int)
               << std::endl;
-    std::cerr << "Last sub-buffer starts at "
-              << (NumParallelQueues - 1) * WorkShare << std::endl;
+    std::cerr << "WorkShare (bytes) == " << WorkShare * sizeof(cl_int)
+              << std::endl;
+    std::cerr << "Processing data before "
+              << NumParallelQueues * WorkShare * sizeof(cl_int) << " bytes "
+              << std::endl;
+    std::cerr << "Last sub-buffer starts at byte offset "
+              << (NumParallelQueues - 1) * WorkShare * sizeof(cl_int)
+              << std::endl;
 
     std::vector<int> HostBufA, HostBufB, HostBufC;
     for (size_t i = 0; i < NumData; ++i) {
       HostBufA.push_back(i);
-      HostBufB.push_back(2);
-      HostBufC.push_back(1);
+      HostBufB.push_back(0);
+      HostBufC.push_back(3);
     }
 
     cl::Buffer ABuffer =
@@ -118,8 +134,11 @@ int TestOutputDataDecomposition() {
       Queues.push_back(Queue);
 
       cl_buffer_region Region{.origin = i * WorkShare * sizeof(cl_int),
-                              .size = WorkShare * sizeof(cl_int)};
+                              .size = (WorkShare - Uncovered) * sizeof(cl_int)};
 
+      std::cout << "Q" << i << " sub-buffer origin element " << i * WorkShare
+                << " last element "
+                << i * WorkShare + (WorkShare - Uncovered - 1) << std::endl;
       cl::Buffer ASubBuffer =
           ABuffer.createSubBuffer(0, CL_BUFFER_CREATE_TYPE_REGION, &Region);
       cl::Buffer BSubBuffer =
@@ -136,19 +155,31 @@ int TestOutputDataDecomposition() {
       SubBuffers.push_back(BSubBuffer);
       SubBuffers.push_back(CSubBuffer);
 
+      // Initialize the sub-buffers using fillbuffer, just to test it out.
+      cl::Event FEv1, FEv2;
+
+      Queue.enqueueFillBuffer(BSubBuffer, (cl_int)2, 0,
+                              (WorkShare - Uncovered) * sizeof(cl_int), nullptr,
+                              &FEv1);
+
+      Queue.enqueueFillBuffer(CSubBuffer, (cl_int)1, 0,
+                              (WorkShare - Uncovered) * sizeof(cl_int), nullptr,
+                              &FEv2);
+
+      cl::vector<cl::Event> Deps;
+      Deps.push_back(FEv1);
+      Deps.push_back(FEv2);
+
       cl::Event Ev;
       Queue.enqueueNDRangeKernel(VecAddKernel, cl::NullRange,
-                                 cl::NDRange(WorkShare), cl::NullRange, nullptr,
-                                 &Ev);
+                                 cl::NDRange(WorkShare - Uncovered),
+                                 cl::NullRange, &Deps, &Ev);
       KernelEvents.push_back(Ev);
     }
 
     std::vector<int> AfterSubBufCContents(NumData);
 
-    for (size_t i = 0; i < Queues.size(); ++i)
-      Queues[i].finish();
-
-    Queues[0].enqueueReadBuffer(CBuffer, CL_TRUE, 0, sizeof(cl_int) * NumData,
+    Queues[0].enqueueReadBuffer(CBuffer, CL_FALSE, 0, sizeof(cl_int) * NumData,
                                 AfterSubBufCContents.data(), &KernelEvents);
 
     // Push a kernel that reads and writes the whole buffer.
@@ -157,7 +188,7 @@ int TestOutputDataDecomposition() {
     VecAddKernel.setArg(1, BBuffer);
     VecAddKernel.setArg(2, CBuffer);
 
-    // Event dep on the previous kernel commands should ensure the data is
+    // The event dep on the previous kernel commands should ensure the data is
     // implicitly migrated to the parent buffer.
     Queues[0].enqueueNDRangeKernel(VecAddKernel, cl::NullRange,
                                    cl::NDRange(WorkShare * NumParallelQueues),
@@ -168,15 +199,15 @@ int TestOutputDataDecomposition() {
     Queues[0].enqueueReadBuffer(CBuffer, CL_FALSE, 0, sizeof(cl_int) * NumData,
                                 NewBufCContents.data());
 
-    // Push a kernel that inputs the old subbuffer, that should get updated with
-    // the changes done by the previous command.
+    // Push a kernel that inputs the last CSubbuffer, that should get updated
+    // with the changes done by the previous command.
     VecAddKernel.setArg(0, SubBuffers.back());
     VecAddKernel.setArg(1, BBuffer); // Should add 2 to all elements, in place.
     VecAddKernel.setArg(2, SubBuffers.back());
 
     Queues[0].enqueueNDRangeKernel(VecAddKernel, cl::NullRange,
-                                   cl::NDRange(WorkShare), cl::NullRange,
-                                   &KernelEvents, nullptr);
+                                   cl::NDRange(WorkShare - Uncovered),
+                                   cl::NullRange, &KernelEvents, nullptr);
 
     std::vector<int> FinalBufCContents(NumData);
 
@@ -185,25 +216,25 @@ int TestOutputDataDecomposition() {
 
     Queues[0].finish();
 
-    // This should not be needed due to the event dep from the other queues.
-    for (size_t i = 0; i < Queues.size(); ++i)
-      Queues[i].finish();
-
     // Check the data after the parallel sub-buffer launches.
     for (size_t i = 0; i < NumData; ++i) {
-      if (i < (WorkShare * NumParallelQueues)) {
+      int Share = i / WorkShare;
+      if (i >= WorkShare * Share &&
+          i < WorkShare * Share + WorkShare - Uncovered &&
+          i < WorkShare * NumParallelQueues) {
         if (AfterSubBufCContents[i] != i + 2) {
           std::cerr << "ERROR: after sub-bufs " << i << " was "
-                    << AfterSubBufCContents[i] << " expected " << i + 2 + 2
+                    << AfterSubBufCContents[i] << " expected " << i + 2
                     << std::endl;
           AllOK = false;
           break;
         }
       } else {
-        // The last part should remain untouched.
-        if (AfterSubBufCContents[i] != 1) {
+        // The last part and the unaligned gaps after the sub-buffers should
+        // remain untouched.
+        if (AfterSubBufCContents[i] != 3) {
           std::cerr << "ERROR: after sub-bufs the last part " << i << " was "
-                    << AfterSubBufCContents[i] << " expected 1\n";
+                    << AfterSubBufCContents[i] << " expected 3\n";
           AllOK = false;
           break;
         }
@@ -212,7 +243,10 @@ int TestOutputDataDecomposition() {
 
     // Check the data before the last kernel launch.
     for (size_t i = 0; i < NumData; ++i) {
-      if (i < (WorkShare * NumParallelQueues)) {
+      int Share = i / WorkShare;
+      if (i >= WorkShare * Share &&
+          i < WorkShare * Share + WorkShare - Uncovered &&
+          i < WorkShare * NumParallelQueues) {
         if (NewBufCContents[i] != i + 2 + 2) {
           std::cerr << "ERROR: " << i << " was " << NewBufCContents[i]
                     << " expected " << i + 2 + 2 << std::endl;
@@ -221,9 +255,9 @@ int TestOutputDataDecomposition() {
         }
       } else {
         // The last part should remain untouched.
-        if (NewBufCContents[i] != 1) {
+        if (NewBufCContents[i] != 3) {
           std::cerr << "ERROR: " << i << " was " << NewBufCContents[i]
-                    << " expected 1\n";
+                    << " expected 3\n";
           AllOK = false;
           break;
         }
@@ -233,25 +267,31 @@ int TestOutputDataDecomposition() {
     // In the final state there should be one additional 2 addition in the
     // last manipulated part of the array.
     for (size_t i = 0; i < NumData; ++i) {
-      if (i < (WorkShare * (NumParallelQueues - 1))) {
-        if (FinalBufCContents[i] != i + 2 + 2) {
-          std::cerr << "ERROR: final " << i << " was " << FinalBufCContents[i]
-                    << " expected " << i + 2 + 2 << std::endl;
-          AllOK = false;
-          break;
-        }
-      } else if (i < (WorkShare * NumParallelQueues)) {
-        if (FinalBufCContents[i] != i + 2 + 2 + 2) {
-          std::cerr << "ERROR: final " << i << " was " << FinalBufCContents[i]
-                    << " expected " << i + 2 + 2 << std::endl;
-          AllOK = false;
-          break;
+      int Share = i / WorkShare;
+      if (i >= WorkShare * Share &&
+          i < WorkShare * Share + WorkShare - Uncovered &&
+          i < WorkShare * NumParallelQueues) {
+        if (i < (WorkShare * (NumParallelQueues - 1))) {
+          if (FinalBufCContents[i] != i + 2 + 2) {
+            std::cerr << "ERROR: final " << i << " was " << FinalBufCContents[i]
+                      << " expected " << i + 2 + 2 << std::endl;
+            AllOK = false;
+            break;
+          }
+        } else if (i < (WorkShare * NumParallelQueues)) {
+          // The part which was not touched by sub-buffers.
+          if (FinalBufCContents[i] != i + 2 + 2 + 2) {
+            std::cerr << "ERROR: final " << i << " was " << FinalBufCContents[i]
+                      << " expected " << i + 2 + 2 << std::endl;
+            AllOK = false;
+            break;
+          }
         }
       } else {
         // The very last part should still remain untouched.
-        if (FinalBufCContents[i] != 1) {
+        if (FinalBufCContents[i] != 3) {
           std::cerr << "ERROR: final last part " << i << " was "
-                    << FinalBufCContents[i] << " expected 1\n";
+                    << FinalBufCContents[i] << " expected 3\n";
           AllOK = false;
           break;
         }

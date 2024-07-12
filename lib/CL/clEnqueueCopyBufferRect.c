@@ -1,24 +1,24 @@
 /* OpenCL runtime library: clEnqueueCopyBufferRect()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
-   
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #include "pocl_cl.h"
@@ -57,13 +57,11 @@ pocl_copy_buffer_rect_common (cl_command_buffer_khr command_buffer,
     return errcode;
 
   size_t src_offset = 0;
-  POCL_CONVERT_SUBBUFFER_OFFSET (src_buffer, src_offset);
   POCL_GOTO_ERROR_ON (
       (src_buffer->size > command_queue->device->max_mem_alloc_size),
       CL_OUT_OF_RESOURCES, "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
 
   size_t dst_offset = 0;
-  POCL_CONVERT_SUBBUFFER_OFFSET (dst_buffer, dst_offset);
   POCL_GOTO_ERROR_ON (
       (dst_buffer->size > command_queue->device->max_mem_alloc_size),
       CL_OUT_OF_RESOURCES, "dst is larger than device's MAX_MEM_ALLOC_SIZE\n");
@@ -71,11 +69,7 @@ pocl_copy_buffer_rect_common (cl_command_buffer_khr command_buffer,
   _cl_command_node *c = *cmd;
   cl_device_id dev = command_queue->device;
 
-  c->command.copy_rect.src_mem_id
-      = &src_buffer->device_ptrs[dev->global_mem_id];
   c->command.copy_rect.src = src_buffer;
-  c->command.copy_rect.dst_mem_id
-      = &dst_buffer->device_ptrs[dev->global_mem_id];
   c->command.copy_rect.dst = dst_buffer;
 
   c->command.copy_rect.src_origin[0] = src_offset + src_origin[0];
@@ -105,7 +99,7 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
                                 cl_mem src_buffer,
                                 cl_mem dst_buffer,
                                 const size_t *src_origin,
-                                const size_t *dst_origin, 
+                                const size_t *dst_origin,
                                 const size_t *region,
                                 size_t src_row_pitch,
                                 size_t src_slice_pitch,

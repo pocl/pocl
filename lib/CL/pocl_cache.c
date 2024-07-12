@@ -28,6 +28,7 @@
 #include <unistd.h>
 
 #include "config.h"
+#include "common.h"
 #include "pocl_build_timestamp.h"
 #include "pocl_version.h"
 

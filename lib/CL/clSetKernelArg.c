@@ -201,7 +201,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
         value = kernel->dyn_argument_offsets[arg_index];
       else
         {
-          /* FIXME: this is a cludge to determine an acceptable alignment,
+          /* FIXME: this is a kludge to determine an acceptable alignment,
            * we should probably extract the argument alignment from the
            * LLVM bytecode during kernel header generation. */
           arg_alignment = pocl_size_ceil2 (arg_size);
@@ -222,27 +222,12 @@ POname(clSetKernelArg)(cl_kernel kernel,
       if ((pi->type == POCL_ARG_TYPE_POINTER) && (arg_value != NULL))
         {
           cl_mem buf = *(const cl_mem *)arg_value;
-          if (buf->parent != NULL)
-            {
-              p->offset = buf->origin;
-              buf = buf->parent;
-            }
-          else
-            {
-              p->offset = 0;
-            }
           memcpy (value, &buf, arg_size);
         }
       else
         memcpy (value, arg_value, arg_size);
       p->value = value;
     }
-
-#if 0
-  printf(
-      "### clSetKernelArg for %s arg %d (size %u) set to %x points to %x\n", 
-      kernel->name, arg_index, arg_size, p->value, *(int*)arg_value);
-#endif
 
   p->size = arg_size;
   p->is_set = 1;

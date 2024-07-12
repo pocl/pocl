@@ -1,12 +1,12 @@
 /* pocl_debug.h: Internal debugging aids.
 
-   Copyright (c) 2011-2021 pocl developers
+   Copyright (c) 2011-2024 pocl developers
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -16,9 +16,9 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #ifndef POCL_DEBUG_H
@@ -44,7 +44,9 @@
 
 #include "config.h"
 
+#include "CL/cl.h"
 #include "pocl_export.h"
+#include "pocl_threads.h"
 
 // size_t print spec
 #ifndef PRIuS
@@ -538,8 +540,39 @@ POCL_EXPORT
     }                                                                         \
   while (0)
 
+/**
+ * Converts a command type to a string.
+ *
+ * @param cmd The command.
+ * @param shortened Set to 1 for a shortened string.
+ */
+POCL_EXPORT
+const char *pocl_command_type_to_str (cl_command_type cmd, int shortened);
+
+/**
+ * Dumps all commands and events of the context as a graphviz dot file.
+ *
+ * Currently works only with PoCL contexts.
+ *
+ * @param context the OpenCL context to dump.
+ * @param file_name the target file name.
+ */
+POCL_EXPORT
+void pocl_dump_dot_task_graph (cl_context context, const char *file_name);
+
+/* Some of the device drivers can wait until clFinish() is called to allow
+   a full task graph dumped to disk of the accumulated commands. The lock and
+   the condition variable are used to synchronize the
+   "clFinish() -> dump -> asynch execution in drivers" cycle with the condition
+   variable holding the asynch execution until after we have dumped the
+   graph. */
+POCL_EXPORT
+extern pocl_lock_t pocl_tg_dump_lock;
+POCL_EXPORT
+extern pocl_cond_t pocl_tg_dump_cond;
 #ifdef __cplusplus
 }
 #endif
+
 
 #endif
