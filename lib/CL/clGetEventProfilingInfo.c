@@ -34,8 +34,7 @@ POname(clGetEventProfilingInfo)(cl_event event,
 {
   size_t const value_size = sizeof(cl_ulong);
 
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (event)),
-                          CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (event)), CL_INVALID_EVENT);
 
   POCL_RETURN_ERROR_ON((event->queue == NULL),
     CL_PROFILING_INFO_NOT_AVAILABLE, "Cannot return profiling info for user events\n");
