@@ -1,6 +1,6 @@
 /* OpenCL built-in library: subgroup basic functionality
 
-   Copyright (c) 2022-2023 Pekka Jääskeläinen / Intel Finland Oy
+   Copyright (c) 2022-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -74,95 +74,92 @@ intel_sub_group_shuffle_down (uint current, uint next, uint delta)
   return idx >= get_sub_group_size () ? other_cur : other_next;
 }
 
-uint _CL_OVERLOADABLE
-intel_sub_group_block_read (const global uint *p)
-{
-  return p[get_sub_group_local_id ()];
-}
+#define INTEL_SG_BLOCK_READ_WRITE_T(TYPE, SUFFIX)                             \
+  TYPE _CL_OVERLOADABLE intel_sub_group_block_read##SUFFIX (                  \
+    const global TYPE *p)                                                     \
+  {                                                                           \
+    return p[get_sub_group_local_id ()];                                      \
+  }                                                                           \
+                                                                              \
+  TYPE##2 _CL_OVERLOADABLE intel_sub_group_block_read##SUFFIX##2(             \
+    const global TYPE *p)                                                     \
+  {                                                                           \
+    return (TYPE##2) (                                                        \
+      p[get_sub_group_local_id ()],                                           \
+      p[get_sub_group_local_id () + get_max_sub_group_size ()]);              \
+  }                                                                           \
+                                                                              \
+  TYPE##4 _CL_OVERLOADABLE intel_sub_group_block_read##SUFFIX##4(             \
+    const global TYPE *p)                                                     \
+  {                                                                           \
+    uint sglid = get_sub_group_local_id ();                                   \
+    uint sgsize = get_max_sub_group_size ();                                  \
+    return (TYPE##4) (p[sglid], p[sglid + sgsize], p[sglid + 2 * sgsize],     \
+                      p[sglid + 3 * sgsize]);                                 \
+  }                                                                           \
+                                                                              \
+  TYPE##8 _CL_OVERLOADABLE intel_sub_group_block_read##SUFFIX##8(             \
+    const global TYPE *p)                                                     \
+  {                                                                           \
+    uint sglid = get_sub_group_local_id ();                                   \
+    uint sgsize = get_max_sub_group_size ();                                  \
+    return (TYPE##8) (p[sglid], p[sglid + sgsize], p[sglid + 2 * sgsize],     \
+                      p[sglid + 3 * sgsize], p[sglid + 4 * sgsize],           \
+                      p[sglid + 5 * sgsize], p[sglid + 6 * sgsize],           \
+                      p[sglid + 7 * sgsize]);                                 \
+  }                                                                           \
+                                                                              \
+  void _CL_OVERLOADABLE intel_sub_group_block_write##SUFFIX (global TYPE *p,  \
+                                                             TYPE data)       \
+  {                                                                           \
+    uint sglid = get_sub_group_local_id ();                                   \
+    p[sglid] = data;                                                          \
+  }                                                                           \
+                                                                              \
+  void _CL_OVERLOADABLE intel_sub_group_block_write##SUFFIX##2(               \
+    global TYPE * p, TYPE##2 data)                                            \
+  {                                                                           \
+    uint sglid = get_sub_group_local_id ();                                   \
+    uint sgsize = get_max_sub_group_size ();                                  \
+    p[sglid] = data.x;                                                        \
+    p[sglid + sgsize] = data.y;                                               \
+  }                                                                           \
+                                                                              \
+  void _CL_OVERLOADABLE intel_sub_group_block_write##SUFFIX##4(               \
+    global TYPE * p, TYPE##4 data)                                            \
+  {                                                                           \
+    uint sglid = get_sub_group_local_id ();                                   \
+    uint sgsize = get_max_sub_group_size ();                                  \
+    p[sglid] = data.s0;                                                       \
+    p[sglid + sgsize] = data.s1;                                              \
+    p[sglid + 2 * sgsize] = data.s2;                                          \
+    p[sglid + 3 * sgsize] = data.s3;                                          \
+  }                                                                           \
+                                                                              \
+  void _CL_OVERLOADABLE intel_sub_group_block_write##SUFFIX##8(               \
+    global TYPE * p, TYPE##8 data)                                            \
+  {                                                                           \
+    uint sglid = get_sub_group_local_id ();                                   \
+    uint sgsize = get_max_sub_group_size ();                                  \
+    p[sglid] = data.s0;                                                       \
+    p[sglid + sgsize] = data.s1;                                              \
+    p[sglid + 2 * sgsize] = data.s2;                                          \
+    p[sglid + 3 * sgsize] = data.s3;                                          \
+    p[sglid + 4 * sgsize] = data.s4;                                          \
+    p[sglid + 5 * sgsize] = data.s5;                                          \
+    p[sglid + 6 * sgsize] = data.s6;                                          \
+    p[sglid + 7 * sgsize] = data.s7;                                          \
+  }
 
-uint2 _CL_OVERLOADABLE
-intel_sub_group_block_read2 (const global uint *p)
-{
-  return (uint2)(p[get_sub_group_local_id ()],
-                 p[get_sub_group_local_id () + get_max_sub_group_size ()]);
-}
-
-uint4 _CL_OVERLOADABLE
-intel_sub_group_block_read4 (const global uint *p)
-{
-  uint sglid = get_sub_group_local_id ();
-  uint sgsize = get_max_sub_group_size ();
-  return (uint4)(p[sglid], p[sglid + sgsize], p[sglid + 2 * sgsize],
-                 p[sglid + 3 * sgsize]);
-}
-
-uint8 _CL_OVERLOADABLE
-intel_sub_group_block_read8 (const global uint *p)
-{
-  uint sglid = get_sub_group_local_id ();
-  uint sgsize = get_max_sub_group_size ();
-  return (uint8)(p[sglid], p[sglid + sgsize], p[sglid + 2 * sgsize],
-                 p[sglid + 3 * sgsize], p[sglid + 4 * sgsize],
-                 p[sglid + 5 * sgsize], p[sglid + 6 * sgsize],
-                 p[sglid + 7 * sgsize]);
-}
-
-void _CL_OVERLOADABLE
-intel_sub_group_block_write (global uint *p, uint data)
-{
-  uint sglid = get_sub_group_local_id ();
-  uint sgsize = get_max_sub_group_size ();
-  p[sglid] = data;
-}
-
-void _CL_OVERLOADABLE
-intel_sub_group_block_write2 (global uint *p, uint2 data)
-{
-  uint sglid = get_sub_group_local_id ();
-  uint sgsize = get_max_sub_group_size ();
-  p[sglid] = data.x;
-  p[sglid + sgsize] = data.y;
-}
-
-void _CL_OVERLOADABLE
-intel_sub_group_block_write4 (global uint *p, uint4 data)
-{
-  uint sglid = get_sub_group_local_id ();
-  uint sgsize = get_max_sub_group_size ();
-  p[sglid] = data.s0;
-  p[sglid + sgsize] = data.s1;
-  p[sglid + 2 * sgsize] = data.s2;
-  p[sglid + 3 * sgsize] = data.s3;
-}
-
-void _CL_OVERLOADABLE
-intel_sub_group_block_write8 (global uint *p, uint8 data)
-{
-  uint sglid = get_sub_group_local_id ();
-  uint sgsize = get_max_sub_group_size ();
-  p[sglid] = data.s0;
-  p[sglid + sgsize] = data.s1;
-  p[sglid + 2 * sgsize] = data.s2;
-  p[sglid + 3 * sgsize] = data.s3;
-  p[sglid + 4 * sgsize] = data.s4;
-  p[sglid + 5 * sgsize] = data.s5;
-  p[sglid + 6 * sgsize] = data.s6;
-  p[sglid + 7 * sgsize] = data.s7;
-}
+INTEL_SG_BLOCK_READ_WRITE_T (uint, )
 
 #endif
 
 #ifdef cl_intel_subgroups_short
 /* https://registry.khronos.org/OpenCL/extensions/intel/cl_intel_subgroups_short.html
  */
-ushort8 _CL_OVERLOADABLE
-intel_sub_group_block_read_us8 (const global ushort *p)
-{
-  uint sglid = get_sub_group_local_id ();
-  uint sgsize = get_max_sub_group_size ();
-  return (ushort8)(p[sglid], p[sglid + sgsize], p[sglid + 2 * sgsize],
-                   p[sglid + 3 * sgsize], p[sglid + 4 * sgsize],
-                   p[sglid + 5 * sgsize], p[sglid + 6 * sgsize],
-                   p[sglid + 7 * sgsize]);
-}
+
+INTEL_SG_BLOCK_READ_WRITE_T (ushort, _us)
+INTEL_SG_BLOCK_READ_WRITE_T (uint, _ui)
+
 #endif

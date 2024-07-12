@@ -1,6 +1,6 @@
 /* OpenCL built-in library: subroups functionality
 
-   Copyright (c) 2022-2023 Pekka Jääskeläinen / Intel Finland Oy
+   Copyright (c) 2022-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -162,6 +162,17 @@ SUB_GROUP_BROADCAST_T (long)
 SUB_GROUP_BROADCAST_T (ulong)
 SUB_GROUP_BROADCAST_T (float)
 SUB_GROUP_BROADCAST_T (double)
+#ifdef cl_khr_fp16
+SUB_GROUP_BROADCAST_T (half)
+/* OpenCL C mangles half 'h' whereas C (clang) mangles it 'fp16'.
+   We need to provide a wrapper for the OpenCL C compatible mangling. */
+half
+_Z19sub_group_broadcastDhj (half val, uint mask)
+{
+  return sub_group_broadcast (val, mask);
+}
+
+#endif
 
 #define SUB_GROUP_REDUCE_OT(OPNAME, OPERATION, TYPE)                          \
   __attribute__ ((always_inline))                                             \
