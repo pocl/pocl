@@ -45,6 +45,10 @@
 // cmdlist in synchronous mode
 //#define LEVEL0_IMMEDIATE_CMDLIST
 
+// debugging help. If defined, randomize the execution order by skipping 1-3
+// of the commands in the work queue.
+//#define LEVEL0_RANDOMIZE_QUEUE
+
 using namespace pocl;
 
 static void pocl_level0_abort_on_ze_error(int permit_quiet_exit,
@@ -1489,6 +1493,16 @@ bool Level0QueueGroup::getWorkOrWait(_cl_command_node **Node,
 
     ShouldExit = ThreadExitRequested;
     if (!WorkQueue.empty()) {
+#ifdef LEVEL0_RANDOMIZE_QUEUE
+      int j = std::rand() % 3 + 1;
+      _cl_command_node *Tmp = nullptr;
+      // mix up the queue
+      for (int i = 0; i < j; ++i) {
+        Tmp = WorkQueue.front();
+        WorkQueue.pop();
+        WorkQueue.push(Tmp);
+      }
+#endif
       *Node = WorkQueue.front();
       WorkQueue.pop();
       break;
