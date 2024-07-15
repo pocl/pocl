@@ -62,17 +62,46 @@ sub_group_all (int predicate)
 
 #ifdef cl_intel_subgroups
 
-uint _CL_OVERLOADABLE
-intel_sub_group_shuffle_down (uint current, uint next, uint delta)
-{
-  int idx = get_sub_group_local_id () + delta;
-  uint cur_idx = (idx >= get_max_sub_group_size ()) ? 0 : idx;
-  uint other_cur = sub_group_shuffle (current, cur_idx);
-  int next_idx
-      = (idx > get_max_sub_group_size ()) ? idx - get_sub_group_size () : 0;
-  uint other_next = sub_group_shuffle (next, next_idx);
-  return idx >= get_sub_group_size () ? other_cur : other_next;
-}
+#define INTEL_SG_SHUFFLE_DOWN_T(TYPE)                                         \
+  TYPE _CL_OVERLOADABLE intel_sub_group_shuffle_down (TYPE current,           \
+  TYPE next, uint delta)                                                      \
+  {                                                                           \
+    uint idx = get_sub_group_local_id () + delta;                             \
+    uint cur_idx = (idx >= get_max_sub_group_size ()) ? 0 : idx;              \
+    TYPE cur_val = sub_group_shuffle (current, cur_idx);                      \
+    uint next_idx                                                             \
+         = (idx > get_max_sub_group_size()) ? idx - get_sub_group_size () : 0;\
+    TYPE next_val = sub_group_shuffle (next, next_idx);                       \
+    return idx >= get_sub_group_size () ? next_val : cur_val;                 \
+  }
+
+INTEL_SG_SHUFFLE_DOWN_T(uint)
+INTEL_SG_SHUFFLE_DOWN_T(int)
+INTEL_SG_SHUFFLE_DOWN_T(float)
+__IF_INT64 (INTEL_SG_SHUFFLE_DOWN_T(long)
+            INTEL_SG_SHUFFLE_DOWN_T(ulong))
+__IF_FP16 (INTEL_SG_SHUFFLE_DOWN_T(half))
+__IF_FP64 (INTEL_SG_SHUFFLE_DOWN_T(double))
+
+#define INTEL_SG_SHUFFLE_UP_T(TYPE)                                           \
+  TYPE _CL_OVERLOADABLE intel_sub_group_shuffle_up (TYPE previous,            \
+  TYPE current, uint delta)                                                   \
+  {                                                                           \
+    uint idx = get_sub_group_local_id () - delta;                             \
+    uint cur_idx = (idx < 0) ? 0 : idx;                                       \
+    TYPE cur_val = sub_group_shuffle(current, cur_idx);                       \
+    uint prev_idx = (idx < 0) ? idx + get_max_sub_group_size () : 0;          \
+    TYPE prev_val = sub_group_shuffle (previous, prev_idx);                   \
+    return (idx < 0) ? prev_val : cur_val;                                    \
+  }
+
+INTEL_SG_SHUFFLE_UP_T(uint)
+INTEL_SG_SHUFFLE_UP_T(int)
+INTEL_SG_SHUFFLE_UP_T(float)
+__IF_INT64 (INTEL_SG_SHUFFLE_UP_T(long)
+            INTEL_SG_SHUFFLE_UP_T(ulong))
+__IF_FP16 (INTEL_SG_SHUFFLE_UP_T(half))
+__IF_FP64 (INTEL_SG_SHUFFLE_UP_T(double))
 
 #define INTEL_SG_BLOCK_READ_WRITE_T(TYPE, SUFFIX)                             \
   TYPE _CL_OVERLOADABLE intel_sub_group_block_read##SUFFIX (                  \
