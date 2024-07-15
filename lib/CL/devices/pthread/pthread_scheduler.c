@@ -46,6 +46,10 @@
 #include "pthread_barrier.h"
 #endif
 
+// debugging help. If defined, randomize the execution order by skipping 1-3
+// of the commands in the work queue.
+//#define CPU_RANDOMIZE_QUEUE
+
 static void* pocl_pthread_driver_thread (void *p);
 
 struct pool_thread_data
@@ -553,24 +557,33 @@ shall_we_run_this (thread_data *td, cl_device_id subd)
 static _cl_command_node *
 check_cmd_queue_for_device (thread_data *td)
 {
-  _cl_command_node *cmd;
+  _cl_command_node *cmd = NULL, *last_cmd = NULL;
+  int i = 0;
+#ifdef CPU_RANDOMIZE_QUEUE
+  int limit = (rand() % 3) + 1;
+#else
+  const int limit = 1;
+#endif
   DL_FOREACH (scheduler.work_queue, cmd)
   {
     cl_device_id subd = cmd->device;
     if (shall_we_run_this (td, subd))
       {
-        DL_DELETE (scheduler.work_queue, cmd);
-        return cmd;
+        last_cmd = cmd; ++i;
+        if (i >= limit) break;
       }
   }
 
-  return NULL;
+  if (last_cmd) {
+    DL_DELETE (scheduler.work_queue, last_cmd);
+  }
+  return last_cmd;
 }
 
 static kernel_run_command *
 check_kernel_queue_for_device (thread_data *td)
 {
-  kernel_run_command *cmd;
+  kernel_run_command *cmd = NULL;
   DL_FOREACH (scheduler.kernel_queue, cmd)
   {
     cl_device_id subd = cmd->device;
