@@ -29,8 +29,8 @@
 
 #include "messages.h"
 #include "pocl.h"
-
 #include "pocl_threads.h"
+#include "pocl_util.h"
 #include "utlist.h"
 #include "utlist_addon.h"
 

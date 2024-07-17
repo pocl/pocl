@@ -30,9 +30,19 @@ if(MSVC)
       PROPERTIES LANGUAGE CXX )
 endif(MSVC)
 
-add_pocl_device_library("pocl-devices-remote"
-    remote.h remote.c communication.h communication.c ../../pocl_networking.h
+set(POCL_REMOTE_CLIENT_SOURCES
+    remote.h
+    remote.c
+    communication.h
+    communication.c
+    ../../pocl_networking.h
     ../../pocl_networking.c)
+
+if(ENABLE_RDMA)
+    list(APPEND POCL_REMOTE_CLIENT_SOURCES ../../pocl_rdma.h ../../pocl_rdma.c)
+endif()
+
+add_pocl_device_library("pocl-devices-remote" ${POCL_REMOTE_CLIENT_SOURCES})
 
 if(ENABLE_LOADABLE_DRIVERS AND ENABLE_RDMA)
   target_link_libraries("pocl-devices-remote" PRIVATE RDMAcm::RDMAcm IBVerbs::verbs)

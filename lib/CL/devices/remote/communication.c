@@ -62,8 +62,12 @@
 #include <linux/vm_sockets.h>
 #endif
 
-/* TODO clean up this mess */
+/* TODO: clean up this mess */
 #include "communication.h"
+
+/* TODO: restructure client-server RDMA to work with new connection logic. As a
+ * stopgap solution the handshake currently always requests that client-server
+ * RDMA be disabled. */
 
 /* See documentation for tuning socket parameters:
  * https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_MRG/1.2/html/Realtime_Tuning_Guide/sect-Realtime_Tuning_Guide-Application_Tuning_and_Deployment-TCP_NODELAY_and_Small_Buffer_Writes.html
@@ -1360,7 +1364,7 @@ start_engines (remote_server_data_t *d, remote_device_data_t *devd,
   assert (res == 0);
   d->fast_socket.notify_pipe_r = pipe_pair[0];
   d->fast_socket.notify_pipe_w = pipe_pair[1];
-  pipe (pipe_pair);
+  res = pipe (pipe_pair);
   assert (res == 0);
   d->slow_socket.notify_pipe_r = pipe_pair[0];
   d->slow_socket.notify_pipe_w = pipe_pair[1];
@@ -1414,12 +1418,12 @@ start_engines (remote_server_data_t *d, remote_device_data_t *devd,
   if (d->use_rdma)
     {
       /* rdma thread for reader */
-      SETUP_NETW_Q_ARG (a, d, d->rdma_read_queue);
+      SETUP_NETW_Q_ARG (a, d, d->rdma_read_queue, NULL);
       POCL_CREATE_THREAD (d->rdma_read_queue->thread_id,
                           pocl_remote_rdma_reader_pthread, a);
 
       /* rdma thread for writer */
-      SETUP_NETW_Q_ARG (a, d, d->rdma_write_queue);
+      SETUP_NETW_Q_ARG (a, d, d->rdma_write_queue, NULL);
       POCL_CREATE_THREAD (d->rdma_write_queue->thread_id,
                           pocl_remote_rdma_writer_pthread, a);
     }
@@ -1538,20 +1542,6 @@ find_or_create_server (const char *address_with_port, unsigned port,
 
   d->fast_port = port;
   d->slow_port = port + 1;
-
-#ifdef ENABLE_RDMA
-  /* TODO: re-enable once client RDMA has been reworked to match server
-   * communication */
-  if (CL_TRUE || rdma_init_id (&d->rdma_data) == 0)
-    {
-      hs.m.get_session.use_rdma = 0;
-    }
-  else
-    {
-      POCL_MSG_ERR ("Could not create RDMAcm event channel and id, continuing"
-                    "without RDMA\n");
-    }
-#endif
 
   ReplyMsg_t hsr;
   if (pocl_network_connect (d, &d->fast_socket.fd, d->fast_port,
