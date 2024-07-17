@@ -22,16 +22,19 @@
    THE SOFTWARE.
 */
 
-#ifndef _OPENCL_H_
+#ifndef _CLANG_OPENCL_H
+#define _CLANG_OPENCL_H
 
 /* Use the declarations shipped with Clang. */
+#ifndef _OPENCL_H_
 /* Check for _OPENCL_H already here because the kernel compiler loads the
    header beforehand, but cannot find the file due to include paths not
    set up. */
 #include <opencl-c.h>
+#endif
 
-/* Missing declarations from opencl-c.h. Some of the geometric builtins are
-   defined only up to 4 vectors, but we implement them all: */
+/* Some of the geometric builtins are defined only up to 4 vectors, but we
+   implement them all: */
 #ifdef cl_khr_fp16
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
 half _CL_OVERLOADABLE _CL_READNONE length (half8 p);
