@@ -46,8 +46,6 @@ sub_group_barrier (memory_scope scope)
   work_group_barrier (CLK_GLOBAL_MEM_FENCE);
 }
 
-
-
 int _CL_OVERLOADABLE
 sub_group_any (int predicate)
 {
@@ -182,13 +180,24 @@ __IF_FP64 (INTEL_SG_SHUFFLE_UP_T(double))
 
 INTEL_SG_BLOCK_READ_WRITE_T (uint, )
 
-#endif
-
 #ifdef cl_intel_subgroups_short
-/* https://registry.khronos.org/OpenCL/extensions/intel/cl_intel_subgroups_short.html
+/* https://registry.khronos.org/OpenCL/extensions/intel/
+ * cl_intel_subgroups_short.html
  */
 
 INTEL_SG_BLOCK_READ_WRITE_T (ushort, _us)
+#endif
+
+#ifdef cl_intel_subgroups_char
+/* https://registry.khronos.org/OpenCL/extensions/intel/
+ * cl_intel_subgroups_char.html
+ */
+
+INTEL_SG_BLOCK_READ_WRITE_T (uchar, _uc)
+#endif
+
+#if defined(cl_intel_subgroups_short) || defined(cl_intel_subgroups_char)
 INTEL_SG_BLOCK_READ_WRITE_T (uint, _ui)
+#endif
 
 #endif
