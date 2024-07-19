@@ -341,11 +341,11 @@ OpenASIP used with built-in kernels
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In this role, the OpenASIP core is used as a small control processor.
-In principle, any soft processor could be used, but we choose to use OpenASIP for familiarity.
-Replacing this component with a RISC-V processor would be a very reasonable future change.
+In principle, any soft processor could be used, but we chose to use OpenASIP for familiarity.
+Replacing this component with a simpler RISC-V processor would be a very reasonable future change.
 
 The command processor does not execute the kernel computation,
-instead offloading it to an external accelerator.
+but just controls external accelerator that perform the kernel's functionality.
 Since the built-in kernel functionality is fixed, the kernel firmware can also be fixed.
 The firmware configures external accelerators (and DMA units), and then waits for their execution to complete.
 Once done, it will mark the packet as completed.
@@ -364,7 +364,7 @@ which allows the description of highly efficient ASIPs.
 These processors are exposed as OpenCL Compute Devices via the AlmaIF-driver.
 The same AlmaIF interface is used as for the command processor-role,
 the difference to it is that in this mode, the kernel function itself is compiled for the
-(TTA-based) instruction set of the ASIP.
+instruction set of the ASIP.
 The AlmaIF-driver knows about the compiler support from the magic kernel ID *65535*
 
 In OpenASIP's kernel compilation flow, the kernel is first compiled with LLVM's
@@ -373,7 +373,7 @@ The prebuilt built-in function library is linked in from *kernel/tce*
 (found via the variable *device->kernellib_name*).
 
 Then, a work-group function is generated that executes a single workgroup.
-A loop is generated that iterates over the work-items of a work-group.
+Similarly to the CPU target, "work-item loops" are generated that iterate over the work-items of a work-group while respecting the work-group barrier semantics.
 This uses the same function *pocl_llvm_generate_workgroup_function* as the CPU backend,
 but now just calling it from *lib/CL/devices/almaif/openasip/AlmaifCompileOpenasip.cc*.
 The kernel arguments are loaded from the argument buffer, meaning that the kernel interface is always the same:
@@ -389,16 +389,16 @@ The main-file is responsible for communicating with the AlmaIF-driver, and itera
 in the kernel dispatch packet.
 
 
-Adding new processor types
+Adding new co-processor types
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-AlmaIF-driver is built to generalize to different processor types than just OpenASIP
-(however, no other processor types are yet supported).
+The AlmaIF-driver is designed to generalize to different co-processors/accelerators than just those generated with OpenASIP
+(however, no other processor types are yet tested to our knowledge).
 To plug a different processor with different compilation flow to the driver,
 only the compilation calls need to be redirected in the *lib/CL/devices/AlmaifCompile.cc*,
 and the kernel function library may need to be regenerated in *lib/kernel*.
 
-During runtime, the AlmaIF interface abstraction layer hides all anything processor-specific,
+During runtime, the AlmaIF interface abstraction layer hides anything processor-specific,
 as long as the new processor type implements the AlmaIF memory map as described at the start of this document.
 
 Using this work
