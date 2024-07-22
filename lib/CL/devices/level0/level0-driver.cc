@@ -443,7 +443,9 @@ void Level0Queue::allocNextFreeEvent() {
 
 void Level0Queue::reset() {
   assert(CmdListH);
-  LEVEL0_CHECK_ABORT(zeCommandListReset(CmdListH));
+  if (QueueH) {
+    LEVEL0_CHECK_ABORT(zeCommandListReset(CmdListH));
+  }
   CurrentEventH = nullptr;
   PreviousEventH = nullptr;
   assert(DeviceEventsToReset.empty());
@@ -464,7 +466,9 @@ void Level0Queue::closeCmdList() {
     AvailableDeviceEvents.push(E);
   }
 
-  LEVEL0_CHECK_ABORT(zeCommandListClose(CmdListH));
+  if (QueueH) {
+    LEVEL0_CHECK_ABORT(zeCommandListClose(CmdListH));
+  }
 }
 
 void Level0Queue::makeMemResident() {
@@ -505,13 +509,21 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
   syncMemHostPtrs();
   closeCmdList();
 
-  LEVEL0_CHECK_ABORT(
+  if (QueueH) {
+    LEVEL0_CHECK_ABORT(
       zeCommandQueueExecuteCommandLists(QueueH, 1, &CmdListH, nullptr));
+  }
 
   pocl_update_event_running(event);
 
-  LEVEL0_CHECK_ABORT(
+  if (QueueH) {
+    LEVEL0_CHECK_ABORT(
       zeCommandQueueSynchronize(QueueH, std::numeric_limits<uint64_t>::max()));
+  } else {
+    // immediate cmd list
+    LEVEL0_CHECK_ABORT(
+      zeCommandListHostSynchronize(CmdListH, std::numeric_limits<uint64_t>::max()));
+  }
 
   POCL_UPDATE_EVENT_COMPLETE_MSG(event, Msg);
 }
@@ -536,8 +548,10 @@ void Level0Queue::execCommandBatch(BatchType &Batch) {
 
   POCL_MEASURE_FINISH(ZeListPrepare);
   POCL_MEASURE_START(ZeListExec);
-  LEVEL0_CHECK_ABORT(
+  if (QueueH) {
+    LEVEL0_CHECK_ABORT(
       zeCommandQueueExecuteCommandLists(QueueH, 1, &CmdListH, nullptr));
+  }
   for (auto E : Batch) {
     POCL_LOCK_OBJ(E);
     pocl_update_event_submitted(E);
@@ -545,8 +559,14 @@ void Level0Queue::execCommandBatch(BatchType &Batch) {
     POCL_UNLOCK_OBJ(E);
   }
 
-  LEVEL0_CHECK_ABORT(
+  if (QueueH) {
+    LEVEL0_CHECK_ABORT(
       zeCommandQueueSynchronize(QueueH, std::numeric_limits<uint64_t>::max()));
+  } else {
+    // immediate cmd list
+    LEVEL0_CHECK_ABORT(
+      zeCommandListHostSynchronize(CmdListH, std::numeric_limits<uint64_t>::max()));
+  }
 
   POCL_MEASURE_FINISH(ZeListExec);
   for (auto E : Batch) {
@@ -1407,32 +1427,31 @@ bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
   ze_command_list_handle_t CmdList = nullptr;
 
 #ifdef LEVEL0_IMMEDIATE_CMDLIST
-  ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
-                                          nullptr,
-                                          Ordinal,
-                                          0, // index
-                                          0, // flags
-                                          ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS,
-                                          ZE_COMMAND_QUEUE_PRIORITY_NORMAL};
+  ze_command_queue_desc_t cmdQueueDesc = {
+      ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
+      nullptr,
+      Ordinal,
+      0, // index
+      0, // flags   // ZE_COMMAND_QUEUE_FLAG_EXPLICIT_ONLY
+      ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,
+      ZE_COMMAND_QUEUE_PRIORITY_NORMAL};
   for (unsigned i = 0; i < Count; ++i) {
     cmdQueueDesc.index = i;
-    ZeRes = zeCommandListCreateImmediate(ContextH, DeviceH,
-                               &cmdQueueDesc, &CmdList);
+    ZeRes = zeCommandListCreateImmediate(ContextH, DeviceH, &cmdQueueDesc,
+                                         &CmdList);
     LEVEL0_CHECK_RET(false, ZeRes);
-    ZeRes = zeEventPoolCreate(ContextH, &EvtPoolDesc, 1, &DeviceH, &EventPool);
-    LEVEL0_CHECK_RET(false, ZeRes);
-    QHandles[i] = Queue;
+    QHandles[i] = nullptr;
     LHandles[i] = CmdList;
-    EHandles[i] = EventPool;
   }
 #else
-  ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
-                                          nullptr,
-                                          Ordinal,
-                                          0, // index
-                                          0, // flags
-                                          ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS,
-                                          ZE_COMMAND_QUEUE_PRIORITY_NORMAL};
+  ze_command_queue_desc_t cmdQueueDesc = {
+      ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
+      nullptr,
+      Ordinal,
+      0, // index
+      0, // flags   // ZE_COMMAND_QUEUE_FLAG_EXPLICIT_ONLY
+      ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,
+      ZE_COMMAND_QUEUE_PRIORITY_NORMAL};
 
   ze_command_list_desc_t cmdListDesc = {
       ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC, nullptr, Ordinal,
