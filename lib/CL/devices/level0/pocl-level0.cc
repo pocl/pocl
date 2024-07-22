@@ -1004,16 +1004,11 @@ static bool pocl_level0_queue_supports_batching(cl_command_queue CQ,
                                                 Level0Device *Device) {
   if (!Device->supportsUniversalQueues())
     return false;
-#ifdef LEVEL0_IMMEDIATE_CMDLIST
-  // batching + Immediate CmdLists are currently not supported, TBD
-  return false;
-#else
   if (CQ->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
     return false;
   if (CQ->properties & CL_QUEUE_PROFILING_ENABLE)
     return false;
   return true;
-#endif
 }
 
 static bool pocl_level0_can_event_be_batched(cl_event Ev, cl_event LastEv) {
