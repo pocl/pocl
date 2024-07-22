@@ -271,6 +271,11 @@ pocl.
  *   1 = always use JIT,
  *   auto (default) = guess based on program's kernel count & SPIR-V size.
 
+- **POCL_LEVEL0_LINK_OPT**
+
+ If non-empty string, runs llvm-opt with this option after the linking step,
+ before converting to SPIRV and handing over to L0 driver. Default: empty.
+
 - **POCL_LLVM_VERIFY**
 
   if enabled, some drivers (CUDA, CPU, Level0) use an extra step of
