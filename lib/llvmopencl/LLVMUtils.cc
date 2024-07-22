@@ -251,7 +251,6 @@ isAutomaticLocal(llvm::Function *F, llvm::GlobalVariable &Var) {
   if (!llvm::isa<llvm::PointerType>(Var.getType()) || Var.isConstant())
     return false;
   if (Var.getName().startswith(FuncName + ".")) {
-    assert(isGVarUsedByFunction(&Var, F) == true);
     return true;
   }
 
