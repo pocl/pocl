@@ -2608,8 +2608,7 @@ void *Level0Device::allocDeviceMem(uint64_t Size,
                                    ze_device_mem_alloc_flags_t DevFlags) {
   void *Ptr = nullptr;
   ze_device_mem_alloc_desc_t MemAllocDesc = {
-      ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, nullptr,
-      ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED, GlobalMemOrd};
+      ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, nullptr, DevFlags, GlobalMemOrd};
 
   uint64_t NextPowerOf2 = pocl_size_ceil2_64(Size);
   uint64_t Align = std::min(NextPowerOf2, (uint64_t)MAX_EXTENDED_ALIGNMENT);

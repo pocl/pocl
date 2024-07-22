@@ -1357,7 +1357,7 @@ void *pocl_level0_usm_alloc(cl_device_id Dev, unsigned AllocType,
   int errcode = CL_SUCCESS;
   void *Ptr = nullptr;
   ze_host_mem_alloc_flags_t HostZeFlags = 0;
-  ze_device_mem_alloc_flags_t DevZeFlags = 0;
+  ze_device_mem_alloc_flags_t DevZeFlags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED;
   if (Flags & CL_MEM_ALLOC_WRITE_COMBINED_INTEL)
     HostZeFlags |= ZE_HOST_MEM_ALLOC_FLAG_BIAS_WRITE_COMBINED;
   if (Flags & CL_MEM_ALLOC_INITIAL_PLACEMENT_DEVICE_INTEL)
