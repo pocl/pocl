@@ -1061,9 +1061,11 @@ struct _cl_device_id {
   /* The program scope variable pass takes program-scope variables and replaces
      them by references into a buffer, and creates an initializer kernel. */
   cl_bool run_program_scope_variables_pass;
-  /* if CL_TRUE, pocl_llvm_build_program will ignore pocl's OpenCL headers
-   * and rely purely on Clang's OpenCL headers. For most drivers,
-   * this should default to CL_FALSE. */
+
+  /* If CL_TRUE, pocl_llvm_build_program will ignore pocl's OpenCL headers
+   * that perform built-in renames during OpenCL C build and relies on
+   * Clang's OpenCL header augmented with extra declarations in
+   * _clang_opencl.h. For most drivers, this should default to CL_FALSE. */
   cl_bool use_only_clang_opencl_headers;
   cl_device_exec_capabilities execution_capabilities;
   cl_command_queue_properties queue_properties;

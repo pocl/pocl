@@ -591,7 +591,12 @@ int pocl_llvm_build_program(cl_program program,
   // Use Clang's opencl-c.h header.
   po.Includes.push_back(ClangResourceDir + "/include/opencl-c-base.h");
   po.Includes.push_back(ClangResourceDir + "/include/opencl-c.h");
-  if (device->use_only_clang_opencl_headers == CL_FALSE) {
+
+  std::string ClangAugmentHeader =
+    IncludeRoot + "/include/_clang_opencl.h";
+  if (device->use_only_clang_opencl_headers) {
+    po.Includes.push_back(ClangAugmentHeader);
+  } else {
     po.Includes.push_back(KernelH);
   }
   clang::TargetOptions &ta = pocl_build.getTargetOpts();

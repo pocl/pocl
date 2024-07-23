@@ -34,6 +34,28 @@
 #include <opencl-c.h>
 #endif
 
+/* We can include this header directly (to patch up opencl-c.h without
+   including _kernel.h, thus need to define the attribute macros here. */
+#ifndef _CL_OVERLOADABLE
+
+#if __has_attribute(__overloadable__)
+#  define _CL_OVERLOADABLE __attribute__((__overloadable__))
+#else
+#  define _CL_OVERLOADABLE
+#endif
+
+#endif
+
+#ifndef _CL_READNONE
+
+#if __has_attribute(__const__)
+#  define _CL_READNONE __attribute__((__const__))
+#else
+#  define _CL_READNONE
+#endif
+
+#endif
+
 /* Some of the geometric builtins are defined only up to 4 vectors, but we
    implement them all: */
 #ifdef cl_khr_fp16
