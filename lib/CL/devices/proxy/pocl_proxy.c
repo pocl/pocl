@@ -31,7 +31,9 @@
 #include "devices.h"
 
 #include <assert.h>
+#if !defined(__FreeBSD__)
 #include <alloca.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
