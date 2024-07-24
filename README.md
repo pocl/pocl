@@ -45,12 +45,13 @@ apt install -y python3-dev libpython3-dev build-essential ocl-icd-libopencl1 \
     llvm-${LLVM_VERSION}-dev
 ```
 
-For LLVM 18 and above also `libpolly-${LLVM_VERSION}-dev libzstd-dev` are
-needed for static LLVM linkage.
-
 If your distro does not package the version of LLVM you wish to build against
 you might want to set up the
 [upstream LLVM package repository](https://apt.llvm.org/).
+
+If LLVM is linked to PoCL statically (-DSTATIC_LLVM=ON cmake option), then
+the `libpolly-${LLVM_VERSION}-dev libzstd-dev` packages might be also needed
+(at least on Ubuntu 22.04 with packages from apt.llvm.org).
 
 ### Configure & Build
 
