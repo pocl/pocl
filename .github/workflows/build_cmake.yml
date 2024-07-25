@@ -96,13 +96,33 @@ jobs:
         run: |
           cd ${{ github.workspace }}/build && make -j$(nproc)
 
-      - name: Build Examples
-        id: build_examples
+      - name: Build CTS Examples
+        id: build_cts_examples
         # occasionally git timeouts on git clone of the examples
-        timeout-minutes: 120
-        if: ${{ matrix.config == 'cts_spirv' || matrix.config == 'tier1' || matrix.config == 'chipstar' }}
+        timeout-minutes: 60
+        if: ${{ matrix.config == 'cts_spirv' || matrix.config == 'tier1' }}
         run: |
-          cd ${{ github.workspace }}/build && make -j$(nproc) prepare_examples
+          cd ${{ github.workspace }}/build/examples/conformance && make -j$(nproc) conformance
+
+      - name: Build Tier1 Examples
+        id: build_tier1_examples
+        # occasionally git timeouts on git clone of the examples
+        timeout-minutes: 90
+        if: ${{ matrix.config == 'tier1' }}
+        run: |
+          cd ${{ github.workspace }}/build/examples/AMDSDK3.0 && make -j$(nproc) AMDSDK3.0
+          cd ${{ github.workspace }}/build/examples/piglit && make -j$(nproc) piglit
+          # currently broken
+          #cd ${{ github.workspace }}/build/examples/PyOpenCL && make -j$(nproc) PyOpenCL
+          cd ${{ github.workspace }}/build/examples/IntelSVM && make -j$(nproc) IntelSVM
+
+      - name: Build chipStar Examples
+        id: build_chipstar_examples
+        # occasionally git timeouts on git clone of the examples
+        timeout-minutes: 90
+        if: ${{ matrix.config == 'chipstar' }}
+        run: |
+          cd ${{ github.workspace }}/build/examples/chipStar && make -j$(nproc) chipStar
 
       - name: Get CMake version
         id: cmake_version
