@@ -256,8 +256,8 @@ if [ "$DEBUG" = "true" ]; then
 fi
 @LLVM_SPIRV@ ${LLVM_SPIRV_OPTIONS} || exit 1
 
-mv ${TEMP_SPV_FILE} ${OUTPUT} || exit 1
+mv -n ${TEMP_SPV_FILE} ${OUTPUT} || echo "output already exists, skipping write"
 
-rm -f ${TEMP_BC_FILE}
+rm -f ${TEMP_BC_FILE} ${TEMP_SPV_FILE}
 
 exit 0
