@@ -68,10 +68,20 @@ struct PoclL0EventData {
 
 struct PoclL0QueueData {
   pocl_cond_t Cond;
+
+  size_t getSubmitBatch(BatchType &SubmitBatch);
+  size_t appendAndGetSubmitBatch(cl_event Ev, BatchType &SubmitBatch,
+                                 size_t BatchSizeLimit);
+  size_t getSubmitBatchIfFirstEvent(BatchType &SubmitBatch, cl_event Event);
+  void eraseEvent(cl_event Ev);
+
+private:
   // list of event that have been submitted to the runtime, but not yet
   // to the device. They will be split into actual batches
   // in Flush/Notify callbacks
   BatchType UnsubmittedEventList;
+  std::mutex ListLock;
+  size_t getSubmitBatchUnlocked(BatchType &SubmitBatch);
 };
 
 static void pocl_level0_local_size_optimizer(cl_device_id Dev, cl_kernel Kernel,
@@ -1068,22 +1078,57 @@ static bool pocl_level0_can_event_be_batched(cl_event Ev, cl_event LastEv) {
   return false;
 }
 
-static void pocl_level0_batch_submitted_events(PoclL0QueueData *QD,
-                                               Level0Device *Device,
-                                               BatchType &SubmitBatch) {
+size_t PoclL0QueueData::getSubmitBatch(BatchType &SubmitBatch) {
+  std::lock_guard<std::mutex> ListLockGuard(ListLock);
+  return getSubmitBatchUnlocked(SubmitBatch);
+}
+
+size_t PoclL0QueueData::getSubmitBatchUnlocked(BatchType &SubmitBatch) {
   cl_event LastEv = nullptr;
-  while (!QD->UnsubmittedEventList.empty()) {
-    cl_event Ev = QD->UnsubmittedEventList.front();
+  while (!UnsubmittedEventList.empty()) {
+    cl_event Ev = UnsubmittedEventList.front();
     if (pocl_level0_can_event_be_batched(Ev, LastEv)) {
       SubmitBatch.push_back(Ev);
-      QD->UnsubmittedEventList.pop_front();
+      UnsubmittedEventList.pop_front();
       LastEv = Ev;
     } else {
       break;
     }
   }
   POCL_MSG_PRINT_LEVEL0("Processing Batch: Submitted %zu || New batch: %zu\n",
-                        QD->UnsubmittedEventList.size(), SubmitBatch.size());
+                        UnsubmittedEventList.size(), SubmitBatch.size());
+  return UnsubmittedEventList.size();
+}
+
+size_t PoclL0QueueData::getSubmitBatchIfFirstEvent(BatchType &SubmitBatch,
+                                                   cl_event Event) {
+  std::lock_guard<std::mutex> ListLockGuard(ListLock);
+
+  bool IsFirstEvent =
+      !UnsubmittedEventList.empty() && (Event == UnsubmittedEventList.front());
+  if (!IsFirstEvent)
+    return 0;
+  return getSubmitBatchUnlocked(SubmitBatch);
+}
+
+size_t PoclL0QueueData::appendAndGetSubmitBatch(cl_event Ev,
+                                                BatchType &SubmitBatch,
+                                                size_t BatchSizeLimit) {
+  std::lock_guard<std::mutex> ListLockGuard(ListLock);
+  UnsubmittedEventList.push_back(Ev);
+  size_t UnEvents = 0;
+  // to limit latency of the first launch, limit the size of the batch
+  if (UnsubmittedEventList.size() >= BatchSizeLimit)
+    UnEvents = getSubmitBatchUnlocked(SubmitBatch);
+  return UnEvents;
+}
+
+void PoclL0QueueData::eraseEvent(cl_event Event) {
+  std::lock_guard<std::mutex> ListLockGuard(ListLock);
+  auto It = std::find(UnsubmittedEventList.begin(), UnsubmittedEventList.end(),
+                      Event);
+  if (It != UnsubmittedEventList.end())
+    UnsubmittedEventList.erase(It);
 }
 
 void pocl_level0_flush(cl_device_id ClDev, cl_command_queue Queue) {
@@ -1094,11 +1139,7 @@ void pocl_level0_flush(cl_device_id ClDev, cl_command_queue Queue) {
     return;
 
   BatchType SubmitBatch;
-  POCL_LOCK_OBJ(Queue);
-  if (!QD->UnsubmittedEventList.empty()) {
-    pocl_level0_batch_submitted_events(QD, Device, SubmitBatch);
-  }
-  POCL_UNLOCK_OBJ(Queue);
+  QD->getSubmitBatch(SubmitBatch);
   if (SubmitBatch.empty()) {
     POCL_MSG_PRINT_LEVEL0("FLUSH: SubmitBatch EMPTY\n");
   } else {
@@ -1116,16 +1157,10 @@ void pocl_level0_submit(_cl_command_node *Node, cl_command_queue Queue) {
   Node->ready = CL_TRUE;
 
   if (pocl_level0_queue_supports_batching(Queue, Device)) {
-    POCL_LOCK_OBJ(Queue);
-    QD->UnsubmittedEventList.push_back(Ev);
-    // to limit latency of the first launch, limit the size of the batch
-    if (QD->UnsubmittedEventList.size() >= BatchSizeLimit) {
-      BatchType SubmitBatch;
-      pocl_level0_batch_submitted_events(QD, Device, SubmitBatch);
-      if (!SubmitBatch.empty())
-        Device->pushCommandBatch(std::move(SubmitBatch));
-    }
-    POCL_UNLOCK_OBJ(Queue);
+    BatchType SubmitBatch;
+    QD->appendAndGetSubmitBatch(Ev, SubmitBatch, BatchSizeLimit);
+    if (!SubmitBatch.empty())
+      Device->pushCommandBatch(std::move(SubmitBatch));
   } else {
     // fallback processing for all other events
     if (pocl_command_is_ready(Ev) != 0) {
@@ -1142,13 +1177,8 @@ void pocl_level0_notify(cl_device_id ClDev, cl_event Event, cl_event Finished) {
 
   if (Finished->status < CL_COMPLETE) {
     // remove the Event from unsubmitted list
-    POCL_LOCK_OBJ(Event->queue);
     PoclL0QueueData *QD = (PoclL0QueueData *)Event->queue->data;
-    auto It = std::find(QD->UnsubmittedEventList.begin(),
-                        QD->UnsubmittedEventList.end(), Event);
-    if (It != QD->UnsubmittedEventList.end())
-      QD->UnsubmittedEventList.erase(It);
-    POCL_UNLOCK_OBJ(Event->queue);
+    QD->eraseEvent(Event);
     pocl_update_event_failed(Event);
     return;
   }
@@ -1160,19 +1190,10 @@ void pocl_level0_notify(cl_device_id ClDev, cl_event Event, cl_event Finished) {
   assert(Event->queue);
   if (pocl_level0_queue_supports_batching(Event->queue, Device)) {
     BatchType SubmitBatch;
-    POCL_LOCK_OBJ(Event->queue);
     PoclL0QueueData *QD = (PoclL0QueueData *)Event->queue->data;
-    bool IsFirstEvent = !QD->UnsubmittedEventList.empty() &&
-                        (Event == QD->UnsubmittedEventList.front());
-    if (IsFirstEvent) {
-      if (!QD->UnsubmittedEventList.empty()) {
-        pocl_level0_batch_submitted_events(QD, Device, SubmitBatch);
-      }
-    }
-    POCL_UNLOCK_OBJ(Event->queue);
-    if (!SubmitBatch.empty()) {
+    QD->getSubmitBatchIfFirstEvent(SubmitBatch, Event);
+    if (!SubmitBatch.empty())
       Device->pushCommandBatch(std::move(SubmitBatch));
-    }
   } else {
     if (Node->ready == CL_TRUE && pocl_command_is_ready(Event) != 0) {
       pocl_update_event_submitted(Event);
