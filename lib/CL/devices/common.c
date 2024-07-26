@@ -1867,6 +1867,7 @@ static const cl_name_version OPENCL_EXTENSIONS[]
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_subgroups_short" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_subgroups_long" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_unified_shared_memory" },
+      { CL_MAKE_VERSION (1, 0, 0), "cl_intel_device_attribute_query" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_split_work_group_barrier" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_subgroup_local_block_io" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_spirv_subgroups" },

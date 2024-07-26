@@ -349,6 +349,16 @@ public:
   bool supportsGlobalOffsets() { return HasGOffsets; }
   bool supportsCompression() { return HasCompression; }
   bool supportsUniversalQueues() { return UniversalQueues.available(); }
+  const ze_device_properties_t &getProperties() { return DeviceProperties; }
+  cl_device_feature_capabilities_intel getFeatureCaps() {
+    cl_device_feature_capabilities_intel FeatureCaps = 0;
+    if (SupportsDPAS)
+      FeatureCaps |= CL_DEVICE_FEATURE_FLAG_DPAS_INTEL;
+    if (SupportsDP4A)
+      FeatureCaps |= CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
+    return FeatureCaps;
+  }
+  uint32_t getIPVersion() { return DeviceIPVersion; }
 
 private:
   std::deque<Level0EventPool> EventPools;
@@ -368,7 +378,9 @@ private:
   std::string OpenCL30Features;
   std::string BuiltinKernels;
   unsigned NumBuiltinKernels = 0;
-
+  // need to store for queries
+  ze_device_properties_t DeviceProperties;
+  uint32_t DeviceIPVersion;
 
   Level0Program *MemfillProgram;
   Level0Program *ImagefillProgram;
@@ -382,6 +394,8 @@ private:
   cl_bool Available = CL_FALSE;
   bool OndemandPaging = false;
   bool Supports64bitBuffers = false;
+  bool SupportsDP4A = false;
+  bool SupportsDPAS = false;
   bool NeedsRelaxedLimits = false;
   bool HasGOffsets = false;
   bool HasCompression = false;
@@ -401,7 +415,7 @@ private:
   bool initHelperKernels();
   void destroyHelperKernels();
 
-  bool setupDeviceProperties();
+  bool setupDeviceProperties(bool HasIPVersionExt);
   bool setupComputeProperties();
   bool setupModuleProperties(bool &SupportsInt64Atomics, bool HasFloatAtomics, std::string &Features);
   bool setupQueueGroupProperties();
