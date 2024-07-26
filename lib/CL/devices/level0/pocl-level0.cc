@@ -1469,6 +1469,35 @@ cl_int pocl_level0_get_device_info_ext(cl_device_id Dev,
     }
   }
 
+  case CL_DEVICE_IP_VERSION_INTEL: {
+    uint32_t Res = Device->getIPVersion();
+    POCL_RETURN_GETINFO(uint32_t, Res);
+  }
+  case CL_DEVICE_ID_INTEL: {
+    uint32_t Res = Device->getProperties().deviceId;
+    POCL_RETURN_GETINFO(uint32_t, Res);
+  }
+  case CL_DEVICE_NUM_SLICES_INTEL: {
+    uint32_t Res = Device->getProperties().numSlices;
+    POCL_RETURN_GETINFO(uint32_t, Res);
+  }
+  case CL_DEVICE_NUM_SUB_SLICES_PER_SLICE_INTEL: {
+    uint32_t Res = Device->getProperties().numSubslicesPerSlice;
+    POCL_RETURN_GETINFO(uint32_t, Res);
+  }
+  case CL_DEVICE_NUM_EUS_PER_SUB_SLICE_INTEL: {
+    uint32_t Res = Device->getProperties().numEUsPerSubslice;
+    POCL_RETURN_GETINFO(uint32_t, Res);
+  }
+  case CL_DEVICE_NUM_THREADS_PER_EU_INTEL: {
+    uint32_t Res = Device->getProperties().numThreadsPerEU;
+    POCL_RETURN_GETINFO(uint32_t, Res);
+  }
+  case CL_DEVICE_FEATURE_CAPABILITIES_INTEL: {
+    cl_device_feature_capabilities_intel Res = Device->getFeatureCaps();
+    POCL_RETURN_GETINFO(cl_device_feature_capabilities_intel, Res);
+  }
+
   default:
     return CL_INVALID_VALUE;
   }

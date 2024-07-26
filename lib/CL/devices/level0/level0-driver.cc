@@ -1645,18 +1645,26 @@ ze_event_handle_t Level0EventPool::getEvent() {
   return AvailableEvents[LastIdx++];
 }
 
-bool Level0Device::setupDeviceProperties() {
+bool Level0Device::setupDeviceProperties(bool HasIPVersionExt) {
   ze_result_t Res = ZE_RESULT_SUCCESS;
 
-  ze_device_properties_t DeviceProperties{};
   DeviceProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2;
   DeviceProperties.pNext = nullptr;
+  DeviceIPVersion = 0;
+  ze_device_ip_version_ext_t DeviceIPVersionExt{};
+  if (HasIPVersionExt) {
+    DeviceProperties.pNext = &DeviceIPVersionExt;
+    DeviceIPVersionExt.stype = ZE_STRUCTURE_TYPE_DEVICE_IP_VERSION_EXT;
+    DeviceIPVersionExt.pNext = nullptr;
+  }
+
   Res = zeDeviceGetProperties(DeviceHandle, &DeviceProperties);
   if (Res != ZE_RESULT_SUCCESS) {
     POCL_MSG_ERR("Level Zero: zeDeviceGetProperties() failed\n");
     return false;
   }
 
+  DeviceIPVersion = DeviceIPVersionExt.ipVersion;
   // deviceProperties
   switch (DeviceProperties.type) {
   case ZE_DEVICE_TYPE_CPU:
@@ -1930,8 +1938,11 @@ bool Level0Device::setupModuleProperties(bool &SupportsInt64Atomics,
   SupportsInt64Atomics = (ModuleProperties.flags &
                           ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS) != 0u;
   KernelUUID = ModuleProperties.nativeKernelSupported;
+  SupportsDP4A = (ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_DP4A) > 0;
+  // TODO this seems not reported
+  // SupportsDPAS = (ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_DPAS) > 0;
 
-//  POCL_MSG_PRINT_LEVEL0("Using KernelUUID: %s\n", KernelUUID);
+  //  POCL_MSG_PRINT_LEVEL0("Using KernelUUID: %s\n", KernelUUID);
   if (HasFloatAtomics) {
     ClDev->single_fp_atomic_caps = convertZeAtomicFlags(FloatProperties.fp32Flags, "fp32", Features);
     ClDev->double_fp_atomic_caps = convertZeAtomicFlags(FloatProperties.fp64Flags, "fp64", Features);
@@ -2191,9 +2202,10 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   assert(ContextHandle);
   HasGOffsets = Drv->hasExtension("ZE_experimental_global_offset");
   HasCompression = Drv->hasExtension("ZE_extension_memory_compression_hints");
+  bool HasIPVerExt = Drv->hasExtension("ZE_extension_device_ip_version");
 
   // both of these are mandatory, the rest are optional
-  if (!setupDeviceProperties()) {
+  if (!setupDeviceProperties(HasIPVerExt)) {
     return;
   }
   if (!setupQueueGroupProperties()) {
@@ -2276,6 +2288,10 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 
   if (Drv->hasExtension("ZE_extension_linkonce_odr")) {
     Extensions.append(" cl_khr_spirv_linkonce_odr");
+  }
+
+  if (HasIPVerExt) {
+    Extensions.append(" cl_intel_device_attribute_query");
   }
 
   if (Supports64bitIntAtomics) {
