@@ -588,6 +588,11 @@ else()
   set(LLC_CPUFLAGS "-mcpu=${VARIANT}")
 endif()
 
+if("${VARIANT}" STREQUAL "generic")
+  set(CLANG_CPUFLAGS "")
+  set(LLC_CPUFLAGS "")
+endif()
+
 separate_arguments(CLANG_CPUFLAGS)
 separate_arguments(LLC_CPUFLAGS)
 set(CLANG_FLAGS ${HOST_CLANG_FLAGS} ${CLANG_CPUFLAGS}
