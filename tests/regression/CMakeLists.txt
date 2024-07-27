@@ -48,6 +48,7 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_alignment_with_dynamic_wg2 test_alignment_with_dynamic_wg3
   test_issue_893 test_issue_1435 test_builtin_args test_issue_1390
   test_workitem_func_outside_kernel test_program_scope_vars test_issue_1548
+  test_issue_1525
 )
 
 if (MSVC)
@@ -79,6 +80,8 @@ add_test_pocl(NAME "regression/test_issue_577" COMMAND "test_issue_577")
 add_test_pocl(NAME "regression/test_issue_757" COMMAND "test_issue_757")
 
 add_test_pocl(NAME "regression/test_issue_1435" COMMAND "test_issue_1435")
+
+add_test_pocl(NAME "regression/test_issue_1525" COMMAND "test_issue_1525" LLVM_FILECHECK "test_issue_1525.fc" WORKITEM_HANDLER "loopvec")
 
 add_test_pocl(NAME "regression/test_workitem_func_outside_kernel" COMMAND "test_workitem_func_outside_kernel")
 
