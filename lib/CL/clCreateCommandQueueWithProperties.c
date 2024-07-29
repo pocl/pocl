@@ -33,9 +33,11 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
   int errcode;
   cl_bool found = CL_FALSE;
   cl_command_queue_properties queue_props = 0;
+  cl_queue_priority_khr priority = 0;
+  cl_queue_throttle_khr throttle = 0;
+  cl_uint queue_size = 0;
   int queue_props_set = 0, queue_size_set = 0;
   int queue_priority_set = 0, queue_throttle_set = 0;
-  cl_uint queue_size = 0;
   const cl_command_queue_properties valid_prop_flags =
       (CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE
        | CL_QUEUE_PROFILING_ENABLE
@@ -65,7 +67,7 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
             POCL_GOTO_ERROR_ON ((queue_props_set > 0), CL_INVALID_VALUE,
                                 "CL_QUEUE_PROPERTIES was already set");
             queue_props = (cl_command_queue_properties)properties[i + 1];
-            queue_props_set = 1;
+            queue_props_set++;
             i += 2;
             break;
           }
@@ -74,7 +76,7 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
             POCL_GOTO_ERROR_ON ((queue_size_set > 0), CL_INVALID_VALUE,
                                 "CL_QUEUE_PROPERTIES was already set");
             queue_size = (cl_uint)properties[i + 1];
-            queue_size_set = 1;
+            queue_size_set++;
             i += 2;
             break;
           }
@@ -86,7 +88,8 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
                                  && value != CL_QUEUE_PRIORITY_LOW_KHR),
                                 CL_INVALID_VALUE,
                                 "Invalid CL_QUEUE_PRIORITY_KHR value");
-            queue_priority_set = 1;
+            priority = (cl_queue_priority_khr)properties[i + 1];
+            queue_priority_set++;
             /* This is a hint that provides no behavior or minimum guarantees
              * so it is always safe to bring it along (no action required) */
             i += 2;
@@ -100,7 +103,8 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
                                  && value != CL_QUEUE_THROTTLE_LOW_KHR),
                                 CL_INVALID_VALUE,
                                 "Invalid CL_QUEUE_THROTTLE_KHR value");
-            queue_throttle_set = 1;
+            throttle = (cl_queue_throttle_khr)properties[i + 1];
+            queue_throttle_set++;
             /* This is a hint that provides no behavior or minimum guarantees
              * so it is always safe to bring it along (no action required) */
             i += 2;
@@ -125,15 +129,18 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
           POCL_GOTO_ERROR_COND((queue_throttle_set), CL_INVALID_QUEUE_PROPERTIES);
 
          // create a device side queue
-         POCL_ABORT_UNIMPLEMENTED("Device side queue");
+          POCL_GOTO_ERROR_ON (1, CL_INVALID_QUEUE_PROPERTIES,
+                              "Device-side enqueue is not supported "
+                              "by any device\n");
         }
       else
         POCL_GOTO_ERROR_ON((queue_size > 0), CL_INVALID_VALUE,
                            "To specify queue size, you must use CL_QUEUE_ON_DEVICE in flags\n");
 
       /* validate flags */
-      POCL_GOTO_ERROR_ON((queue_props & (!valid_prop_flags)), CL_INVALID_VALUE,
-                         "CL_QUEUE_PROPERTIES contain invalid entries");
+      POCL_GOTO_ERROR_ON ((queue_props & (~valid_prop_flags)),
+                          CL_INVALID_VALUE,
+                          "CL_QUEUE_PROPERTIES contain invalid entries");
     }
 
   // currently thhere's only support for host side queues.
@@ -145,6 +152,9 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
   if (properties)
     {
       assert (i < 10);
+      cq_ret->properties = queue_props;
+      cq_ret->priority = priority;
+      cq_ret->throttle = throttle;
       cq_ret->num_queue_properties = i + 1;
       memcpy (cq_ret->queue_properties, properties,
               cq_ret->num_queue_properties * sizeof (cl_queue_properties));
