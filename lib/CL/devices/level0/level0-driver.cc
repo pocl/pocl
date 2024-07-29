@@ -1569,6 +1569,13 @@ static const cl_image_format SupportedImageFormats[] = {
     {CL_RGBA, CL_UNORM_INT8},      {CL_RGBA, CL_UNORM_INT16},
     {CL_RGBA, CL_HALF_FLOAT},      {CL_RGBA, CL_FLOAT},
 
+    {CL_BGRA, CL_SIGNED_INT8},     {CL_BGRA, CL_SIGNED_INT16},
+    {CL_BGRA, CL_SIGNED_INT32},    {CL_BGRA, CL_SNORM_INT8},
+    {CL_BGRA, CL_SNORM_INT16},     {CL_BGRA, CL_UNSIGNED_INT8},
+    {CL_BGRA, CL_UNSIGNED_INT16},  {CL_BGRA, CL_UNSIGNED_INT32},
+    {CL_BGRA, CL_UNORM_INT8},      {CL_BGRA, CL_UNORM_INT16},
+    {CL_BGRA, CL_HALF_FLOAT},      {CL_BGRA, CL_FLOAT},
+
     {CL_RGB, CL_UNORM_INT_101010}, {CL_RGB, CL_UNORM_SHORT_565},
     {CL_RGB, CL_UNORM_SHORT_555},
     //{CL_RGBA, CL_UNORM_SHORT_555},
@@ -1713,7 +1720,7 @@ bool Level0Device::setupDeviceProperties(bool HasIPVersionExt) {
   ClDev->max_clock_frequency = DeviceProperties.coreClockRate;
 
   ClDev->max_mem_alloc_size = ClDev->max_constant_buffer_size =
-      ClDev->global_var_pref_size = DeviceProperties.maxMemAllocSize;
+      ClDev->global_var_pref_size = DeviceProperties.maxMemAllocSize * 3 / 4;
   Supports64bitBuffers = (ClDev->max_mem_alloc_size > UINT32_MAX);
 
   if (DeviceProperties.type == ZE_DEVICE_TYPE_GPU ||
@@ -1761,7 +1768,7 @@ bool Level0Device::setupDeviceProperties(bool HasIPVersionExt) {
     ClDev->supported_spir_v_versions = "SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
 #endif
     ClDev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
-    ClDev->version_of_latest_passed_cts = "v2000-00-00-00";
+    ClDev->version_of_latest_passed_cts = "v2000-12-31-01";
   }
 
   MaxCommandQueuePriority = DeviceProperties.maxCommandQueuePriority;
@@ -2834,6 +2841,35 @@ static void convertOpenclToZeImgFormat(cl_channel_type ChType,
       ZeLayout = ZE_IMAGE_FORMAT_LAYOUT_FORCE_UINT32;
     }
     break;
+  }
+  case CL_BGRA: {
+      ZeFormat.x = ZE_IMAGE_FORMAT_SWIZZLE_B;
+      ZeFormat.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+      ZeFormat.z = ZE_IMAGE_FORMAT_SWIZZLE_R;
+      ZeFormat.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
+      switch (ChType) {
+        case CL_SNORM_INT8:
+        case CL_UNORM_INT8:
+        case CL_SIGNED_INT8:
+        case CL_UNSIGNED_INT8:
+          ZeLayout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+          break;
+        case CL_SNORM_INT16:
+        case CL_UNORM_INT16:
+        case CL_SIGNED_INT16:
+        case CL_UNSIGNED_INT16:
+        case CL_HALF_FLOAT:
+          ZeLayout = ZE_IMAGE_FORMAT_LAYOUT_16_16_16_16;
+          break;
+        case CL_SIGNED_INT32:
+        case CL_UNSIGNED_INT32:
+        case CL_FLOAT:
+          ZeLayout = ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32;
+          break;
+        default:
+          ZeLayout = ZE_IMAGE_FORMAT_LAYOUT_FORCE_UINT32;
+      }
+      break;
   }
   }
   ZeFormat.layout = ZeLayout;

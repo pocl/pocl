@@ -1266,12 +1266,6 @@ int pocl_level0_alloc_mem_obj(cl_device_id ClDevice, cl_mem Mem, void *HostPtr) 
       (Mem->mem_host_ptr_is_svm != 0)) {
     P->mem_ptr = Mem->mem_host_ptr;
     P->version = Mem->mem_host_ptr_version;
-  } else if (Mem->flags & CL_MEM_DEVICE_ADDRESS_EXT) {
-    // Treat cl_ext_buffer_device_address identically as USM Device.
-    // If we passed an SVM/USM address, we can use it directly in the
-    // previous branch. That should be at least a USM Device allocation.
-    P->mem_ptr = Device->allocSharedMem(Mem->size, 0);
-    P->version = 0;
   } else {
     bool Compress = false;
     if (pocl_get_bool_option("POCL_LEVEL0_COMPRESS", 0)) {
@@ -1363,13 +1357,12 @@ cl_int pocl_level0_get_mapping_ptr(void *Data, pocl_mem_identifier *MemId,
   /* assume buffer is allocated */
   assert(MemId->mem_ptr != NULL);
 
-  if (Mem->is_image != 0u) {
-    Map->host_ptr = (char *)MemId->mem_ptr + Map->offset;
-  } else if ((Mem->flags & CL_MEM_USE_HOST_PTR) != 0u) {
+  if ((Mem->flags & CL_MEM_USE_HOST_PTR) != 0u) {
     Map->host_ptr = (char *)Mem->mem_host_ptr + Map->offset;
   } else {
     Map->host_ptr = (char *)MemId->mem_ptr + Map->offset;
   }
+
   /* POCL_MSG_ERR ("map HOST_PTR: %p | SIZE %zu | OFFS %zu | DEV PTR: %p \n",
                   map->host_ptr, map->size, map->offset, mem_id->mem_ptr); */
   assert(Map->host_ptr);
