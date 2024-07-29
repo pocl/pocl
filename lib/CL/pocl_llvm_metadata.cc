@@ -70,10 +70,10 @@ static inline bool is_sampler_type(const llvm::Type &t) {
   return false;
 }
 #else
-static inline bool is_image_type(struct pocl_argument_info &ArgInfo,
+static inline bool is_image_type(llvm::Type *ArgType,
+                                 struct pocl_argument_info &ArgInfo,
                                  cl_bitfield has_arg_meta) {
-  if (ArgInfo.type == POCL_ARG_TYPE_POINTER) {
-    //    assert(has_arg_meta & POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER);
+  if (ArgInfo.type == POCL_ARG_TYPE_POINTER || ArgType->isTargetExtTy()) {
 
     assert(has_arg_meta & POCL_HAS_KERNEL_ARG_TYPE_NAME);
     llvm::StringRef name(ArgInfo.type_name);
@@ -635,13 +635,18 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
         ArgInfo.type = POCL_ARG_TYPE_SAMPLER;
       }
 #else
-      if (is_image_type(ArgInfo, meta->has_arg_metadata)) {
+      if (is_image_type(t, ArgInfo, meta->has_arg_metadata)) {
         ArgInfo.type = POCL_ARG_TYPE_IMAGE;
       }
       if (is_sampler_type(ArgInfo, meta->has_arg_metadata)) {
         ArgInfo.type = POCL_ARG_TYPE_SAMPLER;
       }
 #endif
+      if (ArgInfo.type_size == 0 && t->isSized()) {
+        // TODO use getAllocaSize ?
+        TypeSize TS = input->getDataLayout().getTypeStoreSize(t);
+        ArgInfo.type_size = TS.getFixedValue();
+      }
       i++;
     }
 
