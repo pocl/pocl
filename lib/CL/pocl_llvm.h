@@ -96,9 +96,14 @@ extern "C" {
 
   POCL_EXPORT
   int pocl_llvm_run_passes_on_program (cl_program Program, unsigned DeviceI);
-  /**
-   * Free the LLVM IR of a program for a given device
-   */
+
+  /* Parse program file and populate program's llvm_irs */
+  POCL_EXPORT
+  int pocl_llvm_read_program_llvm_irs (cl_program program,
+                                       unsigned device_i,
+                                       const char *path);
+
+  /* Free the LLVM IR of a program for a given device */
   POCL_EXPORT
   void pocl_llvm_free_llvm_irs (cl_program program, unsigned device_i);
 
@@ -176,10 +181,6 @@ extern "C" {
    */
   int pocl_llvm_codegen (cl_device_id device, cl_program program, void *modp,
                          char **output, uint64_t *output_size);
-
-  /* Parse program file and populate program's llvm_irs */
-  int pocl_llvm_read_program_llvm_irs (cl_program program, unsigned device_i,
-                                       const char *path);
 
   int pocl_llvm_link_program (cl_program program, unsigned device_i,
                               cl_uint num_input_programs,
