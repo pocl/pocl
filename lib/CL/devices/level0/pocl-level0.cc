@@ -169,6 +169,7 @@ void pocl_level0_init_device_ops(struct pocl_device_ops *Ops) {
   Ops->free_sampler = pocl_level0_free_sampler;
 
   Ops->get_device_info_ext = pocl_level0_get_device_info_ext;
+  Ops->get_subgroup_info_ext = pocl_level0_get_subgroup_info_ext;
   Ops->set_kernel_exec_info_ext = pocl_level0_set_kernel_exec_info_ext;
   Ops->get_synchronized_timestamps = pocl_driver_get_synchronized_timestamps;
 }
@@ -1521,6 +1522,52 @@ cl_int pocl_level0_get_device_info_ext(cl_device_id Dev,
 
   default:
     return CL_INVALID_VALUE;
+  }
+}
+
+cl_int pocl_level0_get_subgroup_info_ext(
+    cl_device_id Dev, cl_kernel Kernel, unsigned ProgramDeviceI,
+    cl_kernel_sub_group_info param_name, size_t input_value_size,
+    const void *input_value, size_t param_value_size,
+    void *param_value, size_t *param_value_size_ret) {
+
+  Level0Device *Device = (Level0Device *)Dev->data;
+  Level0Kernel *L0Kernel = (Level0Kernel *)Kernel->data[ProgramDeviceI];
+  size_t SgSize = Device->getMaxSGSizeForKernel(L0Kernel);
+
+  switch (param_name) {
+  case CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE: {
+    POCL_RETURN_GETINFO(size_t, SgSize);
+  }
+  case CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE: {
+    POCL_RETURN_GETINFO(
+        size_t, std::min((size_t)Dev->max_num_sub_groups,
+                         (size_t)((input_value_size > sizeof(size_t)
+                                       ? ((size_t *)input_value)[1] / SgSize
+                                       : 1) *
+                                  (input_value_size > sizeof(size_t) * 2
+                                       ? ((size_t *)input_value)[2] / SgSize
+                                       : 1))));
+  }
+  case CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT: {
+    POCL_RETURN_ERROR_ON((input_value == NULL), CL_INVALID_VALUE,
+                         "SG size wish not given.");
+    size_t n_wish = *(size_t *)input_value;
+
+    size_t nd[3];
+    if (n_wish * SgSize > Dev->max_work_group_size) {
+      nd[0] = nd[1] = nd[2] = 0;
+      POCL_RETURN_GETINFO_ARRAY(size_t, param_value_size / sizeof(size_t), nd);
+    } else {
+      nd[0] = n_wish * SgSize;
+      nd[1] = 1;
+      nd[2] = 1;
+      POCL_RETURN_GETINFO_ARRAY(size_t, param_value_size / sizeof(size_t), nd);
+    }
+  }
+  default:
+    POCL_RETURN_ERROR_ON(1, CL_INVALID_VALUE, "Unknown param_name: %u\n",
+                         param_name);
   }
 }
 

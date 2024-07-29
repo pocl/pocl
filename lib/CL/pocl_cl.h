@@ -917,12 +917,15 @@ struct pocl_device_ops {
                                  void *param_value,
                                  size_t *param_value_size_ret);
 
-  cl_int (*get_mem_info_ext) (cl_device_id dev,
-                              const void *ptr,
-                              cl_uint param_name,
-                              size_t param_value_size,
-                              void *param_value,
-                              size_t *param_value_size_ret);
+  cl_int (*get_subgroup_info_ext) (cl_device_id dev,
+                                   cl_kernel kernel,
+                                   unsigned program_device_i,
+                                   cl_kernel_sub_group_info param_name,
+                                   size_t input_value_size,
+                                   const void *input_value,
+                                   size_t param_value_size,
+                                   void *param_value,
+                                   size_t *param_value_size_ret);
 
   /** If the device implements an extension to the clSetKernelExecInfo,
    * it can override this function. */

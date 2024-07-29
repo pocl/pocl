@@ -334,6 +334,13 @@ public:
                      double &NsPerCycle);
   void getMaxWGs(uint32_t_3 *MaxWGs);
   uint32_t getMaxWGSize() { return ClDev->max_work_group_size; }
+  // max WorkGroup size for a particular Kernel
+  uint32_t getMaxWGSizeForKernel(Level0Kernel *Kernel);
+  // max SubGroup size for a particular Kernel
+  uint32_t getMaxSGSizeForKernel(Level0Kernel *Kernel) {
+    // TODO we should get the real value from the L0 API somehow
+    return 8;
+  }
   bool supportsHostUSM() { return ClDev->host_usm_capabs != 0; }
   bool supportsDeviceUSM() { return ClDev->device_usm_capabs != 0; }
   bool supportsSingleSharedUSM() {

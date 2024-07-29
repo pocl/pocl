@@ -3211,6 +3211,38 @@ void Level0Device::getMaxWGs(uint32_t_3 *MaxWGs) {
   std::memcpy(MaxWGs, MaxWGCount, sizeof(uint32_t_3));
 }
 
+uint32_t Level0Device::getMaxWGSizeForKernel(Level0Kernel *Kernel) {
+#ifdef ZE_STRUCTURE_TYPE_KERNEL_MAX_GROUP_SIZE_EXT_PROPERTIES
+  // TODO what default should we return here ?
+  if (!Driver->hasExtension("ZE_extension_kernel_max_group_size_properties"))
+    return getMaxWGSize();
+
+  // TODO this makes the returned value dependent on random choice;
+  ze_kernel_handle_t hKernel = Kernel->getAnyCreated();
+  if (hKernel == nullptr)
+    return getMaxWGSize();
+
+  ze_kernel_max_group_size_properties_ext_t MaxGroupProps = {
+    .stype = ZE_STRUCTURE_TYPE_KERNEL_MAX_GROUP_SIZE_EXT_PROPERTIES,
+    .pNext = nullptr,
+    .maxGroupSize = 0
+  };
+
+  ze_kernel_properties_t KernelProps = {
+    .stype = ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES,
+    .pNext = &MaxGroupProps,
+  };
+
+  ze_result_t Res = zeKernelGetProperties(hKernel, &KernelProps);
+  if (Res != ZE_RESULT_SUCCESS)
+    return getMaxWGSize();
+
+  return MaxGroupProps.maxGroupSize;
+#else
+  return getMaxWGSize();
+#endif
+}
+
 static constexpr unsigned MaxLevel0Devices = 1024;
 
 Level0Driver::Level0Driver() {
