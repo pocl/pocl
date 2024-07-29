@@ -131,6 +131,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->compute_local_size = pocl_default_local_size_optimizer;
 
   ops->get_device_info_ext = pocl_basic_get_device_info_ext;
+  ops->get_subgroup_info_ext = pocl_basic_get_subgroup_info_ext;
   ops->set_kernel_exec_info_ext = pocl_basic_set_kernel_exec_info_ext;
   ops->get_synchronized_timestamps = pocl_driver_get_synchronized_timestamps;
 
@@ -850,6 +851,69 @@ pocl_basic_get_device_info_ext (cl_device_id device, cl_device_info param_name,
       POCL_MSG_ERR ("Unknown param_name for get_device_info_ext: %u\n",
                     param_name);
       return CL_INVALID_VALUE;
+    }
+}
+
+cl_int
+pocl_basic_get_subgroup_info_ext (cl_device_id device,
+                                  cl_kernel kernel,
+                                  unsigned program_device_i,
+                                  cl_kernel_sub_group_info param_name,
+                                  size_t input_value_size,
+                                  const void *input_value,
+                                  size_t param_value_size,
+                                  void *param_value,
+                                  size_t *param_value_size_ret)
+{
+  switch (param_name)
+    {
+    case CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE:
+      {
+
+        /* For now assume SG == WG_x. */
+        POCL_RETURN_GETINFO (size_t, ((size_t *)input_value)[0]);
+      }
+    case CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE:
+      {
+        /* For now assume SG == WG_x and thus we have WG_size_y*WG_size_z of
+           them per WG. */
+        POCL_RETURN_GETINFO (
+          size_t,
+          min (device->max_num_sub_groups,
+               (input_value_size > sizeof (size_t) ? ((size_t *)input_value)[1]
+                                                   : 1)
+                 * (input_value_size > sizeof (size_t) * 2
+                      ? ((size_t *)input_value)[2]
+                      : 1)));
+      }
+    case CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT:
+      {
+        POCL_RETURN_ERROR_ON ((input_value == NULL), CL_INVALID_VALUE,
+                              "SG size wish not given.");
+        size_t n_wish = *(size_t *)input_value;
+        /* For now assume SG == WG_x and the simplest way of looping only at
+           y dimension. Use magic number 32 as the preferred SG size for now.
+         */
+        size_t nd[3];
+        if (n_wish > device->max_num_sub_groups
+            || (n_wish > 1 && param_value_size / sizeof (size_t) == 1))
+          {
+            nd[0] = nd[1] = nd[2] = 0;
+            POCL_RETURN_GETINFO_ARRAY (size_t,
+                                       param_value_size / sizeof (size_t), nd);
+          }
+        else
+          {
+            nd[0] = device->max_work_group_size / n_wish;
+            nd[1] = n_wish;
+            nd[2] = 1;
+            POCL_RETURN_GETINFO_ARRAY (size_t,
+                                       param_value_size / sizeof (size_t), nd);
+          }
+      }
+    default:
+      POCL_RETURN_ERROR_ON (1, CL_INVALID_VALUE, "Unknown param_name: %u\n",
+                            param_name);
     }
 }
 
