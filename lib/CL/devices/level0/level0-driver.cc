@@ -1200,8 +1200,9 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
   cl_kernel Kernel = RunCmd->kernel;
   struct pocl_argument *PoclArg = RunCmd->arguments;
 
-  // static locals are taken care of in ZE compiler
-  assert(Kernel->meta->num_locals == 0);
+  // this may be set to non-zero by the LLVM parsing of IR in setup_metadata,
+  // however: locals are taken care of in L0 runtime
+  //assert(Kernel->meta->num_locals == 0);
 
   cl_uint i = 0;
   ze_result_t Res = ZE_RESULT_SUCCESS;

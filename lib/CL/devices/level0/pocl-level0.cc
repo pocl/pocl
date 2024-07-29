@@ -469,8 +469,6 @@ int pocl_level0_build_source(cl_program Program, cl_uint DeviceI,
 
   // result of pocl_llvm_build_program
   assert(pocl_exists(ProgramBcPath));
-  // we don't need llvm::Module objects, only the bitcode
-  pocl_llvm_free_llvm_irs(Program, DeviceI);
 
   if (pocl_exists(ProgramSpvPath) != 0) {
     POCL_MSG_PRINT_LEVEL0("Found compiled SPIR-V in cache\n");
@@ -506,6 +504,7 @@ int pocl_level0_build_source(cl_program Program, cl_uint DeviceI,
   assert(Program->program_il_size > 0);
   assert(Program->binaries[DeviceI] != nullptr);
   assert(Program->binary_sizes[DeviceI] > 0);
+  assert(Program->llvm_irs[DeviceI] != nullptr);
 
   if (LinkProgram != 0) {
     return Device->createProgram(Program, DeviceI);
@@ -631,6 +630,8 @@ int pocl_level0_build_binary(cl_program Program, cl_uint DeviceI,
   assert(Program->binary_sizes[DeviceI] != 0);
 
   if (LinkProgram != 0) {
+    // for Metadata, read the Bitcode into LLVM::Module
+    pocl_llvm_read_program_llvm_irs(Program, DeviceI, ProgramBcPath);
     return Device->createProgram(Program, DeviceI);
   } else {
     // only final (linked) programs have  ZE module
@@ -732,6 +733,8 @@ int pocl_level0_link_program(cl_program Program, cl_uint DeviceI,
   assert(Program->binary_sizes[DeviceI] > 0);
 
   if (CreateLibrary == 0) {
+    // for Metadata, read the Bitcode into LLVM::Module
+    pocl_llvm_read_program_llvm_irs(Program, DeviceI, ProgramBcPath);
     return Device->createProgram(Program, DeviceI);
   } else {
     // only final (linked) programs have  ZE module
@@ -753,7 +756,14 @@ int pocl_level0_free_program(cl_device_id ClDevice, cl_program Program,
 
 int pocl_level0_setup_metadata(cl_device_id Device, cl_program Program,
                                unsigned ProgramDeviceI) {
-  assert(Program->data[ProgramDeviceI] != NULL);
+  assert(Program->data[ProgramDeviceI] != nullptr);
+
+  // using the LLVM::Module as source for metadata gets more reliable info
+  // than SPIR-V parsing. TODO make the SPIR-V parsing work, so we don't have
+  // to use LLVM::Module.
+  if (Program->llvm_irs[ProgramDeviceI] != nullptr) {
+    return pocl_driver_setup_metadata(Device, Program, ProgramDeviceI);
+  }
 
   // TODO this is using program_il as source
   int32_t *Stream = (int32_t *)Program->program_il;
