@@ -1415,6 +1415,27 @@ int pocl_llvm_read_program_llvm_irs(cl_program program, unsigned device_i,
   return CL_SUCCESS;
 }
 
+int pocl_llvm_recalculate_gvar_sizes(cl_program Program, unsigned DeviceI) {
+  std::string ErrLog;
+  std::set<llvm::GlobalVariable *> GVarSet;
+  cl_device_id Dev = Program->devices[DeviceI];
+
+  assert(Program->llvm_irs[DeviceI] != nullptr);
+  llvm::Module *M = (llvm::Module *)Program->llvm_irs[DeviceI];
+  assert(Program->global_var_total_size != nullptr);
+  Program->global_var_total_size[DeviceI] = 0;
+
+  if (!pocl::areAllGvarsDefined(M, ErrLog, GVarSet, Dev->local_as_id)) {
+    POCL_MSG_ERR("Not all GVars are defined: \n%s\n", ErrLog.c_str());
+    return CL_FAILED;
+  }
+  std::map<llvm::GlobalVariable *, uint64_t> GVarOffsets;
+  size_t TotalSize =
+      pocl::calculateGVarOffsetsSizes(M->getDataLayout(), GVarOffsets, GVarSet);
+  Program->global_var_total_size[DeviceI] = TotalSize;
+  return CL_SUCCESS;
+}
+
 void pocl_llvm_free_llvm_irs(cl_program program, unsigned device_i) {
   cl_context ctx = program->context;
   PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;

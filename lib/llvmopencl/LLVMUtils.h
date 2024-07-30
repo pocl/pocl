@@ -92,6 +92,17 @@ void setFuncArgAddressSpaceMD(llvm::Function *Func, unsigned ArgIndex,
 bool hasWorkgroupBarriers(const llvm::Function &F);
 
 POCL_EXPORT
+bool areAllGvarsDefined(llvm::Module *Program, std::string &log,
+                        std::set<llvm::GlobalVariable *> &GVarSet,
+                        unsigned DeviceLocalAS);
+
+POCL_EXPORT
+size_t calculateGVarOffsetsSizes(
+    const llvm::DataLayout &DL,
+    std::map<llvm::GlobalVariable *, uint64_t> &GVarOffsets,
+    std::set<llvm::GlobalVariable *> &GVarSet);
+
+POCL_EXPORT
 bool isKernelToProcess(const llvm::Function &F);
 
 llvm::Metadata *createConstantIntMD(llvm::LLVMContext &C, int32_t Val);

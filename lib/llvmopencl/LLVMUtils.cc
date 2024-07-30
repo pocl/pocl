@@ -531,6 +531,90 @@ bool hasWorkgroupBarriers(const llvm::Function &F) {
   return false;
 }
 
+// walks through a Module's global variables,
+// determines which ones are OpenCL program-scope variables
+// and checks all of those have definitions
+bool areAllGvarsDefined(llvm::Module *Program, std::string &log,
+                        std::set<llvm::GlobalVariable *> &GVarSet,
+                        unsigned DeviceLocalAS) {
+
+  bool FoundAllReferences = true;
+
+  for (GlobalVariable &GVar : Program->globals()) {
+
+    if (isProgramScopeVariable(GVar, DeviceLocalAS)) {
+
+      assert(GVar.hasName());
+      // adding GV declarations to the module also changes
+      // the global iteration to include them
+      if (GVarSet.count(&GVar) != 0)
+        continue;
+
+      if (GVar.isDeclaration()) {
+        log.append("Undefined reference for program scope variable: ");
+        log.append(GVar.getName().data());
+        log.append("\n");
+        FoundAllReferences = false;
+      } else {
+        GVarSet.insert(&GVar);
+        // std::cerr << "**************************\n";
+        // GVar.dump();
+        // std::cerr << "**************************\n";
+      }
+    }
+  }
+
+  return FoundAllReferences;
+}
+
+// for a set of program scope variables,
+// calculate their offsets & sizes for later replacement with
+// indexing into a single large buffer
+// @returns the total size of all variables
+size_t
+calculateGVarOffsetsSizes(const DataLayout &DL,
+                          std::map<GlobalVariable *, uint64_t> &GVarOffsets,
+                          std::set<llvm::GlobalVariable *> &GVarSet) {
+
+  std::map<GlobalVariable *, uint64_t> GVarSizes;
+
+  // offset into the storage buffer for all of this program's global variables
+  size_t CurrentOffset = 0;
+
+  for (GlobalVariable *GVar : GVarSet) {
+    assert(GVar->hasInitializer());
+
+    // if the current offset into the buffer is not aligned enough, fix it
+#if LLVM_MAJOR < 15
+    uint64_t GVarAlign = GVar->getAlignment();
+#else
+    Align GVarA = GVar->getAlign().valueOrOne();
+    uint64_t GVarAlign = GVarA.value();
+#endif
+
+    if (GVarAlign > 0 && CurrentOffset % GVarAlign) {
+      CurrentOffset |= (GVarAlign - 1);
+      ++CurrentOffset;
+    }
+    GVarOffsets[GVar] = CurrentOffset;
+
+    // add to the offset the required amount of storage for the global variable
+    TypeSize GVSize = DL.getTypeAllocSize(GVar->getValueType());
+    assert(GVSize.isScalable() == false);
+    GVarSizes[GVar] = GVSize.getFixedValue();
+    CurrentOffset += GVarSizes[GVar];
+
+#ifdef POCL_DEBUG_PROGVARS
+    std::cerr << "@@@ GlobalVar: " << GVar->getName().str()
+              << "\n   OFFSET: " << GVarOffsets[GVar]
+              << "\n   SIZE: " << GVarSizes[GVar] << "\n";
+#endif
+  }
+
+  size_t TotalSize = CurrentOffset;
+  return TotalSize;
+}
+
 const char *WorkgroupVariablesArray[NumWorkgroupVariables+1] = {"_local_id_x",
                                     "_local_id_y",
                                     "_local_id_z",
