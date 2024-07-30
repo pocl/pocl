@@ -666,7 +666,15 @@ int pocl_level0_link_program(cl_program Program, cl_uint DeviceI,
     assert(Dev == InputPrograms[I]->devices[DeviceI]);
     POCL_LOCK_OBJ(InputPrograms[I]);
 
+    pocl_cache_program_spv_path(ProgramSpvPath, InputPrograms[I], DeviceI);
+    assert(pocl_exists(ProgramSpvPath));
+    SpvBinaryPaths.push_back(ProgramSpvPath);
+
     char *Spv = (char *)InputPrograms[I]->program_il;
+    if (Spv == nullptr) {
+      readProgramSpv(InputPrograms[I], DeviceI, ProgramSpvPath);
+    }
+    Spv = (char *)InputPrograms[I]->program_il;
     assert(Spv);
     size_t Size = InputPrograms[I]->program_il_size;
     assert(Size);
@@ -677,10 +685,6 @@ int pocl_level0_link_program(cl_program Program, cl_uint DeviceI,
       assert(pocl_exists(ProgramBcPath));
       BcBinaryPaths.push_back(ProgramBcPath);
     }
-
-    pocl_cache_program_spv_path(ProgramSpvPath, InputPrograms[I], DeviceI);
-    assert(pocl_exists(ProgramSpvPath));
-    SpvBinaryPaths.push_back(ProgramSpvPath);
 
     POCL_UNLOCK_OBJ(InputPrograms[I]);
   }
