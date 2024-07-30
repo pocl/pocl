@@ -1949,6 +1949,16 @@ bool Level0Device::setupModuleProperties(bool &SupportsInt64Atomics,
   SupportsDP4A = (ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_DP4A) > 0;
   // TODO this seems not reported
   // SupportsDPAS = (ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_DPAS) > 0;
+  if (SupportsDP4A) {
+    // TODO how to get these properties from L0
+    ClDev->dot_product_caps =
+        CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR |
+        CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_PACKED_KHR;
+    ClDev->dot_product_accel_props_8bit.signed_accelerated = CL_TRUE;
+    ClDev->dot_product_accel_props_8bit.unsigned_accelerated = CL_TRUE;
+    ClDev->dot_product_accel_props_4x8bit.signed_accelerated = CL_TRUE;
+    ClDev->dot_product_accel_props_4x8bit.unsigned_accelerated = CL_TRUE;
+  }
 
   //  POCL_MSG_PRINT_LEVEL0("Using KernelUUID: %s\n", KernelUUID);
   if (HasFloatAtomics) {
@@ -2363,6 +2373,15 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     Extensions.append(" cl_ext_float_atomics");
     OpenCL30Features.append(FPAtomicFeatures);
   }
+
+#ifdef ENABLE_LEVEL0_EXTRA_FEATURES
+  if (SupportsDP4A || SupportsDPAS) {
+    Extensions.append(" cl_khr_integer_dot_product");
+    OpenCL30Features.append(" __opencl_c_integer_dot_product_input_4x8bit");
+    OpenCL30Features.append(
+        " __opencl_c_integer_dot_product_input_4x8bit_packed");
+  }
+#endif
 
   if (ClDev->type == CL_DEVICE_TYPE_CPU
       || ClDev->type == CL_DEVICE_TYPE_GPU) {

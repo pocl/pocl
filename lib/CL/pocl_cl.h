@@ -1030,6 +1030,11 @@ struct _cl_device_id {
   cl_device_fp_atomic_capabilities_ext single_fp_atomic_caps;
   cl_device_fp_atomic_capabilities_ext half_fp_atomic_caps;
   cl_device_fp_atomic_capabilities_ext double_fp_atomic_caps;
+  cl_device_integer_dot_product_capabilities_khr dot_product_caps;
+  cl_device_integer_dot_product_acceleration_properties_khr
+    dot_product_accel_props_8bit;
+  cl_device_integer_dot_product_acceleration_properties_khr
+    dot_product_accel_props_4x8bit;
   cl_device_mem_cache_type global_mem_cache_type;
   cl_uint global_mem_cacheline_size;
   cl_ulong global_mem_cache_size;
