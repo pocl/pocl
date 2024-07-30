@@ -680,6 +680,32 @@ TRACEPOINT_EVENT (
   )
 )
 
+TRACEPOINT_EVENT(
+    pocl_trace,
+    migrate_mem_obj,
+    TP_ARGS(
+        uint64_t, event_id,
+        uint32_t, evt_status,
+        uint32_t, dev_id,
+        uint64_t, queue_id,
+        uint64_t, num_bufs,
+        uint64_t, mem_id,
+        uint64_t, src_id,
+        const char*, type
+
+    ),
+    TP_FIELDS(
+        ctf_integer_hex(uint64_t, event_id, event_id)
+        ctf_integer_hex(uint32_t, evt_status, evt_status)
+        ctf_integer_hex(uint32_t, dev_id, dev_id)
+        ctf_integer_hex(uint64_t, queue_id, queue_id)
+        ctf_integer_hex(uint64_t, num_bufs, num_bufs)
+        ctf_integer_hex(uint64_t, mem_id, mem_id)
+        ctf_integer_hex(uint64_t, src_id, src_id)
+        ctf_string(type, type)
+    )
+)
+
 #endif /* POCL_LLTTNG_H */
 
 #include <lttng/tracepoint-event.h>
