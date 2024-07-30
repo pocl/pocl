@@ -28,6 +28,8 @@ pocl_ndrange_kernel_regex = re.compile(
 pocl_copy_regex = re.compile(
     "^{ event_id = (?P<event_id>0x[0-9A-Fa-f]+), evt_status = (?P<evt_status>0x[0-9A-Fa-f]+), dev_id = (?P<dev_id>0x[0-9A-Fa-f]+), queue_id = (?P<queue_id>0x[0-9A-Fa-f]+), src_id = (?P<src_id>0x[0-9A-Fa-f]+), dest_id = (?P<dest_id>0x[0-9A-Fa-f]+) }$")
 
+pocl_migrate_regex = re.compile(
+    "^{ event_id = (?P<event_id>0x[0-9A-Fa-f]+), evt_status = (?P<evt_status>0x[0-9A-Fa-f]+), dev_id = (?P<dev_id>0x[0-9A-Fa-f]+), queue_id = (?P<queue_id>0x[0-9A-Fa-f]+), num_bufs = (?P<num_bufs>0x[0-9A-Fa-f]+), mem_id = (?P<mem_id>0x[0-9A-Fa-f]+), src_id = (?P<src_id>0x[0-9A-Fa-f]+), type = \"(?P<type_name>\S+)\" }$")
 
 def pocl_parse_status_and_return(dict, event_status):
     """
@@ -224,6 +226,19 @@ def parse_pocl_trace_data(trace_type, string, dict):
 
         res_dict = res.groupdict()
         set_dict_values(dict, res_dict)
+        event_status = int(res_dict["evt_status"], 16)
+        return pocl_parse_status_and_return(dict, event_status)
+
+    elif trace_type == "migrate_mem_obj":
+
+        res = pocl_migrate_regex.match(string)
+        if res is None:
+            print("could not parse migrate mem obj: " + string)
+            return None
+
+        res_dict = res.groupdict()
+        set_dict_values(dict, res_dict)
+        dict["name"] = "migrate " + res_dict["type_name"]
         event_status = int(res_dict["evt_status"], 16)
         return pocl_parse_status_and_return(dict, event_status)
 

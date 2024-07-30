@@ -504,6 +504,39 @@ lttng_tracer_event_updated (cl_event event, int status)
                   event->mem_objs[0]->id);
       break;
 
+    case CL_COMMAND_MIGRATE_MEM_OBJECTS:
+      {
+        assert (event->num_buffers > 0);
+        switch (node->command.migrate.type)
+          {
+
+          case ENQUEUE_MIGRATE_TYPE_H2D:
+            tracepoint (pocl_trace, migrate_mem_obj, event->id, status,
+                        dev->dev_id, cq->id, event->num_buffers,
+                        event->mem_objs[0]->id, 0, "H2D");
+            break;
+
+          case ENQUEUE_MIGRATE_TYPE_D2H:
+            tracepoint (pocl_trace, migrate_mem_obj, event->id, status,
+                        dev->dev_id, cq->id, event->num_buffers,
+                        event->mem_objs[0]->id, 0, "D2H");
+            break;
+
+          case ENQUEUE_MIGRATE_TYPE_D2D:
+            tracepoint (pocl_trace, migrate_mem_obj, event->id, status,
+                        dev->dev_id, cq->id, event->num_buffers,
+                        event->mem_objs[0]->id,
+                        node->command.migrate.src_device->id, "D2D");
+            break;
+
+          case ENQUEUE_MIGRATE_TYPE_NOP:
+            tracepoint (pocl_trace, migrate_mem_obj, event->id, status,
+                        dev->dev_id, cq->id, event->num_buffers,
+                        event->mem_objs[0]->id, 0, "NOP");
+            break;
+          }
+        break;
+      }
     }
 }
 
