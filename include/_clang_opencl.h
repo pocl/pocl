@@ -353,6 +353,18 @@ void _CL_OVERLOADABLE
 intel_sub_group_block_write_uc8 (read_write image2d_t, int2, uchar8);
 #endif // defined(__opencl_c_read_write_images)
 
+#ifdef cl_intel_split_work_group_barrier
+void _CL_OVERLOADABLE
+intel_work_group_barrier_arrive (cl_mem_fence_flags flags);
+void _CL_OVERLOADABLE intel_work_group_barrier_wait (cl_mem_fence_flags flags);
+// For OpenCL C 2.0 or newer:
+#if defined(__OPENCL_CPP_VERSION__) || (__OPENCL_C_VERSION__ >= CL_VERSION_2_0)
+void _CL_OVERLOADABLE
+intel_work_group_barrier_arrive (cl_mem_fence_flags flags, memory_scope scope);
+void _CL_OVERLOADABLE intel_work_group_barrier_wait (cl_mem_fence_flags flags,
+                                                     memory_scope scope);
+#endif
+#endif // cl_intel_split_work_group_barrier
 
 #endif
 
