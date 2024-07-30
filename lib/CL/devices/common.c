@@ -1880,6 +1880,7 @@ static const cl_name_version OPENCL_EXTENSIONS[]
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_local_int32_extended_atomics" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_int64_base_atomics" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_int64_extended_atomics" },
+      { CL_MAKE_VERSION (1, 0, 0), "cl_khr_integer_dot_product" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroups" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_extended_types" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_non_uniform_vote" },
@@ -2027,6 +2028,8 @@ static const cl_name_version OPENCL_C_FEATURES[] = {
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp16_local_atomic_load_store" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp32_local_atomic_load_store" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp64_local_atomic_load_store" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_integer_dot_product_input_4x8bit" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_integer_dot_product_input_4x8bit_packed" },
 };
 
 const size_t OPENCL_C_FEATURES_NUM

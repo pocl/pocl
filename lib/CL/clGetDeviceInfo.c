@@ -197,6 +197,18 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_GETINFO(cl_device_fp_atomic_capabilities_ext,
                         device->half_fp_atomic_caps);
 
+  case CL_DEVICE_INTEGER_DOT_PRODUCT_CAPABILITIES_KHR:
+    POCL_RETURN_GETINFO (cl_device_integer_dot_product_capabilities_khr,
+                         device->dot_product_caps);
+  case CL_DEVICE_INTEGER_DOT_PRODUCT_ACCELERATION_PROPERTIES_8BIT_KHR:
+    POCL_RETURN_GETINFO (
+      cl_device_integer_dot_product_acceleration_properties_khr,
+      device->dot_product_accel_props_8bit);
+  case CL_DEVICE_INTEGER_DOT_PRODUCT_ACCELERATION_PROPERTIES_4x8BIT_PACKED_KHR:
+    POCL_RETURN_GETINFO (
+      cl_device_integer_dot_product_acceleration_properties_khr,
+      device->dot_product_accel_props_4x8bit);
+
   case CL_DEVICE_NAME:
     POCL_RETURN_GETINFO_STR(device->long_name);
    
