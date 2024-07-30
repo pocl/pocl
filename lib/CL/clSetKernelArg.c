@@ -158,6 +158,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
       size_t as = arg_size;
       size_t as3 = arg_size;
       /* handle <type>3 vectors, we accept both <type>3 and <type>4 sizes */
+      /* pi->type_size for <type>3 vectors is expected = sizeof(<type>4) */
       if (as % 3 == 0)
         as3 = (as / 3) * 4;
       POCL_RETURN_ERROR_ON (
