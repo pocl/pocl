@@ -244,40 +244,6 @@ static void addGlobalVarInitInstr(GlobalVariable *OriginalGVarDef,
 
 
 
-// walks through a Module's global variables,
-// determines which ones are OpenCL program-scope variables
-// and checks all of those have definitions
-static bool areAllGvarsDefined(Module *Program, std::string &log,
-                               GVarSetT &GVarSet, unsigned DeviceLocalAS) {
-
-  bool FoundAllReferences = true;
-
-  for (GlobalVariable &GVar : Program->globals()) {
-
-    if (isProgramScopeVariable(GVar, DeviceLocalAS)) {
-
-      assert(GVar.hasName());
-      // adding GV declarations to the module also changes
-      // the global iteration to include them
-      if (GVarSet.count(&GVar) != 0)
-        continue;
-
-      if (GVar.isDeclaration()) {
-        log.append("Undefined reference for program scope variable: ");
-        log.append(GVar.getName().data());
-        log.append("\n");
-        FoundAllReferences = false;
-      } else {
-        GVarSet.insert(&GVar);
-        // std::cerr << "**************************\n";
-        // GVar.dump();
-        // std::cerr << "**************************\n";
-      }
-    }
-  }
-
-  return FoundAllReferences;
-}
 
 // Emit a kernel named "pocl.gvar.init" for initialing global variables
 static void emitInitializeKernel(Module *Program, LLVMContext &Ctx,
@@ -334,51 +300,6 @@ static void emitInitializeKernel(Module *Program, LLVMContext &Ctx,
   for (GlobalVariable *GVar : GVarSet) {
     GVar->setInitializer(UndefValue::get(GVar->getValueType()));
   }
-}
-
-// for a set of program scope variables,
-// calculate their offsets & sizes for later replacement with
-// indexing into a single large buffer
-// @returns the total size of all variables
-static size_t calculateOffsetsSizes(GVarUlongMapT &GVarOffsets,
-                                    const DataLayout &DL, GVarSetT &GVarSet) {
-  GVarUlongMapT GVarSizes;
-
-  // offset into the storage buffer for all of this program's global variables
-  size_t CurrentOffset = 0;
-
-  for (GlobalVariable *GVar : GVarSet) {
-    assert(GVar->hasInitializer());
-
-    // if the current offset into the buffer is not aligned enough, fix it
-#if LLVM_MAJOR < 15
-    uint64_t GVarAlign = GVar->getAlignment();
-#else
-    Align GVarA = GVar->getAlign().valueOrOne();
-    uint64_t GVarAlign = GVarA.value();
-#endif
-
-    if (GVarAlign > 0 && CurrentOffset % GVarAlign) {
-      CurrentOffset |= (GVarAlign - 1);
-      ++CurrentOffset;
-    }
-    GVarOffsets[GVar] = CurrentOffset;
-
-    // add to the offset the required amount of storage for the global variable
-    TypeSize GVSize = DL.getTypeAllocSize(GVar->getValueType());
-    assert(GVSize.isScalable() == false);
-    GVarSizes[GVar] = GVSize.getFixedValue();
-    CurrentOffset += GVarSizes[GVar];
-
-#ifdef POCL_DEBUG_PROGVARS
-    std::cerr << "@@@ GlobalVar: " << GVar->getName().str()
-              << "\n   OFFSET: " << GVarOffsets[GVar]
-              << "\n   SIZE: " << GVarSizes[GVar] << "\n";
-#endif
-  }
-
-  size_t TotalSize = CurrentOffset;
-  return TotalSize;
 }
 
 // emit the GEP+casts for a replacement of GVar with [GVarBuffer+Offset]
@@ -576,7 +497,7 @@ int runProgramScopeVariablesPass(
 
   breakConstantExprs(GVarSet);
 
-  TotalGVarSize = calculateOffsetsSizes(GVarOffsets, DL, GVarSet);
+  TotalGVarSize = calculateGVarOffsetsSizes(DL, GVarOffsets, GVarSet);
 
   Type *GVarBufferArrayTy = ArrayType::get(Type::getInt8Ty(Ctx), TotalGVarSize);
   PointerType *GVarBufferTy =

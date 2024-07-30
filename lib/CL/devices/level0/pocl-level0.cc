@@ -507,6 +507,7 @@ int pocl_level0_build_source(cl_program Program, cl_uint DeviceI,
   assert(Program->llvm_irs[DeviceI] != nullptr);
 
   if (LinkProgram != 0) {
+    pocl_llvm_recalculate_gvar_sizes(Program, DeviceI);
     return Device->createProgram(Program, DeviceI);
   } else {
     // only final (linked) programs have  ZE module
@@ -632,6 +633,7 @@ int pocl_level0_build_binary(cl_program Program, cl_uint DeviceI,
   if (LinkProgram != 0) {
     // for Metadata, read the Bitcode into LLVM::Module
     pocl_llvm_read_program_llvm_irs(Program, DeviceI, ProgramBcPath);
+    pocl_llvm_recalculate_gvar_sizes(Program, DeviceI);
     return Device->createProgram(Program, DeviceI);
   } else {
     // only final (linked) programs have  ZE module
@@ -735,6 +737,7 @@ int pocl_level0_link_program(cl_program Program, cl_uint DeviceI,
   if (CreateLibrary == 0) {
     // for Metadata, read the Bitcode into LLVM::Module
     pocl_llvm_read_program_llvm_irs(Program, DeviceI, ProgramBcPath);
+    pocl_llvm_recalculate_gvar_sizes(Program, DeviceI);
     return Device->createProgram(Program, DeviceI);
   } else {
     // only final (linked) programs have  ZE module
