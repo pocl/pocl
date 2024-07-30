@@ -543,7 +543,7 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
                     "POCL_REMOTEX_PARAMETERS=hostname[:port]/INDEX - port is "
                     "optional, defaults to ",
                     j);
-      return -1;
+      return CL_DEVICE_NOT_FOUND;
     }
 
   if (j >= MAX_REMOTE_DEVICES)
@@ -562,7 +562,7 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
 
   // TODO: add list of all remotes to create_or_find_server from here
   if (pocl_network_init_device (device, d, j, parameters))
-    return CL_INVALID_DEVICE;
+    return CL_DEVICE_NOT_FOUND;
 
   const char *magic = "pocl";
   device->vendor_id
@@ -575,7 +575,7 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
   if (pocl_network_setup_devinfo (device, d, d->server,
                                   d->remote_platform_index,
                                   d->remote_device_index))
-    return CL_INVALID_DEVICE;
+    return CL_DEVICE_NOT_FOUND;
 
   assert (device->short_name);
   char *res = calloc (1000, sizeof (char));
