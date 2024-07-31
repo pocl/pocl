@@ -294,7 +294,6 @@ uchar4 _CL_OVERLOADABLE _CL_CONV
 intel_sub_group_block_read_uc4 (read_only image2d_t, int2);
 uchar8 _CL_OVERLOADABLE _CL_CONV
 intel_sub_group_block_read_uc8 (read_only image2d_t, int2);
-#endif // defined(__opencl_c_images)
 
 #if defined(__opencl_c_read_write_images)
 uchar _CL_OVERLOADABLE _CL_CONV
@@ -306,6 +305,7 @@ intel_sub_group_block_read_uc4 (read_write image2d_t, int2);
 uchar8 _CL_OVERLOADABLE _CL_CONV
 intel_sub_group_block_read_uc8 (read_write image2d_t, int2);
 #endif // defined(__opencl_c_read_write_images)
+#endif // defined(__opencl_c_images)
 
 uchar _CL_OVERLOADABLE _CL_CONV
 intel_sub_group_block_read_uc (const __global uchar *p);
@@ -350,7 +350,6 @@ void _CL_OVERLOADABLE _CL_CONV
 intel_sub_group_block_write_uc4 (write_only image2d_t, int2, uchar4);
 void _CL_OVERLOADABLE _CL_CONV
 intel_sub_group_block_write_uc8 (write_only image2d_t, int2, uchar8);
-#endif // defined(__opencl_c_images)
 
 #if defined(__opencl_c_read_write_images)
 void _CL_OVERLOADABLE _CL_CONV
@@ -362,6 +361,8 @@ intel_sub_group_block_write_uc4 (read_write image2d_t, int2, uchar4);
 void _CL_OVERLOADABLE _CL_CONV
 intel_sub_group_block_write_uc8 (read_write image2d_t, int2, uchar8);
 #endif // defined(__opencl_c_read_write_images)
+
+#endif // defined(__opencl_c_images)
 
 #ifdef cl_intel_split_work_group_barrier
 void _CL_OVERLOADABLE
