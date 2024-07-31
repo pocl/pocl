@@ -436,6 +436,21 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     return CL_SUCCESS; /* gracefully no-op in case the driver fails to handle
                           the query */
 
+  /* cl_khr_device_uuid */
+  case CL_DEVICE_UUID_KHR:
+    POCL_RETURN_GETINFO_ARRAY (cl_uchar, CL_UUID_SIZE_KHR,
+                               device->device_uuid);
+  case CL_DRIVER_UUID_KHR:
+    POCL_RETURN_GETINFO_ARRAY (cl_uchar, CL_UUID_SIZE_KHR,
+                               device->driver_uuid);
+  case CL_DEVICE_LUID_VALID_KHR:
+    POCL_RETURN_GETINFO (cl_bool, device->luid_is_valid);
+  case CL_DEVICE_LUID_KHR:
+    POCL_RETURN_GETINFO_ARRAY (cl_uchar, CL_LUID_SIZE_KHR,
+                               device->device_luid);
+  case CL_DEVICE_NODE_MASK_KHR:
+    POCL_RETURN_GETINFO (cl_uint, device->device_node_mask);
+
   /** cl_intel_unified_shared_memory queries **/
   case CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL:
   case CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL:

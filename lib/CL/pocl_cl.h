@@ -1263,6 +1263,13 @@ struct _cl_device_id {
   cl_device_unified_shared_memory_capabilities_intel cross_shared_usm_capabs;
   cl_device_unified_shared_memory_capabilities_intel system_shared_usm_capabs;
 
+  // cl_khr_device_uuid
+  cl_uchar device_uuid[CL_UUID_SIZE_KHR];
+  cl_uchar driver_uuid[CL_UUID_SIZE_KHR];
+  cl_bool luid_is_valid;
+  cl_uint device_node_mask;
+  cl_uchar device_luid[CL_LUID_SIZE_KHR];
+
   struct _cl_device_id *next;
 };
 

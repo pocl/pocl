@@ -392,8 +392,6 @@ private:
   Level0Program *MemfillProgram;
   Level0Program *ImagefillProgram;
 
-  // TODO check reliability
-  ze_device_uuid_t UUID;
   // TODO: it seems libze just returs zeroes for KernelUUID
   ze_native_kernel_uuid_t KernelUUID;
   std::string KernelCacheHash;
@@ -448,7 +446,7 @@ public:
 
   ze_context_handle_t getContextHandle() { return ContextH; }
   unsigned getNumDevices() { return Devices.size(); }
-  const ze_driver_uuid_t &getUUID() { return UUID; }
+  const ze_driver_uuid_t *getUUID() { return &UUID; }
   uint32_t getVersion() const { return Version; }
   Level0Device *createDevice(unsigned Index, cl_device_id Dev, const char *Params);
   void releaseDevice(Level0Device *Dev);
