@@ -427,6 +427,7 @@ private:
   bool setupMemoryProperties(bool &HasUSMCapability);
   bool setupCacheProperties();
   bool setupImageProperties();
+  bool setupPCIAddress();
 };
 
 typedef std::unique_ptr<Level0Device> Level0DeviceUPtr;

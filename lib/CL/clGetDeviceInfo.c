@@ -451,6 +451,9 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_NODE_MASK_KHR:
     POCL_RETURN_GETINFO (cl_uint, device->device_node_mask);
 
+  case CL_DEVICE_PCI_BUS_INFO_KHR:
+    POCL_RETURN_GETINFO (cl_device_pci_bus_info_khr, device->pci_bus_info);
+
   /** cl_intel_unified_shared_memory queries **/
   case CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL:
   case CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL:

@@ -2226,6 +2226,23 @@ bool Level0Device::setupImageProperties() {
   return true;
 }
 
+bool Level0Device::setupPCIAddress() {
+  ze_pci_ext_properties_t PCIProps = {
+    .stype = ZE_STRUCTURE_TYPE_PCI_EXT_PROPERTIES,
+    .pNext = nullptr
+  };
+
+  ze_result_t Res = zeDevicePciGetPropertiesExt(DeviceHandle, &PCIProps);
+  if (Res != ZE_RESULT_SUCCESS)
+    return false;
+
+  ClDev->pci_bus_info.pci_bus = PCIProps.address.bus;
+  ClDev->pci_bus_info.pci_device = PCIProps.address.device;
+  ClDev->pci_bus_info.pci_domain = PCIProps.address.domain;
+  ClDev->pci_bus_info.pci_function = PCIProps.address.function;
+  return true;
+}
+
 // dev -> Dev
 Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                            cl_device_id dev, const char *Parameters)
@@ -2340,6 +2357,10 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 
   if (Drv->hasExtension("ZE_extension_linkonce_odr")) {
     Extensions.append(" cl_khr_spirv_linkonce_odr");
+  }
+
+  if (Drv->hasExtension("ZE_extension_pci_properties") && setupPCIAddress()) {
+    Extensions.append(" cl_khr_pci_bus_info");
   }
 
   if (HasIPVerExt) {
