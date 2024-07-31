@@ -1712,7 +1712,9 @@ bool Level0Device::setupDeviceProperties(bool HasIPVersionExt) {
   ClDev->num_partition_types = 0;
   ClDev->partition_type = NULL;
   ClDev->short_name = ClDev->long_name = strdup(DeviceProperties.name);
-  UUID = DeviceProperties.uuid;
+  memcpy(ClDev->device_uuid, &DeviceProperties.uuid,
+         sizeof(DeviceProperties.uuid));
+  memcpy(ClDev->driver_uuid, Driver->getUUID(), sizeof(DeviceProperties.uuid));
   ClDev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT;
   // TODO externalMemProperties
   ClDev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
@@ -2300,6 +2302,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                            " cl_khr_global_int32_extended_atomics"
                            " cl_khr_local_int32_base_atomics"
                            " cl_khr_local_int32_extended_atomics"
+                           " cl_khr_device_uuid"
                            " cl_khr_il_program"
                            " cl_khr_spirv_no_integer_wrap_decoration"
 #ifdef ENABLE_LEVEL0_EXTRA_FEATURES
