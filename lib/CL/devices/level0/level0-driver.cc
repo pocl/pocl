@@ -1763,6 +1763,7 @@ bool Level0Device::setupDeviceProperties(bool HasIPVersionExt) {
     ClDev->llvm_target_triplet = "spir64-unknown-unknown";
     ClDev->generic_as_support = CL_TRUE;
 #ifdef ENABLE_LEVEL0_EXTRA_FEATURES
+    ClDev->wg_collective_func_support = CL_TRUE;
     ClDev->supported_spir_v_versions = "SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
 #else
     ClDev->supported_spir_v_versions = "SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
@@ -1833,6 +1834,7 @@ bool Level0Device::setupComputeProperties() {
   ClDev->local_mem_type = CL_LOCAL;
   ClDev->local_mem_size = ComputeProperties.maxSharedLocalMemory;
 
+#ifndef ENABLE_CONFORMANCE
   cl_uint Max = 0;
   if (ComputeProperties.numSubGroupSizes > 0) {
     for (unsigned i = 0; i < ComputeProperties.numSubGroupSizes; ++i) {
@@ -1847,6 +1849,7 @@ bool Level0Device::setupComputeProperties() {
       SupportedSubgroupSizes[i] = ComputeProperties.subGroupSizes[i];
     }
   }
+#endif
 
   POCL_MSG_PRINT_LEVEL0("Device Max WG SIZE %zu ||| WG counts: %u | %u | %u\n",
       ClDev->max_work_group_size, MaxWGCount[0],
@@ -1936,9 +1939,13 @@ bool Level0Device::setupModuleProperties(bool &SupportsInt64Atomics,
   }
 
   ClDev->single_fp_config = convertZeFPFlags(ModuleProperties.fp32flags);
+#ifndef ENABLE_CONFORMANCE
+  // TODO we should check & rely on ZE_DEVICE_FP_FLAG_SOFT_FLOAT,
+  // but it's not set by the LevelZero driver
   if ((ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_FP64) != 0u) {
     ClDev->double_fp_config = convertZeFPFlags(ModuleProperties.fp64flags);
   }
+#endif
   if ((ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_FP16) != 0u) {
     ClDev->half_fp_config = convertZeFPFlags(ModuleProperties.fp16flags);
   }
@@ -1949,7 +1956,7 @@ bool Level0Device::setupModuleProperties(bool &SupportsInt64Atomics,
   SupportsDP4A = (ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_DP4A) > 0;
   // TODO this seems not reported
   // SupportsDPAS = (ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_DPAS) > 0;
-  if (SupportsDP4A) {
+  if (SupportsDP4A || SupportsDPAS) {
     // TODO how to get these properties from L0
     ClDev->dot_product_caps =
         CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR |
@@ -1963,8 +1970,12 @@ bool Level0Device::setupModuleProperties(bool &SupportsInt64Atomics,
   //  POCL_MSG_PRINT_LEVEL0("Using KernelUUID: %s\n", KernelUUID);
   if (HasFloatAtomics) {
     ClDev->single_fp_atomic_caps = convertZeAtomicFlags(FloatProperties.fp32Flags, "fp32", Features);
-    ClDev->double_fp_atomic_caps = convertZeAtomicFlags(FloatProperties.fp64Flags, "fp64", Features);
-    ClDev->half_fp_atomic_caps = convertZeAtomicFlags(FloatProperties.fp16Flags, "fp16", Features);
+    if (ClDev->double_fp_config)
+      ClDev->double_fp_atomic_caps =
+          convertZeAtomicFlags(FloatProperties.fp64Flags, "fp64", Features);
+    if (ClDev->half_fp_config)
+      ClDev->half_fp_atomic_caps =
+          convertZeAtomicFlags(FloatProperties.fp16Flags, "fp16", Features);
   }
 
   ClDev->device_side_printf = 0;
@@ -2090,14 +2101,27 @@ bool Level0Device::setupMemoryProperties(bool &HasUSMCapability) {
     ClDev->atomic_memory_capabilities =
         CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
         CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP |
-        CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+        CL_DEVICE_ATOMIC_SCOPE_DEVICE | CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES;
     ClDev->atomic_fence_capabilities =
         CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
         CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM |
         CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
     // OpenCL 2.0 properties
-    ClDev->svm_caps =
-        CL_DEVICE_SVM_COARSE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
+    bool A1 = MemAccessProperties.sharedSingleDeviceAllocCapabilities
+        & ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC;
+    bool A2 = MemAccessProperties.hostAllocCapabilities
+        & ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC;
+    bool A3 = MemAccessProperties.deviceAllocCapabilities
+        & ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC;
+    // the CL_DEVICE_SVM_ATOMICS implies support for fine-grained
+    // so it will likely require from the device
+    // ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC flag
+    if (A1 && A2 && A3)
+      ClDev->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER |
+                        CL_DEVICE_SVM_FINE_GRAIN_BUFFER;
+    else
+      ClDev->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
+
   } else {
     POCL_MSG_PRINT_LEVEL0("SVM disabled for device\n");
   }
@@ -2277,7 +2301,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                            " cl_khr_local_int32_base_atomics"
                            " cl_khr_local_int32_extended_atomics"
                            " cl_khr_il_program"
-                           " cl_intel_spirv_subgroups"
                            " cl_khr_spirv_no_integer_wrap_decoration"
 #ifdef ENABLE_LEVEL0_EXTRA_FEATURES
                            " cl_intel_split_work_group_barrier"
@@ -2287,13 +2310,20 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 #endif
   );
 
-  OpenCL30Features = std::string("__opencl_c_atomic_order_acq_rel"
-                                 " __opencl_c_atomic_order_seq_cst"
-                                 " __opencl_c_atomic_scope_device"
-                                 " __opencl_c_atomic_scope_all_devices"
-                                 " __opencl_c_program_scope_global_variables"
-                                 " __opencl_c_generic_address_space"
-                                );
+  OpenCL30Features = std::string("__opencl_c_generic_address_space"
+                                 " __opencl_c_program_scope_global_variables");
+
+  if (ClDev->atomic_memory_capabilities & CL_DEVICE_ATOMIC_ORDER_ACQ_REL)
+    OpenCL30Features.append(" __opencl_c_atomic_order_acq_rel");
+
+  if (ClDev->atomic_memory_capabilities & CL_DEVICE_ATOMIC_ORDER_SEQ_CST)
+    OpenCL30Features.append(" __opencl_c_atomic_order_seq_cst");
+
+  if (ClDev->atomic_memory_capabilities & CL_DEVICE_ATOMIC_SCOPE_DEVICE)
+    OpenCL30Features.append(" __opencl_c_atomic_scope_device");
+
+  if (ClDev->atomic_memory_capabilities & CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES)
+    OpenCL30Features.append(" __opencl_c_atomic_scope_all_devices");
 
 #ifndef ENABLE_CONFORMANCE
   if (ClDev->image_support != CL_FALSE) {
@@ -2329,6 +2359,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 #ifndef ENABLE_CONFORMANCE
   if (ClDev->max_num_sub_groups > 0) {
     Extensions.append(" cl_khr_subgroups"
+                      " cl_intel_spirv_subgroups"
 #ifdef ENABLE_LEVEL0_EXTRA_FEATURES
                            " cl_khr_subgroup_shuffle"
                            " cl_khr_subgroup_shuffle_relative"
@@ -2347,14 +2378,15 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 #endif
                       );
 
-    OpenCL30Features.append(" __opencl_c_subgroups"
-#ifdef ENABLE_LEVEL0_EXTRA_FEATURES
-                            " __opencl_c_work_group_collective_functions"
-#endif
-                            );
-  } else
-#else
+    OpenCL30Features.append(" __opencl_c_subgroups");
+  }
+#else // enable_conformance
   ClDev->max_num_sub_groups = 0;
+#endif
+
+#ifdef ENABLE_LEVEL0_EXTRA_FEATURES
+  if (ClDev->wg_collective_func_support)
+    OpenCL30Features.append(" __opencl_c_work_group_collective_functions");
 #endif
 
   if (ClDev->has_64bit_long != 0) {
