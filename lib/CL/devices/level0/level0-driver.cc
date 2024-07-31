@@ -2298,6 +2298,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 #endif
 
   Extensions = std::string("cl_khr_byte_addressable_store"
+                           " cl_khr_create_command_queue"
                            " cl_khr_global_int32_base_atomics"
                            " cl_khr_global_int32_extended_atomics"
                            " cl_khr_local_int32_base_atomics"
