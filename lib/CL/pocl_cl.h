@@ -1270,6 +1270,9 @@ struct _cl_device_id {
   cl_uint device_node_mask;
   cl_uchar device_luid[CL_LUID_SIZE_KHR];
 
+  /* cl_khr_pci_bus_info */
+  cl_device_pci_bus_info_khr pci_bus_info;
+
   struct _cl_device_id *next;
 };
 
