@@ -402,6 +402,11 @@ int pocl_llvm_build_program(cl_program program,
       cl_ext += tok.str();
       cl_ext += ",";
     }
+    if (device->image_support == CL_FALSE)  {
+      cl_ext += "-__opencl_c_images,";
+      cl_ext += "-__opencl_c_read_write_images,";
+      cl_ext += "-__opencl_c_3d_image_writes,";
+    }
   }
   if (!cl_ext.empty()) {
     cl_ext.back() = ' '; // replace last "," with space

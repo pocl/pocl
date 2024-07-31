@@ -2465,7 +2465,8 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 
 #ifndef ENABLE_CONFORMANCE
   if (ClDev->image_support != CL_FALSE) {
-    Extensions += " cl_khr_3d_image_writes";
+    Extensions += " cl_khr_3d_image_writes"
+                  " cl_khr_depth_images";
     OpenCL30Features += " __opencl_c_images"
                         " __opencl_c_read_write_images"
                         " __opencl_c_3d_image_writes";
