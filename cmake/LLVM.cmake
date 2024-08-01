@@ -836,5 +836,3 @@ execute_process(COMMAND "${CLANG}" "--print-resource-dir" OUTPUT_VARIABLE RESOUR
 string(STRIP "${RESOURCE_DIR}" RESOURCE_DIR)
 set(CLANG_RESOURCE_DIR "${RESOURCE_DIR}" CACHE INTERNAL "Clang resource dir")
 
-set(CLANG_OPENCL_HEADERS "${CLANG_RESOURCE_DIR}/include/opencl-c.h"
-                         "${CLANG_RESOURCE_DIR}/include/opencl-c-base.h")

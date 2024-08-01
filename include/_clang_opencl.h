@@ -31,7 +31,7 @@
 /* Check for _OPENCL_H already here because the kernel compiler loads the
    header beforehand, but cannot find the file due to include paths not
    set up. */
-#include <opencl-c.h>
+#include "opencl-c.h"
 #endif
 
 /* We can include this header directly (to patch up opencl-c.h without
