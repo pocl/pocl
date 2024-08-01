@@ -694,7 +694,21 @@ void Level0Queue::copyRect(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
                            size_t const SrcSlicePitch) {
   char *SrcPtr = static_cast<char *>(SrcMemId->mem_ptr);
   char *DstPtr = static_cast<char *>(DstMemId->mem_ptr);
-  POCL_MSG_PRINT_LEVEL0("COPY RECT | SRC %p | DST %p \n", SrcPtr, DstPtr);
+
+  POCL_MSG_PRINT_LEVEL0(
+      "COPY RECT \n"
+      "SRC DEV %p | DST DEV %p | SIZE %zu\n"
+      "SRC Origin %u %u %u | DST Origin %u %u %u \n"
+      "SRC row_pitch %lu | SRC slice_pitch %lu |"
+      "DST row_pitch %lu | DST slice_pitch %lu\n"
+      "Reg[0,1,2]  %lu  %lu  %lu\n",
+      SrcPtr, DstPtr,
+      Region[0] * Region[1] * Region[2],
+      (unsigned)SrcOrigin[0], (unsigned)SrcOrigin[1], (unsigned)SrcOrigin[2],
+      (unsigned)DstOrigin[0], (unsigned)DstOrigin[1], (unsigned)DstOrigin[2],
+      (unsigned long)SrcRowPitch, (unsigned long)SrcSlicePitch,
+      (unsigned long)DstRowPitch, (unsigned long)DstSlicePitch,
+      (unsigned long)Region[0], (unsigned long)Region[1], (unsigned long)Region[2]);
 
   ze_copy_region_t DstRegion;
   ze_copy_region_t SrcRegion;
@@ -730,6 +744,22 @@ void Level0Queue::readRect(void *__restrict__ HostPtr,
                            size_t const HostSlicePitch) {
   const char *BufferPtr = static_cast<const char *>(SrcMemId->mem_ptr);
 
+  POCL_MSG_PRINT_LEVEL0(
+      "READ RECT \n"
+      "SRC DEV %p | DST HOST %p | SIZE %zu\n"
+      "B Origin %u %u %u | H Origin %u %u %u \n"
+      "buf_row_pitch %lu | buf_slice_pitch %lu |"
+      "host_row_pitch %lu | host_slice_pitch %lu\n"
+      "reg[0] %lu reg[1] %lu reg[2] %lu\n",
+      BufferPtr, HostPtr,
+      Region[0] * Region[1] * Region[2], (unsigned)BufferOrigin[0],
+      (unsigned)BufferOrigin[1], (unsigned)BufferOrigin[2],
+      (unsigned)HostOrigin[0], (unsigned)HostOrigin[1],
+      (unsigned)HostOrigin[2], (unsigned long)BufferRowPitch,
+      (unsigned long)BufferSlicePitch, (unsigned long)HostRowPitch,
+      (unsigned long)HostSlicePitch, (unsigned long)Region[0],
+      (unsigned long)Region[1], (unsigned long)Region[2]);
+
   ze_copy_region_t HostRegion;
   ze_copy_region_t BufferRegion;
   BufferRegion.originX = BufferOrigin[0];
@@ -763,6 +793,22 @@ void Level0Queue::writeRect(const void *__restrict__ HostPtr,
                             size_t const HostRowPitch,
                             size_t const HostSlicePitch) {
   char *BufferPtr = static_cast<char *>(DstMemId->mem_ptr);
+
+  POCL_MSG_PRINT_LEVEL0(
+      "WRITE RECT \n"
+      "SRC HOST %p | DST DEV %p | SIZE %zu\n"
+      "B Origin %u %u %u | H Origin %u %u %u \n"
+      "buf_row_pitch %lu | buf_slice_pitch %lu |"
+      "host_row_pitch %lu | host_slice_pitch %lu\n"
+      "reg[0] %lu reg[1] %lu reg[2] %lu\n",
+      HostPtr, BufferPtr,
+      Region[0] * Region[1] * Region[2], (unsigned)BufferOrigin[0],
+      (unsigned)BufferOrigin[1], (unsigned)BufferOrigin[2],
+      (unsigned)HostOrigin[0], (unsigned)HostOrigin[1],
+      (unsigned)HostOrigin[2], (unsigned long)BufferRowPitch,
+      (unsigned long)BufferSlicePitch, (unsigned long)HostRowPitch,
+      (unsigned long)HostSlicePitch, (unsigned long)Region[0],
+      (unsigned long)Region[1], (unsigned long)Region[2]);
 
   ze_copy_region_t HostRegion;
   ze_copy_region_t BufferRegion;
