@@ -681,8 +681,12 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_basic_micro_other_ocl_30"
           async_work_group_copy_fence_import_after_export_aliased_global_and_local
           async_work_group_copy_fence_import_after_export_aliased_local wg_barrier
           enqueued_local_size   get_linear_ids  global_linear_id  local_linear_id
-          progvar_func_scope  progvar_prog_scope_init  progvar_prog_scope_misc   progvar_prog_scope_uninit
           rw_image_access_qualifier   simple_read_image_pitch   simple_write_image_pitch    vector_swizzle)
+
+add_test(NAME "${TS_NAME}${TS_SUFFIX}_basic_micro_progvar"
+         COMMAND "${TS_BUILDDIR}/basic/test_basic" ${EXTRA_ARGS}
+         progvar_func_scope  progvar_prog_scope_init  progvar_prog_scope_misc   progvar_prog_scope_uninit)
+
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_SVM_micro_1"
          COMMAND "${TS_BUILDDIR}/SVM/test_svm" ${EXTRA_ARGS} svm_byte_granularity  svm_set_kernel_exec_info_svm_ptrs  svm_fine_grain_memory_consistency  svm_fine_grain_sync_buffers  svm_shared_address_space_fine_grain  svm_shared_sub_buffers  svm_shared_address_space_fine_grain_buffers)
@@ -731,8 +735,11 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_basic_micro_image"
          COMMAND "${TS_BUILDDIR}/basic/test_basic" ${EXTRA_ARGS} readimage  readimage_int16  readimage_fp32  writeimage  writeimage_int16  writeimage_fp32  image_r8  imagereadwrite  imagereadwrite3d  readimage3d  readimage3d_int16  readimage3d_fp32  imagearraycopy  imagearraycopy3d  imagecopy  imagecopy3d  imagerandomcopy  arrayimagecopy  arrayimagecopy3d  imagenpot  imagedim_pow2  imagedim_non_pow2  image_param  image_multipass_integer_coord  image_multipass_float_coord  enqueue_map_image)
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_basic_micro_other"
          COMMAND "${TS_BUILDDIR}/basic/test_basic" ${EXTRA_ARGS} mri_one  mri_multiple  barrier  createkernelsinprogram  work_item_functions    kernel_call_kernel_function  host_numeric_constants  kernel_numeric_constants  kernel_limit_constants  kernel_preprocessor_macros  parameter_types  vector_creation  vec_type_hint  global_work_offsets  get_global_offset  hostptr    if  sizeof  loop  pointer_cast  local_arg_def  local_kernel_def  local_kernel_scope  constant  constant_source)
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_basic_micro_memory"
-         COMMAND "${TS_BUILDDIR}/basic/test_basic" ${EXTRA_ARGS} vload_global  vload_local  vstore_global  vstore_local   bufferreadwriterect  arrayreadwrite  arraycopy  enqueue_map_buffer   kernel_memory_alignment_local  kernel_memory_alignment_global)
+
+add_test(NAME "${TS_NAME}${TS_SUFFIX}_basic_micro_memory_1"
+         COMMAND "${TS_BUILDDIR}/basic/test_basic" ${EXTRA_ARGS} vload_global  vload_local  vstore_global  vstore_local   arraycopy  enqueue_map_buffer   kernel_memory_alignment_local  kernel_memory_alignment_global)
+add_test(NAME "${TS_NAME}${TS_SUFFIX}_basic_micro_memory_2"
+         COMMAND "${TS_BUILDDIR}/basic/test_basic" ${EXTRA_ARGS} bufferreadwriterect  arrayreadwrite)
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_buffers_micro_read_async"
          COMMAND "${TS_BUILDDIR}/buffers/test_buffers" ${EXTRA_ARGS} buffer_read_async_int  buffer_read_async_uint  buffer_read_async_long  buffer_read_async_ulong  buffer_read_async_short  buffer_read_async_ushort  buffer_read_async_char  buffer_read_async_uchar  buffer_read_async_float)
@@ -886,6 +893,7 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_relationals_micro"
 set(OCL_30_TESTS_MICRO
     "${TS_NAME}${TS_SUFFIX}_api_micro_ocl_30"
     "${TS_NAME}${TS_SUFFIX}_basic_micro_other_ocl_30"
+    "${TS_NAME}${TS_SUFFIX}_basic_micro_progvar"
     "${TS_NAME}${TS_SUFFIX}_c11_atomics_micro_1"
     "${TS_NAME}${TS_SUFFIX}_c11_atomics_micro_2"
     "${TS_NAME}${TS_SUFFIX}_c11_atomics_micro_3"
@@ -949,7 +957,8 @@ set(CTS_MICRO_LIST
 
     ${CTS_MATH_TESTS_MICRO}
 
-    "${TS_NAME}${TS_SUFFIX}_basic_micro_memory"
+    "${TS_NAME}${TS_SUFFIX}_basic_micro_memory_1"
+    "${TS_NAME}${TS_SUFFIX}_basic_micro_memory_2"
     "${TS_NAME}${TS_SUFFIX}_basic_micro_other"
 
     "${TS_NAME}${TS_SUFFIX}_conversion_micro_uint_uchar"
@@ -1044,7 +1053,8 @@ set(CTS_LEVEL0_LIST
   conformance_main_cl_khr_command_buffer
   conformance_main_cl_khr_command_buffer_mutable
   conformance_main_api_micro_ocl_30
-  #conformance_main_basic_micro_other_ocl_30
+  conformance_main_basic_micro_other_ocl_30
+  #conformance_main_basic_micro_progvar
   conformance_main_SVM_micro_1
   conformance_main_SVM_micro_2
 
@@ -1057,7 +1067,9 @@ set(CTS_LEVEL0_LIST
   conformance_main_basic_micro_math
   conformance_main_basic_micro_image
   conformance_main_basic_micro_other
-  #conformance_main_basic_micro_memory
+
+  conformance_main_basic_micro_memory_1
+  #conformance_main_basic_micro_memory_2
 
   conformance_main_buffers_micro_read
   conformance_main_buffers_micro_write
