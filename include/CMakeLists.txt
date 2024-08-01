@@ -29,7 +29,7 @@ if(INSTALL_OPENCL_HEADERS)
 endif()
 
 set(PRIVATE_HEADERS _enable_all_exts.h _builtin_renames.h
-                    _kernel.h _clang_opencl.h
+                    _kernel.h _clang_opencl.h opencl-c.h opencl-c-base.h
                     _kernel_c.h _kernel_constants.h _libclang_versions_checks.h
                     pocl_types.h pocl_device.h pocl.h pocl_spir.h
                     pocl_image_types.h)
