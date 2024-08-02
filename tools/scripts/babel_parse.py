@@ -26,7 +26,7 @@ pocl_ndrange_kernel_regex = re.compile(
     "^{ event_id = (?P<event_id>0x[0-9A-Fa-f]+), evt_status = (?P<evt_status>0x[0-9A-Fa-f]+), dev_id = (?P<dev_id>0x[0-9A-Fa-f]+), queue_id = (?P<queue_id>0x[0-9A-Fa-f]+), kernel_id = (?P<kernel_id>0x[0-9A-Fa-f]+), kernel_name = \"(?P<kernel_name>\S+)\" }$")
 
 pocl_copy_regex = re.compile(
-    "^{ event_id = (?P<event_id>0x[0-9A-Fa-f]+), evt_status = (?P<evt_status>0x[0-9A-Fa-f]+), dev_id = (?P<dev_id>0x[0-9A-Fa-f]+), queue_id = (?P<queue_id>0x[0-9A-Fa-f]+), src_id = (?P<src_id>0x[0-9A-Fa-f]+), dest_id = (?P<dest_id>0x[0-9A-Fa-f]+) }$")
+    "^{ event_id = (?P<event_id>0x[0-9A-Fa-f]+), evt_status = (?P<evt_status>0x[0-9A-Fa-f]+), dev_id = (?P<dev_id>0x[0-9A-Fa-f]+), queue_id = (?P<queue_id>0x[0-9A-Fa-f]+), src_id = (?P<src_id>0x[0-9A-Fa-f]+), dst_id = (?P<dst_id>0x[0-9A-Fa-f]+) }$")
 
 
 def pocl_parse_status_and_return(dict, event_status):
@@ -98,7 +98,7 @@ def parse_pocl_trace_data(trace_type, string, dict):
             trace_type == "msg_sent"):
         res = pocl_msg_regex.match(string)
         if res is None:
-            print("could not parse msg_received trace point, possibly the type has changed?")
+            print("could not parse " + trace_type + " trace point, possibly the type has changed?")
             return None
 
         res_dict = res.groupdict()
@@ -144,7 +144,7 @@ def parse_pocl_trace_data(trace_type, string, dict):
         res = pocl_free_object_regex.match(string)
 
         if res is None:
-            print("could not parse pocl trace point: " + string)
+            print("could not parse " + trace_type + " trace point: " + string)
             return None
 
         res_dict = res.groupdict()
@@ -160,7 +160,7 @@ def parse_pocl_trace_data(trace_type, string, dict):
         res = pocl_kernel_create_regex.match(string)
 
         if res is None:
-            print("could not parse pocl trace point: " + string)
+            print("could not parse " + trace_type + " trace point: " + string)
             return None
 
         res_dict = res.groupdict()
@@ -187,7 +187,7 @@ def parse_pocl_trace_data(trace_type, string, dict):
 
         res = pocl_buffer_regex.match(string)
         if res is None:
-            print("could not parse buffer trace point: " + string)
+            print("could not parse " + trace_type + " buffer trace point: " + string)
             return None
 
         res_dict = res.groupdict()
@@ -219,7 +219,7 @@ def parse_pocl_trace_data(trace_type, string, dict):
 
         res = pocl_copy_regex.match(string)
         if res is None:
-            print("could not parse buffer trace point: " + string)
+            print("could not parse " + trace_type + " buffer trace point: " + string)
             return None
 
         res_dict = res.groupdict()
