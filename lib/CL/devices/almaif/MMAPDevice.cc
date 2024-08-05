@@ -27,6 +27,7 @@
 #include "AlmaifShared.hh"
 
 #include "pocl_file_util.h"
+#include "utlist.h"
 
 #include <unistd.h>
 //#include <sys/stat.h>

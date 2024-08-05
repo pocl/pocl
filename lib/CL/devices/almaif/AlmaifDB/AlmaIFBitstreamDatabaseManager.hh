@@ -27,6 +27,9 @@
 
 #include <map>
 #include <string>
+#include <vector>
+
+#include "pocl_builtin_kernels.h"
 
 typedef struct json_s json_t;
 

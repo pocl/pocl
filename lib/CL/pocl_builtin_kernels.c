@@ -153,6 +153,9 @@ void
 pocl_init_builtin_kernel_metadata ()
 {
   pocl_kernel_metadata_t temporary_BIDescriptors[BIKERNELS] = {
+    BIKD (POCL_CDBI_COPY_I8, "pocl.copy.i8", 2,
+          BI_ARG_READ_BUF ("char*", "input"),
+          BI_ARG_WRITE_BUF ("char*", "output")),
     BIKD (
       POCL_CDBI_ADD_I32, "pocl.add.i32", 3, BI_ARG_READ_BUF ("int*", "input1"),
       BI_ARG_READ_BUF ("int*", "input2"), BI_ARG_WRITE_BUF ("int*", "output")),

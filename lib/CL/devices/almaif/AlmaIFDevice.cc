@@ -32,6 +32,7 @@
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
 #include "pocl_timing.h"
+#include "utlist.h"
 
 #include <iostream>
 
