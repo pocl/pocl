@@ -51,6 +51,7 @@
 #include "common_driver.h"
 #include "devices.h"
 #include "openasip/AlmaifCompileOpenasip.hh"
+#include "pocl_builtin_kernels.h"
 #include "pocl_cl.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
@@ -126,7 +127,7 @@ void pocl_almaif_init_device_ops(struct pocl_device_ops *ops) {
   ops->init_queue = pocl_almaif_init_queue;
   ops->free_queue = pocl_almaif_free_queue;
 
-  ops->build_builtin = pocl_driver_build_opencl_builtins;
+  ops->build_builtin = pocl_almaif_build_builtin;
   ops->free_program = pocl_driver_free_program;
 
   ops->copy_rect = pocl_almaif_copy_rect;
@@ -134,6 +135,11 @@ void pocl_almaif_init_device_ops(struct pocl_device_ops *ops) {
   ops->write_rect = pocl_almaif_write_rect;
 
   ops->memfill = pocl_almaif_memfill;
+}
+
+// AlmaIF's driver by default has nothing to build for BiKs.
+int pocl_almaif_build_builtin(cl_program program, cl_uint device_i) {
+  return CL_SUCCESS;
 }
 
 void pocl_almaif_write(void *data, const void *__restrict__ src_host_ptr,
@@ -406,7 +412,7 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
 
       bool found = false;
       for (size_t i = 0; i < BIKERNELS; ++i) {
-        if (pocl_BIDescriptors[i].KernelId == kernelId) {
+        if (pocl_BIDescriptors[i].builtin_kernel_id == kernelId) {
           if (supportedList.size() > 0)
             supportedList += ";";
           supportedList += pocl_BIDescriptors[i].name;
@@ -430,7 +436,7 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
 
       bool found = false;
       for (size_t i = 0; i < BIKERNELS; ++i) {
-        if (pocl_BIDescriptors[i].KernelId == kernelId) {
+        if (pocl_BIDescriptors[i].builtin_kernel_id == kernelId) {
           if (supportedList.size() > 0)
             supportedList += ";";
           supportedList += pocl_BIDescriptors[i].name;
@@ -840,7 +846,7 @@ void scheduleNDRange(AlmaifData *data, _cl_command_node *cmd, size_t arg_size,
 
   for (auto supportedKernel : data->SupportedKernels) {
     if (strcmp(supportedKernel->name, k->name) == 0) {
-      kernelID = (int32_t)supportedKernel->KernelId;
+      kernelID = (int32_t)supportedKernel->builtin_kernel_id;
       /* builtin kernels that come from tce_kernels.cl need compiling */
       if (p->num_builtin_kernels > 0 && p->source) {
         POCL_MSG_PRINT_ALMAIF(

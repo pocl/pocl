@@ -29,6 +29,7 @@
 #include "almaif.h"
 #include "AlmaifCompile.hh"
 
+#include "common.h"
 #include "common_driver.h"
 
 // TODO TCE SPECIFIC
