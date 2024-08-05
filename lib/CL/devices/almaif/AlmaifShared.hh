@@ -191,7 +191,7 @@ struct AlmaifData {
 
   cl_bool Available;
 
-  std::set<BIKD *> SupportedKernels;
+  std::set<pocl_kernel_metadata_t *> SupportedKernels;
   // List of commands ready to be executed.
   _cl_command_node *ReadyList;
   // List of commands not yet ready to be executed.
