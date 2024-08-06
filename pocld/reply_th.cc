@@ -132,8 +132,6 @@ void ReplyQueueThread::pushReply(Reply *reply) {
 
 void ReplyQueueThread::writeThread() {
   // XXX: Change into a ring buffer?
-  std::queue<Reply *> backup;
-  bool resending = false;
   size_t i = 0;
   int fd = *this->fd;
   int oldfd = fd;
@@ -144,7 +142,6 @@ void ReplyQueueThread::writeThread() {
       std::unique_lock<std::mutex> lock(io_mutex);
       int n = io_inflight.size();
       lock.unlock();
-      resending = true;
       POCL_MSG_PRINT_GENERAL(
           "%s: FD change detected with %d items in queue, %d -> %d\n",
           id_str.c_str(), n, oldfd, fd);
@@ -154,20 +151,10 @@ void ReplyQueueThread::writeThread() {
     if (eh->exit_requested())
       return;
 
-    if (backup.empty())
-      resending = false;
     std::unique_lock<std::mutex> lock(io_mutex);
-    if ((io_inflight.size() > 0 || resending) && fd >= 0) {
+    if ((io_inflight.size() > 0) && fd >= 0) {
       Reply *reply = io_inflight[i];
       lock.unlock();
-
-      // If we need to resend old messages, disregard the inflight queue
-      if (resending) {
-        reply = backup.front();
-        POCL_MSG_PRINT_GENERAL("%s: Resending old replies, %" PRIuS
-                               " remaining\n",
-                               id_str.c_str(), backup.size());
-      }
 
       cl_int status =
           (reply->event.get() == nullptr)
@@ -219,7 +206,6 @@ void ReplyQueueThread::writeThread() {
 
         ReplyMessageType t =
             static_cast<ReplyMessageType>(reply->rep.message_type);
-
         POCL_MSG_PRINT_GENERAL(
             "%s: SENDING MESSAGE, ID: %" PRIu64 " TYPE: %s SIZE: %" PRIuS
             " EXTRA: %" PRIuS " FAILED: %" PRIu32 "\n",
@@ -255,36 +241,27 @@ void ReplyQueueThread::writeThread() {
         TP_MSG_SENT(reply->rep.msg_id, reply->rep.did, reply->rep.failed,
                     reply->rep.message_type);
 
-        if (resending) {
-          delete reply;
-          backup.pop();
-        } else {
-          if (reply->event.get() != nullptr) {
-            virtualContext->notifyEvent(reply->req->req.event_id, status);
-            Request peer_notice{};
-            peer_notice.req.msg_id = reply->rep.msg_id;
-            peer_notice.req.event_id = reply->req->req.event_id;
-            peer_notice.req.message_type = MessageType_NotifyEvent;
-            virtualContext->broadcastToPeers(peer_notice);
-          }
-
-          // swap the current element into last place and pop it off the vector
-          lock.lock();
-          if (i != io_inflight.size() - 1) {
-            std::swap(io_inflight[i], io_inflight[io_inflight.size() - 1]);
-          }
-          io_inflight.pop_back();
-
-          // move to next item (now in the old place of the current item)
-          i = i % std::max(io_inflight.size(), (size_t)1);
-          lock.unlock();
-
-          backup.push(reply);
-          if (backup.size() > 5) {
-            delete backup.front();
-            backup.pop();
-          }
+        if (reply->event.get() != nullptr) {
+          virtualContext->notifyEvent(reply->req->req.event_id, status);
+          Request peer_notice{};
+          peer_notice.req.msg_id = reply->rep.msg_id;
+          peer_notice.req.event_id = reply->req->req.event_id;
+          peer_notice.req.message_type = MessageType_NotifyEvent;
+          virtualContext->broadcastToPeers(peer_notice);
         }
+
+        // swap the current element into last place and pop it off the vector
+        lock.lock();
+        if (i != io_inflight.size() - 1) {
+          std::swap(io_inflight[i], io_inflight[io_inflight.size() - 1]);
+        }
+        io_inflight.pop_back();
+
+        // move to next item (now in the old place of the current item)
+        i = i % std::max(io_inflight.size(), (size_t)1);
+        lock.unlock();
+
+        delete reply;
       } else {
         lock.lock();
         i = (i + 1) % io_inflight.size();

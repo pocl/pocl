@@ -691,15 +691,26 @@ void PoclDaemon::readAllClientSocketsThread() {
                       assert(cit != ClientSessions.end());
                       cit->second->updateSockets(command_fd, stream_fd);
                       SocketContexts.at(i) = cit->second;
+                      L.unlock();
+
+                      ReplyMsg_t Reply = {};
+                      Reply.message_type =
+                          MessageType_CreateOrAttachSessionReply;
+                      Reply.m.get_session.session = Session;
+                      memcpy(Reply.m.get_session.authkey, R->req.authkey,
+                             AUTHKEY_LENGTH);
+                      write_full(pfds.at(i).fd, &Reply, sizeof(Reply), nullptr);
+                    } else {
+                      POCL_MSG_ERR(
+                          "Client attempted to connect with invalid key\n");
+                      DroppedFds.push_back(pfds.at(i).fd);
                     }
+                  } else {
+                    POCL_MSG_ERR("Client attempted to connect to unknown "
+                                 "session %" PRIu64 "\n",
+                                 Session);
+                    DroppedFds.push_back(pfds.at(i).fd);
                   }
-                  L.unlock();
-                  ReplyMsg_t Reply = {};
-                  Reply.message_type = MessageType_CreateOrAttachSessionReply;
-                  Reply.m.get_session.session = Session;
-                  memcpy(Reply.m.get_session.authkey, R->req.authkey,
-                         AUTHKEY_LENGTH);
-                  write_full(pfds.at(i).fd, &Reply, sizeof(Reply), nullptr);
                 }
                 delete R;
               } else {
@@ -834,6 +845,19 @@ void PoclDaemon::readAllClientSocketsThread() {
           continue;
         VContext->requestExit(0,
                               "Client disconnected and reconnect not enabled.");
+
+        std::unique_lock<std::mutex> L(SessionListMtx);
+        uint64_t Session = 0;
+        for (auto it : ClientSessions) {
+          if (it.second == VContext) {
+            Session = it.first;
+            break;
+          }
+        }
+        if (Session != 0) {
+          SessionKeys.erase(Session);
+          ClientSessions.erase(Session);
+        }
         delete VContext;
       }
     }
