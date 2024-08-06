@@ -64,15 +64,16 @@ using namespace pocl;
 
 struct PoclL0EventData {
   pocl_cond_t Cond;
+  bool CanBeBatched;
 };
 
 struct PoclL0QueueData {
   pocl_cond_t Cond;
 
-  size_t getSubmitBatch(BatchType &SubmitBatch);
-  size_t appendAndGetSubmitBatch(cl_event Ev, BatchType &SubmitBatch,
+  void getSubmitBatch(BatchType &SubmitBatch);
+  void appendAndGetSubmitBatch(cl_event Ev, BatchType &SubmitBatch,
                                  size_t BatchSizeLimit);
-  size_t getSubmitBatchIfFirstEvent(BatchType &SubmitBatch, cl_event Event);
+  void getSubmitBatchIfFirstEvent(BatchType &SubmitBatch, cl_event Event);
   void eraseEvent(cl_event Ev);
 
 private:
@@ -81,7 +82,7 @@ private:
   // in Flush/Notify callbacks
   BatchType UnsubmittedEventList;
   std::mutex ListLock;
-  size_t getSubmitBatchUnlocked(BatchType &SubmitBatch);
+  void getSubmitBatchUnlocked(BatchType &SubmitBatch);
 };
 
 static void pocl_level0_local_size_optimizer(cl_device_id Dev, cl_kernel Kernel,
@@ -1046,16 +1047,16 @@ void pocl_level0_notify_cmdq_finished(cl_command_queue Queue) {
 }
 
 void pocl_level0_notify_event_finished(cl_event Event) {
-  pocl_cond_t *EventCond = (pocl_cond_t *)Event->data;
-  POCL_BROADCAST_COND(*EventCond);
+  PoclL0EventData *EvData = (PoclL0EventData *)Event->data;
+  POCL_BROADCAST_COND(EvData->Cond);
 }
 
 void pocl_level0_free_event_data(cl_event Event) {
   if (Event->data == nullptr) {
     return;
   }
-  pocl_cond_t *EventCond = (pocl_cond_t *)Event->data;
-  POCL_DESTROY_COND(*EventCond);
+  PoclL0EventData *EvData = (PoclL0EventData *)Event->data;
+  POCL_DESTROY_COND(EvData->Cond);
   POCL_MEM_FREE(Event->data);
 }
 
@@ -1083,62 +1084,68 @@ static bool pocl_level0_queue_supports_batching(cl_command_queue CQ,
   return true;
 }
 
-static bool pocl_level0_can_event_be_batched(cl_event Ev, cl_event LastEv) {
-  assert(Ev != LastEv);
+static bool pocl_level0_can_event_be_batched(cl_event Ev) {
 
-  // immediately ready event
+  // empty waitlist -> immediately ready event
   if (Ev->wait_list == nullptr)
     return true;
-  // has one event only, and it's the previous in the queue
-  if (Ev->wait_list->event == LastEv && Ev->wait_list->next == nullptr)
-    return true;
 
-  return false;
+  // non-empty waitlist. if it has only one
+  // event in the waitlist, it must be
+  // the previous one (inorder queue)
+  return Ev->wait_list->next == nullptr;
 }
 
-size_t PoclL0QueueData::getSubmitBatch(BatchType &SubmitBatch) {
+void PoclL0QueueData::getSubmitBatch(BatchType &SubmitBatch) {
   std::lock_guard<std::mutex> ListLockGuard(ListLock);
-  return getSubmitBatchUnlocked(SubmitBatch);
+  getSubmitBatchUnlocked(SubmitBatch);
 }
 
-size_t PoclL0QueueData::getSubmitBatchUnlocked(BatchType &SubmitBatch) {
-  cl_event LastEv = nullptr;
+void PoclL0QueueData::getSubmitBatchUnlocked(BatchType &SubmitBatch) {
+  if (UnsubmittedEventList.empty())
+    return;
+  cl_event FirstEv = UnsubmittedEventList.front();
+  // first event must be ready to launch = null waitlist
+  if (FirstEv->wait_list != nullptr)
+    return;
+  // if the first event has null waitlist, it's ready to launch
+  SubmitBatch.push_back(FirstEv);
+  UnsubmittedEventList.pop_front();
+
   while (!UnsubmittedEventList.empty()) {
     cl_event Ev = UnsubmittedEventList.front();
-    if (pocl_level0_can_event_be_batched(Ev, LastEv)) {
+    assert(Ev->data);
+    PoclL0EventData *EvData = (PoclL0EventData *)Ev->data;
+    if (EvData->CanBeBatched) {
       SubmitBatch.push_back(Ev);
       UnsubmittedEventList.pop_front();
-      LastEv = Ev;
     } else {
       break;
     }
   }
   POCL_MSG_PRINT_LEVEL0("Processing Batch: Submitted %zu || New batch: %zu\n",
                         UnsubmittedEventList.size(), SubmitBatch.size());
-  return UnsubmittedEventList.size();
 }
 
-size_t PoclL0QueueData::getSubmitBatchIfFirstEvent(BatchType &SubmitBatch,
-                                                   cl_event Event) {
+void PoclL0QueueData::getSubmitBatchIfFirstEvent(BatchType &SubmitBatch,
+                                                 cl_event Event) {
   std::lock_guard<std::mutex> ListLockGuard(ListLock);
 
   bool IsFirstEvent =
       !UnsubmittedEventList.empty() && (Event == UnsubmittedEventList.front());
   if (!IsFirstEvent)
-    return 0;
-  return getSubmitBatchUnlocked(SubmitBatch);
+    return;
+  getSubmitBatchUnlocked(SubmitBatch);
 }
 
-size_t PoclL0QueueData::appendAndGetSubmitBatch(cl_event Ev,
+void PoclL0QueueData::appendAndGetSubmitBatch(cl_event Ev,
                                                 BatchType &SubmitBatch,
                                                 size_t BatchSizeLimit) {
   std::lock_guard<std::mutex> ListLockGuard(ListLock);
   UnsubmittedEventList.push_back(Ev);
-  size_t UnEvents = 0;
   // to limit latency of the first launch, limit the size of the batch
   if (UnsubmittedEventList.size() >= BatchSizeLimit)
-    UnEvents = getSubmitBatchUnlocked(SubmitBatch);
-  return UnEvents;
+    getSubmitBatchUnlocked(SubmitBatch);
 }
 
 void PoclL0QueueData::eraseEvent(cl_event Event) {
@@ -1173,14 +1180,18 @@ void pocl_level0_submit(_cl_command_node *Node, cl_command_queue Queue) {
   cl_event Ev = Node->sync.event.event;
 
   Node->ready = CL_TRUE;
+  assert(Ev->data);
+  PoclL0EventData *EvData = (PoclL0EventData *)Ev->data;
 
   if (pocl_level0_queue_supports_batching(Queue, Device)) {
+    EvData->CanBeBatched = pocl_level0_can_event_be_batched(Ev);
     BatchType SubmitBatch;
     QD->appendAndGetSubmitBatch(Ev, SubmitBatch, BatchSizeLimit);
     if (!SubmitBatch.empty())
       Device->pushCommandBatch(std::move(SubmitBatch));
   } else {
     // fallback processing for all other events
+    EvData->CanBeBatched = false;
     if (pocl_command_is_ready(Ev) != 0) {
       pocl_update_event_submitted(Ev);
       Device->pushCommand(Node);
@@ -1222,10 +1233,11 @@ void pocl_level0_notify(cl_device_id ClDev, cl_event Event, cl_event Finished) {
 
 void pocl_level0_update_event(cl_device_id ClDevice, cl_event Event) {
   if (Event->data == nullptr) {
-    pocl_cond_t *EventCond = (pocl_cond_t *)malloc(sizeof(pocl_cond_t));
-    assert(EventCond);
-    POCL_INIT_COND(*EventCond);
-    Event->data = (void *)EventCond;
+    PoclL0EventData *EvData = (PoclL0EventData *)malloc(sizeof(PoclL0EventData));
+    assert(EvData);
+    POCL_INIT_COND(EvData->Cond);
+    EvData->CanBeBatched = false;
+    Event->data = (void *)EvData;
   }
   if (Event->status == CL_QUEUED) {
     Event->time_queue = pocl_gettimemono_ns();
@@ -1237,11 +1249,12 @@ void pocl_level0_update_event(cl_device_id ClDevice, cl_event Event) {
 
 void pocl_level0_wait_event(cl_device_id ClDevice, cl_event Event) {
   POCL_MSG_PRINT_LEVEL0("device->wait_event on event %zu\n", Event->id);
-  pocl_cond_t *EventCond = (pocl_cond_t *)Event->data;
+  assert(Event->data);
+  PoclL0EventData *EvData = (PoclL0EventData *)Event->data;
 
   POCL_LOCK_OBJ(Event);
   while (Event->status > CL_COMPLETE) {
-    POCL_WAIT_COND(*EventCond, Event->pocl_lock);
+    POCL_WAIT_COND(EvData->Cond, Event->pocl_lock);
   }
   POCL_UNLOCK_OBJ(Event);
 }

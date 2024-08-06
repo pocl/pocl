@@ -1374,7 +1374,9 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
     } else {
       assert(PoclArg[i].value != NULL);
       assert(PoclArg[i].size > 0);
-      assert(PoclArg[i].size == Kernel->meta->arg_info[i].type_size);
+      if (Kernel->meta->arg_info[i].type_size) {
+        assert(PoclArg[i].size <= Kernel->meta->arg_info[i].type_size);
+      }
 
       Res = zeKernelSetArgumentValue(KernelH, i, PoclArg[i].size,
                                      PoclArg[i].value);
@@ -2160,6 +2162,7 @@ bool Level0Device::setupQueueGroupProperties() {
   if (CopyQueueOrd != UINT32_MAX) {
     CopyQueues.init(CopyQueueOrd, NumCopyQueues, this);
   }
+
   // always create universal queues, if available
   if (UniversalQueueOrd != UINT32_MAX) {
     uint32_t num = std::max(1U, NumUniversalQueues);
