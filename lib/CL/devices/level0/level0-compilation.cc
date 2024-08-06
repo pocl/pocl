@@ -1024,8 +1024,8 @@ bool Level0CompilationJobScheduler::init(
 
   JobQueue = std::make_unique<Level0CompilerJobQueue>();
   DriverH = H;
-  unsigned NumThreads = std::thread::hardware_concurrency();
   unsigned NumDevices = DevicesH.size();
+  unsigned NumThreads = std::min((NumDevices * 2), std::thread::hardware_concurrency());
   assert(NumDevices > 0);
   for (unsigned i = 0; i < NumThreads; ++i) {
     ze_device_handle_t PreferredDeviceH = DevicesH[i % NumDevices];
