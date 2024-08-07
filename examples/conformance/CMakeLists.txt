@@ -877,7 +877,7 @@ unset(CTS_MATH_TESTS_MICRO)
 foreach(MATH_FUNC ${MATH_FUNC_LIST})
   list(APPEND CTS_MATH_TESTS_MICRO "${TS_NAME}${TS_SUFFIX}_math_micro_${MATH_FUNC}")
   add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_${MATH_FUNC}"
-           COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS} --num-worker-threads 1 -4 -w ${MATH_FUNC})
+           COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS} -m --num-worker-threads 1 -4 -w ${MATH_FUNC})
 endforeach()
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_events_micro"
