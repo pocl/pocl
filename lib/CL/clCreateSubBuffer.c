@@ -35,7 +35,7 @@ POname (clCreateSubBuffer) (cl_mem parent,
                             cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_1
 {
   cl_mem mem = NULL;
-  int errcode;
+  int errcode, parent_locked = 0;
 
   POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (parent)), CL_INVALID_MEM_OBJECT);
 
@@ -149,11 +149,9 @@ POname (clCreateSubBuffer) (cl_mem parent,
   sub_buf->mem = mem;
   POCL_GOTO_ERROR_COND ((mem->device_ptrs == NULL), CL_OUT_OF_HOST_MEMORY);
 
-  POCL_LOCK_OBJ (parent);
+  POCL_LOCK_OBJ (parent); parent_locked = 1;
 
   LL_APPEND (parent->sub_buffers, sub_buf);
-
-  POCL_UNLOCK_OBJ (parent);
 
   for (int i = 0; i < parent->context->num_devices; ++i)
     {
@@ -185,6 +183,8 @@ POname (clCreateSubBuffer) (cl_mem parent,
   if (parent->mem_host_ptr != NULL)
     mem->mem_host_ptr = parent->mem_host_ptr + info->origin;
 
+  POCL_UNLOCK_OBJ (parent); parent_locked = 0;
+
   POCL_MSG_PRINT_MEMORY ("Created sub-buffer %zu (%p) with size %zu, origin "
                          "%zu and parent %zu (%p)\n",
                          mem->id, mem, info->size, info->origin,
@@ -195,6 +195,9 @@ POname (clCreateSubBuffer) (cl_mem parent,
   return mem;
 
 ERROR:
+  if (parent_locked)
+    POCL_UNLOCK_OBJ (parent);
+
   if (mem != NULL && mem->device_ptrs)
     {
       for (int i = 0; i < parent->context->num_devices; ++i)
