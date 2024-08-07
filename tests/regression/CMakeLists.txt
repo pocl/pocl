@@ -322,7 +322,7 @@ set_property(TEST
   "regression/clSetKernelArg_overwriting_the_previous_kernel's_args_loopvec"
   APPEND PROPERTY LABELS "vulkan")
 
-
+if(ENABLE_LEVEL0)
 set_property(TEST
   "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_loopvec"
   "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_loopvec"
@@ -332,7 +332,6 @@ set_property(TEST
   "regression/for-loop_with_computation_after_the_brexit_loopvec"
   "regression/for-loop_with_a_variable_iteration_count_loopvec"
   "regression/id-dependent_computation_before_kernel_exit_loopvec"
-  "regression/infinite_loop_loopvec"
   "regression/issues_with_local_pointers_loopvec"
   "regression/phi_nodes_not_replicated_loopvec"
   "regression/simple_for-loop_with_a_barrier_inside_loopvec"
@@ -343,7 +342,6 @@ set_property(TEST
   "regression/autolocals_in_constexprs_loopvec"
   "regression/case_with_multiple_variable_length_loops_and_a_barrier_in_one_loopvec"
   "regression/clSetKernelArg_overwriting_the_previous_kernel's_args_loopvec"
-  "regression/passing_a_constant_array_as_an_arg_loopvec"
   "regression/setting_a_buffer_argument_to_NULL_causes_a_segfault_loopvec"
   "regression/struct_kernel_arguments_loopvec"
   "regression/vector_kernel_arguments_loopvec"
@@ -368,9 +366,18 @@ set_property(TEST
   "regression/test_issue_445_loopvec"
   "regression/test_issue_553_loopvec"
   "regression/test_issue_577_loopvec"
-  "regression/test_issue_757_loopvec"
 
   APPEND PROPERTY LABELS "level0")
+
+if(NOT ENABLE_CONFORMANCE)
+set_property(TEST
+  "regression/infinite_loop_loopvec"
+  "regression/test_issue_757_loopvec"
+  "regression/passing_a_constant_array_as_an_arg_loopvec"
+  APPEND PROPERTY LABELS "level0")
+endif()
+
+endif()
 
 ###################################################################
 
