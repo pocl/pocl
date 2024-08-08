@@ -1793,11 +1793,7 @@ if(ENABLE_CUDA)
     cl_khr_int64_extended_atomics cl_nv_device_attribute_query")
 
   # CUDA device: list of OpenCL 3.0 features that are always enabled
-  # __opencl_c_images should not be included since we don't support images yet,
-  # but is needed to work around an issue with the opencl-c.h header in Clang versions from 14 onwards
-  # https://github.com/llvm/llvm-project/issues/58017
-  # __opencl_c_3d_image_writes and other image-related extensions are disabled because not supported yet
-  set(CUDA_DEVICE_FEATURES_30 "__opencl_c_images __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
+  set(CUDA_DEVICE_FEATURES_30 "__opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
     __opencl_c_atomic_scope_device __opencl_c_program_scope_global_variables \
     __opencl_c_generic_address_space")
 
