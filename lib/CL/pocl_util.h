@@ -242,6 +242,10 @@ cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_
 int pocl_device_supports_builtin_kernel (cl_device_id dev,
                                          const char *kernel_name);
 
+void pocl_event_callback_init ();
+void pocl_event_callback_finish ();
+void pocl_event_cb_push (cl_event event, int status);
+
 #define POCL_CHECK_DEV_IN_CMDQ                                                \
   do                                                                          \
     {                                                                         \

@@ -25,6 +25,7 @@
 
 #include "devices/devices.h"
 #include "pocl_runtime_config.h"
+#include "pocl_util.h"
 
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
@@ -159,6 +160,8 @@ pocl_check_uninit_devices ()
   usleep (100000);
 
   pocl_event_tracing_finish ();
+
+  pocl_event_callback_finish ();
 
   POCL_LOCK (pocl_context_handling_lock);
   if (cl_context_count == 0)
