@@ -36,6 +36,7 @@ jobs:
     env:
       CCACHE_DIR: "${{ github.workspace }}/../../../ccache_storage"
       EXAMPLES_DIR: "${{ github.workspace }}/../../../examples"
+      TSAN_OPTIONS: "second_deadlock_stack=1"
     strategy:
       fail-fast: false
       matrix:
@@ -58,7 +59,7 @@ jobs:
         id: cmake
         run: |
           runCMake() {
-            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            BUILD_FLAGS="-O1 -ggdb -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
             cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo "-DCMAKE_C_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
             "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
