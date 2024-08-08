@@ -58,24 +58,12 @@ static const struct pocl_event_tracer *event_tracer = NULL;
 void
 pocl_event_updated (cl_event event, int status)
 {
-  event_callback_item *cb_ptr;
-
   if (event_tracer && event_tracer->event_updated
       && ((1 << status) & event_trace_filter))
     event_tracer->event_updated (event, status);
 
-  /* Event callback handling calls functions in the same order
-     they were added if the status matches the specified one. */
-  for (cb_ptr = event->callback_list; cb_ptr; cb_ptr = cb_ptr->next)
-    {
-      if (cb_ptr->trigger_status == status)
-        {
-          POCL_UNLOCK_OBJ (event);
-          cb_ptr->callback_function (event, cb_ptr->trigger_status,
-                                     cb_ptr->user_data);
-          POCL_LOCK_OBJ (event);
-        }
-    }
+  if (event->callback_list)
+    pocl_event_cb_push (event, status);
 }
 
 static void
