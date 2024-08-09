@@ -1993,13 +1993,20 @@ struct _cl_event {
 
   /* The execution status of the command this event is monitoring. */
   cl_int status;
-  /* impicit event = an event for pocl's internal use, not visible to user */
-  short implicit_event;
+  /* implicit event = an event for pocl's internal use, not visible to user */
+  char implicit_event;
+
   /* if set, at the completion of event, the mem_host_ptr_refcount should be
    * lowered and memory freed if it's 0 */
-  short release_mem_host_ptr_after;
+  char release_mem_host_ptr_after;
 
-  short profiling_available;
+  /* for command buffers, profiling info is only available if
+   * profiling is enabled on all queues of the cmdbuffer */
+  char profiling_available;
+
+  /* reset command buffer when the event is finished */
+  char reset_command_buffer;
+  cl_command_buffer_khr command_buffer;
 
   _cl_event *next;
   _cl_event *prev;

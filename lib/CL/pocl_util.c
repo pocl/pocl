@@ -2085,6 +2085,7 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
   assert (event->queue != NULL);
   assert (event->status > CL_COMPLETE);
   int notify_cmdq = CL_FALSE;
+  cl_command_buffer_khr command_buffer = NULL;
 
   cl_command_queue cq = event->queue;
   POCL_LOCK_OBJ (cq);
@@ -2122,7 +2123,20 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
    * because it calls event callbacks, which can have calls to
    * clEnqueueSomething() */
   pocl_event_updated (event, status);
+  command_buffer = event->command_buffer;
   POCL_UNLOCK_OBJ (event);
+
+  if (event->reset_command_buffer)
+  {
+    assert (command_buffer);
+    POCL_LOCK (command_buffer->mutex);
+    command_buffer->pending -= 1;
+    if (command_buffer->pending == 0)
+        command_buffer->state = CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR;
+    POCL_UNLOCK (command_buffer->mutex);
+    POname (clReleaseCommandBufferKHR) (command_buffer);
+  }
+
   ops->broadcast (event);
 
   /* With remote being asynchronous it is possible that an event completion

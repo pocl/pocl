@@ -28,18 +28,6 @@
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
-static void CL_CALLBACK
-buffer_finished_callback (cl_event event, cl_int event_command_status,
-                          void *user_data)
-{
-  cl_command_buffer_khr command_buffer = (cl_command_buffer_khr)user_data;
-  POCL_LOCK (command_buffer->mutex);
-  command_buffer->pending -= 1;
-  if (command_buffer->pending == 0)
-    command_buffer->state = CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR;
-  POCL_UNLOCK (command_buffer->mutex);
-  POname (clReleaseCommandBufferKHR) (command_buffer);
-}
 
 CL_API_ENTRY cl_int
 POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
@@ -226,16 +214,8 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
                  : 0;
         }
 
-      errcode = POname (clSetEventCallback) (final_ev, CL_COMPLETE,
-                                             buffer_finished_callback,
-                                             (void *)command_buffer);
-      if (errcode != CL_SUCCESS)
-        {
-          POCL_MSG_ERR ("Failed to set command buffer cleanup callback\n");
-          POname (clReleaseEvent) (final_ev);
-          pocl_mem_manager_free_command (node);
-          return errcode;
-        }
+      final_ev->reset_command_buffer = CL_TRUE;
+      final_ev->command_buffer = command_buffer;
 
       if (event_p != NULL)
         *event_p = final_ev;
