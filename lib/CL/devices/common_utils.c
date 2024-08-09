@@ -536,8 +536,8 @@ pocl_cpu_validate_khr_gemm (cl_bool TransA,
                             const cl_tensor_desc *TenB,
                             const cl_tensor_desc *TenCIOpt,
                             const cl_tensor_desc *TenCOut,
-                            const cl_tensor_datatype_union *Alpha,
-                            const cl_tensor_datatype_union *Beta)
+                            const cl_tensor_datatype_value *Alpha,
+                            const cl_tensor_datatype_value *Beta)
 {
   /* TODO: We probably need to have support for mixed input/output
    * precisions to be able to fit results of large, low precision input
@@ -555,19 +555,19 @@ pocl_cpu_validate_khr_gemm (cl_bool TransA,
                          || TenA->dtype == CL_TENSOR_DTYPE_INT4
                          || TenCOut->dtype == CL_TENSOR_DTYPE_FP8
                          || TenCOut->dtype == CL_TENSOR_DTYPE_INT4),
-                        CL_INVALID_DBK_DATATYPE,
+                        CL_INVALID_TENSOR_DATATYPE,
                         "Datatype support not yet implemented. CPU supports "
                         "only FP16/32/64 and INT8/16/32/64 currently\n");
 
   /* type mixing check */
   POCL_RETURN_ERROR_ON ((pocl_tensor_type_is_int (TenA->dtype)
                          != pocl_tensor_type_is_int (TenCOut->dtype)),
-                        CL_INVALID_DBK_DATATYPE,
+                        CL_INVALID_TENSOR_DATATYPE,
                         "Datatype mixing (INT/FP) not supported");
 
   POCL_RETURN_ERROR_ON ((pocl_tensor_type_size (TenA->dtype)
                          > pocl_tensor_type_size (TenCOut->dtype)),
-                        CL_INVALID_DBK_DATATYPE,
+                        CL_INVALID_TENSOR_DATATYPE,
                         "Datatype of C is smaller than A");
 
   /* TODO check the value in respective type */

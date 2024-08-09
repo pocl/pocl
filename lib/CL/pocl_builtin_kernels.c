@@ -680,8 +680,8 @@ pocl_validate_khr_gemm (cl_bool TransA,
                         const cl_tensor_desc *TenB,
                         const cl_tensor_desc *TenCIOpt,
                         const cl_tensor_desc *TenCOut,
-                        const cl_tensor_datatype_union *Alpha,
-                        const cl_tensor_datatype_union *Beta)
+                        const cl_tensor_datatype_value *Alpha,
+                        const cl_tensor_datatype_value *Beta)
 {
   POCL_RETURN_ERROR_COND ((TenA == NULL), CL_INVALID_DBK_ATTRIBUTE);
   POCL_RETURN_ERROR_COND ((TenB == NULL), CL_INVALID_DBK_ATTRIBUTE);
@@ -698,20 +698,20 @@ pocl_validate_khr_gemm (cl_bool TransA,
   //      dimensions as batch dimensions - but it might not be
   //      worthwhile due the extra work to support them and processing
   //      overhead they may impose.
-  POCL_RETURN_ERROR_ON ((TenA->rank > 3), CL_INVALID_DBK_RANK,
+  POCL_RETURN_ERROR_ON ((TenA->rank > 3), CL_INVALID_TENSOR_RANK,
                         "Unsupported high-degree tensors.\n");
-  POCL_RETURN_ERROR_ON ((TenA->rank < 2), CL_INVALID_DBK_RANK,
+  POCL_RETURN_ERROR_ON ((TenA->rank < 2), CL_INVALID_TENSOR_RANK,
                         "Rank of A/B tensors must be in {2,3}.\n");
 
-  POCL_RETURN_ERROR_ON ((TenA->rank != TenB->rank), CL_INVALID_DBK_RANK,
+  POCL_RETURN_ERROR_ON ((TenA->rank != TenB->rank), CL_INVALID_TENSOR_RANK,
                         "Rank mismatch between A and B\n");
-  POCL_RETURN_ERROR_ON ((TenB->rank != TenCOut->rank), CL_INVALID_DBK_RANK,
+  POCL_RETURN_ERROR_ON ((TenB->rank != TenCOut->rank), CL_INVALID_TENSOR_RANK,
                         "Rank mismatch between A/B and COut\n");
 
   POCL_RETURN_ERROR_ON (
     (TenCIOpt != NULL
      && pocl_tensor_shape_equals (TenCIOpt, TenCOut) == CL_FALSE),
-    CL_INVALID_DBK_SHAPE, "Tensor shape mismatch between C_in and C_out.");
+    CL_INVALID_TENSOR_SHAPE, "Tensor shape mismatch between C_in and C_out.");
 
   size_t BatchDims = TenA->rank - 2;
 
@@ -749,24 +749,24 @@ pocl_validate_khr_gemm (cl_bool TransA,
       POCL_RETURN_ERROR_ON ((BatchSize > 1
                              && (BatchSize != TenB->shape[0]
                                  || TenB->shape[0] != TenCOut->shape[0])),
-                            CL_INVALID_DBK_SHAPE, "Batch size mismatch.\n");
+                            CL_INVALID_TENSOR_SHAPE, "Batch size mismatch.\n");
 
       POCL_RETURN_ERROR_ON (
         (BatchSize > 1 && TenCIOpt && TenCIOpt->shape[0] != TenCOut->shape[0]),
-        CL_INVALID_DBK_SHAPE, "Batch size mismatch.\n");
+        CL_INVALID_TENSOR_SHAPE, "Batch size mismatch.\n");
     }
 
   // Check datatypes
   POCL_RETURN_ERROR_ON (
     (TenA->dtype >= CL_TENSOR_DTYPE_LAST || TenB->dtype >= CL_TENSOR_DTYPE_LAST
      || TenCOut->dtype >= CL_TENSOR_DTYPE_LAST),
-    CL_INVALID_DBK_DATATYPE, "Unknown data type in input Tensors");
+    CL_INVALID_TENSOR_DATATYPE, "Unknown data type in input Tensors");
 
-  POCL_RETURN_ERROR_ON ((TenA->dtype != TenB->dtype), CL_INVALID_DBK_DATATYPE,
+  POCL_RETURN_ERROR_ON ((TenA->dtype != TenB->dtype), CL_INVALID_TENSOR_DATATYPE,
                         "datatype mismatch between A and B.\n");
 
   POCL_RETURN_ERROR_ON (TenCIOpt && (TenCIOpt->dtype != TenCOut->dtype),
-                        CL_INVALID_DBK_DATATYPE,
+                        CL_INVALID_TENSOR_DATATYPE,
                         "datatype mismatch between C_ind and C_out\n");
 
   // TODO: check validity of data layouts of the tensors. Now assumes they're
