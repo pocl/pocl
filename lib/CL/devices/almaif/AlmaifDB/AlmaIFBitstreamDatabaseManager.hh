@@ -25,10 +25,11 @@
 #ifndef POCL_ALMAIFBITSTREAMDATABASEMANAGER_H
 #define POCL_ALMAIFBITSTREAMDATABASEMANAGER_H
 
-#include "builtin_kernels.hh"
-
 #include <map>
 #include <string>
+#include <vector>
+
+#include "pocl_builtin_kernels.h"
 
 typedef struct json_s json_t;
 

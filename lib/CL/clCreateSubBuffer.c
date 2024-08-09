@@ -123,7 +123,7 @@ POname (clCreateSubBuffer) (cl_mem parent,
 
   /* Initially the sub-buffer's latest contents are in the same memory where
      the parent's latest contents are due to aliasing. */
-  for (int i = 0; i < mem->context->num_devices; ++i)
+  for (unsigned i = 0; i < mem->context->num_devices; ++i)
     {
       cl_device_id d = mem->context->devices[i];
       if (parent->device_ptrs[d->global_mem_id].version == mem->latest_version)
@@ -153,7 +153,7 @@ POname (clCreateSubBuffer) (cl_mem parent,
 
   LL_APPEND (parent->sub_buffers, sub_buf);
 
-  for (int i = 0; i < parent->context->num_devices; ++i)
+  for (unsigned i = 0; i < parent->context->num_devices; ++i)
     {
       cl_device_id dev = parent->context->devices[i];
       if (parent->device_ptrs[dev->global_mem_id].mem_ptr == NULL)
@@ -200,7 +200,7 @@ ERROR:
 
   if (mem != NULL && mem->device_ptrs)
     {
-      for (int i = 0; i < parent->context->num_devices; ++i)
+      for (unsigned i = 0; i < parent->context->num_devices; ++i)
         {
           cl_device_id dev = parent->context->devices[i];
           pocl_mem_identifier *p = &mem->device_ptrs[dev->global_mem_id];

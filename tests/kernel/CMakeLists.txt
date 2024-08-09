@@ -89,6 +89,12 @@ foreach(VARIANT ${VARIANTS})
     "kernel/test_hadd_${VARIANT}"
     PROPERTIES
       LABELS "internal;kernel")
+  # TODO: works on LLVM 15 but fails with LLVM 16, most likely reason:
+  # https://github.com/pocl/pocl/issues/1525
+  # https://github.com/grpc/grpc/issues/14587
+  if(APPLE AND ARM64)
+    set_tests_properties( "kernel/test_as_type_${VARIANT}" PROPERTIES DISABLED 1)
+  endif()
 endforeach()
 
 add_test_pocl(NAME "kernel/test_min_max"

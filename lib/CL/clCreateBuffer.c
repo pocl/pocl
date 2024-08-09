@@ -27,6 +27,7 @@
 #include "devices.h"
 #include "pocl_cl.h"
 #include "pocl_shared.h"
+#include "pocl_tensor_util.h"
 #include "pocl_util.h"
 
 extern unsigned long buffer_c;
@@ -350,8 +351,46 @@ ERROR:
 
   return mem;
 }
-POsym (clCreateBuffer)
+POsym (clCreateBuffer);
 
+
+
+static cl_int
+pocl_parse_cl_mem_properties (const cl_mem_properties *prop_ptr,
+                              const cl_tensor_desc **tdesc)
+{
+
+  if (!prop_ptr)
+    {
+      return CL_SUCCESS;
+    }
+
+  if (*prop_ptr == 0)
+    {
+      return CL_SUCCESS;
+    }
+
+  while (*prop_ptr)
+    {
+      switch (*prop_ptr)
+        {
+        case CL_MEM_TENSOR:
+          {
+            *tdesc = (const cl_tensor_desc *)prop_ptr[1];
+            prop_ptr += 2; /* = CL_MEM_TENSOR and its value. */
+
+            POCL_RETURN_ERROR_ON ((pocl_check_tensor_desc (*tdesc)),
+                                  CL_INVALID_PROPERTY,
+                                  "invalid tensor description.");
+            return CL_SUCCESS;
+          }
+        default:
+          POCL_RETURN_ERROR_ON (1, CL_INVALID_PROPERTY,
+                                "Unknown cl_mem property %zu", *prop_ptr);
+        }
+    }
+  return CL_OUT_OF_HOST_MEMORY;
+}
 
 CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBufferWithProperties)(
                                cl_context                context,
@@ -363,22 +402,35 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBufferWithProperties)(
 CL_API_SUFFIX__VERSION_3_0
 {
   int errcode;
-  /* pocl doesn't support any extra properties ATM */
-  POCL_GOTO_ERROR_ON ((properties && properties[0] != 0), CL_INVALID_PROPERTY,
-                      "PoCL doesn't support any properties on buffers yet\n");
+  const cl_tensor_desc *tdesc = NULL;
 
-  cl_mem mem_ret = POname(clCreateBuffer) (context, flags, size,
-                                           host_ptr, errcode_ret);
-  if (mem_ret == NULL)
-    return NULL;
-
-  if (properties && properties[0] == 0)
+  errcode = pocl_parse_cl_mem_properties (properties, &tdesc);
+  if (errcode != CL_SUCCESS)
     {
-      mem_ret->num_properties = 1;
-      mem_ret->properties[0] = 0;
+      goto ERROR;
     }
 
-  return mem_ret;
+  cl_mem mem
+    = POname (clCreateBuffer) (context, flags, size, host_ptr, errcode_ret);
+  if (mem == NULL)
+    return NULL;
+
+  /* this is checked by CTS tests */
+  if (properties && properties[0] == 0)
+  {
+    mem->num_properties = 1;
+    mem->properties[0] = 0;
+  }
+  if (tdesc)
+    {
+      mem->num_properties = 1;
+      mem->properties[0] = CL_MEM_TENSOR;
+      POCL_GOTO_ERROR_ON ((pocl_copy_tensor_desc (mem, tdesc)),
+                          CL_OUT_OF_HOST_MEMORY,
+                          "Couldn't allocate space for tensor description.");
+    }
+
+  return mem;
 
 ERROR:
   if (errcode_ret)

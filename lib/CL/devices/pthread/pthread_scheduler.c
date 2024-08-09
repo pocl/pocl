@@ -32,11 +32,11 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "builtin_kernels.hh"
 #include "common.h"
 #include "common_driver.h"
 #include "pocl-pthread.h"
 #include "pocl-pthread_scheduler.h"
+#include "pocl_builtin_kernels.h"
 #include "pocl_cl.h"
 #include "pocl_mem_management.h"
 #include "pocl_util.h"
@@ -638,14 +638,36 @@ RETRY:
 
       if (cmd->type == CL_COMMAND_NDRANGE_KERNEL)
         {
-#ifdef ENABLE_HOST_CPU_DEVICES_OPENMP
-          run_cmd = pocl_pthread_prepare_kernel (cmd->device->data, cmd);
-          work_group_scheduler (run_cmd, td);
-          finalize_kernel_command (td, run_cmd);
-          run_cmd = NULL;
+          cl_kernel kernel = cmd->command.run.kernel;
+          cl_program program = kernel->program;
+          pocl_kernel_metadata_t *meta = kernel->meta;
+          cl_uint dev_i = cmd->program_device_i;
+          if (program->builtin_kernel_attributes)
+            {
+              assert (meta->builtin_kernel_id != 0);
+              pocl_update_event_running (cmd->sync.event.event);
+
+#ifdef HAVE_LIBXSMM
+              pocl_cpu_execute_dbk (program, kernel, meta, dev_i,
+                                    cmd->command.run.arguments);
 #else
-          pocl_pthread_prepare_kernel (cmd->device->data, cmd);
+              POCL_MSG_ERR (
+                "PoCL compiled without libxsmm - cannot execute DBK\n");
 #endif
+              POCL_UPDATE_EVENT_COMPLETE_MSG (cmd->sync.event.event,
+                                              "Builtin Kernel        ");
+            }
+          else
+            {
+#ifdef ENABLE_HOST_CPU_DEVICES_OPENMP
+              run_cmd = pocl_pthread_prepare_kernel (cmd->device->data, cmd);
+              work_group_scheduler (run_cmd, td);
+              finalize_kernel_command (td, run_cmd);
+              run_cmd = NULL;
+#else
+              pocl_pthread_prepare_kernel (cmd->device->data, cmd);
+#endif
+            }
         }
       else
         {

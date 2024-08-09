@@ -32,7 +32,8 @@
 #include "AlmaIFDevice.hh"
 #include "EmulationDevice.hh"
 #include "bufalloc.h"
-#include "builtin_kernels.hh"
+
+#include "pocl_builtin_kernels.h"
 
 #define ALMAIF_DEFAULT_PRIVATE_MEM_SIZE (2048)
 
@@ -190,7 +191,7 @@ struct AlmaifData {
 
   cl_bool Available;
 
-  std::set<BIKD *> SupportedKernels;
+  std::set<pocl_kernel_metadata_t *> SupportedKernels;
   // List of commands ready to be executed.
   _cl_command_node *ReadyList;
   // List of commands not yet ready to be executed.
