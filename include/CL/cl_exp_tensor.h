@@ -57,7 +57,7 @@ typedef cl_uint cl_tensor_datatype;
 #define CL_TENSOR_DTYPE_UINT4 14
 #define CL_TENSOR_DTYPE_LAST 15
 
-/* cl_tensor_datatype_union is used to pass POD data to DBKs (like Alpha & Beta
+/* cl_tensor_datatype_value is used to pass POD data to DBKs (like Alpha & Beta
  * parameters to the GEMM); the actual type used is implied. In case of
  * GEMM, the datatype is implied the same as COut Tensor datatype.
  * TODO: this could be done with passing a void* pointer, however
@@ -72,7 +72,7 @@ typedef union
   cl_float f;
   cl_double d;
   char raw[sizeof (cl_double)];
-} cl_tensor_datatype_union;
+} cl_tensor_datatype_value;
 
 /* cl_tensor_layout_type describes the type of layout struct in cl_tensor_desc */
 typedef cl_uint cl_tensor_layout_type;
@@ -94,7 +94,7 @@ typedef cl_uint cl_tensor_layout_type;
  * a Tensor cl_mem argument should succeed even if the new Tensor given is
  * different in the respective property (dims,dtype etc) than the original
  * cl_tensor_desc given at clCreateProgramWithDBKs() time.
- * Drivers that don't support Mutable attributes should return an error
+ * Devices that don't support Mutable attributes should return an error
  * at Program build time. */
 typedef cl_properties cl_tensor_properties;
 
@@ -109,7 +109,8 @@ typedef cl_properties cl_tensor_properties;
 
 /*********************** Additions to cl_mem_object_type ********************/
 
-/* A clCreateBufferWithProperties() property used for creating a tensor. */
+/* A clCreateBufferWithProperties() property value that implies next
+ * property is a pointer to cl_tensor_desc. */
 #define CL_MEM_TENSOR 0x8000
 
 /* TBC: A clCreateSubBuffer() cl_buffer_create_type used for creating a
@@ -121,6 +122,7 @@ typedef cl_properties cl_tensor_properties;
  #define CL_MEM_TENSOR_VIEW 0x8001 */
 
 /* Maximum tensor rank that can be used in the structs defined below */
+/* TODO is there a good reason to make this non-fixed size */
 #define CL_MEM_MAX_TENSOR_RANK 20
 
 /* Maximum number of tensor properties */

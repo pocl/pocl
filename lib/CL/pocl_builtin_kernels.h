@@ -58,8 +58,8 @@ extern "C"
                                      const cl_tensor_desc *TenB,
                                      const cl_tensor_desc *TenCIOpt,
                                      const cl_tensor_desc *TenCOut,
-                                     const cl_tensor_datatype_union *Alpha,
-                                     const cl_tensor_datatype_union *Beta);
+                                     const cl_tensor_datatype_value *Alpha,
+                                     const cl_tensor_datatype_value *Beta);
 
   /* GemmCB can be NULL, in which case the "generic" validation is run,
    * which checks the basic sanity. If it's non-NULL it's expected to check
