@@ -34,17 +34,14 @@
 #include "cl_exp_tensor.h"
 
 /* errors returned by the DBK API */
-#define CL_INVALID_DBK_ID 0x8101
-#define CL_INVALID_DBK_ATTRIBUTE 0x8102
-#define CL_INVALID_DBK_RANK 0x8103
-#define CL_INVALID_DBK_SHAPE 0x8104
-#define CL_INVALID_DBK_DATATYPE 0x8105
-
 /* TODO numeric values */
-#define CL_INVALID_TENSOR_LAYOUT -2309
-#define CL_INVALID_TENSOR_RANK -2310
-#define CL_INVALID_TENSOR_SHAPE -2311
-#define CL_UNSUPPORTED_DBK -2312
+#define CL_INVALID_DBK_ID          -2306
+#define CL_INVALID_DBK_ATTRIBUTE   -2307
+#define CL_UNSUPPORTED_DBK         -2308
+#define CL_INVALID_TENSOR_LAYOUT   -2309
+#define CL_INVALID_TENSOR_RANK     -2310
+#define CL_INVALID_TENSOR_SHAPE    -2311
+#define CL_INVALID_TENSOR_DATATYPE -2312
 
 /* list of fixed predefined builtin kernel IDs.
  * These should be allocated by the OpenCL extension process
@@ -96,30 +93,27 @@ typedef enum
   POCL_CDBI_JIT_COMPILER = 0xFFFF
 } BuiltinKernelId;
 
-/* for storing cl_dbk_property enums and actual values */
+/* for storing DBK property numbers and actual values */
 typedef cl_properties cl_dbk_properties;
 
-/* TODO convert enum to defines ? */
-typedef enum
-{
-  /* Maximum relative error in ULPs allowed for the results respect to */
-  /* infinitely precise result. */
-  CL_DBK_PROPERTY_MAX_RELATIVE_ERROR = 1, /* <float> */
+/* Maximum relative error in ULPs allowed for the results respect to */
+/* infinitely precise result. */
+#define CL_DBK_PROPERTY_MAX_RELATIVE_ERROR 1 /* <float> */
 
-  /* Allows the results of the DBK to fluctuate* with the exactly same
-   * inputs across kernel launches.
-   *
-   * *: CL_DBK_PROPERTY_MAX_RELATIVE_ERROR must still be respected if present.
-   *
-   * Drivers may ignore this property. */
-  CL_DBK_PROPERTY_NON_DETERMINISTIC,
+/* Allows the results of the DBK to fluctuate* with the exactly same
+ * inputs across kernel launches.
+ *
+ * *: CL_DBK_PROPERTY_MAX_RELATIVE_ERROR must still be respected if present.
+ *
+ * Drivers may ignore this property. */
+#define CL_DBK_PROPERTY_NON_DETERMINISTIC 2
 
-  /* Allow driver to trade off accuracy for speed by allowing it to flush
-   * denormals to zero.
-   *
-   * Drivers may ignore this property, meaning the behavior is not guaranteed. */
-  CL_DBK_PROPERTY_ALLOW_FTZ
-} cl_dbk_property;
+/* Allow driver to trade off accuracy for speed by allowing it to flush
+ * denormals to zero.
+ *
+ * Drivers may ignore this property, meaning the behavior is not guaranteed. */
+#define CL_DBK_PROPERTY_ALLOW_FTZ 3
+
 
 typedef cl_program (*clCreateProgramWithDefinedBuiltInKernels_fn) (
     cl_context context, cl_uint num_devices, const cl_device_id *device_list,
@@ -175,7 +169,7 @@ typedef struct _cl_dbk_attributes_khr_gemm
   cl_bool trans_a, trans_b;
   /* Union, real Type depends on the tensor operands. E.g.
    * CL_TENSOR_FLOAT --> cl_float, CL_TENSOR_DOUBLE --> cl_double. */
-  cl_tensor_datatype_union alpha, beta;
+  cl_tensor_datatype_value alpha, beta;
   /* 0-terminated array of DBK properties */
   cl_dbk_properties kernel_props[CL_MAX_DBK_PROPERTIES];
 } cl_dbk_attributes_khr_gemm;
