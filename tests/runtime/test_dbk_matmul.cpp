@@ -82,7 +82,7 @@ public:
     memcpy(Layout.leading_strides, LeadingStrides.data(), LeadingStrides.size()*sizeof(size_t) );
   }
 
-  const cl_tensor_layout_blas *get() const noexcept { return &Layout; }
+  cl_tensor_layout_blas *get() noexcept { return &Layout; }
   // In elements.
   size_t getSize() const noexcept { return LeadingStrides.back(); }
   unsigned getNumLeadingDims() const noexcept { return LeadingDims.size(); }
@@ -112,6 +112,7 @@ public:
     Desc.dtype = DType;
     Desc.layout = nullptr;
     Desc.layout_type = CL_TENSOR_LAYOUT_BLAS;
+    Desc.properties[0] = 0;
 
     if (Layout.getNumLeadingDims())
       Desc.layout = Layout.get();
@@ -193,6 +194,7 @@ void doFloatMatmul(bool ColumnMajor, unsigned Transpose, unsigned M, unsigned N,
   memcpy(&MatmulAttrs.c, CTDesc.get(), sizeof(cl_tensor_desc));
   MatmulAttrs.trans_a = !!(Transpose & TRANSPOSE_A);
   MatmulAttrs.trans_b = !!(Transpose & TRANSPOSE_B);
+  MatmulAttrs.kernel_props[0] = 0;
   memset(MatmulAttrs.kernel_props, 0, sizeof(MatmulAttrs.kernel_props));
 
   cl_int Status;

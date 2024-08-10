@@ -425,7 +425,7 @@ CL_API_SUFFIX__VERSION_3_0
     {
       mem->num_properties = 1;
       mem->properties[0] = CL_MEM_TENSOR;
-      POCL_GOTO_ERROR_ON ((pocl_copy_tensor_desc (mem, tdesc)),
+      POCL_GOTO_ERROR_ON ((pocl_copy_tensor_desc2mem (mem, tdesc)),
                           CL_OUT_OF_HOST_MEMORY,
                           "Couldn't allocate space for tensor description.");
     }

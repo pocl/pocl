@@ -1729,12 +1729,13 @@ struct _cl_mem {
   size_t                  pipe_max_packets;
 
   /* Tensor Properties */
-  cl_bool is_tensor;
   cl_uint tensor_rank;
   cl_tensor_shape tensor_shape[CL_MEM_MAX_TENSOR_RANK];
   cl_tensor_datatype tensor_dtype;
   cl_tensor_layout_type tensor_layout_type;
   void *tensor_layout;
+  // properties
+  char is_tensor;
 };
 
 /** Returns the backing store cl_mem for an image, otherwise the cl_mem

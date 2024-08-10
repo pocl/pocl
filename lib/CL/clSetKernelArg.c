@@ -50,6 +50,113 @@ dump_hex (const char *data, size_t size, char *buffer)
   buffer[j] = 0;
 }
 
+static int
+pocl_verify_dbk_kernel_arg (cl_mem buf, const cl_tensor_desc *desc)
+{
+  POCL_RETURN_ERROR_ON ((buf->is_tensor == CL_FALSE), CL_INVALID_ARG_VALUE,
+                        "the cl_mem argument must be a tensor\n");
+
+  const cl_tensor_properties *P = desc->properties;
+  char tensor_mutable_layout = 0;
+  char tensor_mutable_shape = 0;
+  char tensor_mutable_dtype = 0;
+  while (*P)
+    {
+      switch (*P)
+        {
+        case CL_TENSOR_PROPERTY_MUTABLE_SHAPE:
+          tensor_mutable_shape = 1;
+          break;
+        case CL_TENSOR_PROPERTY_MUTABLE_DTYPE:
+          tensor_mutable_dtype = 1;
+          break;
+        case CL_TENSOR_PROPERTY_MUTABLE_LAYOUT:
+          tensor_mutable_layout = 1;
+          break;
+        default:
+          break;
+        }
+      ++P;
+    }
+
+  POCL_RETURN_ERROR_ON ((buf->tensor_rank != desc->rank), CL_INVALID_ARG_VALUE,
+                        "the cl_mem Tensor argument has incorrect rank\n");
+
+  POCL_RETURN_ERROR_ON (
+    (buf->tensor_dtype != desc->dtype && tensor_mutable_dtype == CL_FALSE),
+    CL_INVALID_ARG_VALUE,
+    "the cl_mem Tensor argument must have identical dtype\n");
+
+  POCL_RETURN_ERROR_ON (
+    (buf->tensor_layout_type != desc->layout_type
+     && tensor_mutable_layout == CL_FALSE),
+    CL_INVALID_ARG_VALUE,
+    "the cl_mem Tensor argument has incorrect layout type\n");
+  int cmp = 0;
+  switch (desc->layout_type)
+    {
+    case CL_TENSOR_LAYOUT_ML:
+      cmp = memcmp (buf->tensor_layout, desc->layout,
+                    sizeof (cl_tensor_layout_ml));
+      break;
+    case CL_TENSOR_LAYOUT_BLAS:
+      cmp = memcmp (buf->tensor_layout, desc->layout,
+                    sizeof (cl_tensor_layout_blas));
+      break;
+    default:
+      break;
+    }
+  POCL_RETURN_ERROR_ON (
+    (cmp != 0 && tensor_mutable_layout == CL_FALSE), CL_INVALID_ARG_VALUE,
+    "the cl_mem Tensor layout is different, and mutable layout == false\n");
+
+  cmp = memcmp (buf->tensor_shape, desc->shape,
+                (desc->rank * sizeof (cl_ulong)));
+  POCL_RETURN_ERROR_ON (
+    (cmp != 0 && tensor_mutable_shape == CL_FALSE), CL_INVALID_ARG_VALUE,
+    "the cl_mem Tensor shape is different, and mutable dims == false\n");
+
+  return CL_SUCCESS;
+}
+
+static int
+pocl_verify_dbk_kernel_args (cl_mem buf,
+                             pocl_kernel_metadata_t *meta,
+                             size_t arg_index)
+{
+  switch (meta->builtin_kernel_id)
+    {
+    case POCL_CDBI_DBK_KHR_GEMM:
+      {
+        const cl_dbk_attributes_khr_gemm *Attrs
+          = (cl_dbk_attributes_khr_gemm *)meta->builtin_kernel_attrs;
+        if (arg_index == 0)
+          return pocl_verify_dbk_kernel_arg (buf, &Attrs->a);
+        if (arg_index == 1)
+          return pocl_verify_dbk_kernel_arg (buf, &Attrs->b);
+        if (arg_index == 2)
+          return pocl_verify_dbk_kernel_arg (buf, &Attrs->c_in);
+        if (arg_index == 3)
+          return pocl_verify_dbk_kernel_arg (buf, &Attrs->c_out);
+        POCL_ABORT ("this should not be reached \n");
+      }
+    case POCL_CDBI_DBK_KHR_MATMUL:
+      {
+        const cl_dbk_attributes_khr_matmul *Attrs
+          = (const cl_dbk_attributes_khr_matmul *)meta->builtin_kernel_attrs;
+        if (arg_index == 0)
+          return pocl_verify_dbk_kernel_arg (buf, &Attrs->a);
+        if (arg_index == 1)
+          return pocl_verify_dbk_kernel_arg (buf, &Attrs->b);
+        if (arg_index == 2)
+          return pocl_verify_dbk_kernel_arg (buf, &Attrs->c);
+        POCL_ABORT ("this should not be reached \n");
+      }
+    default:
+      return CL_INVALID_KERNEL;
+    }
+}
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clSetKernelArg)(cl_kernel kernel,
                cl_uint arg_index,
@@ -194,10 +301,17 @@ POname(clSetKernelArg)(cl_kernel kernel,
     }
 
   if (arg_value != NULL
-      && !(pi->type == POCL_ARG_TYPE_POINTER
-           && *(const intptr_t *)arg_value == 0))
+      && !(pi->type == POCL_ARG_TYPE_POINTER && ptr_value == 0))
     {
       void *value;
+      if (kernel->meta->builtin_kernel_attrs && ptr_value)
+        {
+          cl_mem buf = (const cl_mem)ptr_value;
+          int ret = pocl_verify_dbk_kernel_args (buf, kernel->meta, arg_index);
+          if (ret)
+            return ret;
+        }
+
       if (kernel->dyn_argument_storage != NULL)
         value = kernel->dyn_argument_offsets[arg_index];
       else
@@ -220,13 +334,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
             }
         }
 
-      if ((pi->type == POCL_ARG_TYPE_POINTER) && (arg_value != NULL))
-        {
-          cl_mem buf = *(const cl_mem *)arg_value;
-          memcpy (value, &buf, arg_size);
-        }
-      else
-        memcpy (value, arg_value, arg_size);
+      memcpy (value, arg_value, arg_size);
       p->value = value;
     }
 

@@ -23,6 +23,8 @@
 
 #include "pocl_builtin_kernels.h"
 
+#include "pocl_tensor_util.h"
+
 #include <string.h>
 
 /*
@@ -813,6 +815,7 @@ void *
 pocl_copy_defined_builtin_attributes (BuiltinKernelId kernel_id,
                                       const void *kernel_attributes)
 {
+  int err = CL_SUCCESS;
   switch (kernel_id)
     {
     case POCL_CDBI_DBK_KHR_GEMM:
@@ -821,7 +824,14 @@ pocl_copy_defined_builtin_attributes (BuiltinKernelId kernel_id,
           = malloc (sizeof (cl_dbk_attributes_khr_gemm));
         if (attrs == NULL)
           return NULL;
-        memcpy (attrs, kernel_attributes, sizeof (cl_dbk_attributes_khr_gemm));
+        cl_dbk_attributes_khr_gemm *src
+          = (cl_dbk_attributes_khr_gemm *)kernel_attributes;
+        memcpy (attrs, src, sizeof (cl_dbk_attributes_khr_gemm));
+        err = pocl_copy_tensor_desc_layout (&attrs->a, &src->a);
+        err = pocl_copy_tensor_desc_layout (&attrs->b, &src->b);
+        err = pocl_copy_tensor_desc_layout (&attrs->c_in, &src->c_in);
+        err = pocl_copy_tensor_desc_layout (&attrs->c_out, &src->c_out);
+
         return attrs;
       }
     case POCL_CDBI_DBK_KHR_MATMUL:
@@ -830,8 +840,14 @@ pocl_copy_defined_builtin_attributes (BuiltinKernelId kernel_id,
           = malloc (sizeof (cl_dbk_attributes_khr_matmul));
         if (attrs == NULL)
           return NULL;
-        memcpy (attrs, kernel_attributes,
-                sizeof (cl_dbk_attributes_khr_matmul));
+        cl_dbk_attributes_khr_matmul *src
+          = (cl_dbk_attributes_khr_matmul *)kernel_attributes;
+        memcpy (attrs, src, sizeof (cl_dbk_attributes_khr_matmul));
+
+        err = pocl_copy_tensor_desc_layout (&attrs->a, &src->a);
+        err = pocl_copy_tensor_desc_layout (&attrs->b, &src->b);
+        err = pocl_copy_tensor_desc_layout (&attrs->c, &src->c);
+
         return attrs;
       }
     default:
@@ -848,9 +864,24 @@ pocl_release_defined_builtin_attributes (BuiltinKernelId kernel_id,
   switch (kernel_id)
     {
     case POCL_CDBI_DBK_KHR_GEMM:
+      {
+        cl_dbk_attributes_khr_gemm *attrs
+          = (cl_dbk_attributes_khr_gemm *)kernel_attributes;
+        POCL_MEM_FREE (attrs->a.layout);
+        POCL_MEM_FREE (attrs->b.layout);
+        POCL_MEM_FREE (attrs->c_in.layout);
+        POCL_MEM_FREE (attrs->c_out.layout);
+        POCL_MEM_FREE (attrs);
+        return CL_SUCCESS;
+      }
     case POCL_CDBI_DBK_KHR_MATMUL:
       {
-        POCL_MEM_FREE (kernel_attributes);
+        cl_dbk_attributes_khr_matmul *attrs
+          = (cl_dbk_attributes_khr_matmul *)kernel_attributes;
+        POCL_MEM_FREE (attrs->a.layout);
+        POCL_MEM_FREE (attrs->b.layout);
+        POCL_MEM_FREE (attrs->c.layout);
+        POCL_MEM_FREE (attrs);
         return CL_SUCCESS;
       }
     default:
