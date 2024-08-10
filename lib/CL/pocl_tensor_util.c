@@ -22,6 +22,7 @@
 */
 
 #include "pocl_tensor_util.h"
+#include "pocl_util.h"
 
 /* Check the tensor layout is well defined.
  * Return CL_INVALID_TENSOR_LAYOUT if there is an error. */
@@ -124,7 +125,6 @@ pocl_check_tensor_desc (const cl_tensor_desc *tdesc)
    */
   POCL_RETURN_ERROR_COND ((tdesc == NULL), CL_INVALID_ARG_VALUE);
 
-  /* TBC: Should there be upper limit for tensor rank? */
   POCL_RETURN_ERROR_ON ((tdesc->rank > CL_MEM_MAX_TENSOR_RANK),
                         CL_INVALID_TENSOR_RANK, "Unsupported tensor rank.");
 
@@ -132,6 +132,21 @@ pocl_check_tensor_desc (const cl_tensor_desc *tdesc)
     POCL_RETURN_ERROR_ON ((tdesc->shape[i] == 0), CL_INVALID_TENSOR_SHAPE,
                           "Tensor shape must be fully specified!");
 
+  const cl_tensor_properties *P = tdesc->properties;
+  while (*P)
+    {
+      switch (*P)
+        {
+        case CL_TENSOR_PROPERTY_MUTABLE_SHAPE:
+        case CL_TENSOR_PROPERTY_MUTABLE_DTYPE:
+        case CL_TENSOR_PROPERTY_MUTABLE_LAYOUT:
+          break;
+        default:
+          POCL_RETURN_ERROR_ON (1, CL_INVALID_TENSOR_PROPERTY,
+                                "Unknown property %" PRIu64 "\n", *P);
+        }
+      ++P;
+    }
   return pocl_check_tensor_layout (tdesc->rank, tdesc->shape,
                                    tdesc->layout_type, tdesc->layout);
 }
@@ -152,7 +167,7 @@ duplicate_array (const void *src, size_t num_objects, size_t object_size)
 /* Copies the tensor description (deep copy) into the cl_mem.
  * The 'tdesc' must be valid (checked by check_tensor_desc). */
 int
-pocl_copy_tensor_desc (cl_mem mem, const cl_tensor_desc *tdesc)
+pocl_copy_tensor_desc2mem (cl_mem mem, const cl_tensor_desc *tdesc)
 {
   if (!tdesc)
     return CL_SUCCESS;
@@ -215,6 +230,28 @@ error:
   return CL_OUT_OF_HOST_MEMORY;
 }
 
+/* Copies the tensor layout only
+ * The 'src' must be valid (checked by check_tensor_desc). */
+int
+pocl_copy_tensor_desc_layout (cl_tensor_desc *dest, const cl_tensor_desc *src)
+{
+  if (src == NULL)
+    return CL_SUCCESS;
+  switch (src->layout_type)
+    {
+    case CL_TENSOR_LAYOUT_ML:
+      dest->layout = malloc (sizeof (cl_tensor_layout_ml));
+      memcpy (dest->layout, src->layout, sizeof (cl_tensor_layout_ml));
+      return CL_SUCCESS;
+    case CL_TENSOR_LAYOUT_BLAS:
+      dest->layout = malloc (sizeof (cl_tensor_layout_blas));
+      memcpy (dest->layout, src->layout, sizeof (cl_tensor_layout_blas));
+      return CL_SUCCESS;
+    default:
+      return CL_SUCCESS;
+    }
+}
+
 int
 pocl_tensor_type_is_int (cl_tensor_datatype T)
 {
@@ -270,5 +307,52 @@ pocl_tensor_type_size (cl_tensor_datatype T)
     case CL_TENSOR_DTYPE_UNKNOWN:
     default:
       return -1;
+    }
+}
+
+cl_bool
+pocl_tensor_dtype_value_equals (const cl_tensor_datatype DType,
+                                const cl_tensor_datatype_value *Value,
+                                cl_double doubleConst,
+                                cl_long longConst,
+                                cl_ulong ulongConst,
+                                char fp8Const,
+                                char int4Const)
+{
+  cl_float floatConst = (cl_float)doubleConst;
+  cl_half halfConst = float_to_half (floatConst);
+  switch (DType)
+    {
+    case CL_TENSOR_DTYPE_FP64:
+      return (Value->d == doubleConst);
+    case CL_TENSOR_DTYPE_FP32:
+      return (Value->f == floatConst);
+    case CL_TENSOR_DTYPE_FP16:
+      return (Value->h == halfConst);
+    /* TODO fp8 comparison */
+    case CL_TENSOR_DTYPE_FP8:
+      return (Value->c == fp8Const);
+    case CL_TENSOR_DTYPE_INT64:
+      return (Value->l == longConst);
+    case CL_TENSOR_DTYPE_UINT64:
+      return (Value->l == ulongConst);
+    case CL_TENSOR_DTYPE_INT32:
+      return ((cl_long)Value->l == longConst);
+    case CL_TENSOR_DTYPE_UINT32:
+      return ((cl_ulong)Value->i == ulongConst);
+    case CL_TENSOR_DTYPE_INT16:
+      return ((cl_long)Value->s == longConst);
+    case CL_TENSOR_DTYPE_UINT16:
+      return ((cl_ulong)Value->s == ulongConst);
+    case CL_TENSOR_DTYPE_INT8:
+      return ((cl_long)Value->c == longConst);
+    case CL_TENSOR_DTYPE_UINT8:
+      return ((cl_ulong)Value->c == ulongConst);
+    /* TODO int4 comparison */
+    case CL_TENSOR_DTYPE_INT4:
+    case CL_TENSOR_DTYPE_UINT4:
+      return (Value->c == int4Const);
+    default:
+      return CL_FALSE;
     }
 }

@@ -42,6 +42,7 @@
 #define CL_INVALID_TENSOR_RANK     -2310
 #define CL_INVALID_TENSOR_SHAPE    -2311
 #define CL_INVALID_TENSOR_DATATYPE -2312
+#define CL_INVALID_TENSOR_PROPERTY -2313
 
 /* list of fixed predefined builtin kernel IDs.
  * These should be allocated by the OpenCL extension process
@@ -183,8 +184,7 @@ typedef struct _cl_dbk_attributes_khr_gemm
 typedef struct _cl_dbk_attributes_khr_matmul
 {
   cl_tensor_desc a, b, c;
-  cl_int trans_a;
-  cl_int trans_b;
+  cl_bool trans_a, trans_b;
   /* 0-terminated array */
   cl_dbk_properties kernel_props[CL_MAX_DBK_PROPERTIES];
 } cl_dbk_attributes_khr_matmul;

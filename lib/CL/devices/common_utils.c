@@ -570,15 +570,41 @@ pocl_cpu_validate_khr_gemm (cl_bool TransA,
                         CL_INVALID_TENSOR_DATATYPE,
                         "Datatype of C is smaller than A");
 
+  const cl_tensor_properties P = TenA->properties[0];
+  if (P != 0)
+    {
+      POCL_RETURN_ERROR_ON ((P == CL_TENSOR_PROPERTY_MUTABLE_DTYPE),
+                            CL_INVALID_TENSOR_PROPERTY,
+                            "CPU driver does not "
+                            "support CL_TENSOR_PROPERTY_MUTABLE_DTYPE\n");
+      POCL_RETURN_ERROR_ON ((P == CL_TENSOR_PROPERTY_MUTABLE_LAYOUT),
+                            CL_INVALID_TENSOR_PROPERTY,
+                            "CPU driver does not "
+                            "support CL_TENSOR_PROPERTY_MUTABLE_LAYOUT\n");
+      // Mutable dims are supported by CPU
+      POCL_RETURN_ERROR_ON ((P != CL_TENSOR_PROPERTY_MUTABLE_SHAPE),
+                            CL_INVALID_TENSOR_PROPERTY,
+                            "Unknown Property %" PRIu64 "\n", P);
+    }
+
   /* TODO check the value in respective type */
   if (Alpha)
     {
-      POCL_RETURN_ERROR_ON (Alpha->f != 1.0f, CL_INVALID_DBK_ATTRIBUTE,
+      cl_bool IsAlphaOne
+        = pocl_tensor_dtype_value_equals (TenA->dtype, Alpha, 1.0, 1, 1, 1, 1);
+
+      POCL_RETURN_ERROR_ON (IsAlphaOne == CL_FALSE, CL_INVALID_DBK_ATTRIBUTE,
                             "CPU supports only Alpha == 1.0\n");
     }
   if (Beta)
     {
-      POCL_RETURN_ERROR_ON ((Beta->f != 0.0f && Beta->f != 1.0f),
+      cl_bool IsBetaOne
+        = pocl_tensor_dtype_value_equals (TenA->dtype, Beta, 1.0, 1, 1, 1, 1);
+
+      cl_bool IsBetaZero
+        = pocl_tensor_dtype_value_equals (TenA->dtype, Beta, 0.0, 0, 0, 0, 0);
+
+      POCL_RETURN_ERROR_ON ((!IsBetaOne && !IsBetaZero),
                             CL_INVALID_DBK_ATTRIBUTE,
                             "CPU supports only Beta == 0.0 or 1.0\n");
     }

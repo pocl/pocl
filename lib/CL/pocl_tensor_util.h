@@ -30,8 +30,19 @@ int pocl_check_tensor_layout (cl_uint rank,
 
 int pocl_check_tensor_desc (const cl_tensor_desc *tdesc);
 
-int pocl_copy_tensor_desc (cl_mem mem, const cl_tensor_desc *tdesc);
+int pocl_copy_tensor_desc2mem (cl_mem mem, const cl_tensor_desc *tdesc);
+
+int pocl_copy_tensor_desc_layout (cl_tensor_desc *dest,
+                                  const cl_tensor_desc *src);
 
 int pocl_tensor_type_is_int (cl_tensor_datatype T);
 
 int pocl_tensor_type_size (cl_tensor_datatype T);
+
+cl_bool pocl_tensor_dtype_value_equals (const cl_tensor_datatype DType,
+                                        const cl_tensor_datatype_value *Value,
+                                        cl_double doubleConst,
+                                        cl_long longConst,
+                                        cl_ulong ulongConst,
+                                        char fp8Const,
+                                        char int4Const);

@@ -99,8 +99,8 @@ typedef cl_uint cl_tensor_layout_type;
 typedef cl_properties cl_tensor_properties;
 
 #define CL_TENSOR_PROPERTY_NONE 0
-/* allow the tensor to be mutable with respect to dimensions */
-#define CL_TENSOR_PROPERTY_MUTABLE_DIMS 1
+/* allow the tensor to be mutable with respect to shape */
+#define CL_TENSOR_PROPERTY_MUTABLE_SHAPE 1
 /* allow the tensor to be mutable with respect to data types */
 #define CL_TENSOR_PROPERTY_MUTABLE_DTYPE 2
 /* allow the tensor to be mutable with respect to layout */
@@ -159,7 +159,7 @@ typedef struct _cl_tensor_desc
    * used for transferring data from or to tensor. If a pointer to the
    * tensor data is aquired (somehow), dereferencing that pointer is
    * undefined behavior. */
-  const void *layout;
+  void *layout;
   cl_tensor_layout_type layout_type;
 
 } cl_tensor_desc;
