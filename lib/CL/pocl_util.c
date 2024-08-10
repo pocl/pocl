@@ -1160,9 +1160,8 @@ pocl_command_push (_cl_command_node *node,
 }
 
 static void
-pocl_unmap_command_finished (cl_event event, _cl_command_t *cmd)
+pocl_unmap_command_finished (cl_device_id dev, _cl_command_t *cmd)
 {
-  cl_device_id dev = event->queue->device;
   pocl_mem_identifier *mem_id = NULL;
   cl_mem mem = NULL;
   mem = POCL_MEM_BS (cmd->unmap.buffer);
@@ -1968,9 +1967,8 @@ pocl_update_event_running (cl_event event)
 }
 
 /* Note: this must be kept in sync with pocl_copy_command_node */
-static void pocl_free_event_node (cl_event event)
+static void pocl_free_event_node (_cl_command_node *node)
 {
-  _cl_command_node *node = event->command;
   switch (node->type)
     {
     case CL_COMMAND_NDRANGE_KERNEL:
@@ -1991,7 +1989,7 @@ static void pocl_free_event_node (cl_event event)
       break;
 
     case CL_COMMAND_UNMAP_MEM_OBJECT:
-      pocl_unmap_command_finished (event, &node->command);
+      pocl_unmap_command_finished (node->device, &node->command);
       break;
 
     case CL_COMMAND_SVM_MIGRATE_MEM:
@@ -2004,7 +2002,6 @@ static void pocl_free_event_node (cl_event event)
       break;
     }
   pocl_mem_manager_free_command (node);
-  event->command = NULL;
 }
 
 /**
@@ -2086,6 +2083,7 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
   assert (event->status > CL_COMPLETE);
   int notify_cmdq = CL_FALSE;
   cl_command_buffer_khr command_buffer = NULL;
+  _cl_command_node *node = NULL;
 
   cl_command_queue cq = event->queue;
   POCL_LOCK_OBJ (cq);
@@ -2124,8 +2122,35 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
    * clEnqueueSomething() */
   pocl_event_updated (event, status);
   command_buffer = event->command_buffer;
+  node = event->command;
+  event->command = NULL;
   POCL_UNLOCK_OBJ (event);
 
+  /* NOTE: this must be called before we call broadcast.
+   * Reason: pocl_ndrange_node_cleanup releases kernel; broadcast makes the next
+   * event runnable. Assume pocl_ndrange_node_cleanup is not called before
+   * pocl_broadcast; then with this sequence of calls:
+   * clBuildProgram(p)
+   * kernel = clCreateKernel(p)
+   * clEnqueueNDRange(kernel)
+   * clFinish()
+   *   ... pocl_update_event_finished()
+   *      ... pocl_broadcast
+   *      <this cpu thread gets descheduled here, but next events are launched>
+   *      ... pocl_ndrange_node_cleanup
+   * clReleaseKernel(kernel)
+   * clBuildProgram(rebuild the same program again)
+   * ...
+   * since cleanup is still not called at clBuildProgram, this will cause the
+   * clBuildProgram to fail with CL_INVALID_OPERATION(program still has kernels)
+   * this happens with CTS test "compiler", subtests: options_build_macro,
+   * options_build_macro_existence, options_denorm_cache */
+  if (node)
+  {
+    pocl_free_event_node (node);
+  }
+
+  /* NOTE this must be called before we call broadcast, see above */
   if (event->reset_command_buffer)
   {
     assert (command_buffer);
@@ -2139,6 +2164,7 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
 
   ops->broadcast (event);
 
+#ifdef ENABLE_REMOTE_CLIENT
   /* With remote being asynchronous it is possible that an event completion
    * signal is received before some of its dependencies. Therefore this event
    * has to be removed from the notify lists of any remaining events in the
@@ -2175,6 +2201,7 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
       POCL_LOCK_OBJ (event);
     }
   POCL_UNLOCK_OBJ (event);
+#endif
 
 #ifdef POCL_DEBUG_MESSAGES
   if (msg != NULL)
@@ -2183,8 +2210,6 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
           func, line, msg, (uint64_t) (event->time_end - event->time_start));
     }
 #endif
-
-  pocl_free_event_node (event);
 
   POCL_LOCK_OBJ (event);
   if (ops->notify_event_finished)
