@@ -1837,18 +1837,28 @@ pocl_network_init_device (cl_device_id device, remote_device_data_t *ddata,
 
 #define D(x) device->x = devinfo->x
 
+/**
+ * Fetches the device info data.
+ *
+ * @param specific_info Can be set to a specific (vendor-specific) device info
+ * id, then that info will be returned only in @param param_value and
+ * @param param_value_size_ret. Otherwise, the standard info will be
+ * populated and cached for returning later from clGetDeviceInfo().
+ */
 cl_int
-pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
-                            remote_server_data_t *data, uint32_t pid,
-                            uint32_t did)
+pocl_network_fetch_devinfo (cl_device_id device,
+                            cl_device_info specific_info,
+                            size_t param_value_size,
+                            void *param_value,
+                            size_t *param_value_size_ret)
 {
-  // setup device info
-  // ####################################################
-  // ####################################################
+  remote_device_data_t *ddata = (remote_device_data_t *)device->data;
+  remote_server_data_t *data = ddata->server;
+  uint32_t pid = ddata->remote_platform_index;
+  uint32_t did = ddata->remote_device_index;
 
   CREATE_SYNC_NETCMD;
 
-  // request device info
   ID_REQUEST (DeviceInfo, did);
 
   DeviceInfo_t *devinfo;
@@ -1856,6 +1866,7 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
      string section length. */
   netcmd->rep_extra_data = NULL;
   netcmd->rep_extra_size = sizeof (DeviceInfo_t);
+  netcmd->request.m.device_info.id = specific_info;
 
   SEND_REQ_FAST;
 
@@ -1867,6 +1878,24 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
   assert (netcmd->reply.data_size >= sizeof (DeviceInfo_t));
 
   devinfo = (DeviceInfo_t *)netcmd->rep_extra_data;
+
+  if (specific_info != 0)
+    {
+      if (devinfo->specific_info_size == 0)
+        return CL_INVALID_VALUE;
+
+      if (param_value != NULL)
+        {
+          if (param_value_size != devinfo->specific_info_size)
+            return CL_INVALID_VALUE;
+          memcpy (param_value, &devinfo->specific_info_data,
+                  devinfo->specific_info_size);
+        }
+
+      if (param_value_size_ret != NULL)
+        *param_value_size_ret = devinfo->specific_info_size;
+      return CL_SUCCESS;
+    }
 
   device->host_unified_memory = 0;
   device->execution_capabilities = CL_EXEC_KERNEL;
@@ -2016,6 +2045,9 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
   D (image3d_max_depth);
   D (image_max_buffer_size);
   D (image_max_array_size);
+
+  D (max_num_sub_groups);
+  D (host_unified_memory);
 
   size_t i, j;
   for (i = 0; i < NUM_OPENCL_IMAGE_TYPES; ++i)

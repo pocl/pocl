@@ -1104,7 +1104,8 @@ void VirtualCLContext::DeviceInfo(Request *req, Reply *rep) {
   // The first string starts at offset 1.
   rep->rep.strings_size = 1;
 
-  SharedContextList[req->req.pid]->getDeviceInfo(req->req.did, info, strings);
+  SharedContextList[req->req.pid]->getDeviceInfo(req->req.did, info, strings,
+                                                 req->req.m.device_info.id);
 
   for (const std::string &str : strings)
     rep->rep.strings_size += str.size() + 1;

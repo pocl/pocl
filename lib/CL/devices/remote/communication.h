@@ -3,7 +3,7 @@
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
    Copyright (c) 2019-2023 Jan Solanti / Tampere University
-   Copyright (c) 2023 Pekka Jääskeläinen / Intel Finland Oy
+   Copyright (c) 2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -308,10 +308,11 @@ cl_int pocl_network_free_device (cl_device_id device);
 
 cl_int pocl_network_setup_peer_mesh ();
 
-cl_int pocl_network_setup_devinfo (cl_device_id device,
-                                   remote_device_data_t *ddata,
-                                   remote_server_data_t *data, uint32_t pid,
-                                   uint32_t did);
+cl_int pocl_network_fetch_devinfo (cl_device_id device,
+                                   cl_device_info specific_info,
+                                   size_t param_value_size,
+                                   void *param_value,
+                                   size_t *param_value_size_ret);
 
 cl_int pocl_network_create_buffer (remote_device_data_t *d, cl_mem mem,
                                    void **device_addr);

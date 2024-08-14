@@ -319,6 +319,9 @@ extern "C"
     uint64_t image_max_buffer_size;
     uint64_t image_max_array_size;
 
+    /* ########### subgroups */
+    uint32_t max_num_sub_groups;
+
     ENUM_TYPE type;
     uint8_t available;
     uint8_t compiler_available;
@@ -327,7 +330,25 @@ extern "C"
     uint8_t image_support;
     uint8_t full_profile;
 
+    cl_bool host_unified_memory;
+
     ImgFormatInfo_t supported_image_formats[6];
+
+    /* If a single (vendor-specific) device info is queried (instead
+       of all the basic device info data all at once), its data
+       will be stored in this union verbatim. */
+    union
+    {
+      /* E.g. for CL_​DEVICE_​SUB_​GROUP_​SIZES_​INTEL. */
+      size_t size_t_array[16];
+      cl_uint uint_val;
+      cl_bool bool_val;
+      cl_device_feature_capabilities_intel intel_capab_val;
+    } specific_info_data;
+
+    /* The size of the value is returned in specificInfoSize. Zero
+       is used to signal an unknown/unsupported key type. */
+    uint32_t specific_info_size;
   } DeviceInfo_t;
 
   typedef struct __attribute__ ((packed, aligned (8))) ConnectPeerMsg_s
@@ -601,6 +622,13 @@ extern "C"
     uint64_t pod_arg_size;
   } RunKernelMsg_t;
 
+  typedef struct __attribute__ ((packed, aligned (8))) DeviceInfoMsg_s
+  {
+    /* If non-zero, the client has requested a specific device info
+       instead of all standard ones at once. */
+    cl_device_info id;
+  } DeviceInfoMsg_t;
+
   /* ########################## */
 
   typedef struct __attribute__ ((packed, aligned (8))) PeerHandshake_s
@@ -659,6 +687,8 @@ extern "C"
       CreateKernelMsg_t create_kernel;
       FreeKernelMsg_t free_kernel;
       RunKernelMsg_t run_kernel;
+
+      DeviceInfoMsg_t device_info;
     } m;
   } RequestMsg_t;
 
@@ -855,9 +885,11 @@ extern "C"
       case MessageType_FillImageRect:
         body = sizeof (FillImageRectMsg_t);
         break;
-
       case MessageType_RunKernel:
         body = sizeof (RunKernelMsg_t);
+        break;
+      case MessageType_DeviceInfo:
+        body = sizeof (DeviceInfoMsg_t);
         break;
 
       default:
