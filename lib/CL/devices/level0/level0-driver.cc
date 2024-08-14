@@ -1401,6 +1401,15 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   assert(Kernel->data[DeviceI] != nullptr);
   Level0Kernel *L0Kernel = (Level0Kernel *)Kernel->data[DeviceI];
 
+  uint32_t TotalWGsX = PoclCtx->num_groups[0];
+  uint32_t TotalWGsY = PoclCtx->num_groups[1];
+  uint32_t TotalWGsZ = PoclCtx->num_groups[2];
+  // it's valid to enqueue ndrange with zeros
+  size_t TotalWGs = TotalWGsX * TotalWGsY * TotalWGsZ;
+  if (TotalWGs == 0) {
+    return;
+  }
+
   bool Needs64bitPtrs = false;
   pocl_buffer_migration_info *MI;
   LL_FOREACH (Cmd->migr_infos, MI) {
@@ -1445,14 +1454,6 @@ void Level0Queue::run(_cl_command_node *Cmd) {
 
   if (setupKernelArgs(ModuleH, KernelH, Dev, Cmd->program_device_i, RunCmd)) {
     POCL_MSG_ERR("Level0: Failed to setup kernel arguments\n");
-    return;
-  }
-
-  uint32_t TotalWGsX = PoclCtx->num_groups[0];
-  uint32_t TotalWGsY = PoclCtx->num_groups[1];
-  uint32_t TotalWGsZ = PoclCtx->num_groups[2];
-  size_t TotalWGs = TotalWGsX * TotalWGsY * TotalWGsZ;
-  if (TotalWGs == 0) {
     return;
   }
 

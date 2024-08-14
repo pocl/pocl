@@ -97,7 +97,7 @@ static void pocl_level0_local_size_optimizer(cl_device_id Dev, cl_kernel Kernel,
   uint32_t SuggestedX = 0;
   uint32_t SuggestedY = 0;
   uint32_t SuggestedZ = 0;
-  ze_result_t Res = ZE_RESULT_ERROR_DEVICE_LOST;
+  ze_result_t Res = ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
   if (HKernel != nullptr) {
     Res = zeKernelSuggestGroupSize(HKernel, GlobalX, GlobalY, GlobalZ,
                                    &SuggestedX, &SuggestedY, &SuggestedZ);
@@ -113,6 +113,22 @@ static void pocl_level0_local_size_optimizer(cl_device_id Dev, cl_kernel Kernel,
   }
 }
 
+static int pocl_level0_verify_ndrange_sizes(const size_t *GlobalOffsets,
+                                            const size_t *GlobalWsize,
+                                            const size_t *LocalWsize) {
+  size_t GlobalMax = GlobalWsize[0] | GlobalWsize[1] | GlobalWsize[2];
+  POCL_RETURN_ERROR_ON((GlobalMax > UINT32_MAX), CL_INVALID_GLOBAL_WORK_SIZE,
+                       "Level0 driver does not support "
+                       "Global Work Sizes >32bit \n");
+
+  size_t OffsetMax = GlobalOffsets[0] | GlobalOffsets[1] | GlobalOffsets[2];
+  POCL_RETURN_ERROR_ON((OffsetMax > UINT32_MAX), CL_INVALID_GLOBAL_OFFSET,
+                       "Level0 driver does not support "
+                       "Global Offset Sizes >32bit \n");
+
+  return CL_SUCCESS;
+}
+
 void pocl_level0_init_device_ops(struct pocl_device_ops *Ops) {
   Ops->device_name = "level0";
 
@@ -125,6 +141,7 @@ void pocl_level0_init_device_ops(struct pocl_device_ops *Ops) {
   Ops->free_mapping_ptr = pocl_level0_free_mapping_ptr;
 
   Ops->compute_local_size = pocl_level0_local_size_optimizer;
+  Ops->verify_ndrange_sizes = pocl_level0_verify_ndrange_sizes;
 
   Ops->alloc_mem_obj = pocl_level0_alloc_mem_obj;
   Ops->free = pocl_level0_free;

@@ -923,6 +923,13 @@ struct pocl_device_ops {
                               size_t global_z, size_t *local_x,
                               size_t *local_y, size_t *local_z);
 
+  /* verifies that the device can run the requested WG sizes/offsets.
+   * better to do this at enqueueNDRange time, than handling
+   * the error later in the driver */
+  int (*verify_ndrange_sizes) (const size_t *global_work_offset,
+                               const size_t *global_work_size,
+                               const size_t *local_work_size);
+
   /** If the device implements an extension that introduces new
    * clGetDeviceInfo() types, it can override this function. */
   cl_int (*get_device_info_ext) (cl_device_id dev,
