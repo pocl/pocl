@@ -43,7 +43,7 @@ jobs:
         git clone https://github.com/OCL-dev/ocl-icd.git ${{github.workspace}}/../$OCL_ICD
         git clone https://github.com/THU-DSP-LAB/ventus-gpgpu-isa-simulator.git ${{github.workspace}}/../$ISA_SIMULATOR
         git clone https://github.com/THU-DSP-LAB/ventus-driver.git ${{github.workspace}}/../$VENTUS_DRIVER
-        git clone https://github.com/Jules-Kong/gpu-rodinia.git ${{github.workspace}}/../$RODINIA
+        git clone https://github.com/THU-DSP-LAB/gpu-rodinia.git ${{github.workspace}}/../$RODINIA
         export DRIVER_DIR=${{github.workspace}}/../$VENTUS_DRIVER
         export DRIVER_BUILD_DIR=${DRIVER_DIR}/build
         export VENTUS_INSTALL_PREFIX=${{github.workspace}}/../$LLVM/install
