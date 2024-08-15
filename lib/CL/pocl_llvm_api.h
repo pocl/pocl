@@ -30,6 +30,7 @@
 #include <llvm/IR/DiagnosticPrinter.h>
 #include <llvm/IR/Module.h>
 #include <llvm/Support/raw_os_ostream.h>
+#include <llvm/Target/TargetMachine.h>
 
 #include <map>
 #include <string>
@@ -101,8 +102,12 @@ POCL_EXPORT bool getModuleBoolMetadata (const llvm::Module &mod,
  * SizeL - optimize for size
  * Vectorize - whether to invoke the vectorizer (only used for legacy PM)
  */
-POCL_EXPORT void populateModulePM (void *Passes, void *Module, unsigned OptL,
-                                   unsigned SizeL, bool Vectorize = true);
+POCL_EXPORT void populateModulePM (void *Passes,
+                                   void *Module,
+                                   unsigned OptL,
+                                   unsigned SizeL,
+                                   bool Vectorize = true,
+                                   llvm::TargetMachine *TM = nullptr);
 
 extern std::string CurrentWgMethod;
 

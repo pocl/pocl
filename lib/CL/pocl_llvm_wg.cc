@@ -199,7 +199,7 @@ llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
   // devices do not want to vectorize intra work-item at this
   // stage.
   Vectorize = ((CurrentWgMethod == "loopvec" || CurrentWgMethod == "cbs") &&
-               (Dev->spmd == CL_FALSE));
+               (!Dev->spmd));
   PTO.SLPVectorization = Vectorize;
   PTO.LoopVectorization = Vectorize;
   OptimizeLevel = OLevel;
@@ -272,7 +272,6 @@ llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
 #endif
 
   pocl::registerFunctionAnalyses(PB);
-
   // Register all the basic analyses with the managers.
   PB.registerModuleAnalyses(MAM);
   PB.registerCGSCCAnalyses(CGAM);
@@ -312,7 +311,7 @@ void PoCLModulePassManager::run(llvm::Module &Bitcode) {
   PM.run(Bitcode, MAM);
 #ifdef SEPARATE_OPTIMIZATION_FROM_POCL_PASSES
   populateModulePM(nullptr, (void *)&Bitcode, OptimizeLevel, SizeLevel,
-                   Vectorize);
+                   Vectorize, Machine.get());
 #endif
 }
 
@@ -516,7 +515,7 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
 
   // NOTE: if you add a new PoCL pass here,
   // don't forget to register it in registerPassBuilderPasses
-  if (Dev->spmd == CL_FALSE) {
+  if (!Dev->spmd) {
     addPass(Passes, "simplifycfg");
     addPass(Passes, "loop-simplify");
 
@@ -1568,18 +1567,42 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
 }
 
 void populateModulePM(void *Passes, void *Module, unsigned OptL, unsigned SizeL,
-                      bool Vectorize) {
+                      bool Vectorize, TargetMachine *TM) {
+
+  PipelineTuningOptions PTO;
+
+  // Let the loopvec decide when to unroll.
+  PTO.LoopUnrolling = false;
+#if LLVM_MAJOR > 16
+  PTO.UnifiedLTO = false;
+#endif
+  PTO.SLPVectorization = Vectorize;
+  PTO.LoopVectorization = Vectorize;
+
+#ifdef DEBUG_NEW_PASS_MANAGER
+  PrintPassOptions PrintPassOpts;
+  PassInstrumentationCallbacks PIC;
+  llvm::LLVMContext Context; // for SI
+  std::unique_ptr<StandardInstrumentations> SI;
+  PrintPassOpts.Verbose = true;
+  PrintPassOpts.SkipAnalyses = false;
+  PrintPassOpts.Indent = true;
+  SI.reset(new StandardInstrumentations(Context,
+                                        true,  // debug logging
+                                        false, // verify each
+                                        PrintPassOpts));
+  SI->registerCallbacks(PIC, &MAM);
+
+  PassBuilder PB(TM, PTO, std::nullopt, &PIC);
+#else
+  PassBuilder PB(TM, PTO);
+#endif
+
   // Create the analysis managers.
   LoopAnalysisManager LAM;
   FunctionAnalysisManager FAM;
   CGSCCAnalysisManager CGAM;
   ModuleAnalysisManager MAM;
-
-  // Create the new pass manager builder.
-  // Take a look at the PassBuilder constructor parameters for more
-  // customization, e.g. specifying a TargetMachine or various debugging
-  // options.
-  PassBuilder PB;
 
   // Register all the basic analyses with the managers.
   PB.registerModuleAnalyses(MAM);
