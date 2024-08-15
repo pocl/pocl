@@ -67,6 +67,9 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   POCL_RETURN_ERROR_COND ((*(device->available) == CL_FALSE),
                           CL_DEVICE_NOT_AVAILABLE);
 
+  POCL_MSG_PRINT_INFO ("clGetDeviceInfo query of param %x for %s\n",
+                       param_name, device->short_name);
+
   switch (param_name)
   {
   case CL_DEVICE_IMAGE_SUPPORT:
@@ -243,7 +246,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_GETINFO (cl_ulong, device->half_fp_config);
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF       :
     POCL_RETURN_DEVICE_INFO_WITH_EXT_CHECK(cl_uint, device->preferred_vector_width_half, cl_khr_fp16);
-  case CL_DEVICE_HOST_UNIFIED_MEMORY               : 
+  case CL_DEVICE_HOST_UNIFIED_MEMORY:
     POCL_RETURN_GETINFO(cl_bool, device->host_unified_memory);
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR          : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_char);

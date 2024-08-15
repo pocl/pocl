@@ -228,7 +228,8 @@ public:
   virtual int freeQueue(uint32_t queue_id) override;
 
   virtual int getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
-                            std::vector<std::string>& strings) override;
+                            std::vector<std::string> &strings,
+                            cl_device_info SpecificInfo) override;
 
   virtual int createSampler(uint32_t sampler_id, uint32_t normalized,
                             uint32_t address, uint32_t filter) override;
@@ -877,14 +878,46 @@ static void appendImageFormats(DeviceInfo_t &devi, unsigned i,
 }
 #undef DI
 
+/**
+ * Returns the basic device infos that can be asked via clGetDeviceInfo.
+ *
+ * @param strings The string values are returned in this vector.
+ * @param Info If this is not set to zero, all of the basic
+ * clGetDeviceInfo types are returned at once in the named attributes
+ * of @param i. Otherwise, data for a valid cl_device_info type
+ * is returend in i.specific_info_data and its size in i.specific_info_size;
+ */
 int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
-                                   std::vector<std::string>& strings) {
+                                   std::vector<std::string> &strings,
+                                   cl_device_info SpecificInfo) {
 
-  bool is_nvidia = false;
-  bool is_pocl_CPU = false;
-  POCL_MSG_PRINT_INFO("P %u Get Device %" PRIu32 " Info\n", plat_id, device_id);
+  POCL_MSG_PRINT_INFO("P %u Get Device %" PRIu32 " Info (specific info %x)\n",
+                      plat_id, device_id, SpecificInfo);
 
   cl::Device clientDevice = CLDevices[device_id];
+
+  if (SpecificInfo != 0) {
+    size_t ValSize = 0;
+    i.specific_info_size = 0;
+    cl_int RetVal =
+        clGetDeviceInfo(clientDevice.get(), SpecificInfo, 0, nullptr, &ValSize);
+    if (RetVal != CL_SUCCESS) {
+      return 0;
+    } else {
+      if (ValSize > sizeof(i.specific_info_data)) {
+        POCL_MSG_ERR("Device info data for %x too large (%zu > %zu).",
+                     SpecificInfo, ValSize, sizeof(i.specific_info_data));
+        return 0;
+      }
+      RetVal = clGetDeviceInfo(clientDevice.get(), SpecificInfo, ValSize,
+                               &i.specific_info_data, nullptr);
+      if (RetVal != CL_SUCCESS)
+        return 0;
+
+      i.specific_info_size = ValSize;
+      return 0;
+    }
+  }
 
   std::string temp;
 
@@ -900,20 +933,20 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
   PUSH_STRING(i.opencl_c_version, clientDevice.getInfo<CL_DEVICE_OPENCL_C_VERSION>());
   temp = clientDevice.getInfo<CL_DEVICE_VERSION>();
   PUSH_STRING(i.device_version, temp);
-  is_pocl_CPU = (temp.find("pocl") != std::string::npos);
 
   temp = clientDevice.getInfo<CL_DRIVER_VERSION>();
   PUSH_STRING(i.driver_version, temp);
 
   temp = clientDevice.getInfo<CL_DEVICE_VENDOR>();
   PUSH_STRING(i.vendor, temp);
-  is_nvidia = (temp.find("NVIDIA") != std::string::npos);
 
   PUSH_STRING(i.builtin_kernels, clientDevice.getInfo<CL_DEVICE_BUILT_IN_KERNELS>());
 
+  std::string targetExtensions =
+      clientDevice.getInfo<CL_DEVICE_EXTENSIONS>() + " ";
   // Filter the extensions list and drop those that are currently not
   // supported through PoCL-R.
-  std::stringstream extsStream(clientDevice.getInfo<CL_DEVICE_EXTENSIONS>());
+  std::stringstream extsStream(targetExtensions);
   std::string extName;
   std::string exts;
 
@@ -921,10 +954,6 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
       // need to delegate
       // device.getInfo<CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL>()
       "cl_intel_command_queue_families",
-      // need to delegate various extended device queries
-      "cl_intel_device_attribute_query",
-      // need to delegate device.getInfo<CL_DEVICE_SUB_GROUP_SIZES_INTEL>()
-      "cl_intel_required_subgroup_size",
       // USM/SVM not yet supported.
       "cl_intel_unified_shared_memory",
       // need to delegate device.getInfo<CL_DEVICE_{L,U}UID_KHR>()
@@ -938,10 +967,21 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
       "cl_ext_buffer_device_address",
   };
 
+  // Device query extensions which are supported if the target supports them and
+  // can be directly delegated to the device.
+  const std::vector<std::string> delegatedDeviceQueryExts{
+      "cl_intel_device_attribute_query", "cl_intel_required_subgroup_size"};
+
   while (getline(extsStream, extName, ' ')) {
 
     if (std::find(unsupportedExts.begin(), unsupportedExts.end(), extName) !=
         unsupportedExts.end())
+      continue;
+
+    if (std::find(delegatedDeviceQueryExts.begin(),
+                  delegatedDeviceQueryExts.end(),
+                  extName) != unsupportedExts.end() &&
+        targetExtensions.find(extName + " ") == std::string::npos)
       continue;
 
     if (extName == "cl_khr_il_program") {
@@ -1093,6 +1133,11 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
       clientDevice.getInfo<CL_DEVICE_IMAGE_MAX_BUFFER_SIZE>();
   i.image_max_array_size =
       clientDevice.getInfo<CL_DEVICE_IMAGE_MAX_ARRAY_SIZE>();
+  i.max_num_sub_groups = clientDevice.getInfo<CL_DEVICE_MAX_NUM_SUB_GROUPS>();
+
+  // Use the C API since deprecated and not available in the C++ one.
+  clGetDeviceInfo(clientDevice.get(), CL_DEVICE_HOST_UNIFIED_MEMORY,
+                  sizeof(cl_bool), &i.host_unified_memory, nullptr);
 
   /*******************************************************************/
 

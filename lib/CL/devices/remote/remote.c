@@ -334,6 +334,8 @@ pocl_remote_init_device_ops (struct pocl_device_ops *ops)
   ops->free = pocl_remote_free;
   ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
   ops->free_mapping_ptr = pocl_driver_free_mapping_ptr;
+
+  ops->get_device_info_ext = pocl_remote_get_device_info_ext;
   ops->set_kernel_exec_info_ext = pocl_remote_set_kernel_exec_info_ext;
 
   ops->can_migrate_d2d = pocl_remote_can_migrate_d2d;
@@ -572,9 +574,7 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
 
   POCL_INIT_LOCK (d->mem_lock);
 
-  if (pocl_network_setup_devinfo (device, d, d->server,
-                                  d->remote_platform_index,
-                                  d->remote_device_index))
+  if (pocl_network_fetch_devinfo (device, 0, NULL, 0, NULL))
     return CL_DEVICE_NOT_FOUND;
 
   assert (device->short_name);
@@ -2648,4 +2648,15 @@ pocl_remote_set_kernel_exec_info_ext (cl_device_id dev,
     default:
       return CL_INVALID_VALUE;
     }
+}
+
+cl_int
+pocl_remote_get_device_info_ext (cl_device_id device,
+                                 cl_device_info param_name,
+                                 size_t param_value_size,
+                                 void *param_value,
+                                 size_t *param_value_size_ret)
+{
+  return pocl_network_fetch_devinfo (device, param_name, param_value_size,
+                                     param_value, param_value_size_ret);
 }
