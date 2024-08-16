@@ -54,6 +54,9 @@ public:
   Result run(llvm::Function &F, llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
+
+WorkitemHandlerType ChooseWorkitemHandler(llvm::Function &F);
+
 } // namespace pocl
 
 #endif

@@ -38,16 +38,13 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 POP_COMPILER_DIAGS
 
 #include <functional>
+#include <map>
 #include <sstream>
 #include <vector>
 
 #include "config.h"
 
 namespace pocl {
-
-#define POCL_LOCAL_ID_X_GLOBAL "_local_id_x"
-#define POCL_LOCAL_ID_Y_GLOBAL "_local_id_y"
-#define POCL_LOCAL_ID_Z_GLOBAL "_local_id_z"
 
 class Kernel;
 
@@ -134,9 +131,7 @@ class Kernel;
 
     static void GenerateTempNames(llvm::BasicBlock *bb);
 
-    llvm::Instruction* LocalIDXLoad();
-    llvm::Instruction* LocalIDYLoad();
-    llvm::Instruction* LocalIDZLoad();
+    llvm::Instruction *getOrCreateIDLoad(std::string IDGlobalName);
 
     void LocalizeIDLoads();
 
@@ -145,9 +140,9 @@ class Kernel;
   private:
     BBContainer BBs_;
 
-    llvm::Instruction* LocalIDXLoadInstr;
-    llvm::Instruction* LocalIDYLoadInstr;
-    llvm::Instruction* LocalIDZLoadInstr;
+    /// Cache for the instructions in the entry block that load the various WI
+    /// ids.
+    std::map<std::string, llvm::Instruction *> IDLoadInstrs;
 
     bool Verify();
     /// The indices of entry and exit, not pointers, for finding the BBs in the

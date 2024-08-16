@@ -104,8 +104,6 @@ bool WorkitemReplicationImpl::runOnFunction(Function &F) {
 bool WorkitemReplicationImpl::processFunction(Function &F) {
   Module *M = F.getParent();
 
-//  F.viewCFG();
-
   Kernel *K = cast<Kernel> (&F);
   Initialize(K);
 
@@ -304,6 +302,7 @@ bool WorkitemReplicationImpl::processFunction(Function &F) {
   delete OriginalParallelRegions;
   OriginalParallelRegions = nullptr;
 
+  GenerateGlobalIdComputation();
   return true;
 }
 

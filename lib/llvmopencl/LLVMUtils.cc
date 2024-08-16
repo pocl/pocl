@@ -631,6 +631,9 @@ const char *WorkgroupVariablesArray[NumWorkgroupVariables+1] = {"_local_id_x",
                                     "_global_offset_x",
                                     "_global_offset_y",
                                     "_global_offset_z",
+                                    "_global_id_x",
+                                    "_global_id_y",
+                                    "_global_id_z",
                                     "_pocl_sub_group_size",
                                     PoclGVarBufferName,
                                     NULL};
@@ -687,6 +690,15 @@ void registerFunctionAnalyses(llvm::PassBuilder &PB) {
   VariableUniformityAnalysis::registerWithPB(PB);
   WorkitemHandlerChooser::registerWithPB(PB);
   WorkItemAliasAnalysis::registerWithPB(PB);
+}
+
+/**
+ * Returns the size_t for the current target.
+ */
+llvm::Type *SizeT(llvm::Module *M) {
+  unsigned long AddressBits;
+  getModuleIntMetadata(*M, "device_address_bits", AddressBits);
+  return IntegerType::get(M->getContext(), AddressBits);
 }
 
 } // namespace pocl

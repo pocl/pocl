@@ -55,6 +55,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "pocl_cl.h"
 #include "pocl_llvm_api.h"
 
+#include "KernelCompilerUtils.h"
 #include "LLVMUtils.h"
 #include "linker.h"
 
@@ -474,14 +475,12 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
           continue;
         }
 
-        if ((f == NULL) ||
-            (f->isDeclaration() &&
-             // A target might want to expose the C99 printf in case not supporting
-             // the OpenCL 1.2 printf.
-             !f->getName().equals("printf") &&
-             !f->getName().equals(pocl_sampler_handler) &&
-             !f->getName().startswith(llvm_intrins))
-           ) {
+        if ((f == NULL) || (f->isDeclaration() &&
+                            // A target might want to expose the C99 printf in
+                            // case not supporting the OpenCL 1.2 printf.
+                            !f->getName().equals("printf") &&
+                            !f->getName().equals(pocl_sampler_handler) &&
+                            !f->getName().startswith(llvm_intrins))) {
           Log.append("Cannot find symbol ");
           Log.append(r.str());
           Log.append(" in kernel library\n");

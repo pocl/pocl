@@ -55,7 +55,7 @@ namespace pocl {
 
 typedef std::map<llvm::Function*, llvm::Function*> FunctionMapping;
 
-constexpr unsigned NumWorkgroupVariables = 18;
+constexpr unsigned NumWorkgroupVariables = 21;
 extern const char *WorkgroupVariablesArray[];
 extern const std::vector<std::string> WorkgroupVariablesVector;
 constexpr unsigned NumWIFuncNames = 11;
@@ -134,6 +134,8 @@ llvm::DISubprogram *mimicDISubprogram(llvm::DISubprogram *Old,
 void registerPassBuilderPasses(llvm::PassBuilder &PB);
 
 void registerFunctionAnalyses(llvm::PassBuilder &PB);
+
+llvm::Type *SizeT(llvm::Module *M);
 
 } // namespace pocl
 

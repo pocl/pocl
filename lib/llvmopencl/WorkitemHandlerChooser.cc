@@ -54,55 +54,41 @@ namespace pocl {
 
 using namespace llvm;
 
-static WorkitemHandlerType runWorkitemHandlerChooser(Function &F) {
+/**
+ * Selects the work-group generator to use for handling the given
+ * kernel.
+ */
+WorkitemHandlerType ChooseWorkitemHandler(Function &F) {
   if (!isKernelToProcess(F))
     return WorkitemHandlerType::INVALID;
 
   WorkitemHandlerType Result = WorkitemHandlerType::INVALID;
-  unsigned long WGLocalSizeX = 0;
-  unsigned long WGLocalSizeY = 0;
-  unsigned long WGLocalSizeZ = 0;
   bool WGDynamicLocalSize = false;
 
-  getModuleIntMetadata(*F.getParent(), "WGLocalSizeX", WGLocalSizeX);
-  getModuleIntMetadata(*F.getParent(), "WGLocalSizeY", WGLocalSizeY);
-  getModuleIntMetadata(*F.getParent(), "WGLocalSizeZ", WGLocalSizeZ);
   getModuleBoolMetadata(*F.getParent(), "WGDynamicLocalSize",
                         WGDynamicLocalSize);
 
   std::string method = "auto";
-  if (getenv("POCL_WORK_GROUP_METHOD") != NULL)
-    {
-      method = getenv("POCL_WORK_GROUP_METHOD");
-      if ((method == "repl" || method == "workitemrepl") && !WGDynamicLocalSize)
-        Result = WorkitemHandlerType::FULL_REPLICATION;
-      else if (method == "loops" || method == "workitemloops" || method == "loopvec")
-        Result = WorkitemHandlerType::LOOPS;
-      else if (method == "cbs")
-        Result = WorkitemHandlerType::CBS;
-      else if (method != "auto")
-        {
-          std::cerr << "Unknown work group generation method. Using 'auto'." << std::endl;
-          method = "auto";
-        }
+  if (getenv("POCL_WORK_GROUP_METHOD") != NULL) {
+    method = getenv("POCL_WORK_GROUP_METHOD");
+    if ((method == "repl" || method == "workitemrepl") && !WGDynamicLocalSize)
+      Result = WorkitemHandlerType::FULL_REPLICATION;
+    else if (method == "loops" || method == "workitemloops" ||
+             method == "loopvec")
+      Result = WorkitemHandlerType::LOOPS;
+    else if (method == "cbs")
+      Result = WorkitemHandlerType::CBS;
+    else if (method != "auto") {
+      std::cerr << "Unknown work group generation method. Using 'auto'."
+                << std::endl;
+      method = "auto";
     }
+  }
 
-  if (method == "auto") 
-    {
-      unsigned ReplThreshold = 2;
-      if (getenv("POCL_FULL_REPLICATION_THRESHOLD") != NULL) 
-      {
-        ReplThreshold = atoi(getenv("POCL_FULL_REPLICATION_THRESHOLD"));
-      }
-
-      if (!WGDynamicLocalSize &&
-          WGLocalSizeX * WGLocalSizeY * WGLocalSizeZ <= ReplThreshold) {
-        Result = WorkitemHandlerType::FULL_REPLICATION;
-      } else {
-        Result = WorkitemHandlerType::LOOPS;
-      }
-    }
-    return Result;
+  if (method == "auto") {
+    Result = WorkitemHandlerType::LOOPS;
+  }
+  return Result;
 }
 
 /**********************************************************************/
@@ -112,7 +98,7 @@ llvm::AnalysisKey WorkitemHandlerChooser::Key;
 WorkitemHandlerResult
 WorkitemHandlerChooser::run(llvm::Function &F,
                             llvm::FunctionAnalysisManager &AM) {
-  return runWorkitemHandlerChooser(F);
+  return ChooseWorkitemHandler(F);
 }
 
 bool WorkitemHandlerResult::invalidate(

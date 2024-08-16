@@ -49,6 +49,7 @@ POP_COMPILER_DIAGS
 #include "Barrier.h"
 #include "BarrierTailReplication.h"
 #include "CanonicalizeBarriers.h"
+#include "KernelCompilerUtils.h"
 #include "LLVMUtils.h"
 #include "ProgramScopeVariables.h"
 #include "VariableUniformityAnalysis.h"
@@ -220,7 +221,7 @@ bool WorkgroupImpl::runOnModule(Module &M, FunctionVec &OldKernels) {
 
   HiddenArgs = 0;
   SizeTWidth = AddressBits;
-  SizeT = IntegerType::get(*C, SizeTWidth);
+  SizeT = pocl::SizeT(&M);
 
   llvm::Type *Int32T = Type::getInt32Ty(*C);
   llvm::Type *Int8T = Type::getInt8Ty(*C);
@@ -845,9 +846,41 @@ void WorkgroupImpl::privatizeGlobals(
   }
 }
 
+/**
+ * Makes the work-item context data function private.
+ *
+ * Until this point all the work-group generation passes have referred to
+ * magic global variables to access the work-item identifiers. These are
+ * converted to kernel-local allocas by this function.
+ */
 void WorkgroupImpl::privatizeContext(Function *F) {
-  char TempStr[STRING_LENGTH];
+
+  // Privatize _global_id_* to private allocas.
+  // They are referred to by WorkItemLoops to fetch the global id directly.
+
   IRBuilder<> Builder(F->getEntryBlock().getFirstNonPHI());
+
+  // For replace the global_ids with local allocas for easier
+  // data flow analysis.
+  std::vector<Value *> GlobalIdAllocas(3);
+  for (int i = 0; i < 3; ++i) {
+    if (M->getGlobalVariable(GID_G_NAME(i)) == nullptr)
+      continue;
+    GlobalIdAllocas[i] = Builder.CreateAlloca(SizeT, 0, GID_G_NAME(i));
+  }
+
+  for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
+    for (BasicBlock::iterator ii = i->begin(), ee = i->end(); ii != ee; ++ii) {
+      for (int j = 0; j < 3; ++j) {
+        if (M->getGlobalVariable(GID_G_NAME(j)) == nullptr)
+          continue;
+        ii->replaceUsesOfWith(M->getGlobalVariable(GID_G_NAME(j)),
+                              GlobalIdAllocas[j]);
+      }
+    }
+  }
+
+  char TempStr[STRING_LENGTH];
 
   std::vector<GlobalVariable*> LocalIdGlobals(3);
   std::vector<AllocaInst*> LocalIdAllocas(3);

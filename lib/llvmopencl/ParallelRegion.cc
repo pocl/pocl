@@ -32,10 +32,13 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
-#include "ParallelRegion.h"
 #include "Barrier.h"
-#include "Kernel.h"
 #include "DebugHelpers.h"
+#include "Kernel.h"
+#include "KernelCompilerUtils.h"
+#include "LLVMUtils.h"
+#include "ParallelRegion.h"
+
 POP_COMPILER_DIAGS
 
 #include <algorithm>
@@ -58,10 +61,8 @@ using namespace pocl;
 
 int ParallelRegion::idGen = 0;
 
-ParallelRegion::ParallelRegion(int forcedRegionId) :
-  LocalIDXLoadInstr(NULL), LocalIDYLoadInstr(NULL), LocalIDZLoadInstr(NULL),
-  exitIndex_(0), entryIndex_(0), pRegionId(forcedRegionId)
-{
+ParallelRegion::ParallelRegion(int forcedRegionId)
+    : exitIndex_(0), entryIndex_(0), pRegionId(forcedRegionId) {
   if (forcedRegionId == -1)
     pRegionId = idGen++;
 }
@@ -295,22 +296,17 @@ ParallelRegion::insertLocalIdInit(llvm::BasicBlock* Entry,
 
   Module *M = Entry->getParent()->getParent();
 
-  unsigned long address_bits;
-  getModuleIntMetadata(*M, "device_address_bits", address_bits);
-
-  llvm::Type *SizeT = IntegerType::get(M->getContext(), address_bits);
-
-  GlobalVariable *GVX = M->getGlobalVariable(POCL_LOCAL_ID_X_GLOBAL);
+  GlobalVariable *GVX = M->getGlobalVariable(LID_G_NAME(0));
   if (GVX != NULL)
-      Builder.CreateStore(ConstantInt::get(SizeT, X), GVX);
+    Builder.CreateStore(ConstantInt::get(SizeT(M), X), GVX);
 
-  GlobalVariable *GVY = M->getGlobalVariable(POCL_LOCAL_ID_Y_GLOBAL);
+  GlobalVariable *GVY = M->getGlobalVariable(LID_G_NAME(1));
   if (GVY != NULL)
-      Builder.CreateStore(ConstantInt::get(SizeT, Y), GVY);
+    Builder.CreateStore(ConstantInt::get(SizeT(M), Y), GVY);
 
-  GlobalVariable *GVZ = M->getGlobalVariable(POCL_LOCAL_ID_Z_GLOBAL);
+  GlobalVariable *GVZ = M->getGlobalVariable(LID_G_NAME(2));
   if (GVZ != NULL)
-      Builder.CreateStore(ConstantInt::get(SizeT, Z), GVZ);
+    Builder.CreateStore(ConstantInt::get(SizeT(M), Z), GVZ);
 }
 
 void
@@ -611,63 +607,28 @@ ParallelRegion::HasBlock(llvm::BasicBlock *bb)
 }
 
 /**
- * Find the instruction that loads the Z dimension of the work item
- * in the beginning of the parallel region, if not found, creates it.
+ * Finds the instruction that loads an id of the work item in the beginning of
+ * the parallel region, if not found, creates it.
+ *
+ * @param IDGlobalName The name of the (magic) GlobalVariable representing the
+ * id.
  */
-llvm::Instruction*
-ParallelRegion::LocalIDZLoad()
-{
-  if (LocalIDZLoadInstr != NULL) return LocalIDZLoadInstr;
-  IRBuilder<> builder(&*(entryBB()->getFirstInsertionPt()));
-  GlobalVariable *Ptr = entryBB()->getParent()->getParent()->getGlobalVariable(
-      POCL_LOCAL_ID_Z_GLOBAL);
-  return LocalIDZLoadInstr = builder.CreateLoad(
-#if LLVM_MAJOR > 14
-             Ptr->getValueType(),
-#else
-             Ptr->getType()->getPointerElementType(),
-#endif
-             Ptr);
-}
+llvm::Instruction *ParallelRegion::getOrCreateIDLoad(std::string IDGlobalName) {
 
-/**
- * Find the instruction that loads the Y dimension of the work item
- * in the beginning of the parallel region, if not found, creates it.
- */
-llvm::Instruction*
-ParallelRegion::LocalIDYLoad()
-{
-  if (LocalIDYLoadInstr != NULL) return LocalIDYLoadInstr;
-  IRBuilder<> builder(&*(entryBB()->getFirstInsertionPt()));
-  GlobalVariable *Ptr = entryBB()->getParent()->getParent()->getGlobalVariable(
-      POCL_LOCAL_ID_Y_GLOBAL);
-  return LocalIDYLoadInstr = builder.CreateLoad(
-#if LLVM_MAJOR > 14
-             Ptr->getValueType(),
-#else
-             Ptr->getType()->getPointerElementType(),
-#endif
-             Ptr);
-}
+    if (IDLoadInstrs.find(IDGlobalName) != IDLoadInstrs.end())
+      return IDLoadInstrs[IDGlobalName];
 
-/**
- * Find the instruction that loads the X dimension of the work item
- * in the beginning of the parallel region, if not found, creates it.
- */
-llvm::Instruction*
-ParallelRegion::LocalIDXLoad()
-{
-  if (LocalIDXLoadInstr != NULL) return LocalIDXLoadInstr;
-  IRBuilder<> builder(&*(entryBB()->getFirstInsertionPt()));
-  GlobalVariable *Ptr = entryBB()->getParent()->getParent()->getGlobalVariable(
-      POCL_LOCAL_ID_X_GLOBAL);
-  return LocalIDXLoadInstr = builder.CreateLoad(
-#if LLVM_MAJOR > 14
-             Ptr->getValueType(),
-#else
-             Ptr->getType()->getPointerElementType(),
-#endif
-             Ptr);
+    llvm::Type *ST = SizeT(entryBB()->getParent()->getParent());
+
+    GlobalVariable *Ptr = cast<GlobalVariable>(
+        entryBB()->getParent()->getParent()->getOrInsertGlobal(IDGlobalName,
+                                                               ST));
+
+    IRBuilder<> Builder(entryBB()->getFirstNonPHI());
+
+    Instruction *IDLoad = Builder.CreateLoad(ST, Ptr);
+    IDLoadInstrs[IDGlobalName] = IDLoad;
+    return IDLoad;
 }
 
 void
@@ -767,9 +728,9 @@ ParallelRegion::InjectRegionPrintF()
   ConstantInt* pRID = ConstantInt::get(M->getContext(), APInt(32, pRegionId, 10));
   std::vector<Value*> params;
   params.push_back(pRID);
-  params.push_back(LocalIDXLoad());
-  params.push_back(LocalIDYLoad());
-  params.push_back(LocalIDZLoad());
+  params.push_back(getOrCreateIDLoad(LID_G_NAME(0)));
+  params.push_back(getOrCreateIDLoad(LID_G_NAME(1)));
+  params.push_back(getOrCreateIDLoad(LID_G_NAME(2)));
 
   InjectPrintF(exitBB()->getTerminator(), "PR %d WI %u %u %u\n", params);
 
@@ -807,63 +768,81 @@ ParallelRegion::InjectVariablePrintouts()
 /**
  * Localizes all the loads to the the work-item identifiers.
  *
- * In case the code inside the region queries the WI id, it
- * should not (re)use one that is loaded in another region, but
- * one that is loaded in the same region. Otherwise, it ends
- * up using the last id the previous PR work-item loop got.
- * This caused problems in cases where the local id was stored
- * to a temporary variable in an earlier region and that temp
- * was reused later.
+ * In case the code inside the region queries the WI id, it should not (re)use
+ * one that is loaded in another region, but one that is loaded in the same
+ * region. Otherwise, it ends up using the last id the previous PR work-item
+ * loop got. This caused problems in cases where the local id was stored to a
+ * temporary variable in an earlier region and that temp was reused later.
  *
- * The function scans for all loads from the local id variables
- * and converts them to loads inside the parallel region.
+ * The function scans for all accesses to the local and global ids and converts
+ * them to loads inside the parallel region. Also converts calls to
+ * get_global_id() declaration to the magic global variable calls. (TODO: Move
+ * that functionality to a separate method).
  */
-void
-ParallelRegion::LocalizeIDLoads() 
-{
-  /* The local id loads inside the parallel region. */
-  llvm::Instruction* LocalIDXLoadInstr = LocalIDXLoad();
-  llvm::Instruction* LocalIDYLoadInstr = LocalIDYLoad();
-  llvm::Instruction* LocalIDZLoadInstr = LocalIDZLoad();
-  llvm::Module *M = LocalIDXLoadInstr->getParent()->getParent()->getParent();
-  llvm::Value *localIdZ = M->getNamedGlobal(POCL_LOCAL_ID_Z_GLOBAL);
-  llvm::Value *localIdY = M->getNamedGlobal(POCL_LOCAL_ID_Y_GLOBAL);
-  llvm::Value *localIdX = M->getNamedGlobal(POCL_LOCAL_ID_X_GLOBAL);
+void ParallelRegion::LocalizeIDLoads() {
 
-  assert (localIdZ != NULL && localIdY != NULL && localIdX != NULL &&
-	  "The local id globals were not created.");
+  // Replace get_global_id with loads from the _get_global_id magic
+  // global.
+  std::set<llvm::Instruction *> InstrsToDelete;
+  for (ParallelRegion::iterator BBI = begin(); BBI != end(); ++BBI) {
+    llvm::BasicBlock *BB = *BBI;
+    for (llvm::BasicBlock::iterator II = BB->begin(); II != BB->end(); ++II) {
+      llvm::Instruction *Instr = &*II;
+      llvm::CallInst *Call = dyn_cast<llvm::CallInst>(Instr);
+      if (Call == nullptr)
+        continue;
 
-  for (ParallelRegion::iterator i = begin();
-       i != end(); ++i)
-    {
-      llvm::BasicBlock *bb = *i;
-      for (llvm::BasicBlock::iterator instrI = bb->begin();
-           instrI != bb->end(); ++instrI) 
-        {
-          llvm::Instruction *instr = &*instrI;
-	  if (instr == LocalIDXLoadInstr ||
-	      instr == LocalIDYLoadInstr ||
-	      instr == LocalIDZLoadInstr) continue;
-
-	  /* Search all operands of the instruction. If any of them is
-	     using a local id, replace it with the intra-PR load from the
-	     id variable. */
-          for (unsigned opr = 0; opr < instr->getNumOperands(); ++opr)
-            {
-	      llvm::LoadInst *load = 
-		dyn_cast<llvm::LoadInst>(instr->getOperand(opr));
-	      if (load == NULL) continue;
-	      if (load == LocalIDXLoadInstr ||
-		  load == LocalIDYLoadInstr ||
-		  load == LocalIDZLoadInstr) continue;
-	      
-	      if (load->getPointerOperand() == localIdZ)
-		instr->setOperand(opr, LocalIDZLoadInstr);
-	      if (load->getPointerOperand() == localIdY)
-		instr->setOperand(opr, LocalIDYLoadInstr);
-	      if (load->getPointerOperand() == localIdX)
-		instr->setOperand(opr, LocalIDXLoadInstr);
-	    }
-	}
+      auto Callee = Call->getCalledFunction();
+      if (Callee->isDeclaration() &&
+          Callee->getName().equals(GID_BUILTIN_NAME)) {
+        int Dim =
+            cast<llvm::ConstantInt>(Call->getArgOperand(0))->getZExtValue();
+        llvm::Instruction *GIDLoad = getOrCreateIDLoad(GID_G_NAME(Dim));
+        Call->replaceAllUsesWith(GIDLoad);
+        InstrsToDelete.insert(Call);
+        continue;
+      }
     }
+  }
+  for (auto I : InstrsToDelete)
+    I->eraseFromParent();
+
+  // The id loads inside the parallel region.
+  std::array<llvm::Instruction *, 6> RegionIDLoads = {
+      getOrCreateIDLoad(LID_G_NAME(0)), getOrCreateIDLoad(LID_G_NAME(1)),
+      getOrCreateIDLoad(LID_G_NAME(2)), getOrCreateIDLoad(GID_G_NAME(0)),
+      getOrCreateIDLoad(GID_G_NAME(1)), getOrCreateIDLoad(GID_G_NAME(2))};
+
+  llvm::Module *M = RegionIDLoads[0]->getParent()->getParent()->getParent();
+
+  std::array<llvm::Value *, 6> Globals = {
+      M->getNamedGlobal(LID_G_NAME(0)), M->getNamedGlobal(LID_G_NAME(1)),
+      M->getNamedGlobal(LID_G_NAME(2)), M->getNamedGlobal(GID_G_NAME(0)),
+      M->getNamedGlobal(GID_G_NAME(1)), M->getNamedGlobal(GID_G_NAME(2))};
+
+  for (ParallelRegion::iterator BBI = begin(); BBI != end(); ++BBI) {
+    llvm::BasicBlock *BB = *BBI;
+    for (llvm::BasicBlock::iterator II = BB->begin(); II != BB->end(); ++II) {
+      llvm::Instruction *Instr = &*II;
+
+      // If any of the operands is using an id, replace it with the
+      // intra-PR load from the parallel region specific id variable.
+      for (unsigned Opr = 0; Opr < Instr->getNumOperands(); ++Opr) {
+        llvm::LoadInst *Load = dyn_cast<llvm::LoadInst>(Instr->getOperand(Opr));
+        if (Load == NULL)
+          continue;
+
+        if (std::find(RegionIDLoads.begin(), RegionIDLoads.end(), Load) !=
+            RegionIDLoads.end())
+          continue; // Already converted.
+
+        auto Pos = std::find(Globals.begin(), Globals.end(),
+                             Load->getPointerOperand());
+        if (Pos == Globals.end())
+          continue;
+
+        Instr->setOperand(Opr, RegionIDLoads[Pos - Globals.begin()]);
+      }
+    }
+  }
 }
