@@ -1308,7 +1308,18 @@ int pocl_level0_alloc_mem_obj(cl_device_id ClDevice, cl_mem Mem, void *HostPtr) 
     if (pocl_get_bool_option("POCL_LEVEL0_COMPRESS", 0)) {
       Compress = (Mem->flags & CL_MEM_READ_ONLY) > 0;
     }
-    Allocation = Device->allocSharedMem(Mem->size, Compress);
+    ze_device_mem_alloc_flags_t DevFlags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED;
+    ze_host_mem_alloc_flags_t HostFlags =
+        ZE_HOST_MEM_ALLOC_FLAG_BIAS_CACHED |
+        ZE_HOST_MEM_ALLOC_FLAG_BIAS_WRITE_COMBINED;
+    if (Mem->flags & (CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR |
+                      CL_MEM_ALLOC_INITIAL_PLACEMENT_DEVICE_INTEL))
+      HostFlags |= ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT;
+    else
+      DevFlags |= ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT;
+
+    Allocation =
+        Device->allocSharedMem(Mem->size, Compress, DevFlags, HostFlags);
     if (Allocation == nullptr) {
       return CL_MEM_OBJECT_ALLOCATION_FAILURE;
     }
