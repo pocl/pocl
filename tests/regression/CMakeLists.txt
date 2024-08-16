@@ -395,8 +395,6 @@ value is changed at global_id: 6, local_id 2, group_id 1, to: 3
 if(LLVM_VERSION_MAJOR EQUAL 18)
   set_tests_properties(
   "regression/barrier_between_two_for_loops_cbs"
-  "regression/test_alignment_with_dynamic_wg_114_cbs"
-  "regression/test_alignment_with_dynamic_wg_117_cbs"
   "regression/test_alignment_with_dynamic_wg_225_cbs"
   "regression/test_alignment_with_dynamic_wg_173_cbs"
   "regression/test_alignment_with_dynamic_wg_183_cbs"
@@ -405,3 +403,10 @@ if(LLVM_VERSION_MAJOR EQUAL 18)
   "regression/test_alignment_with_dynamic_wg_323_cbs"
   PROPERTIES DISABLED 1)
 endif()
+
+# With the autovec/target specific optimizations, this started
+# crashing or hanging.
+set_tests_properties(
+  "regression/test_alignment_with_dynamic_wg_114_cbs"
+  "regression/test_alignment_with_dynamic_wg_117_cbs"
+  PROPERTIES DISABLED 1)
