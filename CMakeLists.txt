@@ -251,6 +251,8 @@ option(ENABLE_PRINTF_IMMEDIATE_FLUSH "[currently only applies to CPU drivers] if
 
 option(ENABLE_VSOCK "Enable vsock transport in the remote driver" OFF)
 
+option(ENABLE_LLVM_FILECHECKS "Enable kernel compiler/autovectorizer filechecks using the given FileCheck binary defined in LLVM_FILECHECK_BIN. Note: the checks are tested against recent Intel X86/SIMD CPUs for now.")
+
 if (ENABLE_PROXY_DEVICE)
   set(VISIBILITY_HIDDEN_DEFAULT OFF)
 else()
@@ -2240,6 +2242,7 @@ if (ENABLE_LLVM)
   MESSAGE(STATUS "LLVM_AS: ${LLVM_AS}")
   MESSAGE(STATUS "LLVM_LINK: ${LLVM_LINK}")
   MESSAGE(STATUS "LLVM_LLI: ${LLVM_LLI}")
+  MESSAGE(STATUS "LLVM_FILECHECK_BIN: ${LLVM_FILECHECK_BIN}")
   MESSAGE(STATUS "WITH_LLVM_CONFIG (User preferred llvm-config): ${WITH_LLVM_CONFIG}")
 endif()
 

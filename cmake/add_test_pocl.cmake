@@ -1,7 +1,8 @@
 #=============================================================================
-#   CMake build system files - add_test_pocl() test wrapper
+#   CMake build system files - add_test_pocl() etc. test wrappers
 #
 #   Copyright (c) 2014-2017 pocl developers
+#                 2024 Pekka Jääskeläinen / Intel Finland Oy
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -30,24 +31,18 @@ include(CMakeParseArguments)
 # 1) allows expected outputs (optionally sorted)
 # 2) handles the exit status problem (test properties WILL_FAIL does not work if
 #    the test exits with !0 exit status)
+#
+# If LLVM_FILECHECK is set to an existing FileCheck file, an additional test
+# will be added that runs the test with the LLVM IR tester script using the
+# loopvec method."
 
 function(add_test_pocl)
 
   set(options SORT_OUTPUT)
-  set(oneValueArgs EXPECTED_OUTPUT NAME WORKING_DIRECTORY)
+  set(oneValueArgs EXPECTED_OUTPUT NAME WORKING_DIRECTORY LLVM_FILECHECK)
   set(multiValueArgs COMMAND WORKITEM_HANDLER)
   cmake_parse_arguments(POCL_TEST "${options}" "${oneValueArgs}"
                         "${multiValueArgs}" ${ARGN})
-
-  unset(RUN_CMD)
-  foreach(LOOPVAR ${POCL_TEST_COMMAND})
-    if(NOT RUN_CMD)
-      set(RUN_CMD "${CMAKE_CURRENT_BINARY_DIR}/${LOOPVAR}")
-    else()
-      set(RUN_CMD "${RUN_CMD}####${LOOPVAR}")
-    endif()
-  endforeach()
-
   if(POCL_TEST_WORKITEM_HANDLER)
     set(VARIANTS ${POCL_TEST_WORKITEM_HANDLER})
   else()
@@ -61,6 +56,14 @@ function(add_test_pocl)
     else()
       set(POCL_VARIANT_TEST_NAME ${POCL_TEST_NAME})
     endif()
+    unset(RUN_CMD)
+    foreach(LOOPVAR ${POCL_TEST_COMMAND})
+      if(NOT RUN_CMD)
+        set(RUN_CMD "${CMAKE_CURRENT_BINARY_DIR}/${LOOPVAR}")
+      else()
+        set(RUN_CMD "${RUN_CMD}####${LOOPVAR}")
+      endif()
+    endforeach()
 
     set(POCL_TEST_ARGLIST "NAME" "${POCL_VARIANT_TEST_NAME}")
     if(POCL_TEST_WORKING_DIRECTORY)
@@ -85,7 +88,8 @@ function(add_test_pocl)
       endif()
     list(APPEND POCL_TEST_ARGLIST "-P" "${CMAKE_SOURCE_DIR}/cmake/run_test.cmake")
 
-    add_test(${POCL_TEST_ARGLIST} )
+    add_test(${POCL_TEST_ARGLIST})
+
     if(NOT ENABLE_ANYSAN)
       set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
                           PASS_REGULAR_EXPRESSION "OK"
@@ -99,7 +103,29 @@ function(add_test_pocl)
     endif()
 
     set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
-                          ENVIRONMENT POCL_WORK_GROUP_METHOD=${VARIANT})
+      ENVIRONMENT POCL_WORK_GROUP_METHOD=${VARIANT})
+
+    if(ENABLE_LLVM_FILECHECKS AND POCL_TEST_LLVM_FILECHECK AND VARIANT STREQUAL "loopvec")
+      set(RUN_CMD "${CMAKE_SOURCE_DIR}/tools/scripts/run-and-check-llvm-ir####${LLVM_FILECHECK_BIN}####${CMAKE_CURRENT_SOURCE_DIR}/${POCL_TEST_LLVM_FILECHECK}####${RUN_CMD}")
+
+      set(POCL_TEST_ARGLIST "NAME" "${POCL_VARIANT_TEST_NAME}_llvm-ir-checks")
+      if(POCL_TEST_WORKING_DIRECTORY)
+        list(APPEND POCL_TEST_ARGLIST "WORKING_DIRECTORY")
+        list(APPEND POCL_TEST_ARGLIST "${POCL_TEST_WORKING_DIRECTORY}")
+      endif()
+      list(APPEND POCL_TEST_ARGLIST "COMMAND" "${CMAKE_COMMAND}" "-Dtest_cmd=${RUN_CMD}")
+      list(APPEND POCL_TEST_ARGLIST "-P" "${CMAKE_SOURCE_DIR}/cmake/run_test.cmake")
+
+      add_test(${POCL_TEST_ARGLIST})
+
+      set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
+                          PASS_REGULAR_EXPRESSION "OK"
+                          FAIL_REGULAR_EXPRESSION "FAIL")
+      set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
+        ENVIRONMENT POCL_WORK_GROUP_METHOD=${VARIANT})
+
+    endif()
+
   endforeach()
 
 endfunction()
