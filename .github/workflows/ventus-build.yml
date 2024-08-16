@@ -1,98 +1,118 @@
 name: Build VENTUS
 env:
   LLVM: llvm-project
-  OCL_ICD: ocl-icd
-  ISA_SIMULATOR: ventus-gpgpu-isa-simulator
-  BUILD_TYPE: Release
-  VENTUS_DRIVER: ventus-driver
   RODINIA: gpu-rodinia
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  schedule:
+    - cron: '0 2 * * *' # Runs at 2am everyday
   workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Checkout POCL
-      uses: actions/checkout@v3
+    - name: Checkout pocl
+      uses: actions/checkout@v4
+      with:
+        path: pocl
 
-    - name: Use Node.js 16.x
+    - name: Checkout llvm-ventus
+      uses: actions/checkout@v4
+      with:
+        repository: THU-DSP-LAB/llvm-project
+        path: llvm-project
+
+    - name: Checkout ocl-icd
+      uses: actions/checkout@v4
+      with:
+        repository: OCL-dev/ocl-icd
+        path: ocl-icd
+
+    - name: Checkout driver
+      uses: actions/checkout@v4
+      with:
+        repository: THU-DSP-LAB/ventus-driver
+        path: ventus-driver
+
+    - name: Checkout spike
+      uses: actions/checkout@v4
+      with:
+        repository: THU-DSP-LAB/ventus-gpgpu-isa-simulator
+        path: ventus-gpgpu-isa-simulator
+
+    - name: Checkout rodinia
+      uses: actions/checkout@v4
+      with:
+        repository: THU-DSP-LAB/gpu-rodinia
+        path: gpu-rodinia
+
+    - name: Use node.js 16.x
       uses: actions/setup-node@v3
       with:
         node-version: 16.x
         registry-url: 'https://registry.npmjs.org'
 
-
-    - name: Install Ninja
+    - name: Install ninja
       uses: llvm/actions/install-ninja@main
 
-    - name: Install Other needed packages # maybe install llvm release is a better choice
+    - name: Install Other needed packages
       run: |
         sudo apt-get install -y \
         device-tree-compiler \
         bsdmainutils \
         ccache
 
-    - name: Clone needed packages
+    - name: Download data
       run: |
-        git clone https://github.com/THU-DSP-LAB/llvm-project.git ${{github.workspace}}/../$LLVM
-        git clone https://github.com/OCL-dev/ocl-icd.git ${{github.workspace}}/../$OCL_ICD
-        git clone https://github.com/THU-DSP-LAB/ventus-gpgpu-isa-simulator.git ${{github.workspace}}/../$ISA_SIMULATOR
-        git clone https://github.com/THU-DSP-LAB/ventus-driver.git ${{github.workspace}}/../$VENTUS_DRIVER
-        git clone https://github.com/THU-DSP-LAB/gpu-rodinia.git ${{github.workspace}}/../$RODINIA
-        export DRIVER_DIR=${{github.workspace}}/../$VENTUS_DRIVER
-        export DRIVER_BUILD_DIR=${DRIVER_DIR}/build
-        export VENTUS_INSTALL_PREFIX=${{github.workspace}}/../$LLVM/install
-        wget -P ${{github.workspace}}/../$RODINIA -c https://www.dropbox.com/s/cc6cozpboht3mtu/rodinia-3.1-data.tar.gz
-        tar -zxvf ${{github.workspace}}/../$RODINIA/rodinia-3.1-data.tar.gz -C ${{github.workspace}}/../$RODINIA
-        mv ${{github.workspace}}/../$RODINIA/rodinia-data/* ${{github.workspace}}/../$RODINIA/data/
-        rm ${{github.workspace}}/../$RODINIA/rodinia-3.1-data.tar.gz
-        rm ${{github.workspace}}/../$RODINIA/rodinia-data -rf
-        cd ${{github.workspace}}/../$LLVM
+        wget -P ${{github.workspace}}/$RODINIA -c https://www.dropbox.com/s/cc6cozpboht3mtu/rodinia-3.1-data.tar.gz
+        tar -zxvf ${{github.workspace}}/$RODINIA/rodinia-3.1-data.tar.gz -C ${{github.workspace}}/$RODINIA
+        mv ${{github.workspace}}/$RODINIA/rodinia-data/* ${{github.workspace}}/$RODINIA/data/
+        rm ${{github.workspace}}/$RODINIA/rodinia-* -rf
+        cd ${{github.workspace}}/$LLVM
 
     - name: Start building llvm-ventus
       shell: bash
       run: |
-        bash ${{github.workspace}}/../$LLVM/build-ventus.sh --build llvm
+        bash ${{github.workspace}}/$LLVM/build-ventus.sh --build llvm
 
     - name: Start building ocl-icd
       shell: bash
       run: |
-        bash ${{github.workspace}}/../$LLVM/build-ventus.sh --build ${OCL_ICD}
+        bash ${{github.workspace}}/$LLVM/build-ventus.sh --build ocl-icd
 
     - name: Start building libclc
       shell: bash
       run: |
-        bash ${{github.workspace}}/../$LLVM/build-ventus.sh --build libclc
+        bash ${{github.workspace}}/$LLVM/build-ventus.sh --build libclc
 
     - name: Start building spike
       shell: bash
       run: |
-        bash ${{github.workspace}}/../$LLVM/build-ventus.sh --build spike
+        bash ${{github.workspace}}/$LLVM/build-ventus.sh --build spike
 
     - name: Start building driver
       shell: bash
       run: |
-        bash ${{github.workspace}}/../$LLVM/build-ventus.sh --build driver
+        bash ${{github.workspace}}/$LLVM/build-ventus.sh --build driver
 
     - name: Start building pocl
       shell: bash
       run: |
-        bash ${{github.workspace}}/../$LLVM/build-ventus.sh --build ${POCL}
+        bash ${{github.workspace}}/$LLVM/build-ventus.sh --build pocl
 
     - name: Start testing gpu-rodinia
       shell: bash
       run: |
-         bash ${{github.workspace}}/../$LLVM/build-ventus.sh --build rodinia
+         bash ${{github.workspace}}/$LLVM/build-ventus.sh --build rodinia
 
     - name: Start testing pocl
       shell: bash
       run: |
-         bash ${{github.workspace}}/../$LLVM/build-ventus.sh --build test-pocl
+         bash ${{github.workspace}}/$LLVM/build-ventus.sh --build test-pocl
 
     - name: Start ISA simulation test
       run: |
