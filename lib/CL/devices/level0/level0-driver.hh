@@ -70,8 +70,8 @@ class Level0Queue {
 
 public:
   Level0Queue(Level0WorkQueueInterface *WH, ze_command_queue_handle_t Q,
-              ze_command_list_handle_t L,
-              Level0Device *D);
+              ze_command_list_handle_t L, Level0Device *D,
+              size_t MaxPatternSize);
   ~Level0Queue();
 
   Level0Queue(Level0Queue const &) = delete;
@@ -106,6 +106,7 @@ private:
   uint64_t DeviceTimerWrapTimeNs;
   uint64_t DeviceKernelTimerWrapTimeNs;
   uint32_t_3 DeviceMaxWGSizes;
+  uint32_t MaxFillPatternSize;
 
   void read(void *__restrict__ HostPtr,
             pocl_mem_identifier *SrcMemId, cl_mem SrcBuf,
@@ -222,7 +223,8 @@ public:
   Level0QueueGroup(Level0QueueGroup const &&) = delete;
   Level0QueueGroup& operator=(Level0QueueGroup &&) = delete;
 
-  bool init(unsigned Ordinal, unsigned Count, Level0Device *Device);
+  bool init(unsigned Ordinal, unsigned Count, Level0Device *Device,
+            size_t MaxPatternSize);
   void uninit();
 
   void pushWork(_cl_command_node *Command) override;

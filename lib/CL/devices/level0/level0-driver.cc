@@ -897,7 +897,15 @@ void Level0Queue::memFill(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
   char *DstPtr = static_cast<char *>(DstMemId->mem_ptr);
   POCL_MSG_PRINT_LEVEL0("MEMFILL | PTR %p | SIZE %zu | PAT SIZE %zu\n", DstPtr,
                         Size, PatternSize);
-  memfillImpl(Device, CmdListH, DstPtr, Size, Offset, Pattern, PatternSize);
+  if (PatternSize <= MaxFillPatternSize) {
+    allocNextFreeEvent();
+    LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryFill(
+        CmdListH, DstPtr + Offset, Pattern, PatternSize, Size, CurrentEventH,
+        PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr));
+  } else {
+    POCL_MSG_PRINT_LEVEL0("using PoCL's memoryFill kernels\n");
+    memfillImpl(Device, CmdListH, DstPtr, Size, Offset, Pattern, PatternSize);
+  }
 }
 
 
@@ -1484,14 +1492,15 @@ void Level0Queue::run(_cl_command_node *Cmd) {
 
 Level0Queue::Level0Queue(Level0WorkQueueInterface *WH,
                          ze_command_queue_handle_t Q,
-                         ze_command_list_handle_t L,
-                         Level0Device *D) {
+                         ze_command_list_handle_t L, Level0Device *D,
+                         size_t MaxPatternSize) {
 
   WorkHandler = WH;
   QueueH = Q;
   CmdListH = L;
   Device = D;
   PreviousEventH = CurrentEventH = nullptr;
+  MaxFillPatternSize = MaxPatternSize;
 
   uint32_t TimeStampBits, KernelTimeStampBits;
   Device->getTimingInfo(TimeStampBits, KernelTimeStampBits, DeviceFrequency,
@@ -1528,7 +1537,7 @@ Level0Queue::~Level0Queue() {
 }
 
 bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
-                            Level0Device *Device) {
+                            Level0Device *Device, size_t MaxPatternSize) {
 
   ThreadExitRequested = false;
 
@@ -1588,8 +1597,8 @@ bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
 #endif
 
   for (unsigned i = 0; i < Count; ++i) {
-    Queues.emplace_back(new Level0Queue(
-        this, QHandles[i], LHandles[i], Device));
+    Queues.emplace_back(new Level0Queue(this, QHandles[i], LHandles[i], Device,
+                                        MaxPatternSize));
   }
 
   Available = true;
@@ -2158,16 +2167,20 @@ bool Level0Device::setupQueueGroupProperties() {
 
   // create specialized queues
   if (ComputeQueueOrd != UINT32_MAX) {
-    ComputeQueues.init(ComputeQueueOrd, NumComputeQueues, this);
+    ComputeQueues.init(ComputeQueueOrd, NumComputeQueues, this,
+                       QGroupProps[ComputeQueueOrd].maxMemoryFillPatternSize);
   }
   if (CopyQueueOrd != UINT32_MAX) {
-    CopyQueues.init(CopyQueueOrd, NumCopyQueues, this);
+    CopyQueues.init(CopyQueueOrd, NumCopyQueues, this,
+                    QGroupProps[CopyQueueOrd].maxMemoryFillPatternSize);
   }
 
   // always create universal queues, if available
   if (UniversalQueueOrd != UINT32_MAX) {
     uint32_t num = std::max(1U, NumUniversalQueues);
-    UniversalQueues.init(UniversalQueueOrd, num, this);
+    UniversalQueues.init(
+        UniversalQueueOrd, num, this,
+        QGroupProps[UniversalQueueOrd].maxMemoryFillPatternSize);
   }
 
   return true;
