@@ -381,32 +381,27 @@ pocl.
  multiple work items. Legal values:
 
  * **auto**   -- Choose the best available method depending on the
-              kernel and the work group size. Use
-              POCL_FULL_REPLICATION_THRESHOLD=N to set the
-              maximum local size for a work group to be
-              replicated fully with 'repl'. Otherwise,
-              'loops' is used.
+              kernel and the work group size. Currently always defaults
+              to **loopvec**.
 
- * **loops**  -- Create for-loops that execute the work items
-              (under stabilization). The drawback is the
-              need to save the thread contexts in arrays.
+ * **loops**  -- Create parallel for-loops that execute the work items.
 
               The loops will be unrolled a certain number of
               times of which maximum can be controlled with
               POCL_WILOOPS_MAX_UNROLL_COUNT=N environment
               variable (default is to not perform unrolling).
 
- * **loopvec** -- Create work-item for-loops (see 'loops') and execute
-               the LLVM LoopVectorizer. The loops are not unrolled
-               but the unrolling decision is left to the generic
-               LLVM passes (the default).
+ * **loopvec** -- Create parallel work-item for-loops (see 'loops') and execute
+               the LLVM vectorizers. LLVM loop unrolling is disabled and
+               the unrolling decisions are left to the generic loop vectorizer.
 
  * **repl**   -- Replicate and chain all work items. This results
               in more easily scalarizable private variables, thus
               might avoid storing work-item context to memory.
               However, the code bloat is increased with larger
-              WG sizes.
-    
+              WG sizes. **Deprecated - will be removed in the next
+              release. Use "loops" and full unrolling.**
+
  * **cbs**    -- Use continuation-based synchronization to execute work-items
               on non-SPMD devices.
               CBS is expected to work for kernels that 'loops' does not support.

@@ -51,3 +51,8 @@ most notable/user facing ones are listed below:
 Deprecation/feature removal notices
 ===================================
 
+ * The old "work-item replication" work-group function generation
+   method will be removed in the next release. It seems not provide
+   any benefits anymore over simply fully unrolling the result of
+   "loops".
+
