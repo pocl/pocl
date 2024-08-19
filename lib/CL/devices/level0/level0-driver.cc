@@ -640,7 +640,7 @@ void Level0Queue::read(void *__restrict__ HostPtr,
   char *DevPtr = static_cast<char *>(SrcMemId->mem_ptr);
   if ((DevPtr + Offset) == HostPtr) {
     // this can happen when coming from CL_COMMAND_MIGRATE_MEM_OBJECTS
-    POCL_MSG_WARN("Read skipped, HostPtr == DevPtr\n");
+    POCL_MSG_PRINT_LEVEL0("Read skipped, HostPtr == DevPtr\n");
     return;
   }
   POCL_MSG_PRINT_LEVEL0("READ from: %p to: %p offs: %zu size: %zu \n",
@@ -657,7 +657,7 @@ void Level0Queue::write(const void *__restrict__ HostPtr,
   char *DevPtr = static_cast<char *>(DstMemId->mem_ptr);
   if ((DevPtr + Offset) == HostPtr) {
     // this can happen when coming from CL_COMMAND_MIGRATE_MEM_OBJECTS
-    POCL_MSG_WARN("Write skipped, HostPtr == DevPtr\n");
+    POCL_MSG_PRINT_LEVEL0("Write skipped, HostPtr == DevPtr\n");
     return;
   }
 
@@ -1843,7 +1843,7 @@ bool Level0Device::setupDeviceProperties(bool HasIPVersionExt) {
   memcpy(ClDev->driver_uuid, Driver->getUUID(), sizeof(DeviceProperties.uuid));
   ClDev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT;
   // TODO externalMemProperties
-  ClDev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
+  ClDev->mem_base_addr_align = 4096;
   ClDev->host_unified_memory = Integrated ? CL_TRUE : CL_FALSE;
   ClDev->max_clock_frequency = DeviceProperties.coreClockRate;
 
