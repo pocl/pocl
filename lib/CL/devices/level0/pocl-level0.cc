@@ -97,7 +97,7 @@ static void pocl_level0_local_size_optimizer(cl_device_id Dev, cl_kernel Kernel,
   uint32_t SuggestedX = 0;
   uint32_t SuggestedY = 0;
   uint32_t SuggestedZ = 0;
-  ze_result_t Res = ZE_RESULT_ERROR_DEVICE_LOST;
+  ze_result_t Res = ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
   if (HKernel != nullptr) {
     Res = zeKernelSuggestGroupSize(HKernel, GlobalX, GlobalY, GlobalZ,
                                    &SuggestedX, &SuggestedY, &SuggestedZ);
@@ -113,6 +113,22 @@ static void pocl_level0_local_size_optimizer(cl_device_id Dev, cl_kernel Kernel,
   }
 }
 
+static int pocl_level0_verify_ndrange_sizes(const size_t *GlobalOffsets,
+                                            const size_t *GlobalWsize,
+                                            const size_t *LocalWsize) {
+  size_t GlobalMax = GlobalWsize[0] | GlobalWsize[1] | GlobalWsize[2];
+  POCL_RETURN_ERROR_ON((GlobalMax > UINT32_MAX), CL_INVALID_GLOBAL_WORK_SIZE,
+                       "Level0 driver does not support "
+                       "Global Work Sizes >32bit \n");
+
+  size_t OffsetMax = GlobalOffsets[0] | GlobalOffsets[1] | GlobalOffsets[2];
+  POCL_RETURN_ERROR_ON((OffsetMax > UINT32_MAX), CL_INVALID_GLOBAL_OFFSET,
+                       "Level0 driver does not support "
+                       "Global Offset Sizes >32bit \n");
+
+  return CL_SUCCESS;
+}
+
 void pocl_level0_init_device_ops(struct pocl_device_ops *Ops) {
   Ops->device_name = "level0";
 
@@ -125,6 +141,7 @@ void pocl_level0_init_device_ops(struct pocl_device_ops *Ops) {
   Ops->free_mapping_ptr = pocl_level0_free_mapping_ptr;
 
   Ops->compute_local_size = pocl_level0_local_size_optimizer;
+  Ops->verify_ndrange_sizes = pocl_level0_verify_ndrange_sizes;
 
   Ops->alloc_mem_obj = pocl_level0_alloc_mem_obj;
   Ops->free = pocl_level0_free;
@@ -1291,7 +1308,22 @@ int pocl_level0_alloc_mem_obj(cl_device_id ClDevice, cl_mem Mem, void *HostPtr) 
     if (pocl_get_bool_option("POCL_LEVEL0_COMPRESS", 0)) {
       Compress = (Mem->flags & CL_MEM_READ_ONLY) > 0;
     }
-    Allocation = Device->allocSharedMem(Mem->size, Compress);
+    ze_device_mem_alloc_flags_t DevFlags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED;
+
+    ze_host_mem_alloc_flags_t HostFlags =
+        ZE_HOST_MEM_ALLOC_FLAG_BIAS_CACHED |
+        ZE_HOST_MEM_ALLOC_FLAG_BIAS_WRITE_COMBINED;
+    if (Mem->flags & (CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR |
+                      CL_MEM_ALLOC_INITIAL_PLACEMENT_DEVICE_INTEL))
+      HostFlags |= ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT;
+    else
+      DevFlags |= ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT;
+
+    if (ClDevice->host_unified_memory)
+      Allocation =
+          Device->allocSharedMem(Mem->size, Compress, DevFlags, HostFlags);
+    else
+      Allocation = Device->allocDeviceMem(Mem->size);
     if (Allocation == nullptr) {
       return CL_MEM_OBJECT_ALLOCATION_FAILURE;
     }
@@ -1319,12 +1351,16 @@ int pocl_level0_alloc_mem_obj(cl_device_id ClDevice, cl_mem Mem, void *HostPtr) 
     }
   }
 
-  // since we allocate shared memory, use it for mem_host_ptr
   if (Mem->mem_host_ptr == nullptr) {
-    assert((Mem->flags & CL_MEM_USE_HOST_PTR) == 0);
-    Mem->mem_host_ptr = Allocation;
-    Mem->mem_host_ptr_version = 0;
-    ++Mem->mem_host_ptr_refcount;
+    if (ClDevice->host_unified_memory) {
+      // since we allocate shared memory, use it for mem_host_ptr
+      assert((Mem->flags & CL_MEM_USE_HOST_PTR) == 0);
+      Mem->mem_host_ptr = Allocation;
+      Mem->mem_host_ptr_version = 0;
+      ++Mem->mem_host_ptr_refcount;
+    } else {
+      pocl_alloc_or_retain_mem_host_ptr(Mem);
+    }
   }
 
   POCL_MSG_PRINT_MEMORY("level0 ALLOCATED | MEM_HOST_PTR %p SIZE %zu | "
@@ -1377,11 +1413,8 @@ cl_int pocl_level0_get_mapping_ptr(void *Data, pocl_mem_identifier *MemId,
   /* assume buffer is allocated */
   assert(MemId->mem_ptr != NULL);
 
-  if ((Mem->flags & CL_MEM_USE_HOST_PTR) != 0u) {
-    Map->host_ptr = (char *)Mem->mem_host_ptr + Map->offset;
-  } else {
-    Map->host_ptr = (char *)MemId->mem_ptr + Map->offset;
-  }
+  assert(Mem->mem_host_ptr);
+  Map->host_ptr = (char *)Mem->mem_host_ptr + Map->offset;
 
   /* POCL_MSG_ERR ("map HOST_PTR: %p | SIZE %zu | OFFS %zu | DEV PTR: %p \n",
                   map->host_ptr, map->size, map->offset, mem_id->mem_ptr); */

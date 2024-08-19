@@ -145,6 +145,18 @@ pocl_kernel_calc_wg_size (cl_command_queue command_queue, cl_kernel kernel,
                               CL_INVALID_WORK_GROUP_SIZE);
     }
 
+  if (realdev->ops->verify_ndrange_sizes)
+    {
+      // verify the sanitized NDRange values
+      size_t OFS[3] = { offset_x, offset_y, offset_z };
+      size_t GWS[3] = { global_x, global_y, global_z };
+      size_t LWS[3] = { local_x, local_y, local_z };
+
+      int errcode = realdev->ops->verify_ndrange_sizes (OFS, GWS, LWS);
+      if (errcode != CL_SUCCESS)
+        return errcode;
+    }
+
   /* If the kernel has the reqd_work_group_size attribute, then the local
    * work size _must_ be specified, and it _must_ match the attribute
    * specification
