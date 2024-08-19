@@ -281,7 +281,9 @@ public:
                        ze_device_mem_alloc_flags_t DevFlags =
                            ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED,
                        ze_host_mem_alloc_flags_t HostFlags =
-                           ZE_HOST_MEM_ALLOC_FLAG_BIAS_CACHED);
+                           ZE_HOST_MEM_ALLOC_FLAG_BIAS_CACHED |
+                           ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT |
+                           ZE_HOST_MEM_ALLOC_FLAG_BIAS_WRITE_COMBINED);
   void *allocDeviceMem(uint64_t Size, ze_device_mem_alloc_flags_t DevFlags =
                                           ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED);
   void *allocHostMem(uint64_t Size, ze_device_mem_alloc_flags_t HostFlags =

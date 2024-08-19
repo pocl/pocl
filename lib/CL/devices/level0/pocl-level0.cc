@@ -1309,6 +1309,7 @@ int pocl_level0_alloc_mem_obj(cl_device_id ClDevice, cl_mem Mem, void *HostPtr) 
       Compress = (Mem->flags & CL_MEM_READ_ONLY) > 0;
     }
     ze_device_mem_alloc_flags_t DevFlags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED;
+
     ze_host_mem_alloc_flags_t HostFlags =
         ZE_HOST_MEM_ALLOC_FLAG_BIAS_CACHED |
         ZE_HOST_MEM_ALLOC_FLAG_BIAS_WRITE_COMBINED;
@@ -1318,8 +1319,11 @@ int pocl_level0_alloc_mem_obj(cl_device_id ClDevice, cl_mem Mem, void *HostPtr) 
     else
       DevFlags |= ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT;
 
-    Allocation =
-        Device->allocSharedMem(Mem->size, Compress, DevFlags, HostFlags);
+    if (ClDevice->host_unified_memory)
+      Allocation =
+          Device->allocSharedMem(Mem->size, Compress, DevFlags, HostFlags);
+    else
+      Allocation = Device->allocDeviceMem(Mem->size);
     if (Allocation == nullptr) {
       return CL_MEM_OBJECT_ALLOCATION_FAILURE;
     }
@@ -1347,12 +1351,16 @@ int pocl_level0_alloc_mem_obj(cl_device_id ClDevice, cl_mem Mem, void *HostPtr) 
     }
   }
 
-  // since we allocate shared memory, use it for mem_host_ptr
   if (Mem->mem_host_ptr == nullptr) {
-    assert((Mem->flags & CL_MEM_USE_HOST_PTR) == 0);
-    Mem->mem_host_ptr = Allocation;
-    Mem->mem_host_ptr_version = 0;
-    ++Mem->mem_host_ptr_refcount;
+    if (ClDevice->host_unified_memory) {
+      // since we allocate shared memory, use it for mem_host_ptr
+      assert((Mem->flags & CL_MEM_USE_HOST_PTR) == 0);
+      Mem->mem_host_ptr = Allocation;
+      Mem->mem_host_ptr_version = 0;
+      ++Mem->mem_host_ptr_refcount;
+    } else {
+      pocl_alloc_or_retain_mem_host_ptr(Mem);
+    }
   }
 
   POCL_MSG_PRINT_MEMORY("level0 ALLOCATED | MEM_HOST_PTR %p SIZE %zu | "
@@ -1405,11 +1413,8 @@ cl_int pocl_level0_get_mapping_ptr(void *Data, pocl_mem_identifier *MemId,
   /* assume buffer is allocated */
   assert(MemId->mem_ptr != NULL);
 
-  if ((Mem->flags & CL_MEM_USE_HOST_PTR) != 0u) {
-    Map->host_ptr = (char *)Mem->mem_host_ptr + Map->offset;
-  } else {
-    Map->host_ptr = (char *)MemId->mem_ptr + Map->offset;
-  }
+  assert(Mem->mem_host_ptr);
+  Map->host_ptr = (char *)Mem->mem_host_ptr + Map->offset;
 
   /* POCL_MSG_ERR ("map HOST_PTR: %p | SIZE %zu | OFFS %zu | DEV PTR: %p \n",
                   map->host_ptr, map->size, map->offset, mem_id->mem_ptr); */

@@ -926,7 +926,6 @@ void Level0Queue::mapMem(pocl_mem_identifier *SrcMemId,
     return;
   }
 
-  // memcpy (map->HostPtr, src_device_ptr + map->offset, map->size);
   allocNextFreeEvent();
   ze_result_t res = zeCommandListAppendMemoryCopy(
       CmdListH, Map->host_ptr, SrcPtr + Map->offset, Map->size, CurrentEventH,
@@ -953,7 +952,6 @@ void Level0Queue::unmapMem(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
   }
 
   allocNextFreeEvent();
-  // memcpy (dst_device_ptr + map->offset, map->HostPtr, map->size);
   ze_result_t res = zeCommandListAppendMemoryCopy(
       CmdListH, DstPtr + Map->offset, Map->host_ptr, Map->size, CurrentEventH,
       PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr);
@@ -1152,31 +1150,30 @@ void Level0Queue::readImageRect(cl_mem SrcImage, pocl_mem_identifier *SrcMemId,
 void Level0Queue::mapImage(pocl_mem_identifier *MemId,
                            cl_mem SrcImage, mem_mapping_t *Map) {
 
-  char *SrcImgPtr = static_cast<char *>(MemId->mem_ptr);
-  POCL_MSG_PRINT_LEVEL0("MAP IMAGE: %p FLAGS %zu\n", SrcImgPtr, Map->map_flags);
+  char *DstHostPtr = static_cast<char *>(MemId->mem_ptr);
 
   if ((Map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION) != 0u) {
     return;
   }
 
   // Device vs Shared allocated memory
-  if (Map->host_ptr == (SrcImgPtr + Map->offset)) {
+  if (SrcImage->mem_host_ptr == DstHostPtr) {
     // shared mem, nothing to do
   } else {
-    SrcImgPtr = static_cast<char *>(SrcImage->mem_host_ptr);
-    assert(Map->host_ptr == (SrcImgPtr + Map->offset));
+    // device memory, switch pointer to mem_host_ptr
+    DstHostPtr = static_cast<char *>(SrcImage->mem_host_ptr);
   }
 
-  readImageRect(SrcImage, MemId, SrcImgPtr, nullptr, Map->origin, Map->region,
+  POCL_MSG_PRINT_LEVEL0("MAP IMAGE: %p FLAGS %zu\n", DstHostPtr,
+                        Map->map_flags);
+
+  readImageRect(SrcImage, MemId, DstHostPtr, nullptr, Map->origin, Map->region,
                 Map->row_pitch, Map->slice_pitch, Map->offset);
 }
 
 void Level0Queue::unmapImage(pocl_mem_identifier *MemId,
                              cl_mem DstImage, mem_mapping_t *Map) {
-  char *DstImgPtr = static_cast<char *>(MemId->mem_ptr);
-
-  POCL_MSG_PRINT_LEVEL0("UNMAP IMAGE: %p FLAGS %zu\n", DstImgPtr,
-                        Map->map_flags);
+  char *SrcHostPtr = static_cast<char *>(MemId->mem_ptr);
 
   // for read mappings, don't copy anything
   if (Map->map_flags == CL_MAP_READ) {
@@ -1184,14 +1181,17 @@ void Level0Queue::unmapImage(pocl_mem_identifier *MemId,
   }
 
   // Device vs Shared allocated memory
-  if (Map->host_ptr == (DstImgPtr + Map->offset)) {
-    // nothing to do
+  if (DstImage->mem_host_ptr == SrcHostPtr) {
+    // shared mem, nothing to do
   } else {
-    DstImgPtr = static_cast<char *>(DstImage->mem_host_ptr);
-    assert(Map->host_ptr == (DstImgPtr + Map->offset));
+    // device memory, switch pointer to mem_host_ptr
+    SrcHostPtr = static_cast<char *>(DstImage->mem_host_ptr);
   }
 
-  writeImageRect(DstImage, MemId, DstImgPtr, nullptr, Map->origin, Map->region,
+  POCL_MSG_PRINT_LEVEL0("UNMAP IMAGE: %p FLAGS %zu\n", SrcHostPtr,
+                        Map->map_flags);
+
+  writeImageRect(DstImage, MemId, SrcHostPtr, nullptr, Map->origin, Map->region,
                  Map->row_pitch, Map->slice_pitch, Map->offset);
 }
 
