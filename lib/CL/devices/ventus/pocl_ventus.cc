@@ -279,7 +279,7 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->endian_little = CL_TRUE;
 
   dev->max_mem_alloc_size = 500 * 1024 * 1024; //100M
-  dev->mem_base_addr_align = 4;
+  dev->mem_base_addr_align = 128;
 
   dev->max_constant_buffer_size = 32768;     // TODO: Update this to conformant to OCL 2.0 // no cpmstant buffer now
   dev->local_mem_size = 64 * 1024;     // TODO: Update this to conformant to OCL 2.0 // 64kB per SM
@@ -297,7 +297,10 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->max_work_item_sizes[0] = 1024;
   dev->max_work_item_sizes[1] = 1024;
   dev->max_work_item_sizes[2] = 1024;
-  dev->max_parameter_size = 64;
+  dev->execution_capabilities = CL_EXEC_KERNEL;
+  dev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
+  dev->max_parameter_size = 1024;
+  dev->max_constant_args = 8;
   dev->max_compute_units = 16 * 32; // 16 SM comprise 16 int32 and 16 fp32 cores
   dev->max_clock_frequency = 100; // TODO: This is frequency in MHz
   dev->address_bits = 32;
