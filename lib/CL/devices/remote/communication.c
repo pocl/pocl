@@ -1321,6 +1321,21 @@ EXIT:
   free (a);
   return NULL;
 }
+
+void
+pocl_remote_get_traffic_stats (uint64_t *out_buf, cl_device_id device)
+{
+  remote_device_data_t *device_data = (remote_device_data_t *)device->data;
+  remote_server_data_t *server = device_data->server;
+  struct timespec now;
+  clock_gettime (CLOCK_REALTIME, &now);
+  out_buf[0] = now.tv_sec;
+  out_buf[1] = now.tv_nsec;
+  out_buf[2] = POCL_ATOMIC_LOAD (server->rx_bytes_requested);
+  out_buf[3] = POCL_ATOMIC_LOAD (server->rx_bytes_confirmed);
+  out_buf[4] = POCL_ATOMIC_LOAD (server->tx_bytes_submitted);
+  out_buf[5] = POCL_ATOMIC_LOAD (server->tx_bytes_confirmed);
+}
 #endif
 
 /**

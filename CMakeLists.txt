@@ -304,7 +304,7 @@ option(ENABLE_EXAMPLES "Build examples. Defaults to ON" ON)
 
 option(ENABLE_RDMA "Enable usage of RDMA libraries for memory allocations. Requires libRDMAcm and libverbs" OFF)
 
-option(ENABLE_TRAFFIC_MONITOR "Enable network traffic monitoring & logging in remote device" OFF)
+option(ENABLE_TRAFFIC_MONITOR "Enable network traffic monitoring & logging in remote device" ${ENABLE_REMOTE_CLIENT})
 
 OPTION(RENAME_POCL "rename PoCL's ocl functions to PO<ocl_function>. Allows an user to call both PoCL and another ocl application" OFF)
 

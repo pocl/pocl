@@ -476,8 +476,12 @@ cl_int pocl_network_fill_image (uint32_t cq_id, remote_device_data_t *ddata,
                                 network_command_callback cb, void *arg,
                                 _cl_command_node *node);
 
+#ifdef ENABLE_TRAFFIC_MONITOR
+void pocl_remote_get_traffic_stats (uint64_t *out_buf, cl_device_id device);
+#endif
+
 #ifdef __GNUC__
 #pragma GCC visibility pop
 #endif
 
-#endif /* POCL_SERVER_H */
+#endif /* POCL_REMOTE_COMMUNICATION_H */
