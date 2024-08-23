@@ -250,7 +250,7 @@ bool WorkgroupImpl::runOnModule(Module &M, FunctionVec &OldKernels) {
     // linker's switch --wrap=symbol, where calls to the "symbol" are replaced
     // with "__wrap_symbol" at link time.  These functions may not be referenced
     // until final link and being deleted by LLVM optimizations before it.
-    if (!i->isDeclaration() && !i->getName().startswith("__wrap_"))
+    if (!i->isDeclaration() && !i->getName().starts_with("__wrap_"))
       i->setLinkage(Function::InternalLinkage);
   }
 
@@ -468,7 +468,7 @@ static bool callsPrintf(Function *F) {
         continue;
       Function *callee = CallInstr->getCalledFunction();
 
-      if (callee->getName().startswith("llvm."))
+      if (callee->getName().starts_with("llvm."))
         continue;
       if (callee->getName().equals("_cl_printf"))
         return true;
@@ -599,7 +599,7 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
         replaceCIMap.insert(
             std::pair<CallInst *, CallInst *>(CallInstr, NewCI));
       } else {
-        if (!oldF->getName().startswith("llvm."))
+        if (!oldF->getName().starts_with("llvm."))
           callsToCheck.push_back(CallInstr);
       }
     }

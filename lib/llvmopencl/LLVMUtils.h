@@ -232,4 +232,9 @@ void CloneFunctionIntoAbs(llvm::Function *NewFunc,
 #define REGISTER_OLD_FANALYSIS(PNAME, PCLASS, PDESC)                          \
   static llvm::RegisterPass<PCLASS> X (PNAME, PDESC)
 
+#if LLVM_MAJOR < 16
+// Avoid the deprecation warning with later LLVMs.
+#define starts_with startswith
+#endif
+
 #endif

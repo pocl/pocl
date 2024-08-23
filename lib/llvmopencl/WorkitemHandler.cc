@@ -181,7 +181,7 @@ bool WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree &DT,
               StringRef baseName;
               std::pair< StringRef, StringRef > pieces = 
                 operand->getName().rsplit('.');
-              if (pieces.second.startswith("pocl_"))
+              if (pieces.second.starts_with("pocl_"))
                 baseName = pieces.first;
               else
                 baseName = operand->getName();

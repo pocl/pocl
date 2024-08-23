@@ -74,7 +74,7 @@ static bool flattenAll(Module &M) {
 
   for (llvm::Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     llvm::Function *f = &*i;
-    if (f->isDeclaration() || f->getName().startswith("__pocl_print") ||
+    if (f->isDeclaration() || f->getName().starts_with("__pocl_print") ||
         AuxFuncs.find(f->getName().str()) != AuxFuncs.end())
       continue;
 

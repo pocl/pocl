@@ -122,7 +122,7 @@ static void fixCallingConv(llvm::Module *Mod, std::string &Log) {
         CallInst *CallInstr = dyn_cast<CallInst>(Instr);
         Function *Callee = CallInstr->getCalledFunction();
 
-        if ((Callee == nullptr) || Callee->getName().startswith("llvm.") ||
+        if ((Callee == nullptr) || Callee->getName().starts_with("llvm.") ||
             Callee->isDeclaration())
           continue;
 
@@ -480,7 +480,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
                             // case not supporting the OpenCL 1.2 printf.
                             !f->getName().equals("printf") &&
                             !f->getName().equals(pocl_sampler_handler) &&
-                            !f->getName().startswith(llvm_intrins))) {
+                            !f->getName().starts_with(llvm_intrins))) {
           Log.append("Cannot find symbol ");
           Log.append(r.str());
           Log.append(" in kernel library\n");

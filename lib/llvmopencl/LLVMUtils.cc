@@ -250,7 +250,7 @@ isAutomaticLocal(llvm::Function *F, llvm::GlobalVariable &Var) {
   std::string FuncName = F->getName().str();
   if (!llvm::isa<llvm::PointerType>(Var.getType()) || Var.isConstant())
     return false;
-  if (Var.getName().startswith(FuncName + ".")) {
+  if (Var.getName().starts_with(FuncName + ".")) {
     return true;
   }
 
@@ -420,7 +420,7 @@ bool isKernelToProcess(const llvm::Function &F) {
     return false;
   if (!F.hasName())
     return false;
-  if (F.getName().startswith("@llvm"))
+  if (F.getName().starts_with("@llvm"))
     return false;
 
   NamedMDNode *kernels = m->getNamedMetadata("opencl.kernels");
@@ -455,7 +455,7 @@ void removeUnreachableSwitchCases(llvm::Function &F) {
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
     BasicBlock *BB = &*FI;
 
-    if (BB->hasName() && BB->getName().startswith("default.unreachable")) {
+    if (BB->hasName() && BB->getName().starts_with("default.unreachable")) {
 #ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
       std::cerr << "##################################################\n";
       std::cerr << "### converting unreachable block: " << (void *)BB << "\n";

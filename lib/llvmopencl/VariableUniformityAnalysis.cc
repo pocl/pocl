@@ -339,8 +339,8 @@ bool VariableUniformityAnalysisResult::isUniform(llvm::Function *F,
         CallInst *CallInstr = dyn_cast<CallInst>(user);
         Function *Callee = CallInstr->getCalledFunction();
         if (Callee != nullptr &&
-            (Callee->getName().startswith("llvm.lifetime.end") ||
-             Callee->getName().startswith("llvm.lifetime.start"))) {
+            (Callee->getName().starts_with("llvm.lifetime.end") ||
+             Callee->getName().starts_with("llvm.lifetime.start"))) {
 #ifdef DEBUG_UNIFORMITY_ANALYSIS
           std::cerr << "### alloca is used by llvm.lifetime" << std::endl;
           user->dump();
