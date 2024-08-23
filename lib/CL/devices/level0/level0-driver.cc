@@ -49,6 +49,10 @@
 // of the commands in the work queue.
 //#define LEVEL0_RANDOMIZE_QUEUE
 
+// disable to use zeCommandListAppendMemoryFill API command
+// known to crash with CTS "select" test.
+//#define ENABLE_L0_MEMFILL
+
 using namespace pocl;
 
 static void pocl_level0_abort_on_ze_error(int permit_quiet_exit,
@@ -981,14 +985,18 @@ void Level0Queue::memFill(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
                           const void *__restrict__ Pattern,
                           size_t PatternSize) {
   char *DstPtr = static_cast<char *>(DstMemId->mem_ptr);
-  POCL_MSG_PRINT_LEVEL0("MEMFILL | PTR %p | SIZE %zu | PAT SIZE %zu\n", DstPtr,
-                        Size, PatternSize);
+  POCL_MSG_PRINT_LEVEL0(
+      "MEMFILL | PTR %p | OFS %zu | SIZE %zu | PAT SIZE %zu\n",
+      DstPtr, Offset, Size, PatternSize);
+#ifdef ENABLE_L0_MEMFILL
   if (PatternSize <= MaxFillPatternSize) {
     allocNextFreeEvent();
     LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryFill(
         CmdListH, DstPtr + Offset, Pattern, PatternSize, Size, CurrentEventH,
         PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr));
-  } else {
+  } else
+#endif
+  {
     POCL_MSG_PRINT_LEVEL0("using PoCL's memoryFill kernels\n");
     memfillImpl(Device, CmdListH, DstPtr, Size, Offset, Pattern, PatternSize);
   }
