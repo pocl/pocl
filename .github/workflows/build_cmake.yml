@@ -484,7 +484,7 @@ jobs:
       fail-fast: false
       matrix:
         # 15 to 17 should work, however 17 currently fails two tests (fp16)
-        llvm: [16]
+        llvm: [17]
         config: [openasip]
 
     steps:
