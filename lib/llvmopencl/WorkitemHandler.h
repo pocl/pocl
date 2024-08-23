@@ -35,8 +35,11 @@
 
 namespace pocl {
 
+// Common base class for work-group function generators that includes
+// utility functionality.
 class WorkitemHandler {
 public:
+  // Should be called when starting to process a new kernel.
   virtual void Initialize (pocl::Kernel *K);
 
 protected:
@@ -45,14 +48,26 @@ protected:
   bool dominatesUse (llvm::DominatorTree &DT, llvm::Instruction &Inst,
                      unsigned OpNum);
 
+  llvm::Instruction *getGlobalIdOrigin(int dim);
+  void GenerateGlobalIdComputation();
+
   // The type of size_t for the current target.
-  llvm::Type *SizeT;
+  llvm::Type *ST;
   // The width of size_t for the current target.
   int SizeTWidth;
 
   // The Module global variables that hold the place of the current local
   // id until privatized.
   llvm::Value *LocalIdZGlobal, *LocalIdYGlobal, *LocalIdXGlobal;
+
+  // Points to the global id origin computation instructions in the entry
+  // block of the currently handled kernel. To get the global id, the current
+  // local id must be added to it.
+  std::array<llvm::Instruction *, 3> GlobalIdOrigins;
+
+  // The currently handled Kernel/Function and its Module.
+  pocl::Kernel *K;
+  llvm::Module *M;
 
   // Copies of compilation parameters
   std::string KernelName;

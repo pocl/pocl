@@ -133,7 +133,7 @@ static uint64_t getAndFixLargestVecSize(llvm::Function *F, unsigned Justify) {
       if (Callee == nullptr)
         continue;
 
-      if (Callee->hasName() && Callee->getName().startswith("llvm."))
+      if (Callee->hasName() && Callee->getName().starts_with("llvm."))
         continue;
 
       Calls.push_back(Callee);
@@ -188,7 +188,7 @@ static bool fixMinVecSize(Module &M) {
     llvm::Function *F = &*i;
     if (F->isDeclaration())
       continue;
-    if (F->hasName() && F->getName().startswith("llvm."))
+    if (F->hasName() && F->getName().starts_with("llvm."))
       continue;
 
     // AttributeSet Attrs;
@@ -219,7 +219,7 @@ static bool fixMinVecSize(Module &M) {
     llvm::Function *F = &*i;
     if (F->isDeclaration())
       continue;
-    if (F->hasName() && F->getName().startswith("llvm."))
+    if (F->hasName() && F->getName().starts_with("llvm."))
       continue;
     if (pocl::isKernelToProcess(*F))
       continue;

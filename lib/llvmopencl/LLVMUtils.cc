@@ -250,7 +250,7 @@ isAutomaticLocal(llvm::Function *F, llvm::GlobalVariable &Var) {
   std::string FuncName = F->getName().str();
   if (!llvm::isa<llvm::PointerType>(Var.getType()) || Var.isConstant())
     return false;
-  if (Var.getName().startswith(FuncName + ".")) {
+  if (Var.getName().starts_with(FuncName + ".")) {
     return true;
   }
 
@@ -420,7 +420,7 @@ bool isKernelToProcess(const llvm::Function &F) {
     return false;
   if (!F.hasName())
     return false;
-  if (F.getName().startswith("@llvm"))
+  if (F.getName().starts_with("@llvm"))
     return false;
 
   NamedMDNode *kernels = m->getNamedMetadata("opencl.kernels");
@@ -455,7 +455,7 @@ void removeUnreachableSwitchCases(llvm::Function &F) {
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
     BasicBlock *BB = &*FI;
 
-    if (BB->hasName() && BB->getName().startswith("default.unreachable")) {
+    if (BB->hasName() && BB->getName().starts_with("default.unreachable")) {
 #ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
       std::cerr << "##################################################\n";
       std::cerr << "### converting unreachable block: " << (void *)BB << "\n";
@@ -631,6 +631,9 @@ const char *WorkgroupVariablesArray[NumWorkgroupVariables+1] = {"_local_id_x",
                                     "_global_offset_x",
                                     "_global_offset_y",
                                     "_global_offset_z",
+                                    "_global_id_x",
+                                    "_global_id_y",
+                                    "_global_id_z",
                                     "_pocl_sub_group_size",
                                     PoclGVarBufferName,
                                     NULL};
@@ -687,6 +690,15 @@ void registerFunctionAnalyses(llvm::PassBuilder &PB) {
   VariableUniformityAnalysis::registerWithPB(PB);
   WorkitemHandlerChooser::registerWithPB(PB);
   WorkItemAliasAnalysis::registerWithPB(PB);
+}
+
+/**
+ * Returns the size_t for the current target.
+ */
+llvm::Type *SizeT(llvm::Module *M) {
+  unsigned long AddressBits;
+  getModuleIntMetadata(*M, "device_address_bits", AddressBits);
+  return IntegerType::get(M->getContext(), AddressBits);
 }
 
 } // namespace pocl

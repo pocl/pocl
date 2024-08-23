@@ -48,6 +48,14 @@ else()
     DOC "llvm-config executable")
 endif()
 
+if(ENABLE_LLVM_FILECHECKS)
+  if(IS_ABSOLUTE "${LLVM_FILECHECK_BIN}" AND EXISTS "${LLVM_FILECHECK_BIN}")
+    message(STATUS "LLVM IR checks enabled using ${LLVM_FILECHECK_BIN}.")
+  else()
+    message(FATAL_ERROR "${LLVM_FILECHECK_BIN} not found!")
+  endif()
+endif()
+
 set(WITH_LLVM_CONFIG "${WITH_LLVM_CONFIG}" CACHE PATH "Path to preferred llvm-config")
 
 if(NOT LLVM_CONFIG)

@@ -14,7 +14,15 @@ CPU drivers
 Work-group vectorization improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The WG vectorization with the 'loopvec' method is enabled again.
+* Improve work-group vectorization of kernels which use the global
+  id as the iteration variable. Now the loop vectorizer should
+  generate wide loads/stores more often than falling back to
+  scatter/gather.
+* The WG vectorization with the 'loopvec' method is enabled again,
+  there was an issue when upgrading to the latest LLVM version.
+  Now there's a regression test in place for avoiding accidents
+  like this in the futre.
+
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Miscellaneous
@@ -50,4 +58,9 @@ most notable/user facing ones are listed below:
 ===================================
 Deprecation/feature removal notices
 ===================================
+
+ * The old "work-item replication" work-group function generation
+   method will be removed in the next release. It seems not provide
+   any benefits anymore over simply fully unrolling the result of
+   "loops".
 

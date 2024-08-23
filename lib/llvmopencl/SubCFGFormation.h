@@ -36,9 +36,12 @@
 #include <llvm/Pass.h>
 #include <llvm/Passes/PassBuilder.h>
 
+#include "WorkitemHandler.h"
+
 namespace pocl {
 
-class SubCFGFormation : public llvm::PassInfoMixin<SubCFGFormation> {
+class SubCFGFormation : public llvm::PassInfoMixin<SubCFGFormation>,
+                        WorkitemHandler {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,

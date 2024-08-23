@@ -27,16 +27,20 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/Twine.h>
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-#include "llvm/IR/Metadata.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/ValueSymbolTable.h"
-#include "llvm/Support/CommandLine.h"
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Metadata.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/ValueSymbolTable.h>
+#include <llvm/Support/CommandLine.h>
 
-#include "WorkitemHandler.h"
-#include "Kernel.h"
 #include "DebugHelpers.h"
+#include "Kernel.h"
+#include "KernelCompilerUtils.h"
+#include "LLVMUtils.h"
+#include "WorkitemHandler.h"
+
 POP_COMPILER_DIAGS
 
 #include "pocl_llvm_api.h"
@@ -55,10 +59,10 @@ cl::opt<bool> AddWIMetadata(
     cl::desc("Adds a work item identifier to each of the instruction in "
              "work items."));
 
-void
-WorkitemHandler::Initialize(Kernel *K) {
+void WorkitemHandler::Initialize(Kernel *K_) {
 
-  llvm::Module *M = K->getParent();
+  K = K_;
+  M = K->getParent();
 
   getModuleIntMetadata(*M, "device_address_bits", AddressBits);
 
@@ -79,15 +83,13 @@ WorkitemHandler::Initialize(Kernel *K) {
     WGLocalSizeZ = 1;
 
   SizeTWidth = AddressBits;
-  SizeT = IntegerType::get(M->getContext(), SizeTWidth);
+  ST = pocl::SizeT(M);
 
-  assert ((SizeTWidth == 32 || SizeTWidth == 64) &&
-          "Only 32 and 64 bit size_t widths supported.");
+  LocalIdZGlobal = M->getOrInsertGlobal(LID_G_NAME(2), ST);
+  LocalIdYGlobal = M->getOrInsertGlobal(LID_G_NAME(1), ST);
+  LocalIdXGlobal = M->getOrInsertGlobal(LID_G_NAME(0), ST);
 
-  llvm::Type *LocalIdType = SizeT;
-  LocalIdZGlobal = M->getOrInsertGlobal(POCL_LOCAL_ID_Z_GLOBAL, LocalIdType);
-  LocalIdYGlobal = M->getOrInsertGlobal(POCL_LOCAL_ID_Y_GLOBAL, LocalIdType);
-  LocalIdXGlobal = M->getOrInsertGlobal(POCL_LOCAL_ID_X_GLOBAL, LocalIdType);
+  GlobalIdOrigins = {0, 0, 0};
 }
 
 bool WorkitemHandler::dominatesUse(llvm::DominatorTree &DT, Instruction &Inst,
@@ -179,7 +181,7 @@ bool WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree &DT,
               StringRef baseName;
               std::pair< StringRef, StringRef > pieces = 
                 operand->getName().rsplit('.');
-              if (pieces.second.startswith("pocl_"))
+              if (pieces.second.starts_with("pocl_"))
                 baseName = pieces.first;
               else
                 baseName = operand->getName();
@@ -246,5 +248,80 @@ WorkitemHandler::movePhiNodes(llvm::BasicBlock* Src, llvm::BasicBlock* Dst) {
     PN->moveBefore(Dst->getFirstNonPHI());
 }
 
+/**
+ * Returns the instruction in the entry block which computes the "base" for
+ * the global id which has all components except the local id offset included.
+ */
+llvm::Instruction *WorkitemHandler::getGlobalIdOrigin(int Dim) {
+  llvm::Instruction *Origin = GlobalIdOrigins[Dim];
+  if (Origin != nullptr)
+    return Origin;
+
+  GlobalVariable *LocalSize = cast<GlobalVariable>(M->getOrInsertGlobal(
+      std::string("_local_size_") + (char)('x' + Dim), ST));
+  GlobalVariable *GlobalOffset = cast<GlobalVariable>(M->getOrInsertGlobal(
+      std::string("_global_offset_") + (char)('x' + Dim), ST));
+  GlobalVariable *GroupId = cast<GlobalVariable>(
+      M->getOrInsertGlobal(std::string("_group_id_") + (char)('x' + Dim), ST));
+
+  assert(LocalSize != nullptr);
+  assert(GlobalOffset != nullptr);
+  assert(GroupId != nullptr);
+
+  IRBuilder<> Builder(K->getEntryBlock().getFirstNonPHI());
+
+  Origin = cast<llvm::Instruction>(
+      Builder.CreateBinOp(Instruction::Mul, Builder.CreateLoad(ST, LocalSize),
+                          Builder.CreateLoad(ST, GroupId)));
+
+  Origin = cast<llvm::Instruction>(Builder.CreateBinOp(
+      Instruction::Add, Builder.CreateLoad(ST, GlobalOffset), Origin));
+
+  GlobalIdOrigins[Dim] = Origin;
+
+  llvm::GlobalVariable *GlobalId =
+      cast<GlobalVariable>(M->getOrInsertGlobal(GID_G_NAME(Dim), ST));
+
+  // Initialize the global id to the first value just in case we won't create
+  // a loop for a 1-sized dimensions which would create the monotonically
+  // incrementing GID.
+  Builder.CreateStore(Origin, GlobalId);
+
+  return Origin;
+}
+
+/**
+ * Scans for usages of global id and replaces with global_id_base + local_id.
+ *
+ * This should be called for WorkitemHandlers that do not produce the global
+ * id within the handler like WILoops does.
+ */
+void WorkitemHandler::GenerateGlobalIdComputation() {
+  for (Function::iterator FI = K->begin(), FE = K->end(); FI != FE; ++FI) {
+    for (BasicBlock::iterator II = FI->begin(), IE = FI->end(); II != IE;) {
+      llvm::LoadInst *GIdLoad = dyn_cast<llvm::LoadInst>(II);
+      ++II;
+      if (GIdLoad == NULL)
+        continue;
+
+      for (int Dim = 0; Dim < 3; ++Dim) {
+        GlobalVariable *GlobalId = M->getGlobalVariable(GID_G_NAME(Dim));
+        if (GIdLoad->getOperand(0) != GlobalId) {
+          continue;
+        }
+        IRBuilder<> FBuilder(GIdLoad);
+
+        Instruction *LocalId =
+            FBuilder.CreateLoad(ST, M->getGlobalVariable(LID_G_NAME(Dim)));
+        Instruction *GlobalIdOrigin = getGlobalIdOrigin(Dim);
+
+        Instruction *GidStore = FBuilder.CreateStore(
+            FBuilder.CreateAdd(GlobalIdOrigin, LocalId), GlobalId);
+
+        break;
+      }
+    }
+  }
+}
 
 } // namespace pocl

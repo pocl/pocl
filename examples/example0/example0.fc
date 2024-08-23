@@ -1,0 +1,8 @@
+# A smoke test for autovectorization with a small WG loop without
+# a barrier and with integer arithmetics.
+
+# CHECK: load <8 x i32>
+# CHECK: mul <8 x i32>
+# CHECK: load <8 x i32>
+
+

@@ -50,11 +50,6 @@ namespace pocl {
     void addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY,
                               size_t LocalSizeZ);
 
-    // Returns an instruction in the entry block which computes the
-    // total size of work-items in the work-group. If it doesn't
-    // exist, creates it to the end of the entry block.
-    llvm::Instruction *getWorkGroupSizeInstr();
-
     static bool isKernel(const llvm::Function &F);
 
     static bool classof(const Kernel *) { return true; }
@@ -64,8 +59,9 @@ namespace pocl {
     static bool classof(const llvm::Function *) { return true; }
 
   private:
-    // Instruction that computes the work-group size
-    llvm::Instruction *WGSizeInstr;
+    // Note: Since this class is only using llvm's inheritance mechanism for
+    // creating a convenience class, we never allocate storage for it
+    // separately, thus should not allocate any additional data here.
   };
 
 }

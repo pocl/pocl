@@ -71,7 +71,7 @@ static bool recursivelyInlineBarrierUsers(Function *F, bool ChangeInlineFlag) {
       CallInst *CallInstr = dyn_cast<CallInst>(Instr);
       Function *Callee = CallInstr->getCalledFunction();
 
-      if ((Callee == nullptr) ||  Callee->getName().startswith("llvm."))
+      if ((Callee == nullptr) || Callee->getName().starts_with("llvm."))
         continue;
 
       if (llvm::isa<pocl::Barrier>(CallInstr))

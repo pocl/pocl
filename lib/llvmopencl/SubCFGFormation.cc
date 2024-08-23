@@ -49,6 +49,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 POP_COMPILER_DIAGS
 
 #include "Barrier.h"
+#include "KernelCompilerUtils.h"
 #include "LLVMUtils.h"
 #include "SubCFGFormation.h"
 #include "VariableUniformityAnalysis.h"
@@ -60,6 +61,7 @@ POP_COMPILER_DIAGS
 
 #include <cstddef>
 #include <functional>
+#include <iostream>
 #include <numeric>
 
 // #define DEBUG_SUBCFG_FORMATION
@@ -320,6 +322,12 @@ void createLoopsAround(llvm::Function &F, llvm::BasicBlock *AfterBB,
         Builder.getIntN(DL.getLargestLegalIntTypeSizeInBits(), 0),
         &F.getEntryBlock());
     IndVars.push_back(WIIndVar);
+
+    // Create the global id calculations.
+    llvm::GlobalVariable *LocalIDG =
+        F.getParent()->getGlobalVariable(LID_G_NAME(D));
+    assert(LocalIDG != nullptr);
+    Builder.CreateStore(WIIndVar, LocalIDG);
     Builder.CreateBr(LastHeader);
 
     auto *Latch =
@@ -1571,6 +1579,8 @@ SubCFGFormation::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
   if (!hasWorkgroupBarriers(F))
     return PreservedAnalyses::all();
 
+  Initialize(cast<pocl::Kernel>(&F));
+
   llvm::errs() << "[SubCFG] Form SubCFGs in " << F.getName() << "\n";
 
   auto &DT = AM.getResult<llvm::DominatorTreeAnalysis>(F);
@@ -1584,6 +1594,7 @@ SubCFGFormation::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
     if (llvm::findOptionMDForLoop(SL, PoclMDKind::WorkItemLoop))
       markLoopParallel(F, SL);
 
+  GenerateGlobalIdComputation();
   PreservedAnalyses PAChanged = PreservedAnalyses::none();
   PAChanged.preserve<WorkitemHandlerChooser>();
   return PAChanged;

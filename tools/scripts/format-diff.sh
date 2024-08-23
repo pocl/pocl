@@ -17,8 +17,12 @@ trap 'rm -f $PATCHY' EXIT
 
 git diff $* -U0 --no-color >$PATCHY
 
-"$RELPATH"/clang-format-diff.py -regex '.*(\.h$|\.c$|\.cl$)' -i -p1 -style=file:"$RELPATH/style.GNU" <"$PATCHY"
-"$RELPATH"/clang-format-diff.py -regex '(.*(\.hpp$|\.hh$|\.cc$|\.cpp$))|(lib/llvmopencl/.*)|(lib/CL/devices/tce/.*)' -i -p1 -style=file:"$RELPATH/style.CPP" <"$PATCHY"
+"$RELPATH"/clang-format-diff.py -v -regex '.*(\.h$|\.c$|\.cl$)' -i -p1 -style=file:"$RELPATH/style.GNU" <"$PATCHY"
+
+# We need to recreate the diff since the old patch is stale.
+git diff $* -U0 --no-color >$PATCHY
+
+"$RELPATH"/clang-format-diff.py -v -regex '(.*(\.hpp$|\.hh$|\.cc$|\.cpp$|lib/llvmopencl/.*$|/lib/CL/devices/tce/.*$))' -i -p1 -style=file:"$RELPATH/style.CPP" <"$PATCHY"
 
 # cd back wherever we were previously
 popd > /dev/null || exit 1

@@ -36,8 +36,9 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Module.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 
-#include "DebugHelpers.h"
 #include "Barrier.h"
+#include "DebugHelpers.h"
+#include "LLVMUtils.h"
 #include "Workgroup.h"
 #include "pocl_file_util.h"
 
@@ -82,13 +83,13 @@ static void printBasicBlock(
   s << ",label=\"" << b->getName().str() << ":\\n";
 
   // The work-item loop control structures.
-  if (b->getName().startswith("pregion_for_cond")) {
+  if (b->getName().starts_with("pregion_for_cond")) {
     s << "wi-loop branch\\n";
-  } else if (b->getName().startswith("pregion_for_inc")) {
+  } else if (b->getName().starts_with("pregion_for_inc")) {
     s << "local_id_* increment\\n";
-  } else if (b->getName().startswith("pregion_for_init")) {
+  } else if (b->getName().starts_with("pregion_for_init")) {
     s << "wi-loop init\\n";
-  } else if (b->getName().startswith("pregion_for_end")) {
+  } else if (b->getName().starts_with("pregion_for_end")) {
     s << "wi-loop exit\\n";
   } else {
     // analyze the contents of the BB
