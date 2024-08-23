@@ -793,7 +793,7 @@ void ParallelRegion::LocalizeIDLoads() {
         continue;
 
       auto Callee = Call->getCalledFunction();
-      if (Callee->isDeclaration() &&
+      if (Callee != nullptr && Callee->isDeclaration() &&
           Callee->getName().equals(GID_BUILTIN_NAME)) {
         int Dim =
             cast<llvm::ConstantInt>(Call->getArgOperand(0))->getZExtValue();

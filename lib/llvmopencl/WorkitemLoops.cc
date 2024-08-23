@@ -808,8 +808,9 @@ bool WorkitemLoopsImpl::handleLocalMemAllocas(Kernel &K) {
       if (!isa<CallInst>(I)) continue;
       CallInst &Call = cast<CallInst>(I);
 
-      if (Call.getCalledFunction() != LocalMemAllocaFuncDecl &&
-          Call.getCalledFunction() != WorkGroupAllocaFuncDecl) continue;
+      if (Call.getCalledFunction() == nullptr ||
+          (Call.getCalledFunction() != LocalMemAllocaFuncDecl &&
+           Call.getCalledFunction() != WorkGroupAllocaFuncDecl)) continue;
       InstructionsToFix.push_back(&Call);
     }
   }
