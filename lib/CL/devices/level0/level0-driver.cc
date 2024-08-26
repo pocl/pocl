@@ -1080,20 +1080,28 @@ void Level0Queue::copyImageRect(cl_mem SrcImage, cl_mem DstImage,
   LEVEL0_CHECK_ABORT(Res);
 }
 
-static bool needsStagingCopy(cl_mem DstImage, size_t SrcRowPitch,
-                             size_t SrcSlicePitch) {
-  // row/slice pitch with zero gaps
-  size_t RowPitch = DstImage->image_elem_size
-      * DstImage->image_channels * DstImage->image_width;
-  size_t SlicePitch =
-      RowPitch * (DstImage->image_height ? DstImage->image_height : 1);
+static bool needsStagingCopy(cl_mem DstImage, size_t &UserRowPitch,
+                             size_t &UserSlicePitch, size_t &RowPitch,
+                             size_t &SlicePitch) {
+  // row/slice pitch with zero padding
+  RowPitch = DstImage->image_elem_size * DstImage->image_channels *
+             DstImage->image_width;
+  SlicePitch = RowPitch * (DstImage->image_height ? DstImage->image_height : 1);
 
-  // if the row/slice pitch are nonzero and not equal to zero-gap values,
+  // if the row/slice pitch are nonzero and not equal to zero-padding values,
   // we need a staging buffer memcopy
-  if (SrcRowPitch && (SrcRowPitch != RowPitch))
-    return true;
-  if (SrcSlicePitch && (SrcSlicePitch != SlicePitch))
-    return true;
+  if (UserRowPitch) {
+    if (UserRowPitch != RowPitch)
+      return true;
+  } else {
+    UserRowPitch = RowPitch;
+  }
+  if (UserSlicePitch) {
+    if (UserSlicePitch != SlicePitch)
+      return true;
+  } else {
+    UserSlicePitch = SlicePitch;
+  }
   return false;
 }
 
@@ -1116,11 +1124,19 @@ void Level0Queue::writeImageRect(cl_mem DstImage, pocl_mem_identifier *DstMemId,
   ze_image_handle_t DstImg =
       static_cast<ze_image_handle_t>(DstMemId->extra_ptr);
   char *StagingPtr = (char *)DstMemId->mem_ptr;
-  POCL_MSG_PRINT_LEVEL0("WRITE IMAGE RECT | DST IMG %p | DST IMG STA %p | SRC"
-                        " PTR %p | RowPitch %zu | SlicePitch %zu | DstOffset"
-                        " %zu \n",
-                        (void *)DstImg, (void *)SrcPtr, (void *)StagingPtr,
-                        SrcRowPitch, SrcSlicePitch, SrcOffset);
+  size_t NativeRowPitch, NativeSlicePitch;
+  bool NeedsStaging = needsStagingCopy(DstImage, SrcRowPitch, SrcSlicePitch,
+                                       NativeRowPitch, NativeSlicePitch);
+  POCL_MSG_PRINT_LEVEL0(
+      "WRITE IMAGE RECT | DST IMG %p | DST IMG STA %p | SRC PTR %p | "
+      " Origin %zu %zu %zu | Region %zu %zu %zu |"
+      " SrcRowPitch %zu | SrcSlicePitch %zu | "
+      " NativeRowPitch %zu | NativeSlicePitch %zu |"
+      " SrcOffset %zu | NeedsStaging: %s \n",
+      (void *)DstImg, (void *)StagingPtr, (void *)SrcPtr, Origin[0], Origin[1],
+      Origin[2], Region[0], Region[1], Region[2], SrcRowPitch, SrcSlicePitch,
+      NativeRowPitch, NativeSlicePitch, SrcOffset,
+      (NeedsStaging ? "true" : "false"));
 
   ze_image_region_t ImgRegion;
   ImgRegion.originX = Origin[0];
@@ -1130,27 +1146,47 @@ void Level0Queue::writeImageRect(cl_mem DstImage, pocl_mem_identifier *DstMemId,
   ImgRegion.height = Region[1];
   ImgRegion.depth = Region[2];
 
+  size_t ElemBytes = DstImage->image_elem_size * DstImage->image_channels;
   // unfortunately, this returns ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
   //  ze_result_t Res = zeCommandListAppendImageCopyFromMemoryExt(CmdListH,
   //  DstImg, SrcPtr, &DstRegion,
   //                                            SrcRowPitch, SrcSlicePitch,
   //                                            nullptr, 0, nullptr);
-  bool NeedsStaging = needsStagingCopy(DstImage, SrcRowPitch, SrcSlicePitch);
   if (NeedsStaging) {
-    ze_copy_region_t CopyRegion;
-    CopyRegion.originX = Origin[0];
-    CopyRegion.originY = Origin[1];
-    CopyRegion.originZ = Origin[2];
-    CopyRegion.width = Region[0];
-    CopyRegion.height = Region[1];
-    CopyRegion.depth = Region[2];
+    // if copying from other cl_mem, use the faster & simpler way
+    if (SrcHostPtr == nullptr) {
+      ze_copy_region_t CopyDstRegion;
+      CopyDstRegion.originX = Origin[0] * ElemBytes;
+      CopyDstRegion.originY = Origin[1];
+      CopyDstRegion.originZ = Origin[2];
+      CopyDstRegion.width = Region[0] * ElemBytes;
+      CopyDstRegion.height = Region[1];
+      CopyDstRegion.depth = Region[2];
 
-    allocNextFreeEvent();
-    LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopyRegion(
-        CmdListH, StagingPtr, &CopyRegion, 0, 0,         // DST
-        SrcPtr, &CopyRegion, SrcRowPitch, SrcSlicePitch, // SRC
-        CurrentEventH, PreviousEventH ? 1 : 0,
-        PreviousEventH ? &PreviousEventH : nullptr));
+      ze_copy_region_t CopySrcRegion;
+      CopySrcRegion.originX = 0;
+      CopySrcRegion.originY = 0;
+      CopySrcRegion.originZ = 0;
+      CopySrcRegion.width = Region[0] * ElemBytes;
+      CopySrcRegion.height = Region[1];
+      CopySrcRegion.depth = Region[2];
+
+      allocNextFreeEvent();
+      LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopyRegion(
+          CmdListH, StagingPtr, &CopyDstRegion, NativeRowPitch,
+          NativeSlicePitch,                                   // DST
+          SrcPtr, &CopySrcRegion, SrcRowPitch, SrcSlicePitch, // SRC
+          CurrentEventH, PreviousEventH ? 1 : 0,
+          PreviousEventH ? &PreviousEventH : nullptr));
+    } else {
+      // if copying from host memory, use the helper to avoid L0 bug
+      size_t HostOrigin[3] = {0, 0, 0};
+      size_t DevOrigin[3] = {Origin[0] * ElemBytes, Origin[1], Origin[2]};
+      size_t DevRegion[3] = {Region[0] * ElemBytes, Region[1], Region[2]};
+      writeRectHelper(SrcPtr, StagingPtr, DevOrigin, HostOrigin, DevRegion,
+                      NativeRowPitch, NativeSlicePitch, SrcRowPitch,
+                      SrcSlicePitch);
+    }
 
     allocNextFreeEvent();
     LEVEL0_CHECK_ABORT(zeCommandListAppendImageCopyFromMemory(
@@ -1184,11 +1220,17 @@ void Level0Queue::readImageRect(cl_mem SrcImage, pocl_mem_identifier *SrcMemId,
   ze_image_handle_t SrcImg =
       static_cast<ze_image_handle_t>(SrcMemId->extra_ptr);
   char *StagingPtr = (char *)SrcMemId->mem_ptr;
+  size_t NativeRowPitch, NativeSlicePitch;
+  bool NeedsStaging = needsStagingCopy(SrcImage, DstRowPitch, DstSlicePitch,
+                                       NativeRowPitch, NativeSlicePitch);
   POCL_MSG_PRINT_LEVEL0(
       "READ IMAGE RECT | SRC IMG %p | SRC IMG STA %p | DST PTR %p | "
-      "RowPitch %zu | SlicePitch %zu | DstOffset %zu \n",
-      (void *)SrcImg, (void *)DstPtr, (void *)StagingPtr, DstRowPitch,
-      DstSlicePitch, DstOffset);
+      "DstRowPitch %zu | DstSlicePitch %zu | "
+      "NativeRowPitch %zu | NativeSlicePitch %zu | "
+      "DstOffset %zu \n | NeedsStaging: %s",
+      (void *)SrcImg, (void *)StagingPtr, (void *)DstPtr, DstRowPitch,
+      DstSlicePitch, NativeRowPitch, NativeSlicePitch, DstOffset,
+      (NeedsStaging ? "true" : "false"));
 
   ze_image_region_t ImgRegion;
   ImgRegion.originX = Origin[0];
@@ -1198,32 +1240,53 @@ void Level0Queue::readImageRect(cl_mem SrcImage, pocl_mem_identifier *SrcMemId,
   ImgRegion.height = Region[1];
   ImgRegion.depth = Region[2];
 
+  size_t ElemBytes = SrcImage->image_elem_size * SrcImage->image_channels;
   // unfortunately, this returns ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
   //  ze_result_t Res = zeCommandListAppendImageCopyToMemoryExt(CmdListH,
   //  DstPtr, SrcImg, &SrcRegion,
   //                                          DstRowPitch, DstSlicePitch,
   //                                          nullptr, 0, nullptr);
-  bool NeedsStaging = needsStagingCopy(SrcImage, DstRowPitch, DstSlicePitch);
   if (NeedsStaging) {
-    ze_copy_region_t CopyRegion;
-    CopyRegion.originX = Origin[0];
-    CopyRegion.originY = Origin[1];
-    CopyRegion.originZ = Origin[2];
-    CopyRegion.width = Region[0];
-    CopyRegion.height = Region[1];
-    CopyRegion.depth = Region[2];
-
     allocNextFreeEvent();
     LEVEL0_CHECK_ABORT(zeCommandListAppendImageCopyToMemory(
         CmdListH, StagingPtr, SrcImg, &ImgRegion, CurrentEventH,
         PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr));
 
-    allocNextFreeEvent();
-    LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopyRegion(
-        CmdListH, DstPtr, &CopyRegion, DstRowPitch, DstSlicePitch, // DST
-        StagingPtr, &CopyRegion, 0, 0,                             // SRC
-        CurrentEventH, PreviousEventH ? 1 : 0,
-        PreviousEventH ? &PreviousEventH : nullptr));
+    // if copying to other cl_mem, use the faster & simpler way
+    if (DstHostPtr == nullptr) {
+      ze_copy_region_t CopySrcRegion;
+      CopySrcRegion.originX = Origin[0] * ElemBytes;
+      CopySrcRegion.originY = Origin[1];
+      CopySrcRegion.originZ = Origin[2];
+      CopySrcRegion.width = Region[0] * ElemBytes;
+      CopySrcRegion.height = Region[1];
+      CopySrcRegion.depth = Region[2];
+
+      ze_copy_region_t CopyDstRegion;
+      CopyDstRegion.originX = 0;
+      CopyDstRegion.originY = 0;
+      CopyDstRegion.originZ = 0;
+      CopyDstRegion.width = Region[0] * ElemBytes;
+      CopyDstRegion.height = Region[1];
+      CopyDstRegion.depth = Region[2];
+
+      allocNextFreeEvent();
+      LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopyRegion(
+          CmdListH, DstPtr, &CopyDstRegion, DstRowPitch, DstSlicePitch, // DST
+          StagingPtr, &CopySrcRegion, NativeRowPitch, NativeSlicePitch, // SRC
+          CurrentEventH, PreviousEventH ? 1 : 0,
+          PreviousEventH ? &PreviousEventH : nullptr));
+
+    } else {
+      // if copying to host memory, use the helper to avoid L0 bug
+      size_t HostOrigin[3] = {0, 0, 0};
+      size_t DevOrigin[3] = {Origin[0] * ElemBytes, Origin[1], Origin[2]};
+      size_t DevRegion[3] = {Region[0] * ElemBytes, Region[1], Region[2]};
+
+      readRectHelper(DstPtr, StagingPtr, DevOrigin, HostOrigin, DevRegion,
+                     NativeRowPitch, NativeSlicePitch, DstRowPitch,
+                     DstSlicePitch);
+    }
 
   } else {
     allocNextFreeEvent();
