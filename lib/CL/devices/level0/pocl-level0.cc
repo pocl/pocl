@@ -1287,9 +1287,8 @@ int pocl_level0_alloc_mem_obj(cl_device_id ClDevice, cl_mem Mem, void *HostPtr) 
   P->extra_ptr = NULL;
 
   /* won't preallocate host-visible memory for images,
-   * only for buffers */
-  if (((Mem->flags & CL_MEM_ALLOC_HOST_PTR) != 0u) &&
-      (Mem->mem_host_ptr == NULL) && (Mem->is_image != 0u)) {
+   * only for buffers, because images are not set up enough at this point. */
+  if ((Mem->is_image != 0u) && (Mem->image_channels == 0)) {
     return CL_MEM_OBJECT_ALLOCATION_FAILURE;
   }
 
