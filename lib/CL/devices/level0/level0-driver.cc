@@ -959,14 +959,11 @@ void Level0Queue::memfillImpl(Level0Device *Device,
     WGSizeX *= 2;
   }
 
-  if (Offset) {
-    if (Device->supportsGlobalOffsets()) {
-      ZeRes = zeKernelSetGlobalOffsetExp(KernelH, OffsetX, 0, 0);
-      LEVEL0_CHECK_ABORT(ZeRes);
-    } else {
-      POCL_MSG_ERR("memfill: offset specified but device doesn't "
-                   "support Global offsets\n");
-    }
+  if (Device->supportsGlobalOffsets()) {
+    LEVEL0_CHECK_ABORT(zeKernelSetGlobalOffsetExp(KernelH, OffsetX, 0, 0));
+  } else {
+    POCL_MSG_ERR("memfill: offset specified but device doesn't "
+                 "support Global offsets\n");
   }
 
   ZeRes = zeKernelSetGroupSize(KernelH, WGSizeX, 1, 1);
@@ -1374,16 +1371,13 @@ void Level0Queue::fillImage(cl_mem Image, pocl_mem_identifier *MemId,
   ZeRes = zeKernelSetArgumentValue(KernelH, 1, sizeof(cl_uint4), &OrigPixel);
   LEVEL0_CHECK_ABORT(ZeRes);
 
-  if (Origin[0] || Origin[1] || Origin[2]) {
-    if (Device->supportsGlobalOffsets()) {
-      ZeRes =
-          zeKernelSetGlobalOffsetExp(KernelH, (uint32_t)Origin[0],
-                                     (uint32_t)Origin[1], (uint32_t)Origin[2]);
-      LEVEL0_CHECK_ABORT(ZeRes);
-    } else {
-      POCL_MSG_ERR("imagefill: origin specified but device doesn't "
-                   "support Global offsets\n");
-    }
+  if (Device->supportsGlobalOffsets()) {
+    LEVEL0_CHECK_ABORT(zeKernelSetGlobalOffsetExp(KernelH, (uint32_t)Origin[0],
+                                                  (uint32_t)Origin[1],
+                                                  (uint32_t)Origin[2]));
+  } else {
+    POCL_MSG_ERR("imagefill: origin specified but device doesn't "
+                 "support Global offsets\n");
   }
 
   // TODO could be better
@@ -1616,14 +1610,15 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   uint32_t StartOffsetX = PoclCtx->global_offset[0];
   uint32_t StartOffsetY = PoclCtx->global_offset[1];
   uint32_t StartOffsetZ = PoclCtx->global_offset[2];
-  bool NeedsGlobalOffset = (StartOffsetX | StartOffsetY | StartOffsetZ) > 0;
+  bool NonzeroGlobalOffset = (StartOffsetX | StartOffsetY | StartOffsetZ) > 0;
 
-  if (Device->supportsGlobalOffsets() && NeedsGlobalOffset) {
+  if (Device->supportsGlobalOffsets()) {
     LEVEL0_CHECK_ABORT(zeKernelSetGlobalOffsetExp(KernelH, StartOffsetX,
                                                   StartOffsetY, StartOffsetZ));
   } else {
-    assert(!NeedsGlobalOffset && "command needs global offsets, "
-                                 "but device doesn't support them");
+    if (NonzeroGlobalOffset)
+      POCL_MSG_ERR("command needs global offsets, but device doesn't support "
+                   "the zeKernelSetGlobalOffsetExp extension!\n");
   }
   ze_group_count_t LaunchFuncArgs = {TotalWGsX, TotalWGsY, TotalWGsZ};
   allocNextFreeEvent();
