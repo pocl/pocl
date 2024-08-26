@@ -1150,19 +1150,12 @@ void Level0Queue::readImageRect(cl_mem SrcImage, pocl_mem_identifier *SrcMemId,
 void Level0Queue::mapImage(pocl_mem_identifier *MemId,
                            cl_mem SrcImage, mem_mapping_t *Map) {
 
-  char *DstHostPtr = static_cast<char *>(MemId->mem_ptr);
-
   if ((Map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION) != 0u) {
     return;
   }
 
-  // Device vs Shared allocated memory
-  if (SrcImage->mem_host_ptr == DstHostPtr) {
-    // shared mem, nothing to do
-  } else {
-    // device memory, switch pointer to mem_host_ptr
-    DstHostPtr = static_cast<char *>(SrcImage->mem_host_ptr);
-  }
+  // mapping is always to mem_host_ptr
+  char *DstHostPtr = static_cast<char *>(SrcImage->mem_host_ptr);
 
   POCL_MSG_PRINT_LEVEL0("MAP IMAGE: %p FLAGS %zu\n", DstHostPtr,
                         Map->map_flags);
@@ -1173,20 +1166,14 @@ void Level0Queue::mapImage(pocl_mem_identifier *MemId,
 
 void Level0Queue::unmapImage(pocl_mem_identifier *MemId,
                              cl_mem DstImage, mem_mapping_t *Map) {
-  char *SrcHostPtr = static_cast<char *>(MemId->mem_ptr);
 
   // for read mappings, don't copy anything
   if (Map->map_flags == CL_MAP_READ) {
     return;
   }
 
-  // Device vs Shared allocated memory
-  if (DstImage->mem_host_ptr == SrcHostPtr) {
-    // shared mem, nothing to do
-  } else {
-    // device memory, switch pointer to mem_host_ptr
-    SrcHostPtr = static_cast<char *>(DstImage->mem_host_ptr);
-  }
+  // mapping is always to mem_host_ptr
+  char *SrcHostPtr = static_cast<char *>(DstImage->mem_host_ptr);
 
   POCL_MSG_PRINT_LEVEL0("UNMAP IMAGE: %p FLAGS %zu\n", SrcHostPtr,
                         Map->map_flags);
@@ -1264,10 +1251,9 @@ void Level0Queue::svmCopy(void *DstPtr, const void *SrcPtr, size_t Size) {
                         DstPtr, Size);
 
   allocNextFreeEvent();
-  ze_result_t res = zeCommandListAppendMemoryCopy(
+  LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(
       CmdListH, DstPtr, SrcPtr, Size, CurrentEventH, PreviousEventH ? 1 : 0,
-      PreviousEventH ? &PreviousEventH : nullptr);
-  LEVEL0_CHECK_ABORT(res);
+      PreviousEventH ? &PreviousEventH : nullptr));
 }
 
 void Level0Queue::svmFill(void *DstPtr, size_t Size, void *Pattern,
@@ -2743,8 +2729,8 @@ bool Level0Device::initHelperKernels() {
       ContextHandle, DeviceHandle,
       false, // JITCompilation,
       BuildLog,
-      false, // Optimize,
-      Supports64bitBuffers,
+      false,   // Optimize,
+      false,   // Supports64bitBuffers,
       0,       // SpecConstantIDs.size(),
       nullptr, // SpecConstantIDs.data(),
       nullptr, // SpecConstantPtrs.data(),

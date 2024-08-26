@@ -61,11 +61,7 @@ pocl_validate_write_image (cl_command_queue command_queue,
         "image buffer has been created with CL_MEM_HOST_READ_ONLY "
         "or CL_MEM_HOST_NO_ACCESS\n");
 
-  int errcode = pocl_check_image_origin_region (image, origin, region);
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
-  return CL_SUCCESS;
+  return pocl_check_image_origin_region (image, origin, region);
 }
 
 cl_int
