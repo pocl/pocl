@@ -731,33 +731,17 @@ void Level0Queue::copyRect(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
   LEVEL0_CHECK_ABORT(res);
 }
 
-void Level0Queue::readRect(void *__restrict__ HostPtr,
-                           pocl_mem_identifier *SrcMemId, cl_mem SrcBuf,
-                           const size_t *__restrict__ const BufferOrigin,
-                           const size_t *__restrict__ const HostOrigin,
-                           const size_t *__restrict__ const Region,
-                           size_t const BufferRowPitch,
-                           size_t const BufferSlicePitch,
-                           size_t const HostRowPitch,
-                           size_t const HostSlicePitch) {
-  const char *BufferPtr = static_cast<const char *>(SrcMemId->mem_ptr);
-
-  POCL_MSG_PRINT_LEVEL0(
-      "READ RECT \n"
-      "SRC DEV %p | DST HOST %p | SIZE %zu\n"
-      "B Origin %u %u %u | H Origin %u %u %u \n"
-      "buf_row_pitch %lu | buf_slice_pitch %lu |"
-      "host_row_pitch %lu | host_slice_pitch %lu\n"
-      "reg[0] %lu reg[1] %lu reg[2] %lu\n",
-      BufferPtr, HostPtr,
-      Region[0] * Region[1] * Region[2], (unsigned)BufferOrigin[0],
-      (unsigned)BufferOrigin[1], (unsigned)BufferOrigin[2],
-      (unsigned)HostOrigin[0], (unsigned)HostOrigin[1],
-      (unsigned)HostOrigin[2], (unsigned long)BufferRowPitch,
-      (unsigned long)BufferSlicePitch, (unsigned long)HostRowPitch,
-      (unsigned long)HostSlicePitch, (unsigned long)Region[0],
-      (unsigned long)Region[1], (unsigned long)Region[2]);
-
+void Level0Queue::readRectHelper(char *HostPtr,
+                                 const char* DevicePtr,
+                                 const size_t *BufferOrigin,
+                                 const size_t *HostOrigin,
+                                 const size_t *Region,
+                                 size_t const BufferRowPitch,
+                                 size_t const BufferSlicePitch,
+                                 size_t const HostRowPitch,
+                                 size_t const HostSlicePitch) {
+#if 0
+  // Disabled. Should work but is buggy in the Level Zero driver
   ze_copy_region_t HostRegion;
   ze_copy_region_t BufferRegion;
   BufferRegion.originX = BufferOrigin[0];
@@ -779,35 +763,74 @@ void Level0Queue::readRect(void *__restrict__ HostPtr,
       &BufferRegion, BufferRowPitch, BufferSlicePitch, CurrentEventH,
       PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr);
   LEVEL0_CHECK_ABORT(res);
+#endif
+  const char *AdjustedDevicePtr =
+      DevicePtr + BufferOrigin[2] * BufferSlicePitch +
+      BufferOrigin[1] * BufferRowPitch + BufferOrigin[0];
+  char *AdjustedHostPtr = HostPtr + HostOrigin[2] * HostSlicePitch +
+                          HostOrigin[1] * HostRowPitch + HostOrigin[0];
+
+  POCL_MSG_PRINT_LEVEL0("READ RECT \n"
+                        "SRC DEV %p | DST HOST %p | SIZE %zu\n"
+                        "B Origin %u %u %u | H Origin %u %u %u \n"
+                        "buf_row_pitch %lu | buf_slice_pitch %lu |"
+                        "host_row_pitch %lu | host_slice_pitch %lu\n"
+                        "reg[0] %lu reg[1] %lu reg[2] %lu\n",
+                        DevicePtr, HostPtr, Region[0] * Region[1] * Region[2],
+                        (unsigned)BufferOrigin[0], (unsigned)BufferOrigin[1],
+                        (unsigned)BufferOrigin[2], (unsigned)HostOrigin[0],
+                        (unsigned)HostOrigin[1], (unsigned)HostOrigin[2],
+                        (unsigned long)BufferRowPitch,
+                        (unsigned long)BufferSlicePitch,
+                        (unsigned long)HostRowPitch,
+                        (unsigned long)HostSlicePitch, (unsigned long)Region[0],
+                        (unsigned long)Region[1], (unsigned long)Region[2]);
+
+  if ((BufferRowPitch == HostRowPitch && HostRowPitch == Region[0]) &&
+      (BufferSlicePitch == HostSlicePitch &&
+       HostSlicePitch == (Region[1] * Region[0]))) {
+    allocNextFreeEvent();
+    LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(
+        CmdListH, AdjustedHostPtr, AdjustedDevicePtr,
+        (Region[2] * Region[1] * Region[0]), CurrentEventH,
+        PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr));
+  } else {
+    for (size_t k = 0; k < Region[2]; ++k)
+      for (size_t j = 0; j < Region[1]; ++j) {
+        allocNextFreeEvent();
+        char *Dst = AdjustedHostPtr + HostRowPitch * j + HostSlicePitch * k;
+        const char *Src =
+            AdjustedDevicePtr + BufferRowPitch * j + BufferSlicePitch * k;
+        LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(
+            CmdListH, Dst, Src, Region[0], CurrentEventH,
+            PreviousEventH ? 1 : 0,
+            PreviousEventH ? &PreviousEventH : nullptr));
+      }
+  }
 }
 
-void Level0Queue::writeRect(const void *__restrict__ HostPtr,
-                            pocl_mem_identifier *DstMemId, cl_mem DstBuf,
-                            const size_t *__restrict__ const BufferOrigin,
-                            const size_t *__restrict__ const HostOrigin,
-                            const size_t *__restrict__ const Region,
-                            size_t const BufferRowPitch,
-                            size_t const BufferSlicePitch,
-                            size_t const HostRowPitch,
-                            size_t const HostSlicePitch) {
-  char *BufferPtr = static_cast<char *>(DstMemId->mem_ptr);
+void Level0Queue::readRect(void *__restrict__ HostPtr,
+                           pocl_mem_identifier *SrcMemId, cl_mem SrcBuf,
+                           const size_t *__restrict__ const BufferOrigin,
+                           const size_t *__restrict__ const HostOrigin,
+                           const size_t *__restrict__ const Region,
+                           size_t const BufferRowPitch,
+                           size_t const BufferSlicePitch,
+                           size_t const HostRowPitch,
+                           size_t const HostSlicePitch) {
+  const char *BufferPtr = static_cast<const char *>(SrcMemId->mem_ptr);
+  readRectHelper((char *)HostPtr, BufferPtr, BufferOrigin, HostOrigin, Region,
+                 BufferRowPitch, BufferSlicePitch, HostRowPitch,
+                 HostSlicePitch);
+}
 
-  POCL_MSG_PRINT_LEVEL0(
-      "WRITE RECT \n"
-      "SRC HOST %p | DST DEV %p | SIZE %zu\n"
-      "B Origin %u %u %u | H Origin %u %u %u \n"
-      "buf_row_pitch %lu | buf_slice_pitch %lu |"
-      "host_row_pitch %lu | host_slice_pitch %lu\n"
-      "reg[0] %lu reg[1] %lu reg[2] %lu\n",
-      HostPtr, BufferPtr,
-      Region[0] * Region[1] * Region[2], (unsigned)BufferOrigin[0],
-      (unsigned)BufferOrigin[1], (unsigned)BufferOrigin[2],
-      (unsigned)HostOrigin[0], (unsigned)HostOrigin[1],
-      (unsigned)HostOrigin[2], (unsigned long)BufferRowPitch,
-      (unsigned long)BufferSlicePitch, (unsigned long)HostRowPitch,
-      (unsigned long)HostSlicePitch, (unsigned long)Region[0],
-      (unsigned long)Region[1], (unsigned long)Region[2]);
-
+void Level0Queue::writeRectHelper(
+    const char *HostPtr, char *DevicePtr, const size_t *BufferOrigin,
+    const size_t *HostOrigin, const size_t *Region, size_t const BufferRowPitch,
+    size_t const BufferSlicePitch, size_t const HostRowPitch,
+    size_t const HostSlicePitch) {
+#if 0
+  // Disabled. Should work but is buggy in the Level Zero driver
   ze_copy_region_t HostRegion;
   ze_copy_region_t BufferRegion;
   BufferRegion.originX = BufferOrigin[0];
@@ -829,6 +852,69 @@ void Level0Queue::writeRect(const void *__restrict__ HostPtr,
       HostPtr, &HostRegion, HostRowPitch, HostSlicePitch, CurrentEventH,
       PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr);
   LEVEL0_CHECK_ABORT(res);
+#endif
+
+  char *AdjustedDevicePtr = (char *)DevicePtr +
+                            BufferOrigin[2] * BufferSlicePitch +
+                            BufferOrigin[1] * BufferRowPitch + BufferOrigin[0];
+  const char *AdjustedHostPtr = (const char *)HostPtr +
+                                HostOrigin[2] * HostSlicePitch +
+                                HostOrigin[1] * HostRowPitch + HostOrigin[0];
+
+  POCL_MSG_PRINT_LEVEL0("WRITE RECT \n"
+                        "SRC HOST %p | DST DEV %p | SIZE %zu\n"
+                        "B Origin %u %u %u | H Origin %u %u %u \n"
+                        "buf_row_pitch %lu | buf_slice_pitch %lu |"
+                        "host_row_pitch %lu | host_slice_pitch %lu\n"
+                        "reg[0] %lu reg[1] %lu reg[2] %lu\n",
+                        HostPtr, DevicePtr, Region[0] * Region[1] * Region[2],
+                        (unsigned)BufferOrigin[0], (unsigned)BufferOrigin[1],
+                        (unsigned)BufferOrigin[2], (unsigned)HostOrigin[0],
+                        (unsigned)HostOrigin[1], (unsigned)HostOrigin[2],
+                        (unsigned long)BufferRowPitch,
+                        (unsigned long)BufferSlicePitch,
+                        (unsigned long)HostRowPitch,
+                        (unsigned long)HostSlicePitch, (unsigned long)Region[0],
+                        (unsigned long)Region[1], (unsigned long)Region[2]);
+
+  if ((BufferRowPitch == HostRowPitch && HostRowPitch == Region[0]) &&
+      (BufferSlicePitch == HostSlicePitch &&
+       HostSlicePitch == (Region[1] * Region[0]))) {
+    allocNextFreeEvent();
+    LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(
+        CmdListH, AdjustedDevicePtr, AdjustedHostPtr,
+        (Region[2] * Region[1] * Region[0]), CurrentEventH,
+        PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr));
+  } else {
+    for (size_t k = 0; k < Region[2]; ++k)
+      for (size_t j = 0; j < Region[1]; ++j) {
+        allocNextFreeEvent();
+        const char *Src =
+            AdjustedHostPtr + HostRowPitch * j + HostSlicePitch * k;
+        char *Dst =
+            AdjustedDevicePtr + BufferRowPitch * j + BufferSlicePitch * k;
+        LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(
+            CmdListH, Dst, Src, Region[0], CurrentEventH,
+            PreviousEventH ? 1 : 0,
+            PreviousEventH ? &PreviousEventH : nullptr));
+      }
+  }
+}
+
+void Level0Queue::writeRect(const void *__restrict__ HostPtr,
+                            pocl_mem_identifier *DstMemId, cl_mem DstBuf,
+                            const size_t *__restrict__ const BufferOrigin,
+                            const size_t *__restrict__ const HostOrigin,
+                            const size_t *__restrict__ const Region,
+                            size_t const BufferRowPitch,
+                            size_t const BufferSlicePitch,
+                            size_t const HostRowPitch,
+                            size_t const HostSlicePitch) {
+  char *BufferPtr = static_cast<char *>(DstMemId->mem_ptr);
+
+  writeRectHelper((const char *)HostPtr, BufferPtr, BufferOrigin, HostOrigin,
+                  Region, BufferRowPitch, BufferSlicePitch, HostRowPitch,
+                  HostSlicePitch);
 }
 
 void Level0Queue::memfillImpl(Level0Device *Device,
