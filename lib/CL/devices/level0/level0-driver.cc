@@ -3291,11 +3291,12 @@ ze_sampler_handle_t Level0Device::allocSampler(cl_addressing_mode AddrMode,
   case CL_ADDRESS_NONE:
     ZeAddrMode = ZE_SAMPLER_ADDRESS_MODE_NONE;
     break;
+  default:
   case CL_ADDRESS_CLAMP:
-    ZeAddrMode = ZE_SAMPLER_ADDRESS_MODE_CLAMP;
+    ZeAddrMode = ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
     break;
   case CL_ADDRESS_CLAMP_TO_EDGE:
-    ZeAddrMode = ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+    ZeAddrMode = ZE_SAMPLER_ADDRESS_MODE_CLAMP;
     break;
   case CL_ADDRESS_REPEAT:
     ZeAddrMode = ZE_SAMPLER_ADDRESS_MODE_REPEAT;
@@ -3310,6 +3311,7 @@ ze_sampler_handle_t Level0Device::allocSampler(cl_addressing_mode AddrMode,
   case CL_FILTER_LINEAR:
     ZeFilterMode = ZE_SAMPLER_FILTER_MODE_LINEAR;
     break;
+  default:
   case CL_FILTER_NEAREST:
     ZeFilterMode = ZE_SAMPLER_FILTER_MODE_NEAREST;
     break;
@@ -3319,9 +3321,8 @@ ze_sampler_handle_t Level0Device::allocSampler(cl_addressing_mode AddrMode,
       ZE_STRUCTURE_TYPE_SAMPLER_DESC, nullptr, ZeAddrMode, ZeFilterMode,
       static_cast<ze_bool_t>((char)NormalizedCoords)};
   ze_sampler_handle_t SamplerH = nullptr;
-  ze_result_t Res =
-      zeSamplerCreate(ContextHandle, DeviceHandle, &SamplerDesc, &SamplerH);
-  LEVEL0_CHECK_RET(nullptr, Res);
+  LEVEL0_CHECK_RET(nullptr, zeSamplerCreate(ContextHandle, DeviceHandle,
+                                            &SamplerDesc, &SamplerH));
   return SamplerH;
 }
 
