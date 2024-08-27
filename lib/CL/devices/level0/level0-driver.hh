@@ -439,6 +439,7 @@ private:
   bool setupModuleProperties(bool &SupportsInt64Atomics, bool HasFloatAtomics, std::string &Features);
   bool setupQueueGroupProperties();
   bool setupMemoryProperties(bool &HasUSMCapability);
+  void setupGlobalMemSize(bool HasRelaxedAllocLimits);
   bool setupCacheProperties();
   bool setupImageProperties();
   bool setupPCIAddress();

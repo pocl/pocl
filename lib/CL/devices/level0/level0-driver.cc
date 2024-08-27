@@ -53,6 +53,16 @@
 // known to crash with CTS "select" test.
 //#define ENABLE_L0_MEMFILL
 
+#ifndef ENABLE_CONFORMANCE
+#define ENABLE_IMAGES
+#define ENABLE_SUBGROUPS
+#define ENABLE_FP64
+#endif
+
+#define ENABLE_WG_COLLECTIVE
+#define ENABLE_GENERIC_AS
+#define ENABLE_PROGVARS
+
 using namespace pocl;
 
 static void pocl_level0_abort_on_ze_error(int permit_quiet_exit,
@@ -1840,9 +1850,10 @@ static const cl_image_format SupportedImageFormats[] = {
     {CL_BGRA, CL_UNORM_INT8},      {CL_BGRA, CL_UNORM_INT16},
     {CL_BGRA, CL_HALF_FLOAT},      {CL_BGRA, CL_FLOAT},
 
+#ifndef ENABLE_CONFORMANCE
     {CL_RGB, CL_UNORM_INT_101010}, {CL_RGB, CL_UNORM_SHORT_565},
     {CL_RGB, CL_UNORM_SHORT_555},
-    //{CL_RGBA, CL_UNORM_SHORT_555},
+#endif
 
 };
 
@@ -2027,9 +2038,13 @@ bool Level0Device::setupDeviceProperties(bool HasIPVersionExt) {
     ClDev->serialize_entries = LEVEL0_SERIALIZE_ENTRIES;
     ClDev->llvm_cpu = nullptr;
     ClDev->llvm_target_triplet = "spir64-unknown-unknown";
+#ifdef ENABLE_GENERIC_AS
     ClDev->generic_as_support = CL_TRUE;
-#ifdef ENABLE_LEVEL0_EXTRA_FEATURES
+#endif
+#ifdef ENABLE_WG_COLLECTIVE
     ClDev->wg_collective_func_support = CL_TRUE;
+#endif
+#ifdef ENABLE_LEVEL0_EXTRA_FEATURES
     ClDev->supported_spir_v_versions = "SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
 #else
     ClDev->supported_spir_v_versions = "SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
@@ -2100,7 +2115,7 @@ bool Level0Device::setupComputeProperties() {
   ClDev->local_mem_type = CL_LOCAL;
   ClDev->local_mem_size = ComputeProperties.maxSharedLocalMemory;
 
-#ifndef ENABLE_CONFORMANCE
+#ifdef ENABLE_SUBGROUPS
   cl_uint Max = 0;
   if (ComputeProperties.numSubGroupSizes > 0) {
     for (unsigned i = 0; i < ComputeProperties.numSubGroupSizes; ++i) {
@@ -2115,6 +2130,8 @@ bool Level0Device::setupComputeProperties() {
       SupportedSubgroupSizes[i] = ComputeProperties.subGroupSizes[i];
     }
   }
+#else
+  ClDev->max_num_sub_groups = 0;
 #endif
 
   POCL_MSG_PRINT_LEVEL0("Device Max WG SIZE %zu ||| WG counts: %u | %u | %u\n",
@@ -2205,7 +2222,7 @@ bool Level0Device::setupModuleProperties(bool &SupportsInt64Atomics,
   }
 
   ClDev->single_fp_config = convertZeFPFlags(ModuleProperties.fp32flags);
-#ifndef ENABLE_CONFORMANCE
+#ifdef ENABLE_FP64
   // TODO we should check & rely on ZE_DEVICE_FP_FLAG_SOFT_FLOAT,
   // but it's not set by the LevelZero driver
   if ((ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_FP64) != 0u) {
@@ -2372,7 +2389,7 @@ bool Level0Device::setupMemoryProperties(bool &HasUSMCapability) {
     ClDev->atomic_memory_capabilities =
         CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
         CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP |
-        CL_DEVICE_ATOMIC_SCOPE_DEVICE | CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES;
+        CL_DEVICE_ATOMIC_SCOPE_DEVICE;
     ClDev->atomic_fence_capabilities =
         CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
         CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM |
@@ -2512,6 +2529,32 @@ bool Level0Device::setupPCIAddress() {
   return true;
 }
 
+void Level0Device::setupGlobalMemSize(bool HasRelaxedAllocLimits) {
+  if (HasRelaxedAllocLimits && ClDev->global_mem_size > UINT32_MAX) {
+    // allow allocating 85% of total memory in a single buffer
+    ClDev->max_mem_alloc_size = ClDev->global_mem_size * 85 / 100;
+    // TODO: figure out if relaxed limits also apply to these
+    // for now, assume it doesn't and leave it at DevProps.maxMemAlloc
+//    ClDev->max_constant_buffer_size =
+//    ClDev->global_var_pref_size = ClDev->max_mem_alloc_size;
+    Supports64bitBuffers = true;
+    NeedsRelaxedLimits = true;
+  } else {
+    // ensure thad MaxMemAllocSize is not higher than ClDev->global_mem_size
+    // if the latter was set by POCL_MEMORY_LIMIT
+    ClDev->max_mem_alloc_size = ClDev->max_constant_buffer_size =
+        ClDev->global_var_pref_size =
+            std::min(ClDev->max_mem_alloc_size, ClDev->global_mem_size);
+    if (ClDev->global_mem_size > UINT32_MAX) {
+      Supports64bitBuffers = true;
+    }
+  }
+#ifndef ENABLE_PROGVARS
+  ClDev->global_var_pref_size = 0;
+  ClDev->global_var_max_size = 0;
+#endif
+}
+
 // dev -> Dev
 Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                            cl_device_id dev, const char *Parameters)
@@ -2577,9 +2620,12 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   bool HasUsmCapability = false;
   setupMemoryProperties(HasUsmCapability);
 
-  setupCacheProperties();
+  bool HasRelaxedAllocLimits =
+      Driver->hasExtension("ZE_experimental_relaxed_allocation_limits");
+  setupGlobalMemSize(HasRelaxedAllocLimits);
 
-#ifndef ENABLE_CONFORMANCE
+  setupCacheProperties();
+#ifdef ENABLE_IMAGES
   setupImageProperties();
 #endif
 
@@ -2600,8 +2646,14 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 #endif
   );
 
-  OpenCL30Features = std::string("__opencl_c_generic_address_space"
-                                 " __opencl_c_program_scope_global_variables");
+  if (ClDev->generic_as_support)
+    OpenCL30Features.append(" __opencl_c_generic_address_space");
+
+  if (ClDev->global_var_pref_size)
+    OpenCL30Features.append(" __opencl_c_program_scope_global_variables");
+
+  if (ClDev->wg_collective_func_support)
+    OpenCL30Features.append(" __opencl_c_work_group_collective_functions");
 
   if (ClDev->atomic_memory_capabilities & CL_DEVICE_ATOMIC_ORDER_ACQ_REL)
     OpenCL30Features.append(" __opencl_c_atomic_order_acq_rel");
@@ -2615,7 +2667,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   if (ClDev->atomic_memory_capabilities & CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES)
     OpenCL30Features.append(" __opencl_c_atomic_scope_all_devices");
 
-#ifndef ENABLE_CONFORMANCE
   if (ClDev->image_support != CL_FALSE) {
     Extensions += " cl_khr_3d_image_writes"
                   " cl_khr_depth_images";
@@ -2623,7 +2674,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                         " __opencl_c_read_write_images"
                         " __opencl_c_3d_image_writes";
   }
-#endif
 
   if (Drv->hasExtension("ZE_extension_linkonce_odr")) {
     Extensions.append(" cl_khr_spirv_linkonce_odr");
@@ -2651,7 +2701,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     Extensions.append(" cl_khr_fp64");
     OpenCL30Features.append(" __opencl_c_fp64");
   }
-#ifndef ENABLE_CONFORMANCE
+
   if (ClDev->max_num_sub_groups > 0) {
     Extensions.append(" cl_khr_subgroups"
                       " cl_intel_spirv_subgroups"
@@ -2672,17 +2722,8 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                            " cl_intel_required_subgroup_size"
 #endif
                       );
-
     OpenCL30Features.append(" __opencl_c_subgroups");
   }
-#else // enable_conformance
-  ClDev->max_num_sub_groups = 0;
-#endif
-
-#ifdef ENABLE_LEVEL0_EXTRA_FEATURES
-  if (ClDev->wg_collective_func_support)
-    OpenCL30Features.append(" __opencl_c_work_group_collective_functions");
-#endif
 
   if (ClDev->has_64bit_long != 0) {
     OpenCL30Features.append(" __opencl_c_int64");
@@ -2719,28 +2760,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     pocl_setup_features_with_version(ClDev);
     pocl_setup_extensions_with_version(ClDev);
     pocl_setup_ils_with_version(ClDev);
-  }
-
-  if (Driver->hasExtension("ZE_experimental_relaxed_allocation_limits")
-      && ClDev->global_mem_size > UINT32_MAX) {
-    // allow allocating 85% of total memory in a single buffer
-    ClDev->max_mem_alloc_size = ClDev->global_mem_size * 85 / 100;
-    // TODO: figure out if relaxed limits also apply to these
-    // for now, assume it doesn't and leave it at DevProps.maxMemAlloc
-//    ClDev->max_constant_buffer_size =
-//    ClDev->global_var_pref_size = ClDev->max_mem_alloc_size;
-    Supports64bitBuffers = true;
-    NeedsRelaxedLimits = true;
-  } else {
-    // DeviceProperties.maxMemAllocSize from setupDeviceProperties
-    cl_ulong DevMaxMemAllocSize = ClDev->max_mem_alloc_size;
-
-    ClDev->max_mem_alloc_size = ClDev->max_constant_buffer_size =
-        ClDev->global_var_pref_size =
-        std::min (DevMaxMemAllocSize, ClDev->global_mem_size);
-    if (ClDev->global_mem_size > UINT32_MAX) {
-      Supports64bitBuffers = true;
-    }
   }
 
 
