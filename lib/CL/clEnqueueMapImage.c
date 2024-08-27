@@ -188,8 +188,9 @@ CL_API_SUFFIX__VERSION_1_0
   cmd->command.map.mapping = mapping_info;
   cmd->command.map.buffer = image;
 
-  POCL_MSG_PRINT_MEMORY ("Image %p, Mapping: host_ptr %p offset %zu\n", image,
-                         mapping_info->host_ptr, mapping_info->offset);
+  POCL_MSG_PRINT_MEMORY (
+    "MapImage %p, Mapping: host_ptr %p offset %zu | FLAGS: %zu\n",
+    image, mapping_info->host_ptr, mapping_info->offset, map_flags);
 
   pocl_command_enqueue(command_queue, cmd);
 

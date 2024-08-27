@@ -559,7 +559,7 @@ pocl_init_devices ()
 
   pocl_event_tracing_init ();
 
-  pocl_event_callback_init ();
+  pocl_async_callback_init ();
 
 #ifdef HAVE_SLEEP
   int delay = pocl_get_int_option ("POCL_STARTUP_DELAY", 0);

@@ -38,10 +38,12 @@ POname (clSetContextDestructorCallback) (
   if (callback == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
+  POCL_LOCK_OBJ (context);
   callback->pfn_notify = pfn_notify;
   callback->user_data = user_data;
   callback->next = context->destructor_callbacks;
   context->destructor_callbacks = callback;
+  POCL_UNLOCK_OBJ (context);
 
   return CL_SUCCESS;
 }

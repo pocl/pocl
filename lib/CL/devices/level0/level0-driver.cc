@@ -1344,9 +1344,12 @@ void Level0Queue::fillImage(cl_mem Image, pocl_mem_identifier *MemId,
   ze_image_handle_t ImageH = (ze_image_handle_t)(MemId->extra_ptr);
   assert(Image);
 
-  POCL_MSG_PRINT_LEVEL0("IMAGEFILL | PTR %p | IMAGE %p | PIXEL %0x %0x %0x %0x"
-                        " | P SIZE %zu\n", MapPtr, ImageH, OrigPixel.s[0],
-                        OrigPixel.s[1], OrigPixel.s[2], OrigPixel.s[3], PixelSize);
+  POCL_MSG_PRINT_LEVEL0(
+      "IMAGEFILL | MEM_PTR %p | IMAGE %p | PIXEL %0x %0x %0x %0x"
+      " | P SIZE %zu b | ORIGIN %zu %zu %zu | REGION %zu %zu %zu \n",
+      MapPtr, ImageH, OrigPixel.s[0], OrigPixel.s[1], OrigPixel.s[2],
+      OrigPixel.s[3], PixelSize, Origin[0], Origin[1], Origin[2], Region[0],
+      Region[1], Region[2]);
 
   ze_kernel_handle_t KernelH = nullptr;
   ze_module_handle_t ModuleH = nullptr;
@@ -1381,16 +1384,13 @@ void Level0Queue::fillImage(cl_mem Image, pocl_mem_identifier *MemId,
   }
 
   // TODO could be better
-  ZeRes = zeKernelSetGroupSize(KernelH, 1, 1, 1);
-  LEVEL0_CHECK_ABORT(ZeRes);
+  LEVEL0_CHECK_ABORT(zeKernelSetGroupSize(KernelH, 1, 1, 1));
   ze_group_count_t LaunchFuncArgs = {(uint32_t)Region[0], (uint32_t)Region[1],
                                      (uint32_t)Region[2]};
   allocNextFreeEvent();
-  ZeRes = zeCommandListAppendLaunchKernel(
+  LEVEL0_CHECK_ABORT(zeCommandListAppendLaunchKernel(
       CmdListH, KernelH, &LaunchFuncArgs, CurrentEventH, PreviousEventH ? 1 : 0,
-      PreviousEventH ? &PreviousEventH : nullptr);
-
-  LEVEL0_CHECK_ABORT(ZeRes);
+      PreviousEventH ? &PreviousEventH : nullptr));
 }
 
 void Level0Queue::svmMap(void *Ptr) {}
@@ -3505,7 +3505,7 @@ bool Level0Device::getImagefillKernel(cl_channel_type ChType,
   *L0Kernel = K;
   return Driver->getJobSched().getBestKernel(ImagefillProgram, K,
                                              false, // LargeOffset,
-                                             1024,  // LocalWGSize,
+                                             128,   // LocalWGSize,
                                              ModH, KerH);
 }
 
