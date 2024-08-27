@@ -161,9 +161,10 @@ POname (clEnqueueWriteImage) (cl_command_queue command_queue,
   if (IS_IMAGE1D_BUFFER (image))
     {
       IMAGE1D_ORIG_REG_TO_BYTES (image, origin, region);
+      assert (image->buffer);
       return POname (clEnqueueWriteBuffer) (
-          command_queue, image, blocking_write, i1d_origin[0], i1d_region[0],
-          ptr, num_events_in_wait_list, event_wait_list, event);
+        command_queue, image->buffer, blocking_write, i1d_origin[0],
+        i1d_region[0], ptr, num_events_in_wait_list, event_wait_list, event);
     }
 
   errcode = pocl_write_image_common (

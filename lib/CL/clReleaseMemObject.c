@@ -95,7 +95,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
           POCL_ATOMIC_DEC (buffer_c);
         }
 
-      if (memobj->is_image && (memobj->type == CL_MEM_OBJECT_IMAGE1D_BUFFER))
+      if (IS_IMAGE1D_BUFFER (memobj))
         {
           /* Free the backing buffer for the Image1D object. */
           cl_mem b = memobj->buffer;
