@@ -21,6 +21,7 @@
    IN THE SOFTWARE.
 */
 
+#include <algorithm>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 #include <net/if.h>

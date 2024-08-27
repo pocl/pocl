@@ -574,7 +574,7 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
 
   POCL_INIT_LOCK (d->mem_lock);
 
-  if (pocl_network_fetch_devinfo (device, 0, NULL, 0, NULL))
+  if (pocl_network_fetch_devinfo (device, 0, 0, NULL,  NULL))
     return CL_DEVICE_NOT_FOUND;
 
   assert (device->short_name);
