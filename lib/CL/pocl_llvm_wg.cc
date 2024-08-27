@@ -805,7 +805,7 @@ static int convertBCorSPV(char *InputPath,
   char CapturedOutput[MAX_OUTPUT_BYTES];
   size_t CapturedBytes = MAX_OUTPUT_BYTES;
   std::vector<std::string> CompilationArgs;
-  std::vector<char *> CompilationArgs2;
+  std::vector<const char *> CompilationArgs2;
   llvm::Module *Mod = nullptr;
   char *Content = nullptr;
   uint64_t ContentSize = 0;

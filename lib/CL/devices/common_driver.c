@@ -580,15 +580,15 @@ pocl_regen_spirv_binary (cl_program program, cl_uint device_i)
    * all PoCL devices support, hence check the device */
   char* spirv_target_env = (device->generic_as_support != CL_FALSE) ?
                         "--spirv-target-env=CL2.0" :  "--spirv-target-env=CL1.2";
-  char *args[8] = { pocl_get_path ("LLVM_SPIRV", LLVM_SPIRV),
-                    concated_spec_const_option,
-                    spirv_target_env,
-                    "-r",
-                    "-o",
-                    unlinked_program_bc_temp,
-                    program_bc_spirv,
-                    NULL };
-  char **final_args = args;
+  const char *args[8] = { pocl_get_path ("LLVM_SPIRV", LLVM_SPIRV),
+                          concated_spec_const_option,
+                          spirv_target_env,
+                          "-r",
+                          "-o",
+                          unlinked_program_bc_temp,
+                          program_bc_spirv,
+                          NULL };
+  const char **final_args = args;
 
   errcode = pocl_cache_tempname(unlinked_program_bc_temp, ".bc", NULL);
   POCL_RETURN_ERROR_ON ((errcode != 0), CL_BUILD_PROGRAM_FAILURE,

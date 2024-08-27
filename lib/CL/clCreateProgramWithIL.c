@@ -37,8 +37,8 @@
 static int
 get_program_spec_constants (cl_program program, char *program_bc_spirv)
 {
-  char *args[] = { pocl_get_path ("LLVM_SPIRV", LLVM_SPIRV),
-                   "--spec-const-info", program_bc_spirv, NULL };
+  const char *args[] = { pocl_get_path ("LLVM_SPIRV", LLVM_SPIRV),
+                         "--spec-const-info", program_bc_spirv, NULL };
   char captured_output[MAX_OUTPUT_BYTES];
   size_t captured_bytes = MAX_OUTPUT_BYTES;
   int errcode = CL_SUCCESS;

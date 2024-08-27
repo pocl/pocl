@@ -1775,7 +1775,7 @@ pocl_command_to_str (cl_command_type cmd)
  * vfork() does not copy pagetables.
  */
 int
-pocl_run_command (char *const *args)
+pocl_run_command (const char **args)
 {
   POCL_MSG_PRINT_INFO ("Launching: %s\n", args[0]);
 #ifdef HAVE_VFORK
@@ -1806,7 +1806,7 @@ pocl_run_command (char *const *args)
 #endif
   if (p == 0)
     {
-      return execv (args[0], args);
+      return execv (args[0], (char *const *)args);
     }
   else
     {
@@ -1825,8 +1825,9 @@ pocl_run_command (char *const *args)
 }
 
 int
-pocl_run_command_capture_output (char *capture_string, size_t *captured_bytes,
-                                 char *const *args)
+pocl_run_command_capture_output (char *capture_string,
+                                 size_t *captured_bytes,
+                                 const char **args)
 {
   POCL_MSG_PRINT_INFO ("Launching: %s\n", args[0]);
 
@@ -1851,7 +1852,7 @@ pocl_run_command_capture_output (char *capture_string, size_t *captured_bytes,
       dup2 (out[1], STDOUT_FILENO);
       dup2 (out[1], STDERR_FILENO);
 
-      return execv (args[0], args);
+      return execv (args[0], (char *const *)args);
     }
   else
     {
