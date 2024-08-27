@@ -218,8 +218,7 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
 
   /* Link through Clang driver interface who knows the correct toolchains
      for all of its targets.  */
-  const char *cmd_line[64] =
-    {CLANG, "-o", tmp_module, tmp_objfile};
+  const char *cmd_line[64] = { get_clang (), "-o", tmp_module, tmp_objfile };
   const char **device_ld_arg = device->final_linkage_flags;
   const char **pos = &cmd_line[4];
   while ((*pos++ = *device_ld_arg++)) {}

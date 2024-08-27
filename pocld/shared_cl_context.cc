@@ -1272,7 +1272,7 @@ bool createSPIRVWithSVMOffset(const std::vector<unsigned char> *InputSPV,
     // https://www.khronos.org/blog/offline-compilation-of-opencl-kernels-into-
     // spir-v-using-open-source-tooling
     std::stringstream OpenCLCCmd;
-    OpenCLCCmd << CLANG
+    OpenCLCCmd << get_clang()
                << " -c -target spir64 -cl-kernel-arg-info -cl-std=CL3.0 "
                << SrcFileName.c_str() << " " << BuildOptions
                << " -emit-llvm -o " << OrigBcFileName.c_str();
@@ -1289,7 +1289,7 @@ bool createSPIRVWithSVMOffset(const std::vector<unsigned char> *InputSPV,
 
     std::stringstream SpvCmd;
 
-    SpvCmd << LLVM_SPIRV << " -r " << OrigSpvFileName.c_str() << " -o "
+    SpvCmd << get_llvm_spirv() << " -r " << OrigSpvFileName.c_str() << " -o "
            << OrigBcFileName.c_str();
 
     if (system(SpvCmd.str().c_str()) != EXIT_SUCCESS)
@@ -1313,7 +1313,7 @@ bool createSPIRVWithSVMOffset(const std::vector<unsigned char> *InputSPV,
   // Without -strip-debug there might be crashes due to llvm-spirv
   // not detecting its own produced debug output sometimes (to
   // report).
-  OptCmd << LLVM_OPT << " -load-pass-plugin=" << LibPoCLPath
+  OptCmd << get_llvm_opt() << " -load-pass-plugin=" << LibPoCLPath
          << " -strip-debug -passes=svm-offset -svm-offset-value=" << SVMOffset
          << " " << OrigBcFileName << " -o " << OffsettedBcFileName;
 
@@ -1324,7 +1324,7 @@ bool createSPIRVWithSVMOffset(const std::vector<unsigned char> *InputSPV,
 
   std::stringstream SpvCmd;
 
-  SpvCmd << LLVM_SPIRV << " " << OffsettedBcFileName.c_str() << " -o "
+  SpvCmd << get_llvm_spirv() << " " << OffsettedBcFileName.c_str() << " -o "
          << OutSpvFileName.c_str();
 
   if (system(SpvCmd.str().c_str()) != EXIT_SUCCESS)

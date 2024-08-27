@@ -951,7 +951,7 @@ static int convertBCorSPV(char *InputPath,
 #else
 
   // generate program.spv
-  CompilationArgs.push_back(LLVM_SPIRV);
+  CompilationArgs.push_back(get_llvm_spirv());
 #if (LLVM_MAJOR == 15) || (LLVM_MAJOR == 16)
 #ifdef LLVM_OPAQUE_POINTERS
   CompilationArgs.push_back("--opaque-pointers");
@@ -1552,7 +1552,8 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
                       AsmStr.size(), nullptr);
   pocl_mk_tempname(ObjFileName, "/tmp/pocl-obj", ".o", nullptr);
 
-  const char *Args[] = {CLANG, AsmFileName, "-c", "-o", ObjFileName, nullptr};
+  const char *Args[] = {get_clang(), AsmFileName, "-c",
+                        "-o",        ObjFileName, nullptr};
   int Res = pocl_invoke_clang(Device, Args);
 
   if (Res == 0) {

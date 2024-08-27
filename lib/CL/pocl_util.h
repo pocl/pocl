@@ -644,4 +644,43 @@ while (0)
     return retval;                                                            \
   }
 
+// helper macro to define a path getter that checks for env overrides
+#define POCL_GET_PATH(path, getter, override)                                 \
+  static inline const char *getter ()                                         \
+  {                                                                           \
+    const char *env = getenv (override);                                      \
+    if (env && strlen (env) > 0)                                              \
+      return env;                                                             \
+    else                                                                      \
+      return path;                                                            \
+  }
+
+#ifdef CLANG
+POCL_GET_PATH (CLANG, get_clang, "POCL_CC")
+#endif
+
+#ifdef CLANGXX
+POCL_GET_PATH (CLANGXX, get_clangxx, "POCL_CXX")
+#endif
+
+#ifdef LLVM_LLC
+POCL_GET_PATH (LLVM_LLC, get_llvm_llc, "POCL_LLVM_LLC")
+#endif
+
+#ifdef LLVM_SPIRV
+POCL_GET_PATH (LLVM_SPIRV, get_llvm_spirv, "POCL_LLVM_SPIRV")
+#endif
+
+#ifdef LLVM_OPT
+POCL_GET_PATH (LLVM_OPT, get_llvm_opt, "POCL_LLVM_OPT")
+#endif
+
+#ifdef LLVM_LINK
+POCL_GET_PATH (LLVM_LINK, get_llvm_link, "POCL_LLVM_LINK")
+#endif
+
+#ifdef SPIRV_LINK
+POCL_GET_PATH (SPIRV_LINK, get_spirv_link, "POCL_SPIRV_LINK")
+#endif
+
 #endif

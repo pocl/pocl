@@ -1111,9 +1111,9 @@ compile_parallel_bc_to_brig (char *brigfile, _cl_command_node *cmd,
                           " compiling parallel.bc to brig file: \n%s\n",
                           parallel_bc_path);
 
-
-      char* args1[] = { LLVM_LLC, "-O2", "-march=hsail64", "-filetype=asm",
-                        "-o", hsailfile, parallel_bc_path, NULL };
+      char *args1[] = { get_llvm_llc (),  "-O2", "-march=hsail64",
+                        "-filetype=asm",  "-o",  hsailfile,
+                        parallel_bc_path, NULL };
       if ((error = pocl_run_command (args1)))
         {
           POCL_MSG_PRINT_HSA ("llc exit status %i\n", error);
