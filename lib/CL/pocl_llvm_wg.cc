@@ -530,8 +530,21 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
     // but they should not be invalidated by previous passes
     addPass(Passes, "implicit-loop-barriers", PassType::Loop);
 
-    addPass(Passes, "implicit-cond-barriers");
+    // loop-barriers adds implicit barriers to handle b-loops by isolating the
+    // loop body from the loop construct. It also tries to make non b-loops
+    // "isolated" in a way to produce the wiloop strictly around it, making
+    // things nice for LLVM standard loop analysis (loop-interchange and
+    // loopvec at least).
     addPass(Passes, "loop-barriers", PassType::Loop);
+
+    // implicit-conf-barriers handles barriers inside conditional
+    // basic blocks (basically if...elses). It tries to minimize the
+    // part ending up in the parallel region that is conditional by
+    // isolating the branching condition (which must be uniform,
+    // otherwise the end result is undefined according to barrier rules),
+    // to minimize the impact of "work-item peeling" (* to describe).
+    addPass(Passes, "implicit-cond-barriers");
+
     // required for new PM: WorkitemLoops to remove PHi nodes from LCSSA
     // 153: pocl::WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction*):
     // 153:   Assertion `"Cannot add context restore for a PHI node at the
@@ -566,6 +579,7 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
     // kernels without barriers, but after the transformation the kernel looks
     // like it has barriers, so subcfg would do its thing.
     addPass(Passes, "workitemloops");
+
     // Remove the (pseudo) barriers.   They have no use anymore due to the
     // work-item loop control taking care of them.
     addPass(Passes, "remove-barriers");
@@ -602,6 +616,10 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
   // the standard LLVM optimizations.
   addPass(Passes, "simplifycfg");
 
+  addPass(Passes, "print<pocl-cfg;before>", PassType::Module);
+  addPass(Passes, "print", PassType::Module);
+
+  addPass(Passes, "loop-interchange");
   // the optimization for new PM is handled separately
   // addPass(Passes, "STANDARD_OPTS");
 

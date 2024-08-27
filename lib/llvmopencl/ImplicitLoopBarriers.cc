@@ -181,7 +181,10 @@ ImplicitLoopBarriers::run(llvm::Loop &L, llvm::LoopAnalysisManager &AM,
 
   if (FAMP.cachedResultExists<WorkitemHandlerChooser>(*K)) {
     auto Res = FAMP.getCachedResult<WorkitemHandlerChooser>(*K);
-    if (Res->WIH == WorkitemHandlerType::CBS)
+
+    // Rely on loop-interchange and loop isolation instead of the
+    // implicit loop barriers.
+    if (Res->WIH != WorkitemHandlerType::FULL_REPLICATION)
       return PreservedAnalyses::all();
   } else {
     assert(0 && "missing cached result WIH for ImplicitLoopBarriers");

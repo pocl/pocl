@@ -199,9 +199,22 @@ void Kernel::getParallelRegions(
       BasicBlock *Entry = PR->entryBB();
       int found_predecessors = 0;
       BasicBlock *loop_barrier = NULL;
+
+      // Find the other parallel regions that flow into this one.
       for (pred_iterator i = pred_begin(Entry), e = pred_end(Entry);
            i != e; ++i) {
         BasicBlock *Barrier = (*i);
+        if (!Barrier::hasBarrier(Barrier) && PR->HasBlock(Barrier)) {
+#ifdef DEBUG_PR_CREATION
+          std::cout << "### a block that branches to the entry node, must be a "
+                       "loop header:"
+                    << std::endl;
+          std::cout << Barrier->getName().str() << std::endl;
+
+#endif
+          continue;
+        }
+
         if (!found_barriers.count(Barrier)) {
           /* If this is a loop header block we might have edges from two 
              unprocessed barriers. The one inside the loop (coming from a 

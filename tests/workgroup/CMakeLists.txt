@@ -109,11 +109,6 @@ add_test_pocl(NAME "workgroup/conditional_barrier_cbs"
               COMMAND "run_kernel" "conditional_barriers.cl" 1 2 1 1
               WORKITEM_HANDLER "cbs")
 
-add_test_pocl(NAME "workgroup/forcing_horizontal_parallelization_to_some_outer_loopvec"
-              EXPECTED_OUTPUT "outerlooppar_2_2_1_1.stdout"
-              COMMAND "run_kernel" "outerlooppar.cl" 2 2 1 1
-              WORKITEM_HANDLER "loopvec")
-
 add_test_pocl(NAME "workgroup/loop_with_two_paths_to_the_latch"
               EXPECTED_OUTPUT "for_bug_1_2_1_1.stdout"
               COMMAND "run_kernel" "for_bug.cl" 1 2 1 1)
@@ -146,7 +141,6 @@ set(VARIANTS "loopvec;cbs")
 foreach(VARIANT ${VARIANTS})
   set(TEST_LIST     "workgroup/unconditional_barriers_${VARIANT}"
   "workgroup/conditional_barrier_${VARIANT}"
-  "workgroup/forcing_horizontal_parallelization_to_some_outer_loopvec"
   "workgroup/loop_with_two_paths_to_the_latch_${VARIANT}"
   "workgroup/b_loop_with_two_latches_${VARIANT}"
   "workgroup/workgroup_sizes_work_items_get_wrong_ids_${VARIANT}"
@@ -171,7 +165,6 @@ set_property(TEST
   "workgroup/barriered_for_loops_loopvec"
   "workgroup/conditional_barrier_loopvec"
   "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier_loopvec"
-  "workgroup/forcing_horizontal_parallelization_to_some_outer_loopvec"
   "workgroup/loop_with_two_paths_to_the_latch_loopvec"
   "workgroup/b_loop_with_two_latches_loopvec"
   "workgroup/workgroup_sizes_work_items_get_wrong_ids_loopvec"

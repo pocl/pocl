@@ -50,6 +50,7 @@ POP_COMPILER_DIAGS
 
 POP_COMPILER_DIAGS
 
+
 namespace pocl {
 
 using namespace llvm;
@@ -116,7 +117,7 @@ bool WorkitemHandler::dominatesUse(llvm::DominatorTree &DT, Instruction &Inst,
 /* Fixes the undominated variable uses.
 
    These appear when a conditional barrier kernel is replicated to
-   form a copy of the *same basic block* in the alternative 
+   form a copy of the *same basic block* in the alternative
    "barrier path".
 
    E.g., from
@@ -125,29 +126,30 @@ bool WorkitemHandler::dominatesUse(llvm::DominatorTree &DT, Instruction &Inst,
 
    a replicated CFG as follows, is created:
 
-   A1 -> (T) A2 -> [exit1],  A1 -> (F) A2' -> B1, B2 -> [exit2] 
+   A1 -> (T) A2 -> [exit1],  A1 -> (F) A2' -> B1, B2 -> [exit2]
 
    The regions are correct because of the barrier semantics
    of "all or none". In case any barrier enters the [exit1]
    from A1, all must (because there's a barrier in the else
    branch).
 
-   Here at A2 and A2' one creates the same variables. 
-   However, B2 does not know which copy
-   to refer to, the ones created in A2 or ones in A2' (correct).
+   Here at A2 and A2' the program creates the "same" SSA variables.
+   However, B2 does not know which copy to refer to: the ones created
+   in A2 or ones in A2' (correct).
+
    The mapping data contains only one possibility, the
-   one that was placed there last. Thus, the instructions in B2 
-   might end up referring to the variables defined in A2 
+   one that was placed there last. Thus, the instructions in B2
+   might end up referring to the variables defined in A2
    which do not nominate them.
 
-   The variable references are fixed by exploiting the knowledge
-   of the naming convention of the cloned variables. 
+   For now, the variable references are fixed by exploiting the knowledge
+   of the naming convention of the cloned variables.
 
-   One potential alternative way would be to collect the refmaps per BB,
-   not globally. Then as a final phase traverse through the 
+   One potentially more robust way would be to collect the refmaps per BB,
+   not globally. Then as a final phase traverse through the
    basic blocks starting from the beginning and propagating the
    reference data downwards, the data from the new BB overwriting
-   the old one. This should ensure the reachability without 
+   the old one. This should ensure the reachability without
    the costly dominance analysis.
 */
 bool WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree &DT,
@@ -166,12 +168,18 @@ bool WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree &DT,
       for (llvm::BasicBlock::iterator ins = bb->begin(), inse = bb->end();
            ins != inse; ++ins)
         {
-          for (unsigned opr = 0; opr < ins->getNumOperands(); ++opr)
-            {
-              if (!isa<Instruction>(ins->getOperand(opr))) continue;
-              Instruction *operand = cast<Instruction>(ins->getOperand(opr));
-              if (dominatesUse(DT, *ins, opr)) 
-                  continue;
+        // We can now get PHINodes at this point since we are attempting to
+        // keep the non-b-loops intact. They they confuse the dominance
+        // analysis, but should not get into replicated regions since the
+        // intra loops are isolated and included wholly in their region.
+        if (isa<PHINode>(ins))
+          continue;
+        for (unsigned opr = 0; opr < ins->getNumOperands(); ++opr) {
+          if (!isa<Instruction>(ins->getOperand(opr)))
+            continue;
+          Instruction *operand = cast<Instruction>(ins->getOperand(opr));
+          if (dominatesUse(DT, *ins, opr))
+            continue;
 #ifdef DEBUG_REFERENCE_FIXING
               std::cout << "### dominance error!" << std::endl;
               operand->dump();
@@ -185,7 +193,7 @@ bool WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree &DT,
                 baseName = pieces.first;
               else
                 baseName = operand->getName();
-              
+
               Value *alternative = NULL;
 
               unsigned int copy_i = 0;
@@ -204,7 +212,7 @@ bool WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree &DT,
                     if (dominatesUse(DT, *ins, opr))
                       break;
                   }
-                     
+
                 if (copy_i > 10000 && alternative == NULL)
                   break; /* ran out of possibilities */
                 ++copy_i;
@@ -214,7 +222,7 @@ bool WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree &DT,
 #ifdef DEBUG_REFERENCE_FIXING
                   std::cout << "### found the alternative:" << std::endl;
                   alternative->dump();
-#endif                      
+#endif
                   changed |= true;
                 } else {
 #ifdef DEBUG_REFERENCE_FIXING
@@ -237,7 +245,7 @@ bool WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree &DT,
 
 /**
  * Moves the phi nodes in the beginning of the src to the beginning of
- * the dst. 
+ * the dst.
  *
  * MergeBlockIntoPredecessor function from llvm discards the phi nodes
  * of the replicated BB because it has only one entry.

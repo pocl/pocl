@@ -64,8 +64,8 @@ POP_COMPILER_DIAGS
 #include <vector>
 
 #define DEBUG_TYPE "workitem-loops"
-//#define DUMP_CFGS
-//#define DEBUG_WORK_ITEM_LOOPS
+#define DUMP_CFGS
+// #define DEBUG_WORK_ITEM_LOOPS
 
 // this must be at least the alignment of largest OpenCL type (= 128 bytes)
 #define CONTEXT_ARRAY_ALIGN MAX_EXTENDED_ALIGNMENT
@@ -202,21 +202,15 @@ bool WorkitemLoopsImpl::runOnFunction(Function &Func) {
   bool Changed = processFunction(Func);
 
   Changed |= handleLocalMemAllocas(cast<Kernel>(Func));
-
-#ifdef DUMP_CFGS
-  dumpCFG(F, F.getName().str() + "_after_wiloops.dot", nullptr,
-          &OriginalParallelRegions);
-#endif
-
   Changed |= fixUndominatedVariableUses(DT, Func);
 
-#if 0
-  // Split large BBs so we can print the Dot without it crashing.
-  Changed |= chopBBs(Func, *this);
-  Func.viewCFG();
-#endif
   ContextArrays.clear();
   TempInstructionIds.clear();
+
+#ifdef DUMP_CFGS
+  dumpCFG(*F, F->getName().str() + "_after_wiloops.dot", nullptr,
+          &OriginalParallelRegions);
+#endif
 
   releaseParallelRegions();
   return Changed;
@@ -244,14 +238,14 @@ WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
     ; if peeledFirst is false:
     store i32 0, i32* %_local_id_x, align 4
 
-    ; if peeledFirst is true (assume the 0,0,0 iteration has been executed earlier)
-    ; assume _local_id_x_first is is initialized to 1 in the peeled pregion copy
-    store _local_id_x_first, i32* %_local_id_x, align 4
-    store i32 0, %_local_id_x_first
+    ; if peeledFirst is true (assume the 0,0,0 iteration has been executed
+    earlier) ; assume _local_id_x_first is is initialized to 1 in the peeled
+    pregion copy store _local_id_x_first, i32* %_local_id_x, align 4 store i32
+    0, %_local_id_x_first
 
     br label %for.body
 
-    for.body: 
+    for.body:
 
     ; the parallel region code here
 
@@ -277,10 +271,11 @@ WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
 
     for.end:
 
-    OPTIMIZE: Use a separate iteration variable across all the loops to iterate the context 
-    data arrays to avoid needing multiplications to find the correct location, and to 
-    enable easy vectorization of loading the context data when there are parallel iterations.
-  */     
+    OPTIMIZE: Use a separate iteration variable across all the loops to iterate
+    the context data arrays to avoid multiplications to find the correct
+    location, and to enable easy vectorization of loading the context data when
+    there are parallel iterations.
+  */
 
   llvm::BasicBlock *LoopBodyEntryBB = EntryBB;
   llvm::LLVMContext &C = LoopBodyEntryBB->getContext();
@@ -291,14 +286,14 @@ WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
 
   llvm::BasicBlock *oldExit = ExitBB->getTerminator()->getSuccessor(0);
 
-  llvm::BasicBlock *forInitBB = 
-    BasicBlock::Create(C, "pregion_for_init", F, LoopBodyEntryBB);
+  llvm::BasicBlock *forInitBB =
+      BasicBlock::Create(C, "pregion_for_init", F, LoopBodyEntryBB);
 
-  llvm::BasicBlock *loopEndBB = 
-    BasicBlock::Create(C, "pregion_for_end", F, ExitBB);
+  llvm::BasicBlock *loopEndBB =
+      BasicBlock::Create(C, "pregion_for_end", F, ExitBB);
 
-  llvm::BasicBlock *forCondBB = 
-    BasicBlock::Create(C, "pregion_for_cond", F, ExitBB);
+  llvm::BasicBlock *forCondBB =
+      BasicBlock::Create(C, "pregion_for_cond", F, ExitBB);
 
   DT.reset();
   DT.recalculate(*F);
@@ -313,30 +308,34 @@ WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
     }
   }
 
-  /* Fix the old edges jumping to the region to jump to the basic block
-     that starts the created loop. Back edges should still point to the
-     old basic block so we preserve the old loops. */
-  BasicBlockVector preds;
-  llvm::pred_iterator PI = 
-    llvm::pred_begin(EntryBB),
-    E = llvm::pred_end(EntryBB);
+  // Fix the old edges jumping to the region to jump to the basic block
+  // that starts the created loop. Back edges should still point to the
+  // old basic block so we preserve the old loops.
+  BasicBlockVector Preds;
+  llvm::pred_iterator PI = llvm::pred_begin(EntryBB),
+                      E = llvm::pred_end(EntryBB);
 
-  for (; PI != E; ++PI)
-    {
-      llvm::BasicBlock *bb = *PI;
-      preds.push_back(bb);
-    }    
+  for (; PI != E; ++PI) {
+    llvm::BasicBlock *PredBB = *PI;
+    Preds.push_back(PredBB);
+  }
 
-  for (BasicBlockVector::iterator i = preds.begin();
-       i != preds.end(); ++i)
-    {
-      llvm::BasicBlock *bb = *i;
-      /* Do not fix loop edges inside the region. The loop
-         is replicated as a whole to the body of the wi-loop.*/
-      if (DT.dominates(LoopBodyEntryBB, bb))
-        continue;
-      bb->getTerminator()->replaceUsesOfWith(LoopBodyEntryBB, forInitBB);
-    }
+  for (BasicBlockVector::iterator i = Preds.begin(); i != Preds.end(); ++i) {
+    llvm::BasicBlock *PredBB = *i;
+
+    // Do not fix loop edges inside the region. The loop is included as
+    // a whole to the body of the WI loop.
+    if (DT.dominates(LoopBodyEntryBB, PredBB))
+      continue;
+
+    // In case the loop starts with a non-barrier-loop contained in the region,
+    // the first basic block can contain PHI nodes which must be fixed to point
+    // to the new predecessor.
+    if (Dim == 0)
+      LoopBodyEntryBB->replacePhiUsesWith(PredBB, forInitBB);
+
+    PredBB->getTerminator()->replaceUsesOfWith(LoopBodyEntryBB, forInitBB);
+  }
 
   IRBuilder<> builder(forInitBB);
 
@@ -377,6 +376,7 @@ WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
   }
 
   ExitBB->getTerminator()->replaceUsesOfWith(oldExit, forCondBB);
+
   if (AddIncBlock) {
     appendIncBlock(ExitBB, Dim);
   }
@@ -391,8 +391,24 @@ WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
     cmpResult = builder.CreateICmpULT(builder.CreateLoad(ST, LocalIdVar),
                                       builder.CreateLoad(ST, DynamicLocalSize));
 
-  Instruction *loopBranch =
+  Instruction *LoopBranch =
       builder.CreateCondBr(cmpResult, LoopBodyEntryBB, loopEndBB);
+
+  // Now the PR header can contain PHINodes in case of a kernel
+  // loop included in the region. Since we branch to it from the
+  // dim 0 WI loop, we must add an initialization entry that
+  // matches the loop initial entry so the original loop will
+  // be executed from the beginning.
+  for (BasicBlock::iterator I = LoopBodyEntryBB->begin();
+       I != LoopBodyEntryBB->end(); ++I) {
+    if (!isa<PHINode>(I))
+      continue;
+    // Add a new PHINode option which has the same value as the initial one.
+    PHINode *PHI = cast<PHINode>(I);
+    Value *Val = PHI->getIncomingValueForBlock(forInitBB);
+    assert(Val != nullptr);
+    PHI->addIncoming(Val, LoopBranch->getParent());
+  }
 
   /* Add the metadata to mark a parallel loop. The metadata
      refer to a loop-unique dummy metadata that is not merged
@@ -416,7 +432,7 @@ WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
   MDNode::deleteTemporary(Dummy);
   // We now have
   //   !1 = metadata !{metadata !1} <- self-referential root
-  loopBranch->setMetadata("llvm.loop", Root);
+  LoopBranch->setMetadata("llvm.loop", Root);
 
   auto IsLoadUnconditionallySafe =
     [&dominatesExitBB](llvm::Instruction *insn) -> bool {
@@ -492,18 +508,12 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
   K->getParallelRegions(LI, &OriginalParallelRegions);
 
 #ifdef DUMP_CFGS
-  F.dump();
-  dumpCFG(F, F.getName().str() + "_before_wiloops.dot",
+  dumpCFG(F, F.getName().str() + "_before_wiloops.dot", nullptr,
           &OriginalParallelRegions);
 #endif
 
   IRBuilder<> builder(&*(F.getEntryBlock().getFirstInsertionPt()));
   LocalIdXFirstVar = builder.CreateAlloca(ST, 0, ".pocl.local_id_x_init");
-
-#if 0
-  std::cerr << "### Original" << std::endl;
-  F.viewCFGOnly();
-#endif
 
 #if 0
   for (ParallelRegion::ParallelRegionVector::iterator
@@ -562,84 +572,75 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
        region is inside a loop and the exit block is in the path
        towards the loop exit (and the function exit).
     */
-    bool peelFirst =  entryCounts[original->entryBB()] > 1;
-    
+    bool peelFirst = entryCounts[original->entryBB()] > 1;
+
     peeledRegion[original] = peelFirst;
 
     std::pair<llvm::BasicBlock *, llvm::BasicBlock *> l;
-    // the original predecessor nodes of which successor
+    // The original predecessor nodes of which successor
     // should be fixed if not peeling
     BasicBlockVector preds;
 
     bool unrolled = false;
-    if (peelFirst) 
-      {
+    if (peelFirst) {
 #ifdef DEBUG_WORK_ITEM_LOOPS
         std::cerr << "### conditional region, peeling the first iteration" << std::endl;
 #endif
-        ParallelRegion *replica = 
-          original->replicate(reference_map, ".peeled_wi");
+        ParallelRegion *replica =
+            original->replicate(reference_map, ".peeled_wi");
         replica->chainAfter(original);
         replica->purge();
 
         l = std::make_pair(replica->entryBB(), replica->exitBB());
+    } else {
+      llvm::pred_iterator PI = llvm::pred_begin(original->entryBB()),
+                          E = llvm::pred_end(original->entryBB());
+
+      for (; PI != E; ++PI) {
+        llvm::BasicBlock *BB = *PI;
+        if (DT.dominates(original->entryBB(), BB) &&
+            (regionOfBlock(original->entryBB()) == regionOfBlock(BB)))
+          continue;
+        preds.push_back(BB);
       }
-    else
-      {
-        llvm::pred_iterator PI = 
-          llvm::pred_begin(original->entryBB()), 
-          E = llvm::pred_end(original->entryBB());
 
-        for (; PI != E; ++PI)
-          {
-            llvm::BasicBlock *BB = *PI;
-            if (DT.dominates(original->entryBB(), BB) &&
-                (regionOfBlock(original->entryBB()) == regionOfBlock(BB)))
-              continue;
-            preds.push_back(BB);
-          }
-
-        unsigned unrollCount;
-        if (getenv("POCL_WILOOPS_MAX_UNROLL_COUNT") != NULL)
-            unrollCount = atoi(getenv("POCL_WILOOPS_MAX_UNROLL_COUNT"));
-        else
-            unrollCount = 1;
-        /* Find a two's exponent unroll count, if available. */
-        while (unrollCount >= 1)
-          {
-            if (WGLocalSizeX % unrollCount == 0 &&
-                unrollCount <= WGLocalSizeX)
-              {
-                break;
-              }
-            unrollCount /= 2;
-          }
-
-        if (unrollCount > 1) {
-            ParallelRegion *prev = original;
-            llvm::BasicBlock *lastBB = appendIncBlock(original->exitBB(), 0);
-            original->AddBlockAfter(lastBB, original->exitBB());
-            original->SetExitBB(lastBB);
-
-            if (AddWIMetadata)
-                original->AddIDMetadata(F.getContext(), 0);
-
-            for (unsigned c = 1; c < unrollCount; ++c)
-            {
-                ParallelRegion *unrolled =
-                    original->replicate(reference_map, ".unrolled_wi");
-                unrolled->chainAfter(prev);
-                prev = unrolled;
-                lastBB = unrolled->exitBB();
-                if (AddWIMetadata)
-                    unrolled->AddIDMetadata(F.getContext(), c);
-            }
-            unrolled = true;
-            l = std::make_pair(original->entryBB(), lastBB);
-        } else {
-            l = std::make_pair(original->entryBB(), original->exitBB());
+      unsigned unrollCount;
+      if (getenv("POCL_WILOOPS_MAX_UNROLL_COUNT") != NULL)
+        unrollCount = atoi(getenv("POCL_WILOOPS_MAX_UNROLL_COUNT"));
+      else
+        unrollCount = 1;
+      /* Find a two's exponent unroll count, if available. */
+      while (unrollCount >= 1) {
+        if (WGLocalSizeX % unrollCount == 0 && unrollCount <= WGLocalSizeX) {
+          break;
         }
+        unrollCount /= 2;
       }
+
+      if (unrollCount > 1) {
+        ParallelRegion *prev = original;
+        llvm::BasicBlock *lastBB = appendIncBlock(original->exitBB(), 0);
+        original->AddBlockAfter(lastBB, original->exitBB());
+        original->SetExitBB(lastBB);
+
+        if (AddWIMetadata)
+          original->AddIDMetadata(F.getContext(), 0);
+
+        for (unsigned c = 1; c < unrollCount; ++c) {
+          ParallelRegion *unrolled =
+              original->replicate(reference_map, ".unrolled_wi");
+          unrolled->chainAfter(prev);
+          prev = unrolled;
+          lastBB = unrolled->exitBB();
+          if (AddWIMetadata)
+            unrolled->AddIDMetadata(F.getContext(), c);
+        }
+        unrolled = true;
+        l = std::make_pair(original->entryBB(), lastBB);
+      } else {
+        l = std::make_pair(original->entryBB(), original->exitBB());
+      }
+    }
 
     if (WGDynamicLocalSize) {
       GlobalVariable *gv;
@@ -1386,7 +1387,7 @@ bool WorkitemLoopsImpl::shouldNotBeContextSaved(llvm::Instruction *Instr) {
   // value everywhere.
 
   // Allocas are problematic since they include the de-phi induction variables
-  // of the b-loops. In those case each work item has a separate loop iteration
+  // of the b-loops. In those cases each work item has a separate loop iteration
   // variable in LLVM IR but which is really a parallel region loop invariant.
   // But because we cannot separate such loop invariant variables at this point
   // sensibly, let's just replicate the iteration variable to each work item

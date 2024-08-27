@@ -53,7 +53,8 @@ namespace pocl {
 
 using namespace llvm;
 
-static void addDummyBefore(Region &R, llvm::BasicBlock *BB);
+static void addDummyBefore(Region &R, llvm::BasicBlock *BB,
+                           std::string BBName = ".r_exit");
 static void addDummyAfter(Region &R, llvm::BasicBlock *BB);
 
 /* Ensure Single-Entry Single-Exit Regions are isolated from the
@@ -135,10 +136,10 @@ static bool isolateRegions(Region &R, WorkitemHandlerType WIH) {
 
   if (WIH != WorkitemHandlerType::FULL_REPLICATION &&
       isa<PHINode>(*Entry->begin())) {
-    // The region starts with a loop. Let's add a dummy node before the loop to
-    // let the parallel loop formation need not to care about the loop header
-    // phis.
-    addDummyBefore(R, Entry);
+    // The region starts with a loop. Let's add a dummy node before the loop
+    // to enable the parallel loop formation to not care about the loop
+    // header phis.
+    addDummyBefore(R, Entry, ".loop_header");
     changed = true;
   }
 
@@ -166,7 +167,8 @@ static void addDummyAfter(Region &R, llvm::BasicBlock *BB) {
  * in to the dummy BB in case the source BB is inside the
  * same region.
  */
-static void addDummyBefore(llvm::Region &R, llvm::BasicBlock *BB) {
+static void addDummyBefore(llvm::Region &R, llvm::BasicBlock *BB,
+                           std::string BBName) {
   std::vector<llvm::BasicBlock*> RegionPreds;
 
   for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI) {
@@ -177,7 +179,7 @@ static void addDummyBefore(llvm::Region &R, llvm::BasicBlock *BB) {
   if (RegionPreds.empty())
     return;
   llvm::BasicBlock *NewExit =
-      SplitBlockPredecessors(BB, RegionPreds, ".r_exit");
+      SplitBlockPredecessors(BB, RegionPreds, BBName.c_str());
   R.replaceExit(NewExit);
 }
 

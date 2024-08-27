@@ -114,6 +114,15 @@ namespace pocl {
       return false;
     }
 
+    static Barrier *FindInBasicBlock(llvm::BasicBlock *BB) {
+      for (llvm::BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;
+           ++I) {
+        if (llvm::isa<pocl::Barrier>(I))
+          return llvm::cast<pocl::Barrier>(I);
+      }
+      return nullptr;
+    }
+
     // Returns true in case the given basic block starts with a barrier,
     // that is, contains a branch instruction after possible PHI nodes.
     static bool startsWithBarrier(const llvm::BasicBlock *BB) {

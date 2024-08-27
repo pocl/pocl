@@ -39,6 +39,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "Barrier.h"
 #include "LLVMUtils.h"
 #include "LoopBarriers.h"
+#include "VariableUniformityAnalysis.h"
+#include "VariableUniformityAnalysisResult.hh"
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
 POP_COMPILER_DIAGS
@@ -54,7 +56,8 @@ namespace pocl {
 
 using namespace llvm;
 
-static bool processLoopBarriers(Loop &L, llvm::DominatorTree &DT) {
+static bool processLoopBarriers(Loop &L, llvm::DominatorTree &DT,
+                                VariableUniformityAnalysisResult &VUA) {
   bool IsBarLoop = false;
   bool Changed = false;
 
@@ -87,9 +90,9 @@ static bool processLoopBarriers(Loop &L, llvm::DominatorTree &DT) {
         assert((Preheader != NULL) && "Non-canonicalized loop found!\n");
 #ifdef DEBUG_LOOP_BARRIERS
         std::cerr << "### adding to preheader BB" << std::endl;
-        preheader->dump();
+        Preheader->dump();
         std::cerr << "### before instr" << std::endl;
-        preheader->getTerminator()->dump();
+        Preheader->getTerminator()->dump();
 #endif
         Barrier::Create(Preheader->getTerminator());
         Preheader->setName(Preheader->getName() + ".loopbarrier");
@@ -140,7 +143,7 @@ static bool processLoopBarriers(Loop &L, llvm::DominatorTree &DT) {
           if (L.contains(N)) {
             Latch2 = N;
             // Latch found in the loop, see if the barrier dominates it
-            // (otherwise if might no even belong to this "tail", see
+            // (otherwise if might not even belong to this "tail", see
             // forifbarrier1 graph test).
             if (DT.dominates(j->getParent(), Latch2)) {
               Barrier::Create(Latch2->getTerminator());
@@ -157,19 +160,45 @@ static bool processLoopBarriers(Loop &L, llvm::DominatorTree &DT) {
      block as a preheader so we can replicate the loop as a whole.
 
      If the block has proper instructions after the barrier, it
-     will be split in CanonicalizeBarriers. */
+     will be split in CanonicalizeBarriers.
+
+     Also attempt to isolate the loop with barriers to create the
+     WI loop around it in order to produce a nicely well-formed
+     set of loops for the loop-interchange to analyze.
+  */
   BasicBlock *Preheader = L.getLoopPreheader();
   assert((Preheader != NULL) && "Non-canonicalized loop found!\n");
 
   Instruction *Inst = Preheader->getTerminator();
+
+  Instruction *Terminator = Preheader->getTerminator();
   Instruction *PrevInst = NULL;
-  if (&Preheader->front() != Inst)
-    PrevInst = Inst->getPrevNode();
-  if (PrevInst && isa<Barrier>(PrevInst)) {
-      BasicBlock *NewBB = SplitBlock(Preheader, Inst);
-      NewBB->setName(Preheader->getName() + ".postbarrier_dummy");
-      return true;
+
+  if (!Barrier::hasBarrier(Preheader) &&
+      VUA.isUniform(Preheader->getParent(), Preheader)) {
+    // Insert an implicit barrier before the loop to generate the
+    // work-item loop around it.
+    Barrier::Create(Terminator);
+    Changed = true;
   }
+  if (Barrier *B = Barrier::FindInBasicBlock(Preheader)) {
+    BasicBlock *NewBB = SplitBlock(Preheader, B);
+    NewBB->setName(Preheader->getName() + ".postbarrier_pad");
+    Changed = true;
+  }
+
+  BasicBlock *ExitBlock = L.getExitBlock();
+
+  if (ExitBlock != nullptr && !Barrier::hasBarrier(ExitBlock) &&
+      VUA.isUniform(ExitBlock->getParent(), ExitBlock)) {
+    Barrier::Create(ExitBlock->getTerminator());
+    Changed = true;
+  }
+
+#if 0
+  std::cerr << "After LoopBarriers:" << std::endl;
+  Preheader->getParent()->dump();
+#endif
 
   return Changed;
 }
@@ -189,7 +218,17 @@ llvm::PreservedAnalyses LoopBarriers::run(llvm::Loop &L,
 
   PreservedAnalyses PAChanged = PreservedAnalyses::none();
 
-  return processLoopBarriers(L, AR.DT) ? PAChanged : PreservedAnalyses::all();
+  VariableUniformityAnalysisResult *VUA = nullptr;
+
+  auto &FAMP = AM.getResult<FunctionAnalysisManagerLoopProxy>(L, AR);
+  if (FAMP.cachedResultExists<VariableUniformityAnalysis>(*K)) {
+    VUA = FAMP.getCachedResult<VariableUniformityAnalysis>(*K);
+  } else {
+    assert(0 && "missing cached result VUA for ImplicitLoopBarriers");
+  }
+
+  return processLoopBarriers(L, AR.DT, *VUA) ? PAChanged
+                                             : PreservedAnalyses::all();
 }
 
 REGISTER_NEW_LPASS(PASS_NAME, PASS_CLASS, PASS_DESC);

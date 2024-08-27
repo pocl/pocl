@@ -40,7 +40,7 @@ endforeach()
 
 set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_for_with_var_iteration_count test_id_dependent_computation
-  test_locals test_loop_phi_replication test_multi_level_loops_with_barriers
+  test_locals test_multi_level_loops_with_barriers
   test_simple_for_with_a_barrier test_structs_as_args test_vectors_as_args
   test_barrier_before_return test_infinite_loop test_constant_array
   test_undominated_variable test_setargs test_null_arg
@@ -110,10 +110,6 @@ add_test_pocl(NAME "regression/test_issue_893" COMMAND "test_issue_893")
 
 add_test_pocl(NAME "regression/test_flatten_barrier_subs" COMMAND "test_flatten_barrier_subs" EXPECTED_OUTPUT "test_flatten_barrier_subs.output")
 
-# repl
-
-add_test_pocl(NAME "regression/phi_nodes_not_replicated" WORKITEM_HANDLER "loopvec;cbs;repl" COMMAND "test_loop_phi_replication")
-
 add_test_pocl(NAME "regression/issues_with_local_pointers" WORKITEM_HANDLER "loopvec;cbs;repl" COMMAND "test_locals")
 
 add_test_pocl(NAME "regression/barrier_between_two_for_loops" WORKITEM_HANDLER "loopvec;cbs;repl" COMMAND "test_barrier_between_for_loops")
@@ -146,7 +142,7 @@ add_test_pocl(NAME "regression/test_program_from_binary_with_local_1_1_1" WORKIT
 
 set(VARIANTS_REPL "loopvec;cbs;repl")
 foreach(VARIANT ${VARIANTS_REPL})
-set_tests_properties("regression/phi_nodes_not_replicated_${VARIANT}"
+set_tests_properties(
   "regression/issues_with_local_pointers_${VARIANT}"
   "regression/barrier_between_two_for_loops_${VARIANT}"
   "regression/simple_for-loop_with_a_barrier_inside_${VARIANT}"
@@ -264,7 +260,6 @@ set_property(TEST ${TCE_TESTS} APPEND PROPERTY LABELS "tce")
 
 # Label tests that work with CUDA backend
 set_property(TEST
-  "regression/phi_nodes_not_replicated_loopvec"
   "regression/issues_with_local_pointers_loopvec"
   "regression/barrier_between_two_for_loops_loopvec"
   "regression/simple_for-loop_with_a_barrier_inside_loopvec"
@@ -286,7 +281,6 @@ set_property(TEST
 
 # Label tests that work with HSA runtime with native kernel compilation
 set_property(TEST
-  "regression/phi_nodes_not_replicated_loopvec"
   "regression/issues_with_local_pointers_loopvec"
   "regression/barrier_between_two_for_loops_loopvec"
   "regression/simple_for-loop_with_a_barrier_inside_loopvec"
@@ -306,7 +300,6 @@ set_property(TEST
 
 # Label tests that work with proxy driver
 set_property(TEST
-  "regression/phi_nodes_not_replicated_loopvec"
   "regression/barrier_between_two_for_loops_loopvec"
   "regression/simple_for-loop_with_a_barrier_inside_loopvec"
   "regression/for-loop_with_computation_after_the_brexit_loopvec"
@@ -342,7 +335,6 @@ set_property(TEST
   "regression/for-loop_with_a_variable_iteration_count_loopvec"
   "regression/id-dependent_computation_before_kernel_exit_loopvec"
   "regression/issues_with_local_pointers_loopvec"
-  "regression/phi_nodes_not_replicated_loopvec"
   "regression/simple_for-loop_with_a_barrier_inside_loopvec"
   "regression/test_program_from_binary_with_local_1_1_1_loopvec"
   "regression/undominated_variable_from_conditional_barrier_handling_loopvec"
