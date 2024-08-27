@@ -354,7 +354,7 @@ static int linkWithSpirvLink(cl_program Program, cl_uint DeviceI,
   std::vector<std::string> CompilationArgs;
   std::vector<char *> CompilationArgs2;
 
-  CompilationArgs.push_back(get_spirv_link());
+  CompilationArgs.push_back(pocl_get_path("SPIRV_LINK", SPIRV_LINK));
   if (CreateLibrary != 0) {
     CompilationArgs.push_back("--create-library");
   }
@@ -391,7 +391,7 @@ static int runLLVMOpt(cl_program Program, cl_uint DeviceI,
   std::vector<std::string> CompilationArgs;
   std::vector<char *> CompilationArgs2;
 
-  CompilationArgs.push_back(get_llvm_opt());
+  CompilationArgs.push_back(pocl_get_path("LLVM_OPT", LLVM_OPT));
   CompilationArgs.push_back(L0passes);
   strcpy(ProgramBcOldPathTemp, ProgramBcPathTemp);
   strncat(ProgramBcPathTemp, ".opt.bc", POCL_MAX_PATHNAME_LENGTH);
@@ -422,7 +422,7 @@ static int linkWithLLVMLink(cl_program Program, cl_uint DeviceI,
   std::vector<std::string> CompilationArgs;
   std::vector<char *> CompilationArgs2;
 
-  CompilationArgs.push_back(get_llvm_link());
+  CompilationArgs.push_back(pocl_get_path("LLVM_LINK", LLVM_LINK));
 //  if (CreateLibrary != 0) {
 //    CompilationArgs.push_back("--create-library");
 //  }
