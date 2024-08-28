@@ -528,7 +528,10 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
 
     // NEW PM requires WIH & VUA analyses here,
     // but they should not be invalidated by previous passes
-    addPass(Passes, "implicit-loop-barriers", PassType::Loop);
+
+    // Rely on loop-interchange and loop isolation instead of the
+    // implicit loop barriers.
+    // addPass(Passes, "implicit-loop-barriers", PassType::Loop);
 
     // loop-barriers adds implicit barriers to handle b-loops by isolating the
     // loop body from the loop construct. It also tries to make non b-loops
@@ -616,8 +619,10 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
   // the standard LLVM optimizations.
   addPass(Passes, "simplifycfg");
 
+#if 0
   addPass(Passes, "print<pocl-cfg;before>", PassType::Module);
   addPass(Passes, "print", PassType::Module);
+#endif
 
   addPass(Passes, "loop-interchange");
   // the optimization for new PM is handled separately
