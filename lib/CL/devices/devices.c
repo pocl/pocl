@@ -414,6 +414,9 @@ pocl_uninit_devices ()
 
   POCL_MSG_PRINT_GENERAL ("UNINIT all devices\n");
 
+  pocl_event_tracing_finish ();
+  pocl_async_callback_finish ();
+
   unsigned i, j;
   cl_device_id device = pocl_devices;
 
@@ -468,6 +471,10 @@ pocl_reinit_devices ()
     return CL_DEVICE_NOT_FOUND;
 
   POCL_MSG_WARN ("REINIT all devices\n");
+
+  /*  TODO: reinit tracing */
+  /* pocl_event_tracing_init (); */
+  pocl_async_callback_init ();
 
   unsigned i, j;
   cl_device_id device = pocl_devices;

@@ -2845,6 +2845,8 @@ pocl_async_callback_finish ()
   POCL_FAST_UNLOCK (async_cb_lock);
   if (async_callback_thread_id)
     POCL_JOIN_THREAD (async_callback_thread_id);
+  POCL_DESTROY_COND (async_cb_wake_cond);
+  POCL_DESTROY_LOCK (async_cb_lock);
 }
 
 static void
@@ -2935,8 +2937,6 @@ pocl_async_callback_thread (void *data)
         }
     }
 
-  POCL_FAST_DESTROY (async_cb_lock);
-  POCL_DESTROY_COND (async_cb_wake_cond);
   return NULL;
 }
 
@@ -2945,6 +2945,9 @@ pocl_async_callback_init ()
 {
   POCL_FAST_INIT (async_cb_lock);
   POCL_INIT_COND (async_cb_wake_cond);
+  exit_pocl_async_callback_thread = CL_FALSE;
+  async_callback_thread_id = 0;
+  async_callback_list = NULL;
   POCL_CREATE_THREAD (async_callback_thread_id, pocl_async_callback_thread,
                       NULL);
 }

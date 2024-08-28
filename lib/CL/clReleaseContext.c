@@ -154,10 +154,6 @@ pocl_check_uninit_devices ()
 
   usleep (100000);
 
-  pocl_event_tracing_finish ();
-
-  pocl_async_callback_finish ();
-
   POCL_LOCK (pocl_context_handling_lock);
   if (cl_context_count == 0)
     {
