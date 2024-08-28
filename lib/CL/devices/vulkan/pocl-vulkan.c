@@ -1732,8 +1732,9 @@ pocl_vulkan_get_timer_value(void *data)
 #endif
 
 int
-run_and_append_output_to_build_log (cl_program program, unsigned device_i,
-                                    char *const *args)
+run_and_append_output_to_build_log (cl_program program,
+                                    unsigned device_i,
+                                    const char **args)
 {
   int errcode = CL_SUCCESS;
 
@@ -1910,23 +1911,16 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
   char program_spv_path_temp[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_tempname (program_spv_path_temp, ".spv", NULL);
 
-  char *COMPILATION[MAX_COMPILATION_ARGS]
-      = { CLSPV,
-          "-x=cl",
-          "--spv-version=1.0",
-          "--cl-kernel-arg-info",
-          "--keep-unused-arguments",
-          "--uniform-workgroup-size",
-          "--global-offset",
-          "--long-vector",
-          "--global-offset-push-constant", // goffs as push constant
-          "--module-constants-in-storage-buffer",
-          /* push constants should be faster,
-           * but currently don't work with goffs */
-          /* "--pod-pushconstant",*/
-          "--pod-ubo",
-          "--cluster-pod-kernel-args",
-          NULL };
+  const char *COMPILATION[MAX_COMPILATION_ARGS]
+    = { CLSPV, "-x=cl", "--spv-version=1.0", "--cl-kernel-arg-info",
+        "--keep-unused-arguments", "--uniform-workgroup-size",
+        "--global-offset", "--long-vector",
+        "--global-offset-push-constant", // goffs as push constant
+        "--module-constants-in-storage-buffer",
+        /* push constants should be faster,
+         * but currently don't work with goffs */
+        /* "--pod-pushconstant",*/
+        "--pod-ubo", "--cluster-pod-kernel-args", NULL };
 
   unsigned last_arg_idx = 12;
 
@@ -2106,8 +2100,8 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
   POCL_GOTO_ERROR_ON (!pocl_exists (program_spv_path_temp),
                       CL_BUILD_PROGRAM_FAILURE, "clspv produced no output\n");
 
-  char *REFLECTION[] = { CLSPV_REFLECTION, program_spv_path_temp, "-o",
-                         program_map_path_temp, NULL };
+  const char *REFLECTION[] = { CLSPV_REFLECTION, program_spv_path_temp, "-o",
+                               program_map_path_temp, NULL };
   err = run_and_append_output_to_build_log (program, device_i, REFLECTION);
 
   POCL_GOTO_ERROR_ON ((err != 0), CL_BUILD_PROGRAM_FAILURE,
@@ -2230,8 +2224,8 @@ pocl_vulkan_build_binary (cl_program program, cl_uint device_i,
           !pocl_exists (program_spv_path_temp), CL_BUILD_PROGRAM_FAILURE,
           "failed to write SPIR-V file %s\n", program_spv_path_temp);
 
-      char *REFLECTION[] = { CLSPV "-reflection", program_spv_path_temp, "-o",
-                             program_map_path_temp, NULL };
+      const char *REFLECTION[] = { CLSPV "-reflection", program_spv_path_temp,
+                                   "-o", program_map_path_temp, NULL };
 
       err = run_and_append_output_to_build_log (program, device_i, REFLECTION);
       POCL_RETURN_ERROR_ON ((err != 0), CL_BUILD_PROGRAM_FAILURE,

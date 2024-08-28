@@ -301,7 +301,7 @@ static void convertProgramBcPathToSpv(char *ProgramBcPath,
 static constexpr unsigned DefaultCaptureSize = 128 * 1024;
 
 static int runAndAppendOutputToBuildLog(cl_program Program, unsigned DeviceI,
-                                        char *const *Args) {
+                                        const char **Args) {
   int Errcode = CL_SUCCESS;
 
   char *CapturedOutput = nullptr;
@@ -352,7 +352,7 @@ static int linkWithSpirvLink(cl_program Program, cl_uint DeviceI,
                              std::vector<std::string> &SpvBinaryPaths,
                              int CreateLibrary) {
   std::vector<std::string> CompilationArgs;
-  std::vector<char *> CompilationArgs2;
+  std::vector<const char *> CompilationArgs2;
 
   CompilationArgs.push_back(pocl_get_path("SPIRV_LINK", SPIRV_LINK));
   if (CreateLibrary != 0) {
@@ -389,7 +389,7 @@ static int runLLVMOpt(cl_program Program, cl_uint DeviceI,
   char ProgramBcOldPathTemp[POCL_MAX_PATHNAME_LENGTH];
 
   std::vector<std::string> CompilationArgs;
-  std::vector<char *> CompilationArgs2;
+  std::vector<const char *> CompilationArgs2;
 
   CompilationArgs.push_back(pocl_get_path("LLVM_OPT", LLVM_OPT));
   CompilationArgs.push_back(L0passes);
@@ -420,7 +420,7 @@ static int linkWithLLVMLink(cl_program Program, cl_uint DeviceI,
                             std::vector<std::string> &BcBinaryPaths,
                             int CreateLibrary) {
   std::vector<std::string> CompilationArgs;
-  std::vector<char *> CompilationArgs2;
+  std::vector<const char *> CompilationArgs2;
 
   CompilationArgs.push_back(pocl_get_path("LLVM_LINK", LLVM_LINK));
 //  if (CreateLibrary != 0) {
