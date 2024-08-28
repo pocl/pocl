@@ -41,6 +41,10 @@
 #include <iostream>
 #include <sstream>
 
+#if defined(ENABLE_CONFORMANCE) && defined(ENABLE_LEVEL0_EXTRA_FEATURES)
+#error Defined both ENABLE_CONFORMANCE and ENABLE_LEVEL0_EXTRA_FEATURES
+#endif
+
 // TODO: do we need to use Barriers, if we're using immediate
 // cmdlist in synchronous mode
 //#define LEVEL0_IMMEDIATE_CMDLIST
