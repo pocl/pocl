@@ -58,14 +58,21 @@
 //#define ENABLE_L0_MEMFILL
 
 #ifndef ENABLE_CONFORMANCE
+// fails some corner cases (with CL_RGBA + CL_FLOAT + 3D image, some CTS
+// test fails b/c of GPU rounding a pixel channel value 1e-38 to zero)
 #define ENABLE_IMAGES
+// subgroups require device queries which aren't yet available in L0
 #define ENABLE_SUBGROUPS
+// this is emulated on consumer hardware and fails math corner cases
 #define ENABLE_FP64
+// fails a single test (progvar_prog_scope_init) in CTS test "basic"
+#define ENABLE_PROGVARS
+// fails a c11_atomics subtest with GPU hang (even with increased timeout)
+#define ENABLE_64BIT_ATOMICS
 #endif
 
 #define ENABLE_WG_COLLECTIVE
 #define ENABLE_GENERIC_AS
-#define ENABLE_PROGVARS
 
 using namespace pocl;
 
@@ -2237,8 +2244,11 @@ bool Level0Device::setupModuleProperties(bool &SupportsInt64Atomics,
     ClDev->half_fp_config = convertZeFPFlags(ModuleProperties.fp16flags);
   }
 
+#ifdef ENABLE_64BIT_ATOMICS
   SupportsInt64Atomics = (ModuleProperties.flags &
                           ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS) != 0u;
+#endif
+
   KernelUUID = ModuleProperties.nativeKernelSupported;
   SupportsDP4A = (ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_DP4A) > 0;
   // TODO this seems not reported
