@@ -1409,7 +1409,7 @@ pocl_print_system_memory_stats()
 
 /* default WG size in each dimension & total WG size.
  * this should be reasonable for CPU */
-#define DEFAULT_WG_SIZE 4096
+#define DEFAULT_WG_SIZE 8192
 
 static const char *final_ld_flags[] =
   {"-lm", "-nostartfiles", HOST_LD_FLAGS_ARRAY, NULL};
