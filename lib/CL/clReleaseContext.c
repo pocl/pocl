@@ -61,7 +61,6 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
 
   int new_refcount;
   POCL_LOCK (pocl_context_handling_lock);
-
   POCL_LOCK_OBJ (context);
   POCL_RELEASE_OBJECT_UNLOCKED (context, new_refcount);
   POCL_MSG_PRINT_REFCOUNTS ("Release Context %" PRId64 " (%p), Refcount: %d\n",
@@ -69,6 +68,13 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
 
   if (new_refcount == 0)
     {
+      if (context->destructor_callbacks)
+        {
+          pocl_context_cb_push (context);
+          POCL_UNLOCK_OBJ (context);
+          POCL_UNLOCK (pocl_context_handling_lock);
+          return CL_SUCCESS;
+        }
       POCL_UNLOCK_OBJ (context);
       VG_REFC_ZERO (context);
 
@@ -107,17 +113,6 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
 #ifdef ENABLE_LLVM
       pocl_llvm_release_context (context);
 #endif
-
-      /* Fire any registered destructor callbacks */
-      context_destructor_callback_t *next_callback,
-          *callback = context->destructor_callbacks;
-      while (callback)
-        {
-          callback->pfn_notify (context, callback->user_data);
-          next_callback = callback->next;
-          free (callback);
-          callback = next_callback;
-        }
 
       POCL_DESTROY_OBJECT (context);
       POCL_MEM_FREE(context);
@@ -161,7 +156,7 @@ pocl_check_uninit_devices ()
 
   pocl_event_tracing_finish ();
 
-  pocl_event_callback_finish ();
+  pocl_async_callback_finish ();
 
   POCL_LOCK (pocl_context_handling_lock);
   if (cl_context_count == 0)

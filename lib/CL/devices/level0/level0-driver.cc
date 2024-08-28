@@ -49,6 +49,20 @@
 // of the commands in the work queue.
 //#define LEVEL0_RANDOMIZE_QUEUE
 
+// disable to use zeCommandListAppendMemoryFill API command
+// known to crash with CTS "select" test.
+//#define ENABLE_L0_MEMFILL
+
+#ifndef ENABLE_CONFORMANCE
+#define ENABLE_IMAGES
+#define ENABLE_SUBGROUPS
+#define ENABLE_FP64
+#endif
+
+#define ENABLE_WG_COLLECTIVE
+#define ENABLE_GENERIC_AS
+#define ENABLE_PROGVARS
+
 using namespace pocl;
 
 static void pocl_level0_abort_on_ze_error(int permit_quiet_exit,
@@ -731,33 +745,17 @@ void Level0Queue::copyRect(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
   LEVEL0_CHECK_ABORT(res);
 }
 
-void Level0Queue::readRect(void *__restrict__ HostPtr,
-                           pocl_mem_identifier *SrcMemId, cl_mem SrcBuf,
-                           const size_t *__restrict__ const BufferOrigin,
-                           const size_t *__restrict__ const HostOrigin,
-                           const size_t *__restrict__ const Region,
-                           size_t const BufferRowPitch,
-                           size_t const BufferSlicePitch,
-                           size_t const HostRowPitch,
-                           size_t const HostSlicePitch) {
-  const char *BufferPtr = static_cast<const char *>(SrcMemId->mem_ptr);
-
-  POCL_MSG_PRINT_LEVEL0(
-      "READ RECT \n"
-      "SRC DEV %p | DST HOST %p | SIZE %zu\n"
-      "B Origin %u %u %u | H Origin %u %u %u \n"
-      "buf_row_pitch %lu | buf_slice_pitch %lu |"
-      "host_row_pitch %lu | host_slice_pitch %lu\n"
-      "reg[0] %lu reg[1] %lu reg[2] %lu\n",
-      BufferPtr, HostPtr,
-      Region[0] * Region[1] * Region[2], (unsigned)BufferOrigin[0],
-      (unsigned)BufferOrigin[1], (unsigned)BufferOrigin[2],
-      (unsigned)HostOrigin[0], (unsigned)HostOrigin[1],
-      (unsigned)HostOrigin[2], (unsigned long)BufferRowPitch,
-      (unsigned long)BufferSlicePitch, (unsigned long)HostRowPitch,
-      (unsigned long)HostSlicePitch, (unsigned long)Region[0],
-      (unsigned long)Region[1], (unsigned long)Region[2]);
-
+void Level0Queue::readRectHelper(char *HostPtr,
+                                 const char* DevicePtr,
+                                 const size_t *BufferOrigin,
+                                 const size_t *HostOrigin,
+                                 const size_t *Region,
+                                 size_t const BufferRowPitch,
+                                 size_t const BufferSlicePitch,
+                                 size_t const HostRowPitch,
+                                 size_t const HostSlicePitch) {
+#if 0
+  // Disabled. Should work but is buggy in the Level Zero driver
   ze_copy_region_t HostRegion;
   ze_copy_region_t BufferRegion;
   BufferRegion.originX = BufferOrigin[0];
@@ -779,35 +777,74 @@ void Level0Queue::readRect(void *__restrict__ HostPtr,
       &BufferRegion, BufferRowPitch, BufferSlicePitch, CurrentEventH,
       PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr);
   LEVEL0_CHECK_ABORT(res);
+#endif
+  const char *AdjustedDevicePtr =
+      DevicePtr + BufferOrigin[2] * BufferSlicePitch +
+      BufferOrigin[1] * BufferRowPitch + BufferOrigin[0];
+  char *AdjustedHostPtr = HostPtr + HostOrigin[2] * HostSlicePitch +
+                          HostOrigin[1] * HostRowPitch + HostOrigin[0];
+
+  POCL_MSG_PRINT_LEVEL0("READ RECT \n"
+                        "SRC DEV %p | DST HOST %p | SIZE %zu\n"
+                        "B Origin %u %u %u | H Origin %u %u %u \n"
+                        "buf_row_pitch %lu | buf_slice_pitch %lu |"
+                        "host_row_pitch %lu | host_slice_pitch %lu\n"
+                        "reg[0] %lu reg[1] %lu reg[2] %lu\n",
+                        DevicePtr, HostPtr, Region[0] * Region[1] * Region[2],
+                        (unsigned)BufferOrigin[0], (unsigned)BufferOrigin[1],
+                        (unsigned)BufferOrigin[2], (unsigned)HostOrigin[0],
+                        (unsigned)HostOrigin[1], (unsigned)HostOrigin[2],
+                        (unsigned long)BufferRowPitch,
+                        (unsigned long)BufferSlicePitch,
+                        (unsigned long)HostRowPitch,
+                        (unsigned long)HostSlicePitch, (unsigned long)Region[0],
+                        (unsigned long)Region[1], (unsigned long)Region[2]);
+
+  if ((BufferRowPitch == HostRowPitch && HostRowPitch == Region[0]) &&
+      (BufferSlicePitch == HostSlicePitch &&
+       HostSlicePitch == (Region[1] * Region[0]))) {
+    allocNextFreeEvent();
+    LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(
+        CmdListH, AdjustedHostPtr, AdjustedDevicePtr,
+        (Region[2] * Region[1] * Region[0]), CurrentEventH,
+        PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr));
+  } else {
+    for (size_t k = 0; k < Region[2]; ++k)
+      for (size_t j = 0; j < Region[1]; ++j) {
+        allocNextFreeEvent();
+        char *Dst = AdjustedHostPtr + HostRowPitch * j + HostSlicePitch * k;
+        const char *Src =
+            AdjustedDevicePtr + BufferRowPitch * j + BufferSlicePitch * k;
+        LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(
+            CmdListH, Dst, Src, Region[0], CurrentEventH,
+            PreviousEventH ? 1 : 0,
+            PreviousEventH ? &PreviousEventH : nullptr));
+      }
+  }
 }
 
-void Level0Queue::writeRect(const void *__restrict__ HostPtr,
-                            pocl_mem_identifier *DstMemId, cl_mem DstBuf,
-                            const size_t *__restrict__ const BufferOrigin,
-                            const size_t *__restrict__ const HostOrigin,
-                            const size_t *__restrict__ const Region,
-                            size_t const BufferRowPitch,
-                            size_t const BufferSlicePitch,
-                            size_t const HostRowPitch,
-                            size_t const HostSlicePitch) {
-  char *BufferPtr = static_cast<char *>(DstMemId->mem_ptr);
+void Level0Queue::readRect(void *__restrict__ HostPtr,
+                           pocl_mem_identifier *SrcMemId, cl_mem SrcBuf,
+                           const size_t *__restrict__ const BufferOrigin,
+                           const size_t *__restrict__ const HostOrigin,
+                           const size_t *__restrict__ const Region,
+                           size_t const BufferRowPitch,
+                           size_t const BufferSlicePitch,
+                           size_t const HostRowPitch,
+                           size_t const HostSlicePitch) {
+  const char *BufferPtr = static_cast<const char *>(SrcMemId->mem_ptr);
+  readRectHelper((char *)HostPtr, BufferPtr, BufferOrigin, HostOrigin, Region,
+                 BufferRowPitch, BufferSlicePitch, HostRowPitch,
+                 HostSlicePitch);
+}
 
-  POCL_MSG_PRINT_LEVEL0(
-      "WRITE RECT \n"
-      "SRC HOST %p | DST DEV %p | SIZE %zu\n"
-      "B Origin %u %u %u | H Origin %u %u %u \n"
-      "buf_row_pitch %lu | buf_slice_pitch %lu |"
-      "host_row_pitch %lu | host_slice_pitch %lu\n"
-      "reg[0] %lu reg[1] %lu reg[2] %lu\n",
-      HostPtr, BufferPtr,
-      Region[0] * Region[1] * Region[2], (unsigned)BufferOrigin[0],
-      (unsigned)BufferOrigin[1], (unsigned)BufferOrigin[2],
-      (unsigned)HostOrigin[0], (unsigned)HostOrigin[1],
-      (unsigned)HostOrigin[2], (unsigned long)BufferRowPitch,
-      (unsigned long)BufferSlicePitch, (unsigned long)HostRowPitch,
-      (unsigned long)HostSlicePitch, (unsigned long)Region[0],
-      (unsigned long)Region[1], (unsigned long)Region[2]);
-
+void Level0Queue::writeRectHelper(
+    const char *HostPtr, char *DevicePtr, const size_t *BufferOrigin,
+    const size_t *HostOrigin, const size_t *Region, size_t const BufferRowPitch,
+    size_t const BufferSlicePitch, size_t const HostRowPitch,
+    size_t const HostSlicePitch) {
+#if 0
+  // Disabled. Should work but is buggy in the Level Zero driver
   ze_copy_region_t HostRegion;
   ze_copy_region_t BufferRegion;
   BufferRegion.originX = BufferOrigin[0];
@@ -829,6 +866,69 @@ void Level0Queue::writeRect(const void *__restrict__ HostPtr,
       HostPtr, &HostRegion, HostRowPitch, HostSlicePitch, CurrentEventH,
       PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr);
   LEVEL0_CHECK_ABORT(res);
+#endif
+
+  char *AdjustedDevicePtr = (char *)DevicePtr +
+                            BufferOrigin[2] * BufferSlicePitch +
+                            BufferOrigin[1] * BufferRowPitch + BufferOrigin[0];
+  const char *AdjustedHostPtr = (const char *)HostPtr +
+                                HostOrigin[2] * HostSlicePitch +
+                                HostOrigin[1] * HostRowPitch + HostOrigin[0];
+
+  POCL_MSG_PRINT_LEVEL0("WRITE RECT \n"
+                        "SRC HOST %p | DST DEV %p | SIZE %zu\n"
+                        "B Origin %u %u %u | H Origin %u %u %u \n"
+                        "buf_row_pitch %lu | buf_slice_pitch %lu |"
+                        "host_row_pitch %lu | host_slice_pitch %lu\n"
+                        "reg[0] %lu reg[1] %lu reg[2] %lu\n",
+                        HostPtr, DevicePtr, Region[0] * Region[1] * Region[2],
+                        (unsigned)BufferOrigin[0], (unsigned)BufferOrigin[1],
+                        (unsigned)BufferOrigin[2], (unsigned)HostOrigin[0],
+                        (unsigned)HostOrigin[1], (unsigned)HostOrigin[2],
+                        (unsigned long)BufferRowPitch,
+                        (unsigned long)BufferSlicePitch,
+                        (unsigned long)HostRowPitch,
+                        (unsigned long)HostSlicePitch, (unsigned long)Region[0],
+                        (unsigned long)Region[1], (unsigned long)Region[2]);
+
+  if ((BufferRowPitch == HostRowPitch && HostRowPitch == Region[0]) &&
+      (BufferSlicePitch == HostSlicePitch &&
+       HostSlicePitch == (Region[1] * Region[0]))) {
+    allocNextFreeEvent();
+    LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(
+        CmdListH, AdjustedDevicePtr, AdjustedHostPtr,
+        (Region[2] * Region[1] * Region[0]), CurrentEventH,
+        PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr));
+  } else {
+    for (size_t k = 0; k < Region[2]; ++k)
+      for (size_t j = 0; j < Region[1]; ++j) {
+        allocNextFreeEvent();
+        const char *Src =
+            AdjustedHostPtr + HostRowPitch * j + HostSlicePitch * k;
+        char *Dst =
+            AdjustedDevicePtr + BufferRowPitch * j + BufferSlicePitch * k;
+        LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(
+            CmdListH, Dst, Src, Region[0], CurrentEventH,
+            PreviousEventH ? 1 : 0,
+            PreviousEventH ? &PreviousEventH : nullptr));
+      }
+  }
+}
+
+void Level0Queue::writeRect(const void *__restrict__ HostPtr,
+                            pocl_mem_identifier *DstMemId, cl_mem DstBuf,
+                            const size_t *__restrict__ const BufferOrigin,
+                            const size_t *__restrict__ const HostOrigin,
+                            const size_t *__restrict__ const Region,
+                            size_t const BufferRowPitch,
+                            size_t const BufferSlicePitch,
+                            size_t const HostRowPitch,
+                            size_t const HostSlicePitch) {
+  char *BufferPtr = static_cast<char *>(DstMemId->mem_ptr);
+
+  writeRectHelper((const char *)HostPtr, BufferPtr, BufferOrigin, HostOrigin,
+                  Region, BufferRowPitch, BufferSlicePitch, HostRowPitch,
+                  HostSlicePitch);
 }
 
 void Level0Queue::memfillImpl(Level0Device *Device,
@@ -869,14 +969,11 @@ void Level0Queue::memfillImpl(Level0Device *Device,
     WGSizeX *= 2;
   }
 
-  if (Offset) {
-    if (Device->supportsGlobalOffsets()) {
-      ZeRes = zeKernelSetGlobalOffsetExp(KernelH, OffsetX, 0, 0);
-      LEVEL0_CHECK_ABORT(ZeRes);
-    } else {
-      POCL_MSG_ERR("memfill: offset specified but device doesn't "
-                   "support Global offsets\n");
-    }
+  if (Device->supportsGlobalOffsets()) {
+    LEVEL0_CHECK_ABORT(zeKernelSetGlobalOffsetExp(KernelH, OffsetX, 0, 0));
+  } else {
+    POCL_MSG_ERR("memfill: offset specified but device doesn't "
+                 "support Global offsets\n");
   }
 
   ZeRes = zeKernelSetGroupSize(KernelH, WGSizeX, 1, 1);
@@ -895,14 +992,18 @@ void Level0Queue::memFill(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
                           const void *__restrict__ Pattern,
                           size_t PatternSize) {
   char *DstPtr = static_cast<char *>(DstMemId->mem_ptr);
-  POCL_MSG_PRINT_LEVEL0("MEMFILL | PTR %p | SIZE %zu | PAT SIZE %zu\n", DstPtr,
-                        Size, PatternSize);
+  POCL_MSG_PRINT_LEVEL0(
+      "MEMFILL | PTR %p | OFS %zu | SIZE %zu | PAT SIZE %zu\n",
+      DstPtr, Offset, Size, PatternSize);
+#ifdef ENABLE_L0_MEMFILL
   if (PatternSize <= MaxFillPatternSize) {
     allocNextFreeEvent();
     LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryFill(
         CmdListH, DstPtr + Offset, Pattern, PatternSize, Size, CurrentEventH,
         PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr));
-  } else {
+  } else
+#endif
+  {
     POCL_MSG_PRINT_LEVEL0("using PoCL's memoryFill kernels\n");
     memfillImpl(Device, CmdListH, DstPtr, Size, Offset, Pattern, PatternSize);
   }
@@ -994,20 +1095,28 @@ void Level0Queue::copyImageRect(cl_mem SrcImage, cl_mem DstImage,
   LEVEL0_CHECK_ABORT(Res);
 }
 
-static bool needsStagingCopy(cl_mem DstImage, size_t SrcRowPitch,
-                             size_t SrcSlicePitch) {
-  // row/slice pitch with zero gaps
-  size_t RowPitch = DstImage->image_elem_size
-      * DstImage->image_channels * DstImage->image_width;
-  size_t SlicePitch =
-      RowPitch * (DstImage->image_height ? DstImage->image_height : 1);
+static bool needsStagingCopy(cl_mem DstImage, size_t &UserRowPitch,
+                             size_t &UserSlicePitch, size_t &RowPitch,
+                             size_t &SlicePitch) {
+  // row/slice pitch with zero padding
+  RowPitch = DstImage->image_elem_size * DstImage->image_channels *
+             DstImage->image_width;
+  SlicePitch = RowPitch * (DstImage->image_height ? DstImage->image_height : 1);
 
-  // if the row/slice pitch are nonzero and not equal to zero-gap values,
+  // if the row/slice pitch are nonzero and not equal to zero-padding values,
   // we need a staging buffer memcopy
-  if (SrcRowPitch && (SrcRowPitch != RowPitch))
-    return true;
-  if (SrcSlicePitch && (SrcSlicePitch != SlicePitch))
-    return true;
+  if (UserRowPitch) {
+    if (UserRowPitch != RowPitch)
+      return true;
+  } else {
+    UserRowPitch = RowPitch;
+  }
+  if (UserSlicePitch) {
+    if (UserSlicePitch != SlicePitch)
+      return true;
+  } else {
+    UserSlicePitch = SlicePitch;
+  }
   return false;
 }
 
@@ -1030,11 +1139,19 @@ void Level0Queue::writeImageRect(cl_mem DstImage, pocl_mem_identifier *DstMemId,
   ze_image_handle_t DstImg =
       static_cast<ze_image_handle_t>(DstMemId->extra_ptr);
   char *StagingPtr = (char *)DstMemId->mem_ptr;
-  POCL_MSG_PRINT_LEVEL0("WRITE IMAGE RECT | DST IMG %p | DST IMG STA %p | SRC"
-                        " PTR %p | RowPitch %zu | SlicePitch %zu | DstOffset"
-                        " %zu \n",
-                        (void *)DstImg, (void *)SrcPtr, (void *)StagingPtr,
-                        SrcRowPitch, SrcSlicePitch, SrcOffset);
+  size_t NativeRowPitch, NativeSlicePitch;
+  bool NeedsStaging = needsStagingCopy(DstImage, SrcRowPitch, SrcSlicePitch,
+                                       NativeRowPitch, NativeSlicePitch);
+  POCL_MSG_PRINT_LEVEL0(
+      "WRITE IMAGE RECT | DST IMG %p | DST IMG STA %p | SRC PTR %p | "
+      " Origin %zu %zu %zu | Region %zu %zu %zu |"
+      " SrcRowPitch %zu | SrcSlicePitch %zu | "
+      " NativeRowPitch %zu | NativeSlicePitch %zu |"
+      " SrcOffset %zu | NeedsStaging: %s \n",
+      (void *)DstImg, (void *)StagingPtr, (void *)SrcPtr, Origin[0], Origin[1],
+      Origin[2], Region[0], Region[1], Region[2], SrcRowPitch, SrcSlicePitch,
+      NativeRowPitch, NativeSlicePitch, SrcOffset,
+      (NeedsStaging ? "true" : "false"));
 
   ze_image_region_t ImgRegion;
   ImgRegion.originX = Origin[0];
@@ -1044,27 +1161,47 @@ void Level0Queue::writeImageRect(cl_mem DstImage, pocl_mem_identifier *DstMemId,
   ImgRegion.height = Region[1];
   ImgRegion.depth = Region[2];
 
+  size_t ElemBytes = DstImage->image_elem_size * DstImage->image_channels;
   // unfortunately, this returns ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
   //  ze_result_t Res = zeCommandListAppendImageCopyFromMemoryExt(CmdListH,
   //  DstImg, SrcPtr, &DstRegion,
   //                                            SrcRowPitch, SrcSlicePitch,
   //                                            nullptr, 0, nullptr);
-  bool NeedsStaging = needsStagingCopy(DstImage, SrcRowPitch, SrcSlicePitch);
   if (NeedsStaging) {
-    ze_copy_region_t CopyRegion;
-    CopyRegion.originX = Origin[0];
-    CopyRegion.originY = Origin[1];
-    CopyRegion.originZ = Origin[2];
-    CopyRegion.width = Region[0];
-    CopyRegion.height = Region[1];
-    CopyRegion.depth = Region[2];
+    // if copying from other cl_mem, use the faster & simpler way
+    if (SrcHostPtr == nullptr) {
+      ze_copy_region_t CopyDstRegion;
+      CopyDstRegion.originX = Origin[0] * ElemBytes;
+      CopyDstRegion.originY = Origin[1];
+      CopyDstRegion.originZ = Origin[2];
+      CopyDstRegion.width = Region[0] * ElemBytes;
+      CopyDstRegion.height = Region[1];
+      CopyDstRegion.depth = Region[2];
 
-    allocNextFreeEvent();
-    LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopyRegion(
-        CmdListH, StagingPtr, &CopyRegion, 0, 0,         // DST
-        SrcPtr, &CopyRegion, SrcRowPitch, SrcSlicePitch, // SRC
-        CurrentEventH, PreviousEventH ? 1 : 0,
-        PreviousEventH ? &PreviousEventH : nullptr));
+      ze_copy_region_t CopySrcRegion;
+      CopySrcRegion.originX = 0;
+      CopySrcRegion.originY = 0;
+      CopySrcRegion.originZ = 0;
+      CopySrcRegion.width = Region[0] * ElemBytes;
+      CopySrcRegion.height = Region[1];
+      CopySrcRegion.depth = Region[2];
+
+      allocNextFreeEvent();
+      LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopyRegion(
+          CmdListH, StagingPtr, &CopyDstRegion, NativeRowPitch,
+          NativeSlicePitch,                                   // DST
+          SrcPtr, &CopySrcRegion, SrcRowPitch, SrcSlicePitch, // SRC
+          CurrentEventH, PreviousEventH ? 1 : 0,
+          PreviousEventH ? &PreviousEventH : nullptr));
+    } else {
+      // if copying from host memory, use the helper to avoid L0 bug
+      size_t HostOrigin[3] = {0, 0, 0};
+      size_t DevOrigin[3] = {Origin[0] * ElemBytes, Origin[1], Origin[2]};
+      size_t DevRegion[3] = {Region[0] * ElemBytes, Region[1], Region[2]};
+      writeRectHelper(SrcPtr, StagingPtr, DevOrigin, HostOrigin, DevRegion,
+                      NativeRowPitch, NativeSlicePitch, SrcRowPitch,
+                      SrcSlicePitch);
+    }
 
     allocNextFreeEvent();
     LEVEL0_CHECK_ABORT(zeCommandListAppendImageCopyFromMemory(
@@ -1098,11 +1235,17 @@ void Level0Queue::readImageRect(cl_mem SrcImage, pocl_mem_identifier *SrcMemId,
   ze_image_handle_t SrcImg =
       static_cast<ze_image_handle_t>(SrcMemId->extra_ptr);
   char *StagingPtr = (char *)SrcMemId->mem_ptr;
+  size_t NativeRowPitch, NativeSlicePitch;
+  bool NeedsStaging = needsStagingCopy(SrcImage, DstRowPitch, DstSlicePitch,
+                                       NativeRowPitch, NativeSlicePitch);
   POCL_MSG_PRINT_LEVEL0(
       "READ IMAGE RECT | SRC IMG %p | SRC IMG STA %p | DST PTR %p | "
-      "RowPitch %zu | SlicePitch %zu | DstOffset %zu \n",
-      (void *)SrcImg, (void *)DstPtr, (void *)StagingPtr, DstRowPitch,
-      DstSlicePitch, DstOffset);
+      "DstRowPitch %zu | DstSlicePitch %zu | "
+      "NativeRowPitch %zu | NativeSlicePitch %zu | "
+      "DstOffset %zu \n | NeedsStaging: %s",
+      (void *)SrcImg, (void *)StagingPtr, (void *)DstPtr, DstRowPitch,
+      DstSlicePitch, NativeRowPitch, NativeSlicePitch, DstOffset,
+      (NeedsStaging ? "true" : "false"));
 
   ze_image_region_t ImgRegion;
   ImgRegion.originX = Origin[0];
@@ -1112,32 +1255,53 @@ void Level0Queue::readImageRect(cl_mem SrcImage, pocl_mem_identifier *SrcMemId,
   ImgRegion.height = Region[1];
   ImgRegion.depth = Region[2];
 
+  size_t ElemBytes = SrcImage->image_elem_size * SrcImage->image_channels;
   // unfortunately, this returns ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
   //  ze_result_t Res = zeCommandListAppendImageCopyToMemoryExt(CmdListH,
   //  DstPtr, SrcImg, &SrcRegion,
   //                                          DstRowPitch, DstSlicePitch,
   //                                          nullptr, 0, nullptr);
-  bool NeedsStaging = needsStagingCopy(SrcImage, DstRowPitch, DstSlicePitch);
   if (NeedsStaging) {
-    ze_copy_region_t CopyRegion;
-    CopyRegion.originX = Origin[0];
-    CopyRegion.originY = Origin[1];
-    CopyRegion.originZ = Origin[2];
-    CopyRegion.width = Region[0];
-    CopyRegion.height = Region[1];
-    CopyRegion.depth = Region[2];
-
     allocNextFreeEvent();
     LEVEL0_CHECK_ABORT(zeCommandListAppendImageCopyToMemory(
         CmdListH, StagingPtr, SrcImg, &ImgRegion, CurrentEventH,
         PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr));
 
-    allocNextFreeEvent();
-    LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopyRegion(
-        CmdListH, DstPtr, &CopyRegion, DstRowPitch, DstSlicePitch, // DST
-        StagingPtr, &CopyRegion, 0, 0,                             // SRC
-        CurrentEventH, PreviousEventH ? 1 : 0,
-        PreviousEventH ? &PreviousEventH : nullptr));
+    // if copying to other cl_mem, use the faster & simpler way
+    if (DstHostPtr == nullptr) {
+      ze_copy_region_t CopySrcRegion;
+      CopySrcRegion.originX = Origin[0] * ElemBytes;
+      CopySrcRegion.originY = Origin[1];
+      CopySrcRegion.originZ = Origin[2];
+      CopySrcRegion.width = Region[0] * ElemBytes;
+      CopySrcRegion.height = Region[1];
+      CopySrcRegion.depth = Region[2];
+
+      ze_copy_region_t CopyDstRegion;
+      CopyDstRegion.originX = 0;
+      CopyDstRegion.originY = 0;
+      CopyDstRegion.originZ = 0;
+      CopyDstRegion.width = Region[0] * ElemBytes;
+      CopyDstRegion.height = Region[1];
+      CopyDstRegion.depth = Region[2];
+
+      allocNextFreeEvent();
+      LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopyRegion(
+          CmdListH, DstPtr, &CopyDstRegion, DstRowPitch, DstSlicePitch, // DST
+          StagingPtr, &CopySrcRegion, NativeRowPitch, NativeSlicePitch, // SRC
+          CurrentEventH, PreviousEventH ? 1 : 0,
+          PreviousEventH ? &PreviousEventH : nullptr));
+
+    } else {
+      // if copying to host memory, use the helper to avoid L0 bug
+      size_t HostOrigin[3] = {0, 0, 0};
+      size_t DevOrigin[3] = {Origin[0] * ElemBytes, Origin[1], Origin[2]};
+      size_t DevRegion[3] = {Region[0] * ElemBytes, Region[1], Region[2]};
+
+      readRectHelper(DstPtr, StagingPtr, DevOrigin, HostOrigin, DevRegion,
+                     NativeRowPitch, NativeSlicePitch, DstRowPitch,
+                     DstSlicePitch);
+    }
 
   } else {
     allocNextFreeEvent();
@@ -1150,19 +1314,12 @@ void Level0Queue::readImageRect(cl_mem SrcImage, pocl_mem_identifier *SrcMemId,
 void Level0Queue::mapImage(pocl_mem_identifier *MemId,
                            cl_mem SrcImage, mem_mapping_t *Map) {
 
-  char *DstHostPtr = static_cast<char *>(MemId->mem_ptr);
-
   if ((Map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION) != 0u) {
     return;
   }
 
-  // Device vs Shared allocated memory
-  if (SrcImage->mem_host_ptr == DstHostPtr) {
-    // shared mem, nothing to do
-  } else {
-    // device memory, switch pointer to mem_host_ptr
-    DstHostPtr = static_cast<char *>(SrcImage->mem_host_ptr);
-  }
+  // mapping is always to mem_host_ptr
+  char *DstHostPtr = static_cast<char *>(SrcImage->mem_host_ptr);
 
   POCL_MSG_PRINT_LEVEL0("MAP IMAGE: %p FLAGS %zu\n", DstHostPtr,
                         Map->map_flags);
@@ -1173,20 +1330,14 @@ void Level0Queue::mapImage(pocl_mem_identifier *MemId,
 
 void Level0Queue::unmapImage(pocl_mem_identifier *MemId,
                              cl_mem DstImage, mem_mapping_t *Map) {
-  char *SrcHostPtr = static_cast<char *>(MemId->mem_ptr);
 
   // for read mappings, don't copy anything
   if (Map->map_flags == CL_MAP_READ) {
     return;
   }
 
-  // Device vs Shared allocated memory
-  if (DstImage->mem_host_ptr == SrcHostPtr) {
-    // shared mem, nothing to do
-  } else {
-    // device memory, switch pointer to mem_host_ptr
-    SrcHostPtr = static_cast<char *>(DstImage->mem_host_ptr);
-  }
+  // mapping is always to mem_host_ptr
+  char *SrcHostPtr = static_cast<char *>(DstImage->mem_host_ptr);
 
   POCL_MSG_PRINT_LEVEL0("UNMAP IMAGE: %p FLAGS %zu\n", SrcHostPtr,
                         Map->map_flags);
@@ -1203,9 +1354,12 @@ void Level0Queue::fillImage(cl_mem Image, pocl_mem_identifier *MemId,
   ze_image_handle_t ImageH = (ze_image_handle_t)(MemId->extra_ptr);
   assert(Image);
 
-  POCL_MSG_PRINT_LEVEL0("IMAGEFILL | PTR %p | IMAGE %p | PIXEL %0x %0x %0x %0x"
-                        " | P SIZE %zu\n", MapPtr, ImageH, OrigPixel.s[0],
-                        OrigPixel.s[1], OrigPixel.s[2], OrigPixel.s[3], PixelSize);
+  POCL_MSG_PRINT_LEVEL0(
+      "IMAGEFILL | MEM_PTR %p | IMAGE %p | PIXEL %0x %0x %0x %0x"
+      " | P SIZE %zu b | ORIGIN %zu %zu %zu | REGION %zu %zu %zu \n",
+      MapPtr, ImageH, OrigPixel.s[0], OrigPixel.s[1], OrigPixel.s[2],
+      OrigPixel.s[3], PixelSize, Origin[0], Origin[1], Origin[2], Region[0],
+      Region[1], Region[2]);
 
   ze_kernel_handle_t KernelH = nullptr;
   ze_module_handle_t ModuleH = nullptr;
@@ -1230,29 +1384,23 @@ void Level0Queue::fillImage(cl_mem Image, pocl_mem_identifier *MemId,
   ZeRes = zeKernelSetArgumentValue(KernelH, 1, sizeof(cl_uint4), &OrigPixel);
   LEVEL0_CHECK_ABORT(ZeRes);
 
-  if (Origin[0] || Origin[1] || Origin[2]) {
-    if (Device->supportsGlobalOffsets()) {
-      ZeRes =
-          zeKernelSetGlobalOffsetExp(KernelH, (uint32_t)Origin[0],
-                                     (uint32_t)Origin[1], (uint32_t)Origin[2]);
-      LEVEL0_CHECK_ABORT(ZeRes);
-    } else {
-      POCL_MSG_ERR("imagefill: origin specified but device doesn't "
-                   "support Global offsets\n");
-    }
+  if (Device->supportsGlobalOffsets()) {
+    LEVEL0_CHECK_ABORT(zeKernelSetGlobalOffsetExp(KernelH, (uint32_t)Origin[0],
+                                                  (uint32_t)Origin[1],
+                                                  (uint32_t)Origin[2]));
+  } else {
+    POCL_MSG_ERR("imagefill: origin specified but device doesn't "
+                 "support Global offsets\n");
   }
 
   // TODO could be better
-  ZeRes = zeKernelSetGroupSize(KernelH, 1, 1, 1);
-  LEVEL0_CHECK_ABORT(ZeRes);
+  LEVEL0_CHECK_ABORT(zeKernelSetGroupSize(KernelH, 1, 1, 1));
   ze_group_count_t LaunchFuncArgs = {(uint32_t)Region[0], (uint32_t)Region[1],
                                      (uint32_t)Region[2]};
   allocNextFreeEvent();
-  ZeRes = zeCommandListAppendLaunchKernel(
+  LEVEL0_CHECK_ABORT(zeCommandListAppendLaunchKernel(
       CmdListH, KernelH, &LaunchFuncArgs, CurrentEventH, PreviousEventH ? 1 : 0,
-      PreviousEventH ? &PreviousEventH : nullptr);
-
-  LEVEL0_CHECK_ABORT(ZeRes);
+      PreviousEventH ? &PreviousEventH : nullptr));
 }
 
 void Level0Queue::svmMap(void *Ptr) {}
@@ -1264,10 +1412,9 @@ void Level0Queue::svmCopy(void *DstPtr, const void *SrcPtr, size_t Size) {
                         DstPtr, Size);
 
   allocNextFreeEvent();
-  ze_result_t res = zeCommandListAppendMemoryCopy(
+  LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(
       CmdListH, DstPtr, SrcPtr, Size, CurrentEventH, PreviousEventH ? 1 : 0,
-      PreviousEventH ? &PreviousEventH : nullptr);
-  LEVEL0_CHECK_ABORT(res);
+      PreviousEventH ? &PreviousEventH : nullptr));
 }
 
 void Level0Queue::svmFill(void *DstPtr, size_t Size, void *Pattern,
@@ -1473,14 +1620,15 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   uint32_t StartOffsetX = PoclCtx->global_offset[0];
   uint32_t StartOffsetY = PoclCtx->global_offset[1];
   uint32_t StartOffsetZ = PoclCtx->global_offset[2];
-  bool NeedsGlobalOffset = (StartOffsetX | StartOffsetY | StartOffsetZ) > 0;
+  bool NonzeroGlobalOffset = (StartOffsetX | StartOffsetY | StartOffsetZ) > 0;
 
-  if (Device->supportsGlobalOffsets() && NeedsGlobalOffset) {
+  if (Device->supportsGlobalOffsets()) {
     LEVEL0_CHECK_ABORT(zeKernelSetGlobalOffsetExp(KernelH, StartOffsetX,
                                                   StartOffsetY, StartOffsetZ));
   } else {
-    assert(!NeedsGlobalOffset && "command needs global offsets, "
-                                 "but device doesn't support them");
+    if (NonzeroGlobalOffset)
+      POCL_MSG_ERR("command needs global offsets, but device doesn't support "
+                   "the zeKernelSetGlobalOffsetExp extension!\n");
   }
   ze_group_count_t LaunchFuncArgs = {TotalWGsX, TotalWGsY, TotalWGsZ};
   allocNextFreeEvent();
@@ -1702,9 +1850,10 @@ static const cl_image_format SupportedImageFormats[] = {
     {CL_BGRA, CL_UNORM_INT8},      {CL_BGRA, CL_UNORM_INT16},
     {CL_BGRA, CL_HALF_FLOAT},      {CL_BGRA, CL_FLOAT},
 
+#ifndef ENABLE_CONFORMANCE
     {CL_RGB, CL_UNORM_INT_101010}, {CL_RGB, CL_UNORM_SHORT_565},
     {CL_RGB, CL_UNORM_SHORT_555},
-    //{CL_RGBA, CL_UNORM_SHORT_555},
+#endif
 
 };
 
@@ -1889,9 +2038,13 @@ bool Level0Device::setupDeviceProperties(bool HasIPVersionExt) {
     ClDev->serialize_entries = LEVEL0_SERIALIZE_ENTRIES;
     ClDev->llvm_cpu = nullptr;
     ClDev->llvm_target_triplet = "spir64-unknown-unknown";
+#ifdef ENABLE_GENERIC_AS
     ClDev->generic_as_support = CL_TRUE;
-#ifdef ENABLE_LEVEL0_EXTRA_FEATURES
+#endif
+#ifdef ENABLE_WG_COLLECTIVE
     ClDev->wg_collective_func_support = CL_TRUE;
+#endif
+#ifdef ENABLE_LEVEL0_EXTRA_FEATURES
     ClDev->supported_spir_v_versions = "SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
 #else
     ClDev->supported_spir_v_versions = "SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
@@ -1962,7 +2115,7 @@ bool Level0Device::setupComputeProperties() {
   ClDev->local_mem_type = CL_LOCAL;
   ClDev->local_mem_size = ComputeProperties.maxSharedLocalMemory;
 
-#ifndef ENABLE_CONFORMANCE
+#ifdef ENABLE_SUBGROUPS
   cl_uint Max = 0;
   if (ComputeProperties.numSubGroupSizes > 0) {
     for (unsigned i = 0; i < ComputeProperties.numSubGroupSizes; ++i) {
@@ -1977,6 +2130,8 @@ bool Level0Device::setupComputeProperties() {
       SupportedSubgroupSizes[i] = ComputeProperties.subGroupSizes[i];
     }
   }
+#else
+  ClDev->max_num_sub_groups = 0;
 #endif
 
   POCL_MSG_PRINT_LEVEL0("Device Max WG SIZE %zu ||| WG counts: %u | %u | %u\n",
@@ -2067,7 +2222,7 @@ bool Level0Device::setupModuleProperties(bool &SupportsInt64Atomics,
   }
 
   ClDev->single_fp_config = convertZeFPFlags(ModuleProperties.fp32flags);
-#ifndef ENABLE_CONFORMANCE
+#ifdef ENABLE_FP64
   // TODO we should check & rely on ZE_DEVICE_FP_FLAG_SOFT_FLOAT,
   // but it's not set by the LevelZero driver
   if ((ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_FP64) != 0u) {
@@ -2234,7 +2389,7 @@ bool Level0Device::setupMemoryProperties(bool &HasUSMCapability) {
     ClDev->atomic_memory_capabilities =
         CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
         CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP |
-        CL_DEVICE_ATOMIC_SCOPE_DEVICE | CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES;
+        CL_DEVICE_ATOMIC_SCOPE_DEVICE;
     ClDev->atomic_fence_capabilities =
         CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
         CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM |
@@ -2374,6 +2529,32 @@ bool Level0Device::setupPCIAddress() {
   return true;
 }
 
+void Level0Device::setupGlobalMemSize(bool HasRelaxedAllocLimits) {
+  if (HasRelaxedAllocLimits && ClDev->global_mem_size > UINT32_MAX) {
+    // allow allocating 85% of total memory in a single buffer
+    ClDev->max_mem_alloc_size = ClDev->global_mem_size * 85 / 100;
+    // TODO: figure out if relaxed limits also apply to these
+    // for now, assume it doesn't and leave it at DevProps.maxMemAlloc
+//    ClDev->max_constant_buffer_size =
+//    ClDev->global_var_pref_size = ClDev->max_mem_alloc_size;
+    Supports64bitBuffers = true;
+    NeedsRelaxedLimits = true;
+  } else {
+    // ensure thad MaxMemAllocSize is not higher than ClDev->global_mem_size
+    // if the latter was set by POCL_MEMORY_LIMIT
+    ClDev->max_mem_alloc_size = ClDev->max_constant_buffer_size =
+        ClDev->global_var_pref_size =
+            std::min(ClDev->max_mem_alloc_size, ClDev->global_mem_size);
+    if (ClDev->global_mem_size > UINT32_MAX) {
+      Supports64bitBuffers = true;
+    }
+  }
+#ifndef ENABLE_PROGVARS
+  ClDev->global_var_pref_size = 0;
+  ClDev->global_var_max_size = 0;
+#endif
+}
+
 // dev -> Dev
 Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                            cl_device_id dev, const char *Parameters)
@@ -2439,9 +2620,12 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   bool HasUsmCapability = false;
   setupMemoryProperties(HasUsmCapability);
 
-  setupCacheProperties();
+  bool HasRelaxedAllocLimits =
+      Driver->hasExtension("ZE_experimental_relaxed_allocation_limits");
+  setupGlobalMemSize(HasRelaxedAllocLimits);
 
-#ifndef ENABLE_CONFORMANCE
+  setupCacheProperties();
+#ifdef ENABLE_IMAGES
   setupImageProperties();
 #endif
 
@@ -2462,8 +2646,14 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 #endif
   );
 
-  OpenCL30Features = std::string("__opencl_c_generic_address_space"
-                                 " __opencl_c_program_scope_global_variables");
+  if (ClDev->generic_as_support)
+    OpenCL30Features.append(" __opencl_c_generic_address_space");
+
+  if (ClDev->global_var_pref_size)
+    OpenCL30Features.append(" __opencl_c_program_scope_global_variables");
+
+  if (ClDev->wg_collective_func_support)
+    OpenCL30Features.append(" __opencl_c_work_group_collective_functions");
 
   if (ClDev->atomic_memory_capabilities & CL_DEVICE_ATOMIC_ORDER_ACQ_REL)
     OpenCL30Features.append(" __opencl_c_atomic_order_acq_rel");
@@ -2477,7 +2667,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   if (ClDev->atomic_memory_capabilities & CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES)
     OpenCL30Features.append(" __opencl_c_atomic_scope_all_devices");
 
-#ifndef ENABLE_CONFORMANCE
   if (ClDev->image_support != CL_FALSE) {
     Extensions += " cl_khr_3d_image_writes"
                   " cl_khr_depth_images";
@@ -2485,7 +2674,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                         " __opencl_c_read_write_images"
                         " __opencl_c_3d_image_writes";
   }
-#endif
 
   if (Drv->hasExtension("ZE_extension_linkonce_odr")) {
     Extensions.append(" cl_khr_spirv_linkonce_odr");
@@ -2513,7 +2701,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     Extensions.append(" cl_khr_fp64");
     OpenCL30Features.append(" __opencl_c_fp64");
   }
-#ifndef ENABLE_CONFORMANCE
+
   if (ClDev->max_num_sub_groups > 0) {
     Extensions.append(" cl_khr_subgroups"
                       " cl_intel_spirv_subgroups"
@@ -2534,17 +2722,8 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                            " cl_intel_required_subgroup_size"
 #endif
                       );
-
     OpenCL30Features.append(" __opencl_c_subgroups");
   }
-#else // enable_conformance
-  ClDev->max_num_sub_groups = 0;
-#endif
-
-#ifdef ENABLE_LEVEL0_EXTRA_FEATURES
-  if (ClDev->wg_collective_func_support)
-    OpenCL30Features.append(" __opencl_c_work_group_collective_functions");
-#endif
 
   if (ClDev->has_64bit_long != 0) {
     OpenCL30Features.append(" __opencl_c_int64");
@@ -2581,28 +2760,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     pocl_setup_features_with_version(ClDev);
     pocl_setup_extensions_with_version(ClDev);
     pocl_setup_ils_with_version(ClDev);
-  }
-
-  if (Driver->hasExtension("ZE_experimental_relaxed_allocation_limits")
-      && ClDev->global_mem_size > UINT32_MAX) {
-    // allow allocating 85% of total memory in a single buffer
-    ClDev->max_mem_alloc_size = ClDev->global_mem_size * 85 / 100;
-    // TODO: figure out if relaxed limits also apply to these
-    // for now, assume it doesn't and leave it at DevProps.maxMemAlloc
-//    ClDev->max_constant_buffer_size =
-//    ClDev->global_var_pref_size = ClDev->max_mem_alloc_size;
-    Supports64bitBuffers = true;
-    NeedsRelaxedLimits = true;
-  } else {
-    // DeviceProperties.maxMemAllocSize from setupDeviceProperties
-    cl_ulong DevMaxMemAllocSize = ClDev->max_mem_alloc_size;
-
-    ClDev->max_mem_alloc_size = ClDev->max_constant_buffer_size =
-        ClDev->global_var_pref_size =
-        std::min (DevMaxMemAllocSize, ClDev->global_mem_size);
-    if (ClDev->global_mem_size > UINT32_MAX) {
-      Supports64bitBuffers = true;
-    }
   }
 
 
@@ -2743,8 +2900,8 @@ bool Level0Device::initHelperKernels() {
       ContextHandle, DeviceHandle,
       false, // JITCompilation,
       BuildLog,
-      false, // Optimize,
-      Supports64bitBuffers,
+      false,   // Optimize,
+      false,   // Supports64bitBuffers,
       0,       // SpecConstantIDs.size(),
       nullptr, // SpecConstantIDs.data(),
       nullptr, // SpecConstantPtrs.data(),
@@ -3156,11 +3313,12 @@ ze_sampler_handle_t Level0Device::allocSampler(cl_addressing_mode AddrMode,
   case CL_ADDRESS_NONE:
     ZeAddrMode = ZE_SAMPLER_ADDRESS_MODE_NONE;
     break;
+  default:
   case CL_ADDRESS_CLAMP:
-    ZeAddrMode = ZE_SAMPLER_ADDRESS_MODE_CLAMP;
+    ZeAddrMode = ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
     break;
   case CL_ADDRESS_CLAMP_TO_EDGE:
-    ZeAddrMode = ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+    ZeAddrMode = ZE_SAMPLER_ADDRESS_MODE_CLAMP;
     break;
   case CL_ADDRESS_REPEAT:
     ZeAddrMode = ZE_SAMPLER_ADDRESS_MODE_REPEAT;
@@ -3175,6 +3333,7 @@ ze_sampler_handle_t Level0Device::allocSampler(cl_addressing_mode AddrMode,
   case CL_FILTER_LINEAR:
     ZeFilterMode = ZE_SAMPLER_FILTER_MODE_LINEAR;
     break;
+  default:
   case CL_FILTER_NEAREST:
     ZeFilterMode = ZE_SAMPLER_FILTER_MODE_NEAREST;
     break;
@@ -3184,9 +3343,8 @@ ze_sampler_handle_t Level0Device::allocSampler(cl_addressing_mode AddrMode,
       ZE_STRUCTURE_TYPE_SAMPLER_DESC, nullptr, ZeAddrMode, ZeFilterMode,
       static_cast<ze_bool_t>((char)NormalizedCoords)};
   ze_sampler_handle_t SamplerH = nullptr;
-  ze_result_t Res =
-      zeSamplerCreate(ContextHandle, DeviceHandle, &SamplerDesc, &SamplerH);
-  LEVEL0_CHECK_RET(nullptr, Res);
+  LEVEL0_CHECK_RET(nullptr, zeSamplerCreate(ContextHandle, DeviceHandle,
+                                            &SamplerDesc, &SamplerH));
   return SamplerH;
 }
 
@@ -3366,7 +3524,7 @@ bool Level0Device::getImagefillKernel(cl_channel_type ChType,
   *L0Kernel = K;
   return Driver->getJobSched().getBestKernel(ImagefillProgram, K,
                                              false, // LargeOffset,
-                                             1024,  // LocalWGSize,
+                                             128,   // LocalWGSize,
                                              ModH, KerH);
 }
 

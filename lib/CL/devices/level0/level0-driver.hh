@@ -123,12 +123,22 @@ private:
                 const size_t *__restrict__ SrcOrigin,
                 const size_t *__restrict__ Region, size_t DstRowPitch,
                 size_t DstSlicePitch, size_t SrcRowPitch, size_t SrcSlicePitch);
+  void readRectHelper(char *HostPtr, const char *DevicePtr,
+                      const size_t *BufferOrigin, const size_t *HostOrigin,
+                      const size_t *Region, size_t const BufferRowPitch,
+                      size_t const BufferSlicePitch, size_t const HostRowPitch,
+                      size_t const HostSlicePitch);
   void readRect(void *__restrict__ HostVoidPtr, pocl_mem_identifier *SrcMemId,
                 cl_mem SrcBuf, const size_t *__restrict__ BufferOrigin,
                 const size_t *__restrict__ HostOrigin,
                 const size_t *__restrict__ Region, size_t BufferRowPitch,
                 size_t BufferSlicePitch, size_t HostRowPitch,
                 size_t HostSlicePitch);
+  void writeRectHelper(const char *HostPtr, char *DevicePtr,
+                       const size_t *BufferOrigin, const size_t *HostOrigin,
+                       const size_t *Region, size_t const BufferRowPitch,
+                       size_t const BufferSlicePitch, size_t const HostRowPitch,
+                       size_t const HostSlicePitch);
   void writeRect(const void *__restrict__ HostVoidPtr,
                  pocl_mem_identifier *DstMemId, cl_mem DstBuf,
                  const size_t *__restrict__ BufferOrigin,
@@ -429,6 +439,7 @@ private:
   bool setupModuleProperties(bool &SupportsInt64Atomics, bool HasFloatAtomics, std::string &Features);
   bool setupQueueGroupProperties();
   bool setupMemoryProperties(bool &HasUSMCapability);
+  void setupGlobalMemSize(bool HasRelaxedAllocLimits);
   bool setupCacheProperties();
   bool setupImageProperties();
   bool setupPCIAddress();

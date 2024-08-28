@@ -6,42 +6,42 @@ xxd -i imagefill.spv >imagefill.h
 
 #define IMAGEFILL_KERNELS(SUFFIX, PIX_TYPE, DEPTH_TYPE)                       \
                                                                               \
-  void __kernel imagefill_2d_##SUFFIX (write_only image2d_t img,              \
+  void __kernel imagefill_2d_##SUFFIX (read_write image2d_t img,              \
                                        const PIX_TYPE color)                  \
   {                                                                           \
-    int2 coord = (int2)(get_global_id (0), get_global_id (1));                \
+    int2 coord; coord.x = get_global_id (0); coord.y = get_global_id (1);     \
     write_image##SUFFIX (img, coord, color);                                  \
   }                                                                           \
                                                                               \
-  void __kernel imagefill_2d_array_##SUFFIX (write_only image2d_array_t img,  \
+  void __kernel imagefill_2d_array_##SUFFIX (read_write image2d_array_t img,  \
                                              const PIX_TYPE color)            \
   {                                                                           \
-    int4 coord                                                                \
-        = (int4)(get_global_id (0), get_global_id (1), get_global_id (2), 0); \
+    int4 coord; coord.x = get_global_id (0); coord.y = get_global_id (1);     \
+        coord.z = get_global_id (2); coord.w = 0;                             \
     write_image##SUFFIX (img, coord, color);                                  \
   }                                                                           \
                                                                               \
-  void __kernel imagefill_1d_##SUFFIX (write_only image1d_t img,              \
+  void __kernel imagefill_1d_##SUFFIX (read_write image1d_t img,              \
                                        const PIX_TYPE color)                  \
   {                                                                           \
     int coord = get_global_id (0);                                            \
     write_image##SUFFIX (img, coord, color);                                  \
   }                                                                           \
   void __kernel imagefill_1d_buffer_##SUFFIX (                                \
-      write_only image1d_buffer_t img, const PIX_TYPE color)                  \
+      read_write image1d_buffer_t img, const PIX_TYPE color)                  \
   {                                                                           \
     int coord = get_global_id (0);                                            \
     write_image##SUFFIX (img, coord, color);                                  \
   }                                                                           \
                                                                               \
-  void __kernel imagefill_1d_array_##SUFFIX (write_only image1d_array_t img,  \
+  void __kernel imagefill_1d_array_##SUFFIX (read_write image1d_array_t img,  \
                                              const PIX_TYPE color)            \
   {                                                                           \
     int2 coord = (int2)(get_global_id (0), get_global_id (1));                \
     write_image##SUFFIX (img, coord, color);                                  \
   }                                                                           \
                                                                               \
-  void __kernel imagefill_3d_##SUFFIX (write_only image3d_t img,              \
+  void __kernel imagefill_3d_##SUFFIX (read_write image3d_t img,              \
                                        const PIX_TYPE color)                  \
   {                                                                           \
     int4 coord                                                                \
@@ -60,14 +60,14 @@ IMAGEFILL_KERNELS (i, int4, int)
 // ###############################################################
 
 void __kernel
-imagefill_2d_depth (write_only image2d_depth_t img, const float color)
+imagefill_2d_depth (read_write image2d_depth_t img, const float color)
 {
   int2 coord = (int2)(get_global_id (0), get_global_id (1));
   write_imagef (img, coord, color);
 }
 
 void __kernel
-imagefill_2d_array_depth (write_only image2d_array_depth_t img,
+imagefill_2d_array_depth (read_write image2d_array_depth_t img,
                           const float color)
 {
   int4 coord

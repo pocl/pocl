@@ -362,7 +362,17 @@ int pocl_llvm_build_program(cl_program program,
     // workaround for a bug in Clang. It unconditionally predefines this macro
     // when compiling for SPIR or SPIRV target
     ss << "-U__IMAGE_SUPPORT__ ";
+    ss << "-U__opencl_c_images ";
+    ss << "-U__opencl_c_read_write_images ";
+    ss << "-U__opencl_c_3d_image_writes ";
+    // required for SPIR-V
+    ss << "-D__undef___opencl_c_read_write_images ";
   }
+  if (device->wg_collective_func_support == CL_FALSE)
+    ss << "-D__undef___opencl_c_work_group_collective_functions ";
+  if ((device->atomic_memory_capabilities &
+       CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES) == 0)
+    ss << "-D__undef___opencl_c_atomic_scope_all_devices ";
 
   ss << "-DCL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE=" << device->global_var_max_size << " ";
 

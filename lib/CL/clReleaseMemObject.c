@@ -24,6 +24,7 @@
 
 #include "devices.h"
 #include "pocl_cl.h"
+#include "pocl_util.h"
 #include "utlist.h"
 
 #ifdef ENABLE_RDMA
@@ -73,6 +74,12 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
   cl_int err = CL_SUCCESS;
   if (new_refcount == 0)
     {
+      if (memobj->destructor_callbacks)
+        {
+          pocl_mem_cb_push (memobj);
+          POCL_UNLOCK_OBJ (memobj);
+          return CL_SUCCESS;
+        }
       POCL_UNLOCK_OBJ (memobj);
       VG_REFC_ZERO (memobj);
 
@@ -88,7 +95,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
           POCL_ATOMIC_DEC (buffer_c);
         }
 
-      if (memobj->is_image && (memobj->type == CL_MEM_OBJECT_IMAGE1D_BUFFER))
+      if (IS_IMAGE1D_BUFFER (memobj))
         {
           /* Free the backing buffer for the Image1D object. */
           cl_mem b = memobj->buffer;
@@ -159,15 +166,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 
       POCL_MEM_FREE (memobj->device_ptrs);
 
-      /* Fire any registered destructor callbacks. */
-      callback = memobj->destructor_callbacks;
-      while (callback)
-      {
-        callback->pfn_notify (memobj, callback->user_data);
-        next_callback = callback->next;
-        free (callback);
-        callback = next_callback;
-      }
+      assert (memobj->destructor_callbacks == NULL);
 
       if (memobj->is_image)
         POCL_MEM_FREE (memobj->device_supports_this_image);

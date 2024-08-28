@@ -2754,93 +2754,196 @@ int pocl_svm_check_pointer (cl_context context, const void *svm_ptr,
   return pocl_svm_check_get_pointer(context, svm_ptr, size, buffer_size, NULL);
 }
 
-typedef struct _pocl_event_cb_item pocl_event_cb_item;
-struct _pocl_event_cb_item
+typedef enum
 {
-  cl_event event;
-  event_callback_item *list;
-  int status; /* trigger status */
-  pocl_event_cb_item *next;
+  POCL_CB_TYPE_EVENT,
+  POCL_CB_TYPE_CONTEXT,
+  POCL_CB_TYPE_MEM
+} pocl_cb_type_t;
+
+typedef struct _pocl_async_callback_item pocl_async_callback_item;
+struct _pocl_async_callback_item
+{
+  union
+  {
+    struct
+    {
+      int status;
+      cl_event event;
+    } event_cb;
+    struct
+    {
+      cl_context ctx;
+    } context_cb;
+    struct
+    {
+      cl_mem mem;
+    } mem_cb;
+  } data;
+  pocl_cb_type_t type;
+  pocl_async_callback_item *next;
 };
 
-static pocl_event_cb_item *event_callback_list = NULL;
-static pthread_cond_t event_cb_wake_cond
+static pocl_async_callback_item *async_callback_list = NULL;
+static pthread_cond_t async_cb_wake_cond
   __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-static POCL_FAST_LOCK_T event_cb_lock
+static POCL_FAST_LOCK_T async_cb_lock
   __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-static int exit_pocl_event_callback_thread = CL_FALSE;
-static pocl_thread_t event_callback_thread_id = 0;
+static int exit_pocl_async_callback_thread = CL_FALSE;
+static pocl_thread_t async_callback_thread_id = 0;
+
+static void
+pocl_async_cb_push (pocl_async_callback_item *it)
+{
+  POCL_FAST_LOCK (async_cb_lock);
+  LL_APPEND (async_callback_list, it);
+  POCL_SIGNAL_COND (async_cb_wake_cond);
+  POCL_FAST_UNLOCK (async_cb_lock);
+}
 
 void
 pocl_event_cb_push (cl_event event, int status)
 {
   POCL_RETAIN_OBJECT_UNLOCKED (event);
-  POCL_FAST_LOCK (event_cb_lock);
-  pocl_event_cb_item *it = malloc (sizeof (pocl_event_cb_item));
-  it->event = event;
-  it->status = status;
-  LL_APPEND (event_callback_list, it);
-  POCL_SIGNAL_COND (event_cb_wake_cond);
-  POCL_FAST_UNLOCK (event_cb_lock);
+  pocl_async_callback_item *it = malloc (sizeof (pocl_async_callback_item));
+  it->data.event_cb.event = event;
+  it->data.event_cb.status = status;
+  it->type = POCL_CB_TYPE_EVENT;
+  it->next = NULL;
+  pocl_async_cb_push (it);
 }
 
 void
-pocl_event_callback_finish ()
+pocl_context_cb_push (cl_context ctx)
 {
-  POCL_FAST_LOCK (event_cb_lock);
-  exit_pocl_event_callback_thread = CL_TRUE;
-  POCL_SIGNAL_COND (event_cb_wake_cond);
-  POCL_FAST_UNLOCK (event_cb_lock);
-  if (event_callback_thread_id)
-  POCL_JOIN_THREAD (event_callback_thread_id);
+  POCL_RETAIN_OBJECT_UNLOCKED (ctx);
+  pocl_async_callback_item *it = malloc (sizeof (pocl_async_callback_item));
+  it->data.context_cb.ctx = ctx;
+  it->type = POCL_CB_TYPE_CONTEXT;
+  it->next = NULL;
+  pocl_async_cb_push (it);
+}
+
+void
+pocl_mem_cb_push (cl_mem mem)
+{
+  POCL_RETAIN_OBJECT_UNLOCKED (mem);
+  pocl_async_callback_item *it = malloc (sizeof (pocl_async_callback_item));
+  it->data.mem_cb.mem = mem;
+  it->type = POCL_CB_TYPE_MEM;
+  it->next = NULL;
+  pocl_async_cb_push (it);
+}
+
+void
+pocl_async_callback_finish ()
+{
+  POCL_FAST_LOCK (async_cb_lock);
+  exit_pocl_async_callback_thread = CL_TRUE;
+  POCL_SIGNAL_COND (async_cb_wake_cond);
+  POCL_FAST_UNLOCK (async_cb_lock);
+  if (async_callback_thread_id)
+    POCL_JOIN_THREAD (async_callback_thread_id);
+}
+
+static void
+process_event_cb (pocl_async_callback_item *it)
+{
+  event_callback_item *cb_ptr = NULL;
+  cl_event event = it->data.event_cb.event;
+  for (cb_ptr = event->callback_list; cb_ptr; cb_ptr = cb_ptr->next)
+    {
+      if (cb_ptr->trigger_status == it->data.event_cb.status)
+        {
+          cb_ptr->callback_function (event, cb_ptr->trigger_status,
+                                     cb_ptr->user_data);
+        }
+    }
+  POname (clReleaseEvent) (event);
+}
+
+static void
+process_mem_cb (pocl_async_callback_item *it)
+{
+  cl_mem mem = it->data.mem_cb.mem;
+  mem_destructor_callback_t *cb = mem->destructor_callbacks;
+  mem_destructor_callback_t *next_cb = NULL;
+  while (cb)
+    {
+      next_cb = cb->next;
+      cb->pfn_notify (mem, cb->user_data);
+      free (cb);
+      cb = next_cb;
+    }
+  mem->destructor_callbacks = NULL;
+  POname (clReleaseMemObject) (mem);
+}
+
+static void
+process_context_cb (pocl_async_callback_item *it)
+{
+  cl_context ctx = it->data.context_cb.ctx;
+  context_destructor_callback_t *cb = ctx->destructor_callbacks;
+  context_destructor_callback_t *next_cb = NULL;
+  while (cb)
+    {
+      next_cb = cb->next;
+      cb->pfn_notify (ctx, cb->user_data);
+      free (cb);
+      cb = next_cb;
+    }
+  ctx->destructor_callbacks = NULL;
+  POname (clReleaseContext) (ctx);
 }
 
 static void *
-pocl_event_callback_thread (void *data)
+pocl_async_callback_thread (void *data)
 {
-  while (exit_pocl_event_callback_thread == CL_FALSE)
-  {
-    POCL_FAST_LOCK (event_cb_lock);
-    /* Event callback handling calls functions in the same order
-       they were added if the status matches the specified one. */
-    pocl_event_cb_item *it = NULL;
-    if (event_callback_list != NULL)
-      {
-      it = event_callback_list;
-      LL_DELETE (event_callback_list, it);
-      }
-    else
-      {
-      POCL_WAIT_COND (event_cb_wake_cond, event_cb_lock);
-      }
-    POCL_FAST_UNLOCK (event_cb_lock);
-
-    if (it)
-      {
-      event_callback_item *cb_ptr = NULL;
-      for (cb_ptr = it->event->callback_list; cb_ptr; cb_ptr = cb_ptr->next)
-            {
-        if (cb_ptr->trigger_status == it->status)
+  while (exit_pocl_async_callback_thread == CL_FALSE)
+    {
+      POCL_FAST_LOCK (async_cb_lock);
+      /* Event callback handling calls functions in the same order
+         they were added if the status matches the specified one. */
+      pocl_async_callback_item *it = NULL;
+      if (async_callback_list != NULL)
         {
-          cb_ptr->callback_function (it->event, cb_ptr->trigger_status,
-                                     cb_ptr->user_data);
+          it = async_callback_list;
+          LL_DELETE (async_callback_list, it);
         }
-            }
-      POname (clReleaseEvent) (it->event);
-      free (it);
-      }
-  }
+      else
+        {
+          POCL_WAIT_COND (async_cb_wake_cond, async_cb_lock);
+        }
+      POCL_FAST_UNLOCK (async_cb_lock);
 
-  POCL_FAST_DESTROY (event_cb_lock);
-  POCL_DESTROY_COND (event_cb_wake_cond);
+      if (it)
+        {
+          switch (it->type)
+            {
+            case POCL_CB_TYPE_EVENT:
+              process_event_cb (it);
+              break;
+            case POCL_CB_TYPE_MEM:
+              process_mem_cb (it);
+              break;
+            case POCL_CB_TYPE_CONTEXT:
+              process_context_cb (it);
+              break;
+            }
+          free (it);
+        }
+    }
+
+  POCL_FAST_DESTROY (async_cb_lock);
+  POCL_DESTROY_COND (async_cb_wake_cond);
   return NULL;
 }
 
 void
-pocl_event_callback_init ()
+pocl_async_callback_init ()
 {
-  POCL_FAST_INIT (event_cb_lock);
-  POCL_INIT_COND (event_cb_wake_cond);
-  POCL_CREATE_THREAD (event_callback_thread_id, pocl_event_callback_thread,
+  POCL_FAST_INIT (async_cb_lock);
+  POCL_INIT_COND (async_cb_wake_cond);
+  POCL_CREATE_THREAD (async_callback_thread_id, pocl_async_callback_thread,
                       NULL);
 }
