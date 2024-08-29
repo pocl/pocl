@@ -43,14 +43,8 @@ POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
     {
       POCL_UNLOCK_OBJ (event);
       VG_REFC_ZERO (event);
-      event_callback_item *cb_ptr = NULL;
-      event_callback_item *next = NULL;
-      for (cb_ptr = event->callback_list; cb_ptr; cb_ptr = next)
-        {
-          next = cb_ptr->next;
-          POCL_MEM_FREE (cb_ptr);
-        }
 
+      assert (event->callback_list == NULL);
       if (event->command_type == CL_COMMAND_USER)
         {
           POCL_ATOMIC_DEC (uevent_c);

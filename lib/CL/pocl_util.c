@@ -2771,13 +2771,16 @@ struct _pocl_async_callback_item
     {
       int status;
       cl_event event;
+      event_callback_item *cb;
     } event_cb;
     struct
     {
+      context_destructor_callback_t *cb;
       cl_context ctx;
     } context_cb;
     struct
     {
+      mem_destructor_callback_t *cb;
       cl_mem mem;
     } mem_cb;
   } data;
@@ -2805,13 +2808,34 @@ pocl_async_cb_push (pocl_async_callback_item *it)
 void
 pocl_event_cb_push (cl_event event, int status)
 {
-  POCL_RETAIN_OBJECT_UNLOCKED (event);
   pocl_async_callback_item *it = malloc (sizeof (pocl_async_callback_item));
   it->data.event_cb.event = event;
   it->data.event_cb.status = status;
+  it->data.event_cb.cb = NULL;
+
+  event_callback_item *tmp = NULL, *cb = NULL;
+  LL_FOREACH_SAFE (event->callback_list, cb, tmp)
+    {
+      if (cb->trigger_status == status)
+        {
+          assert (event->callback_list);
+          LL_DELETE (event->callback_list, cb);
+          LL_APPEND (it->data.event_cb.cb, cb);
+        }
+    }
+
   it->type = POCL_CB_TYPE_EVENT;
   it->next = NULL;
-  pocl_async_cb_push (it);
+
+  if (it->data.event_cb.cb)
+    {
+      POCL_RETAIN_OBJECT_UNLOCKED (event);
+      pocl_async_cb_push (it);
+    }
+  else
+    {
+      free (it);
+    }
 }
 
 void
@@ -2819,6 +2843,8 @@ pocl_context_cb_push (cl_context ctx)
 {
   POCL_RETAIN_OBJECT_UNLOCKED (ctx);
   pocl_async_callback_item *it = malloc (sizeof (pocl_async_callback_item));
+  it->data.context_cb.cb = ctx->destructor_callbacks;
+  ctx->destructor_callbacks = NULL;
   it->data.context_cb.ctx = ctx;
   it->type = POCL_CB_TYPE_CONTEXT;
   it->next = NULL;
@@ -2830,6 +2856,8 @@ pocl_mem_cb_push (cl_mem mem)
 {
   POCL_RETAIN_OBJECT_UNLOCKED (mem);
   pocl_async_callback_item *it = malloc (sizeof (pocl_async_callback_item));
+  it->data.mem_cb.cb = mem->destructor_callbacks;
+  mem->destructor_callbacks = NULL;
   it->data.mem_cb.mem = mem;
   it->type = POCL_CB_TYPE_MEM;
   it->next = NULL;
@@ -2852,15 +2880,17 @@ pocl_async_callback_finish ()
 static void
 process_event_cb (pocl_async_callback_item *it)
 {
-  event_callback_item *cb_ptr = NULL;
   cl_event event = it->data.event_cb.event;
-  for (cb_ptr = event->callback_list; cb_ptr; cb_ptr = cb_ptr->next)
+  event_callback_item *cb = it->data.event_cb.cb;
+  event_callback_item *next_cb = NULL;
+
+  while (cb)
     {
-      if (cb_ptr->trigger_status == it->data.event_cb.status)
-        {
-          cb_ptr->callback_function (event, cb_ptr->trigger_status,
-                                     cb_ptr->user_data);
-        }
+      next_cb = cb->next;
+      assert (cb->trigger_status == it->data.event_cb.status);
+      cb->callback_function (event, cb->trigger_status, cb->user_data);
+      free (cb);
+      cb = next_cb;
     }
   POname (clReleaseEvent) (event);
 }
@@ -2869,7 +2899,7 @@ static void
 process_mem_cb (pocl_async_callback_item *it)
 {
   cl_mem mem = it->data.mem_cb.mem;
-  mem_destructor_callback_t *cb = mem->destructor_callbacks;
+  mem_destructor_callback_t *cb = it->data.mem_cb.cb;
   mem_destructor_callback_t *next_cb = NULL;
   while (cb)
     {
@@ -2878,7 +2908,6 @@ process_mem_cb (pocl_async_callback_item *it)
       free (cb);
       cb = next_cb;
     }
-  mem->destructor_callbacks = NULL;
   POname (clReleaseMemObject) (mem);
 }
 
@@ -2886,7 +2915,7 @@ static void
 process_context_cb (pocl_async_callback_item *it)
 {
   cl_context ctx = it->data.context_cb.ctx;
-  context_destructor_callback_t *cb = ctx->destructor_callbacks;
+  context_destructor_callback_t *cb = it->data.context_cb.cb;
   context_destructor_callback_t *next_cb = NULL;
   while (cb)
     {
@@ -2895,7 +2924,6 @@ process_context_cb (pocl_async_callback_item *it)
       free (cb);
       cb = next_cb;
     }
-  ctx->destructor_callbacks = NULL;
   POname (clReleaseContext) (ctx);
 }
 
