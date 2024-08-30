@@ -3374,11 +3374,8 @@ int Level0Device::createProgram(cl_program Program, cl_uint DeviceI) {
   POCL_RETURN_ERROR_ON((Res == 0), CL_BUILD_PROGRAM_FAILURE,
                        "Binary is not a SPIR-V module!\n");
 
-  std::vector<uint8_t> Spirv;
-  Spirv.resize(Program->program_il_size);
-  for (size_t i = 0; i < Program->program_il_size; ++i) {
-    Spirv[i] = static_cast<uint8_t>(Program->program_il[i]);
-  }
+  std::vector<uint8_t> Spirv(Program->program_il,
+                             Program->program_il + Program->program_il_size);
 
   std::vector<char> ProgramBC;
   char *BinaryPtr = (char *)Program->binaries[DeviceI];

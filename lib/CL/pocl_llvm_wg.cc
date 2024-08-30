@@ -92,6 +92,7 @@ POP_COMPILER_DIAGS
 #endif
 
 #include "linker.h"
+#include "spirv_parser.hh"
 
 // Enable to get the LLVM pass execution timing report dumped to console after
 // each work-group IR function generation. Requires LLVM > 7.
@@ -806,6 +807,7 @@ static int convertBCorSPV(char *InputPath,
   size_t CapturedBytes = MAX_OUTPUT_BYTES;
   std::vector<std::string> CompilationArgs;
   std::vector<const char *> CompilationArgs2;
+  std::vector<uint8_t> FinalSpirv;
   llvm::Module *Mod = nullptr;
   char *Content = nullptr;
   uint64_t ContentSize = 0;
@@ -927,12 +929,17 @@ static int convertBCorSPV(char *InputPath,
       goto FINISHED;
     }
     SS.flush();
-    std::string OutputSpirv = SS.str();
-    assert(OutputSpirv.size() > 20);
-    Content = (char *)malloc(OutputSpirv.size());
+    std::string IntermediateSpirv = SS.str();
+    assert(IntermediateSpirv.size() > 20);
+
+    SPIRVParser::applyAtomicCmpXchgWorkaround(
+        (const int32_t *)IntermediateSpirv.data(), IntermediateSpirv.size() / 4,
+        FinalSpirv);
+
+    Content = (char *)malloc(FinalSpirv.size());
     assert(Content);
-    memcpy(Content, OutputSpirv.data(), OutputSpirv.size());
-    ContentSize = OutputSpirv.size();
+    memcpy(Content, FinalSpirv.data(), FinalSpirv.size());
+    ContentSize = IntermediateSpirv.size();
   }
 
   if (OutContent && OutSize) {
@@ -982,12 +989,34 @@ static int convertBCorSPV(char *InputPath,
     goto FINISHED;
   }
 
-  if (OutContent && OutSize) {
-    r = pocl_read_file(HiddenOutputPath, OutContent, OutSize);
-    if (r != 0) {
-      BuildLog->append("failed to read output file from llvm-spirv\n");
-      goto FINISHED;
+  Content = nullptr;
+  ContentSize = 0;
+  r = pocl_read_file(HiddenOutputPath, &Content, &ContentSize);
+  if (r != 0) {
+    BuildLog->append("failed to read output file from llvm-spirv\n");
+    goto FINISHED;
+  }
+  if (!reverse) {
+    SPIRVParser::applyAtomicCmpXchgWorkaround((const int32_t *)Content,
+                                              ContentSize / 4, FinalSpirv);
+    assert(FinalSpirv.size() <= ContentSize);
+    std::memcpy(Content, FinalSpirv.data(), FinalSpirv.size());
+    ContentSize = FinalSpirv.size();
+
+    if (keepOutputPath) {
+      r = pocl_write_file(HiddenOutputPath, Content, ContentSize, 0);
+      if (r != 0) {
+        BuildLog->append("failed to write SPIR-V output file\n");
+        goto FINISHED;
+      }
     }
+  }
+
+  if (OutContent && OutSize) {
+    *OutContent = Content;
+    *OutSize = ContentSize;
+  } else {
+    free(Content);
   }
 
   r = 0;

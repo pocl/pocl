@@ -37,9 +37,16 @@
 
 #include "pocl_debug.h"
 
+// uncomment to enable extra messages from the parser
+//#define DEBUG_SPIRV_PARSER
+
+#ifdef DEBUG_SPIRV_PARSER
+#define logTrace(...) POCL_MSG_PRINT_INFO(__VA_ARGS__);
+#else
+#define logTrace(...) ((void)0)
+#endif
 #define logWarn(...) POCL_MSG_WARN(__VA_ARGS__);
 #define logError(...) POCL_MSG_ERR(__VA_ARGS__);
-#define logTrace(...) POCL_MSG_PRINT_INFO(__VA_ARGS__);
 
 namespace SPIRVParser {
 
@@ -180,10 +187,13 @@ public:
 
 class SPIRVtypePointer : public SPIRVtype {
   OCLSpace ASpace_;
+  int32_t PointedType;
+  int32_t Storage;
 
 public:
-  SPIRVtypePointer(int32_t Id, int32_t StorClass, size_t PointerSize)
-      : SPIRVtype(Id, PointerSize) {
+  SPIRVtypePointer(int32_t Id, int32_t StorClass, size_t PointerSize,
+                   int32_t PT)
+      : SPIRVtype(Id, PointerSize), PointedType(PT), Storage(StorClass) {
     switch (StorClass) {
     case (int32_t)spv::StorageClass::CrossWorkgroup:
       ASpace_ = OCLSpace::Global;
@@ -207,6 +217,8 @@ public:
   }
   virtual ~SPIRVtypePointer(){};
   virtual OCLType ocltype() override { return OCLType::Pointer; }
+  int32_t getPointedType() { return PointedType; }
+  int32_t getStorageClass() { return Storage; }
   OCLSpace getAS() override { return ASpace_; }
 };
 
@@ -369,7 +381,12 @@ public:
     return ((int32_t)Opcode_ >= (int32_t)spv::Op::OpTypeVoid) &&
            ((int32_t)Opcode_ <= (int32_t)spv::Op::OpTypeForwardPointer);
   }
-  bool isConstant() const { return (Opcode_ == spv::Op::OpConstant); }
+  bool isConstant() const { return Opcode_ == spv::Op::OpConstant; }
+  bool isBitcast() const { return Opcode_ == spv::Op::OpBitcast; }
+  bool isAtomicCmpXchg() const {
+    return (Opcode_ == spv::Op::OpAtomicCompareExchange ||
+            Opcode_ == spv::Op::OpAtomicCompareExchangeWeak);
+  }
 
   std::string &&getName() { return std::move(Extra_); }
   int32_t nameID() { return Word1_; }
@@ -392,6 +409,13 @@ public:
     assert(isType());
     return Word1_;
   }
+  int32_t getBitcastResultType() const { return Word1_; }
+  int32_t getBitcastResult() const { return Word2_; }
+  int32_t getBitcastOperand() const { return Word3_; }
+
+  int32_t getAtomicCmpXchgResultType() const { return Word1_; }
+  int32_t getAtomicCmpXchgValue() const { return Word7_; }
+  int32_t getAtomicCmpXchgPointer() const { return Word3_; }
 
   int32_t getFunctionParamID() const { return Word2_; }
   int32_t getFunctionParamType() const { return Word1_; }
@@ -435,7 +459,7 @@ public:
     }
 
     if (Opcode_ == spv::Op::OpTypeForwardPointer) {
-      return new SPIRVtypePointer(Word1_, Word2_, PointerSize);
+      return new SPIRVtypePointer(Word1_, Word2_, PointerSize, Word3_);
     }
 
     if (Opcode_ == spv::Op::OpTypeVector) {
@@ -528,7 +552,7 @@ public:
         return new SPIRVtypePOD(Word1_, PointeeSize);
 
       } else
-        return new SPIRVtypePointer(Word1_, Word2_, PointerSize);
+        return new SPIRVtypePointer(Word1_, Word2_, PointerSize, Word3_);
     }
 
     return nullptr;
@@ -692,6 +716,20 @@ public:
     return true;
   }
 
+  bool applyCmpXchgWorkaround(const int32_t *InStream, size_t NumWords,
+                              std::vector<int32_t> &OutStream) {
+    const int32_t *PastHeaderPtr = InStream;
+    HeaderOK_ = parseHeader(PastHeaderPtr, NumWords);
+    if (!HeaderOK_) {
+      logError("SPIR-V parser: Corrupted header.\n");
+      return false;
+    }
+
+    OutStream.clear();
+    OutStream.insert(OutStream.end(), InStream, PastHeaderPtr);
+    return transformInstructionStream(PastHeaderPtr, NumWords, OutStream);
+  }
+
 private:
   bool parseInstructionStream(const int32_t *Stream, size_t NumWords) {
     const int32_t *StreamIntPtr = Stream;
@@ -848,6 +886,168 @@ private:
 
     return true;
   }
+
+  // walks the TypeMap and finds a type ID which is a pointer to PointeeTypeID
+  // with the exact Storage Class
+  int32_t getPointerType(int32_t PointeeTypeID, int32_t StorClass) {
+    for (const auto &it : TypeMap_) {
+      int32_t ID = it.first;
+      SPIRVtype *T = it.second;
+      if (T->ocltype() != OCLType::Pointer)
+        continue;
+      SPIRVtypePointer *PtrType = (SPIRVtypePointer *)T;
+      int32_t PointeeType = PtrType->getPointedType();
+      int32_t PtrStorClass = PtrType->getStorageClass();
+      if (PointeeType == PointeeTypeID && StorClass == PtrStorClass)
+        return ID;
+    }
+    return 0;
+  }
+
+  // returns true if the current instruction need to be completely skipped
+  // in the output stream, otherwise returns false and possibly sets
+  bool fixBitcast(SPIRVinst &Inst, size_t InstSize, size_t I, size_t NumWords,
+                  const int32_t *InStream, int32_t &ReplaceBitcastType,
+                  int32_t &ReplaceAtomicTypeID) {
+    if (!Inst.isBitcast())
+      return false;
+
+    int32_t BCRes = Inst.getBitcastResult();
+    int32_t BCResTypeID = Inst.getBitcastResultType();
+    logTrace("SPIRVInst %i is BitCast\n", BCRes);
+
+/*
+ * Example original SPIR-V disassembled (causing the problem):
+ * %arrayidx23 = OpInBoundsPtrAccessChain %_ptr_Workgroup_uint %120 %ulong_0
+ * # result_id           result_type           operand
+ * %128 = OpBitcast %_ptr_Workgroup_uchar %arrayidx23
+ * # result_id                 res_type  ptr  scope   semantics     value  comp
+ * %129 = OpAtomicCompareExchange %uint %128 %uint_2 %uint_0 %uint_0 %126 %exp6
+*/
+
+    // 9 == words of OpAtomicInst
+    if (I + InstSize + 9 >= NumWords)
+      return false;
+    logTrace("bitcast is followed by more insts\n");
+    // peek at next instruction, it must be OpAtomicCompareExchange(weak)
+    SPIRVinst NextInst(InStream + I + InstSize);
+    if (!NextInst.isAtomicCmpXchg())
+      return false;
+
+    logTrace("Bitcast followed by AtomicCmpXchg\n");
+    int32_t PtrID = NextInst.getAtomicCmpXchgPointer();
+    int32_t ResType = NextInst.getAtomicCmpXchgResultType();
+    if (PtrID != BCRes)
+      return false;
+    logTrace("AtomicCmpXCHG PtrID %i == BCRes %i\n", PtrID, BCRes);
+
+    SPIRVtype *BCResType = TypeMap_[BCResTypeID];
+    if (BCResType == nullptr)
+      return false;
+    if (BCResType->ocltype() != OCLType::Pointer)
+      return false;
+
+    SPIRVtypePointer *BcResPtrType = (SPIRVtypePointer *)BCResType;
+    int32_t BitcastedType = BcResPtrType->getPointedType();
+    if (BitcastedType == ResType)
+      return false;
+    logTrace("AtomicCmpXCHG bitcastedType %i != ResType %i\n", BitcastedType,
+             ResType);
+    // return the bitcasted type
+    logTrace("Trying to fix bitcast\n");
+    int32_t ResPtrType =
+        getPointerType(ResType, BcResPtrType->getStorageClass());
+    if (ResPtrType == 0)
+      logError("SPIR-V parser: Bitcast needs fixing, "
+               "but unable to find correct type!\n");
+    ReplaceBitcastType = ResPtrType;
+    return false;
+
+#if 0
+    // TODO: we should track variables and get the bitcast operand type
+    // from the operand variable; if the operand type is identical to restype,
+    // return the original operand and drop the bitcast like this:
+    ReplaceAtomicTypeID = BCOper;
+    logError("Found a bitcast that needs removing\n");
+    return true;
+#endif
+  }
+
+  bool transformInstructionStream(const int32_t *InStream, size_t NumWords,
+                                  std::vector<int32_t> &OutStream) {
+    size_t InstSize = 0;
+    size_t PointerSize = 0;
+    int32_t ReplacementAtomicType = 0;
+    int32_t ReplacementBitcastType = 0;
+
+    for (size_t I = 0; I < NumWords; I += InstSize) {
+      SPIRVinst Inst(InStream + I);
+      InstSize = Inst.size();
+
+      if (InstSize == 0) {
+        logError("SPIR-V parser: zero sized instruction\n");
+        return false;
+      }
+
+      if (Inst.isKernelCapab())
+        KernelCapab_ = true;
+
+      if (Inst.isExtIntOpenCL())
+        ExtIntOpenCL_ = true;
+
+      if (Inst.isMemModelOpenCL()) {
+        MemModelCL_ = true;
+        PointerSize = Inst.getPointerSize();
+        assert(PointerSize > 0);
+      }
+
+      if (Inst.isType()) {
+        if (Inst.isFunctionType())
+          FunctionTypeMap_.emplace(std::make_pair(
+              Inst.getTypeID(),
+              Inst.decodeFunctionType(TypeMap_, ReqLocalMap_, LocalHintMap_,
+                                      VecTypeHintMap_, PointerSize)));
+        else
+          TypeMap_.emplace(std::make_pair(
+              Inst.getTypeID(),
+              Inst.decodeType(TypeMap_, ConstMap_, PointerSize)));
+      }
+
+      if (Inst.isConstant()) {
+        auto *Const = Inst.decodeConstant(TypeMap_);
+        if (Const == nullptr) {
+          logWarn("SPIR-V parser: failed to decode const\n");
+        }
+        ConstMap_.emplace(std::make_pair(Inst.getConstID(), Const));
+      }
+
+      bool SkipInstructionOutput =
+          fixBitcast(Inst, InstSize, I, NumWords, InStream,
+                     ReplacementBitcastType, ReplacementAtomicType);
+
+      if (SkipInstructionOutput)
+        continue;
+
+      if (ReplacementAtomicType && Inst.isAtomicCmpXchg()) {
+        std::vector<int32_t> Tmp(InStream + I, InStream + I + InstSize);
+        // word3 = Pointer
+        Tmp[3] = ReplacementAtomicType;
+        ReplacementAtomicType = 0;
+        OutStream.insert(OutStream.end(), Tmp.begin(), Tmp.end());
+      } else if (ReplacementBitcastType && Inst.isBitcast()) {
+        std::vector<int32_t> Tmp(InStream + I, InStream + I + InstSize);
+        // word1 = Result Type
+        Tmp[1] = ReplacementBitcastType;
+        ReplacementBitcastType = 0;
+        OutStream.insert(OutStream.end(), Tmp.begin(), Tmp.end());
+      } else {
+        OutStream.insert(OutStream.end(), InStream + I,
+                         InStream + I + InstSize);
+      }
+    }
+
+    return true;
+  }
 };
 
 bool parseSPIRV(const int32_t *Stream, size_t NumWords,
@@ -856,6 +1056,15 @@ bool parseSPIRV(const int32_t *Stream, size_t NumWords,
   if (!Mod.parseSPIRV(Stream, NumWords))
     return false;
   return Mod.fillModuleInfo(Output);
+}
+
+void applyAtomicCmpXchgWorkaround(const int32_t *InStream, size_t NumWords,
+                                  std::vector<uint8_t> &OutStream) {
+  SPIRVmodule Mod;
+  std::vector<int32_t> Out;
+  Mod.applyCmpXchgWorkaround(InStream, NumWords, Out);
+  OutStream.resize(Out.size() * 4);
+  std::memcpy(OutStream.data(), Out.data(), Out.size() * 4);
 }
 
 } // namespace SPIRVParser
