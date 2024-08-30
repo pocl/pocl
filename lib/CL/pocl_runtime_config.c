@@ -25,6 +25,7 @@
 
 #include "pocl_runtime_config.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -56,4 +57,13 @@ pocl_get_string_option (const char *key, const char *default_value)
 {
   const char *val = getenv (key);
   return val != NULL ? val : default_value;
+}
+
+/* Returns a string, but can be overriden by a POCL_PATH env var. */
+const char *
+pocl_get_path (const char *name, const char *default_value)
+{
+  char key[256];
+  snprintf (key, sizeof (key), "POCL_PATH_%s", name);
+  return pocl_get_string_option (key, default_value);
 }

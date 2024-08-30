@@ -1043,7 +1043,8 @@ int pocl_invoke_clang(cl_device_id Device, const char** Args) {
 
   DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
 
-  clang::driver::Driver TheDriver(CLANG, Device->llvm_target_triplet, Diags);
+  clang::driver::Driver TheDriver(pocl_get_path("CLANG", CLANG),
+                                  Device->llvm_target_triplet, Diags);
 
   const char **ArgsEnd = Args;
   while (*ArgsEnd++ != nullptr) {}

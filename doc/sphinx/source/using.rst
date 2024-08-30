@@ -302,6 +302,20 @@ pocl.
  good for creating pocl binaries. Requires those drivers to be compiled with support
  for compilation for those devices.
 
+- **POCL_PATH_XXX**
+
+ String. These variables can be used to override the path to executables that
+ pocl uses during compilation, linking, etc. By default, they are set to the
+ paths configured during the build.
+
+ The following variables are available:
+
+  * **POCL_PATH_CLANG** -- Path to the clang executable.
+  * **POCL_PATH_LLVM_LINK** -- Path to the llvm-link executable.
+  * **POCL_PATH_LLVM_OPT** -- Path to the llvm-opt executable.
+  * **POCL_PATH_LLVM_LLC** -- Path to the llc executable.
+  * **POCL_PATH_LLVM_SPIRV** -- Path to the llvm-spirv executable.
+  * **POCL_PATH_SPIRV_LINK** -- Path to the spirv-link executable.
 
 - **POCL_SIGFPE_HANDLER**
 
