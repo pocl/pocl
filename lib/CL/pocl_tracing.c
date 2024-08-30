@@ -371,17 +371,13 @@ lttng_tracer_event_updated (cl_event event, int status)
       break;
 
     case CL_COMMAND_READ_BUFFER:
-      tracepoint (pocl_trace, read_buffer,
-                  event->id, status,
-                  dev->dev_id, cq->id,
-                  event->mem_objs[0]->id);
+      tracepoint (pocl_trace, read_buffer, event->id, status, dev->dev_id,
+                  cq->id, node->command.read.src->id);
       break;
 
     case CL_COMMAND_WRITE_BUFFER:
-      tracepoint (pocl_trace, write_buffer,
-                  event->id, status,
-                  dev->dev_id, cq->id,
-                  event->mem_objs[0]->id);
+      tracepoint (pocl_trace, write_buffer, event->id, status, dev->dev_id,
+                  cq->id, node->command.write.dst->id);
       break;
 
     case CL_COMMAND_COPY_BUFFER:
@@ -393,24 +389,18 @@ lttng_tracer_event_updated (cl_event event, int status)
       break;
 
     case CL_COMMAND_FILL_BUFFER:
-      tracepoint (pocl_trace, fill_buffer,
-                  event->id, status,
-                  dev->dev_id, cq->id,
-                  event->mem_objs[0]->id);
+      tracepoint (pocl_trace, fill_buffer, event->id, status, dev->dev_id,
+                  cq->id, node->command.memfill.dst->id);
       break;
 
     case CL_COMMAND_READ_BUFFER_RECT:
-      tracepoint (pocl_trace, read_buffer_rect,
-                  event->id, status,
-                  dev->dev_id, cq->id,
-                  event->mem_objs[0]->id);
+      tracepoint (pocl_trace, read_buffer_rect, event->id, status, dev->dev_id,
+                  cq->id, node->command.read_rect.src->id);
       break;
 
     case CL_COMMAND_WRITE_BUFFER_RECT:
-      tracepoint (pocl_trace, write_buffer_rect,
-                  event->id, status,
-                  dev->dev_id, cq->id,
-                  event->mem_objs[0]->id);
+      tracepoint (pocl_trace, write_buffer_rect, event->id, status,
+                  dev->dev_id, cq->id, node->command.write_rect.dst->id);
       break;
 
     case CL_COMMAND_COPY_BUFFER_RECT:
@@ -423,18 +413,12 @@ lttng_tracer_event_updated (cl_event event, int status)
       break;
 
     case CL_COMMAND_READ_IMAGE:
-      tracepoint (pocl_trace, read_image_rect,
-                  event->id, status,
-                  dev->dev_id,
-                  cq->id,
-                  event->mem_objs[0]->id);
+      tracepoint (pocl_trace, read_image_rect, event->id, status, dev->dev_id,
+                  cq->id, node->command.read_image.dst->id);
       break;
     case CL_COMMAND_WRITE_IMAGE:
-      tracepoint (pocl_trace, write_image_rect,
-                  event->id, status,
-                  dev->dev_id,
-                  cq->id,
-                  event->mem_objs[0]->id);
+      tracepoint (pocl_trace, write_image_rect, event->id, status, dev->dev_id,
+                  cq->id, node->command.write_image.dst->id);
       break;
 
     case CL_COMMAND_COPY_IMAGE:
@@ -447,10 +431,8 @@ lttng_tracer_event_updated (cl_event event, int status)
       break;
 
     case CL_COMMAND_FILL_IMAGE:
-      tracepoint (pocl_trace, fill_image,
-                  event->id, status,
-                  dev->dev_id, cq->id,
-                  event->mem_objs[0]->id);
+      tracepoint (pocl_trace, fill_image, event->id, status, dev->dev_id,
+                  cq->id, node->command.fill_image.dst->id);
       break;
 
     case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
@@ -472,55 +454,49 @@ lttng_tracer_event_updated (cl_event event, int status)
       break;
 
     case CL_COMMAND_MAP_BUFFER:
-      tracepoint (pocl_trace, map_buffer,
-                  event->id, status,
-                  dev->dev_id, cq->id,
-                  event->mem_objs[0]->id);
+      tracepoint (pocl_trace, map_buffer, event->id, status, dev->dev_id,
+                  cq->id, node->command.map.buffer->id);
       break;
 
     case CL_COMMAND_MAP_IMAGE:
-      tracepoint (pocl_trace, map_image,
-                  event->id, status,
-                  dev->dev_id, cq->id,
-                  event->mem_objs[0]->id);
+      tracepoint (pocl_trace, map_image, event->id, status, dev->dev_id,
+                  cq->id, node->command.map.buffer->id);
       break;
 
     case CL_COMMAND_UNMAP_MEM_OBJECT:
-      tracepoint (pocl_trace, unmap_memobj,
-                  event->id, status,
-                  dev->dev_id, cq->id,
-                  event->mem_objs[0]->id);
+      tracepoint (pocl_trace, unmap_memobj, event->id, status, dev->dev_id,
+                  cq->id, node->command.unmap.buffer->id);
       break;
 
     case CL_COMMAND_MIGRATE_MEM_OBJECTS:
       {
-        assert (event->num_buffers > 0);
+        assert (node->command.migrate.num_buffers > 0);
         switch (node->command.migrate.type)
           {
 
           case ENQUEUE_MIGRATE_TYPE_H2D:
             tracepoint (pocl_trace, migrate_mem_obj, event->id, status,
-                        dev->dev_id, cq->id, event->num_buffers,
-                        event->mem_objs[0]->id, 0, "H2D");
+                        dev->dev_id, cq->id, node->command.migrate.num_buffers,
+                        node->migr_infos->buffer->id, 0, "H2D");
             break;
 
           case ENQUEUE_MIGRATE_TYPE_D2H:
             tracepoint (pocl_trace, migrate_mem_obj, event->id, status,
-                        dev->dev_id, cq->id, event->num_buffers,
-                        event->mem_objs[0]->id, 0, "D2H");
+                        dev->dev_id, cq->id, node->command.migrate.num_buffers,
+                        node->migr_infos->buffer->id, 0, "D2H");
             break;
 
           case ENQUEUE_MIGRATE_TYPE_D2D:
             tracepoint (pocl_trace, migrate_mem_obj, event->id, status,
-                        dev->dev_id, cq->id, event->num_buffers,
-                        event->mem_objs[0]->id,
+                        dev->dev_id, cq->id, node->command.migrate.num_buffers,
+                        node->migr_infos->buffer->id,
                         node->command.migrate.src_device->id, "D2D");
             break;
 
           case ENQUEUE_MIGRATE_TYPE_NOP:
             tracepoint (pocl_trace, migrate_mem_obj, event->id, status,
-                        dev->dev_id, cq->id, event->num_buffers,
-                        event->mem_objs[0]->id, 0, "NOP");
+                        dev->dev_id, cq->id, node->command.migrate.num_buffers,
+                        node->migr_infos->buffer->id, 0, "NOP");
             break;
           }
         break;
