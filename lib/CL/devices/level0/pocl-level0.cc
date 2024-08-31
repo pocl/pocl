@@ -221,6 +221,10 @@ static int readProgramSpv(cl_program Program, cl_uint DeviceI,
 
 static Level0Driver *DriverInstance = nullptr;
 
+void __attribute__ ((destructor)) finish_fn(void) {
+  delete DriverInstance;
+}
+
 char *pocl_level0_build_hash(cl_device_id Device) {
   // TODO build hash
   char *Res = (char *)malloc(32);
