@@ -57,7 +57,7 @@ namespace pocl {
     static Barrier *Create(llvm::Instruction *InsertBefore) {
       llvm::Module *M = InsertBefore->getParent()->getParent()->getParent();
 
-      if (InsertBefore != &InsertBefore->getParent()->front() && 
+      if (InsertBefore != &InsertBefore->getParent()->front() &&
           llvm::isa<Barrier>(InsertBefore->getPrevNode()))
         return llvm::cast<Barrier>(InsertBefore->getPrevNode());
       llvm::FunctionCallee FC =

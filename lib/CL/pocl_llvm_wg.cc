@@ -556,6 +556,10 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
 #endif
 
     addPass(Passes, "workitemrepl");
+
+    // subcfgformation (for CBS) before workitemloops, as wiloops creates the
+    // loops for kernels without barriers, but after the transformation the
+    // kernel looks like it has barriers, so subcfg would do its thing.
     addPass(Passes, "subcfgformation");
 
     // subcfgformation before workitemloops, as wiloops creates the loops for
@@ -588,6 +592,10 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
   // Attempt to move all allocas to the entry block to avoid the need for
   // dynamic stack which is problematic for some architectures.
   addPass(Passes, "allocastoentry");
+
+  // Convert variables back to PHIs to clean up loop structures to enable the
+  // LLVM standard loop analysis.
+  addPass(Passes, "mem2reg");
 
   // Later passes might get confused (and expose possible bugs in them) due to
   // UNREACHABLE blocks left by repl. So let's clean up the CFG before running
