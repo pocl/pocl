@@ -136,9 +136,9 @@ static bool isolateRegions(Region &R, WorkitemHandlerType WIH) {
 
   if (WIH != WorkitemHandlerType::FULL_REPLICATION &&
       isa<PHINode>(*Entry->begin())) {
-    // The region starts with a loop. Let's add a dummy node before the loop
-    // to enable the parallel loop formation to not care about the loop
-    // header phis.
+    // The region starts with a loop. Let's add a dummy node before the loop to
+    // let the parallel loop formation need not to care about the loop header
+    // phis.
     addDummyBefore(R, Entry, ".loop_header");
     changed = true;
   }
