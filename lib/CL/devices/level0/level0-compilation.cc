@@ -818,8 +818,7 @@ void Level0CompilationJob::signalFinished() {
   std::lock_guard<std::mutex> LockGuard(Mutex);
   Finished = true;
   // adds only successful builds to program
-  Successful =
-      Build->isSuccessful() && Program->addFinishedBuild(std::move(Build));
+  Successful = Program->addFinishedBuild(std::move(Build));
   Cond.notify_one();
 }
 
@@ -1123,12 +1122,15 @@ Level0Kernel *Level0CompilationJobScheduler::createKernel(Level0Program *Prog,
   }
 
   Level0Kernel *K = Program->createKernel(Name);
+  if (!K)
+    return nullptr;
 
   // prebuild a 32bit small-WG specialization here
   // this might not be necessary but is useful for timing & catching errors
   // early
-  if (pocl_get_bool_option("POCL_LEVEL0_JIT_PREBUILD", 0)) {
-    if (K && Prog->isJITCompiled()) {
+
+  if (Prog->isJITCompiled()) {
+    if (pocl_get_bool_option("POCL_LEVEL0_JIT_PREBUILD", 0)) {
       POCL_MSG_PRINT_LEVEL0("JIT pre-compiling kernel %p %s\n", K,
                             K->getName().c_str());
       bool Res = createAndWaitKernelJITBuilds(Program, K,
@@ -1142,6 +1144,12 @@ Level0Kernel *Level0CompilationJobScheduler::createKernel(Level0Program *Prog,
         return nullptr;
       }
     }
+  } else {
+    // prebuild a 32bit any-WG kernel specialization here.
+    // This is for local size optimizer
+    ze_module_handle_t Mod;
+    ze_kernel_handle_t Ker;
+    Program->getBestKernel(K, false, true, Mod, Ker);
   }
 
   return K;

@@ -97,20 +97,27 @@ static void pocl_level0_local_size_optimizer(cl_device_id Dev, cl_kernel Kernel,
   uint32_t SuggestedX = 0;
   uint32_t SuggestedY = 0;
   uint32_t SuggestedZ = 0;
-  ze_result_t Res = ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
-  if (HKernel != nullptr) {
-    Res = zeKernelSuggestGroupSize(HKernel, GlobalX, GlobalY, GlobalZ,
-                                   &SuggestedX, &SuggestedY, &SuggestedZ);
-  }
-  if (Res != ZE_RESULT_SUCCESS) {
-    POCL_MSG_WARN("zeKernelSuggestGroupSize FAILED: %0x\n", (unsigned)Res);
-    pocl_default_local_size_optimizer(Dev, Kernel, DeviceI, GlobalX, GlobalY,
-                                      GlobalZ, LocalX, LocalY, LocalZ);
+
+  if (HKernel) {
+    ze_result_t Res =
+        zeKernelSuggestGroupSize(HKernel, GlobalX, GlobalY, GlobalZ,
+                                 &SuggestedX, &SuggestedY, &SuggestedZ);
+    if (Res == ZE_RESULT_SUCCESS) {
+      *LocalX = SuggestedX;
+      *LocalY = SuggestedY;
+      *LocalZ = SuggestedZ;
+      return;
+    } else {
+      POCL_MSG_PRINT_LEVEL0("zeKernelSuggestGroupSize FAILED: %0x\n",
+                            (unsigned)Res);
+    }
   } else {
-    *LocalX = SuggestedX;
-    *LocalY = SuggestedY;
-    *LocalZ = SuggestedZ;
+    POCL_MSG_PRINT_LEVEL0(
+        "pocl_level0_local_size_optimizer : HKernel == nullptr\n");
   }
+
+  pocl_default_local_size_optimizer(Dev, Kernel, DeviceI, GlobalX, GlobalY,
+                                    GlobalZ, LocalX, LocalY, LocalZ);
 }
 
 static int pocl_level0_verify_ndrange_sizes(const size_t *GlobalOffsets,
@@ -213,6 +220,10 @@ static int readProgramSpv(cl_program Program, cl_uint DeviceI,
 }
 
 static Level0Driver *DriverInstance = nullptr;
+
+void __attribute__ ((destructor)) finish_fn(void) {
+  delete DriverInstance;
+}
 
 char *pocl_level0_build_hash(cl_device_id Device) {
   // TODO build hash

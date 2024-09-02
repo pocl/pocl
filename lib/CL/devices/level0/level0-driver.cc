@@ -41,6 +41,10 @@
 #include <iostream>
 #include <sstream>
 
+#if defined(ENABLE_CONFORMANCE) && defined(ENABLE_LEVEL0_EXTRA_FEATURES)
+#error Defined both ENABLE_CONFORMANCE and ENABLE_LEVEL0_EXTRA_FEATURES
+#endif
+
 // TODO: do we need to use Barriers, if we're using immediate
 // cmdlist in synchronous mode
 //#define LEVEL0_IMMEDIATE_CMDLIST
@@ -54,14 +58,21 @@
 //#define ENABLE_L0_MEMFILL
 
 #ifndef ENABLE_CONFORMANCE
+// fails some corner cases (with CL_RGBA + CL_FLOAT + 3D image, some CTS
+// test fails b/c of GPU rounding a pixel channel value 1e-38 to zero)
 #define ENABLE_IMAGES
+// subgroups require device queries which aren't yet available in L0
 #define ENABLE_SUBGROUPS
+// this is emulated on consumer hardware and fails math corner cases
 #define ENABLE_FP64
+// fails a single test (progvar_prog_scope_init) in CTS test "basic"
+#define ENABLE_PROGVARS
+// fails a c11_atomics subtest with GPU hang (even with increased timeout)
+#define ENABLE_64BIT_ATOMICS
 #endif
 
 #define ENABLE_WG_COLLECTIVE
 #define ENABLE_GENERIC_AS
-#define ENABLE_PROGVARS
 
 using namespace pocl;
 
@@ -2233,8 +2244,11 @@ bool Level0Device::setupModuleProperties(bool &SupportsInt64Atomics,
     ClDev->half_fp_config = convertZeFPFlags(ModuleProperties.fp16flags);
   }
 
+#ifdef ENABLE_64BIT_ATOMICS
   SupportsInt64Atomics = (ModuleProperties.flags &
                           ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS) != 0u;
+#endif
+
   KernelUUID = ModuleProperties.nativeKernelSupported;
   SupportsDP4A = (ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_DP4A) > 0;
   // TODO this seems not reported
@@ -3360,11 +3374,8 @@ int Level0Device::createProgram(cl_program Program, cl_uint DeviceI) {
   POCL_RETURN_ERROR_ON((Res == 0), CL_BUILD_PROGRAM_FAILURE,
                        "Binary is not a SPIR-V module!\n");
 
-  std::vector<uint8_t> Spirv;
-  Spirv.resize(Program->program_il_size);
-  for (size_t i = 0; i < Program->program_il_size; ++i) {
-    Spirv[i] = static_cast<uint8_t>(Program->program_il[i]);
-  }
+  std::vector<uint8_t> Spirv(Program->program_il,
+                             Program->program_il + Program->program_il_size);
 
   std::vector<char> ProgramBC;
   char *BinaryPtr = (char *)Program->binaries[DeviceI];
