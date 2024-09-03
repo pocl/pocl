@@ -342,37 +342,37 @@ ParallelRegion::dumpNames()
     std::cerr << std::endl;
 }
 
-ParallelRegion *
-ParallelRegion::Create(const SmallPtrSet<BasicBlock *, 8>& bbs, BasicBlock *entry, BasicBlock *exit)
-{
-  ParallelRegion *new_region = new ParallelRegion();
+ParallelRegion *ParallelRegion::Create(const SmallPtrSet<BasicBlock *, 8> &BBs,
+                                       BasicBlock *Entry, BasicBlock *Exit) {
+  ParallelRegion *NewRegion = new ParallelRegion();
 
-  assert (entry != NULL);
-  assert (exit != NULL);
+  assert(Entry != NULL);
+  assert(Exit != NULL);
 
   // This is done in two steps so order of the vector
   // is the same as original function order.
-  Function *F = entry->getParent();
+  Function *F = Entry->getParent();
   for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
-    BasicBlock *b = &*i;
-    for (SmallPtrSetIterator<BasicBlock *> j = bbs.begin(); j != bbs.end(); ++j) {
-      if (*j == b) {
-        new_region->push_back(&*i);
-        if (entry == *j)
-            new_region->setEntryBBIndex(new_region->size() - 1);
-        else if (exit == *j)
-            new_region->setExitBBIndex(new_region->size() - 1);
+    BasicBlock *B = &*i;
+    for (SmallPtrSetIterator<BasicBlock *> j = BBs.begin(); j != BBs.end();
+         ++j) {
+      if (*j == B) {
+        NewRegion->push_back(&*i);
+        if (Entry == *j)
+          NewRegion->setEntryBBIndex(NewRegion->size() - 1);
+        else if (Exit == *j)
+          NewRegion->setExitBBIndex(NewRegion->size() - 1);
         break;
       }
     }
   }
 
-  new_region->LocalizeIDLoads();
+  NewRegion->LocalizeIDLoads();
 #ifdef DEBUG_CREATE
-  assert(new_region->Verify());
+  assert(NewRegion->Verify());
 #endif
 
-  return new_region;
+  return NewRegion;
 }
 
 bool
@@ -383,7 +383,7 @@ ParallelRegion::Verify()
   // 2) Single outgoing edge from exit block
   //    (other outgoing edges allowed, will be purged in replicas).
   // 3) No barriers inside the region.
-  
+
   int entry_edges = 0;
 
   for (iterator i = begin(), e = end(); i != e; ++i) {
@@ -412,7 +412,7 @@ ParallelRegion::Verify()
         ++entry_edges;
       }
     }
-    
+
     // if (entry_edges != 1) {
     //   assert(0 && "Parallel regions must be single entry!");
     //   return false;

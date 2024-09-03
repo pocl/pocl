@@ -137,6 +137,8 @@ class Kernel;
 
     int GetID() const { return pRegionId; }
 
+    static int getNextID() { return idGen; }
+
   private:
     BBContainer BBs_;
 

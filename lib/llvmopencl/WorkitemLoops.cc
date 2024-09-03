@@ -64,7 +64,7 @@ POP_COMPILER_DIAGS
 #include <vector>
 
 #define DEBUG_TYPE "workitem-loops"
-#define DUMP_CFGS
+// #define DUMP_CFGS
 // #define DEBUG_WORK_ITEM_LOOPS
 
 // this must be at least the alignment of largest OpenCL type (= 128 bytes)
@@ -471,38 +471,6 @@ void WorkitemLoopsImpl::releaseParallelRegions() {
 
 bool WorkitemLoopsImpl::processFunction(Function &F) {
 
-#if 0
-  // Replace get_global_id with loads from the _get_global_id magic
-  // global. TODO: Find a better place for this.
-  std::set<llvm::Instruction *> InstrsToDelete;
-  for (llvm::Function::iterator BB = F.begin(), BBE = F.end(); BB != BBE;
-       ++BB) {
-    for (llvm::BasicBlock::iterator II = BB->begin(); II != BB->end(); ++II) {
-      llvm::Instruction *Instr = &*II;
-      llvm::CallInst *Call = dyn_cast<llvm::CallInst>(Instr);
-      if (Call == nullptr)
-        continue;
-
-      auto Callee = Call->getCalledFunction();
-      if (Callee->isDeclaration() &&
-          Callee->getName().equals(GID_BUILTIN_NAME)) {
-        int Dim =
-            cast<llvm::ConstantInt>(Call->getArgOperand(0))->getZExtValue();
-        GlobalVariable *GIDGlobal = cast<GlobalVariable>(
-            M->getOrInsertGlobal(GID_G_NAME(Dim), pocl::SizeT(M)));
-        IRBuilder<> Builder(Call);
-        Instruction *GIDLoad = Builder.CreateLoad(pocl::SizeT(M), GIDGlobal);
-        Call->replaceAllUsesWith(GIDLoad);
-        InstrsToDelete.insert(Call);
-        ++II;
-        continue;
-      }
-    }
-  }
-  for (auto I : InstrsToDelete)
-    I->eraseFromParent();
-#endif
-
   releaseParallelRegions();
 
   K->getParallelRegions(LI, &OriginalParallelRegions);
@@ -511,6 +479,8 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
   dumpCFG(F, F.getName().str() + "_before_wiloops.dot", nullptr,
           &OriginalParallelRegions);
 #endif
+  dumpCFG(F, F.getName().str() + "_before_wiloops.dot", nullptr,
+          &OriginalParallelRegions);
 
   IRBuilder<> builder(&*(F.getEntryBlock().getFirstInsertionPt()));
   LocalIdXFirstVar = builder.CreateAlloca(ST, 0, ".pocl.local_id_x_init");
@@ -1303,46 +1273,14 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Instr) {
 
   for (InstructionVec::iterator I = Uses.begin(); I != Uses.end(); ++I) {
     Instruction *UserI = *I;
-    Instruction *ContextRestoreLocation = UserI;
     // If the user is in a block that doesn't belong to a region, the variable
     // itself must be a "work group variable", that is, not dependent on the
     // work item. Most likely an iteration variable of a for loop with a
     // barrier.
-    if (regionOfBlock(UserI->getParent()) == NULL) continue;
-
-    PHINode* Phi = dyn_cast<PHINode>(UserI);
-    if (Phi != NULL) {
-      // In case of PHI nodes, we cannot just insert the context restore code
-      // before it in the same basic block because it is assumed there are no
-      // non-phi Instructions before PHIs which the context restore code
-      // constitutes to. Add the context restore to the incomingBB instead.
-
-      // There can be values in the PHINode that are incoming from another
-      // region even though the decision BB is within the region. For those
-      // values we need to add the context restore code in the incoming BB
-      // (which is known to be inside the region due to the assumption of not
-      // having to touch PHI nodes in PRentry BBs).
-
-      // PHINodes at region entries are broken down earlier.
-      assert ("Cannot add context restore for a PHI node at the region entry!"
-               && regionOfBlock(
-                Phi->getParent())->entryBB() != Phi->getParent());
-#ifdef DEBUG_WORK_ITEM_LOOPS
-      std::cerr << "### adding context restore code before PHI" << std::endl;
-      UserI->dump();
-      std::cerr << "### in BB:" << std::endl;
-      UserI->getParent()->dump();
-#endif
-      BasicBlock *IncomingBB = NULL;
-      for (unsigned Incoming = 0; Incoming < Phi->getNumIncomingValues();
-           ++Incoming) {
-        Value *Val = Phi->getIncomingValue(Incoming);
-        BasicBlock *BB = Phi->getIncomingBlock(Incoming);
-        if (Val == Instr) IncomingBB = BB;
-      }
-      assert(IncomingBB != NULL);
-      ContextRestoreLocation = IncomingBB->getTerminator();
-    }
+    ParallelRegion *PR = regionOfBlock(UserI->getParent());
+    if (PR == NULL)
+      continue;
+    Instruction *ContextRestoreLocation = PR->entryBB()->getTerminator();
     llvm::Value *LoadedValue = addContextRestore(
       UserI, Alloca, Instr->getType(),
       PoclWrapperStructAdded, ContextRestoreLocation,

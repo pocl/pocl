@@ -104,13 +104,11 @@ namespace pocl {
       return endsWithBarrier(BB) && BB->size() == 2;
     }
 
-    static bool hasBarrier(const llvm::BasicBlock *BB)
-    {
+    static bool hasBarrier(const llvm::BasicBlock *BB) {
       for (llvm::BasicBlock::const_iterator I = BB->begin(), E = BB->end();
            I != E; ++I)
-        {
-          if (llvm::isa<Barrier>(I)) return true;
-        }
+        if (llvm::isa<Barrier>(I))
+          return true;
       return false;
     }
 
