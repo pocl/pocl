@@ -1581,7 +1581,9 @@ SubCFGFormation::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
 
   Initialize(cast<pocl::Kernel>(&F));
 
+#ifdef DEBUG_SUBCFG_FORMATION
   llvm::errs() << "[SubCFG] Form SubCFGs in " << F.getName() << "\n";
+#endif
 
   auto &DT = AM.getResult<llvm::DominatorTreeAnalysis>(F);
   auto &PDT = AM.getResult<llvm::PostDominatorTreeAnalysis>(F);

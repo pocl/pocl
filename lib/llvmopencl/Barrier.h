@@ -26,6 +26,7 @@
 
 #include "config.h"
 
+#include <llvm/Analysis/LoopInfo.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Module.h>
@@ -38,7 +39,6 @@
 namespace pocl {
 
   class Barrier : public llvm::CallInst {
-
   public:
     static void GetBarriers(llvm::SmallVectorImpl<Barrier *> &B,
                             llvm::Module &M) {
@@ -49,6 +49,20 @@ namespace pocl {
           B.push_back(llvm::cast<Barrier>(*I));
       }
     }
+
+    static bool IsLoopWithBarrier(llvm::Loop &L) {
+      for (llvm::Loop::block_iterator i = L.block_begin(), e = L.block_end();
+           i != e; ++i) {
+        for (llvm::BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();
+             j != e; ++j) {
+          if (llvm::isa<Barrier>(j)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
     /**
      * Creates a new barrier before the given instruction.
      *
@@ -85,8 +99,6 @@ namespace pocl {
       return (llvm::isa<User>(V) &&
               classof(llvm::cast<llvm::User>(V)));
     }
-
-
 
     static bool hasOnlyBarrier(const llvm::BasicBlock *BB) {
       return endsWithBarrier(BB) && BB->size() == 2;

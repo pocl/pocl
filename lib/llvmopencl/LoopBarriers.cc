@@ -58,6 +58,7 @@ static bool processLoopBarriers(Loop &L, llvm::DominatorTree &DT) {
   bool IsBarLoop = false;
   bool Changed = false;
 
+  IsBarLoop = Barrier::IsLoopWithBarrier(L);
   for (Loop::block_iterator i = L.block_begin(), e = L.block_end();
        i != e && !IsBarLoop; ++i) {
     for (BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();
