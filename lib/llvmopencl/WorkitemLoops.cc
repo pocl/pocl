@@ -159,7 +159,7 @@ private:
 
   llvm::BasicBlock *appendIncBlock(llvm::BasicBlock *After, int Dim);
 
-  ParallelRegion *regionOfBlock(llvm::BasicBlock *BB);
+  ParallelRegion *RegionOfBlock(llvm::BasicBlock *BB);
 
   bool shouldNotBeContextSaved(llvm::Instruction *Instr);
 
@@ -449,7 +449,7 @@ WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
   return std::make_pair(forInitBB, loopEndBB);
 }
 
-ParallelRegion *WorkitemLoopsImpl::regionOfBlock(llvm::BasicBlock *BB) {
+ParallelRegion *WorkitemLoopsImpl::RegionOfBlock(llvm::BasicBlock *BB) {
   for (ParallelRegion::ParallelRegionVector::iterator
            PRI = OriginalParallelRegions.begin(),
            PRE = OriginalParallelRegions.end();
@@ -569,7 +569,7 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
       for (; PI != E; ++PI) {
         llvm::BasicBlock *BB = *PI;
         if (DT.dominates(original->entryBB(), BB) &&
-            (regionOfBlock(original->entryBB()) == regionOfBlock(BB)))
+            (RegionOfBlock(original->entryBB()) == RegionOfBlock(BB)))
           continue;
         preds.push_back(BB);
       }
@@ -745,9 +745,8 @@ void WorkitemLoopsImpl::fixMultiRegionVariables(ParallelRegion *Region) {
             // If the instruction is used also inside another region (not
             // in a regionless BB like the B-loop construct BBs), we need
             // to context save it to pass the private data over.
-            (InstructionsInRegion.find(User) ==
-             InstructionsInRegion.end() &&
-             regionOfBlock(User->getParent()) != NULL)) {
+            (InstructionsInRegion.find(User) == InstructionsInRegion.end() &&
+             RegionOfBlock(User->getParent()) != NULL)) {
           InstructionsToFix.push_back(Instr);
           break;
         }
@@ -876,7 +875,7 @@ WorkitemLoopsImpl::addContextSave(llvm::Instruction *Inst,
 
   /* Reuse the id loads earlier in the region, if possible, to
      avoid messy output with lots of redundant loads. */
-  ParallelRegion *region = regionOfBlock(Inst->getParent());
+  ParallelRegion *region = RegionOfBlock(Inst->getParent());
   assert ("Adding context save outside any region produces illegal code." && 
           region != NULL);
 
@@ -923,7 +922,7 @@ llvm::Instruction *WorkitemLoopsImpl::addContextRestore(llvm::Value *Val,
 
   /* Reuse the id loads earlier in the region, if possible, to
      avoid messy output with lots of redundant loads. */
-  ParallelRegion *region = regionOfBlock(Before->getParent());
+  ParallelRegion *region = RegionOfBlock(Before->getParent());
   assert ("Adding context save outside any region produces illegal code." && 
           region != NULL);
 
@@ -1241,12 +1240,12 @@ WorkitemLoopsImpl::getContextArray(llvm::Instruction *Inst,
 // TODO: rematerialize some values such as extended values of global
 // variables (especially global id which is computed from local id) or kernel
 // argument values instead of allocating stack space for them
-void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Instr) {
+void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
 
   // Allocate the context data array for the variable.
   bool PoclWrapperStructAdded = false;
-  llvm::AllocaInst *Alloca = getContextArray(Instr, PoclWrapperStructAdded);
-  llvm::Instruction *TheStore = addContextSave(Instr, Alloca);
+  llvm::AllocaInst *Alloca = getContextArray(Def, PoclWrapperStructAdded);
+  llvm::Instruction *TheStore = addContextSave(Def, Alloca);
 
   InstructionVec Uses;
   // Restore the produced variable before each use to ensure the correct
@@ -1264,10 +1263,13 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Instr) {
 #endif
 
   // Find out the uses to fix first as fixing them invalidates the iterator.
-  for (Instruction::use_iterator UI = Instr->use_begin(),
-         UE = Instr->use_end(); UI != UE; ++UI) {
+  for (Instruction::use_iterator UI = Def->use_begin(), UE = Def->use_end();
+       UI != UE; ++UI) {
     llvm::Instruction *User = cast<Instruction>(UI->getUser());
-    if (User == NULL || User == TheStore) continue;
+    if (User == NULL || User == TheStore ||
+        // Use the original variable in the defining region.
+        RegionOfBlock(Def->getParent()) == RegionOfBlock(User->getParent()))
+      continue;
     Uses.push_back(User);
   }
 
@@ -1277,15 +1279,14 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Instr) {
     // itself must be a "work group variable", that is, not dependent on the
     // work item. Most likely an iteration variable of a for loop with a
     // barrier.
-    ParallelRegion *PR = regionOfBlock(UserI->getParent());
+    ParallelRegion *PR = RegionOfBlock(UserI->getParent());
     if (PR == NULL)
       continue;
     Instruction *ContextRestoreLocation = PR->entryBB()->getTerminator();
-    llvm::Value *LoadedValue = addContextRestore(
-      UserI, Alloca, Instr->getType(),
-      PoclWrapperStructAdded, ContextRestoreLocation,
-      isa<AllocaInst>(Instr));
-    UserI->replaceUsesOfWith(Instr, LoadedValue);
+    llvm::Value *LoadedValue =
+        addContextRestore(UserI, Alloca, Def->getType(), PoclWrapperStructAdded,
+                          ContextRestoreLocation, isa<AllocaInst>(Def));
+    UserI->replaceUsesOfWith(Def, LoadedValue);
 
 #ifdef DEBUG_WORK_ITEM_LOOPS
     std::cerr << "### done, the user was converted to:" << std::endl;
