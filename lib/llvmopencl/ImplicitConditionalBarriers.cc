@@ -103,6 +103,7 @@ static bool implicitConditionalBarriers(Function &F,
   if (ConditionalBarriers.size() == 0)
     return true;
 
+  bool Changed = false;
   for (BarrierBlockIndex::const_iterator i = ConditionalBarriers.begin();
        i != ConditionalBarriers.end(); ++i) {
     BasicBlock *BB = *i;
@@ -143,14 +144,24 @@ static bool implicitConditionalBarriers(Function &F,
     // PHIs. It has a loop that is autoconverted to a b-loop and the
     // conditional barrier is inserted after the loop short cut check.
     Barrier::Create(Pos->getFirstNonPHI());
+
+    Changed = true;
+
 #ifdef DEBUG_COND_BARRIERS
     std::cerr << "### added an implicit barrier to the BB" << std::endl;
     Pos->dump();
 #endif
-
+    if (BasicBlock *Source = Pos->getSinglePredecessor()) {
+      Barrier::Create(Source->getTerminator());
+#ifdef DEBUG_COND_BARRIERS
+      std::cerr
+          << "### added an implicit barrier to the source of the BB as well"
+          << std::endl;
+      Source->dump();
+#endif
+    }
   }
-
-  return true;
+  return Changed;
 }
 
 
