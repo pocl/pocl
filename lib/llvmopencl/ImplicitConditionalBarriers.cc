@@ -172,11 +172,19 @@ ImplicitConditionalBarriers::run(llvm::Function &F,
     // PHIs. It has a loop that is autoconverted to a b-loop and the
     // conditional barrier is inserted after the loop shortcut check.
     Barrier::Create(Pos->getFirstNonPHI());
+
     Changed = true;
 #ifdef DEBUG_COND_BARRIERS
     std::cerr << "### added an implicit barrier to the BB" << std::endl;
     Pos->dump();
 #endif
+    if (BasicBlock *Source = Pos->getSinglePredecessor()) {
+      Barrier::Create(Source->getTerminator());
+#ifdef DEBUG_COND_BARRIERS
+      std::cerr << "### added an implicit barrier to source the BB as well" << std::endl;
+      Source->dump();
+#endif
+    }
   }
 
 #ifdef DEBUG_COND_BARRIERS
