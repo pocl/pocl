@@ -56,7 +56,6 @@ pocl_get_last_events (cl_context context, cl_event **last_events,
 
   for (unsigned i = 0; i < context->num_devices; ++i)
     {
-      cl_device_id dev = context->devices[i];
       if (context->default_queues && context->default_queues[i])
         {
           POCL_LOCK_OBJ (context->default_queues[i]);
@@ -106,15 +105,13 @@ pocl_mem_free_intel (cl_context context, void *usm_pointer, cl_bool blocking)
 
   if (blocking == CL_FALSE)
     {
-      context->usm_allocdev->ops->usm_free (context->usm_allocdev,
-                                            usm_pointer);
+      item->device->ops->usm_free (item->device, usm_pointer);
     }
   else
     {
       /* if the device implements blocking free callback */
-      if (context->usm_allocdev->ops->usm_free_blocking)
-        context->usm_allocdev->ops->usm_free_blocking (context->usm_allocdev,
-                                                       usm_pointer);
+      if (item->device->ops->usm_free_blocking)
+        item->device->ops->usm_free_blocking (item->device, usm_pointer);
       else
         {
           /* otherwise wait for all queues in the context */
@@ -134,8 +131,7 @@ pocl_mem_free_intel (cl_context context, void *usm_pointer, cl_bool blocking)
                   POname (clReleaseEvent) (last_events[i]);
                 }
             }
-          context->usm_allocdev->ops->usm_free (context->usm_allocdev,
-                                                usm_pointer);
+          item->device->ops->usm_free (item->device, usm_pointer);
         }
     }
 
