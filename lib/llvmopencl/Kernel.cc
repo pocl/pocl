@@ -72,6 +72,10 @@ ParallelRegion *Kernel::createParallelRegionBefore(llvm::BasicBlock *B) {
   BasicBlock *OrigEntry = NULL;
   BasicBlock *Exit = B->getSinglePredecessor();
 
+  // The special entry block is not treated as a parallel region.
+  if (Exit == &getEntryBlock())
+    return nullptr;
+
   SmallVector<BasicBlock *, 4> PendingBlocks;
   AddPredecessors(PendingBlocks, B);
 
@@ -103,9 +107,13 @@ ParallelRegion *Kernel::createParallelRegionBefore(llvm::BasicBlock *B) {
       continue;
     }
 
+    // We expect no other instructions in barrier blocks expect the function
+    // entry node where we push context data allocas.
     if (Barrier::hasBarrier(Current)) {
-      assert(false && "Barrier found in a non-barrier block! (forgot barrier "
-                      "canonicalization?)");
+      assert(
+          false &&
+          "Barrier found in a non-barrier (non-entry) block! (forgot barrier "
+          "canonicalization?)");
     }
 
 #ifdef DEBUG_PR_CREATION
@@ -189,42 +197,54 @@ static void AddPredecessors(SmallVectorImpl<BasicBlock *> &V, BasicBlock *BB) {
  * @todo Move to ParallelRegion.
  */
 void Kernel::getParallelRegions(
-    llvm::LoopInfo &LI,
-    ParallelRegion::ParallelRegionVector *ParallelRegions) {
+    llvm::LoopInfo &LI, ParallelRegion::ParallelRegionVector *ParallelRegions) {
 
-  SmallVector<BasicBlock *, 4> ExitBlocks;
-  getExitBlocks(ExitBlocks);
+  // Ensure we have a separate function entry node where we push context
+  // array allocas and that it's separated from the very first use code
+  // block with an isolated barrier node.
+  BasicBlock *KernelEntry = &getEntryBlock();
+  assert(Barrier::hasBarrier(KernelEntry));
+  Barrier *Bar = Barrier::FindInBasicBlock(KernelEntry);
+  llvm::SplitBlock(KernelEntry, Bar);
+
+  // Unhandled parallel region exit blocks.
+  SmallVector<BasicBlock *, 4> PRExitBlocks;
+
+  // We start on a function exit block and process the parallel regions upwards
+  // (finding an execution trace).
+  getExitBlocks(PRExitBlocks);
 
   // We need to keep track of traversed barriers to detect back edges.
-  SmallPtrSet<BasicBlock *, 8> FoundBarriers;
+  SmallPtrSet<BasicBlock *, 8> ProcessedPRExits;
 
   // First find all the ParallelRegions in the Function.
-  while (!ExitBlocks.empty()) {
+  while (!PRExitBlocks.empty()) {
 
-    // We start on an exit block and process the parallel regions upwards
-    // (finding an execution trace).
-    BasicBlock *Exit = ExitBlocks.back();
-    ExitBlocks.pop_back();
+    BasicBlock *PRExitToProcess = PRExitBlocks.back();
+    PRExitBlocks.pop_back();
 
     // Already handled.
-    if (FoundBarriers.count(Exit) != 0)
+    if (ProcessedPRExits.count(PRExitToProcess) > 0)
       continue;
 
-    while (ParallelRegion *PR = createParallelRegionBefore(Exit)) {
+    while (ParallelRegion *PR = createParallelRegionBefore(PRExitToProcess)) {
       assert(PR != NULL && !PR->empty() &&
              "Empty parallel region in kernel (contiguous barriers)!");
 
-      FoundBarriers.insert(Exit);
-      Exit = NULL;
+      ProcessedPRExits.insert(PRExitToProcess);
+      PRExitToProcess = NULL;
       ParallelRegions->push_back(PR);
-      BasicBlock *Entry = PR->entryBB();
+      BasicBlock *PREntry = PR->entryBB();
       int FoundPredecessors = 0;
       BasicBlock *LoopBarrier = NULL;
 
       // Find the other parallel regions that flow into this one.
-      for (pred_iterator i = pred_begin(Entry), e = pred_end(Entry);
-           i != e; ++i) {
+      for (pred_iterator i = pred_begin(PREntry), e = pred_end(PREntry); i != e;
+           ++i) {
         BasicBlock *Barrier = (*i);
+        if (ProcessedPRExits.count(Barrier) > 0)
+          continue;
+
         if (!Barrier::hasBarrier(Barrier) && PR->HasBlock(Barrier)) {
 #ifdef DEBUG_PR_CREATION
           std::cout << "### a block that branches to the entry node, must be a "
@@ -235,49 +255,42 @@ void Kernel::getParallelRegions(
           continue;
         }
 
-        if (!FoundBarriers.count(Barrier)) {
-          // If this is a loop header block we might have edges from two
-          // unprocessed barriers. The one inside the loop (coming from a
-          // computation block after a branch block) should be processed
-          // first.
-          std::string bbName = "";
+        // If this is a loop header block we might have edges from two
+        // unprocessed barriers. The one inside the loop (coming from a
+        // computation block after a branch block) should be processed
+        // first.
 
-          // Do we need to recompute LoopInfo.
-          bool IsInTheSameLoop =
-              LI.getLoopFor(Barrier) != NULL && LI.getLoopFor(Entry) != NULL &&
-              LI.getLoopFor(Entry) == LI.getLoopFor(Barrier);
+        // Do we need to recompute LoopInfo here since we've added the entry
+        // blocks to PRs?
+        bool IsInTheSameLoop = LI.getLoopFor(Barrier) != NULL &&
+                               LI.getLoopFor(PREntry) != NULL &&
+                               LI.getLoopFor(PREntry) == LI.getLoopFor(Barrier);
 
-          if (IsInTheSameLoop) {
+        if (IsInTheSameLoop) {
 #ifdef DEBUG_PR_CREATION
-            std::cout << "### found a barrier inside a loop:" << std::endl;
-            std::cout << Barrier->getName().str() << std::endl;
+          std::cout << "### found a barrier inside a loop:" << std::endl;
+          std::cout << Barrier->getName().str() << std::endl;
 #endif
-            if (LoopBarrier != NULL) {
-              // there can be multiple latches and each have their barrier,
-              // save the previously found inner loop barrier
-              ExitBlocks.push_back(LoopBarrier);
-            }
-            LoopBarrier = Barrier;
-          } else {
-#ifdef DEBUG_PR_CREATION
-              std::cout << "### found a barrier:" << std::endl;
-              std::cout << Barrier->getName().str() << std::endl;
-#endif
-              Exit = Barrier;
+          if (LoopBarrier != NULL) {
+            // There can be multiple latches and each have their barrier,
+            // save the previously found inner loop barrier.
+            PRExitBlocks.push_back(LoopBarrier);
           }
-          ++FoundPredecessors;
+          LoopBarrier = Barrier;
+        } else {
+#ifdef DEBUG_PR_CREATION
+          std::cout << "### found a barrier:" << std::endl;
+          std::cout << Barrier->getName().str() << std::endl;
+#endif
+          PRExitToProcess = Barrier;
+          PRExitBlocks.push_back(Barrier);
         }
+        ++FoundPredecessors;
       }
 
-      if (LoopBarrier != NULL) {
-        // The secondary barrier to process in case it was a loop
-        // header. Push it for later processing.
-        if (Exit != NULL)
-          ExitBlocks.push_back(Exit);
-        // Always process the inner loop regions first.
-        if (!FoundBarriers.count(LoopBarrier))
-          Exit = LoopBarrier;
-      }
+      // Always process the inner loop regions first.
+      if (LoopBarrier != NULL && !ProcessedPRExits.count(LoopBarrier))
+        PRExitToProcess = LoopBarrier;
 
 #ifdef DEBUG_PR_CREATION
       std::cout << "### created a ParallelRegion:" << std::endl;
@@ -293,7 +306,8 @@ void Kernel::getParallelRegions(
         // processed) before.
         break;
       }
-      assert(Exit != NULL && "Parallel region without entry barrier!");
+      assert(PRExitToProcess != NULL &&
+             "Parallel region without entry barrier!");
     }
   }
 
