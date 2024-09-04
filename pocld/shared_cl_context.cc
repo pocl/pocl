@@ -23,6 +23,7 @@
    IN THE SOFTWARE.
 */
 
+#include <algorithm>
 #include <cassert>
 #include <cstdio>
 #include <filesystem>
