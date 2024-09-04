@@ -1,6 +1,7 @@
 // LLVM function pass to convert all PHIs to allocas.
 //
 // Copyright (c) 2012-2019 Pekka Jääskeläinen
+//               2024 Pekka Jääskeläinen / Intel Finland Oy
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +28,7 @@ POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/IRBuilder.h>
 
+#include "Barrier.h"
 #include "LLVMUtils.h"
 #include "PHIsToAllocas.h"
 #include "VariableUniformityAnalysis.h"
@@ -40,12 +42,17 @@ POP_COMPILER_DIAGS
 #define PASS_CLASS pocl::PHIsToAllocas
 #define PASS_DESC "Convert all PHI nodes to allocas"
 
-//#define DEBUG_PHIS_TO_ALLOCAS
+// #define DEBUG_PHIS_TO_ALLOCAS
 
 // Skip PHIsToAllocas when we are not creating the work item loops,
 // as it leads to worse code without benefits for the full replication method.
 // Note: re-enabling this causes workgroup/cond_barriers_in_for_cbs to fail
 //#define CBS_NO_PHIS_IN_SPLIT
+
+// WiP: Attempt to preserve loop PHIs for easier loop analysis without
+// needing to run mem2reg again.
+// #define PRESERVE_LOOP_PHIS
+
 #include <iostream>
 
 namespace pocl {
@@ -69,33 +76,6 @@ static bool needsPHIsToAllocas(Function &F, WorkitemHandlerType WIH) {
     return false;
 
   return true;
-}
-
-static bool runPHIsToAllocas(Function &F,
-                             VariableUniformityAnalysisResult &VUA) {
-
-  typedef std::vector<llvm::Instruction* > InstructionVec;
-
-  InstructionVec PHIs;
-
-  for (Function::iterator bb = F.begin(); bb != F.end(); ++bb) {
-    for (BasicBlock::iterator p = bb->begin(); 
-         p != bb->end(); ++p) {
-        Instruction* instr = &*p;
-        if (isa<PHINode>(instr)) {
-            PHIs.push_back(instr);
-        }
-    }
-  }
-
-  bool changed = false;
-  for (InstructionVec::iterator i = PHIs.begin(); i != PHIs.end();
-       ++i) {
-      Instruction *instr = *i;
-      breakPHIToAllocas(dyn_cast<PHINode>(instr), VUA);
-      changed = true;
-  }  
-  return changed;
 }
 
 /**
@@ -124,7 +104,6 @@ breakPHIToAllocas(PHINode *Phi, VariableUniformityAnalysisResult &VUA) {
   llvm::Function *Function = Phi->getParent()->getParent();
 
   const bool OriginalPHIWasUniform = VUA.isUniform(Function, Phi);
-
   IRBuilder<> Builder(&*(Function->getEntryBlock().getFirstInsertionPt()));
 
   llvm::Instruction *AllocaI =
@@ -165,6 +144,7 @@ breakPHIToAllocas(PHINode *Phi, VariableUniformityAnalysisResult &VUA) {
 
 llvm::PreservedAnalyses PHIsToAllocas::run(llvm::Function &F,
                                            llvm::FunctionAnalysisManager &AM) {
+
   WorkitemHandlerType WIH = AM.getResult<WorkitemHandlerChooser>(F).WIH;
   if (!needsPHIsToAllocas(F, WIH))
     return PreservedAnalyses::all();
@@ -172,10 +152,45 @@ llvm::PreservedAnalyses PHIsToAllocas::run(llvm::Function &F,
   VariableUniformityAnalysisResult VUA =
       AM.getResult<VariableUniformityAnalysis>(F);
 
+#ifdef PRESERVE_LOOP_PHIS
+  llvm::LoopInfo &LI = AM.getResult<LoopAnalysis>(F);
+#endif
+
   PreservedAnalyses PAChanged = PreservedAnalyses::none();
   PAChanged.preserve<VariableUniformityAnalysis>();
   PAChanged.preserve<WorkitemHandlerChooser>();
-  return runPHIsToAllocas(F, VUA) ? PAChanged : PreservedAnalyses::all();
+
+  typedef std::vector<llvm::Instruction *> InstructionVec;
+
+  InstructionVec PHIs;
+
+  for (Function::iterator bb = F.begin(); bb != F.end(); ++bb) {
+    for (BasicBlock::iterator p = bb->begin(); p != bb->end(); ++p) {
+      Instruction *I = &*p;
+      if (!isa<PHINode>(I))
+        continue;
+
+#ifdef PRESERVE_LOOP_PHIS
+      // If this is a PHINode in a non-barrier loop header, we should not
+      // convert it to allocas to enable easier loop analysis for loopvec and
+      // to avoid storing the induction variable in the WI context. Repl
+      // relies on all PHIs to be converted to allocas.
+      llvm::Loop *L = LI.getLoopFor(I->getParent());
+      if (L != nullptr && !Barrier::IsLoopWithBarrier(*L))
+        continue;
+#endif
+      PHIs.push_back(I);
+    }
+  }
+
+  bool Changed = false;
+  for (InstructionVec::iterator i = PHIs.begin(); i != PHIs.end(); ++i) {
+    Instruction *instr = *i;
+    if (breakPHIToAllocas(dyn_cast<PHINode>(instr), VUA) != nullptr)
+      Changed = true;
+  }
+
+  return Changed ? PAChanged : PreservedAnalyses::all();
 }
 
 REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);

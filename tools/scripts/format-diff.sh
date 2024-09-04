@@ -22,7 +22,7 @@ git diff $* -U0 --no-color >$PATCHY
 # We need to recreate the diff since the old patch is stale.
 git diff $* -U0 --no-color >$PATCHY
 
-"$RELPATH"/clang-format-diff.py -v -regex '(.*(\.hpp$|\.hh$|\.cc$|\.cpp$|lib/llvmopencl/.*$|/lib/CL/devices/tce/.*$))' -i -p1 -style=file:"$RELPATH/style.CPP" <"$PATCHY"
+"$RELPATH"/clang-format-diff.py -v -regex '(.*(\.hpp$|\.hh$|\.cc$|\.cpp$|lib/llvmopencl/.*\.h$|/lib/CL/devices/tce/.*$))' -i -p1 -style=file:"$RELPATH/style.CPP" <"$PATCHY"
 
 # cd back wherever we were previously
 popd > /dev/null || exit 1

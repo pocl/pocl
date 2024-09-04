@@ -60,7 +60,7 @@ Deprecation/feature removal notices
 ===================================
 
  * The old "work-item replication" work-group function generation
-   method will be removed in the next release. It seems not provide
-   any benefits anymore over simply fully unrolling the result of
-   "loops".
+   method was removed to clean up the kernel compiler. It did not
+   anymore have any use cases that could not be covered by fully
+   unrolling "loops".
 

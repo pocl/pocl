@@ -530,7 +530,19 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
     // but they should not be invalidated by previous passes
     addPass(Passes, "implicit-loop-barriers", PassType::Loop);
 
+    // implicit-cond-barriers handles barriers inside conditional
+    // basic blocks (basically if...elses). It tries to minimize the
+    // part ending up in the parallel region that is conditional by
+    // isolating the branching condition (which must be uniform,
+    // otherwise the end result is undefined according to barrier rules),
+    // to minimize the impact of "work-item peeling" (* to describe).
     addPass(Passes, "implicit-cond-barriers");
+
+    // loop-barriers adds implicit barriers to handle b-loops by isolating the
+    // loop body from the loop construct. It also tries to make non b-loops
+    // "isolated" in a way to produce the wiloop strictly around it, making
+    // things nice for LLVM standard loop analysis (loop-interchange and
+    // loopvec at least).
     addPass(Passes, "loop-barriers", PassType::Loop);
     // required for new PM: WorkitemLoops to remove PHi nodes from LCSSA
     // 153: pocl::WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction*):
@@ -554,8 +566,6 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
     // it will be used as a prefix to the dot files ("PREFIX_kernel.dot")
     addPass(Passes, "print<pocl-cfg;before>", PassType::Module);
 #endif
-
-    addPass(Passes, "workitemrepl");
 
     // subcfgformation (for CBS) before workitemloops, as wiloops creates the
     // loops for kernels without barriers, but after the transformation the
