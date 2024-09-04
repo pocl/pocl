@@ -21,21 +21,27 @@ test_kernel (global int *output)
 
   for (int i = 0; i < 2; i++)
     {
+      printf ("A i %d gid_x %d group_id %d\n", i, gid_x, group_id);
       if (group_id > 0)
         {
+          printf ("B i %d gid_x %d group_id %d\n", i, gid_x, group_id);
           barrier (CLK_LOCAL_MEM_FENCE);
           if (group_id == 1)
             {
               const int v = scratch[0];
+              printf ("C i %d gid_x %d group_id %d\n", i, gid_x, group_id);
               barrier (CLK_LOCAL_MEM_FENCE);
               scratch[local_id] += v;
             }
+          printf ("D i %d gid_x %d group_id %d\n", i, gid_x, group_id);
         }
       else
         {
           scratch[local_id] += 1;
+          printf ("E i %d gid_x %d group_id %d\n", i, gid_x, group_id);
           barrier (CLK_LOCAL_MEM_FENCE);
           scratch[local_id] += 1;
+          printf ("F i %d gid_x %d group_id %d\n", i, gid_x, group_id);
         }
     }
   output[global_id] = scratch[local_id];

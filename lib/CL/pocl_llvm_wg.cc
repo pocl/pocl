@@ -3,7 +3,7 @@
 
    Copyright (c) 2013 Kalle Raiskila
                  2013-2019 Pekka Jääskeläinen
-                 2023 Pekka Jääskeläinen / Intel Finland Oy
+                 2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -486,7 +486,7 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
   addPass(Passes, "mem2reg");
   addAnalysis(Passes, "domtree");
   addAnalysis(Passes, "workitem-handler-chooser");
-  if (Dev->spmd != CL_FALSE) {
+  if (Dev->spmd) {
     addPass(Passes, "flatten-inline-all", PassType::Module);
     addPass(Passes, "always-inline", PassType::Module);
   } else {
@@ -540,6 +540,8 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
     // loopvec at least).
     addPass(Passes, "loop-barriers", PassType::Loop);
 
+    addPass(Passes, "canon-barriers");
+
     // implicit-conf-barriers handles barriers inside conditional
     // basic blocks (basically if...elses). It tries to minimize the
     // part ending up in the parallel region that is conditional by
@@ -555,9 +557,14 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
     // Phi->getParent()' failed.
     addPass(Passes, "instcombine");
 
+    // Move all allocas to the entry block to ensure they do not end up
+    // in parallel regions. Parallel regions should have their own context
+    // handling for all cross-PR variables.
+    addPass(Passes, "allocastoentry");
+
     addPass(Passes, "barriertails");
-    addPass(Passes, "canon-barriers");
     addPass(Passes, "isolate-regions");
+    addPass(Passes, "canon-barriers");
 
     // required for OLD PM
     addAnalysis(Passes, "wi-aa");
@@ -586,6 +593,10 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
     // Remove the (pseudo) barriers.   They have no use anymore due to the
     // work-item loop control taking care of them.
     addPass(Passes, "remove-barriers");
+  } else {
+    // Attempt to move all allocas to the entry block to avoid the need for
+    // dynamic stack which is problematic for some architectures.
+    addPass(Passes, "allocastoentry");
   }
 
   // verify & print the module
@@ -605,10 +616,6 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
     addPass(Passes, "workgroup", PassType::Module);
     addPass(Passes, "always-inline", PassType::Module);
   }
-
-  // Attempt to move all allocas to the entry block to avoid the need for
-  // dynamic stack which is problematic for some architectures.
-  addPass(Passes, "allocastoentry");
 
   // Convert variables back to PHIs to clean up loop structures to enable the
   // LLVM standard loop analysis.

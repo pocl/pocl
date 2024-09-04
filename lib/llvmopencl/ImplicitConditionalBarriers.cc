@@ -113,18 +113,13 @@ ImplicitConditionalBarriers::run(llvm::Function &F,
     if (!Barrier::hasBarrier(BB)) continue;
 
     // Unconditional barrier postdominates the entry node.
-    if (PDT.dominates(BB, &F.getEntryBlock()))
+    if (PDT.dominates(BB, &F.getEntryBlock())) {
+#ifdef DEBUG_COND_BARRIERS
+      std::cerr << "### BB postdominates the entry block" << std::endl;
+      BB->dump();
+#endif
       continue;
-
-    // If this is a barrier in an loop exit node that isolates a loop at its
-    // end, we do not need to analyze it since we know the barrier that isolates
-    // it from the start will take care of a potential branch that makes the
-    // whole loop conditional. If we added an implicit barrier here, it would
-    // add one to the loop body, making all loops b-loops.
-    if (pred_begin(BB) != pred_end(BB) &&
-        LI.getLoopFor(*pred_begin(BB)) != nullptr)
-      continue;
-
+    }
     ConditionalBarriers.push_back(BB);
   }
 
@@ -163,15 +158,18 @@ ImplicitConditionalBarriers::run(llvm::Function &F,
       if (Pred == BB) break; // Traced across a loop edge, skip this case.
     }
 
-    if (Barrier::hasOnlyBarrier(Pos)) continue;
-    // Inject a barrier at the beginning of the BB and let the
-    // CanonicalizeBarrier clean it up (split to a separate BB).
+    // If we encountered a loop on the way, we do not have to do anything
+    // as loops are isolated separately. This is likely a barrier isolating
+    // the loop regions.
+    if (LI.getLoopFor(BB) != LI.getLoopFor(Pos))
+      continue;
 
-    // mri-q of parboil breaks in case injected at the beginning
-    // TODO: investigate. It might related to the alloca-converted
-    // PHIs. It has a loop that is autoconverted to a b-loop and the
-    // conditional barrier is inserted after the loop shortcut check.
-    Barrier::Create(Pos->getFirstNonPHI());
+    if (Barrier::hasOnlyBarrier(Pos) || isa<Barrier>(Pos->getFirstNonPHI()))
+      continue;
+
+    // Inject a barrier at the end of the conditional BB and let the
+    // CanonicalizeBarriers split it to a separate BB.
+    Barrier::Create(Pos->getTerminator());
 
     Changed = true;
 #ifdef DEBUG_COND_BARRIERS
@@ -181,7 +179,8 @@ ImplicitConditionalBarriers::run(llvm::Function &F,
     if (BasicBlock *Source = Pos->getSinglePredecessor()) {
       Barrier::Create(Source->getTerminator());
 #ifdef DEBUG_COND_BARRIERS
-      std::cerr << "### added an implicit barrier to source the BB as well" << std::endl;
+      std::cerr << "### added an implicit barrier to a source of the BB as well"
+                << std::endl;
       Source->dump();
 #endif
     }

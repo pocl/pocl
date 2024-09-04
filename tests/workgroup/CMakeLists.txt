@@ -141,6 +141,7 @@ set(VARIANTS "loopvec;cbs")
 foreach(VARIANT ${VARIANTS})
   set(TEST_LIST     "workgroup/unconditional_barriers_${VARIANT}"
   "workgroup/conditional_barrier_${VARIANT}"
+  "workgroup/cond_barriers_in_for_${VARIANT}"
   "workgroup/loop_with_two_paths_to_the_latch_${VARIANT}"
   "workgroup/b_loop_with_two_latches_${VARIANT}"
   "workgroup/workgroup_sizes_work_items_get_wrong_ids_${VARIANT}"
