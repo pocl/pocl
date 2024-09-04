@@ -64,15 +64,10 @@ pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
   POCL_GOTO_ERROR_ON ((!context->usm_allocdev), CL_INVALID_OPERATION,
                       "None of the devices in this context is USM-capable\n");
 
-  if (device)
-    {
-      POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (device)), CL_INVALID_DEVICE);
-      POCL_GOTO_ERROR_ON ((device->ops->usm_alloc == NULL),
-                          CL_INVALID_OPERATION,
-                          "The device in argument is not USM-capable\n");
-    }
-  else
-    device = context->usm_allocdev;
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (device)), CL_INVALID_DEVICE);
+  POCL_GOTO_ERROR_ON ((device->ops->usm_alloc == NULL),
+                      CL_INVALID_OPERATION,
+                      "The device in argument is not USM-capable\n");
 
   switch (alloc_type)
     {
@@ -140,8 +135,7 @@ pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
   POCL_GOTO_ERROR_ON ((item == NULL), CL_OUT_OF_HOST_MEMORY,
                       "out of host memory\n");
 
-  ptr
-      = device->ops->usm_alloc (device, alloc_type, flags, size, &errcode);
+  ptr = device->ops->usm_alloc (device, alloc_type, flags, size, &errcode);
   if (errcode != CL_SUCCESS)
     goto ERROR;
   POCL_GOTO_ERROR_ON ((ptr == NULL), CL_OUT_OF_RESOURCES,
@@ -153,11 +147,7 @@ pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
   item->vm_ptr = ptr;
   item->size = size;
   item->kind = POCL_RAW_PTR_INTEL_USM;
-  if (alloc_type == CL_MEM_TYPE_DEVICE_INTEL ||
-      alloc_type == CL_MEM_TYPE_SHARED_INTEL)
-    item->device = device;
-  else
-    item->device = NULL;
+  item->device = device;
   item->usm_properties.alloc_type = alloc_type;
   item->usm_properties.flags = flags;
   DL_APPEND (context->raw_ptrs, item);
@@ -202,8 +192,8 @@ POname (clHostMemAllocINTEL) (cl_context context,
                               size_t size, cl_uint alignment,
                               cl_int *errcode_ret) CL_API_SUFFIX__VERSION_2_0
 {
-  return pocl_usm_alloc (CL_MEM_TYPE_HOST_INTEL, context, NULL, properties,
-                         size, alignment, errcode_ret);
+  return pocl_usm_alloc (CL_MEM_TYPE_HOST_INTEL, context, context->usm_allocdev,
+                         properties, size, alignment, errcode_ret);
 }
 POsym (clHostMemAllocINTEL)
 
