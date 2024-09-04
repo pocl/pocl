@@ -53,7 +53,7 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
 )
 
 if(OPENCL_HEADER_VERSION GREATER 299)
-  list(APPEND PROGRAMS_TO_BUILD test_program_scope_vars)
+  list(APPEND PROGRAMS_TO_BUILD test_program_scope_vars test_issue_1548)
 endif()
 
 if (MSVC)
@@ -93,6 +93,15 @@ if(OPENCL_HEADER_VERSION GREATER 299)
   set_tests_properties("regression/test_program_scope_vars" PROPERTIES
     LABELS "internal;regression;level0"
     SKIP_RETURN_CODE 77)
+
+  # this test requires two USM devices
+  if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LEVEL0)
+    add_test(NAME "regression/test_issue_1548" COMMAND "test_issue_1548")
+    set_tests_properties("regression/test_issue_1548" PROPERTIES
+      LABELS "internal;regression;level0"
+      ENVIRONMENT "POCL_DEVICES=level0 cpu"
+      SKIP_RETURN_CODE 77)
+  endif()
 endif()
 
 add_test_pocl(NAME "regression/test_llvm_segfault_issue_889" COMMAND "test_llvm_segfault_issue_889")
