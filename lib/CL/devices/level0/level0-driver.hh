@@ -287,6 +287,34 @@ private:
   unsigned LastIdx;
 };
 
+class Level0Allocator {
+public:
+  virtual void *allocBuffer(uintptr_t Key, Level0Device *D,
+                            ze_device_mem_alloc_flags_t DevFlags,
+                            ze_host_mem_alloc_flags_t HostFlags, size_t Size,
+                            bool &IsHostAccessible) = 0;
+  virtual bool freeBuffer(uintptr_t Key, Level0Device *D, void *Ptr) = 0;
+  virtual bool clear(Level0Device *D) = 0;
+
+  /*
+    virtual void *allocUSMSharedMem(uint64_t Size, bool EnableCompression =
+    false, ze_device_mem_alloc_flags_t DevFlags =
+                             ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED,
+                         ze_host_mem_alloc_flags_t HostFlags =
+                             ZE_HOST_MEM_ALLOC_FLAG_BIAS_CACHED |
+                             ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT |
+                             ZE_HOST_MEM_ALLOC_FLAG_BIAS_WRITE_COMBINED) = 0;
+    virtual void *allocUSMDeviceMem(uint64_t Size, ze_device_mem_alloc_flags_t
+    DevFlags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED) = 0; virtual void
+    *allocUSMHostMem(uint64_t Size, ze_device_mem_alloc_flags_t HostFlags =
+                                          ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED)
+    = 0; virtual void freeUSMMem(void *Ptr) = 0; virtual bool
+    freeUSMMemBlocking(void *Ptr) = 0;
+  */
+};
+
+using Level0AllocatorSPtr = std::shared_ptr<Level0Allocator>;
+
 class Level0Device {
 
 public:
@@ -302,19 +330,33 @@ public:
   void pushCommand(_cl_command_node *Command);
   void pushCommandBatch(BatchType Batch);
 
-  void *allocSharedMem(uint64_t Size, bool EnableCompression = false,
-                       ze_device_mem_alloc_flags_t DevFlags =
-                           ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED,
-                       ze_host_mem_alloc_flags_t HostFlags =
-                           ZE_HOST_MEM_ALLOC_FLAG_BIAS_CACHED |
-                           ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT |
-                           ZE_HOST_MEM_ALLOC_FLAG_BIAS_WRITE_COMBINED);
-  void *allocDeviceMem(uint64_t Size, ze_device_mem_alloc_flags_t DevFlags =
-                                          ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED);
-  void *allocHostMem(uint64_t Size, ze_device_mem_alloc_flags_t HostFlags =
-                                        ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED);
-  void freeMem(void *Ptr);
-  bool freeMemBlocking(void *Ptr);
+  void assignAllocator(Level0AllocatorSPtr NewAlloc) { Alloc = NewAlloc; }
+  void *allocBuffer(uintptr_t Key, ze_device_mem_alloc_flags_t DevFlags,
+                    ze_host_mem_alloc_flags_t HostFlags, size_t Size,
+                    bool &IsHostAccessible) {
+    return Alloc->allocBuffer(Key, this, DevFlags, HostFlags, Size,
+                              IsHostAccessible);
+  }
+  bool freeBuffer(uintptr_t Key, void *Ptr) {
+    return Alloc->freeBuffer(Key, this, Ptr);
+  }
+
+  void *allocUSMSharedMem(uint64_t Size, bool EnableCompression = false,
+                          ze_device_mem_alloc_flags_t DevFlags =
+                              ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED,
+                          ze_host_mem_alloc_flags_t HostFlags =
+                              ZE_HOST_MEM_ALLOC_FLAG_BIAS_CACHED |
+                              ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT |
+                              ZE_HOST_MEM_ALLOC_FLAG_BIAS_WRITE_COMBINED);
+  void *allocUSMDeviceMem(uint64_t Size,
+                          ze_device_mem_alloc_flags_t DevFlags =
+                              ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED);
+  void *allocUSMHostMem(uint64_t Size,
+                        ze_device_mem_alloc_flags_t HostFlags =
+                            ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED,
+                        void *pNext = nullptr);
+  void freeUSMMem(void *Ptr);
+  bool freeUSMMemBlocking(void *Ptr);
 
   ze_image_handle_t allocImage(cl_channel_type ChType,
                                cl_channel_order ChOrder,
@@ -372,6 +414,7 @@ public:
   ze_context_handle_t getContextHandle() { return ContextHandle; }
   Level0CompilationJobScheduler &getJobSched();
   Level0Driver *getDriver() const { return Driver; }
+  cl_device_id getClDev();
   void getTimingInfo(uint32_t &TS, uint32_t &KernelTS, double &TimerFreq,
                      double &NsPerCycle);
   void getMaxWGs(uint32_t_3 *MaxWGs);
@@ -383,6 +426,7 @@ public:
     // TODO we should get the real value from the L0 API somehow
     return 8;
   }
+  bool isHostUnifiedMemory() { return ClDev->host_unified_memory; }
   bool supportsHostUSM() { return ClDev->host_usm_capabs != 0; }
   bool supportsDeviceUSM() { return ClDev->device_usm_capabs != 0; }
   bool supportsSingleSharedUSM() {
@@ -397,6 +441,8 @@ public:
   bool supportsOndemandPaging() { return OndemandPaging; }
   bool supportsGlobalOffsets() { return HasGOffsets; }
   bool supportsCompression() { return HasCompression; }
+  bool supportsExportByDmaBuf() { return HasDMABufExport; }
+  bool supportsImportByDmaBuf() { return HasDMABufImport; }
   const ze_device_properties_t &getProperties() { return DeviceProperties; }
   cl_device_feature_capabilities_intel getFeatureCaps() {
     cl_device_feature_capabilities_intel FeatureCaps = 0;
@@ -426,6 +472,7 @@ public:
   bool prefersHostQueues() { return ClDev->type == CL_DEVICE_TYPE_CUSTOM; }
 
 private:
+  Level0AllocatorSPtr Alloc;
   std::deque<Level0EventPool> EventPools;
   std::mutex EventPoolLock;
   Level0QueueGroup CopyQueues;
@@ -462,6 +509,8 @@ private:
   bool NeedsRelaxedLimits = false;
   bool HasGOffsets = false;
   bool HasCompression = false;
+  bool HasDMABufExport = false;
+  bool HasDMABufImport = false;
   uint32_t MaxCommandQueuePriority = 0;
   uint32_t TSBits = 0;
   uint32_t KernelTSBits = 0;
@@ -492,8 +541,6 @@ private:
 
 typedef std::unique_ptr<Level0Device> Level0DeviceUPtr;
 
-
-
 class Level0Driver {
 
 public:
@@ -510,6 +557,9 @@ public:
   graph_dditable_ext_t *getGraphExt() { return GraphDDITableExt; }
 #endif
   unsigned getNumDevices() { return Devices.size(); }
+  Level0Device *getExportDevice();
+  bool getImportDevices(std::vector<Level0Device *> &ImportDevices,
+                        Level0Device *ExcludeDev);
   const ze_driver_uuid_t *getUUID() { return &UUID; }
   uint32_t getVersion() const { return Version; }
   Level0Device *createDevice(unsigned Index, cl_device_id Dev, const char *Params);
@@ -546,6 +596,81 @@ private:
 };
 
 using Level0DriverUPtr = std::unique_ptr<Level0Driver>;
+
+class Level0DefaultAllocator : public Level0Allocator {
+public:
+  Level0DefaultAllocator(Level0Driver *Dr, Level0Device *Dev)
+      : Driver(Dr), Device(Dev){};
+
+  // the default allocator ignores the Device argument, since there is only one
+  virtual void *allocBuffer(uintptr_t Key, Level0Device *,
+                            ze_device_mem_alloc_flags_t DevFlags,
+                            ze_host_mem_alloc_flags_t HostFlags, size_t Size,
+                            bool &IsHostAccessible) override;
+  virtual bool freeBuffer(uintptr_t Key, Level0Device *, void *Ptr) override;
+  virtual bool clear(Level0Device *D) override { return true; }
+
+private:
+  Level0Driver *Driver;
+  Level0Device *Device;
+};
+
+using Level0DefaultAllocatorUPtr = std::unique_ptr<Level0DefaultAllocator>;
+
+/// manages multiple device allocations for a single buffer
+/// automatically allocates export memory first and releases it last
+class DMABufAllocation {
+public:
+  DMABufAllocation() = default;
+  DMABufAllocation(const DMABufAllocation &) = default;
+  DMABufAllocation(DMABufAllocation &&) = default;
+  DMABufAllocation &operator=(DMABufAllocation &&) = default;
+  DMABufAllocation &operator=(const DMABufAllocation &) = default;
+  ~DMABufAllocation();
+
+  void *allocExport(Level0Device *D, ze_device_mem_alloc_flags_t DevFlags,
+                    ze_host_mem_alloc_flags_t HostFlags, size_t Size);
+  void *allocImport(Level0Device *D, ze_device_mem_alloc_flags_t DevFlags,
+                    ze_host_mem_alloc_flags_t HostFlags, size_t Size);
+  bool free(Level0Device *D);
+  bool isValid() { return FD >= 0; }
+
+private:
+  using DevicePtrMap = std::map<Level0Device *, void *>;
+  DevicePtrMap BufferImportMap;
+
+  Level0Device *ExportDev = nullptr;
+  void *ExportPtr = nullptr;
+  int FD = -1;
+};
+
+/// multi-L0-device (and multi-L0-context) allocator,
+/// using DMABUF export/import L0 API
+/// to create cross-device zero-copy allocations
+class Level0DMABufAllocator : public Level0Allocator {
+public:
+  Level0DMABufAllocator(Level0Device *ExDev,
+                        const std::vector<Level0Device *> &ImDev)
+      : ImportDevices(ImDev), ExportDevice(ExDev){};
+
+  virtual void *allocBuffer(uintptr_t Key, Level0Device *D,
+                            ze_device_mem_alloc_flags_t DevFlags,
+                            ze_host_mem_alloc_flags_t HostFlags, size_t Size,
+                            bool &IsHostAccessible) override;
+  virtual bool freeBuffer(uintptr_t Key, Level0Device *D, void *Ptr) override;
+  virtual bool clear(Level0Device *D) override;
+
+private:
+  /// single L0 device that supports export via DMABUF;
+  /// this is used to create the first allocation and File Descriptor
+  Level0Device *ExportDevice;
+  /// vector of devices that will allocate the buffer by importing the FD
+  std::vector<Level0Device *> ImportDevices;
+  /// Key can be anything but currently we're using cl_mem
+  std::map<uintptr_t, DMABufAllocation> Allocations;
+};
+
+using Level0DMABufAllocatorSPtr = std::shared_ptr<Level0DMABufAllocator>;
 
 } // namespace pocl
 

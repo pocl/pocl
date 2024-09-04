@@ -97,6 +97,11 @@ static void pocl_level0_local_size_optimizer(cl_device_id Dev, cl_kernel Ker,
                                              size_t GlobalX, size_t GlobalY,
                                              size_t GlobalZ, size_t *LocalX,
                                              size_t *LocalY, size_t *LocalZ) {
+  // for NPU, return all 1s
+  if (Dev->type != CL_DEVICE_TYPE_GPU) {
+    *LocalX = *LocalY = *LocalZ = 1;
+    return;
+  }
   assert(Ker->data[DeviceI] != nullptr);
   Level0Kernel *L0Kernel = (Level0Kernel *)Ker->data[DeviceI];
   ze_kernel_handle_t HKernel = L0Kernel->getAnyCreated();
@@ -148,10 +153,60 @@ static int pocl_level0_verify_ndrange_sizes(const size_t *GlobalOffsets,
   return CL_SUCCESS;
 }
 
+static cl_int pocl_level0_post_init(struct pocl_device_ops *ops) {
+
+  // TODO currently only works with two drivers
+  if (L0DriverInstances.size() != 2)
+    return CL_SUCCESS;
+
+  Level0Device *ExportDevice = nullptr;
+  std::vector<Level0Device *> ImportDevices;
+  Level0Driver *D0 = L0DriverInstances[0].get();
+  Level0Driver *D1 = L0DriverInstances[1].get();
+  Level0Driver *ExDrv = nullptr, *ImDrv = nullptr;
+  if (D0->getNumDevices() == 0 || D1->getNumDevices() == 0) {
+    return CL_SUCCESS;
+  }
+
+  if ((ExportDevice = D0->getExportDevice()) &&
+      D0->getImportDevices(ImportDevices, ExportDevice) &&
+      D1->getImportDevices(ImportDevices, nullptr) &&
+      TotalL0Devices == (ImportDevices.size() + 1)) {
+    ExDrv = D0;
+    ImDrv = D1;
+  } else if ((ExportDevice = D1->getExportDevice()) &&
+             D1->getImportDevices(ImportDevices, ExportDevice) &&
+             D0->getImportDevices(ImportDevices, nullptr) &&
+             TotalL0Devices == (ImportDevices.size() + 1)) {
+    ExDrv = D1;
+    ImDrv = D0;
+  } else {
+    return CL_SUCCESS;
+  }
+  POCL_MSG_PRINT_LEVEL0("Found both Import&Export devices, "
+                        "creating shared memory allocator\n");
+
+  assert(ExportDevice != nullptr);
+  assert(!ImportDevices.empty());
+
+  auto ExClDev = ExportDevice->getClDev();
+  auto ImClDev = ImportDevices[0]->getClDev();
+  POCL_MSG_PRINT_LEVEL0("ExportDev: %s\nImportDevs[0]: %s\n",
+                        ExClDev->short_name, ImClDev->short_name);
+  Level0DMABufAllocatorSPtr SharedAlloc{
+      new Level0DMABufAllocator(ExportDevice, ImportDevices)};
+  ExportDevice->assignAllocator(SharedAlloc);
+  for (auto &Dev : ImportDevices) {
+    Dev->assignAllocator(SharedAlloc);
+  }
+  return CL_SUCCESS;
+}
+
 void pocl_level0_init_device_ops(struct pocl_device_ops *Ops) {
   Ops->device_name = "level0";
 
   Ops->probe = pocl_level0_probe;
+  Ops->post_init = pocl_level0_post_init;
   Ops->init = pocl_level0_init;
   Ops->uninit = pocl_level0_uninit;
   Ops->reinit = pocl_level0_reinit;
@@ -1406,16 +1461,14 @@ int pocl_level0_alloc_mem_obj(cl_device_id ClDevice, cl_mem Mem, void *HostPtr) 
     return CL_MEM_OBJECT_ALLOCATION_FAILURE;
   }
 
-  // The cl_mems are allocated as shared USM by default to make clEnqueueMap()
-  // implementation simpler. TODO: measure the perf. impact of this on some
-  // relevant platform and use memcopies for map.
-
   void *Allocation = nullptr;
+  bool IsAllocHostAccessible = false;
   // special handling for clCreateBuffer called on SVM or USM pointer
   if (((Mem->flags & CL_MEM_USE_HOST_PTR) != 0u) &&
       (Mem->mem_host_ptr_is_svm != 0)) {
     P->mem_ptr = Mem->mem_host_ptr;
     P->version = Mem->mem_host_ptr_version;
+    IsAllocHostAccessible = true;
   } else {
     // handle all other cases here.
     // CL_MEM_USE_HOST_PTR without SVM
@@ -1440,18 +1493,8 @@ int pocl_level0_alloc_mem_obj(cl_device_id ClDevice, cl_mem Mem, void *HostPtr) 
     else
       DevFlags |= ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT;
 
-    if (ClDevice->host_unified_memory)
-      if (Device->supportsSingleSharedUSM()) {
-        // iGPU
-        Allocation = Device->allocSharedMem(Mem->size, Compress, DevFlags, HostFlags);
-      } else {
-        // NPU device uses L0 Host Mem
-        Allocation = Device->allocHostMem(Mem->size, HostFlags);
-      }
-    else
-      // dGPU
-      Allocation = Device->allocDeviceMem(Mem->size, DevFlags);
-
+    Allocation = Device->allocBuffer((uintptr_t)Mem, DevFlags, HostFlags,
+                                     Mem->size, IsAllocHostAccessible);
     if (Allocation == nullptr) {
       return CL_MEM_OBJECT_ALLOCATION_FAILURE;
     }
@@ -1469,7 +1512,7 @@ int pocl_level0_alloc_mem_obj(cl_device_id ClDevice, cl_mem Mem, void *HostPtr) 
         Mem->image_array_size);
     if (Image == nullptr) {
       if (Allocation != nullptr) {
-        Device->freeMem(Allocation);
+        Device->freeBuffer((uintptr_t)Mem, Allocation);
       }
       P->mem_ptr = nullptr;
       P->version = 0;
@@ -1480,7 +1523,7 @@ int pocl_level0_alloc_mem_obj(cl_device_id ClDevice, cl_mem Mem, void *HostPtr) 
   }
 
   if (Mem->mem_host_ptr == nullptr) {
-    if (ClDevice->host_unified_memory) {
+    if (IsAllocHostAccessible) {
       // since we allocate shared memory, use it for mem_host_ptr
       assert((Mem->flags & CL_MEM_USE_HOST_PTR) == 0);
       Mem->mem_host_ptr = Allocation;
@@ -1518,12 +1561,10 @@ void pocl_level0_free(cl_device_id ClDevice, cl_mem Mem) {
     P->mem_ptr = nullptr;
     P->version = 0;
   } else {
-    Device->freeMem(P->mem_ptr);
+    Device->freeBuffer((uintptr_t)Mem, P->mem_ptr);
     assert (Mem->mem_host_ptr != nullptr);
   }
 
-//  if ((Mem->flags & CL_MEM_USE_HOST_PTR) == 0u) {
-//    if (Mem->mem_host_ptr == P->mem_ptr) {
   if (Mem->mem_host_ptr != nullptr && Mem->mem_host_ptr == P->mem_ptr) {
     assert((Mem->flags & CL_MEM_USE_HOST_PTR) == 0);
     Mem->mem_host_ptr = nullptr;
@@ -1589,12 +1630,12 @@ void *pocl_level0_svm_alloc(cl_device_id Dev, cl_svm_mem_flags Flags,
   if (pocl_get_bool_option("POCL_LEVEL0_COMPRESS", 0)) {
     Compress = (Flags & CL_MEM_READ_ONLY) > 0;
   }
-  return Device->allocSharedMem(Size, Compress);
+  return Device->allocUSMSharedMem(Size, Compress);
 }
 
 void pocl_level0_svm_free(cl_device_id Dev, void *SvmPtr) {
   Level0Device *Device = (Level0Device *)Dev->data;
-  Device->freeMem(SvmPtr);
+  Device->freeUSMMem(SvmPtr);
 }
 
 void *pocl_level0_usm_alloc(cl_device_id Dev, unsigned AllocType,
@@ -1616,17 +1657,17 @@ void *pocl_level0_usm_alloc(cl_device_id Dev, unsigned AllocType,
   case CL_MEM_TYPE_HOST_INTEL:
     POCL_GOTO_ERROR_ON(!Device->supportsHostUSM(), CL_INVALID_OPERATION,
                        "Device does not support Host USM allocations\n");
-    Ptr = Device->allocHostMem(Size, HostZeFlags);
+    Ptr = Device->allocUSMHostMem(Size, HostZeFlags);
     break;
   case CL_MEM_TYPE_DEVICE_INTEL:
     POCL_GOTO_ERROR_ON(!Device->supportsDeviceUSM(), CL_INVALID_OPERATION,
                        "Device does not support Device USM allocations\n");
-    Ptr = Device->allocDeviceMem(Size, DevZeFlags);
+    Ptr = Device->allocUSMDeviceMem(Size, DevZeFlags);
     break;
   case CL_MEM_TYPE_SHARED_INTEL:
     POCL_GOTO_ERROR_ON(!Device->supportsSingleSharedUSM(), CL_INVALID_OPERATION,
                        "Device does not support Shared USM allocations\n");
-    Ptr = Device->allocSharedMem(Size, false, DevZeFlags, HostZeFlags);
+    Ptr = Device->allocUSMSharedMem(Size, false, DevZeFlags, HostZeFlags);
     break;
   default:
     POCL_MSG_ERR("Unknown USM AllocType requested\n");
@@ -1640,12 +1681,12 @@ ERROR:
 
 void pocl_level0_usm_free(cl_device_id Dev, void *SvmPtr) {
   Level0Device *Device = (Level0Device *)Dev->data;
-  Device->freeMem(SvmPtr);
+  Device->freeUSMMem(SvmPtr);
 }
 
 void pocl_level0_usm_free_blocking(cl_device_id Dev, void *SvmPtr) {
   Level0Device *Device = (Level0Device *)Dev->data;
-  Device->freeMemBlocking(SvmPtr);
+  Device->freeUSMMemBlocking(SvmPtr);
 }
 
 cl_int pocl_level0_get_device_info_ext(cl_device_id Dev,

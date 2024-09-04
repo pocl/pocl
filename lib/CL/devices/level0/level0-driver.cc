@@ -1,4 +1,4 @@
-/// level0-driver.cc - driver for LevelZero Compute API devices.
+﻿/// level0-driver.cc - driver for LevelZero Compute API devices.
 ///
 /// Copyright (c) 2022-2023 Michal Babej / Intel Finland Oy
 ///
@@ -36,6 +36,7 @@
 #include "imagefill.h"
 #include "memfill.h"
 
+#include <algorithm>
 #include <cstring>
 #include <iomanip>
 #include <iostream>
@@ -1629,8 +1630,8 @@ void Level0Queue::runBuiltinKernel(_cl_command_run *RunCmd,
 
       cl_mem arg_buf = (*(cl_mem *)(PoclArg[i].value));
       pocl_mem_identifier *memid = &arg_buf->device_ptrs[Dev->global_mem_id];
-//      MemPtr = memid->mem_ptr;
-      MemPtr = arg_buf->mem_host_ptr;
+      MemPtr = memid->mem_ptr;
+//      MemPtr = arg_buf->mem_host_ptr;
 //    }
     POCL_MSG_PRINT_LEVEL0("NPU: setting argument %u to: %p\n", graphArgIndex, MemPtr);
     LEVEL0_CHECK_ABORT(Ext->pfnSetArgumentValue(GraphH, graphArgIndex++, MemPtr));
@@ -2106,7 +2107,7 @@ bool Level0Device::setupDeviceProperties(bool HasIPVersionExt) {
          sizeof(DeviceProperties.uuid));
   memcpy(ClDev->driver_uuid, Driver->getUUID(), sizeof(DeviceProperties.uuid));
   ClDev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT;
-  // TODO externalMemProperties
+
   ClDev->mem_base_addr_align = 4096;
   ClDev->host_unified_memory = Integrated ? CL_TRUE : CL_FALSE;
   ClDev->max_clock_frequency = DeviceProperties.coreClockRate;
@@ -2167,6 +2168,10 @@ bool Level0Device::setupDeviceProperties(bool HasIPVersionExt) {
     ClDev->on_host_queue_props
         = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;
     ClDev->version_of_latest_passed_cts = "v2000-12-31-01";
+  } else {
+    // FPGA / VPU custom devices
+    ClDev->on_host_queue_props
+        = CL_QUEUE_PROFILING_ENABLE;
   }
 
   MaxCommandQueuePriority = DeviceProperties.maxCommandQueuePriority;
@@ -2505,7 +2510,7 @@ bool Level0Device::setupMemoryProperties(bool &HasUSMCapability) {
 
   if (int MemLimit = pocl_get_int_option("POCL_MEMORY_LIMIT", 0)) {
     uint64_t MemInGBytes = std::max((ClDev->global_mem_size >> 30), 1UL);
-    if (MemLimit > 0 && MemLimit <= MemInGBytes) {
+    if (MemLimit > 0 && (uint64_t)MemLimit <= MemInGBytes) {
       ClDev->global_mem_size = (size_t)MemLimit << 30;
     }
   }
@@ -2643,7 +2648,9 @@ bool Level0Device::setupImageProperties() {
 bool Level0Device::setupPCIAddress() {
   ze_pci_ext_properties_t PCIProps = {
     .stype = ZE_STRUCTURE_TYPE_PCI_EXT_PROPERTIES,
-    .pNext = nullptr
+    .pNext = nullptr,
+    .address = {0},
+    .maxSpeed = {0}
   };
 
   ze_result_t Res = zeDevicePciGetPropertiesExt(DeviceHandle, &PCIProps);
@@ -2713,19 +2720,19 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     return;
   }
 
-/*
-#if 0
-  // support for importing external memory, currently not implemented
+  // test support for importing/exporting external memory
   ze_device_external_memory_properties_t ExternalMemProperties{};
   ExternalMemProperties.stype =
       ZE_STRUCTURE_TYPE_DEVICE_EXTERNAL_MEMORY_PROPERTIES;
   ExternalMemProperties.pNext = nullptr;
-  Res =
+  ze_result_t Res =
       zeDeviceGetExternalMemoryProperties(DeviceHandle, &ExternalMemProperties);
-  if (Res != ZE_RESULT_SUCCESS) {
-    return;
+  if (Res == ZE_RESULT_SUCCESS) {
+    HasDMABufImport = ExternalMemProperties.memoryAllocationImportTypes &
+                      ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+    HasDMABufExport = ExternalMemProperties.memoryAllocationExportTypes &
+                      ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
   }
-#endif
 
 #if 0
   /// support for subdevices. Currently unimplemented
@@ -2735,7 +2742,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   ze_device_handle_t subDevices[2] = {};
   zeDeviceGetSubDevices(device, &subDeviceCount, subDevices);
 #endif
-*/
 
   setupComputeProperties();
 
@@ -2899,12 +2905,11 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
       || ClDev->type == CL_DEVICE_TYPE_ACCELERATOR) {
     ClDev->extensions = Extensions.c_str();
     ClDev->features = "";
-    POCL_MSG_WARN("@@@@ DEVICE EXTENSIONS:\n   %s\n", ClDev->extensions);
     pocl_setup_extensions_with_version(ClDev);
 
 #ifdef ENABLE_NPU
     pocl::getNpuGraphModelsList(BuiltinKernels, NumBuiltinKernels);
-    POCL_MSG_WARN("NPU Model list:\n %s\n", BuiltinKernels.c_str());
+    POCL_MSG_PRINT_LEVEL0("NPU BiK list:\n %s\n", BuiltinKernels.c_str());
     ClDev->builtin_kernel_list = BuiltinKernels.data();
     ClDev->num_builtin_kernels = NumBuiltinKernels;
 
@@ -2957,6 +2962,8 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   for (unsigned i = 0; i < 4; ++i)
     EventPools.emplace_back(this, EventPoolSize);
 
+  Alloc.reset(new Level0DefaultAllocator{Driver, this});
+
   POCL_MSG_PRINT_LEVEL0("Device %s initialized & available\n", ClDev->short_name);
   this->Available = CL_TRUE;
 }
@@ -2965,12 +2972,17 @@ Level0CompilationJobScheduler &Level0Device::getJobSched() {
   return Driver->getJobSched();
 }
 
+cl_device_id Level0Device::getClDev() {
+  return Driver->getClDevForHandle(DeviceHandle);
+}
+
 Level0Device::~Level0Device() {
   UniversalQueues.uninit();
   ComputeQueues.uninit();
   CopyQueues.uninit();
   destroyHelperKernels();
   EventPools.clear();
+  Alloc->clear(this);
 }
 
 static void calculateHash(uint8_t *BuildHash,
@@ -3122,9 +3134,16 @@ void Level0Device::pushCommandBatch(BatchType Batch) {
   }
 }
 
-void *Level0Device::allocSharedMem(uint64_t Size, bool EnableCompression,
-                                   ze_device_mem_alloc_flags_t DevFlags,
-                                   ze_host_mem_alloc_flags_t HostFlags) {
+ze_event_handle_t Level0Device::getNewEvent() {
+  std::lock_guard<std::mutex> Guard(EventPoolLock);
+  if (EventPools.front().isEmpty())
+    EventPools.emplace_front(this, EventPoolSize);
+  return EventPools.front().getEvent();
+}
+
+void *Level0Device::allocUSMSharedMem(uint64_t Size, bool EnableCompression,
+                                      ze_device_mem_alloc_flags_t DevFlags,
+                                      ze_host_mem_alloc_flags_t HostFlags) {
   void *Ptr = nullptr;
   ze_device_mem_alloc_desc_t MemAllocDesc = {
       ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, nullptr, DevFlags, GlobalMemOrd};
@@ -3154,15 +3173,8 @@ void *Level0Device::allocSharedMem(uint64_t Size, bool EnableCompression,
   return Ptr;
 }
 
-ze_event_handle_t Level0Device::getNewEvent() {
-  std::lock_guard<std::mutex> Guard(EventPoolLock);
-  if (EventPools.front().isEmpty())
-    EventPools.emplace_front(this, EventPoolSize);
-  return EventPools.front().getEvent();
-}
-
-void *Level0Device::allocDeviceMem(uint64_t Size,
-                                   ze_device_mem_alloc_flags_t DevFlags) {
+void *Level0Device::allocUSMDeviceMem(uint64_t Size,
+                                      ze_device_mem_alloc_flags_t DevFlags) {
   void *Ptr = nullptr;
   ze_device_mem_alloc_desc_t MemAllocDesc = {
       ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, nullptr, DevFlags, GlobalMemOrd};
@@ -3170,34 +3182,33 @@ void *Level0Device::allocDeviceMem(uint64_t Size,
   uint64_t NextPowerOf2 = pocl_size_ceil2_64(Size);
   uint64_t Align = std::min(NextPowerOf2, (uint64_t)MAX_EXTENDED_ALIGNMENT);
 
-  ze_result_t Res = zeMemAllocDevice(ContextHandle, &MemAllocDesc, Size, Align,
-                                     DeviceHandle, &Ptr);
-  LEVEL0_CHECK_RET(nullptr, Res);
+  LEVEL0_CHECK_RET(nullptr, zeMemAllocDevice(ContextHandle, &MemAllocDesc, Size,
+                                             Align, DeviceHandle, &Ptr));
   return Ptr;
 }
 
-void *Level0Device::allocHostMem(uint64_t Size,
-                                 ze_device_mem_alloc_flags_t HostFlags) {
+void *Level0Device::allocUSMHostMem(uint64_t Size,
+                                    ze_device_mem_alloc_flags_t HostFlags,
+                                    void *pNext) {
   void *Ptr = nullptr;
   ze_host_mem_alloc_desc_t HostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC,
-                                       nullptr, HostFlags};
+                                       pNext, HostFlags};
 
   uint64_t NextPowerOf2 = pocl_size_ceil2_64(Size);
   uint64_t Align = std::min(NextPowerOf2, (uint64_t)MAX_EXTENDED_ALIGNMENT);
 
-  ze_result_t Res = zeMemAllocHost(ContextHandle, &HostDesc, Size, Align, &Ptr);
-  LEVEL0_CHECK_RET(nullptr, Res);
+  LEVEL0_CHECK_RET(nullptr,
+                   zeMemAllocHost(ContextHandle, &HostDesc, Size, Align, &Ptr));
   return Ptr;
 }
 
-void Level0Device::freeMem(void *Ptr) {
+void Level0Device::freeUSMMem(void *Ptr) {
   if (Ptr == nullptr)
     return;
-  ze_result_t Res = zeMemFree(ContextHandle, Ptr);
-  LEVEL0_CHECK_ABORT_NO_EXIT(Res);
+  LEVEL0_CHECK_ABORT_NO_EXIT(zeMemFree(ContextHandle, Ptr));
 }
 
-bool Level0Device::freeMemBlocking(void *Ptr) {
+bool Level0Device::freeUSMMemBlocking(void *Ptr) {
   if (Ptr == nullptr)
     return true;
 
@@ -4016,14 +4027,15 @@ Level0Driver::~Level0Driver() {
   }
 }
 
-Level0Device *Level0Driver::createDevice(unsigned Index, cl_device_id Dev,
+Level0Device *Level0Driver::createDevice(unsigned Index,
+                                         cl_device_id Dev,
                                          const char *Params) {
   assert(Index < Devices.size());
   assert(Devices[Index].get() == nullptr);
   Devices[Index].reset(
       new Level0Device(this, DeviceHandles[Index], Dev, Params));
   POCL_MSG_PRINT_LEVEL0("createDEVICE | Cl Dev %p | Dri %p | Dev %p \n",
-                        DriverH, Dev, Devices[Index].get());
+                        Dev, DriverH, Devices[Index].get());
   ++NumDevices;
   HandleToIDMap[DeviceHandles[Index]] = Dev;
   return Devices[Index].get();
@@ -4039,4 +4051,211 @@ void Level0Driver::releaseDevice(Level0Device *Dev) {
       --NumDevices;
     }
   }
+}
+
+Level0Device *Level0Driver::getExportDevice() {
+  // first find device which can only export not import
+  for (auto &Device : Devices) {
+    if (Device->supportsExportByDmaBuf() && !Device->supportsImportByDmaBuf()) {
+      return Device.get();
+    }
+  }
+
+  // then find any dev that can export
+  for (auto &Device : Devices) {
+    if (Device->supportsExportByDmaBuf()) {
+      return Device.get();
+    }
+  }
+
+  return nullptr;
+}
+
+bool Level0Driver::getImportDevices(std::vector<Level0Device *> &ImportDevices,
+                                    Level0Device *ExcludeDev) {
+  unsigned UnsupportingDevices = 0;
+  for (auto &Device : Devices) {
+    if (ExcludeDev && Device.get() == ExcludeDev)
+      continue;
+    if (Device->supportsImportByDmaBuf())
+      ImportDevices.push_back(Device.get());
+    else
+      ++UnsupportingDevices;
+  }
+  return UnsupportingDevices == 0;
+}
+
+void *Level0DefaultAllocator::allocBuffer(uintptr_t Key, Level0Device *,
+                                          ze_device_mem_alloc_flags_t DevFlags,
+                                          ze_host_mem_alloc_flags_t HostFlags,
+                                          size_t Size, bool &IsHostAccessible) {
+  if (Device->isHostUnifiedMemory()) {
+    IsHostAccessible = true;
+    if (Device->supportsSingleSharedUSM()) {
+      // iGPU
+      return Device->allocUSMSharedMem(Size, /* Compress */ false, DevFlags,
+                                       HostFlags);
+    } else {
+      // NPU device uses L0 Host Mem
+      return Device->allocUSMHostMem(Size, HostFlags);
+    }
+  } else {
+    IsHostAccessible = false;
+    // dGPU
+    return Device->allocUSMDeviceMem(Size, DevFlags);
+  }
+}
+
+bool Level0DefaultAllocator::freeBuffer(uintptr_t Key, Level0Device *,
+                                        void *Ptr) {
+  Device->freeUSMMem(Ptr);
+  return true;
+}
+
+void *Level0DMABufAllocator::allocBuffer(uintptr_t Key, Level0Device *D,
+                                         ze_device_mem_alloc_flags_t DevFlags,
+                                         ze_host_mem_alloc_flags_t HostFlags,
+                                         size_t Size, bool &IsHostAccessible) {
+  assert(D->isHostUnifiedMemory());
+  IsHostAccessible = true;
+  auto ImportIt = std::find(ImportDevices.begin(), ImportDevices.end(), D);
+  bool DevIsImport = ImportIt != ImportDevices.end();
+  bool DevIsExport = ExportDevice == D;
+  assert(DevIsExport || DevIsImport);
+
+  // we must have an available filedescriptor -> do an Export allocation first
+  void *ExportPtr =
+      Allocations[Key].allocExport(ExportDevice, DevFlags, HostFlags, Size);
+  if (DevIsExport)
+    return ExportPtr;
+  if (ExportPtr == nullptr)
+    return nullptr;
+
+  assert(Allocations[Key].isValid());
+  assert(DevIsImport);
+  return Allocations[Key].allocImport(D, DevFlags, HostFlags, Size);
+}
+
+bool Level0DMABufAllocator::freeBuffer(uintptr_t Key, Level0Device *D,
+                                       void *Ptr) {
+  assert(D->isHostUnifiedMemory());
+  if (!Allocations[Key].isValid())
+    return false;
+
+  auto ImportIt = std::find(ImportDevices.begin(), ImportDevices.end(), D);
+  bool DevIsImport = ImportIt != ImportDevices.end();
+  bool DevIsExport = ExportDevice == D;
+  assert(DevIsExport || DevIsImport);
+
+  return Allocations[Key].free(D);
+}
+
+bool Level0DMABufAllocator::clear(Level0Device *D) {
+  for (auto &A: Allocations) {
+    A.second.free(D);
+  }
+  return true;
+}
+
+void *DMABufAllocation::allocExport(Level0Device *D,
+                                    ze_device_mem_alloc_flags_t DevFlags,
+                                    ze_host_mem_alloc_flags_t HostFlags,
+                                    size_t Size) {
+  if (ExportPtr != nullptr)
+    return ExportPtr;
+
+  ze_external_memory_export_desc_t descExport = {};
+  descExport.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC;
+  descExport.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+
+  void *Ptr = D->allocUSMHostMem(Size, HostFlags, &descExport);
+  POCL_MSG_PRINT_LEVEL0("ALLOCATED: %p SIZE: %zu | FROM ExportDev: %s\n",
+                        Ptr, Size, D->getClDev()->short_name);
+
+  // only one export device is supported, all others must be import devices
+  assert(FD < 0);
+  ze_external_memory_export_fd_t FdExport = {};
+  FdExport.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD;
+  FdExport.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+
+  ze_memory_allocation_properties_t propAlloc = {};
+  propAlloc.stype = ZE_STRUCTURE_TYPE_MEMORY_ALLOCATION_PROPERTIES;
+  propAlloc.pNext = &FdExport;
+
+  ze_result_t Res =
+      zeMemGetAllocProperties(D->getContextHandle(), Ptr, &propAlloc, nullptr);
+  assert(Res == ZE_RESULT_SUCCESS);
+  assert(FdExport.fd != 0);
+
+  if (Ptr && FdExport.fd >= 0) {
+    ExportDev = D;
+    ExportPtr = Ptr;
+    FD = FdExport.fd;
+    return Ptr;
+  } else {
+    return nullptr;
+  }
+}
+
+void *DMABufAllocation::allocImport(Level0Device *D,
+                                    ze_device_mem_alloc_flags_t DevFlags,
+                                    ze_host_mem_alloc_flags_t HostFlags,
+                                    size_t Size) {
+  if (BufferImportMap[D] != nullptr)
+    return BufferImportMap[D];
+
+  // export mem must be allocated before import is called
+  assert(ExportDev);
+  assert(ExportPtr);
+  assert(FD >= 0);
+
+  ze_external_memory_import_fd_t FdImport = {};
+  FdImport.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD;
+  FdImport.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+  FdImport.fd = FD;
+
+  void *Ptr = D->allocUSMHostMem(Size, HostFlags, &FdImport);
+  POCL_MSG_PRINT_LEVEL0("ALLOCATED: %p SIZE: %zu | FROM ImportDev: %s\n",
+                        Ptr, Size, D->getClDev()->short_name);
+
+  if (Ptr)
+    BufferImportMap[D] = Ptr;
+  return Ptr;
+}
+
+bool DMABufAllocation::free(Level0Device *D) {
+  if (D == ExportDev) {
+    if (BufferImportMap.empty()) {
+      D->freeUSMMem(ExportPtr);
+      ExportPtr = nullptr;
+      ExportDev = nullptr;
+    } else {
+      POCL_MSG_PRINT_LEVEL0("Not freeing Export alloc "
+                            "because Import(s) remain\n");
+      return false; // can we release export mem while we have active imports?
+    }
+  } else {
+    auto It = BufferImportMap.find(D);
+    if (It == BufferImportMap.end()) {
+      // this is OK in general; the allocation
+      // could be freed earlier for a particular device
+#if 0
+      POCL_MSG_PRINT_LEVEL0("Could not find allocation "
+                            "for Device %p in the ImportMap\n",
+                            D);
+#endif
+      return false;
+    }
+    D->freeUSMMem(It->second);
+    BufferImportMap.erase(D);
+  }
+  return true;
+}
+
+DMABufAllocation::~DMABufAllocation() {
+  for (auto &[Dev, Ptr] : BufferImportMap) {
+    Dev->freeUSMMem(Ptr);
+  }
+  if (ExportDev && ExportPtr)
+    ExportDev->freeUSMMem(ExportPtr);
 }
