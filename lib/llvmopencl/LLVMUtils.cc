@@ -44,7 +44,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "FlattenGlobals.hh"
 #include "HandleSamplerInitialization.h"
 #include "ImplicitConditionalBarriers.h"
-#include "ImplicitLoopBarriers.h"
 #include "InlineKernels.hh"
 #include "IsolateRegions.h"
 #include "LoopBarriers.h"
@@ -60,7 +59,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
 #include "WorkitemLoops.h"
-#include "WorkitemReplication.h"
 
 #include "LLVMUtils.h"
 POP_COMPILER_DIAGS
@@ -668,7 +666,6 @@ void registerPassBuilderPasses(llvm::PassBuilder &PB) {
   FlattenGlobals::registerWithPB(PB);
   HandleSamplerInitialization::registerWithPB(PB);
   ImplicitConditionalBarriers::registerWithPB(PB);
-  ImplicitLoopBarriers::registerWithPB(PB);
   InlineKernels::registerWithPB(PB);
   IsolateRegions::registerWithPB(PB);
   LoopBarriers::registerWithPB(PB);
@@ -680,7 +677,6 @@ void registerPassBuilderPasses(llvm::PassBuilder &PB) {
   SubCFGFormation::registerWithPB(PB);
   Workgroup::registerWithPB(PB);
   WorkitemLoops::registerWithPB(PB);
-  WorkitemReplication::registerWithPB(PB);
   PoCLCFGPrinter::registerWithPB(PB);
 }
 

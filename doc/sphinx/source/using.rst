@@ -398,24 +398,6 @@ pocl.
               kernel and the work group size. Currently always defaults
               to **loopvec**.
 
- * **loops**  -- Create parallel for-loops that execute the work items.
-
-              The loops will be unrolled a certain number of
-              times of which maximum can be controlled with
-              POCL_WILOOPS_MAX_UNROLL_COUNT=N environment
-              variable (default is to not perform unrolling).
-
- * **loopvec** -- Create parallel work-item for-loops (see 'loops') and execute
-               the LLVM vectorizers. LLVM loop unrolling is disabled and
-               the unrolling decisions are left to the generic loop vectorizer.
-
- * **repl**   -- Replicate and chain all work items. This results
-              in more easily scalarizable private variables, thus
-              might avoid storing work-item context to memory.
-              However, the code bloat is increased with larger
-              WG sizes. **Deprecated - will be removed in the next
-              release. Use "loops" and full unrolling.**
-
  * **cbs**    -- Use continuation-based synchronization to execute work-items
               on non-SPMD devices.
               CBS is expected to work for kernels that 'loops' does not support.
@@ -425,6 +407,17 @@ pocl.
               An in-depth explanation of the implementation of CBS and how it
               compares to the other approaches can be found in
               [this thesis](https://joameyer.de/hipsycl/Thesis_JoachimMeyer.pdf).
+
+ * **loops**  -- Create parallel for-loops that execute the work items.
+
+              The loops will be unrolled a certain number of
+              times of which maximum can be controlled with
+              POCL_WILOOPS_MAX_UNROLL_COUNT=N environment
+              variable (default is to not perform unrolling).
+
+ * **loopvec** -- Create parallel work-item for-loops (see 'loops') and execute
+               the standard LLVM vectorizers. LLVM loop unrolling is disabled and
+               the unrolling decisions are left to the generic loop vectorizer.
 
 - **POCL_WORK_GROUP_SPECIALIZATION**
 

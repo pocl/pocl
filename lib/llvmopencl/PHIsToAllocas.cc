@@ -1,6 +1,7 @@
 // LLVM function pass to convert all PHIs to allocas.
 //
 // Copyright (c) 2012-2019 Pekka Jääskeläinen
+//               2024 Pekka Jääskeläinen / Intel Finland Oy
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -162,28 +163,13 @@ llvm::PreservedAnalyses PHIsToAllocas::run(llvm::Function &F,
       if (!isa<PHINode>(I))
         continue;
 
-      if (WIH != WorkitemHandlerType::FULL_REPLICATION) {
-        // If this is a PHINode in a non-barrier loop header, we should not
-        // convert it to allocas to enable easier loop analysis for loopvec and
-        // to avoid storing the induction variable in the WI context. Repl
-        // relies on all PHIs to be converted to allocas.
-        bool IsBarLoop = false;
-        llvm::Loop *L = LI.getLoopFor(I->getParent());
-        if (L != nullptr)
-          for (Loop::block_iterator i = L->block_begin(), e = L->block_end();
-               i != e && !IsBarLoop; ++i) {
-            for (BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();
-                 j != e; ++j) {
-              if (isa<Barrier>(j)) {
-                IsBarLoop = true;
-                break;
-              }
-            }
-          }
-        if (L != nullptr && !IsBarLoop)
-          continue;
-      }
-
+      // If this is a PHINode in a non-barrier loop header, we should not
+      // convert it to allocas to enable easier loop analysis for loopvec and
+      // to avoid storing the induction variable in the WI context. Repl
+      // relies on all PHIs to be converted to allocas.
+      llvm::Loop *L = LI.getLoopFor(I->getParent());
+      if (L != nullptr && !Barrier::IsLoopWithBarrier(*L))
+        continue;
       PHIs.push_back(I);
     }
   }

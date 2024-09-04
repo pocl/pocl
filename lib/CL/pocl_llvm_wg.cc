@@ -529,10 +529,6 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
     // NEW PM requires WIH & VUA analyses here,
     // but they should not be invalidated by previous passes
 
-    // Rely on loop-interchange and loop isolation instead of the
-    // implicit loop barriers.
-    // addPass(Passes, "implicit-loop-barriers", PassType::Loop);
-
     // loop-barriers adds implicit barriers to handle b-loops by isolating the
     // loop body from the loop construct. It also tries to make non b-loops
     // "isolated" in a way to produce the wiloop strictly around it, making
@@ -577,8 +573,6 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
     // it will be used as a prefix to the dot files ("PREFIX_kernel.dot")
     addPass(Passes, "print<pocl-cfg;before>", PassType::Module);
 #endif
-
-    addPass(Passes, "workitemrepl");
 
     // subcfgformation (for CBS) before workitemloops, as wiloops creates the
     // loops for kernels without barriers, but after the transformation the

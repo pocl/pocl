@@ -46,8 +46,6 @@ set(LLVMPASSES_SOURCES "AllocasToEntry.cc"
                        "HandleSamplerInitialization.h"
                        "ImplicitConditionalBarriers.cc"
                        "ImplicitConditionalBarriers.h"
-                       "ImplicitLoopBarriers.cc"
-                       "ImplicitLoopBarriers.h"
                        "InlineKernels.cc"
                        "IsolateRegions.cc"
                        "IsolateRegions.h"
@@ -89,9 +87,7 @@ set(LLVMPASSES_SOURCES "AllocasToEntry.cc"
                        "WorkitemHandlerChooser.cc"
                        "WorkitemHandlerChooser.h"
                        "WorkitemLoops.cc"
-                       "WorkitemLoops.h"
-                       "WorkitemReplication.cc"
-                       "WorkitemReplication.h")
+                       "WorkitemLoops.h")
 
 if (ENABLE_REMOTE_SERVER)
   list(APPEND LLVMPASSES_SOURCES

@@ -37,7 +37,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
 #include "WorkitemLoops.h"
-#include "WorkitemReplication.h"
 POP_COMPILER_DIAGS
 
 #include "pocl_llvm_api.h"
@@ -73,10 +72,7 @@ WorkitemHandlerType ChooseWorkitemHandler(Function &F,
   std::string method = "auto";
   if (getenv("POCL_WORK_GROUP_METHOD") != NULL) {
     method = getenv("POCL_WORK_GROUP_METHOD");
-    if ((method == "repl" || method == "workitemrepl") && !WGDynamicLocalSize)
-      Result = WorkitemHandlerType::FULL_REPLICATION;
-    else if (method == "loops" || method == "workitemloops" ||
-             method == "loopvec")
+    if (method == "loops" || method == "workitemloops" || method == "loopvec")
       Result = WorkitemHandlerType::LOOPS;
     else if (method == "cbs")
       Result = WorkitemHandlerType::CBS;
