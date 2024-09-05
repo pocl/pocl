@@ -2660,7 +2660,6 @@ pocl_remote_get_device_info_ext (cl_device_id device,
 
   switch (param_name)
     {
-#ifdef ENABLE_TRAFFIC_MONITOR
     case CL_DEVICE_REMOTE_TRAFFIC_STATS_POCL:
       {
         size_t traffic_data_size = 6 * sizeof (int64_t);
@@ -2668,7 +2667,6 @@ pocl_remote_get_device_info_ext (cl_device_id device,
           traffic_data_size,
           pocl_remote_get_traffic_stats (param_value, device));
       }
-#endif
     }
 
   return pocl_network_fetch_devinfo (device, param_name, param_value_size,
