@@ -2,6 +2,7 @@
 // function for a kernel and work group size.
 //
 // Copyright (c) 2012-2019 Pekka Jääskeläinen
+//               2024 Pekka Jääskeläinen / Intel Finland Oy
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -48,7 +49,7 @@ POP_COMPILER_DIAGS
 #define PASS_NAME "workitem-handler-chooser"
 #define PASS_CLASS pocl::WorkitemHandlerChooser
 #define PASS_DESC                                                              \
-  "Finds the best way to handle work-items to produce a multi-WG function."
+  "Finds the best way to handle work-items to produce a multi-WI function."
 
 namespace pocl {
 
@@ -58,7 +59,8 @@ using namespace llvm;
  * Selects the work-group generator to use for handling the given
  * kernel.
  */
-WorkitemHandlerType ChooseWorkitemHandler(Function &F) {
+WorkitemHandlerType ChooseWorkitemHandler(Function &F,
+                                          llvm::FunctionAnalysisManager &AM) {
   if (!isKernelToProcess(F))
     return WorkitemHandlerType::INVALID;
 
@@ -88,6 +90,13 @@ WorkitemHandlerType ChooseWorkitemHandler(Function &F) {
   if (method == "auto") {
     Result = WorkitemHandlerType::LOOPS;
   }
+
+  // Check if this is a kernel WILoops is able and willing to handle.
+  // Otherwise, fall back to CBS.
+  if (Result == WorkitemHandlerType::LOOPS &&
+      !WorkitemLoops::CanHandleKernel(F, AM))
+    Result = WorkitemHandlerType::CBS;
+
   return Result;
 }
 
@@ -98,7 +107,7 @@ llvm::AnalysisKey WorkitemHandlerChooser::Key;
 WorkitemHandlerResult
 WorkitemHandlerChooser::run(llvm::Function &F,
                             llvm::FunctionAnalysisManager &AM) {
-  return ChooseWorkitemHandler(F);
+  return ChooseWorkitemHandler(F, AM);
 }
 
 bool WorkitemHandlerResult::invalidate(

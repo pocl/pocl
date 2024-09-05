@@ -40,6 +40,12 @@ public:
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
+
+  // Returns false in case the WG generator can or should not handle the given
+  // kernel. It might refuse to handle trickiest of conditional barrier
+  // scenarios which would result in non-vectorizable loops anyhow.
+  static bool CanHandleKernel(llvm::Function &K,
+                              llvm::FunctionAnalysisManager &AM);
 };
 
 

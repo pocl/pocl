@@ -104,7 +104,6 @@ Kernel::createParallelRegionBefore(llvm::BasicBlock *B)
 #endif     
       continue;
     }
-    
 
     if (!verify_no_barriers(current))
       {
@@ -114,10 +113,10 @@ Kernel::createParallelRegionBefore(llvm::BasicBlock *B)
 
 #ifdef DEBUG_PR_CREATION
     std::cerr << "added it to the region" << std::endl;
-#endif        
+#endif
     // Non-barrier block, this must be on the region.
     blocks_in_region.insert(current);
-    
+
     // Add predecessors to pending queue.
     add_predecessors(pending_blocks, current);
   }
@@ -164,9 +163,9 @@ verify_no_barriers(const BasicBlock *B)
 }
 
 /**
- * The main entry to the "parallel region formation", phase which search
- * for the regions between barriers that can be freely parallelized 
- * across work-items in the work-group.
+ * The main entry to the "parallel region formation" which searches for regions
+ * of basic blocks between barriers that can be freely parallelized across
+ * work-items in the work-group.
  */
 void Kernel::getParallelRegions(
     llvm::LoopInfo &LI,
@@ -216,8 +215,8 @@ void Kernel::getParallelRegions(
           if (IsInTheSameLoop)
             {
 #ifdef DEBUG_PR_CREATION
-              std::cout << "### found a barrier inside the loop:" << std::endl;
-              std::cout << barrier->getName().str() << std::endl;
+            std::cout << "### found a barrier inside a loop:" << std::endl;
+            std::cout << Barrier->getName().str() << std::endl;
 #endif
               if (loop_barrier != NULL) {
                 // there can be multiple latches and each have their barrier,
@@ -230,7 +229,7 @@ void Kernel::getParallelRegions(
             {
 #ifdef DEBUG_PR_CREATION
               std::cout << "### found a barrier:" << std::endl;
-              std::cout << barrier->getName().str() << std::endl;
+              std::cout << Barrier->getName().str() << std::endl;
 #endif
               exit = Barrier;
             }
@@ -269,7 +268,8 @@ void Kernel::getParallelRegions(
   }
 
 #ifdef DEBUG_PR_CREATION
-  pocl::dumpCFG(*this, this->getName().str() + ".pregions.dot", parallel_regions);
+  pocl::dumpCFG(*this, this->getName().str() + ".pregions.dot", nullptr,
+                ParallelRegions);
 #endif
 }
 

@@ -108,7 +108,7 @@ static bool isolateRegions(Region &R, WorkitemHandlerType WIH) {
     return false;
 
 #ifdef DEBUG_ISOLATE_REGIONS
-  std::cerr << "### processing region:" << std::endl;
+  std::cerr << "### Isolate regions processing region:" << std::endl;
   R.dump();
   std::cerr << "### exit block:" << std::endl;
   Exit->dump();
@@ -122,13 +122,23 @@ static bool isolateRegions(Region &R, WorkitemHandlerType WIH) {
       changed = true;
   }
 
-  llvm::BasicBlock *entry = R.getEntry();
-  if (entry == NULL) return changed;
+  llvm::BasicBlock *Entry = R.getEntry();
+  if (Entry == NULL)
+    return changed;
 
-  bool isFunctionEntry = &entry->getParent()->getEntryBlock() == entry;
+  bool isFunctionEntry = &Entry->getParent()->getEntryBlock() == Entry;
 
-  if (Barrier::hasBarrier(entry) || isFunctionEntry) {
-    addDummyAfter(R, entry);
+  if (Barrier::hasBarrier(Entry) || isFunctionEntry) {
+    addDummyAfter(R, Entry);
+    changed = true;
+  }
+
+  if (WIH != WorkitemHandlerType::FULL_REPLICATION &&
+      isa<PHINode>(*Entry->begin())) {
+    // The region starts with a loop. Let's add a dummy node before the loop to
+    // let the parallel loop formation need not to care about the loop header
+    // phis.
+    addDummyBefore(R, Entry);
     changed = true;
   }
 
