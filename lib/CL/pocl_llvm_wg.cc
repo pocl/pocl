@@ -443,7 +443,7 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
                                       std::vector<std::string> &Passes) {
   /* The kernel compiler passes to run, in order.
 
-     Notes about the kernel compiler phase ordering:
+     Some notes about the kernel compiler phase ordering constraints:
 
      -mem2reg first because we get unoptimized output from Clang where all
      variables are allocas. Avoid context saving the allocas and make them
@@ -542,7 +542,7 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
 
     addPass(Passes, "canon-barriers");
 
-    // implicit-conf-barriers handles barriers inside conditional
+    // implicit-cond-barriers handles barriers inside conditional
     // basic blocks (basically if...elses). It tries to minimize the
     // part ending up in the parallel region that is conditional by
     // isolating the branching condition (which must be uniform,
