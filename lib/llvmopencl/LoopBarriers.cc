@@ -39,6 +39,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "Barrier.h"
 #include "LLVMUtils.h"
 #include "LoopBarriers.h"
+#include "VariableUniformityAnalysis.h"
+#include "VariableUniformityAnalysisResult.hh"
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
 POP_COMPILER_DIAGS
@@ -54,24 +56,11 @@ namespace pocl {
 
 using namespace llvm;
 
-static bool processLoopBarriers(Loop &L, llvm::DominatorTree &DT) {
-  bool IsBarLoop = false;
-  bool Changed = false;
-
-  IsBarLoop = Barrier::IsLoopWithBarrier(L);
-  for (Loop::block_iterator i = L.block_begin(), e = L.block_end();
-       i != e && !IsBarLoop; ++i) {
-    for (BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();
-         j != e; ++j) {
-      if (isa<Barrier>(j)) {
-          IsBarLoop = true;
-          break;
-      }
-    }
-  }
+static bool processLoopWithBarriers(Loop &L, llvm::DominatorTree &DT,
+                                    VariableUniformityAnalysisResult &VUA) {
 
   for (Loop::block_iterator i = L.block_begin(), e = L.block_end();
-       i != e && IsBarLoop; ++i) {
+       i != e; ++i) {
     for (BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();
          j != e; ++j) {
       if (isa<Barrier>(j)) {
@@ -122,7 +111,7 @@ static bool processLoopBarriers(Loop &L, llvm::DominatorTree &DT) {
           // are probably running before BTR.
           Barrier::Create(Latch->getTerminator());
           Latch->setName(Latch->getName() + ".latchbarrier");
-          return Changed;
+          return true;
         }
 
         // Modified code from llvm::LoopBase::getLoopLatch to
@@ -152,12 +141,37 @@ static bool processLoopBarriers(Loop &L, llvm::DominatorTree &DT) {
       }
     }
   }
+  return false;
+}
 
-  /* This is a loop without a barrier. Ensure we have a non-barrier
-     block as a preheader so we can replicate the loop as a whole.
+static bool processLoop(Loop &L, llvm::DominatorTree &DT,
+                        VariableUniformityAnalysisResult &VUA) {
 
-     If the block has proper instructions after the barrier, it
-     will be split in CanonicalizeBarriers. */
+  if (Barrier::IsLoopWithBarrier(L))
+    return processLoopWithBarriers(L, DT, VUA);
+
+  bool Changed = false;
+
+  // This is a loop without a barrier. Ensure we have a non-barrier
+  // block as a preheader so we capture the loop as a whole to the
+  // parallel region.
+  //
+  // If the block has proper instructions after the barrier, it
+  // will be split in CanonicalizeBarriers.
+  //
+  // Also attempt to isolate the loop with barriers to create the
+  // WI loop around it in order to produce a nicely well-formed
+  // WI-loop + K-loop hierarchy for the loop-interchange to analyze.
+
+  // Include all the layers in a multi-level loop without barriers
+  // in the region. Thus, do the handling only for the outermost
+  // loop without barriers. Otherwise we end up creating a b-loop
+  // to the innermost loop if we process that first, ruining the
+  // idea for multi-level loops.
+  Loop *ParentLoop = L.getParentLoop();
+  if (!(ParentLoop == nullptr || Barrier::IsLoopWithBarrier(*ParentLoop)))
+    return false;
+
   BasicBlock *Preheader = L.getLoopPreheader();
   assert((Preheader != NULL) && "Non-canonicalized loop found!\n");
 
@@ -189,7 +203,16 @@ llvm::PreservedAnalyses LoopBarriers::run(llvm::Loop &L,
 
   PreservedAnalyses PAChanged = PreservedAnalyses::none();
 
-  return processLoopBarriers(L, AR.DT) ? PAChanged : PreservedAnalyses::all();
+  VariableUniformityAnalysisResult *VUA = nullptr;
+
+  auto &FAMP = AM.getResult<FunctionAnalysisManagerLoopProxy>(L, AR);
+  if (FAMP.cachedResultExists<VariableUniformityAnalysis>(*K)) {
+    VUA = FAMP.getCachedResult<VariableUniformityAnalysis>(*K);
+  } else {
+    assert(0 && "missing cached result VUA for ImplicitLoopBarriers");
+  }
+
+  return processLoop(L, AR.DT, *VUA) ? PAChanged : PreservedAnalyses::all();
 }
 
 REGISTER_NEW_LPASS(PASS_NAME, PASS_CLASS, PASS_DESC);

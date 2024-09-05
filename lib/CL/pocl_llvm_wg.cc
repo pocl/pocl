@@ -443,7 +443,7 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
                                       std::vector<std::string> &Passes) {
   /* The kernel compiler passes to run, in order.
 
-     Notes about the kernel compiler phase ordering:
+     Some notes about the kernel compiler phase ordering constraints:
 
      -mem2reg first because we get unoptimized output from Clang where all
      variables are allocas. Avoid context saving the allocas and make them
