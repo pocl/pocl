@@ -394,6 +394,7 @@ static void diagHandler(LLVMDiagnosticInfoRef DI, void *diagprinter) {
   DiagnosticPrinterRawOStream *poclDiagPrinter =
       (DiagnosticPrinterRawOStream *)diagprinter;
   unwrap(DI)->print(*poclDiagPrinter);
+  *poclDiagPrinter << "\n";
 }
 
 std::string getDiagString(void *PoclCtx) {
