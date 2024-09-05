@@ -271,9 +271,7 @@ read_full (int fd, void *p, size_t total, remote_server_data_t *sinfo)
   size_t readb = 0;
   ssize_t res;
   char *ptr = (char *)(p);
-#ifdef ENABLE_TRAFFIC_MONITOR
   POCL_ATOMIC_ADD (sinfo->rx_bytes_requested, total);
-#endif
   while (readb < total)
     {
       size_t remain = total - readb;
@@ -286,9 +284,7 @@ read_full (int fd, void *p, size_t total, remote_server_data_t *sinfo)
         { // EOF
           return 0;
         }
-#ifdef ENABLE_TRAFFIC_MONITOR
       POCL_ATOMIC_ADD (sinfo->rx_bytes_confirmed, (uint64_t)res);
-#endif
       readb += (size_t)res;
     }
 
@@ -302,9 +298,7 @@ write_full (int fd, void *p, size_t total, remote_server_data_t *sinfo)
   size_t written = 0;
   ssize_t res;
   char *ptr = (char *)(p);
-#ifdef ENABLE_TRAFFIC_MONITOR
   POCL_ATOMIC_ADD (sinfo->tx_bytes_submitted, total);
-#endif
   while (written < total)
     {
       size_t remain = total - written;
@@ -317,9 +311,7 @@ write_full (int fd, void *p, size_t total, remote_server_data_t *sinfo)
           else
             return -1;
         }
-#ifdef ENABLE_TRAFFIC_MONITOR
       POCL_ATOMIC_ADD (sinfo->tx_bytes_confirmed, (uint64_t)res);
-#endif
       written += (size_t)res;
     }
   return 0;
@@ -357,17 +349,13 @@ writev_full (int fd, size_t num, void **arys, size_t *sizes,
     }
   else
     {
-#ifdef ENABLE_TRAFFIC_MONITOR
       POCL_ATOMIC_ADD (sinfo->tx_bytes_submitted, total);
-#endif
       ssize_t written = writev (fd, ary, num);
       if (written < 0)
         res = -1;
       else
         {
-#ifdef ENABLE_TRAFFIC_MONITOR
           POCL_ATOMIC_ADD (sinfo->tx_bytes_confirmed, total);
-#endif
           assert ((size_t)written == total);
         }
     }
@@ -1257,7 +1245,6 @@ wait_on_netcmd (network_command *n)
 // ##################################################################################
 // ##################################################################################
 
-#ifdef ENABLE_TRAFFIC_MONITOR
 static void *
 traffic_monitor_pthread (void *arg)
 {
@@ -1321,7 +1308,21 @@ EXIT:
   free (a);
   return NULL;
 }
-#endif
+
+void
+pocl_remote_get_traffic_stats (uint64_t *out_buf, cl_device_id device)
+{
+  remote_device_data_t *device_data = (remote_device_data_t *)device->data;
+  remote_server_data_t *server = device_data->server;
+  struct timespec now;
+  clock_gettime (CLOCK_REALTIME, &now);
+  out_buf[0] = now.tv_sec;
+  out_buf[1] = now.tv_nsec;
+  out_buf[2] = POCL_ATOMIC_LOAD (server->rx_bytes_requested);
+  out_buf[3] = POCL_ATOMIC_LOAD (server->rx_bytes_confirmed);
+  out_buf[4] = POCL_ATOMIC_LOAD (server->tx_bytes_submitted);
+  out_buf[5] = POCL_ATOMIC_LOAD (server->tx_bytes_confirmed);
+}
 
 /**
  * Start all threads needed for the given server connection
@@ -1336,13 +1337,11 @@ start_engines (remote_server_data_t *d, remote_device_data_t *devd,
   d->inflight_queue = calloc (1, sizeof (network_queue));
   SETUP_NETW_Q (d->inflight_queue, 0);
 
-#ifdef ENABLE_TRAFFIC_MONITOR
   d->traffic_monitor = calloc (1, sizeof (network_queue));
   SETUP_NETW_Q (d->traffic_monitor, 0);
   SETUP_NETW_Q_ARG (a, d, d->traffic_monitor);
   POCL_CREATE_THREAD (d->traffic_monitor->thread_id, traffic_monitor_pthread,
                       a);
-#endif
 
 #ifdef ENABLE_RDMA
   d->rdma_read_queue = calloc (1, sizeof (network_queue));
@@ -1434,10 +1433,9 @@ stop_engines (remote_server_data_t *d)
   POCL_JOIN_THREAD (d->rdma_write_queue->thread_id);
 #endif
 
-#ifdef ENABLE_TRAFFIC_MONITOR
   NOTIFY_SHUTDOWN (d->traffic_monitor);
   POCL_JOIN_THREAD (d->traffic_monitor->thread_id);
-#endif
+
 #undef NOTIFY_SHUTDOWN
 }
 

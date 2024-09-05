@@ -2657,6 +2657,18 @@ pocl_remote_get_device_info_ext (cl_device_id device,
                                  void *param_value,
                                  size_t *param_value_size_ret)
 {
+
+  switch (param_name)
+    {
+    case CL_DEVICE_REMOTE_TRAFFIC_STATS_POCL:
+      {
+        size_t traffic_data_size = 6 * sizeof (int64_t);
+        POCL_RETURN_GETINFO_INNER (
+          traffic_data_size,
+          pocl_remote_get_traffic_stats (param_value, device));
+      }
+    }
+
   return pocl_network_fetch_devinfo (device, param_name, param_value_size,
                                      param_value, param_value_size_ret);
 }

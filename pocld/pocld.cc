@@ -25,6 +25,7 @@
 #include <csignal>
 #include <cstdlib>
 #include <unistd.h>
+#include <CL/opencl.hpp>
 
 #ifdef __linux__
 #include <sys/resource.h>
@@ -81,6 +82,33 @@ int main(int argc, char *argv[]) {
   listen_ports.peer_rdma = listen_ports.command + 3;
   listen_ports.rdma = listen_ports.command + 4;
 #endif
+
+    {
+        std::vector<cl::Platform> PlatformList;
+        cl::Platform::get(&PlatformList);
+        POCL_MSG_PRINT_INFO("showing devices on: %" PRIuS " platform(s) \n", PlatformList.size());
+        for(size_t i = 0; i< PlatformList.size(); i++) {
+
+            std::string platformName = PlatformList[i].getInfo<CL_PLATFORM_NAME>();
+            POCL_MSG_PRINT_INFO("%" PRIuS": %s\n", i, platformName.c_str());
+
+            std::vector<cl::Device> DeviceList;
+            PlatformList[i].getDevices(CL_DEVICE_TYPE_ALL, &DeviceList);
+            for(size_t j = 0; j<DeviceList.size(); j++) {
+                std::string deviceName = DeviceList[j].getInfo<CL_DEVICE_NAME>();
+                POCL_MSG_PRINT_INFO("\t%" PRIuS": %s \n", j, deviceName.c_str());
+            }
+
+            // also query all the custom devices that don't show up under
+            // device type all
+            size_t allSize = DeviceList.size();
+            PlatformList[i].getDevices(CL_DEVICE_TYPE_CUSTOM, &DeviceList);
+            for(size_t j = 0; j<DeviceList.size(); j++) {
+                std::string deviceName = DeviceList[j].getInfo<CL_DEVICE_NAME>();
+                POCL_MSG_PRINT_INFO("\t%" PRIuS": %s \n", allSize+j, deviceName.c_str());
+            }
+        }
+    }
 
   int error;
   PoclDaemon server;

@@ -39,8 +39,6 @@
 
 #cmakedefine ENABLE_RDMA
 
-#cmakedefine ENABLE_TRAFFIC_MONITOR
-
 #cmakedefine ENABLE_HWLOC
 
 #cmakedefine ENABLE_HOST_CPU_DEVICES

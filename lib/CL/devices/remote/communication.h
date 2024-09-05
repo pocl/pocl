@@ -214,13 +214,11 @@ typedef struct remote_server_data_s
                                  // memset(0) the whole struct anyway
   uint8_t use_rdma;
 #endif
-#ifdef ENABLE_TRAFFIC_MONITOR
   network_queue *traffic_monitor;
   uint64_t rx_bytes_requested;
   uint64_t rx_bytes_confirmed;
   uint64_t tx_bytes_submitted;
   uint64_t tx_bytes_confirmed;
-#endif
 
   // ID maps.
   // TODO locking required ??? prolly not, because all create/release are
@@ -476,8 +474,10 @@ cl_int pocl_network_fill_image (uint32_t cq_id, remote_device_data_t *ddata,
                                 network_command_callback cb, void *arg,
                                 _cl_command_node *node);
 
+void pocl_remote_get_traffic_stats (uint64_t *out_buf, cl_device_id device);
+
 #ifdef __GNUC__
 #pragma GCC visibility pop
 #endif
 
-#endif /* POCL_SERVER_H */
+#endif /* POCL_REMOTE_COMMUNICATION_H */
