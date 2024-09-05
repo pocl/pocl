@@ -137,6 +137,8 @@ Known Bugs/Issues in OpenCL Implementations
   compilation/parsing step, because without argument metadata
   it's impossible to tell if an argument to clSetKernelArg is a pointer or an integer.
 
+.. _remote-how-to-build-label:
+
 How to Build
 -------------
 
@@ -380,6 +382,168 @@ Then, build a SYCL program of your choice as instructed in the DPC++ documentati
   ./simple-sycl-app
   The results are correct!
 
+
+Dynamic Device Management and Network Discovery
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Dynamic Device Management and Network Discovery adds the ability to find and
+manage remote servers in both Local Area Networks (LAN) and Wide Area Networks
+(WAN). Through discovery remote servers can be discovered and their OpenCL
+devices can be dynamically added to the platform. 
+
+**Network Discovery Mechanisms**
+
+* mDNS (Multicast-DNS): Utilizes the Avahi library for local network discovery.
+
+* Unicast-DNS-SD: For server discovery in specified domains, also using Avahi.
+
+* DHT (Distributed Hash Table): uses the OpenDHT library to establish or join a
+  DHT network, where servers can publish their information and clients can
+  listen for server announcements.
+
+**Enumerations for Device Info**
+
+The following new enumerations have been added to the clGetDeviceInfo():
+
+* ``CL_DEVICE_REMOTE_SERVER_IP``: Retrieves the IP address of the remote server.
+
+* ``CL_DEVICE_REMOTE_SERVER_PORT``: Retrieves the port of the remote server.
+
+**Discovery Build and Environment Variables**
+
+To build the remote server or client with discovery follow the steps in
+:ref:`remote-how-to-build`, in addition to those, follow the following build
+options:
+
+Remote Client:
+
+* ``-DENABLE_REMOTE_DISCOVERY_AVAHI``: Enable mDNS and unicast-DNS-SD discovery
+  via Avahi.
+
+* ``-DENABLE_REMOTE_DISCOVERY_DHT``: Enable DHT-based discovery.
+
+Remote Server:
+
+* ``-DENABLE_REMOTE_ADVERTISEMENT_AVAHI``: Enable mDNS advertisement via Avahi.
+
+* ``-DENABLE_REMOTE_ADVERTISEMENT_DHT``: Enable DHT-based advertisement.
+
+
+The following environment variables are introduced to control and customize
+discovery and advertisement:
+
+* ``POCL_DISCOVERY`` (bool): Located in devices.h and utilized in devices.c.
+  This variable allows users to enable or disable network discovery entirely.
+
+* ``POCL_REMOTE_SEARCH_DOMAINS`` (string): Introduced in network_discovery.h
+  and used in network_discovery.c. This variable specifies DNS domains for
+  unicast-DNS-SD queries. If set to ``NULL``, discovery is limited to the
+  local network. For example, setting
+  ``POCL_REMOTE_SEARCH_DOMAINS="example.com"`` enables discovery in both the
+  LAN and the specified domain.
+
+* ``POCL_REMOTE_DHT_PORT`` (int): Introduced in network_discovery.h and
+  dht_advertise.h, and used in network_discovery.c and
+  dht_advertise.c. This variable allows users to specify a port on which the
+  DHT node will operate. Set to 4222 by default.
+
+* ``POCL_REMOTE_DHT_BOOTSTRAP`` (string): Introduced in network_discovery.h and
+  dht_advertise.h, and utilized in network_discovery.c and
+  dht_advertise.c. This variable specifies a bootstrap node to connect to
+  an existing DHT network. Set to "bootstrap.jami.net" by default.
+
+* ``POCL_REMOTE_DHT_KEY`` (string): Introduced in network_discovery.h and
+  dht_advertise.h, and used in network_discovery.c and
+  dht_advertise.c. This variable provides a common key for server and
+  client nodes to use when publishing or listening for server details within
+  the DHT network. Set to "poclremoteservernetwork" by default.
+
+Run remote client with these environment variables in addition to the ones
+specified in :ref:`remote-how-to-build`.
+
+**Examples**
+
+Discovery in client using mDNS::
+
+    mkdir build; cd build;
+    cmake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LLVM=0 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_ICD=1 -DENABLE_REMOTE_CLIENT=1 -DENABLE_REMOTE_DISCOVERY_AVAHI=1 ..
+    make -j$(nproc)
+
+Environment variables::
+
+    export POCL_DISCOVERY=1
+    export OCL_ICD_VENDORS=$PWD/ocl-vendors/pocl-tests.icd
+    export POCL_DEVICES=remote
+    export POCL_REMOTE0_PARAMETERS='<IP ADDRESS>:<PORT>/<DEVICE ID>#<PEER ADDRESS>'
+
+Discovery in client using unicast-DNS-SD, build is same as mDNS::
+
+    export POCL_DISCOVERY=1
+    export POCL_REMOTE_SEARCH_DOMAINS="domain_name.com"
+    export OCL_ICD_VENDORS=$PWD/ocl-vendors/pocl-tests.icd
+    export POCL_DEVICES=remote
+    export POCL_REMOTE0_PARAMETERS='<IP ADDRESS>:<PORT>/<DEVICE ID>#<PEER ADDRESS>'
+
+Discovery in client using DHT::
+  
+    mkdir build; cd build;
+    cmake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LLVM=0 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_ICD=1 -DENABLE_REMOTE_CLIENT=1 -DENABLE_REMOTE_DISCOVERY_DHT=1 ..
+    make -j$(nproc)
+
+Environment variables::
+
+    export POCL_DISCOVERY=1
+    export POCL_REMOTE_DHT_PORT=<DHT PORT>
+    export POCL_REMOTE_DHT_BOOTSTRAP=<BOOTSTRAP IP>
+    export POCL_REMOTE_DHT_KEY=<COMMON KEY>
+    export OCL_ICD_VENDORS=$PWD/ocl-vendors/pocl-tests.icd
+    export POCL_DEVICES=remote
+    export POCL_REMOTE0_PARAMETERS='<IP ADDRESS>:<PORT>/<DEVICE ID>#<PEER ADDRESS>'
+
+For remote server advertisement using mDNS use ``-DENABLE_REMOTE_ADVERTISEMENT_AVAHI=YES``
+
+To advertise using unicast-DNS-SD, you would need to add DNS records for the
+remote-server in the name server of the domain which you are using. The
+following example shows how that can be done for a domain "example.com".
+
+Add PTR records:
+
+* ``lb._dns-sd._udp.example.com`` points to ``example.com`` - This sets legacy
+  browse domain to "example.com".
+
+* ``b._dns-sd._udp.example.com`` points to ``example.com`` - Sets browse domain
+  to "example.com".
+  
+* ``_services._dns-sd._udp.example.com`` points to ``pocl._tcp.example.com`` -
+  Adds the service type "pocl" in the seacrh domain.
+
+* ``_pocl._tcp.example.com`` points to ``unique_32_char_string._pocl._tcp.example.com``
+  - Adds the service instance called "unique_32_char_string" for service type "pocl".
+
+Add SRV records:
+
+* ``unique_32_char_string._pocl._tcp.example.com`` with your choice of priority,
+  weight, TTL, port, points to ``unique_32_char_string.example.com``
+
+Add A/AAAA records:
+
+* ``unique_32_char_string.example.com`` points to IP
+
+Add TXT records:
+
+* ``unique_32_char_string._pocl._tcp.example.com`` has content "11" (The text
+  record is used by the client to determine the type of the device and total
+  number of devices. 0 - CPU, 1 - GPU, 2 - Accelerator, 4 - Custom. Hence, "11"
+  denotes "gpu gpu")
+
+
+For remote server advertisement using DHT use ``-DENABLE_REMOTE_ADVERTISEMENT_DHT=YES``
+Environment variables::
+
+    export POCL_REMOTE_DHT_PORT=<DHT PORT>
+    export POCL_REMOTE_DHT_BOOTSTRAP=<BOOTSTRAP IP>
+    export POCL_REMOTE_DHT_KEY=<COMMON KEY>
+    
 
 Implementation Notes
 --------------------

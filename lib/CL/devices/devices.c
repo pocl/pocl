@@ -239,6 +239,7 @@ POCL_EXPORT int pocl_offline_compile = 0;
 static unsigned first_init_done = 0;
 static unsigned init_in_progress = 0;
 static unsigned device_count[POCL_NUM_DEVICE_TYPES];
+unsigned dev_index;
 
 // after calling drivers uninit, we may have to re-init the devices.
 static unsigned devices_active = 0;
@@ -506,6 +507,102 @@ FINISH:
   return retval;
 }
 
+/**
+ * Callback function that dynamically adds and initializes devices. It is
+ * registered by pocl_init_device_discovery(), for device drivers that support
+ * device discovery. Can be called by any and more than one device drivers.
+ */
+cl_int
+disco_dev_init_callback (const char *dev_parameters,
+                         unsigned pocl_dev_type_idx)
+{
+  assert (first_init_done);
+
+  POCL_LOCK (pocl_init_lock);
+  int errcode = CL_SUCCESS;
+
+  char dev_name[MAX_DEV_NAME_LEN] = { 0 };
+  pocl_str_toupper (dev_name, pocl_device_ops[pocl_dev_type_idx].device_name);
+  assert (pocl_device_ops[pocl_dev_type_idx].init);
+
+#ifdef POCL_DEBUG_MESSAGES
+  const char *debug = pocl_get_string_option ("POCL_DEBUG", "0");
+  pocl_debug_messages_setup (debug);
+  pocl_stderr_is_a_tty = isatty (fileno (stderr));
+#endif
+
+  cl_device_id dev;
+  dev = (cl_device_id)calloc (1, sizeof (*dev));
+
+  dev->ops = &pocl_device_ops[pocl_dev_type_idx];
+  dev->dev_id = dev_index;
+  dev->global_mem_id = dev_index;
+  POCL_INIT_OBJECT (dev);
+  dev->driver_version = POCL_VERSION_FULL;
+  if (dev->version == NULL)
+    dev->version = "OpenCL 3.0 pocl";
+
+  errcode = dev->ops->init (pocl_dev_type_idx, dev, dev_parameters);
+  POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), errcode,
+                      "Device %i / %s initialization failed! \n",
+                      pocl_dev_type_idx, dev_name);
+
+  LL_APPEND_ATOMIC (pocl_devices, dev);
+  POCL_ATOMIC_INC (device_count[pocl_dev_type_idx]);
+  POCL_ATOMIC_INC (pocl_num_devices);
+  POCL_ATOMIC_INC (dev_index);
+  devices_active = 1;
+
+  POCL_UNLOCK (pocl_init_lock);
+  return errcode;
+
+ERROR:
+  POCL_MEM_FREE (dev);
+  POCL_UNLOCK (pocl_init_lock);
+  return errcode;
+}
+
+/**
+ * Initialize discovery in device driver
+ */
+cl_int
+pocl_init_device_discovery ()
+{
+  assert (first_init_done);
+  /* Discovery initialization should happen once and only by one thread. */
+  static unsigned first_disco_init_done = 0;
+  if (POCL_ATOMIC_CAS (&first_disco_init_done, 0, 1))
+    return CL_SUCCESS;
+
+  int errcode = CL_SUCCESS;
+
+#ifdef POCL_DEBUG_MESSAGES
+  const char *debug = pocl_get_string_option ("POCL_DEBUG", "0");
+  pocl_debug_messages_setup (debug);
+  pocl_stderr_is_a_tty = isatty (fileno (stderr));
+#endif
+
+  /* If device discovery is disable by the env variable then return CL_SUCCESS.
+   */
+  if (!pocl_get_bool_option (POCL_DISCOVERY, 0))
+    goto ERROR;
+
+  for (unsigned i = 0; i < POCL_NUM_DEVICE_TYPES; i++)
+    {
+      if (pocl_device_ops[i].init_discovery == NULL)
+        continue;
+
+      errcode
+        = pocl_device_ops[i].init_discovery (&disco_dev_init_callback, i);
+      POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), errcode,
+                          "Discovery initialization failed for device: %s \n",
+                          pocl_device_ops[i].device_name);
+    }
+
+ERROR:
+  return errcode;
+}
+
 cl_int
 pocl_init_devices ()
 {
@@ -539,7 +636,7 @@ pocl_init_devices ()
     }
 
   /* first time initialization */
-  unsigned i, j, dev_index;
+  unsigned i, j;
   char env_name[MAX_ENV_NAME_LEN] = { 0 };
   char dev_name[MAX_DEV_NAME_LEN] = { 0 };
 
@@ -639,11 +736,27 @@ pocl_init_devices ()
       pocl_num_devices += device_count[i];
     }
 
-  const char *dev_env = pocl_get_string_option (POCL_DEVICES_ENV, NULL);
-  POCL_GOTO_ERROR_ON ((pocl_num_devices == 0), CL_DEVICE_NOT_FOUND,
-                      "no devices found. %s=%s\n", POCL_DEVICES_ENV, dev_env);
-
   dev_index = 0;
+
+  const char *dev_env = pocl_get_string_option (POCL_DEVICES_ENV, NULL);
+
+  /* If device discovery is enabled and no devices are found through probing
+   * then, we return with CL_SUCCESS after which discovery process is
+   * initialised. The disocvery process may find devices, hence we don't return
+   * with error. */
+  if (pocl_get_bool_option (POCL_DISCOVERY, 0) && 0 == pocl_num_devices)
+    {
+      POCL_MSG_WARN (
+        "No devices found by probing: %s=%s. Trying through discovery. \n",
+        POCL_DEVICES_ENV, dev_env);
+      first_init_done = 1;
+      errcode = pocl_init_device_discovery ();
+      goto ERROR;
+    }
+  POCL_GOTO_ERROR_ON ((pocl_num_devices == 0), CL_DEVICE_NOT_FOUND,
+                      "no devices found by probing. %s=%s\n", POCL_DEVICES_ENV,
+                      dev_env);
+
   /* Init infos for each probed devices */
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
     {
@@ -669,7 +782,7 @@ pocl_init_devices ()
               "POCL_DRIVER_VERSION_OVERRIDE", POCL_VERSION_FULL);
 
           if (dev->version == NULL)
-            dev->version = "OpenCL 2.0 pocl";
+            dev->version = "OpenCL 3.0 pocl";
 
           /* Check if there are device-specific parameters set in the
              POCL_DEVICEn_PARAMETERS env. */
@@ -681,7 +794,7 @@ pocl_init_devices ()
 
           errcode = dev->ops->init (j, dev, getenv (env_name));
           POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), errcode,
-                              "Device %i / %s initialization failed!", j,
+                              "Device %i / %s initialization failed! \n", j,
                               dev_name);
 
           LL_APPEND_ATOMIC (pocl_devices, dev);
@@ -695,6 +808,7 @@ pocl_init_devices ()
     }
   first_init_done = 1;
   devices_active = 1;
+  errcode = pocl_init_device_discovery ();
 ERROR:
   init_in_progress = 0;
   POCL_UNLOCK (pocl_init_lock);

@@ -41,6 +41,7 @@
 #include "pocl_builtin_kernels.h"
 #include "pocl_cache.h"
 #include "pocl_cl.h"
+#include "pocl_debug.h"
 #include "pocl_file_util.h"
 #include "pocl_mem_management.h"
 #include "pocl_tensor_util.h"
@@ -51,6 +52,11 @@
 
 #include "communication.h"
 #include "messages.h"
+
+#if defined(ENABLE_REMOTE_DISCOVERY_AVAHI)                                    \
+  || defined(ENABLE_REMOTE_DISCOVERY_DHT)
+#include "network_discovery.h"
+#endif
 
 /*
   TODO / problematic:
@@ -372,6 +378,11 @@ pocl_remote_init_device_ops (struct pocl_device_ops *ops)
 
   ops->create_sampler = pocl_remote_create_sampler;
   ops->free_sampler = pocl_remote_free_sampler;
+
+#if defined(ENABLE_REMOTE_DISCOVERY_AVAHI)                                    \
+  || defined(ENABLE_REMOTE_DISCOVERY_DHT)
+  ops->init_discovery = pocl_remote_init_discovery;
+#endif
 }
 
 char *
@@ -569,7 +580,10 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
 
   // TODO: add list of all remotes to create_or_find_server from here
   if (pocl_network_init_device (device, d, j, parameters))
-    return CL_DEVICE_NOT_FOUND;
+    {
+      POCL_MEM_FREE (d);
+      return CL_DEVICE_NOT_FOUND;
+    }
 
   const char *magic = "pocl";
   device->vendor_id
@@ -624,6 +638,19 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
 
   return CL_SUCCESS;
 }
+
+#if defined(ENABLE_REMOTE_DISCOVERY_AVAHI)                                    \
+  || defined(ENABLE_REMOTE_DISCOVERY_DHT)
+cl_int
+pocl_remote_init_discovery (cl_int (*disco_dev_init_callback) (const char *,
+                                                               unsigned),
+                            unsigned pocl_dev_type_idx)
+{
+  return init_network_discovery (disco_dev_init_callback,
+                                 pocl_remote_reconnect_rediscover,
+                                 pocl_dev_type_idx);
+}
+#endif
 
 cl_int
 pocl_remote_setup_peer_mesh (struct pocl_device_ops *ops)
@@ -2774,6 +2801,20 @@ pocl_remote_get_device_info_ext (cl_device_id device,
         POCL_RETURN_GETINFO_INNER (
           traffic_data_size,
           pocl_remote_get_traffic_stats (param_value, device));
+      }
+
+    case CL_DEVICE_REMOTE_SERVER_IP:
+      {
+        remote_device_data_t *dev_data = (remote_device_data_t *)device->data;
+        remote_server_data_t *server = dev_data->server;
+        POCL_RETURN_GETINFO_STR (server->address);
+      }
+
+    case CL_DEVICE_REMOTE_SERVER_PORT:
+      {
+        remote_device_data_t *dev_data = (remote_device_data_t *)device->data;
+        remote_server_data_t *server = dev_data->server;
+        POCL_RETURN_GETINFO (unsigned, server->fast_port);
       }
     }
 

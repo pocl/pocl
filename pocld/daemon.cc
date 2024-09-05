@@ -52,6 +52,14 @@
 
 #include "daemon.hh"
 
+#ifdef ENABLE_REMOTE_ADVERTISEMENT_AVAHI
+#include "avahi_advertise.h"
+#endif
+
+#ifdef ENABLE_REMOTE_ADVERTISEMENT_DHT
+#include "dht_advertise.hh"
+#endif
+
 #ifndef POLLRDHUP
 #define POLLRDHUP 0
 #endif
@@ -65,6 +73,10 @@
       return 1;                                                                \
     }                                                                          \
   } while (0)
+
+#ifdef ENABLE_REMOTE_ADVERTISEMENT_DHT
+std::thread DHTThread;
+#endif
 
 int listen_peers(void *data) {
   peer_listener_data_t *d = (peer_listener_data_t *)data;
@@ -213,6 +225,243 @@ int listen_rdmacm_events(rdmacm::EventChannelPtr cm_channel,
 }
 #endif
 
+#ifdef ENABLE_REMOTE_ADVERTISEMENT_AVAHI
+
+/// Called to initialize and start mDNS service advertisement using avahi
+void StartAvahiAdvert(addrinfo *RA, struct ServerPorts &Ports) {
+
+  // Get the platform and device information to add to DNS TXT field.
+  std::vector<cl::Platform> PlatformList;
+  cl::Platform::get(&PlatformList);
+  // String to store the device types of each device present in the platform.
+  std::string DevTypes;
+
+  for (cl_uint i = 0; i < PlatformList.size(); ++i) {
+    std::vector<cl::Device> CLDevices;
+    PlatformList[i].getDevices(CL_DEVICE_TYPE_ALL, &CLDevices);
+    for (cl_uint i = 0; i < CLDevices.size(); i++) {
+      DevTypes.append(
+          std::to_string(CLDevices[i].getInfo<CL_DEVICE_TYPE>() /
+                         4)); // divide by 4 to get the type as 0,1,2,4(single
+                              // characters) instead of 2,4,8,16.
+    }
+
+    // Custom devices are not under CL_DEVICE_TYPE_ALL.
+    PlatformList[i].getDevices(CL_DEVICE_TYPE_CUSTOM, &CLDevices);
+    for (cl_uint i = 0; i < CLDevices.size(); i++) {
+      DevTypes.append(
+          std::to_string(CLDevices[i].getInfo<CL_DEVICE_TYPE>() /
+                         4)); // divide by 4 to get the type as 0,1,2,4(single
+                              // characters) instead of 2,4,8,16.
+    }
+  }
+
+  // Generate a 32 char unique random server identifier when the daemon process
+  // (re)starts. The server ID is needed as 'service name' for advertising the
+  // server on the network  The unique server identifier is used by the
+  // client's discovery process to check if the session has changed when the
+  // server advertises itself. The client uses this to decide if the server
+  // should reconnect or be newly added.
+
+  std::random_device RD;
+  std::default_random_engine Dice(RD());
+  std::uniform_int_distribution<uint8_t> Dist(0, UINT8_MAX);
+  std::array<uint8_t, 16> ServerID;
+  std::string SrvID;
+
+  for (uint8_t &i : ServerID) {
+    i = Dist(Dice);
+  }
+
+  SrvID = std::accumulate(ServerID.begin(), ServerID.end(), std::string(),
+                          hexdigits);
+
+  // Get the interface and IP protocol for the first resolved valid address.
+  addrinfo *ResolvedAddress = RA;
+
+  struct ifaddrs *addrs, *ifa;
+  // Initialize to advertise at all interfaces and using all protocols.
+  // (Avahi specification)
+  int16_t IfIndex = -1, IpProto = -1;
+
+  char BufInf[32], BufBase[32];
+  getifaddrs(&addrs);
+
+  for (; ResolvedAddress; ResolvedAddress = ResolvedAddress->ai_next) {
+
+    if (ResolvedAddress->ai_family == AF_INET) {
+
+      for (ifa = addrs; ifa; ifa = ifa->ifa_next) {
+
+        inet_ntop(AF_INET,
+                  (void *)&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
+                  BufInf, sizeof(BufInf));
+        inet_ntop(
+            AF_INET,
+            (void *)&((struct sockaddr_in *)ResolvedAddress->ai_addr)->sin_addr,
+            BufBase, sizeof(BufBase));
+
+        if (!strcmp(BufBase, BufInf)) {
+          IfIndex = if_nametoindex(ifa->ifa_name);
+          IpProto = 0;
+          break;
+        }
+      }
+      break;
+    } else if (ResolvedAddress->ai_family == AF_INET6) {
+
+      for (ifa = addrs; ifa; ifa = ifa->ifa_next) {
+
+        inet_ntop(AF_INET6,
+                  (void *)&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr,
+                  BufInf, sizeof(BufInf));
+        inet_ntop(AF_INET6,
+                  (void *)&((struct sockaddr_in6 *)&ResolvedAddress->ai_addr)
+                      ->sin6_addr,
+                  BufBase, sizeof(BufBase));
+
+        if (!strcmp(BufBase, BufInf)) {
+          IfIndex = if_nametoindex(ifa->ifa_name);
+          IpProto = 1;
+          break;
+        }
+      }
+      break;
+    }
+  }
+
+  init_avahi_advertisement(SrvID.c_str(), SrvID.length(), IfIndex, IpProto,
+                           Ports.command, DevTypes.c_str(), DevTypes.length());
+}
+
+#endif
+
+#ifdef ENABLE_REMOTE_ADVERTISEMENT_DHT
+/// Called to initialize and start DHT based service advertisement using
+/// OpenDHT.
+void StartDHTAdvert(addrinfo *RA, struct ServerPorts &Ports) {
+
+  // Generate a 32 char unique random server identifier when the daemon process
+  // (re)starts. The server ID is needed as 'service name' for advertising the
+  // server on the network  The unique server identifier is used by the
+  // client's discovery process to check if the session has changed when the
+  // server advertises itself. The client uses this to decide if the server
+  // should reconnect or be newly added.
+
+  std::random_device RD;
+  std::default_random_engine Dice(RD());
+  std::uniform_int_distribution<uint8_t> Dist(0, UINT8_MAX);
+  std::array<uint8_t, 16> ServerID;
+  std::string SrvID;
+
+  for (uint8_t &i : ServerID) {
+    i = Dist(Dice);
+  }
+
+  SrvID = std::accumulate(ServerID.begin(), ServerID.end(), std::string(),
+                          hexdigits);
+
+  // Get the IP from the struct of the resolved address.
+  addrinfo *ResolvedAddress = RA;
+  char IP[INET6_ADDRSTRLEN];
+  for (; ResolvedAddress; ResolvedAddress = ResolvedAddress->ai_next) {
+    if (ResolvedAddress->ai_family == AF_INET) {
+      inet_ntop(
+          AF_INET,
+          (void *)&((struct sockaddr_in *)ResolvedAddress->ai_addr)->sin_addr,
+          IP, INET_ADDRSTRLEN);
+      break;
+    } else if (ResolvedAddress->ai_family == AF_INET6) {
+      inet_ntop(AF_INET6,
+                (void *)&((struct sockaddr_in6 *)&ResolvedAddress->ai_addr)
+                    ->sin6_addr,
+                IP, INET6_ADDRSTRLEN);
+      break;
+    }
+  }
+
+  // Information to be put on the DHT network has to be an array of bytes.
+  std::vector<uint8_t> InfoArray;
+
+  for (char c : SrvID) {
+    InfoArray.push_back(static_cast<uint8_t>(c));
+  }
+  InfoArray.push_back(static_cast<uint8_t>('~'));
+  for (char c : (strcat(IP, ":") + std::to_string(Ports.command))) {
+    InfoArray.push_back(static_cast<uint8_t>(c));
+  }
+  InfoArray.push_back(static_cast<uint8_t>('~'));
+
+  // Get the platform and device information to add to InfoArray.
+  std::vector<cl::Platform> PlatformList;
+  cl::Platform::get(&PlatformList);
+  for (size_t i = 0; i < PlatformList.size(); ++i) {
+    std::vector<cl::Device> CLDevices;
+    PlatformList[i].getDevices(CL_DEVICE_TYPE_ALL, &CLDevices);
+    for (int i = 0; i < CLDevices.size(); i++) {
+
+      // Serialize the info
+      for (char c : CLDevices[i].getInfo<CL_DEVICE_NAME>()) {
+        InfoArray.push_back(static_cast<uint8_t>(c));
+      }
+      InfoArray.push_back(static_cast<uint8_t>('~'));
+
+      // divide by 4 to get the type as 0,1,2,4(single characters) instead of
+      // 2,4,8,16.
+      for (char c :
+           std::to_string(CLDevices[i].getInfo<CL_DEVICE_TYPE>() / 4)) {
+        InfoArray.push_back(static_cast<uint8_t>(c));
+      }
+      InfoArray.push_back(static_cast<uint8_t>('~'));
+
+      for (char c : std::to_string(
+               CLDevices[i].getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>())) {
+        InfoArray.push_back(static_cast<uint8_t>(c));
+      }
+      InfoArray.push_back(static_cast<uint8_t>('~'));
+
+      for (char c :
+           std::to_string(CLDevices[i].getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>())) {
+        InfoArray.push_back(static_cast<uint8_t>(c));
+      }
+      InfoArray.push_back(static_cast<uint8_t>('~'));
+    }
+
+    // Custom devices are not under CL_DEVICE_TYPE_ALL
+    PlatformList[i].getDevices(CL_DEVICE_TYPE_CUSTOM, &CLDevices);
+    for (int i = 0; i < CLDevices.size(); i++) {
+
+      for (char c : CLDevices[i].getInfo<CL_DEVICE_NAME>()) {
+        InfoArray.push_back(static_cast<uint8_t>(c));
+      }
+      InfoArray.push_back(static_cast<uint8_t>('~'));
+
+      // divide by 4 to get the type as 0,1,2,4(single characters) instead of
+      // 2,4,8,16.
+      for (char c :
+           std::to_string(CLDevices[i].getInfo<CL_DEVICE_TYPE>() / 4)) {
+        InfoArray.push_back(static_cast<uint8_t>(c));
+      }
+      InfoArray.push_back(static_cast<uint8_t>('~'));
+
+      for (char c : std::to_string(
+               CLDevices[i].getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>())) {
+        InfoArray.push_back(static_cast<uint8_t>(c));
+      }
+      InfoArray.push_back(static_cast<uint8_t>('~'));
+
+      for (char c :
+           std::to_string(CLDevices[i].getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>())) {
+        InfoArray.push_back(static_cast<uint8_t>(c));
+      }
+      InfoArray.push_back(static_cast<uint8_t>('~'));
+    }
+  }
+
+  DHTThread = std::move(std::thread(init_dht_advertisement, InfoArray));
+}
+#endif
+
 PoclDaemon::~PoclDaemon() {
   if (ClientPoller.joinable())
     ClientPoller.join();
@@ -302,6 +551,14 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports,
     POCL_MSG_ERR("Error resolving address: %s\n", gai_strerror(error));
     return -1;
   }
+
+#ifdef ENABLE_REMOTE_ADVERTISEMENT_AVAHI
+  StartAvahiAdvert(ResolvedAddress, Ports);
+#endif
+#ifdef ENABLE_REMOTE_ADVERTISEMENT_DHT
+  StartDHTAdvert(ResolvedAddress, Ports);
+#endif
+
   addrinfo *ai = ResolvedAddress;
   NumListenFds = 0;
   for (addrinfo *ai = ResolvedAddress; ai; ai = ai->ai_next) {

@@ -78,6 +78,19 @@ if(BUILD_REMOTE_CLIENT)
   add_subdirectory("remote")
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
     "$<TARGET_OBJECTS:pocl-devices-remote>")
+
+  if(ENABLE_REMOTE_DISCOVERY_AVAHI)
+    find_library(AVAHI_COMMON_LIB NAMES avahi-common REQUIRED)
+    find_library(AVAHI_CLIENT_LIB NAMES avahi-client REQUIRED)
+    list(APPEND POCL_DEVICES_LINK_LIST ${AVAHI_COMMON_LIB} ${AVAHI_CLIENT_LIB})
+  endif()
+
+  if(ENABLE_REMOTE_DISCOVERY_DHT)
+    find_library(OPENDHT NAMES opendht REQUIRED)
+    find_library(OPENDHT_C NAMES opendht-c REQUIRED)
+    list(APPEND POCL_DEVICES_LINK_LIST ${OPENDHT} ${OPENDHT_C})
+  endif()
+
   if((NOT ENABLE_LOADABLE_DRIVERS) AND ENABLE_RDMA)
     list(APPEND POCL_DEVICES_LINK_LIST RDMAcm::RDMAcm IBVerbs::verbs)
   endif()

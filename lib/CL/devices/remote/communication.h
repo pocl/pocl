@@ -197,12 +197,19 @@ typedef struct remote_connection_s
   int notify_pipe_w;
   /* Flag for determining the socket options to use when (re)connecting */
   int is_fast;
+  /* Counter to track attempts made for reconnection. Variable is used to be
+   * able to give-up after POCL_REMOTE_RECONNECT_MAX_ATTEMPTS. */
+  int reconnect_attempts;
+  /* Sync object mainly to use the condition to signal the reader threads from
+   * the discovery reconnect function. */
+  sync_t discovery_reconnect_guard;
 } remote_connection_t;
 
 #define INITIAL_ARRAY_CAP 1024
 
 /* in nanoseconds */
 #define POCL_REMOTE_RECONNECT_TIMEOUT_NS 60 * 1000000000L
+#define POCL_REMOTE_RECONNECT_MAX_ATTEMPTS 0
 
 typedef struct remote_server_data_s
 {
@@ -526,6 +533,8 @@ cl_int pocl_network_fill_image (uint32_t cq_id, remote_device_data_t *ddata,
                                 _cl_command_node *node);
 
 void pocl_remote_get_traffic_stats (uint64_t *out_buf, cl_device_id device);
+
+cl_int pocl_remote_reconnect_rediscover (const char *address_with_port);
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

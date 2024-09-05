@@ -78,6 +78,9 @@ int pocl_device_get_env_count(const char *dev_type);
 /* the environment variable that lists the enabled devices */
 #define POCL_DEVICES_ENV "POCL_DEVICES"
 
+/* environment variable to enable/disable device discovery. */
+#define POCL_DISCOVERY "POCL_DISCOVERY"
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

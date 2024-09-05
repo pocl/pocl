@@ -45,7 +45,7 @@ set(C_PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clSetMemObjectDestructorCallback test_dbk_jpeg
   test_cl_pocl_content_size test_cl_pocl_content_size_migration
   test_deviceside_enqueue test_command_buffer test_command_buffer_images
-  test_command_buffer_multi_device test_queue_creation_with_hints)
+  test_command_buffer_multi_device test_queue_creation_with_hints test_remote_discovery)
 
 if(HAVE_ONNXRT)
   list(APPEND C_PROGRAMS_TO_BUILD test_dbk_onnx_inference)
@@ -352,6 +352,54 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
       PROPERTIES
         LABELS "remote_rdma")
   endif()
+endif()
+
+if(ENABLE_REMOTE_DISCOVERY_AVAHI AND
+   ENABLE_REMOTE_ADVERTISEMENT_AVAHI AND
+   ENABLE_REMOTE_CLIENT AND
+   ENABLE_REMOTE_SERVER AND
+   ENABLE_HOST_CPU_DEVICES)
+
+  add_test(NAME "discovery/remote_discovery_mDNS"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_discovery.sh"
+           "${CMAKE_BINARY_DIR}"
+           "tests/runtime/test_remote_discovery"
+           "mdns")
+
+  set_tests_properties(
+    "discovery/remote_discovery_mDNS"
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "OK"
+      COST 2.0
+      PROCESSORS 1
+      DEPENDS "pocl_version_check"
+      LABELS "discovery"
+      RESOURCE_LOCK "pocld_ports")
+
+endif()
+
+if(ENABLE_REMOTE_DISCOVERY_DHT AND
+   ENABLE_REMOTE_ADVERTISEMENT_DHT AND
+   ENABLE_REMOTE_CLIENT AND
+   ENABLE_REMOTE_SERVER AND
+   ENABLE_HOST_CPU_DEVICES)
+
+  add_test(NAME "discovery/remote_discovery_dht"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_discovery.sh"
+           "${CMAKE_BINARY_DIR}"
+           "tests/runtime/test_remote_discovery"
+           "dht")
+
+  set_tests_properties(
+    "discovery/remote_discovery_dht"
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "OK"
+      COST 2.0
+      PROCESSORS 1
+      DEPENDS "pocl_version_check"
+      LABELS "discovery"
+      RESOURCE_LOCK "pocld_ports")
+
 endif()
 
 if(NOT ENABLE_ANYSAN)
