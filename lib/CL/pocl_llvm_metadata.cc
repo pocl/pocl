@@ -94,7 +94,7 @@ static inline bool is_sampler_type(struct pocl_argument_info &ArgInfo,
                                    cl_bitfield has_arg_meta) {
   assert(has_arg_meta & POCL_HAS_KERNEL_ARG_TYPE_NAME);
   llvm::StringRef name(ArgInfo.type_name);
-  return name.equals("sampler_t");
+  return name == "sampler_t";
 }
 #endif
 

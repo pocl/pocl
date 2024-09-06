@@ -545,6 +545,4 @@ typedef enum
   POCL_AUTOLOCALS_TO_ARGS_ONLY_IF_DYNAMIC_LOCALS_PRESENT = 2,
 } pocl_autolocals_to_args_strategy;
 
-#include "_libclang_versions_checks.h"
-
 #endif /* POCL_H */
