@@ -647,13 +647,9 @@ RETRY:
               assert (meta->builtin_kernel_id != 0);
               pocl_update_event_running (cmd->sync.event.event);
 
-#ifdef HAVE_LIBXSMM
               pocl_cpu_execute_dbk (program, kernel, meta, dev_i,
                                     cmd->command.run.arguments);
-#else
-              POCL_MSG_ERR (
-                "PoCL compiled without libxsmm - cannot execute DBK\n");
-#endif
+
               POCL_UPDATE_EVENT_COMPLETE_MSG (cmd->sync.event.event,
                                               "Builtin Kernel        ");
             }

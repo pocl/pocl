@@ -31,6 +31,10 @@
 #include "pocl_context.h"
 #include "pocl_workgroup_func.h"
 
+#ifdef HAVE_LIBJPEG_TURBO
+#include "cpu_dbk/pocl_dbk_khr_jpeg_cpu.h"
+#endif
+
 /* Generic struct for CPU device drivers.
  * Not all fields of this struct are used by all drivers. */
 typedef struct kernel_run_command kernel_run_command;
@@ -118,6 +122,8 @@ void pocl_free_kernel_arg_array (kernel_run_command *k);
 POCL_EXPORT
 void pocl_free_kernel_arg_array_with_locals (void **arguments, void **arguments2,
                                         kernel_run_command *k);
+
+void *pocl_cpu_get_ptr (struct pocl_argument *arg, unsigned global_mem_id);
 
 #ifdef __cplusplus
 }

@@ -58,7 +58,7 @@ static std::tuple<cl::Platform, cl::Device> findDeviceWithMatmulDBK() noexcept {
         continue;
 
       std::string BiKs = D.getInfo<CL_DEVICE_BUILT_IN_KERNELS>();
-      if (BiKs.find("khr_matmul") != std::string::npos) {
+      if (BiKs.find("exp_matmul") != std::string::npos) {
         std::cerr << "Selected device: " << D.getInfo<CL_DEVICE_NAME>() << "\n";
         return std::make_tuple(P, D);
       }

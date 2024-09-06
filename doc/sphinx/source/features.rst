@@ -10,3 +10,4 @@ Supported OpenCL features, device drivers
    conformance
    extensions
    drivers
+   dbk

@@ -152,8 +152,16 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
           return pocl_verify_dbk_kernel_arg (buf, &Attrs->c);
         POCL_ABORT ("this should not be reached \n");
       }
+    case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
+    case POCL_CDBI_DBK_EXP_JPEG_DECODE:
+      return CL_SUCCESS;
     default:
-      return CL_INVALID_KERNEL;
+      {
+        POCL_MSG_ERR ("pocl_verify_dbk_kernel_args called on "
+                      "unknown/unsupported DBK type %d.\n",
+                      meta->builtin_kernel_id);
+        return CL_INVALID_KERNEL;
+      }
     }
 }
 

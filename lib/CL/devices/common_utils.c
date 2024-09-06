@@ -112,7 +112,8 @@ align_ptr (char *p)
 #define FALLBACK_MAX_THREAD_COUNT 8
 
 /* Initializes CPU-specific device info default, that cannot / should
-   not be initialized in pocl_init_default_device_infos() */
+   not be initialized in pocl_init_default_device_infos()
+*/
 cl_int
 pocl_cpu_init_common (cl_device_id device)
 {
@@ -135,7 +136,6 @@ pocl_cpu_init_common (cl_device_id device)
       device->max_num_sub_groups = device->max_work_group_size / 32;
     }
 
-#ifdef HAVE_LIBXSMM
   if (device->builtin_kernel_list
       && strstr (HOST_DEVICE_EXTENSIONS, "cl_exp_defined_builtin_kernels")
            != NULL)
@@ -146,11 +146,24 @@ pocl_cpu_init_common (cl_device_id device)
                   "org.khronos.openvx.scale_image.nn.u8;"
                   "org.khronos.openvx.scale_image.bl.u8;"
                   "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32;"
+#ifdef HAVE_LIBXSMM
                   "exp_gemm;"
-                  "exp_matmul;");
-      device->num_builtin_kernels = 6;
-    }
+                  "exp_matmul;"
 #endif
+#ifdef HAVE_LIBJPEG_TURBO
+                  "exp_jpeg_encode;"
+                  "exp_jpeg_decode;"
+#endif
+        );
+      device->num_builtin_kernels = 4
+#ifdef HAVE_LIBXSMM
+                                    + 2
+#endif
+#ifdef HAVE_LIBJPEG_TURBO
+                                    + 2
+#endif
+        ;
+    }
 
   /* 0 is the host memory shared with all drivers that use it */
   device->global_mem_id = 0;
@@ -621,15 +634,28 @@ pocl_cpu_supports_dbk (cl_device_id device,
                        BuiltinKernelId kernel_id,
                        const void *kernel_attributes)
 {
+  switch (kernel_id)
+    {
 #ifdef HAVE_LIBXSMM
-  /* the following code checks for LIBXSMM specific requirements on Tensors */
-  return pocl_validate_dbk_attributes (kernel_id, kernel_attributes,
-                                       pocl_cpu_validate_khr_gemm);
-#else
-  POCL_RETURN_ERROR_ON (1, CL_UNSUPPORTED_DBK,
-                        "The CPU driver must be compiled with libxsmm "
-                        "to support tensor DBKs\n");
+    case POCL_CDBI_DBK_EXP_GEMM:
+    case POCL_CDBI_DBK_EXP_MATMUL:
+      {
+        /* The following code checks for LIBXSMM specific requirements put
+         * on the tensors that are part of the kernel attributes. */
+        return pocl_validate_dbk_attributes (kernel_id, kernel_attributes,
+                                             pocl_cpu_validate_khr_gemm);
+      }
 #endif
+#ifdef HAVE_LIBJPEG_TURBO
+    case POCL_CDBI_DBK_EXP_JPEG_DECODE:
+    case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
+      return pocl_validate_dbk_attributes (kernel_id, kernel_attributes, NULL);
+#endif
+    default:
+      POCL_RETURN_ERROR_ON (
+        1, CL_UNSUPPORTED_DBK,
+        "The CPU driver does not support DBK (kernel id %d).\n", kernel_id);
+    }
 }
 
 void
@@ -643,14 +669,40 @@ pocl_cpu_probe ()
 int
 pocl_cpu_build_defined_builtin (cl_program program, cl_uint device_i)
 {
+
 #ifdef HAVE_LIBXSMM
   /* TODO perhaps prebuild something here ? */
   return CL_SUCCESS;
-#else
-  POCL_RETURN_ERROR_ON (1, CL_BUILD_PROGRAM_FAILURE,
-                        "The CPU driver must be compiled with libxsmm "
-                        "to support tensor DBKs\n");
 #endif
+#ifdef HAVE_LIBJPEG_TURBO
+  return CL_SUCCESS;
+#endif
+  /* TODO: is it necessary to return an error here or can it be caught earlier
+     on? */
+  POCL_RETURN_ERROR_ON (
+    1, CL_BUILD_PROGRAM_FAILURE,
+    "The CPU driver has not been compiled with support for DBKs\n");
+}
+
+/**
+ * Get the device memory pointer of the supplied pocl argument.
+ *
+ * \param global_mem_id [in] This is needed to get the device specific pointer.
+ * \return NULL if arg->value is NULL and otherwise the requested pointer.
+ */
+void *
+pocl_cpu_get_ptr (struct pocl_argument *arg, unsigned global_mem_id)
+{
+  if (arg->value == NULL)
+    return NULL;
+
+  if (arg->is_raw_ptr)
+    return *(void **)arg->value;
+
+  cl_mem mem = *(cl_mem *)(arg->value);
+  char *ptr = (char *)(mem->device_ptrs[global_mem_id].mem_ptr);
+  ptr += arg->offset;
+  return (void *)ptr;
 }
 
 #ifdef HAVE_LIBXSMM
@@ -830,27 +882,12 @@ pocl_cpu_execute_gemm_anytype (char *Aptr,
   return CL_SUCCESS;
 }
 
-static void *
-pocl_cpu_get_ptr (struct pocl_argument *arg, unsigned global_mem_id)
-{
-  if (arg->value == NULL)
-    return NULL;
-
-  if (arg->is_raw_ptr)
-    return *(void **)arg->value;
-
-  cl_mem mem = *(cl_mem *)(arg->value);
-  char *ptr = (char *)(mem->device_ptrs[global_mem_id].mem_ptr);
-  ptr += arg->offset;
-  return (void *)ptr;
-}
-
 int
-pocl_cpu_execute_dbk (cl_program program,
-                      cl_kernel kernel,
-                      pocl_kernel_metadata_t *meta,
-                      cl_uint dev_i,
-                      struct pocl_argument *arguments)
+pocl_xsmm_execute_dbk (cl_program program,
+                       cl_kernel kernel,
+                       pocl_kernel_metadata_t *meta,
+                       cl_uint dev_i,
+                       struct pocl_argument *arguments)
 {
   cl_device_id dev = program->devices[dev_i];
   unsigned mem_id = dev->global_mem_id;
@@ -916,3 +953,34 @@ pocl_cpu_execute_dbk (cl_program program,
 }
 
 #endif
+
+int
+pocl_cpu_execute_dbk (cl_program program,
+                      cl_kernel kernel,
+                      pocl_kernel_metadata_t *meta,
+                      cl_uint dev_i,
+                      struct pocl_argument *arguments)
+{
+  switch (meta->builtin_kernel_id)
+    {
+#ifdef HAVE_LIBXSMM
+    case POCL_CDBI_DBK_EXP_GEMM:
+    case POCL_CDBI_DBK_EXP_MATMUL:
+      return pocl_xsmm_execute_dbk (program, kernel, meta, dev_i, arguments);
+#endif
+#ifdef HAVE_LIBJPEG_TURBO
+    case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
+      return pocl_cpu_execute_dbk_khr_jpeg_encode (program, kernel, meta,
+                                                   dev_i, arguments);
+    case POCL_CDBI_DBK_EXP_JPEG_DECODE:
+      return pocl_cpu_execute_dbk_khr_jpeg_decode (program, kernel, meta,
+                                                   dev_i, arguments);
+#endif
+    default:
+      {
+        POCL_MSG_ERR ("Unhandled DBK id %d.\n", meta->builtin_kernel_id);
+        POCL_ABORT_UNIMPLEMENTED (
+          "Requested DBK is not implemented on the CPU device.\n");
+      }
+    }
+}

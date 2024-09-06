@@ -10,6 +10,15 @@ Driver-specific features
 CPU drivers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+* New experimental support for Defined Built-in Kernels (DBK) has
+  been added to the CPU drivers. These DBKs allow for a
+  standardized set of built-in kernels with well-defined
+  semantics that can be configured during creation of the OpenCL
+  program. Currently the following DBKs are implemented: GEMM,
+  matrix multiplication, and JPEG en-/de-code. The Extension
+  documentation draft can be found on
+  `github <https://github.com/KhronosGroup/OpenCL-Docs/pull/1007>`_.
+
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Work-group vectorization improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

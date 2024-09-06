@@ -1121,7 +1121,8 @@ struct _cl_device_id {
   /* highest OpenCL C version supported by the compiler */
   const char *opencl_c_version_as_opt;
   cl_version opencl_c_version_as_cl;
-
+  /* Holds data specifically unique to each device type,
+   * needed for internal device functions. */
   void *data;
 
   const char* llvm_target_triplet; /* the llvm target triplet to use */

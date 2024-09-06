@@ -173,6 +173,7 @@ if(ENABLE_HOST_CPU_DEVICES)
   if(ENABLE_HWLOC)
     list(APPEND POCL_DEVICES_LINK_LIST PkgConfig::HWLOC)
   endif()
+  add_subdirectory(cpu_dbk)
   list(APPEND POCL_DEVICES_SOURCES common_utils.h common_utils.c)
 endif()
 
@@ -190,6 +191,9 @@ endif()
 if(HAVE_LIBXSMM) # for includedir flags
   target_link_libraries("pocl-devices" PRIVATE PkgConfig::LIBXSMM)
 endif()
+if(HAVE_LIBJPEG_TURBO)
+  target_link_libraries("pocl-devices" PRIVATE libjpeg-turbo::turbojpeg)
+endif ()
 
 set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
     "$<TARGET_OBJECTS:pocl-devices>")

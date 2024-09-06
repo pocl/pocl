@@ -90,6 +90,12 @@ typedef enum
   POCL_CDBI_GAUSSIAN3X3_P512 = 37,
   POCL_CDBI_DBK_EXP_GEMM = 38,
   POCL_CDBI_DBK_EXP_MATMUL = 39,
+  /* See 'Defined Built-in Kernels:JPEG:Usage' in dbk.rst for details on usage.
+   */
+  POCL_CDBI_DBK_EXP_JPEG_ENCODE = 40,
+  /* See 'Defined Built-in Kernels:JPEG:Usage' in dbk.rst for details on usage.
+   */
+  POCL_CDBI_DBK_EXP_JPEG_DECODE = 41,
   POCL_CDBI_LAST,
   POCL_CDBI_JIT_COMPILER = 0xFFFF
 } BuiltinKernelId;
@@ -188,5 +194,19 @@ typedef struct _cl_dbk_attributes_exp_matmul
   /* 0-terminated array */
   cl_dbk_properties kernel_props[CL_MAX_DBK_PROPERTIES];
 } cl_dbk_attributes_exp_matmul;
+
+/**
+ * Name: exp_jpeg_encode
+ *
+ * \param width needs to be within the JPEG specification.
+ * \param height needs to be within the JPEG specification.
+ * \param quality needs to be within [1 - 100].
+ */
+typedef struct
+{
+  cl_int width;
+  cl_int height;
+  cl_int quality;
+} cl_dbk_attributes_exp_jpeg_encode;
 
 #endif /* OPENCL_EXP_DEFINED_BUILTIN_KERNELS */
