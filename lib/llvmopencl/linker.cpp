@@ -435,9 +435,9 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
       if (copy_func_callgraph(r, Lib, Program, vvm)) {
         Function *f = Program->getFunction(r);
 
-        if (f->getName().equals("__to_local") ||
-            f->getName().equals("__to_global") ||
-            f->getName().equals("__to_private")) {
+        if (f->getName() == "__to_local" ||
+            f->getName() == "__to_global" ||
+            f->getName() == "__to_private") {
 
           // Special handling for the AS cast built-ins: They do not use
           // type mangling, which complicates the CPU implementation which
@@ -478,8 +478,8 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
         if ((f == NULL) || (f->isDeclaration() &&
                             // A target might want to expose the C99 printf in
                             // case not supporting the OpenCL 1.2 printf.
-                            !f->getName().equals("printf") &&
-                            !f->getName().equals(pocl_sampler_handler) &&
+                            f->getName() != "printf" &&
+                            f->getName() != pocl_sampler_handler &&
                             !f->getName().starts_with(llvm_intrins))) {
           Log.append("Cannot find symbol ");
           Log.append(r.str());

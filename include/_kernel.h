@@ -116,42 +116,6 @@
 #  define _CL_CONVERGENT
 #endif
 
-/************************ setup Clang version macros ******************/
-
-#if (__clang_major__ == 14)
-
-#undef LLVM_14_0
-#define LLVM_14_0
-
-#elif (__clang_major__ == 15)
-
-#undef LLVM_15_0
-#define LLVM_15_0
-
-#elif (__clang_major__ == 16)
-
-#undef LLVM_16_0
-#define LLVM_16_0
-
-#elif (__clang_major__ == 17)
-
-#undef LLVM_17_0
-#define LLVM_17_0
-
-#elif (__clang_major__ == 18)
-
-#undef LLVM_18_0
-#define LLVM_18_0
-
-#else
-
-#error Unsupported Clang/LLVM version.
-
-#endif
-
-#include "_libclang_versions_checks.h"
-
-
 /****************************************************************************/
 
 /* A static assert statement to catch inconsistencies at build time */

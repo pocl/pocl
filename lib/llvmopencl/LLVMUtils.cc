@@ -37,7 +37,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "AllocasToEntry.h"
 #include "AutomaticLocals.h"
 #include "BarrierTailReplication.h"
-#include "BreakConstantGEPs.h"
 #include "CanonicalizeBarriers.h"
 #include "DebugHelpers.h"
 #include "Flatten.hh"
@@ -663,7 +662,6 @@ void registerPassBuilderPasses(llvm::PassBuilder &PB) {
   AllocasToEntry::registerWithPB(PB);
   AutomaticLocals::registerWithPB(PB);
   BarrierTailReplication::registerWithPB(PB);
-  BreakConstantGEPs::registerWithPB(PB);
   CanonicalizeBarriers::registerWithPB(PB);
   FlattenAll::registerWithPB(PB);
   FlattenBarrierSubs::registerWithPB(PB);

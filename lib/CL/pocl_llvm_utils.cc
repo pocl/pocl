@@ -2,6 +2,7 @@
 
    Copyright (c) 2013 Kalle Raiskila
                  2013-2020 Pekka Jääskeläinen
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -257,10 +258,16 @@ const char *pocl_get_distro_kernellib_variant() {
   StringMap<bool> Features;
 
 #if defined(__i386__) || defined(__x86_64__)
+
+#if LLVM_MAJOR < 19
   if (!llvm::sys::getHostCPUFeatures(Features)) {
     POCL_MSG_WARN("LLVM can't get host CPU flags!\n");
     return NULL;
   }
+#else
+  Features = llvm::sys::getHostCPUFeatures();
+#endif
+
 #else
   return pocl_get_llvm_cpu_name();
 #endif
@@ -295,10 +302,15 @@ const char *pocl_get_distro_cpu_name(const char *kernellib_variant) {
   StringMap<bool> Features;
 
 #if defined(__i386__) || defined(__x86_64__)
+#if LLVM_MAJOR < 19
   if (!llvm::sys::getHostCPUFeatures(Features)) {
     POCL_MSG_WARN("LLVM can't get host CPU flags!\n");
     return NULL;
   }
+#else
+  Features = llvm::sys::getHostCPUFeatures();
+#endif
+
 #else
   return pocl_get_llvm_cpu_name();
 #endif
@@ -327,24 +339,36 @@ int pocl_bitcode_is_triple(const char *bitcode, size_t size, const char *triple)
 // TODO this should be fixed to not require LLVM eventually,
 // so that LLVM-less builds also report FMA correctly.
 int cpu_has_fma() {
-  StringMap<bool> features;
-  bool res = llvm::sys::getHostCPUFeatures(features);
-  return ((res && (features["fma"] || features["fma4"])) ? 1 : 0);
+  StringMap<bool> Features;
+#if LLVM_MAJOR < 19
+  bool Res = llvm::sys::getHostCPUFeatures(Features);
+#else
+  const bool Res = true;
+  Features = llvm::sys::getHostCPUFeatures();
+#endif
+  return ((Res && (Features["fma"] || Features["fma4"])) ? 1 : 0);
 }
 
 #define VECWIDTH(x)                                                            \
   std::min(std::max((lane_width / (unsigned)(sizeof(x))), 1U), 16U)
 
 void cpu_setup_vector_widths(cl_device_id dev) {
-  StringMap<bool> features;
-  bool res = llvm::sys::getHostCPUFeatures(features);
+
+  StringMap<bool> Features;
+  bool Res = true;
+#if LLVM_MAJOR < 19
+  Res = llvm::sys::getHostCPUFeatures(Features);
+#else
+  Features = llvm::sys::getHostCPUFeatures();
+#endif
+
   unsigned lane_width = 1;
-  if (res) {
-    if ((features["sse"]) || (features["neon"]))
+  if (Res) {
+    if ((Features["sse"]) || (Features["neon"]))
       lane_width = 16;
-    if (features["avx"])
+    if (Features["avx"])
       lane_width = 32;
-    if (features["avx512f"])
+    if (Features["avx512f"])
       lane_width = 64;
   }
   dev->native_vector_width_in_bits = lane_width * 8;
@@ -394,6 +418,7 @@ static void diagHandler(LLVMDiagnosticInfoRef DI, void *diagprinter) {
   DiagnosticPrinterRawOStream *poclDiagPrinter =
       (DiagnosticPrinterRawOStream *)diagprinter;
   unwrap(DI)->print(*poclDiagPrinter);
+  *poclDiagPrinter << "\n";
 }
 
 std::string getDiagString(void *PoclCtx) {

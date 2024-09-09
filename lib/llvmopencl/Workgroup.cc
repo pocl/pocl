@@ -468,11 +468,11 @@ static bool callsPrintf(Function *F) {
         continue;
       Function *callee = CallInstr->getCalledFunction();
 
-      if (callee->getName().starts_with("llvm."))
+      if (callee->getName() == "llvm.")
         continue;
-      if (callee->getName().equals("_cl_printf"))
+      if (callee->getName() == "_cl_printf")
         return true;
-      if (callee->getName().equals("__pocl_printf"))
+      if (callee->getName() == "__pocl_printf")
         return true;
       if (callsPrintf(callee))
         return true;
@@ -569,7 +569,7 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
       if (oldF == nullptr)
         continue;
 
-      if (oldF->getName().equals("_cl_printf")) {
+      if (oldF->getName() == "_cl_printf") {
         ops.clear();
         ops.push_back(pb);
         ops.push_back(pbp);

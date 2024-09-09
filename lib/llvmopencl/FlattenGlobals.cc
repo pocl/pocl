@@ -111,7 +111,7 @@ static bool flattenGlobals(Module &M) {
     llvm::Function *f = &*i;
     if (f->isDeclaration())
       continue;
-    if (f->getName().equals(barrier)) {
+    if (f->getName() == barrier) {
       f->removeFnAttr(Attribute::NoInline);
       f->removeFnAttr(Attribute::OptimizeNone);
       f->addFnAttr(Attribute::AlwaysInline);

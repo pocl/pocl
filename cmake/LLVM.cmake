@@ -39,6 +39,7 @@ else()
     NAMES
       "llvmtce-config"
       "llvm-config"
+      "llvm-config-mp-19.0" "llvm-config-mp-19" "llvm-config-19" "llvm-config190"
       "llvm-config-mp-18.0" "llvm-config-mp-18" "llvm-config-18" "llvm-config180"
       "llvm-config-mp-17.0" "llvm-config-mp-17" "llvm-config-17" "llvm-config170"
       "llvm-config-mp-16.0" "llvm-config-mp-16" "llvm-config-16" "llvm-config160"
@@ -193,8 +194,11 @@ elseif(LLVM_VERSION MATCHES "^17[.]")
 elseif(LLVM_VERSION MATCHES "^18[.]")
   set(LLVM_MAJOR 18)
   set(LLVM_18_0 1)
+elseif(LLVM_VERSION MATCHES "^19[.]")
+  set(LLVM_MAJOR 19)
+  set(LLVM_19_0 1)
 else()
-  message(FATAL_ERROR "LLVM version between 14.0 and 18.0 required, found: ${LLVM_VERSION}")
+  message(FATAL_ERROR "LLVM version between 14.0 and 19.0 required, found: ${LLVM_VERSION}")
 endif()
 
 #############################################################
