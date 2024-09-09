@@ -120,6 +120,8 @@ static const char *ventus_objdump_flags[] = {
   NULL
 };
 
+static std::map<uint64_t, uint> program_ids;
+
 void
 pocl_ventus_init_device_ops(struct pocl_device_ops *ops)
 {
@@ -386,6 +388,12 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
       it->second++;
   else
       knl_name_list[meta->name] = 0;
+
+  if(program_ids.find(uint64_t(kernel->program)) == program_ids.end()) {
+      printf("ERROR: program id not found\n");
+      exit(10);
+  }
+  uint id = program_ids[uint64_t(kernel->program)];
 
     uint64_t num_thread=[]{
 	  char* numVar = std::getenv("NUM_THREAD");
@@ -670,9 +678,11 @@ step5 make a writefile for chisel
    * clCreateKernel.c line 79
    ***********************************************************************************************************/
 	uint32_t kernel_entry;
+  char filename[256] = "object";
+  strcat(filename, std::to_string(id).c_str());
   #ifdef __linux__
     std::string kernel_name(meta->name);
-    std::string kernel_entry_cmd = std::string(R"(nm -s object.riscv | grep -w 'T' | grep -w )") +kernel_name+ std::string(R"( | grep -o '^[^ ]*')");
+    std::string kernel_entry_cmd = std::string(R"(nm -s )") + filename + std::string(R"(.riscv | grep -w 'T' | grep -w )") +kernel_name+ std::string(R"( | grep -o '^[^ ]*')");
     FILE *fp0 = popen(kernel_entry_cmd.c_str(), "r");
     if(fp0 == NULL) {
         POCL_MSG_ERR("running compile kernel failed");
@@ -717,21 +727,25 @@ step5 make a writefile for chisel
       assert(pocl_exists(ventus_assembler.c_str()));
     }
   	system((std::string("chmod +x ") + assembler_path).c_str());
-  	assembler_path += " object";
+        assembler_path = assembler_path + std::string(" ") + std::string(filename);
   	system(assembler_path.c_str());
-	  POCL_MSG_PRINT_VENTUS("Vmem file has been written to object.vmem\n");
+	  POCL_MSG_PRINT_VENTUS("Vmem file has been written to %s.vmem\n", filename);
   #elif
     POCL_MSG_ERR("This operate system is not supported now by ventus, please use linux! \n");
     exit(1);
   #endif
 
 	//pass in vmem file
-	char filename[]="object.riscv";
+	char binary_filename[256];
+        strcpy(binary_filename, filename);
+        strcat(binary_filename, ".riscv");
 	///将text段搬到ddr(not related to spike),并且起始地址必须是0x80000000(spike专用)，verilator需要先解析出vmem,然后上传程序段
-	vt_upload_kernel_file(d->vt_device,filename,0);
+	vt_upload_kernel_file(d->vt_device,binary_filename,0);
   #ifdef PRINT_CHISEL_TESTCODE
     //this file includes all kernels of executable file, kernel actually to be executed is determined by metadata.
-	std::ifstream vmem_file("object.vmem");
+        char vmem_filename[256];
+        strcpy(vmem_filename, filename);
+	std::ifstream vmem_file(strcat(vmem_filename, ".vmem"));
 	vmem_file.seekg(0, vmem_file.end);
 	auto size = vmem_file.tellg();
 	std::string content;
@@ -880,7 +894,9 @@ step5 make a writefile for chisel
   // move print buffer back or wait to read?
 
     // rename log file from spike and add index for log
-    const char* sp_logname = "object.riscv.log";
+    char sp_logname[256];
+    strcpy(sp_logname, filename);
+    strcat(sp_logname, ".riscv.log");
     char newName[256]; // 假设文件名不超过 255 个字符
     FILE* logfp = fopen(sp_logname, "r");
     if(logfp) {
@@ -1427,18 +1443,28 @@ int pocl_ventus_post_build_program (cl_program program, cl_uint device_i) {
 
   char program_bc_path[POCL_FILENAME_LENGTH];
 
+  static uint counter = 0;
+  program_ids.insert(std::pair<uint64_t, uint>(uint64_t(program), counter));
+  counter++;
+
 
   //pocl_cache_create_program_cachedir(program, device_i, program->source,
   //                                     strlen(program->source),
   //                                     program_bc_path);
   //TODO: move .cl and .riscv file into program_bc_path, and let spike read file from this path.
-  std::ofstream outfile("object.cl");
+  char filename[256] = "object";
+  std::string id = std::to_string(program_ids[uint64_t(program)]);
+  strcat(filename, id.c_str());
+  char cl_filename[256];
+  strcpy(cl_filename, filename);
+  strcat(cl_filename, ".cl");
+  std::ofstream outfile(cl_filename);
   outfile << program->source;
   outfile.close();
 
   cl_device_id device = program->devices[device_i];
 
-    ss_cmd << clang_path <<" -cl-std=CL2.0 " << "-target " << device->llvm_target_triplet << " -mcpu=" << device->llvm_cpu  << " object.cl " << " -o " << "object.riscv ";
+    ss_cmd << clang_path <<" -cl-std=CL2.0 " << "-target " << device->llvm_target_triplet << " -mcpu=" << device->llvm_cpu  << " " << cl_filename << "  " << " -o " << filename << ".riscv ";
 	for(int i = 0; ventus_final_ld_flags[i] != NULL; i++) {
 		ss_cmd << ventus_final_ld_flags[i];
 	}
