@@ -31,7 +31,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/ADT/Statistic.h>
 #include <llvm/Analysis/LoopInfo.h>
 #include <llvm/Analysis/PostDominators.h>
-#include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/DataLayout.h>
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/IRBuilder.h>
@@ -67,9 +66,6 @@ POP_COMPILER_DIAGS
 // #define DUMP_CFGS
 // #define DEBUG_WORK_ITEM_LOOPS
 
-// this must be at least the alignment of largest OpenCL type (= 128 bytes)
-#define CONTEXT_ARRAY_ALIGN MAX_EXTENDED_ALIGNMENT
-
 #define PASS_NAME "workitemloops"
 #define PASS_CLASS pocl::WorkitemLoops
 #define PASS_DESC "Workitem loop generation pass"
@@ -93,6 +89,10 @@ public:
                     VariableUniformityAnalysisResult &VUA)
       : WorkitemHandler(), DT(DT), LI(LI), PDT(PDT), VUA(VUA) {}
   virtual bool runOnFunction(llvm::Function &F);
+
+protected:
+  llvm::Value *getLinearWIIndexInRegion(llvm::Instruction *Instr);
+  llvm::Value *getLocalIdInRegion(llvm::Instruction *Instr, size_t Dim);
 
 private:
   using BasicBlockVector = std::vector<llvm::BasicBlock *>;
@@ -145,8 +145,8 @@ private:
   llvm::Instruction *addContextSave(llvm::Instruction *Instruction,
                                     llvm::AllocaInst *AllocaI);
   llvm::Instruction *
-  addContextRestore(llvm::Value *Val, llvm::AllocaInst *AllocaI,
-                    llvm::Type *InstType, bool PoclWrapperStructAdded,
+  AddContextRestore(llvm::Value *Val, llvm::AllocaInst *AllocaI,
+                    llvm::Type *LoadInstType, bool PaddingWasAdded,
                     llvm::Instruction *Before = nullptr, bool isAlloca = false);
   llvm::AllocaInst *getContextArray(llvm::Instruction *Inst,
                                     bool &PoclWrapperStructAdded);
@@ -815,6 +815,7 @@ bool WorkitemLoopsImpl::handleLocalMemAllocas(Kernel &K) {
   return Changed;
 }
 
+// TO CLEAN: Refactor into getLinearWIIndexInRegion.
 llvm::Value *WorkitemLoopsImpl::getLinearWiIndex(llvm::IRBuilder<> &Builder,
                                                  llvm::Module *M,
                                                  ParallelRegion *Region) {
@@ -853,6 +854,21 @@ llvm::Value *WorkitemLoopsImpl::getLinearWiIndex(llvm::IRBuilder<> &Builder,
                              "linear_xyz_idx");
 }
 
+llvm::Value *
+WorkitemLoopsImpl::getLinearWIIndexInRegion(llvm::Instruction *Instr) {
+  ParallelRegion *ParRegion = RegionOfBlock(Instr->getParent());
+  assert(ParRegion != nullptr);
+  IRBuilder<> Builder(Instr);
+  return getLinearWiIndex(Builder, M, ParRegion);
+}
+
+llvm::Value *WorkitemLoopsImpl::getLocalIdInRegion(llvm::Instruction *Instr,
+                                                   size_t Dim) {
+  ParallelRegion *ParRegion = RegionOfBlock(Instr->getParent());
+  assert(ParRegion != nullptr);
+  return ParRegion->getOrCreateIDLoad(LID_G_NAME(Dim));
+}
+
 llvm::Instruction *
 WorkitemLoopsImpl::addContextSave(llvm::Instruction *Inst,
                                   llvm::AllocaInst *AllocaI) {
@@ -870,6 +886,7 @@ WorkitemLoopsImpl::addContextSave(llvm::Instruction *Inst,
   ++definition;
   while (isa<PHINode>(definition)) ++definition;
 
+  // TO CLEAN: Refactor by calling CreateContextArrayGEP.
   IRBuilder<> builder(&*definition);
   std::vector<llvm::Value *> gepArgs;
 
@@ -902,329 +919,58 @@ WorkitemLoopsImpl::addContextSave(llvm::Instruction *Inst,
 #endif
 }
 
-llvm::Instruction *WorkitemLoopsImpl::addContextRestore(llvm::Value *Val,
-    llvm::AllocaInst *AllocaI, llvm::Type *InstType,
-    bool PoclWrapperStructAdded, llvm::Instruction *Before, bool isAlloca) {
+llvm::Instruction *WorkitemLoopsImpl::AddContextRestore(
+    llvm::Value *Val, llvm::AllocaInst *AllocaI, llvm::Type *LoadInstType,
+    bool PaddingWasAdded, llvm::Instruction *Before, bool isAlloca) {
 
-  assert(Val != NULL);
-  assert(AllocaI != NULL);
-  IRBuilder<> builder(AllocaI);
-  if (Before != NULL) {
-    builder.SetInsertPoint(Before);
-  } else if (isa<Instruction>(Val)) {
-    builder.SetInsertPoint(dyn_cast<Instruction>(Val));
-    Before = dyn_cast<Instruction>(Val);
-  } else {
-    assert(false && "Unknown context restore location!");
-  }
+  assert(Before != nullptr);
 
-  std::vector<llvm::Value *> gepArgs;
-
-  /* Reuse the id loads earlier in the region, if possible, to
-     avoid messy output with lots of redundant loads. */
-  ParallelRegion *region = RegionOfBlock(Before->getParent());
-  assert ("Adding context save outside any region produces illegal code." && 
-          region != NULL);
-
-  if (WGDynamicLocalSize)
-    {
-      Module *M = AllocaI->getParent()->getParent()->getParent();
-      gepArgs.push_back(getLinearWiIndex(builder, M, region));
-    }
-  else
-    {
-      gepArgs.push_back(ConstantInt::get(ST, 0));
-      gepArgs.push_back(region->getOrCreateIDLoad(LID_G_NAME(2)));
-      gepArgs.push_back(region->getOrCreateIDLoad(LID_G_NAME(1)));
-      gepArgs.push_back(region->getOrCreateIDLoad(LID_G_NAME(0)));
-    }
-
-  if (PoclWrapperStructAdded)
-    gepArgs.push_back(
-      ConstantInt::get(Type::getInt32Ty(AllocaI->getContext()), 0));
-
-#if LLVM_MAJOR < 15
-  llvm::Instruction *gep = dyn_cast<Instruction>(
-    builder.CreateGEP(
-      AllocaI->getType()->getPointerElementType(), AllocaI, gepArgs));
-#else
-  llvm::Instruction *gep = dyn_cast<Instruction>(
-    builder.CreateGEP(
-      AllocaI->getAllocatedType(), AllocaI, gepArgs));
-#endif
-
-
+  llvm::Instruction *GEP =
+      CreateContextArrayGEP(AllocaI, Before, PaddingWasAdded);
   if (isAlloca) {
     /* In case the context saved instruction was an alloca, we created a
        context array with pointed-to elements, and now want to return a
        pointer to the elements to emulate the original alloca. */
-    return gep;
+    return GEP;
   }
-  return builder.CreateLoad(InstType, gep);
+  IRBuilder<> Builder(Before);
+  return Builder.CreateLoad(LoadInstType, GEP);
 }
 
 // Returns the context array (alloca) for the given Value, creates it if not
 // found.
 //
 // PoCLWrapperStructAdded will be set to true in case a wrapper struct was
-// added to enforce proper alignment to the elements of the array.
-llvm::AllocaInst *
-WorkitemLoopsImpl::getContextArray(llvm::Instruction *Inst,
-                                   bool &PoclWrapperStructAdded) {
-  PoclWrapperStructAdded = false;
-  /*
-   * Unnamed temp instructions need a generated name for the
-   * context array. Create one using a running integer.
-   */
-  std::ostringstream var;
-  var << ".";
+// added for padding in order to enforce proper alignment to the elements of
+// the array. Such padding might be needed to ensure aligned accessed from
+// single work-items accessing the context data.
+llvm::AllocaInst *WorkitemLoopsImpl::getContextArray(llvm::Instruction *Inst,
+                                                     bool &PaddingAdded) {
+  PaddingAdded = false;
 
-  if (std::string(Inst->getName().str()) != "")
-    {
-      var << Inst->getName().str();
-    }
-  else if (TempInstructionIds.find(Inst) != TempInstructionIds.end())
-    {
-      var << TempInstructionIds[Inst];
-    }
-  else
-    {
-      TempInstructionIds[Inst] = TempInstructionIndex++;
-      var << TempInstructionIds[Inst];
-    }
+  std::ostringstream Var;
+  Var << ".";
 
-  var << ".pocl_context";
-  std::string varName = var.str();
-
-  if (ContextArrays.find(varName) != ContextArrays.end())
-    return ContextArrays[varName];
-
-  BasicBlock &bb = Inst->getParent()->getParent()->getEntryBlock();
-  IRBuilder<> builder(&*(bb.getFirstInsertionPt()));
-  Function *FF = Inst->getParent()->getParent();
-  Module *M = Inst->getParent()->getParent()->getParent();
-  const llvm::DataLayout &Layout = M->getDataLayout();
-  DICompileUnit *CU = nullptr;
-  std::unique_ptr<DIBuilder> DB;
-  if (M->debug_compile_units_begin() != M->debug_compile_units_end()) {
-    CU = *M->debug_compile_units_begin();
-    DB = std::unique_ptr<DIBuilder>{new DIBuilder(*M, true, CU)};
+  if (std::string(Inst->getName().str()) != "") {
+    Var << Inst->getName().str();
+  } else if (TempInstructionIds.find(Inst) != TempInstructionIds.end()) {
+    Var << TempInstructionIds[Inst];
+  } else {
+    // Unnamed temp instructions need a name generated for the context array.
+    // Create one using a running integer.
+    TempInstructionIds[Inst] = TempInstructionIndex++;
+    Var << TempInstructionIds[Inst];
   }
 
-  // find the debug metadata corresponding to this variable
-  Value *DebugVal = nullptr;
-  IntrinsicInst *DebugCall = nullptr;
+  Var << ".pocl_context";
+  std::string CArrayName = Var.str();
 
-  if (CU) {
-    for (BasicBlock &BB : (*FF)) {
-      for (Instruction &I : BB) {
-        IntrinsicInst *CI = dyn_cast<IntrinsicInst>(&I);
-        if (CI && (CI->getIntrinsicID() == llvm::Intrinsic::dbg_declare)) {
-          Metadata *Meta =
-              cast<MetadataAsValue>(CI->getOperand(0))->getMetadata();
-          if (isa<ValueAsMetadata>(Meta)) {
-            Value *V = cast<ValueAsMetadata>(Meta)->getValue();
-            if (Inst == V) {
-              DebugVal = V;
-              DebugCall = CI;
-              break;
-            }
-          }
-        }
-      }
-    }
-  }
+  if (ContextArrays.find(CArrayName) != ContextArrays.end())
+    return ContextArrays[CArrayName];
 
-#ifdef DEBUG_WORK_ITEM_LOOPS
-  if (DebugVal && DebugCall) {
-    std::cerr << "### DI INTRIN: \n";
-    DebugCall->dump();
-    std::cerr << "### DI VALUE:  \n";
-    DebugVal->dump();
-  }
-#endif
-
-  llvm::Type *elementType;
-  if (isa<AllocaInst>(Inst))
-    {
-      /* If the variable to be context saved was itself an alloca,
-         create one big alloca that stores the data of all the 
-         work-items and directly return pointers to that array.
-         This enables moving all the allocas to the entry node without
-         breaking the parallel loop.
-         Otherwise we would rely on a dynamic alloca to allocate 
-         unique stack space to all the work-items when its wiloop
-         iteration is executed. */
-      elementType = 
-        dyn_cast<AllocaInst>(Inst)->getAllocatedType();
-    } 
-  else 
-    {
-      elementType = Inst->getType();
-    }
-
-  /* 3D context array. In case the elementType itself is an array or struct,
-   * we must take into account it could be alloca-ed with alignment and loads
-   * or stores might use vectorized instructions expecting proper alignment.
-   * Because of that, we cannot simply allocate x*y*z*(size), we must
-   * enlarge the type to fit the alignment. */
-  Type *AllocType = elementType;
-  AllocaInst *InstCast = dyn_cast<AllocaInst>(Inst);
-  if (InstCast) {
-#if LLVM_MAJOR < 15
-    unsigned Alignment = InstCast->getAlignment();
-#else
-    unsigned Alignment = InstCast->getAlign().value();
-#endif
-    uint64_t StoreSize =
-        Layout.getTypeStoreSize(InstCast->getAllocatedType());
-
-    if ((Alignment > 1) && (StoreSize & (Alignment - 1))) {
-      uint64_t AlignedSize = (StoreSize & (~(Alignment - 1))) + Alignment;
-#ifdef DEBUG_WORK_ITEM_LOOPS
-      std::cerr << "### unaligned type found: aligning " << StoreSize << " to "
-                << AlignedSize << "\n";
-#endif
-      assert(AlignedSize > StoreSize);
-      uint64_t RequiredExtraBytes = AlignedSize - StoreSize;
-
-      if (isa<ArrayType>(elementType)) {
-
-        ArrayType *StructPadding = ArrayType::get(
-            Type::getInt8Ty(M->getContext()), RequiredExtraBytes);
-
-        std::vector<Type *> PaddedStructElements;
-        PaddedStructElements.push_back(elementType);
-        PaddedStructElements.push_back(StructPadding);
-        const ArrayRef<Type *> NewStructElements(PaddedStructElements);
-        AllocType = StructType::get(M->getContext(), NewStructElements, true);
-        PoclWrapperStructAdded = true;
-        uint64_t NewStoreSize = Layout.getTypeStoreSize(AllocType);
-        assert(NewStoreSize == AlignedSize);
-
-      } else if (isa<StructType>(elementType)) {
-        StructType *OldStruct = dyn_cast<StructType>(elementType);
-
-        ArrayType *StructPadding =
-            ArrayType::get(Type::getInt8Ty(M->getContext()), RequiredExtraBytes);
-        std::vector<Type *> PaddedStructElements;
-        for (unsigned j = 0; j < OldStruct->getNumElements(); j++)
-          PaddedStructElements.push_back(OldStruct->getElementType(j));
-        PaddedStructElements.push_back(StructPadding);
-        const ArrayRef<Type *> NewStructElements(PaddedStructElements);
-        AllocType = StructType::get(OldStruct->getContext(), NewStructElements,
-                                    OldStruct->isPacked());
-        uint64_t NewStoreSize = Layout.getTypeStoreSize(AllocType);
-        assert(NewStoreSize == AlignedSize);
-      }
-    }
-  }
-
-  llvm::AllocaInst *Alloca = nullptr;
-  if (WGDynamicLocalSize)
-    {
-      char GlobalName[32];
-      GlobalVariable* LocalSize;
-      LoadInst* LocalSizeLoad[3];
-      for (int i = 0; i < 3; ++i) {
-        snprintf(GlobalName, 32, "_local_size_%c", 'x' + i);
-        LocalSize = cast<GlobalVariable>(M->getOrInsertGlobal(GlobalName, ST));
-        LocalSizeLoad[i] = builder.CreateLoad(ST, LocalSize);
-      }
-
-      Value* LocalXTimesY =
-        builder.CreateBinOp(Instruction::Mul, LocalSizeLoad[0],
-                            LocalSizeLoad[1], "tmp");
-      Value* NumberOfWorkItems =
-        builder.CreateBinOp(Instruction::Mul, LocalXTimesY,
-                            LocalSizeLoad[2], "num_wi");
-
-      Alloca = builder.CreateAlloca(AllocType, NumberOfWorkItems, varName);
-    }
-  else
-    {
-      llvm::Type *contextArrayType = ArrayType::get(
-          ArrayType::get(ArrayType::get(AllocType, WGLocalSizeX), WGLocalSizeY),
-          WGLocalSizeZ);
-
-      /* Allocate the context data array for the variable. */
-      Alloca = builder.CreateAlloca(contextArrayType, nullptr, varName);
-    }
-
-  /* Align the context arrays to stack to enable wide vectors
-     accesses to them. Also, LLVM 3.3 seems to produce illegal
-     code at least with Core i5 when aligned only at the element
-     size. */
-  Alloca->setAlignment(llvm::Align(CONTEXT_ARRAY_ALIGN));
-
-    if (DebugVal && DebugCall && !WGDynamicLocalSize) {
-
-      llvm::SmallVector<llvm::Metadata *, 4> Subscripts;
-      Subscripts.push_back(DB->getOrCreateSubrange(0, WGLocalSizeZ));
-      Subscripts.push_back(DB->getOrCreateSubrange(0, WGLocalSizeY));
-      Subscripts.push_back(DB->getOrCreateSubrange(0, WGLocalSizeX));
-      llvm::DINodeArray SubscriptArray = DB->getOrCreateArray(Subscripts);
-
-      size_t sizeBits;
-      sizeBits = Alloca
-                     ->getAllocationSizeInBits(M->getDataLayout())
-#if LLVM_MAJOR > 14
-                     .value_or(TypeSize(0, false))
-                     .getFixedValue();
-#else
-                     .getValueOr(TypeSize(0, false))
-                     .getFixedValue();
-#endif
-
-      assert(sizeBits != 0);
-
-      // if (size == 0) WGLocalSizeX * WGLocalSizeY * WGLocalSizeZ * 8 *
-      // Alloca->getAllocatedType()->getScalarSizeInBits();
-#if LLVM_MAJOR < 15
-      size_t alignBits = Alloca->getAlignment() * 8;
-#else
-      size_t alignBits = Alloca->getAlign().value() * 8;
-#endif
-
-      Metadata *VariableDebugMeta =
-          cast<MetadataAsValue>(DebugCall->getOperand(1))->getMetadata();
-#ifdef DEBUG_WORK_ITEM_LOOPS
-      std::cerr << "### VariableDebugMeta :  ";
-      VariableDebugMeta->dump();
-      std::cerr << "### sizeBits :  " << sizeBits
-                << "  alignBits: " << alignBits << "\n";
-#endif
-
-      DILocalVariable *LocalVar = dyn_cast<DILocalVariable>(VariableDebugMeta);
-      assert(LocalVar);
-      if (LocalVar) {
-
-        DICompositeType *CT = DB->createArrayType(
-            sizeBits, alignBits, LocalVar->getType(), SubscriptArray);
-
-#ifdef DEBUG_WORK_ITEM_LOOPS
-        std::cerr << "### DICompositeType:\n";
-        CT->dump();
-#endif
-        DILocalVariable *NewLocalVar = DB->createAutoVariable(
-            LocalVar->getScope(), LocalVar->getName(), LocalVar->getFile(),
-            LocalVar->getLine(), CT, false, LocalVar->getFlags());
-
-        Metadata *NewMeta = ValueAsMetadata::get(Alloca);
-        DebugCall->setOperand(0,
-                              MetadataAsValue::get(M->getContext(), NewMeta));
-
-        MetadataAsValue *NewLV =
-            MetadataAsValue::get(M->getContext(), NewLocalVar);
-        DebugCall->setOperand(1, NewLV);
-
-        DebugCall->removeFromParent();
-        DebugCall->insertAfter(Alloca);
-      }
-    }
-
-    ContextArrays[varName] = Alloca;
-    return Alloca;
+  BasicBlock &Entry = K->getEntryBlock();
+  return ContextArrays[CArrayName] = CreateAlignedAndPaddedContextAlloca(
+             Inst, &*(Entry.getFirstInsertionPt()), CArrayName, PaddingAdded);
 }
 
 // Adds context save/restore code for the value produced by the
@@ -1243,8 +989,8 @@ WorkitemLoopsImpl::getContextArray(llvm::Instruction *Inst,
 void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
 
   // Allocate the context data array for the variable.
-  bool PoclWrapperStructAdded = false;
-  llvm::AllocaInst *Alloca = getContextArray(Def, PoclWrapperStructAdded);
+  bool PaddingAdded = false;
+  llvm::AllocaInst *Alloca = getContextArray(Def, PaddingAdded);
   llvm::Instruction *TheStore = addContextSave(Def, Alloca);
 
   InstructionVec Uses;
@@ -1284,7 +1030,7 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
       continue;
     Instruction *ContextRestoreLocation = PR->entryBB()->getTerminator();
     llvm::Value *LoadedValue =
-        addContextRestore(UserI, Alloca, Def->getType(), PoclWrapperStructAdded,
+        AddContextRestore(UserI, Alloca, Def->getType(), PaddingAdded,
                           ContextRestoreLocation, isa<AllocaInst>(Def));
     UserI->replaceUsesOfWith(Def, LoadedValue);
 

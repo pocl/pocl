@@ -1,7 +1,8 @@
 // Header for WorkitemHandler, a parent class for all implementations of
-// work item handling.
+// work-group generation.
 //
 // Copyright (c) 2012-2019 Pekka Jääskeläinen
+//               2024 Pekka Jääskeläinen / Intel Finland Oy
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -40,7 +41,7 @@ namespace pocl {
 class WorkitemHandler {
 public:
   // Should be called when starting to process a new kernel.
-  virtual void Initialize (pocl::Kernel *K);
+  void Initialize(pocl::Kernel *K);
 
 protected:
   void movePhiNodes(llvm::BasicBlock *Src, llvm::BasicBlock *Dst);
@@ -50,6 +51,21 @@ protected:
 
   llvm::Instruction *getGlobalIdOrigin(int dim);
   void GenerateGlobalIdComputation();
+
+  llvm::AllocaInst *CreateAlignedAndPaddedContextAlloca(
+      llvm::Instruction *Inst, llvm::Instruction *Before,
+      const std::string &Name, bool &PaddingAdded);
+
+  // The handler should override these to return the linear and n-dimensional
+  // work-item index in the parallel region with the given \param Instr.
+  // The Value should be reachable by the given \param Instr.
+  virtual llvm::Value *getLinearWIIndexInRegion(llvm::Instruction *Instr) = 0;
+  virtual llvm::Value *getLocalIdInRegion(llvm::Instruction *Instr,
+                                          size_t Dim) = 0;
+
+  llvm::GetElementPtrInst *
+  CreateContextArrayGEP(llvm::AllocaInst *CtxArrayAlloca,
+                        llvm::Instruction *Before, bool AlignPadding);
 
   // The type of size_t for the current target.
   llvm::Type *ST;
