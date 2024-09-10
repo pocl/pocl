@@ -546,13 +546,6 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
     // to minimize the impact of "work-item peeling" (* to describe).
     addPass(Passes, "implicit-cond-barriers");
 
-    // required for new PM: WorkitemLoops to remove PHi nodes from LCSSA
-    // 153: pocl::WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction*):
-    // 153:   Assertion `"Cannot add context restore for a PHI node at the
-    // region entry!" 153:   && RegionOfBlock( Phi->getParent())->entryBB() !=
-    // Phi->getParent()' failed.
-    addPass(Passes, "instcombine");
-
     // Move all allocas to the entry block to ensure they do not end up
     // in parallel regions. Parallel regions should have their own context
     // handling for all cross-PR variables.
