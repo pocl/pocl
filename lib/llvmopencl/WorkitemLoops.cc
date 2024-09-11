@@ -220,6 +220,10 @@ bool WorkitemLoopsImpl::runOnFunction(Function &Func) {
   TempInstructionIds.clear();
 
   releaseParallelRegions();
+#ifdef DEBUG_WORK_ITEM_LOOPS
+  std::cerr << "### After WILoops:\n";
+  Func.dump();
+#endif
   return Changed;
 }
 

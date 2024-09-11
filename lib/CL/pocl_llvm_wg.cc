@@ -152,7 +152,6 @@ class PoCLModulePassManager {
   CGSCCAnalysisManager CGAM;
   ModuleAnalysisManager MAM;
   ModulePassManager PM;
-  PipelineTuningOptions PTO;
   std::unique_ptr<TargetLibraryInfoImpl> TLII;
   std::unique_ptr<StandardInstrumentations> SI;
 #ifdef PER_STAGE_TARGET_MACHINE
@@ -166,12 +165,12 @@ class PoCLModulePassManager {
   std::unique_ptr<PassBuilder> PassB;
   unsigned OptimizeLevel;
   unsigned SizeLevel;
-  bool Vectorize;
+  bool Vectorize = false;
 
 public:
   PoCLModulePassManager() = default;
-  llvm::Error build(std::string PoclPipeline,
-                    unsigned OLevel, unsigned SLevel,
+  llvm::Error build(std::string PoclPipeline, unsigned OLevel, unsigned SLevel,
+                    bool EnableVectorizers,
 #ifndef PER_STAGE_TARGET_MACHINE
                     TargetMachine *TM,
 #endif
@@ -181,6 +180,7 @@ public:
 
 llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
                                          unsigned OLevel, unsigned SLevel,
+                                         bool EnableVectorizers,
 #ifndef PER_STAGE_TARGET_MACHINE
                                          TargetMachine *TM,
 #endif
@@ -191,18 +191,14 @@ llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
   TargetMachine *TM = Machine.get();
 #endif
 
+  PipelineTuningOptions PTO;
+  // TODO: Does this affect the loop unroller of the vectorizer as well? We
+  // might want to enable it in the default case.
   PTO.LoopUnrolling = false;
 #if LLVM_MAJOR > 16
   PTO.UnifiedLTO = false;
 #endif
-  // These need to be setup in addition to invoking the passes
-  // to get the vectorizers initialized properly. Assume SPMD
-  // devices do not want to vectorize intra work-item at this
-  // stage.
-  Vectorize = ((CurrentWgMethod == "loopvec" || CurrentWgMethod == "cbs") &&
-               (!Dev->spmd));
-  PTO.SLPVectorization = Vectorize;
-  PTO.LoopVectorization = Vectorize;
+  PTO.SLPVectorization = PTO.LoopVectorization = Vectorize = EnableVectorizers;
   OptimizeLevel = OLevel;
   SizeLevel = SLevel;
 
@@ -346,25 +342,36 @@ public:
   void run(llvm::Module &Bitcode);
 };
 
-llvm::Error TwoStagePoCLModulePassManager::build(cl_device_id Dev,
-    const std::string &Stage1Pipeline, unsigned Stage1OLevel, unsigned Stage1SLevel,
-    const std::string &Stage2Pipeline, unsigned Stage2OLevel, unsigned Stage2SLevel) {
+llvm::Error TwoStagePoCLModulePassManager::build(
+    cl_device_id Dev, const std::string &Stage1Pipeline, unsigned Stage1OLevel,
+    unsigned Stage1SLevel, const std::string &Stage2Pipeline,
+    unsigned Stage2OLevel, unsigned Stage2SLevel) {
+
+  // Do not vectorize in the first round of (cleanup) optimizations to avoid
+  // ending up with only vectorizing across the k-loops before the wi-loops have
+  // been created. Let's leave the loop-interchange freedom to decide over which
+  // loop to vectorize.
+  bool Vectorize = false;
 
 #ifndef PER_STAGE_TARGET_MACHINE
   Machine.reset(GetTargetMachine(Dev));
   TargetMachine *TMach = Machine.get();
 #endif
-  llvm::Error E1 = Stage1.build(Stage1Pipeline,
-                                Stage1OLevel, Stage1SLevel,
+  llvm::Error E1 =
+      Stage1.build(Stage1Pipeline, Stage1OLevel, Stage1SLevel, Vectorize,
 #ifndef PER_STAGE_TARGET_MACHINE
-                                TMach,
+                   TMach,
 #endif
-                                Dev);
+                   Dev);
   if (E1)
     return E1;
 
-  return Stage2.build(Stage2Pipeline,
-                      Stage2OLevel, Stage2SLevel,
+  // Let's assume SPMD devices do their own vectorization at (SPIR-V) JIT time
+  // if they see it beneficial.
+  Vectorize = ((CurrentWgMethod == "loopvec" || CurrentWgMethod == "cbs") &&
+               (!Dev->spmd));
+
+  return Stage2.build(Stage2Pipeline, Stage2OLevel, Stage2SLevel, Vectorize,
 #ifndef PER_STAGE_TARGET_MACHINE
                       TMach,
 #endif
@@ -1627,6 +1634,7 @@ void populateModulePM(void *Passes, void *Module, unsigned OptL, unsigned SizeL,
 #if LLVM_MAJOR > 16
   PTO.UnifiedLTO = false;
 #endif
+  PTO.LoopInterleaving = Vectorize;
   PTO.SLPVectorization = Vectorize;
   PTO.LoopVectorization = Vectorize;
 
