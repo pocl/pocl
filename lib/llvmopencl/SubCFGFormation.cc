@@ -33,7 +33,6 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/Twine.h>
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-#include <llvm/Analysis/PostDominators.h>
 #include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/DebugInfo.h>
 #include <llvm/IR/Dominators.h>
@@ -52,8 +51,6 @@ POP_COMPILER_DIAGS
 #include "KernelCompilerUtils.h"
 #include "LLVMUtils.h"
 #include "SubCFGFormation.h"
-#include "VariableUniformityAnalysis.h"
-#include "VariableUniformityAnalysisResult.hh"
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
 
@@ -382,105 +379,6 @@ void createLoopsAround(llvm::Function &F, llvm::BasicBlock *AfterBB,
   ContiguousIdx = Idx;
 }
 
-class SubCFG {
-
-  using BlockVector = llvm::SmallVector<llvm::BasicBlock *, 8>;
-  BlockVector Blocks_;
-  BlockVector NewBlocks_;
-  size_t EntryId_;
-  llvm::BasicBlock *EntryBarrier_;
-  llvm::SmallDenseMap<llvm::BasicBlock *, size_t> ExitIds_;
-  llvm::AllocaInst *LastBarrierIdStorage_;
-  llvm::Value *ContIdx_;
-  llvm::BasicBlock *EntryBB_;
-  llvm::BasicBlock *ExitBB_;
-  llvm::BasicBlock *LoadBB_;
-  llvm::BasicBlock *PreHeader_;
-  size_t Dim;
-
-  llvm::BasicBlock *createExitWithID(
-      llvm::detail::DenseMapPair<llvm::BasicBlock *, size_t> BarrierPair,
-      llvm::BasicBlock *After, llvm::BasicBlock *TargetBB);
-
-  void loadMultiSubCfgValues(
-      const llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
-          &InstAllocaMap,
-      llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
-          &BaseInstAllocaMap,
-      llvm::DenseMap<llvm::Instruction *,
-                     llvm::SmallVector<llvm::Instruction *, 8>>
-          &ContInstReplicaMap,
-      llvm::BasicBlock *UniformLoadBB, llvm::ValueToValueMapTy &VMap);
-  void loadUniformAndRecalcContValues(
-      llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
-          &BaseInstAllocaMap,
-      llvm::DenseMap<llvm::Instruction *,
-                     llvm::SmallVector<llvm::Instruction *, 8>>
-          &ContInstReplicaMap,
-      llvm::BasicBlock *UniformLoadBB, llvm::ValueToValueMapTy &VMap);
-  llvm::BasicBlock *createLoadBB(llvm::ValueToValueMapTy &VMap);
-  llvm::BasicBlock *createUniformLoadBB(llvm::BasicBlock *OuterMostHeader);
-
-public:
-  SubCFG(llvm::BasicBlock *EntryBarrier, llvm::AllocaInst *LastBarrierIdStorage,
-         const llvm::DenseMap<llvm::BasicBlock *, size_t> &BarrierIds,
-         llvm::Value *IndVar, size_t Dim);
-
-  SubCFG(const SubCFG &) = delete;
-  SubCFG &operator=(const SubCFG &) = delete;
-
-  SubCFG(SubCFG &&) = default;
-  SubCFG &operator=(SubCFG &&) = default;
-
-  BlockVector &getBlocks() noexcept { return Blocks_; }
-  const BlockVector &getBlocks() const noexcept { return Blocks_; }
-
-  BlockVector &getNewBlocks() noexcept { return NewBlocks_; }
-  const BlockVector &getNewBlocks() const noexcept { return NewBlocks_; }
-
-  size_t getEntryId() const noexcept { return EntryId_; }
-
-  llvm::BasicBlock *getEntry() noexcept { return EntryBB_; }
-  llvm::BasicBlock *getExit() noexcept { return ExitBB_; }
-  llvm::BasicBlock *getLoadBB() noexcept { return LoadBB_; }
-  llvm::Value *getContiguousIdx() noexcept { return ContIdx_; }
-
-  void replicate(llvm::Function &F,
-                 const llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
-                     &InstAllocaMap,
-                 llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
-                     &BaseInstAllocaMap,
-                 llvm::DenseMap<llvm::Instruction *,
-                                llvm::SmallVector<llvm::Instruction *, 8>>
-                     &ContInstReplicaMap,
-                 llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
-                     &RemappedInstAllocaMap,
-                 llvm::BasicBlock *AfterBB,
-                 llvm::ArrayRef<llvm::Value *> LocalSize);
-
-  void arrayifyMultiSubCfgValues(
-      llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *> &InstAllocaMap,
-      llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
-          &BaseInstAllocaMap,
-      llvm::DenseMap<llvm::Instruction *,
-                     llvm::SmallVector<llvm::Instruction *, 8>>
-          &ContInstReplicaMap,
-      llvm::ArrayRef<SubCFG> SubCFGs, llvm::Instruction *AllocaIP,
-      llvm::Value *ReqdArrayElements,
-      pocl::VariableUniformityAnalysisResult &VecInfo);
-  void fixSingleSubCfgValues(
-      llvm::DominatorTree &DT,
-      const llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
-          &RemappedInstAllocaMap,
-      llvm::Value *ReqdArrayElements,
-      pocl::VariableUniformityAnalysisResult &VecInfo);
-
-  void print() const;
-  void removeDeadPhiBlocks(
-      llvm::SmallVector<llvm::BasicBlock *, 8> &BlocksToRemap) const;
-  llvm::SmallVector<llvm::Instruction *, 16> topoSortInstructions(
-      const llvm::SmallPtrSet<llvm::Instruction *, 16> &UniquifyInsts) const;
-};
 
 // create new exiting block writing the exit's id to LastBarrierIdStorage_
 llvm::BasicBlock *SubCFG::createExitWithID(
@@ -1233,7 +1131,8 @@ template <class PtrSet> struct PtrSetWrapper {
 };
 
 // checks if all uses of an alloca are in just a single subcfg (doesn't have to
-// be arrayified!)
+// be arrayified!).
+// TO CLEAN: merge with WorkitemLoopsImpl::shouldNotBeContextSaved().
 bool isAllocaSubCfgInternal(llvm::AllocaInst *Alloca,
                             const std::vector<SubCFG> &SubCfgs,
                             const llvm::DominatorTree &DT) {
@@ -1275,12 +1174,13 @@ bool isAllocaSubCfgInternal(llvm::AllocaInst *Alloca,
 }
 
 // Widens the allocas in the entry block to array allocas.
-// Replace uses of the original alloca with GEP that indexes the new alloca with
+// Replace uses of the original alloca with a GEP that indexes the new alloca
+// with
 // \a Idx.
-void arrayifyAllocas(llvm::BasicBlock *EntryBlock, llvm::DominatorTree &DT,
-                     std::vector<SubCFG> &SubCfgs,
-                     llvm::Value *ReqdArrayElements,
-                     pocl::VariableUniformityAnalysisResult &VecInfo) {
+void SubCFGFormation::ArrayifyAllocas(
+    llvm::BasicBlock *EntryBlock, llvm::DominatorTree &DT,
+    std::vector<SubCFG> &SubCfgs, llvm::Value *ReqdArrayElements,
+    pocl::VariableUniformityAnalysisResult &VecInfo) {
   auto *MDAlloca = llvm::MDNode::get(
       EntryBlock->getContext(),
       {llvm::MDString::get(EntryBlock->getContext(), "poclLoopState")});
@@ -1305,36 +1205,51 @@ void arrayifyAllocas(llvm::BasicBlock *EntryBlock, llvm::DominatorTree &DT,
     }
   }
 
+  BasicBlock &Entry = K->getEntryBlock();
   for (auto *I : WL) {
-    llvm::IRBuilder<> AllocaBuilder{I};
-    llvm::Type *T = I->getAllocatedType();
-    if (auto *ArrSizeC = llvm::dyn_cast<llvm::ConstantInt>(I->getArraySize())) {
-      auto ArrSize = ArrSizeC->getLimitedValue();
-      if (ArrSize > 1) {
-        T = llvm::ArrayType::get(T, ArrSize);
-        llvm::errs() << "Caution, alloca was array\n";
-      }
-    }
-
-    auto *Alloca = AllocaBuilder.CreateAlloca(T, ReqdArrayElements,
-                                              I->getName() + "_alloca");
-    Alloca->setAlignment(llvm::Align{DefaultAlignment});
+    bool PaddingAdded = false;
+    llvm::AllocaInst *Alloca = CreateAlignedAndPaddedContextAlloca(
+        I, &*Entry.getFirstInsertionPt(), std::string(I->getName()) + "_alloca",
+        PaddingAdded);
     Alloca->setMetadata(PoclMDKind::Arrayified, MDAlloca);
 
     for (auto &SubCfg : SubCfgs) {
-      auto *GepIp = SubCfg.getLoadBB()->getFirstNonPHIOrDbgOrLifetime();
+      auto *Before = SubCfg.getLoadBB()->getFirstNonPHIOrDbgOrLifetime();
 
-      llvm::IRBuilder<> LoadBuilder{GepIp};
-      auto *GEP =
-          llvm::cast<llvm::GetElementPtrInst>(LoadBuilder.CreateInBoundsGEP(
-              Alloca->getAllocatedType(), Alloca, SubCfg.getContiguousIdx(),
-              I->getName() + "_gep"));
+      auto GEP = CreateContextArrayGEP(Alloca, Before, PaddingAdded);
       GEP->setMetadata(PoclMDKind::Arrayified, MDAlloca);
 
       llvm::replaceDominatedUsesWith(I, GEP, DT, SubCfg.getLoadBB());
     }
     I->eraseFromParent();
   }
+}
+
+llvm::Value *
+SubCFGFormation::getLinearWIIndexInRegion(llvm::Instruction *Instr) {
+  SubCFG *Region = RegionOfBlock(Instr->getParent());
+  assert(Region != nullptr);
+  return Region->getContiguousIdx();
+}
+
+llvm::Value *SubCFGFormation::getLocalIdInRegion(llvm::Instruction *Instr,
+                                                 size_t Dim) {
+  SubCFG *Region = RegionOfBlock(Instr->getParent());
+
+  std::string VarName = LID_G_NAME(Dim);
+  // Find a load in the region load block to ensure it's defined before the
+  // referred instruction.
+  BasicBlock *LoadBB = Region->getLoadBB();
+  auto *GV = K->getParent()->getOrInsertGlobal(VarName, ST);
+
+  for (auto &I : *LoadBB) {
+    if (auto *LoadI = llvm::dyn_cast<llvm::LoadInst>(&I)) {
+      if (LoadI->getPointerOperand() == GV)
+        return &I;
+    }
+  }
+  llvm::IRBuilder<> Builder(LoadBB->getFirstNonPHI());
+  return Builder.CreateLoad(ST, GV);
 }
 
 void moveAllocasToEntry(llvm::Function &F,
@@ -1366,9 +1281,11 @@ getBarrierIds(llvm::BasicBlock *Entry,
       Barriers.insert({BB, BarrierId++});
   return Barriers;
 }
-void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI, llvm::DominatorTree &DT,
-                 llvm::PostDominatorTree &PDT,
-                 pocl::VariableUniformityAnalysisResult &VUA) {
+
+void SubCFGFormation::FormSubCfgs(llvm::Function &F, llvm::LoopInfo &LI,
+                                  llvm::DominatorTree &DT,
+                                  llvm::PostDominatorTree &PDT,
+                                  pocl::VariableUniformityAnalysisResult &VUA) {
 #ifdef DEBUG_SUBCFG_FORMATION
   F.viewCFG();
 #endif
@@ -1410,6 +1327,8 @@ void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI, llvm::DominatorTree &DT,
                  [](auto &BB) { return &BB; });
 
   // non-entry block Allocas are considered broken, move to entry.
+  // TODO: Unify with the AllocasToEntry pass. Perhaps convert to
+  // a WorkitemHandler helper function.
   moveAllocasToEntry(F, Blocks);
 
 // kept for simple reenabling of more advanced uniformity analysis
@@ -1447,8 +1366,7 @@ void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI, llvm::DominatorTree &DT,
   VecInfo.setPinnedShape(*IndVar, pocl::VectorShape::cont());
 #endif
 
-  // create subcfgs
-  std::vector<SubCFG> SubCFGs;
+  SubCFGs.clear();
   for (auto &BIt : Barriers) {
 #ifdef DEBUG_SUBCFG_FORMATION
     llvm::errs() << "Create SubCFG from " << BIt.first->getName() << "("
@@ -1485,7 +1403,7 @@ void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI, llvm::DominatorTree &DT,
   llvm::removeUnreachableBlocks(F);
 
   DT.recalculate(F);
-  arrayifyAllocas(&F.getEntryBlock(), DT, SubCFGs, ReqdArrayElements, VUA);
+  ArrayifyAllocas(&F.getEntryBlock(), DT, SubCFGs, ReqdArrayElements, VUA);
 
   for (auto &Cfg : SubCFGs) {
     Cfg.fixSingleSubCfgValues(DT, RemappedInstAllocaMap, ReqdArrayElements,
@@ -1497,6 +1415,7 @@ void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI, llvm::DominatorTree &DT,
 #ifdef DEBUG_SUBCFG_FORMATION
   F.viewCFG();
 #endif
+
   assert(!llvm::verifyFunction(F, &llvm::errs()) &&
          "Function verification failed");
 
@@ -1504,6 +1423,19 @@ void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI, llvm::DominatorTree &DT,
   // prevent misunderstandings.
   auto *WhileLoop = updateDtAndLi(LI, DT, WhileHeader, F);
   llvm::simplifyLoop(WhileLoop, &DT, &LI, nullptr, nullptr, nullptr, false);
+}
+
+// Finds the SubCFG in the currently found SubCFGs which has the given BB.
+SubCFG *SubCFGFormation::RegionOfBlock(llvm::BasicBlock *BB) {
+  for (auto &Region : SubCFGs) {
+    if (Region.getLoadBB() == BB)
+      return &Region;
+    SubCFG::BlockVector &BlocksInRegion = Region.getBlocks();
+    for (auto *Block : BlocksInRegion)
+      if (Block == BB)
+        return &Region;
+  }
+  return nullptr;
 }
 
 void createParallelAccessesMdOrAddAccessGroup(const llvm::Function *F,
@@ -1590,7 +1522,7 @@ SubCFGFormation::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
   auto &LI = AM.getResult<llvm::LoopAnalysis>(F);
   auto &VUA = AM.getResult<pocl::VariableUniformityAnalysis>(F);
 
-  formSubCfgs(F, LI, DT, PDT, VUA);
+  FormSubCfgs(F, LI, DT, PDT, VUA);
 
   for (auto *SL : LI.getLoopsInPreorder())
     if (llvm::findOptionMDForLoop(SL, PoclMDKind::WorkItemLoop))

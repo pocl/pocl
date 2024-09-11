@@ -403,7 +403,7 @@ endif()
 
 # With the autovec/target specific optimizations, this started
 # crashing or hanging.
-set_tests_properties(
-  "regression/test_alignment_with_dynamic_wg_114_cbs"
-  "regression/test_alignment_with_dynamic_wg_117_cbs"
-  PROPERTIES DISABLED 1)
+#set_tests_properties(
+#  "regression/test_alignment_with_dynamic_wg_114_cbs"
+#  "regression/test_alignment_with_dynamic_wg_117_cbs"
+#  PROPERTIES DISABLED 1)
