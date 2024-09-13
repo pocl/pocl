@@ -32,6 +32,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "builtin-kernels/metadata.h"
 #include "common.h"
 #include "common_driver.h"
 #include "pocl-pthread.h"
@@ -329,8 +330,8 @@ work_group_scheduler (kernel_run_command *k,
                  gids[0], gids[1], gids[2]);
 #endif
           pocl_set_default_rm ();
-          k->workgroup ((uint8_t*)arguments, (uint8_t*)&pc,
-			gids[0], gids[1], gids[2]);
+          k->workgroup ((uint8_t *)arguments, (uint8_t *)&pc, gids[0], gids[1],
+                        gids[2]);
         }
     }
   while (get_wg_index_range (k, &start_index, &end_index, &last_wgs,
@@ -464,9 +465,20 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
   pocl_driver_build_gvar_init_kernel (program, dev_i, cmd->device,
                                       pocl_cpu_gvar_init_callback);
 
+  char *dylib_name = NULL;
+  for (int i = 0; i < NUM_PTHREAD_BUILTIN_HOST_KERNELS; ++i)
+    {
+      if (strcmp (kernel->name, kernel_names[i]) == 0)
+        {
+          dylib_name = dylib_names[i];
+          break;
+        }
+    }
+
   char *saved_name = NULL;
   pocl_sanitize_builtin_kernel_name (kernel, &saved_name);
-  void *ci = pocl_check_kernel_dlhandle_cache (cmd, CL_TRUE, CL_TRUE);
+  void *ci
+    = pocl_check_kernel_dlhandle_cache (cmd, CL_TRUE, CL_TRUE, dylib_name);
   cmd->command.run.device_data = ci;
   pocl_restore_builtin_kernel_name (kernel, saved_name);
 

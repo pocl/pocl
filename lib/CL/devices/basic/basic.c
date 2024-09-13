@@ -490,7 +490,7 @@ static void
 basic_command_scheduler (pocl_basic_data_t *d)
 {
   _cl_command_node *node;
-  
+
   /* execute commands from ready list */
   while ((node = d->ready_list))
     {
@@ -517,7 +517,7 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
       if (!program->builtin_kernel_attributes)
         {
           node->command.run.device_data
-            = pocl_check_kernel_dlhandle_cache (node, CL_TRUE, CL_TRUE);
+            = pocl_check_kernel_dlhandle_cache (node, CL_TRUE, CL_TRUE, NULL);
         }
     }
 
@@ -592,7 +592,7 @@ pocl_basic_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
   char *saved_name = NULL;
   pocl_sanitize_builtin_kernel_name (kernel, &saved_name);
   if (cmd != NULL && cmd->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_check_kernel_dlhandle_cache (cmd, CL_FALSE, specialize);
+    pocl_check_kernel_dlhandle_cache (cmd, CL_FALSE, specialize, NULL);
   pocl_restore_builtin_kernel_name (kernel, saved_name);
 }
 

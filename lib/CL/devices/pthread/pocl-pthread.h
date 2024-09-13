@@ -33,4 +33,7 @@ GEN_PROTOTYPES (pthread)
 #include "prototypes.inc"
 GEN_PROTOTYPES (basic)
 
+POCL_EXPORT
+int pocl_pthread_add_host_builtins (cl_program program, cl_uint device_i);
+
 #endif /* POCL_PTHREAD_H */
