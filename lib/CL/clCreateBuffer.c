@@ -179,11 +179,11 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
       mem->latest_version = 1;
     }
 
-  /* If ALLOC or COPY flag is present, try to pre-allocate host-visible
+  /* If ALLOC flag is present, try to pre-allocate host-visible
    * backing store memory from a driver.
    * First driver to allocate for a physical memory wins; if none of
    * the drivers do it, we allocate the backing store via malloc */
-  if (flags & (CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR))
+  if (flags & CL_MEM_ALLOC_HOST_PTR)
     {
       POCL_MSG_PRINT_MEMORY (
           "Trying driver allocation for CL_MEM_ALLOC_HOST_PTR\n");
@@ -232,14 +232,13 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
               assert (mem->device_ptrs[dev->global_mem_id].mem_ptr == NULL);
               mem->device_ptrs[dev->global_mem_id].mem_ptr = ptr;
             }
-          else {
-            if (mem->device_ptrs[dev->global_mem_id].mem_ptr == NULL)
-              {
-                err = dev->ops->alloc_mem_obj (dev, mem, host_ptr);
-                POCL_GOTO_ERROR_ON (err != CL_SUCCESS, CL_OUT_OF_RESOURCES,
-                                    "Out of device memory?");
-              }
+          else if (mem->device_ptrs[dev->global_mem_id].mem_ptr == NULL)
+            {
+              err = dev->ops->alloc_mem_obj (dev, mem, host_ptr);
               ptr = mem->device_ptrs[dev->global_mem_id].mem_ptr;
+              POCL_GOTO_ERROR_ON (err != CL_SUCCESS, CL_OUT_OF_RESOURCES,
+                                  "Out of device memory?");
+
               pocl_raw_ptr *item = calloc (1, sizeof (pocl_raw_ptr));
               POCL_RETURN_ERROR_ON ((item == NULL), NULL,
                                     "out of host memory\n");
@@ -267,7 +266,9 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
      do the copy here. */
   if ((flags & CL_MEM_COPY_HOST_PTR) && (mem->mem_host_ptr_version == 0))
     {
-      assert(mem->mem_host_ptr != NULL);
+      POCL_GOTO_ERROR_ON ((pocl_alloc_or_retain_mem_host_ptr (mem) != 0),
+                          CL_OUT_OF_HOST_MEMORY,
+                          "Cannot allocate backing memory!\n");
       memcpy (mem->mem_host_ptr, host_ptr, size);
       mem->mem_host_ptr_version = 1;
       mem->latest_version = 1;
