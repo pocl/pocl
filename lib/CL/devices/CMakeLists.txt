@@ -164,6 +164,7 @@ set(POCL_DEVICES_SOURCES
   pocl_local_size.h  pocl_local_size.c
   common_driver.h  common_driver.c
   spirv.hh  spirv_parser.hh  spirv_parser.cc
+  printf_base.c printf_base.h printf_buffer.c
   cpuinfo.c  cpuinfo.h)
 
 if(ENABLE_HOST_CPU_DEVICES)

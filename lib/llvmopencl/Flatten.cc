@@ -73,16 +73,18 @@ static bool flattenAll(Module &M) {
   }
 
   for (llvm::Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
-    llvm::Function *f = &*i;
-    if (f->isDeclaration() || f->getName().starts_with("__pocl_print") ||
-        AuxFuncs.find(f->getName().str()) != AuxFuncs.end())
+    llvm::Function *F = &*i;
+    if (F->isDeclaration() || F->getName().starts_with("__pocl_print") ||
+        F->getName() == "__printf_alloc" ||
+        F->getName() == "__printf_flush_buffer" ||
+        AuxFuncs.find(F->getName().str()) != AuxFuncs.end())
       continue;
 
     AttributeSet Attrs;
     changed = true;
     decltype(Attribute::AlwaysInline) replaceThisAttr, replacementAttr;
     decltype(llvm::GlobalValue::ExternalLinkage) linkage;
-    if (pocl::isKernelToProcess(*f)) {
+    if (pocl::isKernelToProcess(*F)) {
       replaceThisAttr = Attribute::AlwaysInline;
       replacementAttr = Attribute::NoInline;
       linkage = llvm::GlobalValue::ExternalLinkage;
@@ -97,11 +99,15 @@ static bool flattenAll(Module &M) {
       std::cerr << "### AlwaysInline for " << f->getName().str() << std::endl;
 #endif
     }
-    f->setAttributes(f->getAttributes()
+    F->setAttributes(F->getAttributes()
                          .removeFnAttribute(M.getContext(), replaceThisAttr)
-                         .addFnAttribute(f->getContext(), replacementAttr));
+                         .addFnAttribute(F->getContext(), replacementAttr));
+    if (F->hasFnAttribute(Attribute::AlwaysInline) &&
+        F->hasFnAttribute(Attribute::OptimizeNone)) {
+      F->removeFnAttr(Attribute::OptimizeNone);
+    }
 
-    f->setLinkage(linkage);
+    F->setLinkage(linkage);
   }
   return changed;
 }

@@ -291,8 +291,6 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   dev->max_parameter_size = 64;
   dev->address_bits = 32;
 
-  dev->device_side_printf = 0;
-
   // This would be more logical as a per builtin kernel value?
   // there is a way to query it: clGetKernelWorkGroupInfo
   /*
@@ -655,7 +653,7 @@ void pocl_almaif_update_event(cl_device_id device, cl_event event) {
           D->Dev->DataMemory->Write32(PrintfPositionChunk->start_address -
                                           D->Dev->DataMemory->PhysAddress(),
                                       0);
-          write(STDOUT_FILENO, tmp_printf_buf, position);
+          pocl_write_printf_buffer(tmp_printf_buf, position);
           free(tmp_printf_buf);
         }
       }

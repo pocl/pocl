@@ -1002,7 +1002,7 @@ struct _cl_device_id {
 
   cl_uint max_work_item_dimensions;
   /* when enabled, Workgroup LLVM pass will replace all printf() calls
-   * with calls to __pocl_printf and recursively change functions to
+   * with calls to __printf_alloc and recursively change functions to
    * add printf buffer arguments from pocl_context.
    * Currently the pthread/basic devices require this; other devices
    * implement printf their own way. */

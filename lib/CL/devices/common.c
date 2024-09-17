@@ -185,9 +185,7 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   if (pocl_exists (final_binary_path))
     goto FINISH;
 
-  /* Write temporary kernel.so.o, required for the final linking step.
-     Use append-write because tmp_objfile is already temporary, thus
-     we don't need to create new temporary... */
+  /* Write temporary kernel.so.o, required for the final linking step */
   error = pocl_cache_write_kernel_objfile (tmp_objfile, objfile, objfile_size);
   if (error)
     {
@@ -220,9 +218,25 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
      for all of its targets.  */
   const char *cmd_line[64]
     = { pocl_get_path ("CLANG", CLANG), "-o", tmp_module, tmp_objfile };
+  unsigned last_arg_idx = 4;
+  /* immediate flush enabled results in "__printf_flush_buffer" symbol
+   * referenced it the built kernel.so, however that function exists only
+   * on the host side; therefore link to libpocl.so which provides it */
+#ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
+#ifdef HAVE_DLFCN_H
+  Dl_info info;
+  int r = dladdr ((void *)pocl_cache_tempname, &info);
+  assert (r != 0);
+  cmd_line[last_arg_idx++] = info.dli_fname;
+#else
+#error ENABLE_PRINTF_IMMEDIATE_FLUSH requires HAVE_DLFCN_H
+#endif
+#endif
+  const char **last_arg = &cmd_line[last_arg_idx];
   const char **device_ld_arg = device->final_linkage_flags;
-  const char **pos = &cmd_line[4];
-  while ((*pos++ = *device_ld_arg++)) {}
+  while ((*last_arg++ = *device_ld_arg++))
+    {
+    }
 
   error = pocl_invoke_clang (device, cmd_line);
 
@@ -1669,7 +1683,7 @@ pocl_init_default_device_infos (cl_device_id dev,
   dev->num_partition_types = 0;
   dev->partition_type = NULL;
 
-  dev->device_side_printf = 1;
+  dev->device_side_printf = CL_FALSE;
   dev->printf_buffer_size = PRINTF_BUFFER_SIZE * 1024;
 
   dev->vendor = "pocl";

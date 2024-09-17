@@ -131,6 +131,12 @@ void pocl_setup_features_with_version (cl_device_id dev);
 POCL_EXPORT
 void pocl_setup_builtin_kernels_with_version (cl_device_id dev);
 
+POCL_EXPORT
+void __printf_flush_buffer (char *buffer, uint32_t buffer_size);
+
+POCL_EXPORT
+void pocl_write_printf_buffer (char *printf_buffer, uint32_t bytes);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1885,7 +1885,7 @@ pocl_hsa_ndrange_event_finished (pocl_hsa_device_data_t *d, size_t i)
 
   if (d->device->device_side_printf && *d->printf_write_pos > 0)
     {
-      write (STDOUT_FILENO, d->printf_buffer, *d->printf_write_pos);
+      pocl_write_printf_buffer (d->printf_buffer, *d->printf_write_pos);
       bzero (d->printf_write_pos, sizeof (size_t));
     }
 

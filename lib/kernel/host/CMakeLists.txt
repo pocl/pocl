@@ -120,7 +120,6 @@ pocl_run_all_wgs.c
 popcount.cl
 prefetch.cl
 printf.c
-printf_base.c
 read_image.cl
 rhadd.cl
 rotate.cl

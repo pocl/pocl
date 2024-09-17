@@ -848,7 +848,7 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
     assert(tmp_printf_buf);
     d->copyDeviceToHost(d->printf_buffer->start_address, tmp_printf_buf,
                         printf_position);
-    write(STDOUT_FILENO, tmp_printf_buf, printf_position);
+    pocl_write_printf_buffer(tmp_printf_buf, printf_position);
     delete[] tmp_printf_buf;
   }
 

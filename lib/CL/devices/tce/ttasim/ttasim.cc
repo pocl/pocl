@@ -633,7 +633,6 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->type = CL_DEVICE_TYPE_GPU;
   dev->max_compute_units = 1;
   dev->max_work_item_dimensions = 3;
-  dev->device_side_printf = 0;
 
   int max_wg
       = pocl_get_int_option ("POCL_MAX_WORK_GROUP_SIZE", DEFAULT_WG_SIZE);
@@ -733,17 +732,18 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->mem_base_addr_align = 128;
   dev->min_data_type_align_size = 128;
 
-  dev->device_side_printf = 1;
+  dev->device_side_printf = CL_TRUE;
   dev->printf_buffer_size = PRINTF_BUFFER_SIZE;
   TTASimDevice *d = (TTASimDevice *)dev->data;
   d->printf_buffer =
       pocl_alloc_buffer_from_region(&d->global_mem, dev->printf_buffer_size);
-  assert(d->printf_buffer);
   d->printf_position_chunk = pocl_alloc_buffer_from_region(&d->global_mem, 4);
-  if (d->printf_position_chunk == NULL) {
-    POCL_ABORT("TTASIM: Can't allocate 4 bytes for printf index\n");
+  if (d->printf_position_chunk == NULL || d->printf_buffer == NULL) {
+    POCL_MSG_ERR("TTASIM: Can't allocate 4 bytes for printf index, disabled "
+                 "device-side printf\n");
+    dev->device_side_printf = CL_FALSE;
   }
-  
+
   dev->max_parameter_size = 1024;
 
   return CL_SUCCESS;

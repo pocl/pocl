@@ -175,6 +175,7 @@ pocl_cpu_init_common (cl_device_id device)
   device->run_program_scope_variables_pass = CL_TRUE;
   device->generic_as_support = CL_TRUE;
   device->wg_collective_func_support = CL_TRUE;
+  device->device_side_printf = CL_TRUE;
 
   pocl_setup_opencl_c_with_version (device, CL_TRUE);
   pocl_setup_features_with_version (device);
