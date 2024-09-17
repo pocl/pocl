@@ -221,6 +221,11 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   device->num_partition_properties = 0;
   device->num_partition_types = 0;
 
+  assert (device->printf_buffer_size > 0);
+  d->printf_buffer
+    = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, device->printf_buffer_size);
+  assert (d->printf_buffer != NULL);
+
   return ret;
 }
 
@@ -358,18 +363,14 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
         }
     }
 
-#ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
   pc->printf_buffer = d->printf_buffer;
   assert (pc->printf_buffer != NULL);
   uint32_t position = 0;
   pc->printf_buffer_position = &position;
-#else
-  pc->printf_buffer = NULL;
-  pc->printf_buffer_position = NULL;
-#endif
 
   pc->printf_buffer_capacity = cmd->device->printf_buffer_size;
   assert (pc->printf_buffer_capacity > 0);
+
   pc->global_var_buffer = program->gvar_storage[dev_i];
 
   unsigned rm = pocl_save_rm ();
@@ -387,11 +388,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
   pocl_restore_ftz (ftz);
 
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
-  if (position > 0)
-    {
-      write (STDOUT_FILENO, pc->printf_buffer, position);
-      position = 0;
-    }
+  pocl_write_printf_buffer ((char *)d->printf_buffer, position);
 #endif
 
   for (i = 0; i < meta->num_args; ++i)
@@ -474,7 +471,6 @@ pocl_basic_reinit (unsigned j, cl_device_id device, const char *parameters)
       = (pocl_basic_data_t *)calloc (1, sizeof (pocl_basic_data_t));
   if (d == NULL)
     return CL_OUT_OF_HOST_MEMORY;
-
 
   assert (device->printf_buffer_size > 0);
   d->printf_buffer = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,

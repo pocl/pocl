@@ -188,7 +188,8 @@ static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
   }
 
   if (link(Mod, BuiltinLib, Log, Device->device_aux_functions,
-           Device->device_side_printf != CL_FALSE))
+           Device->global_as_id, Device->device_side_printf != CL_FALSE,
+           Device->type == CL_DEVICE_TYPE_CPU))
     return true;
 
   raw_string_ostream OS(Log);

@@ -996,10 +996,16 @@ elseif(UNIX)
     else()
       message(FATAL_ERROR "Could not find dlfcn.h!")
     endif()
+
   endif()
 
 else()
   message(STATUS "Unknown OS, don't know how to load a dynamic library")
+endif()
+
+if(ENABLE_PRINTF_IMMEDIATE_FLUSH AND (NOT HAVE_DLFCN_H))
+  message(WARNING "ENABLE_PRINTF_IMMEDIATE_FLUSH cannot work without HAVE_DLFCN_H, disabling it")
+  set(ENABLE_PRINTF_IMMEDIATE_FLUSH OFF CACHE BOOL "enable immediate printf flush" FORCE)
 endif()
 
 ######################################################################################

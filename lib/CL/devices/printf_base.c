@@ -1,12 +1,13 @@
-/* OpenCL built-in library: printf_base.c
+/* OpenCL runtime: printf helper functions
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
+   Copyright (c) 2024 Michal Babej / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -16,48 +17,18 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #include "printf_base.h"
 
-/* when BUILD_WITH_LIBC is enabled, uses C library's snprintf() for
- * float conversions. Otherwise uses builtin conversion (which currently
- * requires compiler-rt) */
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
 
-#ifdef ENABLE_POCL_FLOAT_CONVERSION
-#undef BUILD_WITH_LIBC
-#else
 #define BUILD_WITH_LIBC
-#endif
-
-/********************************************/
-
-#ifdef BUILD_WITH_LIBC
-int snprintf (char *str, size_t size, const char *format, ...);
-#else
-
-#include "errol/errol.h"
-
-/* this is the function that generates a decimal representation string
- * of a float. May be any implementation as long as:
- *
- * 1) first returned digit in buffer is nonzero
- * 2) buffer is null-terminated
- * 3) return value is the decimal point position.
- *
- * e.g. 0.925 should return "925" in buffer and 0 as decimal point.
- *
- * Input is positive, non-zero, finite float. */
-int
-__pocl_generate_float_digits (FLOAT_T f, char *buffer)
-{
-  return errol4_dtoa (f, buffer);
-}
-
-#endif
 
 void
 __pocl_printf_putcf (param_t *p, char c)
@@ -699,14 +670,16 @@ __pocl_printf_putchw (param_t *p)
     }
 }
 
-void
-__pocl_printf_puts_ljust (param_t *p, const char *string, size_t width,
-                          ssize_t max_width)
+unsigned
+__pocl_printf_puts_ljust (param_t *p,
+                          const char *string,
+                          unsigned width,
+                          int max_width)
 {
   char c;
-  size_t written = 0;
+  unsigned written = 0;
   if (max_width < 0)
-    max_width = (__SIZE_MAX__ >> 1);
+    max_width = INT32_MAX;
   while ((c = *string++))
     {
       if (written < max_width)
@@ -719,16 +692,19 @@ __pocl_printf_puts_ljust (param_t *p, const char *string, size_t width,
         __pocl_printf_putcf (p, ' ');
       ++written;
     }
+  return written;
 }
 
-void
-__pocl_printf_puts_rjust (param_t *p, const char *string, size_t width,
-                          ssize_t max_width)
+unsigned
+__pocl_printf_puts_rjust (param_t *p,
+                          const char *string,
+                          unsigned width,
+                          int max_width)
 {
   char c;
-  size_t i, strleng = 0, written = 0;
+  unsigned i, strleng = 0, written = 0;
   if (max_width < 0)
-    max_width = (__SIZE_MAX__ >> 1);
+    max_width = INT32_MAX;
 
   const char *tmp = string;
   while ((c = *tmp++))
@@ -747,6 +723,7 @@ __pocl_printf_puts_rjust (param_t *p, const char *string, size_t width,
         __pocl_printf_putcf (p, c);
       ++written;
     }
+  return written;
 }
 
 void

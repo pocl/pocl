@@ -225,15 +225,15 @@ bool WorkgroupImpl::runOnModule(Module &M, FunctionVec &OldKernels) {
 
   llvm::Type *Int32T = Type::getInt32Ty(*C);
   llvm::Type *Int8T = Type::getInt8Ty(*C);
-  PoclContextT =
-      StructType::get(ArrayType::get(SizeT, 3),    // NUM_GROUPS
-                      ArrayType::get(SizeT, 3),    // GLOBAL_OFFSET
-                      ArrayType::get(SizeT, 3),    // LOCAL_SIZE
-                      PointerType::get(Int8T, 0),  // PRINTF_BUFFER
-                      PointerType::get(Int32T, 0), // PRINTF_BUFFER_POSITION
-                      Int32T,                      // PRINTF_BUFFER_CAPACITY
-                      PointerType::get(Int8T, 0),  // GLOBAL_VAR_BUFFER
-                      Int32T);                     // WORK_DIM
+  PoclContextT = StructType::get(
+      ArrayType::get(SizeT, 3),                   // NUM_GROUPS
+      ArrayType::get(SizeT, 3),                   // GLOBAL_OFFSET
+      ArrayType::get(SizeT, 3),                   // LOCAL_SIZE
+      PointerType::get(Int8T, DeviceGlobalASid),  // PRINTF_BUFFER
+      PointerType::get(Int32T, DeviceGlobalASid), // PRINTF_BUFFER_POSITION
+      Int32T,                                     // PRINTF_BUFFER_CAPACITY
+      PointerType::get(Int8T, DeviceGlobalASid),  // GLOBAL_VAR_BUFFER
+      Int32T);                                    // WORK_DIM
 
   LauncherFuncT = FunctionType::get(
       Type::getVoidTy(*C),
@@ -276,7 +276,9 @@ bool WorkgroupImpl::runOnModule(Module &M, FunctionVec &OldKernels) {
         createArgBufferWorkgroupLauncher(L, OrigKernel.getName().str());
       L->addFnAttr(Attribute::NoInline);
       L->removeFnAttr(Attribute::AlwaysInline);
+
       WGLauncher->addFnAttr(Attribute::AlwaysInline);
+      WGLauncher->removeFnAttr(Attribute::OptimizeNone);
       if (DeviceUsingGridLauncher)
         createGridLauncher(L, WGLauncher, OrigKernel.getName().str());
     } else if (DeviceIsSPMD) {
@@ -470,9 +472,10 @@ static bool callsPrintf(Function *F) {
 
       if (callee->getName() == "llvm.")
         continue;
-      if (callee->getName() == "_cl_printf")
+
+      if (callee->getName() == "__printf_alloc")
         return true;
-      if (callee->getName() == "__pocl_printf")
+      if (callee->getName() == "__printf_flush_buffer")
         return true;
       if (callsPrintf(callee))
         return true;
@@ -527,16 +530,17 @@ static Function *cloneFunctionWithPrintfArgs(Value *pb, Value *pbp, Value *pbc,
   return NewF;
 }
 
-// Recursively replace _cl_printf calls with _pocl_printf calls, while
-// propagating the required pocl_context->printf_buffer arguments.
+// Recursively replace __printf_alloc calls with __pocl_printf_alloc calls,
+// while propagating the required pocl_context->printf_buffer arguments.
 static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
-                               Function *poclPrintf, Module &M, Function *L,
-                               FunctionMapping &printfCache) {
+                               Function *poclPrintfAlloc, Module &M,
+                               Function *L, FunctionMapping &printfCache) {
 
   // If none of the kernels use printf(), it will not be linked into the
   // module.
-  if (poclPrintf == nullptr)
+  if (poclPrintfAlloc == nullptr) {
     return;
+  }
 
   // For kernel function, we are provided with proper printf arguments;
   // for non-kernel functions, we assume the function was replaced with
@@ -569,7 +573,7 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
       if (oldF == nullptr)
         continue;
 
-      if (oldF->getName() == "_cl_printf") {
+      if (oldF->getName() == "__printf_alloc") {
         ops.clear();
         ops.push_back(pb);
         ops.push_back(pbp);
@@ -578,21 +582,11 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
         unsigned j = CallInstr->getNumOperands() - 1;
         for (unsigned i = 0; i < j; ++i) {
           auto *Operand = CallInstr->getOperand(i);
-          // The printf decl might have the format string in the constant AS
-          // in order to support compilation from SPIR-V where the calls adhere
-          // to the SPIR-V/OpenCL standard in terms of the argument type.
-          // Thus, when compiling directly from OpenCL C to native LLVM we
-          // have to add an (temporarily illegal) AS cast in case the target
-          // is a flat address space target (CPUs).
-          if (i == 0)
-            Operand = llvm::CastInst::CreatePointerBitCastOrAddrSpaceCast(
-                Operand, poclPrintf->getArg(3)->getType(),
-                "printf_fmt_str_as_cast", CallInstr);
           ops.push_back(Operand);
         }
 
-        CallInst *NewCI = CallInst::Create(poclPrintf, ops);
-        NewCI->setCallingConv(poclPrintf->getCallingConv());
+        CallInst *NewCI = CallInst::Create(poclPrintfAlloc, ops);
+        NewCI->setCallingConv(poclPrintfAlloc->getCallingConv());
         auto *CB = dyn_cast<CallBase>(CallInstr);
         NewCI->setTailCall(CB->isTailCall());
 
@@ -639,7 +633,7 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
       needsPrintf = callsPrintf(oldF);
       if (needsPrintf) {
         newF = cloneFunctionWithPrintfArgs(pb, pbp, pbc, oldF, &M);
-        replacePrintfCalls(nullptr, nullptr, nullptr, false, poclPrintf, M,
+        replacePrintfCalls(nullptr, nullptr, nullptr, false, poclPrintfAlloc, M,
                            newF, printfCache);
 
         printfCache.insert(
@@ -752,12 +746,11 @@ Function *WorkgroupImpl::createWrapper(Function *F,
   IRBuilder<> Builder(BasicBlock::Create(C, "", L));
 
   Value *PrintfBuf, *PrintfBufPos, *PrintfBufCapa;
+  PrintfBuf = PrintfBufPos = PrintfBufCapa = nullptr;
   if (DeviceSidePrintf) {
     PrintfBuf = createLoadFromContext(Builder, PC_PRINTF_BUFFER);
     PrintfBufPos = createLoadFromContext(Builder, PC_PRINTF_BUFFER_POSITION);
     PrintfBufCapa = createLoadFromContext(Builder, PC_PRINTF_BUFFER_CAPACITY);
-  } else {
-    PrintfBuf = PrintfBufPos = PrintfBufCapa = nullptr;
   }
 
   CallInst *CI = Builder.CreateCall(F, ArrayRef<Value *>(FuncArgs));
@@ -773,9 +766,10 @@ Function *WorkgroupImpl::createWrapper(Function *F,
   InlineFunction(*CI, IFI);
 
   if (DeviceSidePrintf) {
-    Function *FoclPrintfFun = M->getFunction("__pocl_printf");
-    replacePrintfCalls(PrintfBuf, PrintfBufPos, PrintfBufCapa,
-                       true, FoclPrintfFun, *M, L, PrintfCache);
+
+    Function *PoclPrintfFun = M->getFunction("__pocl_printf_alloc");
+    replacePrintfCalls(PrintfBuf, PrintfBufPos, PrintfBufCapa, true,
+                       PoclPrintfFun, *M, L, PrintfCache);
   }
 
   // SPMD machines might need a special calling convention to mark the

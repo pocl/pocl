@@ -111,7 +111,6 @@ public:
                                             SchedData->local_mem_size);
     memcpy(&PC, &K->pc, sizeof(struct pocl_context));
 
-#ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
     // capacity and position already set up
     PC.printf_buffer = PrintfBuffer;
     uint32_t Position = 0;
@@ -119,10 +118,6 @@ public:
     assert(PC.printf_buffer != NULL);
     assert(PC.printf_buffer_capacity > 0);
     assert(PC.printf_buffer_position != NULL);
-#else
-    PC.printf_buffer = NULL;
-    PC.printf_buffer_position = NULL;
-#endif
 
     /* Flush to zero is only set once at the start of the kernel execution
      * because FTZ is a compilation option. */
@@ -141,9 +136,7 @@ public:
     }
 
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
-    if (Position > 0) {
-      write(STDOUT_FILENO, PC.printf_buffer, Position);
-    }
+    pocl_write_printf_buffer((char *)PC.printf_buffer, Position);
 #endif
 
     pocl_free_kernel_arg_array_with_locals((void **)&Arguments,

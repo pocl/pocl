@@ -336,10 +336,9 @@ work_group_scheduler (kernel_run_command *k,
   while (get_wg_index_range (k, &start_index, &end_index, &last_wgs,
                              thread_data->num_threads));
 
-  if (position > 0)
-    {
-      write (STDOUT_FILENO, pc.printf_buffer, position);
-    }
+#ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
+  pocl_write_printf_buffer ((char *)pc.printf_buffer, position);
+#endif
 
   pocl_free_kernel_arg_array_with_locals ((void **)&arguments, (void **)&arguments2,
                                      k);
@@ -369,16 +368,11 @@ work_group_scheduler (kernel_run_command *k,
                                         scheduler.local_mem_size);
     memcpy (&pc, &k->pc, sizeof (struct pocl_context));
 
-#ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
     assert (pc.printf_buffer_capacity > 0);
     pc.printf_buffer = malloc (pc.printf_buffer_capacity);
     assert (pc.printf_buffer != NULL);
     uint32_t position = 0;
     pc.printf_buffer_position = &position;
-#else
-    pc.printf_buffer = NULL;
-    pc.printf_buffer_position = NULL;
-#endif
 
     unsigned rm = pocl_save_rm ();
     pocl_set_default_rm ();
@@ -399,20 +393,14 @@ work_group_scheduler (kernel_run_command *k,
     pocl_restore_ftz (ftz);
 
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
-    if (position > 0)
-      {
-        write (STDOUT_FILENO, pc.printf_buffer, position);
-        position = 0;
-      }
+    pocl_write_printf_buffer ((char *)pc.printf_buffer, position);
 #endif
 
     pocl_free_kernel_arg_array_with_locals ((void **)&arguments,
                                        (void **)&arguments2, k);
 
     free (local_mem);
-#ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
     free (pc.printf_buffer);
-#endif
   } // #pragma omp parallel
 
   return 0;

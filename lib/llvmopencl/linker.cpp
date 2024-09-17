@@ -50,15 +50,16 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/PassInfo.h>
 #include <llvm/PassRegistry.h>
 #include <llvm/Transforms/IPO/AlwaysInliner.h>
+#include <llvm/Transforms/Utils/AMDGPUEmitPrintf.h>
 #include <llvm/Transforms/Utils/ValueMapper.h>
 
 #include "pocl_cl.h"
 #include "pocl_llvm_api.h"
 
+#include "EmitPrintf.hh"
 #include "KernelCompilerUtils.h"
 #include "LLVMUtils.h"
 #include "linker.h"
-
 
 using namespace llvm;
 
@@ -172,40 +173,8 @@ find_called_functions(llvm::Function *F,
         DB_PRINT("search: %s callee NULL\n", F->getName().str().c_str());
         continue;
       }
-      if (Callee->getCallingConv() == llvm::CallingConv::SPIR_FUNC ||
-          CI->getCallingConv() == llvm::CallingConv::SPIR_FUNC) {
-        // Loosen the CC to the default one. It should be always the
-        // preferred one to SPIR_FUNC at this stage.
-        Callee->setCallingConv(llvm::CallingConv::C);
-        CI->setCallingConv(llvm::CallingConv::C);
-      }
       if (!Callee->hasName()) {
-        if (F->getCallingConv() == llvm::CallingConv::SPIR_KERNEL) {
-          // This is an SPIR-V entry point wrapper function: SPIR-V
-          // translator generates these because OpenCL allows calling
-          // kernels from kernels like they were device side functions
-          // whereas SPIR-V entry points cannot call other entry points.
-
-          Callee->setName(std::string("_spirv_wrapped_") + F->getName());
-
-          // The SPIR-V translator loses the kernel's original DISubprogram
-          // info, leaving it to the wrapper, thus even after inlining the
-          // function to the kernel we do not get any debug info (LLVM checks
-          // for DISubprogram for each function it generates the debug info
-          // for). Just reuse the DISubprogram in the kernel here in that case.
-          if (Callee->getSubprogram() != nullptr &&
-              F->getSubprogram() == nullptr &&
-              Callee->getSubprogram()->getName() == F->getName()) {
-            F->setSubprogram(pocl::mimicDISubprogram(
-                Callee->getSubprogram(),
-                std::string("_spirv_wrapped_") + F->getName().str(), nullptr));
-            CI->setDebugLoc(llvm::DILocation::get(
-                Callee->getContext(), Callee->getSubprogram()->getLine(), 0,
-                F->getSubprogram(), nullptr, true));
-          }
-        } else {
-          Callee->setName("__noname_function");
-        }
+        Callee->setName("__anonymous_function");
       }
       const char* Name = Callee->getName().data();
       DB_PRINT("search: %s calls %s\n",
@@ -360,14 +329,70 @@ static void shared_copy(llvm::Module *program, const llvm::Module *lib,
     program->eraseNamedMetadata(DebugCU);
 }
 
+static void handleDeviceSidePrintf(
+    llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
+    ValueToValueMapTy &vvm,
+    bool DeviceSVM,            // Device shares AS with host
+    unsigned DeviceGlobalAS) { // AS of the global memory (where printf buffer
+                               // resides)
+  /* Replace printf function calls with storing of format string+arguments to a
+   * buffer */
+  Function *CalledPrintf = Program->getFunction("printf");
+  if (CalledPrintf) {
+    // if a device supports immediate flush, a declaration must exist in the
+    // the device's builtin library (the definition is on the host side in
+    // libpocl)
+    bool DeviceSupportsImmediateFlush =
+        Lib->getFunction("__printf_flush_buffer") != nullptr;
 
+    Function *PrintfAlloc = Lib->getFunction("__printf_alloc");
+    assert(PrintfAlloc != nullptr);
+    copy_func_callgraph("__printf_alloc", Lib, Program, vvm);
+    copy_func_callgraph("__pocl_printf_alloc", Lib, Program, vvm);
+    if (DeviceSupportsImmediateFlush)
+      copy_func_callgraph("__printf_flush_buffer", Lib, Program, vvm);
 
+    std::set<CallInst *> Calls;
+    for (auto U : CalledPrintf->users()) {
+      CallInst *CI = dyn_cast<CallInst>(U);
+      if (CI == nullptr)
+        continue;
+      if (CI->getCalledFunction() == nullptr)
+        continue;
+      if (CI->getCalledFunction() != CalledPrintf)
+        continue;
+      Calls.insert(CI);
+    }
+
+    for (CallInst *C : Calls) {
+      llvm::IRBuilder<> Builder(C);
+      llvm::SmallVector<llvm::Value *> Args(C->arg_begin(), C->arg_end());
+      Value *Replacement =
+          pocl::emitPrintfCall(Builder, Args,
+                               DeviceGlobalAS,           // Printf Buffer AS
+                               true,                     // isBuffered
+                               true,                     // DontAlign
+                               DeviceSVM ? true : false, // StorePtrInsteadOfMD5
+                               DeviceSVM ? false : true, // AlwaysStoreFmtPtr
+                               DeviceSupportsImmediateFlush);
+      C->replaceAllUsesWith(Replacement);
+    }
+
+    for (CallInst *C : Calls) {
+      C->eraseFromParent();
+    }
+
+    if (CalledPrintf->getNumUses() == 0)
+      CalledPrintf->eraseFromParent();
+  }
+}
 }
 
 using namespace pocl;
 
 int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
-         const char **DevAuxFuncs, bool DeviceSidePrintf) {
+         const char **DevAuxFuncs, unsigned DeviceGlobalAS,
+         bool DeviceSidePrintf, bool DeviceSVM) {
 
   assert(Program);
   assert(Lib);
@@ -396,7 +421,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
     // when it searches for undefined functions in the kernel library.
     // assign a name here, this should be made unique by setName()
     if (!fi->hasName()) {
-      fi->setName("__anonymous_internal_func__");
+      fi->setName("__anonymous_function");
     }
     DB_PRINT("Function '%s' is defined\n", fi->getName().data());
     // Find all functions the program source calls
@@ -498,15 +523,8 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
 
   fixCallingConv(Program, Log);
 
-  if (DeviceSidePrintf) {
-    /* Rename printf function to something else than "printf". Note that it has
-     * to be done here, can't be done in the sources via macro, because Clang
-     * refuses to compile it. */
-    Function *CalledPrintf = Program->getFunction("printf");
-    if (CalledPrintf) {
-      CalledPrintf->setName("_cl_printf");
-    }
-  }
+  if (DeviceSidePrintf)
+    handleDeviceSidePrintf(Program, Lib, Log, vvm, DeviceSVM, DeviceGlobalAS);
 
   return 0;
 }

@@ -21,7 +21,8 @@
    THE SOFTWARE.
 */
 
-#include "pocl_types.h"
+#include <stddef.h>
+#include <stdint.h>
 
 /* printing largest double with %f formatter requires about ~1024 digits for
  * integral part, plus precision digits for decimal part, plus some space for
@@ -29,42 +30,14 @@
 #define BUFSIZE 1200
 #define SMALL_BUF_SIZE 64
 
-#define NULL ((void*)0)
-
-/* Produce a SPIR-V compliant bitcode where the format string is
-   in the constant address space (2 in SPIR-V). Address space cast
-   in Workgroup.cc in case of native compilation. */
-#define PRINTF_FMT_STR_AS __attribute__ ((address_space (2)))
-
-#ifdef PRINTF_BUFFER_AS_ID
-#define PRINTF_BUFFER_AS __attribute__ ((address_space (PRINTF_BUFFER_AS_ID)))
-#else
-#define PRINTF_BUFFER_AS
-#endif
-
-typedef intptr_t ssize_t;
-
-#ifdef cl_khr_int64
-
 #define INT_T int64_t
 #define UINT_T uint64_t
-#define INT_T_MIN LONG_MIN
-#define INT_T_MAX LONG_MAX
+#define INT_T_MIN INT64_MIN
+#define INT_T_MAX INT64_MAX
 
-#else
-
-#define INT_T int32_t
-#define UINT_T uint32_t
-#define INT_T_MIN INT_MIN
-#define INT_T_MAX INT_MAX
-
-#endif
-
-
-#ifdef cl_khr_fp64
 #define FLOAT_T double
-#define FLOAT_INT_T long
-#define FLOAT_UINT_T ulong
+#define FLOAT_INT_T int64_t
+#define FLOAT_UINT_T uint64_t
 
 #define NAN __builtin_nan ("1")
 #define INFINITY (__builtin_inf())
@@ -83,31 +56,6 @@ typedef intptr_t ssize_t;
 #define L_SIGNBIT(x) (x >> 63)
 #define L_MSB_NIBBLE(x) (x & MSB_NIBBLE)
 
-#else
-
-#define FLOAT_T float
-#define FLOAT_INT_T int
-#define FLOAT_UINT_T uint
-
-#define NAN __builtin_nanf ("1")
-#define INFINITY (__builtin_inff())
-#define SIGNBIT __builtin_signbitf
-
-#define EXPBITS      0x7f800000
-#define EXPBIAS      127
-#define EXPSHIFTBITS 23
-#define MANTBITS     0x007fffff
-#define LEADBIT      0x00800000
-#define MSB_NIBBLE   0x00780000
-#define MAX_NIBBLES  6
-
-#define L_EXPONENT(x) (((x & EXPBITS) >> EXPSHIFTBITS) - EXPBIAS)
-#define L_MANTISSA(x) (x & MANTBITS)
-#define L_SIGNBIT(x) (x >> 31)
-#define L_MSB_NIBBLE(x) (x & MSB_NIBBLE)
-
-#endif
-
 /* Conversion flags */
 typedef struct
 {
@@ -125,9 +73,9 @@ typedef struct
 typedef struct
 {
   char *bf;             /**  Buffer to output */
-  PRINTF_BUFFER_AS char *restrict printf_buffer;
-  uint printf_buffer_index;
-  uint printf_buffer_capacity;
+  char *__restrict printf_buffer;
+  uint32_t printf_buffer_index;
+  uint32_t printf_buffer_capacity;
   int precision;       /**  field precision */
   unsigned width;      /**  field width */
   unsigned base;
@@ -143,11 +91,15 @@ void __pocl_printf_puts (param_t *p, const char *string);
 
 void __pocl_printf_nonfinite (param_t *p, const char *ptr);
 
-void __pocl_printf_puts_ljust (param_t *p, const char *string, size_t width,
-                               ssize_t max_width);
+unsigned __pocl_printf_puts_ljust (param_t *p,
+                                   const char *string,
+                                   unsigned width,
+                                   int max_width);
 
-void __pocl_printf_puts_rjust (param_t *p, const char *string, size_t width,
-                               ssize_t max_width);
+unsigned __pocl_printf_puts_rjust (param_t *p,
+                                   const char *string,
+                                   unsigned width,
+                                   int max_width);
 
 void __pocl_printf_ptr (param_t *p, const void *ptr);
 

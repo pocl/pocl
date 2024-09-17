@@ -244,12 +244,9 @@ static bool fixMinVecSize(Module &M) {
               << ", force-inlining\n";
 #endif
 
-    decltype(Attribute::AlwaysInline) replaceThisAttr, replacementAttr;
-    replaceThisAttr = Attribute::NoInline;
-    replacementAttr = Attribute::AlwaysInline;
-    F->setAttributes(F->getAttributes()
-                         .removeFnAttribute(F->getContext(), replaceThisAttr)
-                         .addFnAttribute(F->getContext(), replacementAttr));
+    F->addFnAttr(Attribute::AlwaysInline);
+    F->removeFnAttr(Attribute::NoInline);
+    F->removeFnAttr(Attribute::OptimizeNone);
   }
 
   return false;
