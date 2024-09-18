@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2011 Universidad Rey Juan Carlos and
 //               2012-2019 Pekka Jääskeläinen
+//               2024 Pekka Jääskeläinen / Intel Finland Oy
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +32,7 @@ POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/InlineAsm.h>
+#include <llvm/Transforms/Utils/BasicBlockUtils.h>
 
 #include "Kernel.h"
 #include "Barrier.h"
@@ -39,115 +41,115 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "pocl.h"
 #include "pocl_llvm_api.h"
 
+// #define DEBUG_PR_CREATION
+
 POP_COMPILER_DIAGS
 
 using namespace llvm;
 using namespace pocl;
 
-static void add_predecessors(SmallVectorImpl<BasicBlock *> &v,
-                             BasicBlock *b);
-static bool verify_no_barriers(const BasicBlock *B);
+static void addPredecessors(SmallVectorImpl<BasicBlock *> &V, BasicBlock *BB);
 
-void
-Kernel::getExitBlocks(SmallVectorImpl<llvm::BasicBlock *> &B)
-{
+void Kernel::getExitBlocks(SmallVectorImpl<llvm::BasicBlock *> &B) {
   for (iterator i = begin(), e = end(); i != e; ++i) {
     auto t = i->getTerminator();
     if (t->getNumSuccessors() == 0) {
       // All exits must be barrier blocks.
       llvm::BasicBlock *BB = cast<BasicBlock>(i);
       if (!Barrier::hasBarrier(BB))
-        Barrier::Create(BB->getTerminator());
+        Barrier::create(BB->getTerminator());
       B.push_back(BB);
     }
   }
 }
 
-ParallelRegion *
-Kernel::createParallelRegionBefore(llvm::BasicBlock *B)
-{
-  SmallVector<BasicBlock *, 4> pending_blocks;
-  SmallPtrSet<BasicBlock *, 8> blocks_in_region;
-  BasicBlock *region_entry_barrier = NULL;
-  BasicBlock *entry = NULL;
-  BasicBlock *exit = B->getSinglePredecessor();
-  add_predecessors(pending_blocks, B);
+/* @todo Move to ParallelRegion.cc */
+ParallelRegion *Kernel::createParallelRegionBefore(llvm::BasicBlock *B) {
+
+  BasicBlock *RegionEntryBarrier = NULL;
+  // The original entry basic block of the parallel region, before creating the
+  // context restore entry.
+  BasicBlock *OrigEntry = NULL;
+  BasicBlock *Exit = B->getSinglePredecessor();
+
+  // The special entry block is not treated as a parallel region.
+  if (Exit == &getEntryBlock())
+    return nullptr;
+
+  SmallVector<BasicBlock *, 4> PendingBlocks;
+  addPredecessors(PendingBlocks, B);
 
 #ifdef DEBUG_PR_CREATION
   std::cerr << "createParallelRegionBefore " << B->getName().str() << std::endl;
 #endif
-  
-  while (!pending_blocks.empty()) {
-    BasicBlock *current = pending_blocks.back();
-    pending_blocks.pop_back();
+
+  SmallPtrSet<BasicBlock *, 8> BlocksInRegion;
+  while (!PendingBlocks.empty()) {
+    BasicBlock *Current = PendingBlocks.back();
+    PendingBlocks.pop_back();
 
 #ifdef DEBUG_PR_CREATION
-    std::cerr << "considering " << current->getName().str() << std::endl;
+    std::cerr << "considering " << Current->getName().str() << std::endl;
 #endif
-    
+
     // avoid infinite recursion of loops
-    if (blocks_in_region.count(current) != 0)
-      {
+    if (BlocksInRegion.count(Current) != 0)
+      continue;
+
+    // If we reach another barrier this must be the parallel region's original
+    // entry node.
+    if (Barrier::hasOnlyBarrier(Current)) {
+      if (RegionEntryBarrier == NULL)
+        RegionEntryBarrier = Current;
 #ifdef DEBUG_PR_CREATION
-        std::cerr << "already in the region!" << std::endl;
+      std::cerr << "### it's a barrier!" << std::endl;
 #endif
-        continue;
-      }
-    
-    // If we reach another barrier this must be the
-    // parallel region entry.
-    if (Barrier::hasOnlyBarrier(current)) {
-      if (region_entry_barrier == NULL)
-        region_entry_barrier = current;
-#ifdef DEBUG_PR_CREATION
-      std::cerr << "### it's a barrier!" << std::endl;        
-#endif     
       continue;
     }
 
-    if (!verify_no_barriers(current))
-      {
-        assert(verify_no_barriers(current) &&
-               "Barrier found in a non-barrier block! (forgot barrier canonicalization?)");
-      }
+    // We expect no other instructions in barrier blocks expect the function
+    // entry node where we push context data allocas.
+    if (Barrier::hasBarrier(Current)) {
+      assert(
+          false &&
+          "Barrier found in a non-barrier (non-entry) block! (forgot barrier "
+          "canonicalization?)");
+    }
 
 #ifdef DEBUG_PR_CREATION
     std::cerr << "added it to the region" << std::endl;
 #endif
     // Non-barrier block, this must be on the region.
-    blocks_in_region.insert(current);
+    BlocksInRegion.insert(Current);
 
     // Add predecessors to pending queue.
-    add_predecessors(pending_blocks, current);
+    addPredecessors(PendingBlocks, Current);
   }
 
-  if (blocks_in_region.empty())
+  if (BlocksInRegion.empty())
     return NULL;
 
   // Find the entry node.
-  assert (region_entry_barrier != NULL);
-  for (unsigned suc = 0, num = region_entry_barrier->getTerminator()->getNumSuccessors(); 
-       suc < num; ++suc) 
-    {
-      llvm::BasicBlock *entryCandidate = 
-        region_entry_barrier->getTerminator()->getSuccessor(suc);
-      if (blocks_in_region.count(entryCandidate) == 0)
-        continue;
-      entry = entryCandidate;
-      break;
-    }
-  assert (blocks_in_region.count(entry) != 0);
+  assert(RegionEntryBarrier != NULL);
+  for (unsigned Suc = 0,
+                Num = RegionEntryBarrier->getTerminator()->getNumSuccessors();
+       Suc < Num; ++Suc) {
+    llvm::BasicBlock *EntryCandidate =
+        RegionEntryBarrier->getTerminator()->getSuccessor(Suc);
+    if (BlocksInRegion.count(EntryCandidate) == 0)
+      continue;
+    OrigEntry = EntryCandidate;
+    break;
+  }
+  assert(BlocksInRegion.count(OrigEntry) != 0);
 
   // We got all the blocks in a region, create it.
-  return ParallelRegion::Create(blocks_in_region, entry, exit);
+  return ParallelRegion::Create(BlocksInRegion, OrigEntry, Exit);
 }
 
-static void
-add_predecessors(SmallVectorImpl<BasicBlock *> &v, BasicBlock *b)
-{
-  for (pred_iterator i = pred_begin(b), e = pred_end(b);
-       i != e; ++i) {
-    v.push_back(*i);
+static void addPredecessors(SmallVectorImpl<BasicBlock *> &V, BasicBlock *BB) {
+  for (pred_iterator i = pred_begin(BB), e = pred_end(BB); i != e; ++i) {
+    V.push_back(*i);
   }
 }
 

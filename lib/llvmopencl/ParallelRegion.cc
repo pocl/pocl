@@ -342,37 +342,37 @@ ParallelRegion::dumpNames()
     std::cerr << std::endl;
 }
 
-ParallelRegion *
-ParallelRegion::Create(const SmallPtrSet<BasicBlock *, 8>& bbs, BasicBlock *entry, BasicBlock *exit)
-{
-  ParallelRegion *new_region = new ParallelRegion();
+ParallelRegion *ParallelRegion::Create(const SmallPtrSet<BasicBlock *, 8> &BBs,
+                                       BasicBlock *Entry, BasicBlock *Exit) {
+  ParallelRegion *NewRegion = new ParallelRegion();
 
-  assert (entry != NULL);
-  assert (exit != NULL);
+  assert(Entry != NULL);
+  assert(Exit != NULL);
 
   // This is done in two steps so order of the vector
   // is the same as original function order.
-  Function *F = entry->getParent();
+  Function *F = Entry->getParent();
   for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
-    BasicBlock *b = &*i;
-    for (SmallPtrSetIterator<BasicBlock *> j = bbs.begin(); j != bbs.end(); ++j) {
-      if (*j == b) {
-        new_region->push_back(&*i);
-        if (entry == *j)
-            new_region->setEntryBBIndex(new_region->size() - 1);
-        else if (exit == *j)
-            new_region->setExitBBIndex(new_region->size() - 1);
+    BasicBlock *B = &*i;
+    for (SmallPtrSetIterator<BasicBlock *> j = BBs.begin(); j != BBs.end();
+         ++j) {
+      if (*j == B) {
+        NewRegion->push_back(&*i);
+        if (Entry == *j)
+          NewRegion->setEntryBBIndex(NewRegion->size() - 1);
+        else if (Exit == *j)
+          NewRegion->setExitBBIndex(NewRegion->size() - 1);
         break;
       }
     }
   }
 
-  new_region->LocalizeIDLoads();
+  NewRegion->LocalizeIDLoads();
 #ifdef DEBUG_CREATE
-  assert(new_region->Verify());
+  assert(NewRegion->Verify());
 #endif
 
-  return new_region;
+  return NewRegion;
 }
 
 bool
@@ -383,7 +383,7 @@ ParallelRegion::Verify()
   // 2) Single outgoing edge from exit block
   //    (other outgoing edges allowed, will be purged in replicas).
   // 3) No barriers inside the region.
-  
+
   int entry_edges = 0;
 
   for (iterator i = begin(), e = end(); i != e; ++i) {
@@ -412,7 +412,7 @@ ParallelRegion::Verify()
         ++entry_edges;
       }
     }
-    
+
     // if (entry_edges != 1) {
     //   assert(0 && "Parallel regions must be single entry!");
     //   return false;
@@ -489,19 +489,18 @@ ParallelRegion::Verify()
  * vectorization easier. In this case using of IsLoadUnconditionallySafe
  * parameter will be skipped.
  */
-void
-ParallelRegion::AddParallelLoopMetadata(
+void ParallelRegion::addParallelLoopMetadata(
     llvm::MDNode *Identifier,
     std::function<bool(llvm::Instruction *)> IsLoadUnconditionallySafe) {
   for (iterator i = begin(), e = end(); i != e; ++i) {
-    BasicBlock* bb = *i;      
-    for (BasicBlock::iterator ii = bb->begin(), ee = bb->end();
-         ii != ee; ii++) {
+    BasicBlock *BB = *i;
+    for (BasicBlock::iterator ii = BB->begin(), ee = BB->end(); ii != ee;
+         ii++) {
       if (!ii->mayReadOrWriteMemory()) {
         continue;
       }
 
-      MDNode *NewMD = MDNode::get(bb->getContext(), Identifier);
+      MDNode *NewMD = MDNode::get(BB->getContext(), Identifier);
       MDNode *OldMD = ii->getMetadata(PARALLEL_MD_NAME);
       if (OldMD != nullptr) {
         NewMD = llvm::MDNode::concatenate(OldMD, NewMD);
@@ -532,22 +531,17 @@ ParallelRegion::AddIDMetadata(
           ConstantInt::get(Type::getInt32Ty(context), y)),      
         llvm::ConstantAsMetadata::get(
           ConstantInt::get(Type::getInt32Ty(context), z))};
-    MDNode* mdXYZ = MDNode::get(context, v2);  
-    Metadata *v[] = {
-        MDString::get(context, "WI_data"),      
-        mdRegion,
-        mdXYZ};
-    MDNode* md = MDNode::get(context, v);              
-    
+    MDNode* mdXYZ = MDNode::get(context, v2);
+    Metadata *v[] = {MDString::get(context, "WI_data"), mdRegion, mdXYZ};
+    MDNode *md = MDNode::get(context, v);
+
     for (iterator i = begin(), e = end(); i != e; ++i) {
-      BasicBlock* bb = *i;
-      for (BasicBlock::iterator ii = bb->begin();
-            ii != bb->end(); ii++) {
-        Metadata *v3[] = {
-            MDString::get(context, "WI_counter"),      
-            llvm::ConstantAsMetadata::get(
-              ConstantInt::get(Type::getInt32Ty(context), counter))};
-        MDNode* mdCounter = MDNode::get(context, v3);  
+      BasicBlock *BB = *i;
+      for (BasicBlock::iterator ii = BB->begin(); ii != BB->end(); ii++) {
+        Metadata *v3[] = {MDString::get(context, "WI_counter"),
+                          llvm::ConstantAsMetadata::get(ConstantInt::get(
+                              Type::getInt32Ty(context), counter))};
+        MDNode *mdCounter = MDNode::get(context, v3);
         counter++;
         ii->setMetadata("wi", md);
         ii->setMetadata("wi_counter", mdCounter);
@@ -600,20 +594,21 @@ ParallelRegion::AddBlockAfter(llvm::BasicBlock *block, llvm::BasicBlock *after)
     insert(afterPos, block);
 }
 
-bool 
-ParallelRegion::HasBlock(llvm::BasicBlock *bb)
-{
-    return find(begin(), end(), bb) != end();
+bool ParallelRegion::hasBlock(llvm::BasicBlock *Block) {
+  return find(begin(), end(), Block) != end();
 }
 
-/**
- * Finds the instruction that loads an id of the work item in the beginning of
- * the parallel region, if not found, creates it.
- *
- * @param IDGlobalName The name of the (magic) GlobalVariable representing the
- * id.
- */
-llvm::Instruction *ParallelRegion::getOrCreateIDLoad(std::string IDGlobalName) {
+/// Finds the instruction that loads an id of the work item in the
+/// beginning of the parallel region, if not found, creates it.
+///
+/// \param IDGlobalName The name of the (magic) GlobalVariable temporally
+/// representing the id.
+/// \param Before If given, finds one in the basic block of the given
+/// instruction, or creates one just before it.
+/// \returns The instruction loading the id.
+llvm::Instruction *
+ParallelRegion::getOrCreateIDLoad(std::string IDGlobalName,
+                                  llvm::Instruction *Before) {
 
     if (IDLoadInstrs.find(IDGlobalName) != IDLoadInstrs.end())
       return IDLoadInstrs[IDGlobalName];

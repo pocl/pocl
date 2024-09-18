@@ -182,7 +182,7 @@ void dumpCFG(llvm::Function &F, std::string fname,
              RE = ParRegions->end();
          RI != RE; ++RI) {
       ParallelRegion *PR = *RI;
-      s << "\tsubgraph cluster" << PR->GetID() << " {" << std::endl;
+      s << "\tsubgraph cluster" << PR->getID() << " {" << std::endl;
       for (ParallelRegion::iterator It = PR->begin(), E = PR->end(); It != E;
            ++It) {
         BasicBlock *BB = *It;
@@ -191,7 +191,7 @@ void dumpCFG(llvm::Function &F, std::string fname,
             (highlights != NULL && highlights->find(BB) != highlights->end()));
         regionBBs.insert(BB);
       }
-      s << "label=\"Parallel region #" << PR->GetID() << "\";" << std::endl;
+      s << "label=\"Parallel region #" << PR->getID() << "\";" << std::endl;
       s << "}" << std::endl;
     }
   }

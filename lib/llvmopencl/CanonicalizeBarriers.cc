@@ -1,18 +1,19 @@
 // LLVM function pass to canonicalize barriers.
-// 
+//
 // Copyright (c) 2011 Universidad Rey Juan Carlos
 //               2012-2014 Pekka Jääskeläinen / Tampere University of Technology
-// 
+//               2024 Pekka Jääskeläinen / Intel Finland Oy
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -62,16 +63,18 @@ using InstructionSet = std::set<llvm::Instruction *>;
 static bool canonicalizeBarriers(Function &F, WorkitemHandlerType Handler) {
   bool changed = false;
 
-  BasicBlock *entry = &F.getEntryBlock();
-  if (!Barrier::hasOnlyBarrier(entry)) {
+  // The function entry node should be a pure barrier.
+  // It should start a parallel region.
+  BasicBlock *Entry = &F.getEntryBlock();
+  if (!Barrier::hasOnlyBarrier(Entry)) {
 #ifdef DEBUG_CANON_BARRIERS
     std::cerr << "CanonBar: hasOnlyBarrier(entry)\n";
 #endif
-    BasicBlock *effective_entry = SplitBlock(entry, &(entry->front()));
+    BasicBlock *EffectiveEntry = SplitBlock(Entry, &(Entry->front()));
 
-    effective_entry->takeName(entry);
-    entry->setName("entry.barrier");
-    Barrier::Create(entry->getTerminator());
+    EffectiveEntry->takeName(Entry);
+    Entry->setName("entry.barrier");
+    Barrier::create(Entry->getTerminator());
     changed |= true;
   }
 
@@ -103,7 +106,7 @@ static bool canonicalizeBarriers(Function &F, WorkitemHandlerType Handler) {
       else
         exit = SplitBlock(b, t);
       exit->setName("exit.barrier");
-      Barrier::Create(t);
+      Barrier::create(t);
       changed |= true;
     }
   }
@@ -111,13 +114,14 @@ static bool canonicalizeBarriers(Function &F, WorkitemHandlerType Handler) {
   return processFunction(F, Handler) || changed;
 }
 
-// Canonicalize barriers: ensure all barriers are in a separate BB
-// containing only the barrier and the terminator, with just one
-// predecessor. This allows us to use those BBs as markers only, 
-// they will not be replicated.
 static bool processFunction(Function &F, WorkitemHandlerType Handler) {
 
   bool changed = false;
+
+#ifdef DEBUG_CANON_BARRIERS
+  std::cerr << "Before CanonicalizeBarriers:\n";
+  F.dump();
+#endif
 
   InstructionSet Barriers;
 
@@ -207,7 +211,11 @@ static bool processFunction(Function &F, WorkitemHandlerType Handler) {
           }
       }
   } while (emptyRegionDeleted);
-  
+
+#ifdef DEBUG_CANON_BARRIERS
+  std::cerr << "After CanonicalizeBarriers:\n";
+  F.dump();
+#endif
 
   return changed;
 }

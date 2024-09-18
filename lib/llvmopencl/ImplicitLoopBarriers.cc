@@ -116,8 +116,8 @@ static bool addInnerLoopBarrier(llvm::Loop &L,
 
     /* Add a barrier both to the beginning of the entry and to the very end
        to nicely isolate the parallel region. */
-    Barrier::Create(brexit->getTerminator());   
-    Barrier::Create(loopEntry->getFirstNonPHI());
+    Barrier::create(brexit->getTerminator());
+    Barrier::create(loopEntry->getFirstNonPHI());
 
 #ifdef DEBUG_ILOOP_BARRIERS
     std::cerr << "### added an inner-loop barrier to the loop" << std::endl << std::endl;
