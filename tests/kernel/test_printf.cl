@@ -86,9 +86,10 @@ kernel void test_printf()
   printf("%.4e\n",10.3456f);
 
   /* test RTE rounding */
-  printf("%.6e %.8e \n ", -252569.750, -252569.750);
-  printf("%.6e %.8e \n ", 4184049.50, 4184049.50);
-  printf("%.1e\n",  1.25E+15);
+  printf("%.6e %.8e\n", -252569.750, -252569.750);
+  printf("%.6e %.8e\n", 4184049.50, 4184049.50);
+  printf("%.1e\n", 1.25 );
+  printf("%.1e\n", 1.75 );
 
   float j = as_float((uint)0x408fffffU);
   float k = as_float((uint)0x40f00e00U);
