@@ -146,8 +146,8 @@ pocl_cpu_init_common (cl_device_id device)
                   "org.khronos.openvx.scale_image.nn.u8;"
                   "org.khronos.openvx.scale_image.bl.u8;"
                   "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32;"
-                  "khr_gemm;"
-                  "khr_matmul;");
+                  "exp_gemm;"
+                  "exp_matmul;");
       device->num_builtin_kernels = 6;
     }
 #endif
@@ -868,10 +868,10 @@ pocl_cpu_execute_dbk (cl_program program,
 
   switch (meta->builtin_kernel_id)
     {
-    case POCL_CDBI_DBK_KHR_GEMM:
+    case POCL_CDBI_DBK_EXP_GEMM:
       {
-        const cl_dbk_attributes_khr_gemm *Attrs
-          = (const cl_dbk_attributes_khr_gemm *)meta->builtin_kernel_attrs;
+        const cl_dbk_attributes_exp_gemm *Attrs
+          = (const cl_dbk_attributes_exp_gemm *)meta->builtin_kernel_attrs;
         void *Cin = pocl_cpu_get_ptr (&arguments[2], mem_id);
         void *Cout = pocl_cpu_get_ptr (&arguments[3], mem_id);
         memcpy (&Alpha, arguments[4].value, sizeof (float));
@@ -886,10 +886,10 @@ pocl_cpu_execute_dbk (cl_program program,
         TenCIOpt = &Attrs->c_in;
         break;
       }
-    case POCL_CDBI_DBK_KHR_MATMUL:
+    case POCL_CDBI_DBK_EXP_MATMUL:
       {
-        const cl_dbk_attributes_khr_matmul *Attrs
-          = (const cl_dbk_attributes_khr_matmul *)meta->builtin_kernel_attrs;
+        const cl_dbk_attributes_exp_matmul *Attrs
+          = (const cl_dbk_attributes_exp_matmul *)meta->builtin_kernel_attrs;
         InDtype = Attrs->a.dtype;
         OutDtype = Attrs->c.dtype;
         TransposeA = Attrs->trans_a;

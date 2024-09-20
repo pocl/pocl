@@ -126,10 +126,10 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
 {
   switch (meta->builtin_kernel_id)
     {
-    case POCL_CDBI_DBK_KHR_GEMM:
+    case POCL_CDBI_DBK_EXP_GEMM:
       {
-        const cl_dbk_attributes_khr_gemm *Attrs
-          = (cl_dbk_attributes_khr_gemm *)meta->builtin_kernel_attrs;
+        const cl_dbk_attributes_exp_gemm *Attrs
+          = (cl_dbk_attributes_exp_gemm *)meta->builtin_kernel_attrs;
         if (arg_index == 0)
           return pocl_verify_dbk_kernel_arg (buf, &Attrs->a);
         if (arg_index == 1)
@@ -140,10 +140,10 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
           return pocl_verify_dbk_kernel_arg (buf, &Attrs->c_out);
         POCL_ABORT ("this should not be reached \n");
       }
-    case POCL_CDBI_DBK_KHR_MATMUL:
+    case POCL_CDBI_DBK_EXP_MATMUL:
       {
-        const cl_dbk_attributes_khr_matmul *Attrs
-          = (const cl_dbk_attributes_khr_matmul *)meta->builtin_kernel_attrs;
+        const cl_dbk_attributes_exp_matmul *Attrs
+          = (const cl_dbk_attributes_exp_matmul *)meta->builtin_kernel_attrs;
         if (arg_index == 0)
           return pocl_verify_dbk_kernel_arg (buf, &Attrs->a);
         if (arg_index == 1)
