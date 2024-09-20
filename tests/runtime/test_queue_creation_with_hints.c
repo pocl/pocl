@@ -25,9 +25,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <CL/cl_ext.h>
-
 #include "poclu.h"
+
+#include <CL/cl_ext.h>
 
 int
 main ()

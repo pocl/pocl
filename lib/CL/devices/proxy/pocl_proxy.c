@@ -2197,13 +2197,14 @@ proxy_exec_command (_cl_command_node *node, cl_device_id dev,
   switch (node->type)
     {
     case CL_COMMAND_MIGRATE_MEM_OBJECTS:
+      assert (cmd->migrate.num_buffers > 0);
+      cl_mem m = node->migr_infos->buffer;
+
       switch (cmd->migrate.type)
         {
         case ENQUEUE_MIGRATE_TYPE_D2H:
           {
             POCL_MSG_PRINT_PROXY ("export D2H, device %s\n", dev->long_name);
-
-            cl_mem m = event->mem_objs[0];
 
             if (m->is_image)
               {
@@ -2216,21 +2217,22 @@ proxy_exec_command (_cl_command_node *node, cl_device_id dev,
                 size_t origin[3] = { 0, 0, 0 };
 
                 pocl_proxy_enque_read_image_rect (
-                    d, cq_id, node, m, cmd->migrate.mem_id, m->mem_host_ptr,
-                    NULL, origin, region, 0, 0, 0);
+                  d, cq_id, node, m,
+                  &node->migr_infos->buffer->device_ptrs[dev->global_mem_id],
+                  m->mem_host_ptr, NULL, origin, region, 0, 0, 0);
               }
             else
               {
-                pocl_proxy_enque_read (d, cq_id, node, m->mem_host_ptr,
-                                       cmd->migrate.mem_id, m, 0, m->size);
+                pocl_proxy_enque_read (
+                  d, cq_id, node, m->mem_host_ptr,
+                  &node->migr_infos->buffer->device_ptrs[dev->global_mem_id],
+                  m, 0, m->size);
               }
             break;
           }
         case ENQUEUE_MIGRATE_TYPE_H2D:
           {
             POCL_MSG_PRINT_PROXY ("import H2D, device %s\n", dev->long_name);
-
-            cl_mem m = event->mem_objs[0];
 
             if (m->is_image)
               {
@@ -2243,13 +2245,16 @@ proxy_exec_command (_cl_command_node *node, cl_device_id dev,
                 size_t origin[3] = { 0, 0, 0 };
 
                 pocl_proxy_enque_write_image_rect (
-                    d, cq_id, node, m, cmd->migrate.mem_id, m->mem_host_ptr,
-                    NULL, origin, region, 0, 0, 0);
+                  d, cq_id, node, m,
+                  &node->migr_infos->buffer->device_ptrs[dev->global_mem_id],
+                  m->mem_host_ptr, NULL, origin, region, 0, 0, 0);
               }
             else
               {
-                pocl_proxy_enque_write (d, cq_id, node, m->mem_host_ptr,
-                                        cmd->migrate.mem_id, m, 0, m->size);
+                pocl_proxy_enque_write (
+                  d, cq_id, node, m->mem_host_ptr,
+                  &node->migr_infos->buffer->device_ptrs[dev->global_mem_id],
+                  m, 0, m->size);
               }
             break;
           }
@@ -2257,9 +2262,9 @@ proxy_exec_command (_cl_command_node *node, cl_device_id dev,
           {
             cl_device_id dev = cmd->migrate.src_device;
             assert (dev);
-            pocl_proxy_enque_migrate_d2d (d, dev->data, cq_id, node,
-                                          event->mem_objs[0],
-                                          cmd->migrate.mem_id);
+            pocl_proxy_enque_migrate_d2d (
+              d, dev->data, cq_id, node, m,
+              &node->migr_infos->buffer->device_ptrs[dev->global_mem_id]);
             break;
           }
         case ENQUEUE_MIGRATE_TYPE_NOP:
@@ -2283,79 +2288,90 @@ proxy_exec_command (_cl_command_node *node, cl_device_id dev,
 #endif
 
     case CL_COMMAND_READ_BUFFER:
-      pocl_proxy_enque_read (d, cq_id, node, cmd->read.dst_host_ptr,
-                             cmd->read.src_mem_id, event->mem_objs[0],
-                             cmd->read.offset, cmd->read.size);
+      pocl_proxy_enque_read (
+        d, cq_id, node, cmd->read.dst_host_ptr,
+        &POCL_MEM_BS (cmd->read.src)->device_ptrs[dev->global_mem_id],
+        cmd->read.src, cmd->read.offset, cmd->read.size);
       goto FINISH_COMMAND;
 
     case CL_COMMAND_WRITE_BUFFER:
-      pocl_proxy_enque_write (d, cq_id, node, cmd->write.src_host_ptr,
-                              cmd->write.dst_mem_id, event->mem_objs[0],
-                              cmd->write.offset, cmd->write.size);
+      pocl_proxy_enque_write (
+        d, cq_id, node, cmd->write.src_host_ptr,
+        &POCL_MEM_BS (cmd->write.dst)->device_ptrs[dev->global_mem_id],
+        cmd->write.dst, cmd->write.offset, cmd->write.size);
       goto FINISH_COMMAND;
 
     case CL_COMMAND_COPY_BUFFER:
-      pocl_proxy_enque_copy (d, cq_id, node, cmd->copy.dst_mem_id,
-                             cmd->copy.dst, cmd->copy.src_mem_id,
-                             cmd->copy.src, cmd->copy.dst_offset,
-                             cmd->copy.src_offset, cmd->copy.size);
+      pocl_proxy_enque_copy (
+        d, cq_id, node,
+        &POCL_MEM_BS (cmd->copy.dst)->device_ptrs[dev->global_mem_id],
+        cmd->copy.dst,
+        &POCL_MEM_BS (cmd->copy.src)->device_ptrs[dev->global_mem_id],
+        cmd->copy.src, cmd->copy.dst_offset, cmd->copy.src_offset,
+        cmd->copy.size);
       goto FINISH_COMMAND;
 
     case CL_COMMAND_READ_BUFFER_RECT:
       pocl_proxy_enque_read_rect (
-          d, cq_id, node, cmd->read_rect.dst_host_ptr,
-          cmd->read_rect.src_mem_id, event->mem_objs[0],
-          cmd->read_rect.buffer_origin, cmd->read_rect.host_origin,
-          cmd->read_rect.region, cmd->read_rect.buffer_row_pitch,
-          cmd->read_rect.buffer_slice_pitch, cmd->read_rect.host_row_pitch,
-          cmd->read_rect.host_slice_pitch);
+        d, cq_id, node, cmd->read_rect.dst_host_ptr,
+        &cmd->read_rect.src->device_ptrs[dev->global_mem_id],
+        cmd->read_rect.src, cmd->read_rect.buffer_origin,
+        cmd->read_rect.host_origin, cmd->read_rect.region,
+        cmd->read_rect.buffer_row_pitch, cmd->read_rect.buffer_slice_pitch,
+        cmd->read_rect.host_row_pitch, cmd->read_rect.host_slice_pitch);
       goto FINISH_COMMAND;
 
     case CL_COMMAND_WRITE_BUFFER_RECT:
       pocl_proxy_enque_write_rect (
-          d, cq_id, node, cmd->write_rect.src_host_ptr,
-          cmd->write_rect.dst_mem_id, event->mem_objs[0],
-          cmd->write_rect.buffer_origin, cmd->write_rect.host_origin,
-          cmd->write_rect.region, cmd->write_rect.buffer_row_pitch,
-          cmd->write_rect.buffer_slice_pitch, cmd->write_rect.host_row_pitch,
-          cmd->write_rect.host_slice_pitch);
+        d, cq_id, node, cmd->write_rect.src_host_ptr,
+        &cmd->write_rect.dst->device_ptrs[dev->global_mem_id],
+        cmd->write_rect.dst, cmd->write_rect.buffer_origin,
+        cmd->write_rect.host_origin, cmd->write_rect.region,
+        cmd->write_rect.buffer_row_pitch, cmd->write_rect.buffer_slice_pitch,
+        cmd->write_rect.host_row_pitch, cmd->write_rect.host_slice_pitch);
       goto FINISH_COMMAND;
 
     case CL_COMMAND_COPY_BUFFER_RECT:
       pocl_proxy_enque_copy_rect (
-          d, cq_id, node, cmd->copy_rect.dst_mem_id, cmd->copy_rect.dst,
-          cmd->copy_rect.src_mem_id, cmd->copy_rect.src,
-          cmd->copy_rect.dst_origin, cmd->copy_rect.src_origin,
-          cmd->copy_rect.region, cmd->copy_rect.dst_row_pitch,
-          cmd->copy_rect.dst_slice_pitch, cmd->copy_rect.src_row_pitch,
-          cmd->copy_rect.src_slice_pitch);
+        d, cq_id, node, &cmd->copy_rect.dst->device_ptrs[dev->global_mem_id],
+        cmd->copy_rect.dst,
+        &cmd->copy_rect.src->device_ptrs[dev->global_mem_id],
+        cmd->copy_rect.src, cmd->copy_rect.dst_origin,
+        cmd->copy_rect.src_origin, cmd->copy_rect.region,
+        cmd->copy_rect.dst_row_pitch, cmd->copy_rect.dst_slice_pitch,
+        cmd->copy_rect.src_row_pitch, cmd->copy_rect.src_slice_pitch);
       goto FINISH_COMMAND;
 
     case CL_COMMAND_FILL_BUFFER:
-      pocl_proxy_enque_memfill (d, cq_id, node, cmd->memfill.dst_mem_id,
-                                event->mem_objs[0], cmd->memfill.size,
-                                cmd->memfill.offset, cmd->memfill.pattern,
-                                cmd->memfill.pattern_size);
+      pocl_proxy_enque_memfill (
+        d, cq_id, node, &cmd->memfill.dst->device_ptrs[dev->global_mem_id],
+        cmd->memfill.dst, cmd->memfill.size, cmd->memfill.offset,
+        cmd->memfill.pattern, cmd->memfill.pattern_size);
       goto FINISH_COMMAND;
 
     case CL_COMMAND_MAP_BUFFER:
-      pocl_proxy_enque_map_mem (d, cq_id, node, cmd->map.mem_id,
-                                event->mem_objs[0], cmd->map.mapping);
+      pocl_proxy_enque_map_mem (
+        d, cq_id, node,
+        &POCL_MEM_BS (cmd->map.buffer)->device_ptrs[dev->global_mem_id],
+        cmd->map.buffer, cmd->map.mapping);
       goto FINISH_COMMAND;
 
     case CL_COMMAND_UNMAP_MEM_OBJECT:
 
-      if (event->mem_objs[0]->is_image == CL_FALSE
-          || IS_IMAGE1D_BUFFER (event->mem_objs[0]))
+      if (cmd->unmap.buffer->is_image == CL_FALSE
+          || IS_IMAGE1D_BUFFER (cmd->unmap.buffer))
         {
-          pocl_proxy_enque_unmap_mem (d, cq_id, node, cmd->unmap.mem_id,
-                                      event->mem_objs[0], cmd->unmap.mapping);
+          pocl_proxy_enque_unmap_mem (
+            d, cq_id, node,
+            &cmd->unmap.buffer->device_ptrs[dev->global_mem_id],
+            cmd->unmap.buffer, cmd->unmap.mapping);
         }
       else
         {
-          pocl_proxy_enque_unmap_image (d, cq_id, node, cmd->unmap.mem_id,
-                                        event->mem_objs[0],
-                                        cmd->unmap.mapping);
+          pocl_proxy_enque_unmap_image (
+            d, cq_id, node,
+            &POCL_MEM_BS (cmd->unmap.buffer)->device_ptrs[dev->global_mem_id],
+            cmd->unmap.buffer, cmd->unmap.mapping);
         }
       goto FINISH_COMMAND;
 
@@ -2367,54 +2383,64 @@ proxy_exec_command (_cl_command_node *node, cl_device_id dev,
 
     case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
       pocl_proxy_enque_read_image_rect (
-          d, cq_id, node, cmd->read_image.src, cmd->read_image.src_mem_id,
-          NULL, cmd->read_image.dst_mem_id, cmd->read_image.origin,
-          cmd->read_image.region, cmd->read_image.dst_row_pitch,
-          cmd->read_image.dst_slice_pitch, cmd->read_image.dst_offset);
+        d, cq_id, node, cmd->read_image.src,
+        &POCL_MEM_BS (cmd->read_image.src)->device_ptrs[dev->global_mem_id],
+        NULL,
+        &POCL_MEM_BS (cmd->read_image.dst)->device_ptrs[dev->global_mem_id],
+        cmd->read_image.origin, cmd->read_image.region,
+        cmd->read_image.dst_row_pitch, cmd->read_image.dst_slice_pitch,
+        cmd->read_image.dst_offset);
       goto FINISH_COMMAND;
 
     case CL_COMMAND_READ_IMAGE:
       pocl_proxy_enque_read_image_rect (
-          d, cq_id, node, cmd->read_image.src, cmd->read_image.src_mem_id,
-          cmd->read_image.dst_host_ptr, NULL, cmd->read_image.origin,
-          cmd->read_image.region, cmd->read_image.dst_row_pitch,
-          cmd->read_image.dst_slice_pitch, cmd->read_image.dst_offset);
+        d, cq_id, node, cmd->read_image.src,
+        &POCL_MEM_BS (cmd->read_image.src)->device_ptrs[dev->global_mem_id],
+        cmd->read_image.dst_host_ptr, NULL, cmd->read_image.origin,
+        cmd->read_image.region, cmd->read_image.dst_row_pitch,
+        cmd->read_image.dst_slice_pitch, cmd->read_image.dst_offset);
       goto FINISH_COMMAND;
 
     case CL_COMMAND_COPY_BUFFER_TO_IMAGE:
       pocl_proxy_enque_write_image_rect (
-          d, cq_id, node, cmd->write_image.dst, cmd->write_image.dst_mem_id,
-          NULL, cmd->write_image.src_mem_id, cmd->write_image.origin,
-          cmd->write_image.region, cmd->write_image.src_row_pitch,
-          cmd->write_image.src_slice_pitch, cmd->write_image.src_offset);
+        d, cq_id, node, cmd->write_image.dst,
+        &POCL_MEM_BS (cmd->write_image.dst)->device_ptrs[dev->global_mem_id],
+        NULL, &cmd->write_image.src->device_ptrs[dev->global_mem_id],
+        cmd->write_image.origin, cmd->write_image.region,
+        cmd->write_image.src_row_pitch, cmd->write_image.src_slice_pitch,
+        cmd->write_image.src_offset);
       goto FINISH_COMMAND;
 
     case CL_COMMAND_WRITE_IMAGE:
       pocl_proxy_enque_write_image_rect (
-          d, cq_id, node, cmd->write_image.dst, cmd->write_image.dst_mem_id,
-          cmd->write_image.src_host_ptr, NULL, cmd->write_image.origin,
-          cmd->write_image.region, cmd->write_image.src_row_pitch,
-          cmd->write_image.src_slice_pitch, cmd->write_image.src_offset);
+        d, cq_id, node, cmd->write_image.dst,
+        &POCL_MEM_BS (cmd->write_image.dst)->device_ptrs[dev->global_mem_id],
+        cmd->write_image.src_host_ptr, NULL, cmd->write_image.origin,
+        cmd->write_image.region, cmd->write_image.src_row_pitch,
+        cmd->write_image.src_slice_pitch, cmd->write_image.src_offset);
       goto FINISH_COMMAND;
 
     case CL_COMMAND_COPY_IMAGE:
       pocl_proxy_enque_copy_image_rect (
-          d, cq_id, node, cmd->copy_image.src, cmd->copy_image.dst,
-          cmd->copy_image.src_mem_id, cmd->copy_image.dst_mem_id,
-          cmd->copy_image.src_origin, cmd->copy_image.dst_origin,
-          cmd->copy_image.region);
+        d, cq_id, node, cmd->copy_image.src, cmd->copy_image.dst,
+        &POCL_MEM_BS (cmd->copy_image.src)->device_ptrs[dev->global_mem_id],
+        &POCL_MEM_BS (cmd->copy_image.dst)->device_ptrs[dev->global_mem_id],
+        cmd->copy_image.src_origin, cmd->copy_image.dst_origin,
+        cmd->copy_image.region);
       goto FINISH_COMMAND;
 
     case CL_COMMAND_FILL_IMAGE:
       pocl_proxy_enque_fill_image (
-          d, cq_id, node, event->mem_objs[0], cmd->fill_image.mem_id,
-          cmd->fill_image.origin, cmd->fill_image.region,
-          &cmd->fill_image.orig_pixel);
+        d, cq_id, node, cmd->fill_image.dst,
+        &cmd->fill_image.dst->device_ptrs[dev->global_mem_id],
+        cmd->fill_image.origin, cmd->fill_image.region,
+        &cmd->fill_image.orig_pixel);
       goto FINISH_COMMAND;
 
     case CL_COMMAND_MAP_IMAGE:
-      pocl_proxy_enque_map_image (d, cq_id, node, cmd->map.mem_id,
-                                  event->mem_objs[0], cmd->map.mapping);
+      pocl_proxy_enque_map_image (
+        d, cq_id, node, &cmd->map.buffer->device_ptrs[dev->global_mem_id],
+        cmd->map.buffer, cmd->map.mapping);
       goto FINISH_COMMAND;
 
     case CL_COMMAND_MARKER:
