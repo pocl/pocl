@@ -37,7 +37,7 @@ const char* kernel_src =
 "    if(i == 854 && get_global_id(0) == 67599){\n"
 "      hitIndex = i;\n"
 "      if(get_global_id(0) > 67595 && get_global_id(0) < 67600){\n"
-"        printf(\"Changed value at global_id: %d, local_id %d, group_id %d, to: %i\\n\", get_global_id(0), get_local_id(0), get_group_id(0), i);\n"
+"        printf(\"Changed value at global_id: %ld, local_id %ld, group_id %ld, to: %i\\n\", (ulong)get_global_id(0), (ulong)get_local_id(0), (ulong)get_group_id(0), i);\n"
 "      }\n"
 "    }\n"
 "  }\n"
@@ -45,7 +45,7 @@ const char* kernel_src =
 "  if(hitIndex > -1){\n"
 "    // (This should only print if first print is printed with the same id)\n"
 "    if(get_global_id(0) > 67595 && get_global_id(0) < 67600){\n"
-"      printf(\"Value is changed at global_id: %d, local_id %d, group_id %d, to: %i\\n\", get_global_id(0), get_local_id(0), get_group_id(0), hitIndex);\n"
+"      printf(\"Value is changed at global_id: %ld, local_id %ld, group_id %ld, to: %i\\n\", (ulong)get_global_id(0), (ulong)get_local_id(0), (ulong)get_group_id(0), hitIndex);\n"
 "    }\n"
 "  }\n"
 "}\n";

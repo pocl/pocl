@@ -33,13 +33,13 @@ const char* kernel_src =
 "  for(int i = 0; i < *limit; ++i){\n"
 "    if(i == 3 && get_global_id(0) == 6){\n"
 "      hitIndex = i;\n"
-"      printf(\"changing the value at global_id: %d, local_id %d, group_id %d, to: %i\\n\", get_global_id(0), get_local_id(0), get_group_id(0), hitIndex);\n"
+"      printf(\"changing the value at global_id: %ld, local_id %ld, group_id %ld, to: %i\\n\", (ulong)get_global_id(0), (ulong)get_local_id(0), (ulong)get_group_id(0), hitIndex);\n"
 "    }\n"
 "  }\n"
 "\n"
 "  if(hitIndex != -1){\n"
 "    // (This should print if first print is printed with the same id)\n"
-"    printf(\"value is changed at global_id: %d, local_id %d, group_id %d, to: %i\\n\", get_global_id(0), get_local_id(0), get_group_id(0), hitIndex);\n"
+"    printf(\"value is changed at global_id: %ld, local_id %ld, group_id %ld, to: %i\\n\", (ulong)get_global_id(0), (ulong)get_local_id(0), (ulong)get_group_id(0), hitIndex);\n"
 "  }\n"
 "}\n";
 
