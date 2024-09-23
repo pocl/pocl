@@ -134,9 +134,6 @@ ExternalProject_Add(
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 add_dependencies(prepare_examples ${TS_NAME})
 
-# unfortunately, math_brute_force is not thread-safe;
-# run each test separately with 1 worker thread
-# math_brute_force/test_bruteforce -p
 set(MATH_FUNC_LIST acos acosh acospi asin asinh asinpi atan atanh atanpi atan2 atan2pi
   cbrt ceil copysign cos cosh cospi exp exp2 exp10 expm1 fabs fdim
   floor fma fmax fmin fmod fract frexp hypot ilogb isequal isfinite
@@ -171,11 +168,6 @@ if(HOST_CPU_CORECOUNT GREATER 8)
 endif()
 set(PAR_ARG "--num-worker-threads" ${TEST_THREADS})
 
-# TODO fix this in pocl's fork:::
-# on recent LLVMs, run all tests except the get_kernel_arg_info.
-# That test incorrectly assumes "const" type qualifiers are returned
-# for non-pointer arguments too. The spec PDF says type qualifiers
-# are only returned for pointer types, so the test is incorrect AFAICT
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_api"
            COMMAND "${TS_BUILDDIR}/api/test_api" ${EXTRA_ARGS})
 
@@ -311,15 +303,8 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_non_uniform_work_group"
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_pipes"
          COMMAND "${TS_BUILDDIR}/pipes/test_pipes" ${EXTRA_ARGS})
 
-# Two tests (vector_1 vector_2) fail when run with SPIR-V input, but work with C source input.
-# details in issue #1017
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_printf"
-         COMMAND "${TS_BUILDDIR}/printf/test_printf" ${EXTRA_ARGS}
-           int_0 int_1 int_2 int_3 int_4 int_5 int_6 int_7 int_8 half_0 half_1 half_2 half_3 half_4 half_5 half_6 half_7 half_8 half_9 half_limits_0 half_limits_1 half_limits_2 float_0
-           float_1 float_2 float_3 float_4 float_5 float_6 float_7 float_8 float_9 float_10 float_11 float_12 float_13 float_14 float_15 float_16 float_17 float_limits_0 float_limits_1
-           float_limits_2 octal_0 octal_1 octal_2 octal_3 unsigned_0 unsigned_1 hexadecimal_0 hexadecimal_1 hexadecimal_2 hexadecimal_3 hexadecimal_4 char_0 char_1 char_2 string_0
-           string_1 string_2 vector_0 vector_3 vector_4 vector_5 address_space_0 address_space_1 address_space_2 address_space_3 address_space_4 buffer_size
-         WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/test_conformance/printf")
+         COMMAND "${TS_BUILDDIR}/printf/test_printf" ${EXTRA_ARGS})
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_profiling"
          COMMAND "${TS_BUILDDIR}/profiling/test_profiling" ${EXTRA_ARGS})
@@ -344,7 +329,6 @@ endif()
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new"
          COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS}
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
-
 endif()
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_subgroups"
