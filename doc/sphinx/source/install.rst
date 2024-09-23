@@ -251,10 +251,6 @@ use ";" as separator (you'll have to escape it for bash).
   programs in ``examples/`` directory) are built from their git branches
   (if available), as opposed to default: building from release tars.
 
-- ``-DENABLE_POCL_FLOAT_CONVERSION=ON/OFF``
-  When enabled, OpenCL printf() call's f/e/g formatters are handled by pocl.
-  When disabled (default), these are handled by system C library.
-
 - ``-DINTEL_SDE_AVX512=<PATH>``
   Path to Intel® Software Development Emulator. When this option is given,
   the LLVM host CPU is forcibly set to 'skylake-avx512', and the internal
