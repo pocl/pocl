@@ -83,7 +83,7 @@ jobs:
           elif [ "${{ matrix.config }}" == "asan" ]; then
             runCMake -DENABLE_ASAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DDEVELOPER_MODE=OFF
           elif [ "${{ matrix.config }}" == "tsan" ]; then
-            runCMake -DENABLE_TSAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0
+            runCMake -DENABLE_TSAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_PRINTF_IMMEDIATE_FLUSH=OFF
           elif [ "${{ matrix.config }}" == "ubsan" ]; then
             runCMake -DENABLE_UBSAN=1 -DENABLE_LATEST_CXX_STD=ON -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0
           else
