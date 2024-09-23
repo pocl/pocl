@@ -401,9 +401,10 @@ if(LLVM_VERSION_MAJOR EQUAL 18)
   PROPERTIES DISABLED 1)
 endif()
 
-# With the autovec/target specific optimizations, this started
-# crashing or hanging.
-set_tests_properties(
-  "regression/test_alignment_with_dynamic_wg_114_cbs"
-  "regression/test_alignment_with_dynamic_wg_117_cbs"
-  PROPERTIES DISABLED 1)
+# Produced wrong results with LLVM 14. Works with all newer versions.
+# No point putting time for debugging.
+if(LLVM_VERSION_MAJOR EQUAL 14)
+  set_tests_properties(
+    "regression/test_alignment_with_dynamic_wg_225_cbs"
+    PROPERTIES DISABLED 1)
+endif()

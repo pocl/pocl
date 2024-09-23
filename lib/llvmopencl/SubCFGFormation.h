@@ -31,14 +31,118 @@
 #ifndef POCL_SUBCFGFORMATION_H
 #define POCL_SUBCFGFORMATION_H
 
+#include <llvm/Analysis/PostDominators.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Pass.h>
 #include <llvm/Passes/PassBuilder.h>
 
+#include "VariableUniformityAnalysis.h"
+#include "VariableUniformityAnalysisResult.hh"
 #include "WorkitemHandler.h"
 
 namespace pocl {
+
+// TO CLEAN: Merge with / derive from ParallelRegion.
+class SubCFG {
+public:
+  using BlockVector = llvm::SmallVector<llvm::BasicBlock *, 8>;
+  SubCFG(llvm::BasicBlock *EntryBarrier, llvm::AllocaInst *LastBarrierIdStorage,
+         const llvm::DenseMap<llvm::BasicBlock *, size_t> &BarrierIds,
+         llvm::Value *IndVar, size_t Dim);
+
+  SubCFG(const SubCFG &) = delete;
+  SubCFG &operator=(const SubCFG &) = delete;
+
+  SubCFG(SubCFG &&) = default;
+  SubCFG &operator=(SubCFG &&) = default;
+
+  BlockVector &getBlocks() noexcept { return Blocks_; }
+  const BlockVector &getBlocks() const noexcept { return Blocks_; }
+
+  BlockVector &getNewBlocks() noexcept { return NewBlocks_; }
+  const BlockVector &getNewBlocks() const noexcept { return NewBlocks_; }
+
+  size_t getEntryId() const noexcept { return EntryId_; }
+
+  llvm::BasicBlock *getEntry() noexcept { return EntryBB_; }
+  llvm::BasicBlock *getExit() noexcept { return ExitBB_; }
+  llvm::BasicBlock *getLoadBB() noexcept { return LoadBB_; }
+  llvm::Value *getContiguousIdx() noexcept { return ContIdx_; }
+
+  void replicate(llvm::Function &F,
+                 const llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
+                     &InstAllocaMap,
+                 llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
+                     &BaseInstAllocaMap,
+                 llvm::DenseMap<llvm::Instruction *,
+                                llvm::SmallVector<llvm::Instruction *, 8>>
+                     &ContInstReplicaMap,
+                 llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
+                     &RemappedInstAllocaMap,
+                 llvm::BasicBlock *AfterBB,
+                 llvm::ArrayRef<llvm::Value *> LocalSize);
+
+  void arrayifyMultiSubCfgValues(
+      llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *> &InstAllocaMap,
+      llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
+          &BaseInstAllocaMap,
+      llvm::DenseMap<llvm::Instruction *,
+                     llvm::SmallVector<llvm::Instruction *, 8>>
+          &ContInstReplicaMap,
+      llvm::ArrayRef<SubCFG> SubCFGs, llvm::Instruction *AllocaIP,
+      llvm::Value *ReqdArrayElements,
+      pocl::VariableUniformityAnalysisResult &VecInfo);
+  void fixSingleSubCfgValues(
+      llvm::DominatorTree &DT,
+      const llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
+          &RemappedInstAllocaMap,
+      llvm::Value *ReqdArrayElements,
+      pocl::VariableUniformityAnalysisResult &VecInfo);
+
+  void print() const;
+  void removeDeadPhiBlocks(
+      llvm::SmallVector<llvm::BasicBlock *, 8> &BlocksToRemap) const;
+  llvm::SmallVector<llvm::Instruction *, 16> topoSortInstructions(
+      const llvm::SmallPtrSet<llvm::Instruction *, 16> &UniquifyInsts) const;
+
+private:
+  BlockVector Blocks_;
+  BlockVector NewBlocks_;
+  size_t EntryId_;
+  llvm::BasicBlock *EntryBarrier_;
+  llvm::SmallDenseMap<llvm::BasicBlock *, size_t> ExitIds_;
+  llvm::AllocaInst *LastBarrierIdStorage_;
+  llvm::Value *ContIdx_;
+  llvm::BasicBlock *EntryBB_;
+  llvm::BasicBlock *ExitBB_;
+  llvm::BasicBlock *LoadBB_;
+  llvm::BasicBlock *PreHeader_;
+  size_t Dim;
+
+  llvm::BasicBlock *createExitWithID(
+      llvm::detail::DenseMapPair<llvm::BasicBlock *, size_t> BarrierPair,
+      llvm::BasicBlock *After, llvm::BasicBlock *TargetBB);
+
+  void loadMultiSubCfgValues(
+      const llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
+          &InstAllocaMap,
+      llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
+          &BaseInstAllocaMap,
+      llvm::DenseMap<llvm::Instruction *,
+                     llvm::SmallVector<llvm::Instruction *, 8>>
+          &ContInstReplicaMap,
+      llvm::BasicBlock *UniformLoadBB, llvm::ValueToValueMapTy &VMap);
+  void loadUniformAndRecalcContValues(
+      llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
+          &BaseInstAllocaMap,
+      llvm::DenseMap<llvm::Instruction *,
+                     llvm::SmallVector<llvm::Instruction *, 8>>
+          &ContInstReplicaMap,
+      llvm::BasicBlock *UniformLoadBB, llvm::ValueToValueMapTy &VMap);
+  llvm::BasicBlock *createLoadBB(llvm::ValueToValueMapTy &VMap);
+  llvm::BasicBlock *createUniformLoadBB(llvm::BasicBlock *OuterMostHeader);
+};
 
 class SubCFGFormation : public llvm::PassInfoMixin<SubCFGFormation>,
                         WorkitemHandler {
@@ -47,6 +151,23 @@ public:
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
+
+protected:
+  llvm::Value *getLinearWIIndexInRegion(llvm::Instruction *Instr);
+  llvm::Value *getLocalIdInRegion(llvm::Instruction *Instr, size_t Dim);
+
+private:
+  void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI,
+                   llvm::DominatorTree &DT, llvm::PostDominatorTree &PDT,
+                   pocl::VariableUniformityAnalysisResult &VUA);
+  void arrayifyAllocas(llvm::BasicBlock *EntryBlock, llvm::DominatorTree &DT,
+                       std::vector<SubCFG> &SubCfgs,
+                       llvm::Value *ReqdArrayElements,
+                       pocl::VariableUniformityAnalysisResult &VecInfo);
+  SubCFG *regionOfBlock(llvm::BasicBlock *BB);
+
+  // The sub CFGs in the currently handled kernel.
+  std::vector<SubCFG> SubCFGs;
 };
 
 } // namespace pocl
