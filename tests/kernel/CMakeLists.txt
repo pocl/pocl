@@ -194,7 +194,6 @@ endforeach()
 add_executable("test_shuffle" "test_shuffle.cc")
 target_link_libraries("test_shuffle" ${POCLU_LINK_OPTIONS})
 
-set(EXTRA_TESTS "")
 add_test_pocl(NAME "kernel/test_shuffle_char"
               COMMAND "test_shuffle" "char")
 
@@ -235,28 +234,19 @@ add_test_pocl(NAME "kernel/test_printf"
               EXPECTED_OUTPUT "test_printf_expout.txt"
               COMMAND "kernel" "test_printf")
 
-# fails (gets stuck on 100% CPU) with full device-side printf
-if (NOT ENABLE_POCL_FLOAT_CONVERSION)
+add_test_pocl(NAME "kernel/test_printf_vectors"
+              EXPECTED_OUTPUT "test_printf_vectors_expout.txt"
+              COMMAND "kernel" "test_printf_vectors")
 
-  add_test_pocl(NAME "kernel/test_printf_vectors"
-                EXPECTED_OUTPUT "test_printf_vectors_expout.txt"
-                COMMAND "kernel" "test_printf_vectors")
-
-  add_test_pocl(NAME "kernel/test_printf_vectors_ulongn"
-                EXPECTED_OUTPUT "test_printf_vectors_ulongn_expout.txt"
-                COMMAND "kernel" "test_printf_vectors_ulongn")
-
-  list(APPEND EXTRA_TESTS "kernel/test_printf_vectors" "kernel/test_printf_vectors_ulongn")
-
-endif()
+add_test_pocl(NAME "kernel/test_printf_vectors_ulongn"
+              EXPECTED_OUTPUT "test_printf_vectors_ulongn_expout.txt"
+              COMMAND "kernel" "test_printf_vectors_ulongn")
 
 add_test_pocl(NAME "kernel/test_sizeof_uint"
               EXPECTED_OUTPUT "test_sizeof_expout.txt"
               COMMAND "kernel" "test_sizeof")
 
 foreach(VARIANT ${VARIANTS})
-  set(EXTRA_TEST_VARIANT ${EXTRA_TESTS})
-  list(TRANSFORM EXTRA_TEST_VARIANT APPEND "_${VARIANT}")
 
   set_tests_properties("kernel/test_shuffle_char_${VARIANT}"
     "kernel/test_shuffle_short_${VARIANT}" "kernel/test_shuffle_ushort_${VARIANT}"
@@ -266,8 +256,9 @@ foreach(VARIANT ${VARIANTS})
     "kernel/test_shuffle_double_${VARIANT}"
     "kernel/test_ucharn_${VARIANT}"
     "kernel/test_printf_${VARIANT}"
+    "kernel/test_printf_vectors_${VARIANT}"
+    "kernel/test_printf_vectors_ulongn_${VARIANT}"
     "kernel/test_sizeof_uint_${VARIANT}"
-    ${EXTRA_TEST_VARIANT}
 
     PROPERTIES
       PROCESSORS 1

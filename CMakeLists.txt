@@ -860,22 +860,6 @@ endif()
 
 ######################################################################################
 
-# fully device-side printf on devices which support it (only CPU backend ATM), disabled by default.
-# this requires 128bit integer support because of the code in "errol" float-to-string conversion routine
-# the output is not 100% compatible with glibc's printf (%f with large argument prints zeroes after
-# last significant digit - 16-18th digit or so, unlike glibc which prints digits up to decimal point).
-if(CLANG_HAS_128B_MATH)
-  option(ENABLE_POCL_FLOAT_CONVERSION "Enable use of pocl's own float-to-decimal conversion code in OpenCL printf(). Defaults to OFF (uses snprintf from C library). Requires compiler-rt." OFF)
-else()
-  set(ENABLE_POCL_FLOAT_CONVERSION OFF CACHE INTERNAL "pocl's own float-to-decimal conversion code")
-endif()
-
-unset(FLOATCONV_FLAG)
-if(ENABLE_POCL_FLOAT_CONVERSION)
-  # force link with Clang; otherwise not needed on x86 but in this case we need rtlib
-  set(FLOATCONV_FLAG "-DENABLE_POCL_FLOAT_CONVERSION")
-endif()
-
 unset(OPAQUE_PTR_FLAGS)
 if(LLVM_VERSION VERSION_EQUAL 15.0)
   if(LLVM_OPAQUE_POINTERS)
@@ -897,9 +881,9 @@ endif()
 #
 # no-jump-tables is to avoid LLVM optimization passes introducing switch tables,
 # which the variable uniformity analysis cannot analyze
-set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector -fPIC -fno-jump-tables ${FLOATCONV_FLAG} ${OPAQUE_PTR_FLAGS}")
-set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fPIC -fno-jump-tables ${FLOATCONV_FLAG} ${OPAQUE_PTR_FLAGS}")
-set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fPIC -fno-jump-tables ${FLOATCONV_FLAG} ${OPAQUE_PTR_FLAGS}")
+set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector -fPIC -fno-jump-tables ${OPAQUE_PTR_FLAGS}")
+set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fPIC -fno-jump-tables ${OPAQUE_PTR_FLAGS}")
+set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fPIC -fno-jump-tables ${OPAQUE_PTR_FLAGS}")
 
 
 set(EXTRA_KERNEL_FLAGS "" CACHE STRING "Extra arguments to all kernel compilation commands (defaults to empty)")
@@ -2386,7 +2370,6 @@ MESSAGE(STATUS "ENABLE_TSAN (thread sanitizer): ${ENABLE_TSAN}")
 MESSAGE(STATUS "ENABLE_UBSAN (UB sanitizer): ${ENABLE_UBSAN}")
 MESSAGE(STATUS "ENABLE_LTTNG: ${ENABLE_LTTNG}")
 MESSAGE(STATUS "ENABLE_POCL_BUILDING: ${ENABLE_POCL_BUILDING}")
-MESSAGE(STATUS "ENABLE_POCL_FLOAT_CONVERSION: ${ENABLE_POCL_FLOAT_CONVERSION}")
 MESSAGE(STATUS "ENABLE_RELOCATION: ${ENABLE_RELOCATION}")
 MESSAGE(STATUS "ENABLE_PROXY_DEVICE: ${ENABLE_PROXY_DEVICE}")
 MESSAGE(STATUS "ENABLE_PROXY_DEVICE_INTEROP: ${ENABLE_PROXY_DEVICE_INTEROP}")
