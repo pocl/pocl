@@ -523,6 +523,11 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
     // required for OLD PM
     addAnalysis(Passes, "workitem-handler-chooser");
     addAnalysis(Passes, "pocl-vua");
+
+    // Run lcssa explicitly to ensure it has generated its lcssa phis before
+    // we break them in phistoallocas. This is an intermediate solution while
+    // working towards processing unoptimized Clang output.
+    addPass(Passes, "lcssa");
     addPass(Passes, "phistoallocas");
     addPass(Passes, "isolate-regions");
 
@@ -544,12 +549,6 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
     // things nice for LLVM standard loop analysis (loop-interchange and
     // loopvec at least).
     addPass(Passes, "loop-barriers", PassType::Loop);
-    // required for new PM: WorkitemLoops to remove PHi nodes from LCSSA
-    // 153: pocl::WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction*):
-    // 153:   Assertion `"Cannot add context restore for a PHI node at the
-    // region entry!" 153:   && RegionOfBlock( Phi->getParent())->entryBB() !=
-    // Phi->getParent()' failed.
-    addPass(Passes, "instcombine");
 
     addPass(Passes, "barriertails");
     addPass(Passes, "canon-barriers");
