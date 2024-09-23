@@ -28,8 +28,9 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Constants.h>
-#include <llvm/IR/Instructions.h>
+#include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Instructions.h>
 #include <llvm/IR/Metadata.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/ValueSymbolTable.h>
@@ -322,6 +323,278 @@ void WorkitemHandler::GenerateGlobalIdComputation() {
       }
     }
   }
+}
+
+// this must be at least the alignment of largest OpenCL type (= 128 bytes)
+#define CONTEXT_ARRAY_ALIGN MAX_EXTENDED_ALIGNMENT
+
+/// Creates a well aligned and padded context array for the given value.
+///
+/// This is not entirely trivial to get right since we want to align the
+/// innermost dimension with natural alignment in order to enable vectorized
+/// accesses to intra-kernel arrays from the different work-items.
+/// In the case of unaligned kernel arrays we have to add padding to make
+/// each WI's array nicely aligned.
+///
+/// \param Instr the original per work-item instruction.
+/// \param Before the instruction before which to create the alloca.
+/// \param Name for the context array.
+/// \param PaddingAdded set to true in case padding was added to align the
+/// arrayified object.
+llvm::AllocaInst *WorkitemHandler::createAlignedAndPaddedContextAlloca(
+    llvm::Instruction *Inst, llvm::Instruction *Before, const std::string &Name,
+    bool &PaddingAdded) {
+
+  PaddingAdded = false;
+  BasicBlock &BB = Inst->getParent()->getParent()->getEntryBlock();
+  IRBuilder<> Builder(Before);
+  Function *FF = Inst->getParent()->getParent();
+  Module *M = Inst->getParent()->getParent()->getParent();
+  const llvm::DataLayout &Layout = M->getDataLayout();
+  DICompileUnit *CU = nullptr;
+  std::unique_ptr<DIBuilder> DB;
+  if (M->debug_compile_units_begin() != M->debug_compile_units_end()) {
+    CU = *M->debug_compile_units_begin();
+    DB = std::unique_ptr<DIBuilder>{new DIBuilder(*M, true, CU)};
+  }
+
+  // find the original debug metadata corresponding to the variable
+  Value *DebugVal = nullptr;
+  IntrinsicInst *DebugCall = nullptr;
+  if (CU != nullptr) {
+    for (BasicBlock &BB : (*FF)) {
+      for (Instruction &I : BB) {
+        IntrinsicInst *CI = dyn_cast<IntrinsicInst>(&I);
+        if (CI && (CI->getIntrinsicID() == llvm::Intrinsic::dbg_declare)) {
+          Metadata *Meta =
+              cast<MetadataAsValue>(CI->getOperand(0))->getMetadata();
+          if (isa<ValueAsMetadata>(Meta)) {
+            Value *V = cast<ValueAsMetadata>(Meta)->getValue();
+            if (Inst == V) {
+              DebugVal = V;
+              DebugCall = CI;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+#ifdef DEBUG_DEBUG_DATA_GENERATION
+  if (DebugVal && DebugCall) {
+    std::cerr << "### DI INTRIN: \n";
+    DebugCall->dump();
+    std::cerr << "### DI VALUE:  \n";
+    DebugVal->dump();
+  }
+#endif
+
+  llvm::Type *ElementType = nullptr;
+  Type *AllocType = nullptr;
+
+  if (AllocaInst *SrcAlloca = dyn_cast<AllocaInst>(Inst)) {
+    // If the variable to be context saved was itself an alloca, create one
+    // big alloca that stores the data of all the work-items and directly
+    // return pointers to that array. This enables moving all the allocas to
+    // the entry node without breaking the parallel loop. Otherwise we would
+    // need to rely on a dynamic alloca to allocate unique stack space to all
+    // the work-items when its wiloop iteration is executed.
+    ElementType = SrcAlloca->getAllocatedType();
+    AllocType = ElementType;
+
+#if LLVM_MAJOR < 15
+    unsigned Alignment = SrcAlloca->getAlignment();
+#else
+    unsigned Alignment = SrcAlloca->getAlign().value();
+#endif
+    uint64_t StoreSize = Layout.getTypeStoreSize(SrcAlloca->getAllocatedType());
+
+    if ((Alignment > 1) && (StoreSize & (Alignment - 1))) {
+      uint64_t AlignedSize = (StoreSize & (~(Alignment - 1))) + Alignment;
+#ifdef DEBUG_WORK_ITEM_LOOPS
+      std::cerr << "### unaligned type found: padding " << StoreSize << " to "
+                << AlignedSize << "\n";
+#endif
+      assert(AlignedSize > StoreSize);
+      uint64_t RequiredExtraBytes = AlignedSize - StoreSize;
+
+      // n-dim context array: In case the elementType itself is an array or
+      // a struct, we must take into account it could be alloca-ed with
+      // alignment and loads or stores might use vectorized instructions
+      // expecting proper alignment.
+      // Because of that, we cannot simply allocate x*y*z*(size), but must
+      // pad the inner row to ensure the alignment to the next element.
+      if (isa<ArrayType>(ElementType)) {
+
+        ArrayType *StructPadding = ArrayType::get(
+            Type::getInt8Ty(M->getContext()), RequiredExtraBytes);
+
+        std::vector<Type *> PaddedStructElements;
+        PaddedStructElements.push_back(ElementType);
+        PaddedStructElements.push_back(StructPadding);
+        const ArrayRef<Type *> NewStructElements(PaddedStructElements);
+        AllocType = StructType::get(M->getContext(), NewStructElements, true);
+        PaddingAdded = true;
+        uint64_t NewStoreSize = Layout.getTypeStoreSize(AllocType);
+        assert(NewStoreSize == AlignedSize);
+
+      } else if (isa<StructType>(ElementType)) {
+        StructType *OldStruct = dyn_cast<StructType>(ElementType);
+
+        ArrayType *StructPadding = ArrayType::get(
+            Type::getInt8Ty(M->getContext()), RequiredExtraBytes);
+        std::vector<Type *> PaddedStructElements;
+        for (unsigned j = 0; j < OldStruct->getNumElements(); j++)
+          PaddedStructElements.push_back(OldStruct->getElementType(j));
+        PaddedStructElements.push_back(StructPadding);
+        PaddingAdded = true;
+        const ArrayRef<Type *> NewStructElements(PaddedStructElements);
+        AllocType = StructType::get(OldStruct->getContext(), NewStructElements,
+                                    OldStruct->isPacked());
+        uint64_t NewStoreSize = Layout.getTypeStoreSize(AllocType);
+        assert(NewStoreSize == AlignedSize);
+      }
+    }
+  } else {
+    ElementType = Inst->getType();
+    AllocType = ElementType;
+  }
+
+  llvm::AllocaInst *Alloca = nullptr;
+  if (WGDynamicLocalSize) {
+    GlobalVariable *LocalSize;
+    LoadInst *LocalSizeLoad[3];
+    for (int i = 0; i < 3; ++i) {
+      std::string Name = LID_G_NAME(i);
+      LocalSize = cast<GlobalVariable>(M->getOrInsertGlobal(Name, ST));
+      LocalSizeLoad[i] = Builder.CreateLoad(ST, LocalSize);
+    }
+
+    Value *LocalXTimesY = Builder.CreateBinOp(
+        Instruction::Mul, LocalSizeLoad[0], LocalSizeLoad[1], "tmp");
+    Value *NumberOfWorkItems = Builder.CreateBinOp(
+        Instruction::Mul, LocalXTimesY, LocalSizeLoad[2], "num_wi");
+
+    Alloca = Builder.CreateAlloca(AllocType, NumberOfWorkItems, Name);
+  } else {
+    llvm::Type *ContextArrayType = ArrayType::get(
+        ArrayType::get(ArrayType::get(AllocType, WGLocalSizeX), WGLocalSizeY),
+        WGLocalSizeZ);
+    Alloca = Builder.CreateAlloca(ContextArrayType, nullptr, Name);
+  }
+
+  // Generously align the context arrays to enable wide vector accesses to them.
+  // Also at least LLVM 3.3 produced illegal code at least for a Core i5 when
+  // aligned only at the element size.
+  Alloca->setAlignment(llvm::Align(CONTEXT_ARRAY_ALIGN));
+
+  if (DebugVal && DebugCall && !WGDynamicLocalSize) {
+
+    llvm::SmallVector<llvm::Metadata *, 4> Subscripts;
+    Subscripts.push_back(DB->getOrCreateSubrange(0, WGLocalSizeZ));
+    Subscripts.push_back(DB->getOrCreateSubrange(0, WGLocalSizeY));
+    Subscripts.push_back(DB->getOrCreateSubrange(0, WGLocalSizeX));
+    llvm::DINodeArray SubscriptArray = DB->getOrCreateArray(Subscripts);
+
+    size_t SizeBits;
+    SizeBits = Alloca
+                   ->getAllocationSizeInBits(M->getDataLayout())
+#if LLVM_MAJOR > 14
+                   .value_or(TypeSize(0, false))
+                   .getFixedValue();
+#else
+                   .getValueOr(TypeSize(0, false))
+                   .getFixedValue();
+#endif
+
+    assert(SizeBits != 0);
+
+    // if (size == 0) WGLocalSizeX * WGLocalSizeY * WGLocalSizeZ * 8 *
+    // Alloca->getAllocatedType()->getScalarSizeInBits();
+#if LLVM_MAJOR < 15
+    size_t AlignBits = Alloca->getAlignment() * 8;
+#else
+    size_t AlignBits = Alloca->getAlign().value() * 8;
+#endif
+
+    Metadata *VariableDebugMeta =
+        cast<MetadataAsValue>(DebugCall->getOperand(1))->getMetadata();
+#ifdef DEBUG_WORK_ITEM_LOOPS
+    std::cerr << "### VariableDebugMeta :  ";
+    VariableDebugMeta->dump();
+    std::cerr << "### sizeBits :  " << sizeBits << "  alignBits: " << alignBits
+              << "\n";
+#endif
+
+    DILocalVariable *LocalVar = dyn_cast<DILocalVariable>(VariableDebugMeta);
+    assert(LocalVar);
+    if (LocalVar) {
+
+      DICompositeType *CT = DB->createArrayType(
+          SizeBits, AlignBits, LocalVar->getType(), SubscriptArray);
+
+#ifdef DEBUG_WORK_ITEM_LOOPS
+      std::cerr << "### DICompositeType:\n";
+      CT->dump();
+#endif
+      DILocalVariable *NewLocalVar = DB->createAutoVariable(
+          LocalVar->getScope(), LocalVar->getName(), LocalVar->getFile(),
+          LocalVar->getLine(), CT, false, LocalVar->getFlags());
+
+      Metadata *NewMeta = ValueAsMetadata::get(Alloca);
+      DebugCall->setOperand(0, MetadataAsValue::get(M->getContext(), NewMeta));
+
+      MetadataAsValue *NewLV =
+          MetadataAsValue::get(M->getContext(), NewLocalVar);
+      DebugCall->setOperand(1, NewLV);
+
+      DebugCall->removeFromParent();
+      DebugCall->insertAfter(Alloca);
+    }
+  }
+  return Alloca;
+}
+
+/// Creates a GEP to a context array in the currently handled parallel region.
+///
+/// \param CtxArrayAlloca the context array alloca to address.
+/// \param Before the instruction in the parallel region to insert the GEP
+/// before.
+/// \param AlignPading If this is set to true, the CArrayAlloca's innermost
+/// dimension has the alignment padding which should be taken in account in
+/// addressing the array.
+llvm::GetElementPtrInst *
+WorkitemHandler::createContextArrayGEP(llvm::AllocaInst *CtxArrayAlloca,
+                                       llvm::Instruction *Before,
+                                       bool AlignPadding) {
+
+  std::vector<llvm::Value *> GEPArgs;
+  if (WGDynamicLocalSize) {
+    GEPArgs.push_back(getLinearWIIndexInRegion(Before));
+  } else {
+    GEPArgs.push_back(ConstantInt::get(ST, 0));
+    GEPArgs.push_back(getLocalIdInRegion(Before, 2));
+    GEPArgs.push_back(getLocalIdInRegion(Before, 1));
+    GEPArgs.push_back(getLocalIdInRegion(Before, 0));
+  }
+
+  if (AlignPadding)
+    GEPArgs.push_back(
+        ConstantInt::get(Type::getInt32Ty(CtxArrayAlloca->getContext()), 0));
+
+  IRBuilder<> Builder(Before);
+#if LLVM_MAJOR < 15
+  llvm::GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(
+      Builder.CreateGEP(CtxArrayAlloca->getType()->getPointerElementType(),
+                        CtxArrayAlloca, GEPArgs));
+#else
+  llvm::GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Builder.CreateGEP(
+      CtxArrayAlloca->getAllocatedType(), CtxArrayAlloca, GEPArgs));
+#endif
+  assert(GEP != nullptr);
+
+  return GEP;
 }
 
 } // namespace pocl
