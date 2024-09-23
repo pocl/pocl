@@ -163,9 +163,6 @@
 
 #define CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
 
-#define LINK_COMMAND "@LINK_COMMAND@"
-
-
 
 
 #ifdef BUILD_LEVEL0

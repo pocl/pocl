@@ -637,17 +637,6 @@ endif()
 
 ######################################################################################
 
-if (NOT MSVC)
-  find_program(LINK_COMMAND
-    NAMES ld${CMAKE_EXECUTABLE_SUFFIX}
-    HINTS ENV PATH
-  )
-else()
-    set(LINK_COMMAND "${CLANGXX}")
-endif()
-
-######################################################################################
-
 if(UNIX)
   include(CheckCSourceCompiles)
   include(CheckSymbolExists)
