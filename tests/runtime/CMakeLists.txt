@@ -52,6 +52,9 @@ set(C_PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
 if(OPENCL_HEADER_VERSION GREATER 299)
     list(APPEND C_PROGRAMS_TO_BUILD test_queue_creation_with_hints)
 endif()
+if(HAVE_ONNXRT)
+  list(APPEND C_PROGRAMS_TO_BUILD test_dbk_onnx_inference)
+endif()
 
 set(CXX_PROGRAMS_TO_BUILD test_device_address test_svm test_large_buf
   test_subbuffers test_compile_n_link)
@@ -176,6 +179,9 @@ if(OPENCL_HEADER_VERSION GREATER 299)
 
   add_test(NAME "runtime/test_dbk_matmul" COMMAND test_dbk_matmul)
   set(OCL_30_TESTS ${OCL_30_TESTS} "runtime/test_dbk_matmul")
+endif()
+if(HAVE_ONNXRT)
+  add_test(NAME "runtime/test_dbk_onnx_inference" COMMAND "test_dbk_onnx_inference")
 endif()
 
 set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"

@@ -26,6 +26,7 @@
 #include "pocl_tensor_util.h"
 
 #include "dbk/pocl_dbk_khr_jpeg_shared.h"
+#include "dbk/pocl_dbk_khr_onnxrt_shared.h"
 
 #include <string.h>
 
@@ -419,6 +420,11 @@ pocl_init_builtin_kernel_metadata ()
               BI_ARG_READ_BUF ("uint8_t*", "jpeg"),
               BI_ARG_READ_BUF ("int64_t*", "jpeg_size"),
               BI_ARG_WRITE_BUF ("uint8_t*", "image"), ),
+    BIKD_DBK (POCL_CDBI_DBK_EXP_ONNX_INFERENCE, "exp_onnx_inference", 4,
+              BI_ARG_READ_BUF ("unsigned long*", "input_offsets"),
+              BI_ARG_READ_BUF ("unsigned char*", "inputs"),
+              BI_ARG_READ_BUF ("unsigned long*", "output_offsets"),
+              BI_ARG_WRITE_BUF ("unsigned char*", "outputs"), ),
 
   };
   memcpy (pocl_BIDescriptors, temporary_BIDescriptors,
@@ -833,10 +839,31 @@ pocl_validate_dbk_attributes (BuiltinKernelId kernel_id,
     case POCL_CDBI_DBK_EXP_JPEG_DECODE:
     case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
       return pocl_validate_khr_jpeg (kernel_id, kernel_attributes);
-    default:
+#ifdef HAVE_ONNXRT
+    case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
+      {
+        /* TODO: validate I/O tensor list */
+        const cl_dbk_attributes_khr_onnx_inference *attrs
+          = (cl_dbk_attributes_khr_onnx_inference *)kernel_attributes;
+
+        if (attrs->num_initializers == 0
+            && (attrs->initializer_names != NULL
+                || attrs->initializer_data != NULL
+                || attrs->initializer_tensor_descs != NULL))
+          return CL_INVALID_ARG_VALUE;
+        if (attrs->num_initializers == 1
+            && (attrs->initializer_names == NULL
+                || attrs->initializer_data == NULL
+                || attrs->initializer_tensor_descs == NULL))
+          return CL_INVALID_ARG_VALUE;
+
+        return CL_SUCCESS;
+      }
+#endif
+  default:
       break;
     }
-  POCL_RETURN_ERROR_ON (1, CL_INVALID_DBK_ID, "Unknown builtin kernel ID: %u",
+  POCL_RETURN_ERROR_ON (1, CL_INVALID_DBK_ID, "Unknown builtin kernel ID: %u.\n",
                         kernel_id);
 }
 
@@ -882,7 +909,11 @@ pocl_copy_defined_builtin_attributes (BuiltinKernelId kernel_id,
     case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
     case POCL_CDBI_DBK_EXP_JPEG_DECODE:
       return pocl_copy_dbk_attributes_khr_jpeg (kernel_id, kernel_attributes);
-    default:
+#ifdef HAVE_ONNXRT
+    case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
+      return pocl_copy_onnx_inference_dbk_attributes (kernel_attributes);
+#endif
+  default:
       break;
     }
   POCL_MSG_ERR ("Unknown builtin kernel ID: %u", kernel_id);
@@ -920,9 +951,16 @@ pocl_release_defined_builtin_attributes (BuiltinKernelId kernel_id,
     case POCL_CDBI_DBK_EXP_JPEG_DECODE:
       return pocl_release_dbk_attributes_khr_jpeg (kernel_id,
                                                    kernel_attributes);
+#ifdef HAVE_ONNXRT
+    case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
+      {
+        pocl_release_onnx_inference_dbk_attributes (kernel_attributes);
+        return CL_SUCCESS;
+      }
+#endif
     default:
       break;
     }
-  POCL_RETURN_ERROR_ON (1, CL_INVALID_DBK_ID, "Unknown builtin kernel ID: %u",
+  POCL_RETURN_ERROR_ON (1, CL_INVALID_DBK_ID, "Unknown builtin kernel ID: %u.\n",
                         kernel_id);
 }
