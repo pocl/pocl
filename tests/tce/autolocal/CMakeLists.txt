@@ -31,22 +31,9 @@ add_compile_options( -Wno-deprecated -Wno-deprecated-declarations)
 
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
-
 add_test_pocl(NAME "tcele/autolocal" COMMAND "autolocal_host" WORKITEM_HANDLER "loopvec")
 
-add_test_pocl(NAME "tce/autolocal" COMMAND "autolocal_host" WORKITEM_HANDLER "loopvec")
-
 add_test_pocl(NAME "almaif/autolocal" COMMAND "autolocal_host" WORKITEM_HANDLER "loopvec")
-
-
-set_tests_properties( "tce/autolocal"
-  PROPERTIES
-    COST 40.0
-    PROCESSORS 1
-    PASS_REGULAR_EXPRESSION "PING23456.000000 2000001OK"
-    LABELS "tce;tta;ttasim"
-    ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine.adf"
-    DEPENDS "pocl_version_check")
 
 set_tests_properties( "tcele/autolocal"
   PROPERTIES
