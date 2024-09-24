@@ -25,6 +25,8 @@
 
 #include "pocl_tensor_util.h"
 
+#include "dbk/pocl_dbk_khr_jpeg_shared.h"
+
 #include <string.h>
 
 /*
@@ -36,6 +38,13 @@
 
   2) open builtin_kernels.c and edit pocl_BIDescriptors, add a new struct
      for the new kernel, with argument metadata
+
+  2.5)if adding a Defined Built-in Kernel (DBK) add code specific to that kernel
+     to:
+       * pocl_validate_dbk_attributes
+       * pocl_copy_defined_builtin_attributes
+       * pocl_release_defined_builtin_attributes
+       * pocl_verify_dbk_kernel_args
 
   3) make sure that devices where you want to support this builtin kernel,
      report it. Every driver does this a bit differently, but at pocl_XYZ_init
@@ -55,6 +64,14 @@
          lib/CL/devices/almaif/tce_builtins.cl
        * almaif driver with other backends has builtin kernels in binary format
   (bitstream)
+  4.5) to add DBK kernels to cpu devices, add your specific code to the following
+  functions:
+       * pocl_basic_create_kernel
+       * pocl_basic_free_kernel
+       * pocl_cpu_init_common
+       * pocl_cpu_supports_dbk
+       * pocl_cpu_build_defined_builtin
+       * pocl_cpu_execute_dbk
 
 */
 
@@ -379,7 +396,7 @@ pocl_init_builtin_kernel_metadata ()
     BIKD (POCL_CDBI_GAUSSIAN3X3_P512, "pocl.gaussian3x3.p512", 2,
           BI_ARG_READ_PIPE ("uchar64", "in"),
           BI_ARG_WRITE_PIPE ("uchar64", "out"), ),
-    BIKD_DBK (POCL_CDBI_DBK_KHR_GEMM, "khr_gemm", 6,
+    BIKD_DBK (POCL_CDBI_DBK_EXP_GEMM, "exp_gemm", 6,
               // The types are placeholders
               BI_ARG_READ_BUF ("unsigned char*", "a"),
               BI_ARG_READ_BUF ("unsigned char*", "b"),
@@ -390,10 +407,19 @@ pocl_init_builtin_kernel_metadata ()
               // given to clCreateProgramWithDefinedBuiltinKernels
               BI_ARG_POD_MUTABLE ("mutable", "alpha"),
               BI_ARG_POD_MUTABLE ("mutable", "beta"), ),
-    BIKD_DBK (POCL_CDBI_DBK_KHR_MATMUL, "khr_matmul", 3,
+    BIKD_DBK (POCL_CDBI_DBK_EXP_MATMUL, "exp_matmul", 3,
               BI_ARG_READ_BUF ("unsigned char*", "a"),
               BI_ARG_READ_BUF ("unsigned char*", "b"),
               BI_ARG_WRITE_BUF ("unsigned char*", "c"), ),
+    BIKD_DBK (POCL_CDBI_DBK_EXP_JPEG_ENCODE, "exp_jpeg_encode", 3,
+              BI_ARG_READ_BUF ("uint8_t*", "image"),
+              BI_ARG_WRITE_BUF ("uint8_t*", "jpeg"),
+              BI_ARG_WRITE_BUF ("int64_t*", "jpeg_size"), ),
+    BIKD_DBK (POCL_CDBI_DBK_EXP_JPEG_DECODE, "exp_jpeg_decode", 3,
+              BI_ARG_READ_BUF ("uint8_t*", "jpeg"),
+              BI_ARG_READ_BUF ("int64_t*", "jpeg_size"),
+              BI_ARG_WRITE_BUF ("uint8_t*", "image"), ),
+
   };
   memcpy (pocl_BIDescriptors, temporary_BIDescriptors,
           sizeof (pocl_BIDescriptors));
@@ -543,10 +569,10 @@ pocl_generate_dbk_defined_arg_info (BuiltinKernelId kernel_id,
   switch (kernel_id)
     {
     // currently only GEMM has mutable POD arguments
-    case POCL_CDBI_DBK_KHR_GEMM:
+    case POCL_CDBI_DBK_EXP_GEMM:
       {
-        const cl_dbk_attributes_khr_gemm *gemm_attrs
-          = (const cl_dbk_attributes_khr_gemm *)attrs;
+        const cl_dbk_attributes_exp_gemm *gemm_attrs
+          = (const cl_dbk_attributes_exp_gemm *)attrs;
         // BI_ARG_POD_MUTABLE("mutable", "alpha"),
         // BI_ARG_POD_MUTABLE("mutable", "beta"),
         //  TODO should we support separate datatypes for alpha/beta ?
@@ -784,26 +810,28 @@ pocl_validate_dbk_attributes (BuiltinKernelId kernel_id,
 {
   if (GemmCB == NULL)
     GemmCB = pocl_validate_khr_gemm;
-
   switch (kernel_id)
     {
-    case POCL_CDBI_DBK_KHR_GEMM:
+    case POCL_CDBI_DBK_EXP_GEMM:
       {
-        const cl_dbk_attributes_khr_gemm *Attrs
-          = (const cl_dbk_attributes_khr_gemm *)kernel_attributes;
+        const cl_dbk_attributes_exp_gemm *Attrs
+          = (const cl_dbk_attributes_exp_gemm *)kernel_attributes;
 
         return GemmCB (Attrs->trans_a, Attrs->trans_b, &Attrs->a, &Attrs->b,
                        &Attrs->c_in, &Attrs->c_out, &Attrs->alpha,
                        &Attrs->beta);
       }
-    case POCL_CDBI_DBK_KHR_MATMUL:
+    case POCL_CDBI_DBK_EXP_MATMUL:
       {
-        const cl_dbk_attributes_khr_matmul *Attrs
-          = (const cl_dbk_attributes_khr_matmul *)kernel_attributes;
+        const cl_dbk_attributes_exp_matmul *Attrs
+          = (const cl_dbk_attributes_exp_matmul *)kernel_attributes;
 
         return GemmCB (Attrs->trans_a, Attrs->trans_b, &Attrs->a, &Attrs->b,
                        NULL, &Attrs->c, NULL, NULL);
       }
+    case POCL_CDBI_DBK_EXP_JPEG_DECODE:
+    case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
+      return pocl_validate_khr_jpeg (kernel_id, kernel_attributes);
     default:
       break;
     }
@@ -818,15 +846,15 @@ pocl_copy_defined_builtin_attributes (BuiltinKernelId kernel_id,
   int err = CL_SUCCESS;
   switch (kernel_id)
     {
-    case POCL_CDBI_DBK_KHR_GEMM:
+    case POCL_CDBI_DBK_EXP_GEMM:
       {
-        cl_dbk_attributes_khr_gemm *attrs
-          = malloc (sizeof (cl_dbk_attributes_khr_gemm));
+        cl_dbk_attributes_exp_gemm *attrs
+          = malloc (sizeof (cl_dbk_attributes_exp_gemm));
         if (attrs == NULL)
           return NULL;
-        cl_dbk_attributes_khr_gemm *src
-          = (cl_dbk_attributes_khr_gemm *)kernel_attributes;
-        memcpy (attrs, src, sizeof (cl_dbk_attributes_khr_gemm));
+        cl_dbk_attributes_exp_gemm *src
+          = (cl_dbk_attributes_exp_gemm *)kernel_attributes;
+        memcpy (attrs, src, sizeof (cl_dbk_attributes_exp_gemm));
         err = pocl_copy_tensor_desc_layout (&attrs->a, &src->a);
         err = pocl_copy_tensor_desc_layout (&attrs->b, &src->b);
         err = pocl_copy_tensor_desc_layout (&attrs->c_in, &src->c_in);
@@ -834,15 +862,15 @@ pocl_copy_defined_builtin_attributes (BuiltinKernelId kernel_id,
 
         return attrs;
       }
-    case POCL_CDBI_DBK_KHR_MATMUL:
+    case POCL_CDBI_DBK_EXP_MATMUL:
       {
-        cl_dbk_attributes_khr_matmul *attrs
-          = malloc (sizeof (cl_dbk_attributes_khr_matmul));
+        cl_dbk_attributes_exp_matmul *attrs
+          = malloc (sizeof (cl_dbk_attributes_exp_matmul));
         if (attrs == NULL)
           return NULL;
-        cl_dbk_attributes_khr_matmul *src
-          = (cl_dbk_attributes_khr_matmul *)kernel_attributes;
-        memcpy (attrs, src, sizeof (cl_dbk_attributes_khr_matmul));
+        cl_dbk_attributes_exp_matmul *src
+          = (cl_dbk_attributes_exp_matmul *)kernel_attributes;
+        memcpy (attrs, src, sizeof (cl_dbk_attributes_exp_matmul));
 
         err = pocl_copy_tensor_desc_layout (&attrs->a, &src->a);
         err = pocl_copy_tensor_desc_layout (&attrs->b, &src->b);
@@ -850,6 +878,9 @@ pocl_copy_defined_builtin_attributes (BuiltinKernelId kernel_id,
 
         return attrs;
       }
+    case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
+    case POCL_CDBI_DBK_EXP_JPEG_DECODE:
+      return pocl_copy_dbk_attributes_khr_jpeg (kernel_id, kernel_attributes);
     default:
       break;
     }
@@ -863,10 +894,10 @@ pocl_release_defined_builtin_attributes (BuiltinKernelId kernel_id,
 {
   switch (kernel_id)
     {
-    case POCL_CDBI_DBK_KHR_GEMM:
+    case POCL_CDBI_DBK_EXP_GEMM:
       {
-        cl_dbk_attributes_khr_gemm *attrs
-          = (cl_dbk_attributes_khr_gemm *)kernel_attributes;
+        cl_dbk_attributes_exp_gemm *attrs
+          = (cl_dbk_attributes_exp_gemm *)kernel_attributes;
         POCL_MEM_FREE (attrs->a.layout);
         POCL_MEM_FREE (attrs->b.layout);
         POCL_MEM_FREE (attrs->c_in.layout);
@@ -874,16 +905,20 @@ pocl_release_defined_builtin_attributes (BuiltinKernelId kernel_id,
         POCL_MEM_FREE (attrs);
         return CL_SUCCESS;
       }
-    case POCL_CDBI_DBK_KHR_MATMUL:
+    case POCL_CDBI_DBK_EXP_MATMUL:
       {
-        cl_dbk_attributes_khr_matmul *attrs
-          = (cl_dbk_attributes_khr_matmul *)kernel_attributes;
+        cl_dbk_attributes_exp_matmul *attrs
+          = (cl_dbk_attributes_exp_matmul *)kernel_attributes;
         POCL_MEM_FREE (attrs->a.layout);
         POCL_MEM_FREE (attrs->b.layout);
         POCL_MEM_FREE (attrs->c.layout);
         POCL_MEM_FREE (attrs);
         return CL_SUCCESS;
       }
+    case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
+    case POCL_CDBI_DBK_EXP_JPEG_DECODE:
+      return pocl_release_dbk_attributes_khr_jpeg (kernel_id,
+                                                   kernel_attributes);
     default:
       break;
     }

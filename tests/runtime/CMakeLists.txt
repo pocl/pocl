@@ -45,7 +45,9 @@ set(C_PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clSetMemObjectDestructorCallback
   test_cl_pocl_content_size test_cl_pocl_content_size_migration
   test_deviceside_enqueue test_command_buffer test_command_buffer_images
-  test_command_buffer_multi_device)
+  test_command_buffer_multi_device
+  test_dbk_jpeg
+  )
 
 if(OPENCL_HEADER_VERSION GREATER 299)
     list(APPEND C_PROGRAMS_TO_BUILD test_queue_creation_with_hints)

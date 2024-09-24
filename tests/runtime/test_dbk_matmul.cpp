@@ -58,7 +58,7 @@ static std::tuple<cl::Platform, cl::Device> findDeviceWithMatmulDBK() noexcept {
         continue;
 
       std::string BiKs = D.getInfo<CL_DEVICE_BUILT_IN_KERNELS>();
-      if (BiKs.find("khr_matmul") != std::string::npos) {
+      if (BiKs.find("exp_matmul") != std::string::npos) {
         std::cerr << "Selected device: " << D.getInfo<CL_DEVICE_NAME>() << "\n";
         return std::make_tuple(P, D);
       }
@@ -171,7 +171,7 @@ cl::Device Dev;
 cl::Context Ctx;
 cl::CommandQueue CmdQ;
 clCreateProgramWithDefinedBuiltInKernels_fn createProgramWithDBKs;
-cl_dbk_attributes_khr_matmul MatmulAttrs;
+cl_dbk_attributes_exp_matmul MatmulAttrs;
 
 void doFloatMatmul(bool ColumnMajor, unsigned Transpose, unsigned M, unsigned N,
                    unsigned K, std::initializer_list<float> AData, unsigned Lda,
@@ -199,10 +199,10 @@ void doFloatMatmul(bool ColumnMajor, unsigned Transpose, unsigned M, unsigned N,
 
   cl_int Status;
   cl_device_id Devices[1] = {Dev()};
-  BuiltinKernelId IDs[1] = {BuiltinKernelId::POCL_CDBI_DBK_KHR_MATMUL};
-  const char *Names[1] = {"khr_matmul"};
+  BuiltinKernelId IDs[1] = {BuiltinKernelId::POCL_CDBI_DBK_EXP_MATMUL};
+  const char *Names[1] = {"exp_matmul"};
   cl_int DeviceStatus[1] = {0};
-  cl_dbk_attributes_khr_matmul *Attrs[1] = {&MatmulAttrs};
+  cl_dbk_attributes_exp_matmul *Attrs[1] = {&MatmulAttrs};
   cl_program Yolo =
       createProgramWithDBKs(Ctx(), 1, Devices, 1, IDs, Names,
                             (const void **)Attrs, DeviceStatus, &Status);

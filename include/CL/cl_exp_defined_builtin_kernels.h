@@ -88,8 +88,14 @@ typedef enum
   POCL_CDBI_MAGNITUDE_P512 = 35,
   POCL_CDBI_ORIENTED_NONMAX_P512 = 36,
   POCL_CDBI_GAUSSIAN3X3_P512 = 37,
-  POCL_CDBI_DBK_KHR_GEMM = 38,
-  POCL_CDBI_DBK_KHR_MATMUL = 39,
+  POCL_CDBI_DBK_EXP_GEMM = 38,
+  POCL_CDBI_DBK_EXP_MATMUL = 39,
+  /* See 'Defined Built-in Kernels:JPEG:Usage' in dbk.rst for details on usage.
+   */
+  POCL_CDBI_DBK_EXP_JPEG_ENCODE = 40,
+  /* See 'Defined Built-in Kernels:JPEG:Usage' in dbk.rst for details on usage.
+   */
+  POCL_CDBI_DBK_EXP_JPEG_DECODE = 41,
   POCL_CDBI_LAST,
   POCL_CDBI_JIT_COMPILER = 0xFFFF
 } BuiltinKernelId;
@@ -159,12 +165,12 @@ clCreateProgramWithDefinedBuiltInKernels (cl_context context,
 /* Maximum number of DBK properties */
 #define CL_MAX_DBK_PROPERTIES 16
 
-/* Name: "khr_gemm"
+/* Name: "exp_gemm"
  * Attributes for General multiply operation for matrices.
  * TODO: adopt Vulkan-like extensible struct ?
  * Note that this DBK can also perform matrix-vector operations if
  * tensor shapes are set accordingly. */
-typedef struct _cl_dbk_attributes_khr_gemm
+typedef struct _cl_dbk_attributes_exp_gemm
 {
   cl_tensor_desc a, b, c_in, c_out;
   cl_bool trans_a, trans_b;
@@ -173,20 +179,34 @@ typedef struct _cl_dbk_attributes_khr_gemm
   cl_tensor_datatype_value alpha, beta;
   /* 0-terminated array of DBK properties */
   cl_dbk_properties kernel_props[CL_MAX_DBK_PROPERTIES];
-} cl_dbk_attributes_khr_gemm;
+} cl_dbk_attributes_exp_gemm;
 
-/* Name: "khr_matmul"
- * Attributes for Matrix multiplication. Identical to khr_gemm
+/* Name: "exp_matmul"
+ * Attributes for Matrix multiplication. Identical to exp_gemm
  * with alpha and beta set to 1 and 0, respectively.
  * TODO: adopt Vulkan-like extensible struct ?
  * Note that this DBK can also perform matrix-vector operations if
  * tensor shapes are set accordingly. */
-typedef struct _cl_dbk_attributes_khr_matmul
+typedef struct _cl_dbk_attributes_exp_matmul
 {
   cl_tensor_desc a, b, c;
   cl_bool trans_a, trans_b;
   /* 0-terminated array */
   cl_dbk_properties kernel_props[CL_MAX_DBK_PROPERTIES];
-} cl_dbk_attributes_khr_matmul;
+} cl_dbk_attributes_exp_matmul;
+
+/**
+ * Name: exp_jpeg_encode
+ *
+ * \param width needs to be within the JPEG specification.
+ * \param height needs to be within the JPEG specification.
+ * \param quality needs to be within [1 - 100].
+ */
+typedef struct
+{
+  cl_int width;
+  cl_int height;
+  cl_int quality;
+} cl_dbk_attributes_exp_jpeg_encode;
 
 #endif /* OPENCL_EXP_DEFINED_BUILTIN_KERNELS */

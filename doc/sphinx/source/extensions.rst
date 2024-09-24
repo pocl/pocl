@@ -37,3 +37,11 @@ commands are prepared at command buffer recording
 time, reducing the overhead of dispatching the sequence
 and allowing drivers to optimize the scheduling of
 commands within a buffer.
+
+cl_ext_defined_builtin_kernels
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The purpose of this extension is to provide a standardized
+set of built-in kernels with well-defined semantics.
+See :ref:`defined-built-in-kernels` for more details on
+DBKs and PoCL's implementation of them.

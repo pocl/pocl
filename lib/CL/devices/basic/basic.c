@@ -153,8 +153,8 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->svm_copy_rect = pocl_driver_svm_copy_rect;
   ops->svm_fill_rect = pocl_driver_svm_fill_rect;
 
-  ops->create_kernel = NULL;
-  ops->free_kernel = NULL;
+  ops->create_kernel = pocl_basic_create_kernel;
+  ops->free_kernel = pocl_basic_free_kernel;
   ops->create_sampler = NULL;
   ops->free_sampler = NULL;
   ops->copy_image_rect = pocl_basic_copy_image_rect;
@@ -240,12 +240,8 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
   if (program->builtin_kernel_attributes)
     {
       assert (meta->builtin_kernel_id != 0);
-#ifdef HAVE_LIBXSMM
       pocl_cpu_execute_dbk (program, kernel, meta, dev_i,
                             cmd->command.run.arguments);
-#else
-      POCL_MSG_ERR ("PoCL compiled without libxsmm - cannot execute DBK\n");
-#endif
       return;
     }
 
@@ -958,5 +954,113 @@ pocl_basic_set_kernel_exec_info_ext (cl_device_id dev,
     return CL_SUCCESS;
     default:
       return CL_INVALID_VALUE;
+    }
+}
+
+/**
+ * Find the index in cl_program p's builtin_kernel_names of cl_kernel k.
+ *
+ * \return -1 if k is not a DBK of p and otherwise a valid index.
+ */
+static int
+get_dbk_index (cl_program p, cl_kernel k)
+{
+
+  int dbk_index = -1;
+  for (int i = 0; i < p->num_builtin_kernels; ++i)
+    {
+      if (strcmp (p->builtin_kernel_names[i], k->name) == 0)
+        {
+          dbk_index = i;
+          return dbk_index;
+        }
+    }
+  return dbk_index;
+}
+
+int
+pocl_basic_create_kernel (cl_device_id device,
+                          cl_program p,
+                          cl_kernel k,
+                          unsigned device_i)
+{
+
+  /* no dbks, nothing to do */
+  if (p->num_builtin_kernels < 1)
+    return CL_SUCCESS;
+
+  int dbk_index = get_dbk_index (p, k);
+
+  if (dbk_index < 0)
+    return CL_INVALID_KERNEL_NAME;
+
+  int status = CL_SUCCESS;
+  BuiltinKernelId dbk_id = p->builtin_kernel_ids[dbk_index];
+  switch (dbk_id)
+    {
+#ifdef HAVE_LIBXSMM
+    case POCL_CDBI_DBK_EXP_GEMM:
+    case POCL_CDBI_DBK_EXP_MATMUL:
+      return status;
+#endif
+#ifdef HAVE_LIBJPEG_TURBO
+    case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
+      {
+        k->data[device_i] = pocl_cpu_init_dbk_khr_jpeg_encode (
+          p->builtin_kernel_attributes[dbk_index], &status);
+        return status;
+      }
+    case POCL_CDBI_DBK_EXP_JPEG_DECODE:
+      {
+        k->data[device_i] = pocl_cpu_init_dbk_khr_jpeg_decode (
+          p->builtin_kernel_attributes[dbk_index], &status);
+        return status;
+      }
+#endif
+    default:
+      POCL_ABORT ("pocl_basic_create_kernel called with unknown/unimplemented "
+                  "DBK kernel.\n");
+    }
+}
+
+int
+pocl_basic_free_kernel (cl_device_id device,
+                        cl_program p,
+                        cl_kernel k,
+                        unsigned device_i)
+{
+  /* no dbks, nothing to do */
+  if (p->num_builtin_kernels < 1)
+    return CL_SUCCESS;
+
+  int dbk_index = get_dbk_index (p, k);
+
+  if (dbk_index < 0)
+    return CL_INVALID_KERNEL_NAME;
+
+  int status = CL_SUCCESS;
+  BuiltinKernelId dbk_id = p->builtin_kernel_ids[dbk_index];
+  switch (dbk_id)
+    {
+#ifdef HAVE_LIBXSMM
+    case POCL_CDBI_DBK_EXP_GEMM:
+    case POCL_CDBI_DBK_EXP_MATMUL:
+      return status;
+#endif
+#ifdef HAVE_LIBJPEG_TURBO
+    case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
+      {
+        status = pocl_cpu_destroy_dbk_khr_jpeg_encode (&(k->data[device_i]));
+        return status;
+      }
+    case POCL_CDBI_DBK_EXP_JPEG_DECODE:
+      {
+        status = pocl_cpu_destroy_dbk_khr_jpeg_decode (&(k->data[device_i]));
+        return status;
+      }
+#endif
+    default:
+      POCL_ABORT (
+        "pocl_basic_free_kernel called with unknown/unimplemented DBK kernel.\n");
     }
 }
