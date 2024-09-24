@@ -1071,9 +1071,40 @@ else()
   message(STATUS "libxsmm or libblas not found, disabled")
 endif()
 
+function(print_target_properties target)
+  if(NOT TARGET ${target})
+    message(STATUS "There is no target named '${target}'")
+    return()
+  endif()
+  message("Target found: ${target}")
+
+  foreach(property ${CMAKE_PROPERTY_LIST})
+    string(REPLACE "<CONFIG>" "DEBUG" property ${property})
+
+    get_property(was_set TARGET ${target} PROPERTY ${property} SET)
+    if(was_set)
+      get_target_property(value ${target} ${property})
+      message("${target} ${property} = ${value}")
+    endif()
+  endforeach()
+endfunction()
+
 if(ENABLE_HOST_CPU_DEVICES AND NOT ENABLE_CONFORMANCE)
+  find_package(onnxruntime)
+  set(HAVE_ONNXRT ${onnxruntime_FOUND})
+  if(${HAVE_ONNXRT})
+    print_target_properties(onnxruntime::onnxruntime)
+    # TODO: this is a hack, just passing onnxruntime::onnxruntime
+    # to include_directories should probably work
+    get_target_property(onnxruntime_INCLUDE_DIRS onnxruntime::onnxruntime INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(onnxruntime_IMPORTED_CONFIGURATIONS onnxruntime::onnxruntime IMPORTED_CONFIGURATIONS)
+    message("Found ONNXRuntime headers at ${onnxruntime_INCLUDE_DIRS} for configs ${onnxruntime_IMPORTED_CONFIGURATIONS}")
+  else()
+    message(STATUS "ONNXRuntime not found, disabled")
+  endif()
+
   pkg_search_module(LIBJPEG_TURBO IMPORTED_TARGET
-    libjpeg-turbo>=3.0.0 libturbojpeg>=3.0.0)
+          libjpeg-turbo>=3.0.0 libturbojpeg>=3.0.0)
   if(NOT LIBJPEG_TURBO_FOUND)
     message(STATUS "libjpeg-turbo v3.0.0+ not found, disabled")
   endif()
@@ -1319,7 +1350,7 @@ if(NOT ENABLE_CONFORMANCE)
       cl_pocl_svm_rect cl_pocl_command_buffer_svm \
       cl_pocl_command_buffer_host_buffer")
 
-  if (HAVE_LIBXSMM)
+  if (HAVE_LIBXSMM OR HAVE_ONNXRT OR HAVE_LIBJPEG_TURBO)
     set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} \
       cl_exp_tensor cl_exp_defined_builtin_kernels")
   endif()
@@ -2244,6 +2275,7 @@ MESSAGE(STATUS "HAVE_CLOCK_GETTIME: ${HAVE_CLOCK_GETTIME}")
 MESSAGE(STATUS "HAVE_GLEW: ${HAVE_GLEW}")
 MESSAGE(STATUS "HAVE_LIBXSMM: ${HAVE_LIBXSMM}")
 MESSAGE(STATUS "HAVE_LIBJPEG_TURBO: ${HAVE_LIBJPEG_TURBO}")
+MESSAGE(STATUS "HAVE_ONNXRT: ${HAVE_ONNXRT}")
 MESSAGE(STATUS "HOST_AS_FLAGS: ${HOST_AS_FLAGS}")
 MESSAGE(STATUS "HOST_CLANG_FLAGS: ${HOST_CLANG_FLAGS}")
 MESSAGE(STATUS "HOST_LD_FLAGS: ${HOST_LD_FLAGS}")

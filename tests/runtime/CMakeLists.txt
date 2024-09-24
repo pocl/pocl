@@ -47,6 +47,10 @@ set(C_PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_deviceside_enqueue test_command_buffer test_command_buffer_images
   test_command_buffer_multi_device test_queue_creation_with_hints)
 
+if(HAVE_ONNXRT)
+  list(APPEND C_PROGRAMS_TO_BUILD test_dbk_onnx_inference)
+endif()
+
 set(CXX_PROGRAMS_TO_BUILD test_device_address test_svm test_large_buf
   test_subbuffers test_compile_n_link test_dbk_matmul)
 
@@ -163,6 +167,10 @@ endif()
 add_test(NAME "runtime/test_queue_creation_with_hints" COMMAND "test_queue_creation_with_hints")
 
 add_test(NAME "runtime/test_dbk_matmul" COMMAND test_dbk_matmul)
+
+if(HAVE_ONNXRT)
+  add_test(NAME "runtime/test_dbk_onnx_inference" COMMAND "test_dbk_onnx_inference")
+endif()
 
 set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clGetEventInfo" "runtime/clCreateProgramWithBinary"

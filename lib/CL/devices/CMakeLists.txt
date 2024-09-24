@@ -199,6 +199,9 @@ endif()
 if(HAVE_LIBJPEG_TURBO)
   target_link_libraries("pocl-devices" PRIVATE PkgConfig::LIBJPEG_TURBO)
 endif ()
+if(HAVE_ONNXRT)
+  target_link_libraries("pocl-devices" PRIVATE onnxruntime::onnxruntime)
+endif ()
 
 set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
     "$<TARGET_OBJECTS:pocl-devices>")

@@ -98,6 +98,8 @@
 
 #cmakedefine HAVE_LIBJPEG_TURBO
 
+#cmakedefine HAVE_ONNXRT
+
 #cmakedefine HAVE_OCL_ICD
 #cmakedefine HAVE_OCL_ICD_30_COMPATIBLE
 

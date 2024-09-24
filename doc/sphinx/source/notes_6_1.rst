@@ -15,9 +15,11 @@ CPU drivers
   standardized set of built-in kernels with well-defined
   semantics that can be configured during creation of the OpenCL
   program. Currently the following DBKs are implemented: GEMM,
-  matrix multiplication, and JPEG en-/de-code. The Extension
-  documentation draft can be found on
+  matrix multiplication, JPEG en-/de-code, and ONNX runtime
+  inference. The Extension documentation draft can be found on
   `github <https://github.com/KhronosGroup/OpenCL-Docs/pull/1007>`_.
+  Please note that these DBKs are still a proof-of-concept and
+  are subject to change without notice.
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Work-group vectorization improvements
