@@ -197,6 +197,7 @@ libclc/length.cl
 ################
 
 tce/memcpy.c
+tce/memcpy.ll
 
 libclc-pocl/pocl_fma.cl
 

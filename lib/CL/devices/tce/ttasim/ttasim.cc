@@ -185,6 +185,12 @@ pocl_tce_device_hash (const char *adf_file, const char *llvm_triplet,
   return 0;
 }
 
+static const char *ttasim_llvm_intrin_replace(const char *IName, size_t Size) {
+  std::string Intrin(IName, Size);
+  if (Intrin == "llvm.memcpy.p1.p2.i32")
+    return "__pocl_tce_memcpy_p1_p2_i32";
+  return nullptr;
+}
 
 class TTASimDevice : public TCEDevice {
 public:
@@ -224,6 +230,7 @@ public:
        */
       dev->llvm_fp_contract_mode = "off";
     }
+    dev->llvm_intrin_replace = ttasim_llvm_intrin_replace;
     dev->kernellib_fallback_name = NULL;
     dev->kernellib_subdir = "tce";
 

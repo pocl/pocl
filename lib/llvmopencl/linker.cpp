@@ -404,6 +404,35 @@ static void handleDeviceSidePrintf(llvm::Module *Program,
       CalledPrintf->eraseFromParent();
   }
 }
+
+static void replaceIntrinsics(llvm::Module *Program, const llvm::Module *Lib,
+                              ValueToValueMapTy &vvm, cl_device_id ClDev) {
+  llvm_intrin_replace_fn IntrinRepl = ClDev->llvm_intrin_replace;
+  std::map<Function *, Function *> EraseMap;
+  llvm::Module::iterator FI, FE;
+  StringRef LlvmIntrins("llvm.");
+  for (FI = Program->begin(), FE = Program->end(); FI != FE; FI++) {
+    if (FI->isDeclaration()) {
+      if (IntrinRepl && FI->hasName() &&
+          FI->getName().starts_with(LlvmIntrins)) {
+        const char *ReplacementName =
+            IntrinRepl(FI->getName().data(), FI->getName().size());
+        if (ReplacementName) {
+          copy_func_callgraph(ReplacementName, Lib, Program, vvm);
+          Function *Repl = Program->getFunction(ReplacementName);
+          assert(Repl);
+          EraseMap[&*FI] = Repl;
+          continue;
+        }
+      }
+    }
+  }
+
+  for (auto [Intrin, Repl] : EraseMap) {
+    Intrin->replaceAllUsesWith(Repl);
+    Intrin->eraseFromParent();
+  }
+}
 }
 
 using namespace pocl;
@@ -543,6 +572,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
   if (ClDev->device_side_printf)
     handleDeviceSidePrintf(Program, Lib, Log, vvm, ClDev);
 
+  replaceIntrinsics(Program, Lib, vvm, ClDev);
   return 0;
 }
 

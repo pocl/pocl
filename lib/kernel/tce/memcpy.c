@@ -40,3 +40,25 @@ _pocl_memcpy_1 (__attribute__ ((address_space (0))) char *dst,
   for (size_t i = 0; i < bytes; ++i)
     dst[i] = src[i];
 }
+
+/* Note: memcpy has to be in .ll because the last argument is actually "i1" not
+"i8"
+/*
+void
+__pocl_tce_memcpy_p1_p2_i32 (__attribute__ ((address_space (1))) char *dst,
+                             __attribute__ ((address_space (2))) char *src,
+                             uint32_t bytes, char unused) {
+  for (uint32_t i = 0; i < bytes; ++i)
+    dst[i] = src[i];
+}
+*/
+
+/*
+void
+__pocl_tce_memcpy_p1_p2_i64 (__attribute__ ((address_space (1))) char *dst,
+                             __attribute__ ((address_space (2))) char *src,
+                             uint64_t bytes, char unused) {
+  for (int32_t i = 0; i < (int32_t)bytes; ++i)
+    dst[i] = src[i];
+}
+*/

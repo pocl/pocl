@@ -987,6 +987,11 @@ typedef struct pocl_global_mem_t {
 
 #define NUM_OPENCL_IMAGE_TYPES 6
 
+/* typedef for intrinsics replacement function. TODO this is a hack,
+ * remove when OpenASIP has memcpy implemented.*/
+typedef const char *(*llvm_intrin_replace_fn) (const char *intrin_name,
+                                               size_t size);
+
 struct _cl_device_id {
   POCL_ICD_OBJECT
   POCL_OBJECT;
@@ -1132,6 +1137,7 @@ struct _cl_device_id {
   const char* llvm_cpu; /* the llvm CPU variant to use */
   const char *llvm_abi; /* the ABI to use */
   const char* llvm_fp_contract_mode; /* the floating point contract mde to use */
+  llvm_intrin_replace_fn llvm_intrin_replace;
 
   /* A running number (starting from zero) across all the device instances.
      Used for indexing arrays in data structures with device specific

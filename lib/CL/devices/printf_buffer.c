@@ -236,7 +236,7 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
           ch = *format++;
           if (ch == 0)
             {
-              POCL_MSG_ERR ("printf error: NULL after format sign (%)\n");
+              POCL_MSG_ERR ("printf error: NULL after format sign (%%)\n");
               return -1;
             }
 
