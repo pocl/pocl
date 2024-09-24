@@ -468,9 +468,11 @@ callBufferedPrintfArgPush(IRBuilder<> &Builder,
         // to alignment padding is not populated with any specific value
         // here. This would be safe as long as runtime is sync with
         // the offsets.
+        Value *MemcpyLen =
+            Builder.CreateTrunc(StrIt->RealSize, Builder.getInt32Ty());
         Builder.CreateMemCpy(PtrToStore, /*DstAlign*/ Align(1), Args[i],
                              /*SrcAlign*/ Args[i]->getPointerAlignment(DL),
-                             StrIt->RealSize);
+                             MemcpyLen);
 
         Value *StoreSize = DontAlign ? StrIt->RealSize : StrIt->AlignedSize;
         PtrToStore = Builder.CreateInBoundsGEP(Builder.getInt8Ty(), PtrToStore,
@@ -504,7 +506,8 @@ callBufferedPrintfArgPush(IRBuilder<> &Builder,
         auto SSize = AI->getAllocationSizeInBits(DL)->getFixedValue() / 8;
 #endif
         AllocSize = TypeSize::get(SSize, false);
-        Builder.CreateMemCpy(PtrToStore, Align(1), AI, Align(1), SSize);
+        Value *MemcpyLen = ConstantInt::get(Builder.getInt32Ty(), SSize);
+        Builder.CreateMemCpy(PtrToStore, Align(1), AI, Align(1), MemcpyLen);
         StBuff = nullptr;
       } else {
         StBuff = createAlignedStore(Builder, toStore, PtrToStore, DontAlign);
