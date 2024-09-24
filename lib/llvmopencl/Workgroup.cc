@@ -767,8 +767,13 @@ Function *WorkgroupImpl::createWrapper(Function *F,
   if (DeviceSidePrintf) {
 
     Function *PoclPrintfFun = M->getFunction("__pocl_printf_alloc");
-    replacePrintfCalls(PrintfBuf, PrintfBufPos, PrintfBufCapa, true,
-                       PoclPrintfFun, *M, L, PrintfCache);
+    if (PoclPrintfFun) {
+      replacePrintfCalls(PrintfBuf, PrintfBufPos, PrintfBufCapa, true,
+                         PoclPrintfFun, *M, L, PrintfCache);
+      PoclPrintfFun->removeFnAttr(Attribute::NoInline);
+      PoclPrintfFun->removeFnAttr(Attribute::OptimizeNone);
+      PoclPrintfFun->addFnAttr(Attribute::AlwaysInline);
+    }
   }
 
   // SPMD machines might need a special calling convention to mark the

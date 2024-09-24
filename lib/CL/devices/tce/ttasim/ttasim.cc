@@ -668,7 +668,7 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->max_clock_frequency = 100;
   dev->image_support = CL_FALSE;
   dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
-  dev->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
+  dev->double_fp_config = 0;
   dev->global_mem_cache_type = CL_NONE;
   dev->local_mem_type = CL_GLOBAL;
   dev->error_correction_support = CL_FALSE;

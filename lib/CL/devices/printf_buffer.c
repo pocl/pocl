@@ -24,6 +24,7 @@
    IN THE SOFTWARE.
 */
 
+#include "printf_buffer.h"
 #include "common.h"
 #include "pocl_debug.h"
 #include "printf_base.h"
@@ -163,14 +164,26 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
   p->bf = bf;
   char ch = 0;
 
-  /* fetch & skip the control dword */
+  /* fetch & decode the control dword */
   uint32_t control_dword;
   memcpy (&control_dword, buffer, sizeof (uint32_t));
   FORWARD_BUFFER (sizeof (uint32_t));
   /* if this flag is set, the fmt str is a constant stored as pointer
    * otherwise it's a dynamic string stored directly in the buffer */
-  uint32_t skip_fmt_str = control_dword & 2;
-  assert ((control_dword >> 2) == (buffer_size + sizeof (uint32_t)));
+  uint32_t skip_fmt_str = control_dword & PRINTF_BUFFER_CTWORD_SKIP_FMT_STR;
+  uint32_t char_short_promotion
+    = control_dword & PRINTF_BUFFER_CTWORD_CHAR_SHORT_PR;
+  uint32_t char2_promotion = control_dword & PRINTF_BUFFER_CTWORD_CHAR2_PR;
+  uint32_t float_promotion = control_dword & PRINTF_BUFFER_CTWORD_FLOAT_PR;
+  uint32_t big_endian = control_dword & PRINTF_BUFFER_CTWORD_BIG_ENDIAN;
+  if (big_endian)
+    {
+      POCL_MSG_ERR ("printf error: printf for big endian devices not yet"
+                    "implemented\n");
+      return -1;
+    }
+  assert ((control_dword >> PRINTF_BUFFER_CTWORD_FLAG_BITS)
+          == (buffer_size + sizeof (uint32_t)));
 
   const char *format;
   if (skip_fmt_str)
@@ -474,24 +487,19 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                       case 1:
                         __pocl_print_ints_uchar (p, buffer, vector_length,
                                                  is_unsigned);
-                        /* C char promotion to int */
-                        if (vector_length == 1)
+                        if (char_short_promotion && vector_length == 1)
                           {
                             alloca_length = 4;
                           }
-#if defined(__arm__) || defined(__aarch64__)
-                        /* ARM seems to promote char2 to int */
-                        if (vector_length == 2)
+                        if (char2_promotion && vector_length == 2)
                           {
                             alloca_length = 4;
                           }
-#endif
                         break;
                       case 2:
                         __pocl_print_ints_ushort (p, buffer, vector_length,
                                                   is_unsigned);
-                        /* short promotion to int */
-                        if (vector_length == 1)
+                        if (char_short_promotion && vector_length == 1)
                           {
                             alloca_length = 4;
                           }
@@ -528,7 +536,9 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                         p->flags.uc = 1;
                         p->conv += 32;
                       }
-                    DEBUG_PRINTF (("[printf:float:conversion=%c]\n", ch));
+                    DEBUG_PRINTF (
+                      ("[printf:float:conversion=%c|promotion=%u]\n", ch,
+                       (unsigned)float_promotion));
                     if (length == 0)
                       length = 4;
                     alloca_length *= length;
@@ -542,8 +552,8 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                           return -1; /* half type not yet implemented */
                         }
                       case 4:
-                        /* single float is promoted to double */
-                        if (vector_length > 1)
+                        /* single float can be promoted to double */
+                        if (!float_promotion || vector_length > 1)
                           {
                             __pocl_print_floats_float (p, buffer,
                                                        vector_length);
@@ -772,7 +782,7 @@ pocl_write_printf_buffer (char *printf_buffer, uint32_t bytes)
         }
 
       memcpy (&control_dword, printf_buffer, sizeof (uint32_t));
-      single_entry_bytes = control_dword >> 2;
+      single_entry_bytes = control_dword >> PRINTF_BUFFER_CTWORD_FLAG_BITS;
 
       if (single_entry_bytes > bytes)
         {

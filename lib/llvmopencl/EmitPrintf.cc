@@ -25,6 +25,7 @@
 #include <iostream>
 
 #include "EmitPrintf.hh"
+#include "printf_buffer.h"
 
 using namespace llvm;
 
@@ -115,10 +116,12 @@ static Value *getStrlenWithNull(IRBuilder<> &Builder, Value *Str) {
   BasicBlock *WhileDone = BasicBlock::Create(
       M->getContext(), "strlen.while.done", Prev->getParent(), Join);
 
+  ConstantPointerNull *NullPtr =
+      ConstantPointerNull::get(cast<PointerType>(Str->getType()));
+
   // Emit an early return for when the pointer is null.
   Builder.SetInsertPoint(Prev);
-  auto CmpNull =
-      Builder.CreateICmpEQ(Str, Constant::getNullValue(Str->getType()));
+  auto CmpNull = Builder.CreateICmpEQ(Str, NullPtr);
   Builder.CreateCondBr(CmpNull, Join, While);
 
   // Entry to the while loop.
@@ -519,9 +522,7 @@ callBufferedPrintfArgPush(IRBuilder<> &Builder,
 
 Value *pocl::emitPrintfCall(IRBuilder<> &Builder,
                             SmallVector<llvm::Value *> &Args,
-                            unsigned PrintfBufferAS, bool IsBuffered,
-                            bool DontAlign, bool StorePtrInsteadOfMD5,
-                            bool AlwaysStoreFmtPtr, bool FlushBuffer) {
+                            PrintfCallFlags Flags) {
   auto NumOps = Args.size();
   assert(NumOps >= 1);
 
@@ -532,19 +533,19 @@ Value *pocl::emitPrintfCall(IRBuilder<> &Builder,
   if (getConstantStringInfo(Fmt, FmtStr))
     locateCStrings(SpecIsCString, FmtStr);
 
-  if (IsBuffered) {
+  if (Flags.IsBuffered) {
     SmallVector<StringData, 8> StringContents;
     Module *M = Builder.GetInsertBlock()->getModule();
     LLVMContext &Ctx = Builder.getContext();
     auto Int8Ty = Builder.getInt8Ty();
     auto Int32Ty = Builder.getInt32Ty();
-    bool SkipFmtStr = !FmtStr.empty() && !AlwaysStoreFmtPtr;
+    bool SkipFmtStr = !FmtStr.empty() && !Flags.AlwaysStoreFmtPtr;
 
     Value *ArgSize = nullptr;
     Value *FmtStrLen = nullptr;
     // this truncates ArgSize to int32
     Value *StartPtr = callBufferedPrintfStart(
-        Builder, Args, Fmt, PrintfBufferAS, SkipFmtStr, DontAlign,
+        Builder, Args, Fmt, Flags.PrintfBufferAS, SkipFmtStr, Flags.DontAlign,
         SpecIsCString, StringContents, ArgSize, FmtStrLen);
 
     // The buffered version still follows OpenCL printf standards for
@@ -573,15 +574,33 @@ Value *pocl::emitPrintfCall(IRBuilder<> &Builder,
     Builder.SetInsertPoint(ArgPush);
 
     // Create controlDWord and store as the first entry, format as follows
-    // Bit 0 (LSB) -> stream (1 if stderr, 0 if stdout, printf always outputs to
-    // stdout) Bit 1 -> constant format string (1 if constant) Bits 2-31 -> size
+    // Bit 0 (LSB) -> stream (1 if stderr, 0 if stdout,
+    // Bit 1 -> constant format string (1 if constant)
+    // Bit 2 -> char & short promotion to int
+    // Bit 3 -> char2 promotion to int
+    // Bit 4 -> float promotion to double
+    // Bit 5 -> 1 = big-endian, 0 = little-endian
+    // Bits 6-31 -> size
     // of printf data frame
-    auto ConstantTwo = Builder.getInt32(2);
-    auto ControlDWord = Builder.CreateShl(ArgSize, ConstantTwo);
-    if (SkipFmtStr)
-      ControlDWord = Builder.CreateOr(ControlDWord, ConstantTwo);
 
-    createAlignedStore(Builder, ControlDWord, StartPtr, DontAlign);
+    auto ControlDWord = Builder.CreateShl(
+        ArgSize, Builder.getInt32(PRINTF_BUFFER_CTWORD_FLAG_BITS));
+    uint32_t FlagsOrValue = 0;
+    if (SkipFmtStr)
+      FlagsOrValue |= PRINTF_BUFFER_CTWORD_SKIP_FMT_STR;
+    if (Flags.ArgPromotionCharShort)
+      FlagsOrValue |= PRINTF_BUFFER_CTWORD_CHAR_SHORT_PR;
+    if (Flags.ArgPromotionChar2)
+      FlagsOrValue |= PRINTF_BUFFER_CTWORD_CHAR2_PR;
+    if (Flags.ArgPromotionFloat)
+      FlagsOrValue |= PRINTF_BUFFER_CTWORD_FLOAT_PR;
+    if (Flags.IsBigEndian)
+      FlagsOrValue |= PRINTF_BUFFER_CTWORD_BIG_ENDIAN;
+
+    if (FlagsOrValue)
+      ControlDWord =
+          Builder.CreateOr(ControlDWord, Builder.getInt32(FlagsOrValue));
+    createAlignedStore(Builder, ControlDWord, StartPtr, Flags.DontAlign);
 
     Value *Ptr = Builder.CreateConstInBoundsGEP1_32(Int8Ty, StartPtr, 4);
 
@@ -589,8 +608,8 @@ Value *pocl::emitPrintfCall(IRBuilder<> &Builder,
     // same onto buffer and metadata.
     NamedMDNode *metaD = M->getOrInsertNamedMetadata("llvm.printf.fmts");
     if (SkipFmtStr) {
-      if (StorePtrInsteadOfMD5) {
-        createAlignedStore(Builder, Fmt, Ptr, DontAlign);
+      if (Flags.StorePtrInsteadOfMD5) {
+        createAlignedStore(Builder, Fmt, Ptr, Flags.DontAlign);
         Ptr = Builder.CreateConstInBoundsGEP1_32(Int8Ty, Ptr, 8);
       } else {
         MD5 Hasher;
@@ -608,7 +627,7 @@ Value *pocl::emitPrintfCall(IRBuilder<> &Builder,
         metaD->addOperand(myMD);
 
         createAlignedStore(Builder, Builder.getInt64(Hash.low()), Ptr,
-                           DontAlign);
+                           Flags.DontAlign);
         Ptr = Builder.CreateConstInBoundsGEP1_32(Int8Ty, Ptr, 8);
       }
     } else {
@@ -625,11 +644,11 @@ Value *pocl::emitPrintfCall(IRBuilder<> &Builder,
 
     // Push The printf arguments onto buffer
     callBufferedPrintfArgPush(Builder, Args, Ptr, SpecIsCString, StringContents,
-                              SkipFmtStr, DontAlign);
+                              SkipFmtStr, Flags.DontAlign);
 
     // flush the buffer if requested by calling
     // void __printf_flush_buffer(void* buffer, uint32_t bytes);
-    if (FlushBuffer) {
+    if (Flags.FlushBuffer) {
       SmallVector<Value *, 2> Alloc_args;
       Alloc_args.push_back(StartPtr);
       Alloc_args.push_back(ArgSize);
@@ -640,9 +659,9 @@ Value *pocl::emitPrintfCall(IRBuilder<> &Builder,
 
       Type *PtrTy =
 #ifdef LLVM_OPAQUE_POINTERS
-          Builder.getPtrTy(PrintfBufferAS);
+          Builder.getPtrTy(Flags.PrintfBufferAS);
 #else
-          Builder.getInt8PtrTy(PrintfBufferAS);
+          Builder.getInt8PtrTy(Flags.PrintfBufferAS);
 #endif
 
       Type *Tys_alloc[2] = {PtrTy, Builder.getInt32Ty()};
