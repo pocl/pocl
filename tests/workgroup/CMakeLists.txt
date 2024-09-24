@@ -195,7 +195,6 @@ set_property(TEST
 
 # broken:  "workgroup/for_with_divergent_return"
 set_property(TEST
-  "workgroup/different_implicit_barrier_injection_scenarios"
   "workgroup/unbarriered_for_loops_loopvec"
   "workgroup/barriered_for_loops_loopvec"
   "workgroup/switch_case_loopvec"

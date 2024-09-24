@@ -94,8 +94,11 @@ bool test_invocation(unsigned x, unsigned y, unsigned z,
 
   bool correct = true;
   for (size_t i = 0; i < x; ++i) {
-    if (out[i] != expected_sum)
+    if (out[i] != expected_sum) {
+      std::cout << "out[" << i << "] == " << out[i] << " is not "
+                << expected_sum << std::endl;
       correct = false;
+    }
   }
 
   std::cout << (correct ? "OK\n" : "FAIL\n");
