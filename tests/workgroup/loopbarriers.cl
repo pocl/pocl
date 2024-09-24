@@ -1,3 +1,8 @@
+
+/* Workaround for the VPlan/LLVM crash reported here:
+   https://github.com/pocl/pocl/issues/1556 */
+#define volatile
+
 kernel void
 test_kernel (global int *output)
 {

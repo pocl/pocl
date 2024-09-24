@@ -89,9 +89,7 @@ set(LLVMPASSES_SOURCES "AllocasToEntry.cc"
                        "WorkitemHandlerChooser.cc"
                        "WorkitemHandlerChooser.h"
                        "WorkitemLoops.cc"
-                       "WorkitemLoops.h"
-                       "WorkitemReplication.cc"
-                       "WorkitemReplication.h")
+                       "WorkitemLoops.h")
 
 if (ENABLE_REMOTE_SERVER)
   list(APPEND LLVMPASSES_SOURCES

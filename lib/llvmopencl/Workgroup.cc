@@ -55,7 +55,6 @@ POP_COMPILER_DIAGS
 #include "VariableUniformityAnalysis.h"
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
-#include "WorkitemReplication.h"
 
 #include "pocl_llvm_api.h"
 

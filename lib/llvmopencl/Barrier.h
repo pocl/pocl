@@ -78,7 +78,7 @@ namespace pocl {
         M->getOrInsertFunction(BARRIER_FUNCTION_NAME,
                                 llvm::Type::getVoidTy(M->getContext()));
       llvm::Function *F = llvm::cast<llvm::Function>(FC.getCallee());
-      F->addFnAttr(llvm::Attribute::NoDuplicate);
+      F->addFnAttr(llvm::Attribute::Convergent);
       return llvm::cast<pocl::Barrier>
         (llvm::CallInst::Create(F, "", InsertBefore));
     }

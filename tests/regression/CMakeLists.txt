@@ -40,7 +40,7 @@ endforeach()
 
 set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_for_with_var_iteration_count test_id_dependent_computation
-  test_locals test_loop_phi_replication test_multi_level_loops_with_barriers
+  test_locals test_multi_level_loops_with_barriers
   test_simple_for_with_a_barrier test_structs_as_args test_vectors_as_args
   test_barrier_before_return test_infinite_loop test_constant_array
   test_undominated_variable test_setargs test_null_arg
@@ -110,43 +110,39 @@ add_test_pocl(NAME "regression/test_issue_893" COMMAND "test_issue_893")
 
 add_test_pocl(NAME "regression/test_flatten_barrier_subs" COMMAND "test_flatten_barrier_subs" EXPECTED_OUTPUT "test_flatten_barrier_subs.output")
 
-# repl
+add_test_pocl(NAME "regression/issues_with_local_pointers" WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_locals")
 
-add_test_pocl(NAME "regression/phi_nodes_not_replicated" WORKITEM_HANDLER "loopvec;cbs;repl" COMMAND "test_loop_phi_replication")
+add_test_pocl(NAME "regression/barrier_between_two_for_loops" WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_barrier_between_for_loops")
 
-add_test_pocl(NAME "regression/issues_with_local_pointers" WORKITEM_HANDLER "loopvec;cbs;repl" COMMAND "test_locals")
+add_test_pocl(NAME "regression/simple_for-loop_with_a_barrier_inside" WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_simple_for_with_a_barrier")
 
-add_test_pocl(NAME "regression/barrier_between_two_for_loops" WORKITEM_HANDLER "loopvec;cbs;repl" COMMAND "test_barrier_between_for_loops")
+add_test_pocl(NAME "regression/for-loop_with_computation_after_the_brexit" WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_multi_level_loops_with_barriers")
 
-add_test_pocl(NAME "regression/simple_for-loop_with_a_barrier_inside" WORKITEM_HANDLER "loopvec;cbs;repl" COMMAND "test_simple_for_with_a_barrier")
+add_test_pocl(NAME "regression/for-loop_with_a_variable_iteration_count" WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_for_with_var_iteration_count")
 
-add_test_pocl(NAME "regression/for-loop_with_computation_after_the_brexit" WORKITEM_HANDLER "loopvec;cbs;repl" COMMAND "test_multi_level_loops_with_barriers")
+add_test_pocl(NAME "regression/early_return_before_a_barrier_region" WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_early_return")
 
-add_test_pocl(NAME "regression/for-loop_with_a_variable_iteration_count" WORKITEM_HANDLER "loopvec;cbs;repl" COMMAND "test_for_with_var_iteration_count")
+add_test_pocl(NAME "regression/id-dependent_computation_before_kernel_exit" WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_id_dependent_computation")
 
-add_test_pocl(NAME "regression/early_return_before_a_barrier_region" WORKITEM_HANDLER "loopvec;cbs;repl" COMMAND "test_early_return")
+add_test_pocl(NAME "regression/barrier_just_before_return" WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_barrier_before_return")
 
-add_test_pocl(NAME "regression/id-dependent_computation_before_kernel_exit" WORKITEM_HANDLER "loopvec;cbs;repl" COMMAND "test_id_dependent_computation")
-
-add_test_pocl(NAME "regression/barrier_just_before_return" WORKITEM_HANDLER "loopvec;cbs;repl" COMMAND "test_barrier_before_return")
-
-add_test_pocl(NAME "regression/infinite_loop" WORKITEM_HANDLER "loopvec;cbs;repl" COMMAND "test_infinite_loop")
+add_test_pocl(NAME "regression/infinite_loop" WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_infinite_loop")
 
 add_test_pocl(NAME "regression/undominated_variable_from_conditional_barrier_handling"
-  WORKITEM_HANDLER "loopvec;cbs;repl" COMMAND "test_undominated_variable")
+  WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_undominated_variable")
 
 add_test_pocl(NAME "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local"
-  WORKITEM_HANDLER "loopvec;cbs;repl" COMMAND "test_assign_loop_variable_to_privvar_makes_it_local")
+  WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_assign_loop_variable_to_privvar_makes_it_local")
 
 add_test_pocl(NAME "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2"
-  WORKITEM_HANDLER "loopvec;cbs;repl" COMMAND "test_assign_loop_variable_to_privvar_makes_it_local_2")
+  WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_assign_loop_variable_to_privvar_makes_it_local_2")
 
-add_test_pocl(NAME "regression/test_program_from_binary_with_local_1_1_1" WORKITEM_HANDLER "loopvec;cbs;repl"
+add_test_pocl(NAME "regression/test_program_from_binary_with_local_1_1_1" WORKITEM_HANDLER "loopvec;cbs;"
   COMMAND "test_program_from_binary_with_local_1_1_1")
 
-set(VARIANTS_REPL "loopvec;cbs;repl")
-foreach(VARIANT ${VARIANTS_REPL})
-set_tests_properties("regression/phi_nodes_not_replicated_${VARIANT}"
+set(VARIANTS "loopvec;cbs;")
+foreach(VARIANT ${VARIANTS})
+set_tests_properties(
   "regression/issues_with_local_pointers_${VARIANT}"
   "regression/barrier_between_two_for_loops_${VARIANT}"
   "regression/simple_for-loop_with_a_barrier_inside_${VARIANT}"
@@ -225,10 +221,7 @@ add_test_pocl(NAME "regression/struct_kernel_arguments" COMMAND "test_structs_as
 add_test_pocl(NAME "regression/vector_kernel_arguments" COMMAND "test_vectors_as_args")
 
 set(TCE_TESTS "regression/barrier_between_two_for_loops_loopvec"
-  "regression/barrier_between_two_for_loops_repl"
-  "regression/for-loop_with_computation_after_the_brexit_repl"
   "regression/for-loop_with_computation_after_the_brexit_loopvec"
-  "regression/early_return_before_a_barrier_region_repl"
   "regression/early_return_before_a_barrier_region_loopvec")
 
 set(VARIANTS "loopvec;cbs")
@@ -264,7 +257,6 @@ set_property(TEST ${TCE_TESTS} APPEND PROPERTY LABELS "tce")
 
 # Label tests that work with CUDA backend
 set_property(TEST
-  "regression/phi_nodes_not_replicated_loopvec"
   "regression/issues_with_local_pointers_loopvec"
   "regression/barrier_between_two_for_loops_loopvec"
   "regression/simple_for-loop_with_a_barrier_inside_loopvec"
@@ -286,7 +278,6 @@ set_property(TEST
 
 # Label tests that work with HSA runtime with native kernel compilation
 set_property(TEST
-  "regression/phi_nodes_not_replicated_loopvec"
   "regression/issues_with_local_pointers_loopvec"
   "regression/barrier_between_two_for_loops_loopvec"
   "regression/simple_for-loop_with_a_barrier_inside_loopvec"
@@ -306,7 +297,6 @@ set_property(TEST
 
 # Label tests that work with proxy driver
 set_property(TEST
-  "regression/phi_nodes_not_replicated_loopvec"
   "regression/barrier_between_two_for_loops_loopvec"
   "regression/simple_for-loop_with_a_barrier_inside_loopvec"
   "regression/for-loop_with_computation_after_the_brexit_loopvec"
@@ -342,7 +332,6 @@ set_property(TEST
   "regression/for-loop_with_a_variable_iteration_count_loopvec"
   "regression/id-dependent_computation_before_kernel_exit_loopvec"
   "regression/issues_with_local_pointers_loopvec"
-  "regression/phi_nodes_not_replicated_loopvec"
   "regression/simple_for-loop_with_a_barrier_inside_loopvec"
   "regression/test_program_from_binary_with_local_1_1_1_loopvec"
   "regression/undominated_variable_from_conditional_barrier_handling_loopvec"
@@ -393,7 +382,6 @@ endif()
 # TODO infinite loop test: AT_SKIP_IF([ env | grep -q POCL_IMPLICIT_FINISH])
 
 set_tests_properties(
-  "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_repl"
   "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_loopvec"
   "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_cbs"
     PROPERTIES PASS_REGULAR_EXPRESSION
@@ -413,9 +401,10 @@ if(LLVM_VERSION_MAJOR EQUAL 18)
   PROPERTIES DISABLED 1)
 endif()
 
-# With the autovec/target specific optimizations, this started
-# crashing or hanging.
-set_tests_properties(
-  "regression/test_alignment_with_dynamic_wg_114_cbs"
-  "regression/test_alignment_with_dynamic_wg_117_cbs"
-  PROPERTIES DISABLED 1)
+# Produced wrong results with LLVM 14. Works with all newer versions.
+# No point putting time for debugging.
+if(LLVM_VERSION_MAJOR EQUAL 14)
+  set_tests_properties(
+    "regression/test_alignment_with_dynamic_wg_225_cbs"
+    PROPERTIES DISABLED 1)
+endif()
