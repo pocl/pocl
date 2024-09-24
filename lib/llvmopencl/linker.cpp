@@ -329,21 +329,46 @@ static void shared_copy(llvm::Module *program, const llvm::Module *lib,
     program->eraseNamedMetadata(DebugCU);
 }
 
-static void handleDeviceSidePrintf(
-    llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
-    ValueToValueMapTy &vvm,
-    bool DeviceSVM,            // Device shares AS with host
-    unsigned DeviceGlobalAS) { // AS of the global memory (where printf buffer
-                               // resides)
-  /* Replace printf function calls with storing of format string+arguments to a
-   * buffer */
+/* Replace printf function calls with storing of format string+arguments to a
+ * buffer */
+static void handleDeviceSidePrintf(llvm::Module *Program,
+                                   const llvm::Module *Lib, std::string &Log,
+                                   ValueToValueMapTy &vvm, cl_device_id ClDev) {
+
+  // if a device supports immediate flush, a declaration must exist in the
+  // the device's builtin library (the definition is on the host side in
+  // libpocl)
+  bool DeviceSupportsImmediateFlush =
+      Lib->getFunction("__printf_flush_buffer") != nullptr;
+
+  PrintfCallFlags PFlags;
+  PFlags.PrintfBufferAS = ClDev->global_as_id;
+  PFlags.IsBuffered = true;
+  PFlags.DontAlign = true;
+  PFlags.FlushBuffer = DeviceSupportsImmediateFlush;
+
+  if (ClDev->type == CL_DEVICE_TYPE_CPU) {
+    PFlags.StorePtrInsteadOfMD5 = true;
+    PFlags.AlwaysStoreFmtPtr = false;
+#if defined(__arm__) || defined(__aarch64__)
+    /* ARM seems to promote char2 to int */
+    PFlags.ArgPromotionChar2 = true;
+#endif
+  } else {
+    PFlags.StorePtrInsteadOfMD5 = false;
+    PFlags.AlwaysStoreFmtPtr = true;
+  }
+
+  PFlags.ArgPromotionCharShort = true;
+  if (ClDev->double_fp_config == 0) {
+    PFlags.ArgPromotionFloat = false;
+  }
+  if (!ClDev->endian_little) {
+    PFlags.IsBigEndian = true;
+  }
+
   Function *CalledPrintf = Program->getFunction("printf");
   if (CalledPrintf) {
-    // if a device supports immediate flush, a declaration must exist in the
-    // the device's builtin library (the definition is on the host side in
-    // libpocl)
-    bool DeviceSupportsImmediateFlush =
-        Lib->getFunction("__printf_flush_buffer") != nullptr;
 
     Function *PrintfAlloc = Lib->getFunction("__printf_alloc");
     assert(PrintfAlloc != nullptr);
@@ -367,14 +392,7 @@ static void handleDeviceSidePrintf(
     for (CallInst *C : Calls) {
       llvm::IRBuilder<> Builder(C);
       llvm::SmallVector<llvm::Value *> Args(C->arg_begin(), C->arg_end());
-      Value *Replacement =
-          pocl::emitPrintfCall(Builder, Args,
-                               DeviceGlobalAS,           // Printf Buffer AS
-                               true,                     // isBuffered
-                               true,                     // DontAlign
-                               DeviceSVM ? true : false, // StorePtrInsteadOfMD5
-                               DeviceSVM ? false : true, // AlwaysStoreFmtPtr
-                               DeviceSupportsImmediateFlush);
+      Value *Replacement = pocl::emitPrintfCall(Builder, Args, PFlags);
       C->replaceAllUsesWith(Replacement);
     }
 
@@ -391,8 +409,7 @@ static void handleDeviceSidePrintf(
 using namespace pocl;
 
 int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
-         const char **DevAuxFuncs, unsigned DeviceGlobalAS,
-         bool DeviceSidePrintf, bool DeviceSVM) {
+         cl_device_id ClDev) {
 
   assert(Program);
   assert(Lib);
@@ -400,8 +417,8 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
   llvm::StringSet<> DeclaredFunctions;
 
   // Include auxiliary functions required by the device at hand.
-  if (DevAuxFuncs) {
-    const char **Func = DevAuxFuncs;
+  if (ClDev->device_aux_functions) {
+    const char **Func = ClDev->device_aux_functions;
     while (*Func != nullptr) {
       DeclaredFunctions.insert(*Func++);
     }
@@ -523,8 +540,8 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
 
   fixCallingConv(Program, Log);
 
-  if (DeviceSidePrintf)
-    handleDeviceSidePrintf(Program, Lib, Log, vvm, DeviceSVM, DeviceGlobalAS);
+  if (ClDev->device_side_printf)
+    handleDeviceSidePrintf(Program, Lib, Log, vvm, ClDev);
 
   return 0;
 }

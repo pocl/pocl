@@ -21,22 +21,28 @@
 
 namespace pocl {
 
-llvm::Value *emitPrintfCall(
-    llvm::IRBuilder<> &Builder, llvm::SmallVector<llvm::Value *> &Args,
-    unsigned PrintfBufferAS, // AS of the printf buffer
-    bool isBuffered,         // Buffered mode - store arguments to a buffer;
-                     // Non-buffered mode - call predefined functions with
-                     // arguments
-    bool DontAlign = false,
-    // true = do not add extra alignment; false = default = aligns
-    // all arguments to 8 bytes (in buffered mode)
-    bool StorePtrInsteadOfMD5 = false, // if the formatstring is Constant, pass
-                                       // it as pointer instead of MD5
-    bool AlwaysStoreFmtPtr = false, // if true, always store the FmtStr directly
-                                    // in the buffer
-    bool FlushBuffer = false // in Buffered mode, call a function to flush the
-                             // buffer immediately after storing the arguments
-);
+struct PrintfCallFlags {
+  unsigned PrintfBufferAS = 0; // AS of the printf buffer
+  bool IsBuffered = true;      // Buffered mode - store arguments to a buffer;
+                          // Non-buffered mode - call predefined functions with
+                          // arguments
+  bool DontAlign = true;    // true = do not add extra alignment; false = aligns
+                            // all arguments to 8 bytes (in buffered mode)
+  bool FlushBuffer = false; // in Buffered mode, call a function to flush the
+                            // buffer immediately after storing the arguments
+  bool StorePtrInsteadOfMD5 = false; // if the formatstring is Constant, pass
+                                     // it as pointer instead of MD5
+  bool AlwaysStoreFmtPtr = false; // if true, always store the FmtStr directly
+                                  // in the buffer
+  bool ArgPromotionCharShort = true; // Clang promotes char/short
+  bool ArgPromotionChar2 = false;    // Clang promotes char2 to int
+  bool ArgPromotionFloat = true;     // Clang promotes float to double
+  bool IsBigEndian = false;          // device is big-endian
+};
+
+llvm::Value *emitPrintfCall(llvm::IRBuilder<> &Builder,
+                            llvm::SmallVector<llvm::Value *> &Args,
+                            PrintfCallFlags Flags);
 
 } // namespace pocl
 

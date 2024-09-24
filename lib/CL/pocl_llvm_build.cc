@@ -183,9 +183,7 @@ static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
     Program->global_var_total_size[device_i] = TotalGVarBytes;
   }
 
-  if (link(Mod, BuiltinLib, Log, Device->device_aux_functions,
-           Device->global_as_id, Device->device_side_printf != CL_FALSE,
-           Device->type == CL_DEVICE_TYPE_CPU))
+  if (link(Mod, BuiltinLib, Log, Device))
     return true;
 
   raw_string_ostream OS(Log);
