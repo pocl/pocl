@@ -1,3 +1,12 @@
+/*
+Note: this started as a copy of AMDGPUEmitPrintf.cpp from the LLVM project.
+However, the upstream version has a few bugs (e.g. inserting ret void
+in the middle of a block) and a ton of missing features (handling of vector
+arguments, custom alignment, immediate flush ...) that we need in PoCL.
+TODO: we should upstream the changes eventually, and avoid formatting this
+file (too much) to keep the diff minimal.
+*/
+
 //===- AMDGPUEmitPrintf.cpp -----------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
