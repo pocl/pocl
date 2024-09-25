@@ -329,11 +329,31 @@ static void shared_copy(llvm::Module *program, const llvm::Module *lib,
     program->eraseNamedMetadata(DebugCU);
 }
 
-/* Replace printf function calls with storing of format string+arguments to a
- * buffer */
-static void handleDeviceSidePrintf(llvm::Module *Program,
-                                   const llvm::Module *Lib, std::string &Log,
-                                   ValueToValueMapTy &vvm, cl_device_id ClDev) {
+/* Replace printf calls with generated bitcode that stores the format-string
+ * and the arguments to a printf buffer. The replacement bitcode generated
+ * by emitPrintfCall is:
+ *
+ * 1) get the format string length and argument sizes
+ * 2) call __printf_alloc to allocate storage from device's printf buffer
+ *    to allocate the size from 0)
+ * 3) store the arguments using Store or Memcpy instructions
+ * 4) optionally call __printf_flush_buffer (if the device supports
+ *    immediate flushing) to immediately print the buffer content
+ *
+ * At some point the host-side code in printf_buffer.c decodes
+ * the printf buffer content and writes it to STDOUT.
+ * Note that this gets rid of variadic arguments on the kernel side,
+ * however, Clang still does printf() argument promotions when compiling
+ * OpenCL C source code, and these promotions also depends on target device.
+ * Currently this is solved by passing a bunch of flags here (from device
+ * properties) to the emitPrintfCall, which stores them in the "control word"
+ * in the printf buffer. The decoding code on the host side reads the flags
+ * to know the promotions used for arguments. This could also be implemented
+ * by storing each argument's size in the printf buffer, but that's TBD
+*/
+static void handleDeviceSidePrintf(
+    llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
+    ValueToValueMapTy &vvm, cl_device_id ClDev) {
 
   // if a device supports immediate flush, a declaration must exist in the
   // the device's builtin library (the definition is on the host side in
@@ -348,6 +368,9 @@ static void handleDeviceSidePrintf(llvm::Module *Program,
   PFlags.FlushBuffer = DeviceSupportsImmediateFlush;
 
   if (ClDev->type == CL_DEVICE_TYPE_CPU) {
+    // for CPU, store constant format strings as simply a pointer
+    // the original AMDGPU emitPrintfCall uses MD5 but that is
+    // unnecessary complication for CPU devices
     PFlags.StorePtrInsteadOfMD5 = true;
     PFlags.AlwaysStoreFmtPtr = false;
 #if defined(__arm__) || defined(__aarch64__)
@@ -355,14 +378,19 @@ static void handleDeviceSidePrintf(llvm::Module *Program,
     PFlags.ArgPromotionChar2 = true;
 #endif
   } else {
+    // for non-CPU devices, always store the format string in the buffer,
+    // even if it's a constant format string, since we cannot use pointers
     PFlags.StorePtrInsteadOfMD5 = false;
     PFlags.AlwaysStoreFmtPtr = true;
   }
 
+  // C promotion of char/short -> int32
   PFlags.ArgPromotionCharShort = true;
+  // C promotion of float -> double only if device supports double
   if (ClDev->double_fp_config == 0) {
     PFlags.ArgPromotionFloat = false;
   }
+  // big endian support is not implemented at all currently
   if (!ClDev->endian_little) {
     PFlags.IsBigEndian = true;
   }
