@@ -2,6 +2,7 @@
 #   CMake build system files
 #
 #   Copyright (c) 2017 Michal Babej / Tampere University of Technology
+#   Copyright (c) 2022-24 Michal Babej / Tampere University of Technology
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -168,8 +169,21 @@ if(HOST_CPU_CORECOUNT GREATER 8)
 endif()
 set(PAR_ARG "--num-worker-threads" ${TEST_THREADS})
 
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_api"
+if(TS_SUFFIX STREQUAL "_spirv")
+  # min_max_parameter_size...
+  # error: line 18: OpTypeFunction may not take more than 255 arguments. OpTypeFunction <id> '5[%5]' has 256 arguments.
+  # ...
+  # clGetDeviceInfo: CL_DEVICE_MAX_PARAMETER_SIZE
+  # Max size in bytes of all arguments that can be passed to a kernel.
+  # The minimum value is 1024 for devices that are not of type CL_DEVICE_TYPE_CUSTOM. For this minimum value, only a maximum of 128 arguments can be passed to a kernel. For all other values, a maximum of 255 arguments can be passed to a kernel.
+  # ...
+  # issue https://github.com/KhronosGroup/OpenCL-CTS/issues/1373
+  add_test(NAME "${TS_NAME}${TS_SUFFIX}_api"
+           COMMAND "${TS_BUILDDIR}/api/test_api" --disable-spirv-validation ${EXTRA_ARGS})
+else()
+  add_test(NAME "${TS_NAME}${TS_SUFFIX}_api"
            COMMAND "${TS_BUILDDIR}/api/test_api" ${EXTRA_ARGS})
+endif()
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_atomics"
          COMMAND "${TS_BUILDDIR}/atomics/test_atomics" ${EXTRA_ARGS})
