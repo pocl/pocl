@@ -128,8 +128,14 @@ TARGET=none
 DEV_VER=100
 DEV_C_VER=100
 CL_EXT_DEFS="-D__ENDIAN_LITTLE__=1"
-# TODO __opencl_c_int64 && atomics might not be supported by all PoCL devices
-CL_EXTS="-Xclang -cl-ext=-all"
+# TODO there is not enough information to figure out the feature macros
+# that might be supported by the device, because --cl-device-info FILE does
+# not contain the list of the feature macros.
+# However, at least __opencl_c_generic_address_space is required by the
+# C11 atomic tests in SPIR-V mode. This is therefore a hack, but should
+# be fine because PoCL's Level0 and CPU drivers support gen. AS; atomic_order
+# features are optional, but again they are supported by both CPU and L0
+CL_EXTS="-Xclang -cl-ext=-all,+__opencl_c_generic_address_space,+__opencl_c_atomic_order_acq_rel,+__opencl_c_atomic_order_seq_cst,+__opencl_c_atomic_scope_device"
 
 if [ -e "${CL_DEV_INFO}" ]; then
 
