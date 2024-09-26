@@ -42,10 +42,11 @@ jobs:
         # cts_spirv = cts with SPIR-V
         # tier1 = includes CTS without SPIR-V
         # chipstar 1.1 only supports LLVM up to 17
+        # chipstar 1.2 only supports LLVM up to 19
         # asan, tsan, ubsan = sanitizers
         config: [cts_spirv, tier1, asan, tsan, ubsan]
         include:
-          - llvm: 17
+          - llvm: 19
             config: chipstar
 
     steps:
