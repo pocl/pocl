@@ -532,6 +532,19 @@ setup_kernel_metadata (cl_program program)
       (setup_successful == 0), CL_INVALID_BINARY,
       "Could not find kernel metadata in the built program\n");
 
+  /* DBKs are named by the application. Overwrite the kernel names
+     initialized by the metadata setup code with the requested ones.  */
+  if (program->builtin_kernel_attributes)
+    {
+      for (size_t i = 0; i < program->num_kernels; ++i)
+        {
+          if (program->kernel_meta[i].name)
+            free (program->kernel_meta[i].name);
+          program->kernel_meta[i].name
+              = strdup (program->builtin_kernel_names[i]);
+        }
+    }
+
   /* calculate argument storage size */
   for (i = 0; i < program->num_kernels; ++i)
     {
