@@ -1,0 +1,79 @@
+---
+name: Build-only test matrix
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - 'CHANGES'
+      - 'COPYING'
+      - 'CREDITS'
+      - 'LICENSE'
+      - 'README.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  CCACHE_COMPRESS: "true"
+  CCACHE_COMPRESSLEVEL: "1"
+  CCACHE_MAXSIZE: "25000M"
+  CCACHE_BASEDIR: "${{ github.workspace }}"
+  CCACHE_DIR: "${{ github.workspace }}/../../../../ccache_storage"
+  EXAMPLES_DIR: "${{ github.workspace }}/../../../../examples"
+
+jobs:
+  build_only_matrix:
+    name: Build-only - ${{ matrix.config }}
+    runs-on: [self-hosted, linux, "${{ matrix.config }}"]
+    # these runners have action runner directly in the home directory
+    env:
+      CCACHE_DIR: "${{ github.workspace }}/../../../ccache_storage"
+      EXAMPLES_DIR: "${{ github.workspace }}/../../../examples"
+    strategy:
+      fail-fast: false
+      matrix:
+        # cross - arm 32bit gnueabihf crosscompiled (ENABLE_LLVM=0)
+        # proxy - proxy driver
+        # accel - almaif driver
+        # no_llvm_no_debug - pthread driver + ENABLE_LLVM=0 + POCL_DEBUG_MESSAGES=0
+        # android is currently disabled, need to check NDK license if we can use it in CI
+        config: [cross, proxy, accel, no_llvm_no_debug]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: CMake
+        id: cmake
+        run: |
+          runCMake() {
+            BUILD_FLAGS="-O1 -ggdb -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-format"
+            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DENABLE_EXAMPLES=0 -DENABLE_TESTS=0 \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo "-DCMAKE_C_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
+            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+          }
+
+          rm -rf ${{ github.workspace }}/build
+          mkdir ${{ github.workspace }}/build
+
+          # if [ "${{ matrix.config }}" == "android" ]; then
+          # runCMake -DENABLE_POCLCC=0 -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LLVM=0 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DANDROID_NDK=${{ env.NDK_PATH }} -DCMAKE_MAKE_PROGRAM=${{ env.NDK_PATH }}/prebuilt/linux-x86_64/bin/make -DCMAKE_TOOLCHAIN_FILE=${{ env.NDK_PATH }}/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a -DANDROID_NATIVE_API_LEVEL=23
+          if [ "${{ matrix.config }}" == "cross" ]; then
+            runCMake -DENABLE_LOADABLE_DRIVERS=0 -DCMAKE_TOOLCHAIN_FILE=/opt/cross.cmake -DCMAKE_CROSSCOMPILING=1 -DENABLE_HWLOC=0 -DHOST_DEVICE_BUILD_HASH=cross1245 -DENABLE_HOST_CPU_DEVICES=1 -DENABLE_LLVM=0 -DENABLE_ICD=0
+          elif [ "${{ matrix.config }}" == "accel" ]; then
+            runCMake -DENABLE_ALMAIF_DEVICE=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_LLVM=0 -DENABLE_HOST_CPU_DEVICES=0
+          elif [ "${{ matrix.config }}" == "no_llvm_no_debug" ]; then
+            runCMake -DHOST_DEVICE_BUILD_HASH=1234567 -DENABLE_LLVM=0 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DPOCL_DEBUG_MESSAGES:BOOL=OFF
+          elif [ "${{ matrix.config }}" == "proxy" ]; then
+            runCMake -DENABLE_PROXY_DEVICE=1 -DENABLE_PROXY_DEVICE_INTEROP=1 -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LLVM=0 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DVISIBILITY_HIDDEN=0
+          else
+            echo "Unknown configuration" && exit 1
+          fi
+
+      - name: Build PoCL
+        id: build_pocl
+        timeout-minutes: 30
+        run: |
+          cd ${{ github.workspace }}/build && make -j$(nproc)
