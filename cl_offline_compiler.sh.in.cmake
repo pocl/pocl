@@ -178,6 +178,10 @@ if [ -e "${CL_DEV_INFO}" ]; then
     DEV_VER=200
   elif [[ "$CL_DEVICE_VERSION" =~ "OpenCL 1.2" ]]; then
     DEV_VER=120
+  elif [[ "$CL_DEVICE_VERSION" =~ "OpenCL 1.1" ]]; then
+    DEV_VER=110
+  elif [[ "$CL_DEVICE_VERSION" =~ "OpenCL 1.0" ]]; then
+    DEV_VER=100
   else
     echo "unknown device version: ${CL_DEVICE_VERSION}"
     exit 1
@@ -194,6 +198,10 @@ if [ -e "${CL_DEV_INFO}" ]; then
     DEV_C_VER=200
   elif [[ "$CL_STD" =~ "CL1.2" ]]; then
     DEV_C_VER=120
+  elif [[ "$CL_STD" =~ "CL1.1" ]]; then
+    DEV_C_VER=110
+  elif [[ "$CL_STD" =~ "CL1.0" ]]; then
+    DEV_C_VER=100
   else
     echo "unknown device C version: ${CL_STD}"
     exit 1
@@ -242,9 +250,9 @@ if [ "$DEBUG" = "true" ]; then
   echo "OUTPUT: ${OUTPUT}"
 fi
 
-ALL_OPTIONS="--target=${TARGET} -x cl ${CL_STD} ${BUILD_OPTIONS} -o ${TEMP_BC_FILE} -emit-llvm -c ${SOURCE}"
+ALL_OPTIONS="--target=${TARGET} -x cl ${CL_STD} -cl-opt-disable ${BUILD_OPTIONS} -o ${TEMP_BC_FILE} -emit-llvm -c ${SOURCE}"
 
-LLVM_SPIRV_OPTIONS="--spirv-gen-kernel-arg-name-md ${SPIRV_ENV} --spirv-max-version=1.2 -o ${TEMP_SPV_FILE} ${TEMP_BC_FILE}"
+LLVM_SPIRV_OPTIONS="--spirv-gen-kernel-arg-name-md --spirv-max-version=1.2 -o ${TEMP_SPV_FILE} ${TEMP_BC_FILE}"
 
 if [ "$DEBUG" = "true" ]; then
   echo "Running @CLANG@ ${ALL_OPTIONS}"
