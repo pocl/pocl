@@ -141,6 +141,11 @@ if [ -e "${CL_DEV_INFO}" ]; then
       CL_EXTS="${CL_EXTS},+__opencl_c_images"
     fi
     CL_EXT_DEFS="${CL_EXT_DEFS} -D__IMAGE_SUPPORT__=1"
+  else
+    if [ "$CL_IS_30" = "true" ]; then
+      CL_EXTS="${CL_EXTS},-__opencl_c_images"
+    fi
+    CL_EXT_DEFS="${CL_EXT_DEFS} -U__IMAGE_SUPPORT__ -D__undef___opencl_c_read_write_images"
   fi
 
   if [ "$CL_FAST_MATH" = "true" ]; then
