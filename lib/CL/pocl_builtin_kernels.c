@@ -444,7 +444,8 @@ pocl_clone_builtin_kernel_metadata (cl_device_id dev,
 
   memcpy (target, (pocl_kernel_metadata_t *)source,
           sizeof (pocl_kernel_metadata_t));
-  target->name = strdup (source->name);
+  target->name = strdup (
+      "<internal-error: DBKs are meant to be named by the application>");
   target->arg_info = (struct pocl_argument_info *)calloc (
     source->num_args, sizeof (struct pocl_argument_info));
   memset (target->arg_info, 0,

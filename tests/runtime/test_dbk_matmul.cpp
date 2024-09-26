@@ -197,10 +197,11 @@ void doFloatMatmul(bool ColumnMajor, unsigned Transpose, unsigned M, unsigned N,
   MatmulAttrs.kernel_props[0] = 0;
   memset(MatmulAttrs.kernel_props, 0, sizeof(MatmulAttrs.kernel_props));
 
+  constexpr const char ExpextedKernelName[] = "my_matmul";
   cl_int Status;
   cl_device_id Devices[1] = {Dev()};
   BuiltinKernelId IDs[1] = {BuiltinKernelId::POCL_CDBI_DBK_EXP_MATMUL};
-  const char *Names[1] = {"exp_matmul"};
+  const char *Names[1] = {ExpextedKernelName};
   cl_int DeviceStatus[1] = {0};
   cl_dbk_attributes_exp_matmul *Attrs[1] = {&MatmulAttrs};
   cl_program Yolo =
@@ -212,8 +213,12 @@ void doFloatMatmul(bool ColumnMajor, unsigned Transpose, unsigned M, unsigned N,
   Status = MatmulProg.build();
   EXPECT(Status == CL_SUCCESS);
 
-  auto MatmulKernel = cl::Kernel(MatmulProg, Names[0], &Status);
+  auto MatmulKernel = cl::Kernel(MatmulProg, ExpextedKernelName, &Status);
   EXPECT(Status == CL_SUCCESS);
+
+  std::string ActualKernelName =
+      MatmulKernel.getInfo<CL_KERNEL_FUNCTION_NAME>();
+  EXPECT(ActualKernelName == ExpextedKernelName);
 
   auto ATensor = createTensor(Ctx, ATDesc, AData.begin(), &Status);
   EXPECT(Status == CL_SUCCESS);
