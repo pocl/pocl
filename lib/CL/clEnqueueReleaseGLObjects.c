@@ -23,6 +23,7 @@
 
 #include <assert.h>
 #include "pocl_util.h"
+#include "pocl_mem_management.h"
 
 CL_API_ENTRY cl_int CL_API_CALL POname (clEnqueueReleaseGLObjects) (
     cl_command_queue command_queue, cl_uint num_mem_objects,
@@ -39,13 +40,17 @@ CL_API_ENTRY cl_int CL_API_CALL POname (clEnqueueReleaseGLObjects) (
   POCL_RETURN_ERROR_COND ((num_mem_objects == 0), CL_INVALID_VALUE);
   POCL_RETURN_ERROR_COND ((mem_objects == NULL), CL_INVALID_VALUE);
 
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
+                          CL_DEVICE_NOT_AVAILABLE);
+
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
                                         event_wait_list);
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  char *rdonly = (char *)alloca (num_mem_objects * sizeof (char));
-  cl_mem *copy = (cl_mem *)alloca (num_mem_objects * sizeof (cl_mem));
+  pocl_buffer_migration_info *migr_infos = NULL;
 
   for (i = 0; i < num_mem_objects; ++i)
     {
@@ -72,18 +77,17 @@ CL_API_ENTRY cl_int CL_API_CALL POname (clEnqueueReleaseGLObjects) (
       ++released;
 
       // TODO
-      rdonly[i] = (mem_objects[i]->flags & CL_MEM_READ_ONLY) ? 1 : 0;
-      copy[i] = mem_objects[i];
+      char rdonly = (mem_objects[i]->flags & CL_MEM_READ_ONLY) ? 1 : 0;
+      cl_mem m = mem_objects[i];
+
+      pocl_append_unique_migration_info (migr_infos, m, rdonly);
 
       POCL_UNLOCK_OBJ (mem_objects[i]);
     }
 
-  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
-                          CL_DEVICE_NOT_AVAILABLE);
-
   errcode = pocl_create_command (
       &cmd, command_queue, CL_COMMAND_RELEASE_GL_OBJECTS, event,
-      num_events_in_wait_list, event_wait_list, num_mem_objects, copy, rdonly);
+      num_events_in_wait_list, event_wait_list, migr_infos);
 
   if (errcode != CL_SUCCESS)
     goto ERROR;

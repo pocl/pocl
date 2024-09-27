@@ -1623,12 +1623,17 @@ pocl_proxy_notify_event_finished (cl_event event)
 static void
 pocl_proxy_enque_acquire_gl (void *data, cl_command_queue cq,
                              _cl_command_node *node, unsigned global_mem_id,
-                             size_t num_objs, cl_mem *objs)
+                             pocl_buffer_migration_info *migr_infos)
 {
+  size_t num_objs = 0;
+  pocl_buffer_migration_info *tmp = NULL;
+  LL_FOREACH(migr_infos, tmp) ++num_objs;
+
   cl_mem *proxy_objs = (cl_mem *)alloca (num_objs * sizeof (cl_mem));
-  size_t i;
-  for (i = 0; i < num_objs; ++i)
-    proxy_objs[i] = (cl_mem)objs[i]->device_ptrs[global_mem_id].mem_ptr;
+  size_t i = 0;
+  LL_FOREACH(migr_infos, tmp) {
+    proxy_objs[i++] = (cl_mem)tmp->buffer->device_ptrs[global_mem_id].mem_ptr;
+  }
 
 #ifdef ENABLE_EGL_INTEROP
   ENQUEUE (
@@ -1642,12 +1647,17 @@ pocl_proxy_enque_acquire_gl (void *data, cl_command_queue cq,
 static void
 pocl_proxy_enque_release_gl (void *data, cl_command_queue cq,
                              _cl_command_node *node, unsigned global_mem_id,
-                             size_t num_objs, cl_mem *objs)
+                             pocl_buffer_migration_info *migr_infos)
 {
+  size_t num_objs = 0;
+  pocl_buffer_migration_info *tmp = NULL;
+  LL_FOREACH(migr_infos, tmp) ++num_objs;
+
   cl_mem *proxy_objs = (cl_mem *)alloca (num_objs * sizeof (cl_mem));
-  size_t i;
-  for (i = 0; i < num_objs; ++i)
-    proxy_objs[i] = (cl_mem)objs[i]->device_ptrs[global_mem_id].mem_ptr;
+  size_t i = 0;
+  LL_FOREACH(migr_infos, tmp) {
+    proxy_objs[i++] = (cl_mem)tmp->buffer->device_ptrs[global_mem_id].mem_ptr;
+  }
 
 #ifdef ENABLE_EGL_INTEROP
   ENQUEUE (
@@ -2277,36 +2287,36 @@ proxy_exec_command (_cl_command_node *node, cl_device_id dev,
     case CL_COMMAND_ACQUIRE_GL_OBJECTS:
     case CL_COMMAND_ACQUIRE_EGL_OBJECTS_KHR:
       pocl_proxy_enque_acquire_gl (d, cq_id, node, dev->global_mem_id,
-                                   event->num_buffers, event->mem_objs);
+                                   node->migr_infos);
       goto FINISH_COMMAND;
 
     case CL_COMMAND_RELEASE_GL_OBJECTS:
     case CL_COMMAND_RELEASE_EGL_OBJECTS_KHR:
       pocl_proxy_enque_release_gl (d, cq_id, node, dev->global_mem_id,
-                                   event->num_buffers, event->mem_objs);
+                                   node->migr_infos);
       goto FINISH_COMMAND;
 #endif
 
     case CL_COMMAND_READ_BUFFER:
       pocl_proxy_enque_read (
         d, cq_id, node, cmd->read.dst_host_ptr,
-        &POCL_MEM_BS (cmd->read.src)->device_ptrs[dev->global_mem_id],
+        &cmd->read.src->device_ptrs[dev->global_mem_id],
         cmd->read.src, cmd->read.offset, cmd->read.size);
       goto FINISH_COMMAND;
 
     case CL_COMMAND_WRITE_BUFFER:
       pocl_proxy_enque_write (
         d, cq_id, node, cmd->write.src_host_ptr,
-        &POCL_MEM_BS (cmd->write.dst)->device_ptrs[dev->global_mem_id],
+        &cmd->write.dst->device_ptrs[dev->global_mem_id],
         cmd->write.dst, cmd->write.offset, cmd->write.size);
       goto FINISH_COMMAND;
 
     case CL_COMMAND_COPY_BUFFER:
       pocl_proxy_enque_copy (
         d, cq_id, node,
-        &POCL_MEM_BS (cmd->copy.dst)->device_ptrs[dev->global_mem_id],
+        &cmd->copy.dst->device_ptrs[dev->global_mem_id],
         cmd->copy.dst,
-        &POCL_MEM_BS (cmd->copy.src)->device_ptrs[dev->global_mem_id],
+        &cmd->copy.src->device_ptrs[dev->global_mem_id],
         cmd->copy.src, cmd->copy.dst_offset, cmd->copy.src_offset,
         cmd->copy.size);
       goto FINISH_COMMAND;
@@ -2352,7 +2362,7 @@ proxy_exec_command (_cl_command_node *node, cl_device_id dev,
     case CL_COMMAND_MAP_BUFFER:
       pocl_proxy_enque_map_mem (
         d, cq_id, node,
-        &POCL_MEM_BS (cmd->map.buffer)->device_ptrs[dev->global_mem_id],
+        &cmd->map.buffer->device_ptrs[dev->global_mem_id],
         cmd->map.buffer, cmd->map.mapping);
       goto FINISH_COMMAND;
 

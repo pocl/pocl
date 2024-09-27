@@ -55,7 +55,7 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateFromEGLImageKHR) (
   assert (properties == NULL);
 
   return pocl_create_image_internal (context, flags, &format, &desc, NULL,
-                                     errcode_ret, display, image);
+                                     errcode_ret, 0, 0, 0, display, image);
 
 #else
 
