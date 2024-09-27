@@ -143,8 +143,44 @@ ParallelRegion *Kernel::createParallelRegionBefore(llvm::BasicBlock *B) {
   }
   assert(BlocksInRegion.count(OrigEntry) != 0);
 
-  // We got all the blocks in a region, create it.
-  return ParallelRegion::Create(BlocksInRegion, OrigEntry, Exit);
+  // Ensure we have a unique PR entry block without phis where all the context
+  // restore code will be added and which acts as a unique landing pad from
+  // other PRs.
+  BasicBlock *PREntry = BasicBlock::Create(
+      OrigEntry->getContext(),
+      "parallel_region_" + std::to_string(ParallelRegion::getNextID()) +
+          "_entry",
+      OrigEntry->getParent(), OrigEntry);
+
+  IRBuilder<> Builder(PREntry);
+  Builder.CreateBr(OrigEntry);
+
+  // Does it have a jump to the next block?
+  BlocksInRegion.insert(PREntry);
+  std::set<BasicBlock *> Preds;
+  for (pred_iterator PI = pred_begin(OrigEntry), PE = pred_end(OrigEntry);
+       PI != PE; ++PI) {
+    Preds.insert(*PI);
+  }
+  // There can be many predecessor basic blocks to the region,
+  // fix all the predecessor blocks from other regions to jump to the region
+  // entry. Note: a special case is the intra-PR-loop case where the header node
+  // is the loop header. In that case get incoming branches to the
+  // entry from inside the PR.
+  for (BasicBlock *PredBB : Preds) {
+    if (BlocksInRegion.count(PredBB) > 0)
+      continue; // Must be an intra-PR loop backedge source.
+
+    // Fix the branch of the predecessor to point to the new entry.
+    BranchInst *BR = cast<BranchInst>(PredBB->getTerminator());
+    for (unsigned Suc = 0; Suc < BR->getNumSuccessors(); ++Suc)
+      if (BR->getSuccessor(Suc) == OrigEntry)
+        BR->setSuccessor(Suc, PREntry);
+    OrigEntry->replacePhiUsesWith(PredBB, PREntry);
+  }
+  assert(PREntry != nullptr);
+
+  return ParallelRegion::Create(BlocksInRegion, PREntry, Exit);
 }
 
 static void addPredecessors(SmallVectorImpl<BasicBlock *> &V, BasicBlock *BB) {
@@ -193,11 +229,18 @@ void Kernel::getParallelRegions(
       for (pred_iterator i = pred_begin(Entry), e = pred_end(Entry);
            i != e; ++i) {
         BasicBlock *Barrier = (*i);
+        // Check if we have found barriers that start new parallel regions.
+        if (!found_barriers.count(Barrier))
+          exit_blocks.push_back(Barrier);
+#if 0
+        // This should be now obsolete thanks to the dedicated entry block
+        // added always to the beginning of the parallel region. It should
+        // never be a k-loop entry block.
         if (!found_barriers.count(Barrier)) {
-          /* If this is a loop header block we might have edges from two 
-             unprocessed barriers. The one inside the loop (coming from a 
-             computation block after a branch block) should be processed 
-             first. */
+          // If this is a loop header block we might have edges from two
+          // unprocessed barriers. The one inside the loop (coming from a
+          // computation block after a branch block) should be processed
+          // first.
           std::string bbName = "";
           bool IsInTheSameLoop =
               LI.getLoopFor(Barrier) != NULL && LI.getLoopFor(Entry) != NULL &&
@@ -226,8 +269,10 @@ void Kernel::getParallelRegions(
             }
           ++found_predecessors;
         }
+#endif
       }
 
+#if 0
       if (loop_barrier != NULL)
         {
           /* The secondary barrier to process in case it was a loop
@@ -236,8 +281,10 @@ void Kernel::getParallelRegions(
             exit_blocks.push_back(exit);
           /* always process the inner loop regions first */
           if (!found_barriers.count(loop_barrier))
-            exit = loop_barrier; 
+            exit = loop_barrier;
+          loop_barrier = NULL;
         }
+#endif
 
 #ifdef DEBUG_PR_CREATION
       std::cout << "### created a ParallelRegion:" << std::endl;
