@@ -186,6 +186,21 @@ This Sphinx documentation can be built by::
 
 This builds the html version of the documents under the 'build/html' directory.
 
+Documenting Code
+^^^^^^^^^^^^^^^^
+
+Code comments should be done C99 style (so "/\* ... \*/") in C files and C++ style
+("//") in C++ files. Doxygen documentation above functions should follow the
+LLVM practises described `here
+<https://llvm.org/docs/CodingStandards.html#doxygen-use-in-documentation-comments>`_.
+Do keep in mind that for C files the Doxygen documentation should be created with "/\*\*"
+but use the "\\" prefix Doxygen commands, e.g. "\\param". It is also possible to
+generate a Doxygen documentation page by configuring CMake with: `ENABLE_DOXYGEN=YES`
+and then running::
+
+    cd <build dir>
+    make gen_doc
+    make open_doc
 
 .. _maintenance-policy:
 
