@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2011 Universidad Rey Juan Carlos
 //               2012-2019 Pekka Jääskeläinen
+//               2024 Pekka Jääskeläinen / Intel Finland Oy
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -76,18 +77,18 @@ static bool processLoopWithBarriers(Loop &L, llvm::DominatorTree &DT,
         assert((Preheader != NULL) && "Non-canonicalized loop found!\n");
 #ifdef DEBUG_LOOP_BARRIERS
         std::cerr << "### adding to preheader BB" << std::endl;
-        preheader->dump();
+        Preheader->dump();
         std::cerr << "### before instr" << std::endl;
-        preheader->getTerminator()->dump();
+        Preheader->getTerminator()->dump();
 #endif
-        Barrier::Create(Preheader->getTerminator());
+        Barrier::create(Preheader->getTerminator());
         Preheader->setName(Preheader->getName() + ".loopbarrier");
 
         // Add a barrier after the PHI nodes on the header (the replicated
         // headers will be merged afterwards).
         BasicBlock *Header = L.getHeader();
         if (Header->getFirstNonPHI() != &Header->front()) {
-          Barrier::Create(Header->getFirstNonPHI());
+          Barrier::create(Header->getFirstNonPHI());
           Header->setName(Header->getName() + ".phibarrier");
           // Split the block to  create a replicable region of
           // the loop contents in case the phi node contains a
@@ -101,7 +102,7 @@ static bool processLoopWithBarriers(Loop &L, llvm::DominatorTree &DT,
         // after the exit decision.
         BasicBlock *BrExit = L.getExitingBlock();
         if (BrExit != NULL) {
-          Barrier::Create(BrExit->getTerminator());
+          Barrier::create(BrExit->getTerminator());
           BrExit->setName(BrExit->getName() + ".brexitbarrier");
         }
 
@@ -109,7 +110,7 @@ static bool processLoopWithBarriers(Loop &L, llvm::DominatorTree &DT,
         if (Latch != NULL && BrExit != Latch) {
           // This loop has only one latch. Do not check for dominance, we
           // are probably running before BTR.
-          Barrier::Create(Latch->getTerminator());
+          Barrier::create(Latch->getTerminator());
           Latch->setName(Latch->getName() + ".latchbarrier");
           return true;
         }
@@ -129,10 +130,10 @@ static bool processLoopWithBarriers(Loop &L, llvm::DominatorTree &DT,
           if (L.contains(N)) {
             Latch2 = N;
             // Latch found in the loop, see if the barrier dominates it
-            // (otherwise if might no even belong to this "tail", see
+            // (otherwise if might not even belong to this "tail", see
             // forifbarrier1 graph test).
             if (DT.dominates(j->getParent(), Latch2)) {
-              Barrier::Create(Latch2->getTerminator());
+              Barrier::create(Latch2->getTerminator());
               Latch2->setName(Latch2->getName() + ".latchbarrier");
             }
           }
@@ -150,18 +151,16 @@ static bool processLoop(Loop &L, llvm::DominatorTree &DT,
   if (Barrier::IsLoopWithBarrier(L))
     return processLoopWithBarriers(L, DT, VUA);
 
-  bool Changed = false;
-
   // This is a loop without a barrier. Ensure we have a non-barrier
-  // block as a preheader so we capture the loop as a whole to the
-  // parallel region.
+  // block as a preheader so we can replicate the loop as a whole.
   //
   // If the block has proper instructions after the barrier, it
   // will be split in CanonicalizeBarriers.
   //
   // Also attempt to isolate the loop with barriers to create the
   // WI loop around it in order to produce a nicely well-formed
-  // WI-loop + K-loop hierarchy for the loop-interchange to analyze.
+  // WI-loop + K-loop hierarchy for the loop-interchange and loop
+  // vectorizer to optimize.
 
   // Include all the layers in a multi-level loop without barriers
   // in the region. Thus, do the handling only for the outermost
@@ -185,7 +184,13 @@ static bool processLoop(Loop &L, llvm::DominatorTree &DT,
       return true;
   }
 
-  return Changed;
+
+#ifdef DEBUG_LOOP_BARRIERS
+  std::cerr << "After LoopBarriers:" << std::endl;
+  Preheader->getParent()->dump();
+#endif
+
+  return false;
 }
 
 llvm::PreservedAnalyses LoopBarriers::run(llvm::Loop &L,
@@ -194,6 +199,11 @@ llvm::PreservedAnalyses LoopBarriers::run(llvm::Loop &L,
                                           llvm::LPMUpdater &U) {
 
   Function *K = L.getHeader()->getParent();
+
+#ifdef DEBUG_LOOP_BARRIERS
+  std::cerr << "Before LoopBarriers:" << std::endl;
+  K->dump();
+#endif
 
   if (!isKernelToProcess(*K))
     return PreservedAnalyses::all();

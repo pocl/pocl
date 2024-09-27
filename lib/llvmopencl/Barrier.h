@@ -63,17 +63,19 @@ namespace pocl {
       return false;
     }
 
-    /**
-     * Creates a new barrier before the given instruction.
-     *
-     * If there was already a barrier there, returns the old one.
-     */
-    static Barrier *Create(llvm::Instruction *InsertBefore) {
+    /// Ensures there is a barrier call in the basic block before the given
+    /// instruction.
+    ///
+    /// Otherwise, creates a new one there.
+    ///
+    /// \returns The barrier.
+    static Barrier *create(llvm::Instruction *InsertBefore) {
       llvm::Module *M = InsertBefore->getParent()->getParent()->getParent();
 
       if (InsertBefore != &InsertBefore->getParent()->front() &&
           llvm::isa<Barrier>(InsertBefore->getPrevNode()))
         return llvm::cast<Barrier>(InsertBefore->getPrevNode());
+
       llvm::FunctionCallee FC =
         M->getOrInsertFunction(BARRIER_FUNCTION_NAME,
                                 llvm::Type::getVoidTy(M->getContext()));
@@ -82,6 +84,7 @@ namespace pocl {
       return llvm::cast<pocl::Barrier>
         (llvm::CallInst::Create(F, "", InsertBefore));
     }
+
     static bool classof(const Barrier *) { return true; }
     static bool classof(const llvm::CallInst *C) {
       return C->getCalledFunction() != NULL &&
@@ -104,13 +107,11 @@ namespace pocl {
       return endsWithBarrier(BB) && BB->size() == 2;
     }
 
-    static bool hasBarrier(const llvm::BasicBlock *BB)
-    {
+    static bool hasBarrier(const llvm::BasicBlock *BB) {
       for (llvm::BasicBlock::const_iterator I = BB->begin(), E = BB->end();
            I != E; ++I)
-        {
-          if (llvm::isa<Barrier>(I)) return true;
-        }
+        if (llvm::isa<Barrier>(I))
+          return true;
       return false;
     }
 

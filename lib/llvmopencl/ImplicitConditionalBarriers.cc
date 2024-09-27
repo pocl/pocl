@@ -1,18 +1,19 @@
 // LLVM function pass that adds implicit barriers to branches where it sees
 // beneficial (and legal).
-// 
+//
 // Copyright (c) 2013 Pekka Jääskeläinen / TUT
-// 
+//               2024 Pekka Jääskeläinen / Intel Finland Oy
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -42,7 +43,7 @@ POP_COMPILER_DIAGS
 
 #include "pocl.h"
 
-//#define DEBUG_COND_BARRIERS
+// #define DEBUG_COND_BARRIERS
 
 #define PASS_NAME "implicit-cond-barriers"
 #define PASS_CLASS pocl::ImplicitConditionalBarriers
@@ -71,14 +72,36 @@ static BasicBlock *firstNonBackedgePredecessor(llvm::BasicBlock *BB,
     return *I;
 }
 
-static bool implicitConditionalBarriers(Function &F,
-                                        llvm::PostDominatorTree &PDT,
-                                        llvm::DominatorTree &DT) {
+llvm::PreservedAnalyses
+ImplicitConditionalBarriers::run(llvm::Function &F,
+                                 llvm::FunctionAnalysisManager &FAM) {
+
+  if (!isKernelToProcess(F))
+    return PreservedAnalyses::all();
+
+  if (!hasWorkgroupBarriers(F))
+    return PreservedAnalyses::all();
+
+  WorkitemHandlerType WIH = FAM.getResult<WorkitemHandlerChooser>(F).WIH;
+  if (WIH == WorkitemHandlerType::CBS)
+    return PreservedAnalyses::all();
+
+  llvm::PostDominatorTree &PDT = FAM.getResult<PostDominatorTreeAnalysis>(F);
+  llvm::DominatorTree &DT = FAM.getResult<DominatorTreeAnalysis>(F);
+  llvm::LoopInfo &LI = FAM.getResult<LoopAnalysis>(F);
+
+  PreservedAnalyses PAChanged = PreservedAnalyses::none();
+  PAChanged.preserve<VariableUniformityAnalysis>();
+  PAChanged.preserve<WorkitemHandlerChooser>();
+  PAChanged.preserve<LoopAnalysis>();
 
   typedef std::vector<BasicBlock*> BarrierBlockIndex;
   BarrierBlockIndex ConditionalBarriers;
 
-  // Required hack. See the docs of removeUnreachableSwitchCases
+  bool Changed = false;
+
+  // Required workaround hack. See the documentation of
+  // removeUnreachableSwitchCases().
   DT.reset();
   PDT.reset();
   removeUnreachableSwitchCases(F);
@@ -90,26 +113,27 @@ static bool implicitConditionalBarriers(Function &F,
     if (!Barrier::hasBarrier(BB)) continue;
 
     // Unconditional barrier postdominates the entry node.
-    if (PDT.dominates(BB, &F.getEntryBlock()))
-      continue;
-
+    if (PDT.dominates(BB, &F.getEntryBlock())) {
 #ifdef DEBUG_COND_BARRIERS
-    std::cerr << "### found a conditional barrier:\n";
-    BB->dump();
+      std::cerr << "### BB postdominates the entry block" << std::endl;
+      BB->dump();
 #endif
+      continue;
+    }
     ConditionalBarriers.push_back(BB);
   }
 
-  if (ConditionalBarriers.size() == 0)
-    return true;
-
-  bool Changed = false;
   for (BarrierBlockIndex::const_iterator i = ConditionalBarriers.begin();
        i != ConditionalBarriers.end(); ++i) {
     BasicBlock *BB = *i;
+#ifdef DEBUG_COND_BARRIERS
+    std::cerr << "### handling a conditional barrier in basic block:\n";
+    BB->dump();
+#endif
     // Trace upwards from the barrier until one encounters another
-    // barrier or the split point that makes the barrier conditional. 
-    // In case of the latter, add a new barrier to both branches of the split point. 
+    // barrier or the split point that makes the barrier conditional.
+    // In case of the latter, add a new barrier to both branches of the split
+    // point.
 
     // BB before which to inject the barrier.
     BasicBlock *Pos = BB;
@@ -143,7 +167,7 @@ static bool implicitConditionalBarriers(Function &F,
     // TODO: investigate. It might related to the alloca-converted
     // PHIs. It has a loop that is autoconverted to a b-loop and the
     // conditional barrier is inserted after the loop short cut check.
-    Barrier::Create(Pos->getFirstNonPHI());
+    Barrier::create(Pos->getFirstNonPHI());
 
     Changed = true;
 
@@ -152,45 +176,23 @@ static bool implicitConditionalBarriers(Function &F,
     Pos->dump();
 #endif
     if (BasicBlock *Source = Pos->getSinglePredecessor()) {
-      Barrier::Create(Source->getTerminator());
+      Barrier::create(Source->getTerminator());
 #ifdef DEBUG_COND_BARRIERS
-      std::cerr
-          << "### added an implicit barrier to the source of the BB as well"
-          << std::endl;
+      std::cerr << "### added an implicit barrier to a source of the BB as well"
+                << std::endl;
       Source->dump();
 #endif
     }
   }
-  return Changed;
-}
 
+#ifdef DEBUG_COND_BARRIERS
+  std::cerr << "### After implicit conditional barrier handling:" << std::endl;
+  F.dump();
+#endif
 
-llvm::PreservedAnalyses
-ImplicitConditionalBarriers::run(llvm::Function &F,
-                                 llvm::FunctionAnalysisManager &FAM) {
-
-  if (!isKernelToProcess(F))
-    return PreservedAnalyses::all();
-
-  if (!hasWorkgroupBarriers(F))
-    return PreservedAnalyses::all();
-
-  WorkitemHandlerType WIH = FAM.getResult<WorkitemHandlerChooser>(F).WIH;
-  if (WIH == WorkitemHandlerType::CBS)
-    return PreservedAnalyses::all();
-
-  llvm::PostDominatorTree &PDT = FAM.getResult<PostDominatorTreeAnalysis>(F);
-  llvm::DominatorTree &DT = FAM.getResult<DominatorTreeAnalysis>(F);
-
-  PreservedAnalyses PAChanged = PreservedAnalyses::none();
-  PAChanged.preserve<VariableUniformityAnalysis>();
-  PAChanged.preserve<WorkitemHandlerChooser>();
-
-  return implicitConditionalBarriers(F, PDT, DT) ? PAChanged
-                                                 : PreservedAnalyses::all();
+  return Changed ? PAChanged : PreservedAnalyses::all();
 }
 
 REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
 
 } // namespace pocl

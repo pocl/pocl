@@ -112,11 +112,11 @@ class Kernel;
                        std::size_t y = 0,
                        std::size_t z = 0);
 
-    void AddParallelLoopMetadata
-        (llvm::MDNode *Identifier,
-         std::function<bool(llvm::Instruction *)> IsLoadUnconditionallySafe);
+    void addParallelLoopMetadata(
+        llvm::MDNode *Identifier,
+        std::function<bool(llvm::Instruction *)> IsLoadUnconditionallySafe);
 
-    bool HasBlock(llvm::BasicBlock *bb);
+    bool hasBlock(llvm::BasicBlock *Block);
 
     void InjectRegionPrintF();
     void InjectVariablePrintouts();
@@ -131,11 +131,14 @@ class Kernel;
 
     static void GenerateTempNames(llvm::BasicBlock *bb);
 
-    llvm::Instruction *getOrCreateIDLoad(std::string IDGlobalName);
+    llvm::Instruction *getOrCreateIDLoad(std::string IDGlobalName,
+                                         llvm::Instruction *Before = nullptr);
 
     void LocalizeIDLoads();
 
-    int GetID() const { return pRegionId; }
+    int getID() const { return pRegionId; }
+
+    static int getNextID() { return idGen; }
 
   private:
     BBContainer BBs_;
