@@ -153,17 +153,6 @@ static void addPredecessors(SmallVectorImpl<BasicBlock *> &V, BasicBlock *BB) {
   }
 }
 
-static bool
-verify_no_barriers(const BasicBlock *B)
-{
-  for (BasicBlock::const_iterator i = B->begin(), e = B->end(); i != e; ++i) {
-    if (isa<Barrier>(i))
-      return false;
-  }
-
-  return true;
-}
-
 /**
  * The main entry to the "parallel region formation" which searches for regions
  * of basic blocks between barriers that can be freely parallelized across

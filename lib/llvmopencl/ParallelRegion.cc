@@ -757,33 +757,28 @@ ParallelRegion::InjectRegionPrintF()
 
 }
 
-/**
- * Adds a printf to the end of the parallel region that prints the
- * hex contents of all named non-pointer variables.
- *
- * Useful for debugging data flow bugs.
- */
-void
-ParallelRegion::InjectVariablePrintouts()
-{
-  for (ParallelRegion::iterator i = begin();
-       i != end(); ++i)
-    {
-      llvm::BasicBlock *bb = *i;
-      for (llvm::BasicBlock::iterator instr = bb->begin();
-           instr != bb->end(); ++instr) 
-        {
-          llvm::Instruction *instruction = &*instr;
-          if (isa<PointerType>(instruction->getType()) ||
-              !instruction->hasName()) continue;
-          std::string name = instruction->getName().str();
-          std::vector<Value*> args;
-          IRBuilder<> builder(exitBB()->getTerminator());
-          args.push_back(builder.CreateGlobalString(name));
-          args.push_back(instruction);
-          InjectPrintF(instruction->getParent()->getTerminator(), "variable %s == %x\n", args);
-        }
+/// Adds a printf to the end of the parallel region that prints the
+/// hex contents of all named non-pointer variables.
+///
+/// Useful for debugging data flow bugs.
+///
+void ParallelRegion::InjectVariablePrintouts() {
+  for (ParallelRegion::iterator i = begin(); i != end(); ++i) {
+    llvm::BasicBlock *BB = *i;
+    for (llvm::BasicBlock::iterator Instr = BB->begin(); Instr != BB->end();
+         ++Instr) {
+      llvm::Instruction *Instruction = &*Instr;
+      if (isa<PointerType>(Instruction->getType()) || !Instruction->hasName())
+        continue;
+      std::string Name = Instruction->getName().str();
+      std::vector<Value *> Args;
+      IRBuilder<> Builder(exitBB()->getTerminator());
+      Args.push_back(Builder.CreateGlobalString(Name));
+      Args.push_back(Instruction);
+      InjectPrintF(Instruction->getParent()->getTerminator(),
+                   "variable %s == %x\n", Args);
     }
+  }
 }
 
 /**
