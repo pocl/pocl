@@ -1,7 +1,7 @@
 # PoCL Security Policy
 
-PoCL developers are committed to the highest level of quality related especially
-related to security issues in the main branch that forms the basis for PoCL releases.
+PoCL developers are committed to the highest level of quality especially related
+to security issues in the main branch that forms the basis for PoCL releases.
 This security policy outlines the methods and steps taken to handle security issues.
 
 ## Types of Issues Considered Security Issues
