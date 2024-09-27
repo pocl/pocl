@@ -610,20 +610,46 @@ llvm::Instruction *
 ParallelRegion::getOrCreateIDLoad(std::string IDGlobalName,
                                   llvm::Instruction *Before) {
 
-    if (IDLoadInstrs.find(IDGlobalName) != IDLoadInstrs.end())
-      return IDLoadInstrs[IDGlobalName];
+  Module *M = entryBB()->getParent()->getParent();
 
-    llvm::Type *ST = SizeT(entryBB()->getParent()->getParent());
+  llvm::Type *ST = SizeT(M);
+  GlobalVariable *IDGlobal =
+      cast<GlobalVariable>(M->getOrInsertGlobal(IDGlobalName, ST));
 
-    GlobalVariable *Ptr = cast<GlobalVariable>(
-        entryBB()->getParent()->getParent()->getOrInsertGlobal(IDGlobalName,
-                                                               ST));
+  if (Before != nullptr) {
+    // Try to find one in the same BB.
+    BasicBlock *BB = Before->getParent();
+    for (auto &I : *BB) {
+      Instruction *BBInst = &I;
 
-    IRBuilder<> Builder(entryBB()->getFirstNonPHI());
+      if (BBInst == Before) {
+        // Didn't find one before it. Create one.
+        IRBuilder<> Builder(Before);
+        return Builder.CreateLoad(ST, IDGlobal);
+      }
 
-    Instruction *IDLoad = Builder.CreateLoad(ST, Ptr);
-    IDLoadInstrs[IDGlobalName] = IDLoad;
-    return IDLoad;
+      LoadInst *Load = dyn_cast<LoadInst>(BBInst);
+      if (Load == nullptr)
+        continue;
+      GlobalVariable *Global =
+          dyn_cast<GlobalVariable>(Load->getPointerOperand());
+      if (Global == IDGlobal)
+        return Load;
+    }
+  }
+
+  // Otherwise, create one to the parallel region entry.
+  if (IDLoadInstrs.find(IDGlobalName) != IDLoadInstrs.end())
+    return IDLoadInstrs[IDGlobalName];
+
+  GlobalVariable *Ptr =
+      cast<GlobalVariable>(M->getOrInsertGlobal(IDGlobalName, ST));
+
+  IRBuilder<> Builder(entryBB()->getFirstNonPHI());
+
+  Instruction *IDLoad = Builder.CreateLoad(ST, IDGlobal);
+  IDLoadInstrs[IDGlobalName] = IDLoad;
+  return IDLoad;
 }
 
 void
@@ -731,33 +757,28 @@ ParallelRegion::InjectRegionPrintF()
 
 }
 
-/**
- * Adds a printf to the end of the parallel region that prints the
- * hex contents of all named non-pointer variables.
- *
- * Useful for debugging data flow bugs.
- */
-void
-ParallelRegion::InjectVariablePrintouts()
-{
-  for (ParallelRegion::iterator i = begin();
-       i != end(); ++i)
-    {
-      llvm::BasicBlock *bb = *i;
-      for (llvm::BasicBlock::iterator instr = bb->begin();
-           instr != bb->end(); ++instr) 
-        {
-          llvm::Instruction *instruction = &*instr;
-          if (isa<PointerType>(instruction->getType()) ||
-              !instruction->hasName()) continue;
-          std::string name = instruction->getName().str();
-          std::vector<Value*> args;
-          IRBuilder<> builder(exitBB()->getTerminator());
-          args.push_back(builder.CreateGlobalString(name));
-          args.push_back(instruction);
-          InjectPrintF(instruction->getParent()->getTerminator(), "variable %s == %x\n", args);
-        }
+/// Adds a printf to the end of the parallel region that prints the
+/// hex contents of all named non-pointer variables.
+///
+/// Useful for debugging data flow bugs.
+///
+void ParallelRegion::InjectVariablePrintouts() {
+  for (ParallelRegion::iterator i = begin(); i != end(); ++i) {
+    llvm::BasicBlock *BB = *i;
+    for (llvm::BasicBlock::iterator Instr = BB->begin(); Instr != BB->end();
+         ++Instr) {
+      llvm::Instruction *Instruction = &*Instr;
+      if (isa<PointerType>(Instruction->getType()) || !Instruction->hasName())
+        continue;
+      std::string Name = Instruction->getName().str();
+      std::vector<Value *> Args;
+      IRBuilder<> Builder(exitBB()->getTerminator());
+      Args.push_back(Builder.CreateGlobalString(Name));
+      Args.push_back(Instruction);
+      InjectPrintF(Instruction->getParent()->getTerminator(),
+                   "variable %s == %x\n", Args);
     }
+  }
 }
 
 /**
