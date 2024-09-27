@@ -40,8 +40,8 @@ int pocl_stderr_is_a_tty;
 
 static pocl_lock_t console_mutex;
 
-pocl_lock_t pocl_tg_dump_lock = POCL_LOCK_INITIALIZER;
-pocl_cond_t pocl_tg_dump_cond;
+static pocl_lock_t pocl_tg_dump_lock = POCL_LOCK_INITIALIZER;
+static pocl_cond_t pocl_tg_dump_cond;
 
 void pocl_debug_output_lock(void) { POCL_LOCK(console_mutex); }
 
@@ -220,6 +220,13 @@ void pocl_debug_measure_finish(uint64_t *start, uint64_t *finish,
   pocl_debug_print_duration(func, line, msg, (*finish - *start));
 }
 
+/* Some of the device drivers can wait until clFinish() is called to allow
+   a full task graph dumped to disk of the accumulated commands. The lock and
+   the condition variable are used to synchronize the
+   "clFinish() -> dump -> asynch execution in drivers" cycle with the condition
+   variable holding the asynch execution until after we have dumped the
+   graph. */
+
 static void
 dump_dot_command_queue (FILE *f,
                         struct _cl_command_queue *q,
@@ -358,6 +365,26 @@ pocl_dump_dot_task_graph (cl_context context, const char *file_name)
   fprintf (f, "}\n");
 
   fclose (f);
+}
+
+void
+pocl_dump_dot_task_graph_wait ()
+{
+  POCL_LOCK (pocl_tg_dump_lock);
+  POCL_WAIT_COND (pocl_tg_dump_cond, pocl_tg_dump_lock);
+  POCL_UNLOCK (pocl_tg_dump_lock);
+}
+
+void
+pocl_dump_dot_task_graph_signal ()
+{
+  /* Snapshot dumped. Now let the drivers supporting task graph dumping
+   execute finish executing their queues asynchronously. The condition
+   wait is per clFinish(). The drivers should take care of waiting for it
+   in the correct spot. */
+  POCL_LOCK (pocl_tg_dump_lock);
+  POCL_BROADCAST_COND (pocl_tg_dump_cond);
+  POCL_UNLOCK (pocl_tg_dump_lock);
 }
 
 const char *
