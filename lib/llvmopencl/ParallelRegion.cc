@@ -610,20 +610,46 @@ llvm::Instruction *
 ParallelRegion::getOrCreateIDLoad(std::string IDGlobalName,
                                   llvm::Instruction *Before) {
 
-    if (IDLoadInstrs.find(IDGlobalName) != IDLoadInstrs.end())
-      return IDLoadInstrs[IDGlobalName];
+  Module *M = entryBB()->getParent()->getParent();
 
-    llvm::Type *ST = SizeT(entryBB()->getParent()->getParent());
+  llvm::Type *ST = SizeT(M);
+  GlobalVariable *IDGlobal =
+      cast<GlobalVariable>(M->getOrInsertGlobal(IDGlobalName, ST));
 
-    GlobalVariable *Ptr = cast<GlobalVariable>(
-        entryBB()->getParent()->getParent()->getOrInsertGlobal(IDGlobalName,
-                                                               ST));
+  if (Before != nullptr) {
+    // Try to find one in the same BB.
+    BasicBlock *BB = Before->getParent();
+    for (auto &I : *BB) {
+      Instruction *BBInst = &I;
 
-    IRBuilder<> Builder(entryBB()->getFirstNonPHI());
+      if (BBInst == Before) {
+        // Didn't find one before it. Create one.
+        IRBuilder<> Builder(Before);
+        return Builder.CreateLoad(ST, IDGlobal);
+      }
 
-    Instruction *IDLoad = Builder.CreateLoad(ST, Ptr);
-    IDLoadInstrs[IDGlobalName] = IDLoad;
-    return IDLoad;
+      LoadInst *Load = dyn_cast<LoadInst>(BBInst);
+      if (Load == nullptr)
+        continue;
+      GlobalVariable *Global =
+          dyn_cast<GlobalVariable>(Load->getPointerOperand());
+      if (Global == IDGlobal)
+        return Load;
+    }
+  }
+
+  // Otherwise, create one to the parallel region entry.
+  if (IDLoadInstrs.find(IDGlobalName) != IDLoadInstrs.end())
+    return IDLoadInstrs[IDGlobalName];
+
+  GlobalVariable *Ptr =
+      cast<GlobalVariable>(M->getOrInsertGlobal(IDGlobalName, ST));
+
+  IRBuilder<> Builder(entryBB()->getFirstNonPHI());
+
+  Instruction *IDLoad = Builder.CreateLoad(ST, IDGlobal);
+  IDLoadInstrs[IDGlobalName] = IDLoad;
+  return IDLoad;
 }
 
 void
