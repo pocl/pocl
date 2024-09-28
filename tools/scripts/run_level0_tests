@@ -26,6 +26,8 @@ export POCL_BUILDING=1
 export POCL_DEVICES="level0"
 export IGC_EnableDPEmulation=1
 export OverrideDefaultFP64Settings=1
+# necessary to workaround issues with llvm-spirv translator
+export CL_OFFLINE_COMPILER_DISABLE_OPT=1
 
 if [ -z "$OCL_ICD_VENDORS" ]; then
   export OCL_ICD_VENDORS=$PWD/ocl-vendors

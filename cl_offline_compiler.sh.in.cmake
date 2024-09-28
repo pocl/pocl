@@ -261,7 +261,11 @@ if [ "$DEBUG" = "true" ]; then
   echo "OUTPUT: ${OUTPUT}"
 fi
 
-ALL_OPTIONS="--target=${TARGET} -x cl ${CL_STD} -cl-opt-disable ${BUILD_OPTIONS} -o ${TEMP_BC_FILE} -emit-llvm -c ${SOURCE}"
+if [ "$CL_OFFLINE_COMPILER_DISABLE_OPT" = "1" ]; then
+  BUILD_OPTIONS="${BUILD_OPTIONS} -cl-opt-disable"
+fi
+
+ALL_OPTIONS="--target=${TARGET} -x cl ${CL_STD} ${BUILD_OPTIONS} -o ${TEMP_BC_FILE} -emit-llvm -c ${SOURCE}"
 
 LLVM_SPIRV_OPTIONS="--spirv-gen-kernel-arg-name-md --spirv-max-version=1.2 -o ${TEMP_SPV_FILE} ${TEMP_BC_FILE}"
 
