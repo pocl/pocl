@@ -404,6 +404,19 @@ void setFuncArgAddressSpaceMD(llvm::Function *F, unsigned ArgIndex,
   F->setMetadata(MDKind, MDNode::get(F->getContext(), AddressQuals));
 }
 
+void markFunctionAlwaysInline(llvm::Function *F) {
+  F->removeFnAttr(Attribute::NoInline);
+  F->removeFnAttr(Attribute::OptimizeNone);
+  F->addFnAttr(Attribute::AlwaysInline);
+  // remove noInline from the callsite. otherwise it could cause alwaysInline
+  // pass to skip the inlining
+  for (auto U: F->users()) {
+    if (CallInst *CI = dyn_cast<CallInst>(U)) {
+      CI->removeFnAttr(Attribute::NoInline);
+    }
+  }
+}
+
 // Returns true in case the given function is a kernel that
 // should be processed by the kernel compiler.
 bool isKernelToProcess(const llvm::Function &F) {
