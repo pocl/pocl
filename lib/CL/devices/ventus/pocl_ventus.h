@@ -126,6 +126,10 @@ pocl_ventus_copy_rect (void *data, pocl_mem_identifier *dst_mem_id,
                        size_t const dst_slice_pitch,
                        size_t const src_row_pitch,
                        size_t const src_slice_pitch);
+void
+pocl_ventus_memfill (void *data, pocl_mem_identifier *dst_mem_id,
+                     cl_mem dst_buf, size_t size, size_t offset,
+                     const void *__restrict__ pattern, size_t pattern_size);
 cl_int
 pocl_ventus_map_mem (void *data, pocl_mem_identifier *src_mem_id,
                      cl_mem src_buf, mem_mapping_t *map);
