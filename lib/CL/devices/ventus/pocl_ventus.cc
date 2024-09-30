@@ -1436,7 +1436,9 @@ int pocl_ventus_post_build_program (cl_program program, cl_uint device_i) {
 	for(int i = 0; ventus_other_compile_flags[i] != NULL; i++) {
 		ss_cmd << ventus_other_compile_flags[i];
 	}
-  ss_cmd << "-Wl,--init=" << program->kernel_meta->name << " ";
+  if(program->kernel_meta) {
+    ss_cmd << "-Wl,--init=" << program->kernel_meta->name << " ";
+  }
 #ifdef POCL_DEBUG_FLAG_GENERAL
 	ss_cmd << " -w ";
 #endif
