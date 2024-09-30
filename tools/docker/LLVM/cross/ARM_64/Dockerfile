@@ -10,7 +10,7 @@
 # 5) put all files (cross.cmake & tars) into the same directory as this dockerfile,
 #    then run docker build
 
-FROM amd64/ubuntu:22.04
+FROM amd64/ubuntu:22.04@sha256:3d1556a8a18cf5307b121e0a98e93f1ddf1f3f8e092f1fddfd941254785b95d7
 
 # number of threads to use for building (make -jX)
 ARG JOBS=16
