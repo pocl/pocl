@@ -7,6 +7,8 @@ standard which can be easily adapted for new targets.
 
 [Full documentation](http://portablecl.org/docs/html/)
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9499/badge)](https://www.bestpractices.dev/projects/9499)
+
 ## Building
 
 This section contains instructions for building PoCL in its default
