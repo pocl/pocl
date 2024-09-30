@@ -67,7 +67,7 @@ generated to point to the pocl library in the build tree.
 Coding Style
 ------------
 
-The code base of pocl consists most of pure C sources and C++ sources.
+The code base of PoCL consists mostly of pure C sources and C++ sources.
 
 1) In the C sources, follow the GNU C style, but with spaces for indent.
 
@@ -99,21 +99,21 @@ An example emacs configuration to help get the pocl code style correct::
   (setq default-tab-width 2)
   (setq-default indent-tabs-mode nil)
   (setq-default show-trailing-whitespace t)
-  
+
   (defun my-c-mode-common-hook ()
     (c-set-style "gnu")
     (setq tab-width 2)
     (setq c-basic-offset 2)
   )
   (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
-  
+
   (defun my-cpp-mode-common-hook ()
     (c-set-style "stroustrup")
     (setq tab-width 4)
     (setq c-basic-offset 4)
     )
   (add-hook 'c++-mode-hook 'my-cpp-mode-common-hook)
-  
+
   (add-to-list 'auto-mode-alist '("\\.cl$" . c-mode))
   (add-to-list 'auto-mode-alist '("\\.icc$" . c++-mode))
   (add-to-list 'auto-mode-alist '("\\.cc$" . c++-mode))
@@ -143,7 +143,7 @@ Now it should use the Khronos loader for ICD dispatching and you (and
 the pocl build system) should be able to override the icd search path
 with OCL_ICD_VENDORS environment variable.
 
-Using pocl from the Build Tree
+Using PoCL from the Build Tree
 ------------------------------
 
 If you want use the pocl from the build tree, you must export
@@ -163,8 +163,7 @@ Target and Host CPU Architectures for CPU Devices
 
 By default, pocl build system compiles the kernel libraries for
 the host CPU architecture, to be used by CPU devices ('cpu' and 'cpu-minimal').
-
-LLVM is used to detect the CPU variant to be used as target. This 
+LLVM is used to detect the CPU variant to be used as target. This
 can be overridden by passing -DLLC_HOST_CPU=... to CMake. See the
 documentation for LLC_HOST_CPU build option.
 
@@ -176,7 +175,7 @@ has not been tested for CPU devices.
 Writing Documentation
 ---------------------
 
-The documentation is written using the `Sphinx documentation generator 
+The documentation is written using the `Sphinx documentation generator
 <http://sphinx-doc.org/>`_ and the reStructuredText markup.
 
 This Sphinx documentation can be built by::
@@ -193,7 +192,7 @@ Code comments should be done C99 style (so "/\* ... \*/") in C files and C++ sty
 ("//") in C++ files. Doxygen documentation above functions should follow the
 LLVM practises described `here
 <https://llvm.org/docs/CodingStandards.html#doxygen-use-in-documentation-comments>`_.
-Do keep in mind that for C files the Doxygen documentation should be created with "/\*\*"
+Please keep in mind that for C files the Doxygen documentation should be created with "/\*\*"
 but use the "\\" prefix Doxygen commands, e.g. "\\param". It is also possible to
 generate a Doxygen documentation page by configuring CMake with: `ENABLE_DOXYGEN=YES`
 and then running::
@@ -207,46 +206,37 @@ and then running::
 Maintenance Policy
 -------------------
 
-pocl development is currently managed mostly by researchers and
-research assistants of the `Customized Parallel Computing <https://tuni.fi/cpc>`_
-group of Tampere University. We provide general maintenance for pocl
-on the side of our research projects (which on the other hand might use
-and/or extend it) because we consider it an important project that helps the
-"heterogeneous parallel programming cause". However, doing maintenance "on the
-side" unfortunately means that there is limited time to respond to external
-support requests due to other activities.
+To make PoCL maintenance feasible within the limited resources, we have set
+Tier-1 following regarding releases:
 
-To make pocl maintenance feasible within our limited time, we have set the following
-policy regarding releases:
 **External projects using OpenCL that have a test suite included in "regularly
 tested suites" (we later call 'tier-1' test suites) will be kept regression free,
 but for the rest we cannot make any promises.**
 
-Tier-1 tests will be executed successfully before the lead developer pushes
+Most of the Tier-1 tests will be executed successfully before the maintainers push
 new pull requests (PR) to the master branch, and some of them are additionally
-executed with multiple continuous integration (buildbot) servers on
-different platforms. Active developers are also assumed to run them locally
-before submitting PRs. Thus, regressions on these suites should be detected
-early. The required testsuites can be enabled at buildtime with
+executed with multiple continuous integration servers on
+different platforms and library configurations. Thus, regressions on these suites
+are detected early. The required testsuites can be enabled at build time with
 ``-DENABLE_TESTSUITES=tier1`` cmake option.
 
-Currently (2023-02-28) the following are included in the tier-1 test suites:
+Currently (2024-09-30) the following are included in the tier-1 test suite:
 
 * The standard test suite of pocl.
 * PyOpenCL test suite
 * piglit test suite
 * conformance_suite_micro_main test suite
 * SHOC test suite
-* CHIP-SPV test suite
+* chipStar test suite
+* Simple SYCL samples.
 
-Please note that not necessarily all the tests currently pass in the suites,
-we just ensure the currently passing ones do not regress with new
-commits (expected failing ones are disabled or skipped).
-The primary test platform is x86-64.
+The primary test platform is x86-64 CPU with the Level Zero layered
+driver as the primary GPU test platform.
 
 The latest LLVM release is given priority when testing, and we cannot
-guarantee older LLVM versions keep working over pocl releases due to
-the constantly changing library API.
+guarantee older LLVM versions keep working over PoCL releases due to
+the constantly changing library API. Currently we maintain support
+for the LLVM version 14 and newer.
 
 If you would like get your favourite OpenCL-using project's test
 suite included in the tier-1 suite, please send a pull request that
@@ -263,8 +253,9 @@ HEAD of pocl and let us know, and we do our best to add it.
 Release management
 ----------------------------------
 
-We aim to make a new release according to the Clang/LLVM release schedule.
-
+We aim to make a new release according to the Clang/LLVM release schedule,
+with a new release created with an undefined delay after the latest
+LLVM release.
 
 For each release, a release manager is assigned. Release manager is responsible
 for creating and uploading new release candidate tar balls and requesting for
@@ -297,10 +288,10 @@ A checklist and hints for testing and making a release successfully:
   the release branch, then release branch merged to master.
 
 * Create a new release on Github. Mark it as pre-release. This should
-  create both a tarball and a git tag.
+  create both a tarball and a git tag. Sign the package with a GPG
+  key.
 
-* Upload the package to portablecl.org/downloads via SFTP or to the
-  sourceforge file listing for the pocl project.
+* Upload the package and the key also to portablecl.org/downloads via SFTP.
 
 * Request for testers in Twitter and/or mailing list. Point the testers to
   send their test reports to you privately or by adding them to the wiki.
@@ -308,22 +299,14 @@ A checklist and hints for testing and making a release successfully:
   log. See https://github.com/pocl/pocl/wiki/pocl-0.10-release-testing for
   an example.
 
-* To publish a release, create a new release on Github without the
-  checking the pre-release checkbox.
-  Upload the tar ball to the sourceforge download page and
-  to http://portablecl.org/downloads.
-* Update the CHANGES and ANNOUNCEMENT text files in these directories.
-  ANNOUNCEMENT is a copy of the latest release notes. A direct link to it can
-  be easily circulated in IRC, for example.
+* To publish a release, create a new release on Github without checking
+  the pre-release checkbox. Upload tar ball simiarly as prereleases.
+
+* Update the notes*.rst files in the Sphinx documentation folder.
+
 * Update the http://portablecl.org web page with the release information.
-* Advertise everywhere you can. At least in Twitter and the mailing list.
+
+* Advertise everywhere you can. At least in Mastodon and Twitter.
 
 In case of any problems, ask any previous release manager for help.
-Previous releases were managed by the following pocl developers:
 
-* 0.14: Pekka Jääskeläinen
-* 0.11: Michal Babej
-* 0.10: Pekka Jääskeläinen
-* 0.9: Kalle Raiskila
-* 0.8: Erik Schnetter
-* 0.6 and 0.7: Pekka Jääskeläinen
