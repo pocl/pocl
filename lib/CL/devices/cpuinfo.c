@@ -204,7 +204,7 @@ pocl_cpuinfo_detect_compute_unit_count()
       p = contents;
       if ((p = strstr (p, "cpu cores")) != NULL)
         {
-          if (sscanf (p, ": %d\n", &cores_per_cpu) != 1)
+          if (sscanf (p, ": %d\n", &cores_per_cpu) != 1 || cores_per_cpu < 1)
             cores_per_cpu = 1;
 #ifdef DEBUG_POCL_CPUINFO
           printf ("cores per cpu %d\n", cores_per_cpu);
@@ -231,9 +231,9 @@ pocl_cpuinfo_detect_compute_unit_count()
         printf ("max threads %d\n", cores);
 #endif
         return cores; /* only multicore, if not unicore*/
-      }      
-    } 
-  return -1;  
+        }
+    }
+  return -1;
 }
 
 #if __arm__ || __aarch64__

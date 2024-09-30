@@ -59,7 +59,7 @@ int pocl_setup_builtin_metadata (cl_device_id device, cl_program program,
         {                                                                     \
           size_t l = strlen (program->build_log[device_i]);                   \
           size_t newl = l + (size_t)written;                                  \
-          char *newp = realloc (program->build_log[device_i], newl);          \
+          char *newp = realloc (program->build_log[device_i], newl + 1);      \
           assert (newp);                                                      \
           memcpy (newp + l, temp, (size_t)written);                           \
           newp[newl] = 0;                                                     \

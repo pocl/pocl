@@ -35,6 +35,7 @@ pocl_svm_migrate_mem_common (cl_command_type command_type,
 {
   unsigned i;
   cl_int errcode;
+  _cl_command_node *cmd = NULL;
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
@@ -57,7 +58,7 @@ pocl_svm_migrate_mem_common (cl_command_type command_type,
   size_t *actual_sizes = calloc (num_svm_pointers, sizeof (size_t));
   if (sizes)
     memcpy (actual_sizes, sizes, num_svm_pointers * sizeof (size_t));
-  void **ptrs = malloc (num_svm_pointers * sizeof (void *));
+  void **ptrs = calloc (num_svm_pointers, sizeof (void *));
   memcpy (ptrs, svm_pointers, num_svm_pointers * sizeof (void *));
 
   for (i = 0; i < num_svm_pointers; ++i)
@@ -82,7 +83,6 @@ pocl_svm_migrate_mem_common (cl_command_type command_type,
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  _cl_command_node *cmd = NULL;
   errcode
     = pocl_create_command (&cmd, command_queue, command_type, event,
                            num_events_in_wait_list, event_wait_list, NULL);
