@@ -27,6 +27,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(pocld)
 
+add_definitions(-DCL_TARGET_OPENCL_VERSION=${OPENCL_HEADER_VERSION}
+        -DCL_HPP_TARGET_OPENCL_VERSION=${OPENCL_HEADER_VERSION})
+
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
 set(SOURCES pocld.cc daemon.hh daemon.cc cmdline.h cmdline.c
