@@ -46,8 +46,8 @@ extern CALLAPI int exec_integer_mad_kernel (cl_context context,
 int
 main (int argc, char **argv)
 {
-  cl_uint *srcA, *srcB;
-  cl_uint *dst;
+  cl_uint *srcA = NULL, *srcB = NULL;
+  cl_uint *dst = NULL;
   int i, err, spirv, poclbin;
 
   cl_context context = NULL;
@@ -71,9 +71,9 @@ main (int argc, char **argv)
   if (err != CL_SUCCESS)
     goto FINISH;
 
-  srcA = (cl_uint *)malloc (N * sizeof (cl_uint));
-  srcB = (cl_uint *)malloc (N * sizeof (cl_uint));
-  dst = (cl_uint *)malloc (N * sizeof (cl_uint));
+  srcA = (cl_uint *)calloc (N, sizeof (cl_uint));
+  srcB = (cl_uint *)calloc (N, sizeof (cl_uint));
+  dst = (cl_uint *)calloc (N, sizeof (cl_uint));
 
   for (i = 0; i < N; ++i)
     {

@@ -24,6 +24,7 @@ int main(int argc, char **argv)
   cl_mem image = NULL;
   cl_int err;
   int retval = -1;
+  cl_device_id *devices = NULL;
 
   /* image parameters */
   cl_uchar4 *imageData;
@@ -38,7 +39,7 @@ int main(int argc, char **argv)
   image_format.image_channel_order = CL_RGBA;
   image_format.image_channel_data_type = CL_UNSIGNED_INT8;
   imageData = (cl_uchar4*)malloc (4 * 4 * sizeof(cl_uchar4));
-  
+
   if (imageData == NULL)
     {
       puts("out of host memory\n");
@@ -76,7 +77,7 @@ int main(int argc, char **argv)
     = clGetContextInfo (context, CL_CONTEXT_DEVICES, 0, NULL, &device_id_size);
   CHECK_OPENCL_ERROR_IN ("clGetContextInfo");
 
-  cl_device_id *devices = malloc (device_id_size);
+  devices = malloc (device_id_size);
   TEST_ASSERT (devices != NULL && "out of host memory\n");
   err = clGetContextInfo (context, CL_CONTEXT_DEVICES, device_id_size, devices,
                           NULL);

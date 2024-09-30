@@ -131,6 +131,8 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
       _cl_command_node *cmd;
 
       cl_event syncpoints[command_buffer->num_syncpoints];
+      memset (&syncpoints[0], 0,
+              sizeof (cl_event) * command_buffer->num_syncpoints);
       cl_event *deps = (cl_event *)alloca (
         sizeof (cl_event)
         * (command_buffer->num_syncpoints + num_events_in_wait_list));

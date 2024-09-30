@@ -1729,6 +1729,7 @@ pocl_init_default_device_infos (cl_device_id dev,
 
   char kernellib[POCL_MAX_PATHNAME_LENGTH] = "kernel-";
   char kernellib_fallback[POCL_MAX_PATHNAME_LENGTH];
+
   strcat(kernellib, dev->llvm_target_triplet);
 
   strcat(kernellib, "-");
@@ -1747,9 +1748,12 @@ pocl_init_default_device_infos (cl_device_id dev,
   strcat(kernellib, OCL_KERNEL_TARGET_CPU);
 #else
   dev->llvm_cpu = pocl_get_llvm_cpu_name ();
-  strcpy(kernellib_fallback, kernellib);
-  strcat(kernellib_fallback, OCL_KERNEL_TARGET_CPU);
-  strcat(kernellib, dev->llvm_cpu);
+  strncpy (kernellib_fallback, kernellib, POCL_MAX_PATHNAME_LENGTH);
+  strncat (kernellib_fallback, OCL_KERNEL_TARGET_CPU,
+           POCL_MAX_PATHNAME_LENGTH - strlen (kernellib));
+  strncat (kernellib, dev->llvm_cpu,
+           POCL_MAX_PATHNAME_LENGTH - strlen (kernellib)
+             - strlen (OCL_KERNEL_TARGET_CPU));
   dev->kernellib_fallback_name = strdup(kernellib_fallback);
 #endif
   dev->kernellib_name = strdup(kernellib);

@@ -400,6 +400,8 @@ int pocl_llvm_build_program(cl_program program,
       if (e_start >= extensions.size())
         break;
       e_end = extensions.find(' ', e_start);
+      if (e_end > extensions.size())
+        e_end = extensions.size();
       llvm::StringRef tok = extensions.slice(e_start, e_end);
       e_start = e_end + 1;
       ss << "-D" << tok.str() << "=1 ";
