@@ -263,10 +263,15 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
 
   char extensions[1024];
   extensions[0] = 0;
-  strcat (extensions, "cl_khr_fp64"
-                      " __opencl_c_generic_address_space"
-                      " __opencl_c_named_address_space_builtins");
-  dev->extensions = strdup (extensions); // no extention support now
+  strcat (extensions, "cl_khr_fp64");
+  dev->extensions = strdup (extensions);
+
+
+  char features[1024];
+  features[0] = 0;
+  strcat (features, " __opencl_c_generic_address_space"
+                    " __opencl_c_named_address_space_builtins");
+  dev->features = strdup (features);
 
   dev->profile = "EMBEDDED_PROFILE";
   dev->endian_little = CL_TRUE;
