@@ -1,6 +1,9 @@
 ---
 name: Main test matrix
 
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
   pull_request:
