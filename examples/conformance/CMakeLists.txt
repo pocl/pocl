@@ -2,7 +2,7 @@
 #   CMake build system files
 #
 #   Copyright (c) 2017 Michal Babej / Tampere University of Technology
-#   Copyright (c) 2022-24 Michal Babej / Tampere University of Technology
+#   Copyright (c) 2022-24 Michal Babej / Intel Finland Oy
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
