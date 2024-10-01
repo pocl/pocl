@@ -342,6 +342,10 @@ else()
   set(KERNEL_SOURCES ${SOURCES_GENERIC})
 endif()
 
+if(HOST_CPU_ENABLE_CL_KHR_FP16)
+  list(APPEND KERNEL_SOURCES isinf_half.cl)
+endif()
+
 if(HOST_DEVICE_CL_VERSION_MAJOR GREATER_EQUAL 2)
 if(MIPS)
   message(STATUS "OpenCL 2.0 atomics are currently broken on MIPS")
