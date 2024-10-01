@@ -30,11 +30,11 @@ env:
 jobs:
   arm64_matrix:
     name: LLVM ${{ matrix.llvm }} - ARM64 ${{ matrix.config }}
-    runs-on: [self-hosted, linux, arm64, ubuntu]
+    runs-on: [self-hosted, linux, arm64]
     strategy:
       fail-fast: false
       matrix:
-        llvm: [18]
+        llvm: [19]
         config: [basic]
 
     steps:
