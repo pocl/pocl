@@ -52,7 +52,8 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateFromGLTexture) (
   desc.num_samples = 0;
 
   return pocl_create_image_internal (context, flags, &format, &desc, NULL,
-                                     errcode_ret, target, miplevel, texture);
+                                     errcode_ret, target, miplevel, texture,
+                                     NULL, NULL);
 
 #else
 

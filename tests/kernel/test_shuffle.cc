@@ -303,6 +303,8 @@ public:
     prog = clCreateProgramWithSource(ctx, 1, &c_src, &srclen, &errcode);
     ERRCHECK()
     errcode = clBuildProgram(prog, 0, NULL, NULL, NULL, NULL);
+    if (errcode != CL_SUCCESS)
+      poclu_show_program_build_log (prog);
     ERRCHECK()
 
     unsigned errors = 0;

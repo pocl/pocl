@@ -10,7 +10,7 @@
 # 5) put all files (cross.cmake & tars) into the same directory as this dockerfile,
 #    then run docker build
 
-FROM amd64/debian:bookworm
+FROM amd64/debian:bookworm@sha256:27586f4609433f2f49a9157405b473c62c3cb28a581c413393975b4e8496d0ab
 
 # number of threads to use for building (make -jX)
 ARG JOBS=16

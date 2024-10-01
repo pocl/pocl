@@ -169,6 +169,31 @@ POCL_EXPORT
 
         #define POCL_DEBUG_HEADER(FILTER, FILTER_TYPE) \
             pocl_debug_print_header (__func__, __LINE__, #FILTER, FILTER_TYPE);
+/**
+ * Dumps all commands and events of the context as a graphviz dot file.
+ *
+ * Currently works only with PoCL contexts.
+ *
+ * @param context the OpenCL context to dump.
+ * @param file_name the target file name.
+ */
+POCL_EXPORT
+void pocl_dump_dot_task_graph (cl_context context, const char *file_name);
+
+POCL_EXPORT
+void pocl_dump_dot_task_graph_wait ();
+
+POCL_EXPORT
+void pocl_dump_dot_task_graph_signal ();
+
+/**
+ * Converts a command type to a string.
+ *
+ * @param cmd The command.
+ * @param shortened Set to 1 for a shortened string.
+ */
+POCL_EXPORT
+const char *pocl_command_type_to_str (cl_command_type cmd, int shortened);
 
 POCL_EXPORT
         extern void pocl_debug_output_lock (void);
@@ -540,36 +565,7 @@ POCL_EXPORT
     }                                                                         \
   while (0)
 
-/**
- * Converts a command type to a string.
- *
- * @param cmd The command.
- * @param shortened Set to 1 for a shortened string.
- */
-POCL_EXPORT
-const char *pocl_command_type_to_str (cl_command_type cmd, int shortened);
 
-/**
- * Dumps all commands and events of the context as a graphviz dot file.
- *
- * Currently works only with PoCL contexts.
- *
- * @param context the OpenCL context to dump.
- * @param file_name the target file name.
- */
-POCL_EXPORT
-void pocl_dump_dot_task_graph (cl_context context, const char *file_name);
-
-/* Some of the device drivers can wait until clFinish() is called to allow
-   a full task graph dumped to disk of the accumulated commands. The lock and
-   the condition variable are used to synchronize the
-   "clFinish() -> dump -> asynch execution in drivers" cycle with the condition
-   variable holding the asynch execution until after we have dumped the
-   graph. */
-POCL_EXPORT
-extern pocl_lock_t pocl_tg_dump_lock;
-POCL_EXPORT
-extern pocl_cond_t pocl_tg_dump_cond;
 #ifdef __cplusplus
 }
 #endif

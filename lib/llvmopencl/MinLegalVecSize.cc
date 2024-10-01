@@ -1,5 +1,7 @@
 // LLVM module pass. Sets AlwaysInline on functions that have arguments whose size
-// exceeds the largest available register size of the Target
+// exceeds the largest available register size of the Target. This is necessary
+// because passing these breaks the ABI and causes SPIR-V test failures.
+// Alternative solution would be to change the args to byval passing
 //
 // Copyright (c) 2023 Michal Babej / Intel Finland Oy
 //
@@ -172,7 +174,7 @@ static uint64_t getAndFixLargestVecSize(llvm::Function *F, unsigned Justify) {
 
 // find all kernels with SPIR_KERNEL CC and recursively fix their
 // "min-legal-vector-width" attributes to the correct value. If any
-// called function has has "min-legal-vector-width" larger than
+// called function has its "min-legal-vector-width" larger than
 // the device's native vector width size, also set the AlwaysInline
 // attribute on that function
 // the kernels htemselves are
@@ -204,10 +206,10 @@ static bool fixMinVecSize(Module &M) {
 
       getAndFixLargestVecSize(F, 0);
 
+#ifdef DEBUG_VEC_SIZE
       Attr = F->getFnAttribute("min-legal-vector-width");
       uint64_t NewWidth = 0;
       Attr.getValueAsString().getAsInteger(0, NewWidth);
-#ifdef DEBUG_VEC_SIZE
       std::cerr << "Set kernel attr min-legal-vector-width to : " << NewWidth
                 << "\n";
 #endif

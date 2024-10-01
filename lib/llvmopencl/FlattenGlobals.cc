@@ -55,34 +55,28 @@ namespace pocl {
 using namespace llvm;
 
 static bool flattenGlobals(Module &M) {
-  SmallPtrSet<Function *, 8> functions_to_inline;
-  SmallVector<Value *, 8> pending;
+  SmallPtrSet<Function *, 8> FunctionsToInline;
+  SmallVector<Value *, 8> Pending;
 
-  const char **GVs = WorkgroupVariablesArray;
-  while (*GVs != NULL) {
-    GlobalVariable *GV = M.getGlobalVariable(*GVs);
-    if (GV != NULL)
-      pending.push_back(GV);
-
-    ++GVs;
+  for (auto & GVarName : WorkgroupVariablesVector) {
+    GlobalVariable *GV = M.getGlobalVariable(GVarName);
+    if (GV != nullptr)
+      Pending.push_back(GV);
   }
 
-  while (!pending.empty()) {
-    Value *v = pending.back();
-    pending.pop_back();
+  while (!Pending.empty()) {
+    Value *Current = Pending.back();
+    Pending.pop_back();
 
-    for (Value::use_iterator i = v->use_begin(), e = v->use_end(); i != e;
-         ++i) {
-      llvm::User *user = i->getUser();
-      if (Instruction *ci = dyn_cast<Instruction>(user)) {
+    for (auto U: Current->users()) {
+      if (Instruction *ci = dyn_cast<Instruction>(U)) {
+        Function *f = ci->getParent()->getParent();
+        assert((f != NULL) &&
+            "Per-workgroup global variable used on function with no parent!");
+
         // Prevent infinite looping on recursive functions
         // (though OpenCL does not allow this?)
-        Function *f = ci->getParent()->getParent();
-        ;
-        assert(
-            (f != NULL) &&
-            "Per-workgroup global variable used on function with no parent!");
-        if (functions_to_inline.count(f))
+        if (FunctionsToInline.count(f))
           continue;
 
         // if it's an OpenCL kernel with OptNone attribute, assume we're debugging,
@@ -92,18 +86,14 @@ static bool flattenGlobals(Module &M) {
             f->hasFnAttribute(Attribute::OptimizeNone))
           continue;
 
-        functions_to_inline.insert(f);
-        pending.push_back(f);
+        FunctionsToInline.insert(f);
+        Pending.push_back(f);
       }
     }
   }
 
-  for (SmallPtrSet<Function *, 8>::iterator i = functions_to_inline.begin(),
-                                            e = functions_to_inline.end();
-       i != e; ++i) {
-    (*i)->removeFnAttr(Attribute::NoInline);
-    (*i)->removeFnAttr(Attribute::OptimizeNone);
-    (*i)->addFnAttr(Attribute::AlwaysInline);
+  for (auto F : FunctionsToInline) {
+    markFunctionAlwaysInline(F);
   }
 
   StringRef barrier("_Z7barrierj");
@@ -112,9 +102,7 @@ static bool flattenGlobals(Module &M) {
     if (f->isDeclaration())
       continue;
     if (f->getName() == barrier) {
-      f->removeFnAttr(Attribute::NoInline);
-      f->removeFnAttr(Attribute::OptimizeNone);
-      f->addFnAttr(Attribute::AlwaysInline);
+      markFunctionAlwaysInline(f);
     }
   }
 

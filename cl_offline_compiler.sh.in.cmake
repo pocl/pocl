@@ -128,8 +128,14 @@ TARGET=none
 DEV_VER=100
 DEV_C_VER=100
 CL_EXT_DEFS="-D__ENDIAN_LITTLE__=1"
-# TODO __opencl_c_int64 && atomics might not be supported by all PoCL devices
-CL_EXTS="-Xclang -cl-ext=-all"
+# TODO there is not enough information to figure out the feature macros
+# that might be supported by the device, because --cl-device-info FILE does
+# not contain the list of the feature macros.
+# However, at least __opencl_c_generic_address_space is required by the
+# C11 atomic tests in SPIR-V mode. This is therefore a hack, but should
+# be fine because PoCL's Level0 and CPU drivers support gen. AS; atomic_order
+# features are optional, but again they are supported by both CPU and L0
+CL_EXTS="-Xclang -cl-ext=-all,+__opencl_c_generic_address_space,+__opencl_c_atomic_order_acq_rel,+__opencl_c_atomic_order_seq_cst,+__opencl_c_atomic_scope_device"
 
 if [ -e "${CL_DEV_INFO}" ]; then
 
@@ -141,6 +147,11 @@ if [ -e "${CL_DEV_INFO}" ]; then
       CL_EXTS="${CL_EXTS},+__opencl_c_images"
     fi
     CL_EXT_DEFS="${CL_EXT_DEFS} -D__IMAGE_SUPPORT__=1"
+  else
+    if [ "$CL_IS_30" = "true" ]; then
+      CL_EXTS="${CL_EXTS},-__opencl_c_images"
+    fi
+    CL_EXT_DEFS="${CL_EXT_DEFS} -U__IMAGE_SUPPORT__ -D__undef___opencl_c_read_write_images"
   fi
 
   if [ "$CL_FAST_MATH" = "true" ]; then
@@ -178,6 +189,10 @@ if [ -e "${CL_DEV_INFO}" ]; then
     DEV_VER=200
   elif [[ "$CL_DEVICE_VERSION" =~ "OpenCL 1.2" ]]; then
     DEV_VER=120
+  elif [[ "$CL_DEVICE_VERSION" =~ "OpenCL 1.1" ]]; then
+    DEV_VER=110
+  elif [[ "$CL_DEVICE_VERSION" =~ "OpenCL 1.0" ]]; then
+    DEV_VER=100
   else
     echo "unknown device version: ${CL_DEVICE_VERSION}"
     exit 1
@@ -194,6 +209,10 @@ if [ -e "${CL_DEV_INFO}" ]; then
     DEV_C_VER=200
   elif [[ "$CL_STD" =~ "CL1.2" ]]; then
     DEV_C_VER=120
+  elif [[ "$CL_STD" =~ "CL1.1" ]]; then
+    DEV_C_VER=110
+  elif [[ "$CL_STD" =~ "CL1.0" ]]; then
+    DEV_C_VER=100
   else
     echo "unknown device C version: ${CL_STD}"
     exit 1
@@ -242,9 +261,13 @@ if [ "$DEBUG" = "true" ]; then
   echo "OUTPUT: ${OUTPUT}"
 fi
 
+if [ "$CL_OFFLINE_COMPILER_DISABLE_OPT" = "1" ]; then
+  BUILD_OPTIONS="${BUILD_OPTIONS} -cl-opt-disable"
+fi
+
 ALL_OPTIONS="--target=${TARGET} -x cl ${CL_STD} ${BUILD_OPTIONS} -o ${TEMP_BC_FILE} -emit-llvm -c ${SOURCE}"
 
-LLVM_SPIRV_OPTIONS="--spirv-gen-kernel-arg-name-md ${SPIRV_ENV} --spirv-max-version=1.2 -o ${TEMP_SPV_FILE} ${TEMP_BC_FILE}"
+LLVM_SPIRV_OPTIONS="--spirv-gen-kernel-arg-name-md --spirv-max-version=1.2 -o ${TEMP_SPV_FILE} ${TEMP_BC_FILE}"
 
 if [ "$DEBUG" = "true" ]; then
   echo "Running @CLANG@ ${ALL_OPTIONS}"

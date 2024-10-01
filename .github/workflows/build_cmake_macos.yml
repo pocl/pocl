@@ -1,6 +1,9 @@
 ---
 name: Main test matrix for macOS
 
+permissions:
+  contents: read
+
 on:
   push:
   workflow_dispatch:
@@ -37,7 +40,8 @@ jobs:
         config: [basic, devel]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - uses: conda-incubator/setup-miniconda@v3
         with:

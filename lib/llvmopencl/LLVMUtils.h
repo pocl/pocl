@@ -118,6 +118,8 @@ llvm::Metadata *createConstantIntMD(llvm::LLVMContext &C, int32_t Val);
 // ignore blocks with an unreachable inst.
 void removeUnreachableSwitchCases(llvm::Function &F);
 
+void markFunctionAlwaysInline(llvm::Function *F);
+
 /**
  * \brief Clones a DISubprogram with changed function name and scope.
  *

@@ -616,6 +616,8 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
 
       err = clBuildProgram (program, num_devices, devices, final_opts, NULL,
                             NULL);
+      if (err != CL_SUCCESS)
+        poclu_show_program_build_log (program);
       CHECK_OPENCL_ERROR_IN ("clBuildProgram");
       free (src);
     }
@@ -631,6 +633,8 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
       CHECK_OPENCL_ERROR_IN ("clCreateProgramWithIL");
 
       err = clBuildProgram (program, 0, NULL, final_opts, NULL, NULL);
+      if (err != CL_SUCCESS)
+        poclu_show_program_build_log (program);
       CHECK_OPENCL_ERROR_IN ("clBuildProgram");
       free (binary);
 #else
@@ -649,6 +653,8 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
       CHECK_OPENCL_ERROR_IN ("clCreateProgramWithBinary");
 
       err = clBuildProgram (program, 0, NULL, final_opts, NULL, NULL);
+      if (err != CL_SUCCESS)
+        poclu_show_program_build_log (program);
       CHECK_OPENCL_ERROR_IN ("clBuildProgram");
       free (binary);
     }

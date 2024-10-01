@@ -24,7 +24,7 @@
 
 #include "templates.h"
 
-#if !__has_builtin(__builtin_atanf16)
+#if !__has_builtin(__builtin_atan2f16)
 #undef __IF_FP16
 #define __IF_FP16(X)
 #endif

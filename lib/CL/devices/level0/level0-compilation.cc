@@ -143,7 +143,7 @@ void Level0Kernel::setAccessedPointers(const std::map<void *, size_t> &Ptrs) {
 
 Level0Program::~Level0Program() {
   std::lock_guard<std::mutex> LockGuard(Mutex);
-  assert(Kernels.empty());
+  Kernels.clear();
   ProgBuilds.clear();
   KernBuilds.clear();
   JITProgBuilds.clear();

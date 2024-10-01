@@ -141,6 +141,8 @@ main(void)
 
   int ierr;
   ierr = clBuildProgram (program, 0, NULL, NULL, NULL, NULL);
+  if (ierr != CL_SUCCESS)
+    poclu_show_program_build_log (program);
   if (ierr)
     return -1;
 
