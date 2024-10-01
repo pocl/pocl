@@ -31,7 +31,8 @@
    implement proper block copies or similar. */
 
 #define IMPLEMENT_ASYNC_STRIDED_COPY_FUNCS_SINGLE(GENTYPE)                    \
-  __attribute__ ((overloadable)) event_t async_work_group_strided_copy (      \
+  __attribute__ ((overloadable,optnone,noinline))                             \
+  event_t async_work_group_strided_copy (                                     \
       __local GENTYPE *dst, const __global GENTYPE *src, size_t num_gentypes, \
       size_t src_stride, event_t event)                                       \
   {                                                                           \
@@ -43,7 +44,8 @@
     return event;                                                             \
   }                                                                           \
                                                                               \
-  __attribute__ ((overloadable)) event_t async_work_group_strided_copy (      \
+  __attribute__ ((overloadable,optnone,noinline))                             \
+  event_t async_work_group_strided_copy (                                     \
       __global GENTYPE *dst, const __local GENTYPE *src, size_t num_gentypes, \
       size_t dst_stride, event_t event)                                       \
   {                                                                           \
