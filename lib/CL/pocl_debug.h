@@ -177,8 +177,8 @@ POCL_EXPORT
  *
  * Currently works only with PoCL contexts.
  *
- * @param context the OpenCL context to dump.
- * @param file_name the target file name.
+ * \param context the OpenCL context to dump.
+ * \param file_name the target file name.
  */
 POCL_EXPORT
 void pocl_dump_dot_task_graph (cl_context context, const char *file_name);
@@ -192,8 +192,8 @@ void pocl_dump_dot_task_graph_signal ();
 /**
  * Converts a command type to a string.
  *
- * @param cmd The command.
- * @param shortened Set to 1 for a shortened string.
+ * \param cmd The command.
+ * \param shortened Set to 1 for a shortened string.
  */
 POCL_EXPORT
 const char *pocl_command_type_to_str (cl_command_type cmd, int shortened);

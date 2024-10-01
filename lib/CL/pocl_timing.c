@@ -1,4 +1,5 @@
 /* OpenCL runtime library: time measurement utility functions
+   implemented using platform-specific C APIs
 
    Copyright (c) 2015 Michal Babej / Tampere University of Technology
    Copyright (c) 2024 Michal Babej / Intel Finland Oy

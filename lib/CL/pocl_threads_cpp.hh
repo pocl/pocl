@@ -1,4 +1,5 @@
-/* OpenCL runtime library: utility functions for thread operations
+/* OpenCL runtime library: header for utility functions for thread operations
+   implemented using C++11 standard library
 
    Copyright (c) 2024 Michal Babej / Intel Finland Oy
 
