@@ -56,7 +56,8 @@ jobs:
             config: chipstar
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - name: CMake
         id: cmake
@@ -196,7 +197,8 @@ jobs:
             config: static
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - name: Install prerequisites and ocl-icd
         run: >
@@ -292,7 +294,8 @@ jobs:
         llvm: [18]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - name: CMake
         id: cmake
@@ -358,7 +361,8 @@ jobs:
         llvm: [16]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - name: CMake
         id: cmake
@@ -401,7 +405,8 @@ jobs:
         llvm: [17]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - name: CMake
         id: cmake
@@ -445,7 +450,8 @@ jobs:
         config: [cuda]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - name: Run CMake
         id: cmake
@@ -491,7 +497,8 @@ jobs:
         config: [openasip]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - name: Run CMake
         id: cmake
@@ -529,7 +536,8 @@ jobs:
     runs-on: [self-hosted, linux, vulkan]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - name: Run CMake
         id: cmake
@@ -573,7 +581,8 @@ jobs:
         config: [basic]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - name: Run CMake
         id: cmake
@@ -616,7 +625,8 @@ jobs:
         config: [level_zero]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - name: Run CMake
         id: cmake

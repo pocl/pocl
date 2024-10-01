@@ -46,7 +46,8 @@ jobs:
         config: [cross, proxy, accel, no_llvm_no_debug]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - name: CMake
         id: cmake
