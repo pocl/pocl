@@ -177,13 +177,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [17, 18]
         # basic = simplest pthread build
         # devel = with devel options
-        # cts_spirv = cts with SPIR-V
-        # tier1 = includes CTS without SPIR-V
-        # asan, tsan, ubsan = sanitizers
-        # chipstar 1.1 only supports LLVM up to 17
+        # install = install PoCL system-wide and run tests
+        llvm: [17, 18]
         config: [basic, devel]
         include:
           - llvm: 14
@@ -193,7 +190,7 @@ jobs:
           - llvm: 16
             config: basic
           - llvm: 18
-            config: static
+            config: install
 
     steps:
       - name: Checkout
@@ -253,7 +250,9 @@ jobs:
           elif [ "${{ matrix.config }}" == "static" ]; then
             runCMake -DENABLE_ICD=1 -DSTATIC_LLVM=1
           elif [ "${{ matrix.config }}" == "devel" ]; then
-            runCMake -DENABLE_RELOCATION=0 -DENABLE_VALGRIND=1 -DENABLE_EXTRA_VALIDITY_CHECKS=1
+            runCMake -DENABLE_RELOCATION=0 -DDEVELOPER_MODE=1 -DENABLE_VALGRIND=1 -DENABLE_EXTRA_VALIDITY_CHECKS=1
+          elif [ "${{ matrix.config }}" == "install" ]; then
+            runCMake -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_ICD=1 -DKERNELLIB_HOST_CPU_VARIANTS=distro -DPOCL_ICD_ABSOLUTE_PATH=OFF -DENABLE_POCL_BUILDING=OFF
           else
             echo "Unknown configuration" && exit 1
           fi
@@ -264,6 +263,15 @@ jobs:
         run: |
           cd ${{ github.workspace }}/build && make -j$(nproc)
 
+      - name: Install PoCL
+        id: install_pocl
+        if: ${{ matrix.config == 'install' }}
+        timeout-minutes: 5
+        run: |
+          # remove CTestCustom.cmake - it contains POCL_BUILDING and OCL_ICD_VENDORS incompatible with install config
+          cd ${{ github.workspace }}/build && sudo make install && rm CTestCustom.cmake
+          cd ${{ github.workspace }}/build/lib/CL && make clean
+
       - name: Run Tests
         env:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
@@ -271,22 +279,15 @@ jobs:
         timeout-minutes: 120
         run: |
           runCTest() {
-            cd ${{ github.workspace }}/build &&  ctest -j$(nproc) $CTEST_FLAGS "$@"
+            cd ${{ github.workspace }}/build && ctest -j$(nproc) $CTEST_FLAGS "$@"
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          if [ "${{ matrix.config }}" == "OpenMP" ]; then
-            runCTest -L internal
-          elif [ "${{ matrix.config }}" == "TBB" ]; then
-            runCTest -L internal
-          elif [ "${{ matrix.config }}" == "basic" ]; then
-            runCTest -L internal
-          elif [ "${{ matrix.config }}" == "static" ]; then
-            runCTest -L internal
-          elif [ "${{ matrix.config }}" == "devel" ]; then
-            runCTest -L internal
+          # the pocl_test_dlopen tests try to dlopen libraries from the build dir; however, we removed them at install step
+          if [ "${{ matrix.config }}" == "install" ]; then
+            runCTest -L internal -E pocl_test_dlopen_
           else
-            echo "Unknown configuration" && exit 1
+            runCTest -L internal
           fi
 
   oneapi_matrix:
