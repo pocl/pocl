@@ -27,13 +27,18 @@ env:
 
 jobs:
   level_zero_matrix:
-    name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
+    name: LLVM ${{ matrix.llvm }} - Level Zero - CTS ${{ matrix.conformance }}
     runs-on: [self-hosted, linux, level_zero]
     strategy:
       fail-fast: false
       matrix:
-        llvm: [17, 18]
-        config: [level_zero]
+        include:
+          - llvm: 17
+            conformance: 0
+          - llvm: 18
+            conformance: 0
+          - llvm: 19
+            conformance: 1
 
     steps:
       - name: Checkout
@@ -59,7 +64,7 @@ jobs:
           mkdir -p ${EXAMPLES_DIR}/build_level0
           mkdir -p ${EXAMPLES_DIR}/source
           # test both with and without ENABLE_CONFORMANCE
-          if [ ${{ matrix.llvm }} -eq 17 ]; then
+          if [ ${{ matrix.conformance }} -eq 0 ]; then
             runCMake -DENABLE_LEVEL0=1 -DENABLE_HOST_CPU_DEVICES=0 -DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }}
           else
             runCMake -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_level0 -DENABLE_LEVEL0=1 -DENABLE_HOST_CPU_DEVICES=0 -DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }}
@@ -70,9 +75,9 @@ jobs:
         run: |
           cd ${{ github.workspace }}/build && make -j4
 
-      - name: Build Examples
+      - name: Build OpenCL-CTS
         id: build_examples
-        if: ${{ matrix.llvm == 18 }}
+        if: ${{ matrix.conformance == 1 }}
         timeout-minutes: 120
         run: |
           cd ${{ github.workspace }}/build/examples/conformance && make -j4 conformance
