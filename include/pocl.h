@@ -41,7 +41,7 @@
 typedef uint64_t pocl_obj_id_t;
 
 #ifndef CL_TARGET_OPENCL_VERSION
-#define CL_TARGET_OPENCL_VERSION 220
+#define CL_TARGET_OPENCL_VERSION 300
 #endif
 #include <CL/opencl.h>
 

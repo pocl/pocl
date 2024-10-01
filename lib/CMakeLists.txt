@@ -26,8 +26,7 @@
 separate_arguments(HOST_CLANG_FLAGS)
 separate_arguments(HOST_LLC_FLAGS)
 
-# these are hardcoded here b/c we want to build the library with latest OpenCL
-add_definitions(-DCL_TARGET_OPENCL_VERSION=300 -DCL_HPP_TARGET_OPENCL_VERSION=300)
+add_definitions(-DCL_TARGET_OPENCL_VERSION=${OPENCL_HEADER_VERSION} -DCL_HPP_TARGET_OPENCL_VERSION=${OPENCL_HEADER_VERSION})
 include_directories("${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/include/hpp")
 
 cpack_add_component("lib")
