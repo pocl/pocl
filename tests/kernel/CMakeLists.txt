@@ -136,6 +136,9 @@ add_test_pocl(NAME "kernel/test_short16"
 add_test_pocl(NAME "kernel/test_frexp_modf"
               COMMAND "kernel" "test_frexp_modf")
 
+add_test_pocl(NAME "kernel/test_halfs"
+              COMMAND "kernel" "test_halfs")
+
 foreach(VARIANT ${VARIANTS})
   set_tests_properties("kernel/test_min_max_${VARIANT}" "kernel/test_length_distance_${VARIANT}"
     "kernel/test_fmin_fmax_fma_${VARIANT}" "kernel/test_local_struct_array_${VARIANT}"
