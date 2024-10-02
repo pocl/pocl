@@ -215,8 +215,8 @@ typedef struct
  */
 typedef struct _cl_dbk_attributes_exp_onnx_inference
 {
-  const char *model_data;
   size_t model_size;
+  const char *model_data;
   size_t num_inputs;
   const char **input_tensor_names;
   const cl_tensor_desc *input_tensor_descs;
@@ -227,6 +227,6 @@ typedef struct _cl_dbk_attributes_exp_onnx_inference
   const char **initializer_names;
   const cl_tensor_desc *initializer_tensor_descs;
   const char **initializer_data;
-} cl_dbk_attributes_khr_onnx_inference;
+} cl_dbk_attributes_exp_onnx_inference;
 
 #endif /* OPENCL_EXP_DEFINED_BUILTIN_KERNELS */

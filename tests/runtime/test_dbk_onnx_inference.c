@@ -120,8 +120,8 @@ main (int _argc, char **_argv)
                                                   &tensor_layout,
                                                   CL_TENSOR_LAYOUT_ML } };
 
-  const cl_dbk_attributes_khr_onnx_inference onnx_inference_attributes
-    = { model_bytes, model_size, 2, input_tensor_names, input_tensor_descs, 1,
+  const cl_dbk_attributes_exp_onnx_inference onnx_inference_attributes
+    = { model_size, model_bytes, 2, input_tensor_names, input_tensor_descs, 1,
         output_tensor_names, output_tensor_descs,
         /* The below attributes are optional and can be left zeroed out */
         1, initializer_names, initializer_tensor_descs,

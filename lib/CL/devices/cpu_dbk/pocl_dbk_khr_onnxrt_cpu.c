@@ -47,7 +47,7 @@ typedef struct onnxrt_instance
   OrtMemoryInfo *mem_info;
   OrtSession *session;
   OrtSessionOptions *session_options;
-  const cl_dbk_attributes_khr_onnx_inference *attributes;
+  const cl_dbk_attributes_exp_onnx_inference *attributes;
 } onnxrt_instance_t;
 
 static void
@@ -158,7 +158,7 @@ cl_to_onnxrt_tensor_element_type (cl_tensor_datatype dtype)
   while (0)
 
 cl_int
-pocl_create_ort_instance (const cl_dbk_attributes_khr_onnx_inference *attrs,
+pocl_create_ort_instance (const cl_dbk_attributes_exp_onnx_inference *attrs,
                           onnxrt_instance_t **onnxrt)
 {
   cl_int err = CL_SUCCESS;
@@ -272,7 +272,7 @@ pocl_perform_ort_inference (onnxrt_instance_t *ort,
                             char *output_storage)
 {
   cl_int err = CL_SUCCESS;
-  const cl_dbk_attributes_khr_onnx_inference *attrs = ort->attributes;
+  const cl_dbk_attributes_exp_onnx_inference *attrs = ort->attributes;
   OrtValue **outputs = NULL;
   OrtValue **inputs = NULL;
   OrtRunOptions *run_options = NULL;

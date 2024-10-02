@@ -159,9 +159,9 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
       return CL_SUCCESS;
     case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
       {
-        const cl_dbk_attributes_khr_onnx_inference *attrs
-            = (const cl_dbk_attributes_khr_onnx_inference *)
-                meta->builtin_kernel_attrs;
+        const cl_dbk_attributes_exp_onnx_inference *attrs
+          = (const cl_dbk_attributes_exp_onnx_inference *)
+              meta->builtin_kernel_attrs;
 
         /* Input offsets */
         if (arg_index == 0

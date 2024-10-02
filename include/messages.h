@@ -112,6 +112,7 @@ extern "C"
     MessageType_BuildProgramFromSource,
     MessageType_BuildProgramFromBinary,
     MessageType_BuildProgramWithBuiltins,
+    MessageType_BuildProgramWithDefinedBuiltins,
     // Special message type for SPIR-V IL for now. No support for
     // vendor-specific ILs.
     MessageType_BuildProgramFromSPIRV,
