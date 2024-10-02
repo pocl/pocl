@@ -564,14 +564,6 @@ find_program(XARGS_EXEC
   HINTS ENV PATH
 )
 
-if(NOT PATCH_EXEC)
-  message(FATAL_ERROR "Could not find patch command.")
-endif()
-
-if(NOT XARGS_EXEC)
-  message(FATAL_ERROR "Could not find xargs command.")
-endif()
-
 ######################################################################################
 
 if(ENABLE_LLVM)

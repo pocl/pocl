@@ -275,31 +275,43 @@ function(make_kernel_bc OUTPUT_VAR NAME SUBDIR USE_SLEEF EXTRA_BC EXTRA_CONFIG)
   file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}")
   compile_to_bc("${SUBDIR}" BC_LIST "${EXTRA_CONFIG}" ${ARGN})
 
-  set(DEPENDLIST ${BC_LIST})
-  # fix too long commandline with cat and xargs
-  set(BC_LIST_FILE_TXT "")
-  foreach(FILENAME ${BC_LIST})
-    # straight parsing semicolon separated list with xargs -d didn't work on windows.. no such switch available
-    set(BC_LIST_FILE_TXT "${BC_LIST_FILE_TXT} \"${FILENAME}\"")
-  endforeach()
   if(USE_SLEEF)
-    set(BC_LIST_FILE_TXT "${BC_LIST_FILE_TXT} \"${EXTRA_BC}\"")
-    list(APPEND DEPENDLIST ${EXTRA_BC} "sleef_config_${VARIANT}")
+    list(APPEND BC_LIST ${EXTRA_BC})
   endif()
-  set(BC_LIST_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/kernel_${NAME}_linklist.txt")
-  file(WRITE "${BC_LIST_FILE}" "${BC_LIST_FILE_TXT}")
+
+  # Split linking into smaller pieces by 40. This is to avoid a problem
+  # with command input size limitation on Windows
+  list(LENGTH BC_LIST BCLIST_LENGTH)
+  set(INDEX 0)
+  set(FINAL_LINK_INPUTS)
+  while(BCLIST_LENGTH GREATER INDEX)
+    list(SUBLIST BC_LIST ${INDEX} 40 BC_SUBLIST)
+    list(LENGTH BC_SUBLIST BCSUBLIST_LENGTH)
+    set(LINK_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/partial-${NAME}-${INDEX}.bc")
+    list(APPEND FINAL_LINK_INPUTS "${LINK_OUTPUT}")
+    add_custom_command(OUTPUT "${LINK_OUTPUT}"
+      DEPENDS ${BC_LIST}
+      COMMAND "${LLVM_LINK}" "-o" "${LINK_OUTPUT}" ${BC_SUBLIST}
+      COMMENT "Linking part of builtins library"
+      VERBATIM)
+    math(EXPR INDEX "${INDEX} + ${BCSUBLIST_LENGTH}")
+  endwhile()
 
   # don't waste time optimizing the kernels IR when in developer mode
   if(DEVELOPER_MODE)
-    set(LINK_OPT_COMMAND COMMAND "${XARGS_EXEC}" "${LLVM_LINK}" "-o" "${KERNEL_BC}" < "${BC_LIST_FILE}")
+    set(LINK_OPT_COMMAND COMMAND "${LLVM_LINK}" "-o" "${KERNEL_BC}" ${FINAL_LINK_INPUTS})
   else()
-    set(LINK_CMD COMMAND "${XARGS_EXEC}" "${LLVM_LINK}" "-o" "kernel-${NAME}-unoptimized.bc" < "${BC_LIST_FILE}")
+    set(LINK_CMD COMMAND "${LLVM_LINK}" "-o" "kernel-${NAME}-unoptimized.bc" ${FINAL_LINK_INPUTS})
     set(OPT_CMD COMMAND "${LLVM_OPT}" ${LLC_FLAGS} "-O3" "-fp-contract=off" "-o" "${KERNEL_BC}" "kernel-${NAME}-unoptimized.bc")
     set(LINK_OPT_COMMAND ${LINK_CMD} ${OPT_CMD})
   endif()
 
+  if(USE_SLEEF)
+    list(APPEND FINAL_LINK_INPUTS "sleef_config_${VARIANT}")
+  endif()
+
   add_custom_command( OUTPUT "${KERNEL_BC}"
-        DEPENDS ${DEPENDLIST}
+        DEPENDS ${FINAL_LINK_INPUTS}
         ${LINK_OPT_COMMAND}
         COMMENT "Linking & optimizing Kernel bitcode ${KERNEL_BC}"
         VERBATIM)
