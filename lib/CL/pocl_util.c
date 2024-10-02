@@ -2789,7 +2789,7 @@ struct _pocl_async_callback_item
 };
 
 static pocl_async_callback_item *async_callback_list = NULL;
-static pthread_cond_t async_cb_wake_cond
+static pocl_cond_t async_cb_wake_cond
   __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 static POCL_FAST_LOCK_T async_cb_lock
   __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));

@@ -84,7 +84,7 @@ static void pocl_level0_abort_on_ze_error(int permit_quiet_exit,
     // this error code is returned when the main thread exits and the ZE driver
     // is uninitialized by the exit handlers. Return quietly instead of abort
     if (permit_quiet_exit && (status == ZE_RESULT_ERROR_UNINITIALIZED))
-      pthread_exit(NULL);
+      POCL_EXIT_THREAD(NULL);
     // TODO convert level0 errors to strings
     POCL_ABORT("Error %0x from LevelZero API:\n%s\n", (unsigned)status, str);
   }

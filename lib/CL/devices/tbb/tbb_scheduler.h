@@ -51,8 +51,8 @@ extern "C"
 
   typedef struct
   {
-    pthread_cond_t wake_meta_thread
-        __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+    pocl_cond_t wake_meta_thread
+      __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
     POCL_FAST_LOCK_T wq_lock_fast
         __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
     _cl_command_node *work_queue;
@@ -69,7 +69,7 @@ extern "C"
 
     struct TBBArena *tbb_arena;
 
-    pthread_t meta_thread;
+    pocl_thread_t meta_thread;
     int meta_thread_shutdown_requested;
   } pocl_tbb_scheduler_data
       __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));

@@ -146,11 +146,11 @@ static struct sigaction sigfpe_action, old_sigfpe_action;
 /* list of threads (e.g. of CPU driver), for which the SIGFPE should be
  * ignored. for all threads not on this list, the original handler is invoked
  */
-static pthread_t ignored_thread_ids[2048];
+static pocl_thread_t ignored_thread_ids[2048];
 static unsigned num_ignored_threads = 0;
 
 void
-pocl_ignore_sigfpe_for_thread (pthread_t thr)
+pocl_ignore_sigfpe_for_thread (pocl_thread_t thr)
 {
   unsigned current_idx
       = __atomic_fetch_add (&num_ignored_threads, 1, __ATOMIC_SEQ_CST);
@@ -170,7 +170,7 @@ sigfpe_signal_handler (int signo, siginfo_t *si, void *data)
       /* SIGFPE is delivered to the thread that caused the div-by-zero.
        * check if the thread is on the list of threads we should ignore.
        */
-      pthread_t ID = pthread_self ();
+      pocl_thread_t ID = POCL_THREAD_SELF ();
       int found = 0;
       unsigned max_threads
           = __atomic_load_n (&num_ignored_threads, __ATOMIC_SEQ_CST);

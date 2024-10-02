@@ -1,6 +1,7 @@
-/* pocl_threads.h - various helper macros & functions for multithreading
+/* pocl_threads.h - various helper macros & functions for multithreading.
 
    Copyright (c) 2023 Jan Solanti / Tampere University
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -20,6 +21,15 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
    IN THE SOFTWARE.
 */
+
+/** \file pocl_threads.h
+ *
+ * PoCL core should use only the abstractions in this file for threading and
+ * synchronization. Thus, this file acts as a portability layer for various
+ * threading libraries needed in the runtime. The 'pthread' CPU device still
+ * calls pthread directly as it's a CPU device driver optimized for using that
+ * API.
+ */
 
 #ifndef POCL_THREADS_H
 #define POCL_THREADS_H
@@ -145,5 +155,5 @@ extern "C"
 #define POCL_JOIN_THREAD2(thr, res_ptr)                                       \
   PTHREAD_CHECK (pthread_join (thr, res_ptr))
 #define POCL_EXIT_THREAD(res) pthread_exit (res)
-
+#define POCL_THREAD_SELF() pthread_self ()
 #endif

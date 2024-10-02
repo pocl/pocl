@@ -74,21 +74,21 @@ kernel_run_command* new_kernel_run_command ()
     {
       LL_DELETE (kernel_pool, k);
       memset (k, 0, sizeof(kernel_run_command));
-      PTHREAD_CHECK (pthread_mutex_init (&k->lock, NULL));
+      POCL_INIT_LOCK (&k->lock);
       POCL_UNLOCK (kernel_pool_lock);
       return k;
     }
 
   POCL_UNLOCK (kernel_pool_lock);
   k = (kernel_run_command*)calloc (1, sizeof (kernel_run_command));
-  PTHREAD_CHECK (pthread_mutex_init (&k->lock, NULL));
+  POCL_INIT_LOCK (&k->lock);
   return k;
 }
 
 void free_kernel_run_command (kernel_run_command *k)
 {
   POCL_LOCK (kernel_pool_lock);
-  PTHREAD_CHECK (pthread_mutex_destroy (&k->lock));
+  POCL_DESTROY_LOCK (&k->lock);
   LL_PREPEND (kernel_pool, k);
   POCL_UNLOCK (kernel_pool_lock);
 }
