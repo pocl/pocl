@@ -3,7 +3,7 @@
 
    Copyright (c) 2013 Kalle Raiskila
                  2013-2019 Pekka Jääskeläinen
-                 2023 Pekka Jääskeläinen / Intel Finland Oy
+                 2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -492,7 +492,8 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
   addPass(Passes, "mem2reg");
   addAnalysis(Passes, "domtree");
   addAnalysis(Passes, "workitem-handler-chooser");
-  if (Dev->spmd != CL_FALSE) {
+
+  if (Dev->spmd) {
     addPass(Passes, "flatten-inline-all", PassType::Module);
     addPass(Passes, "always-inline", PassType::Module);
   } else {
@@ -1597,7 +1598,6 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
 
   // Next call the target's assembler via the Toolchain API indirectly through
   // the Driver API.
-
   char AsmFileName[POCL_MAX_PATHNAME_LENGTH];
   char ObjFileName[POCL_MAX_PATHNAME_LENGTH];
 
@@ -1605,11 +1605,16 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
   pocl_cache_write_kernel_asmfile(AsmFileName, AsmStr.c_str(), AsmStr.size());
   pocl_cache_tempname(ObjFileName, OBJ_EXT, nullptr);
 
+  std::string MCPU = Device->llvm_cpu != nullptr
+                         ? (std::string(CLANG_MARCH_FLAG) + Device->llvm_cpu)
+                         : "";
+
   const char *Args[] = {pocl_get_path("CLANG", CLANG),
                         AsmFileName,
                         "-c",
                         "-o",
                         ObjFileName,
+                        Device->llvm_cpu != nullptr ? MCPU.c_str() : nullptr,
                         nullptr};
   int Res = pocl_invoke_clang(Device, Args);
 

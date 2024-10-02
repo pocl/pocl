@@ -327,10 +327,28 @@ POCL_EXPORT
 const char *
 pocl_command_to_str (cl_command_type cmd);
 
+/**
+ * Wrapper for running commands.
+ *
+ * \param args The list of arguments, including the executed program.
+ * \return The return value from the executed command.
+ */
 POCL_EXPORT
 int pocl_run_command (const char **args);
 
 #if defined(HAVE_FORK)
+ /**
+ * Wrapper for running commands with their output captured to a buffer.
+ *
+ * \todo This currently might block forever if capture_string is too small
+ * for all the output.
+ *
+ * \param capture_string The target for storing the stdout and stderr.
+ * \param captured_bytes [in/out] Input the number of bytes allocated in
+ * capture_string, outputs the number of bytes written there.
+ * \param args The list of arguments, including the executed program.
+ * \return The return value from the executed command.
+ */
 POCL_EXPORT
 int pocl_run_command_capture_output (char *capture_string,
                                      size_t *captured_bytes,

@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2014 Kalle Raiskila
 //               2016-2022 Pekka Jääskeläinen
+//               2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal

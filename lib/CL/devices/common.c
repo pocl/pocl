@@ -208,12 +208,12 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
 
   POCL_MSG_PRINT_INFO ("Linking final module\n");
 
-  /* Link through Clang driver interface who knows the correct toolchains
+  /* Link through Clang driver interface which knows the correct toolchains
      for all of its targets.  */
   const char *cmd_line[64]
     = { pocl_get_path ("CLANG", CLANG), "-o", tmp_module, tmp_objfile };
   unsigned last_arg_idx = 4;
-  /* immediate flush enabled results in "__printf_flush_buffer" symbol
+  /* Immediate flush enabled results in "__printf_flush_buffer" symbol
    * referenced it the built kernel.so, however that function exists only
    * on the host side; therefore link to libpocl.so which provides it */
 #ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
@@ -1446,6 +1446,15 @@ static const cl_image_format supported_image_formats[] = {
 };
 #endif
 
+/** Initializes device info defaults.
+ *
+ * It setups the most generic defaults applicable to most devices,
+ * which the device drivers can overwrite with more specific values.
+ * pocl_cpu_init_common() should be called instead for CPU-devices.
+ *
+ * \param dev The device to initialize.
+ * \param device_extensions A list of extensions the device supports.
+ */
 void
 pocl_init_default_device_infos (cl_device_id dev,
                                 const char *device_extensions)
@@ -1660,7 +1669,6 @@ pocl_init_default_device_infos (cl_device_id dev,
 
 #ifdef ENABLE_LLVM
 
-  dev->llvm_target_triplet = OCL_KERNEL_TARGET;
   dev->kernellib_fallback_name = NULL;
 
   char kernellib[POCL_MAX_PATHNAME_LENGTH] = "kernel-";
@@ -1675,15 +1683,14 @@ pocl_init_default_device_infos (cl_device_id dev,
   dev->kernellib_fallback_name = strdup(kernellib_fallback);
 
   const char* kernellib_variant = pocl_get_distro_kernellib_variant ();
-  dev->llvm_cpu = pocl_get_distro_cpu_name (kernellib_variant);
+  if (dev->llvm_cpu == NULL)
+    dev->llvm_cpu = pocl_get_distro_cpu_name (kernellib_variant);
   strcat(kernellib, kernellib_variant);
   if (!kernellib_variant)
     dev->available = CL_FALSE;
 #elif defined(HOST_CPU_FORCED)
-  dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
   strcat(kernellib, OCL_KERNEL_TARGET_CPU);
 #else
-  dev->llvm_cpu = pocl_get_llvm_cpu_name ();
   strncpy (kernellib_fallback, kernellib, POCL_MAX_PATHNAME_LENGTH);
   strncat (kernellib_fallback, OCL_KERNEL_TARGET_CPU,
            POCL_MAX_PATHNAME_LENGTH - strlen (kernellib));
@@ -1693,16 +1700,18 @@ pocl_init_default_device_infos (cl_device_id dev,
   dev->kernellib_fallback_name = strdup(kernellib_fallback);
 #endif
   dev->kernellib_name = strdup(kernellib);
-  dev->kernellib_subdir = "host";
+  if (dev->kernellib_subdir == NULL)
+    dev->kernellib_subdir = "host";
   dev->llvm_abi = pocl_get_llvm_cpu_abi ();
 
 #else /* No compiler, no CPU info */
   dev->kernellib_name = NULL;
   dev->kernellib_fallback_name = NULL;
-  dev->kernellib_subdir = "host";
-  dev->llvm_cpu = NULL;
+  if (dev->kernellib_subdir == NULL)
+    dev->kernellib_subdir = "host";
   dev->llvm_abi = NULL;
-  dev->llvm_target_triplet = "";
+  if (dev->llvm_target_triplet == NULL)
+    dev->llvm_target_triplet = "";
 #endif
 
 #ifdef ENABLE_SPIRV
@@ -1728,6 +1737,9 @@ pocl_init_default_device_infos (cl_device_id dev,
                   "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32;");
       dev->num_builtin_kernels = 4;
     }
+
+  SETUP_DEVICE_CL_VERSION (dev, HOST_DEVICE_CL_VERSION_MAJOR,
+                           HOST_DEVICE_CL_VERSION_MINOR)
 }
 
 /*

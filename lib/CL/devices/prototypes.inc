@@ -86,8 +86,8 @@
       const size_t *region, size_t dst_row_pitch, size_t dst_slice_pitch,     \
       size_t src_row_pitch, size_t src_slice_pitch);                          \
   void pocl_##__DRV__##_compile_kernel (_cl_command_node *node,               \
-                                        cl_kernel kernel,                     \
-                                        cl_device_id device, int specialize); \
+                                         cl_kernel kernel,                    \
+                                         cl_device_id device, int specialize);\
   int pocl_##__DRV__##_init_queue (cl_device_id device,                       \
                                    cl_command_queue queue);                   \
   int pocl_##__DRV__##_free_queue (cl_device_id device,                       \

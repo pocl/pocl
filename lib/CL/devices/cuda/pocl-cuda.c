@@ -385,9 +385,6 @@ setup_kernellib_and_additional_extensions (cl_device_id dev,
   assert (data && "data must not be NULL!");
   assert (data->sm && data->ptx && "CUDA target must be known!");
 
-  dev->kernellib_fallback_name = NULL;
-  dev->kernellib_subdir = "cuda";
-
   int is_64bit_target = (sizeof (void *) == 8);
 
   int has_unified_addressing = 0;
@@ -518,6 +515,11 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 
   assert (dev->data == NULL);
 
+  dev->llvm_target_triplet = (sizeof (void *) == 8) ? "nvptx64" : "nvptx";
+  dev->llvm_cpu = "generic";
+  dev->kernellib_fallback_name = NULL;
+  dev->kernellib_subdir = "cuda";
+
   pocl_init_default_device_infos (dev, CUDA_DEVICE_EXTENSIONS);
 
   SETUP_DEVICE_CL_VERSION (dev, CUDA_DEVICE_CL_VERSION_MAJOR,
@@ -529,7 +531,6 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->type = CL_DEVICE_TYPE_GPU;
   dev->address_bits = (sizeof (void *) * 8);
 
-  dev->llvm_target_triplet = (sizeof (void *) == 8) ? "nvptx64" : "nvptx";
   dev->llvm_fp_contract_mode = "fast";
 
   dev->spmd = CL_TRUE;

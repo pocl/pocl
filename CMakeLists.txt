@@ -2,6 +2,7 @@
 #   CMake build system files
 #
 #   Copyright (c) 2014-2024 pocl developers
+#                 2024 Pekka Jääskeläinen / Intel Finland Oy
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -314,7 +315,7 @@ option(ENABLE_EXAMPLES "Build examples. Defaults to ON" ON)
 
 option(ENABLE_RDMA "Enable usage of RDMA libraries for memory allocations. Requires libRDMAcm and libverbs" OFF)
 
-option(RENAME_POCL "rename PoCL's ocl functions to PO<ocl_function>. Allows an user to call both PoCL and another ocl application" OFF)
+option(RENAME_POCL "Rename PoCL's OpenCL functions to PO<ocl_function>. Allows an user to call both PoCL and another OpenCL implementation." OFF)
 
 
 ##########################################################

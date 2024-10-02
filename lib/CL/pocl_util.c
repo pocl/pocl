@@ -1731,20 +1731,6 @@ pocl_command_to_str (cl_command_type cmd)
   return "unknown";
 }
 
-/*
- * This replaces a simple system(), because:
- *
- * 1) system() was causing issues (gpu lockups) with HSA when
- * compiling code (via compile_parallel_bc_to_brig)
- * with OpenCL 2.0 atomics (like CalcPie from AMD SDK).
- * The reason of lockups is unknown (yet).
- *
- * 2) system() uses fork() which copies page table maps, and runs
- * out of AS when pocl has already allocated huge buffers in memory.
- * this happened in llvm_codegen()
- *
- * vfork() does not copy pagetables.
- */
 int
 pocl_run_command (const char **args)
 {

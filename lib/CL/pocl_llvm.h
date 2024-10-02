@@ -35,7 +35,7 @@ extern "C" {
   void InitializeLLVM ();
   void UnInitializeLLVM ();
 
-  /* Returns the cpu name as reported by LLVM. */
+  /* Returns the host cpu name as reported by LLVM. */
   POCL_EXPORT
   char *pocl_get_llvm_cpu_name ();
 
