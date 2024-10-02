@@ -332,7 +332,7 @@ RETRY:
 
   /* if no command was available, sleep */
   if ((Cmd == NULL) && (DoExit == 0)) {
-    pthread_cond_wait(&SchedData->wake_meta_thread, &SchedData->wq_lock_fast);
+    POCL_WAIT_COND(SchedData->wake_meta_thread, SchedData->wq_lock_fast);
     goto RETRY;
   }
 
@@ -349,7 +349,7 @@ void *TBBDriverThread(void *Dev) {
   while (1) {
     DoExit = runSingleCommand(SchedData);
     if (DoExit) {
-      pthread_exit(NULL);
+      POCL_EXIT_THREAD(NULL);
     }
   }
 }
