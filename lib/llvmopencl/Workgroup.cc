@@ -1477,14 +1477,16 @@ WorkgroupImpl::createArgBufferWorkgroupLauncher(Function *Func,
   return llvm::dyn_cast<llvm::Function>(llvm::unwrap(WrapperKernel));
 }
 
-/**
- * Creates a launcher function that executes all work-items in the grid by
- * launching a given work-group function for all work-group ids.
- *
- * The function adheres to the PHSA calling convention where the first two
- * arguments are for PHSA's context data, and the third one is the argument
- * buffer. The name will be phsa_kernel.KERNELNAME_grid_launcher.
- */
+/// Creates a launcher function that executes all work-items in the grid by
+/// launching a given work-group function for all work-group ids.
+///
+/// The function adheres to the PHSA calling convention where the first two
+/// arguments are for PHSA's context data, and the third one is the argument
+/// buffer. The name will be phsa_kernel.KERNELNAME_grid_launcher.
+///
+/// \param KernFunc The kernel function to generate the launcher for.
+/// \param WGFunc The work-group function.
+/// \param KernName The (original) name of the kernel.
 void WorkgroupImpl::createGridLauncher(Function *KernFunc, Function *WGFunc,
                                        std::string KernName) {
 
@@ -1726,6 +1728,11 @@ llvm::PreservedAnalyses Workgroup::run(llvm::Module &M,
   for (llvm::GlobalVariable *GVar : GVarsToDelete) {
     GVar->eraseFromParent();
   }
+
+#ifdef DEBUG_WORK_GROUP_GEN
+  std::cerr << "### After Workgroup:\n";
+  M.dump();
+#endif
 
   return Ret ? PAChanged : PreservedAnalyses::all();
 }

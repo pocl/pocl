@@ -29,6 +29,9 @@
 #include "common_utils.h"
 #include "cpuinfo.h"
 #include "pocl_builtin_kernels.h"
+#ifdef ENABLE_LLVM
+#include "pocl_llvm.h"
+#endif
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
 #include "pocl_tensor_util.h"
@@ -111,18 +114,24 @@ align_ptr (char *p)
 
 #define FALLBACK_MAX_THREAD_COUNT 8
 
-/* Initializes CPU-specific device info default, that cannot / should
-   not be initialized in pocl_init_default_device_infos()
-*/
+/** Initializes device info defaults for CPU (host) devices.
+ *
+ * pocl_init_default_device_infos() can be called instead
+ * for non-CPU (host) devices.
+ */
 cl_int
 pocl_cpu_init_common (cl_device_id device)
 {
   int ret = CL_SUCCESS;
 
-  pocl_init_default_device_infos (device, HOST_DEVICE_EXTENSIONS);
+#ifdef ENABLE_LLVM
+  device->llvm_target_triplet = OCL_KERNEL_TARGET;
+  device->llvm_cpu = OCL_KERNEL_TARGET_CPU;
+  if (device->llvm_cpu == NULL)
+    device->llvm_cpu = pocl_get_llvm_cpu_name ();
+#endif
 
-  SETUP_DEVICE_CL_VERSION (device, HOST_DEVICE_CL_VERSION_MAJOR,
-                           HOST_DEVICE_CL_VERSION_MINOR)
+  pocl_init_default_device_infos (device, HOST_DEVICE_EXTENSIONS);
 
   if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_subgroup") != NULL)
     {

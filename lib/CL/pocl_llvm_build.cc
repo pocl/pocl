@@ -154,20 +154,20 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
                                       PoclLLVMContextData *llvm_ctx);
 
 /**
-* \brief  This function runs various LLVM "passes" on the program.bc LLVM module;
-* the passes are not real LLVM passes, but perhaps it will make sense
-* to convert at some point. Note that this should only run passes which
-* for some reason must be run at program.bc stage rather than parallel.bc
-*
-* \param [in] Context the pocl LLVM context
-* \param [in] Mod is the LLVM module
-* \param [in] Program the cl_program corresponding to Mod
-* \param [in] Device the device used for the LLVM passes
-* \param [in] device_i index into program->devices[] corresponding to Device
-* \param [out] Log a std::string containing the error/warning log
-* \returns true if there is an error
-*
-*/
+ * Runs various LLVM "passes" on the program.bc LLVM module;
+ * the passes are not real LLVM passes, but perhaps it will make sense
+ * to convert at some point. Note that this should only run passes which
+ * for some reason must be run at program.bc stage rather than parallel.bc
+ *
+ * \param [in] Context the pocl LLVM context
+ * \param [in] Mod is the LLVM module
+ * \param [in] Program the cl_program corresponding to Mod
+ * \param [in] Device the device used for the LLVM passes
+ * \param [in] device_i index into program->devices[] corresponding to Device
+ * \param [out] Log a std::string containing the error/warning log
+ * \returns true if there is an error
+ *
+ */
 static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
                              cl_program Program, cl_device_id Device,
                              unsigned device_i, std::string &Log) {
@@ -293,7 +293,7 @@ int pocl_llvm_build_program(cl_program program,
   if (device->has_64bit_long)
     ss << "-Dcl_khr_int64 ";
 
-  if (device->use_only_clang_opencl_headers == CL_FALSE) {
+  if (!device->use_only_clang_opencl_headers) {
     ss << "-DPOCL_DEVICE_ADDRESS_BITS=" << device->address_bits << " ";
     ss << "-D__USE_CLANG_OPENCL_C_H ";
   }
@@ -875,7 +875,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
     error = pocl_convert_spir_bitcode_to_target(TempModule.get(), libmodule,
                                                 device);
     POCL_RETURN_ERROR_ON((error != CL_SUCCESS), CL_LINK_PROGRAM_FAILURE,
-                         "could connvert SPIR to Target\n");
+                         "could not convert SPIR to Target\n");
 
     if (Linker::linkModules(*mod, std::move(TempModule))) {
       std::string msg = getDiagString(ctx);

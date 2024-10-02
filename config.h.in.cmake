@@ -197,6 +197,8 @@
 
 #define CLANGXX "@CLANGXX@"
 
+#define CLANG_MARCH_FLAG "@CLANG_MARCH_FLAG@"
+
 #define LLVM_LLC "@LLVM_LLC@"
 
 #cmakedefine HAVE_LLVM_SPIRV

@@ -1073,11 +1073,19 @@ struct _cl_device_id {
      we need to generate work-item loops to execute all the work-items
      in the WG. For SPMD machines, the hardware spawns the WIs. */
   cl_bool spmd;
-  /* The device uses an HSA-like kernel ABI with a single argument buffer as
-     an input. */
+
+  /**
+   * The device uses an HSA-like kernel ABI with a single argument buffer as
+   * an input.
+   */
   cl_bool arg_buffer_launcher;
-  /* The device uses a GRID launcher */
+
+  /**
+   * The device uses a grid launcher which iterates through the whole
+   * index space.
+   */
   cl_bool grid_launcher;
+
   /* The Workgroup pass creates launcher functions and replaces work-item
      placeholder global variables (e.g. _local_size_, _global_offset_ etc) with
      loads from the context struct passed as a kernel argument. This flag

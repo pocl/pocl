@@ -78,6 +78,9 @@ bool chopBBs (llvm::Function &F, llvm::Pass &P);
 // Controls the debug output from ImplicitConditionalBarriers.cc:
 //#define DEBUG_COND_BARRIERS
 
+// Controls the debug output from Workgroup.cc
+// #define DEBUG_WORK_GROUP_GEN
+
 // Controls the debug output from PHIsToAllocas.cc
 //#define DEBUG_PHIS_TO_ALLOCAS
 
