@@ -24,13 +24,13 @@
 #include "pocl_tensor_util.h"
 
 /** Construct a deep copy of the given attributes */
-cl_dbk_attributes_khr_onnx_inference *
+cl_dbk_attributes_exp_onnx_inference *
 pocl_copy_onnx_inference_dbk_attributes (
-    const cl_dbk_attributes_khr_onnx_inference *src)
+  const cl_dbk_attributes_exp_onnx_inference *src)
 {
   int err;
-  cl_dbk_attributes_khr_onnx_inference *attrs
-      = malloc (sizeof (cl_dbk_attributes_khr_onnx_inference));
+  cl_dbk_attributes_exp_onnx_inference *attrs
+    = malloc (sizeof (cl_dbk_attributes_exp_onnx_inference));
   if (attrs == NULL)
     return NULL;
   attrs->model_size = src->model_size;
@@ -139,7 +139,7 @@ pocl_copy_onnx_inference_dbk_attributes (
  * or string literals. */
 void
 pocl_release_onnx_inference_dbk_attributes (
-    cl_dbk_attributes_khr_onnx_inference *attrs)
+  cl_dbk_attributes_exp_onnx_inference *attrs)
 {
   free ((char *)attrs->model_data);
 
@@ -198,6 +198,6 @@ pocl_release_onnx_inference_dbk_attributes (
   free ((cl_tensor_desc *)attrs->initializer_tensor_descs);
   POCL_MEM_FREE (attrs->initializer_data);
 
-  memset (attrs, 0, sizeof (cl_dbk_attributes_khr_onnx_inference));
+  memset (attrs, 0, sizeof (cl_dbk_attributes_exp_onnx_inference));
   POCL_MEM_FREE (attrs);
 }
