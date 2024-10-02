@@ -1181,71 +1181,43 @@ message(STATUS "Run tests with ICD: ${TESTS_USE_ICD}")
 
 ######################################################################################
 
-# Apple's OpenCL headers are too old for building PoCL, always use our own
-if(NOT APPLE)
-  find_file(OPENCL_H opencl.h PATH_SUFFIXES CL)
-  find_file(OPENCL_HPP opencl.hpp PATH_SUFFIXES CL)
-endif()
-
-if(OPENCL_H AND ENABLE_ICD AND (NOT HAVE_OCL_ICD_30_COMPATIBLE))
-  # if system-wide headers are present, ICD is enabled and older than 3.0 -> use the system-wide headers
-  # TBD we're assuming a sane combination of header & ICD versions
-  message(STATUS "opencl.h found (${OPENCL_H}) and ICD <3.0 enabled, using system headers")
-  set(HAVE_OPENCL_H ON)
-  set_expr(HAVE_OPENCL_HPP OPENCL_HPP)
-  set(IOH OFF)
-else()
-  # if system-wide OpenCL headers are not found, we must use PoCL's
-  # if ICD is disabled, we might as well compile with our own headers
-  # if ICD is 3.0, force the use of PoCL's own 3.0 headers -> enables some additional tests
-  message(STATUS "opencl.h not found or ICD disabled or ICD >= 3.0, using our headers")
-  set(HAVE_OPENCL_H OFF)
-  set(HAVE_OPENCL_HPP OFF)
-  # install headers only if system-wide headers not found
-  if(OPENCL_H)
-    set(IOH OFF)
-  else()
-    set(IOH ON)
+# if ICD is enabled and older than 3.0, we can't compile tests and examples. Disable them
+if(ENABLE_ICD AND (NOT HAVE_OCL_ICD_30_COMPATIBLE))
+  if(ENABLE_TESTS OR ENABLE_EXAMPLES)
+    message(FATAL_ERROR "ENABLE_ICD=ON and ICD doesn't support OpenCL 3.0, and tests/examples \
+                         are enabled. Either disable ICD or tests/examples")
   endif()
 endif()
 
 if(NOT DEFINED INSTALL_OPENCL_HEADERS)
+  find_file(OPENCL_H opencl.h PATH_SUFFIXES CL)
+  find_file(OPENCL_HPP opencl.hpp PATH_SUFFIXES CL)
+
+  # install headers only if system-wide headers not found
+  if(OPENCL_H AND OPENCL_HPP)
+    set(IOH OFF)
+  else()
+    set(IOH ON)
+  endif()
+
   option(INSTALL_OPENCL_HEADERS "Install POCL's OpenCL headers. (Ones from Khronos should be installed instead)" ${IOH})
 endif()
+
+#  force the use of PoCL's own 3.0 headers -> enables some additional tests
+message(STATUS "Using PoCL's OpenCL 3.0 headers")
+# PoCL's internal headers are OpenCL 3.0
+set(OPENCL_HEADER_VERSION 300)
 
 add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_0_APIS -DCL_USE_DEPRECATED_OPENCL_1_1_APIS
                 -DCL_USE_DEPRECATED_OPENCL_1_2_APIS -DCL_USE_DEPRECATED_OPENCL_2_0_APIS
                 -DCL_USE_DEPRECATED_OPENCL_2_1_APIS -DCL_USE_DEPRECATED_OPENCL_2_2_APIS)
 
-# check the highest supported OpenCL version in the headers
-if(HAVE_OPENCL_H)
-  include(CheckSymbolExists)
-  check_symbol_exists(CL_VERSION_3_0 ${OPENCL_H} HAVE_OPECL_3_0)
-  check_symbol_exists(CL_VERSION_2_2 ${OPENCL_H} HAVE_OPECL_2_2)
-  check_symbol_exists(CL_VERSION_2_1 ${OPENCL_H} HAVE_OPECL_2_1)
-  check_symbol_exists(CL_VERSION_2_0 ${OPENCL_H} HAVE_OPECL_2_0)
-  check_symbol_exists(CL_VERSION_1_2 ${OPENCL_H} HAVE_OPECL_1_2)
-  if(HAVE_OPECL_3_0)
-    set(OPENCL_HEADER_VERSION 300)
-  else()
-    message(FATAL_ERROR "Couldn't find OpenCL header with version at least 3.0")
-  endif()
-else()
-  # PoCL's internal headers are OpenCL 3.0
-  set(OPENCL_HEADER_VERSION 300)
-endif()
-
 # sets a target-version macro
-# sets the include directories to point either to system-wide OpenCL headers, or PoCL's own
+# sets the include directories to point to PoCL's own
 macro(set_opencl_header_includes)
   add_definitions(-DCL_TARGET_OPENCL_VERSION=${OPENCL_HEADER_VERSION}
                   -DCL_HPP_TARGET_OPENCL_VERSION=${OPENCL_HEADER_VERSION})
-  if(NOT HAVE_OPENCL_H)
-    include_directories("${CMAKE_SOURCE_DIR}/include")
-  endif()
-  if(NOT HAVE_OPENCL_HPP)
-    include_directories("${CMAKE_SOURCE_DIR}/include/hpp")
-  endif()
+  include_directories("${CMAKE_SOURCE_DIR}/include")
   include_directories("${CMAKE_SOURCE_DIR}/poclu")
 endmacro()
 

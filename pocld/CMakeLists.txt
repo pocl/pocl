@@ -60,9 +60,6 @@ unset(P_LINK_LIST)
 
 option(QUEUE_PROFILING "Enable profiling on server queues. Enabled by default" ON)
 
-# CL/opencl.hpp
-list(APPEND P_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/../include/hpp")
-
 # messages.h + pocl_remote.h
 list(APPEND P_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/../include")
 

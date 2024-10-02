@@ -4,8 +4,8 @@
 Installation
 ============
 
-Requirements
-------------
+Install Requirements
+------------------------
 
 In order to build pocl, you need the following support libraries and
 tools:
@@ -23,7 +23,7 @@ tools:
     required for SPIR-V support in CPU / CUDA; Vulkan driver supports SPIR-V through clspv)
 
 Installing requirements for Ubuntu
-----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Note: The binary packages from https://apt.llvm.org/ are recommended
 (and tested for each release) instead of the binary tar balls or
@@ -43,15 +43,22 @@ Installing requirements for Fedora::
 There are also Dockerfiles available for a few most common linux
 distributions in ``tools/docker``, looking into them might be helpful.
 
-OpenCL 3.0 support
-------------------
+ICD / OpenCL 3.0 support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you want PoCL built with ICD and OpenCL 3.0 support at platform level, you will
-need sufficiently new ocl-icd (2.3.x). For Ubuntu, it can be installed from
+PoCL's build by default builds the runtime library, tests and examples.
+The tests and examples cannot be built against ICD loader which doesn't
+support OpenCL 3.0. In other words, they can only be built with disabled
+ICD (linking directly to PoCL) or with ICD supporting OpenCL 3.0.
+
+The loader in Ubuntu (ocl-icd) supports OpenCL 3.0 since version 2.3.0;
+for Ubuntu earlier than 24.04, it can be installed from
 this PPA: https://launchpad.net/~ocl-icd/+archive/ubuntu/ppa
 
-Note: PoCL assumes that the OpenCL development headers and the ICD loader
-(if present on your system) are version compatible.
+If you don't have a sufficiently new ICD, and you want the tests/examples,
+then either
+ * disable building with ICD (-DENABLE_ICD=0)
+ * disable the tests & examples (-DENABLE_TESTS=0 -DENABLE_EXAMPLES=0)
 
 Clang / LLVM Notes
 ------------------
@@ -73,6 +80,8 @@ Supported LLVM versions
 
 Configure & Build
 -----------------
+
+
 
 CMake version 3.12 or higher is required.
 
