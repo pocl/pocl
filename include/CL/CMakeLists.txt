@@ -43,5 +43,6 @@ if(INSTALL_OPENCL_HEADERS)
                 cl_va_api_media_sharing_intel.h
                 cl_version.h
                 opencl.h
+                cl2.hpp opencl.hpp
           DESTINATION "${POCL_INSTALL_OPENCL_HEADER_DIR}" COMPONENT "dev")
 endif()

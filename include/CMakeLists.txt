@@ -25,7 +25,6 @@
 
 if(INSTALL_OPENCL_HEADERS)
   add_subdirectory("CL")
-  add_subdirectory("hpp/CL")
 endif()
 
 set(PRIVATE_HEADERS _enable_all_exts.h _builtin_renames.h

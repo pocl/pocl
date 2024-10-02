@@ -49,12 +49,8 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_flatten_barrier_subs test_alignment_with_dynamic_wg
   test_alignment_with_dynamic_wg2 test_alignment_with_dynamic_wg3
   test_issue_893 test_issue_1435 test_builtin_args test_issue_1390
-  test_workitem_func_outside_kernel
+  test_workitem_func_outside_kernel test_program_scope_vars test_issue_1548
 )
-
-if(OPENCL_HEADER_VERSION GREATER 299)
-  list(APPEND PROGRAMS_TO_BUILD test_program_scope_vars test_issue_1548)
-endif()
 
 if (MSVC)
   add_compile_options(${OPENCL_CFLAGS})
@@ -87,21 +83,19 @@ add_test_pocl(NAME "regression/test_issue_1435" COMMAND "test_issue_1435")
 
 add_test_pocl(NAME "regression/test_workitem_func_outside_kernel" COMMAND "test_workitem_func_outside_kernel")
 
-if(OPENCL_HEADER_VERSION GREATER 299)
-  add_test(NAME "regression/test_program_scope_vars" COMMAND "test_program_scope_vars")
-  set(OCL_30_TESTS "regression/test_program_scope_vars")
-  set_tests_properties("regression/test_program_scope_vars" PROPERTIES
+add_test(NAME "regression/test_program_scope_vars" COMMAND "test_program_scope_vars")
+set_tests_properties("regression/test_program_scope_vars"
+  PROPERTIES
     LABELS "internal;regression;level0"
     SKIP_RETURN_CODE 77)
 
-  # this test requires two USM devices
-  if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LEVEL0)
-    add_test(NAME "regression/test_issue_1548" COMMAND "test_issue_1548")
-    set_tests_properties("regression/test_issue_1548" PROPERTIES
-      LABELS "internal;regression;level0"
-      ENVIRONMENT "POCL_DEVICES=level0 cpu"
-      SKIP_RETURN_CODE 77)
-  endif()
+# this test requires two USM devices
+if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LEVEL0)
+  add_test(NAME "regression/test_issue_1548" COMMAND "test_issue_1548")
+  set_tests_properties("regression/test_issue_1548" PROPERTIES
+    LABELS "internal;regression;level0"
+    ENVIRONMENT "POCL_DEVICES=level0 cpu"
+    SKIP_RETURN_CODE 77)
 endif()
 
 add_test_pocl(NAME "regression/test_llvm_segfault_issue_889" COMMAND "test_llvm_segfault_issue_889")
@@ -238,7 +232,7 @@ foreach(VARIANT ${VARIANTS})
     "regression/test_issue_893_${VARIANT}" "regression/test_issue_1435_${VARIANT}"
     "regression/test_flatten_barrier_subs_${VARIANT}"
     "regression/test_workitem_func_outside_kernel_${VARIANT}"
-    ${OCL_30_TESTS}
+    "regression/test_program_scope_vars"
     ${TCE_TESTS}
     PROPERTIES
       COST 1.5
