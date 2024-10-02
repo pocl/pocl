@@ -20,8 +20,9 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
    IN THE SOFTWARE.
 */
-
+#define CL_TARGET_OPENCL_VERSION 300
 #include "pocl_tensor_util.h"
+#include "CL/cl_exp_tensor.h"
 #include "pocl_util.h"
 
 /* Check the tensor layout is well defined.
@@ -308,6 +309,17 @@ pocl_tensor_type_size (cl_tensor_datatype T)
     default:
       return -1;
     }
+}
+
+size_t
+pocl_tensor_data_size (const cl_tensor_desc *t)
+{
+  size_t data_len = pocl_tensor_type_size (t->dtype);
+  for (size_t dim = 0; dim < t->rank; ++dim)
+    {
+      data_len *= t->shape[dim];
+    }
+  return data_len;
 }
 
 cl_bool
