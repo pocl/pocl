@@ -104,8 +104,6 @@ protected:
   unsigned long WGMaxGridDimWidth;
 };
 
-  extern llvm::cl::opt<bool> AddWIMetadata;
-  extern llvm::cl::opt<int> LockStepSIMDWidth;
 }
 
 #endif
