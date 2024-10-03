@@ -1362,8 +1362,7 @@ pocl_print_system_memory_stats()
  * this should be reasonable for CPU */
 #define DEFAULT_WG_SIZE 8192
 
-static const char *final_ld_flags[] =
-  {"-lm", "-nostartfiles", HOST_LD_FLAGS_ARRAY, NULL};
+static const char *final_ld_flags[] = { HOST_LD_FLAGS_ARRAY, NULL };
 
 static cl_device_partition_property basic_partition_properties[1] = { 0 };
 

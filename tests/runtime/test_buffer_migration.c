@@ -95,10 +95,10 @@ main (int argc, char **argv)
   input = (cl_float *)malloc (num_floats * sizeof (cl_float));
   output = (cl_float *)calloc (num_floats, sizeof (cl_float));
 
-  srand48 (0);
+  srand (12345);
   for (i = 0; i < num_floats; ++i)
     {
-      input[i] = (cl_float)drand48 ();
+      input[i] = (cl_float)rand ();
     }
 
   buf_in = clCreateBuffer (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
