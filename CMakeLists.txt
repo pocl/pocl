@@ -88,7 +88,8 @@ endmacro()
 # don't allow implicit function declarations
 if(UNIX)
   if((CMAKE_C_COMPILER_ID STREQUAL "GNU") OR
-     (CMAKE_C_COMPILER_ID STREQUAL "Clang"))
+     (CMAKE_C_COMPILER_ID STREQUAL "Clang") OR
+      (CMAKE_C_COMPILER_ID STREQUAL "AppleClang"))
 
     check_c_compiler_flag("-Wincompatible-pointer-types" HAVE_WARN_INCOMPATIBLE_POINTER_TYPES)
     set(FORBID_IMPLICIT_FUNCTIONS "-Werror=implicit-function-declaration")
