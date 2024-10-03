@@ -597,4 +597,34 @@ WorkitemHandler::createContextArrayGEP(llvm::AllocaInst *CtxArrayAlloca,
   return GEP;
 }
 
+/// Checks if it's OK to mark the work-item loops in the given function as
+/// parallel loops.
+///
+/// Currently the only known reason to not mark them is to workaround a VPlan
+/// crash that occurs with volatile memory accesses inside the parallel
+/// WI-loops. Thus, we return true only in case of LLVM 19 and if the loop
+/// contains volatile accesses. The PoCL issue:
+/// https://github.com/pocl/pocl/issues/1556
+///
+/// We could make this Loop-specific, but it seems not worth the effort at
+/// this point as WorkitemLoops doesn't have a loop at hand when it needs it
+/// and luckily volatile usage is not common and ruins the perf anyhow.
+///
+/// \param F the function to check.
+/// \return False in case we should _not_ add the parallel loop metadata,
+/// even though the loop is known to be parallel.
+bool WorkitemHandler::canAnnotateParallelLoops(llvm::Function &F) {
+#if LLVM_MAJOR == 19
+  for (auto &BB : F) {
+    for (auto &I : BB) {
+      if (I.isVolatile())
+        return false;
+    }
+  }
+  return true;
+#else
+  return true;
+#endif
+}
+
 } // namespace pocl

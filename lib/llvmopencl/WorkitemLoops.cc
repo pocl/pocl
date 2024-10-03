@@ -398,41 +398,43 @@ WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
     cmpResult = builder.CreateICmpULT(builder.CreateLoad(ST, LocalIdVar),
                                       builder.CreateLoad(ST, DynamicLocalSize));
 
-  Instruction *loopBranch =
+  Instruction *LoopBranch =
       builder.CreateCondBr(cmpResult, LoopBodyEntryBB, loopEndBB);
 
-  /* Add the metadata to mark a parallel loop. The metadata
-     refer to a loop-unique dummy metadata that is not merged
-     automatically. */
+  if (canAnnotateParallelLoops(*K)) {
+    // Add the metadata to mark a parallel loop. The metadata refers to
+    // a loop-unique dummy metadata that is not merged automatically.
+    // TODO: Merge with the similar code in SubCFGFormation.
 
-  /* This creation of the identifier metadata is copied from
-     LLVM's MDBuilder::createAnonymousTBAARoot(). */
+    // This creation of the identifier metadata is copied from
+    // LLVM's MDBuilder::createAnonymousTBAARoot().
 
-  MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Metadata*>()).release();
-  MDNode *AccessGroupMD = MDNode::getDistinct(C, {});
-  MDNode *ParallelAccessMD = MDNode::get(
-      C, {MDString::get(C, "llvm.loop.parallel_accesses"), AccessGroupMD});
+    MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Metadata *>()).release();
+    MDNode *AccessGroupMD = MDNode::getDistinct(C, {});
+    MDNode *ParallelAccessMD = MDNode::get(
+        C, {MDString::get(C, "llvm.loop.parallel_accesses"), AccessGroupMD});
 
-  MDNode *Root = MDNode::get(C, {Dummy, ParallelAccessMD});
+    MDNode *Root = MDNode::get(C, {Dummy, ParallelAccessMD});
 
-  // At this point we have
-  //   !0 = metadata !{}            <- dummy
-  //   !1 = metadata !{metadata !0} <- root
-  // Replace the dummy operand with the root node itself and delete the dummy.
-  Root->replaceOperandWith(0, Root);
-  MDNode::deleteTemporary(Dummy);
-  // We now have
-  //   !1 = metadata !{metadata !1} <- self-referential root
-  loopBranch->setMetadata("llvm.loop", Root);
+    // At this point we have
+    //   !0 = metadata !{}            <- dummy
+    //   !1 = metadata !{metadata !0} <- root
+    // Replace the dummy operand with the root node itself and delete the dummy.
+    Root->replaceOperandWith(0, Root);
+    MDNode::deleteTemporary(Dummy);
+    // We now have
+    //   !1 = metadata !{metadata !1} <- self-referential root
+    LoopBranch->setMetadata("llvm.loop", Root);
 
-  auto IsLoadUnconditionallySafe =
-    [&dominatesExitBB](llvm::Instruction *insn) -> bool {
-      assert(insn->mayReadFromMemory());
+    auto IsLoadUnconditionallySafe =
+        [&dominatesExitBB](llvm::Instruction *Insn) -> bool {
+      assert(Insn->mayReadFromMemory());
       // Checks that the instruction isn't in a conditional block.
-      return dominatesExitBB.count(insn->getParent());
+      return dominatesExitBB.count(Insn->getParent());
     };
 
-  Region.addParallelLoopMetadata(AccessGroupMD, IsLoadUnconditionallySafe);
+    Region.addParallelLoopMetadata(AccessGroupMD, IsLoadUnconditionallySafe);
+  }
 
   builder.SetInsertPoint(loopEndBB);
   builder.CreateBr(oldExit);

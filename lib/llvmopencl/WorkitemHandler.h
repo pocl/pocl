@@ -71,6 +71,8 @@ protected:
   createContextArrayGEP(llvm::AllocaInst *CtxArrayAlloca,
                         llvm::Instruction *Before, bool AlignPadding);
 
+  bool canAnnotateParallelLoops(llvm::Function &F);
+
   // The type of size_t for the current target.
   llvm::Type *ST;
   // The width of size_t for the current target.
