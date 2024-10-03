@@ -1,7 +1,7 @@
-/* libopencl.c - Stub libopencl that dlsyms into actual library based on
-   environment variable
+/* libopencl.c - Stub libopencl that pocl_dynlib_symbol_address into actual
+   library based on environment variable
 
-   LIBOPENCL_SO_PATH      -- Path to opencl so that will be searched first
+   LIBOPENCL_SO_PATH      -- Path to the opencl .so that will be searched first
    LIBOPENCL_SO_PATH_2    -- Searched second
    LIBOPENCL_SO_PATH_3    -- Searched third
    LIBOPENCL_SO_PATH_4    -- Searched fourth
@@ -34,9 +34,10 @@
 #define stubname(name) stub##name
 
 #include "libopencl.h"
-#include <dlfcn.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+
+#include "pocl_dynlib.h"
 
 #if defined(__APPLE__) || defined(__MACOSX)
 static const char *default_so_paths[]
@@ -109,7 +110,7 @@ open_libopencl_so ()
 
   if (path)
     {
-      so_handle = dlopen (path, RTLD_LAZY);
+      so_handle = pocl_dynlib_open (path, RTLD_LAZY);
       return 0;
     }
   else
@@ -122,7 +123,7 @@ void
 stubOpenclReset ()
 {
   if (so_handle)
-    dlclose (so_handle);
+    pocl_dynlib_close (so_handle);
 
   so_handle = NULL;
 }
@@ -136,7 +137,8 @@ stubname (clGetPlatformIDs) (cl_uint num_entries, cl_platform_id *platforms,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetPlatformIDs)dlsym (so_handle, "clGetPlatformIDs");
+  func = (f_clGetPlatformIDs)pocl_dynlib_symbol_address (so_handle,
+                                                         "clGetPlatformIDs");
   if (func)
     {
       return func (num_entries, platforms, num_platforms);
@@ -158,7 +160,8 @@ stubname (clGetPlatformInfo) (cl_platform_id platform,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetPlatformInfo)dlsym (so_handle, "clGetPlatformInfo");
+  func = (f_clGetPlatformInfo)pocl_dynlib_symbol_address (so_handle,
+                                                          "clGetPlatformInfo");
   if (func)
     {
       return func (platform, param_name, param_value_size, param_value,
@@ -180,7 +183,8 @@ stubname (clGetDeviceIDs) (cl_platform_id platform, cl_device_type device_type,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetDeviceIDs)dlsym (so_handle, "clGetDeviceIDs");
+  func = (f_clGetDeviceIDs)pocl_dynlib_symbol_address (so_handle,
+                                                       "clGetDeviceIDs");
   if (func)
     {
       return func (platform, device_type, num_entries, devices, num_devices);
@@ -201,7 +205,8 @@ stubname (clGetDeviceInfo) (cl_device_id device, cl_device_info param_name,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetDeviceInfo)dlsym (so_handle, "clGetDeviceInfo");
+  func = (f_clGetDeviceInfo)pocl_dynlib_symbol_address (so_handle,
+                                                        "clGetDeviceInfo");
   if (func)
     {
       return func (device, param_name, param_value_size, param_value,
@@ -224,7 +229,8 @@ stubname (clCreateSubDevices) (cl_device_id in_device,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateSubDevices)dlsym (so_handle, "clCreateSubDevices");
+  func = (f_clCreateSubDevices)pocl_dynlib_symbol_address (
+    so_handle, "clCreateSubDevices");
   if (func)
     {
       return func (in_device, properties, num_devices, out_devices,
@@ -244,7 +250,8 @@ stubname (clRetainDevice) (cl_device_id device)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clRetainDevice)dlsym (so_handle, "clRetainDevice");
+  func = (f_clRetainDevice)pocl_dynlib_symbol_address (so_handle,
+                                                       "clRetainDevice");
   if (func)
     {
       return func (device);
@@ -263,7 +270,8 @@ stubname (clReleaseDevice) (cl_device_id device)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clReleaseDevice)dlsym (so_handle, "clReleaseDevice");
+  func = (f_clReleaseDevice)pocl_dynlib_symbol_address (so_handle,
+                                                        "clReleaseDevice");
   if (func)
     {
       return func (device);
@@ -286,7 +294,8 @@ stubname (clCreateContext) (const cl_context_properties *properties,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateContext)dlsym (so_handle, "clCreateContext");
+  func = (f_clCreateContext)pocl_dynlib_symbol_address (so_handle,
+                                                        "clCreateContext");
   if (func)
     {
       return func (properties, num_devices, devices, pfn_notify, user_data,
@@ -309,8 +318,8 @@ stubname (clCreateContextFromType) (
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateContextFromType)dlsym (so_handle,
-                                           "clCreateContextFromType");
+  func = (f_clCreateContextFromType)pocl_dynlib_symbol_address (
+    so_handle, "clCreateContextFromType");
   if (func)
     {
       return func (properties, device_type, pfn_notify, user_data,
@@ -330,7 +339,8 @@ stubname (clRetainContext) (cl_context context)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clRetainContext)dlsym (so_handle, "clRetainContext");
+  func = (f_clRetainContext)pocl_dynlib_symbol_address (so_handle,
+                                                        "clRetainContext");
   if (func)
     {
       return func (context);
@@ -349,7 +359,8 @@ stubname (clReleaseContext) (cl_context context)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clReleaseContext)dlsym (so_handle, "clReleaseContext");
+  func = (f_clReleaseContext)pocl_dynlib_symbol_address (so_handle,
+                                                         "clReleaseContext");
   if (func)
     {
       return func (context);
@@ -370,7 +381,8 @@ stubname (clGetContextInfo) (cl_context context, cl_context_info param_name,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetContextInfo)dlsym (so_handle, "clGetContextInfo");
+  func = (f_clGetContextInfo)pocl_dynlib_symbol_address (so_handle,
+                                                         "clGetContextInfo");
   if (func)
     {
       return func (context, param_name, param_value_size, param_value,
@@ -392,7 +404,8 @@ stubname (clCreateCommandQueue) (cl_context context, cl_device_id device,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateCommandQueue)dlsym (so_handle, "clCreateCommandQueue");
+  func = (f_clCreateCommandQueue)pocl_dynlib_symbol_address (
+    so_handle, "clCreateCommandQueue");
   if (func)
     {
       return func (context, device, properties, errcode_ret);
@@ -414,8 +427,8 @@ clCreateCommandQueueWithProperties (cl_context context, cl_device_id device,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateCommandQueueWithProperties)dlsym (
-      so_handle, "clCreateCommandQueueWithProperties");
+  func = (f_clCreateCommandQueueWithProperties)pocl_dynlib_symbol_address (
+    so_handle, "clCreateCommandQueueWithProperties");
   if (func)
     {
       return func (context, device, properties, errcode_ret);
@@ -435,7 +448,8 @@ stubname (clRetainCommandQueue) (cl_command_queue command_queue)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clRetainCommandQueue)dlsym (so_handle, "clRetainCommandQueue");
+  func = (f_clRetainCommandQueue)pocl_dynlib_symbol_address (
+    so_handle, "clRetainCommandQueue");
   if (func)
     {
       return func (command_queue);
@@ -454,7 +468,8 @@ stubname (clReleaseCommandQueue) (cl_command_queue command_queue)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clReleaseCommandQueue)dlsym (so_handle, "clReleaseCommandQueue");
+  func = (f_clReleaseCommandQueue)pocl_dynlib_symbol_address (
+    so_handle, "clReleaseCommandQueue");
   if (func)
     {
       return func (command_queue);
@@ -476,7 +491,8 @@ stubname (clGetCommandQueueInfo) (cl_command_queue command_queue,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetCommandQueueInfo)dlsym (so_handle, "clGetCommandQueueInfo");
+  func = (f_clGetCommandQueueInfo)pocl_dynlib_symbol_address (
+    so_handle, "clGetCommandQueueInfo");
   if (func)
     {
       return func (command_queue, param_name, param_value_size, param_value,
@@ -497,7 +513,8 @@ stubname (clCreateBuffer) (cl_context context, cl_mem_flags flags, size_t size,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateBuffer)dlsym (so_handle, "clCreateBuffer");
+  func = (f_clCreateBuffer)pocl_dynlib_symbol_address (so_handle,
+                                                       "clCreateBuffer");
   if (func)
     {
       return func (context, flags, size, host_ptr, errcode_ret);
@@ -519,7 +536,8 @@ stubname (clCreateSubBuffer) (cl_mem buffer, cl_mem_flags flags,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateSubBuffer)dlsym (so_handle, "clCreateSubBuffer");
+  func = (f_clCreateSubBuffer)pocl_dynlib_symbol_address (so_handle,
+                                                          "clCreateSubBuffer");
   if (func)
     {
       return func (buffer, flags, buffer_create_type, buffer_create_info,
@@ -542,7 +560,8 @@ stubname (clCreateImage) (cl_context context, cl_mem_flags flags,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateImage)dlsym (so_handle, "clCreateImage");
+  func
+    = (f_clCreateImage)pocl_dynlib_symbol_address (so_handle, "clCreateImage");
   if (func)
     {
       return func (context, flags, image_format, image_desc, host_ptr,
@@ -562,7 +581,8 @@ stubname (clRetainMemObject) (cl_mem memobj)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clRetainMemObject)dlsym (so_handle, "clRetainMemObject");
+  func = (f_clRetainMemObject)pocl_dynlib_symbol_address (so_handle,
+                                                          "clRetainMemObject");
   if (func)
     {
       return func (memobj);
@@ -581,7 +601,8 @@ stubname (clReleaseMemObject) (cl_mem memobj)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clReleaseMemObject)dlsym (so_handle, "clReleaseMemObject");
+  func = (f_clReleaseMemObject)pocl_dynlib_symbol_address (
+    so_handle, "clReleaseMemObject");
   if (func)
     {
       return func (memobj);
@@ -604,8 +625,8 @@ stubname (clGetSupportedImageFormats) (cl_context context, cl_mem_flags flags,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetSupportedImageFormats)dlsym (so_handle,
-                                              "clGetSupportedImageFormats");
+  func = (f_clGetSupportedImageFormats)pocl_dynlib_symbol_address (
+    so_handle, "clGetSupportedImageFormats");
   if (func)
     {
       return func (context, flags, image_type, num_entries, image_formats,
@@ -627,7 +648,8 @@ stubname (clGetMemObjectInfo) (cl_mem memobj, cl_mem_info param_name,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetMemObjectInfo)dlsym (so_handle, "clGetMemObjectInfo");
+  func = (f_clGetMemObjectInfo)pocl_dynlib_symbol_address (
+    so_handle, "clGetMemObjectInfo");
   if (func)
     {
       return func (memobj, param_name, param_value_size, param_value,
@@ -649,7 +671,8 @@ stubname (clGetImageInfo) (cl_mem image, cl_image_info param_name,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetImageInfo)dlsym (so_handle, "clGetImageInfo");
+  func = (f_clGetImageInfo)pocl_dynlib_symbol_address (so_handle,
+                                                       "clGetImageInfo");
   if (func)
     {
       return func (image, param_name, param_value_size, param_value,
@@ -671,8 +694,8 @@ stubname (clSetMemObjectDestructorCallback) (
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clSetMemObjectDestructorCallback)dlsym (
-      so_handle, "clSetMemObjectDestructorCallback");
+  func = (f_clSetMemObjectDestructorCallback)pocl_dynlib_symbol_address (
+    so_handle, "clSetMemObjectDestructorCallback");
   if (func)
     {
       return func (memobj, pfn_notify, user_data);
@@ -693,7 +716,8 @@ stubname (clCreateSampler) (cl_context context, cl_bool normalized_coords,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateSampler)dlsym (so_handle, "clCreateSampler");
+  func = (f_clCreateSampler)pocl_dynlib_symbol_address (so_handle,
+                                                        "clCreateSampler");
   if (func)
     {
       return func (context, normalized_coords, addressing_mode, filter_mode,
@@ -713,7 +737,8 @@ stubname (clRetainSampler) (cl_sampler sampler)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clRetainSampler)dlsym (so_handle, "clRetainSampler");
+  func = (f_clRetainSampler)pocl_dynlib_symbol_address (so_handle,
+                                                        "clRetainSampler");
   if (func)
     {
       return func (sampler);
@@ -732,7 +757,8 @@ stubname (clReleaseSampler) (cl_sampler sampler)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clReleaseSampler)dlsym (so_handle, "clReleaseSampler");
+  func = (f_clReleaseSampler)pocl_dynlib_symbol_address (so_handle,
+                                                         "clReleaseSampler");
   if (func)
     {
       return func (sampler);
@@ -753,7 +779,8 @@ stubname (clGetSamplerInfo) (cl_sampler sampler, cl_sampler_info param_name,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetSamplerInfo)dlsym (so_handle, "clGetSamplerInfo");
+  func = (f_clGetSamplerInfo)pocl_dynlib_symbol_address (so_handle,
+                                                         "clGetSamplerInfo");
   if (func)
     {
       return func (sampler, param_name, param_value_size, param_value,
@@ -776,8 +803,8 @@ stubname (clCreateProgramWithSource) (cl_context context, cl_uint count,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateProgramWithSource)dlsym (so_handle,
-                                             "clCreateProgramWithSource");
+  func = (f_clCreateProgramWithSource)pocl_dynlib_symbol_address (
+    so_handle, "clCreateProgramWithSource");
   if (func)
     {
       return func (context, count, strings, lengths, errcode_ret);
@@ -801,8 +828,8 @@ stubname (clCreateProgramWithBinary) (cl_context context, cl_uint num_devices,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateProgramWithBinary)dlsym (so_handle,
-                                             "clCreateProgramWithBinary");
+  func = (f_clCreateProgramWithBinary)pocl_dynlib_symbol_address (
+    so_handle, "clCreateProgramWithBinary");
   if (func)
     {
       return func (context, num_devices, device_list, lengths, binaries,
@@ -826,8 +853,8 @@ stubname (clCreateProgramWithBuiltInKernels) (cl_context context,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateProgramWithBuiltInKernels)dlsym (
-      so_handle, "clCreateProgramWithBuiltInKernels");
+  func = (f_clCreateProgramWithBuiltInKernels)pocl_dynlib_symbol_address (
+    so_handle, "clCreateProgramWithBuiltInKernels");
   if (func)
     {
       return func (context, num_devices, device_list, kernel_names,
@@ -847,7 +874,8 @@ stubname (clRetainProgram) (cl_program program)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clRetainProgram)dlsym (so_handle, "clRetainProgram");
+  func = (f_clRetainProgram)pocl_dynlib_symbol_address (so_handle,
+                                                        "clRetainProgram");
   if (func)
     {
       return func (program);
@@ -866,7 +894,8 @@ stubname (clReleaseProgram) (cl_program program)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clReleaseProgram)dlsym (so_handle, "clReleaseProgram");
+  func = (f_clReleaseProgram)pocl_dynlib_symbol_address (so_handle,
+                                                         "clReleaseProgram");
   if (func)
     {
       return func (program);
@@ -888,7 +917,8 @@ stubname (clBuildProgram) (
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clBuildProgram)dlsym (so_handle, "clBuildProgram");
+  func = (f_clBuildProgram)pocl_dynlib_symbol_address (so_handle,
+                                                       "clBuildProgram");
   if (func)
     {
       return func (program, num_devices, device_list, options, pfn_notify,
@@ -912,7 +942,8 @@ stubname (clCompileProgram) (
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCompileProgram)dlsym (so_handle, "clCompileProgram");
+  func = (f_clCompileProgram)pocl_dynlib_symbol_address (so_handle,
+                                                         "clCompileProgram");
   if (func)
     {
       return func (program, num_devices, device_list, options,
@@ -939,7 +970,8 @@ stubname (clLinkProgram) (cl_context context, cl_uint num_devices,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clLinkProgram)dlsym (so_handle, "clLinkProgram");
+  func
+    = (f_clLinkProgram)pocl_dynlib_symbol_address (so_handle, "clLinkProgram");
   if (func)
     {
       return func (context, num_devices, device_list, options,
@@ -960,8 +992,8 @@ stubname (clUnloadPlatformCompiler) (cl_platform_id platform)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clUnloadPlatformCompiler)dlsym (so_handle,
-                                            "clUnloadPlatformCompiler");
+  func = (f_clUnloadPlatformCompiler)pocl_dynlib_symbol_address (
+    so_handle, "clUnloadPlatformCompiler");
   if (func)
     {
       return func (platform);
@@ -982,7 +1014,8 @@ stubname (clGetProgramInfo) (cl_program program, cl_program_info param_name,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetProgramInfo)dlsym (so_handle, "clGetProgramInfo");
+  func = (f_clGetProgramInfo)pocl_dynlib_symbol_address (so_handle,
+                                                         "clGetProgramInfo");
   if (func)
     {
       return func (program, param_name, param_value_size, param_value,
@@ -1005,7 +1038,8 @@ stubname (clGetProgramBuildInfo) (cl_program program, cl_device_id device,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetProgramBuildInfo)dlsym (so_handle, "clGetProgramBuildInfo");
+  func = (f_clGetProgramBuildInfo)pocl_dynlib_symbol_address (
+    so_handle, "clGetProgramBuildInfo");
   if (func)
     {
       return func (program, device, param_name, param_value_size, param_value,
@@ -1026,7 +1060,8 @@ stubname (clCreateKernel) (cl_program program, const char *kernel_name,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateKernel)dlsym (so_handle, "clCreateKernel");
+  func = (f_clCreateKernel)pocl_dynlib_symbol_address (so_handle,
+                                                       "clCreateKernel");
   if (func)
     {
       return func (program, kernel_name, errcode_ret);
@@ -1047,8 +1082,8 @@ stubname (clCreateKernelsInProgram) (cl_program program, cl_uint num_kernels,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateKernelsInProgram)dlsym (so_handle,
-                                            "clCreateKernelsInProgram");
+  func = (f_clCreateKernelsInProgram)pocl_dynlib_symbol_address (
+    so_handle, "clCreateKernelsInProgram");
   if (func)
     {
       return func (program, num_kernels, kernels, num_kernels_ret);
@@ -1067,7 +1102,8 @@ stubname (clRetainKernel) (cl_kernel kernel)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clRetainKernel)dlsym (so_handle, "clRetainKernel");
+  func = (f_clRetainKernel)pocl_dynlib_symbol_address (so_handle,
+                                                       "clRetainKernel");
   if (func)
     {
       return func (kernel);
@@ -1086,7 +1122,8 @@ stubname (clReleaseKernel) (cl_kernel kernel)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clReleaseKernel)dlsym (so_handle, "clReleaseKernel");
+  func = (f_clReleaseKernel)pocl_dynlib_symbol_address (so_handle,
+                                                        "clReleaseKernel");
   if (func)
     {
       return func (kernel);
@@ -1106,7 +1143,8 @@ stubname (clSetKernelArg) (cl_kernel kernel, cl_uint arg_index,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clSetKernelArg)dlsym (so_handle, "clSetKernelArg");
+  func = (f_clSetKernelArg)pocl_dynlib_symbol_address (so_handle,
+                                                       "clSetKernelArg");
   if (func)
     {
       return func (kernel, arg_index, arg_size, arg_value);
@@ -1127,7 +1165,8 @@ stubname (clGetKernelInfo) (cl_kernel kernel, cl_kernel_info param_name,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetKernelInfo)dlsym (so_handle, "clGetKernelInfo");
+  func = (f_clGetKernelInfo)pocl_dynlib_symbol_address (so_handle,
+                                                        "clGetKernelInfo");
   if (func)
     {
       return func (kernel, param_name, param_value_size, param_value,
@@ -1150,7 +1189,8 @@ stubname (clGetKernelArgInfo) (cl_kernel kernel, cl_uint arg_indx,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetKernelArgInfo)dlsym (so_handle, "clGetKernelArgInfo");
+  func = (f_clGetKernelArgInfo)pocl_dynlib_symbol_address (
+    so_handle, "clGetKernelArgInfo");
   if (func)
     {
       return func (kernel, arg_indx, param_name, param_value_size, param_value,
@@ -1174,8 +1214,8 @@ stubname (clGetKernelWorkGroupInfo) (cl_kernel kernel, cl_device_id device,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetKernelWorkGroupInfo)dlsym (so_handle,
-                                            "clGetKernelWorkGroupInfo");
+  func = (f_clGetKernelWorkGroupInfo)pocl_dynlib_symbol_address (
+    so_handle, "clGetKernelWorkGroupInfo");
   if (func)
     {
       return func (kernel, device, param_name, param_value_size, param_value,
@@ -1195,7 +1235,8 @@ stubname (clWaitForEvents) (cl_uint num_events, const cl_event *event_list)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clWaitForEvents)dlsym (so_handle, "clWaitForEvents");
+  func = (f_clWaitForEvents)pocl_dynlib_symbol_address (so_handle,
+                                                        "clWaitForEvents");
   if (func)
     {
       return func (num_events, event_list);
@@ -1216,7 +1257,8 @@ stubname (clGetEventInfo) (cl_event event, cl_event_info param_name,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetEventInfo)dlsym (so_handle, "clGetEventInfo");
+  func = (f_clGetEventInfo)pocl_dynlib_symbol_address (so_handle,
+                                                       "clGetEventInfo");
   if (func)
     {
       return func (event, param_name, param_value_size, param_value,
@@ -1236,7 +1278,8 @@ stubname (clCreateUserEvent) (cl_context context, cl_int *errcode_ret)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateUserEvent)dlsym (so_handle, "clCreateUserEvent");
+  func = (f_clCreateUserEvent)pocl_dynlib_symbol_address (so_handle,
+                                                          "clCreateUserEvent");
   if (func)
     {
       return func (context, errcode_ret);
@@ -1255,7 +1298,8 @@ stubname (clRetainEvent) (cl_event event)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clRetainEvent)dlsym (so_handle, "clRetainEvent");
+  func
+    = (f_clRetainEvent)pocl_dynlib_symbol_address (so_handle, "clRetainEvent");
   if (func)
     {
       return func (event);
@@ -1274,7 +1318,8 @@ stubname (clReleaseEvent) (cl_event event)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clReleaseEvent)dlsym (so_handle, "clReleaseEvent");
+  func = (f_clReleaseEvent)pocl_dynlib_symbol_address (so_handle,
+                                                       "clReleaseEvent");
   if (func)
     {
       return func (event);
@@ -1293,7 +1338,8 @@ stubname (clSetUserEventStatus) (cl_event event, cl_int execution_status)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clSetUserEventStatus)dlsym (so_handle, "clSetUserEventStatus");
+  func = (f_clSetUserEventStatus)pocl_dynlib_symbol_address (
+    so_handle, "clSetUserEventStatus");
   if (func)
     {
       return func (event, execution_status);
@@ -1315,7 +1361,8 @@ stubname (clSetEventCallback) (cl_event event,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clSetEventCallback)dlsym (so_handle, "clSetEventCallback");
+  func = (f_clSetEventCallback)pocl_dynlib_symbol_address (
+    so_handle, "clSetEventCallback");
   if (func)
     {
       return func (event, command_exec_callback_type, pfn_notify, user_data);
@@ -1337,8 +1384,8 @@ stubname (clGetEventProfilingInfo) (cl_event event,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetEventProfilingInfo)dlsym (so_handle,
-                                           "clGetEventProfilingInfo");
+  func = (f_clGetEventProfilingInfo)pocl_dynlib_symbol_address (
+    so_handle, "clGetEventProfilingInfo");
   if (func)
     {
       return func (event, param_name, param_value_size, param_value,
@@ -1358,7 +1405,7 @@ stubname (clFlush) (cl_command_queue command_queue)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clFlush)dlsym (so_handle, "clFlush");
+  func = (f_clFlush)pocl_dynlib_symbol_address (so_handle, "clFlush");
   if (func)
     {
       return func (command_queue);
@@ -1377,7 +1424,7 @@ stubname (clFinish) (cl_command_queue command_queue)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clFinish)dlsym (so_handle, "clFinish");
+  func = (f_clFinish)pocl_dynlib_symbol_address (so_handle, "clFinish");
   if (func)
     {
       return func (command_queue);
@@ -1401,7 +1448,8 @@ stubname (clEnqueueReadBuffer) (cl_command_queue command_queue, cl_mem buffer,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueReadBuffer)dlsym (so_handle, "clEnqueueReadBuffer");
+  func = (f_clEnqueueReadBuffer)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueReadBuffer");
   if (func)
     {
       return func (command_queue, buffer, blocking_read, offset, size, ptr,
@@ -1427,8 +1475,8 @@ stubname (clEnqueueReadBufferRect) (
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueReadBufferRect)dlsym (so_handle,
-                                           "clEnqueueReadBufferRect");
+  func = (f_clEnqueueReadBufferRect)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueReadBufferRect");
   if (func)
     {
       return func (command_queue, buffer, blocking_read, buffer_offset,
@@ -1455,7 +1503,8 @@ stubname (clEnqueueWriteBuffer) (cl_command_queue command_queue, cl_mem buffer,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueWriteBuffer)dlsym (so_handle, "clEnqueueWriteBuffer");
+  func = (f_clEnqueueWriteBuffer)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueWriteBuffer");
   if (func)
     {
       return func (command_queue, buffer, blocking_write, offset, size, ptr,
@@ -1481,8 +1530,8 @@ stubname (clEnqueueWriteBufferRect) (
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueWriteBufferRect)dlsym (so_handle,
-                                            "clEnqueueWriteBufferRect");
+  func = (f_clEnqueueWriteBufferRect)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueWriteBufferRect");
   if (func)
     {
       return func (command_queue, buffer, blocking_write, buffer_offset,
@@ -1509,7 +1558,8 @@ stubname (clEnqueueFillBuffer) (cl_command_queue command_queue, cl_mem buffer,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueFillBuffer)dlsym (so_handle, "clEnqueueFillBuffer");
+  func = (f_clEnqueueFillBuffer)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueFillBuffer");
   if (func)
     {
       return func (command_queue, buffer, pattern, pattern_size, offset, size,
@@ -1534,7 +1584,8 @@ stubname (clEnqueueCopyBuffer) (cl_command_queue command_queue,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueCopyBuffer)dlsym (so_handle, "clEnqueueCopyBuffer");
+  func = (f_clEnqueueCopyBuffer)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueCopyBuffer");
   if (func)
     {
       return func (command_queue, src_buffer, dst_buffer, src_offset,
@@ -1560,8 +1611,8 @@ stubname (clEnqueueCopyBufferRect) (
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueCopyBufferRect)dlsym (so_handle,
-                                           "clEnqueueCopyBufferRect");
+  func = (f_clEnqueueCopyBufferRect)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueCopyBufferRect");
   if (func)
     {
       return func (command_queue, src_buffer, dst_buffer, src_origin,
@@ -1589,7 +1640,8 @@ stubname (clEnqueueReadImage) (cl_command_queue command_queue, cl_mem image,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueReadImage)dlsym (so_handle, "clEnqueueReadImage");
+  func = (f_clEnqueueReadImage)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueReadImage");
   if (func)
     {
       return func (command_queue, image, blocking_read, origin, region,
@@ -1616,7 +1668,8 @@ stubname (clEnqueueWriteImage) (cl_command_queue command_queue, cl_mem image,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueWriteImage)dlsym (so_handle, "clEnqueueWriteImage");
+  func = (f_clEnqueueWriteImage)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueWriteImage");
   if (func)
     {
       return func (command_queue, image, blocking_write, origin, region,
@@ -1642,7 +1695,8 @@ stubname (clEnqueueFillImage) (cl_command_queue command_queue, cl_mem image,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueFillImage)dlsym (so_handle, "clEnqueueFillImage");
+  func = (f_clEnqueueFillImage)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueFillImage");
   if (func)
     {
       return func (command_queue, image, fill_color, origin, region,
@@ -1668,7 +1722,8 @@ stubname (clEnqueueCopyImage) (cl_command_queue command_queue,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueCopyImage)dlsym (so_handle, "clEnqueueCopyImage");
+  func = (f_clEnqueueCopyImage)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueCopyImage");
   if (func)
     {
       return func (command_queue, src_image, dst_image, src_origin, dst_origin,
@@ -1694,8 +1749,8 @@ stubname (clEnqueueCopyImageToBuffer) (cl_command_queue command_queue,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueCopyImageToBuffer)dlsym (so_handle,
-                                              "clEnqueueCopyImageToBuffer");
+  func = (f_clEnqueueCopyImageToBuffer)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueCopyImageToBuffer");
   if (func)
     {
       return func (command_queue, src_image, dst_buffer, src_origin, region,
@@ -1720,8 +1775,8 @@ stubname (clEnqueueCopyBufferToImage) (
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueCopyBufferToImage)dlsym (so_handle,
-                                              "clEnqueueCopyBufferToImage");
+  func = (f_clEnqueueCopyBufferToImage)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueCopyBufferToImage");
   if (func)
     {
       return func (command_queue, src_buffer, dst_image, src_offset,
@@ -1747,7 +1802,8 @@ stubname (clEnqueueMapBuffer) (cl_command_queue command_queue, cl_mem buffer,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueMapBuffer)dlsym (so_handle, "clEnqueueMapBuffer");
+  func = (f_clEnqueueMapBuffer)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueMapBuffer");
   if (func)
     {
       return func (command_queue, buffer, blocking_map, map_flags, offset,
@@ -1775,7 +1831,8 @@ stubname (clEnqueueMapImage) (cl_command_queue command_queue, cl_mem image,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueMapImage)dlsym (so_handle, "clEnqueueMapImage");
+  func = (f_clEnqueueMapImage)pocl_dynlib_symbol_address (so_handle,
+                                                          "clEnqueueMapImage");
   if (func)
     {
       return func (command_queue, image, blocking_map, map_flags, origin,
@@ -1801,8 +1858,8 @@ stubname (clEnqueueUnmapMemObject) (cl_command_queue command_queue,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueUnmapMemObject)dlsym (so_handle,
-                                           "clEnqueueUnmapMemObject");
+  func = (f_clEnqueueUnmapMemObject)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueUnmapMemObject");
   if (func)
     {
       return func (command_queue, memobj, mapped_ptr, num_events_in_wait_list,
@@ -1828,8 +1885,8 @@ stubname (clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueMigrateMemObjects)dlsym (so_handle,
-                                              "clEnqueueMigrateMemObjects");
+  func = (f_clEnqueueMigrateMemObjects)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueMigrateMemObjects");
   if (func)
     {
       return func (command_queue, num_mem_objects, mem_objects, flags,
@@ -1853,7 +1910,8 @@ stubname (clEnqueueNDRangeKernel) (
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueNDRangeKernel)dlsym (so_handle, "clEnqueueNDRangeKernel");
+  func = (f_clEnqueueNDRangeKernel)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueNDRangeKernel");
   if (func)
     {
       return func (command_queue, kernel, work_dim, global_work_offset,
@@ -1876,7 +1934,8 @@ stubname (clEnqueueTask) (cl_command_queue command_queue, cl_kernel kernel,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueTask)dlsym (so_handle, "clEnqueueTask");
+  func
+    = (f_clEnqueueTask)pocl_dynlib_symbol_address (so_handle, "clEnqueueTask");
   if (func)
     {
       return func (command_queue, kernel, num_events_in_wait_list,
@@ -1900,7 +1959,8 @@ stubname (clEnqueueNativeKernel) (
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueNativeKernel)dlsym (so_handle, "clEnqueueNativeKernel");
+  func = (f_clEnqueueNativeKernel)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueNativeKernel");
   if (func)
     {
       return func (command_queue, user_func, args, cb_args, num_mem_objects,
@@ -1924,8 +1984,8 @@ stubname (clEnqueueMarkerWithWaitList) (cl_command_queue command_queue,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueMarkerWithWaitList)dlsym (so_handle,
-                                               "clEnqueueMarkerWithWaitList");
+  func = (f_clEnqueueMarkerWithWaitList)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueMarkerWithWaitList");
   if (func)
     {
       return func (command_queue, num_events_in_wait_list, event_wait_list,
@@ -1948,8 +2008,8 @@ stubname (clEnqueueBarrierWithWaitList) (cl_command_queue command_queue,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueBarrierWithWaitList)dlsym (
-      so_handle, "clEnqueueBarrierWithWaitList");
+  func = (f_clEnqueueBarrierWithWaitList)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueBarrierWithWaitList");
   if (func)
     {
       return func (command_queue, num_events_in_wait_list, event_wait_list,
@@ -1970,7 +2030,8 @@ stubname (clGetExtensionFunctionAddressForPlatform) (cl_platform_id platform,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetExtensionFunctionAddressForPlatform)dlsym (
+  func
+    = (f_clGetExtensionFunctionAddressForPlatform)pocl_dynlib_symbol_address (
       so_handle, "clGetExtensionFunctionAddressForPlatform");
   if (func)
     {
@@ -1994,7 +2055,8 @@ stubname (clCreateImage2D) (cl_context context, cl_mem_flags flags,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateImage2D)dlsym (so_handle, "clCreateImage2D");
+  func = (f_clCreateImage2D)pocl_dynlib_symbol_address (so_handle,
+                                                        "clCreateImage2D");
   if (func)
     {
       return func (context, flags, image_format, image_width, image_height,
@@ -2019,7 +2081,8 @@ stubname (clCreateImage3D) (cl_context context, cl_mem_flags flags,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateImage3D)dlsym (so_handle, "clCreateImage3D");
+  func = (f_clCreateImage3D)pocl_dynlib_symbol_address (so_handle,
+                                                        "clCreateImage3D");
   if (func)
     {
       return func (context, flags, image_format, image_width, image_height,
@@ -2040,7 +2103,8 @@ stubname (clEnqueueMarker) (cl_command_queue command_queue, cl_event *event)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueMarker)dlsym (so_handle, "clEnqueueMarker");
+  func = (f_clEnqueueMarker)pocl_dynlib_symbol_address (so_handle,
+                                                        "clEnqueueMarker");
   if (func)
     {
       return func (command_queue, event);
@@ -2061,7 +2125,8 @@ stubname (clEnqueueWaitForEvents) (cl_command_queue command_queue,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueWaitForEvents)dlsym (so_handle, "clEnqueueWaitForEvents");
+  func = (f_clEnqueueWaitForEvents)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueWaitForEvents");
   if (func)
     {
       return func (command_queue, num_events, event_list);
@@ -2080,7 +2145,8 @@ stubname (clEnqueueBarrier) (cl_command_queue command_queue)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueBarrier)dlsym (so_handle, "clEnqueueBarrier");
+  func = (f_clEnqueueBarrier)pocl_dynlib_symbol_address (so_handle,
+                                                         "clEnqueueBarrier");
   if (func)
     {
       return func (command_queue);
@@ -2099,7 +2165,8 @@ stubname (clUnloadCompiler) (void)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clUnloadCompiler)dlsym (so_handle, "clUnloadCompiler");
+  func = (f_clUnloadCompiler)pocl_dynlib_symbol_address (so_handle,
+                                                         "clUnloadCompiler");
   if (func)
     {
       return func ();
@@ -2118,8 +2185,8 @@ stubname (clGetExtensionFunctionAddress) (const char *func_name)
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetExtensionFunctionAddress)dlsym (
-      so_handle, "clGetExtensionFunctionAddress");
+  func = (f_clGetExtensionFunctionAddress)pocl_dynlib_symbol_address (
+    so_handle, "clGetExtensionFunctionAddress");
   if (func)
     {
       return func (func_name);
@@ -2139,7 +2206,8 @@ stubname (clCreateFromGLBuffer) (cl_context context, cl_mem_flags flags,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateFromGLBuffer)dlsym (so_handle, "clCreateFromGLBuffer");
+  func = (f_clCreateFromGLBuffer)pocl_dynlib_symbol_address (
+    so_handle, "clCreateFromGLBuffer");
   if (func)
     {
       return func (context, flags, bufobj, errcode_ret);
@@ -2160,7 +2228,8 @@ stubname (clCreateFromGLTexture) (cl_context context, cl_mem_flags flags,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateFromGLTexture)dlsym (so_handle, "clCreateFromGLTexture");
+  func = (f_clCreateFromGLTexture)pocl_dynlib_symbol_address (
+    so_handle, "clCreateFromGLTexture");
   if (func)
     {
       return func (context, flags, target, miplevel, texture, errcode_ret);
@@ -2181,8 +2250,8 @@ stubname (clCreateFromGLRenderbuffer) (cl_context context, cl_mem_flags flags,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateFromGLRenderbuffer)dlsym (so_handle,
-                                              "clCreateFromGLRenderbuffer");
+  func = (f_clCreateFromGLRenderbuffer)pocl_dynlib_symbol_address (
+    so_handle, "clCreateFromGLRenderbuffer");
   if (func)
     {
       return func (context, flags, renderbuffer, errcode_ret);
@@ -2202,7 +2271,8 @@ stubname (clGetGLObjectInfo) (cl_mem memobj, cl_gl_object_type *gl_object_type,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetGLObjectInfo)dlsym (so_handle, "clGetGLObjectInfo");
+  func = (f_clGetGLObjectInfo)pocl_dynlib_symbol_address (so_handle,
+                                                          "clGetGLObjectInfo");
   if (func)
     {
       return func (memobj, gl_object_type, gl_object_name);
@@ -2223,7 +2293,8 @@ stubname (clGetGLTextureInfo) (cl_mem memobj, cl_gl_texture_info param_name,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetGLTextureInfo)dlsym (so_handle, "clGetGLTextureInfo");
+  func = (f_clGetGLTextureInfo)pocl_dynlib_symbol_address (
+    so_handle, "clGetGLTextureInfo");
   if (func)
     {
       return func (memobj, param_name, param_value_size, param_value,
@@ -2248,8 +2319,8 @@ stubname (clEnqueueAcquireGLObjects) (cl_command_queue command_queue,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueAcquireGLObjects)dlsym (so_handle,
-                                             "clEnqueueAcquireGLObjects");
+  func = (f_clEnqueueAcquireGLObjects)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueAcquireGLObjects");
   if (func)
     {
       return func (command_queue, num_objects, mem_objects,
@@ -2274,8 +2345,8 @@ stubname (clEnqueueReleaseGLObjects) (cl_command_queue command_queue,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clEnqueueReleaseGLObjects)dlsym (so_handle,
-                                             "clEnqueueReleaseGLObjects");
+  func = (f_clEnqueueReleaseGLObjects)pocl_dynlib_symbol_address (
+    so_handle, "clEnqueueReleaseGLObjects");
   if (func)
     {
       return func (command_queue, num_objects, mem_objects,
@@ -2297,8 +2368,8 @@ stubname (clCreateFromGLTexture2D) (cl_context context, cl_mem_flags flags,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateFromGLTexture2D)dlsym (so_handle,
-                                           "clCreateFromGLTexture2D");
+  func = (f_clCreateFromGLTexture2D)pocl_dynlib_symbol_address (
+    so_handle, "clCreateFromGLTexture2D");
   if (func)
     {
       return func (context, flags, target, miplevel, texture, errcode_ret);
@@ -2319,8 +2390,8 @@ stubname (clCreateFromGLTexture3D) (cl_context context, cl_mem_flags flags,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clCreateFromGLTexture3D)dlsym (so_handle,
-                                           "clCreateFromGLTexture3D");
+  func = (f_clCreateFromGLTexture3D)pocl_dynlib_symbol_address (
+    so_handle, "clCreateFromGLTexture3D");
   if (func)
     {
       return func (context, flags, target, miplevel, texture, errcode_ret);
@@ -2342,7 +2413,8 @@ stubname (clGetGLContextInfoKHR) (const cl_context_properties *properties,
   if (!so_handle)
     open_libopencl_so ();
 
-  func = (f_clGetGLContextInfoKHR)dlsym (so_handle, "clGetGLContextInfoKHR");
+  func = (f_clGetGLContextInfoKHR)pocl_dynlib_symbol_address (
+    so_handle, "clGetGLContextInfoKHR");
   if (func)
     {
       return func (properties, param_name, param_value_size, param_value,
