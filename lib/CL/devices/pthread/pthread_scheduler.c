@@ -140,7 +140,7 @@ pthread_scheduler_init (cl_device_id device)
       POCL_CREATE_THREAD (scheduler.thread_pool[i].thread,
                           pocl_pthread_driver_thread,
                           (void *)&scheduler.thread_pool[i]);
-#if defined(__linux__) && defined(__x86_64__)
+#ifdef ENABLE_SIGNAL_HANDLERS
       pocl_ignore_sigfpe_for_thread (scheduler.thread_pool[i].thread);
 #endif
     }

@@ -182,7 +182,7 @@ if(ENABLE_HOST_CPU_DEVICES)
   list(APPEND POCL_DEVICES_SOURCES common_utils.h common_utils.c)
 endif()
 
-if(UNIX AND (CMAKE_SYSTEM_NAME MATCHES "Linux") AND ENABLE_HOST_CPU_DEVICES)
+if(ENABLE_SIGNAL_HANDLERS)
   list(APPEND POCL_DEVICES_SOURCES signal_handlers.c)
 endif()
 
