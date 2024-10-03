@@ -113,7 +113,8 @@ extern "C" {
   POCL_EXPORT
   void pocl_destroy_llvm_module (void *modp, cl_context ctx);
 
-  int pocl_llvm_remove_file_on_signal (const char *file);
+  int pocl_llvm_remove_file_on_signal_create (const char *file);
+  int pocl_llvm_remove_file_on_signal_destroy (const char *file);
 
   void pocl_llvm_create_context (cl_context ctx);
   void pocl_llvm_release_context (cl_context ctx);
