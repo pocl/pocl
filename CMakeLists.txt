@@ -468,12 +468,21 @@ find_package(PkgConfig MODULE)
 
 if(PKG_CONFIG_FOUND)
   pkg_check_modules(HWLOC IMPORTED_TARGET hwloc>=1.0)
+endif()
 
-  if(NOT HWLOC_FOUND)
-    set(DEFAULT_ENABLE_HWLOC OFF CACHE INTERNAL "default hwloc")
-  else()
-    set(DEFAULT_ENABLE_HWLOC ON CACHE INTERNAL "default hwloc")
+if(WIN32 AND NOT HWLOC_FOUND)
+  find_library(HWLOC_DLL "hwloc")
+  find_library(HWLOC_LIB "libhwloc.lib")
+  find_path(HWLOC_INC_DIR "hwloc.h")
+  if (HWLOC_LIB AND HWLOC_DLL AND HWLOC_INC_DIR)
+    set(HWLOC_FOUND 1)
   endif()
+endif()
+
+if(HWLOC_FOUND)
+  set(DEFAULT_ENABLE_HWLOC ON CACHE INTERNAL "default hwloc")
+else()
+  set(DEFAULT_ENABLE_HWLOC OFF CACHE INTERNAL "default hwloc")
 endif()
 
 option(ENABLE_HWLOC "Enable Portable Hardware Locality software package"
