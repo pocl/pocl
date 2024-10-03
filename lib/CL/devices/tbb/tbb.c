@@ -157,7 +157,7 @@ static void
 tbb_scheduler_init (cl_device_id device)
 {
   pocl_tbb_scheduler_data *dd = (pocl_tbb_scheduler_data *)device->data;
-  POCL_FAST_INIT (dd->wq_lock_fast);
+  POCL_INIT_LOCK (dd->wq_lock_fast);
   dd->work_queue = NULL;
 
   POCL_INIT_COND (dd->wake_meta_thread);
@@ -235,14 +235,14 @@ tbb_scheduler_uninit (cl_device_id device)
 {
   pocl_tbb_scheduler_data *dd = (pocl_tbb_scheduler_data *)device->data;
 
-  POCL_FAST_LOCK (dd->wq_lock_fast);
+  POCL_LOCK (dd->wq_lock_fast);
   dd->meta_thread_shutdown_requested = 1;
   POCL_BROADCAST_COND (dd->wake_meta_thread);
-  POCL_FAST_UNLOCK (dd->wq_lock_fast);
+  POCL_UNLOCK (dd->wq_lock_fast);
 
   POCL_JOIN_THREAD (dd->meta_thread);
 
-  POCL_FAST_DESTROY (dd->wq_lock_fast);
+  POCL_DESTROY_LOCK (dd->wq_lock_fast);
   POCL_DESTROY_COND (dd->wake_meta_thread);
 
   dd->meta_thread_shutdown_requested = 0;
@@ -258,10 +258,10 @@ tbb_scheduler_push_command (_cl_command_node *cmd)
 {
   cl_device_id device = cmd->device;
   pocl_tbb_scheduler_data *dd = (pocl_tbb_scheduler_data *)device->data;
-  POCL_FAST_LOCK (dd->wq_lock_fast);
+  POCL_LOCK (dd->wq_lock_fast);
   DL_APPEND (dd->work_queue, cmd);
   POCL_SIGNAL_COND (dd->wake_meta_thread);
-  POCL_FAST_UNLOCK (dd->wq_lock_fast);
+  POCL_UNLOCK (dd->wq_lock_fast);
 }
 
 void pocl_tbb_submit(_cl_command_node *node, cl_command_queue cq) {

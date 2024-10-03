@@ -34,7 +34,8 @@ MESSAGE(STATUS "CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
 MESSAGE(STATUS "CMAKE_LIBRARY_ARCHITECTURE: ${CMAKE_LIBRARY_ARCHITECTURE}")
 
 set(LATEST_KNOWN_CXX_STD_VERSION "20")
-set(SUPPORTED_CXX_STD_VERSION "11")
+# this is required for lib/CL/pocl_threads.cc
+set(SUPPORTED_CXX_STD_VERSION "17")
 
 option(ENABLE_LATEST_CXX_STD "Upgrade C++ standard version to ${LATEST_KNOWN_CXX_STD_VERSION}. Required to get rid of unused variables warnings in compilers not supporting [[gnu::*]] attributes. Can bring other benefits, including performance and efficiency ones. Before a pull request build with this disabled." OFF)
 if(ENABLE_LATEST_CXX_STD)
@@ -254,16 +255,12 @@ option(ENABLE_VSOCK "Enable vsock transport in the remote driver" OFF)
 
 option(ENABLE_LLVM_FILECHECKS "Enable kernel compiler/autovectorizer filechecks using the given FileCheck binary defined in LLVM_FILECHECK_BIN. Note: the checks are tested against recent Intel X86/SIMD CPUs for now.")
 
-if (USE_LLVM_FOR_DYNLIBS)
-  if(ENABLE_LOADABLE_DRIVERS)
-    message(WARNING "LLVM dynlibs implementation doesn't support loadable drivers, disabling.")
-    set(ENABLE_LOADABLE_DRIVERS 0)
-  endif()
-  if(ENABLE_PRINTF_IMMEDIATE_FLUSH)
-    message(WARNING "LLVM dynlibs implementation doesn't support printf() immediate flush, disabling.")
-    set(ENABLE_PRINTF_IMMEDIATE_FLUSH 0)
-  endif()
+if(WIN32)
+  set(DEFAULT_LLVM_PLATFORM_SUPPORT ON)
+else()
+  set(DEFAULT_LLVM_PLATFORM_SUPPORT OFF)
 endif()
+option(ENABLE_LLVM_PLATFORM_SUPPORT "Enable platform support using C++ STL and LLVM's Support library" ${DEFAULT_LLVM_PLATFORM_SUPPORT})
 
 if (ENABLE_PROXY_DEVICE)
   set(VISIBILITY_HIDDEN_DEFAULT OFF)
@@ -275,7 +272,6 @@ if(VISIBILITY_HIDDEN)
   add_compile_options(-fvisibility=hidden)
   add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fvisibility-inlines-hidden>)
 endif()
-
 
 # Ninja Job Pool support
 set(PARALLEL_COMPILE_JOBS "" CACHE STRING
@@ -306,8 +302,6 @@ option(ENABLE_EXTRA_VALIDITY_CHECKS "Enable extra checks on cl_* object validity
 
 option(DEVELOPER_MODE "This will SIGNIFICANTLY reduce PoCL's performance, but speeds up its compilation for faster development-test cycles. Only turn on if you know what you're doing." OFF)
 
-option(USE_LLVM_FOR_DYNLIBS "Use the LLVM's support library for dynamic library handling (instead of POSIX directly) in the host runtime.")
-
 option(USE_POCL_MEMMANAGER "Enables custom memory manager. Except for special circumstances, this should be disabled." OFF)
 
 option(EXAMPLES_USE_GIT_MASTER "If enabled, some of the external testsuites in examples/ will try to use sources from Git master, instead of releases. This may result in failure to build or run the examples" OFF)
@@ -335,6 +329,20 @@ endif()
 # printf buffer size, in KB
 if(NOT DEFINED PRINTF_BUFFER_SIZE)
   set(PRINTF_BUFFER_SIZE 16384 CACHE STRING "printf buffer size, in KB")
+endif()
+
+if(ENABLE_LLVM_PLATFORM_SUPPORT)
+  if(NOT ENABLE_LLVM)
+    message(FATAL_ERROR "ENABLE_LLVM_PLATFORM_SUPPORT requires also ENABLE_LLVM")
+  endif()
+  if(ENABLE_LOADABLE_DRIVERS)
+    message(WARNING "LLVM dynlibs implementation doesn't support loadable drivers, disabling.")
+    set(ENABLE_LOADABLE_DRIVERS 0)
+  endif()
+  if(ENABLE_PRINTF_IMMEDIATE_FLUSH)
+    message(WARNING "LLVM dynlibs implementation doesn't support printf() immediate flush, disabling.")
+    set(ENABLE_PRINTF_IMMEDIATE_FLUSH 0)
+  endif()
 endif()
 
 ##################################################################################
@@ -973,7 +981,8 @@ elseif(UNIX)
       endif()
       set(HAVE_DLFCN_H ON CACHE BOOL "dlfcn.h" FORCE)
     else()
-      message(FATAL_ERROR "Could not find dlfcn.h!")
+      message(STATUS "dlfcn.h header not found")
+	  set(HAVE_DLFCN_H OFF CACHE BOOL "dlfcn.h" FORCE)
     endif()
 
   endif()

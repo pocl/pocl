@@ -1426,10 +1426,10 @@ pocl_proxy_free_queue (cl_device_id device, cl_command_queue queue)
   if (queue->data == NULL)
     return CL_SUCCESS;
 
-  POCL_FAST_LOCK (qd->wq_lock);
+  POCL_LOCK (qd->wq_lock);
   qd->cq_thread_exit_requested = 1;
   POCL_SIGNAL_COND (qd->wakeup_cond);
-  POCL_FAST_UNLOCK (qd->wq_lock);
+  POCL_UNLOCK (qd->wq_lock);
 
   if (POCL_THREAD_SELF () != qd->cq_thread_id)
     POCL_JOIN_THREAD (qd->cq_thread_id);
@@ -1488,10 +1488,10 @@ proxy_push_command (_cl_command_node *node)
   cl_command_queue cq = node->sync.event.event->queue;
   proxy_queue_data_t *qd = (proxy_queue_data_t *)cq->data;
 
-  POCL_FAST_LOCK (qd->wq_lock);
+  POCL_LOCK (qd->wq_lock);
   DL_APPEND (qd->work_queue, node);
   POCL_SIGNAL_COND (qd->wakeup_cond);
-  POCL_FAST_UNLOCK (qd->wq_lock);
+  POCL_UNLOCK (qd->wq_lock);
 }
 
 void
@@ -2478,13 +2478,13 @@ pocl_proxy_queue_pthread (void *ptr)
   _cl_command_node *cmd = NULL;
   cl_device_id device = qd->queue->device;
   proxy_device_data_t *d = (proxy_device_data_t *)device->data;
-  POCL_FAST_LOCK (qd->wq_lock);
+  POCL_LOCK (qd->wq_lock);
 
   while (1)
     {
       if (qd->cq_thread_exit_requested)
         {
-          POCL_FAST_UNLOCK (qd->wq_lock);
+          POCL_UNLOCK (qd->wq_lock);
           return NULL;
         }
 
@@ -2492,7 +2492,7 @@ pocl_proxy_queue_pthread (void *ptr)
       if (cmd)
         {
           DL_DELETE (qd->work_queue, cmd);
-          POCL_FAST_UNLOCK (qd->wq_lock);
+          POCL_UNLOCK (qd->wq_lock);
 
           assert (pocl_command_is_ready (cmd->sync.event.event));
           assert (cmd->sync.event.event->status == CL_SUBMITTED);
@@ -2503,7 +2503,7 @@ pocl_proxy_queue_pthread (void *ptr)
           if (qd->cq_thread_exit_requested && qd->cq_thread_id==0)
             return NULL;
 
-          POCL_FAST_LOCK (qd->wq_lock);
+          POCL_LOCK (qd->wq_lock);
         }
 
       if ((qd->work_queue == NULL) && (qd->cq_thread_exit_requested == 0))

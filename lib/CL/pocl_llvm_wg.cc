@@ -1005,11 +1005,10 @@ static int convertBCorSPV(char *InputPath,
     CompilationArgs2[i] = (char *)CompilationArgs[i].data();
   CompilationArgs2[CompilationArgs.size()] = nullptr;
 
-  r = pocl_run_command_capture_output(CapturedOutput, &CapturedBytes,
-                                      CompilationArgs2.data());
+  // TODO removed output capture
+  r = pocl_run_command(CompilationArgs2.data());
   if (r != 0) {
-    BuildLog->append("llvm-spirv failed with output:\n");
-    BuildLog->append(CapturedOutput, CapturedBytes);
+    BuildLog->append("llvm-spirv failed\n");
     goto FINISHED;
   }
 
@@ -1602,7 +1601,7 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
 
   std::string AsmStr = SOS.str().str();
   pocl_write_tempfile(AsmFileName, "/tmp/pocl-asm", ".s", AsmStr.c_str(),
-                      AsmStr.size(), nullptr);
+                      AsmStr.size());
   pocl_mk_tempname(ObjFileName, "/tmp/pocl-obj", ".o", nullptr);
 
   const char *Args[] = {pocl_get_path("CLANG", CLANG),

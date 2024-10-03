@@ -1,6 +1,7 @@
-/* pocl_threads.c - helper functions for thread operations
+/* OpenCL runtime library: utility functions for thread operations
 
    Copyright (c) 2023 Jan Solanti / Tampere University
+   Copyright (c) 2024 Michal Babej / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -21,8 +22,14 @@
    IN THE SOFTWARE.
 */
 
-#include "pocl_threads.h"
+#define _GNU_SOURCE
 #include "pocl_debug.h"
+#include "pocl_threads_c.h"
+
+#include <errno.h>
+#include <time.h>
+
+pocl_lock_t pocl_init_lock = POCL_LOCK_INITIALIZER;
 
 void
 pocl_abort_on_pthread_error (int status, unsigned line, const char *func)
@@ -33,4 +40,24 @@ pocl_abort_on_pthread_error (int status, unsigned line, const char *func)
       POCL_ABORT ("PTHREAD ERROR in %s():%u: %s (%d)\n", func, line,
                   strerror (status), status);
     }
+}
+
+void
+pocl_timed_wait (pocl_cond_t *c, pocl_lock_t *m, unsigned long usec)
+{
+  struct timespec now = { 0, 0 };
+  clock_gettime (CLOCK_REALTIME, &now);
+
+  unsigned long nsec = usec * 1000UL;
+  if (now.tv_nsec + nsec < 1000000000UL)
+    {
+      now.tv_nsec += nsec;
+    }
+  else
+    {
+      now.tv_nsec = now.tv_nsec + nsec - 1000000000UL;
+      now.tv_sec += 1;
+    }
+
+  PTHREAD_CHECK2 (ETIMEDOUT, pthread_cond_timedwait (c, m, &now));
 }

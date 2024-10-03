@@ -74,8 +74,6 @@ POname(clWaitForEvents)(cl_uint              num_events ,
     return ret;
 
   /* wait for user events */
-  struct timespec time_to_wait = { 0, 0 };
-
   for (i = 0; i < num_events; ++i)
     {
       cl_event e = event_list[i];
@@ -85,8 +83,7 @@ POname(clWaitForEvents)(cl_uint              num_events ,
         {
           while (e->status > CL_COMPLETE)
             {
-              time_to_wait.tv_sec = time (NULL) + 1;
-              POCL_TIMEDWAIT_COND (p->wakeup_cond, e->pocl_lock, time_to_wait);
+              POCL_WAIT_COND (p->wakeup_cond, e->pocl_lock);
             }
           if (e->status < 0)
             ret = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;

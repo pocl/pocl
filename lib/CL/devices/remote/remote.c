@@ -1380,10 +1380,10 @@ remote_push_command (_cl_command_node *node)
   cl_device_id device = node->device;
   remote_device_data_t *d = (remote_device_data_t *)device->data;
 
-  POCL_FAST_LOCK (d->wq_lock);
+  POCL_LOCK (d->wq_lock);
   DL_APPEND (d->work_queue, node);
   POCL_SIGNAL_COND (d->wakeup_cond);
-  POCL_FAST_UNLOCK (d->wq_lock);
+  POCL_UNLOCK (d->wq_lock);
 }
 
 void
@@ -1559,10 +1559,10 @@ remote_finish_command (void *arg, _cl_command_node *node,
       break;
     }
 
-  POCL_FAST_LOCK (d->wq_lock);
+  POCL_LOCK (d->wq_lock);
   DL_APPEND (d->finished_list, node);
   POCL_SIGNAL_COND (d->wakeup_cond);
-  POCL_FAST_UNLOCK (d->wq_lock);
+  POCL_UNLOCK (d->wq_lock);
 }
 
 int
@@ -2551,9 +2551,9 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
     }
 
 EARLY_FINISH:
-  POCL_FAST_LOCK (d->wq_lock);
+  POCL_LOCK (d->wq_lock);
   DL_APPEND (d->finished_list, node);
-  POCL_FAST_UNLOCK (d->wq_lock);
+  POCL_UNLOCK (d->wq_lock);
 }
 
 static void *
@@ -2566,13 +2566,13 @@ pocl_remote_driver_pthread (void *cldev)
 
   /* Sleep so we have time to run the task graph dumper in main(). */
   /* sleep (2); */
-  POCL_FAST_LOCK (d->wq_lock);
+  POCL_LOCK (d->wq_lock);
 
   while (1)
     {
       if (d->driver_thread_exit_requested)
         {
-          POCL_FAST_UNLOCK (d->wq_lock);
+          POCL_UNLOCK (d->wq_lock);
           return NULL;
         }
 
@@ -2580,20 +2580,20 @@ pocl_remote_driver_pthread (void *cldev)
       if (cmd)
         {
           DL_DELETE (d->work_queue, cmd);
-          POCL_FAST_UNLOCK (d->wq_lock);
+          POCL_UNLOCK (d->wq_lock);
 
           assert (cmd->sync.event.event->status == CL_SUBMITTED);
 
           remote_start_command (d, cmd);
 
-          POCL_FAST_LOCK (d->wq_lock);
+          POCL_LOCK (d->wq_lock);
         }
 
       finished = d->finished_list;
       if (finished)
         {
           DL_DELETE (d->finished_list, finished);
-          POCL_FAST_UNLOCK (d->wq_lock);
+          POCL_UNLOCK (d->wq_lock);
 
           cl_event event = finished->sync.event.event;
 
@@ -2603,7 +2603,7 @@ pocl_remote_driver_pthread (void *cldev)
 
           POCL_UPDATE_EVENT_COMPLETE_MSG (event, msg);
 
-          POCL_FAST_LOCK (d->wq_lock);
+          POCL_LOCK (d->wq_lock);
         }
 
       if ((d->work_queue == NULL) && (d->finished_list == NULL)

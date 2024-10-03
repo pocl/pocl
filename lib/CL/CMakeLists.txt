@@ -140,28 +140,12 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clSetProgramSpecializationConstant.c"
                    "clCloneKernel.c"
                    "clEnqueueSVMMigrateMem.c"
-                   "pocl_builtin_kernels.c" "pocl_builtin_kernels.h"
-                   "dbk/pocl_dbk_khr_jpeg_shared.c" "dbk/pocl_dbk_khr_jpeg_shared.h"
-                   "pocl_cl.h" "pocl_util.h" "pocl_util.c"
-                   "pocl_cl_half_util.c" "pocl_cl_half_util.h"
-                   "pocl_image_util.c" "pocl_image_util.h"
-                   "pocl_img_buf_cpy.c"
-                   "pocl_fill_memobj.c"
-                   "pocl_ndrange_kernel.c"
-                   "pocl_icd.h" "pocl_llvm.h"
-                   "pocl_tracing.h" "pocl_tracing.c"
-                   "pocl_runtime_config.c" "pocl_runtime_config.h"
-                   "pocl_mem_management.c"  "pocl_mem_management.h"
-                   "pocl_hash.c" "pocl_file_util.c"
-                   "pocl_debug.h" "pocl_debug.c" "pocl_timing.c"
-                   "pocl_timing.h" "pocl_threads.h" "pocl_threads.c"
-                   "pocl_tensor_util.h" "pocl_tensor_util.c"
+
                    "clSVMAlloc.c" "clSVMFree.c" "clEnqueueSVMFree.c"
                    "clEnqueueSVMMap.c" "clEnqueueSVMUnmap.c"
                    "clEnqueueSVMMemcpy.c" "clEnqueueSVMMemFill.c"
                    "clSetKernelArgSVMPointer.c" "clSetKernelExecInfo.c"
                    "clSetDefaultDeviceCommandQueue.c"
-                   "pocl_binary.c" "pocl_opengl.c" "pocl_cq_profiling.c"
                    "clCommandBarrierWithWaitListKHR.c"
                    "clCommandCopyBufferKHR.c"
                    "clCommandCopyBufferRectKHR.c"
@@ -201,7 +185,36 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clEnqueueSVMMemcpyRectPOCL.c"
                    "clEnqueueSVMMemfillRectPOCL.c"
                    "clSetKernelArgDevicePointer.c"
+
+                   "pocl_builtin_kernels.c" "pocl_builtin_kernels.h"
+                   "pocl_cl_half_util.c" "pocl_cl_half_util.h"
+                   "pocl_cl.h" "pocl_icd.h" "pocl_llvm.h"
+                   "pocl_util.h" "pocl_util.c"
+                   "pocl_image_util.c" "pocl_image_util.h"
+                   "pocl_img_buf_cpy.c"
+                   "pocl_fill_memobj.c"
+                   "pocl_ndrange_kernel.c"
+                   "pocl_tracing.h" "pocl_tracing.c"
+                   "pocl_runtime_config.c" "pocl_runtime_config.h"
+                   "pocl_mem_management.c"  "pocl_mem_management.h"
+                   "pocl_hash.c"
+                   "pocl_debug.h" "pocl_debug.c"
+                   "pocl_tensor_util.h" "pocl_tensor_util.c"
+                   "pocl_binary.c" "pocl_opengl.c" "pocl_cq_profiling.c"
+                   # platform dep
+                   "pocl_timing.h" "pocl_threads.h" "pocl_file_util.h"
+                   # dbks
+                   "dbk/pocl_dbk_khr_jpeg_shared.c" "dbk/pocl_dbk_khr_jpeg_shared.h"
 )
+
+unset(EXTRA_LLVM_SOURCES)
+
+if(ENABLE_LLVM_PLATFORM_SUPPORT)
+  list(APPEND POCL_LIB_SOURCES "pocl_timing.cc" "pocl_threads.cc")
+  list(APPEND EXTRA_LLVM_SOURCES "pocl_llvm_file_utils.cc" "pocl_llvm_dynlib.cc")
+else()
+  list(APPEND POCL_LIB_SOURCES "pocl_timing.c" "pocl_threads.c" "pocl_file_util.c" "pocl_dynlib.c")
+endif()
 
 if(ANDROID)
   list(APPEND POCL_LIB_SOURCES "pocl_mkstemp.c")
@@ -240,11 +253,7 @@ if (ENABLE_LLVM)
   unset(CMAKE_CXX_STANDARD)
   unset(CMAKE_CXX_STANDARD_REQUIRED)
 
-  set(LLVM_API_SOURCES "pocl_llvm_build.cc" "pocl_llvm_metadata.cc" "pocl_llvm_utils.cc" "pocl_llvm_wg.cc")
-  if(USE_LLVM_FOR_DYNLIBS)
-    list(APPEND LLVM_API_SOURCES "pocl_llvm_dynlib.cc")
-  endif()
-
+  set(LLVM_API_SOURCES "pocl_llvm_build.cc" "pocl_llvm_metadata.cc" "pocl_llvm_utils.cc" "pocl_llvm_wg.cc" ${EXTRA_LLVM_SOURCES})
   set_source_files_properties(${LLVM_API_SOURCES} PROPERTIES COMPILE_FLAGS "${LLVM_CXXFLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl\"")
 
   add_library("lib_cl_llvm" OBJECT ${LLVM_API_SOURCES})
@@ -283,10 +292,6 @@ endif()
 if(MSVC)
   set_source_files_properties( ${POCL_LIB_SOURCES} PROPERTIES LANGUAGE CXX )
 endif(MSVC)
-
-if(NOT USE_LLVM_FOR_DYNLIBS)
-  list(APPEND POCL_LIB_SOURCES "pocl_dynlib.c")
-endif()
 
 # this is so that we don't compile twice when building both libpocl and libOpenCL
 add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})

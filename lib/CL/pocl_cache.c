@@ -292,9 +292,8 @@ pocl_cache_tempname (char *path, const char *suffix, int *fd)
 int
 pocl_cache_write_program_source (char *program_cl_path, cl_program program)
 {
-  return pocl_write_tempfile (program_cl_path, tempfile_pattern,
-                              ".cl", program->source,
-                              strlen (program->source), NULL);
+  return pocl_write_tempfile (program_cl_path, tempfile_pattern, ".cl",
+                              program->source, strlen (program->source));
 }
 
 int
@@ -303,7 +302,7 @@ pocl_cache_write_kernel_objfile (char *objfile_path,
                                  uint64_t objfile_size)
 {
   return pocl_write_tempfile (objfile_path, tempfile_pattern, ".so.o",
-                              objfile_content, objfile_size, NULL);
+                              objfile_content, objfile_size);
 }
 
 int
@@ -312,7 +311,7 @@ pocl_cache_write_spirv (char *spirv_path,
                         uint64_t file_size)
 {
   return pocl_write_tempfile (spirv_path, tempfile_pattern, ".spirv",
-                              spirv_content, file_size, NULL);
+                              spirv_content, file_size);
 }
 
 int
@@ -321,7 +320,7 @@ pocl_cache_write_generic_objfile (char *objfile_path,
                                   uint64_t objfile_size)
 {
   return pocl_write_tempfile (objfile_path, tempfile_pattern, ".binary",
-                              objfile_content, objfile_size, NULL);
+                              objfile_content, objfile_size);
 }
 
 /******************************************************************************/

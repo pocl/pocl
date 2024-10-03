@@ -1,13 +1,12 @@
 /* pocl_file_util.h: global declarations of portable file utility functions
-   defined in lib/llvmopencl, due to using llvm::sys::fs & other llvm APIs
 
-   Copyright (c) 2015 pocl developers
+   Copyright (c) 2015-2024 pocl developers
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -17,11 +16,10 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
-
 
 #ifndef POCL_FILE_UTIL_H
 #define POCL_FILE_UTIL_H
@@ -57,9 +55,11 @@ POCL_EXPORT
 int pocl_write_file(const char* path, const char* content,
                     uint64_t count, int append);
 
-int pocl_write_tempfile (char *output_path, const char *prefix,
-                         const char *suffix, const char *content,
-                         unsigned long count, int *ret_fd);
+int pocl_write_tempfile (char *output_path,
+                         const char *prefix,
+                         const char *suffix,
+                         const char *content,
+                         uint64_t count);
 
 /* Allocates memory and places file contents in it.
  * Returns negative errno on error, zero otherwise. */

@@ -170,7 +170,7 @@ sigfpe_signal_handler (int signo, siginfo_t *si, void *data)
       /* SIGFPE is delivered to the thread that caused the div-by-zero.
        * check if the thread is on the list of threads we should ignore.
        */
-      pocl_thread_t ID = POCL_THREAD_SELF ();
+      pocl_thread_t ID = POCL_THREAD_SELF();
       int found = 0;
       unsigned max_threads
           = __atomic_load_n (&num_ignored_threads, __ATOMIC_SEQ_CST);
@@ -241,6 +241,8 @@ sigfpe_signal_handler (int signo, siginfo_t *si, void *data)
 }
 
 #endif
+
+static char signal_empty_file[POCL_MAX_PATHNAME_LENGTH];
 
 void
 pocl_install_sigfpe_handler ()

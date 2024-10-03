@@ -315,8 +315,7 @@ typedef struct pocl_vulkan_device_data_s
   /* driver wake + lock */
   pthread_cond_t wakeup_cond
       __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  POCL_FAST_LOCK_T wq_lock_fast
-      __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  pocl_lock_t wq_lock_fast __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
   size_t driver_thread_exit_requested
       __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
@@ -1680,7 +1679,7 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
 
   POCL_INIT_COND (d->wakeup_cond);
 
-  POCL_FAST_INIT (d->wq_lock_fast);
+  POCL_INIT_LOCK (d->wq_lock_fast);
 
   d->work_queue = NULL;
 
@@ -1700,10 +1699,10 @@ pocl_vulkan_uninit (unsigned j, cl_device_id device)
   if (device->available != CL_FALSE)
     {
 
-      POCL_FAST_LOCK (d->wq_lock_fast);
+      POCL_LOCK (d->wq_lock_fast);
       d->driver_thread_exit_requested = 1;
       POCL_SIGNAL_COND (d->wakeup_cond);
-      POCL_FAST_UNLOCK (d->wq_lock_fast);
+      POCL_UNLOCK (d->wq_lock_fast);
 
       POCL_JOIN_THREAD (d->driver_pthread_id);
 
@@ -2841,10 +2840,10 @@ static void
 vulkan_push_command (cl_device_id dev, _cl_command_node *cmd)
 {
   pocl_vulkan_device_data_t *d = (pocl_vulkan_device_data_t *)dev->data;
-  POCL_FAST_LOCK (d->wq_lock_fast);
+  POCL_LOCK (d->wq_lock_fast);
   DL_APPEND (d->work_queue, cmd);
   POCL_SIGNAL_COND (d->wakeup_cond);
-  POCL_FAST_UNLOCK (d->wq_lock_fast);
+  POCL_UNLOCK (d->wq_lock_fast);
 }
 
 void
@@ -4262,7 +4261,7 @@ vulkan_process_work (pocl_vulkan_device_data_t *d)
 {
   _cl_command_node *cmd;
 
-  POCL_FAST_LOCK (d->wq_lock_fast);
+  POCL_LOCK (d->wq_lock_fast);
   size_t do_exit = 0;
 
 RETRY:
@@ -4272,14 +4271,14 @@ RETRY:
   if (cmd)
     {
       DL_DELETE (d->work_queue, cmd);
-      POCL_FAST_UNLOCK (d->wq_lock_fast);
+      POCL_UNLOCK (d->wq_lock_fast);
 
       assert (pocl_command_is_ready (cmd->sync.event.event));
       assert (cmd->sync.event.event->status == CL_SUBMITTED);
 
       pocl_exec_command (cmd);
 
-      POCL_FAST_LOCK (d->wq_lock_fast);
+      POCL_LOCK (d->wq_lock_fast);
     }
 
   if ((cmd == NULL) && (do_exit == 0))
@@ -4289,7 +4288,7 @@ RETRY:
       goto RETRY;
     }
 
-  POCL_FAST_UNLOCK (d->wq_lock_fast);
+  POCL_UNLOCK (d->wq_lock_fast);
 
   return do_exit;
 }

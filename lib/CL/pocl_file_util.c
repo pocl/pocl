@@ -1,3 +1,30 @@
+/* OpenCL runtime library: file & directory related utility functions
+
+   Copyright (c) 2016 Romaric JODIN
+   Copyright (c) 2016-2021 Michal Babej / Tampere University
+   Copyright (c) 2019 Kati Tervo / Tampere University
+   Copyright (c) 2024 Michal Babej / Intel Finland Oy
+   Copyright (c) 2024 Pekka Jääskeläinen / Intel Finland Oy
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
+*/
+
 #ifndef _WIN32
 #define _GNU_SOURCE
 #define _DEFAULT_SOURCE
@@ -342,8 +369,11 @@ pocl_mk_tempdir (char *output, const char *prefix)
 /* write content[count] into a temporary file, and return the tempfile name in
  * output_path */
 int
-pocl_write_tempfile (char *output_path, const char *prefix, const char *suffix,
-                     const char *content, unsigned long count, int *ret_fd)
+pocl_write_tempfile (char *output_path,
+                     const char *prefix,
+                     const char *suffix,
+                     const char *content,
+                     uint64_t count)
 {
   assert (output_path);
   assert (prefix);
@@ -387,11 +417,7 @@ pocl_write_tempfile (char *output_path, const char *prefix, const char *suffix,
     return errno;
 #endif
 
-  err = 0;
-  if (ret_fd)
-    *ret_fd = fd;
-  else
-    err = close (fd);
+  err = close (fd);
 
-  return err ? errno : 0;
+  return err ? -2 : 0;
 }
