@@ -85,22 +85,14 @@
  * inter-thread synchronisation event, but one which is invisible to Helgrind.
  *
  * ... this macro explicitly associates the cond var with the mutex, by
- * calling pthread_cond_wait with a short timeout (100 usec)
+ * calling pthread_cond_wait with a short timeout (10 usec)
  */
 
 #ifdef ENABLE_VALGRIND
 #define VG_ASSOC_COND_VAR(cond_var, mutex)                                    \
   do                                                                          \
     {                                                                         \
-      struct timespec time_to_wait;                                           \
-      clock_gettime (CLOCK_MONOTONIC, &time_to_wait);                         \
-      time_to_wait.tv_nsec += 100000;                                         \
-      if (time_to_wait.tv_nsec > 1000000000)                                  \
-        {                                                                     \
-          time_to_wait.tv_nsec -= 1000000000;                                 \
-          time_to_wait.tv_sec += 1;                                           \
-        }                                                                     \
-      POCL_TIMEDWAIT_COND (cond_var, mutex, time_to_wait);                    \
+      POCL_TIMEDWAIT_COND (cond_var, mutex, 10);                              \
     }                                                                         \
   while (0)
 #else
@@ -979,7 +971,6 @@ struct pocl_device_ops {
 };
 
 typedef struct pocl_global_mem_t {
-  pocl_lock_t pocl_lock;
   cl_ulong max_ever_allocated;
   cl_ulong currently_allocated;
   cl_ulong total_alloc_limit;
@@ -1511,7 +1502,7 @@ struct _cl_command_buffer_khr
 {
   POCL_ICD_OBJECT;
   POCL_OBJECT;
-  POCL_FAST_LOCK_T mutex;
+  pocl_lock_t mutex;
 
   /* Queues that this command buffer was created for */
   cl_uint num_queues;

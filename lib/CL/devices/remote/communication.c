@@ -799,7 +799,7 @@ pocl_remote_reader_pthread (void *aa)
       POCL_UNLOCK (inflight->mutex);
       finish_running_cmd (running_cmd);
     }
-  POCL_EXIT_THREAD (NULL);
+  return NULL;
 }
 
 #ifdef ENABLE_RDMA
@@ -895,7 +895,7 @@ pocl_remote_rdma_reader_pthread (void *aa)
       POCL_LOCK (this->mutex);
     }
 
-  POCL_EXIT_THREAD (NULL);
+  return NULL;
 }
 
 static void *
@@ -1045,7 +1045,7 @@ pocl_remote_rdma_writer_pthread (void *aa)
   POCL_UNLOCK (this->mutex);
   rdma_unregister_mem_region (request_mr);
 
-  POCL_EXIT_THREAD (NULL);
+  return NULL;
 }
 #endif
 
@@ -1217,10 +1217,7 @@ pocl_remote_writer_pthread (void *aa)
             }
           // hack: wake regularly to check if the readers are waiting to get
           // reconnected
-          struct timespec deadline;
-          clock_gettime (CLOCK_REALTIME, &deadline);
-          deadline.tv_sec += 1;
-          POCL_TIMEDWAIT_COND (this->cond, this->mutex, deadline);
+          POCL_TIMEDWAIT_COND (this->cond, this->mutex, 1000000); /* 1sec */
           POCL_LOCK (remote->setup_lock.mutex);
           if (remote->threads_awaiting_reconnect > 0)
             pocl_remote_reconnect_sockets (remote);
@@ -1230,7 +1227,7 @@ pocl_remote_writer_pthread (void *aa)
 
   POCL_UNLOCK (this->mutex);
 
-  POCL_EXIT_THREAD (NULL);
+  return NULL;
 }
 
 static void
@@ -1294,9 +1291,8 @@ traffic_monitor_pthread (void *arg)
                tx_bytes_submitted, tx_bytes_confirmed);
       fflush (f);
 
-      now.tv_nsec += 10000000; /* 10ms */
       POCL_LOCK (q->mutex);
-      POCL_TIMEDWAIT_COND (q->cond, q->mutex, now);
+      POCL_TIMEDWAIT_COND (q->cond, q->mutex, 10000); /* 10ms */
     }
   POCL_UNLOCK (q->mutex);
 

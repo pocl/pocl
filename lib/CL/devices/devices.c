@@ -243,7 +243,7 @@ static unsigned device_count[POCL_NUM_DEVICE_TYPES];
 // after calling drivers uninit, we may have to re-init the devices.
 static unsigned devices_active = 0;
 
-static pocl_lock_t pocl_init_lock = POCL_LOCK_INITIALIZER;
+extern pocl_lock_t pocl_init_lock;
 
 #ifdef ENABLE_LOADABLE_DRIVERS
 

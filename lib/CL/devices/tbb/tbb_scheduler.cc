@@ -301,7 +301,7 @@ static int runSingleCommand(pocl_tbb_scheduler_data *SchedData) {
   kernel_run_command *RunCmd;
   TBBArena *TBBA = SchedData->tbb_arena;
 
-  POCL_FAST_LOCK(SchedData->wq_lock_fast);
+  POCL_LOCK(SchedData->wq_lock_fast);
   int DoExit = 0;
 
 RETRY:
@@ -311,7 +311,7 @@ RETRY:
   Cmd = SchedData->work_queue;
   if (Cmd) {
     DL_DELETE(SchedData->work_queue, Cmd);
-    POCL_FAST_UNLOCK(SchedData->wq_lock_fast);
+    POCL_UNLOCK(SchedData->wq_lock_fast);
 
     assert(pocl_command_is_ready(Cmd->sync.event.event));
 
@@ -327,7 +327,7 @@ RETRY:
       TBBA->Arena.execute([Cmd]() { pocl_exec_command(Cmd); });
     }
 
-    POCL_FAST_LOCK(SchedData->wq_lock_fast);
+    POCL_LOCK(SchedData->wq_lock_fast);
   }
 
   /* if no command was available, sleep */
@@ -336,7 +336,7 @@ RETRY:
     goto RETRY;
   }
 
-  POCL_FAST_UNLOCK(SchedData->wq_lock_fast);
+  POCL_UNLOCK(SchedData->wq_lock_fast);
 
   return DoExit;
 }
@@ -349,7 +349,7 @@ void *TBBDriverThread(void *Dev) {
   while (1) {
     DoExit = runSingleCommand(SchedData);
     if (DoExit) {
-      POCL_EXIT_THREAD(NULL);
+      return NULL;
     }
   }
 }

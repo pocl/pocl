@@ -129,7 +129,7 @@ POname (clCreateCommandBufferKHR) (
       = (cl_command_queue *)calloc (num_queues, sizeof (cl_command_queue));
   memcpy (cmdbuf->queues, queues, num_queues * sizeof (cl_command_queue));
   cmdbuf->num_properties = num_properties;
-  POCL_FAST_INIT(cmdbuf->mutex);
+  POCL_INIT_LOCK (cmdbuf->mutex);
   if (num_properties > 0)
     {
       cmdbuf->properties = (cl_command_buffer_properties_khr *)malloc (

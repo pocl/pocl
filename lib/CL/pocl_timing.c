@@ -1,12 +1,13 @@
-/* OpenCL runtime library: OS-dependent time routines
+/* OpenCL runtime library: time measurement utility functions
 
    Copyright (c) 2015 Michal Babej / Tampere University of Technology
+   Copyright (c) 2024 Michal Babej / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -16,9 +17,9 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #include "config.h"
@@ -49,19 +50,22 @@
 
 #include "pocl_timing.h"
 
+uint64_t
+pocl_gettimer_resolution ()
+{
 #ifdef HAVE_CLOCK_GETTIME
 // clock_gettime is (at best) nanosec res
-const unsigned pocl_timer_resolution = 1;
+return 1;
 #else
 #  ifndef _MSC_VER
 // gettimeofday() has (at best) microsec res
-const unsigned pocl_timer_resolution = 1000;
+return 1000;
 #  else
 // the resolution of windows clock is "it depends"...
-const unsigned pocl_timer_resolution = 1000;
+return 10000;
 #  endif
 #endif
-
+}
 
 uint64_t pocl_gettimemono_ns() {
 

@@ -1116,10 +1116,10 @@ static void tce_push_command(_cl_command_node *node) {
   cl_device_id device = node->device;
   TCEDevice *d = (TCEDevice*)device->data;
 
-  POCL_FAST_LOCK(d->wq_lock);
+  POCL_LOCK(d->wq_lock);
   DL_APPEND(d->work_queue, node);
   POCL_SIGNAL_COND(d->wakeup_cond);
-  POCL_FAST_UNLOCK(d->wq_lock);
+  POCL_UNLOCK(d->wq_lock);
 }
 
 void pocl_tce_submit(_cl_command_node *node, cl_command_queue cq) {
@@ -1226,21 +1226,21 @@ void pocl_tce_notify_event_finished(cl_event event) {
 void *pocl_tce_driver_thread(void *cldev) {
   TCEDevice *d = (TCEDevice *)cldev;
 
-  POCL_FAST_LOCK(d->wq_lock);
+  POCL_LOCK(d->wq_lock);
 
   while (1) {
     _cl_command_node *cmd;
 
   RETRY:
     if (d->shutdownRequested) {
-      POCL_FAST_UNLOCK(d->wq_lock);
+      POCL_UNLOCK(d->wq_lock);
       return NULL;
     }
 
     cmd = d->work_queue;
     if (cmd) {
       DL_DELETE(d->work_queue, cmd);
-      POCL_FAST_UNLOCK(d->wq_lock);
+      POCL_UNLOCK(d->wq_lock);
 
       assert(pocl_command_is_ready(cmd->sync.event.event));
       assert(cmd->sync.event.event->status == CL_SUBMITTED);
@@ -1250,7 +1250,7 @@ void *pocl_tce_driver_thread(void *cldev) {
 
       pocl_exec_command(cmd);
 
-      POCL_FAST_LOCK(d->wq_lock);
+      POCL_LOCK(d->wq_lock);
     }
 
     if ((d->work_queue == NULL) && (d->shutdownRequested == false)) {

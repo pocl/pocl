@@ -24,11 +24,23 @@
    IN THE SOFTWARE.
 */
 
+#define _BSD_SOURCE
+#define _DEFAULT_SOURCE
+#define _POSIX_C_SOURCE 200809L
+
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
+#if defined(__FreeBSD__)
+#include <stdlib.h>
+#elif defined(__WIN32)
+#include <malloc.h>
+#else
+#include <alloca.h>
+#endif
 
 #include <time.h>
 
@@ -46,9 +58,14 @@
 #  include "vccompat.hpp"
 #endif
 
+#ifdef __MINGW32__
+#include <process.h>
+#endif
+
 #include "common.h"
 #include "devices.h"
 #include "pocl_cache.h"
+#include "pocl_dynlib.h"
 #include "pocl_file_util.h"
 #include "pocl_llvm.h"
 #include "pocl_local_size.h"
@@ -60,15 +77,6 @@
 #include "utlist.h"
 #include "utlist_addon.h"
 
-#ifdef ENABLE_RELOCATION
-#if defined(__APPLE__)
-#define _DARWIN_C_SOURCE
-#endif
-#ifdef __linux__
-#define _GNU_SOURCE
-#endif
-#include <dlfcn.h>
-#endif
 
 /* required for setting SSE/AVX flush denorms to zero flag */
 #if defined(__x86_64__) && defined(__GNUC__)
@@ -1779,10 +1787,35 @@ int
 pocl_run_command (const char **args)
 {
   POCL_MSG_PRINT_INFO ("Launching: %s\n", args[0]);
-#ifdef HAVE_VFORK
-  pid_t p = vfork ();
-#elif defined(HAVE_FORK)
+#if defined(HAVE_FORK)
   pid_t p = fork ();
+  if (p == 0)
+    {
+      return execv (args[0], (char *const *)args);
+    }
+  else
+    {
+      if (p < 0)
+        return EXIT_FAILURE;
+      int status;
+      int ret;
+      do
+        {
+          ret = waitpid (p, &status, 0);
+        }
+      while (ret == -1 && errno == EINTR);
+      if (ret < 0)
+        {
+          POCL_MSG_ERR ("pocl: waitpid() failed.\n");
+          return EXIT_FAILURE;
+        }
+      if (WIFEXITED (status))
+        return WEXITSTATUS (status);
+      else if (WIFSIGNALED (status))
+        return WTERMSIG (status);
+      else
+        return EXIT_FAILURE;
+    }
 #elif _WIN32
   STARTUPINFO si;
   ZeroMemory(&si, sizeof(si));
@@ -1803,32 +1836,11 @@ pocl_run_command (const char **args)
     return EXIT_FAILURE;
   return exit_code;
 #else
-#error Must have fork() or vfork() system calls for HSA
+#error Must have fork() or vfork() or Win32 CreateProcess
 #endif
-  if (p == 0)
-    {
-      return execv (args[0], (char *const *)args);
-    }
-  else
-    {
-      if (p < 0)
-        return EXIT_FAILURE;
-      int status;
-      int ret;
-      do {
-        ret = waitpid (p, &status, 0);
-      } while (ret == -1 && errno == EINTR);
-      if (ret < 0)
-        POCL_ABORT ("pocl: waitpid() failed.\n");
-      if (WIFEXITED (status))
-        return WEXITSTATUS (status);
-      else if (WIFSIGNALED (status))
-        return WTERMSIG (status);
-      else
-        return EXIT_FAILURE;
-    }
 }
 
+#if defined(HAVE_FORK)
 int
 pocl_run_command_capture_output (char *capture_string,
                                  size_t *captured_bytes,
@@ -1841,13 +1853,7 @@ pocl_run_command_capture_output (char *capture_string,
   pipe (in);
   pipe (out);
 
-#ifdef HAVE_VFORK
-  pid_t p = vfork ();
-#elif defined(HAVE_FORK)
   pid_t p = fork ();
-#else
-#error Must have fork() or vfork() system calls
-#endif
   if (p == 0)
     {
       close (in[1]);
@@ -1891,7 +1897,10 @@ pocl_run_command_capture_output (char *capture_string,
         ret = waitpid (p, &status, 0);
       } while (ret == -1 && errno == EINTR);
       if (ret < 0)
-        POCL_ABORT ("pocl: waitpid() failed.\n");
+        {
+          POCL_MSG_ERR ("pocl: waitpid() failed.\n");
+          return EXIT_FAILURE;
+        }
 
       close (out[0]);
       close (in[1]);
@@ -1904,6 +1913,7 @@ pocl_run_command_capture_output (char *capture_string,
         return EXIT_FAILURE;
     }
 }
+#endif // fork
 
 void
 pocl_update_event_queued (cl_event event)
@@ -2391,20 +2401,20 @@ pocl_escape_quoted_whitespace (char *temp_options, char *replace_me)
 /* returns private datadir, possibly using relative path to libpocl sharedlib */
 int pocl_get_private_datadir(char* private_datadir)
 {
-#ifdef ENABLE_RELOCATION
-    Dl_info info;
-    if (dladdr((void*)pocl_get_private_datadir, &info))
+/* pocl_dynlib_pathname() is not implemented for LLVM dynlib */
+#ifndef ENABLE_LLVM_PLATFORM_SUPPORT
+  const char *Path = pocl_dynlib_pathname ((void *)pocl_get_private_datadir);
+  if (Path)
     {
-        char const *soname = info.dli_fname;
-        strcpy(private_datadir, soname);
-        char* last_slash = strrchr (private_datadir,'/');
-        if (last_slash)
-          {
-            ++last_slash;
-            *last_slash = 0;
-            strcat (private_datadir, POCL_INSTALL_PRIVATE_DATADIR_REL);
-            return 0;
-          }
+      strncpy (private_datadir, Path, POCL_MAX_PATHNAME_LENGTH);
+      char *last_slash = strrchr (private_datadir, '/');
+      if (last_slash)
+        {
+          ++last_slash;
+          *last_slash = 0;
+          strcat (private_datadir, POCL_INSTALL_PRIVATE_DATADIR_REL);
+          return 0;
+        }
         else
           return -1;
     }
@@ -2719,7 +2729,7 @@ struct _pocl_async_callback_item
 static pocl_async_callback_item *async_callback_list = NULL;
 static pocl_cond_t async_cb_wake_cond
   __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-static POCL_FAST_LOCK_T async_cb_lock
+static pocl_lock_t async_cb_lock
   __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 static int exit_pocl_async_callback_thread = CL_FALSE;
 static pocl_thread_t async_callback_thread_id = 0;
@@ -2727,10 +2737,10 @@ static pocl_thread_t async_callback_thread_id = 0;
 static void
 pocl_async_cb_push (pocl_async_callback_item *it)
 {
-  POCL_FAST_LOCK (async_cb_lock);
+  POCL_LOCK (async_cb_lock);
   LL_APPEND (async_callback_list, it);
   POCL_SIGNAL_COND (async_cb_wake_cond);
-  POCL_FAST_UNLOCK (async_cb_lock);
+  POCL_UNLOCK (async_cb_lock);
 }
 
 void
@@ -2795,10 +2805,10 @@ pocl_mem_cb_push (cl_mem mem)
 void
 pocl_async_callback_finish ()
 {
-  POCL_FAST_LOCK (async_cb_lock);
+  POCL_LOCK (async_cb_lock);
   exit_pocl_async_callback_thread = CL_TRUE;
   POCL_SIGNAL_COND (async_cb_wake_cond);
-  POCL_FAST_UNLOCK (async_cb_lock);
+  POCL_UNLOCK (async_cb_lock);
   if (async_callback_thread_id)
     POCL_JOIN_THREAD (async_callback_thread_id);
   POCL_DESTROY_COND (async_cb_wake_cond);
@@ -2860,7 +2870,7 @@ pocl_async_callback_thread (void *data)
 {
   while (exit_pocl_async_callback_thread == CL_FALSE)
     {
-      POCL_FAST_LOCK (async_cb_lock);
+      POCL_LOCK (async_cb_lock);
       /* Event callback handling calls functions in the same order
          they were added if the status matches the specified one. */
       pocl_async_callback_item *it = NULL;
@@ -2873,7 +2883,7 @@ pocl_async_callback_thread (void *data)
         {
           POCL_WAIT_COND (async_cb_wake_cond, async_cb_lock);
         }
-      POCL_FAST_UNLOCK (async_cb_lock);
+      POCL_UNLOCK (async_cb_lock);
 
       if (it)
         {
@@ -2899,7 +2909,7 @@ pocl_async_callback_thread (void *data)
 void
 pocl_async_callback_init ()
 {
-  POCL_FAST_INIT (async_cb_lock);
+  POCL_INIT_LOCK (async_cb_lock);
   POCL_INIT_COND (async_cb_wake_cond);
   exit_pocl_async_callback_thread = CL_FALSE;
   async_callback_thread_id = 0;

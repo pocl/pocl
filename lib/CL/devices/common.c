@@ -1185,7 +1185,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 #define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
 
 /* accounting object for the main memory */
-static pocl_global_mem_t system_memory = {POCL_LOCK_INITIALIZER, 0, 0, 0};
+static pocl_global_mem_t system_memory = { 0, 0, 0 };
 
 void
 pocl_setup_device_for_system_memory (cl_device_id device)
@@ -1348,45 +1348,6 @@ pocl_set_buffer_image_limits(cl_device_id device)
     device->image3d_max_depth = max_pixels;
 
 }
-
-void*
-pocl_aligned_malloc_global_mem(cl_device_id device, size_t align, size_t size)
-{
-  pocl_global_mem_t *mem = device->global_memory;
-  void *retval = NULL;
-
-  POCL_LOCK (mem->pocl_lock);
-  if ((mem->total_alloc_limit - mem->currently_allocated) < size)
-    goto ERROR;
-
-  retval = pocl_aligned_malloc (align, size);
-  if (!retval)
-    goto ERROR;
-
-  mem->currently_allocated += size;
-  if (mem->max_ever_allocated < mem->currently_allocated)
-    mem->max_ever_allocated = mem->currently_allocated;
-  assert(mem->currently_allocated <= mem->total_alloc_limit);
-
-ERROR:
-  POCL_UNLOCK (mem->pocl_lock);
-
-  return retval;
-}
-
-void
-pocl_free_global_mem(cl_device_id device, void* ptr, size_t size)
-{
-  pocl_global_mem_t *mem = device->global_memory;
-
-  POCL_LOCK (mem->pocl_lock);
-  assert(mem->currently_allocated >= size);
-  mem->currently_allocated -= size;
-  POCL_UNLOCK (mem->pocl_lock);
-
-  POCL_MEM_FREE(ptr);
-}
-
 
 void
 pocl_print_system_memory_stats()
@@ -1635,7 +1596,7 @@ pocl_init_default_device_infos (cl_device_id dev,
   dev->error_correction_support = CL_FALSE;
   dev->host_unified_memory = CL_TRUE;
 
-  dev->profiling_timer_resolution = pocl_timer_resolution;
+  dev->profiling_timer_resolution = pocl_gettimer_resolution ();
 
   dev->endian_little = !(WORDS_BIGENDIAN);
   dev->compiler_available = CL_TRUE;

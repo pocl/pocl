@@ -263,9 +263,9 @@ public:
     POCL_UNLOCK(lock);
     POCL_JOIN_THREAD(ttasim_thread);
 
-    POCL_FAST_LOCK(wq_lock);
+    POCL_LOCK(wq_lock);
     POCL_SIGNAL_COND(wakeup_cond);
-    POCL_FAST_UNLOCK(wq_lock);
+    POCL_UNLOCK(wq_lock);
     POCL_JOIN_THREAD(driver_thread);
   }
 

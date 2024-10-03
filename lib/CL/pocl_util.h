@@ -312,10 +312,12 @@ pocl_command_to_str (cl_command_type cmd);
 POCL_EXPORT
 int pocl_run_command (const char **args);
 
+#if defined(HAVE_FORK)
 POCL_EXPORT
 int pocl_run_command_capture_output (char *capture_string,
                                      size_t *captured_bytes,
                                      const char **args);
+#endif
 
 void pocl_free_kernel_metadata (cl_program program, unsigned kernel_i);
 

@@ -39,8 +39,7 @@ uint64_t pocl_debug_messages_filter; /* Bitfield */
 int pocl_stderr_is_a_tty;
 
 static pocl_lock_t console_mutex;
-
-static pocl_lock_t pocl_tg_dump_lock = POCL_LOCK_INITIALIZER;
+static pocl_lock_t pocl_tg_dump_lock;
 static pocl_cond_t pocl_tg_dump_cond;
 
 void pocl_debug_output_lock(void) { POCL_LOCK(console_mutex); }
@@ -49,6 +48,8 @@ void pocl_debug_output_unlock(void) { POCL_UNLOCK(console_mutex); }
 
 void pocl_debug_messages_setup(const char *debug) {
   POCL_INIT_LOCK(console_mutex);
+  POCL_INIT_LOCK (pocl_tg_dump_lock);
+  POCL_INIT_COND (pocl_tg_dump_cond);
   pocl_debug_messages_filter = 0;
   if (strlen(debug) == 1) {
     if (debug[0] == '1')

@@ -35,6 +35,8 @@
 #define MAX_OUTPUT_BYTES 65536
 
 #ifdef ENABLE_SPIRV
+
+#if defined(HAVE_FORK)
 static int
 get_program_spec_constants (cl_program program, char *program_bc_spirv)
 {
@@ -102,8 +104,16 @@ ERROR:
     }
   return errcode;
 }
-#endif
+#else
+/* TODO this requires pocl_run_command_capture_output */
+static int
+get_program_spec_constants (cl_program program, char *program_bc_spirv)
+{
+  program->num_spec_consts = 0;
+}
+#endif // fork
 
+#endif // spirv
 
 CL_API_ENTRY cl_program CL_API_CALL
 POname(clCreateProgramWithIL)(cl_context context,

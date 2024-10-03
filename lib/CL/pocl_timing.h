@@ -1,6 +1,7 @@
-/* OpenCL runtime library: time measurement related helpers.
+/* OpenCL runtime library: time measurement utility functions
 
    Copyright (c) 2012-2019 pocl developers
+   Copyright (c) 2024 Michal Babej / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -38,11 +39,13 @@
 extern "C" {
 #endif
 
-extern const unsigned pocl_timer_resolution;
-
 POCL_EXPORT
 uint64_t pocl_gettimemono_ns();
 
+POCL_EXPORT
+uint64_t pocl_gettimer_resolution ();
+
+/* only used in pocl_debug.h */
 int pocl_gettimereal(int *year, int *mon, int *day, int *hour, int *min, int *sec, int* nanosec);
 
 #ifdef __cplusplus

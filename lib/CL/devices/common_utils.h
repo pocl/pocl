@@ -40,7 +40,7 @@
 typedef struct kernel_run_command kernel_run_command;
 struct kernel_run_command
 {
-  POCL_FAST_LOCK_T lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  pocl_lock_t lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   void *data;
   cl_kernel kernel;
   cl_device_id device;
