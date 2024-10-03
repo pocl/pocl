@@ -8,6 +8,7 @@ standard which can be easily adapted for new targets.
 [Full documentation](http://portablecl.org/docs/html/)
 
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9499/badge)](https://www.bestpractices.dev/projects/9499)
+[![Coverity Scan Build Status](https://scan.coverity.com/projects/30739/badge.svg)](https://scan.coverity.com/projects/pocl-pocl)
 
 ## Building
 
