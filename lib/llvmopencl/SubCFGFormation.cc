@@ -1523,10 +1523,12 @@ SubCFGFormation::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
 
   formSubCfgs(F, LI, DT, PDT, VUA);
 
-  if (canAnnotateParallelLoops(*K))
+  if (canAnnotateParallelLoops())
     for (auto *SL : LI.getLoopsInPreorder())
       if (llvm::findOptionMDForLoop(SL, PoclMDKind::WorkItemLoop))
         markLoopParallel(F, SL);
+
+  handleLocalMemAllocas();
 
   GenerateGlobalIdComputation();
   PreservedAnalyses PAChanged = PreservedAnalyses::none();

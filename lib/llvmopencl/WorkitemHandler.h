@@ -71,7 +71,10 @@ protected:
   createContextArrayGEP(llvm::AllocaInst *CtxArrayAlloca,
                         llvm::Instruction *Before, bool AlignPadding);
 
-  bool canAnnotateParallelLoops(llvm::Function &F);
+  bool canAnnotateParallelLoops();
+  bool handleLocalMemAllocas();
+
+  llvm::Instruction *getWorkGroupSizeInstr();
 
   // The type of size_t for the current target.
   llvm::Type *ST;
@@ -86,6 +89,19 @@ protected:
   // block of the currently handled kernel. To get the global id, the current
   // local id must be added to it.
   std::array<llvm::Instruction *, 3> GlobalIdOrigins;
+
+  // Points to the __pocl_local_mem_alloca pseudo function declaration, if
+  // it's been referred to in the currently processed module.
+  llvm::Function *LocalMemAllocaFuncDecl;
+
+  // Points to the __pocl_work_group_alloca pseudo function declaration, if
+  // it's been referred to in the currently processed module.
+  llvm::Function *WorkGroupAllocaFuncDecl;
+
+  // Points to the work-group size computation instruction in the entry
+  // block of the currently handled kernel. Will be created with the first
+  // call to getWorkGroupSizeInstr.
+  llvm::Instruction *WGSizeInstr;
 
   // The currently handled Kernel/Function and its Module.
   pocl::Kernel *K;
