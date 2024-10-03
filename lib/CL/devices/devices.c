@@ -2,12 +2,13 @@
 
    Copyright (c) 2011 Universidad Rey Juan Carlos and
                  2012-2018 Pekka Jääskeläinen
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -17,11 +18,10 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
-
 
 #define _GNU_SOURCE
 
@@ -47,6 +47,7 @@
 #include "pocl_builtin_kernels.h"
 #include "pocl_cache.h"
 #include "pocl_debug.h"
+#include "pocl_dynlib.h"
 #include "pocl_export.h"
 #include "pocl_runtime_config.h"
 #include "pocl_shared.h"
@@ -113,14 +114,6 @@
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
-
-#ifdef HAVE_DLFCN_H
-#if defined(__APPLE__)
-#define _DARWIN_C_SOURCE
-#endif
-#include <dlfcn.h>
-#endif
-
 
 /* the enabled devices */
 /*
@@ -265,10 +258,10 @@ static void *pocl_device_handles[POCL_NUM_DEVICE_TYPES];
 static void
 get_pocl_device_lib_path (char *result, char *device_name, int absolute_path)
 {
-  Dl_info info;
-  if (absolute_path && dladdr ((void *)get_pocl_device_lib_path, &info))
+  const char *soname = NULL;
+  if (absolute_path
+      && (soname = pocl_dynlib_pathname ((void *)get_pocl_device_lib_path)))
     {
-      char const *soname = info.dli_fname;
       strcpy (result, soname);
       char *last_slash = strrchr (result, POCL_PATH_SEPARATOR[0]);
       *(++last_slash) = '\0';
@@ -443,9 +436,7 @@ pocl_uninit_devices ()
           }
 #ifdef ENABLE_LOADABLE_DRIVERS
           if (pocl_device_handles[i] != NULL)
-            {
-              dlclose (pocl_device_handles[i]);
-            }
+          pocl_dynlib_close (pocl_device_handles[i]);
 #endif
           j++;
         }
@@ -600,21 +591,19 @@ pocl_init_devices ()
           char device_library[PATH_MAX] = "";
           char init_device_ops_name[MAX_DEV_NAME_LEN + 21] = "";
           get_pocl_device_lib_path (device_library, pocl_device_types[i], 1);
-          pocl_device_handles[i] = dlopen (device_library, RTLD_LAZY);
+          pocl_device_handles[i] = pocl_dynlib_open (device_library, 1, 0);
           if (pocl_device_handles[i] == NULL)
             {
-              POCL_MSG_WARN ("Loading %s failed: %s\n", device_library,
-                             dlerror ());
+              POCL_MSG_WARN ("Loading %s failed.\n", device_library);
 
               /* Try again with just the *.so filename */
               device_library[0] = 0;
               get_pocl_device_lib_path (device_library,
                                         pocl_device_types[i], 0);
-              pocl_device_handles[i] = dlopen (device_library, RTLD_LAZY);
+              pocl_device_handles[i] = pocl_dynlib_open (device_library, 1, 0);
               if (pocl_device_handles[i] == NULL)
                 {
-                  POCL_MSG_WARN ("Loading %s failed: %s\n", device_library,
-                                 dlerror ());
+                  POCL_MSG_WARN ("Loading %s failed\n", device_library);
                   device_count[i] = 0;
                   continue;
                 }
@@ -627,13 +616,13 @@ pocl_init_devices ()
           strcat (init_device_ops_name, "pocl_");
           strcat (init_device_ops_name, pocl_device_types[i]);
           strcat (init_device_ops_name, "_init_device_ops");
-          pocl_devices_init_ops[i] = (init_device_ops)dlsym (
-          pocl_device_handles[i], init_device_ops_name);
+          pocl_devices_init_ops[i]
+            = (init_device_ops)pocl_dynlib_symbol_address (
+              pocl_device_handles[i], init_device_ops_name);
           if (pocl_devices_init_ops[i] == NULL)
             {
-              POCL_MSG_ERR ("Loading symbol %s from %s failed: %s\n",
-                             init_device_ops_name, device_library,
-                             dlerror ());
+              POCL_MSG_ERR ("Loading symbol %s from %s failed\n",
+                            init_device_ops_name, device_library);
               device_count[i] = 0;
               continue;
             }

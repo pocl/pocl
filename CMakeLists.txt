@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014-2023 pocl developers
+#   Copyright (c) 2014-2024 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -254,6 +254,17 @@ option(ENABLE_VSOCK "Enable vsock transport in the remote driver" OFF)
 
 option(ENABLE_LLVM_FILECHECKS "Enable kernel compiler/autovectorizer filechecks using the given FileCheck binary defined in LLVM_FILECHECK_BIN. Note: the checks are tested against recent Intel X86/SIMD CPUs for now.")
 
+if (USE_LLVM_FOR_DYNLIBS)
+  if(ENABLE_LOADABLE_DRIVERS)
+    message(WARNING "LLVM dynlibs implementation doesn't support loadable drivers, disabling.")
+    set(ENABLE_LOADABLE_DRIVERS 0)
+  endif()
+  if(ENABLE_PRINTF_IMMEDIATE_FLUSH)
+    message(WARNING "LLVM dynlibs implementation doesn't support printf() immediate flush, disabling.")
+    set(ENABLE_PRINTF_IMMEDIATE_FLUSH 0)
+  endif()
+endif()
+
 if (ENABLE_PROXY_DEVICE)
   set(VISIBILITY_HIDDEN_DEFAULT OFF)
 else()
@@ -294,6 +305,8 @@ endif()
 option(ENABLE_EXTRA_VALIDITY_CHECKS "Enable extra checks on cl_* object validity" OFF)
 
 option(DEVELOPER_MODE "This will SIGNIFICANTLY reduce PoCL's performance, but speeds up its compilation for faster development-test cycles. Only turn on if you know what you're doing." OFF)
+
+option(USE_LLVM_FOR_DYNLIBS "Use the LLVM's support library for dynamic library handling (instead of POSIX directly) in the host runtime.")
 
 option(USE_POCL_MEMMANAGER "Enables custom memory manager. Except for special circumstances, this should be disabled." OFF)
 

@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014-2018 pocl developers
+#   Copyright (c) 2014-2024 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -241,6 +241,10 @@ if (ENABLE_LLVM)
   unset(CMAKE_CXX_STANDARD_REQUIRED)
 
   set(LLVM_API_SOURCES "pocl_llvm_build.cc" "pocl_llvm_metadata.cc" "pocl_llvm_utils.cc" "pocl_llvm_wg.cc")
+  if(USE_LLVM_FOR_DYNLIBS)
+    list(APPEND LLVM_API_SOURCES "pocl_llvm_dynlib.cc")
+  endif()
+
   set_source_files_properties(${LLVM_API_SOURCES} PROPERTIES COMPILE_FLAGS "${LLVM_CXXFLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl\"")
 
   add_library("lib_cl_llvm" OBJECT ${LLVM_API_SOURCES})
@@ -279,6 +283,10 @@ endif()
 if(MSVC)
   set_source_files_properties( ${POCL_LIB_SOURCES} PROPERTIES LANGUAGE CXX )
 endif(MSVC)
+
+if(NOT USE_LLVM_FOR_DYNLIBS)
+  list(APPEND POCL_LIB_SOURCES "pocl_dynlib.c")
+endif()
 
 # this is so that we don't compile twice when building both libpocl and libOpenCL
 add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
