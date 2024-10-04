@@ -74,14 +74,6 @@ namespace pocl {
 
 using namespace llvm;
 
-// Magic function used to allocate "local memory" dynamically. Used with SG/WG
-// shuffles as temporary storage.
-static const char *POCL_LOCAL_MEM_ALLOCA_FUNC_NAME = "__pocl_local_mem_alloca";
-
-// Another, which multiplies the size by the number of WIs in the WG.
-static const char *POCL_WORK_GROUP_ALLOCA_FUNC_NAME =
-    "__pocl_work_group_alloca";
-
 class WorkitemLoopsImpl : public pocl::WorkitemHandler {
 public:
   WorkitemLoopsImpl(llvm::DominatorTree &DT, llvm::LoopInfo &LI,
@@ -113,18 +105,6 @@ private:
 
   StrInstructionMap ContextArrays;
 
-  // Points to the __pocl_local_mem_alloca pseudo function declaration, if
-  // it's been referred to in the processed module.
-  llvm::Function *LocalMemAllocaFuncDecl;
-
-  // Points to the __pocl_work_group_alloca pseudo function declaration, if
-  // it's been referred to in the processed module.
-  llvm::Function *WorkGroupAllocaFuncDecl;
-
-  // Points to the work-group size computation instruction in the entry
-  // block of the currently handled function.
-  llvm::Instruction *WGSizeInstr;
-
   // Temporary global_id_* iteration variables updated by the work-item
   // loops.
   std::array<llvm::GlobalVariable *, 3> GlobalIdIterators;
@@ -132,7 +112,6 @@ private:
   bool processFunction(llvm::Function &F);
 
   void fixMultiRegionVariables(ParallelRegion *region);
-  bool handleLocalMemAllocas(Kernel &K);
   void addContextSaveRestore(llvm::Instruction *instruction);
   void releaseParallelRegions();
 
@@ -185,10 +164,6 @@ bool WorkitemLoopsImpl::runOnFunction(Function &Func) {
   F = &Func;
   Initialize(cast<Kernel>(&Func));
 
-  // TODO: These should be nullptr already at init, just remember to clean
-  // them up in the end.
-  WGSizeInstr = nullptr;
-
   GlobalIdIterators = {
       cast<GlobalVariable>(M->getOrInsertGlobal(GID_G_NAME(0), ST)),
       cast<GlobalVariable>(M->getOrInsertGlobal(GID_G_NAME(1), ST)),
@@ -196,15 +171,9 @@ bool WorkitemLoopsImpl::runOnFunction(Function &Func) {
 
   TempInstructionIndex = 0;
 
-  LocalMemAllocaFuncDecl =
-      Func.getParent()->getFunction(POCL_LOCAL_MEM_ALLOCA_FUNC_NAME);
-
-  WorkGroupAllocaFuncDecl =
-      Func.getParent()->getFunction(POCL_WORK_GROUP_ALLOCA_FUNC_NAME);
-
   bool Changed = processFunction(Func);
 
-  Changed |= handleLocalMemAllocas(cast<Kernel>(Func));
+  Changed |= handleLocalMemAllocas();
 
 #ifdef DUMP_CFGS
   dumpCFG(F, F.getName().str() + "_after_wiloops.dot", nullptr,
@@ -398,41 +367,43 @@ WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
     cmpResult = builder.CreateICmpULT(builder.CreateLoad(ST, LocalIdVar),
                                       builder.CreateLoad(ST, DynamicLocalSize));
 
-  Instruction *loopBranch =
+  Instruction *LoopBranch =
       builder.CreateCondBr(cmpResult, LoopBodyEntryBB, loopEndBB);
 
-  /* Add the metadata to mark a parallel loop. The metadata
-     refer to a loop-unique dummy metadata that is not merged
-     automatically. */
+  if (canAnnotateParallelLoops()) {
+    // Add the metadata to mark a parallel loop. The metadata refers to
+    // a loop-unique dummy metadata that is not merged automatically.
+    // TODO: Merge with the similar code in SubCFGFormation.
 
-  /* This creation of the identifier metadata is copied from
-     LLVM's MDBuilder::createAnonymousTBAARoot(). */
+    // This creation of the identifier metadata is copied from
+    // LLVM's MDBuilder::createAnonymousTBAARoot().
 
-  MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Metadata*>()).release();
-  MDNode *AccessGroupMD = MDNode::getDistinct(C, {});
-  MDNode *ParallelAccessMD = MDNode::get(
-      C, {MDString::get(C, "llvm.loop.parallel_accesses"), AccessGroupMD});
+    MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Metadata *>()).release();
+    MDNode *AccessGroupMD = MDNode::getDistinct(C, {});
+    MDNode *ParallelAccessMD = MDNode::get(
+        C, {MDString::get(C, "llvm.loop.parallel_accesses"), AccessGroupMD});
 
-  MDNode *Root = MDNode::get(C, {Dummy, ParallelAccessMD});
+    MDNode *Root = MDNode::get(C, {Dummy, ParallelAccessMD});
 
-  // At this point we have
-  //   !0 = metadata !{}            <- dummy
-  //   !1 = metadata !{metadata !0} <- root
-  // Replace the dummy operand with the root node itself and delete the dummy.
-  Root->replaceOperandWith(0, Root);
-  MDNode::deleteTemporary(Dummy);
-  // We now have
-  //   !1 = metadata !{metadata !1} <- self-referential root
-  loopBranch->setMetadata("llvm.loop", Root);
+    // At this point we have
+    //   !0 = metadata !{}            <- dummy
+    //   !1 = metadata !{metadata !0} <- root
+    // Replace the dummy operand with the root node itself and delete the dummy.
+    Root->replaceOperandWith(0, Root);
+    MDNode::deleteTemporary(Dummy);
+    // We now have
+    //   !1 = metadata !{metadata !1} <- self-referential root
+    LoopBranch->setMetadata("llvm.loop", Root);
 
-  auto IsLoadUnconditionallySafe =
-    [&dominatesExitBB](llvm::Instruction *insn) -> bool {
-      assert(insn->mayReadFromMemory());
+    auto IsLoadUnconditionallySafe =
+        [&dominatesExitBB](llvm::Instruction *Insn) -> bool {
+      assert(Insn->mayReadFromMemory());
       // Checks that the instruction isn't in a conditional block.
-      return dominatesExitBB.count(insn->getParent());
+      return dominatesExitBB.count(Insn->getParent());
     };
 
-  Region.addParallelLoopMetadata(AccessGroupMD, IsLoadUnconditionallySafe);
+    Region.addParallelLoopMetadata(AccessGroupMD, IsLoadUnconditionallySafe);
+  }
 
   builder.SetInsertPoint(loopEndBB);
   builder.CreateBr(oldExit);
@@ -623,17 +594,12 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
         PRegion->AddBlockAfter(lastBB, PRegion->exitBB());
         PRegion->SetExitBB(lastBB);
 
-        if (AddWIMetadata)
-          PRegion->AddIDMetadata(F.getContext(), 0);
-
         for (unsigned c = 1; c < UnrollCount; ++c) {
           ParallelRegion *UnrolledPR =
               PRegion->replicate(reference_map, ".unrolled_wi");
           UnrolledPR->chainAfter(prev);
           prev = UnrolledPR;
           lastBB = UnrolledPR->exitBB();
-          if (AddWIMetadata)
-            UnrolledPR->AddIDMetadata(F.getContext(), c);
         }
         Unrolled = true;
         l = std::make_pair(PRegion->entryBB(), lastBB);
@@ -792,55 +758,6 @@ void WorkitemLoopsImpl::fixMultiRegionVariables(ParallelRegion *Region) {
 #endif
     addContextSaveRestore(*I);
   }
-}
-
-// Convert calls to the __pocl_{work_group,local_mem}_alloca() pseudo function
-// to allocas.
-bool WorkitemLoopsImpl::handleLocalMemAllocas(Kernel &K) {
-
-  std::vector<CallInst *> InstructionsToFix;
-
-  for (BasicBlock &BB : K) {
-    for (Instruction &I : BB) {
-
-      if (!isa<CallInst>(I)) continue;
-      CallInst &Call = cast<CallInst>(I);
-
-      if (Call.getCalledFunction() == nullptr ||
-          (Call.getCalledFunction() != LocalMemAllocaFuncDecl &&
-           Call.getCalledFunction() != WorkGroupAllocaFuncDecl)) continue;
-      InstructionsToFix.push_back(&Call);
-    }
-  }
-
-  bool Changed = false;
-  for (CallInst *Call : InstructionsToFix) {
-    Value *Size = Call->getArgOperand(0);
-    Align Alignment =
-      cast<ConstantInt>(Call->getArgOperand(1))->getAlignValue();
-    Value *ExtraSize = Call->getArgOperand(2);
-
-    IRBuilder<> Builder(K.getEntryBlock().getTerminator());
-
-    if (Call->getCalledFunction() == WorkGroupAllocaFuncDecl) {
-          Instruction *WGSize = getWorkGroupSizeInstr(K);
-          Size = Builder.CreateBinOp(Instruction::Mul, WGSize, Size);
-          Size = Builder.CreateBinOp(Instruction::Add, Size, ExtraSize);
-    }
-    AllocaInst *Alloca = new AllocaInst(
-        llvm::Type::getInt8Ty(Call->getContext()), 0, Size, Alignment,
-        "__pocl_wg_alloca", K.getEntryBlock().getTerminator());
-#ifdef DEBUG_WORK_ITEM_LOOPS
-    std::cerr << "### fixing..." << std::endl;
-    Call->dump();
-    std::cerr << "### to..." << std::endl;
-    Alloca->dump();
-#endif
-    Call->replaceAllUsesWith(Alloca);
-    Call->eraseFromParent();
-    Changed = true;
-  }
-  return Changed;
 }
 
 // TO CLEAN: Refactor into getLinearWIIndexInRegion.
@@ -1028,7 +945,7 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
   // context copy is used.
 
 #if 0
-  // TODO: This is now obsolete (?):
+  // TODO: This is now obsolete:
   // We could add the restore only to other regions outside the variable
   // defining region and use the original variable in the defining region due
   // to the SSA virtual registers being unique. However, alloca variables can
@@ -1189,38 +1106,6 @@ llvm::BasicBlock *WorkitemLoopsImpl::appendIncBlock(llvm::BasicBlock *After,
 
   return forIncBB;
 }
-
-// Returns the instruction in the entry block which computes the total size of
-// work-items in the work-group. If it doesn't exist, creates and adds it to
-// the end of the entry block.
-llvm::Instruction *WorkitemLoopsImpl::getWorkGroupSizeInstr(llvm::Function &F) {
-
-  if (WGSizeInstr != nullptr)
-      return WGSizeInstr;
-
-  IRBuilder<> Builder(F.getEntryBlock().getTerminator());
-
-  llvm::Module *M = F.getParent();
-  GlobalVariable *GV = M->getGlobalVariable("_local_size_x");
-  if (GV != NULL) {
-    WGSizeInstr = Builder.CreateLoad(ST, GV);
-  }
-
-  GV = M->getGlobalVariable("_local_size_y");
-  if (GV != NULL) {
-    WGSizeInstr = cast<llvm::Instruction>(Builder.CreateBinOp(
-        Instruction::Mul, Builder.CreateLoad(ST, GV), WGSizeInstr));
-  }
-
-  GV = M->getGlobalVariable("_local_size_z");
-  if (GV != NULL) {
-    WGSizeInstr = cast<llvm::Instruction>(Builder.CreateBinOp(
-        Instruction::Mul, Builder.CreateLoad(ST, GV), WGSizeInstr));
-  }
-
-  return WGSizeInstr;
-}
-
 
 // enable new pass manager infrastructure
 llvm::PreservedAnalyses WorkitemLoops::run(llvm::Function &F,

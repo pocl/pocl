@@ -107,10 +107,6 @@ class Kernel;
 
     llvm::BasicBlock* exitBB() { return at(exitIndex_); }
     llvm::BasicBlock* entryBB() { return at(entryIndex_); }
-    void AddIDMetadata(llvm::LLVMContext& context,
-                       std::size_t x = 0,
-                       std::size_t y = 0,
-                       std::size_t z = 0);
 
     void addParallelLoopMetadata(
         llvm::MDNode *Identifier,

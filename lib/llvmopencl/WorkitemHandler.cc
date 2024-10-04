@@ -55,15 +55,32 @@ namespace pocl {
 
 using namespace llvm;
 
-cl::opt<bool> AddWIMetadata(
-    "add-wi-metadata", cl::init(false), cl::Hidden,
-    cl::desc("Adds a work item identifier to each of the instruction in "
-             "work items."));
+// Compiler-expanded function that can be used to allocate "local memory"
+// dynamically in the work-group function. Used by SG/WG shuffle implementations
+// as temporary storage.
+constexpr const char *POCL_LOCAL_MEM_ALLOCA_FUNC_NAME =
+    "__pocl_local_mem_alloca";
 
+// Another which multiplies the given size by the number of WIs in the WG.
+constexpr const char *POCL_WORK_GROUP_ALLOCA_FUNC_NAME =
+    "__pocl_work_group_alloca";
+
+/// Start processing a new kernel.
+///
+/// Should be invoked from the work-item handlers to initialize the internal
+/// per-kernel data.
 void WorkitemHandler::Initialize(Kernel *K_) {
 
   K = K_;
   M = K->getParent();
+
+  LocalMemAllocaFuncDecl =
+      K->getParent()->getFunction(POCL_LOCAL_MEM_ALLOCA_FUNC_NAME);
+
+  WorkGroupAllocaFuncDecl =
+      K->getParent()->getFunction(POCL_WORK_GROUP_ALLOCA_FUNC_NAME);
+
+  WGSizeInstr = nullptr;
 
   getModuleIntMetadata(*M, "device_address_bits", AddressBits);
 
@@ -595,6 +612,117 @@ WorkitemHandler::createContextArrayGEP(llvm::AllocaInst *CtxArrayAlloca,
   assert(GEP != nullptr);
 
   return GEP;
+}
+
+/// Checks if it's OK to mark the work-item loops in the currently processed
+/// kernel as parallel loops.
+///
+/// Currently the only known reason to not mark them is to workaround a VPlan
+/// crash that occurs with volatile memory accesses inside the parallel
+/// WI-loops. Thus, we return true only in case of LLVM 19 and if the loop
+/// contains volatile accesses. The PoCL issue:
+/// https://github.com/pocl/pocl/issues/1556
+///
+/// We could make this Loop-specific, but it seems not worth the effort at
+/// this point as WorkitemLoops doesn't have a loop at hand when it needs it
+/// and luckily volatile usage is not common and ruins the perf anyhow.
+///
+/// \param F the function to check.
+/// \return False in case we should _not_ add the parallel loop metadata,
+/// even though the loop is known to be parallel.
+bool WorkitemHandler::canAnnotateParallelLoops() {
+#if LLVM_MAJOR == 19
+  for (auto &BB : *K) {
+    for (auto &I : BB) {
+      if (I.isVolatile())
+        return false;
+    }
+  }
+  return true;
+#else
+  return true;
+#endif
+}
+
+/// Returns the instruction in the entry block of the currently handled kernel
+/// which computes the total size of work-items in the work-group.
+///
+/// If it doesn't exist, creates and adds it to the end of the entry block.
+llvm::Instruction *WorkitemHandler::getWorkGroupSizeInstr() {
+
+  if (WGSizeInstr != nullptr)
+    return WGSizeInstr;
+
+  IRBuilder<> Builder(K->getEntryBlock().getTerminator());
+
+  llvm::Module *M = K->getParent();
+  GlobalVariable *GV = M->getGlobalVariable("_local_size_x");
+  if (GV != NULL) {
+    WGSizeInstr = Builder.CreateLoad(ST, GV);
+  }
+
+  GV = M->getGlobalVariable("_local_size_y");
+  if (GV != NULL) {
+    WGSizeInstr = cast<llvm::Instruction>(Builder.CreateBinOp(
+        Instruction::Mul, Builder.CreateLoad(ST, GV), WGSizeInstr));
+  }
+
+  GV = M->getGlobalVariable("_local_size_z");
+  if (GV != NULL) {
+    WGSizeInstr = cast<llvm::Instruction>(Builder.CreateBinOp(
+        Instruction::Mul, Builder.CreateLoad(ST, GV), WGSizeInstr));
+  }
+
+  return WGSizeInstr;
+}
+
+/// Converts calls to the __pocl_{work_group,local_mem}_alloca() pseudo
+/// functions to allocas in the current kernel.
+///
+/// These compiler-expanded functions are used to allocate temporary
+/// storage for subgroup implementation. Search for their usage in the
+/// bitcode library for examples.
+bool WorkitemHandler::handleLocalMemAllocas() {
+
+  std::vector<CallInst *> InstructionsToFix;
+
+  for (BasicBlock &BB : *K) {
+    for (Instruction &I : BB) {
+
+      if (!isa<CallInst>(I))
+        continue;
+      CallInst &Call = cast<CallInst>(I);
+
+      if (Call.getCalledFunction() == nullptr ||
+          (Call.getCalledFunction() != LocalMemAllocaFuncDecl &&
+           Call.getCalledFunction() != WorkGroupAllocaFuncDecl))
+        continue;
+      InstructionsToFix.push_back(&Call);
+    }
+  }
+
+  bool Changed = false;
+  for (CallInst *Call : InstructionsToFix) {
+    Value *Size = Call->getArgOperand(0);
+    Align Alignment =
+        cast<ConstantInt>(Call->getArgOperand(1))->getAlignValue();
+    Value *ExtraSize = Call->getArgOperand(2);
+
+    IRBuilder<> Builder(K->getEntryBlock().getTerminator());
+
+    if (Call->getCalledFunction() == WorkGroupAllocaFuncDecl) {
+      Instruction *WGSize = getWorkGroupSizeInstr();
+      Size = Builder.CreateBinOp(Instruction::Mul, WGSize, Size);
+      Size = Builder.CreateBinOp(Instruction::Add, Size, ExtraSize);
+    }
+    AllocaInst *Alloca = new AllocaInst(
+        llvm::Type::getInt8Ty(Call->getContext()), 0, Size, Alignment,
+        "__pocl_wg_alloca", K->getEntryBlock().getTerminator());
+    Call->replaceAllUsesWith(Alloca);
+    Call->eraseFromParent();
+    Changed = true;
+  }
+  return Changed;
 }
 
 } // namespace pocl

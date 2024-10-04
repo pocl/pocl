@@ -510,46 +510,6 @@ void ParallelRegion::addParallelLoopMetadata(
   }
 }
 
-void
-ParallelRegion::AddIDMetadata(
-    llvm::LLVMContext& context, 
-    std::size_t x, 
-    std::size_t y, 
-    std::size_t z) {
-    int counter = 1;
-    Metadata *v1[] = {
-        MDString::get(context, "WI_region"),      
-        llvm::ConstantAsMetadata::get(
-          ConstantInt::get(Type::getInt32Ty(context), pRegionId))
-    };
-    MDNode* mdRegion = MDNode::get(context, v1);  
-    Metadata *v2[] = {
-        MDString::get(context, "WI_xyz"),      
-        llvm::ConstantAsMetadata::get(
-          ConstantInt::get(Type::getInt32Ty(context), x)),
-        llvm::ConstantAsMetadata::get(
-          ConstantInt::get(Type::getInt32Ty(context), y)),      
-        llvm::ConstantAsMetadata::get(
-          ConstantInt::get(Type::getInt32Ty(context), z))};
-    MDNode* mdXYZ = MDNode::get(context, v2);
-    Metadata *v[] = {MDString::get(context, "WI_data"), mdRegion, mdXYZ};
-    MDNode *md = MDNode::get(context, v);
-
-    for (iterator i = begin(), e = end(); i != e; ++i) {
-      BasicBlock *BB = *i;
-      for (BasicBlock::iterator ii = BB->begin(); ii != BB->end(); ii++) {
-        Metadata *v3[] = {MDString::get(context, "WI_counter"),
-                          llvm::ConstantAsMetadata::get(ConstantInt::get(
-                              Type::getInt32Ty(context), counter))};
-        MDNode *mdCounter = MDNode::get(context, v3);
-        counter++;
-        ii->setMetadata("wi", md);
-        ii->setMetadata("wi_counter", mdCounter);
-      }
-    }
-}
-
-
 /**
  * Inserts a new basic block to the region, before an old basic block in
  * the region.
