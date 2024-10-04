@@ -1813,7 +1813,11 @@ pocl_run_command (const char **args)
       if (p < 0)
         return EXIT_FAILURE;
       int status;
-      if (waitpid (p, &status, 0) < 0)
+      int ret;
+      do {
+        ret = waitpid (p, &status, 0);
+      } while (ret == -1 && errno == EINTR);
+      if (ret < 0)
         POCL_ABORT ("pocl: waitpid() failed.\n");
       if (WIFEXITED (status))
         return WEXITSTATUS (status);
@@ -1881,7 +1885,11 @@ pocl_run_command_capture_output (char *capture_string,
       *captured_bytes = total_bytes;
 
       int status;
-      if (waitpid (p, &status, 0) < 0)
+      int ret;
+      do {
+        ret = waitpid (p, &status, 0);
+      } while (ret == -1 && errno == EINTR);
+      if (ret < 0)
         POCL_ABORT ("pocl: waitpid() failed.\n");
 
       close (out[0]);
