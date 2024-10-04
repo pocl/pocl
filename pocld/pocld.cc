@@ -114,10 +114,10 @@ int main(int argc, char *argv[]) {
   PoclDaemon server;
   bool UseVsock = false;
   if (ai.vsock_flag == 1) {
-#ifdef ENABLE_VSOCK
+#ifdef HAVE_LINUX_VSOCK_H
     UseVsock = true;
 #else
-    POCL_MSG_ERR("use -DENABLE_VSOCK=1 rebuild the source to use vsock\n");
+    POCL_MSG_ERR("This pocld was built without vsock support\n");
     return -1;
 #endif
   } else {
