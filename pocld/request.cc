@@ -87,6 +87,8 @@ const char *request_to_str(RequestMessageType type) {
     return "LinkProgram";
   case MessageType_BuildProgramWithBuiltins:
     return "BuildProgramWithBuiltins";
+  case MessageType_BuildProgramWithDefinedBuiltins:
+      return "BuildProgramWithDefinedBuiltins";
   case MessageType_FreeProgram:
     return "FreeProgram";
 
@@ -136,10 +138,8 @@ const char *request_to_str(RequestMessageType type) {
 
   case MessageType_Shutdown:
     return "Shutdown";
-
-  default:
-    return "UNKNOWN";
   }
+    return "UNKNOWN";
 }
 
 /* Returns 0 on success and no-op, otherwise errno */
