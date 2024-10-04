@@ -20,10 +20,9 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
    IN THE SOFTWARE.
 */
-#define CL_TARGET_OPENCL_VERSION 300
 #include "pocl_tensor_util.h"
 #include "CL/cl_exp_tensor.h"
-#include "pocl_util.h"
+#include "pocl_cl_half_util.h"
 
 /* Check the tensor layout is well defined.
  * Return CL_INVALID_TENSOR_LAYOUT if there is an error. */
@@ -332,7 +331,7 @@ pocl_tensor_dtype_value_equals (const cl_tensor_datatype DType,
                                 char int4Const)
 {
   cl_float floatConst = (cl_float)doubleConst;
-  cl_half halfConst = float_to_half (floatConst);
+  cl_half halfConst = pocl_float_to_half (floatConst);
   switch (DType)
     {
     case CL_TENSOR_DTYPE_FP64:

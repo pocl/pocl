@@ -226,20 +226,19 @@ POCLU_API cl_int POCLU_CALL poclu_get_multiple_devices (
     int ooo_queues);
 
 /**
- * \brief convert a float to a cl_half (uint16_t).
+ * Convert a float to a cl_half (uint16_t).
  *
- * The idea behind these float to half functions is from:
- * https://gamedev.stackexchange.com/a/17410
- * @param value [in] float to be converted.
- * @return a converted cl_half.
+ * \param value [in] float to be converted.
+ * \return a converted cl_half.
  */
 POCLU_API cl_half POCLU_CALL
 poclu_float_to_cl_half(float value);
 
 /**
- * \brief convert a cl_half to a float.
- * @param value [in] cl_half to be converted.
- * @return a converted float.
+ * Convert a cl_half to a float.
+ *
+ * \param value [in] cl_half to be converted.
+ * \return a converted float.
  */
 POCLU_API float POCLU_CALL
 poclu_cl_half_to_float(cl_half value);
