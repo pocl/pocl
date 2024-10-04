@@ -1120,6 +1120,7 @@ pocl_remote_build_defined_builtin (cl_program program, cl_uint device_i)
   size_t payload_size = sizeof (uint64_t);
   for (size_t i = 0; i < program->num_builtin_kernels; ++i)
     {
+      payload_size += sizeof (uint64_t);
       payload_size += strlen (program->builtin_kernel_names[i]) + 1;
       payload_size += pocl_serialize_dbk_attribs (
         program->builtin_kernel_ids[i], program->builtin_kernel_attributes[i],
@@ -1135,7 +1136,7 @@ pocl_remote_build_defined_builtin (cl_program program, cl_uint device_i)
       uint64_t name_len = strlen (program->builtin_kernel_names[i]) + 1;
       memcpy (cursor, &name_len, sizeof (name_len));
       cursor += sizeof (name_len);
-      strcpy (cursor, program->builtin_kernel_names[i]);
+      memcpy (cursor, program->builtin_kernel_names[i], name_len);
       cursor += name_len;
       pocl_serialize_dbk_attribs (program->builtin_kernel_ids[i],
                                   program->builtin_kernel_attributes[i],
