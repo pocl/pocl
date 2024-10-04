@@ -33,6 +33,7 @@
 
 #include "config.h"
 
+#include "pocl_cl_half_util.h"
 #include "pocl_opencl.h"
 
 cl_context
@@ -672,4 +673,16 @@ poclu_load_program (cl_context context, cl_device_id device,
   return poclu_load_program_multidev (context, &device, 1, basename,
                                       spirv, poclbin, explicit_binary,
                                       extra_build_opts, p);
+}
+
+cl_half
+poclu_float_to_cl_half (float value)
+{
+  return pocl_float_to_half (value);
+}
+
+float
+poclu_cl_half_to_float (cl_half value)
+{
+  return pocl_half_to_float (value);
 }
