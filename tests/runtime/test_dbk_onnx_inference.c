@@ -195,8 +195,8 @@ main (int _argc, char **_argv)
   for (size_t i = 0; i < num_elements; ++i)
     {
       float ref = (float)(fabs (in_A[i] - in_B[i]) > 0.5);
-      // printf("in_A[%zu]=%f xor in_B[%zu]=%f = buf_map[%zu]=%f ~ ref=%f\n",
-      // i, in_A[i], i, in_B[i], i, buf_map[i], ref);
+      //       printf("in_A[%zu]=%f xor in_B[%zu]=%f = buf_map[%zu]=%f ~
+      //       ref=%f\n", i, in_A[i], i, in_B[i], i, buf_map[i], ref);
       TEST_ASSERT (fabs (buf_map[i] - ref) < 1e-6);
     }
   CHECK_CL_ERROR (clEnqueueUnmapMemObject (command_queue, all_outputs, buf_map,

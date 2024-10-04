@@ -1500,15 +1500,15 @@ int SharedCLContext::buildOrLinkProgram(
                                    &cursor);
     }
 
-    cl_program prog;
-    createProgramWithDBKs(ContextWithAllDevices(), program->devices.size(),
-                          (cl_device_id *)program->devices.data(), num_kernels,
-                          kernel_ids.data(), kernel_names.data(),
-                          (const void **)kernel_attributes.data(), NULL, &err);
+    cl_program prog = createProgramWithDBKs(
+        ContextWithAllDevices(), program->devices.size(),
+        (cl_device_id *)program->devices.data(), num_kernels, kernel_ids.data(),
+        kernel_names.data(), (const void **)kernel_attributes.data(), NULL,
+        &err);
 
     for (size_t i = 0; i < num_kernels; ++i) {
       pocl_release_defined_builtin_attributes(kernel_ids[i],
-                                              &kernel_attributes[i]);
+                                              kernel_attributes[i]);
     }
 
     if (err != CL_SUCCESS) {

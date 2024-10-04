@@ -837,6 +837,7 @@ extern "C"
       case MessageType_CompileProgramFromSource:
       case MessageType_CompileProgramFromSPIRV:
       case MessageType_BuildProgramWithBuiltins:
+      case MessageType_BuildProgramWithDefinedBuiltins:
       case MessageType_LinkProgram:
         body = sizeof (BuildProgramMsg_t);
         break;

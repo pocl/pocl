@@ -1150,7 +1150,7 @@ pocl_serialize_dbk_attribs (BuiltinKernelId id,
 int
 pocl_deserialize_cl_tensor_desc (cl_tensor_desc *t, const char **buf)
 {
-  uint8_t has_layout;
+  uint8_t has_layout = 0;
   DESERIALIZE (t->rank);
   DESERIALIZE (t->dtype);
   DESERIALIZE (t->properties);
@@ -1240,67 +1240,88 @@ pocl_deserialize_dbk_attribs (BuiltinKernelId *id,
     case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
       {
         cl_dbk_attributes_exp_onnx_inference *attr
-          = malloc (sizeof (cl_dbk_attributes_exp_onnx_inference));
+          = calloc (1, sizeof (cl_dbk_attributes_exp_onnx_inference));
         uint64_t model_size;
         uint64_t num_inputs;
         uint64_t num_outputs;
         uint64_t num_initializers;
         DESERIALIZE (model_size);
         attr->model_size = model_size;
-        attr->model_data = malloc (model_size);
-        COPY ((char*)attr->model_data, model_size);
+        if (model_size > 0)
+          {
+            attr->model_data = malloc (model_size);
+            COPY ((char *)attr->model_data, model_size);
+          }
         DESERIALIZE (num_inputs);
         attr->num_inputs = num_inputs;
-        attr->input_tensor_names = malloc (sizeof (char *) * num_inputs);
-        attr->input_tensor_descs
-          = malloc (sizeof (cl_tensor_desc) * num_inputs);
-        for (size_t i = 0; i < num_inputs; ++i)
+        if (num_inputs > 0)
           {
-            uint64_t name_len;
+            attr->input_tensor_names = malloc (sizeof (char *) * num_inputs);
+            attr->input_tensor_descs
+              = malloc (sizeof (cl_tensor_desc) * num_inputs);
+            for (size_t i = 0; i < num_inputs; ++i)
+              {
+                uint64_t name_len;
 
-            DESERIALIZE (name_len);
-            attr->input_tensor_names[i] = malloc (name_len + 1);
-            COPY ((char*)attr->input_tensor_names[i], name_len);
-            ((char*)attr->input_tensor_names[i])[name_len] = 0;
-            pocl_deserialize_cl_tensor_desc ((cl_tensor_desc*)&(attr->input_tensor_descs[i]),
-                                             buf);
+                DESERIALIZE (name_len);
+                attr->input_tensor_names[i] = malloc (name_len + 1);
+                COPY ((char *)attr->input_tensor_names[i], name_len);
+                ((char *)attr->input_tensor_names[i])[name_len] = 0;
+                pocl_deserialize_cl_tensor_desc (
+                  (cl_tensor_desc *)&(attr->input_tensor_descs[i]), buf);
+              }
           }
+
         DESERIALIZE (num_outputs);
         attr->num_outputs = num_outputs;
-        attr->output_tensor_names = malloc (sizeof (char *) * num_outputs);
-        attr->output_tensor_descs
-          = malloc (sizeof (cl_tensor_desc) * num_outputs);
-        for (size_t i = 0; i < num_outputs; ++i)
+        if (num_outputs > 0)
           {
-            uint64_t name_len;
+            attr->output_tensor_names = malloc (sizeof (char *) * num_outputs);
+            attr->output_tensor_descs
+              = malloc (sizeof (cl_tensor_desc) * num_outputs);
+            for (size_t i = 0; i < num_outputs; ++i)
+              {
+                uint64_t name_len;
 
-            DESERIALIZE (name_len);
-            attr->output_tensor_names[i] = malloc (name_len + 1);
-            COPY ((char*)attr->output_tensor_names[i], name_len);
-            ((char*)attr->output_tensor_names[i])[name_len] = 0;
-            pocl_deserialize_cl_tensor_desc ((cl_tensor_desc*)&(attr->output_tensor_descs[i]),
-                                             buf);
+                DESERIALIZE (name_len);
+                attr->output_tensor_names[i] = malloc (name_len + 1);
+                COPY ((char *)attr->output_tensor_names[i], name_len);
+                ((char *)attr->output_tensor_names[i])[name_len] = 0;
+                pocl_deserialize_cl_tensor_desc (
+                  (cl_tensor_desc *)&(attr->output_tensor_descs[i]), buf);
+              }
           }
+
         DESERIALIZE (num_initializers);
         attr->num_initializers = num_initializers;
-        attr->initializer_names = malloc (sizeof (char *) * num_initializers);
-        attr->initializer_tensor_descs
-          = malloc (sizeof (cl_tensor_desc) * num_initializers);
-        for (size_t i = 0; i < num_initializers; ++i)
+        if (num_initializers > 0)
           {
-            uint64_t name_len;
-            uint64_t data_len;
+            attr->initializer_names
+              = malloc (sizeof (char *) * num_initializers);
+            attr->initializer_tensor_descs
+              = malloc (sizeof (cl_tensor_desc) * num_initializers);
+            attr->initializer_data
+              = malloc (sizeof (char *) * num_initializers);
+            for (size_t i = 0; i < num_initializers; ++i)
+              {
+                uint64_t name_len;
+                uint64_t data_len;
 
-            DESERIALIZE (name_len);
-            attr->initializer_names[i] = malloc (name_len + 1);
-            COPY ((char*)attr->initializer_names[i], name_len);
-            ((char*)attr->initializer_names[i])[name_len] = 0;
-            pocl_deserialize_cl_tensor_desc (
-              (cl_tensor_desc*)&(attr->initializer_tensor_descs[i]), buf);
-            DESERIALIZE (data_len);
-            attr->initializer_data[i] = malloc (data_len);
-            COPY ((char*)attr->initializer_data[i], data_len);
+                DESERIALIZE (name_len);
+                attr->initializer_names[i] = malloc (name_len + 1);
+                COPY ((char *)attr->initializer_names[i], name_len);
+                ((char *)attr->initializer_names[i])[name_len] = 0;
+                pocl_deserialize_cl_tensor_desc (
+                  (cl_tensor_desc *)&(attr->initializer_tensor_descs[i]), buf);
+                DESERIALIZE (data_len);
+                if (data_len > 0)
+                  {
+                    attr->initializer_data[i] = malloc (data_len);
+                    COPY ((char *)attr->initializer_data[i], data_len);
+                  }
+              }
           }
+
         *attributes = attr;
         break;
       }

@@ -686,6 +686,9 @@ pocl_cpu_build_defined_builtin (cl_program program, cl_uint device_i)
 #ifdef HAVE_LIBJPEG_TURBO
   return CL_SUCCESS;
 #endif
+#ifdef HAVE_ONNXRT
+  return CL_SUCCESS;
+#endif
   /* TODO: is it necessary to return an error here or can it be caught earlier
      on? */
   POCL_RETURN_ERROR_ON (
