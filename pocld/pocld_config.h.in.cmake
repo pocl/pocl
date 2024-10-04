@@ -1,5 +1,7 @@
 #cmakedefine HAVE_LTTNG_UST
 
+#cmakedefine HAVE_LINUX_VSOCK_H
+
 #cmakedefine QUEUE_PROFILING
 
 #cmakedefine FORKING

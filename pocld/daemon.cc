@@ -42,7 +42,7 @@
 #include "rdma.hh"
 #endif
 
-#ifdef ENABLE_VSOCK
+#ifdef HAVE_LINUX_VSOCK_H
 #include <limits.h>
 #include <linux/version.h>
 #include <linux/vm_sockets.h>
@@ -331,7 +331,7 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports,
     else if (server_addr_command.ss_family == AF_INET6)
       ((struct sockaddr_in6 *)&server_addr_command)->sin6_port =
           htons(ListenPorts.command);
-#ifdef ENABLE_VSOCK
+#ifdef HAVE_LINUX_VSOCK_H
     else if (server_addr_command.ss_family == AF_VSOCK)
       ((struct sockaddr_vm *)&server_addr_command)->svm_port =
           ListenPorts.command;
@@ -353,7 +353,7 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports,
     else if (server_addr_stream.ss_family == AF_INET6)
       ((struct sockaddr_in6 *)&server_addr_stream)->sin6_port =
           htons(ListenPorts.stream);
-#ifdef ENABLE_VSOCK
+#ifdef HAVE_LINUX_VSOCK_H
     else if (server_addr_command.ss_family == AF_VSOCK)
       ((struct sockaddr_vm *)&server_addr_command)->svm_port =
           ListenPorts.stream;
@@ -425,9 +425,9 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports,
     if (listen_stream_fd)
       close(listen_stream_fd);
   }
-#ifdef ENABLE_VSOCK
+#ifdef HAVE_LINUX_VSOCK_H
   if (UseVsock)
-    host_freeaddrinfo(ResolvedAddress);
+    pocl_freeaddrinfo(ResolvedAddress);
   else
 #endif
     freeaddrinfo(ResolvedAddress);

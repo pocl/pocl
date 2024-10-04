@@ -43,6 +43,7 @@
 
 #include "common.h"
 #include "pocl_cl.h"
+#include "pocl_debug.h"
 #include "pocl_image_util.h"
 #include "pocl_networking.h"
 #include "pocl_timing.h"
@@ -57,7 +58,7 @@
 #include <rdma/rdma_cma.h>
 #endif
 
-#ifdef ENABLE_VSOCK
+#ifdef HAVE_LINUX_VSOCK_H
 #include <linux/vm_sockets.h>
 #endif
 
@@ -221,7 +222,7 @@ struct network_queue
   pocl_cond_t cond;
   pocl_thread_t thread_id;
   int exit_requested;
-  int *fd;
+  transport_info_t *connection;
 };
 
 typedef struct network_queue_arg
@@ -231,10 +232,10 @@ typedef struct network_queue_arg
   network_queue *ours;
 } network_queue_arg;
 
-#define SETUP_NETW_Q(n, f)                                                    \
+#define SETUP_NETW_Q(n, c)                                                    \
   POCL_INIT_LOCK (n->mutex);                                                  \
   POCL_INIT_COND (n->cond);                                                   \
-  n->fd = f;
+  n->connection = c;
 
 // n->dev = device; n->devd = devd; n->d = d; s = server data
 #define SETUP_NETW_Q_ARG(n, s, o)                                             \
@@ -265,7 +266,10 @@ SMALL_VECTOR_HELPERS (sampler_ids, remote_server_data_t, uint32_t, sampler_ids)
 
 /* TODO these are duplicated in C++ */
 ssize_t
-read_full (int fd, void *p, size_t total, remote_server_data_t *sinfo)
+read_full (transport_info_t *connection,
+           void *p,
+           size_t total,
+           remote_server_data_t *sinfo)
 {
 
   size_t readb = 0;
@@ -275,7 +279,7 @@ read_full (int fd, void *p, size_t total, remote_server_data_t *sinfo)
   while (readb < total)
     {
       size_t remain = total - readb;
-      res = read (fd, ptr + readb, remain);
+      res = read (connection->fd, ptr + readb, remain);
       if (res < 0)
         { // ERROR
           return -1;
@@ -292,7 +296,10 @@ read_full (int fd, void *p, size_t total, remote_server_data_t *sinfo)
 }
 
 int
-write_full (int fd, void *p, size_t total, remote_server_data_t *sinfo)
+write_full (transport_info_t *connection,
+            void *p,
+            size_t total,
+            remote_server_data_t *sinfo)
 {
 
   size_t written = 0;
@@ -302,7 +309,7 @@ write_full (int fd, void *p, size_t total, remote_server_data_t *sinfo)
   while (written < total)
     {
       size_t remain = total - written;
-      res = write (fd, ptr + written, remain);
+      res = write (connection->fd, ptr + written, remain);
       if (res < 0)
         {
           int e = errno;
@@ -320,7 +327,10 @@ write_full (int fd, void *p, size_t total, remote_server_data_t *sinfo)
 #define THRESHOLD 1200
 
 int
-writev_full (int fd, size_t num, void **arys, size_t *sizes,
+writev_full (transport_info_t *connection,
+             size_t num,
+             void **arys,
+             size_t *sizes,
              remote_server_data_t *sinfo)
 {
 
@@ -342,7 +352,8 @@ writev_full (int fd, size_t num, void **arys, size_t *sizes,
 
       for (i = 0; i < num; ++i)
         {
-          res = write_full (fd, ary[i].iov_base, ary[i].iov_len, sinfo);
+          res
+            = write_full (connection, ary[i].iov_base, ary[i].iov_len, sinfo);
           if (res < 0)
             break;
         }
@@ -350,7 +361,7 @@ writev_full (int fd, size_t num, void **arys, size_t *sizes,
   else
     {
       POCL_ATOMIC_ADD (sinfo->tx_bytes_submitted, total);
-      ssize_t written = writev (fd, ary, num);
+      ssize_t written = writev (connection->fd, ary, num);
       if (written < 0)
         res = -1;
       else
@@ -528,78 +539,94 @@ finish_running_cmd (network_command *running_cmd)
 }
 
 static cl_int
-pocl_network_connect (remote_server_data_t *data, int *fd, unsigned port,
-                      int bufsize, int is_fast, ReplyMsg_t *reply_out)
+pocl_network_connect (remote_server_data_t *data,
+                      transport_info_t *connection,
+                      unsigned port,
+                      int bufsize,
+                      int is_fast,
+                      ReplyMsg_t *reply_out)
 {
   const int32_t one = 1;
   const int32_t zero = 0;
-  int socket_fd;
-  *fd = -1;
+  connection->fd = -1;
   unsigned addrlen = 0;
-
-#ifdef USE_UDS
-
-  POCL_RETURN_ERROR_ON (((socket_fd = socket (AF_UNIX, SOCK_STREAM, 0)) == -1),
-                        CL_INVALID_DEVICE, "socket() returned errno: %i\n",
-                        errno);
-
-  struct sockaddr_un server;
-  memset (&server, 0, sizeof (server));
-  server.sun_family = AF_UNIX;
-  strncpy (server.sun_path, "/tmp/pocl.socket", sizeof (server.sun_path) - 1);
-  addrlen = sizeof (server);
-
-#else
-
-  struct addrinfo *ai;
-  struct sockaddr_storage server;
   int err = 0;
-  ai = pocl_resolve_address (data->address, port, &err);
-  if (err)
+  transport_info_t new_connection = *connection;
+
+  struct sockaddr_storage server;
+  struct addrinfo *ai = NULL;
+
+  if (connection->domain != TransportDomain_Unix)
     {
-      POCL_MSG_ERR ("Failed to resolve address: %s\n", gai_strerror (err));
-      return err;
+      ai = pocl_resolve_address (data->address, port, &err);
+      if (err)
+        {
+          POCL_MSG_ERR ("Failed to resolve address: %s\n", gai_strerror (err));
+          return err;
+        }
+      memcpy (&server, ai->ai_addr, ai->ai_addrlen);
+      addrlen = ai->ai_addrlen;
     }
 
-  memcpy (&server, ai->ai_addr, ai->ai_addrlen);
-  addrlen = ai->ai_addrlen;
-
-#ifdef ENABLE_VSOCK
-  POCL_RETURN_ERROR_ON (
-      ((socket_fd = socket (ai->ai_family, ai->ai_socktype,
-                            ai->ai_family == AF_VSOCK ? 0 : IPPROTO_TCP))
-       == -1),
-      CL_INVALID_DEVICE, "socket() returned errno: %i\n", errno);
-
-  if (ai->ai_family == AF_VSOCK)
+  switch (connection->domain)
     {
-      host_freeaddrinfo (ai);
-    }
-  else
-    {
-      freeaddrinfo (ai);
-    }
-  err = pocl_remote_client_set_socket_options (socket_fd, bufsize, is_fast,
-                                               server.ss_family);
-  if (err)
-    return err;
+    case TransportDomain_Unix:
+      {
+
+        POCL_RETURN_ERROR_ON (
+          ((new_connection.fd = socket (AF_UNIX, SOCK_STREAM, 0)) == -1),
+          CL_INVALID_DEVICE, "socket() returned errno: %i\n", errno);
+
+        struct sockaddr_un server;
+        memset (&server, 0, sizeof (server));
+        server.sun_family = AF_UNIX;
+        strncpy (server.sun_path, "/tmp/pocl.socket",
+                 sizeof (server.sun_path) - 1);
+        addrlen = sizeof (server);
+        break;
+      }
+
+    case TransportDomain_Inet:
+      {
+        POCL_RETURN_ERROR_ON (
+          ((new_connection.fd
+            = socket (ai->ai_family, ai->ai_socktype, IPPROTO_TCP))
+           == -1),
+          CL_INVALID_DEVICE, "socket() returned errno: %i\n", errno);
+
+        break;
+      }
+
+    case TransportDomain_Vsock:
+      {
+#ifdef HAVE_LINUX_VSOCK_H
+        POCL_RETURN_ERROR_ON (
+          ((new_connection.fd
+            = socket (ai->ai_family, ai->ai_socktype,
+                      ai->ai_family == AF_VSOCK ? 0 : IPPROTO_TCP))
+           == -1),
+          CL_INVALID_DEVICE, "socket() returned errno: %i\n", errno);
+
+        err = pocl_remote_client_set_socket_options (
+          new_connection.fd, bufsize, is_fast, server.ss_family);
+        if (err)
+          return err;
 #else
-  POCL_RETURN_ERROR_ON (
-      ((socket_fd = socket (ai->ai_family, ai->ai_socktype, IPPROTO_TCP))
-       == -1),
-      CL_INVALID_DEVICE, "socket() returned errno: %i\n", errno);
+        return CL_INVALID_DEVICE;
+#endif
+      }
+    }
 
-  freeaddrinfo (ai);
+  pocl_freeaddrinfo (ai);
 
-  err = pocl_remote_client_set_socket_options (socket_fd, bufsize, is_fast,
-                                               server.ss_family);
+  err = pocl_remote_client_set_socket_options (new_connection.fd, bufsize,
+                                               is_fast, server.ss_family);
   if (err)
     return err;
-#endif
-#endif
+
   POCL_RETURN_ERROR_ON (
-      (connect (socket_fd, (struct sockaddr *)&server, addrlen) == -1),
-      CL_INVALID_DEVICE, "connect() returned errno: %i\n", errno);
+    (connect (new_connection.fd, (struct sockaddr *)&server, addrlen) == -1),
+    CL_INVALID_DEVICE, "connect() returned errno: %i\n", errno);
 
   RequestMsg_t hs;
   ReplyMsg_t hsr;
@@ -611,25 +638,26 @@ pocl_network_connect (remote_server_data_t *data, int *fd, unsigned port,
   memcpy (hs.authkey, data->authkey, AUTHKEY_LENGTH);
   ssize_t readb, writeb;
   uint32_t req_len = request_size (hs.message_type);
-  writeb = write_full (socket_fd, &req_len, sizeof (req_len), data);
+  writeb = write_full (&new_connection, &req_len, sizeof (req_len), data);
   assert ((size_t)(writeb) == 0);
-  writeb = write_full (socket_fd, &hs, req_len, data);
+  writeb = write_full (&new_connection, &hs, req_len, data);
   assert ((size_t)(writeb) == 0);
-  readb = read_full (socket_fd, &hsr, sizeof (hsr), data);
+  readb = read_full (&new_connection, &hsr, sizeof (hsr), data);
   assert ((size_t)(readb) == sizeof (hsr));
   if (reply_out)
     memcpy (reply_out, &hsr, sizeof (ReplyMsg_t));
 
-  *fd = socket_fd;
+  *connection = new_connection;
 
   return 0;
 }
 
 static cl_int
-pocl_network_disconnect (remote_server_data_t *data, int fd)
+pocl_network_disconnect (remote_server_data_t *data,
+                         transport_info_t *connection)
 {
-  shutdown (fd, SHUT_RDWR);
-  return (close (fd));
+  shutdown (connection->fd, SHUT_RDWR);
+  return (close (connection->fd));
 }
 
 /// NOTE: remember to update NUM_SERVER_SOCKET_THREADS to reflect the actual
@@ -638,16 +666,16 @@ static void
 pocl_remote_reconnect_sockets (remote_server_data_t *remote)
 {
   POCL_MSG_PRINT_REMOTE (
-      "Disabling devices on %s until connection is restored\n",
-      remote->address_with_port);
+    "Disabling devices on %s until connection is restored\n",
+    remote->address_with_port);
   POCL_ATOMIC_CAS (&remote->available, CL_TRUE, CL_FALSE);
 
-  // Gather all threads here to sleep. Last one to arrive replaces both sockets
-  // and wakes up all the others when done.
+  // Gather all threads here to sleep. Last one to arrive replaces both
+  // sockets and wakes up all the others when done.
   remote->threads_awaiting_reconnect += 1;
   POCL_MSG_PRINT_REMOTE (
-      "pocl_remote_reconnect_sockets: currently %d threads waiting\n",
-      remote->threads_awaiting_reconnect);
+    "pocl_remote_reconnect_sockets: currently %d threads waiting\n",
+    remote->threads_awaiting_reconnect);
   if (remote->threads_awaiting_reconnect < NUM_SERVER_SOCKET_THREADS)
     {
       POCL_WAIT_COND (remote->setup_lock.cond, remote->setup_lock.mutex);
@@ -655,8 +683,8 @@ pocl_remote_reconnect_sockets (remote_server_data_t *remote)
     }
 
   // close old handles to avoid exceeding the open fd limit
-  close (remote->fast_socket_fd);
-  close (remote->slow_socket_fd);
+  pocl_network_disconnect (remote, &remote->fast_connection);
+  pocl_network_disconnect (remote, &remote->slow_connection);
 
   uint64_t session = 0;
   POCL_MSG_PRINT_REMOTE ("Attempting to connect to session %" PRIu64
@@ -665,10 +693,10 @@ pocl_remote_reconnect_sockets (remote_server_data_t *remote)
 
   // Got the lock, reconnect
   int status = 0;
-  status |= pocl_network_connect (remote, &remote->fast_socket_fd,
+  status |= pocl_network_connect (remote, &remote->fast_connection,
                                   remote->fast_port, NETWORK_BUF_SIZE_FAST, 1,
                                   NULL);
-  status |= pocl_network_connect (remote, &remote->slow_socket_fd,
+  status |= pocl_network_connect (remote, &remote->slow_connection,
                                   remote->slow_port, NETWORK_BUF_SIZE_SLOW, 0,
                                   NULL);
   // TODO: reconnect RDMA somehow?
@@ -708,21 +736,21 @@ pocl_remote_reader_pthread (void *aa)
   while (!this->exit_requested)
     {
       POCL_LOCK (remote->setup_lock.mutex);
-      int fd = *this->fd;
+      transport_info_t connection = *this->connection;
       POCL_UNLOCK (remote->setup_lock.mutex);
       if (0)
         {
         TRY_RECONNECT:
           POCL_LOCK (remote->setup_lock.mutex);
           pocl_remote_reconnect_sockets (remote);
-          fd = *this->fd;
+          connection = *this->connection;
           POCL_UNLOCK (remote->setup_lock.mutex);
         }
 
       // block until there is something to read.
       // this is especially needed to get accurate
       // profiling timestamps for read commands
-      pfd.fd = fd;
+      pfd.fd = connection.fd;
       nevs = poll (&pfd, 1, -1);
       if (nevs < 1)
         {
@@ -736,25 +764,25 @@ pocl_remote_reader_pthread (void *aa)
       // READ MSG
       ReplyMsg_t rep;
       uint64_t start_ts = pocl_gettimemono_ns ();
-      readb = read_full (fd, &rep, sizeof (ReplyMsg_t), remote);
+      readb = read_full (&connection, &rep, sizeof (ReplyMsg_t), remote);
       CHECK_READ_TIMEOUT (readb); // TODO: continue instead of abort
 
       // we have a message
       assert ((size_t)readb == sizeof (ReplyMsg_t));
       POCL_MSG_PRINT_REMOTE (
-          "READER THR: MESSAGE READ, TYPE:  %u  ID: %zu  SIZE: %zu\n",
-          rep.message_type, rep.msg_id, readb);
+        "READER THR: MESSAGE READ, TYPE:  %u  ID: %zu  SIZE: %zu\n",
+        rep.message_type, rep.msg_id, readb);
 
       // find it
       network_command *running_cmd = NULL;
       POCL_LOCK (inflight->mutex);
       DL_FOREACH (inflight->queue, running_cmd)
-      {
-        if (running_cmd->request.msg_id == rep.msg_id)
-          {
-            break;
-          }
-      }
+        {
+          if (running_cmd->request.msg_id == rep.msg_id)
+            {
+              break;
+            }
+        }
       if (!running_cmd)
         {
           // Not found in queue. This can happen when the remote resends
@@ -785,12 +813,12 @@ pocl_remote_reader_pthread (void *aa)
                  know the string pool's size. */
               assert (running_cmd->rep_extra_data == NULL);
               running_cmd->rep_extra_data
-                  = (char *)malloc (running_cmd->reply.data_size);
+                = (char *)malloc (running_cmd->reply.data_size);
               running_cmd->strings
-                  = running_cmd->rep_extra_data + running_cmd->rep_extra_size;
+                = running_cmd->rep_extra_data + running_cmd->rep_extra_size;
             }
           running_cmd->rep_extra_size = running_cmd->reply.data_size;
-          readb = read_full (fd, running_cmd->rep_extra_data,
+          readb = read_full (&connection, running_cmd->rep_extra_data,
                              running_cmd->reply.data_size, remote);
           CHECK_READ (readb);
         }
@@ -1074,7 +1102,7 @@ pocl_remote_writer_pthread (void *aa)
             DL_DELETE (this->queue, cmd);
           POCL_UNLOCK (this->mutex);
           POCL_LOCK (remote->setup_lock.mutex);
-          int fd = *this->fd;
+          transport_info_t connection = *this->connection;
           POCL_UNLOCK (remote->setup_lock.mutex);
 
           if (POCL_ATOMIC_LOAD (cmd->client_write_start_timestamp_ns) == 0)
@@ -1086,7 +1114,7 @@ pocl_remote_writer_pthread (void *aa)
             TRY_RECONNECT:
               POCL_LOCK (remote->setup_lock.mutex);
               pocl_remote_reconnect_sockets (remote);
-              fd = *this->fd;
+              connection = *this->connection;
               POCL_UNLOCK (remote->setup_lock.mutex);
               resending = 1;
               backup_idx = 0;
@@ -1156,7 +1184,7 @@ pocl_remote_writer_pthread (void *aa)
               size_t sizes[5] = { sizeof (uint32_t), msg_size,
                                   cmd->req_waitlist_size * sizeof (uint64_t),
                                   cmd->req_extra_size, cmd->req_extra_size2 };
-              CHECK_WRITE (writev_full (fd, 5, ptrs, sizes, remote));
+              CHECK_WRITE (writev_full (&connection, 5, ptrs, sizes, remote));
             }
           else if (cmd->req_extra_data)
             {
@@ -1169,7 +1197,7 @@ pocl_remote_writer_pthread (void *aa)
               size_t sizes[4]
                   = { sizeof (uint32_t), msg_size,
                       cmd->req_waitlist_size * sizeof (uint64_t), eds };
-              CHECK_WRITE (writev_full (fd, 4, ptrs, sizes, remote));
+              CHECK_WRITE (writev_full (&connection, 4, ptrs, sizes, remote));
             }
           else if (cmd->req_waitlist_size > 0)
             {
@@ -1177,15 +1205,16 @@ pocl_remote_writer_pthread (void *aa)
                   = { &msg_size, &cmd->request, (void *)cmd->req_wait_list };
               size_t sizes[3] = { sizeof (uint32_t), msg_size,
                                   cmd->req_waitlist_size * sizeof (uint64_t) };
-              CHECK_WRITE (writev_full (fd, 3, ptrs, sizes, remote));
+              CHECK_WRITE (writev_full (&connection, 3, ptrs, sizes, remote));
             }
           else
             {
               assert (cmd->req_waitlist_size == 0);
               assert (cmd->req_wait_list == NULL);
+              CHECK_WRITE (write_full (&connection, &msg_size,
+                                       sizeof (uint32_t), remote));
               CHECK_WRITE (
-                  write_full (fd, &msg_size, sizeof (uint32_t), remote));
-              CHECK_WRITE (write_full (fd, &cmd->request, msg_size, remote));
+                write_full (&connection, &cmd->request, msg_size, remote));
             }
 
           POCL_ATOMIC_STORE (cmd->client_write_end_timestamp_ns,
@@ -1347,25 +1376,25 @@ start_engines (remote_server_data_t *d, remote_device_data_t *devd,
 #endif
 
   d->slow_read_queue = calloc (1, sizeof (network_queue));
-  SETUP_NETW_Q (d->slow_read_queue, &d->slow_socket_fd);
+  SETUP_NETW_Q (d->slow_read_queue, &d->slow_connection);
   SETUP_NETW_Q_ARG (a, d, d->slow_read_queue);
   POCL_CREATE_THREAD (d->slow_read_queue->thread_id,
                       pocl_remote_reader_pthread, a);
 
   d->fast_read_queue = calloc (1, sizeof (network_queue));
-  SETUP_NETW_Q (d->fast_read_queue, &d->fast_socket_fd);
+  SETUP_NETW_Q (d->fast_read_queue, &d->fast_connection);
   SETUP_NETW_Q_ARG (a, d, d->fast_read_queue);
   POCL_CREATE_THREAD (d->fast_read_queue->thread_id,
                       pocl_remote_reader_pthread, a);
 
   d->slow_write_queue = calloc (1, sizeof (network_queue));
-  SETUP_NETW_Q (d->slow_write_queue, &d->slow_socket_fd);
+  SETUP_NETW_Q (d->slow_write_queue, &d->slow_connection);
   SETUP_NETW_Q_ARG (a, d, d->slow_write_queue);
   POCL_CREATE_THREAD (d->slow_write_queue->thread_id,
                       pocl_remote_writer_pthread, a);
 
   d->fast_write_queue = calloc (1, sizeof (network_queue));
-  SETUP_NETW_Q (d->fast_write_queue, &d->fast_socket_fd);
+  SETUP_NETW_Q (d->fast_write_queue, &d->slow_connection);
   SETUP_NETW_Q_ARG (a, d, d->fast_write_queue);
   POCL_CREATE_THREAD (d->fast_write_queue->thread_id,
                       pocl_remote_writer_pthread, a);
@@ -1461,18 +1490,28 @@ find_or_create_server (const char *address_with_port, unsigned port,
   d->threads_awaiting_reconnect = 0;
 
   // pocl_network_init_device ensures address_with_port actually contains port
-  if (strncmp (address_with_port, "vsock:", strlen ("vsock:")) == 0)
-    strncpy (d->address, address_with_port,
-             strrchr (address_with_port, ':') - address_with_port);
+  if (address_with_port[0] == '/')
+    {
+      d->fast_connection.domain = TransportDomain_Unix;
+      d->slow_connection.domain = TransportDomain_Unix;
+    }
+  else if (strncmp (address_with_port, "vsock:", strlen ("vsock:")) == 0)
+    {
+      strncpy (d->address, address_with_port,
+               strrchr (address_with_port, ':') - address_with_port);
+      d->fast_connection.domain = TransportDomain_Vsock;
+      d->slow_connection.domain = TransportDomain_Vsock;
+    }
   else
-    strncpy (d->address, address_with_port,
-             strchr (address_with_port, ':') - address_with_port);
+    {
+      strncpy (d->address, address_with_port,
+               strchr (address_with_port, ':') - address_with_port);
+      d->fast_connection.domain = TransportDomain_Inet;
+      d->slow_connection.domain = TransportDomain_Inet;
+    }
   POCL_INIT_LOCK (d->setup_lock.mutex);
   POCL_INIT_COND (d->setup_lock.cond);
 
-  // TODO: delet this
-  // In RealWorldUse(tm) peers should not need a separate interface for
-  // P2P communication. This is merely a quirk of our testing environment.
   char *tmp2 = strdup (parameters);
   char *peer_address = strtok (tmp2, "#");
   if (peer_address == NULL)
@@ -1509,7 +1548,7 @@ find_or_create_server (const char *address_with_port, unsigned port,
 #endif
 
   ReplyMsg_t hsr;
-  if (pocl_network_connect (d, &d->fast_socket_fd, d->fast_port,
+  if (pocl_network_connect (d, &d->fast_connection, d->fast_port,
                             NETWORK_BUF_SIZE_FAST, 1, &hsr))
     {
       POCL_MSG_ERR ("Could not connect to server\n");
@@ -1530,7 +1569,7 @@ find_or_create_server (const char *address_with_port, unsigned port,
 
   d->peer_port = hsr.m.get_session.peer_port;
 
-  if (pocl_network_connect (d, &d->slow_socket_fd, d->slow_port,
+  if (pocl_network_connect (d, &d->slow_connection, d->slow_port,
                             NETWORK_BUF_SIZE_SLOW, 0, NULL))
     {
       POCL_MSG_ERR ("Could not connect to server\n");
@@ -1665,19 +1704,19 @@ find_or_create_server (const char *address_with_port, unsigned port,
   uint32_t msg_size = request_size (req.message_type);
 
   ssize_t writeb, readb;
-  writeb = write (d->fast_socket_fd, &msg_size, sizeof (msg_size));
+  writeb = write (d->fast_connection.fd, &msg_size, sizeof (msg_size));
   assert ((size_t)(writeb) == sizeof (msg_size));
-  writeb = write (d->fast_socket_fd, &req, msg_size);
+  writeb = write (d->fast_connection.fd, &req, msg_size);
   assert ((size_t)(writeb) == msg_size);
 
   ReplyMsg_t rep;
-  readb = read (d->fast_socket_fd, &rep, sizeof (ReplyMsg_t));
+  readb = read (d->fast_connection.fd, &rep, sizeof (ReplyMsg_t));
   assert ((size_t)(readb) == sizeof (ReplyMsg_t));
   assert (rep.message_type == MessageType_ServerInfoReply);
 
   d->num_platforms = rep.obj_id;
   d->platform_devices = malloc (rep.data_size);
-  readb = read (d->fast_socket_fd, d->platform_devices, rep.data_size);
+  readb = read (d->fast_connection.fd, d->platform_devices, rep.data_size);
   assert ((size_t)(readb) == rep.data_size);
   // *************************************
   size_t num_plat_devs
@@ -1732,8 +1771,8 @@ release_server (remote_server_data_t *d)
   SMALL_VECTOR_DESTROY (d, sampler_ids, INITIAL_ARRAY_CAP);
 
   // disconnect sockets.
-  pocl_network_disconnect (d, d->fast_socket_fd);
-  pocl_network_disconnect (d, d->slow_socket_fd);
+  pocl_network_disconnect (d, &d->fast_connection);
+  pocl_network_disconnect (d, &d->slow_connection);
 
 #ifdef ENABLE_RDMA
   rdma_uninitialize (&d->rdma_data);

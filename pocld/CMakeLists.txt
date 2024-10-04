@@ -127,6 +127,14 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
   find_package(Threads REQUIRED)
 
+  find_file(
+    HAVE_LINUX_VSOCK_H
+    NAMES
+      linux/vm_sockets.h
+    PATHS
+      /usr/include
+  )
+
   list(APPEND P_LINK_LIST ${OPENCL} Threads::Threads)
 
   set(POCL_INSTALL_PUBLIC_BINDIR "${CMAKE_INSTALL_PREFIX}/bin")
@@ -190,4 +198,3 @@ if (STANDALONE EQUAL 0)
   install(TARGETS pocld RUNTIME
         DESTINATION "${POCL_INSTALL_PUBLIC_BINDIR}")
 endif()
-

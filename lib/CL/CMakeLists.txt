@@ -223,10 +223,6 @@ if(APPLE)
   list(APPEND POCL_LIB_SOURCES "pthread_barrier.c")
 endif()
 
-if(ENABLE_RDMA)
-  list(APPEND POCL_LIB_SOURCES "pocl_rdma.c")
-endif()
-
 set(LIBPOCL_OBJS "$<TARGET_OBJECTS:libpocl_unlinked_objs>"
                  "$<TARGET_OBJECTS:pocl_cache>")
 

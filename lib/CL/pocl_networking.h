@@ -24,8 +24,6 @@
 
 #include <stdint.h>
 
-#include "pocl_export.h"
-
 #ifndef POCL_NETWORKING_H
 #define POCL_NETWORKING_H
 
@@ -55,14 +53,14 @@ extern "C"
                                                     int is_fast,
                                                     int ai_family);
   /**
-   * host_freeaddrinfo - free addrinfo obtained from host_*() functions
+   * pocl_freeaddrinfo - free addrinfo obtained from host_*() functions
    * @ai: pointer to addrinfo to free
    *
-   * The addrinfos returned by host_*() functions may not have been allocated
+   * The addrinfos returned by pocl_*() functions may not have been allocated
    * by a call to getaddrinfo(3).  It is not safe to free them directly with
    * freeaddrinfo(3).  Use this function instead.
    */
-  extern void host_freeaddrinfo (struct addrinfo *ai);
+  extern void pocl_freeaddrinfo (struct addrinfo *ai);
 
   /*
    * vsock_hostname_addrinfo - Custom 'getaddrinfo' for vsock addresses

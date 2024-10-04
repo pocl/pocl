@@ -27,7 +27,7 @@
 
 #include <arpa/inet.h>
 #include <cassert>
-#ifdef ENABLE_VSOCK
+#ifdef HAVE_LINUX_VSOCK_H
 #include <linux/vm_sockets.h>
 #endif
 #include <netdb.h>
@@ -168,7 +168,7 @@ std::string describe_sockaddr(struct sockaddr *addr, unsigned addr_size) {
   else if (addr->sa_family == AF_INET6)
     inet_ntop(addr->sa_family, &((struct sockaddr_in6 *)addr)->sin6_addr,
               ip_str.data(), ip_str.capacity());
-#ifdef ENABLE_VSOCK
+#ifdef HAVE_LINUX_VSOCK_H
   else if (addr->sa_family == AF_VSOCK) {
     struct sockaddr_vm *vm_addr = (sockaddr_vm *)addr;
 
