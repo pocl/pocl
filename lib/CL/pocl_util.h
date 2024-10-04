@@ -317,10 +317,6 @@ int pocl_run_command_capture_output (char *capture_string,
                                      size_t *captured_bytes,
                                      const char **args);
 
-uint16_t float_to_half (float value);
-
-float half_to_float (uint16_t value);
-
 void pocl_free_kernel_metadata (cl_program program, unsigned kernel_i);
 
 POCL_EXPORT

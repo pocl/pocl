@@ -24,7 +24,7 @@
 #include "pocl_image_util.h"
 #include "assert.h"
 #include "pocl_cl.h"
-#include "pocl_util.h"
+#include "pocl_cl_half_util.h"
 
 cl_int pocl_opencl_image_type_to_index (cl_mem_object_type  image_type)
 {
@@ -529,10 +529,10 @@ write_float4_pixel (cl_float4 color, void *data, int type)
   if (type == CL_HALF_FLOAT)
     {
       /* TODO: convert to builtins */
-      ((uint16_t *)data)[0] = float_to_half (color.s0);
-      ((uint16_t *)data)[1] = float_to_half (color.s1);
-      ((uint16_t *)data)[2] = float_to_half (color.s2);
-      ((uint16_t *)data)[3] = float_to_half (color.s3);
+      ((uint16_t *)data)[0] = pocl_float_to_half (color.s0);
+      ((uint16_t *)data)[1] = pocl_float_to_half (color.s1);
+      ((uint16_t *)data)[2] = pocl_float_to_half (color.s2);
+      ((uint16_t *)data)[3] = pocl_float_to_half (color.s3);
       return;
     }
   const cl_float f127 = ((cl_float) (CL_CHAR_MAX));
@@ -602,8 +602,8 @@ write_float2_pixel (cl_float2 color, void *data, int type)
   if (type == CL_HALF_FLOAT)
     {
       /* TODO: convert to builtins */
-      ((uint16_t *)data)[0] = float_to_half (color.s0);
-      ((uint16_t *)data)[1] = float_to_half (color.s1);
+      ((uint16_t *)data)[0] = pocl_float_to_half (color.s0);
+      ((uint16_t *)data)[1] = pocl_float_to_half (color.s1);
       return;
     }
   const cl_float f127 = ((cl_float) (CL_CHAR_MAX));
@@ -666,7 +666,7 @@ write_float_pixel (cl_float color, void *data, int type)
   if (type == CL_HALF_FLOAT)
     {
       /* TODO: convert to builtins */
-      *((uint16_t *)data) = float_to_half (color);
+      *((uint16_t *)data) = pocl_float_to_half (color);
       return;
     }
   const cl_float f127 = ((cl_float)CL_CHAR_MAX);
