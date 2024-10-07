@@ -292,15 +292,15 @@ pocl_cpu_init_common (cl_device_id device)
                   "org.khronos.openvx.scale_image.bl.u8;"
                   "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32;"
 #ifdef HAVE_LIBXSMM
-                  "exp_gemm;"
-                  "exp_matmul;"
+                  "gemm_exp;"
+                  "matmul_exp;"
 #endif
 #ifdef HAVE_LIBJPEG_TURBO
-                  "exp_jpeg_encode;"
-                  "exp_jpeg_decode;"
+                  "jpeg_encode_exp;"
+                  "jpeg_decode_exp;"
 #endif
 #ifdef HAVE_ONNXRT
-                  "exp_onnx_inference;"
+                  "onnx_inference_exp;"
 #endif
         );
       device->num_builtin_kernels = 4
@@ -680,38 +680,35 @@ pocl_free_kernel_arg_array_with_locals (void **arguments, void **arguments2,
 #ifdef HAVE_LIBXSMM
 
 static libxsmm_datatype
-pocl_convert_to_libxsmm_type (cl_tensor_datatype T)
+pocl_convert_to_libxsmm_type (cl_tensor_datatype_exp T)
 {
   switch (T)
     {
-    case CL_TENSOR_DTYPE_FP64:
+    case CL_TENSOR_DTYPE_FP64_EXP:
       return LIBXSMM_DATATYPE_F64;
-    case CL_TENSOR_DTYPE_FP32:
+    case CL_TENSOR_DTYPE_FP32_EXP:
       return LIBXSMM_DATATYPE_F32;
-    case CL_TENSOR_DTYPE_FP16:
+    case CL_TENSOR_DTYPE_FP16_EXP:
       return LIBXSMM_DATATYPE_F16;
-    case CL_TENSOR_DTYPE_FP8:
-      return LIBXSMM_DATATYPE_HF8;
-
-    case CL_TENSOR_DTYPE_INT64:
+    case CL_TENSOR_DTYPE_INT64_EXP:
       return LIBXSMM_DATATYPE_I64;
-    case CL_TENSOR_DTYPE_UINT64:
+    case CL_TENSOR_DTYPE_UINT64_EXP:
       return LIBXSMM_DATATYPE_U64;
-    case CL_TENSOR_DTYPE_INT32:
+    case CL_TENSOR_DTYPE_INT32_EXP:
       return LIBXSMM_DATATYPE_I32;
-    case CL_TENSOR_DTYPE_UINT32:
+    case CL_TENSOR_DTYPE_UINT32_EXP:
       return LIBXSMM_DATATYPE_U32;
-    case CL_TENSOR_DTYPE_INT16:
+    case CL_TENSOR_DTYPE_INT16_EXP:
       return LIBXSMM_DATATYPE_I16;
-    case CL_TENSOR_DTYPE_UINT16:
+    case CL_TENSOR_DTYPE_UINT16_EXP:
       return LIBXSMM_DATATYPE_U16;
-    case CL_TENSOR_DTYPE_INT8:
+    case CL_TENSOR_DTYPE_INT8_EXP:
       return LIBXSMM_DATATYPE_I8;
-    case CL_TENSOR_DTYPE_UINT8:
+    case CL_TENSOR_DTYPE_UINT8_EXP:
       return LIBXSMM_DATATYPE_U8;
-    case CL_TENSOR_DTYPE_INT4:
+    case CL_TENSOR_DTYPE_INT4_EXP:
       return LIBXSMM_DATATYPE_IMPLICIT;
-    case CL_TENSOR_DTYPE_UINT4:
+    case CL_TENSOR_DTYPE_UINT4_EXP:
       return LIBXSMM_DATATYPE_IMPLICIT;
 
     default:
@@ -722,12 +719,12 @@ pocl_convert_to_libxsmm_type (cl_tensor_datatype T)
 int
 pocl_cpu_validate_khr_gemm (cl_bool TransA,
                             cl_bool TransB,
-                            const cl_tensor_desc *TenA,
-                            const cl_tensor_desc *TenB,
-                            const cl_tensor_desc *TenCIOpt,
-                            const cl_tensor_desc *TenCOut,
-                            const cl_tensor_datatype_value *Alpha,
-                            const cl_tensor_datatype_value *Beta)
+                            const cl_tensor_desc_exp *TenA,
+                            const cl_tensor_desc_exp *TenB,
+                            const cl_tensor_desc_exp *TenCIOpt,
+                            const cl_tensor_desc_exp *TenCOut,
+                            const cl_tensor_datatype_value_exp *Alpha,
+                            const cl_tensor_datatype_value_exp *Beta)
 {
   /* TODO: We probably need to have support for mixed input/output
    * precisions to be able to fit results of large, low precision input
@@ -741,39 +738,41 @@ pocl_cpu_validate_khr_gemm (cl_bool TransA,
    * initial validation (pocl_validate_khr_gemm) */
 
   /* currently FP 16-64 and INT 8-64 are supported */
-  POCL_RETURN_ERROR_ON ((TenA->dtype == CL_TENSOR_DTYPE_FP8
-                         || TenA->dtype == CL_TENSOR_DTYPE_INT4
-                         || TenCOut->dtype == CL_TENSOR_DTYPE_FP8
-                         || TenCOut->dtype == CL_TENSOR_DTYPE_INT4),
-                        CL_INVALID_TENSOR_DATATYPE,
+  /* FIXME: This check does not scale well. convert this into
+            whitelisted check. */
+  POCL_RETURN_ERROR_ON ((TenA->dtype == CL_TENSOR_DTYPE_FP8E4M3_EXP
+                         || TenA->dtype == CL_TENSOR_DTYPE_FP8E5M2_EXP
+                         || TenA->dtype == CL_TENSOR_DTYPE_INT4_EXP
+                         || TenCOut->dtype == CL_TENSOR_DTYPE_INT4_EXP),
+                        CL_INVALID_TENSOR_DATATYPE_EXP,
                         "Datatype support not yet implemented. CPU supports "
                         "only FP16/32/64 and INT8/16/32/64 currently\n");
 
   /* type mixing check */
   POCL_RETURN_ERROR_ON ((pocl_tensor_type_is_int (TenA->dtype)
                          != pocl_tensor_type_is_int (TenCOut->dtype)),
-                        CL_INVALID_TENSOR_DATATYPE,
+                        CL_INVALID_TENSOR_DATATYPE_EXP,
                         "Datatype mixing (INT/FP) not supported");
 
   POCL_RETURN_ERROR_ON ((pocl_tensor_type_size (TenA->dtype)
                          > pocl_tensor_type_size (TenCOut->dtype)),
-                        CL_INVALID_TENSOR_DATATYPE,
+                        CL_INVALID_TENSOR_DATATYPE_EXP,
                         "Datatype of C is smaller than A");
 
-  const cl_tensor_properties P = TenA->properties[0];
+  const cl_tensor_properties_exp P = TenA->properties[0];
   if (P != 0)
     {
-      POCL_RETURN_ERROR_ON ((P == CL_TENSOR_PROPERTY_MUTABLE_DTYPE),
-                            CL_INVALID_TENSOR_PROPERTY,
+      POCL_RETURN_ERROR_ON ((P == CL_TENSOR_PROPERTY_MUTABLE_DTYPE_EXP),
+                            CL_INVALID_TENSOR_PROPERTY_EXP,
                             "CPU driver does not "
-                            "support CL_TENSOR_PROPERTY_MUTABLE_DTYPE\n");
-      POCL_RETURN_ERROR_ON ((P == CL_TENSOR_PROPERTY_MUTABLE_LAYOUT),
-                            CL_INVALID_TENSOR_PROPERTY,
+                            "support CL_TENSOR_PROPERTY_MUTABLE_DTYPE_EXP\n");
+      POCL_RETURN_ERROR_ON ((P == CL_TENSOR_PROPERTY_MUTABLE_LAYOUT_EXP),
+                            CL_INVALID_TENSOR_PROPERTY_EXP,
                             "CPU driver does not "
-                            "support CL_TENSOR_PROPERTY_MUTABLE_LAYOUT\n");
+                            "support CL_TENSOR_PROPERTY_MUTABLE_LAYOUT_EXP\n");
       // Mutable dims are supported by CPU
-      POCL_RETURN_ERROR_ON ((P != CL_TENSOR_PROPERTY_MUTABLE_SHAPE),
-                            CL_INVALID_TENSOR_PROPERTY,
+      POCL_RETURN_ERROR_ON ((P != CL_TENSOR_PROPERTY_MUTABLE_SHAPE_EXP),
+                            CL_INVALID_TENSOR_PROPERTY_EXP,
                             "Unknown Property %" PRIu64 "\n", P);
     }
 
@@ -783,7 +782,8 @@ pocl_cpu_validate_khr_gemm (cl_bool TransA,
       cl_bool IsAlphaOne
         = pocl_tensor_dtype_value_equals (TenA->dtype, Alpha, 1.0, 1, 1, 1, 1);
 
-      POCL_RETURN_ERROR_ON (IsAlphaOne == CL_FALSE, CL_INVALID_DBK_ATTRIBUTE,
+      POCL_RETURN_ERROR_ON (IsAlphaOne == CL_FALSE,
+                            CL_DBK_INVALID_ATTRIBUTE_EXP,
                             "CPU supports only Alpha == 1.0\n");
     }
   if (Beta)
@@ -795,7 +795,7 @@ pocl_cpu_validate_khr_gemm (cl_bool TransA,
         = pocl_tensor_dtype_value_equals (TenA->dtype, Beta, 0.0, 0, 0, 0, 0);
 
       POCL_RETURN_ERROR_ON ((!IsBetaOne && !IsBetaZero),
-                            CL_INVALID_DBK_ATTRIBUTE,
+                            CL_DBK_INVALID_ATTRIBUTE_EXP,
                             "CPU supports only Beta == 0.0 or 1.0\n");
     }
 
@@ -808,14 +808,14 @@ pocl_cpu_validate_khr_gemm (cl_bool TransA,
 
 int
 pocl_cpu_supports_dbk (cl_device_id device,
-                       BuiltinKernelId kernel_id,
+                       cl_dbk_id_exp kernel_id,
                        const void *kernel_attributes)
 {
   switch (kernel_id)
     {
 #ifdef HAVE_LIBXSMM
-    case POCL_CDBI_DBK_EXP_GEMM:
-    case POCL_CDBI_DBK_EXP_MATMUL:
+    case CL_DBK_GEMM_EXP:
+    case CL_DBK_MATMUL_EXP:
       {
         /* The following code checks for LIBXSMM specific requirements put
          * on the tensors that are part of the kernel attributes. */
@@ -824,8 +824,8 @@ pocl_cpu_supports_dbk (cl_device_id device,
       }
 #endif
 #ifdef HAVE_LIBJPEG_TURBO
-    case POCL_CDBI_DBK_EXP_JPEG_DECODE:
-    case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
+    case CL_DBK_JPEG_DECODE_EXP:
+    case CL_DBK_JPEG_ENCODE_EXP:
       return pocl_validate_dbk_attributes (kernel_id, kernel_attributes, NULL);
 #endif
 #ifdef HAVE_ONNXRT
@@ -834,7 +834,7 @@ pocl_cpu_supports_dbk (cl_device_id device,
 #endif
     default:
       POCL_RETURN_ERROR (
-        CL_UNSUPPORTED_DBK,
+        CL_DBK_UNSUPPORTED_EXP,
         "The CPU driver does not support DBK (kernel id %d).\n", kernel_id);
     }
 }
@@ -910,22 +910,24 @@ pocl_cpu_get_memsize (struct pocl_argument *arg, unsigned global_mem_id)
 #ifdef HAVE_LIBXSMM
 
 static cl_bool
-tensor_is_blas_row_major (const cl_tensor_desc *A)
+tensor_is_blas_row_major (const cl_tensor_desc_exp *A)
 {
   assert (A);
   assert (A->layout && "Does not have data layout!");
-  assert (
-    A->layout_type == CL_TENSOR_LAYOUT_BLAS
-    && "The method must not be called for tensors with non-BLAS data layouts");
-  const cl_tensor_layout_blas *BL = (const cl_tensor_layout_blas *)A->layout;
+  assert ((A->layout_type == CL_TENSOR_LAYOUT_BLAS_EXP
+           || A->layout_type == CL_TENSOR_LAYOUT_BLAS_PITCHED_EXP)
+          && "The method must not be called for tensors with non-BLAS data "
+             "layouts");
+  const cl_tensor_layout_blas_exp *BL
+    = (const cl_tensor_layout_blas_exp *)A->layout;
   assert (A->rank >= 2 && "Not a (batched) matrix!");
 
   return BL->leading_dims[0] == (A->rank - 1u) ? CL_TRUE : CL_FALSE;
 }
 
 static unsigned
-tensor_get_trailing_dim (const cl_tensor_desc *A,
-                         const cl_tensor_layout_blas *BL)
+tensor_get_trailing_dim (const cl_tensor_desc_exp *A,
+                         const cl_tensor_dim_exp *leading_dims)
 {
   assert (A);
   assert ((A->rank < (sizeof (unsigned) * 8))
@@ -933,7 +935,7 @@ tensor_get_trailing_dim (const cl_tensor_desc *A,
 
   unsigned DimSet = (1u << A->rank) - 1;
   for (unsigned I = 0; I < A->rank - 1; I++)
-    DimSet &= ~(1u << BL->leading_dims[I]);
+    DimSet &= ~(1u << leading_dims[I]);
 
   assert (__builtin_popcount (DimSet) == 1 && "Invalid data layout?");
   unsigned TrailingDim = __builtin_ctz (DimSet);
@@ -941,20 +943,35 @@ tensor_get_trailing_dim (const cl_tensor_desc *A,
   return TrailingDim;
 }
 
-static cl_tensor_stride
-tensor_get_blas_stride_in_elements (const cl_tensor_desc *A, unsigned Dim)
+static cl_tensor_stride_exp
+tensor_get_blas_stride_in_elements (const cl_tensor_desc_exp *A, unsigned Dim)
 {
   assert (A);
   assert (A->rank >= 2);
   assert (A->layout && "Does not have data layout!");
-  assert (
-    A->layout_type == CL_TENSOR_LAYOUT_BLAS
-    && "The method must not be called for tensors with non-BLAS data layouts");
-  const cl_tensor_layout_blas *BL = (const cl_tensor_layout_blas *)A->layout;
+  assert ((A->layout_type == CL_TENSOR_LAYOUT_BLAS_PITCHED_EXP
+           || A->layout_type == CL_TENSOR_LAYOUT_BLAS_EXP)
+          && "The method must not be called for tensors with non-BLAS data "
+             "layouts");
+
+  if (A->layout_type == CL_TENSOR_LAYOUT_BLAS_EXP)
+    {
+      const cl_tensor_layout_blas_exp *BL = A->layout;
+      cl_tensor_stride_exp stride = 1;
+      for (unsigned i = 0; i < Dim; i++)
+        {
+          assert (A->shape[BL->leading_dims[i]]);
+          stride *= A->shape[BL->leading_dims[i]];
+        }
+      return stride;
+    }
+
+  const cl_tensor_layout_blas_pitched_exp *BL = A->layout;
   if (Dim < (A->rank - 1))
     return BL->leading_strides[Dim];
   else
-    return BL->leading_strides[A->rank - 1] * tensor_get_trailing_dim (A, BL);
+    return BL->leading_strides[A->rank - 1]
+           * tensor_get_trailing_dim (A, BL->leading_dims);
 }
 
 static int
@@ -968,10 +985,10 @@ pocl_cpu_execute_gemm_anytype (char *Aptr,
                                size_t OutElemSize,
                                cl_bool TransposeA,
                                cl_bool TransposeB,
-                               const cl_tensor_desc *TenA,
-                               const cl_tensor_desc *TenB,
-                               const cl_tensor_desc *TenCout,
-                               const cl_tensor_desc *TenCIOpt,
+                               const cl_tensor_desc_exp *TenA,
+                               const cl_tensor_desc_exp *TenB,
+                               const cl_tensor_desc_exp *TenCout,
+                               const cl_tensor_desc_exp *TenCIOpt,
                                float Alpha,
                                float Beta)
 {
@@ -1098,19 +1115,19 @@ pocl_xsmm_execute_dbk (cl_program program,
   void *Cin = NULL;
   void *Cout = pocl_cpu_get_ptr (&arguments[2], mem_id);
   float Alpha = 1.0f, Beta = 0.0f;
-  cl_tensor_datatype InDtype, OutDtype;
+  cl_tensor_datatype_exp InDtype, OutDtype;
   cl_bool TransposeA, TransposeB;
-  const cl_tensor_desc *TenA;
-  const cl_tensor_desc *TenB;
-  const cl_tensor_desc *TenCout;
-  const cl_tensor_desc *TenCIOpt;
+  const cl_tensor_desc_exp *TenA;
+  const cl_tensor_desc_exp *TenB;
+  const cl_tensor_desc_exp *TenCout;
+  const cl_tensor_desc_exp *TenCIOpt;
 
   switch (meta->builtin_kernel_id)
     {
-    case POCL_CDBI_DBK_EXP_GEMM:
+    case CL_DBK_GEMM_EXP:
       {
-        const cl_dbk_attributes_exp_gemm *Attrs
-          = (const cl_dbk_attributes_exp_gemm *)meta->builtin_kernel_attrs;
+        const cl_dbk_attributes_gemm_exp *Attrs
+          = (const cl_dbk_attributes_gemm_exp *)meta->builtin_kernel_attrs;
         void *Cin = pocl_cpu_get_ptr (&arguments[2], mem_id);
         void *Cout = pocl_cpu_get_ptr (&arguments[3], mem_id);
         memcpy (&Alpha, arguments[4].value, sizeof (float));
@@ -1125,10 +1142,10 @@ pocl_xsmm_execute_dbk (cl_program program,
         TenCIOpt = &Attrs->c_in;
         break;
       }
-    case POCL_CDBI_DBK_EXP_MATMUL:
+    case CL_DBK_MATMUL_EXP:
       {
-        const cl_dbk_attributes_exp_matmul *Attrs
-          = (const cl_dbk_attributes_exp_matmul *)meta->builtin_kernel_attrs;
+        const cl_dbk_attributes_matmul_exp *Attrs
+          = (const cl_dbk_attributes_matmul_exp *)meta->builtin_kernel_attrs;
         InDtype = Attrs->a.dtype;
         OutDtype = Attrs->c.dtype;
         TransposeA = Attrs->trans_a;
@@ -1167,15 +1184,15 @@ pocl_cpu_execute_dbk (cl_program program,
   switch (meta->builtin_kernel_id)
     {
 #ifdef HAVE_LIBXSMM
-    case POCL_CDBI_DBK_EXP_GEMM:
-    case POCL_CDBI_DBK_EXP_MATMUL:
+    case CL_DBK_GEMM_EXP:
+    case CL_DBK_MATMUL_EXP:
       return pocl_xsmm_execute_dbk (program, kernel, meta, dev_i, arguments);
 #endif
 #ifdef HAVE_LIBJPEG_TURBO
-    case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
+    case CL_DBK_JPEG_ENCODE_EXP:
       return pocl_cpu_execute_dbk_khr_jpeg_encode (program, kernel, meta,
                                                    dev_i, arguments);
-    case POCL_CDBI_DBK_EXP_JPEG_DECODE:
+    case CL_DBK_JPEG_DECODE_EXP:
       return pocl_cpu_execute_dbk_khr_jpeg_decode (program, kernel, meta,
                                                    dev_i, arguments);
 #endif

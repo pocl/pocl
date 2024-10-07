@@ -1009,22 +1009,22 @@ pocl_basic_create_kernel (cl_device_id device,
     return CL_INVALID_KERNEL_NAME;
 
   int status = CL_SUCCESS;
-  BuiltinKernelId dbk_id = p->builtin_kernel_ids[dbk_index];
+  cl_dbk_id_exp dbk_id = p->builtin_kernel_ids[dbk_index];
   switch (dbk_id)
     {
 #ifdef HAVE_LIBXSMM
-    case POCL_CDBI_DBK_EXP_GEMM:
-    case POCL_CDBI_DBK_EXP_MATMUL:
+    case CL_DBK_GEMM_EXP:
+    case CL_DBK_MATMUL_EXP:
       return status;
 #endif
 #ifdef HAVE_LIBJPEG_TURBO
-    case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
+    case CL_DBK_JPEG_ENCODE_EXP:
       {
         k->data[device_i] = pocl_cpu_init_dbk_khr_jpeg_encode (
           p->builtin_kernel_attributes[dbk_index], &status);
         return status;
       }
-    case POCL_CDBI_DBK_EXP_JPEG_DECODE:
+    case CL_DBK_JPEG_DECODE_EXP:
       {
         k->data[device_i] = pocl_cpu_init_dbk_khr_jpeg_decode (
           p->builtin_kernel_attributes[dbk_index], &status);
@@ -1041,11 +1041,13 @@ pocl_basic_create_kernel (cl_device_id device,
       }
 #endif
     default:
-      POCL_RETURN_ERROR (CL_INVALID_DBK_ID,
+      POCL_RETURN_ERROR (CL_DBK_INVALID_ID_EXP,
                          "pocl_basic_create_kernel called with "
                          "unknown/unimplemented "
                          "DBK kernel.\n");
     }
+  assert (!"UNREACHABLE!");
+  return CL_DBK_INVALID_ID_EXP;
 }
 
 int
@@ -1064,21 +1066,21 @@ pocl_basic_free_kernel (cl_device_id device,
     return CL_INVALID_KERNEL_NAME;
 
   int status = CL_SUCCESS;
-  BuiltinKernelId dbk_id = p->builtin_kernel_ids[dbk_index];
+  cl_dbk_id_exp dbk_id = p->builtin_kernel_ids[dbk_index];
   switch (dbk_id)
     {
 #ifdef HAVE_LIBXSMM
-    case POCL_CDBI_DBK_EXP_GEMM:
-    case POCL_CDBI_DBK_EXP_MATMUL:
+    case CL_DBK_GEMM_EXP:
+    case CL_DBK_MATMUL_EXP:
       return status;
 #endif
 #ifdef HAVE_LIBJPEG_TURBO
-    case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
+    case CL_DBK_JPEG_ENCODE_EXP:
       {
         status = pocl_cpu_destroy_dbk_khr_jpeg_encode (&(k->data[device_i]));
         return status;
       }
-    case POCL_CDBI_DBK_EXP_JPEG_DECODE:
+    case CL_DBK_JPEG_DECODE_EXP:
       {
         status = pocl_cpu_destroy_dbk_khr_jpeg_decode (&(k->data[device_i]));
         return status;
@@ -1093,8 +1095,10 @@ pocl_basic_free_kernel (cl_device_id device,
       }
 #endif
     default:
-      POCL_RETURN_ERROR (CL_INVALID_DBK_ID,
+      POCL_RETURN_ERROR (CL_DBK_INVALID_ID_EXP,
                          "pocl_basic_free_kernel called with "
                          "unknown/unimplemented DBK kernel.\n");
     }
+  assert (!"UNREACHABLE");
+  return CL_DBK_INVALID_ID_EXP;
 }

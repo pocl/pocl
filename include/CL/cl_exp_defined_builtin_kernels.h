@@ -31,18 +31,43 @@
 #ifndef OPENCL_EXP_DEFINED_BUILTIN_KERNELS
 #define OPENCL_EXP_DEFINED_BUILTIN_KERNELS
 
+/* Based on spec v.0.3.1
+ * https://github.com/KhronosGroup/OpenCL-Docs/pull/1007
+ */
+
 #include "cl_exp_tensor.h"
 
 /* errors returned by the DBK API */
 /* TODO numeric values */
-#define CL_INVALID_DBK_ID          -2306
-#define CL_INVALID_DBK_ATTRIBUTE   -2307
-#define CL_UNSUPPORTED_DBK         -2308
-#define CL_INVALID_TENSOR_LAYOUT   -2309
-#define CL_INVALID_TENSOR_RANK     -2310
-#define CL_INVALID_TENSOR_SHAPE    -2311
-#define CL_INVALID_TENSOR_DATATYPE -2312
-#define CL_INVALID_TENSOR_PROPERTY -2313
+#define CL_DBK_INVALID_ID_EXP -2306
+#define CL_DBK_INVALID_ATTRIBUTE_EXP -2307
+#define CL_DBK_UNSUPPORTED_EXP -2308
+#define CL_INVALID_TENSOR_LAYOUT_EXP -2309
+#define CL_INVALID_TENSOR_RANK_EXP -2310
+#define CL_INVALID_TENSOR_SHAPE_EXP -2311
+#define CL_INVALID_TENSOR_DATATYPE_EXP -2312
+#define CL_INVALID_TENSOR_PROPERTY_EXP -2313
+
+/* cl_tensor_datatype_value is used to pass POD data to DBKs (like Alpha & Beta
+ * parameters to the GEMM); the actual type used is implied. In case of
+ * GEMM, the datatype is implied the same as COut Tensor datatype.
+ * TODO: this could be done with passing a void* pointer, however
+ * this avoids the need for malloc & memcpy */
+typedef union
+{
+  cl_char sc;
+  cl_uchar uc;
+  cl_short ss;
+  cl_ushort us;
+  cl_int si;
+  cl_uint ui;
+  cl_long sl;
+  cl_ulong ul;
+  cl_half fh;
+  cl_float ff;
+  cl_double fd;
+  void *raw;
+} cl_tensor_datatype_value_exp;
 
 /* list of fixed predefined builtin kernel IDs.
  * These should be allocated by the OpenCL extension process
@@ -88,25 +113,25 @@ typedef enum
   POCL_CDBI_MAGNITUDE_P512 = 35,
   POCL_CDBI_ORIENTED_NONMAX_P512 = 36,
   POCL_CDBI_GAUSSIAN3X3_P512 = 37,
-  POCL_CDBI_DBK_EXP_GEMM = 38,
-  POCL_CDBI_DBK_EXP_MATMUL = 39,
+  CL_DBK_GEMM_EXP = 38,
+  CL_DBK_MATMUL_EXP = 39,
   /* See 'Defined Built-in Kernels:JPEG:Usage' in dbk.rst for details on usage.
    */
-  POCL_CDBI_DBK_EXP_JPEG_ENCODE = 40,
+  CL_DBK_JPEG_ENCODE_EXP = 40,
   /* See 'Defined Built-in Kernels:JPEG:Usage' in dbk.rst for details on usage.
    */
-  POCL_CDBI_DBK_EXP_JPEG_DECODE = 41,
-  POCL_CDBI_DBK_EXP_ONNX_INFERENCE = 42,
+  CL_DBK_JPEG_DECODE_EXP = 41,
+  CL_DBK_ONNX_INFERENCE_EXP = 42,
   POCL_CDBI_LAST,
   POCL_CDBI_JIT_COMPILER = 0xFFFF
-} BuiltinKernelId;
+} cl_dbk_id_exp; /* NOTE: the spec (v0.3.1) has an error (_exp is missing). */
 
 /* for storing DBK property numbers and actual values */
-typedef cl_properties cl_dbk_properties;
+typedef cl_properties cl_dbk_properties_exp;
 
 /* Maximum relative error in ULPs allowed for the results respect to */
 /* infinitely precise result. */
-#define CL_DBK_PROPERTY_MAX_RELATIVE_ERROR 1 /* <float> */
+#define CL_DBK_PROPERTY_MAX_RELATIVE_ERROR_EXP 1 /* <float> */
 
 /* Allows the results of the DBK to fluctuate* with the exactly same
  * inputs across kernel launches.
@@ -114,23 +139,30 @@ typedef cl_properties cl_dbk_properties;
  * *: CL_DBK_PROPERTY_MAX_RELATIVE_ERROR must still be respected if present.
  *
  * Drivers may ignore this property. */
-#define CL_DBK_PROPERTY_NON_DETERMINISTIC 2
+#define CL_DBK_PROPERTY_NON_DETERMINISTIC_EXP 2
 
 /* Allow driver to trade off accuracy for speed by allowing it to flush
  * denormals to zero.
  *
  * Drivers may ignore this property, meaning the behavior is not guaranteed. */
-#define CL_DBK_PROPERTY_ALLOW_FTZ 3
+#define CL_DBK_PROPERTY_ALLOW_FTZ_EXP 3
 
-
-typedef cl_program (*clCreateProgramWithDefinedBuiltInKernels_fn) (
-    cl_context context, cl_uint num_devices, const cl_device_id *device_list,
-    cl_uint num_kernels, const BuiltinKernelId *kernel_ids, const char **kernel_names,
-    const void **kernel_attributes, cl_int *device_support, cl_int *errcode_ret);
+typedef cl_program (*clCreateProgramWithDefinedBuiltInKernelsEXP_fn) (
+  cl_context context,
+  cl_uint num_devices,
+  const cl_device_id *device_list,
+  cl_uint num_kernels,
+  const cl_dbk_id_exp *kernel_ids,
+  const char **kernel_names,
+  const void **kernel_attributes,
+  cl_int *device_support,
+  cl_int *errcode_ret);
 
 /*! \brief Creates a cl_program with Defined Builtin Kernels.
  *
  * The program then must be built before using clCreateKernel.
+ *
+ * NOTE: spec (v0.3.1) has an error (EXP suffix is missing).
  *
  * @param context [in] Context in which to create the program.
  *
@@ -139,7 +171,7 @@ typedef cl_program (*clCreateProgramWithDefinedBuiltInKernels_fn) (
  *
  * @param num_kernels [in] The number of kernels in the program
  * @param kernel_ids [in] Array of num_kernels integers, each one being a DBK
- *        identifier from the existing values of BuiltinKernelId enum
+ *        identifier from the existing values of cl_dbk_id_exp enum
  * @param kernel_names [in] Array of num_kernels C strings, these are
  *        caller-provided names for each DBK that can be later used with OpenCL
  *        API calls to create, query, clone etc the kernels of the program.
@@ -151,53 +183,53 @@ typedef cl_program (*clCreateProgramWithDefinedBuiltInKernels_fn) (
  *        not support any of the DBK+properties combo
  * @param errcode_ret [out] error
  */
-
 extern CL_API_ENTRY cl_program CL_API_CALL
-clCreateProgramWithDefinedBuiltInKernels (cl_context context,
-                                          cl_uint num_devices,
-                                          const cl_device_id *device_list,
-                                          cl_uint num_kernels,
-                                          const BuiltinKernelId *kernel_ids,
-                                          const char **kernel_names,
-                                          const void **kernel_attributes,
-                                          cl_int *device_support,
-                                          cl_int *errcode_ret);
+clCreateProgramWithDefinedBuiltInKernelsEXP (cl_context context,
+                                             cl_uint num_devices,
+                                             const cl_device_id *device_list,
+                                             cl_uint num_kernels,
+                                             const cl_dbk_id_exp *kernel_ids,
+                                             const char **kernel_names,
+                                             const void **kernel_attributes,
+                                             cl_int *device_support,
+                                             cl_int *errcode_ret);
 
 /* Maximum number of DBK properties */
-#define CL_MAX_DBK_PROPERTIES 16
+/* NOTE: this is CL_MAX_DBK_PROPERTIES in the v0.3.1 spec which is an error. */
+#define CL_DBK_MAX_PROPERTIES_EXP 16
 
-/* Name: "exp_gemm"
+/* Name: "gemm_exp"
  * Attributes for General multiply operation for matrices.
  * TODO: adopt Vulkan-like extensible struct ?
  * Note that this DBK can also perform matrix-vector operations if
  * tensor shapes are set accordingly. */
-typedef struct _cl_dbk_attributes_exp_gemm
+typedef struct _cl_dbk_attributes_gemm_exp
 {
-  cl_tensor_desc a, b, c_in, c_out;
+  cl_tensor_desc_exp a, b, c_in, c_out;
   cl_bool trans_a, trans_b;
   /* Union, real Type depends on the tensor operands. E.g.
    * CL_TENSOR_FLOAT --> cl_float, CL_TENSOR_DOUBLE --> cl_double. */
-  cl_tensor_datatype_value alpha, beta;
+  cl_tensor_datatype_value_exp alpha, beta;
   /* 0-terminated array of DBK properties */
-  cl_dbk_properties kernel_props[CL_MAX_DBK_PROPERTIES];
-} cl_dbk_attributes_exp_gemm;
+  cl_dbk_properties_exp kernel_props[CL_DBK_MAX_PROPERTIES_EXP];
+} cl_dbk_attributes_gemm_exp;
 
-/* Name: "exp_matmul"
- * Attributes for Matrix multiplication. Identical to exp_gemm
+/* Name: "matmul_exp"
+ * Attributes for Matrix multiplication. Identical to gemm_exp
  * with alpha and beta set to 1 and 0, respectively.
  * TODO: adopt Vulkan-like extensible struct ?
  * Note that this DBK can also perform matrix-vector operations if
  * tensor shapes are set accordingly. */
-typedef struct _cl_dbk_attributes_exp_matmul
+typedef struct _cl_dbk_attributes_matmul_exp
 {
-  cl_tensor_desc a, b, c;
+  cl_tensor_desc_exp a, b, c;
   cl_bool trans_a, trans_b;
   /* 0-terminated array */
-  cl_dbk_properties kernel_props[CL_MAX_DBK_PROPERTIES];
-} cl_dbk_attributes_exp_matmul;
+  cl_dbk_properties_exp kernel_props[CL_DBK_MAX_PROPERTIES_EXP];
+} cl_dbk_attributes_matmul_exp;
 
 /**
- * Name: exp_jpeg_encode
+ * Name: jpeg_encode_exp
  *
  * \param width needs to be within the JPEG specification.
  * \param height needs to be within the JPEG specification.
@@ -208,25 +240,25 @@ typedef struct
   cl_int width;
   cl_int height;
   cl_int quality;
-} cl_dbk_attributes_exp_jpeg_encode;
+} cl_dbk_attributes_jpeg_encode_exp;
 
-/* Name: "exp_onnx_inference"
+/* Name: "onnx_inference_exp"
  * Attributes for constructing an inference session for ONNX format ML models.
  */
-typedef struct _cl_dbk_attributes_exp_onnx_inference
+typedef struct _cl_dbk_attributes_onnx_inference_exp
 {
   size_t model_size;
   const char *model_data;
   size_t num_inputs;
   const char **input_tensor_names;
-  const cl_tensor_desc *input_tensor_descs;
+  const cl_tensor_desc_exp *input_tensor_descs;
   size_t num_outputs;
   const char **output_tensor_names;
-  const cl_tensor_desc *output_tensor_descs;
+  const cl_tensor_desc_exp *output_tensor_descs;
   size_t num_initializers;
   const char **initializer_names;
-  const cl_tensor_desc *initializer_tensor_descs;
+  const cl_tensor_desc_exp *initializer_tensor_descs;
   const char **initializer_data;
-} cl_dbk_attributes_exp_onnx_inference;
+} cl_dbk_attributes_onnx_inference_exp;
 
 #endif /* OPENCL_EXP_DEFINED_BUILTIN_KERNELS */

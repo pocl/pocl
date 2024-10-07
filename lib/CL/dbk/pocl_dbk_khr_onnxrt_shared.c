@@ -24,13 +24,13 @@
 #include "pocl_tensor_util.h"
 
 /** Construct a deep copy of the given attributes */
-cl_dbk_attributes_exp_onnx_inference *
+cl_dbk_attributes_onnx_inference_exp *
 pocl_copy_onnx_inference_dbk_attributes (
-  const cl_dbk_attributes_exp_onnx_inference *src)
+  const cl_dbk_attributes_onnx_inference_exp *src)
 {
   int err;
-  cl_dbk_attributes_exp_onnx_inference *attrs
-    = malloc (sizeof (cl_dbk_attributes_exp_onnx_inference));
+  cl_dbk_attributes_onnx_inference_exp *attrs
+    = malloc (sizeof (cl_dbk_attributes_onnx_inference_exp));
   if (attrs == NULL)
     return NULL;
   attrs->model_size = src->model_size;
@@ -47,7 +47,7 @@ pocl_copy_onnx_inference_dbk_attributes (
   if (attrs->input_tensor_names == NULL)
     goto ERROR;
   attrs->input_tensor_descs
-      = calloc (attrs->num_inputs, sizeof (cl_tensor_desc));
+    = calloc (attrs->num_inputs, sizeof (cl_tensor_desc_exp));
   if (attrs->input_tensor_descs == NULL)
     goto ERROR;
   for (size_t i = 0; i < attrs->num_inputs; ++i)
@@ -55,10 +55,10 @@ pocl_copy_onnx_inference_dbk_attributes (
       attrs->input_tensor_names[i] = strdup (src->input_tensor_names[i]);
       if (attrs->input_tensor_names[i] == NULL)
         goto ERROR;
-      memcpy ((cl_tensor_desc *)&attrs->input_tensor_descs[i],
-              &src->input_tensor_descs[i], sizeof (cl_tensor_desc));
+      memcpy ((cl_tensor_desc_exp *)&attrs->input_tensor_descs[i],
+              &src->input_tensor_descs[i], sizeof (cl_tensor_desc_exp));
       err = pocl_copy_tensor_desc_layout (
-        (cl_tensor_desc *)&attrs->input_tensor_descs[i],
+        (cl_tensor_desc_exp *)&attrs->input_tensor_descs[i],
         &src->input_tensor_descs[i]);
       if (err != CL_SUCCESS)
         goto ERROR;
@@ -69,7 +69,7 @@ pocl_copy_onnx_inference_dbk_attributes (
   if (attrs->output_tensor_names == NULL)
     goto ERROR;
   attrs->output_tensor_descs
-      = calloc (attrs->num_outputs, sizeof (cl_tensor_desc));
+    = calloc (attrs->num_outputs, sizeof (cl_tensor_desc_exp));
   if (attrs->output_tensor_descs == NULL)
     goto ERROR;
   for (size_t i = 0; i < attrs->num_outputs; ++i)
@@ -77,10 +77,10 @@ pocl_copy_onnx_inference_dbk_attributes (
       attrs->output_tensor_names[i] = strdup (src->output_tensor_names[i]);
       if (attrs->output_tensor_names[i] == NULL)
         goto ERROR;
-      memcpy ((cl_tensor_desc *)&attrs->output_tensor_descs[i],
-              &src->output_tensor_descs[i], sizeof (cl_tensor_desc));
+      memcpy ((cl_tensor_desc_exp *)&attrs->output_tensor_descs[i],
+              &src->output_tensor_descs[i], sizeof (cl_tensor_desc_exp));
       err = pocl_copy_tensor_desc_layout (
-        (cl_tensor_desc *)&attrs->output_tensor_descs[i],
+        (cl_tensor_desc_exp *)&attrs->output_tensor_descs[i],
         &src->output_tensor_descs[i]);
       if (err != CL_SUCCESS)
         goto ERROR;
@@ -98,7 +98,7 @@ pocl_copy_onnx_inference_dbk_attributes (
       if (attrs->initializer_data == NULL)
         goto ERROR;
       attrs->initializer_tensor_descs
-          = calloc (attrs->num_initializers, sizeof (cl_tensor_desc));
+        = calloc (attrs->num_initializers, sizeof (cl_tensor_desc_exp));
       if (attrs->initializer_tensor_descs == NULL)
         goto ERROR;
       for (size_t i = 0; i < attrs->num_initializers; ++i)
@@ -106,10 +106,11 @@ pocl_copy_onnx_inference_dbk_attributes (
           attrs->initializer_names[i] = strdup (src->initializer_names[i]);
           if (attrs->initializer_names[i] == NULL)
             goto ERROR;
-          memcpy ((cl_tensor_desc *)&attrs->initializer_tensor_descs[i],
-                  &src->initializer_tensor_descs[i], sizeof (cl_tensor_desc));
+          memcpy ((cl_tensor_desc_exp *)&attrs->initializer_tensor_descs[i],
+                  &src->initializer_tensor_descs[i],
+                  sizeof (cl_tensor_desc_exp));
           err = pocl_copy_tensor_desc_layout (
-            (cl_tensor_desc *)&attrs->initializer_tensor_descs[i],
+            (cl_tensor_desc_exp *)&attrs->initializer_tensor_descs[i],
             &src->initializer_tensor_descs[i]);
           if (err != CL_SUCCESS)
             goto ERROR;
@@ -139,7 +140,7 @@ pocl_copy_onnx_inference_dbk_attributes (
  * or string literals. */
 void
 pocl_release_onnx_inference_dbk_attributes (
-  cl_dbk_attributes_exp_onnx_inference *attrs)
+  cl_dbk_attributes_onnx_inference_exp *attrs)
 {
   free ((char *)attrs->model_data);
 
@@ -147,9 +148,9 @@ pocl_release_onnx_inference_dbk_attributes (
     {
       if (attrs->input_tensor_descs)
         {
-          free (attrs->input_tensor_descs[i].layout);
-          memset ((cl_tensor_desc *)&(attrs->input_tensor_descs[i]), 0,
-                  sizeof (cl_tensor_desc));
+          free ((void *)attrs->input_tensor_descs[i].layout);
+          memset ((cl_tensor_desc_exp *)&(attrs->input_tensor_descs[i]), 0,
+                  sizeof (cl_tensor_desc_exp));
         }
 
       if (attrs->input_tensor_names)
@@ -158,16 +159,16 @@ pocl_release_onnx_inference_dbk_attributes (
           memset (&attrs->input_tensor_names[i], 0, sizeof (char *));
         }
     }
-  free ((cl_tensor_desc *)attrs->input_tensor_descs);
+  free ((cl_tensor_desc_exp *)attrs->input_tensor_descs);
   POCL_MEM_FREE (attrs->input_tensor_names);
 
   for (size_t i = 0; i < attrs->num_outputs; ++i)
     {
       if (attrs->output_tensor_descs)
         {
-          free (attrs->output_tensor_descs[i].layout);
-          memset ((cl_tensor_desc *)&(attrs->output_tensor_descs[i]), 0,
-                  sizeof (cl_tensor_desc));
+          free ((void *)attrs->output_tensor_descs[i].layout);
+          memset ((cl_tensor_desc_exp *)&(attrs->output_tensor_descs[i]), 0,
+                  sizeof (cl_tensor_desc_exp));
         }
 
       if (attrs->output_tensor_names)
@@ -176,7 +177,7 @@ pocl_release_onnx_inference_dbk_attributes (
           memset (&attrs->output_tensor_names[i], 0, sizeof (char *));
         }
     }
-  free ((cl_tensor_desc *)attrs->output_tensor_descs);
+  free ((cl_tensor_desc_exp *)attrs->output_tensor_descs);
   POCL_MEM_FREE (attrs->output_tensor_names);
 
   if (attrs->num_initializers != 0)
@@ -186,18 +187,18 @@ pocl_release_onnx_inference_dbk_attributes (
           free ((char *)attrs->initializer_names[i]);
           memset (&attrs->initializer_names[i], 0, sizeof (char *));
 
-          free (attrs->initializer_tensor_descs[i].layout);
-          memset ((cl_tensor_desc *)&(attrs->initializer_tensor_descs[i]), 0,
-                  sizeof (cl_tensor_desc));
+          free ((void *)attrs->initializer_tensor_descs[i].layout);
+          memset ((cl_tensor_desc_exp *)&(attrs->initializer_tensor_descs[i]),
+                  0, sizeof (cl_tensor_desc_exp));
 
           free ((char *)attrs->initializer_data[i]);
           memset (&attrs->initializer_data[i], 0, sizeof (char *));
         }
     }
   POCL_MEM_FREE (attrs->initializer_names);
-  free ((cl_tensor_desc *)attrs->initializer_tensor_descs);
+  free ((cl_tensor_desc_exp *)attrs->initializer_tensor_descs);
   POCL_MEM_FREE (attrs->initializer_data);
 
-  memset (attrs, 0, sizeof (cl_dbk_attributes_exp_onnx_inference));
+  memset (attrs, 0, sizeof (cl_dbk_attributes_onnx_inference_exp));
   POCL_MEM_FREE (attrs);
 }

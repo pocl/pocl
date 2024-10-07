@@ -101,7 +101,7 @@ main (int _argc, char **_argv)
                                  { num_elements },
                                  &tensor_layout,
                                  CL_TENSOR_LAYOUT_ML };
-  BuiltinKernelId dbk_id = POCL_CDBI_DBK_EXP_ONNX_INFERENCE;
+  cl_dbk_id_exp dbk_id = POCL_CDBI_DBK_EXP_ONNX_INFERENCE;
   const char *dbk_name = "exp_onnx_inference";
   const char *input_tensor_names[] = { "A", "B" };
   const char *output_tensor_names[] = { "C" };

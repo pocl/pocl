@@ -352,11 +352,9 @@ ERROR:
 }
 POsym (clCreateBuffer);
 
-
-
 static cl_int
 pocl_parse_cl_mem_properties (const cl_mem_properties *prop_ptr,
-                              const cl_tensor_desc **tdesc)
+                              const cl_tensor_desc_exp **tdesc)
 {
 
   if (!prop_ptr)
@@ -373,9 +371,9 @@ pocl_parse_cl_mem_properties (const cl_mem_properties *prop_ptr,
     {
       switch (*prop_ptr)
         {
-        case CL_MEM_TENSOR:
+        case CL_MEM_TENSOR_EXP:
           {
-            *tdesc = (const cl_tensor_desc *)prop_ptr[1];
+            *tdesc = (const cl_tensor_desc_exp *)prop_ptr[1];
             prop_ptr += 2; /* = CL_MEM_TENSOR and its value. */
 
             POCL_RETURN_ERROR_ON ((pocl_check_tensor_desc (*tdesc)),
@@ -401,7 +399,7 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBufferWithProperties)(
 CL_API_SUFFIX__VERSION_3_0
 {
   int errcode;
-  const cl_tensor_desc *tdesc = NULL;
+  const cl_tensor_desc_exp *tdesc = NULL;
 
   errcode = pocl_parse_cl_mem_properties (properties, &tdesc);
   if (errcode != CL_SUCCESS)
@@ -423,7 +421,7 @@ CL_API_SUFFIX__VERSION_3_0
   if (tdesc)
     {
       mem->num_properties = 1;
-      mem->properties[0] = CL_MEM_TENSOR;
+      mem->properties[0] = CL_MEM_TENSOR_EXP;
       POCL_GOTO_ERROR_ON ((pocl_copy_tensor_desc2mem (mem, tdesc)),
                           CL_OUT_OF_HOST_MEMORY,
                           "Couldn't allocate space for tensor description.");

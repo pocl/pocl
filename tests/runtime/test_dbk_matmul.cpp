@@ -58,7 +58,7 @@ static std::tuple<cl::Platform, cl::Device> findDeviceWithMatmulDBK() noexcept {
         continue;
 
       std::string BiKs = D.getInfo<CL_DEVICE_BUILT_IN_KERNELS>();
-      if (BiKs.find("exp_matmul") != std::string::npos) {
+      if (BiKs.find("matmul_exp") != std::string::npos) {
         std::cerr << "Selected device: " << D.getInfo<CL_DEVICE_NAME>() << "\n";
         return std::make_tuple(P, D);
       }
@@ -70,66 +70,68 @@ static std::tuple<cl::Platform, cl::Device> findDeviceWithMatmulDBK() noexcept {
 }
 
 class TensorLayoutBLAS {
-  std::vector<cl_tensor_dim> LeadingDims;
+  std::vector<cl_tensor_dim_exp> LeadingDims;
   std::vector<size_t> LeadingStrides;
-  cl_tensor_layout_blas Layout;
+  cl_tensor_layout_blas_pitched_exp Layout;
 
 public:
-  TensorLayoutBLAS(std::initializer_list<cl_tensor_dim> TheLeadingDims,
+  TensorLayoutBLAS(std::initializer_list<cl_tensor_dim_exp> TheLeadingDims,
                    std::initializer_list<size_t> TheLeadingStrides)
       : LeadingDims(TheLeadingDims), LeadingStrides(TheLeadingStrides) {
-    memcpy(Layout.leading_dims, LeadingDims.data(), LeadingDims.size()*sizeof(cl_tensor_dim) );
+    memcpy(Layout.leading_dims, LeadingDims.data(),
+           LeadingDims.size() * sizeof(cl_tensor_dim_exp));
     memcpy(Layout.leading_strides, LeadingStrides.data(), LeadingStrides.size()*sizeof(size_t) );
   }
 
-  cl_tensor_layout_blas *get() noexcept { return &Layout; }
+  cl_tensor_layout_blas_pitched_exp *get() noexcept { return &Layout; }
   // In elements.
   size_t getSize() const noexcept { return LeadingStrides.back(); }
   unsigned getNumLeadingDims() const noexcept { return LeadingDims.size(); }
-  const std::vector<cl_tensor_dim> &getLeadingDims() const noexcept {
+  const std::vector<cl_tensor_dim_exp> &getLeadingDims() const noexcept {
     return LeadingDims;
   }
 };
 
 class TensorDesc {
-  std::vector<cl_tensor_shape> Shape;
+  std::vector<cl_tensor_shape_exp> Shape;
   TensorLayoutBLAS Layout;
-  cl_tensor_desc Desc;
+  cl_tensor_desc_exp Desc;
 
 public:
-  TensorDesc(std::initializer_list<cl_tensor_shape> TheShape,
-             cl_tensor_datatype DType, const TensorLayoutBLAS &TheLayout)
+  TensorDesc(std::initializer_list<cl_tensor_shape_exp> TheShape,
+             cl_tensor_datatype_exp DType, const TensorLayoutBLAS &TheLayout)
       : Shape(TheShape), Layout(TheLayout) {
 
     assert(Layout.getNumLeadingDims() == 0 ||
            Layout.getNumLeadingDims() == Shape.size() - 1);
 
     Desc.rank = Shape.size();
-    assert(Desc.rank <= CL_MEM_MAX_TENSOR_RANK);
+    assert(Desc.rank <= CL_MEM_MAX_TENSOR_RANK_EXP);
     memset(Desc.shape, 0, sizeof(Desc.shape));
-    memcpy(Desc.shape, Shape.data(), Shape.size() * sizeof(cl_tensor_shape));
+    memcpy(Desc.shape, Shape.data(),
+           Shape.size() * sizeof(cl_tensor_shape_exp));
 
     Desc.dtype = DType;
     Desc.layout = nullptr;
-    Desc.layout_type = CL_TENSOR_LAYOUT_BLAS;
+    Desc.layout_type = CL_TENSOR_LAYOUT_BLAS_PITCHED_EXP;
     Desc.properties[0] = 0;
 
     if (Layout.getNumLeadingDims())
       Desc.layout = Layout.get();
   }
 
-  const cl_tensor_desc *get() const noexcept { return &Desc; }
+  const cl_tensor_desc_exp *get() const noexcept { return &Desc; }
 
   unsigned rank() const noexcept { return Shape.size(); }
 
   // In bytes.
   unsigned elementSize() const noexcept {
     switch (Desc.dtype) {
-    case CL_TENSOR_DTYPE_FP64:
+    case CL_TENSOR_DTYPE_FP64_EXP:
       return 8;
-    case CL_TENSOR_DTYPE_FP32:
+    case CL_TENSOR_DTYPE_FP32_EXP:
       return 4;
-    case CL_TENSOR_DTYPE_FP16:
+    case CL_TENSOR_DTYPE_FP16_EXP:
       return 2;
     default:
       return 1;
@@ -157,7 +159,7 @@ template <typename T>
 static cl::Buffer createTensor(cl::Context &Ctx, const TensorDesc &TDesc,
                                T *HostPtr = nullptr, cl_int *Status = nullptr) {
   cl_mem_properties Props[] = {
-      CL_MEM_TENSOR, reinterpret_cast<cl_mem_properties>(TDesc.get()), 0};
+      CL_MEM_TENSOR_EXP, reinterpret_cast<cl_mem_properties>(TDesc.get()), 0};
 
   size_t BufSize = TDesc.getStorageSize();
   return cl::Buffer(clCreateBufferWithProperties(
@@ -170,8 +172,8 @@ cl::Platform Platform;
 cl::Device Dev;
 cl::Context Ctx;
 cl::CommandQueue CmdQ;
-clCreateProgramWithDefinedBuiltInKernels_fn createProgramWithDBKs;
-cl_dbk_attributes_exp_matmul MatmulAttrs;
+clCreateProgramWithDefinedBuiltInKernelsEXP_fn createProgramWithDBKs;
+cl_dbk_attributes_matmul_exp MatmulAttrs;
 
 void doFloatMatmul(bool ColumnMajor, unsigned Transpose, unsigned M, unsigned N,
                    unsigned K, std::initializer_list<float> AData, unsigned Lda,
@@ -185,13 +187,13 @@ void doFloatMatmul(bool ColumnMajor, unsigned Transpose, unsigned M, unsigned N,
   TensorLayoutBLAS BTLayout = TensorLayoutBLAS({ColumnMajor ? 0u : 1u}, {Ldb});
   TensorLayoutBLAS CTLayout = TensorLayoutBLAS({ColumnMajor ? 0u : 1u}, {Ldc});
 
-  TensorDesc ATDesc({M, K}, CL_TENSOR_DTYPE_FP32, ATLayout);
-  TensorDesc BTDesc({K, N}, CL_TENSOR_DTYPE_FP32, BTLayout);
-  TensorDesc CTDesc({M, N}, CL_TENSOR_DTYPE_FP32, CTLayout);
+  TensorDesc ATDesc({M, K}, CL_TENSOR_DTYPE_FP32_EXP, ATLayout);
+  TensorDesc BTDesc({K, N}, CL_TENSOR_DTYPE_FP32_EXP, BTLayout);
+  TensorDesc CTDesc({M, N}, CL_TENSOR_DTYPE_FP32_EXP, CTLayout);
 
-  memcpy(&MatmulAttrs.a, ATDesc.get(), sizeof(cl_tensor_desc));
-  memcpy(&MatmulAttrs.b, BTDesc.get(), sizeof(cl_tensor_desc));
-  memcpy(&MatmulAttrs.c, CTDesc.get(), sizeof(cl_tensor_desc));
+  memcpy(&MatmulAttrs.a, ATDesc.get(), sizeof(cl_tensor_desc_exp));
+  memcpy(&MatmulAttrs.b, BTDesc.get(), sizeof(cl_tensor_desc_exp));
+  memcpy(&MatmulAttrs.c, CTDesc.get(), sizeof(cl_tensor_desc_exp));
   MatmulAttrs.trans_a = !!(Transpose & TRANSPOSE_A);
   MatmulAttrs.trans_b = !!(Transpose & TRANSPOSE_B);
   MatmulAttrs.kernel_props[0] = 0;
@@ -200,10 +202,10 @@ void doFloatMatmul(bool ColumnMajor, unsigned Transpose, unsigned M, unsigned N,
   constexpr const char ExpextedKernelName[] = "my_matmul";
   cl_int Status;
   cl_device_id Devices[1] = {Dev()};
-  BuiltinKernelId IDs[1] = {BuiltinKernelId::POCL_CDBI_DBK_EXP_MATMUL};
+  cl_dbk_id_exp IDs[1] = {CL_DBK_MATMUL_EXP};
   const char *Names[1] = {ExpextedKernelName};
   cl_int DeviceStatus[1] = {0};
-  cl_dbk_attributes_exp_matmul *Attrs[1] = {&MatmulAttrs};
+  cl_dbk_attributes_matmul_exp *Attrs[1] = {&MatmulAttrs};
   cl_program Yolo =
       createProgramWithDBKs(Ctx(), 1, Devices, 1, IDs, Names,
                             (const void **)Attrs, DeviceStatus, &Status);
@@ -274,9 +276,9 @@ int main() {
   Ctx = cl::Context(Dev);
 
   cl_int Status = CL_SUCCESS;
-  createProgramWithDBKs = (clCreateProgramWithDefinedBuiltInKernels_fn)
+  createProgramWithDBKs = (clCreateProgramWithDefinedBuiltInKernelsEXP_fn)
       clGetExtensionFunctionAddressForPlatform(
-          Platform(), "clCreateProgramWithDefinedBuiltInKernels");
+          Platform(), "clCreateProgramWithDefinedBuiltInKernelsEXP");
   EXPECT(createProgramWithDBKs != nullptr);
 
   CmdQ = cl::CommandQueue(Ctx, 0, &Status);

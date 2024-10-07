@@ -74,7 +74,7 @@ DBDevice::DBDevice(const std::string &DBPath) : DB_(DBPath) {
 
 DBDevice::~DBDevice() { delete Dev_; }
 
-void DBDevice::programBIKernelBitstream(BuiltinKernelId BikID) {
+void DBDevice::programBIKernelBitstream(cl_dbk_id_exp BikID) {
 
   const AlmaIFBitstreamDatabaseManager::ProgrammingFiles &BitstreamToProgram =
       DB_.getBitstreamFile(BikID, UsedDeviceType_);
@@ -101,7 +101,7 @@ void DBDevice::programBIKernelBitstream(BuiltinKernelId BikID) {
   LoadedBitstreamPath_ = BitstreamPath;
 }
 
-void DBDevice::programBIKernelFirmware(BuiltinKernelId BikID) {
+void DBDevice::programBIKernelFirmware(cl_dbk_id_exp BikID) {
 
   const AlmaIFBitstreamDatabaseManager::ProgrammingFiles &BitstreamToProgram =
       DB_.getFirmwareFile(BikID, UsedDeviceType_);
@@ -169,6 +169,6 @@ size_t DBDevice::pointerDeviceOffset(pocl_mem_identifier *P) {
 
 void DBDevice::discoverDeviceParameters() { Dev_->discoverDeviceParameters(); }
 
-std::vector<BuiltinKernelId> DBDevice::supportedBuiltinKernels() {
+std::vector<cl_dbk_id_exp> DBDevice::supportedBuiltinKernels() {
   return DB_.supportedBuiltinKernels(UsedDeviceType_);
 }

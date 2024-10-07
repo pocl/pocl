@@ -54,37 +54,37 @@ extern "C"
   typedef int
   pocl_validate_khr_gemm_callback_t (cl_bool TransA,
                                      cl_bool TransB,
-                                     const cl_tensor_desc *TenA,
-                                     const cl_tensor_desc *TenB,
-                                     const cl_tensor_desc *TenCIOpt,
-                                     const cl_tensor_desc *TenCOut,
-                                     const cl_tensor_datatype_value *Alpha,
-                                     const cl_tensor_datatype_value *Beta);
+                                     const cl_tensor_desc_exp *TenA,
+                                     const cl_tensor_desc_exp *TenB,
+                                     const cl_tensor_desc_exp *TenCIOpt,
+                                     const cl_tensor_desc_exp *TenCOut,
+                                     const cl_tensor_datatype_value_exp *Alpha,
+                                     const cl_tensor_datatype_value_exp *Beta);
 
   /* GemmCB can be NULL, in which case the "generic" validation is run,
    * which checks the basic sanity. If it's non-NULL it's expected to check
    * device-specific validity. */
   POCL_EXPORT
-  int pocl_validate_dbk_attributes (BuiltinKernelId kernel_id,
+  int pocl_validate_dbk_attributes (cl_dbk_id_exp kernel_id,
                                     const void *kernel_attributes,
                                     pocl_validate_khr_gemm_callback_t GemmCB);
 
-  void *pocl_copy_defined_builtin_attributes (BuiltinKernelId kernel_id,
+  void *pocl_copy_defined_builtin_attributes (cl_dbk_id_exp kernel_id,
                                               const void *kernel_attributes);
 
-  int pocl_release_defined_builtin_attributes (BuiltinKernelId kernel_id,
+  int pocl_release_defined_builtin_attributes (cl_dbk_id_exp kernel_id,
                                                void *kernel_attributes);
 
-  POCL_EXPORT uint64_t pocl_serialize_cl_tensor_desc (const cl_tensor_desc *t,
-                                                      char **buf);
-  POCL_EXPORT uint64_t pocl_serialize_dbk_attribs (BuiltinKernelId id,
+  POCL_EXPORT uint64_t
+  pocl_serialize_cl_tensor_desc (const cl_tensor_desc_exp *t, char **buf);
+  POCL_EXPORT uint64_t pocl_serialize_dbk_attribs (cl_dbk_id_exp id,
                                                    const void *attributes,
                                                    char **buf);
 
-  POCL_EXPORT int pocl_deserialize_cl_tensor_desc (cl_tensor_desc *t,
+  POCL_EXPORT int pocl_deserialize_cl_tensor_desc (cl_tensor_desc_exp *t,
                                                    const char **buf);
 
-  POCL_EXPORT int pocl_deserialize_dbk_attribs (BuiltinKernelId *id,
+  POCL_EXPORT int pocl_deserialize_dbk_attribs (cl_dbk_id_exp *id,
                                                 void **attributes,
                                                 const char **buf);
 #ifdef __cplusplus

@@ -133,15 +133,14 @@ main (int argc, char const *argv[])
         }
   }
 
-  clCreateProgramWithDefinedBuiltInKernels_fn createProgramWithDBKs;
-  createProgramWithDBKs = (clCreateProgramWithDefinedBuiltInKernels_fn)
+  clCreateProgramWithDefinedBuiltInKernelsEXP_fn createProgramWithDBKs;
+  createProgramWithDBKs = (clCreateProgramWithDefinedBuiltInKernelsEXP_fn)
     clGetExtensionFunctionAddressForPlatform (
-      platform, "clCreateProgramWithDefinedBuiltInKernels");
+      platform, "clCreateProgramWithDefinedBuiltInKernelsEXP");
   TEST_ASSERT (createProgramWithDBKs != NULL);
-  BuiltinKernelId dbk_ids[]
-    = { POCL_CDBI_DBK_EXP_JPEG_ENCODE, POCL_CDBI_DBK_EXP_JPEG_DECODE };
-  const char *kernel_names[] = { "exp_jpeg_encode", "exp_jpeg_decode" };
-  cl_dbk_attributes_exp_jpeg_encode encode_attributes = { width, height, 80 };
+  cl_dbk_id_exp dbk_ids[] = { CL_DBK_JPEG_ENCODE_EXP, CL_DBK_JPEG_DECODE_EXP };
+  const char *kernel_names[] = { "jpeg_encode_exp", "jpeg_decode_exp" };
+  cl_dbk_attributes_jpeg_encode_exp encode_attributes = { width, height, 80 };
   const void *attributes[] = { &encode_attributes, NULL };
   cl_int device_support[] = { 0, 0 };
   cl_program program = createProgramWithDBKs (

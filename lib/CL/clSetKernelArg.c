@@ -53,32 +53,32 @@ dump_hex (const char *data, size_t size, char *buffer)
 }
 
 static int
-pocl_verify_dbk_kernel_arg (cl_mem buf, const cl_tensor_desc *desc)
+pocl_verify_dbk_kernel_arg (cl_mem buf, const cl_tensor_desc_exp *desc)
 {
   POCL_RETURN_ERROR_ON ((buf->is_tensor == CL_FALSE), CL_INVALID_ARG_VALUE,
                         "the cl_mem argument must be a tensor\n");
 
-  const cl_tensor_properties *P = desc->properties;
+  const cl_tensor_properties_exp *props = desc->properties;
   char tensor_mutable_layout = 0;
   char tensor_mutable_shape = 0;
   char tensor_mutable_dtype = 0;
-  while (*P)
+  while (*props)
     {
-      switch (*P)
+      switch (*props)
         {
-        case CL_TENSOR_PROPERTY_MUTABLE_SHAPE:
+        case CL_TENSOR_PROPERTY_MUTABLE_SHAPE_EXP:
           tensor_mutable_shape = 1;
           break;
-        case CL_TENSOR_PROPERTY_MUTABLE_DTYPE:
+        case CL_TENSOR_PROPERTY_MUTABLE_DTYPE_EXP:
           tensor_mutable_dtype = 1;
           break;
-        case CL_TENSOR_PROPERTY_MUTABLE_LAYOUT:
+        case CL_TENSOR_PROPERTY_MUTABLE_LAYOUT_EXP:
           tensor_mutable_layout = 1;
           break;
         default:
           break;
         }
-      ++P;
+      ++props;
     }
 
   POCL_RETURN_ERROR_ON ((buf->tensor_rank != desc->rank), CL_INVALID_ARG_VALUE,
@@ -97,13 +97,17 @@ pocl_verify_dbk_kernel_arg (cl_mem buf, const cl_tensor_desc *desc)
   int cmp = 0;
   switch (desc->layout_type)
     {
-    case CL_TENSOR_LAYOUT_ML:
+    case CL_TENSOR_LAYOUT_ML_EXP:
       cmp = memcmp (buf->tensor_layout, desc->layout,
-                    sizeof (cl_tensor_layout_ml));
+                    sizeof (cl_tensor_layout_ml_exp));
       break;
-    case CL_TENSOR_LAYOUT_BLAS:
+    case CL_TENSOR_LAYOUT_BLAS_EXP:
       cmp = memcmp (buf->tensor_layout, desc->layout,
-                    sizeof (cl_tensor_layout_blas));
+                    sizeof (cl_tensor_layout_blas_exp));
+      break;
+    case CL_TENSOR_LAYOUT_BLAS_PITCHED_EXP:
+      cmp = memcmp (buf->tensor_layout, desc->layout,
+                    sizeof (cl_tensor_layout_blas_pitched_exp));
       break;
     default:
       break;
@@ -128,10 +132,10 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
 {
   switch (meta->builtin_kernel_id)
     {
-    case POCL_CDBI_DBK_EXP_GEMM:
+    case CL_DBK_GEMM_EXP:
       {
-        const cl_dbk_attributes_exp_gemm *Attrs
-          = (cl_dbk_attributes_exp_gemm *)meta->builtin_kernel_attrs;
+        const cl_dbk_attributes_gemm_exp *Attrs
+          = (cl_dbk_attributes_gemm_exp *)meta->builtin_kernel_attrs;
         if (arg_index == 0)
           return pocl_verify_dbk_kernel_arg (buf, &Attrs->a);
         if (arg_index == 1)
@@ -143,10 +147,10 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
         POCL_RETURN_ERROR (CL_INVALID_ARG_INDEX, "invalid arg index to "
                                                  "POCL_CDBI_DBK_EXP_GEMM");
       }
-    case POCL_CDBI_DBK_EXP_MATMUL:
+    case CL_DBK_MATMUL_EXP:
       {
-        const cl_dbk_attributes_exp_matmul *Attrs
-          = (const cl_dbk_attributes_exp_matmul *)meta->builtin_kernel_attrs;
+        const cl_dbk_attributes_matmul_exp *Attrs
+          = (const cl_dbk_attributes_matmul_exp *)meta->builtin_kernel_attrs;
         if (arg_index == 0)
           return pocl_verify_dbk_kernel_arg (buf, &Attrs->a);
         if (arg_index == 1)
@@ -156,13 +160,13 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
         POCL_RETURN_ERROR (CL_INVALID_ARG_INDEX, "invalid arg index to "
                                                  "POCL_CDBI_DBK_EXP_MATMUL");
       }
-    case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
-    case POCL_CDBI_DBK_EXP_JPEG_DECODE:
+    case CL_DBK_JPEG_ENCODE_EXP:
+    case CL_DBK_JPEG_DECODE_EXP:
       return CL_SUCCESS;
-    case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
+    case CL_DBK_ONNX_INFERENCE_EXP:
       {
-        const cl_dbk_attributes_exp_onnx_inference *attrs
-          = (const cl_dbk_attributes_exp_onnx_inference *)
+        const cl_dbk_attributes_onnx_inference_exp *attrs
+          = (const cl_dbk_attributes_onnx_inference_exp *)
               meta->builtin_kernel_attrs;
 
         /* Input offsets */

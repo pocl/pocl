@@ -1299,7 +1299,7 @@ extern pocl_kernel_metadata_t pocl_BIDescriptors[BIKERNELS];
 
 int
 pocl_remote_supports_dbk (cl_device_id device,
-                          BuiltinKernelId kernel_id,
+                          cl_dbk_id_exp kernel_id,
                           const void *kernel_attributes)
 {
   if (strstr (device->extensions, "cl_exp_defined_builtin_kernels") != NULL)

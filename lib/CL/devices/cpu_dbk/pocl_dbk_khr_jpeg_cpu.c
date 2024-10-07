@@ -51,8 +51,8 @@ pocl_cpu_execute_dbk_khr_jpeg_encode (cl_program program,
                                       struct pocl_argument *arguments)
 {
   cl_device_id dev = program->devices[dev_i];
-  cl_dbk_attributes_exp_jpeg_encode *attributes
-    = (cl_dbk_attributes_exp_jpeg_encode *)meta->builtin_kernel_attrs;
+  cl_dbk_attributes_jpeg_encode_exp *attributes
+    = (cl_dbk_attributes_jpeg_encode_exp *)meta->builtin_kernel_attrs;
   unsigned mem_id = dev->global_mem_id;
   void *image = pocl_cpu_get_ptr (&arguments[0], mem_id);
   void *jpeg = pocl_cpu_get_ptr (&arguments[1], mem_id);
@@ -102,8 +102,8 @@ pocl_cpu_init_dbk_khr_jpeg_encode (void const *attributes, int *status)
     }
 
   int jpeg_status;
-  cl_dbk_attributes_exp_jpeg_encode *jpeg_attr
-    = (cl_dbk_attributes_exp_jpeg_encode *)attributes;
+  cl_dbk_attributes_jpeg_encode_exp *jpeg_attr
+    = (cl_dbk_attributes_jpeg_encode_exp *)attributes;
   jpeg_status = tj3Set (state->tj_handle, TJPARAM_QUALITY, jpeg_attr->quality);
   if (jpeg_status != 0)
     {

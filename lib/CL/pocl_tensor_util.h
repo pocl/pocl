@@ -24,27 +24,28 @@
 #include "pocl_cl.h"
 
 int pocl_check_tensor_layout (cl_uint rank,
-                              const cl_tensor_shape *shape,
-                              cl_tensor_layout_type layout_type,
+                              const cl_tensor_shape_exp *shape,
+                              cl_tensor_layout_type_exp layout_type,
                               const void *layout);
 
-int pocl_check_tensor_desc (const cl_tensor_desc *tdesc);
+int pocl_check_tensor_desc (const cl_tensor_desc_exp *tdesc);
 
-int pocl_copy_tensor_desc2mem (cl_mem mem, const cl_tensor_desc *tdesc);
+int pocl_copy_tensor_desc2mem (cl_mem mem, const cl_tensor_desc_exp *tdesc);
 
-int pocl_copy_tensor_desc_layout (cl_tensor_desc *dest,
-                                  const cl_tensor_desc *src);
+int pocl_copy_tensor_desc_layout (cl_tensor_desc_exp *dest,
+                                  const cl_tensor_desc_exp *src);
 
-int pocl_tensor_type_is_int (cl_tensor_datatype T);
+int pocl_tensor_type_is_int (cl_tensor_datatype_exp dtype);
 
-int pocl_tensor_type_size (cl_tensor_datatype T);
+int pocl_tensor_type_size (cl_tensor_datatype_exp dtype);
 
-size_t pocl_tensor_data_size (const cl_tensor_desc *t);
+size_t pocl_tensor_data_size (const cl_tensor_desc_exp *t);
 
-cl_bool pocl_tensor_dtype_value_equals (const cl_tensor_datatype DType,
-                                        const cl_tensor_datatype_value *Value,
-                                        cl_double doubleConst,
-                                        cl_long longConst,
-                                        cl_ulong ulongConst,
-                                        char fp8Const,
-                                        char int4Const);
+cl_bool
+pocl_tensor_dtype_value_equals (const cl_tensor_datatype_exp dtype,
+                                const cl_tensor_datatype_value_exp *value,
+                                cl_double double_const,
+                                cl_long long_const,
+                                cl_ulong ulong_const,
+                                char fp8_const,
+                                char int4_const);
