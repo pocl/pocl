@@ -1,6 +1,6 @@
 ###################
 
-FROM amd64/ubuntu:22.04
+FROM amd64/ubuntu:24.04
 
 ARG GIT_COMMIT=main
 ARG GH_PR
