@@ -1,4 +1,4 @@
-FROM amd64/ubuntu:22.04
+FROM amd64/ubuntu:22.04@sha256:3d1556a8a18cf5307b121e0a98e93f1ddf1f3f8e092f1fddfd941254785b95d7
 
 ARG GIT_COMMIT=main
 ARG GH_PR
