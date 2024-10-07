@@ -1,6 +1,9 @@
 ---
 name: Weekly full CTS runs
 
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
   schedule:
@@ -16,17 +19,17 @@ env:
   CCACHE_COMPRESS: "true"
   CCACHE_COMPRESSLEVEL: "1"
   CCACHE_MAXSIZE: "25000M"
-  CCACHE_BASEDIR: ${{ github.workspace }}
-  CCACHE_DIR: /home/github/ccache_storage
-#  CCACHE_BASEDIR: "${{ github.workspace }}"
-#  CCACHE_DIR: "${{ github.workspace }}/../../../../ccache_storage"
-#  EXAMPLES_DIR: "${{ github.workspace }}/../../../../examples"
 
 jobs:
   cpu_cts:
     name: LLVM ${{ matrix.llvm }} - CPU ${{ matrix.config }}
     runs-on: [self-hosted, linux, x64, full_cts_cpu, full_cts_spirv_cpu]
     timeout-minutes: 1600
+    # CPU runners have action runner directly in the home directory
+    env:
+      CCACHE_DIR: "${{ github.workspace }}/../../../ccache_storage"
+      EXAMPLES_DIR: "${{ github.workspace }}/../../../examples"
+      TSAN_OPTIONS: "second_deadlock_stack=1"
     strategy:
       fail-fast: false
       matrix:
@@ -34,19 +37,21 @@ jobs:
         config: [cts_full, cts_full_spirv]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - name: Run CMake
         id: cmake
         run: |
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
+          mkdir -p ${EXAMPLES_DIR}/build_${{ matrix.llvm }}_${{ matrix.config }}
+          mkdir -p ${EXAMPLES_DIR}/source
 
           BUILD_FLAGS="-O2 -march=native"
           cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
           -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
           -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/usr/bin/llvm-spirv-${{ matrix.llvm }} \
-          -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build_cts -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON \
+          -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_${{ matrix.llvm }}_${{ matrix.config }} -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON \
           -B ${{ github.workspace }}/build ${{ github.workspace }}
 
       - name: Run Build
@@ -76,6 +81,9 @@ jobs:
     name: LLVM ${{ matrix.llvm }} - LevelZero ${{ matrix.config }}
     runs-on: [self-hosted, linux, x64, full_cts_l0, full_cts_spirv_l0]
     timeout-minutes: 1600
+    env:
+      CCACHE_DIR: "${{ github.workspace }}/../../../../ccache_storage"
+      EXAMPLES_DIR: "${{ github.workspace }}/../../../../examples"
     strategy:
       fail-fast: false
       matrix:
@@ -83,26 +91,28 @@ jobs:
         config: [cts_full, cts_full_spirv]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - name: Run CMake
         id: cmake
         run: |
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
+          mkdir -p ${EXAMPLES_DIR}/build_${{ matrix.llvm }}_${{ matrix.config }}
+          mkdir -p ${EXAMPLES_DIR}/source
 
           BUILD_FLAGS="-O2 -march=native"
           cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
           -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
           -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/usr/bin/llvm-spirv-${{ matrix.llvm }} \
           -DENABLE_LEVEL0=1 -DENABLE_HOST_CPU_DEVICES=0 -DSTATIC_LLVM=1 \
-          -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build_cts -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON \
+          -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_${{ matrix.llvm }}_${{ matrix.config }} -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON \
           -B ${{ github.workspace }}/build ${{ github.workspace }}
 
       - name: Run Build
         id: build
         run: |
-          cd ${{ github.workspace }}/build && make -j$(nproc) && make -j$(nproc) prepare_examples
+          cd ${{ github.workspace }}/build && make -j4 && make -j4 prepare_examples
 
       - name: Run Tests
         env:
