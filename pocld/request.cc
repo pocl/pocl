@@ -245,6 +245,7 @@ bool Request::read(int fd) {
     request->extra_size2 = req->m.build_program.options_len;
     /* intentional fall through to setting payload (i.e. binary) size */
   case MessageType_BuildProgramWithBuiltins:
+  case MessageType_BuildProgramWithDefinedBuiltins:
     request->extra_size = req->m.build_program.payload_size;
     break;
   /*****************************/
