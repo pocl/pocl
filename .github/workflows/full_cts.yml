@@ -1,6 +1,9 @@
 ---
 name: Weekly full CTS runs
 
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
   schedule:
