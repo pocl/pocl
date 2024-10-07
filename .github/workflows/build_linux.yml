@@ -1,5 +1,5 @@
 ---
-name: Main test matrix
+name: Linux test matrix
 
 permissions:
   contents: read
