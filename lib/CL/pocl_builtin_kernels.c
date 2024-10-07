@@ -26,6 +26,7 @@
 #include "pocl_tensor_util.h"
 
 #include "dbk/pocl_dbk_khr_jpeg_shared.h"
+#include "dbk/pocl_dbk_khr_onnxrt_shared.h"
 
 #include <string.h>
 
@@ -419,6 +420,11 @@ pocl_init_builtin_kernel_metadata ()
               BI_ARG_READ_BUF ("uint8_t*", "jpeg"),
               BI_ARG_READ_BUF ("int64_t*", "jpeg_size"),
               BI_ARG_WRITE_BUF ("uint8_t*", "image"), ),
+    BIKD_DBK (POCL_CDBI_DBK_EXP_ONNX_INFERENCE, "exp_onnx_inference", 4,
+              BI_ARG_READ_BUF ("unsigned long*", "input_offsets"),
+              BI_ARG_READ_BUF ("unsigned char*", "inputs"),
+              BI_ARG_READ_BUF ("unsigned long*", "output_offsets"),
+              BI_ARG_WRITE_BUF ("unsigned char*", "outputs"), ),
 
   };
   memcpy (pocl_BIDescriptors, temporary_BIDescriptors,
@@ -833,10 +839,31 @@ pocl_validate_dbk_attributes (BuiltinKernelId kernel_id,
     case POCL_CDBI_DBK_EXP_JPEG_DECODE:
     case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
       return pocl_validate_khr_jpeg (kernel_id, kernel_attributes);
-    default:
+#ifdef HAVE_ONNXRT
+    case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
+      {
+        /* TODO: validate I/O tensor list */
+        const cl_dbk_attributes_exp_onnx_inference *attrs
+          = (cl_dbk_attributes_exp_onnx_inference *)kernel_attributes;
+
+        if (attrs->num_initializers == 0
+            && (attrs->initializer_names != NULL
+                || attrs->initializer_data != NULL
+                || attrs->initializer_tensor_descs != NULL))
+          return CL_INVALID_ARG_VALUE;
+        if (attrs->num_initializers == 1
+            && (attrs->initializer_names == NULL
+                || attrs->initializer_data == NULL
+                || attrs->initializer_tensor_descs == NULL))
+          return CL_INVALID_ARG_VALUE;
+
+        return CL_SUCCESS;
+      }
+#endif
+  default:
       break;
     }
-  POCL_RETURN_ERROR_ON (1, CL_INVALID_DBK_ID, "Unknown builtin kernel ID: %u",
+  POCL_RETURN_ERROR_ON (1, CL_INVALID_DBK_ID, "Unknown builtin kernel ID: %u.\n",
                         kernel_id);
 }
 
@@ -882,7 +909,11 @@ pocl_copy_defined_builtin_attributes (BuiltinKernelId kernel_id,
     case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
     case POCL_CDBI_DBK_EXP_JPEG_DECODE:
       return pocl_copy_dbk_attributes_khr_jpeg (kernel_id, kernel_attributes);
-    default:
+#ifdef HAVE_ONNXRT
+    case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
+      return pocl_copy_onnx_inference_dbk_attributes (kernel_attributes);
+#endif
+  default:
       break;
     }
   POCL_MSG_ERR ("Unknown builtin kernel ID: %u", kernel_id);
@@ -920,9 +951,386 @@ pocl_release_defined_builtin_attributes (BuiltinKernelId kernel_id,
     case POCL_CDBI_DBK_EXP_JPEG_DECODE:
       return pocl_release_dbk_attributes_khr_jpeg (kernel_id,
                                                    kernel_attributes);
+#ifdef HAVE_ONNXRT
+    case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
+      {
+        pocl_release_onnx_inference_dbk_attributes (kernel_attributes);
+        return CL_SUCCESS;
+      }
+#endif
     default:
       break;
     }
-  POCL_RETURN_ERROR_ON (1, CL_INVALID_DBK_ID, "Unknown builtin kernel ID: %u",
+  POCL_RETURN_ERROR_ON (1, CL_INVALID_DBK_ID, "Unknown builtin kernel ID: %u.\n",
                         kernel_id);
 }
+
+/** Helper functions for (de)serializing dbk attributes in the remote driver */
+
+/******************************* SERIALIZATION *******************************/
+#define SERIALIZE(name)                                                       \
+  do                                                                          \
+    {                                                                         \
+      if (buf)                                                                \
+        {                                                                     \
+          memcpy (*buf, &(name), sizeof (name));                              \
+          *buf += sizeof (name);                                              \
+        }                                                                     \
+      total += sizeof (name);                                                 \
+    }                                                                         \
+  while (0)
+
+#define COPY(name, size)                                                      \
+  do                                                                          \
+    {                                                                         \
+      if (buf)                                                                \
+        {                                                                     \
+          memcpy (*buf, (name), size);                                        \
+          *buf += size;                                                       \
+        }                                                                     \
+      total += size;                                                          \
+    }                                                                         \
+  while (0)
+
+uint64_t
+pocl_serialize_cl_tensor_desc (const cl_tensor_desc *t, char **buf)
+{
+  uint64_t total = 0;
+  uint8_t has_layout = t->layout != NULL;
+
+  SERIALIZE (t->rank);
+  SERIALIZE (t->dtype);
+  SERIALIZE (t->properties);
+  SERIALIZE (t->shape);
+  SERIALIZE (t->layout_type);
+  SERIALIZE (has_layout);
+  if (has_layout)
+    {
+      switch (t->layout_type)
+        {
+        case CL_TENSOR_LAYOUT_BLAS:
+          {
+            cl_tensor_layout_blas *layout = t->layout;
+            SERIALIZE (layout->leading_dims);
+            SERIALIZE (layout->leading_strides);
+            break;
+          }
+        case CL_TENSOR_LAYOUT_ML:
+          {
+            cl_tensor_layout_ml *layout = t->layout;
+            SERIALIZE (layout->ml_type);
+            break;
+          }
+        default:
+          break;
+        }
+    }
+
+  return total;
+}
+
+uint64_t
+pocl_serialize_dbk_attribs (BuiltinKernelId id,
+                            const void *attributes,
+                            char **buf)
+{
+  /* First item shall be the BuiltinKernelId */
+  uint64_t total = 0;
+  uint64_t dbk_id = id;
+
+  SERIALIZE (dbk_id);
+  switch (id)
+    {
+    case POCL_CDBI_DBK_EXP_GEMM:
+      {
+        const cl_dbk_attributes_exp_gemm *attr = attributes;
+        total += pocl_serialize_cl_tensor_desc (&attr->a, buf);
+        total += pocl_serialize_cl_tensor_desc (&attr->b, buf);
+        total += pocl_serialize_cl_tensor_desc (&attr->c_in, buf);
+        total += pocl_serialize_cl_tensor_desc (&attr->c_out, buf);
+        SERIALIZE (attr->trans_a);
+        SERIALIZE (attr->trans_b);
+        SERIALIZE (attr->alpha);
+        SERIALIZE (attr->beta);
+        SERIALIZE (attr->kernel_props);
+        break;
+      }
+    case POCL_CDBI_DBK_EXP_MATMUL:
+      {
+        const cl_dbk_attributes_exp_matmul *attr = attributes;
+        total += pocl_serialize_cl_tensor_desc (&attr->a, buf);
+        total += pocl_serialize_cl_tensor_desc (&attr->b, buf);
+        total += pocl_serialize_cl_tensor_desc (&attr->c, buf);
+        SERIALIZE (attr->trans_a);
+        SERIALIZE (attr->trans_b);
+        SERIALIZE (attr->kernel_props);
+        break;
+      }
+    case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
+      {
+        const cl_dbk_attributes_exp_jpeg_encode *attr = attributes;
+        SERIALIZE (attr->width);
+        SERIALIZE (attr->height);
+        SERIALIZE (attr->quality);
+        break;
+      }
+    case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
+      {
+        const cl_dbk_attributes_exp_onnx_inference *attr = attributes;
+        uint64_t model_size = attr->model_size;
+        uint64_t num_inputs = attr->num_inputs;
+        uint64_t num_outputs = attr->num_outputs;
+        uint64_t num_initializers = attr->num_initializers;
+        SERIALIZE (model_size);
+        COPY (attr->model_data, model_size);
+        SERIALIZE (num_inputs);
+        for (size_t i = 0; i < num_inputs; ++i)
+          {
+            uint64_t name_len = strlen (attr->input_tensor_names[i]);
+            SERIALIZE (name_len);
+            COPY (attr->input_tensor_names[i], name_len);
+            total += pocl_serialize_cl_tensor_desc (
+              &(attr->input_tensor_descs[i]), buf);
+          }
+        SERIALIZE (num_outputs);
+        for (size_t i = 0; i < num_outputs; ++i)
+          {
+            uint64_t name_len = strlen (attr->output_tensor_names[i]);
+            SERIALIZE (name_len);
+            COPY (attr->output_tensor_names[i], name_len);
+            total += pocl_serialize_cl_tensor_desc (
+              &(attr->output_tensor_descs[i]), buf);
+          }
+        SERIALIZE (num_initializers);
+        for (size_t i = 0; i < num_initializers; ++i)
+          {
+            uint64_t name_len = strlen (attr->initializer_names[i]);
+            uint64_t data_len
+              = pocl_tensor_data_size (&(attr->initializer_tensor_descs[i]));
+            SERIALIZE (name_len);
+            COPY (attr->initializer_names[i], name_len);
+            total += pocl_serialize_cl_tensor_desc (
+              &(attr->initializer_tensor_descs[i]), buf);
+            SERIALIZE (data_len);
+            COPY (attr->initializer_data[i], data_len);
+          }
+        break;
+      }
+    default:
+      break;
+    }
+
+  return total;
+}
+
+#undef COPY
+#undef SERIALIZE
+
+/****************************** DESERIALIZATION ******************************/
+
+#define DESERIALIZE(name)                                                     \
+  do                                                                          \
+    {                                                                         \
+      memcpy (&(name), *buf, sizeof (name));                                  \
+      *buf += sizeof (name);                                                  \
+    }                                                                         \
+  while (0)
+
+#define COPY(name, size)                                                      \
+  do                                                                          \
+    {                                                                         \
+      if (buf)                                                                \
+        {                                                                     \
+          memcpy ((name), *buf, size);                                        \
+          *buf += size;                                                       \
+        }                                                                     \
+    }                                                                         \
+  while (0)
+
+int
+pocl_deserialize_cl_tensor_desc (cl_tensor_desc *t, const char **buf)
+{
+  uint8_t has_layout = 0;
+  DESERIALIZE (t->rank);
+  DESERIALIZE (t->dtype);
+  DESERIALIZE (t->properties);
+  DESERIALIZE (t->shape);
+  DESERIALIZE (t->layout_type);
+  DESERIALIZE (has_layout);
+  if (has_layout)
+    {
+      switch (t->layout_type)
+        {
+        case CL_TENSOR_LAYOUT_BLAS:
+          {
+            cl_tensor_layout_blas *layout
+              = malloc (sizeof (cl_tensor_layout_blas));
+            DESERIALIZE (layout->leading_dims);
+            DESERIALIZE (layout->leading_strides);
+            t->layout = layout;
+            break;
+          }
+        case CL_TENSOR_LAYOUT_ML:
+          {
+            cl_tensor_layout_ml *layout
+              = malloc (sizeof (cl_tensor_layout_ml));
+            DESERIALIZE (layout->ml_type);
+            t->layout = layout;
+            break;
+          }
+        default:
+          break;
+        }
+    }
+  else
+    t->layout = NULL;
+
+  return 1;
+}
+
+int
+pocl_deserialize_dbk_attribs (BuiltinKernelId *id,
+                              void **attributes,
+                              const char **buf)
+{
+  uint64_t dbk_id;
+  DESERIALIZE (dbk_id);
+  *id = (BuiltinKernelId)dbk_id;
+  switch (dbk_id)
+    {
+    case POCL_CDBI_DBK_EXP_GEMM:
+      {
+        cl_dbk_attributes_exp_gemm *attr
+          = malloc (sizeof (cl_dbk_attributes_exp_gemm));
+        pocl_deserialize_cl_tensor_desc (&attr->a, buf);
+        pocl_deserialize_cl_tensor_desc (&attr->b, buf);
+        pocl_deserialize_cl_tensor_desc (&attr->c_in, buf);
+        pocl_deserialize_cl_tensor_desc (&attr->c_out, buf);
+        DESERIALIZE (attr->trans_a);
+        DESERIALIZE (attr->trans_b);
+        DESERIALIZE (attr->alpha);
+        DESERIALIZE (attr->beta);
+        DESERIALIZE (attr->kernel_props);
+        *attributes = attr;
+        break;
+      }
+    case POCL_CDBI_DBK_EXP_MATMUL:
+      {
+        cl_dbk_attributes_exp_matmul *attr
+          = malloc (sizeof (cl_dbk_attributes_exp_matmul));
+        pocl_deserialize_cl_tensor_desc (&attr->a, buf);
+        pocl_deserialize_cl_tensor_desc (&attr->b, buf);
+        pocl_deserialize_cl_tensor_desc (&attr->c, buf);
+        DESERIALIZE (attr->trans_a);
+        DESERIALIZE (attr->trans_b);
+        DESERIALIZE (attr->kernel_props);
+        *attributes = attr;
+        break;
+      }
+    case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
+      {
+        cl_dbk_attributes_exp_jpeg_encode *attr
+          = malloc (sizeof (cl_dbk_attributes_exp_jpeg_encode));
+        DESERIALIZE (attr->width);
+        DESERIALIZE (attr->height);
+        DESERIALIZE (attr->quality);
+        *attributes = attr;
+        break;
+      }
+    case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
+      {
+        cl_dbk_attributes_exp_onnx_inference *attr
+          = calloc (1, sizeof (cl_dbk_attributes_exp_onnx_inference));
+        uint64_t model_size;
+        uint64_t num_inputs;
+        uint64_t num_outputs;
+        uint64_t num_initializers;
+        DESERIALIZE (model_size);
+        attr->model_size = model_size;
+        if (model_size > 0)
+          {
+            attr->model_data = malloc (model_size);
+            COPY ((char *)attr->model_data, model_size);
+          }
+        DESERIALIZE (num_inputs);
+        attr->num_inputs = num_inputs;
+        if (num_inputs > 0)
+          {
+            attr->input_tensor_names = malloc (sizeof (char *) * num_inputs);
+            attr->input_tensor_descs
+              = malloc (sizeof (cl_tensor_desc) * num_inputs);
+            for (size_t i = 0; i < num_inputs; ++i)
+              {
+                uint64_t name_len;
+
+                DESERIALIZE (name_len);
+                attr->input_tensor_names[i] = malloc (name_len + 1);
+                COPY ((char *)attr->input_tensor_names[i], name_len);
+                ((char *)attr->input_tensor_names[i])[name_len] = 0;
+                pocl_deserialize_cl_tensor_desc (
+                  (cl_tensor_desc *)&(attr->input_tensor_descs[i]), buf);
+              }
+          }
+
+        DESERIALIZE (num_outputs);
+        attr->num_outputs = num_outputs;
+        if (num_outputs > 0)
+          {
+            attr->output_tensor_names = malloc (sizeof (char *) * num_outputs);
+            attr->output_tensor_descs
+              = malloc (sizeof (cl_tensor_desc) * num_outputs);
+            for (size_t i = 0; i < num_outputs; ++i)
+              {
+                uint64_t name_len;
+
+                DESERIALIZE (name_len);
+                attr->output_tensor_names[i] = malloc (name_len + 1);
+                COPY ((char *)attr->output_tensor_names[i], name_len);
+                ((char *)attr->output_tensor_names[i])[name_len] = 0;
+                pocl_deserialize_cl_tensor_desc (
+                  (cl_tensor_desc *)&(attr->output_tensor_descs[i]), buf);
+              }
+          }
+
+        DESERIALIZE (num_initializers);
+        attr->num_initializers = num_initializers;
+        if (num_initializers > 0)
+          {
+            attr->initializer_names
+              = malloc (sizeof (char *) * num_initializers);
+            attr->initializer_tensor_descs
+              = malloc (sizeof (cl_tensor_desc) * num_initializers);
+            attr->initializer_data
+              = malloc (sizeof (char *) * num_initializers);
+            for (size_t i = 0; i < num_initializers; ++i)
+              {
+                uint64_t name_len;
+                uint64_t data_len;
+
+                DESERIALIZE (name_len);
+                attr->initializer_names[i] = malloc (name_len + 1);
+                COPY ((char *)attr->initializer_names[i], name_len);
+                ((char *)attr->initializer_names[i])[name_len] = 0;
+                pocl_deserialize_cl_tensor_desc (
+                  (cl_tensor_desc *)&(attr->initializer_tensor_descs[i]), buf);
+                DESERIALIZE (data_len);
+                if (data_len > 0)
+                  {
+                    attr->initializer_data[i] = malloc (data_len);
+                    COPY ((char *)attr->initializer_data[i], data_len);
+                  }
+              }
+          }
+
+        *attributes = attr;
+        break;
+      }
+    default:
+      break;
+    }
+
+  return 1;
+}
+
+#undef COPY
+#undef DESERIALIZE
