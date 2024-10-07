@@ -81,9 +81,9 @@ jobs:
             mkdir -p ${EXAMPLES_DIR}/build_tier1
             runCMake "-DENABLE_TESTSUITES=AMDSDK3.0;piglit;conformance;PyOpenCL;IntelSVM" -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_tier1
           elif [ "${{ matrix.config }}" == "chipstar" ]; then
-            mkdir -p ${EXAMPLES_DIR}/build_chipstar
+            mkdir -p ${EXAMPLES_DIR}/build_chipstar_${{ matrix.llvm }}
             mkdir -p ${EXAMPLES_DIR}/source
-            runCMake -DENABLE_TESTSUITES=chipStar -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_chipstar
+            runCMake -DENABLE_TESTSUITES=chipStar -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_chipstar_${{ matrix.llvm }}
           elif [ "${{ matrix.config }}" == "asan" ]; then
             runCMake -DENABLE_ASAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DDEVELOPER_MODE=OFF
           elif [ "${{ matrix.config }}" == "tsan" ]; then
