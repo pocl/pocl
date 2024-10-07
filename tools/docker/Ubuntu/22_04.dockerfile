@@ -11,6 +11,10 @@ ENV TERM=dumb
 ENV TZ=Etc/UTC
 ENV DEBIAN_FRONTEND=noninteractive
 
+# these are only necessary for 22.04 to upgrade ocl-icd to 2.3.x (which supports OpenCL 3.0)
+COPY ocl-icd-ubuntu-ppa.list /etc/apt/sources.list.d/
+COPY ocl-icd_ubuntu_ppa.gpg /etc/apt/trusted.gpg.d/
+
 RUN apt update
 RUN apt upgrade -y
 
