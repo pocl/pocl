@@ -37,7 +37,7 @@ jobs:
         config: [cts_full, cts_full_spirv]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - name: Run CMake
         id: cmake
@@ -91,7 +91,7 @@ jobs:
         config: [cts_full, cts_full_spirv]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - name: Run CMake
         id: cmake
