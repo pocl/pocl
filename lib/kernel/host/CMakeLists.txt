@@ -289,7 +289,8 @@ if(HOST_CPU_ENABLE_CL_KHR_FP16)
     round.cl
     sin.cl
     sqrt.cl
-    trunc.cl)
+    trunc.cl
+    isinf_half.cl)
 endif()
 
 
@@ -340,10 +341,6 @@ if(ENABLE_SLEEF)
   set(KERNEL_SOURCES ${SOURCES_WITH_SLEEF})
 else()
   set(KERNEL_SOURCES ${SOURCES_GENERIC})
-endif()
-
-if(HOST_CPU_ENABLE_CL_KHR_FP16)
-  list(APPEND KERNEL_SOURCES isinf_half.cl)
 endif()
 
 if(HOST_DEVICE_CL_VERSION_MAJOR GREATER_EQUAL 2)
