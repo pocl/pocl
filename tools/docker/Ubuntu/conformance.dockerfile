@@ -1,11 +1,9 @@
-###################
-
-FROM amd64/ubuntu:22.04
+FROM amd64/ubuntu:24.04@sha256:74f92a6b3589aa5cac6028719aaac83de4037bad4371ae79ba362834389035aa
 
 ARG GIT_COMMIT=main
 ARG GH_PR
 ARG GH_SLUG=pocl/pocl
-ARG LLVM_VERSION=14
+ARG LLVM_VERSION=17
 
 LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Ubuntu version=1.0
 
@@ -13,15 +11,11 @@ ENV TERM=dumb
 ENV TZ=Etc/UTC
 ENV DEBIAN_FRONTEND=noninteractive
 
-COPY ocl-icd-ubuntu-ppa.list /etc/apt/sources.list.d/
-COPY ocl-icd_ubuntu_ppa.gpg /etc/apt/trusted.gpg.d/
-
 RUN apt update
 RUN apt upgrade -y
 
 RUN apt install -y tzdata
-RUN apt install -y build-essential cmake git pkg-config libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev make ninja-build ocl-icd-libopencl1 ocl-icd-dev libhwloc-dev zlib1g zlib1g-dev  dialog apt-utils
-RUN ln -s /usr/lib/x86_64-linux-gnu/libOpenCL.so.1 /usr/lib/x86_64-linux-gnu/libOpenCL.so
+RUN apt install -y build-essential cmake git pkg-config libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libllvmspirvlib-${LLVM_VERSION}-dev make ninja-build ocl-icd-libopencl1 ocl-icd-dev libhwloc-dev zlib1g zlib1g-dev  dialog apt-utils
 
 RUN cd /home ; git clone https://github.com/$GH_SLUG.git ; cd /home/pocl ; git checkout $GIT_COMMIT
 RUN cd /home/pocl ; test -z "$GH_PR" || (git fetch origin +refs/pull/$GH_PR/merge && git checkout -qf FETCH_HEAD) && :
