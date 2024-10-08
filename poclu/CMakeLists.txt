@@ -26,10 +26,9 @@
 set_opencl_header_includes()
 
 if(MSVC)
-  set_source_files_properties( bswap.c misc.c "${CMAKE_CURRENT_SOURCE_DIR}/../lib/CL/pocl_cl_half_util.c" PROPERTIES LANGUAGE CXX )
+  set_source_files_properties( bswap.c misc.c PROPERTIES LANGUAGE CXX )
 endif(MSVC)
 
-add_library("poclu" STATIC bswap.c misc.c "${CMAKE_CURRENT_SOURCE_DIR}/../lib/CL/pocl_cl_half_util.c")
+add_library("poclu" STATIC bswap.c misc.c)
 
-target_include_directories("poclu" PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../lib/CL")
 harden("poclu")

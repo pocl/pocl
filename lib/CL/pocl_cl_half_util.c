@@ -23,6 +23,12 @@
    IN THE SOFTWARE.
 */
 
+/**
+ * TODO: see if this library can be dropped for the include/CL/cl_half.h
+ *  library. The question is which rounding mode should be used in that
+ *  case.
+ */
+
 #include "pocl_cl_half_util.h"
 
 static int const shift = 13;
