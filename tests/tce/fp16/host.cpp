@@ -60,10 +60,6 @@ main(void)
     //float a = 23456.0f;
     float a = 3.f;
 
-    // test the poclu's half conversion functions
-    printf("through conversion: %.0f\n", 
-           poclu_cl_half_to_float(poclu_float_to_cl_half(42.0f)));
-    fflush(stdout);
     try {
         std::vector<cl::Platform> platformList;
 
