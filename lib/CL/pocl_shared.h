@@ -87,7 +87,7 @@ cl_int pocl_kernel_copy_args (cl_kernel kernel,
 cl_int pocl_ndrange_kernel_common (
   cl_command_buffer_khr command_buffer,
   cl_command_queue command_queue,
-  const cl_ndrange_kernel_command_properties_khr *properties,
+  const cl_command_properties_khr *properties,
   cl_kernel kernel,
   struct pocl_argument *src_arguments,
   cl_uint work_dim,
@@ -104,7 +104,7 @@ cl_int pocl_ndrange_kernel_common (
 cl_int pocl_record_ndrange_kernel (
   cl_command_buffer_khr command_buffer,
   cl_command_queue command_queue,
-  const cl_ndrange_kernel_command_properties_khr *properties,
+    const cl_command_properties_khr *properties,
   cl_kernel kernel,
   struct pocl_argument *src_arguments,
   cl_uint work_dim,

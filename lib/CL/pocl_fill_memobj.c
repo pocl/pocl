@@ -207,7 +207,7 @@ pocl_fill_image_common (cl_command_buffer_khr command_buffer,
       else
         {
           return POname (clCommandFillBufferKHR) (
-              command_buffer, command_queue, image->buffer, fill_pattern, px,
+              command_buffer, command_queue, NULL, image->buffer, fill_pattern, px,
               origin[0] * px, region[0] * px, num_items_in_wait_list,
               sync_point_wait_list, sync_point, mutable_handle);
         }

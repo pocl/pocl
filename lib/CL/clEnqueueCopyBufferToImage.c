@@ -73,7 +73,7 @@ pocl_copy_buffer_to_image_common (
       else
         {
           return POname (clCommandCopyBufferRectKHR) (
-              command_buffer, command_queue, src_buffer, dst_image->buffer,
+              command_buffer, command_queue, NULL, src_buffer, dst_image->buffer,
               src_origin, i1d_origin, i1d_region, dst_image->image_row_pitch,
               0, dst_image->image_row_pitch, 0, num_items_in_wait_list,
               sync_point_wait_list, sync_point, mutable_handle);
