@@ -263,14 +263,13 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
 
   char extensions[1024];
   extensions[0] = 0;
-  strcat (extensions, "cl_khr_fp64"
-                      " cl_khr_subgroups");
+  strcat (extensions, "cl_khr_fp64");
   dev->extensions = strdup (extensions);
 
 
   char features[1024];
   features[0] = 0;
-  strcat (features, "__opencl_c_generic_address_space"
+  strcat (features, " __opencl_c_generic_address_space"
                     " __opencl_c_named_address_space_builtins");
   dev->features = strdup (features);
 
@@ -1136,6 +1135,11 @@ void pocl_ventus_write(void *data,
                        size_t size) {
   struct vt_device_data_t *d = (struct vt_device_data_t *)data;
   void *tmp_data = malloc(size);
+  if (!(CL_MEM_USE_HOST_PTR & dst_buf->flags)) {
+    memcpy(tmp_data, host_ptr, size);
+    dst_buf->mem_host_ptr = tmp_data;
+  }
+
   int err = vt_copy_to_dev(d->vt_device,*((uint64_t*)(dst_mem_id->mem_ptr))+offset,host_ptr,size,0,0);
   assert(0 == err);
 }
@@ -1443,7 +1447,7 @@ int pocl_ventus_post_build_program (cl_program program, cl_uint device_i) {
 #ifdef POCL_DEBUG_FLAG_GENERAL
 	ss_cmd << " -w ";
 #endif
-  ss_cmd << " -D__opencl_c_generic_address_space=1 -D__opencl_c_named_address_space_builtins=1 -cl-ext=+cl_khr_subgroups ";
+  ss_cmd << " -D__opencl_c_generic_address_space=1 -D__opencl_c_named_address_space_builtins=1 ";
   ss_cmd << " -D__OPENCL_VERSION__=" << device->version_as_int << " ";
 	ss_cmd << program->compiler_options << std::endl;
 	POCL_MSG_PRINT_VENTUS("running \"%s\"\n", ss_cmd.str().c_str());
