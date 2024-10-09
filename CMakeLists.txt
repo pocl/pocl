@@ -1294,7 +1294,7 @@ set(HOST_DEVICE_CL_VERSION_MINOR 0)
 set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
 cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
 cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes \
-cl_khr_command_buffer cl_khr_command_buffer_multi_device cl_khr_subgroups \
+cl_khr_command_buffer cl_khr_command_buffer_multi_device \
 cl_intel_unified_shared_memory cl_ext_buffer_device_address")
 
 # Host CPU device: list of OpenCL 3.0 features that are always enabled
@@ -1318,7 +1318,7 @@ if(NOT ENABLE_CONFORMANCE)
     set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} \
       cl_exp_tensor cl_exp_defined_builtin_kernels")
   endif()
-  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroup_ballot \
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroups cl_khr_subgroup_ballot \
 cl_khr_subgroup_shuffle cl_intel_subgroups cl_intel_subgroups_short cl_intel_subgroups_char \
 cl_ext_float_atomics cl_intel_required_subgroup_size")
   # read-write images are still partially broken
@@ -1351,6 +1351,9 @@ endif()
 #   Those with either 1) expression implementation, or 2) Clang builtin
 #   implementation.
 #
+# * cl_khr_subgroup: still need some patches to OpenCL-CTS, which are
+#   not upstreamed. Removing this extension from conformance-enabled build
+#   is required for PoCL CPU device pass the official upstream OpenCL-CTS.
 
 if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_subgroup")
   set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_subgroups")
