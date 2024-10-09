@@ -50,7 +50,7 @@ namespace pocl {
       }
     }
 
-    static bool IsLoopWithBarrier(llvm::Loop &L) {
+    static bool isLoopWithBarrier(llvm::Loop &L) {
       for (llvm::Loop::block_iterator i = L.block_begin(), e = L.block_end();
            i != e; ++i) {
         for (llvm::BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();

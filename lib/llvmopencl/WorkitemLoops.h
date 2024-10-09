@@ -44,7 +44,7 @@ public:
   // Returns false in case the WG generator can or should not handle the given
   // kernel. It might refuse to handle trickiest of conditional barrier
   // scenarios which would result in non-vectorizable loops anyhow.
-  static bool CanHandleKernel(llvm::Function &K,
+  static bool canHandleKernel(llvm::Function &K,
                               llvm::FunctionAnalysisManager &AM);
 };
 

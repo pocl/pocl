@@ -176,17 +176,12 @@ bool WorkitemLoopsImpl::runOnFunction(Function &Func) {
   Changed |= handleLocalMemAllocas();
 
 #ifdef DUMP_CFGS
-  dumpCFG(F, F.getName().str() + "_after_wiloops.dot", nullptr,
+  dumpCFG(*F, F->getName().str() + "_after_wiloops.dot", nullptr,
           &OriginalParallelRegions);
 #endif
 
   Changed |= fixUndominatedVariableUses(DT, Func);
 
-#if 0
-  // Split large BBs so we can print the Dot without it crashing.
-  Changed |= chopBBs(Func, *this);
-  Func.viewCFG();
-#endif
   ContextArrays.clear();
   TempInstructionIds.clear();
 
@@ -472,7 +467,7 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
 
 #ifdef DUMP_CFGS
   F.dump();
-  dumpCFG(F, F.getName().str() + "_before_wiloops.dot",
+  dumpCFG(F, F.getName().str() + "_before_wiloops.dot", nullptr,
           &OriginalParallelRegions);
 #endif
 
@@ -1133,7 +1128,7 @@ llvm::PreservedAnalyses WorkitemLoops::run(llvm::Function &F,
   return WIL.runOnFunction(F) ? PAChanged : PreservedAnalyses::all();
 }
 
-bool WorkitemLoops::CanHandleKernel(llvm::Function &K,
+bool WorkitemLoops::canHandleKernel(llvm::Function &K,
                                     llvm::FunctionAnalysisManager &AM) {
 
   // Do not handle kernels with barriers inside loops which have early exits
@@ -1143,7 +1138,7 @@ bool WorkitemLoops::CanHandleKernel(llvm::Function &K,
   // Tested by tricky_for.cl.
   LoopInfo &LI = AM.getResult<llvm::LoopAnalysis>(K);
   for (auto L : LI) {
-    if (!Barrier::IsLoopWithBarrier(*L))
+    if (!Barrier::isLoopWithBarrier(*L))
       continue;
     // More than one 'break' point. It would lead to a complex control flow
     // structure which likely ruins loopvec efficiency anyhow.
