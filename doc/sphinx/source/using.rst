@@ -409,15 +409,11 @@ pocl.
               [this thesis](https://joameyer.de/hipsycl/Thesis_JoachimMeyer.pdf).
 
  * **loops**  -- Create parallel for-loops that execute the work items.
+              Automatically falls back to **cbs** for kernels with barrier usage
+              that would lead to very complex control flow structures.
 
-              The loops will be unrolled a certain number of
-              times of which maximum can be controlled with
-              POCL_WILOOPS_MAX_UNROLL_COUNT=N environment
-              variable (default is to not perform unrolling).
-
- * **loopvec** -- Create parallel work-item for-loops (see 'loops') and execute
-               the standard LLVM vectorizers. LLVM loop unrolling is disabled and
-               the unrolling decisions are left to the generic loop vectorizer.
+ * **loopvec** -- Create parallel work-item for-loops with 'loops' and execute
+               the standard LLVM vectorizers.
 
 - **POCL_WORK_GROUP_SPECIALIZATION**
 
