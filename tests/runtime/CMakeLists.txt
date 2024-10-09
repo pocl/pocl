@@ -158,6 +158,18 @@ add_test(NAME "runtime/test_large_buf" COMMAND "test_large_buf")
 
 add_test(NAME "runtime/test_compile_n_link" COMMAND "test_compile_n_link")
 
+if(HAVE_LIBJPEG_TURBO)
+  add_test(NAME "runtime/test_dbk_jpeg"
+    COMMAND test_dbk_jpeg 640 480
+    "${CMAKE_CURRENT_SOURCE_DIR}/test_data/tram.rgb")
+  set_tests_properties("runtime/test_dbk_jpeg"
+    PROPERTIES
+    COST 2.0
+    PROCESSORS 1
+    DEPENDS "pocl_version_check"
+    LABELS "internal;runtime")
+endif()
+
 if(OPENCL_HEADER_VERSION GREATER 299)
   add_test(NAME "runtime/test_queue_creation_with_hints" COMMAND "test_queue_creation_with_hints")
   set(OCL_30_TESTS "runtime/test_queue_creation_with_hints")

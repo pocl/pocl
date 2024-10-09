@@ -193,7 +193,7 @@ if(HAVE_LIBXSMM) # for includedir flags
   target_link_libraries("pocl-devices" PRIVATE PkgConfig::LIBXSMM)
 endif()
 if(HAVE_LIBJPEG_TURBO)
-  target_link_libraries("pocl-devices" PRIVATE libjpeg-turbo::turbojpeg)
+  target_link_libraries("pocl-devices" PRIVATE PkgConfig::LIBJPEG_TURBO)
 endif ()
 
 set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
