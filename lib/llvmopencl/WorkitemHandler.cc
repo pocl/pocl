@@ -483,7 +483,7 @@ llvm::AllocaInst *WorkitemHandler::createAlignedAndPaddedContextAlloca(
     GlobalVariable *LocalSize;
     LoadInst *LocalSizeLoad[3];
     for (int i = 0; i < 3; ++i) {
-      std::string Name = LID_G_NAME(i);
+      std::string Name = LSIZE_G_NAME(i);
       LocalSize = cast<GlobalVariable>(M->getOrInsertGlobal(Name, ST));
       LocalSizeLoad[i] = Builder.CreateLoad(ST, LocalSize);
     }

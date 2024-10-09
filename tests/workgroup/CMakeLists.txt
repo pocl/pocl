@@ -101,8 +101,9 @@ add_test_pocl(NAME "workgroup/unconditional_barriers"
               EXPECTED_OUTPUT "basic_barriers_2_2_2_2.stdout"
               COMMAND "run_kernel" "basic_barriers.cl" 2 2 2 2)
 
+# This case should now automatically fall back to CBS.
 add_test_pocl(NAME "workgroup/conditional_barrier_loopvec"
-              EXPECTED_OUTPUT "cond_barriers_1_2_1_1_loopvec.stdout"
+              EXPECTED_OUTPUT "cond_barriers_1_2_1_1_cbs.stdout"
               COMMAND "run_kernel" "conditional_barriers.cl" 1 2 1 1
               WORKITEM_HANDLER "loopvec")
 add_test_pocl(NAME "workgroup/conditional_barrier_cbs"

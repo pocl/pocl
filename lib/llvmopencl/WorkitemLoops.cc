@@ -131,8 +131,7 @@ private:
 
   std::pair<llvm::BasicBlock *, llvm::BasicBlock *>
   createLoopAround(ParallelRegion &Region, llvm::BasicBlock *EntryBB,
-                   llvm::BasicBlock *ExitBB, bool PeeledFirst, int Dim,
-                   bool AddIncBlock = true,
+                   llvm::BasicBlock *ExitBB, int Dim,
                    llvm::Value *DynamicLocalSize = nullptr);
 
   llvm::BasicBlock *appendIncBlock(llvm::BasicBlock *After, int Dim,
@@ -150,10 +149,6 @@ private:
 
   std::map<llvm::Instruction *, unsigned> TempInstructionIds;
   size_t TempInstructionIndex;
-  // An alloca in the kernel which stores the first iteration to execute
-  // in the inner (dimension 0) loop. This is set to 1 in an peeled iteration
-  // to skip the 0, 0, 0 iteration in the loops.
-  llvm::Value *LocalIdXFirstVar;
 };
 
 bool WorkitemLoopsImpl::runOnFunction(Function &Func) {
@@ -194,8 +189,7 @@ bool WorkitemLoopsImpl::runOnFunction(Function &Func) {
 std::pair<llvm::BasicBlock *, llvm::BasicBlock *>
 WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
                                     llvm::BasicBlock *EntryBB,
-                                    llvm::BasicBlock *ExitBB, bool PeeledFirst,
-                                    int Dim, bool AddIncBlock,
+                                    llvm::BasicBlock *ExitBB, int Dim,
                                     llvm::Value *DynamicLocalSize) {
   Value *LocalIdVars[] = {LocalIdXGlobal, LocalIdYGlobal, LocalIdZGlobal};
   Value *LocalIdVar = LocalIdVars[Dim];
@@ -204,53 +198,6 @@ WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
   size_t LocalSizeForDim = LocalSizes[Dim];
   Instruction *GlobalIdOrigin = getGlobalIdOrigin(Dim);
 
-  /*
-
-    Generate a structure like this for each loop level (x,y,z):
-
-    for.init:
-
-    ; if peeledFirst is false:
-    store i32 0, i32* %_local_id_x, align 4
-
-    ; if peeledFirst is true (assume the 0,0,0 iteration has been executed earlier)
-    ; assume _local_id_x_first is is initialized to 1 in the peeled pregion copy
-    store _local_id_x_first, i32* %_local_id_x, align 4
-    store i32 0, %_local_id_x_first
-
-    br label %for.body
-
-    for.body: 
-
-    ; the parallel region code here
-
-    br label %for.inc
-
-    for.inc:
-
-    ; Separated inc and cond check blocks for easier loop unrolling later on.
-    ; Can then chain N times for.body+for.inc to unroll.
-
-    %2 = load i32* %_local_id_x, align 4
-    %inc = add nsw i32 %2, 1
-
-    store i32 %inc, i32* %_local_id_x, align 4
-    br label %for.cond
-
-    for.cond:
-
-    ; loop header, compare the id to the local size
-    %0 = load i32* %_local_id_x, align 4
-    %cmp = icmp ult i32 %0, i32 123
-    br i1 %cmp, label %for.body, label %for.end
-
-    for.end:
-
-    OPTIMIZE: Use a separate iteration variable across all the loops to iterate the context 
-    data arrays to avoid needing multiplications to find the correct location, and to 
-    enable easy vectorization of loading the context data when there are parallel iterations.
-  */     
-
   llvm::BasicBlock *LoopBodyEntryBB = EntryBB;
   llvm::LLVMContext &C = LoopBodyEntryBB->getContext();
   llvm::Function *F = LoopBodyEntryBB->getParent();
@@ -258,110 +205,81 @@ WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
 
   assert (ExitBB->getTerminator()->getNumSuccessors() == 1);
 
-  llvm::BasicBlock *oldExit = ExitBB->getTerminator()->getSuccessor(0);
+  llvm::BasicBlock *OldExit = ExitBB->getTerminator()->getSuccessor(0);
 
-  llvm::BasicBlock *forInitBB = 
-    BasicBlock::Create(C, "pregion_for_init", F, LoopBodyEntryBB);
+  llvm::BasicBlock *ForInitBB =
+      BasicBlock::Create(C, "pregion_for_init", F, LoopBodyEntryBB);
 
-  llvm::BasicBlock *loopEndBB = 
-    BasicBlock::Create(C, "pregion_for_end", F, ExitBB);
+  llvm::BasicBlock *LoopEndBB =
+      BasicBlock::Create(C, "pregion_for_end", F, ExitBB);
 
-  llvm::BasicBlock *forCondBB = 
-    BasicBlock::Create(C, "pregion_for_cond", F, ExitBB);
+  llvm::BasicBlock *ForCondBB =
+      BasicBlock::Create(C, "pregion_for_cond", F, ExitBB);
 
   DT.reset();
   DT.recalculate(*F);
 
-  /* Collect the basic blocks in the parallel region that dominate the
-     exit. These are used in determining whether load instructions may
-     be executed unconditionally in the parallel loop (see below). */
-  llvm::SmallPtrSet<llvm::BasicBlock *, 8> dominatesExitBB;
+  // Collect the basic blocks in the parallel region that dominate the
+  // exit. These are used in determining whether load instructions may
+  // be executed unconditionally in the parallel loop (see below).
+  llvm::SmallPtrSet<llvm::BasicBlock *, 8> DominatesExitBB;
   for (auto BB: Region) {
     if (DT.dominates(BB, ExitBB)) {
-      dominatesExitBB.insert(BB);
+      DominatesExitBB.insert(BB);
     }
   }
 
-  /* Fix the old edges jumping to the region to jump to the basic block
-     that starts the created loop. Back edges should still point to the
-     old basic block so we preserve the old loops. */
-  BasicBlockVector preds;
-  llvm::pred_iterator PI = 
-    llvm::pred_begin(EntryBB),
-    E = llvm::pred_end(EntryBB);
+  // For fixing the old edges jumping to the region to jump to the basic block
+  // that starts the created loop. Back edges should still point to the old
+  // basic block so we preserve the old loops. TODO: is this still needed with
+  // the forced PR entry block?
+  BasicBlockVector Preds;
+  llvm::pred_iterator PI = llvm::pred_begin(EntryBB),
+                      E = llvm::pred_end(EntryBB);
 
   for (; PI != E; ++PI)
-    {
-      llvm::BasicBlock *bb = *PI;
-      preds.push_back(bb);
-    }    
+    Preds.push_back(*PI);
 
-  for (BasicBlockVector::iterator i = preds.begin();
-       i != preds.end(); ++i)
-    {
-      llvm::BasicBlock *bb = *i;
-      /* Do not fix loop edges inside the region. The loop
-         is replicated as a whole to the body of the wi-loop.*/
-      if (DT.dominates(LoopBodyEntryBB, bb))
-        continue;
-      bb->getTerminator()->replaceUsesOfWith(LoopBodyEntryBB, forInitBB);
-    }
-
-  IRBuilder<> builder(forInitBB);
-
-  // If the first iteration is peeled to figure out the barrier condition, we
-  // need to skip the execution of the first iteration in the very first
-  // iteration of the innermost loop.
-  if (PeeledFirst) {
-    Instruction *LocalIdXFirstVal = builder.CreateLoad(ST, LocalIdXFirstVar);
-    builder.CreateStore(LocalIdXFirstVal, LocalIdVar);
-
-    // Initialize the global id counter with skipped WI as well.
-    GlobalVariable *GlobalId = GlobalIdIterators[Dim];
-    builder.CreateStore(builder.CreateAdd(GlobalIdOrigin, LocalIdXFirstVal),
-                        GlobalId);
-
-    // Then reset the initializer to 0 since we want to execute the first WI
-    // from the X dimension for the next Y and Z iterations.
-    builder.CreateStore(ConstantInt::get(ST, 0), LocalIdXFirstVar);
-
-    if (WGDynamicLocalSize) {
-      llvm::Value *cmpResult;
-      cmpResult =
-          builder.CreateICmpULT(builder.CreateLoad(ST, LocalIdVar),
-                                builder.CreateLoad(ST, DynamicLocalSize));
-
-      builder.CreateCondBr(cmpResult, LoopBodyEntryBB, loopEndBB);
-    } else {
-      builder.CreateBr(LoopBodyEntryBB);
-    }
-  } else {
-    builder.CreateStore(ConstantInt::get(ST, 0), LocalIdVar);
-
-    // Initialize the global id counter with the base.
-    GlobalVariable *GlobalId = GlobalIdIterators[Dim];
-    builder.CreateStore(GlobalIdOrigin, GlobalId);
-
-    builder.CreateBr(LoopBodyEntryBB);
+  for (BasicBlockVector::iterator i = Preds.begin(); i != Preds.end(); ++i) {
+    llvm::BasicBlock *BB = *i;
+    // Do not fix loop edges inside the region. The loop is replicated as
+    // a whole to the body of the WI-loop.
+    if (DT.dominates(LoopBodyEntryBB, BB))
+      continue;
+    BB->getTerminator()->replaceUsesOfWith(LoopBodyEntryBB, ForInitBB);
   }
 
-  ExitBB->getTerminator()->replaceUsesOfWith(oldExit, forCondBB);
-  if (AddIncBlock) {
-    appendIncBlock(ExitBB, Dim);
-  }
+  IRBuilder<> Builder(ForInitBB);
 
-  builder.SetInsertPoint(forCondBB);
+  Builder.CreateStore(ConstantInt::get(ST, 0), LocalIdVar);
 
-  llvm::Value *cmpResult;
-  if (!WGDynamicLocalSize)
-    cmpResult = builder.CreateICmpULT(builder.CreateLoad(ST, LocalIdVar),
+  // Initialize the global id counter with the base.
+  GlobalVariable *GlobalId = GlobalIdIterators[Dim];
+  Builder.CreateStore(GlobalIdOrigin, GlobalId);
+
+  Builder.CreateBr(LoopBodyEntryBB);
+
+  ExitBB->getTerminator()->replaceUsesOfWith(OldExit, ForCondBB);
+  appendIncBlock(ExitBB, Dim);
+
+  Builder.SetInsertPoint(ForCondBB);
+
+  llvm::Value *CmpResult;
+  if (!WGDynamicLocalSize) {
+    CmpResult = Builder.CreateICmpULT(Builder.CreateLoad(ST, LocalIdVar),
                                       ConstantInt::get(ST, LocalSizeForDim));
-  else
-    cmpResult = builder.CreateICmpULT(builder.CreateLoad(ST, LocalIdVar),
-                                      builder.CreateLoad(ST, DynamicLocalSize));
+  } else {
+    GlobalVariable *LocalSizeGlobal = M->getGlobalVariable(LSIZE_G_NAME(Dim));
+    if (LocalSizeGlobal == NULL)
+      LocalSizeGlobal = new GlobalVariable(
+          *M, ST, true, GlobalValue::CommonLinkage, NULL, LSIZE_G_NAME(Dim),
+          NULL, GlobalValue::ThreadLocalMode::NotThreadLocal, 0, true);
+    CmpResult = Builder.CreateICmpULT(Builder.CreateLoad(ST, LocalIdVar),
+                                      Builder.CreateLoad(ST, LocalSizeGlobal));
+  }
 
   Instruction *LoopBranch =
-      builder.CreateCondBr(cmpResult, LoopBodyEntryBB, loopEndBB);
+      Builder.CreateCondBr(CmpResult, LoopBodyEntryBB, LoopEndBB);
 
   if (canAnnotateParallelLoops()) {
     // Add the metadata to mark a parallel loop. The metadata refers to
@@ -389,19 +307,19 @@ WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
     LoopBranch->setMetadata("llvm.loop", Root);
 
     auto IsLoadUnconditionallySafe =
-        [&dominatesExitBB](llvm::Instruction *Insn) -> bool {
+        [&DominatesExitBB](llvm::Instruction *Insn) -> bool {
       assert(Insn->mayReadFromMemory());
       // Checks that the instruction isn't in a conditional block.
-      return dominatesExitBB.count(Insn->getParent());
+      return DominatesExitBB.count(Insn->getParent());
     };
 
     Region.addParallelLoopMetadata(AccessGroupMD, IsLoadUnconditionallySafe);
   }
 
-  builder.SetInsertPoint(loopEndBB);
-  builder.CreateBr(oldExit);
+  Builder.SetInsertPoint(LoopEndBB);
+  Builder.CreateBr(OldExit);
 
-  return std::make_pair(forInitBB, loopEndBB);
+  return std::make_pair(ForInitBB, LoopEndBB);
 }
 
 ParallelRegion *WorkitemLoopsImpl::regionOfBlock(llvm::BasicBlock *BB) {
@@ -423,6 +341,7 @@ void WorkitemLoopsImpl::releaseParallelRegions() {
     ParallelRegion *P = *PRI;
     delete P;
   }
+  OriginalParallelRegions.clear();
 }
 
 bool WorkitemLoopsImpl::processFunction(Function &F) {
@@ -438,217 +357,50 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
 
 #ifdef POCL_KERNEL_COMPILER_DUMP_CFGS
   dumpCFG(F, F.getName().str() + "_before_wiloops" + DotSuffix + ".dot", nullptr,
-          &OriginalParallelRegions);
 #endif
 
   IRBuilder<> builder(&*(F.getEntryBlock().getFirstInsertionPt()));
-  LocalIdXFirstVar = builder.CreateAlloca(ST, 0, ".pocl.local_id_x_init");
-
-#if 0
-  std::cerr << "### Original" << std::endl;
-  F.viewCFGOnly();
-#endif
-
-#if 0
   for (ParallelRegion::ParallelRegionVector::iterator
-         PRI = OriginalParallelRegions.begin(),
-         PRE = OriginalParallelRegions.end();
-       PRI != PRE; ++PRI) {
-    ParallelRegion *region = (*PRI);
-    region->InjectRegionPrintF();
-    region->InjectVariablePrintouts();
-  }
-#endif
-
-  /* Count how many parallel regions share each entry node to
-     detect diverging regions that need to be peeled. */
-  std::map<llvm::BasicBlock*, int> entryCounts;
+           PRI = OriginalParallelRegions.begin(),
+           PRE = OriginalParallelRegions.end();
+       PRI != PRE; ++PRI)
+    fixMultiRegionVariables(*PRI);
 
   for (ParallelRegion::ParallelRegionVector::iterator
            PRI = OriginalParallelRegions.begin(),
            PRE = OriginalParallelRegions.end();
        PRI != PRE; ++PRI) {
-    ParallelRegion *Region = (*PRI);
-#ifdef DEBUG_WORK_ITEM_LOOPS
-    std::cerr << "### Adding context save/restore for PR: ";
-    Region->dumpNames();
-#endif
-    fixMultiRegionVariables(Region);
-    entryCounts[Region->entryBB()]++;
-  }
 
-#if 0
-  std::cerr << "### After context code addition:" << std::endl;
-  F.viewCFG();
-#endif
-  std::map<ParallelRegion*, bool> PeeledRegion;
-  for (ParallelRegion::ParallelRegionVector::iterator
-           PRI = OriginalParallelRegions.begin(),
-           PRE = OriginalParallelRegions.end();
-       PRI != PRE; ++PRI) {
-
-    llvm::ValueToValueMapTy reference_map;
     ParallelRegion *PRegion = (*PRI);
 
-#ifdef DEBUG_WORK_ITEM_LOOPS
-    std::cerr << "### handling region:" << std::endl;
-    PRegion->dumpNames();
-    //F.viewCFGOnly();
-#endif
-
-    /* In case of conditional barriers, the first iteration
-       has to be peeled so we know which branch to execute
-       with the work item loop. In case there are more than one
-       parallel region sharing an entry BB, it's a diverging
-       region.
-
-       Post dominance of entry by exit does not work in case the
-       region is inside a loop and the exit block is in the path
-       towards the loop exit (and the function exit).
-    */
-    bool PeelFirst = entryCounts[PRegion->entryBB()] > 1;
-    PeeledRegion[PRegion] = PeelFirst;
-
-    std::pair<llvm::BasicBlock *, llvm::BasicBlock *> l;
-    // the original predecessor nodes of which successor
-    // should be fixed if not peeling
-    BasicBlockVector preds;
-
-    bool Unrolled = false;
-    if (PeelFirst) {
-#ifdef DEBUG_WORK_ITEM_LOOPS
-        std::cerr << "### conditional region, peeling the first iteration" << std::endl;
-#endif
-        ParallelRegion *replica =
-            PRegion->replicate(reference_map, ".peeled_wi");
-        replica->chainAfter(PRegion);
-        replica->purge();
-
-        l = std::make_pair(replica->entryBB(), replica->exitBB());
-    } else {
-      llvm::pred_iterator PI = llvm::pred_begin(PRegion->entryBB()),
-                          E = llvm::pred_end(PRegion->entryBB());
-
-      for (; PI != E; ++PI) {
-        llvm::BasicBlock *BB = *PI;
-        if (DT.dominates(PRegion->entryBB(), BB) &&
-            (regionOfBlock(PRegion->entryBB()) == regionOfBlock(BB)))
-          continue;
-        preds.push_back(BB);
-      }
-
-      unsigned UnrollCount;
-      if (getenv("POCL_WILOOPS_MAX_UNROLL_COUNT") != NULL)
-        UnrollCount = atoi(getenv("POCL_WILOOPS_MAX_UNROLL_COUNT"));
-      else
-        UnrollCount = 1;
-      /* Find a two's exponent unroll count, if available. */
-      while (UnrollCount >= 1) {
-        if (WGLocalSizeX % UnrollCount == 0 && UnrollCount <= WGLocalSizeX) {
-          break;
-        }
-        UnrollCount /= 2;
-      }
-
-      if (UnrollCount > 1) {
-        ParallelRegion *prev = PRegion;
-        llvm::BasicBlock *lastBB = appendIncBlock(
-            PRegion->exitBB(), 0, PRegion->exitBB(),
-            std::string("pregion.") + std::to_string(PRegion->getID()) +
-                ".dim0.for_inc");
-        PRegion->AddBlockAfter(lastBB, PRegion->exitBB());
-        PRegion->SetExitBB(lastBB);
-
-        for (unsigned c = 1; c < UnrollCount; ++c) {
-          ParallelRegion *UnrolledPR =
-              PRegion->replicate(reference_map, ".unrolled_wi");
-          UnrolledPR->chainAfter(prev);
-          prev = UnrolledPR;
-          lastBB = UnrolledPR->exitBB();
-        }
-        Unrolled = true;
-        l = std::make_pair(PRegion->entryBB(), lastBB);
-      } else {
-        l = std::make_pair(PRegion->entryBB(), PRegion->exitBB());
-      }
+    // The original predecessor nodes of which branches should be fixed
+    // later on to jump to the looped region's start.
+    BasicBlockVector Preds;
+    llvm::pred_iterator PI = llvm::pred_begin(PRegion->entryBB()),
+                        E = llvm::pred_end(PRegion->entryBB());
+    for (; PI != E; ++PI) {
+      llvm::BasicBlock *BB = *PI;
+      if (DT.dominates(PRegion->entryBB(), BB) &&
+          (regionOfBlock(PRegion->entryBB()) == regionOfBlock(BB)))
+        continue;
+      Preds.push_back(BB);
     }
 
-    if (WGDynamicLocalSize) {
-      GlobalVariable *gv;
-      gv = M->getGlobalVariable("_local_size_x");
-      if (gv == NULL)
-        gv = new GlobalVariable(
-            *M, ST, true, GlobalValue::CommonLinkage, NULL, "_local_size_x",
-            NULL, GlobalValue::ThreadLocalMode::NotThreadLocal, 0, true);
+    // The parallel WI-loop being constructed.
+    std::pair<llvm::BasicBlock *, llvm::BasicBlock *> WILoop =
+        std::make_pair(PRegion->entryBB(), PRegion->exitBB());
 
-      l = createLoopAround(*PRegion, l.first, l.second, PeelFirst, 0, !Unrolled,
-                           gv);
-
-      gv = M->getGlobalVariable("_local_size_y");
-      if (gv == NULL)
-        gv = new GlobalVariable(*M, ST, false, GlobalValue::CommonLinkage, NULL,
-                                "_local_size_y");
-
-      l = createLoopAround(*PRegion, l.first, l.second, false, 1, !Unrolled,
-                           gv);
-
-      gv = M->getGlobalVariable("_local_size_z");
-      if (gv == NULL)
-        gv = new GlobalVariable(
-            *M, ST, true, GlobalValue::CommonLinkage, NULL, "_local_size_z",
-            NULL, GlobalValue::ThreadLocalMode::NotThreadLocal, 0, true);
-
-      l = createLoopAround(*PRegion, l.first, l.second, false, 2, !Unrolled,
-                           gv);
-
-    } else {
-      if (WGLocalSizeX > 1) {
-        l = createLoopAround(*PRegion, l.first, l.second, PeelFirst, 0,
-                             !Unrolled);
-      } else {
-        // Ensure the global id for a 1-size dimension is initialized.
-        getGlobalIdOrigin(0);
-      }
-
-      if (WGLocalSizeY > 1) {
-        l = createLoopAround(*PRegion, l.first, l.second, false, 1);
-      } else {
-        getGlobalIdOrigin(1);
-      }
-
-      if (WGLocalSizeZ > 1) {
-        l = createLoopAround(*PRegion, l.first, l.second, false, 2);
-      } else {
-        getGlobalIdOrigin(2);
-      }
+    for (size_t Dim = 0; Dim < 3; ++Dim) {
+      WILoop = createLoopAround(*PRegion, WILoop.first, WILoop.second, Dim);
+      // Ensure the global id for is initialized even for a 1-size dimension.
+      getGlobalIdOrigin(Dim);
     }
 
-    // Loop edges coming from another region mean B-loops which means
-    // we have to fix the loop edge to jump to the beginning of the wi-loop
-    // structure, not its body. This has to be done only for non-peeled
-    // blocks as the semantics is correct in the other case (the jump is
-    // to the beginning of the peeled iteration).
-    if (!PeelFirst) {
-      for (BasicBlockVector::iterator i = preds.begin(); i != preds.end();
-           ++i) {
-        llvm::BasicBlock *BB = *i;
-        BB->getTerminator()->replaceUsesOfWith(PRegion->entryBB(), l.first);
-      }
+    // Fix the predecessors to jump to the beginning of the new WI loop.
+    for (BasicBlockVector::iterator i = Preds.begin(); i != Preds.end(); ++i) {
+      llvm::BasicBlock *BB = *i;
+      BB->getTerminator()->replaceUsesOfWith(PRegion->entryBB(), WILoop.first);
     }
-  }
-
-  // For the peeled regions we need to add a prologue that initializes the local
-  // ids and the first iteration counter.
-  for (ParallelRegion::ParallelRegionVector::iterator
-           PRI = OriginalParallelRegions.begin(),
-       PRE = OriginalParallelRegions.end();
-       PRI != PRE; ++PRI) {
-    ParallelRegion *PR = (*PRI);
-
-    if (!PeeledRegion[PR]) continue;
-    PR->insertPrologue(0, 0, 0);
-    builder.SetInsertPoint(&*(PR->entryBB()->getFirstInsertionPt()));
-    builder.CreateStore(ConstantInt::get(ST, 1), LocalIdXFirstVar);
   }
 
   if (!WGDynamicLocalSize)
@@ -1124,6 +876,43 @@ bool WorkitemLoops::canHandleKernel(llvm::Function &K,
 #endif
       return false;
     }
+  }
+
+  // Do not handle kernels with non-uniform predicates. These used to be
+  // handled by "peeling" the first iteration of the work-item loop to
+  // check if the barrier is taken or not, but it complicates the parallel
+  // region formation and control flow construction quite a bit without
+  // known benchmark benefits. The produced peeled loops are also not easily
+  // vectorizable, thus the performance won't be good anyhow for SIMD. For
+  // VLIW/ILP it might be useful though, but it still doesn't justify the
+  // complexity add.
+
+  // The tricky part here is detecting cases where we have barriers inside
+  // uniform ifs inside for-loops of which iteration counts are not known.
+  // For the purpose of this check, we treat them as always taken for-loops,
+  // relying on the "all or none" barrier semantics. The current checks
+  // is "robustness first": It includes all barriers which are made
+  // conditional with something else than the loop condition. An optimization
+  // would be to allow detected uniform conditions and isolate the if part
+  // to a uniform region with a separate parallel region in both branches.
+
+  llvm::PostDominatorTree &PDT = AM.getResult<PostDominatorTreeAnalysis>(K);
+  for (Function::iterator FI = K.begin(), FE = K.end(); FI != FE; ++FI) {
+    BasicBlock *BB = &*FI;
+    if (!Barrier::hasBarrier(BB)) continue;
+
+    // Unconditional barrier for this purpose postdominates the entry node or
+    // the loop header that it's in.
+    Loop *L = LI.getLoopFor(BB);;
+    BasicBlock *PostDomBlock =
+      L == nullptr ? &K.getEntryBlock() : L->getHeader();
+    if (PDT.dominates(BB, PostDomBlock)) continue;
+
+#ifdef DEBUG_WORK_ITEM_LOOPS
+    std::cerr << "### Detected a conditional barrier not currently supported by WILoops:\n";
+    BB->dump();
+#endif
+    return false;
   }
 
   return true;

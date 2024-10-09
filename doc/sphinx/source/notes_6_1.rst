@@ -72,4 +72,7 @@ Deprecation/feature removal notices
    method was removed to clean up the kernel compiler. It did not
    anymore have any use cases that could not be covered by fully
    unrolling "loops".
-
+ * The "loops" method does no longer unroll loops explicitly via
+   the environment variable POCL_WILOOPS_MAX_UNROLL_COUNT, which
+   was removed in this release. Unrolling decisions are delegated
+   to standard LLVM optimizations.
