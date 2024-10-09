@@ -1044,11 +1044,12 @@ else()
 endif()
 
 if(ENABLE_HOST_CPU_DEVICES AND NOT ENABLE_CONFORMANCE)
-  pkg_check_modules(LIBJPEG_TURBO libjpeg-turbo>=3.0.0)
-  set(HAVE_LIBJPEG_TURBO ${LIBJPEG_TURBO_FOUND})
-  if(NOT ${HAVE_LIBJPEG_TURBO})
+  pkg_search_module(LIBJPEG_TURBO IMPORTED_TARGET
+    libjpeg-turbo>=3.0.0 libturbojpeg>=3.0.0)
+  if(NOT LIBJPEG_TURBO_FOUND)
     message(STATUS "libjpeg-turbo v3.0.0+ not found, disabled")
   endif()
+  set(HAVE_LIBJPEG_TURBO ${LIBJPEG_TURBO_FOUND})
 endif()
 ######################################################################################
 

@@ -1,7 +1,7 @@
 
 if(HAVE_LIBJPEG_TURBO)
-    list(APPEND POCL_DEVICES_LINK_LIST libjpeg-turbo::turbojpeg )
-endif ()
+    list(APPEND POCL_DEVICES_LINK_LIST PkgConfig::LIBJPEG_TURBO)
+endif()
 
 list(APPEND POCL_DEVICES_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/pocl_dbk_khr_jpeg_cpu.c ${CMAKE_CURRENT_SOURCE_DIR}/pocl_dbk_khr_jpeg_cpu.h
