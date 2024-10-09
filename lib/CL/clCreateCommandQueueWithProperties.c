@@ -169,4 +169,17 @@ ERROR:
     }
   return NULL;
 }
-POsym(clCreateCommandQueueWithProperties)
+POsym (clCreateCommandQueueWithProperties)
+
+  CL_API_ENTRY cl_int CL_API_CALL POname (clSetCommandQueueProperty) (
+    cl_command_queue command_queue,
+    cl_command_queue_properties properties,
+    cl_bool enable,
+    cl_command_queue_properties *old_properties)
+    CL_API_SUFFIX__VERSION_1_0_DEPRECATED
+{
+  /* CL_INVALID_OPERATION if no devices in the context associated with
+   * command_queue support modifying the properties of a command-queue */
+  return CL_INVALID_OPERATION;
+}
+POsym (clSetCommandQueueProperty)
