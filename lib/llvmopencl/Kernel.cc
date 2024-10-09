@@ -157,16 +157,19 @@ ParallelRegion *Kernel::createParallelRegionBefore(llvm::BasicBlock *B) {
 
   // Does it have a jump to the next block?
   BlocksInRegion.insert(PREntry);
+
+  // There can be many predecessor basic blocks to the region,
+  // fix all the predecessor blocks from other regions to jump to the region
+  // entry. Note: a special case is the K-loop case where the header node
+  // is the loop header. In that case get incoming branches to the
+  // entry from inside the PR.
+
   std::set<BasicBlock *> Preds;
   for (pred_iterator PI = pred_begin(OrigEntry), PE = pred_end(OrigEntry);
        PI != PE; ++PI) {
     Preds.insert(*PI);
   }
-  // There can be many predecessor basic blocks to the region,
-  // fix all the predecessor blocks from other regions to jump to the region
-  // entry. Note: a special case is the intra-PR-loop case where the header node
-  // is the loop header. In that case get incoming branches to the
-  // entry from inside the PR.
+
   for (BasicBlock *PredBB : Preds) {
     if (BlocksInRegion.count(PredBB) > 0)
       continue; // Must be an intra-PR loop backedge source.
@@ -206,7 +209,6 @@ void Kernel::getParallelRegions(
 
   // First find all the ParallelRegions in the Function.
   while (!exit_blocks.empty()) {
-    
     // We start on an exit block and process the parallel regions upwards
     // (finding an execution trace).
     BasicBlock *exit = exit_blocks.back();
@@ -217,7 +219,7 @@ void Kernel::getParallelRegions(
       continue;
 
     while (ParallelRegion *PR = createParallelRegionBefore(exit)) {
-      assert(PR != NULL && !PR->empty() && 
+      assert(PR != NULL && !PR->empty() &&
              "Empty parallel region in kernel (contiguous barriers)!");
 
       found_barriers.insert(exit);

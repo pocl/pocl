@@ -31,6 +31,7 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 
 #include "Barrier.h"
+#include "DebugHelpers.h"
 #include "ImplicitConditionalBarriers.h"
 #include "LLVMUtils.h"
 #include "VariableUniformityAnalysis.h"
@@ -42,8 +43,6 @@ POP_COMPILER_DIAGS
 #include <iostream>
 
 #include "pocl.h"
-
-// #define DEBUG_COND_BARRIERS
 
 #define PASS_NAME "implicit-cond-barriers"
 #define PASS_CLASS pocl::ImplicitConditionalBarriers
@@ -85,6 +84,11 @@ ImplicitConditionalBarriers::run(llvm::Function &F,
   WorkitemHandlerType WIH = FAM.getResult<WorkitemHandlerChooser>(F).WIH;
   if (WIH == WorkitemHandlerType::CBS)
     return PreservedAnalyses::all();
+
+#ifdef POCL_KERNEL_COMPILER_DUMP_CFGS
+  dumpCFG(F, F.getName().str() + "_before_implicit_cond_barriers.dot", nullptr,
+          nullptr);
+#endif
 
   llvm::PostDominatorTree &PDT = FAM.getResult<PostDominatorTreeAnalysis>(F);
   llvm::DominatorTree &DT = FAM.getResult<DominatorTreeAnalysis>(F);
@@ -188,6 +192,11 @@ ImplicitConditionalBarriers::run(llvm::Function &F,
 #ifdef DEBUG_COND_BARRIERS
   std::cerr << "### After implicit conditional barrier handling:" << std::endl;
   F.dump();
+#endif
+
+#ifdef POCL_KERNEL_COMPILER_DUMP_CFGS
+  dumpCFG(F, F.getName().str() + "_after_implicit_cond_barriers.dot", nullptr,
+          nullptr);
 #endif
 
   return Changed ? PAChanged : PreservedAnalyses::all();

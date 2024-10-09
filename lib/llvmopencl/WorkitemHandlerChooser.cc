@@ -90,7 +90,7 @@ WorkitemHandlerType ChooseWorkitemHandler(Function &F,
   // Check if this is a kernel WILoops is able and willing to handle.
   // Otherwise, fall back to CBS.
   if (Result == WorkitemHandlerType::LOOPS &&
-      !WorkitemLoops::CanHandleKernel(F, AM))
+      !WorkitemLoops::canHandleKernel(F, AM))
     Result = WorkitemHandlerType::CBS;
 
   return Result;

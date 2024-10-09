@@ -540,7 +540,7 @@ llvm::AllocaInst *WorkitemHandler::createAlignedAndPaddedContextAlloca(
 #ifdef DEBUG_WORK_ITEM_LOOPS
     std::cerr << "### VariableDebugMeta :  ";
     VariableDebugMeta->dump();
-    std::cerr << "### sizeBits :  " << sizeBits << "  alignBits: " << alignBits
+    std::cerr << "### sizeBits :  " << SizeBits << "  alignBits: " << AlignBits
               << "\n";
 #endif
 

@@ -148,7 +148,7 @@ static bool processLoopWithBarriers(Loop &L, llvm::DominatorTree &DT,
 static bool processLoop(Loop &L, llvm::DominatorTree &DT,
                         VariableUniformityAnalysisResult &VUA) {
 
-  if (Barrier::IsLoopWithBarrier(L))
+  if (Barrier::isLoopWithBarrier(L))
     return processLoopWithBarriers(L, DT, VUA);
 
   // This is a loop without a barrier. Ensure we have a non-barrier
@@ -168,7 +168,7 @@ static bool processLoop(Loop &L, llvm::DominatorTree &DT,
   // to the innermost loop if we process that first, ruining the
   // idea for multi-level loops.
   Loop *ParentLoop = L.getParentLoop();
-  if (!(ParentLoop == nullptr || Barrier::IsLoopWithBarrier(*ParentLoop)))
+  if (!(ParentLoop == nullptr || Barrier::isLoopWithBarrier(*ParentLoop)))
     return false;
 
   BasicBlock *Preheader = L.getLoopPreheader();

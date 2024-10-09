@@ -63,8 +63,6 @@ POP_COMPILER_DIAGS
 #include <vector>
 
 #define DEBUG_TYPE "workitem-loops"
-//#define DUMP_CFGS
-//#define DEBUG_WORK_ITEM_LOOPS
 
 #define PASS_NAME "workitemloops"
 #define PASS_CLASS pocl::WorkitemLoops
@@ -164,6 +162,11 @@ bool WorkitemLoopsImpl::runOnFunction(Function &Func) {
   F = &Func;
   Initialize(cast<Kernel>(&Func));
 
+#ifdef DEBUG_WORK_ITEM_LOOPS
+  std::cerr << "### Before WILoops:\n";
+  Func.dump();
+#endif
+
   GlobalIdIterators = {
       cast<GlobalVariable>(M->getOrInsertGlobal(GID_G_NAME(0), ST)),
       cast<GlobalVariable>(M->getOrInsertGlobal(GID_G_NAME(1), ST)),
@@ -175,18 +178,8 @@ bool WorkitemLoopsImpl::runOnFunction(Function &Func) {
 
   Changed |= handleLocalMemAllocas();
 
-#ifdef DUMP_CFGS
-  dumpCFG(F, F.getName().str() + "_after_wiloops.dot", nullptr,
-          &OriginalParallelRegions);
-#endif
-
   Changed |= fixUndominatedVariableUses(DT, Func);
 
-#if 0
-  // Split large BBs so we can print the Dot without it crashing.
-  Changed |= chopBBs(Func, *this);
-  Func.viewCFG();
-#endif
   ContextArrays.clear();
   TempInstructionIds.clear();
 
@@ -434,45 +427,17 @@ void WorkitemLoopsImpl::releaseParallelRegions() {
 
 bool WorkitemLoopsImpl::processFunction(Function &F) {
 
-#if 0
-  // Replace get_global_id with loads from the _get_global_id magic
-  // global. TODO: Find a better place for this.
-  std::set<llvm::Instruction *> InstrsToDelete;
-  for (llvm::Function::iterator BB = F.begin(), BBE = F.end(); BB != BBE;
-       ++BB) {
-    for (llvm::BasicBlock::iterator II = BB->begin(); II != BB->end(); ++II) {
-      llvm::Instruction *Instr = &*II;
-      llvm::CallInst *Call = dyn_cast<llvm::CallInst>(Instr);
-      if (Call == nullptr)
-        continue;
-
-      auto Callee = Call->getCalledFunction();
-      if (Callee->isDeclaration() &&
-          Callee->getName().equals(GID_BUILTIN_NAME)) {
-        int Dim =
-            cast<llvm::ConstantInt>(Call->getArgOperand(0))->getZExtValue();
-        GlobalVariable *GIDGlobal = cast<GlobalVariable>(
-            M->getOrInsertGlobal(GID_G_NAME(Dim), pocl::SizeT(M)));
-        IRBuilder<> Builder(Call);
-        Instruction *GIDLoad = Builder.CreateLoad(pocl::SizeT(M), GIDGlobal);
-        Call->replaceAllUsesWith(GIDLoad);
-        InstrsToDelete.insert(Call);
-        ++II;
-        continue;
-      }
-    }
-  }
-  for (auto I : InstrsToDelete)
-    I->eraseFromParent();
+#ifdef POCL_KERNEL_COMPILER_DUMP_CFGS
+  // Append 'dyn' or 'static' to the dot files to differentiate between the
+  // dynamic WG one (produced for the binaries) and the specialized static one.
+  std::string DotSuffix = WGDynamicLocalSize ? "_dyn" : "_static";
+  dumpCFG(F, F.getName().str() + "_before_pregions" + DotSuffix + ".dot", nullptr, nullptr);
 #endif
-
-  releaseParallelRegions();
 
   K->getParallelRegions(LI, &OriginalParallelRegions);
 
-#ifdef DUMP_CFGS
-  F.dump();
-  dumpCFG(F, F.getName().str() + "_before_wiloops.dot",
+#ifdef POCL_KERNEL_COMPILER_DUMP_CFGS
+  dumpCFG(F, F.getName().str() + "_before_wiloops" + DotSuffix + ".dot", nullptr,
           &OriginalParallelRegions);
 #endif
 
@@ -690,6 +655,12 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
     K->addLocalSizeInitCode(WGLocalSizeX, WGLocalSizeY, WGLocalSizeZ);
 
   ParallelRegion::insertLocalIdInit(&F.getEntryBlock(), 0, 0, 0);
+
+#ifdef POCL_KERNEL_COMPILER_DUMP_CFGS
+  dumpCFG(*K, K->getName().str() + "_after_wiloops" + DotSuffix + ".dot", nullptr,
+          &OriginalParallelRegions);
+#endif
+
   return true;
 }
 
@@ -1133,7 +1104,7 @@ llvm::PreservedAnalyses WorkitemLoops::run(llvm::Function &F,
   return WIL.runOnFunction(F) ? PAChanged : PreservedAnalyses::all();
 }
 
-bool WorkitemLoops::CanHandleKernel(llvm::Function &K,
+bool WorkitemLoops::canHandleKernel(llvm::Function &K,
                                     llvm::FunctionAnalysisManager &AM) {
 
   // Do not handle kernels with barriers inside loops which have early exits
@@ -1143,7 +1114,7 @@ bool WorkitemLoops::CanHandleKernel(llvm::Function &K,
   // Tested by tricky_for.cl.
   LoopInfo &LI = AM.getResult<llvm::LoopAnalysis>(K);
   for (auto L : LI) {
-    if (!Barrier::IsLoopWithBarrier(*L))
+    if (!Barrier::isLoopWithBarrier(*L))
       continue;
     // More than one 'break' point. It would lead to a complex control flow
     // structure which likely ruins loopvec efficiency anyhow.
