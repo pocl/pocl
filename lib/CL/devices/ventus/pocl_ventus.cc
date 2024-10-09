@@ -322,6 +322,10 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
                           | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN
                           | CL_FP_DENORM;
 
+  dev->double_fp_config = CL_FP_FMA | CL_FP_ROUND_TO_NEAREST
+                          | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF
+                          | CL_FP_INF_NAN | CL_FP_DENORM;
+
   // TODO: Do we have builtin kernels for Ventus?
 
 #ifdef ENABLE_LLVM
