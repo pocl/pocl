@@ -21,19 +21,19 @@
    IN THE SOFTWARE.
 */
 
-#include <algorithm>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
+#include <memory>
 #include <net/if.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
 #include <numeric>
-#include <optional>
 #include <random>
 #include <set>
 #include <sys/poll.h>
 #include <unistd.h>
 
+#include "connection.hh"
 #include "pocl_debug.h"
 #include "pocl_networking.h"
 #include "pocl_runtime_config.h"
@@ -55,8 +55,6 @@
 #endif
 #define POLLFD_ERROR_BITS (POLLHUP | POLLERR | POLLNVAL | POLLRDHUP)
 
-#define COMMAND_SOCKET_BUFSIZE (4 * 1024)
-#define STREAM_SOCKET_BUFSIZE (4 * 1024 * 1024)
 
 #define PERROR_CHECK(cond, str)                                                \
   do {                                                                         \
@@ -110,12 +108,13 @@ int listen_peers(void *data) {
     socklen_t AddressSize = sizeof(PeerAddress);
     /* NOTE: size argument must be initialized to length of actual size of the
      * addr argument */
-    int PeerFd = accept(listen_sock, &PeerAddress, &AddressSize);
-    assert(PeerFd != -1);
-    if (setsockopt(PeerFd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one)))
+    int Fd = accept(listen_sock, &PeerAddress, &AddressSize);
+    assert(Fd != -1);
+
+    if (setsockopt(Fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one)))
       POCL_MSG_ERR("peer listener: failed to set NODELAY on socket\n");
 #ifdef TCP_QUICKACK
-    if (setsockopt(PeerFd, IPPROTO_TCP, TCP_QUICKACK, &one, sizeof(one)))
+    if (setsockopt(Fd, IPPROTO_TCP, TCP_QUICKACK, &one, sizeof(one)))
       POCL_MSG_ERR("peer listener: failed to set QUICKACK on socket\n");
 #endif
     std::string addr_string =
@@ -123,6 +122,8 @@ int listen_peers(void *data) {
     POCL_MSG_PRINT_GENERAL("PL: New peer connection from %s\n",
                            addr_string.c_str());
 
+    std::shared_ptr<Connection> PeerConnection(
+        new Connection(TransportDomain_Inet, Fd, nullptr));
     ReplyMsg_t Rep;
 
 #ifdef ENABLE_RDMA
@@ -137,10 +138,9 @@ int listen_peers(void *data) {
     Request R{};
     bool ReadError;
     do {
-      ReadError = !R.read(PeerFd);
+      ReadError = !R.read(PeerConnection.get());
     } while (!R.IsFullyRead && !ReadError);
     if (ReadError) {
-      close(PeerFd);
       continue;
     }
 
@@ -156,17 +156,17 @@ int listen_peers(void *data) {
       POCL_MSG_WARN("PL: Attempted peer connection to invalid session %" PRIu64
                     " from %s\n",
                     R.req.session, addr_string.c_str());
-      close(PeerFd);
     } else {
       POCL_MSG_PRINT_INFO("PL: Peer connection from %s to session %" PRIu64
-                          ", fd_peer=%d\n",
-                          addr_string.c_str(), R.req.session, PeerFd);
+                          ", %s\n",
+                          addr_string.c_str(), R.req.session,
+                          PeerConnection->describe().c_str());
       ReplyMsg_t Rep = {};
       Rep.message_type = MessageType_PeerHandshakeReply;
       Rep.msg_id = R.req.msg_id;
       Rep.m.peer_handshake.peer_id = d->SessionPeerId.at(R.req.session);
       d->incoming_peers.at(R.req.session)
-          ->second.push_back({PeerFd, R.req.m.peer_handshake.peer_id
+          ->second.push_back({PeerConnection, R.req.m.peer_handshake.peer_id
 #ifdef ENABLE_RDMA
                               ,
                               rdma_connection
@@ -179,7 +179,7 @@ int listen_peers(void *data) {
           {*rdma_connection->id(), d->vctx_map.at(R.req.session)});
 #endif
       l.unlock();
-      write_full(PeerFd, &Rep, sizeof(Rep), nullptr);
+      PeerConnection->writeFull(&Rep, sizeof(Rep));
     }
   } while (true);
 }
@@ -321,8 +321,10 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports,
                    addr_string.c_str());
       break;
     }
-    int listen_command_fd = 0;
-    int listen_stream_fd = 0;
+    int FdCommand = -1;
+    int FdStream = -1;
+    transport_domain_t Domain =
+        (UseVsock) ? TransportDomain_Vsock : TransportDomain_Inet;
     struct sockaddr_storage server_addr_command, server_addr_stream;
     std::memcpy(&server_addr_command, base_addr, base_addrlen);
     if (server_addr_command.ss_family == AF_INET)
@@ -342,9 +344,9 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports,
       goto SOCKET_ERROR;
     }
 
-    listen_command_fd = socket(server_addr_command.ss_family, SOCK_STREAM,
-                               UseVsock ? 0 : IPPROTO_TCP);
-    PERROR_SKIP((listen_command_fd < 0), "command socket");
+    FdCommand = socket(server_addr_command.ss_family, SOCK_STREAM,
+                       UseVsock ? 0 : IPPROTO_TCP);
+    PERROR_SKIP((FdCommand < 0), "command socket");
 
     std::memcpy(&server_addr_stream, base_addr, base_addrlen);
     if (server_addr_stream.ss_family == AF_INET)
@@ -362,33 +364,26 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports,
       POCL_MSG_ERR("SERVER: unsupported socket address family\n");
       goto SOCKET_ERROR;
     }
-    listen_stream_fd = socket(server_addr_stream.ss_family, SOCK_STREAM,
-                              UseVsock ? 0 : IPPROTO_TCP);
-    PERROR_SKIP((listen_stream_fd < 0), "stream socket");
+    FdStream = socket(server_addr_stream.ss_family, SOCK_STREAM,
+                      UseVsock ? 0 : IPPROTO_TCP);
+    PERROR_SKIP((FdStream < 0), "stream socket");
 
 #ifdef SO_REUSEADDR
-    if (setsockopt(listen_command_fd, SOL_SOCKET, SO_REUSEADDR, &one,
-                   sizeof(one)))
+    if (setsockopt(FdCommand, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
       POCL_MSG_ERR("SERVER: failed to set REUSEADDR on command socket\n");
-    if (setsockopt(listen_stream_fd, SOL_SOCKET, SO_REUSEADDR, &one,
-                   sizeof(one)))
+    if (setsockopt(FdStream, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))
       POCL_MSG_ERR("SERVER: failed to set REUSEADDR on stream socket\n");
 #endif
 
-    PERROR_SKIP(
-        (bind(listen_command_fd, (struct sockaddr *)&server_addr_command,
-              base_addrlen) < 0),
-        "command bind");
-    pocl_remote_client_set_socket_options(
-        listen_command_fd, COMMAND_SOCKET_BUFSIZE, 1, ai->ai_family);
-    PERROR_SKIP((listen(listen_command_fd, 10) < 0), "command listen");
+    PERROR_SKIP((bind(FdCommand, (struct sockaddr *)&server_addr_command,
+                      base_addrlen) < 0),
+                "command bind");
+    PERROR_SKIP((listen(FdCommand, 10) < 0), "command listen");
 
-    PERROR_SKIP((bind(listen_stream_fd, (struct sockaddr *)&server_addr_stream,
+    PERROR_SKIP((bind(FdStream, (struct sockaddr *)&server_addr_stream,
                       base_addrlen) < 0),
                 "stream bind");
-    pocl_remote_client_set_socket_options(
-        listen_stream_fd, STREAM_SOCKET_BUFSIZE, 0, ai->ai_family);
-    PERROR_SKIP((listen(listen_stream_fd, 10) < 0), "stream listen");
+    PERROR_SKIP((listen(FdStream, 10) < 0), "stream listen");
 
 #ifdef ENABLE_RDMA
     rdma_listener.listen(ListenPorts.rdma);
@@ -412,18 +407,18 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports,
 #endif
     );
     ++NumListenFds;
-    OpenClientFds.push_back(listen_command_fd);
-    ListenFdParams.push_back({COMMAND_SOCKET_BUFSIZE, 1});
+    OpenClientConnections.push_back(std::shared_ptr<Connection>(
+        new Connection(Domain, FdCommand, nullptr)));
     ++NumListenFds;
-    OpenClientFds.push_back(listen_stream_fd);
-    ListenFdParams.push_back({STREAM_SOCKET_BUFSIZE, 0});
+    OpenClientConnections.push_back(
+        std::shared_ptr<Connection>(new Connection(Domain, FdStream, nullptr)));
     continue;
 #undef PERROR_SKIP
   SOCKET_ERROR:
-    if (listen_command_fd)
-      close(listen_command_fd);
-    if (listen_stream_fd)
-      close(listen_stream_fd);
+    if (FdCommand > 0)
+      close(FdCommand);
+    if (FdStream > 0)
+      close(FdStream);
   }
 #ifdef HAVE_LINUX_VSOCK_H
   if (UseVsock)
@@ -459,7 +454,8 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports,
   return 0;
 }
 
-VirtualContextBase *PoclDaemon::performSessionSetup(int fd, Request *R) {
+VirtualContextBase *
+PoclDaemon::performSessionSetup(std::shared_ptr<Connection> Conn, Request *R) {
   std::array<uint8_t, AUTHKEY_LENGTH> authkey;
   VirtualContextBase *ctx = nullptr;
   ClientConnections_t connections = {};
@@ -474,13 +470,11 @@ VirtualContextBase *PoclDaemon::performSessionSetup(int fd, Request *R) {
   }
   session = ++LastSessionId;
   SessionKeys.insert(std::make_pair(session, authkey));
-  if (R->req.m.get_session.fast_socket) {
-    connections.fd_command = fd;
-    connections.fd_stream = -1;
-  } else {
-    connections.fd_command = -1;
-    connections.fd_stream = fd;
-  }
+  Conn->configure(R->req.m.get_session.fast_socket);
+  if (R->req.m.get_session.fast_socket)
+    connections.low_latency = Conn;
+  else
+    connections.bulk_throughput = Conn;
 
   ReplyMsg_t Reply = {};
   Reply.message_type = MessageType_CreateOrAttachSessionReply;
@@ -502,7 +496,7 @@ VirtualContextBase *PoclDaemon::performSessionSetup(int fd, Request *R) {
   POCL_MSG_PRINT_INFO("Registered new client session %" PRIu64 " %s\n", session,
                       authkey_hex.c_str());
 
-  if (write_full(fd, &Reply, sizeof(Reply), nullptr) < 0) {
+  if (Conn->writeFull(&Reply, sizeof(Reply)) < 0) {
     POCL_MSG_ERR("Error sending session creation reply, destroying session\n");
     auto it = SessionKeys.find(session);
     if (it != SessionKeys.end())
@@ -550,10 +544,10 @@ void PoclDaemon::readAllClientSocketsThread() {
   // Collect vctxs that were used by connections to free those that are
   // not used by any connection when reconnect is not supported.
   std::set<VirtualContextBase *> DroppedVCtxs;
-  // Collect fds of closed sockets and close them in bulk at the end of the
-  // loop iteration in order to keep indices in sync
-  std::vector<int> DroppedFds;
-  bool FdsChanged = true;
+  // Collect indices of closed connections and drop them in bulk at the end of
+  // the loop iteration in order to keep indices in sync inside the poll loop
+  std::vector<std::shared_ptr<Connection>> DroppedConnections;
+  bool ConnectionsChanged = true;
   std::vector<struct pollfd> pfds;
 
   SocketContexts.clear();
@@ -563,21 +557,23 @@ void PoclDaemon::readAllClientSocketsThread() {
     /* Changes to the list of sockets should be relatively rare so let's
      * just rewrite the whole thing when it happens; it's a trivial
      * operation anyway. */
-    if (FdsChanged) {
+    if (ConnectionsChanged) {
       pfds.clear();
-      pfds.reserve(OpenClientFds.size());
-      for (const int &fd : OpenClientFds) {
+      pfds.reserve(OpenClientConnections.size());
+      for (auto &Connection : OpenClientConnections) {
         /* Unlike the other error flags POLLRDHUP is only returned if explicitly
          * polled for */
-        pfds.push_back({fd, POLLIN | POLLRDHUP, 0});
+        pfds.push_back({Connection->pollableFd(), POLLIN | POLLRDHUP, 0});
       }
-      FdsChanged = false;
+      ConnectionsChanged = false;
     }
 
+    POCL_MSG_WARN("NumListenFds: %d\n", (int)NumListenFds);
+
     /* These *really* ought to stay consistent */
-    assert(pfds.size() == OpenClientFds.size() &&
-           SocketContexts.size() == OpenClientFds.size() &&
-           IncompleteRequests.size() == OpenClientFds.size());
+    assert(pfds.size() == OpenClientConnections.size() &&
+           SocketContexts.size() == OpenClientConnections.size() &&
+           IncompleteRequests.size() == OpenClientConnections.size());
 
     /* Just block forever. If/when a socket is closed - including the client
      * listeners - it triggers a POLLERR/POLLHUP/POLLRDHUP/POLLNVAL. */
@@ -594,13 +590,13 @@ void PoclDaemon::readAllClientSocketsThread() {
     }
 
     auto accept_new_connection = [&](struct pollfd &pfd,
-                                     struct SocketParams &Params) {
+                                     Connection *Transport) {
       int ev = pfd.revents;
       pfd.revents = 0; // reset revents to 0 for the next polling round
       if (ev) {
         --NumEventFds;
         if (ev & POLLFD_ERROR_BITS) {
-          POCL_MSG_ERR("ev = 0x%X\n", ev);
+          POCL_MSG_PRINT_REMOTE("fd=%d ev = 0x%X\n", pfd.fd, ev);
           exit_helper.requestExit("Client listener socket closed", 0);
           return false;
         } else if (ev & POLLIN) {
@@ -610,20 +606,17 @@ void PoclDaemon::readAllClientSocketsThread() {
           socklen_t client_address_length = sizeof(client_address);
           /* NOTE: address length MUST be initialized to the size of the storage
            * given as the addr argument */
-          int newfd = accept(pfd.fd, (struct sockaddr *)&client_address,
+          int NewFd = accept(pfd.fd, (struct sockaddr *)&client_address,
                              &client_address_length);
-          if (newfd > 0) {
-            OpenClientFds.push_back(newfd);
+          if (NewFd > 0) {
+            OpenClientConnections.push_back(std::shared_ptr<Connection>(
+                new Connection(Transport->domain(), NewFd, nullptr)));
             SocketContexts.push_back(nullptr);
             IncompleteRequests.push_back(new Request());
-            FdsChanged = true;
-            /* XXX: Set these based on CreateOrAttachSession request instead? */
-            pocl_remote_client_set_socket_options(
-                newfd, Params.BufSize, Params.IsFast, client_address.ss_family);
+            ConnectionsChanged = true;
             std::string client_address_string = describe_sockaddr(
                 (struct sockaddr *)&client_address, client_address_length);
-            POCL_MSG_PRINT_INFO("Accepted client %s connection from %s\n",
-                                Params.IsFast ? "command" : "stream",
+            POCL_MSG_PRINT_INFO("Accepted client connection from %s\n",
                                 client_address_string.c_str());
           }
         }
@@ -636,7 +629,8 @@ void PoclDaemon::readAllClientSocketsThread() {
     bool CriticalError = false;
     for (size_t i = 0; i < NumListenFds && !CriticalError && NumEventFds > 0;
          ++i) {
-      CriticalError = !accept_new_connection(pfds.at(i), ListenFdParams.at(i));
+      CriticalError =
+          !accept_new_connection(pfds.at(i), OpenClientConnections.at(i).get());
     }
     if (CriticalError)
       break;
@@ -657,22 +651,22 @@ void PoclDaemon::readAllClientSocketsThread() {
           POCL_MSG_PRINT_GENERAL(
               "Poll says fd=%d is dead (0x%X), removing it.\n", pfds.at(i).fd,
               ev);
-          DroppedFds.push_back(pfds.at(i).fd);
+          DroppedConnections.push_back(OpenClientConnections.at(i));
           continue;
         }
 
         if (ev & POLLIN) {
           Request *R = IncompleteRequests.at(i);
-          if (R->read(pfds.at(i).fd)) {
+          if (R->read(OpenClientConnections.at(i).get())) {
             if (R->IsFullyRead) {
               if (R->req.message_type == MessageType_CreateOrAttachSession) {
                 int Fast = R->req.m.get_session.fast_socket;
                 uint64_t Session = R->req.session;
                 if (Session == 0) {
                   VirtualContextBase *ctx =
-                      performSessionSetup(pfds.at(i).fd, R);
+                      performSessionSetup(OpenClientConnections.at(i), R);
                   if (ctx == nullptr) {
-                    DroppedFds.push_back(pfds.at(i).fd);
+                    DroppedConnections.push_back(OpenClientConnections.at(i));
                   } else {
                     SocketContexts.at(i) = ctx;
                   }
@@ -683,14 +677,13 @@ void PoclDaemon::readAllClientSocketsThread() {
                     if (std::memcmp(it->second.data(), R->req.authkey,
                                     AUTHKEY_LENGTH) == 0) {
                       auto cit = ClientSessions.find(Session);
-                      std::optional<int> command_fd;
-                      std::optional<int> stream_fd;
-                      if (Fast)
-                        command_fd = pfds.at(i).fd;
-                      else
-                        stream_fd = pfds.at(i).fd;
                       assert(cit != ClientSessions.end());
-                      cit->second->updateSockets(command_fd, stream_fd);
+                      if (Fast)
+                        cit->second->replaceConnections(
+                            OpenClientConnections.at(i), nullptr);
+                      else
+                        cit->second->replaceConnections(
+                            nullptr, OpenClientConnections.at(i));
                       SocketContexts.at(i) = cit->second;
                     }
                   }
@@ -700,7 +693,7 @@ void PoclDaemon::readAllClientSocketsThread() {
                   Reply.m.get_session.session = Session;
                   memcpy(Reply.m.get_session.authkey, R->req.authkey,
                          AUTHKEY_LENGTH);
-                  write_full(pfds.at(i).fd, &Reply, sizeof(Reply), nullptr);
+                  OpenClientConnections.at(i)->writeFull(&Reply, sizeof(Reply));
                 }
                 delete R;
               } else {
@@ -784,29 +777,27 @@ void PoclDaemon::readAllClientSocketsThread() {
           } else {
             POCL_MSG_ERR("Something went wrong while reading request, closing "
                          "connection\n");
-            DroppedFds.push_back(pfds.at(i).fd);
+            DroppedConnections.push_back(OpenClientConnections.at(i));
           }
         }
       }
     }
 
     /* reap dead fds */
-    FdsChanged |= !DroppedFds.empty();
-    size_t left_to_reap = DroppedFds.size();
-    for (size_t i = 0; left_to_reap; ++i) {
-      int fd = OpenClientFds.at(i);
-      for (int d : DroppedFds) {
-        if (d == fd) {
-          close(fd);
-
+    ConnectionsChanged |= !DroppedConnections.empty();
+    size_t NumConnectionsToReap = DroppedConnections.size();
+    for (size_t i = 0;
+         i < OpenClientConnections.size() && NumConnectionsToReap != 0; ++i) {
+      for (auto &d : DroppedConnections) {
+        if (d.get() == OpenClientConnections.at(i).get()) {
           // Contexts can outlive their client connection (client may reconnect
           // later) so don't destroy them here, only remove them from the socket
           // bookkeeping list. Swap to the end of the vector & pop instead of
           // directly removing to avoid unnecessarily copying the entire rest
           // of the vector around.
 
-          std::swap(OpenClientFds.at(i), OpenClientFds.back());
-          OpenClientFds.pop_back();
+          std::swap(OpenClientConnections.at(i), OpenClientConnections.back());
+          OpenClientConnections.pop_back();
 
           std::swap(SocketContexts.at(i), SocketContexts.back());
           VirtualContextBase *vctx = SocketContexts.back();
@@ -817,11 +808,12 @@ void PoclDaemon::readAllClientSocketsThread() {
           delete IncompleteRequests.back();
           IncompleteRequests.pop_back();
           --i;
-          --left_to_reap;
+          --NumConnectionsToReap;
+          break;
         }
       }
     }
-    DroppedFds.clear();
+    DroppedConnections.clear();
 
     // TODO: The reconnect should have a time window as it holds resources.
     // Especially with SVM on, it will hold the SVMPool which can be a large
@@ -842,5 +834,5 @@ void PoclDaemon::readAllClientSocketsThread() {
   }
 
   /* Close all remaining sockets, including the client listeners */
-  std::for_each(OpenClientFds.cbegin(), OpenClientFds.cend(), &close);
+  OpenClientConnections.clear();
 }

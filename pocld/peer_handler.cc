@@ -21,9 +21,11 @@
    IN THE SOFTWARE.
 */
 
+#include "connection.hh"
 #include <chrono>
 
 #include <arpa/inet.h>
+#include <memory>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -66,9 +68,9 @@ const char *request_to_str(RequestMessageType type);
 PeerHandler::PeerHandler(
     uint32_t id, std::mutex *m,
     std::pair<std::condition_variable, std::vector<PeerConnection>> *incoming,
-    VirtualContextBase *c, ExitHelper *e, TrafficMonitor *tm)
+    VirtualContextBase *c, ExitHelper *e, std::shared_ptr<TrafficMonitor> tm)
     : id(id), NewConnectionsMutex(m), NewConnections(incoming), ctx(c), eh(e),
-      netstat(tm) {
+      Netstat(tm) {
   IncomingPeerHandler = std::thread(&PeerHandler::handleIncomingPeers, this);
 }
 
@@ -121,6 +123,9 @@ PeerHandler::connectPeer(uint64_t msg_id, const char *const address,
   freeaddrinfo(res);
   PERROR_CHECK404((PeerFd < 0), "connect peer socket");
 
+  std::shared_ptr<Connection> Conn(
+      new Connection(TransportDomain_Inet, PeerFd, Netstat));
+
 #ifdef ENABLE_RDMA
   POCL_MSG_PRINT_GENERAL("PH: Attempting RDMAcm connection to %s:%d\n", address,
                          port + 1);
@@ -140,23 +145,21 @@ PeerHandler::connectPeer(uint64_t msg_id, const char *const address,
   std::memcpy(Req.authkey, authkey.data(), AUTHKEY_LENGTH);
   Req.m.peer_handshake.peer_id = id;
   uint32_t RequestSize = request_size(Req.message_type);
-  CHECK_WRITE_RET(
-      write_full(PeerFd, &RequestSize, sizeof(RequestSize), netstat), "PH",
-      -404);
-  CHECK_WRITE_RET(write_full(PeerFd, &Req, RequestSize, netstat), "PH", -404);
+  CHECK_WRITE_RET(Conn->writeFull(&RequestSize, sizeof(RequestSize)), "PH",
+                  -404);
+  CHECK_WRITE_RET(Conn->writeFull(&Req, RequestSize), "PH", -404);
 
   ReplyMsg_t Reply = {};
   ssize_t readb;
-  CHECK_READ_RET(readb, read_full(PeerFd, &Reply, sizeof(Reply), netstat), "PH",
-                 -404);
+  CHECK_READ_RET(readb, Conn->readFull(&Reply, sizeof(Reply)), "PH", -404);
 
   std::unique_lock<std::mutex> map_lock(PeermapMutex);
 #ifdef ENABLE_RDMA
-  Peers[Reply.m.peer_handshake.peer_id].reset(new Peer(
-      Reply.m.peer_handshake.peer_id, id, ctx, eh, PeerFd, netstat, rdma));
+  Peers[Reply.m.peer_handshake.peer_id].reset(
+      new Peer(Reply.m.peer_handshake.peer_id, id, ctx, eh, Conn, rdma));
 #else
   Peers[Reply.m.peer_handshake.peer_id].reset(
-      new Peer(Reply.m.peer_handshake.peer_id, id, ctx, eh, PeerFd, netstat));
+      new Peer(Reply.m.peer_handshake.peer_id, id, ctx, eh, Conn));
 #endif
 
   POCL_MSG_PRINT_INFO("PH: peer %" PRIu32 " is now connected at %s\n",
@@ -176,13 +179,14 @@ void PeerHandler::handleIncomingPeers() {
     NewConnections->second.pop_back();
     l.unlock();
 
+    Conn.Conn->setMeter(Netstat);
     /* Handshake Request/Reply is handled by peer listener thread before
      * sending the fd here */
 
 #ifdef ENABLE_RDMA
-    Peer *p = new Peer(Conn.PeerId, id, ctx, eh, Conn.Fd, netstat, Conn.Rdma);
+    Peer *p = new Peer(Conn.PeerId, id, ctx, eh, Conn.Conn, Conn.Rdma);
 #else
-    Peer *p = new Peer(Conn.PeerId, id, ctx, eh, Conn.Fd, netstat);
+    Peer *p = new Peer(Conn.PeerId, id, ctx, eh, Conn.Conn);
 #endif
     std::unique_lock<std::mutex> map_lock(PeermapMutex);
     Peers[Conn.PeerId].reset(p);
@@ -253,7 +257,6 @@ void PeerHandler::rdmaUnregisterBuffer(uint32_t id) {
 
 PeerHandler::~PeerHandler() {
   eh->requestExit("PH Shutdown", 0);
-  listen_thread.join();
   for (auto &t : Peers) {
     t.second.reset();
   }

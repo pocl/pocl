@@ -24,7 +24,7 @@
 #include "rdma_request_th.hh"
 
 RdmaRequestThread::RdmaRequestThread(
-    VirtualContextBase *c, ExitHelper *e, TrafficMonitor *tm,
+    VirtualContextBase *c, ExitHelper *e, std::shared_ptr<TrafficMonitor> tm,
     const char *id_str, std::shared_ptr<RdmaConnection> conn,
     std::unordered_map<uint32_t, RdmaBufferData> *mem_regions,
     std::mutex *mem_regions_mutex)

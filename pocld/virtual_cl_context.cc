@@ -90,6 +90,7 @@ public:
 
 class VirtualCLContext : public VirtualContextBase {
   PoclDaemon *Daemon;
+  ExitHelper exit_helper;
   ReplyQueueThreadUPtr write_slow;
   ReplyQueueThreadUPtr write_fast;
 #ifdef ENABLE_RDMA
@@ -98,10 +99,6 @@ class VirtualCLContext : public VirtualContextBase {
 #endif
   PeerHandlerUPtr peers;
   uint32_t peer_id;
-  std::atomic_int command_fd;
-  std::atomic_int stream_fd;
-
-  ExitHelper exit_helper;
 
   std::vector<cl::Platform> PlatformList;
   std::vector<SharedContextBase *> SharedContextList;
@@ -126,7 +123,7 @@ class VirtualCLContext : public VirtualContextBase {
   std::mutex client_regions_mutex;
   uint32_t client_uses_rdma;
 #endif
-  TrafficMonitor *netstat;
+  std::shared_ptr<TrafficMonitor> netstat;
 
   std::unordered_set<uint32_t> BufferIDset;
   std::unordered_set<uint32_t> SamplerIDset;
@@ -146,10 +143,12 @@ public:
     assert(exit_helper.exit_requested());
     POCL_MSG_PRINT_GENERAL("VCTX: DEST\n");
 
+    // Wake up IO threads in case they were waiting for a connection
+    write_fast->setConnection(nullptr);
+    write_slow->setConnection(nullptr);
+
     // make sure no shared context tries to broadcast stuff
     std::unique_lock<std::mutex> lock(main_mutex);
-    // TOFIX: peers cannot be freed without crashing, let them leak for now.
-    // peers.reset();
     for (auto i : SharedContextList) {
       delete i;
     }
@@ -161,8 +160,8 @@ public:
   virtual size_t init(PoclDaemon *d, ClientConnections_t conns,
                       uint64_t session, CreateOrAttachSessionMsg_t &params);
 
-  virtual void updateSockets(std::optional<int> command_fd,
-                             std::optional<int> stream_fd) override;
+  virtual void replaceConnections(std::shared_ptr<Connection> Command,
+                                  std::shared_ptr<Connection> Stream) override;
 
   virtual void nonQueuedPush(Request *req) override;
 
@@ -241,8 +240,6 @@ size_t VirtualCLContext::init(PoclDaemon *d, ClientConnections_t conns,
   Daemon = d;
   current_printf_position = 0;
   TotalDevices = 0;
-  command_fd = conns.fd_command;
-  stream_fd = conns.fd_stream;
   peer_id = params.peer_id;
 #ifdef ENABLE_RDMA
   client_uses_rdma = params.use_rdma;
@@ -252,7 +249,11 @@ size_t VirtualCLContext::init(PoclDaemon *d, ClientConnections_t conns,
 #endif
 
   std::string id_string = std::to_string(session);
-  netstat = new TrafficMonitor(&exit_helper, id_string);
+  netstat.reset(new TrafficMonitor(&exit_helper, id_string));
+  if (conns.low_latency.get())
+    conns.low_latency->setMeter(netstat);
+  if (conns.bulk_throughput.get())
+    conns.bulk_throughput->setMeter(netstat);
 
 #ifdef ENABLE_RDMA
   if (client_uses_rdma) {
@@ -265,9 +266,9 @@ size_t VirtualCLContext::init(PoclDaemon *d, ClientConnections_t conns,
   }
 #endif
   write_slow = ReplyQueueThreadUPtr(
-      new ReplyQueueThread(&stream_fd, this, &exit_helper, netstat, "WT_S"));
+      new ReplyQueueThread(conns.bulk_throughput, this, &exit_helper, "WT_S"));
   write_fast = ReplyQueueThreadUPtr(
-      new ReplyQueueThread(&command_fd, this, &exit_helper, netstat, "WT_F"));
+      new ReplyQueueThread(conns.low_latency, this, &exit_helper, "WT_F"));
 
   peers = PeerHandlerUPtr(new PeerHandler(peer_id, conns.incoming_peer_mutex,
                                           conns.incoming_peer_queue, this,
@@ -281,12 +282,17 @@ size_t VirtualCLContext::init(PoclDaemon *d, ClientConnections_t conns,
   return TotalDevices;
 }
 
-void VirtualCLContext::updateSockets(std::optional<int> fd_command,
-                                     std::optional<int> fd_stream) {
-  if (fd_command.has_value())
-    command_fd = fd_command.value();
-  if (fd_stream.has_value())
-    stream_fd = fd_stream.value();
+void VirtualCLContext::replaceConnections(
+    std::shared_ptr<Connection> Latency,
+    std::shared_ptr<Connection> Throughput) {
+  if (Latency.get()) {
+    Latency->setMeter(netstat);
+    write_fast->setConnection(Latency);
+  }
+  if (Throughput.get()) {
+    Throughput->setMeter(netstat);
+    write_slow->setConnection(Throughput);
+  }
 }
 
 size_t VirtualCLContext::initPlatforms() {

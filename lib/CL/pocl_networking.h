@@ -27,6 +27,22 @@
 #ifndef POCL_NETWORKING_H
 #define POCL_NETWORKING_H
 
+typedef enum transport_domain_e
+{
+  /** Unix domain socket */
+  TransportDomain_Unix,
+  /** IPv4 or IPv6 */
+  TransportDomain_Inet,
+  /** VSOCK VirtIO socket */
+  TransportDomain_Vsock,
+} transport_domain_t;
+
+typedef struct transport_info_s
+{
+  transport_domain_t domain;
+  int fd;
+} transport_info_t;
+
 #ifdef __cplusplus
 extern "C"
 {

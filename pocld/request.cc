@@ -26,7 +26,6 @@
 #include <chrono>
 #include <unistd.h>
 
-#include "messages.h"
 #include "pocl_debug.h"
 #include "request.hh"
 #include "tracing.h"
@@ -142,38 +141,19 @@ const char *request_to_str(RequestMessageType type) {
   }
 }
 
-/* Returns 0 on success and no-op, otherwise errno */
-static int reentrant_read(int fd, void *dest, size_t size, size_t *tracker) {
-  if (*tracker == size)
-    return 0;
-
-  ssize_t readb;
-  readb = ::read(fd, (char *)dest + *tracker, size - *tracker);
-  if (readb < 0)
-    return errno;
-
-  if (readb == 0)
-    return EPIPE;
-
-  *tracker += readb;
-  if (*tracker != size)
-    return EAGAIN;
-  return 0;
-}
-
 #define RETURN_UNLESS_DONE(call)                                               \
   do {                                                                         \
     int ret = (call);                                                          \
     if (ret) {                                                                 \
       if (ret == EAGAIN || ret == EWOULDBLOCK)                                 \
         return true;                                                           \
-      POCL_MSG_ERR("Read error on " #call ", fd=%d, reason: %s\n", fd,         \
-                   strerror(ret));                                             \
+      POCL_MSG_ERR("Read error on " #call ", %s, reason: %s\n",                \
+                   Conn->describe().c_str(), strerror(ret));                   \
       return false;                                                            \
     }                                                                          \
   } while (0);
 
-bool Request::read(int fd) {
+bool Request::read(Connection *Conn) {
   ssize_t readb;
   Request *request = this;
   RequestMsg_t *req = &request->req;
@@ -186,12 +166,11 @@ bool Request::read(int fd) {
             .count();
   }
 
-  RETURN_UNLESS_DONE(reentrant_read(fd, &request->req_size,
-                                    sizeof(request->req_size),
-                                    &request->req_size_read));
+  RETURN_UNLESS_DONE(Conn->readReentrant(
+      &request->req_size, sizeof(request->req_size), &request->req_size_read));
 
   RETURN_UNLESS_DONE(
-      reentrant_read(fd, req, request->req_size, &request->req_read));
+      Conn->readReentrant(req, request->req_size, &request->req_read));
 
   TP_MSG_RECEIVED(req->msg_id, req->did, req->cq_id, req->message_type);
 
@@ -262,10 +241,9 @@ bool Request::read(int fd) {
                            "/%" PRIu32 "\n",
                            uint64_t(req->msg_id), request->waitlist_read,
                            request->req.waitlist_size);
-    RETURN_UNLESS_DONE(
-        reentrant_read(fd, request->waitlist.data(),
-                       request->req.waitlist_size * sizeof(uint64_t),
-                       &request->waitlist_read));
+    RETURN_UNLESS_DONE(Conn->readReentrant(
+        request->waitlist.data(), request->req.waitlist_size * sizeof(uint64_t),
+        &request->waitlist_read));
   }
   /*****************************/
 
@@ -275,9 +253,8 @@ bool Request::read(int fd) {
     POCL_MSG_PRINT_GENERAL(
         "READING EXTRA FOR ID: %" PRIu64 " = %" PRIuS "/%" PRIu64 "\n",
         uint64_t(req->msg_id), request->extra_read, request->extra_size);
-    RETURN_UNLESS_DONE(reentrant_read(fd, request->extra_data.data(),
-                                      request->extra_size,
-                                      &request->extra_read));
+    RETURN_UNLESS_DONE(Conn->readReentrant(
+        request->extra_data.data(), request->extra_size, &request->extra_read));
     /* Always add a null byte at the end - it is needed for strings and it does
      * not harm other things */
     request->extra_data[request->extra_size] = 0;
@@ -290,9 +267,9 @@ bool Request::read(int fd) {
     POCL_MSG_PRINT_GENERAL(
         "READING EXTRA2 FOR ID:%" PRIu64 " = %" PRIuS "/%" PRIu64 "\n",
         uint64_t(req->msg_id), request->extra_read2, request->extra_size2);
-    RETURN_UNLESS_DONE(reentrant_read(fd, request->extra_data2.data(),
-                                      request->extra_size2,
-                                      &request->extra_read2));
+    RETURN_UNLESS_DONE(Conn->readReentrant(request->extra_data2.data(),
+                                           request->extra_size2,
+                                           &request->extra_read2));
     /* Always add null byte here too, just in case extra2 is a string */
     request->extra_data2[request->extra_size2] = 0;
   }
@@ -306,8 +283,8 @@ bool Request::read(int fd) {
             .count();
   }
 
-  POCL_MSG_PRINT_GENERAL("ALL READS COMPLETE FOR ID: %" PRIu64 ", fd=%d\n",
-                         uint64_t(req->msg_id), fd);
+  POCL_MSG_PRINT_GENERAL("ALL READS COMPLETE FOR ID: %" PRIu64 ", %s\n",
+                         uint64_t(req->msg_id), Conn->describe().c_str());
 
   IsFullyRead = true;
   return true;

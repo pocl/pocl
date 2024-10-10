@@ -28,6 +28,7 @@
 #include <cstring>
 #include <vector>
 
+#include "connection.hh"
 #include "messages.h"
 
 #ifdef __GNUC__
@@ -35,7 +36,6 @@
 #endif
 
 class Request {
-
 public:
   /** Size, in bytes, of the main request body (up to sizeof RequestMsg_t) */
   uint32_t req_size;
@@ -82,10 +82,10 @@ public:
    * socket. Set at the very end of the read() function. */
   bool IsFullyRead;
 
-  /** Incrementally reads the request from given fd. Returns true on success and
-   * false if an error occurs while reading. Call repeatedly until `fully_read`
-   * gets set to true. */
-  bool read(int fd);
+  /** Incrementally reads the request from given Connection. Returns true on
+   * success and false if an error occurs while reading. Call repeatedly until
+   * `fully_read` gets set to true. */
+  bool read(Connection *);
 };
 
 #ifdef __GNUC__

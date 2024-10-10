@@ -29,6 +29,7 @@
 
 #include "messages.h"
 #include "pocl.h"
+#include "pocl_networking.h"
 #include "pocl_threads.h"
 
 #include "utlist_addon.h"
@@ -173,22 +174,6 @@ struct network_command
 
 // in nanoseconds
 #define POCL_REMOTE_RECONNECT_TIMEOUT_NS 60 * 1000000000L
-
-typedef enum transport_domain_e
-{
-  /** Unix domain socket */
-  TransportDomain_Unix,
-  /** IPv4 or IPv6 */
-  TransportDomain_Inet,
-  /** VSOCK VirtIO socket */
-  TransportDomain_Vsock,
-} transport_domain_t;
-
-typedef struct transport_info_s
-{
-  transport_domain_t domain;
-  int fd;
-} transport_info_t;
 
 typedef struct remote_server_data_s
 {

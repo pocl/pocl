@@ -27,11 +27,11 @@
 #include "rdma_reply_th.hh"
 
 RdmaReplyThread::RdmaReplyThread(
-    VirtualContextBase *c, ExitHelper *e, TrafficMonitor *tm,
+    VirtualContextBase *c, ExitHelper *e, std::shared_ptr<TrafficMonitor> tm,
     const char *id_str, std::shared_ptr<RdmaConnection> conn,
     std::unordered_map<uint32_t, RdmaBufferData> *mem_regions,
     std::mutex *mem_regions_mutex)
-    : virtualContext(c), eh(e), netstat(tm), id_str(id_str), rdma(conn),
+    : virtualContext(c), eh(e), Netstat(tm), id_str(id_str), rdma(conn),
       mem_regions(mem_regions), mem_regions_mutex(mem_regions_mutex) {
   io_thread = std::thread{&RdmaReplyThread::rdmaWriterThread, this};
 }
@@ -114,8 +114,8 @@ void RdmaReplyThread::rdmaWriterThread() {
       data_wr.chain(std::move(cmd_wr));
 
       /******************* submit work requests *******************/
-      if (netstat)
-        netstat->txSubmitted(sizeof(ReplyMsg_t) + data_size);
+      if (Netstat.get())
+        Netstat->txSubmitted(sizeof(ReplyMsg_t) + data_size);
       try {
         rdma->post(data_wr);
       } catch (const std::runtime_error &e) {
@@ -137,8 +137,8 @@ void RdmaReplyThread::rdmaWriterThread() {
         break;
       }
 
-      if (netstat)
-        netstat->txConfirmed(sizeof(ReplyMsg_t) + data_size);
+      if (Netstat.get())
+        Netstat->txConfirmed(sizeof(ReplyMsg_t) + data_size);
 
       virtualContext->notifyEvent(reply->req->req.event_id, CL_COMPLETE);
       Request peer_notice{};

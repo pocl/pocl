@@ -24,6 +24,7 @@
 #ifndef POCL_RDMA_WRITE_QUEUE_HH
 #define POCL_RDMA_WRITE_QUEUE_HH
 
+#include <memory>
 #include <queue>
 
 #include <infiniband/verbs.h>
@@ -46,7 +47,7 @@ class RdmaReplyThread {
   std::condition_variable io_cond;
   ExitHelper *eh;
   std::string id_str;
-  TrafficMonitor *netstat;
+  std::shared_ptr<TrafficMonitor> Netstat;
 
   std::shared_ptr<RdmaConnection> rdma;
 
@@ -56,8 +57,9 @@ class RdmaReplyThread {
   void rdmaWriterThread();
 
 public:
-  RdmaReplyThread(VirtualContextBase *c, ExitHelper *eh, TrafficMonitor *tm,
-                  const char *id_str, std::shared_ptr<RdmaConnection> conn,
+  RdmaReplyThread(VirtualContextBase *c, ExitHelper *eh,
+                  std::shared_ptr<TrafficMonitor> tm, const char *id_str,
+                  std::shared_ptr<RdmaConnection> conn,
                   std::unordered_map<uint32_t, RdmaBufferData> *mem_regions,
                   std::mutex *mem_region_mutex);
 

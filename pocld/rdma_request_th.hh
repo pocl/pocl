@@ -25,6 +25,7 @@
 #ifndef POCL_RDMA_REQUEST_TH_HH
 #define POCL_RDMA_REQUEST_TH_HH
 
+#include <memory>
 #include <queue>
 
 #include <infiniband/verbs.h>
@@ -46,7 +47,7 @@ class RdmaRequestThread {
   std::condition_variable io_cond;
   ExitHelper *eh;
   std::string id_str;
-  TrafficMonitor *netstat;
+  std::shared_ptr<TrafficMonitor> netstat;
 
   std::shared_ptr<RdmaConnection> connection;
 
@@ -56,8 +57,9 @@ class RdmaRequestThread {
   void rdmaReaderThread();
 
 public:
-  RdmaRequestThread(VirtualContextBase *c, ExitHelper *eh, TrafficMonitor *tm,
-                    const char *id_str, std::shared_ptr<RdmaConnection> conn,
+  RdmaRequestThread(VirtualContextBase *c, ExitHelper *eh,
+                    std::shared_ptr<TrafficMonitor> tm, const char *id_str,
+                    std::shared_ptr<RdmaConnection> conn,
                     std::unordered_map<uint32_t, RdmaBufferData> *mem_regions,
                     std::mutex *mem_regions_mutex);
 

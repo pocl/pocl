@@ -23,6 +23,7 @@
 */
 
 #include "common.hh"
+#include "pocl_networking.h"
 #include "traffic_monitor.hh"
 
 #include <arpa/inet.h>
@@ -33,69 +34,6 @@
 #include <netdb.h>
 #include <sys/uio.h>
 #include <unistd.h>
-
-ssize_t read_full(int fd, void *p, size_t total, TrafficMonitor *tm) {
-  //      float_time_point start = Time::now();
-
-  size_t readb = 0;
-  ssize_t res;
-  char *ptr = static_cast<char *>(p);
-  if (tm)
-    tm->rxRequested(total);
-  while (readb < total) {
-    size_t remain = total - readb;
-    res = ::read(fd, ptr + readb, remain);
-    if (res < 0) {
-      int e = errno;
-      if (e == EAGAIN || e == EWOULDBLOCK)
-        continue;
-      else
-        return -1;
-    }
-    if (res == 0) { // EOF
-      return 0;
-    }
-    readb += (size_t)res;
-    if (tm)
-      tm->rxConfirmed(res);
-  }
-
-  return static_cast<ssize_t>(total);
-  //      float_time_point end = Time::now();
-  //      float_sec elapsed_seconds = end-start;
-  //      std::cerr << "read " << total << " bytes   @ " <<
-  //      elapsed_seconds.count() << "\n";
-}
-
-int write_full(int fd, void *p, size_t total, TrafficMonitor *tm) {
-  //      float_time_point start = Time::now();
-
-  size_t written = 0;
-  ssize_t res;
-  char *ptr = static_cast<char *>(p);
-  if (tm)
-    tm->txSubmitted(total);
-  while (written < total) {
-    size_t remain = total - written;
-    res = ::write(fd, ptr + written, remain);
-    if (res < 0) {
-      int e = errno;
-      if (e == EAGAIN || e == EWOULDBLOCK)
-        continue;
-      else
-        return -1;
-    }
-    written += (size_t)res;
-    if (tm)
-      tm->txConfirmed(res);
-  }
-  return 0;
-
-  //      float_time_point end = Time::now();
-  //      float_sec elapsed_seconds = end-start;
-  //      std::cerr << "written " << total << " bytes   @ " <<
-  //      elapsed_seconds.count() << "\n";
-}
 
 void replyID(Reply *rep, ReplyMessageType t, uint32_t id) {
   rep->rep.message_type = t;
