@@ -74,7 +74,7 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
         case CL_QUEUE_SIZE:
           {
             POCL_GOTO_ERROR_ON ((queue_size_set > 0), CL_INVALID_VALUE,
-                                "CL_QUEUE_PROPERTIES was already set");
+                                "CL_QUEUE_SIZE was already set");
             queue_size = (cl_uint)properties[i + 1];
             queue_size_set++;
             i += 2;
@@ -83,6 +83,8 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
         case CL_QUEUE_PRIORITY_KHR:
           {
             cl_queue_properties value = properties[i + 1];
+            POCL_GOTO_ERROR_ON ((queue_priority_set > 0), CL_INVALID_VALUE,
+                                "CL_QUEUE_PRIORITY_KHR was already set");
             POCL_GOTO_ERROR_ON ((value != CL_QUEUE_PRIORITY_HIGH_KHR
                                  && value != CL_QUEUE_PRIORITY_MED_KHR
                                  && value != CL_QUEUE_PRIORITY_LOW_KHR),
@@ -98,6 +100,8 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
         case CL_QUEUE_THROTTLE_KHR:
           {
             cl_queue_properties value = properties[i + 1];
+            POCL_GOTO_ERROR_ON ((queue_throttle_set > 0), CL_INVALID_VALUE,
+                                "CL_QUEUE_THROTTLE_KHR was already set");
             POCL_GOTO_ERROR_ON ((value != CL_QUEUE_THROTTLE_HIGH_KHR
                                  && value != CL_QUEUE_THROTTLE_MED_KHR
                                  && value != CL_QUEUE_THROTTLE_LOW_KHR),
@@ -129,13 +133,29 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
           POCL_GOTO_ERROR_COND((queue_throttle_set), CL_INVALID_QUEUE_PROPERTIES);
 
          // create a device side queue
-          POCL_GOTO_ERROR_ON (1, CL_INVALID_QUEUE_PROPERTIES,
+          POCL_GOTO_ERROR_ON ((device->on_dev_queue_props == 0),
+                              CL_INVALID_QUEUE_PROPERTIES,
                               "Device-side enqueue is not supported "
                               "by any device\n");
         }
       else
-        POCL_GOTO_ERROR_ON((queue_size > 0), CL_INVALID_VALUE,
-                           "To specify queue size, you must use CL_QUEUE_ON_DEVICE in flags\n");
+        {
+          POCL_GOTO_ERROR_ON (
+            (queue_size > 0), CL_INVALID_QUEUE_PROPERTIES,
+            "Queue size can only be specified for on-device queues\n");
+          POCL_GOTO_ERROR_ON (
+            (queue_priority_set
+             && (strstr (device->extensions, "cl_khr_priority_hints")
+                 == NULL)),
+            CL_INVALID_QUEUE_PROPERTIES,
+            "device does not support cl_khr_priority_hints\n");
+          POCL_GOTO_ERROR_ON (
+            (queue_throttle_set
+             && (strstr (device->extensions, "cl_khr_throttle_hints")
+                 == NULL)),
+            CL_INVALID_QUEUE_PROPERTIES,
+            "device does not support cl_khr_throttle_hints\n");
+        }
 
       /* validate flags */
       POCL_GOTO_ERROR_ON ((queue_props & (~valid_prop_flags)),
