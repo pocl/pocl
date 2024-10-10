@@ -2060,7 +2060,8 @@ bool Level0Device::setupDeviceProperties(bool HasIPVersionExt) {
 #else
     ClDev->supported_spir_v_versions = "SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
 #endif
-    ClDev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
+    ClDev->on_host_queue_props
+        = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;
     ClDev->version_of_latest_passed_cts = "v2000-12-31-01";
   }
 
