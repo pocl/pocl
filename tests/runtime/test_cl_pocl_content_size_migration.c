@@ -63,7 +63,7 @@ main (void)
   uint64_t content_size;
 
   poclu_get_multiple_devices (&platform, &context, CL_FALSE, &num_devices,
-                              &devices, &queues, CL_FALSE);
+                              &devices, &queues, 0);
   if (num_devices < 2)
     {
       printf ("Not enough devices (2 required), skipping");

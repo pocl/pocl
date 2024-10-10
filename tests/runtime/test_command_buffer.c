@@ -118,8 +118,13 @@ main (int _argc, char **_argv)
   CHECK_CL_ERROR (
       clSetKernelArg (kernel, 2, sizeof (buffer_res), &buffer_res));
 
-  cl_command_queue command_queue = clCreateCommandQueue (
-      context, device, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, &error);
+  cl_command_queue_properties props = 0;
+  CHECK_CL_ERROR (clGetDeviceInfo (device, CL_DEVICE_QUEUE_ON_HOST_PROPERTIES,
+                                   sizeof (props), &props, NULL));
+  if (props & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
+    props = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+  cl_command_queue command_queue
+    = clCreateCommandQueue (context, device, props, &error);
   CHECK_CL_ERROR (error);
 
   cl_command_buffer_khr command_buffer
