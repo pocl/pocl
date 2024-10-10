@@ -175,7 +175,7 @@ if(OPENCL_HEADER_VERSION GREATER 299)
   set(OCL_30_TESTS "runtime/test_queue_creation_with_hints")
 
   add_test(NAME "runtime/test_dbk_matmul" COMMAND test_dbk_matmul)
-  set(OCL_30_TESTS "runtime/test_dbk_matmul")
+  set(OCL_30_TESTS ${OCL_30_TESTS} "runtime/test_dbk_matmul")
 endif()
 
 set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
