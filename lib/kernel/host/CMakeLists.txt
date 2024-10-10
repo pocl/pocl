@@ -289,7 +289,8 @@ if(HOST_CPU_ENABLE_CL_KHR_FP16)
     round.cl
     sin.cl
     sqrt.cl
-    trunc.cl)
+    trunc.cl
+    isinf_half.cl)
 endif()
 
 
