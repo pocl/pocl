@@ -45,30 +45,24 @@
 #include "common.h"
 #include "pocl_shared.h"
 
+#include "common_driver.h"
 #include "config.h"
 #include "config2.h"
 #include "devices.h"
 #include "pocl_cache.h"
 #include "pocl_debug.h"
+#include "pocl_dynlib.h"
 #include "pocl_file_util.h"
 #include "pocl_image_util.h"
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
-#include "common_driver.h"
 
 #ifdef HAVE_GETRLIMIT
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>
-#endif
-
-#ifdef HAVE_DLFCN_H
-#if defined(__APPLE__)
-#define _DARWIN_C_SOURCE
-#endif
-#include <dlfcn.h>
 #endif
 
 #ifdef ENABLE_LLVM
@@ -224,10 +218,9 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
    * on the host side; therefore link to libpocl.so which provides it */
 #ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
 #ifdef HAVE_DLFCN_H
-  Dl_info info;
-  int r = dladdr ((void *)pocl_cache_tempname, &info);
-  assert (r != 0);
-  cmd_line[last_arg_idx++] = info.dli_fname;
+  const char *fname = pocl_dynlib_pathname ((void *)pocl_cache_tempname);
+  assert (fname != NULL);
+  cmd_line[last_arg_idx++] = fname;
 #else
 #error ENABLE_PRINTF_IMMEDIATE_FLUSH requires HAVE_DLFCN_H
 #endif
@@ -955,10 +948,7 @@ get_new_dlhandle_cache_item ()
   if ((handle_count >= MAX_CACHE_ITEMS) && ci && (ci != pocl_dlhandle_cache))
     {
       DL_DELETE (pocl_dlhandle_cache, ci);
-      dlclose (ci->dlhandle);
-      dl_error = dlerror ();
-      if (dl_error != NULL)
-        POCL_ABORT ("dlclose() failed with error: %s\n", dl_error);
+      pocl_dynlib_close (ci->dlhandle);
       memset (ci, 0, sizeof (pocl_dlhandle_cache_item));
     }
   else
@@ -1103,19 +1093,19 @@ fetch_dlhandle_cache_item (_cl_command_run *run_cmd, int specialize)
 }
 
 /**
- * Checks if the kernel command has been built and has been loaded with
- * dlopen, and reuses its handle. If not, checks if a built binary is found
+ * Checks if the kernel command has been built and loaded, and reuses
+ * its handle. If not, checks if a built binary is found
  * in the disk, if not, builds the kernel and puts it to respective
  * caches.
  *
- * if handle already exists: if the retain argument is given,
+ * If the handle already exists: if the retain argument is given,
  * the refcount is increased, otherwise it's kept unchanged.
  * if handle doesn't exist: if the retain argument is given,
  * refcount is set to 1, otherwise it's set to 0.
  * This can be useful in case we're just pre-compiling kernels
  * (or compiling them for binaries), and not actually need them immediately.
  *
- * Returns: a dlhandle cache item as void*; this needs to be given
+ * Returns: a dynlib handle cache item as void*; this needs to be given
  * to pocl_release_dlhandle_cache(), if it was retained */
 void *
 pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
@@ -1158,36 +1148,26 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 
   char *module_fn = pocl_check_kernel_disk_cache (command, specialize);
 
-  // reset possibly existing error from calls from an ICD loader
-  (void)dlerror();
-  ci->dlhandle = dlopen (module_fn, RTLD_NOW | RTLD_LOCAL);
-  dl_error = dlerror ();
-
-  if (ci->dlhandle == NULL || dl_error != NULL)
-    POCL_ABORT ("dlopen(\"%s\") failed with '%s'.\n"
-                "note: missing symbols in the kernel binary might be"
-                " reported as 'file not found' errors.\n",
-                module_fn, dl_error);
+  ci->dlhandle = pocl_dynlib_open (module_fn, 0, 1);
 
   snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
             "_pocl_kernel_%s_workgroup", run_cmd->kernel->name);
 
-  ci->wg = dlsym (ci->dlhandle, workgroup_string);
-  dl_error = dlerror ();
+  ci->wg = pocl_dynlib_symbol_address (ci->dlhandle, workgroup_string);
 
-  if (ci->wg == NULL || dl_error != NULL)
+  if (ci->wg == NULL)
     {
       // Older OSX dyld APIs need the name without the underscore.
       snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
                 "pocl_kernel_%s_workgroup", run_cmd->kernel->name);
-      ci->wg = dlsym (ci->dlhandle, workgroup_string);
-      dl_error = dlerror ();
+      ci->wg = pocl_dynlib_symbol_address (ci->dlhandle, workgroup_string);
 
-      if (ci->wg == NULL || dl_error != NULL)
-        POCL_ABORT ("dlsym(\"%s\", \"%s\") failed with '%s'.\n"
-                    "note: missing symbols in the kernel binary might be"
-                    " reported as 'file not found' errors.\n",
-                    module_fn, workgroup_string, dl_error);
+      if (ci->wg == NULL)
+      POCL_ABORT (
+        "pocl_dynlib_symbol_address(\"%s\", \"%s\") failed with '%s'.\n"
+        "note: missing symbols in the kernel binary might be"
+        " reported as 'file not found' errors.\n",
+        module_fn, workgroup_string, dl_error);
     }
 
   run_cmd->wg = ci->wg;

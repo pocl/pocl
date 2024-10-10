@@ -2,6 +2,7 @@
    implementations
 
    Copyright (c) 2011-2021 pocl developers
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -33,11 +34,9 @@
 #include "pocl_timing.h"
 #include "utlist.h"
 
-// for pocl_aligned_malloc
-#include "pocl_util.h"
-#include "pocl_file_util.h"
-// for SPIR-V handling
 #include "pocl_cache.h"
+#include "pocl_file_util.h"
+#include "pocl_util.h"
 
 #include "pocl_workgroup_func.h"
 

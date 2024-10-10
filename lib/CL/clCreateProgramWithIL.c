@@ -1,6 +1,7 @@
 /* OpenCL runtime library: clCreateProgramWithIL()
 
    Copyright (c) 2019 pocl developers
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -25,8 +26,8 @@
 #include "pocl_cl.h"
 #include "pocl_file_util.h"
 #include "pocl_llvm.h"
-#include "pocl_util.h"
 #include "pocl_shared.h"
+#include "pocl_util.h"
 
 /* max number of lines in output of 'llvm-spirv --spec-const-info' */
 #define MAX_SPEC_CONSTANT_LINES 4096
