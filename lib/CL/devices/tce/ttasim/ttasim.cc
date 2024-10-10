@@ -700,7 +700,7 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->spmd = CL_FALSE;
   dev->run_workgroup_pass = CL_TRUE;
   dev->execution_capabilities = CL_EXEC_KERNEL;
-  dev->queue_properties = CL_QUEUE_PROFILING_ENABLE;
+  dev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
   dev->vendor = "TTA-Based Co-design Environment";
   dev->profile = "EMBEDDED_PROFILE";
   dev->extensions = TCE_DEVICE_EXTENSIONS;

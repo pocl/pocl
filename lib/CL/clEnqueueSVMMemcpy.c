@@ -75,7 +75,7 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
          buffers. */
       if (command_buffer)
         errcode = POname (clCommandCopyBufferKHR) (
-            command_buffer, NULL, src_svm_ptr->shadow_cl_mem,
+            command_buffer, NULL, NULL, src_svm_ptr->shadow_cl_mem,
             dst_svm_ptr->shadow_cl_mem, src_ptr - src_svm_ptr->vm_ptr,
             dst_ptr - dst_svm_ptr->vm_ptr, size, num_items_in_wait_list,
             sync_point_wait_list, sync_point, NULL);

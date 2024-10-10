@@ -55,7 +55,8 @@ main (int argc, char **argv)
   cl_event ev1, ev2;
 
   err = poclu_get_multiple_devices (&platform, &context, 0, &num_devices,
-                                    &devices, &queues, 1);
+                                    &devices, &queues,
+                                    CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
   CHECK_OPENCL_ERROR_IN ("poclu_get_multiple_devices");
 
   printf ("NUM DEVICES: %u \n", num_devices);

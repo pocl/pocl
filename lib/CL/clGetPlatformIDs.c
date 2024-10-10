@@ -50,7 +50,7 @@ struct _cl_icd_dispatch pocl_dispatch = {
   &POname(clRetainCommandQueue), /* 10 */
   &POname(clReleaseCommandQueue),
   &POname(clGetCommandQueueInfo),
-  NULL /*clSetCommandQueueProperty*/,
+  &POname(clSetCommandQueueProperty),
   &POname(clCreateBuffer),
   &POname(clCreateImage2D),
   &POname(clCreateImage3D),

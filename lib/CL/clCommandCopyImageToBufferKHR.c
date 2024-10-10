@@ -29,6 +29,7 @@
 extern CL_API_ENTRY cl_int CL_API_CALL
 POname (clCommandCopyImageToBufferKHR) (
     cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
+    const cl_command_properties_khr* properties,
     cl_mem src_image, cl_mem dst_buffer, const size_t *src_origin,
     const size_t *region, size_t dst_offset,
     cl_uint num_sync_points_in_wait_list,

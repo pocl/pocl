@@ -29,6 +29,7 @@
 CL_API_ENTRY cl_int CL_API_CALL
 POname (clCommandCopyBufferRectKHR) (
     cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
+    const cl_command_properties_khr* properties,
     cl_mem src_buffer, cl_mem dst_buffer, const size_t *src_origin,
     const size_t *dst_origin, const size_t *region, size_t src_row_pitch,
     size_t src_slice_pitch, size_t dst_row_pitch, size_t dst_slice_pitch,

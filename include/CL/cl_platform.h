@@ -361,11 +361,6 @@ typedef double          cl_double;
 
 #include <stddef.h>
 
-/* Mirror types to GL types. Mirror types allow us to avoid deciding which 87s to load based on whether we are using GL or GLES here. */
-typedef unsigned int cl_GLuint;
-typedef int          cl_GLint;
-typedef unsigned int cl_GLenum;
-
 /*
  * Vector types
  *

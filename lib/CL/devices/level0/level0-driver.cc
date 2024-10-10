@@ -2248,6 +2248,15 @@ bool Level0Device::setupModuleProperties(bool &SupportsInt64Atomics,
   SupportsInt64Atomics = (ModuleProperties.flags &
                           ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS) != 0u;
 #endif
+  // clear flags set in setupDeviceProperties
+  if (ClDev->double_fp_config == 0) {
+    ClDev->preferred_vector_width_double = 0;
+    ClDev->native_vector_width_double = 0;
+  }
+  if (ClDev->half_fp_config == 0) {
+    ClDev->preferred_vector_width_half = 0;
+    ClDev->native_vector_width_half = 0;
+  }
 
   KernelUUID = ModuleProperties.nativeKernelSupported;
   SupportsDP4A = (ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_DP4A) > 0;

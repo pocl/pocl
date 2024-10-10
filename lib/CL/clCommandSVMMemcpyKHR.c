@@ -29,6 +29,7 @@
 CL_API_ENTRY cl_int
 POname (clCommandSVMMemcpyKHR) (
     cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
+    const cl_command_properties_khr* properties,
     void *dst_ptr, const void *src_ptr, size_t size,
     cl_uint num_sync_points_in_wait_list,
     const cl_sync_point_khr *sync_point_wait_list,

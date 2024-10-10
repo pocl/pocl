@@ -118,8 +118,13 @@ main (int _argc, char **_argv)
   CHECK_CL_ERROR (
       clSetKernelArg (kernel, 2, sizeof (buffer_res), &buffer_res));
 
-  cl_command_queue command_queue = clCreateCommandQueue (
-      context, device, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, &error);
+  cl_command_queue_properties props = 0;
+  CHECK_CL_ERROR (clGetDeviceInfo (device, CL_DEVICE_QUEUE_ON_HOST_PROPERTIES,
+                                   sizeof (props), &props, NULL));
+  if (props & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
+    props = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+  cl_command_queue command_queue
+    = clCreateCommandQueue (context, device, props, &error);
   CHECK_CL_ERROR (error);
 
   cl_command_buffer_khr command_buffer
@@ -141,7 +146,7 @@ main (int _argc, char **_argv)
     {
       cl_sync_point_khr copy_sync_points[2];
       CHECK_CL_ERROR (ext.clCommandCopyBufferKHR (
-          command_buffer, NULL, buffer_src1, buffer_tile1,
+          command_buffer, NULL, NULL, buffer_src1, buffer_tile1,
           tile_index * tile_size, 0, tile_size, tile_sync_point ? 1 : 0,
           tile_sync_point ? &tile_sync_point : NULL, &copy_sync_points[0],
           NULL));
@@ -151,7 +156,7 @@ main (int _argc, char **_argv)
       size_t dst_origin[3] = { 0, 0, 0 };
       size_t tile_region[3] = { 8 * sizeof (cl_int), 8, 1 };
       CHECK_CL_ERROR (ext.clCommandCopyBufferRectKHR (
-          command_buffer, NULL, buffer_src2, buffer_tile2, src_origin,
+          command_buffer, NULL, NULL, buffer_src2, buffer_tile2, src_origin,
           dst_origin, tile_region, tile_region[0], 0, tile_region[0], 0,
           tile_sync_point ? 1 : 0, tile_sync_point ? &tile_sync_point : NULL,
           &copy_sync_points[1], NULL));
@@ -163,24 +168,24 @@ main (int _argc, char **_argv)
 
       cl_sync_point_khr res_copy_sync_point;
       CHECK_CL_ERROR (ext.clCommandCopyBufferKHR (
-          command_buffer, NULL, buffer_res, buffer_dst, 0,
+          command_buffer, NULL, NULL, buffer_res, buffer_dst, 0,
           tile_index * tile_size, tile_size, 1, &nd_sync_point,
           &res_copy_sync_point, NULL));
 
       char zero = 0;
       cl_sync_point_khr fill_sync_points[2];
       CHECK_CL_ERROR (ext.clCommandFillBufferKHR (
-          command_buffer, NULL, buffer_tile1, &zero, sizeof (zero), 0,
+          command_buffer, NULL, NULL, buffer_tile1, &zero, sizeof (zero), 0,
           tile_size, 1, &nd_sync_point, &fill_sync_points[0], NULL));
       CHECK_CL_ERROR (ext.clCommandFillBufferKHR (
-          command_buffer, NULL, buffer_tile2, &zero, sizeof (zero), 0,
+          command_buffer, NULL, NULL, buffer_tile2, &zero, sizeof (zero), 0,
           tile_size, 1, &nd_sync_point, &fill_sync_points[1], NULL));
 
       cl_sync_point_khr barrier_deps[4]
           = { nd_sync_point, res_copy_sync_point, fill_sync_points[0],
               fill_sync_points[1] };
       CHECK_CL_ERROR (ext.clCommandBarrierWithWaitListKHR (
-          command_buffer, NULL, 4, barrier_deps, &tile_sync_point, NULL));
+          command_buffer, NULL, NULL, 4, barrier_deps, &tile_sync_point, NULL));
     }
 
   CHECK_CL_ERROR (ext.clFinalizeCommandBufferKHR (command_buffer));

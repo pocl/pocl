@@ -1987,7 +1987,7 @@ pocl_network_fetch_devinfo (cl_device_id device,
 
   device->profile
       = (devinfo->full_profile ? "FULL_PROFILE" : "EMBEDDED_PROFILE");
-  device->queue_properties = CL_QUEUE_PROFILING_ENABLE;
+  device->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
   device->compiler_available = 1;
   device->linker_available = 1;
 

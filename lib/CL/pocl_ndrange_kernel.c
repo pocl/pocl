@@ -388,13 +388,13 @@ pocl_kernel_copy_args (cl_kernel kernel,
 
 static int
 process_command_ndrange_properties (
-  const cl_ndrange_kernel_command_properties_khr *properties)
+  const cl_command_properties_khr *properties)
 {
   if (properties == NULL)
     return CL_SUCCESS;
 
   cl_uint num_properties = 0;
-  const cl_ndrange_kernel_command_properties_khr *key = NULL;
+  const cl_command_properties_khr *key = NULL;
   for (key = properties; *key != 0; key += 2)
     num_properties += 1;
   POCL_RETURN_ERROR_ON ((num_properties == 0), CL_INVALID_VALUE,
@@ -413,7 +413,7 @@ process_command_ndrange_properties (
         default:
           POCL_RETURN_ERROR_ON (1, CL_INVALID_VALUE,
                                 "Unknown property value in "
-                                "cl_ndrange_kernel_command_properties_khr\n");
+                                "cl_command_properties_khr\n");
         }
     }
 
@@ -421,10 +421,9 @@ process_command_ndrange_properties (
 }
 
 cl_int
-pocl_record_ndrange_kernel (
-  cl_command_buffer_khr command_buffer,
+pocl_record_ndrange_kernel (cl_command_buffer_khr command_buffer,
   cl_command_queue command_queue,
-  const cl_ndrange_kernel_command_properties_khr *properties,
+  const cl_command_properties_khr *properties,
   cl_kernel kernel,
   struct pocl_argument *src_arguments,
   cl_uint work_dim,
@@ -473,7 +472,7 @@ cl_int
 pocl_ndrange_kernel_common (
   cl_command_buffer_khr command_buffer,
   cl_command_queue command_queue,
-  const cl_ndrange_kernel_command_properties_khr *properties,
+  const cl_command_properties_khr *properties,
   cl_kernel kernel,
   struct pocl_argument *src_arguments,
   cl_uint work_dim,
