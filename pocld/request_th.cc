@@ -23,6 +23,8 @@
    IN THE SOFTWARE.
 */
 
+#include <memory>
+#include <mutex>
 #include <poll.h>
 #include <sys/socket.h>
 
@@ -36,17 +38,23 @@
 #define POLLRDHUP 0
 #endif
 
-RequestQueueThread::RequestQueueThread(std::atomic_int *f,
+RequestQueueThread::RequestQueueThread(std::shared_ptr<Connection> Conn,
                                        VirtualContextBase *c, ExitHelper *e,
-                                       TrafficMonitor *tm, const char *id_str)
-    : fd(f), virtualContext(c), eh(e), id_str(id_str), netstat(tm) {
+                                       const char *id_str)
+    : Conn(Conn), virtualContext(c), eh(e), id_str(id_str) {
   io_thread = std::thread{&RequestQueueThread::readThread, this};
 }
 
 RequestQueueThread::~RequestQueueThread() {
   eh->requestExit(id_str.c_str(), 0);
   io_thread.join();
-  shutdown(*fd, SHUT_RD);
+}
+
+void RequestQueueThread::setConnection(
+    std::shared_ptr<Connection> NewConnection) {
+  std::unique_lock<std::mutex> l(ConnectionGuard);
+  Conn = NewConnection;
+  ConnectionNotifier.notify_one();
 }
 
 void RequestQueueThread::readThread() {
@@ -56,34 +64,46 @@ void RequestQueueThread::readThread() {
   pfd.events = POLLIN | POLLRDHUP;
   int nevs;
 
-  int fd = *this->fd;
-  int oldfd = fd;
   while (1) {
-    fd = *this->fd;
-    if (fd != oldfd) {
-      POCL_MSG_PRINT_GENERAL("%s: FD change detected: %d -> %d\n",
-                             id_str.c_str(), oldfd, fd);
-    }
-    oldfd = fd;
     if (eh->exit_requested())
       return;
 
-    pfd.fd = fd;
-    nevs = poll(&pfd, 1, 3 * MS_PER_S);
-    if (nevs < 1)
+    std::unique_lock<std::mutex> l(ConnectionGuard);
+
+    if (Conn.get() == nullptr)
+      ConnectionNotifier.wait(l);
+
+    pfd.fd = Conn->pollableFd();
+    nevs = poll(&pfd, 1, -1);
+    if (nevs < 0) {
+      int e = errno;
+      if (e == EINTR)
+        continue;
+      else {
+        // Either a SERIOUS bug in the poll code above (EFAULT, EINVAL) or the
+        // system is out of memory. Can't really recover from either case at
+        // runtime so let's just bail.
+        eh->requestExit("Fatal error during poll(2) in RequestQueueThread", e);
+        return;
+      }
+    }
+    if (pfd.revents & (POLLERR | POLLNVAL | POLLHUP | POLLRDHUP)) {
+      Conn.reset();
       continue;
-    if (pfd.revents & (POLLERR | POLLNVAL | POLLHUP | POLLRDHUP))
-      continue;
+    }
     if (!(pfd.revents & POLLIN))
       continue;
 
     Request *request = new Request();
     while (!request->IsFullyRead) {
-      if (!request->read(fd)) {
+      if (!request->read(Conn.get())) {
         delete request;
+        Conn.reset();
         continue;
       }
     }
+
+    l.unlock();
 
     switch (request->req.message_type) {
     case MessageType_ConnectPeer:

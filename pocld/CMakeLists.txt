@@ -43,7 +43,7 @@ set(SOURCES pocld.cc daemon.hh daemon.cc cmdline.h cmdline.c
             shared_cl_context.cc shared_cl_context.hh
             virtual_cl_context.cc virtual_cl_context.hh
             cmd_queue.cc cmd_queue.hh common.cc common.hh
-            request.hh request.cc
+            connection.hh connection.cc request.hh request.cc
             reply_th.cc reply_th.hh request_th.cc request_th.hh
             peer_handler.cc peer_handler.hh
             peer.cc peer.hh tracing.h traffic_monitor.hh traffic_monitor.cc)

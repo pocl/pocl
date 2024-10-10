@@ -27,6 +27,8 @@
 #include <sstream>
 #include <thread>
 
+#include "common.hh"
+#include "pocl_debug.h"
 #include "traffic_monitor.hh"
 
 TrafficMonitor::TrafficMonitor(ExitHelper *e, std::string &client_id)
