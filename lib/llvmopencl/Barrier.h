@@ -50,7 +50,7 @@ namespace pocl {
       }
     }
 
-    static bool IsLoopWithBarrier(llvm::Loop &L) {
+    static bool isLoopWithBarrier(llvm::Loop &L) {
       for (llvm::Loop::block_iterator i = L.block_begin(), e = L.block_end();
            i != e; ++i) {
         for (llvm::BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();
@@ -113,6 +113,15 @@ namespace pocl {
         if (llvm::isa<Barrier>(I))
           return true;
       return false;
+    }
+
+    static Barrier *findInBasicBlock(llvm::BasicBlock *BB) {
+      for (llvm::BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;
+           ++I) {
+        if (llvm::isa<pocl::Barrier>(I))
+          return llvm::cast<pocl::Barrier>(I);
+      }
+      return nullptr;
     }
 
     // Returns true in case the given basic block starts with a barrier,
