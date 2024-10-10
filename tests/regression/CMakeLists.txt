@@ -30,9 +30,6 @@ set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
   test_llvm_segfault_issue_889
 )
 foreach(PROG ${C_PROGRAMS_TO_BUILD})
-  if(MSVC)
-    set_source_files_properties( "${PROG}.c" PROPERTIES LANGUAGE CXX )
-  endif(MSVC)
   add_executable("${PROG}" "${PROG}.c")
   target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
 endforeach()

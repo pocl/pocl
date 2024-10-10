@@ -27,6 +27,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -132,7 +133,7 @@ append_to_build_log (cl_program program, unsigned device_i, const char *format,
   char temp[4096];
   va_list args;
   va_start (args, format);
-  ssize_t written = vsnprintf (temp, 4096, format, args);
+  int written = vsnprintf (temp, 4096, format, args);
   va_end (args);
   size_t l = 0;
   if (written > 0)

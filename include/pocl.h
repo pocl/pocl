@@ -51,8 +51,7 @@ typedef uint64_t pocl_obj_id_t;
 
 #include "pocl_context.h"
 
-/* detects restrict, variadic macros etc */
-#include "pocl_compiler_features.h"
+#include "vccompat.hpp"
 
 /* The maximum file, directory and path name lengths.
    NOTE: GDB seems to fail to load symbols from .so files which have

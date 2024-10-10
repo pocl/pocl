@@ -293,10 +293,6 @@ if(HAVE_LTTNG_UST)
   list(APPEND POCL_LIB_SOURCES "pocl_lttng.c" "pocl_lttng.h")
 endif()
 
-if(MSVC)
-  set_source_files_properties( ${POCL_LIB_SOURCES} PROPERTIES LANGUAGE CXX )
-endif(MSVC)
-
 # this is so that we don't compile twice when building both libpocl and libOpenCL
 add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
 

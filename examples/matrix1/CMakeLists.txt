@@ -25,9 +25,6 @@
 
 add_compile_options(${OPENCL_CFLAGS} -std=c99)
 
-if (MSVC)
-  set_source_files_properties( matrix1.c PROPERTIES LANGUAGE CXX )
-endif(MSVC)
 add_executable("matrix1" matrix1.c matrix1.cl)
 
 target_link_libraries("matrix1" ${POCLU_LINK_OPTIONS})

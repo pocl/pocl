@@ -125,7 +125,7 @@
 */
 /* Head for the pocl_devices linked list*/
 struct _cl_device_id *pocl_devices = NULL;
-unsigned int pocl_num_devices = 0;
+uint64_t pocl_num_devices = 0;
 
 #ifdef ENABLE_LOADABLE_DRIVERS
 #define INIT_DEV(ARG) NULL

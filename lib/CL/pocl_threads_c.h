@@ -63,13 +63,14 @@ typedef pthread_t pocl_thread_t;
   __sync_val_compare_and_swap (ptr, oldval, newval)
 
 #elif defined(_WIN32)
-#define POCL_ATOMIC_ADD(x, val) InterlockedAdd64 (&x, val);
-#define POCL_ATOMIC_INC(x) InterlockedIncrement64 (&x)
-#define POCL_ATOMIC_DEC(x) InterlockedDecrement64 (&x)
-#define POCL_ATOMIC_LOAD(x) InterlockedOr64 (&x, 0)
-#define POCL_ATOMIC_STORE(x, val) InterlockedExchange64 (&x, val)
+#define POCL_ATOMIC_ADD(x, val) InterlockedAdd64 ((volatile LONG64 *)&x, val);
+#define POCL_ATOMIC_INC(x) InterlockedIncrement64 ((volatile LONG64 *)&x)
+#define POCL_ATOMIC_DEC(x) InterlockedDecrement64 ((volatile LONG64 *)&x)
+#define POCL_ATOMIC_LOAD(x) InterlockedOr64 ((volatile LONG64 *)&x, 0)
+#define POCL_ATOMIC_STORE(x, val)                                             \
+  InterlockedExchange64 ((volatile LONG64 *)&x, val)
 #define POCL_ATOMIC_CAS(ptr, oldval, newval)                                  \
-  InterlockedCompareExchange64 (ptr, newval, oldval)
+  InterlockedCompareExchange64 ((volatile LONG64 *)ptr, newval, oldval)
 #else
 #error Need atomic_inc() builtin for this compiler
 #endif

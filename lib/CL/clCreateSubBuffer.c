@@ -170,7 +170,8 @@ POname (clCreateSubBuffer) (cl_mem parent,
         }
 
       mem->device_ptrs[dev->global_mem_id].mem_ptr
-        = parent->device_ptrs[dev->global_mem_id].mem_ptr + info->origin;
+          = (char *)parent->device_ptrs[dev->global_mem_id].mem_ptr
+            + info->origin;
 
       /* Allocate/register the sub-parent with such devices which need to do
          something device-specific with them. */
@@ -181,7 +182,7 @@ POname (clCreateSubBuffer) (cl_mem parent,
         }
     }
   if (parent->mem_host_ptr != NULL)
-    mem->mem_host_ptr = parent->mem_host_ptr + info->origin;
+    mem->mem_host_ptr = (char *)parent->mem_host_ptr + info->origin;
 
   POCL_UNLOCK_OBJ (parent); parent_locked = 0;
 

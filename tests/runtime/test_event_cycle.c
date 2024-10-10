@@ -26,8 +26,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#ifndef _MSC_VER
 #include <signal.h>
+#include <unistd.h>
+#endif
 
 #define MAX_PLATFORMS 32
 #define MAX_DEVICES   32

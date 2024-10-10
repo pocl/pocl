@@ -24,7 +24,7 @@
 #
 #=============================================================================
 
-cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 cmake_policy(SET CMP0067 OLD)
 
 project(pocl)
@@ -37,6 +37,7 @@ MESSAGE(STATUS "CMAKE_LIBRARY_ARCHITECTURE: ${CMAKE_LIBRARY_ARCHITECTURE}")
 set(LATEST_KNOWN_CXX_STD_VERSION "20")
 # this is required for lib/CL/pocl_threads.cc
 set(SUPPORTED_CXX_STD_VERSION "17")
+set(SUPPORTED_C_STD_VERSION "99")
 
 option(ENABLE_LATEST_CXX_STD "Upgrade C++ standard version to ${LATEST_KNOWN_CXX_STD_VERSION}. Required to get rid of unused variables warnings in compilers not supporting [[gnu::*]] attributes. Can bring other benefits, including performance and efficiency ones. Before a pull request build with this disabled." OFF)
 if(ENABLE_LATEST_CXX_STD)
@@ -47,6 +48,23 @@ endif()
 set(POCL_CMAKE_CXX_STANDARD ${CMAKE_CXX_STANDARD})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+if(MSVC)
+  set(SUPPORTED_C_STD_VERSION "11")
+
+  # Enables __VA_ARGS__ for C++ on MSVC. For some reason the feature, conformant
+  # since C++11, is not enabled by default in the MSVC compiler.
+  add_compile_options(/Zc:preprocessor)
+
+  # Enable conformant respond from __cplusplus. Otherwise, the value is 199711L
+  # regardless of the C++ standard.
+  add_compile_options($<$<COMPILE_LANGUAGE:CXX>:/Zc:__cplusplus>)
+
+  # TODO: Check other Zc options. We might still have some
+  #       leg-shooters enabled.
+endif()
+
+set(CMAKE_C_STANDARD "${SUPPORTED_C_STD_VERSION}")
 
 # if variable FEATURE_X isn't defined, sets it to DEFAULT_FEATURE_X;
 # also, if DEFAULT_FEATURE_X is 0, prevents FEATURE_X being 1
@@ -227,11 +245,18 @@ if(HAVE_GIT)
        set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.${GIT_COMMIT}")
 endif()
 
+set(BUILD_SHARED_LIBS_DEFAULT ON)
+if(MSVC)
+  # Building PoCL as shared library does not work yet.
+  set(BUILD_SHARED_LIBS_DEFAULT OFF)
+endif()
+
 ##################################################################################
 
 option(ENABLE_LLVM "Build pocl with LLVM. Default is ON." ON)
 
-option(BUILD_SHARED_LIBS "ON=Build shared libs, OFF=static libs" ON)
+option(BUILD_SHARED_LIBS "ON=Build shared libs, OFF=static libs"
+  ${BUILD_SHARED_LIBS_DEFAULT})
 
 option(POCL_DEBUG_MESSAGES
   "Enable debug messages from pocl (useful for OpenCL developers), must be enabled at runtime, with env var POCL_DEBUG"
@@ -347,6 +372,10 @@ option(RENAME_POCL "Rename PoCL's OpenCL functions to PO<ocl_function>. Allows a
 
 
 ##########################################################
+
+if(MSVC AND BUILD_SHARED_LIBS)
+  message(FATAL_ERROR "Building shared libraries are not supported on MSVC yet!")
+endif()
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   set(HOST_DEVICE_ADDRESS_BITS 64)
@@ -923,10 +952,20 @@ endif()
 #
 # no-jump-tables is to avoid LLVM optimization passes introducing switch tables,
 # which the variable uniformity analysis cannot analyze
-set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector -fPIC -fno-jump-tables ${OPAQUE_PTR_FLAGS}")
-set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fPIC -fno-jump-tables ${OPAQUE_PTR_FLAGS}")
-set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fPIC -fno-jump-tables ${OPAQUE_PTR_FLAGS}")
 
+# TODO: Should match "msvc" environment component in the
+#       LLC_TRIPLE. Now assuming MSVC implies target triple that
+#       invokes MSVC toolchain in Clang.
+if (MSVC)
+  set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector ${OPAQUE_PTR_FLAGS}")
+  set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector ${OPAQUE_PTR_FLAGS}")
+  set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector ${OPAQUE_PTR_FLAGS}")
+  set(KERNEL_TRIPLE_TARGETS_MSVC_TOOLCHAIN 1)
+else()
+  set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector -fPIC -fno-jump-tables ${OPAQUE_PTR_FLAGS}")
+  set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fPIC -fno-jump-tables ${OPAQUE_PTR_FLAGS}")
+  set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fPIC -fno-jump-tables ${OPAQUE_PTR_FLAGS}")
+endif()
 
 set(EXTRA_KERNEL_FLAGS "" CACHE STRING "Extra arguments to all kernel compilation commands (defaults to empty)")
 set(EXTRA_KERNEL_CL_FLAGS "" CACHE STRING "Extra arguments to kernel CL compiler (defaults to empty)")
@@ -953,9 +992,7 @@ if(UNIX)
   endif()
   set(LIBMATH "-lm")
 elseif(WIN32)
-  if(MINGW)
-    set(DEFAULT_HOST_LD_FLAGS "--shared")
-  endif()
+  set(DEFAULT_HOST_LD_FLAGS "--shared")
   set(LIBMATH)
 endif()
 

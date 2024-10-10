@@ -217,7 +217,8 @@ std::vector<int> generate_hits(unsigned n)
 {
     std::vector<int> res;
     res.reserve(n);
-    for(unsigned i = 0; i < n; ++i) res.push_back(random()&1);
+    for (unsigned i = 0; i < n; ++i)
+      res.push_back(rand() & 1);
     return res;
 }
 
@@ -237,8 +238,6 @@ int main()
     std::vector<int> hits = generate_hits(100);
     std::vector<int> indices;
     exclusive_scan_cpu(hits, indices);
-    print_vec(hits);
-    print_vec(indices);
 
     std::vector<int> cl_indices;
     exclusive_scan_cl(hits, cl_indices);

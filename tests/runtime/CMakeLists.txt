@@ -57,9 +57,6 @@ set(CXX_PROGRAMS_TO_BUILD test_device_address test_svm test_large_buf
 add_compile_options(${OPENCL_CFLAGS} -I${CMAKE_SOURCE_DIR}/include)
 
 foreach(PROG ${C_PROGRAMS_TO_BUILD})
-  if(MSVC)
-    set_source_files_properties( "${PROG}.c" PROPERTIES LANGUAGE CXX )
-  endif(MSVC)
   add_executable("${PROG}" "${PROG}.c")
   target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
 endforeach()

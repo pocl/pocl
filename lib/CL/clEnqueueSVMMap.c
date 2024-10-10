@@ -81,8 +81,8 @@ POname(clEnqueueSVMMap) (cl_command_queue command_queue,
       assert (svm_ptr_pocl->shadow_cl_mem != NULL);
       POname (clEnqueueMapBuffer (
           command_queue, svm_ptr_pocl->shadow_cl_mem, CL_FALSE, 0 /* TODO */,
-          svm_ptr - svm_ptr_pocl->vm_ptr, size, num_events_in_wait_list,
-          event_wait_list, event, &errcode));
+          (char *)svm_ptr - (char *)svm_ptr_pocl->vm_ptr, size,
+          num_events_in_wait_list, event_wait_list, event, &errcode));
       if (errcode != CL_SUCCESS)
         return errcode;
       if (event != NULL)

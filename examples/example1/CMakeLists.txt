@@ -25,9 +25,6 @@
 
 add_compile_options(${OPENCL_CFLAGS})
 
-if (MSVC)
-  set_source_files_properties( example1.c example1_exec.c PROPERTIES LANGUAGE CXX )
-endif(MSVC)
 add_executable("example1" example1.c example1_exec.c example1.cl)
 
 target_link_libraries("example1" ${POCLU_LINK_OPTIONS})

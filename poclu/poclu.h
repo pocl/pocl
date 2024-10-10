@@ -41,6 +41,12 @@
 extern "C" {
 #endif
 
+#if defined(__clang__) || defined(__GNUC__)
+#define POCLU_FUNCTION_ID __PRETTY_FUNCTION__
+#else
+#define POCLU_FUNCTION_ID __func__
+#endif
+
 #if __cplusplus >= 201103L
 #  define POCLU_ALIGNAS(x) alignas(x)
 #elif __STDC_VERSION__ >= 201112L /* C11 */
@@ -388,7 +394,8 @@ POCLU_API int POCLU_CALL check_cl_error (cl_int cl_err, int line,
  * \brief check a CL return value and if it is an error: print it and exit function on failure
  * @param cond [in] cl_int value to check.
  */
-#define CHECK_CL_ERROR(cond) _POCLU_CHECK_CL_ERROR_INNER(cond, __PRETTY_FUNCTION__, __LINE__)
+#define CHECK_CL_ERROR(cond)                                                  \
+  _POCLU_CHECK_CL_ERROR_INNER (cond, POCLU_FUNCTION_ID, __LINE__)
 
 /**
  * \brief check a CL return value and if it is an error: print the message and exit function on failure.
@@ -416,7 +423,7 @@ do {                                                                    \
  * \warning macro assumes "ERROR" statement exists
  */
 #define CHECK_CL_ERROR2(err)                                                  \
-  if (check_cl_error (err, __LINE__, __PRETTY_FUNCTION__))                    \
+  if (check_cl_error (err, __LINE__, POCLU_FUNCTION_ID))                      \
   goto ERROR
 
 #ifdef __cplusplus

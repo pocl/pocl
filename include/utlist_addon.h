@@ -34,14 +34,14 @@ IN THE SOFTWARE.
     }                                                                         \
   while (0)
 
-#define LL_CONCAT_ATOMIC(head1, head2)                                               \
+#define LL_CONCAT_ATOMIC(head1, head2)                                        \
   do                                                                          \
     {                                                                         \
       LDECLTYPE (head1) _tmp;                                                 \
       if (head1)                                                              \
         {                                                                     \
           _tmp = (head1);                                                     \
-          while (!__sync_bool_compare_and_swap (&(_tmp->next), NULL, head2))  \
+          while (POCL_ATOMIC_CAS (_tmp->next, NULL, head2) != NULL)           \
             {                                                                 \
               _tmp = _tmp->next;                                              \
             }                                                                 \
@@ -53,7 +53,7 @@ IN THE SOFTWARE.
     }                                                                         \
   while (0)
 
-#define LL_APPEND_ATOMIC(head, add)                                                  \
+#define LL_APPEND_ATOMIC(head, add)                                           \
   do                                                                          \
     {                                                                         \
       LDECLTYPE (head) _tmp;                                                  \
@@ -61,7 +61,7 @@ IN THE SOFTWARE.
       if (head)                                                               \
         {                                                                     \
           _tmp = (head);                                                      \
-          while (!__sync_bool_compare_and_swap (&(_tmp->next), NULL, add))    \
+          while (POCL_ATOMIC_CAS (&_tmp->next, NULL, add) != NULL)            \
             {                                                                 \
               _tmp = _tmp->next;                                              \
             }                                                                 \
@@ -73,8 +73,8 @@ IN THE SOFTWARE.
     }                                                                         \
   while (0)
 
-#define LL_FOREACH_ATOMIC(head, el)                                                  \
-  for (el = head; el; el = __atomic_load_n (&(el->next), __ATOMIC_SEQ_CST))
+#define LL_FOREACH_ATOMIC(head, el)                                           \
+  for (el = head; el; el = POCL_ATOMIC_LOAD (el->next))
 
 #define LL_BACK(head, el)                                                     \
   do                                                                          \

@@ -139,6 +139,7 @@ run_llvm_config(LLVM_ASSERTS_BUILD --assertion-mode)
 if(MSVC)
   string(REPLACE "-L${LLVM_LIBDIR}" "" LLVM_LDFLAGS "${LLVM_LDFLAGS}")
   string(STRIP "${LLVM_LDFLAGS}" LLVM_LDFLAGS)
+  file(TO_CMAKE_PATH "${LLVM_LDFLAGS}" LLVM_LDFLAGS)
 endif()
 
 if(LLVM_BUILD_MODE MATCHES "Debug")
@@ -174,7 +175,12 @@ endif()
 # yet support mangling for extended vector types (with llvm 3.5)
 # so for now hardcode LLVM_HOST_TARGET to be x86_64-pc with windows
 if(WIN32 AND (NOT MINGW))
-  set(LLVM_HOST_TARGET "x86_64-pc")
+  # Using the following target causes clang to invoke gcc for linking
+  # instead of MSVC's link.exe.
+  # TODO: lower LLVM version requirement until the above issue is hit.
+  if (NOT MSVC OR LLVM_VERSION_MAJOR LESS 18)
+    set(LLVM_HOST_TARGET "x86_64-pc")
+  endif()
 endif()
 
 #############################################################
@@ -190,6 +196,7 @@ endif()
 unset(LLVM_LIBS)
 run_llvm_config(LLVM_LIBS --libs ${LLVM_LIB_MODE})
 string(STRIP "${LLVM_LIBS}" LLVM_LIBS)
+file(TO_CMAKE_PATH "${LLVM_LIBS}" LLVM_LIBS)
 if(NOT LLVM_LIBS)
   message(FATAL_ERROR "llvm-config --libs did not return anything, perhaps wrong setting of STATIC_LLVM ?")
 endif()
@@ -204,11 +211,15 @@ foreach(LIBFLAG ${LLVM_LIBS})
 endforeach()
 
 foreach(LIBNAME ${LLVM_LIBNAMES})
-  find_library(L_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
-  if(NOT L_LIBFILE_${LIBNAME})
-    message(FATAL_ERROR "Could not find LLVM library ${LIBNAME}, perhaps wrong setting of STATIC_LLVM ?")
+  if(EXISTS ${LIBNAME})
+    list(APPEND LLVM_LIBFILES "${LIBNAME}")
+  else()
+    find_library(L_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
+    if(NOT L_LIBFILE_${LIBNAME})
+      message(FATAL_ERROR "Could not find LLVM library ${LIBNAME}, perhaps wrong setting of STATIC_LLVM ?")
+    endif()
+    list(APPEND LLVM_LIBFILES "${L_LIBFILE_${LIBNAME}}")
   endif()
-  list(APPEND LLVM_LIBFILES "${L_LIBFILE_${LIBNAME}}")
 endforeach()
 
 set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
@@ -218,10 +229,13 @@ set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
 # this needs to be done with LLVM_LIB_MODE because it affects the output
 run_llvm_config(LLVM_SYSLIBS --system-libs ${LLVM_LIB_MODE})
 string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
-# TODO this hack is required for MinGW. Without it,
-# Clang link test reports missing symbols like GetFileVersionInfoSizeW
+string(REPLACE " " ";" LLVM_SYSLIBS "${LLVM_SYSLIBS}")
+
+# Clang library depends on this system library.
 if(MINGW)
-  set(LLVM_SYSLIBS "${LLVM_SYSLIBS} -lversion" CACHE STRING "llvm's syslibs" FORCE)
+  list(APPEND LLVM_SYSLIBS "-lversion")
+elseif(MSVC)
+  list(APPEND LLVM_SYSLIBS version.lib)
 endif()
 
 ####################################################################
@@ -249,7 +263,6 @@ else()
 endif()
 
 foreach(LIBNAME ${CLANG_LIBNAMES})
-  list(APPEND CLANG_LIBS "-l${LIBNAME}")
   find_library(C_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
   if(NOT C_LIBFILE_${LIBNAME})
     message(FATAL_ERROR "Could not find Clang library ${LIBNAME}, perhaps wrong setting of STATIC_LLVM ?")
@@ -686,7 +699,7 @@ if(NOT LLVM_LINK_TEST)
   try_compile(LLVM_LINK_TEST ${CMAKE_BINARY_DIR} "${LLVM_LINK_TEST_FILENAME}"
               CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
               CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
-              LINK_LIBRARIES "${LLVM_LDFLAGS} ${LLVM_LIBS} ${LLVM_SYSLIBS}"
+              LINK_LIBRARIES "${LLVM_LDFLAGS}" "${LLVM_LIBS}" "${LLVM_SYSLIBS}"
               COMPILE_DEFINITIONS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}"
               OUTPUT_VARIABLE _TRY_COMPILE_OUTPUT)
 
@@ -710,11 +723,18 @@ if(NOT CLANG_LINK_TEST)
 
   set(CLANG_LINK_TEST_FILENAME "${CMAKE_SOURCE_DIR}/cmake/LinkTestClang.cc")
 
+  set(CXX_COMPAT_FLAGS "")
+  if (MSVC)
+    set(CXX_COMPAT_FLAGS "/Zc:preprocessor")
+  endif()
+
   try_compile(CLANG_LINK_TEST ${CMAKE_BINARY_DIR} "${CLANG_LINK_TEST_FILENAME}"
               CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
               CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
-              LINK_LIBRARIES "${LLVM_LDFLAGS} ${CLANG_LIBS} ${LLVM_LIBS} ${LLVM_SYSLIBS}"
-              COMPILE_DEFINITIONS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS} -DLLVM_MAJOR=${LLVM_VERSION_MAJOR}"
+              LINK_LIBRARIES ${LLVM_LDFLAGS} ${CLANG_LIBFILES} ${LLVM_LIBS}
+              ${LLVM_SYSLIBS}
+              COMPILE_DEFINITIONS ${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}
+	      ${CXX_COMPAT_FLAGS} -DLLVM_MAJOR=${LLVM_VERSION_MAJOR}
               OUTPUT_VARIABLE _TRY_COMPILE_OUTPUT)
 
   if(CLANG_LINK_TEST)

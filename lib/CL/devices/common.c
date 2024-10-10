@@ -35,7 +35,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <utlist.h>
 
 #ifdef _WIN32
@@ -247,6 +246,20 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
       const char *cmd_line[64]
         = { pocl_get_path ("CLANG", CLANG), "-o", tmp_module, tmp_objfile };
       unsigned last_arg_idx = 4;
+
+#ifdef _MSC_VER
+      /* NOTE: This intended for targets having 'msvc' triple component.
+       * These options, passed to MSVC's linker:
+       * - prevent *.exp and *.lib files to be generated and wasting disk
+       *   space.
+       * - suppress "Creating library *.lib and object *.exp" to be written
+       *   stdout which messes up regex checking on some internal tests.  */
+      cmd_line[last_arg_idx++] = "-Xlinker";
+      cmd_line[last_arg_idx++] = "-noexp";
+      cmd_line[last_arg_idx++] = "-Xlinker";
+      cmd_line[last_arg_idx++] = "-noimplib";
+#endif
+
       /* ENABLE_PRINTF_IMMEDIATE_FLUSH results in "pocl_flush_printf_buffer"
        * symbol referenced in the built kernel.so; however that function exists
        * only on the host side, therefore link to libpocl.so which provides it

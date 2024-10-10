@@ -89,7 +89,7 @@ pocl_svm_memfill_common (cl_command_buffer_khr command_buffer,
 
   pocl_raw_ptr *dst_svm_ptr = pocl_find_raw_ptr_with_vm_ptr (context, svm_ptr);
 
-  size_t offset = svm_ptr - dst_svm_ptr->vm_ptr;
+  size_t offset = (char *)svm_ptr - (char *)dst_svm_ptr->vm_ptr;
   if (command_buffer)
     errcode = POname (clCommandFillBufferKHR) (
         command_buffer, NULL, NULL, dst_svm_ptr->shadow_cl_mem, pattern,

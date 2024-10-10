@@ -23,10 +23,6 @@
 #
 #=============================================================================
 
-if(MSVC)
-  set_source_files_properties( pocl-vulkan.c pocl-vulkan.h PROPERTIES LANGUAGE CXX )
-endif(MSVC)
-
 add_pocl_device_library(pocl-devices-vulkan pocl-vulkan.c pocl-vulkan.h)
 
 if(ENABLE_LOADABLE_DRIVERS)

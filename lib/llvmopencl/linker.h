@@ -26,6 +26,8 @@
 
 #include "llvm/IR/Module.h"
 
+#include "pocl_cl.h" // cl_device_id
+
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
 #endif

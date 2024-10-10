@@ -53,7 +53,7 @@
 #include <CL/cl_egl.h>
 #include <CL/opencl.h>
 
-#if __STDC_VERSION__ < 199901L
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
 #  define __func__ __PRETTY_FUNCTION__
 # else
@@ -124,12 +124,12 @@
       (__OBJ__)->magic_2 = POCL_MAGIC_2;
 #define UNSET_VALIDITY_MARKERS(__OBJ__)                                       \
       (__OBJ__)->magic_1 = 0;                                                 \
-      (__OBJ__)->magic_2 = 0;
+      (__OBJ__)->magic_2 = 0
 #else
 #define IS_CL_OBJECT_VALID(__OBJ__)   ((__OBJ__) != NULL)
-#define CHECK_VALIDITY_MARKERS(__OBJ__)
-#define SET_VALIDITY_MARKERS(__OBJ__)
-#define UNSET_VALIDITY_MARKERS(__OBJ__)
+#define CHECK_VALIDITY_MARKERS(__OBJ__) do {} while(0)
+#define SET_VALIDITY_MARKERS(__OBJ__) do {} while(0)
+#define UNSET_VALIDITY_MARKERS(__OBJ__) do {} while(0)
 #endif
 
 #define POCL_LOCK_OBJ(__OBJ__)                                                \
@@ -1539,7 +1539,7 @@ struct _cl_command_queue {
 
 struct _cl_command_buffer_khr
 {
-  POCL_ICD_OBJECT;
+  POCL_ICD_OBJECT
   POCL_OBJECT;
   pocl_lock_t mutex;
 

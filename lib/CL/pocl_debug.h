@@ -36,10 +36,10 @@
 #  define PRIXPTR "p"
 #  define PRIuS "Iu"
 #else
-# ifndef __STDC_FORMAT_MACROS
-# define __STDC_FORMAT_MACROS
-# endif
-# include <inttypes.h>
+#  ifndef __STDC_FORMAT_MACROS
+#  define __STDC_FORMAT_MACROS
+#  endif
+#  include <inttypes.h>
 #endif
 
 #include "config.h"

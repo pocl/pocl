@@ -143,12 +143,6 @@ foreach(VARIANT ${VARIANTS})
 endforeach()
 
 ######################################################################
-if(MSVC)
-  set_source_files_properties( 
-    sampler_address_clamp.c image_query_funcs.c
-    test_shuffle.cc kernel.c PROPERTIES LANGUAGE CXX )
-endif(MSVC)
-
 add_executable("sampler_address_clamp" "sampler_address_clamp.c")
 target_link_libraries("sampler_address_clamp" ${POCLU_LINK_OPTIONS})
 
