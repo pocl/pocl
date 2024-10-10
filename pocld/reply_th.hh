@@ -25,7 +25,6 @@
 #ifndef POCL_REMOTE_REPLY_TH_HH
 #define POCL_REMOTE_REPLY_TH_HH
 
-#include <atomic>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
@@ -42,7 +41,9 @@
 #endif
 
 class ReplyQueueThread {
-  std::atomic_int *fd;
+  std::mutex ConnectionGuard;
+  std::condition_variable ConnectionNotifier;
+  std::shared_ptr<Connection> Conn;
   std::string id_str;
   VirtualContextBase *virtualContext;
   std::vector<Reply *> io_inflight;
@@ -53,12 +54,14 @@ class ReplyQueueThread {
   TrafficMonitor *netstat;
 
 public:
-  ReplyQueueThread(std::atomic_int *f, VirtualContextBase *c, ExitHelper *eh,
-                   TrafficMonitor *tm, const char *id_str);
+  ReplyQueueThread(std::shared_ptr<Connection> Conn, VirtualContextBase *c,
+                   ExitHelper *eh, const char *id_str);
 
   ~ReplyQueueThread();
 
   void pushReply(Reply *reply);
+
+  void setConnection(std::shared_ptr<Connection> NewConnection);
 
   void writeThread();
 };

@@ -23,6 +23,7 @@
 */
 
 #include <algorithm>
+#include <mutex>
 #include <queue>
 
 #include "common.hh"
@@ -106,10 +107,10 @@ static const char *reply_to_str(ReplyMessageType type) {
   }
 }
 
-ReplyQueueThread::ReplyQueueThread(std::atomic_int *f, VirtualContextBase *c,
-                                   ExitHelper *e, TrafficMonitor *tm,
+ReplyQueueThread::ReplyQueueThread(std::shared_ptr<Connection> Conn,
+                                   VirtualContextBase *c, ExitHelper *e,
                                    const char *id_str)
-    : fd(f), virtualContext(c), eh(e), netstat(tm), id_str(id_str) {
+    : Conn(Conn), virtualContext(c), eh(e), id_str(id_str) {
   io_thread = std::thread{&ReplyQueueThread::writeThread, this};
 }
 
@@ -130,34 +131,27 @@ void ReplyQueueThread::pushReply(Reply *reply) {
   io_cond.notify_one();
 }
 
+void ReplyQueueThread::setConnection(
+    std::shared_ptr<Connection> NewConnection) {
+  std::unique_lock<std::mutex> l(ConnectionGuard);
+  Conn = NewConnection;
+  ConnectionNotifier.notify_one();
+}
+
 void ReplyQueueThread::writeThread() {
   // XXX: Change into a ring buffer?
   std::queue<Reply *> backup;
   bool resending = false;
   size_t i = 0;
-  int fd = *this->fd;
-  int oldfd = fd;
   while (1) {
   RETRY:
-    fd = *this->fd;
-    if (fd != oldfd) {
-      std::unique_lock<std::mutex> lock(io_mutex);
-      int n = io_inflight.size();
-      lock.unlock();
-      resending = true;
-      POCL_MSG_PRINT_GENERAL(
-          "%s: FD change detected with %d items in queue, %d -> %d\n",
-          id_str.c_str(), n, oldfd, fd);
-      // Reader closes the socket
-    }
-    oldfd = fd;
     if (eh->exit_requested())
       return;
 
     if (backup.empty())
       resending = false;
     std::unique_lock<std::mutex> lock(io_mutex);
-    if ((io_inflight.size() > 0 || resending) && fd >= 0) {
+    if ((io_inflight.size() > 0 || resending)) {
       Reply *reply = io_inflight[i];
       lock.unlock();
 
@@ -220,12 +214,6 @@ void ReplyQueueThread::writeThread() {
         ReplyMessageType t =
             static_cast<ReplyMessageType>(reply->rep.message_type);
 
-        POCL_MSG_PRINT_GENERAL(
-            "%s: SENDING MESSAGE, ID: %" PRIu64 " TYPE: %s SIZE: %" PRIuS
-            " EXTRA: %" PRIuS " FAILED: %" PRIu32 "\n",
-            id_str.c_str(), uint64_t(reply->rep.msg_id), reply_to_str(t),
-            sizeof(ReplyMsg_t), reply->extra_size, uint32_t(reply->rep.failed));
-
         auto now1 = std::chrono::system_clock::now();
         reply->write_start_timestamp_ns =
             std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -236,19 +224,36 @@ void ReplyQueueThread::writeThread() {
         reply->rep.server_write_start_timestamp_ns =
             reply->write_start_timestamp_ns;
 
+        std::unique_lock<std::mutex> l(ConnectionGuard);
+        if (Conn.get() == nullptr) {
+          POCL_MSG_PRINT_REMOTE(
+              "%s: Got messages to send but no connection, sleeping.\n",
+              id_str.c_str());
+          ConnectionNotifier.wait(l);
+          continue;
+        }
+
+        POCL_MSG_PRINT_GENERAL(
+            "%s: SENDING MESSAGE, ID: %" PRIu64 " TYPE: %s SIZE: %" PRIuS
+            " EXTRA: %" PRIuS " FAILED: %" PRIu32 "\n",
+            id_str.c_str(), uint64_t(reply->rep.msg_id), reply_to_str(t),
+            sizeof(ReplyMsg_t), reply->extra_size, uint32_t(reply->rep.failed));
+
         // WRITE REPLY
-        CHECK_WRITE_RETRY(
-            write_full(fd, &reply->rep, sizeof(ReplyMsg_t), netstat),
-            id_str.c_str());
+        CHECK_WRITE_RETRY(Conn->writeFull(&reply->rep, sizeof(ReplyMsg_t)),
+                          id_str.c_str());
 
         // TODO: handle reconnecting & resending when RDMA is used
         if (reply->extra_size > 0 && !reply->extra_data.empty()) {
           POCL_MSG_PRINT_INFO("%s: WRITING EXTRA: %" PRIuS " \n",
                               id_str.c_str(), reply->extra_size);
           CHECK_WRITE_RETRY(
-              write_full(fd, reply->extra_data.data(), reply->extra_size, netstat),
+              Conn->writeFull(reply->extra_data.data(), reply->extra_size),
               id_str.c_str());
         }
+
+        l.unlock();
+
         POCL_MSG_PRINT_GENERAL("%s: MESSAGE FULLY WRITTEN, ID: %" PRIu64 "\n",
                                id_str.c_str(), uint64_t(reply->rep.msg_id));
 

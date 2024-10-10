@@ -29,6 +29,8 @@
 
 #include "messages.h"
 #include "pocl.h"
+#include "pocl_networking.h"
+#include "pocl_threads.h"
 
 #include "utlist_addon.h"
 #include "utlist.h"
@@ -193,8 +195,9 @@ typedef struct remote_server_data_s
   uint32_t available;
   sync_t setup_lock;
   int threads_awaiting_reconnect;
-  int slow_socket_fd;
-  int fast_socket_fd;
+
+  transport_info_t slow_connection;
+  transport_info_t fast_connection;
 
   uint32_t num_platforms;
   uint32_t num_devices;

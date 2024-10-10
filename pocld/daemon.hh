@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "common.hh"
+#include "connection.hh"
 #ifdef ENABLE_RDMA
 #include "guarded_queue.hh"
 #endif
@@ -51,11 +52,6 @@ struct ServerPorts {
   /** Port for incoming client RDMAcm connections */
   uint16_t rdma;
 #endif
-};
-
-struct SocketParams {
-  int BufSize;
-  int IsFast;
 };
 
 /**
@@ -114,19 +110,19 @@ public:
   }
 
   /* returns nullptr on error */
-  VirtualContextBase *performSessionSetup(int fd, Request *R);
+  VirtualContextBase *performSessionSetup(std::shared_ptr<Connection> Conn,
+                                          Request *R);
 
 private:
   ExitHelper exit_helper;
   /** Port numbers that the server is listening on */
   struct ServerPorts ListenPorts;
-  std::vector<int> OpenClientFds;
+  std::vector<std::shared_ptr<Connection>> OpenClientConnections;
   /** Hacky helper for keeping track of which context is associated with the
    * socket at a given index so the contexts can be dropped when the socket
    * disconnects if reconnecting is not allowed. */
   std::vector<VirtualContextBase *> SocketContexts;
   size_t NumListenFds;
-  std::vector<SocketParams> ListenFdParams;
   std::mutex SessionListMtx;
   std::unordered_map<uint64_t, VirtualContextBase *> ClientSessions;
   std::unordered_map<uint64_t, std::thread> ClientSessionThreads;

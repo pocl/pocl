@@ -38,14 +38,13 @@ const char *request_to_str(RequestMessageType type);
 
 #ifdef ENABLE_RDMA
 Peer::Peer(uint64_t id, uint32_t handler_id, VirtualContextBase *ctx,
-           ExitHelper *eh, int fd, TrafficMonitor *tm,
+           ExitHelper *eh, std::shared_ptr<Connection> Conn,
            std::shared_ptr<RdmaConnection> conn)
-    : id(id), handler_id(handler_id), ctx(ctx), eh(eh), fd(fd), netstat(tm),
-      rdma(conn)
+    : id(id), handler_id(handler_id), ctx(ctx), eh(eh), Conn(Conn), rdma(conn)
 #else
 Peer::Peer(uint64_t id, uint32_t handler_id, VirtualContextBase *ctx,
-           ExitHelper *eh, int fd, TrafficMonitor *tm)
-    : id(id), handler_id(handler_id), ctx(ctx), eh(eh), fd(fd), netstat(tm)
+           ExitHelper *eh, std::shared_ptr<Connection> Conn)
+    : id(id), handler_id(handler_id), ctx(ctx), eh(eh), Conn(Conn)
 #endif
 {
   std::stringstream ss;
@@ -58,8 +57,8 @@ Peer::Peer(uint64_t id, uint32_t handler_id, VirtualContextBase *ctx,
                             rdma, &local_memory_regions, &local_regions_mutex));
   rdma_writer = std::thread(&Peer::rdmaWriterThread, this);
 #endif
-  reader = RequestQueueThreadUPtr(new RequestQueueThread(
-      &this->fd, ctx, eh, netstat, (ss.str() + "_R").c_str()));
+  reader = RequestQueueThreadUPtr(
+      new RequestQueueThread(Conn, ctx, eh, (ss.str() + "_R").c_str()));
   writer = std::thread(&Peer::writerThread, this);
 }
 
@@ -99,38 +98,34 @@ void Peer::writerThread() {
         request_to_str(static_cast<RequestMessageType>(r->req.message_type)),
         msg_size, id);
 
-    CHECK_WRITE(write_full(fd, &msg_size, sizeof(uint32_t), netstat), "PHW");
-    CHECK_WRITE(write_full(fd, &r->req, msg_size, netstat), "PHW");
+    CHECK_WRITE(Conn->writeFull(&msg_size, sizeof(uint32_t)), "PHW");
+    CHECK_WRITE(Conn->writeFull(&r->req, msg_size), "PHW");
 
     assert(r->waitlist.size() == r->req.waitlist_size);
     if (r->req.waitlist_size > 0) {
       POCL_MSG_PRINT_GENERAL("PHW: WRITING WAIT LIST: %" PRIu32 "\n",
                              r->req.waitlist_size);
-      CHECK_WRITE(write_full(fd, r->waitlist.data(),
-                             r->req.waitlist_size * sizeof(uint64_t), netstat),
+      CHECK_WRITE(Conn->writeFull(r->waitlist.data(),
+                                  r->req.waitlist_size * sizeof(uint64_t)),
                   "PHW");
     }
 
     assert(r->extra_data.size() >= r->extra_size);
     if (r->extra_size > 0) {
       POCL_MSG_PRINT_GENERAL("PHW: WRITING EXTRA: %" PRIuS "\n", r->extra_size);
-      CHECK_WRITE(write_full(fd, r->extra_data.data(), r->extra_size, netstat),
-                  "PHW");
+      CHECK_WRITE(Conn->writeFull(r->extra_data.data(), r->extra_size), "PHW");
     }
 
     assert(r->extra_data2.size() >= r->extra_size2);
     if (r->extra_size2 > 0) {
       POCL_MSG_PRINT_GENERAL("PHW: WRITING EXTRA2: %" PRIuS "\n",
                              r->extra_size2);
-      CHECK_WRITE(
-          write_full(fd, r->extra_data2.data(), r->extra_size2, netstat),
-          "PHW");
+      CHECK_WRITE(Conn->writeFull(r->extra_data2.data(), r->extra_size2),
+                  "PHW");
     }
 
     delete r;
   } while (!eh->exit_requested());
-
-  shutdown(fd, SHUT_WR);
 }
 
 #ifdef ENABLE_RDMA
