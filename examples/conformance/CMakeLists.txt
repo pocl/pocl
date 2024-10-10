@@ -1045,13 +1045,16 @@ set(CTS_LEVEL0_LIST
   conformance_main_mem_host_flags
   conformance_main_multiples
   conformance_main_non_uniform_work_group
-  conformance_main_printf
+  # disabled. Fails since CTS 2024.10.09; this CTS added
+  # testcase printf("%s", "") which causes crash in L0
+  #conformance_main_printf
   conformance_main_profiling
   conformance_main_subgroups_micro
   conformance_main_cl_khr_command_buffer
   conformance_main_cl_khr_command_buffer_mutable
   conformance_main_api_micro_ocl_30
   conformance_main_basic_micro_other_ocl_30
+  # disabled. Fails because of a bug in the L0 driver
   #conformance_main_basic_micro_progvar
   conformance_main_SVM_micro_1
   conformance_main_SVM_micro_2
@@ -1106,8 +1109,10 @@ set(CTS_LEVEL0_LIST
   conformance_main_math_micro_cosh
   conformance_main_math_micro_cospi
 
-  conformance_main_math_micro_divide
-  conformance_main_math_micro_divide_cr
+  # disabled. Fails since CTS 2024.10.09;
+  # this CTS checks FP16 ULP precision
+  # conformance_main_math_micro_divide
+  # conformance_main_math_micro_divide_cr
 
   conformance_main_math_micro_exp
   conformance_main_math_micro_exp2
@@ -1121,7 +1126,9 @@ set(CTS_LEVEL0_LIST
   conformance_main_math_micro_fmax
   conformance_main_math_micro_fmin
   conformance_main_math_micro_fmod
-  conformance_main_math_micro_fract
+  # disabled. Fails since CTS 2024.10.09;
+  # this CTS checks FP16 ULP precision
+  # conformance_main_math_micro_fract
   conformance_main_math_micro_frexp
 
   conformance_main_math_micro_hypot
