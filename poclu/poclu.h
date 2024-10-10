@@ -226,24 +226,6 @@ POCLU_API cl_int POCLU_CALL poclu_get_multiple_devices (
     int ooo_queues);
 
 /**
- * Convert a float to a cl_half (uint16_t).
- *
- * \param value [in] float to be converted.
- * \return a converted cl_half.
- */
-POCLU_API cl_half POCLU_CALL
-poclu_float_to_cl_half(float value);
-
-/**
- * Convert a cl_half to a float.
- *
- * \param value [in] cl_half to be converted.
- * \return a converted float.
- */
-POCLU_API float POCLU_CALL
-poclu_cl_half_to_float(cl_half value);
-
-/**
  * \brief read the contents of a file.
  *
  * filename can absolute or relative, according to the fopen
