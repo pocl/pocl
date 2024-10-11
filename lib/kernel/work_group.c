@@ -22,8 +22,8 @@
 */
 
 #include "work_group_alloca.h"
-#include <math.h>
-#include <stdio.h>
+
+#define INFINITY (__builtin_inf())
 
 size_t _CL_OVERLOADABLE get_local_id (unsigned int dimindx);
 size_t _CL_OVERLOADABLE get_local_linear_id (void);
