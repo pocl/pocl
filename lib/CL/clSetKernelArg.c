@@ -284,7 +284,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
 
   p = &(kernel->dyn_arguments[arg_index]);
   if (kernel->dyn_argument_storage == NULL)
-    pocl_aligned_free (p->value);
+    free (p->value);
   p->value = NULL;
   p->is_set = 0;
   p->is_readonly = 0;
@@ -324,18 +324,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
         value = kernel->dyn_argument_offsets[arg_index];
       else
         {
-          /* FIXME: this is a kludge to determine an acceptable alignment,
-           * we should probably extract the argument alignment from the
-           * LLVM bytecode during kernel header generation. */
-          arg_alignment = pocl_size_ceil2 (arg_size);
-          if (arg_alignment >= MAX_EXTENDED_ALIGNMENT)
-            arg_alignment = MAX_EXTENDED_ALIGNMENT;
-
-          arg_alloc_size = arg_size;
-          if (arg_alloc_size < arg_alignment)
-            arg_alloc_size = arg_alignment;
-
-          value = pocl_aligned_malloc (arg_alignment, arg_alloc_size);
+          value = malloc (arg_alloc_size);
           if (value == NULL)
             {
               return CL_OUT_OF_HOST_MEMORY;

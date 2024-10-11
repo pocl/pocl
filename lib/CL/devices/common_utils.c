@@ -292,10 +292,8 @@ pocl_setup_kernel_arg_array (kernel_run_command *k)
   cl_uint i;
   void **arguments;
   void **arguments2;
-  k->arguments = arguments
-      = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, ARGS_SIZE);
-  k->arguments2 = arguments2
-      = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, ARGS_SIZE);
+  k->arguments = arguments = malloc (ARGS_SIZE);
+  k->arguments2 = arguments2 = malloc (ARGS_SIZE);
 
   for (i = 0; i < meta->num_args; ++i)
     {
@@ -335,8 +333,7 @@ pocl_setup_kernel_arg_array (kernel_run_command *k)
         {
           dev_image_t di;
           pocl_fill_dev_image_t (&di, al, k->device);
-          void *devptr = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
-                                              sizeof (dev_image_t));
+          void *devptr = malloc (sizeof (dev_image_t));
           arguments[i] = &arguments2[i];
           arguments2[i] = devptr;
           memcpy (devptr, &di, sizeof (dev_image_t));

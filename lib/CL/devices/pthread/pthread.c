@@ -326,8 +326,7 @@ void pocl_pthread_free_event_data (cl_event event)
 int
 pocl_pthread_init_queue (cl_device_id device, cl_command_queue queue)
 {
-  queue_data *qdata
-    = pocl_aligned_malloc (HOST_CPU_CACHELINE_SIZE, sizeof (queue_data));
+  queue_data *qdata = malloc (sizeof (queue_data));
   POCL_INIT_COND (qdata->cq_cond);
   queue->data = qdata;
 

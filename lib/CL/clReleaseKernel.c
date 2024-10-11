@@ -72,7 +72,7 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
         {
           for (i = 0; i < (kernel->meta->num_args); i++)
             {
-              pocl_aligned_free (kernel->dyn_arguments[i].value);
+              POCL_MEM_FREE (kernel->dyn_arguments[i].value);
             }
         }
       kernel->name = NULL;

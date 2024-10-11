@@ -369,16 +369,7 @@ pocl_kernel_copy_args (cl_kernel kernel,
         {
           size_t arg_alloc_size = arg->size;
           assert (arg_alloc_size > 0);
-          /* FIXME: this is a kludge to determine an acceptable alignment,
-           * we should probably extract the argument alignment from the
-           * LLVM bytecode during kernel header generation. */
-          size_t arg_alignment = pocl_size_ceil2 (arg_alloc_size);
-          if (arg_alignment >= MAX_EXTENDED_ALIGNMENT)
-            arg_alignment = MAX_EXTENDED_ALIGNMENT;
-          if (arg_alloc_size < arg_alignment)
-            arg_alloc_size = arg_alignment;
-
-          arg->value = pocl_aligned_malloc (arg_alignment, arg_alloc_size);
+          arg->value = malloc (arg_alloc_size);
           memcpy (arg->value, src_arguments[i].value, arg->size);
         }
     }

@@ -89,9 +89,6 @@ pocl_svm_memfill_common (cl_command_buffer_khr command_buffer,
 
   pocl_raw_ptr *dst_svm_ptr = pocl_find_raw_ptr_with_vm_ptr (context, svm_ptr);
 
-  void *cmd_pattern = pocl_aligned_malloc (pattern_size, pattern_size);
-  POCL_RETURN_ERROR_COND ((cmd_pattern == NULL), CL_OUT_OF_HOST_MEMORY);
-
   size_t offset = svm_ptr - dst_svm_ptr->vm_ptr;
   if (command_buffer)
     errcode = POname (clCommandFillBufferKHR) (

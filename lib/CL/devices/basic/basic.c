@@ -280,8 +280,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
           else
             {
               arguments[i] = malloc (sizeof (void *));
-              *(void **)(arguments[i]) =
-                pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, al->size);
+              *(void **)(arguments[i]) = malloc (al->size);
             }
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
@@ -315,8 +314,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
           dev_image_t di;
           pocl_fill_dev_image_t (&di, al, cmd->device);
 
-          void *devptr = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
-                                              sizeof (dev_image_t));
+          void *devptr = malloc (sizeof (dev_image_t));
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr;
           memcpy (devptr, &di, sizeof (dev_image_t));
@@ -354,7 +352,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
           size_t s = meta->local_sizes[i];
           size_t j = meta->num_args + i;
           arguments[j] = malloc (sizeof (void *));
-          void *pp = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, s);
+          void *pp = malloc (s);
           *(void **)(arguments[j]) = pp;
         }
     }

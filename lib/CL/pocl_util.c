@@ -322,10 +322,27 @@ pocl_memalign_alloc(size_t align_width, size_t size)
 #endif
 }
 
+static void
+pocl_memalign_free (void *ptr)
+{
+#ifdef __ANDROID__
+  free (ptr);
+#elif defined(HAVE_POSIX_MEMALIGN)
+  free (ptr);
+#elif defined(_MSC_VER)
+  _aligned_free (ptr);
+#elif defined(__MINGW32__)
+  __mingw_aligned_free (ptr);
+#elif (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L))
+  free (ptr);
+#else
+#error Cannot find aligned malloc
+#endif
+}
+
 void *
 pocl_aligned_malloc (size_t alignment, size_t size)
 {
-#ifdef HAVE_ALIGNED_ALLOC
   assert (alignment > 0);
   /* make sure that size is a multiple of alignment, as posix_memalign
    * does not perform this test, whereas aligned_alloc does */
@@ -349,57 +366,13 @@ pocl_aligned_malloc (size_t alignment, size_t size)
     }
 
   return result;
-
-#else
-#error Cannot find aligned malloc
-#endif
-
-#if 0
-  /* this code works in theory, but there many places in pocl
-   * where aligned memory is used in the same pointers
-   * as memory allocated by other means */
-  /* allow zero-sized allocations, force alignment to 1 */
-  if (!size)
-    alignment = 1;
-
-  /* make sure alignment is a non-zero power of two and that
-   * size is a multiple of alignment */
-  size_t mask = alignment - 1;
-  if (!alignment || ((alignment & mask) != 0) || ((size & mask) != 0))
-    {
-      errno = EINVAL;
-      return NULL;
-    }
-
-  /* allocate memory plus space for alignment header */
-  uintptr_t address = (uintptr_t)malloc(size + mask + sizeof(void *));
-  if (!address)
-    return NULL;
-
-  /* align the address, and store original pointer for future use
-   * with free in the preceding bytes */
-  uintptr_t aligned_address = (address + mask + sizeof(void *)) & ~mask;
-  void** address_ptr = (void **)(aligned_address - sizeof(void *));
-  *address_ptr = (void *)address;
-  return (void *)aligned_address;
-
-#endif
 }
 
-#if 0
 void
 pocl_aligned_free (void *ptr)
 {
-#ifdef HAVE_ALIGNED_ALLOC
-  POCL_MEM_FREE (ptr);
-#else
-#error Cannot find aligned malloc
-  /* extract pointer from original allocation and free it */
-  if (ptr)
-    free(*(void **)((uintptr_t)ptr - sizeof(void *)));
-#endif
+  pocl_memalign_free (ptr);
 }
-#endif
 
 void
 pocl_lock_events_inorder (cl_event ev1, cl_event ev2)
@@ -1190,7 +1163,7 @@ pocl_ndrange_node_cleanup (_cl_command_node *node)
   cl_uint i;
   for (i = 0; i < node->command.run.kernel->meta->num_args; ++i)
     {
-      pocl_aligned_free (node->command.run.arguments[i].value);
+      POCL_MEM_FREE (node->command.run.arguments[i].value);
     }
   POCL_MEM_FREE (node->command.run.arguments);
   POname(clReleaseKernel)(node->command.run.kernel);
@@ -2050,8 +2023,7 @@ pocl_copy_command_node (_cl_command_node *dst_node, _cl_command_node *src_node)
 
     case CL_COMMAND_FILL_BUFFER:
       dst_node->command.memfill.pattern
-          = pocl_aligned_malloc (src_node->command.memfill.pattern_size,
-                                 src_node->command.memfill.pattern_size);
+        = malloc (src_node->command.memfill.pattern_size);
       if (dst_node->command.memfill.pattern == NULL)
         return CL_OUT_OF_HOST_MEMORY;
       memcpy (dst_node->command.memfill.pattern,
@@ -2061,8 +2033,7 @@ pocl_copy_command_node (_cl_command_node *dst_node, _cl_command_node *src_node)
 
     case CL_COMMAND_SVM_MEMFILL:
       dst_node->command.svm_fill.pattern
-          = pocl_aligned_malloc (src_node->command.svm_fill.pattern_size,
-                                 src_node->command.svm_fill.pattern_size);
+        = malloc (src_node->command.svm_fill.pattern_size);
       if (dst_node->command.svm_fill.pattern == NULL)
         return CL_OUT_OF_HOST_MEMORY;
       memcpy (dst_node->command.svm_fill.pattern,
@@ -2516,11 +2487,11 @@ pocl_str_append (const char **dst, const char *src)
   return old_dst;
 }
 
-
 int
-pocl_fill_aligned_buf_with_pattern (void *__restrict__ ptr, size_t offset,
+pocl_fill_aligned_buf_with_pattern (void *__restrict__ ptr,
+                                    size_t offset,
                                     size_t size,
-                                    const void *__restrict__ pattern,
+                                    const char *__restrict__ pattern,
                                     size_t pattern_size)
 {
   size_t i;
@@ -2535,8 +2506,9 @@ pocl_fill_aligned_buf_with_pattern (void *__restrict__ ptr, size_t offset,
     case 1:
       {
         uint8_t *p = (uint8_t *)ptr + offset;
-        for (i = 0; i < size; i++)
-          p[i] = *(uint8_t *)pattern;
+        char pat;
+        memcpy (&pat, pattern, 1);
+        memset (p, pat, size);
       }
       break;
     case 2:
@@ -2555,41 +2527,47 @@ pocl_fill_aligned_buf_with_pattern (void *__restrict__ ptr, size_t offset,
       break;
     case 8:
       {
-        uint64_t *p = (uint64_t *)ptr + offset;
+        char *p = (char *)ptr + (offset * 8);
         for (i = 0; i < size; i++)
-          p[i] = *(uint64_t *)pattern;
+          {
+            memcpy (p + (i * 8), pattern, 8);
+          }
       }
       break;
     case 16:
       {
-        uint64_t *p = (uint64_t *)ptr + (offset << 1);
+        char *p = (char *)ptr + (offset * 16);
         for (i = 0; i < size; i++)
-          for (j = 0; j < 2; j++)
-            p[(i << 1) + j] = *((uint64_t *)pattern + j);
+          {
+            memcpy (p + (i * 16), pattern, 16);
+          }
       }
       break;
     case 32:
       {
-        uint64_t *p = (uint64_t *)ptr + (offset << 2);
+        char *p = (char *)ptr + (offset * 32);
         for (i = 0; i < size; i++)
-          for (j = 0; j < 4; j++)
-            p[(i << 2) + j] = *((uint64_t *)pattern + j);
+          {
+            memcpy (p + (i * 32), pattern, 32);
+          }
       }
       break;
     case 64:
       {
-        uint64_t *p = (uint64_t *)ptr + (offset << 3);
+        char *p = (char *)ptr + (offset * 64);
         for (i = 0; i < size; i++)
-          for (j = 0; j < 8; j++)
-            p[(i << 3) + j] = *((uint64_t *)pattern + j);
+          {
+            memcpy (p + (i * 64), pattern, 64);
+          }
       }
       break;
     case 128:
       {
-        uint64_t *p = (uint64_t *)ptr + (offset << 4);
+        char *p = (char *)ptr + (offset * 128);
         for (i = 0; i < size; i++)
-          for (j = 0; j < 16; j++)
-            p[(i << 4) + j] = *((uint64_t *)pattern + j);
+          {
+            memcpy (p + (i * 128), pattern, 128);
+          }
       }
       break;
     default:

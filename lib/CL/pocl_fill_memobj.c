@@ -119,7 +119,7 @@ pocl_fill_buffer_common (cl_command_buffer_khr command_buffer,
   _cl_command_node *c = *cmd;
   c->command.memfill.size = size;
   c->command.memfill.offset = offset;
-  void *p = pocl_aligned_malloc (pattern_size, pattern_size);
+  void *p = malloc (pattern_size);
   memcpy (p, pattern, pattern_size);
   c->command.memfill.pattern = p;
   c->command.memfill.pattern_size = pattern_size;

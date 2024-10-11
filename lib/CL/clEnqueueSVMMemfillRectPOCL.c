@@ -100,7 +100,7 @@ pocl_svm_memfill_rect_common (cl_command_buffer_khr command_buffer,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  void *cmd_pattern = pocl_aligned_malloc (pattern_size, pattern_size);
+  void *cmd_pattern = malloc (pattern_size);
   POCL_RETURN_ERROR_COND ((cmd_pattern == NULL), CL_OUT_OF_HOST_MEMORY);
 
   if (command_buffer == NULL)

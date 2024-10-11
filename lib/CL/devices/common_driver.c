@@ -1188,8 +1188,8 @@ pocl_driver_build_gvar_init_kernel (cl_program program, cl_uint dev_i,
 
   if (program->global_var_total_size[dev_i] > 0 && program->gvar_storage[dev_i] == NULL)
     {
-      program->gvar_storage[dev_i] = pocl_aligned_malloc (
-          MAX_EXTENDED_ALIGNMENT, program->global_var_total_size[dev_i]);
+      program->gvar_storage[dev_i]
+        = malloc (program->global_var_total_size[dev_i]);
 
       pocl_kernel_metadata_t fake_meta;
       memset (&fake_meta, 0, sizeof (fake_meta));

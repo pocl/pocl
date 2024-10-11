@@ -76,8 +76,7 @@ void free_kernel_run_command (kernel_run_command *k);
 #define pocl_init_kernel_run_command_manager() NULL
 #define pocl_init_thread_argument_manager() NULL
 #define new_kernel_run_command()                                              \
-  (kernel_run_command *)pocl_aligned_malloc (HOST_CPU_CACHELINE_SIZE,         \
-                                             sizeof (kernel_run_command))
+  (kernel_run_command *)malloc (sizeof (kernel_run_command))
 #define free_kernel_run_command(k) free (k)
 #endif
 

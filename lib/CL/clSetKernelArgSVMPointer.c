@@ -63,7 +63,7 @@ pocl_set_kernel_arg_pointer (cl_kernel kernel, cl_uint arg_index,
     p->value = kernel->dyn_argument_offsets[arg_index];
   else if (p->value == NULL)
     {
-      p->value = pocl_aligned_malloc (sizeof (void *), sizeof (void *));
+      p->value = malloc (sizeof (void *));
       POCL_RETURN_ERROR_COND ((p->value == NULL), CL_OUT_OF_HOST_MEMORY);
     }
   memcpy (p->value, &arg_value, sizeof (void *));
