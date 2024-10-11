@@ -525,6 +525,17 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
   // don't forget to register it in registerPassBuilderPasses
   if (!Dev->spmd) {
     addPass(Passes, "simplifycfg");
+
+#if LLVM_MAJOR > 17
+    // StructurizeCFG doesn't like switches.
+    addPass(Passes, "lower-switch");
+    // Gotos and LLVM CFG optimizations can produce unstructured control flow
+    // cases that make it difficult or impossible to form clean parallel
+    // regions. StructurizeCFG takes care of them and helps us to use WIloops
+    // instead of CBS for more cases.
+    addPass(Passes, "structurizecfg");
+#endif
+
     addPass(Passes, "loop-simplify");
 
     // required for OLD PM

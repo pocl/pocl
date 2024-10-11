@@ -141,6 +141,12 @@ add_test_pocl(NAME "workgroup/range_md_large_grid"
               EXPECTED_OUTPUT ""
               COMMAND "run_kernel" "range_md.cl" "1000" "128" "1" "1")
 
+# This used trigger a forever looping CFG case due to getting unstructured
+# CFG produced by jump threading.
+add_test_pocl(NAME "workgroup/do_while_with_barrier"
+              EXPECTED_OUTPUT ""
+              COMMAND "run_kernel" "do_while_with_barrier.cl" "1" "2" "1" "1")
+
 # These tests are now always ran with the basic device with a predefined
 # work-group execution order. Their printout verification depends
 # on it.
