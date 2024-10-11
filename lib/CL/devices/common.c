@@ -888,8 +888,6 @@ pocl_cmd_max_grid_dim_width (_cl_command_run *cmd)
 
 /* CPU driver stuff */
 
-#ifdef HAVE_DLFCN_H
-
 typedef struct pocl_dlhandle_cache_item pocl_dlhandle_cache_item;
 struct pocl_dlhandle_cache_item
 {
@@ -1178,8 +1176,6 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 
   return ci;
 }
-
-#endif
 
 
 #define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
