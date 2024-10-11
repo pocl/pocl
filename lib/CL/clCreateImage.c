@@ -26,8 +26,6 @@
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
-extern unsigned long image_c;
-
 cl_mem
 pocl_create_image_internal (cl_context context, cl_mem_flags flags,
                             const cl_image_format *image_format,

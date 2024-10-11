@@ -26,8 +26,6 @@
 #include "pocl_util.h"
 #include <string.h>
 
-extern unsigned long program_c;
-
 CL_API_ENTRY cl_program CL_API_CALL
 POname(clCreateProgramWithSource)(cl_context context,
                           cl_uint count,

@@ -37,8 +37,6 @@
 #include "pocl_util.h"
 #include "utlist.h"
 
-extern unsigned long kernel_c;
-
 CL_API_ENTRY cl_kernel CL_API_CALL
 POname(clCreateKernel)(cl_program program,
                const char *kernel_name,

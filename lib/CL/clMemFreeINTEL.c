@@ -26,8 +26,6 @@
 #include "pocl_util.h"
 #include "utlist.h"
 
-extern unsigned long usm_buffer_c;
-
 /* get & retain all last-events of all command queues of the context */
 static int
 pocl_get_last_events (cl_context context, cl_event **last_events,

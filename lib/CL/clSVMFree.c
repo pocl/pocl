@@ -25,8 +25,6 @@
 #include "pocl_debug.h"
 #include "utlist.h"
 
-extern unsigned long svm_buffer_c;
-
 CL_API_ENTRY void CL_API_CALL
 POname(clSVMFree)(cl_context context,
                   void *svm_pointer) CL_API_SUFFIX__VERSION_2_0

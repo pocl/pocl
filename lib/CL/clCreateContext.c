@@ -30,8 +30,6 @@
 #include "pocl_llvm.h"
 #endif
 
-extern unsigned long context_c;
-
 int
 context_set_properties (cl_context context,
                         const cl_context_properties *properties)

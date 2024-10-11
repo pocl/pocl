@@ -26,8 +26,6 @@
 #include "pocl_util.h"
 #include "utlist.h"
 
-extern unsigned long queue_c;
-
 CL_API_ENTRY cl_command_queue CL_API_CALL
 POname(clCreateCommandQueue)(cl_context context, 
                      cl_device_id device, 

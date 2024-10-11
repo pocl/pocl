@@ -30,8 +30,6 @@
 #include "pocl_util.h"
 #include <string.h>
 
-extern unsigned long program_c;
-
 /* creates either a program with binaries, or an empty program. The latter
  * is useful for clLinkProgram() which needs an empty program to put the
  * compiled results in.

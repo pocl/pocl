@@ -37,22 +37,8 @@
 
 #include <unistd.h>
 
-extern unsigned long context_c;
-
 extern unsigned cl_context_count;
 extern pocl_lock_t pocl_context_handling_lock;
-
-extern unsigned long buffer_c;
-extern unsigned long svm_buffer_c;
-extern unsigned long usm_buffer_c;
-extern unsigned long queue_c;
-extern unsigned long context_c;
-extern unsigned long image_c;
-extern unsigned long kernel_c;
-extern unsigned long program_c;
-extern unsigned long sampler_c;
-extern unsigned long uevent_c;
-extern unsigned long event_c;
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0

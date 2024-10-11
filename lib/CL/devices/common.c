@@ -77,17 +77,17 @@
    valid object id, thus 0 can be used to mark a non-object/null. */
 pocl_obj_id_t last_object_id = 0;
 
-unsigned long buffer_c;
-unsigned long svm_buffer_c;
-unsigned long usm_buffer_c;
-unsigned long queue_c;
-unsigned long context_c;
-unsigned long image_c;
-unsigned long kernel_c;
-unsigned long program_c;
-unsigned long sampler_c;
-unsigned long uevent_c;
-unsigned long event_c;
+size_t buffer_c;
+size_t svm_buffer_c;
+size_t usm_buffer_c;
+size_t queue_c;
+size_t context_c;
+size_t image_c;
+size_t kernel_c;
+size_t program_c;
+size_t sampler_c;
+size_t uevent_c;
+size_t event_c;
 
 /**
  * Generate code from the final bitcode using the LLVM
