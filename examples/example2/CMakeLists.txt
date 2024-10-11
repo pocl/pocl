@@ -62,6 +62,6 @@ set_tests_properties( "examples/example2_poclbin"
     COST 3.0
     ${PROPS}
     PROCESSORS 1
-    ENVIRONMENT "POCL_KERNEL_CACHE=0"
+    ENVIRONMENT "POCL_KERNEL_CACHE=0;POCL_WORK_GROUP_SPECIALIZATION=0"
     LABELS "poclbin;internal;level0"
     DEPENDS "pocl_version_check")
