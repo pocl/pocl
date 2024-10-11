@@ -296,6 +296,30 @@ pocl_topology_detect_device_info (cl_device_id device)
 
 #else
 
-#error Dont know how to get HWLOC-provided values on this system!
+int
+pocl_topology_detect_device_info (cl_device_id device)
+{
+  /*
+   * Sets up:
+   *  max_compute_units
+   *  global_mem_size
+   *  global_mem_cache_type
+   *  global_mem_cacheline_size
+   *  global_mem_cache_size
+   *  local_mem_size
+   *  max_constant_buffer_size
+   */
+
+  device->max_compute_units = 4;
+  device->global_mem_size = (uint64_t)8 << 30;
+
+  device->global_mem_cache_type
+    = 0x2; // CL_READ_WRITE_CACHE, without including all of CL/cl.h
+  device->global_mem_cacheline_size = HOST_CPU_CACHELINE_SIZE;
+  device->global_mem_cache_size = 1 << 20;
+  device->local_mem_size = 1 << 20;
+  device->max_constant_buffer_size = 1 << 25;
+  return 0;
+}
 
 #endif
