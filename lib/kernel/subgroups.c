@@ -27,9 +27,9 @@
    intel_reqd_sub_group_size metadata.
  */
 
-#include <math.h>
-
 #include "work_group_alloca.h"
+
+#define INFINITY (__builtin_inf())
 
 size_t _CL_OVERLOADABLE get_local_id (unsigned int dimindx);
 size_t _CL_OVERLOADABLE get_local_linear_id (void);
