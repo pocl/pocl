@@ -292,7 +292,7 @@ pocl_pthread_update_event (cl_device_id device, cl_event event)
   event_data *e_d = NULL;
   if (event->data == NULL && event->status == CL_QUEUED)
     {
-      e_d = malloc (sizeof (event_data));
+      e_d = pocl_aligned_malloc (HOST_CPU_CACHELINE_SIZE, sizeof (event_data));
       assert(e_d);
 
       POCL_INIT_COND (e_d->event_cond);
@@ -319,7 +319,7 @@ void pocl_pthread_free_event_data (cl_event event)
   assert(event->data != NULL);
   event_data *e_d = (event_data *)event->data;
   POCL_DESTROY_COND (e_d->event_cond);
-  free(event->data);
+  pocl_aligned_free (event->data);
   event->data = NULL;
 }
 
@@ -344,6 +344,6 @@ pocl_pthread_free_queue (cl_device_id device, cl_command_queue queue)
   queue_data *qdata = (queue_data *)queue->data;
   assert (qdata);
   POCL_DESTROY_COND (qdata->cq_cond);
-  POCL_MEM_FREE (queue->data);
+  pocl_aligned_free (queue->data);
   return CL_SUCCESS;
 }

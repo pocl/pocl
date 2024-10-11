@@ -153,7 +153,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
                 memobj->mem_host_ptr = NULL;
               else
                 {
-                  POCL_MEM_FREE (memobj->mem_host_ptr);
+                  pocl_aligned_free (memobj->mem_host_ptr);
                 }
             }
         }

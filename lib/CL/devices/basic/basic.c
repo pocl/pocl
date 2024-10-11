@@ -594,7 +594,7 @@ pocl_basic_free_program (cl_device_id device, cl_program program,
 {
   pocl_driver_free_program (device, program, dev_i);
   program->global_var_total_size[dev_i] = 0;
-  POCL_MEM_FREE (program->gvar_storage[dev_i]);
+  pocl_aligned_free (program->gvar_storage[dev_i]);
   return 0;
 }
 /*********************** IMAGES ********************************/

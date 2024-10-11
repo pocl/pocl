@@ -336,10 +336,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
             arg_alloc_size = arg_alignment;
 
           value = pocl_aligned_malloc (arg_alignment, arg_alloc_size);
-          if (value == NULL)
-            {
-              return CL_OUT_OF_HOST_MEMORY;
-            }
+          POCL_RETURN_ERROR_COND ((value == NULL), CL_OUT_OF_HOST_MEMORY);
         }
 
       memcpy (value, arg_value, arg_size);

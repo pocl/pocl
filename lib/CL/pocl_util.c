@@ -306,8 +306,7 @@ pocl_memalign_alloc(size_t align_width, size_t size)
   int status;
 
 #ifdef __ANDROID__
-  ptr = memalign (align_width, size);
-  return ptr;
+  return memalign (align_width, size);
 #elif defined(HAVE_POSIX_MEMALIGN)
   status = posix_memalign (&ptr, align_width, size);
   return ((status == 0) ? ptr : NULL);
@@ -322,11 +321,33 @@ pocl_memalign_alloc(size_t align_width, size_t size)
 #endif
 }
 
+static void
+pocl_memalign_free (void *ptr)
+{
+#ifdef __ANDROID__
+  free (ptr);
+#elif defined(HAVE_POSIX_MEMALIGN)
+  free (ptr);
+#elif defined(_MSC_VER)
+  _aligned_free (ptr);
+#elif defined(__MINGW32__)
+  __mingw_aligned_free (ptr);
+#elif (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L))
+  free (ptr);
+#else
+#error Cannot find aligned malloc
+#endif
+}
+
 void *
 pocl_aligned_malloc (size_t alignment, size_t size)
 {
-#ifdef HAVE_ALIGNED_ALLOC
   assert (alignment > 0);
+
+  /* posix_memalign requires alignment to be at least sizeof(void *) */
+  if (alignment < sizeof(void *))
+    alignment = sizeof(void* );
+
   /* make sure that size is a multiple of alignment, as posix_memalign
    * does not perform this test, whereas aligned_alloc does */
   if ((size & (alignment - 1)) != 0)
@@ -335,71 +356,14 @@ pocl_aligned_malloc (size_t alignment, size_t size)
       size += 1;
     }
 
-  /* posix_memalign requires alignment to be at least sizeof(void *) */
-  if (alignment < sizeof(void *))
-    alignment = sizeof(void* );
-
-  void* result;
-
-  result = pocl_memalign_alloc(alignment, size);
-  if (result == NULL)
-    {
-      errno = -1;
-      return NULL;
-    }
-
-  return result;
-
-#else
-#error Cannot find aligned malloc
-#endif
-
-#if 0
-  /* this code works in theory, but there many places in pocl
-   * where aligned memory is used in the same pointers
-   * as memory allocated by other means */
-  /* allow zero-sized allocations, force alignment to 1 */
-  if (!size)
-    alignment = 1;
-
-  /* make sure alignment is a non-zero power of two and that
-   * size is a multiple of alignment */
-  size_t mask = alignment - 1;
-  if (!alignment || ((alignment & mask) != 0) || ((size & mask) != 0))
-    {
-      errno = EINVAL;
-      return NULL;
-    }
-
-  /* allocate memory plus space for alignment header */
-  uintptr_t address = (uintptr_t)malloc(size + mask + sizeof(void *));
-  if (!address)
-    return NULL;
-
-  /* align the address, and store original pointer for future use
-   * with free in the preceding bytes */
-  uintptr_t aligned_address = (address + mask + sizeof(void *)) & ~mask;
-  void** address_ptr = (void **)(aligned_address - sizeof(void *));
-  *address_ptr = (void *)address;
-  return (void *)aligned_address;
-
-#endif
+  return pocl_memalign_alloc (alignment, size);
 }
 
-#if 0
 void
 pocl_aligned_free (void *ptr)
 {
-#ifdef HAVE_ALIGNED_ALLOC
-  POCL_MEM_FREE (ptr);
-#else
-#error Cannot find aligned malloc
-  /* extract pointer from original allocation and free it */
-  if (ptr)
-    free(*(void **)((uintptr_t)ptr - sizeof(void *)));
-#endif
+  pocl_memalign_free (ptr);
 }
-#endif
 
 void
 pocl_lock_events_inorder (cl_event ev1, cl_event ev2)
@@ -1989,11 +1953,15 @@ static void pocl_free_event_node (_cl_command_node *node)
       break;
 
     case CL_COMMAND_FILL_BUFFER:
-      POCL_MEM_FREE (node->command.memfill.pattern);
+      pocl_aligned_free (node->command.memfill.pattern);
       break;
 
     case CL_COMMAND_SVM_MEMFILL:
-      POCL_MEM_FREE (node->command.svm_fill.pattern);
+      pocl_aligned_free (node->command.svm_fill.pattern);
+      break;
+
+    case CL_COMMAND_SVM_MEMFILL_RECT_POCL:
+      pocl_aligned_free (node->command.svm_fill_rect.pattern);
       break;
 
     case CL_COMMAND_NATIVE_KERNEL:
