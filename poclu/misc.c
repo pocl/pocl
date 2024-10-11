@@ -220,7 +220,7 @@ poclu_read_binfile (const char *filename, size_t *len)
   FILE *file;
   char *src;
 
-  file = fopen (filename, "r");
+  file = fopen (filename, "rb");
   if (file == NULL)
     return NULL;
 
