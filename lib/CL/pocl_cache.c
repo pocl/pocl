@@ -301,7 +301,8 @@ pocl_cache_write_kernel_objfile (char *objfile_path,
                                  const char *objfile_content,
                                  uint64_t objfile_size)
 {
-  return pocl_write_tempfile (objfile_path, tempfile_pattern, ".so.o",
+  return pocl_write_tempfile (objfile_path, tempfile_pattern,
+                              OBJ_EXT,
                               objfile_content, objfile_size);
 }
 

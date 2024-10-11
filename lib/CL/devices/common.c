@@ -189,12 +189,12 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
     }
   else
     {
-      POCL_MSG_PRINT_LLVM ("written %s size %zu\n",
+      POCL_MSG_PRINT_LLVM ("Written kernel object: %s size: %zu\n",
                           tmp_objfile, (size_t)objfile_size);
     }
 
   /* temporary filename for kernel.so */
-  if (pocl_cache_tempname (tmp_module, ".so", NULL))
+  if (pocl_cache_tempname (tmp_module, SHARED_LIB_EXT, NULL))
     {
       POCL_MSG_PRINT_LLVM ("Creating temporary kernel.so file"
                            " for kernel %s FAILED\n",
@@ -202,8 +202,8 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
       goto FINISH;
     }
   else
-    POCL_MSG_PRINT_LLVM ("Temporary kernel.so file"
-                         " for kernel %s : %s\n",
+    POCL_MSG_PRINT_LLVM ("Temporary shared-lib file"
+                         " for kernel %s is: %s\n",
                          kernel_name, tmp_module);
 
   POCL_MSG_PRINT_INFO ("Linking final module\n");

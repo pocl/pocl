@@ -26,6 +26,19 @@
 
 #include "pocl_cl.h"
 
+#ifdef _WIN32
+#ifdef __MINGW32__
+#define SHARED_LIB_EXT ".dll"
+#define OBJ_EXT ".o"
+#else
+#define SHARED_LIB_EXT ".dll"
+#define OBJ_EXT ".obj"
+#endif
+#else
+#define SHARED_LIB_EXT ".so"
+#define OBJ_EXT  ".so.o"
+#endif
+
 /* The filename in which the work group (parallelizable) kernel LLVM bc is stored in
    the kernel's temp dir. */
 #define POCL_PARALLEL_BC_FILENAME   "/parallel.bc"
