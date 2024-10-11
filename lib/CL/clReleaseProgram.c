@@ -36,8 +36,6 @@
 #include "pocl_llvm.h"
 #include "devices.h"
 
-extern unsigned long program_c;
-
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
 {

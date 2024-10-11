@@ -34,6 +34,19 @@
 extern "C" {
 #endif
 
+extern size_t buffer_c;
+extern size_t svm_buffer_c;
+extern size_t usm_buffer_c;
+extern size_t queue_c;
+extern size_t context_c;
+extern size_t image_c;
+extern size_t kernel_c;
+extern size_t program_c;
+extern size_t sampler_c;
+extern size_t uevent_c;
+extern size_t event_c;
+extern size_t uevent_c;
+
 POCL_EXPORT
 uint32_t pocl_byteswap_uint32_t (uint32_t word, char should_swap);
 float byteswap_float (float word, char should_swap);

@@ -26,8 +26,6 @@
 #include "pocl_util.h"
 #include "utlist.h"
 
-extern unsigned long kernel_c;
-
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 {

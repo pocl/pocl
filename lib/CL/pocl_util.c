@@ -435,8 +435,6 @@ pocl_unlock_events_inorder (cl_event ev1, cl_event ev2)
     }
 }
 
-extern unsigned long event_c;
-extern unsigned long uevent_c;
 
 cl_int
 pocl_create_event (cl_event *event,

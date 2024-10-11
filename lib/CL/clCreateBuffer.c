@@ -30,8 +30,6 @@
 #include "pocl_tensor_util.h"
 #include "pocl_util.h"
 
-extern unsigned long buffer_c;
-
 cl_mem
 pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
                        cl_mem_object_type type, int* device_image_support,

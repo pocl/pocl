@@ -27,8 +27,6 @@
 #include "pocl_util.h"
 #include "utlist.h"
 
-extern unsigned long usm_buffer_c;
-
 static void *
 pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
                 const cl_mem_properties_intel *properties, size_t size,

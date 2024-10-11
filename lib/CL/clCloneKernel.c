@@ -28,8 +28,6 @@
 #include "pocl_util.h"
 #include "utlist.h"
 
-extern unsigned long kernel_c;
-
 CL_API_ENTRY cl_kernel CL_API_CALL
 POname (clCloneKernel) (cl_kernel source_kernel,
                         cl_int *errcode_ret) CL_API_SUFFIX__VERSION_2_1

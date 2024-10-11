@@ -28,8 +28,6 @@
 #include "pocl_util.h"
 #include "utlist.h"
 
-extern unsigned long svm_buffer_c;
-
 CL_API_ENTRY void* CL_API_CALL
 POname(clSVMAlloc)(cl_context context,
                    cl_svm_mem_flags flags,

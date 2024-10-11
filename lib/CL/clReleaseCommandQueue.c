@@ -25,8 +25,6 @@
 #include "pocl_util.h"
 #include "utlist.h"
 
-extern unsigned long queue_c;
-
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {

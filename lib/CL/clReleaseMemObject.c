@@ -31,10 +31,6 @@
 #include "pocl_rdma.h"
 #endif
 
-extern unsigned long buffer_c;
-
-extern unsigned long image_c;
-
 static void free_sub_buffer_data (cl_mem memobj);
 
 CL_API_ENTRY cl_int CL_API_CALL

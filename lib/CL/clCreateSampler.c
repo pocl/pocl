@@ -25,8 +25,6 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
 
-extern unsigned long sampler_c;
-
 CL_API_ENTRY cl_sampler CL_API_CALL
 POname(clCreateSampler)(cl_context          context,
                 cl_bool             normalized_coords, 
