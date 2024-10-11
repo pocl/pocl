@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -1255,7 +1256,11 @@ bool createSPIRVWithSVMOffset(const std::vector<unsigned char> *InputSPV,
   char *TempDirName = strdup(
       (std::filesystem::temp_directory_path() / "pocl-r-XXXXXX").c_str());
 
-  mkdtemp(TempDirName);
+  if (mkdtemp(TempDirName) == nullptr) {
+    POCL_MSG_ERR("Failed to create temp directory at %s: %s\n", TempDirName,
+                 strerror(errno));
+    return false;
+  }
 
   std::filesystem::path TempDir(TempDirName);
 
