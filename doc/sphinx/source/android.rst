@@ -1,7 +1,6 @@
-.. _android-label:
 
-Using PoCL on Android
-=====================
+Android support
+---------------------
 
 It is possible to build and use PoCL on Android. However, the setup requires a number of options to be set.
 To see an example project, have a look at the `PoCL-R Reference Android Java Client <https://github.com/cpc/PoCL-R-Reference-Android-Java-Client>`_ .
@@ -13,7 +12,7 @@ installed via Android Studio. Versions that have been used before include: NDK 2
 3.22.1.
 
 CMake Arguments
----------------
+~~~~~~~~~~~~~~~~~~
 
 A number of features in PoCL such as CPU devices and the icd loader are not available on Android. Below is a list of
 recommended CMake options::
@@ -28,14 +27,14 @@ it is packed into the APK. It is recommended to set ``-DBUILD_SHARED_LIBS=0`` so
 (libpocl.a) as this is easier to use.
 
 Building Remote Client
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you want to make use of PoCL-R, you can add ``-DENABLE_REMOTE_CLIENT=YES`` to the cmake options
 and make sure that network access is allowed in the `AndroidManifest.xml`.
 
 
 Building Proxy Device
----------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 The proxy device allow you make use of any system provided OpenCL implementation as well as any devices provided by PoCL
 at the same time. Combined with the remote device, this allows you for example to easily switch between executing kernels
@@ -69,12 +68,12 @@ See that section for a workaround.
 
 
 Setting PoCL Environment Variables
-----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The easiest way to set PoCL environment variables is to create a native function that calls stdlib.h's setenv function.
 
 Using JOCL
-----------
+~~~~~~~~~~~~~~
 
 It is possible to use JOCL on Android. However, by default JOCL does not get built for Android. It also doesn't look for libpocl.
 See the android reference client readme on how to build JOCL for android and a submodule to our JOCL repo that looks for
