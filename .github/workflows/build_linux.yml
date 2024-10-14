@@ -358,7 +358,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [16]
+        llvm: [18]
 
     steps:
       - name: Checkout
@@ -402,7 +402,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [17]
+        llvm: [18]
 
     steps:
       - name: Checkout
