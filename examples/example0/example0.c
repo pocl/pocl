@@ -43,6 +43,15 @@ extern CALLAPI int exec_integer_mad_kernel (cl_context context,
                                             cl_uint *srcA, cl_uint *srcB,
                                             cl_uint *dst);
 
+/**
+ * Simple multiply and add (MAD) program with different run options.
+ *
+ * Passing nothing runs the program normally. Passing 'v' (for SPIR-V) or 'b'
+ * (for pocl binaries) runs the program with those options. In those cases, it
+ * is also possible to pass the binary path as the second argument.
+ *
+ * \return OpenCL status number
+ */
 int
 main (int argc, char **argv)
 {

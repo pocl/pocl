@@ -92,7 +92,7 @@
 #endif
 
 #ifdef BUILD_PROXY
-#include "proxy/pocl_proxy.h"
+#include "proxy/pocl_proxy.hpp"
 #endif
 
 #ifdef BUILD_VULKAN

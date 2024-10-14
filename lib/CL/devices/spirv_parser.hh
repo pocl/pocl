@@ -26,6 +26,7 @@
 #ifndef HIP_COMMON_HH
 #define HIP_COMMON_HH
 
+#include "pocl_cl.h"
 #include "pocl_export.h"
 
 #include <map>
@@ -99,6 +100,26 @@ bool parseSPIRV(const int32_t *Stream, size_t NumWords,
 POCL_EXPORT
 void applyAtomicCmpXchgWorkaround(const int32_t *InStream, size_t NumWords,
                                   std::vector<uint8_t> &OutStream);
+
+/// Maps OCLFuncInfo objects to PoCL's kernel metadata struct.
+///
+/// \note Not all metadata will be populated, only that which is present in the
+/// funcInfo argument.
+/// \param funcInfo [in] can be the result of parsing SPIR-V with parseSPIRV.
+/// \param kernelName [in] can be the result of parsing SPIR-V with parseSPIRV.
+/// \param numDevices [in] used to allocate enough memory.
+/// \param kernelMetadata [out] stores resulting metadata.
+POCL_EXPORT
+void mapToPoCLMetadata(OCLFuncInfo *funcInfo, const std::string& kernelName,
+                       size_t numDevices,
+                       pocl_kernel_metadata_t *kernelMetadata);
+
+/// Overloaded version of mapToPoCLMetdata what is intended for usage when
+/// iterating over an OpenCLFunctionInfoMap object.
+POCL_EXPORT
+void mapToPoCLMetadata(
+    std::pair<const std::string, std::shared_ptr<OCLFuncInfo>> &pair,
+    size_t numDevices, pocl_kernel_metadata_t *kernelMetadata);
 
 } // namespace SPIRVParser
 

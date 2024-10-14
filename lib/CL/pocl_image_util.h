@@ -30,29 +30,38 @@
 #pragma GCC visibility push(hidden)
 #endif
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 void origin_to_bytes (cl_mem mem, const size_t *origin, size_t *byte_offset);
 
 POCL_EXPORT
-cl_int pocl_opencl_image_type_to_index (cl_mem_object_type  image_type);
+cl_int pocl_opencl_image_type_to_index (cl_mem_object_type image_type);
 
-extern cl_int 
-pocl_check_image_origin_region (const cl_mem image, 
-                                const size_t *origin, 
-                                const size_t *region);
+extern cl_int pocl_check_image_origin_region (const cl_mem image,
+                                              const size_t *origin,
+                                              const size_t *region);
 
-extern void
-pocl_get_image_information (cl_channel_order  ch_order, 
-                            cl_channel_type   ch_type,
-                            int*           host_channels,
-                            int*           host_elem_size);
+extern void pocl_get_image_information (cl_channel_order ch_order,
+                                        cl_channel_type ch_type,
+                                        int *host_channels,
+                                        int *host_elem_size);
 
-extern cl_int pocl_check_device_supports_image (
-    cl_device_id device, const cl_image_format *image_format,
-    const cl_image_desc *image_desc, cl_uint image_type_idx,
-    cl_bool is_gl_texture, int *device_support);
+extern cl_int
+pocl_check_device_supports_image (cl_device_id device,
+                                  const cl_image_format *image_format,
+                                  const cl_image_desc *image_desc,
+                                  cl_uint image_type_idx,
+                                  cl_bool is_gl_texture,
+                                  int *device_support);
 
-void pocl_write_pixel_zero (void *data, const cl_uint4 input_color, int order,
-                            int elem_size, int channel_type);
+void pocl_write_pixel_zero (void *data,
+                            const cl_uint4 input_color,
+                            int order,
+                            int elem_size,
+                            int channel_type);
 
 cl_char4 convert_char4_sat (cl_float4 x);
 cl_char convert_char_sat (cl_float x);
@@ -71,6 +80,10 @@ cl_ushort4 convert_ushort4_sat (cl_float4 x);
 cl_ushort convert_ushort_sat (cl_float x);
 cl_ushort4 convert_ushort4_sat_int (cl_uint4 x);
 cl_ushort convert_ushort_sat_int (cl_uint x);
+
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

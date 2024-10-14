@@ -131,6 +131,11 @@ typedef cl_program (*f_clCreateProgramWithBinary) (cl_context, cl_uint,
 typedef cl_program (*f_clCreateProgramWithBuiltInKernels) (
     cl_context, cl_uint, const cl_device_id *, const char *, cl_int *);
 
+typedef cl_program (*f_clCreateProgramWithIL) (cl_context,
+                                               const void *,
+                                               size_t,
+                                               cl_int *);
+
 typedef cl_int (*f_clRetainProgram) (cl_program);
 
 typedef cl_int (*f_clReleaseProgram) (cl_program);

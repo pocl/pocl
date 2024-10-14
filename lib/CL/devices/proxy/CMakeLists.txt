@@ -24,17 +24,20 @@
 #=============================================================================
 
 if(MSVC)
-  set_source_files_properties( pocl_proxy.h pocl_proxy.c PROPERTIES LANGUAGE CXX )
+  set_source_files_properties(pocl_proxy.hpp pocl_proxy.cpp PROPERTIES LANGUAGE CXX )
 endif(MSVC)
 
-add_pocl_device_library("pocl-devices-proxy" pocl_proxy.h pocl_proxy.c )
+add_pocl_device_library("pocl-devices-proxy" pocl_proxy.hpp pocl_proxy.cpp)
 
 # an option parameter to link to libopencl-stub instead.
 # source code: https://github.com/krrishnarraj/libopencl-stub
 OPTION(PROXY_USE_LIBOPENCL_STUB "link the proxy device to libopencl-stub instead of system opencl" OFF)
 if(PROXY_USE_LIBOPENCL_STUB)
 
-    add_subdirectory(libopencl_stub)
-    target_link_libraries("pocl-devices-proxy" libopencl_stub/libOpenCL.a)
+    set(STUB_SOURCES libopencl_stub/openclstub.c libopencl_stub/openclstub.h libopencl_stub/rename_stub.h)
+    if(MSVC)
+        set_source_files_properties( ${STUB_SOURCES} PROPERTIES LANGUAGE CXX )
+    endif ()
+    target_sources("pocl-devices-proxy" PRIVATE ${STUB_SOURCES})
 
 endif()
