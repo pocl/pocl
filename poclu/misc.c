@@ -110,10 +110,13 @@ poclu_get_any_device2 (cl_context *context, cl_device_id *device,
 }
 
 cl_int
-poclu_get_multiple_devices (cl_platform_id *platform, cl_context *context,
-                            cl_char include_custom_dev, cl_uint *num_devices,
-                            cl_device_id **devices, cl_command_queue **queues,
-                            int ooo_queues)
+poclu_get_multiple_devices (cl_platform_id *platform,
+                            cl_context *context,
+                            cl_char include_custom_dev,
+                            cl_uint *num_devices,
+                            cl_device_id **devices,
+                            cl_command_queue **queues,
+                            cl_command_queue_properties optional_props)
 {
   cl_int err;
   cl_uint num_dev_all = 0;
@@ -184,11 +187,13 @@ poclu_get_multiple_devices (cl_platform_id *platform, cl_context *context,
   if (err != CL_SUCCESS)
     goto ERROR;
 
-  cl_command_queue_properties props = CL_QUEUE_PROFILING_ENABLE;
-  if (ooo_queues)
-    props |= CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
   for (i = 0; i < *num_devices; ++i)
     {
+      cl_command_queue_properties dev_props = 0;
+      CHECK_CL_ERROR (clGetDeviceInfo (devs[i],
+                                       CL_DEVICE_QUEUE_ON_HOST_PROPERTIES,
+                                       sizeof (dev_props), &dev_props, NULL));
+      cl_command_queue_properties props = dev_props & optional_props;
       ques[i] = clCreateCommandQueue (*context, devs[i], props, &err);
       if (err != CL_SUCCESS)
         goto ERROR;
@@ -200,6 +205,11 @@ poclu_get_multiple_devices (cl_platform_id *platform, cl_context *context,
 
 ERROR:
   free (devs);
+  for (i = 0; i < *num_devices; ++i)
+    {
+      if (ques[i])
+        clReleaseCommandQueue (ques[i]);
+    }
   free (ques);
   return err;
 }

@@ -116,8 +116,13 @@ main (int _argc, char **_argv)
                                &img_desc, NULL, &error);
   CHECK_CL_ERROR (error);
 
-  cl_command_queue command_queue = clCreateCommandQueue (
-      context, device, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, &error);
+  cl_command_queue_properties props = 0;
+  CHECK_CL_ERROR (clGetDeviceInfo (device, CL_DEVICE_QUEUE_ON_HOST_PROPERTIES,
+                                   sizeof (props), &props, NULL));
+  if (props & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
+    props = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+  cl_command_queue command_queue
+    = clCreateCommandQueue (context, device, props, &error);
   CHECK_CL_ERROR (error);
 
   /**** Command buffer creation ****/
@@ -129,21 +134,21 @@ main (int _argc, char **_argv)
     cl_sync_point_khr fill_syncpt;
     size_t origin[3] = { 0, 0, 0 };
     size_t region[3] = { img_width, img_height, img_depth };
-    CHECK_CL_ERROR (ext.clCommandFillImageKHR (command_buffer, NULL, img1,
+    CHECK_CL_ERROR (ext.clCommandFillImageKHR (command_buffer, NULL, NULL, img1,
                                                fill_pixel, origin, region, 0,
                                                NULL, &fill_syncpt, NULL));
     cl_sync_point_khr buf2img_syncpt;
     CHECK_CL_ERROR (ext.clCommandCopyBufferToImageKHR (
-        command_buffer, NULL, buffer, img2, 0, origin, region, 0, NULL,
+        command_buffer, NULL, NULL, buffer, img2, 0, origin, region, 0, NULL,
         &buf2img_syncpt, NULL));
     cl_sync_point_khr img2img_syncpt;
     cl_sync_point_khr img2img_deps[2] = { fill_syncpt, buf2img_syncpt };
     CHECK_CL_ERROR (ext.clCommandCopyImageKHR (
-        command_buffer, NULL, img2, img1, img2img_origin, img2img_origin,
+        command_buffer, NULL, NULL, img2, img1, img2img_origin, img2img_origin,
         img2img_region, 2, img2img_deps, &img2img_syncpt, NULL));
 
     CHECK_CL_ERROR (ext.clCommandCopyImageToBufferKHR (
-        command_buffer, NULL, img1, buffer, origin, region, 0, 1,
+        command_buffer, NULL, NULL, img1, buffer, origin, region, 0, 1,
         &img2img_syncpt, NULL, NULL));
   }
 

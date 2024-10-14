@@ -1602,11 +1602,12 @@ pocl_setup_context (cl_context context)
       if (dev->ops->init_context)
         dev->ops->init_context (dev, context);
 
-      context->default_queues[i] = POname (clCreateCommandQueue) (
-          context, dev,
-          (CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_HIDDEN
-           | CL_QUEUE_PROFILING_ENABLE),
-          &err);
+      cl_command_queue_properties props
+        = CL_QUEUE_HIDDEN | CL_QUEUE_PROFILING_ENABLE;
+      if (dev->on_host_queue_props & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
+        props |= CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+      context->default_queues[i]
+        = POname (clCreateCommandQueue) (context, dev, props, &err);
       assert (err == CL_SUCCESS);
       assert (context->default_queues[i]);
     }

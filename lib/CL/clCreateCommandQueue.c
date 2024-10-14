@@ -53,6 +53,17 @@ POname(clCreateCommandQueue)(cl_context context,
   POCL_GOTO_ERROR_ON ((properties & (~all_properties)), CL_INVALID_VALUE,
                       "Unknown properties requested\n");
 
+  cl_command_queue_properties supported_device_props;
+  if (properties & (CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT))
+    supported_device_props = device->on_dev_queue_props;
+  else
+    supported_device_props = device->on_host_queue_props | CL_QUEUE_HIDDEN;
+
+  POCL_GOTO_ERROR_ON (((properties & supported_device_props) != properties),
+                      CL_INVALID_QUEUE_PROPERTIES, "properties (%zu) are "
+                      "not supported by the device (%zu)\n",
+                      (size_t)properties, (size_t)supported_device_props);
+
   if (POCL_DEBUGGING_ON || pocl_cq_profiling_enabled)
     properties |= CL_QUEUE_PROFILING_ENABLE;
 

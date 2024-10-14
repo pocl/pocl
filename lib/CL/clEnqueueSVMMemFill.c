@@ -95,7 +95,7 @@ pocl_svm_memfill_common (cl_command_buffer_khr command_buffer,
   size_t offset = svm_ptr - dst_svm_ptr->vm_ptr;
   if (command_buffer)
     errcode = POname (clCommandFillBufferKHR) (
-        command_buffer, NULL, dst_svm_ptr->shadow_cl_mem, pattern,
+        command_buffer, NULL, NULL, dst_svm_ptr->shadow_cl_mem, pattern,
         pattern_size, offset, size, num_items_in_wait_list,
         sync_point_wait_list, sync_point, NULL);
   else

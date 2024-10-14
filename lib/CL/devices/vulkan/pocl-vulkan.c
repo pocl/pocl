@@ -1460,6 +1460,7 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
     strcat (extensions, " cl_khr_fp64");
 
   dev->extensions = strdup (extensions);
+  dev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
 
   if (dev->vendor_id == 0x10de)
     {

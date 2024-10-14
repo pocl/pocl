@@ -22,11 +22,11 @@ extern "C" {
 #endif
 
 #include <CL/cl.h>
+#include <CL/cl_gl.h>
 #include <CL/cl_exp_tensor.h>
 #include <CL/cl_exp_defined_builtin_kernels.h>
 #include <CL/cl_ext.h>
 #include <CL/cl_ext_pocl.h>
-#include <CL/cl_gl.h>
 
 #ifdef __cplusplus
 }

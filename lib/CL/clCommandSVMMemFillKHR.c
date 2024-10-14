@@ -29,6 +29,7 @@
 CL_API_ENTRY cl_int
 POname (clCommandSVMMemFillKHR) (
     cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
+    const cl_command_properties_khr* properties,
     void *svm_ptr, const void *pattern,
     size_t pattern_size, size_t size,
     cl_uint num_sync_points_in_wait_list,
