@@ -27,6 +27,7 @@
 #ifndef POCL_NETWORKING_H
 #define POCL_NETWORKING_H
 
+/** Tag for transport_info_t to indicate the type of the socket */
 typedef enum transport_domain_e
 {
   /** Unix domain socket */
@@ -37,6 +38,9 @@ typedef enum transport_domain_e
   TransportDomain_Vsock,
 } transport_domain_t;
 
+/** Wrapper struct that holds everything the communication (read/write)
+ * functions need to function, starting with a tag to indicate what kind of
+ * connection this is */
 typedef struct transport_info_s
 {
   transport_domain_t domain;
