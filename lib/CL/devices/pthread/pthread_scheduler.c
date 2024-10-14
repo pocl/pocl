@@ -153,7 +153,7 @@ pthread_scheduler_init (cl_device_id device)
 }
 
 void
-pthread_scheduler_uninit (cl_device_id device)
+pthread_scheduler_uninit ()
 {
   unsigned i;
 
