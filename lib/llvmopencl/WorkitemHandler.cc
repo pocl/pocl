@@ -3,6 +3,7 @@
 //
 // Copyright (c) 2011-2012 Carlos Sánchez de La Lama / URJC and
 //               2012-2019 Pekka Jääskeläinen
+//               2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -619,19 +620,19 @@ WorkitemHandler::createContextArrayGEP(llvm::AllocaInst *CtxArrayAlloca,
 ///
 /// Currently the only known reason to not mark them is to workaround a VPlan
 /// crash that occurs with volatile memory accesses inside the parallel
-/// WI-loops. Thus, we return true only in case of LLVM 19 and if the loop
-/// contains volatile accesses. The PoCL issue:
-/// https://github.com/pocl/pocl/issues/1556
+/// WI-loops. Thus, we return false only in case of using LLVM 17+,
+/// where the issue is producible, and if the loop contains volatile accesses.
+/// The PoCL issue: https://github.com/pocl/pocl/issues/1556
 ///
-/// We could make this Loop-specific, but it seems not worth the effort at
-/// this point as WorkitemLoops doesn't have a loop at hand when it needs it
-/// and luckily volatile usage is not common and ruins the perf anyhow.
+/// We could make this Loop/PRegion-specific, but it seems not worth the effort
+/// at this point as WorkitemLoops doesn't have a ready loop at hand when it
+/// needs to annotate it, and luckily volatile usage is not common and ruins
+/// the perf anyhow.
 ///
-/// \param F the function to check.
 /// \return False in case we should _not_ add the parallel loop metadata,
 /// even though the loop is known to be parallel.
 bool WorkitemHandler::canAnnotateParallelLoops() {
-#if LLVM_MAJOR == 19
+#if LLVM_MAJOR >= 17
   for (auto &BB : *K) {
     for (auto &I : BB) {
       if (I.isVolatile())
