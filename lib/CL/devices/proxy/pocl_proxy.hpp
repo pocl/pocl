@@ -1,6 +1,7 @@
 /* proxy.h - a pocl device driver which delegates to proxied OpenCL devices
 
    Copyright (c) 2021 Michal Babej / Tampere University
+                 2024 Robin Bijl / Tampere University
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -27,6 +28,14 @@
 #include "pocl_cl.h"
 #include "prototypes.inc"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 GEN_PROTOTYPES (proxy)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* POCL_LOCAL_H */

@@ -819,34 +819,15 @@ int pocl_level0_setup_metadata(cl_device_id Device, cl_program Program,
   Program->kernel_meta = (pocl_kernel_metadata_t *)calloc(
       Program->num_kernels, sizeof(pocl_kernel_metadata_t));
 
+// TODO: currently all metadata is gotten from LLVM instead of the SPIR-V parser
+//  and therefore unnecessary. In the future the LLVM dependency could be
+//  dropped in favor of the SPIR-V parser, see comment:
+//  https://github.com/pocl/pocl/pull/1611#discussion_r1810472798
+#if 0
   uint32_t Idx = 0;
   for (auto &I : KernelInfoMap) {
-    std::string Name = I.first;
-    OCLFuncInfo *FI = I.second.get();
 
-    pocl_kernel_metadata_t *Meta = &Program->kernel_meta[Idx];
-    Meta->data = (void **)calloc(Program->num_devices, sizeof(void *));
-    Meta->num_args = FI->ArgTypeInfo.size();
-    Meta->name = strdup(Name.c_str());
-
-    // Level zero driver handles the static locals
-    Meta->num_locals = 0;
-    Meta->local_sizes = nullptr;
-
-    Meta->max_subgroups =
-        (size_t *)calloc(Program->num_devices, sizeof(size_t));
-    Meta->compile_subgroups =
-        (size_t *)calloc(Program->num_devices, sizeof(size_t));
-    Meta->max_workgroup_size =
-        (size_t *)calloc(Program->num_devices, sizeof(size_t));
-    Meta->preferred_wg_multiple =
-        (size_t *)calloc(Program->num_devices, sizeof(size_t));
-    Meta->local_mem_size =
-        (cl_ulong *)calloc(Program->num_devices, sizeof(cl_ulong));
-    Meta->private_mem_size =
-        (cl_ulong *)calloc(Program->num_devices, sizeof(cl_ulong));
-    Meta->spill_mem_size =
-        (cl_ulong *)calloc(Program->num_devices, sizeof(cl_ulong));
+    SPIRVParser::mapToPoCLMetadata(I, Program->num_devices, &Program->kernel_meta[Idx]);
 
     // ZE kernel metadata; TODO with JIT, we don't have the ZE module
     // to extract the metadata - this needs to be extracted from SPIR-V
@@ -908,98 +889,9 @@ int pocl_level0_setup_metadata(cl_device_id Device, cl_program Program,
     }
 #endif
 
-    // ARGUMENTS
-    if (Meta->num_args != 0u) {
-      Meta->arg_info = (struct pocl_argument_info *)calloc(
-          Meta->num_args, sizeof(struct pocl_argument_info));
-
-      for (uint32_t J = 0; J < Meta->num_args; ++J) {
-        cl_kernel_arg_address_qualifier Addr;
-        cl_kernel_arg_access_qualifier Access;
-        Addr = CL_KERNEL_ARG_ADDRESS_PRIVATE;
-        Access = CL_KERNEL_ARG_ACCESS_NONE;
-        Meta->arg_info[J].name = strdup(FI->ArgTypeInfo[J].Name.c_str());
-        Meta->arg_info[J].type_name = nullptr;
-        switch (FI->ArgTypeInfo[J].Type) {
-        case OCLType::POD: {
-          Meta->arg_info[J].type = POCL_ARG_TYPE_NONE;
-          Meta->arg_info[J].type_size = FI->ArgTypeInfo[J].Size;
-          break;
-        }
-        case OCLType::Pointer: {
-          Meta->arg_info[J].type = POCL_ARG_TYPE_POINTER;
-          Meta->arg_info[J].type_size = sizeof(cl_mem);
-          switch (FI->ArgTypeInfo[J].Space) {
-          case OCLSpace::Private:
-            Addr = CL_KERNEL_ARG_ADDRESS_PRIVATE;
-            break;
-          case OCLSpace::Local:
-            Addr = CL_KERNEL_ARG_ADDRESS_LOCAL;
-            break;
-          case OCLSpace::Global:
-            Addr = CL_KERNEL_ARG_ADDRESS_GLOBAL;
-            break;
-          case OCLSpace::Constant:
-            Addr = CL_KERNEL_ARG_ADDRESS_CONSTANT;
-            break;
-          case OCLSpace::Unknown:
-            Addr = CL_KERNEL_ARG_ADDRESS_PRIVATE;
-            break;
-          }
-          break;
-        }
-        case OCLType::Image: {
-          Meta->arg_info[J].type = POCL_ARG_TYPE_IMAGE;
-          Meta->arg_info[J].type_size = sizeof(cl_mem);
-          Addr = CL_KERNEL_ARG_ADDRESS_GLOBAL;
-          bool Readable = FI->ArgTypeInfo[J].Attrs.ReadableImg;
-          bool Writable = FI->ArgTypeInfo[J].Attrs.WriteableImg;
-          if (Readable && Writable) {
-            Access = CL_KERNEL_ARG_ACCESS_READ_WRITE;
-          }
-          if (Readable && !Writable) {
-            Access = CL_KERNEL_ARG_ACCESS_READ_ONLY;
-          }
-          if (!Readable && Writable) {
-            Access = CL_KERNEL_ARG_ACCESS_WRITE_ONLY;
-          }
-          break;
-        }
-        case OCLType::Sampler: {
-          Meta->arg_info[J].type = POCL_ARG_TYPE_SAMPLER;
-          Meta->arg_info[J].type_size = sizeof(cl_mem);
-          break;
-        }
-        case OCLType::Opaque: {
-          POCL_MSG_ERR("Unknown OCL type OPaque\n");
-          Meta->arg_info[J].type = POCL_ARG_TYPE_NONE;
-          Meta->arg_info[J].type_size = FI->ArgTypeInfo[J].Size;
-          break;
-        }
-        }
-        Meta->arg_info[J].address_qualifier = Addr;
-        Meta->arg_info[J].access_qualifier = Access;
-        Meta->arg_info[J].type_qualifier = CL_KERNEL_ARG_TYPE_NONE;
-        if (FI->ArgTypeInfo[J].Attrs.Constant) {
-          Meta->arg_info[J].type_qualifier |= CL_KERNEL_ARG_TYPE_CONST;
-        }
-        if (FI->ArgTypeInfo[J].Attrs.Restrict) {
-          Meta->arg_info[J].type_qualifier |= CL_KERNEL_ARG_TYPE_RESTRICT;
-        }
-        if (FI->ArgTypeInfo[J].Attrs.Volatile) {
-          Meta->arg_info[J].type_qualifier |= CL_KERNEL_ARG_TYPE_VOLATILE;
-        }
-      }
-
-      // TODO: POCL_HAS_KERNEL_ARG_TYPE_NAME missing
-      Meta->has_arg_metadata = POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER |
-                               POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER |
-                               POCL_HAS_KERNEL_ARG_TYPE_QUALIFIER |
-                               POCL_HAS_KERNEL_ARG_NAME;
-    }
-
     ++Idx;
   }
+#endif
 
   return 1;
 }

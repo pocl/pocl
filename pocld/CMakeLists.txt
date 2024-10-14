@@ -37,6 +37,7 @@ set(SOURCES pocld.cc daemon.hh daemon.cc cmdline.h cmdline.c
             ../lib/CL/pocl_threads.c ../lib/CL/pocl_threads.h
             ../lib/CL/pocl_timing.c ../lib/CL/pocl_timing.h
             ../lib/CL/devices/spirv_parser.hh ../lib/CL/devices/spirv_parser.cc
+            ../lib/CL/devices/pocl_spirv_utils.hh ../lib/CL/devices/pocl_spirv_utils.cc
             ../lib/CL/devices/bufalloc.h ../lib/CL/devices/bufalloc.c
             ../lib/CL/pocl_networking.c ../lib/CL/pocl_networking.h
             ../lib/CL/pocl_runtime_config.c
@@ -68,7 +69,7 @@ list(APPEND P_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR})
 list(APPEND P_INCLUDE_DIRECTORIES ${CMAKE_BINARY_DIR})
 # pocl_debug.h + dependencies
 list(APPEND P_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/../lib/CL")
-# spirv_parser.hh
+# spirv_parser.hh pocl_spirv_utils.hh
 list(APPEND P_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/../lib/CL/devices")
 
 ############################################

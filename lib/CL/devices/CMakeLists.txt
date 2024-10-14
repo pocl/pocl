@@ -164,6 +164,7 @@ set(POCL_DEVICES_SOURCES
   pocl_local_size.h  pocl_local_size.c
   common_driver.h  common_driver.c
   spirv.hh  spirv_parser.hh  spirv_parser.cc
+  pocl_spirv_utils.cc pocl_spirv_utils.hh
   printf_base.c printf_base.h printf_buffer.c
   cpuinfo.c  cpuinfo.h)
 

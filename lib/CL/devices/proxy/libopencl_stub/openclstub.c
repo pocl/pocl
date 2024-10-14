@@ -33,7 +33,8 @@
 
 #define stubname(name) stub##name
 
-#include "libopencl.h"
+#include "openclstub.h"
+
 #include <stdlib.h>
 #include <sys/stat.h>
 
@@ -59,9 +60,13 @@ static const char *default_so_paths[]
 static const char *default_so_paths[] = { "OpenCL.dll" };
 #elif defined(__linux__)
 static const char *default_so_paths[]
-    = { "/usr/lib/libOpenCL.so",     "/usr/local/lib/libOpenCL.so",
-        "/usr/local/lib/libpocl.so", "/usr/lib64/libOpenCL.so",
-        "/usr/lib32/libOpenCL.so",   "libOpenCL.so" };
+  = { "/usr/lib/libOpenCL.so",
+      "/usr/local/lib/libOpenCL.so",
+      "/usr/local/lib/libpocl.so",
+      "/usr/lib64/libOpenCL.so",
+      "/usr/lib32/libOpenCL.so",
+      "libOpenCL.so",
+      "/usr/lib/x86_64-linux-gnu/libOpenCL.so" };
 #endif
 
 static void *so_handle = NULL;
@@ -110,7 +115,7 @@ open_libopencl_so ()
 
   if (path)
     {
-      so_handle = pocl_dynlib_open (path, RTLD_LAZY);
+      so_handle = pocl_dynlib_open (path, 1, 0);
       return 0;
     }
   else
@@ -418,7 +423,7 @@ stubname (clCreateCommandQueue) (cl_context context, cl_device_id device,
 
 #ifdef CL_VERSION_2_0
 cl_command_queue
-clCreateCommandQueueWithProperties (cl_context context, cl_device_id device,
+stubname (clCreateCommandQueueWithProperties) (cl_context context, cl_device_id device,
                                     const cl_queue_properties *properties,
                                     cl_int *errcode_ret)
 {
@@ -864,6 +869,29 @@ stubname (clCreateProgramWithBuiltInKernels) (cl_context context,
     {
       return NULL;
     }
+}
+
+cl_program
+stubname (clCreateProgramWithIL) (cl_context context,
+                                  const void *il,
+                                  size_t length,
+                                  cl_int *errcode_ret)
+{
+  f_clCreateProgramWithIL func;
+
+  if (!so_handle)
+    open_libopencl_so ();
+
+  func = (f_clCreateProgramWithIL)pocl_dynlib_symbol_address (
+      so_handle, "clCreateProgramWithIL");
+
+  if (func == NULL)
+    {
+      *errcode_ret = CL_INVALID_OPERATION;
+      return NULL;
+    }
+
+  return func (context, il, length, errcode_ret);
 }
 
 cl_int
