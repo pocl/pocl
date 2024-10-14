@@ -798,19 +798,19 @@ int SharedCLContext::waitAndDeleteEvent(uint64_t event_id) {
 
 void SharedCLContext::queuedPush(Request *req) {
   // handle default queues
-  if (req->req.cq_id == DEFAULT_QUE_ID) {
-    req->req.cq_id += req->req.did;
+  if (req->Body.cq_id == DEFAULT_QUE_ID) {
+    req->Body.cq_id += req->Body.did;
   }
 
-  if (isCommandReceived(req->req.event_id)) {
+  if (isCommandReceived(req->Body.event_id)) {
     delete req;
     return;
   }
 
-  uint32_t cq_id = req->req.cq_id;
+  uint32_t cq_id = req->Body.cq_id;
   POCL_MSG_PRINT_GENERAL("SHCTX %u QUEUED PUSH QID %" PRIu32 " DID %" PRIu32
                          "\n",
-                         plat_id, cq_id, uint32_t(req->req.did));
+                         plat_id, cq_id, uint32_t(req->Body.did));
 
   {
     std::unique_lock<std::mutex> lock(MainMutex);

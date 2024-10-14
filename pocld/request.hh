@@ -37,54 +37,53 @@
 
 class Request {
 public:
-  /** Size, in bytes, of the main request body (up to sizeof RequestMsg_t) */
-  uint32_t req_size;
-  /** Tracker for how many bytes of req_size have been read from the network
-   * socket */
-  size_t req_size_read;
-  /** Main body of the reuqest */
-  RequestMsg_t req;
-  /** Tracker for how many bytes of the main request body have been read from
-   * the network socket */
-  size_t req_read;
+  /// Size, in bytes, of the main request body (up to sizeof RequestMsg_t)
+  uint32_t BodySize;
+  /// Tracker for how many bytes of req_size have been read from the network
+  /// socket
+  size_t BodySizeBytesRead;
+  /// Main body of the reuqest
+  RequestMsg_t Body;
+  /// Tracker for how many bytes of the main request body have been read from
+  /// the network socket
+  size_t BodyBytesRead;
 
-  /** List of event ids that must complete before this Request can be processed
-   */
-  std::vector<uint64_t> waitlist;
-  /** Tracker for how many bytes of the waitlist have been read */
-  size_t waitlist_read;
+  /// List of event ids that must complete before this Request can be processed
+  std::vector<uint64_t> Waitlist;
+  /// Tracker for how many bytes of the waitlist have been read
+  size_t WaitlistBytesRead;
 
-  /** Auxiliary data required for the Request (buffer contents, program binaries
-   * etc) */
-  std::vector<uint8_t> extra_data;
-  /** Size of the auxiliary data buffer */
-  uint64_t extra_size;
-  /** Tracker for how many bytes of the auxiliary data buffer have been read
-   * from the network socket */
-  size_t extra_read;
+  /// Auxiliary data required for the Request (buffer contents, program binaries
+  /// etc)
+  std::vector<uint8_t> ExtraData;
+  /// Size of the auxiliary data buffer
+  uint64_t ExtraDataSize;
+  /// Tracker for how many bytes of the auxiliary data buffer have been read
+  /// from the network socket
+  size_t ExtraDataBytesRead;
 
-  /** Second auxiliary data required for the Request */
-  std::vector<uint8_t> extra_data2;
-  /** Size of the auxiliary data buffer */
-  uint64_t extra_size2;
-  /** Tracker for how many bytes of the second auxiliary data buffer have been
-   * read from the network socket */
-  size_t extra_read2;
+  /// Second auxiliary data required for the Request
+  std::vector<uint8_t> ExtraData2;
+  /// Size of the auxiliary data buffer
+  uint64_t ExtraData2Size;
+  /// Tracker for how many bytes of the second auxiliary data buffer have been
+  /// read from the network socket
+  size_t ExtraData2BytesRead;
 
-  /** Server side timestamp for when reading the request from the network socket
-   * started */
-  uint64_t read_start_timestamp_ns;
-  /** Server side timestamp for when the last bit of data for the request has
-   * been successfully read from the network socket. */
-  uint64_t read_end_timestamp_ns;
+  /// Server side timestamp for when reading the request from the network socket
+  /// started
+  uint64_t ReadStartTimestampNS;
+  /// Server side timestamp for when the last bit of data for the request has
+  /// been successfully read from the network socket.
+  uint64_t ReadEndTimestampNS;
 
-  /** Flag indicating that the request has been fully read from the network
-   * socket. Set at the very end of the read() function. */
+  /// Flag indicating that the request has been fully read from the network
+  /// socket. Set at the very end of the read() function.
   bool IsFullyRead;
 
-  /** Incrementally reads the request from given Connection. Returns true on
-   * success and false if an error occurs while reading. Call repeatedly until
-   * `fully_read` gets set to true. */
+  /// Incrementally reads the request from given Connection. Returns true on
+  /// success and false if an error occurs while reading. Call repeatedly until
+  /// `fully_read` gets set to true.
   bool read(Connection *);
 };
 

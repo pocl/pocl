@@ -155,63 +155,63 @@ const char *request_to_str(RequestMessageType type) {
 
 bool Request::read(Connection *Conn) {
   ssize_t readb;
-  Request *request = this;
-  RequestMsg_t *req = &request->req;
 
-  if (!request->read_start_timestamp_ns) {
+  RequestMsg_t *Body = &this->Body;
+
+  if (!this->ReadStartTimestampNS) {
     auto now1 = std::chrono::system_clock::now();
-    request->read_start_timestamp_ns =
+    this->ReadStartTimestampNS =
         std::chrono::duration_cast<std::chrono::nanoseconds>(
             now1.time_since_epoch())
             .count();
   }
 
   RETURN_UNLESS_DONE(Conn->readReentrant(
-      &request->req_size, sizeof(request->req_size), &request->req_size_read));
+      &this->BodySize, sizeof(this->BodySize), &this->BodySizeBytesRead));
 
   RETURN_UNLESS_DONE(
-      Conn->readReentrant(req, request->req_size, &request->req_read));
+      Conn->readReentrant(Body, this->BodySize, &this->BodyBytesRead));
 
-  TP_MSG_RECEIVED(req->msg_id, req->did, req->cq_id, req->message_type);
+  TP_MSG_RECEIVED(Body->msg_id, Body->did, Body->cq_id, Body->message_type);
 
-  RequestMessageType t = static_cast<RequestMessageType>(req->message_type);
+  RequestMessageType t = static_cast<RequestMessageType>(Body->message_type);
   POCL_MSG_PRINT_GENERAL("---------------------------------------------------"
                          "----------------------------\n");
   POCL_MSG_PRINT_GENERAL("MESSAGE RECEIVED, ID: %" PRIu64
                          " TYPE: %s SIZE: %" PRIu64 "/%" PRIu32 " \n",
-                         uint64_t(req->msg_id), request_to_str(t),
-                         request->req_read, request->req_size);
+                         uint64_t(Body->msg_id), request_to_str(t),
+                         this->BodyBytesRead, this->BodySize);
 
-  switch (req->message_type) {
+  switch (Body->message_type) {
   case MessageType_WriteBuffer:
-    request->extra_size = req->m.write.size;
+    this->ExtraDataSize = Body->m.write.size;
     break;
   case MessageType_WriteBufferRect:
-    request->extra_size = req->m.write_rect.host_bytes;
+    this->ExtraDataSize = Body->m.write_rect.host_bytes;
     break;
   case MessageType_WriteImageRect:
-    request->extra_size = req->m.write_image_rect.host_bytes;
+    this->ExtraDataSize = Body->m.write_image_rect.host_bytes;
     break;
   case MessageType_MigrateD2D:
-    if (req->m.migrate.is_external) {
-      request->extra_size = req->m.migrate.size;
+    if (Body->m.migrate.is_external) {
+      this->ExtraDataSize = Body->m.migrate.size;
     }
     break;
   case MessageType_FillBuffer:
-    request->extra_size = req->m.fill_buffer.pattern_size;
-    assert(request->extra_size <= (16 * sizeof(uint64_t)));
+    this->ExtraDataSize = Body->m.fill_buffer.pattern_size;
+    assert(this->ExtraDataSize <= (16 * sizeof(uint64_t)));
     break;
   case MessageType_FillImageRect:
-    request->extra_size = 16;
+    this->ExtraDataSize = 16;
     break;
   case MessageType_RunKernel:
-    if (req->m.run_kernel.has_new_args) {
-      /* The arguments itself come in through extra data, as well as an array of
+    if (Body->m.run_kernel.has_new_args) {
+      /* The arguments itthis come in through extra data, as well as an array of
          flags which inform whether an argument (buffer) is an
          SVM pointer or not. */
-      request->extra_size = req->m.run_kernel.args_num * sizeof(uint64_t) +
-                            req->m.run_kernel.args_num * sizeof(unsigned char);
-      request->extra_size2 = req->m.run_kernel.pod_arg_size;
+      this->ExtraDataSize = Body->m.run_kernel.args_num * sizeof(uint64_t) +
+                            Body->m.run_kernel.args_num * sizeof(unsigned char);
+      this->ExtraData2Size = Body->m.run_kernel.pod_arg_size;
     }
     break;
   /*****************************/
@@ -221,70 +221,72 @@ bool Request::read(Connection *Conn) {
   case MessageType_CompileProgramFromSPIRV:
   case MessageType_CompileProgramFromSource:
   case MessageType_LinkProgram:
-    request->extra_size2 = req->m.build_program.options_len;
+    this->ExtraData2Size = Body->m.build_program.options_len;
     /* intentional fall through to setting payload (i.e. binary) size */
   case MessageType_BuildProgramWithBuiltins:
-    request->extra_size = req->m.build_program.payload_size;
+    this->ExtraDataSize = Body->m.build_program.payload_size;
     break;
   /*****************************/
   case MessageType_CreateKernel:
-    request->extra_size = req->m.create_kernel.name_len;
+    this->ExtraDataSize = Body->m.create_kernel.name_len;
     break;
   default:
     break;
   }
 
   /*****************************/
-  if (req->waitlist_size > 0) {
-    request->waitlist.resize(req->waitlist_size);
+  if (Body->waitlist_size > 0) {
+    this->Waitlist.resize(Body->waitlist_size);
     POCL_MSG_PRINT_GENERAL("READING WAIT LIST FOR ID: %" PRIu64 " = %" PRIuS
                            "/%" PRIu32 "\n",
-                           uint64_t(req->msg_id), request->waitlist_read,
-                           request->req.waitlist_size);
+                           uint64_t(Body->msg_id), this->WaitlistBytesRead,
+                           this->Body.waitlist_size);
     RETURN_UNLESS_DONE(Conn->readReentrant(
-        request->waitlist.data(), request->req.waitlist_size * sizeof(uint64_t),
-        &request->waitlist_read));
+        this->Waitlist.data(), this->Body.waitlist_size * sizeof(uint64_t),
+        &this->WaitlistBytesRead));
   }
   /*****************************/
 
   /*****************************/
-  if (request->extra_size > 0) {
-    request->extra_data.resize(request->extra_size + 1);
+  if (this->ExtraDataSize > 0) {
+    this->ExtraData.resize(this->ExtraDataSize + 1);
     POCL_MSG_PRINT_GENERAL(
         "READING EXTRA FOR ID: %" PRIu64 " = %" PRIuS "/%" PRIu64 "\n",
-        uint64_t(req->msg_id), request->extra_read, request->extra_size);
-    RETURN_UNLESS_DONE(Conn->readReentrant(
-        request->extra_data.data(), request->extra_size, &request->extra_read));
+        uint64_t(Body->msg_id), this->ExtraDataBytesRead, this->ExtraDataSize);
+    RETURN_UNLESS_DONE(Conn->readReentrant(this->ExtraData.data(),
+                                           this->ExtraDataSize,
+                                           &this->ExtraDataBytesRead));
     /* Always add a null byte at the end - it is needed for strings and it does
      * not harm other things */
-    request->extra_data[request->extra_size] = 0;
+    this->ExtraData[this->ExtraDataSize] = 0;
   }
   /*****************************/
 
   /*****************************/
-  if (request->extra_size2 > 0) {
-    request->extra_data2.resize(request->extra_size2 + 1);
-    POCL_MSG_PRINT_GENERAL(
-        "READING EXTRA2 FOR ID:%" PRIu64 " = %" PRIuS "/%" PRIu64 "\n",
-        uint64_t(req->msg_id), request->extra_read2, request->extra_size2);
-    RETURN_UNLESS_DONE(Conn->readReentrant(request->extra_data2.data(),
-                                           request->extra_size2,
-                                           &request->extra_read2));
+  if (this->ExtraData2Size > 0) {
+    this->ExtraData2.resize(this->ExtraData2Size + 1);
+    POCL_MSG_PRINT_GENERAL("READING EXTRA2 FOR ID:%" PRIu64 " = %" PRIuS
+                           "/%" PRIu64 "\n",
+                           uint64_t(Body->msg_id), this->ExtraData2BytesRead,
+                           this->ExtraData2Size);
+    RETURN_UNLESS_DONE(Conn->readReentrant(this->ExtraData2.data(),
+                                           this->ExtraData2Size,
+                                           &this->ExtraData2BytesRead));
     /* Always add null byte here too, just in case extra2 is a string */
-    request->extra_data2[request->extra_size2] = 0;
+    this->ExtraData2[this->ExtraData2Size] = 0;
   }
   /*****************************/
 
-  if (!request->read_end_timestamp_ns) {
+  if (!this->ReadEndTimestampNS) {
     auto now2 = std::chrono::system_clock::now();
-    request->read_end_timestamp_ns =
+    this->ReadEndTimestampNS =
         std::chrono::duration_cast<std::chrono::nanoseconds>(
             now2.time_since_epoch())
             .count();
   }
 
   POCL_MSG_PRINT_GENERAL("ALL READS COMPLETE FOR ID: %" PRIu64 ", %s\n",
-                         uint64_t(req->msg_id), Conn->describe().c_str());
+                         uint64_t(Body->msg_id), Conn->describe().c_str());
 
   IsFullyRead = true;
   return true;

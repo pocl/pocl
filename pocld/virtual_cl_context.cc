@@ -56,7 +56,7 @@ SharedContextBase *createSharedCLContext(cl::Platform *platform, size_t pid,
 #define INIT_VARS                                                              \
   int err = CL_SUCCESS;                                                        \
   size_t i, j;                                                                 \
-  uint64_t id = req->req.obj_id;
+  uint64_t id = req->Body.obj_id;
 
 #define FOR_EACH_CONTEXT_DO(CODE)                                              \
   for (i = 0; i < SharedContextList.size(); ++i) {                             \
@@ -90,9 +90,9 @@ public:
 
 class VirtualCLContext : public VirtualContextBase {
   PoclDaemon *Daemon;
-  ExitHelper exit_helper;
-  ReplyQueueThreadUPtr write_slow;
-  ReplyQueueThreadUPtr write_fast;
+  ExitHelper ExitSignal;
+  ReplyQueueThreadUPtr WriteSlow;
+  ReplyQueueThreadUPtr WriteFast;
 #ifdef ENABLE_RDMA
   RdmaReplyThreadUPtr write_rdma;
   RdmaRequestThreadUPtr read_rdma;
@@ -140,12 +140,12 @@ public:
 
   ~VirtualCLContext() {
     // stop threads
-    assert(exit_helper.exit_requested());
+    assert(ExitSignal.exit_requested());
     POCL_MSG_PRINT_GENERAL("VCTX: DEST\n");
 
     // Wake up IO threads in case they were waiting for a connection
-    write_fast->setConnection(nullptr);
-    write_slow->setConnection(nullptr);
+    WriteFast->setConnection(nullptr);
+    WriteSlow->setConnection(nullptr);
 
     // make sure no shared context tries to broadcast stuff
     std::unique_lock<std::mutex> lock(main_mutex);
@@ -249,7 +249,7 @@ size_t VirtualCLContext::init(PoclDaemon *d, ClientConnections_t conns,
 #endif
 
   std::string id_string = std::to_string(session);
-  netstat.reset(new TrafficMonitor(&exit_helper, id_string));
+  netstat.reset(new TrafficMonitor(&ExitSignal, id_string));
   if (conns.low_latency.get())
     conns.low_latency->setMeter(netstat);
   if (conns.bulk_throughput.get())
@@ -258,21 +258,21 @@ size_t VirtualCLContext::init(PoclDaemon *d, ClientConnections_t conns,
 #ifdef ENABLE_RDMA
   if (client_uses_rdma) {
     read_rdma = RdmaRequestThreadUPtr(
-        new RdmaRequestThread(this, &exit_helper, netstat, "RDMA_R", conns.rdma,
+        new RdmaRequestThread(this, &ExitSignal, netstat, "RDMA_R", conns.rdma,
                               &client_mem_regions, &client_regions_mutex));
     write_rdma = RdmaReplyThreadUPtr(
-        new RdmaReplyThread(this, &exit_helper, netstat, "RDMA_W", conns.rdma,
+        new RdmaReplyThread(this, &ExitSignal, netstat, "RDMA_W", conns.rdma,
                             &client_mem_regions, &client_regions_mutex));
   }
 #endif
-  write_slow = ReplyQueueThreadUPtr(
-      new ReplyQueueThread(conns.bulk_throughput, this, &exit_helper, "WT_S"));
-  write_fast = ReplyQueueThreadUPtr(
-      new ReplyQueueThread(conns.low_latency, this, &exit_helper, "WT_F"));
+  WriteSlow = ReplyQueueThreadUPtr(
+      new ReplyQueueThread(conns.bulk_throughput, this, &ExitSignal, "WT_S"));
+  WriteFast = ReplyQueueThreadUPtr(
+      new ReplyQueueThread(conns.low_latency, this, &ExitSignal, "WT_F"));
 
   peers = PeerHandlerUPtr(new PeerHandler(peer_id, conns.incoming_peer_mutex,
                                           conns.incoming_peer_queue, this,
-                                          &exit_helper, netstat));
+                                          &ExitSignal, netstat));
   initPlatforms();
 
   POCL_MSG_PRINT_INFO("Created shared contexts for %" PRIuS
@@ -287,11 +287,11 @@ void VirtualCLContext::replaceConnections(
     std::shared_ptr<Connection> Throughput) {
   if (Latency.get()) {
     Latency->setMeter(netstat);
-    write_fast->setConnection(Latency);
+    WriteFast->setConnection(Latency);
   }
   if (Throughput.get()) {
     Throughput->setMeter(netstat);
-    write_slow->setConnection(Throughput);
+    WriteSlow->setConnection(Throughput);
   }
 }
 
@@ -306,7 +306,7 @@ size_t VirtualCLContext::initPlatforms() {
 
   for (size_t i = 0; i < PlatformList.size(); ++i) {
     SharedContextBase *p = createSharedCLContext(
-        &(PlatformList[i]), i, this, write_slow.get(), write_fast.get());
+        &(PlatformList[i]), i, this, WriteSlow.get(), WriteFast.get());
 
     SharedContextList[i] = p;
     TotalDevices += p->numDevices();
@@ -322,12 +322,12 @@ size_t VirtualCLContext::initPlatforms() {
 
 void VirtualCLContext::nonQueuedPush(Request *req) {
 
-  if (req->req.message_type != MessageType_ServerInfo &&
+  if (req->Body.message_type != MessageType_ServerInfo &&
       checkPlatformDeviceValidity(req))
     return;
 
   POCL_MSG_PRINT_GENERAL("VCTX NON-QUEUED PUSH (msg: %" PRIu64 ")\n",
-                         uint64_t(req->req.msg_id));
+                         uint64_t(req->Body.msg_id));
 
   std::unique_lock<std::mutex> lock(main_mutex);
   main_que.push_back(req);
@@ -341,8 +341,8 @@ void VirtualCLContext::queuedPush(Request *req) {
 
   POCL_MSG_PRINT_GENERAL(
       "VCTX QUEUED PUSH (msg: %" PRIu64 ", event: %" PRIu64 ")\n",
-      uint64_t(req->req.msg_id), uint64_t(req->req.event_id));
-  SharedContextList[req->req.pid]->queuedPush(req);
+      uint64_t(req->Body.msg_id), uint64_t(req->Body.event_id));
+  SharedContextList[req->Body.pid]->queuedPush(req);
 }
 
 void VirtualCLContext::notifyEvent(uint64_t event_id, cl_int status) {
@@ -354,7 +354,7 @@ void VirtualCLContext::notifyEvent(uint64_t event_id, cl_int status) {
 }
 
 void VirtualCLContext::requestExit(int code, const char *reason) {
-  exit_helper.requestExit(reason, code);
+  ExitSignal.requestExit(reason, code);
 }
 
 void VirtualCLContext::broadcastToPeers(const Request &req) {
@@ -364,25 +364,25 @@ void VirtualCLContext::broadcastToPeers(const Request &req) {
 
 void VirtualCLContext::unknownRequest(Request *req) {
   Reply *rep = new Reply(req);
-  POCL_MSG_ERR("Unknown request type: %d\n", req->req.message_type);
-  replyFail(&rep->rep, &req->req, CL_INVALID_OPERATION);
-  write_fast->pushReply(rep);
+  POCL_MSG_ERR("Unknown request type: %d\n", req->Body.message_type);
+  replyFail(&rep->rep, &req->Body, CL_INVALID_OPERATION);
+  WriteFast->pushReply(rep);
 }
 
 int VirtualCLContext::checkPlatformDeviceValidity(Request *req) {
-  if (req->req.message_type == MessageType_RdmaBufferRegistration)
+  if (req->Body.message_type == MessageType_RdmaBufferRegistration)
     return 0;
-  if (req->req.message_type == MessageType_MigrateD2D &&
-      peer_id == req->req.m.migrate.source_peer_id) {
-    uint32_t pid = req->req.m.migrate.source_pid;
-    uint32_t did = req->req.m.migrate.source_pid;
+  if (req->Body.message_type == MessageType_MigrateD2D &&
+      peer_id == req->Body.m.migrate.source_peer_id) {
+    uint32_t pid = req->Body.m.migrate.source_pid;
+    uint32_t did = req->Body.m.migrate.source_pid;
     if ((pid < PlatformList.size()) &&
         (did < SharedContextList[pid]->numDevices()))
       return 0;
   }
 
-  uint32_t pid = req->req.pid;
-  uint32_t did = req->req.did;
+  uint32_t pid = req->Body.pid;
+  uint32_t did = req->Body.did;
   if ((pid < PlatformList.size()) &&
       (did < SharedContextList[pid]->numDevices()))
     return 0;
@@ -391,14 +391,14 @@ int VirtualCLContext::checkPlatformDeviceValidity(Request *req) {
 
   int err =
       (pid < PlatformList.size() ? CL_INVALID_DEVICE : CL_INVALID_PLATFORM);
-  replyFail(&reply->rep, &req->req, err);
+  replyFail(&reply->rep, &req->Body, err);
 
   POCL_MSG_ERR("Message ID %" PRIu64 ": Unknown Platform ID %" PRIu32
                " or Device ID %" PRIu32 "\n",
-               uint64_t(req->req.msg_id), uint32_t(req->req.pid),
-               uint32_t(req->req.did));
+               uint64_t(req->Body.msg_id), uint32_t(req->Body.pid),
+               uint32_t(req->Body.did));
 
-  write_fast->pushReply(reply);
+  WriteFast->pushReply(reply);
   return 1;
 }
 
@@ -409,8 +409,8 @@ int VirtualCLContext::run() {
   Reply *reply;
   while (1) {
 
-    if (exit_helper.exit_requested()) {
-      auto e = exit_helper.status();
+    if (ExitSignal.exit_requested()) {
+      auto e = ExitSignal.status();
       POCL_MSG_PRINT_GENERAL("VCTX: exit req, status: %d\n", e);
       return e;
     }
@@ -422,14 +422,14 @@ int VirtualCLContext::run() {
       lock.unlock();
 
       reply = nullptr;
-      if (request->req.message_type != MessageType_MigrateD2D &&
-          request->req.message_type != MessageType_RdmaBufferRegistration) {
+      if (request->Body.message_type != MessageType_MigrateD2D &&
+          request->Body.message_type != MessageType_RdmaBufferRegistration) {
         reply = new Reply(request);
       }
 
       // PROCESSS REQUEST, then PUSH REPLY to WRITE Q
 
-      switch (request->req.message_type) {
+      switch (request->Body.message_type) {
       case MessageType_ServerInfo:
         ServerInfo(request, reply);
         break;
@@ -519,7 +519,7 @@ int VirtualCLContext::run() {
         break;
 
       case MessageType_Shutdown:
-        exit_helper.requestExit("Shutdown notification from client", 0);
+        ExitSignal.requestExit("Shutdown notification from client", 0);
         return 0;
 
       case MessageType_RdmaBufferRegistration:
@@ -527,8 +527,8 @@ int VirtualCLContext::run() {
         // unused existing fields are being repurposed for rdma info here:
         // uint32_t peer_id, uint32_t buf_id, uint32_t rkey, uint64_t vaddr
         peers->notifyRdmaBufferRegistration(
-            request->req.cq_id, request->req.obj_id, request->req.did,
-            request->req.msg_id);
+            request->Body.cq_id, request->Body.obj_id, request->Body.did,
+            request->Body.msg_id);
 #endif
         // Just ignore, this does not require a reply
         delete request;
@@ -542,11 +542,11 @@ int VirtualCLContext::run() {
         reply->extra_data.clear();
         reply->extra_size = 0;
         POCL_MSG_ERR("Unknown message type received: %" PRIu32 "\n",
-                     uint32_t(request->req.message_type));
+                     uint32_t(request->Body.message_type));
       }
 
       if (reply) {
-        write_fast->pushReply(reply);
+        WriteFast->pushReply(reply);
         // Reply frees the request when destroyed
       }
 
@@ -565,10 +565,10 @@ int VirtualCLContext::run() {
 void VirtualCLContext::ConnectPeer(Request *req, Reply *rep) {
   INIT_VARS;
   std::array<uint8_t, AUTHKEY_LENGTH> authkey;
-  std::memcpy(authkey.data(), req->req.m.connect_peer.authkey, AUTHKEY_LENGTH);
-  err = peers->connectPeer(req->req.msg_id, req->req.m.connect_peer.address,
-                           req->req.m.connect_peer.port,
-                           req->req.m.connect_peer.session, authkey);
+  std::memcpy(authkey.data(), req->Body.m.connect_peer.authkey, AUTHKEY_LENGTH);
+  err = peers->connectPeer(req->Body.msg_id, req->Body.m.connect_peer.address,
+                           req->Body.m.connect_peer.port,
+                           req->Body.m.connect_peer.session, authkey);
   RETURN_IF_ERR;
   replyOK(rep, MessageType_ConnectPeerReply);
 }
@@ -579,10 +579,10 @@ void VirtualCLContext::CreateCmdQueue(Request *req, Reply *rep) {
   INIT_VARS;
   CHECK_ID_NOT_EXISTS(QueueIDset, CL_INVALID_COMMAND_QUEUE);
 
-  TP_CREATE_QUEUE(req->req.msg_id, req->req.client_did, id);
-  err = SharedContextList[req->req.pid]->createQueue(
-      id, req->req.did); // TODO queue flags
-  TP_CREATE_QUEUE(req->req.msg_id, req->req.client_did, id);
+  TP_CREATE_QUEUE(req->Body.msg_id, req->Body.client_did, id);
+  err = SharedContextList[req->Body.pid]->createQueue(
+      id, req->Body.did); // TODO queue flags
+  TP_CREATE_QUEUE(req->Body.msg_id, req->Body.client_did, id);
 
   RETURN_IF_ERR;
   QueueIDset.insert(id);
@@ -593,9 +593,9 @@ void VirtualCLContext::FreeCmdQueue(Request *req, Reply *rep) {
   INIT_VARS;
   CHECK_ID_EXISTS(QueueIDset, CL_INVALID_COMMAND_QUEUE);
 
-  TP_FREE_QUEUE(req->req.msg_id, req->req.client_did, id);
-  err = SharedContextList[req->req.pid]->freeQueue(id);
-  TP_FREE_QUEUE(req->req.msg_id, req->req.client_did, id);
+  TP_FREE_QUEUE(req->Body.msg_id, req->Body.client_did, id);
+  err = SharedContextList[req->Body.pid]->freeQueue(id);
+  TP_FREE_QUEUE(req->Body.msg_id, req->Body.client_did, id);
 
   QueueIDset.erase(id);
   RETURN_IF_ERR;
@@ -608,7 +608,7 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
   INIT_VARS;
   CHECK_ID_NOT_EXISTS(BufferIDset, CL_INVALID_MEM_OBJECT);
 
-  CreateBufferMsg_t &m = req->req.m.create_buffer;
+  CreateBufferMsg_t &m = req->Body.m.create_buffer;
 
 #ifdef ENABLE_RDMA
   uint32_t buf_size = m.size;
@@ -619,7 +619,7 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
                                CL_MEM_READ_WRITE, buf_size, 0);
   if (!b) {
     POCL_MSG_ERR("SVM allocation of size %" PRIu32 " failed\n", buf_size);
-    replyFail(&rep->rep, &req->req, CL_MEM_OBJECT_ALLOCATION_FAILURE);
+    replyFail(&rep->rep, &req->Body, CL_MEM_OBJECT_ALLOCATION_FAILURE);
     return;
   }
   std::unique_ptr<char, SVMDeleter> shadow_buf(
@@ -642,7 +642,7 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
     } catch (const std::runtime_error &e) {
       POCL_MSG_ERR("%s", e.what());
       err = 1;
-      replyFail(&rep->rep, &req->req, CL_MEM_OBJECT_ALLOCATION_FAILURE);
+      replyFail(&rep->rep, &req->Body, CL_MEM_OBJECT_ALLOCATION_FAILURE);
       FOR_EACH_CONTEXT_DO(freeBuffer(id, false));
       return;
     }
@@ -654,7 +654,7 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
   rdma_shadow_buffers.insert({id, std::move(shadow_buf)});
 #endif
 
-  TP_CREATE_BUFFER(req->req.msg_id, req->req.client_did, id);
+  TP_CREATE_BUFFER(req->Body.msg_id, req->Body.client_did, id);
 
   uint64_t devaddr;
   FOR_EACH_CONTEXT_DO(createBuffer(id, m.size, m.flags, (void *)m.host_ptr,
@@ -662,7 +662,7 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
   // Do not pass pointer to device_addr directly above since
   // it's a packed struct and the address might be unaligned.
   rep->rep.m.create_buffer.device_addr = devaddr;
-  TP_CREATE_BUFFER(req->req.msg_id, req->req.client_did, id);
+  TP_CREATE_BUFFER(req->Body.msg_id, req->Body.client_did, id);
   FOR_EACH_CONTEXT_UNDO(freeBuffer(id, false));
 
   RETURN_IF_ERR;
@@ -682,12 +682,12 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
 
 void VirtualCLContext::FreeBuffer(Request *req, Reply *rep) {
   INIT_VARS;
-  if (!req->req.m.free_buffer.is_svm)
+  if (!req->Body.m.free_buffer.is_svm)
     CHECK_ID_EXISTS(BufferIDset, CL_INVALID_MEM_OBJECT);
 
-  TP_FREE_BUFFER(req->req.msg_id, req->req.client_did, id);
-  FOR_EACH_CONTEXT_DO(freeBuffer(id, req->req.m.free_buffer.is_svm));
-  TP_FREE_BUFFER(req->req.msg_id, req->req.client_did, id);
+  TP_FREE_BUFFER(req->Body.msg_id, req->Body.client_did, id);
+  FOR_EACH_CONTEXT_DO(freeBuffer(id, req->Body.m.free_buffer.is_svm));
+  TP_FREE_BUFFER(req->Body.msg_id, req->Body.client_did, id);
 
   BufferIDset.erase(id);
 #ifdef ENABLE_RDMA
@@ -717,7 +717,7 @@ void VirtualCLContext::BuildOrLinkProgram(Request *req, Reply *rep,
   INIT_VARS;
   CHECK_ID_NOT_EXISTS(ProgramIDset, CL_INVALID_PROGRAM);
 
-  BuildProgramMsg_t &m = req->req.m.build_program;
+  BuildProgramMsg_t &m = req->Body.m.build_program;
 
   POCL_MSG_PRINT_GENERAL(
       "VirtualCTX: %s %s program %" PRIu64 " for %" PRIu32 " devices\n",
@@ -726,7 +726,7 @@ void VirtualCLContext::BuildOrLinkProgram(Request *req, Reply *rep,
                  : (is_builtin ? "builtin" : (is_spirv ? "SPIR-V" : "source"))),
       id, uint32_t(m.num_devices));
   // source / binary / builtin / SPIR-V must be provided as a payload
-  assert(req->extra_size > 0);
+  assert(req->ExtraDataSize > 0);
   assert(m.num_devices);
   std::vector<uint32_t> DevList{};
   ContextVector ProgramContexts;
@@ -735,27 +735,27 @@ void VirtualCLContext::BuildOrLinkProgram(Request *req, Reply *rep,
   std::unordered_map<uint64_t, std::vector<unsigned char>> InputBinaries;
   std::unordered_map<uint64_t, std::string> build_logs;
   size_t num_kernels = 0;
-  char *source = (char *)(req->extra_data.data());
+  char *source = (char *)(req->ExtraData.data());
   size_t source_len = m.payload_size;
-  char *options = (char *)(req->extra_data2.data());
+  char *options = (char *)(req->ExtraData2.data());
 
   if (LinkOnly) {
     // We receive N client cl_program IDs to link. The first
     // 32b int is the number.
     assert(m.payload_size > sizeof(uint32_t));
-    uint32_t NumPrograms = *((uint32_t *)req->extra_data.data());
+    uint32_t NumPrograms = *((uint32_t *)req->ExtraData.data());
     assert(m.payload_size == sizeof(uint32_t) + sizeof(uint32_t) * NumPrograms);
 
     // Just add the program ids as keys.
     for (size_t i = 0; i < NumPrograms; ++i) {
-      uint32_t ClientProgramID = ((uint32_t *)req->extra_data.data())[i + 1];
+      uint32_t ClientProgramID = ((uint32_t *)req->ExtraData.data())[i + 1];
       InputBinaries[ClientProgramID] = std::vector<unsigned char>();
     }
   } else if (is_binary || is_spirv) {
     source_len = 0;
     unsigned char *buffer = (unsigned char *)source;
     source = nullptr;
-    assert(req->extra_size == m.payload_size);
+    assert(req->ExtraDataSize == m.payload_size);
     unsigned char *buf = buffer;
     size_t buffer_size = m.payload_size;
     uint32_t n_binaries;
@@ -776,7 +776,7 @@ void VirtualCLContext::BuildOrLinkProgram(Request *req, Reply *rep,
     }
   }
 
-  TP_BUILD_PROGRAM(req->req.msg_id, req->req.client_did, id);
+  TP_BUILD_PROGRAM(req->Body.msg_id, req->Body.client_did, id);
   for (i = 0; i < SharedContextList.size(); ++i) {
     DevList.clear();
     for (j = 0; j < m.num_devices; ++j) {
@@ -794,7 +794,7 @@ void VirtualCLContext::BuildOrLinkProgram(Request *req, Reply *rep,
         break;
     }
   }
-  TP_BUILD_PROGRAM(req->req.msg_id, req->req.client_did, id);
+  TP_BUILD_PROGRAM(req->Body.msg_id, req->Body.client_did, id);
 
   // output reply
   rep->extra_data.resize(MAX_REMOTE_BUILDPROGRAM_SIZE);
@@ -865,11 +865,11 @@ void VirtualCLContext::FreeProgram(Request *req, Reply *rep) {
 
   ContextVector &contexts = ProgramPlatformBuildMap[id];
 
-  TP_FREE_PROGRAM(req->req.msg_id, req->req.client_did, id);
+  TP_FREE_PROGRAM(req->Body.msg_id, req->Body.client_did, id);
   for (i = 0; i < contexts.size(); ++i) {
     err = contexts[i]->freeProgram(id);
   }
-  TP_FREE_PROGRAM(req->req.msg_id, req->req.client_did, id);
+  TP_FREE_PROGRAM(req->Body.msg_id, req->Body.client_did, id);
 
   ProgramIDset.erase(id);
   RETURN_IF_ERR;
@@ -880,20 +880,20 @@ void VirtualCLContext::CreateKernel(Request *req, Reply *rep) {
   INIT_VARS;
   CHECK_ID_NOT_EXISTS(KernelIDset, CL_INVALID_KERNEL);
 
-  CreateKernelMsg_t &m = req->req.m.create_kernel;
+  CreateKernelMsg_t &m = req->Body.m.create_kernel;
   CHECK_ID_EXISTS2(ProgramPlatformBuildMap, CL_INVALID_PROGRAM,
                    uint32_t(m.prog_id));
 
   ContextVector &contexts = ProgramPlatformBuildMap[m.prog_id];
 
-  TP_CREATE_KERNEL(req->req.msg_id, req->req.client_did, id);
+  TP_CREATE_KERNEL(req->Body.msg_id, req->Body.client_did, id);
   for (i = 0; i < contexts.size(); ++i) {
     err = contexts[i]->createKernel(id, m.prog_id,
-                                    (const char *)(req->extra_data.data()));
+                                    (const char *)(req->ExtraData.data()));
     if (err != CL_SUCCESS)
       break;
   }
-  TP_CREATE_KERNEL(req->req.msg_id, req->req.client_did, id);
+  TP_CREATE_KERNEL(req->Body.msg_id, req->Body.client_did, id);
   if (err != CL_SUCCESS) {
     for (j = 0; j < i; ++j) {
       err = contexts[i]->freeKernel(id);
@@ -909,17 +909,17 @@ void VirtualCLContext::FreeKernel(Request *req, Reply *rep) {
   INIT_VARS;
   CHECK_ID_EXISTS(KernelIDset, CL_INVALID_KERNEL);
 
-  FreeKernelMsg_t &m = req->req.m.free_kernel;
+  FreeKernelMsg_t &m = req->Body.m.free_kernel;
   CHECK_ID_EXISTS2(ProgramPlatformBuildMap, CL_INVALID_PROGRAM,
                    uint32_t(m.prog_id));
 
   ContextVector &contexts = ProgramPlatformBuildMap[m.prog_id];
 
-  TP_FREE_KERNEL(req->req.msg_id, req->req.client_did, req->req.obj_id);
+  TP_FREE_KERNEL(req->Body.msg_id, req->Body.client_did, req->Body.obj_id);
   for (i = 0; i < contexts.size(); ++i) {
     err = contexts[i]->freeKernel(id);
   }
-  TP_FREE_KERNEL(req->req.msg_id, req->req.client_did, req->req.obj_id);
+  TP_FREE_KERNEL(req->Body.msg_id, req->Body.client_did, req->Body.obj_id);
 
   KernelIDset.erase(id);
   RETURN_IF_ERR;
@@ -932,13 +932,13 @@ void VirtualCLContext::CreateImage(Request *req, Reply *rep) {
   INIT_VARS;
   CHECK_ID_NOT_EXISTS(ImageIDset, CL_INVALID_MEM_OBJECT);
 
-  CreateImageMsg_t &m = req->req.m.create_image;
+  CreateImageMsg_t &m = req->Body.m.create_image;
 
-  TP_CREATE_IMAGE(req->req.msg_id, req->req.client_did, id);
+  TP_CREATE_IMAGE(req->Body.msg_id, req->Body.client_did, id);
   FOR_EACH_CONTEXT_DO(createImage(
       id, m.flags, m.channel_order, m.channel_data_type, m.type, m.width,
       m.height, m.depth, m.array_size, m.row_pitch, m.slice_pitch));
-  TP_CREATE_IMAGE(req->req.msg_id, req->req.client_did, id);
+  TP_CREATE_IMAGE(req->Body.msg_id, req->Body.client_did, id);
 
   FOR_EACH_CONTEXT_UNDO(freeImage(id));
 
@@ -951,9 +951,9 @@ void VirtualCLContext::FreeImage(Request *req, Reply *rep) {
   INIT_VARS;
   CHECK_ID_EXISTS(ImageIDset, CL_INVALID_MEM_OBJECT);
 
-  TP_FREE_IMAGE(req->req.msg_id, req->req.client_did, req->req.obj_id);
+  TP_FREE_IMAGE(req->Body.msg_id, req->Body.client_did, req->Body.obj_id);
   FOR_EACH_CONTEXT_DO(freeImage(id));
-  TP_FREE_IMAGE(req->req.msg_id, req->req.client_did, req->req.obj_id);
+  TP_FREE_IMAGE(req->Body.msg_id, req->Body.client_did, req->Body.obj_id);
 
   ImageIDset.erase(id);
   RETURN_IF_ERR;
@@ -966,12 +966,12 @@ void VirtualCLContext::CreateSampler(Request *req, Reply *rep) {
   INIT_VARS;
   CHECK_ID_NOT_EXISTS(SamplerIDset, CL_INVALID_SAMPLER);
 
-  CreateSamplerMsg_t &m = req->req.m.create_sampler;
+  CreateSamplerMsg_t &m = req->Body.m.create_sampler;
 
-  TP_CREATE_SAMPLER(req->req.msg_id, req->req.client_did, id);
+  TP_CREATE_SAMPLER(req->Body.msg_id, req->Body.client_did, id);
   FOR_EACH_CONTEXT_DO(
       createSampler(id, m.normalized, m.address_mode, m.filter_mode));
-  TP_CREATE_SAMPLER(req->req.msg_id, req->req.client_did, id);
+  TP_CREATE_SAMPLER(req->Body.msg_id, req->Body.client_did, id);
 
   FOR_EACH_CONTEXT_UNDO(freeSampler(id));
 
@@ -984,9 +984,9 @@ void VirtualCLContext::FreeSampler(Request *req, Reply *rep) {
   INIT_VARS;
   CHECK_ID_EXISTS(SamplerIDset, CL_INVALID_SAMPLER);
 
-  TP_FREE_SAMPLER(req->req.msg_id, req->req.client_did, req->req.obj_id);
+  TP_FREE_SAMPLER(req->Body.msg_id, req->Body.client_did, req->Body.obj_id);
   FOR_EACH_CONTEXT_DO(freeSampler(id));
-  TP_FREE_SAMPLER(req->req.msg_id, req->req.client_did, req->req.obj_id);
+  TP_FREE_SAMPLER(req->Body.msg_id, req->Body.client_did, req->Body.obj_id);
 
   SamplerIDset.erase(id);
   RETURN_IF_ERR;
@@ -996,8 +996,8 @@ void VirtualCLContext::FreeSampler(Request *req, Reply *rep) {
 /****************************************************************************************************************/
 
 void VirtualCLContext::MigrateD2D(Request *req) {
-  MigrateD2DMsg_t &m = req->req.m.migrate;
-  RequestMsg_t &r = req->req;
+  MigrateD2DMsg_t &m = req->Body.m.migrate;
+  RequestMsg_t &r = req->Body;
   EventTiming_t evt{};
   uint32_t mem_obj_id = r.obj_id;
   uint32_t size_buffer_id = m.size_id;
@@ -1029,7 +1029,7 @@ void VirtualCLContext::MigrateD2D(Request *req) {
           (m.is_image == 0 ? "Buffer" : "Image"), uint32_t(m.source_pid),
           uint32_t(m.source_did), fake_ev_id, uint64_t(r.msg_id));
 #ifdef ENABLE_RDMA
-      req->extra_data.clear();
+      req->ExtraData.clear();
 #ifndef RDMA_USE_SVM
       // No SVM, we have actual shadow buffers. Write data to shadow buffer but
       // do not pass it along as extra_data, rdma thread will fetch the
@@ -1038,8 +1038,8 @@ void VirtualCLContext::MigrateD2D(Request *req) {
 #endif
 #else
       // No RDMA, no persistent shadow buffers
-      req->extra_data.resize(m.size);
-      storage = (char *)(req->extra_data.data());
+      req->ExtraData.resize(m.size);
+      storage = (char *)(req->ExtraData.data());
 #endif
 
 #ifndef RDMA_USE_SVM
@@ -1072,7 +1072,7 @@ void VirtualCLContext::MigrateD2D(Request *req) {
 
     /* Write extra_size after possible content size has been read, just before
      * pushing the request on */
-    req->extra_size = m.size;
+    req->ExtraDataSize = m.size;
 
     // .... and now we can push the writeBuffer to the queue
     if (m.dest_peer_id == peer_id) {
@@ -1110,8 +1110,8 @@ void VirtualCLContext::DeviceInfo(Request *req, Reply *rep) {
   // The first string starts at offset 1.
   rep->rep.strings_size = 1;
 
-  SharedContextList[req->req.pid]->getDeviceInfo(req->req.did, info, strings,
-                                                 req->req.m.device_info.id);
+  SharedContextList[req->Body.pid]->getDeviceInfo(req->Body.did, info, strings,
+                                                  req->Body.m.device_info.id);
 
   for (const std::string &str : strings)
     rep->rep.strings_size += str.size() + 1;

@@ -107,16 +107,17 @@ static const char *reply_to_str(ReplyMessageType type) {
   }
 }
 
-ReplyQueueThread::ReplyQueueThread(std::shared_ptr<Connection> Conn,
-                                   VirtualContextBase *c, ExitHelper *e,
-                                   const char *id_str)
-    : Conn(Conn), virtualContext(c), eh(e), id_str(id_str) {
-  io_thread = std::thread{&ReplyQueueThread::writeThread, this};
+ReplyQueueThread::ReplyQueueThread(
+    std::shared_ptr<Connection> OutboundConnection, VirtualContextBase *c,
+    ExitHelper *e, const char *id_str)
+    : Conn(OutboundConnection), virtualContext(c), eh(e),
+      ThreadIdentifier(id_str) {
+  IOThread = std::thread{&ReplyQueueThread::writeThread, this};
 }
 
 ReplyQueueThread::~ReplyQueueThread() {
-  eh->requestExit(id_str.c_str(), 0);
-  io_thread.join();
+  eh->requestExit(ThreadIdentifier.c_str(), 0);
+  IOThread.join();
 }
 
 void ReplyQueueThread::pushReply(Reply *reply) {
@@ -124,90 +125,90 @@ void ReplyQueueThread::pushReply(Reply *reply) {
     return;
 
   {
-    std::unique_lock<std::mutex> lock(io_mutex);
-    io_inflight.push_back(reply);
+    std::unique_lock<std::mutex> Lock(io_mutex);
+    IOInflight.push_back(reply);
   }
 
-  io_cond.notify_one();
+  IONotifier.notify_one();
 }
 
 void ReplyQueueThread::setConnection(
     std::shared_ptr<Connection> NewConnection) {
-  std::unique_lock<std::mutex> l(ConnectionGuard);
+  std::unique_lock<std::mutex> Lock(ConnectionGuard);
   Conn = NewConnection;
   ConnectionNotifier.notify_one();
 }
 
 void ReplyQueueThread::writeThread() {
   // XXX: Change into a ring buffer?
-  std::queue<Reply *> backup;
-  bool resending = false;
+  std::queue<Reply *> Backup;
+  bool Resending = false;
   size_t i = 0;
   while (1) {
   RETRY:
     if (eh->exit_requested())
       return;
 
-    if (backup.empty())
-      resending = false;
-    std::unique_lock<std::mutex> lock(io_mutex);
-    if ((io_inflight.size() > 0 || resending)) {
-      Reply *reply = io_inflight[i];
-      lock.unlock();
+    if (Backup.empty())
+      Resending = false;
+    std::unique_lock<std::mutex> InflightLock(io_mutex);
+    if ((IOInflight.size() > 0 || Resending)) {
+      Reply *reply = IOInflight[i];
+      InflightLock.unlock();
 
       // If we need to resend old messages, disregard the inflight queue
-      if (resending) {
-        reply = backup.front();
+      if (Resending) {
+        reply = Backup.front();
         POCL_MSG_PRINT_GENERAL("%s: Resending old replies, %" PRIuS
                                " remaining\n",
-                               id_str.c_str(), backup.size());
+                               ThreadIdentifier.c_str(), Backup.size());
       }
 
-      cl_int status =
+      cl_int Status =
           (reply->event.get() == nullptr)
               ? CL_COMPLETE
               : reply->event.getInfo<CL_EVENT_COMMAND_EXECUTION_STATUS>();
-      if (status <= CL_COMPLETE) {
+      if (Status <= CL_COMPLETE) {
         // clGetEventInfo is NOT a synchronization mechanism and gives no
         // guarantees that everything related to the event is done, so
         // wait explicitly (should be instant since the event is already
         // signaled as complete)
 
-        EventTiming_t timing;
+        EventTiming_t Timing;
 
         if (reply->event()) {
-          timing.queued = 0;
-          timing.submitted = 0;
-          timing.started = 0;
-          timing.completed = 0;
+          Timing.queued = 0;
+          Timing.submitted = 0;
+          Timing.started = 0;
+          Timing.completed = 0;
           cl_int stat = reply->event.wait();
           // This should never actually happen but can't hurt to check
-          if (status == CL_COMPLETE && stat != CL_SUCCESS)
-            status = stat;
+          if (Status == CL_COMPLETE && stat != CL_SUCCESS)
+            Status = stat;
 #ifdef QUEUE_PROFILING
           int err = CL_SUCCESS;
           uint64_t tmp;
           tmp =
               reply->event.getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>(&err);
           if (err == CL_SUCCESS)
-            timing.queued = tmp;
+            Timing.queued = tmp;
           tmp =
               reply->event.getProfilingInfo<CL_PROFILING_COMMAND_SUBMIT>(&err);
           if (err == CL_SUCCESS)
-            timing.submitted = tmp;
+            Timing.submitted = tmp;
           tmp = reply->event.getProfilingInfo<CL_PROFILING_COMMAND_START>(&err);
           if (err == CL_SUCCESS)
-            timing.started = tmp;
+            Timing.started = tmp;
           tmp = reply->event.getProfilingInfo<CL_PROFILING_COMMAND_END>(&err);
           if (err == CL_SUCCESS)
-            timing.completed = tmp;
+            Timing.completed = tmp;
 #endif
         }
 
         // Change reply to FAILURE if the command has failed after submitting
-        if (status < CL_COMPLETE) {
+        if (Status < CL_COMPLETE) {
           reply->rep.failed = 1;
-          reply->rep.fail_details = status;
+          reply->rep.fail_details = Status;
           reply->rep.message_type = MessageType_Failure;
         }
 
@@ -220,87 +221,89 @@ void ReplyQueueThread::writeThread() {
                 now1.time_since_epoch())
                 .count();
 
-        reply->rep.timing = timing;
+        reply->rep.timing = Timing;
         reply->rep.server_write_start_timestamp_ns =
             reply->write_start_timestamp_ns;
 
-        std::unique_lock<std::mutex> l(ConnectionGuard);
+        std::unique_lock<std::mutex> ConnectionLock(ConnectionGuard);
         if (Conn.get() == nullptr) {
           POCL_MSG_PRINT_REMOTE(
               "%s: Got messages to send but no connection, sleeping.\n",
-              id_str.c_str());
-          ConnectionNotifier.wait(l);
+              ThreadIdentifier.c_str());
+          ConnectionNotifier.wait(ConnectionLock);
           continue;
         }
 
         POCL_MSG_PRINT_GENERAL(
             "%s: SENDING MESSAGE, ID: %" PRIu64 " TYPE: %s SIZE: %" PRIuS
             " EXTRA: %" PRIuS " FAILED: %" PRIu32 "\n",
-            id_str.c_str(), uint64_t(reply->rep.msg_id), reply_to_str(t),
-            sizeof(ReplyMsg_t), reply->extra_size, uint32_t(reply->rep.failed));
+            ThreadIdentifier.c_str(), uint64_t(reply->rep.msg_id),
+            reply_to_str(t), sizeof(ReplyMsg_t), reply->extra_size,
+            uint32_t(reply->rep.failed));
 
         // WRITE REPLY
         CHECK_WRITE_RETRY(Conn->writeFull(&reply->rep, sizeof(ReplyMsg_t)),
-                          id_str.c_str());
+                          ThreadIdentifier.c_str());
 
         // TODO: handle reconnecting & resending when RDMA is used
         if (reply->extra_size > 0 && !reply->extra_data.empty()) {
           POCL_MSG_PRINT_INFO("%s: WRITING EXTRA: %" PRIuS " \n",
-                              id_str.c_str(), reply->extra_size);
+                              ThreadIdentifier.c_str(), reply->extra_size);
           CHECK_WRITE_RETRY(
               Conn->writeFull(reply->extra_data.data(), reply->extra_size),
-              id_str.c_str());
+              ThreadIdentifier.c_str());
         }
 
-        l.unlock();
+        ConnectionLock.unlock();
 
         POCL_MSG_PRINT_GENERAL("%s: MESSAGE FULLY WRITTEN, ID: %" PRIu64 "\n",
-                               id_str.c_str(), uint64_t(reply->rep.msg_id));
+                               ThreadIdentifier.c_str(),
+                               uint64_t(reply->rep.msg_id));
 
         TP_MSG_SENT(reply->rep.msg_id, reply->rep.did, reply->rep.failed,
                     reply->rep.message_type);
 
-        if (resending) {
+        if (Resending) {
           delete reply;
-          backup.pop();
+          Backup.pop();
         } else {
           if (reply->event.get() != nullptr) {
-            virtualContext->notifyEvent(reply->req->req.event_id, status);
+            virtualContext->notifyEvent(reply->req->Body.event_id, Status);
             Request peer_notice{};
-            peer_notice.req.msg_id = reply->rep.msg_id;
-            peer_notice.req.event_id = reply->req->req.event_id;
-            peer_notice.req.message_type = MessageType_NotifyEvent;
+            peer_notice.Body.msg_id = reply->rep.msg_id;
+            peer_notice.Body.event_id = reply->req->Body.event_id;
+            peer_notice.Body.message_type = MessageType_NotifyEvent;
             virtualContext->broadcastToPeers(peer_notice);
           }
 
           // swap the current element into last place and pop it off the vector
-          lock.lock();
-          if (i != io_inflight.size() - 1) {
-            std::swap(io_inflight[i], io_inflight[io_inflight.size() - 1]);
+          InflightLock.lock();
+          if (i != IOInflight.size() - 1) {
+            std::swap(IOInflight[i], IOInflight[IOInflight.size() - 1]);
           }
-          io_inflight.pop_back();
+          IOInflight.pop_back();
 
           // move to next item (now in the old place of the current item)
-          i = i % std::max(io_inflight.size(), (size_t)1);
-          lock.unlock();
+          i = i % std::max(IOInflight.size(), (size_t)1);
+          InflightLock.unlock();
 
-          backup.push(reply);
-          if (backup.size() > 5) {
-            delete backup.front();
-            backup.pop();
+          Backup.push(reply);
+          if (Backup.size() > 5) {
+            delete Backup.front();
+            Backup.pop();
           }
         }
       } else {
-        lock.lock();
-        i = (i + 1) % io_inflight.size();
-        // lock is dropped after this
+        InflightLock.lock();
+        i = (i + 1) % IOInflight.size();
+        // InflightLock is dropped after this
       }
     } else {
       auto now = std::chrono::system_clock::now();
       std::chrono::duration<unsigned long> d(3);
       now += d;
       i = 0;
-      io_cond.wait_until(lock, now);
+      IONotifier.wait_until(InflightLock, now);
     }
   }
 }

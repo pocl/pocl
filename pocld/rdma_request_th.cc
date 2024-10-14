@@ -101,14 +101,14 @@ void RdmaRequestThread::rdmaReaderThread() {
 
     /************** Forward the Request to virtual context ******************/
     Request *request = new Request;
-    request->req = requests_buf.at(wc.wr_id);
+    request->Body = requests_buf.at(wc.wr_id);
 
     POCL_MSG_PRINT_GENERAL(
         "%s: received IBV_SEND for message ID: %" PRIu64 " type: %s\n",
-        id_str.c_str(), uint64_t(request->req.msg_id),
-        request_to_str((RequestMessageType)request->req.message_type));
+        id_str.c_str(), uint64_t(request->Body.msg_id),
+        request_to_str((RequestMessageType)request->Body.message_type));
 
-    switch (request->req.message_type) {
+    switch (request->Body.message_type) {
     case MessageType_ConnectPeer:
     case MessageType_DeviceInfo:
     case MessageType_CreateBuffer:
@@ -153,7 +153,7 @@ void RdmaRequestThread::rdmaReaderThread() {
       break;
     }
     case MessageType_NotifyEvent: {
-      virtualContext->notifyEvent(request->req.event_id, CL_SUCCESS);
+      virtualContext->notifyEvent(request->Body.event_id, CL_SUCCESS);
       delete request;
       break;
     }

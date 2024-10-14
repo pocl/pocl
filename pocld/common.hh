@@ -321,12 +321,12 @@ public:
   Reply(Request *r)
       : rep(), req(r), extra_size(0), event(nullptr) {
     assert(req.get());
-    rep.client_did = req->req.client_did;
-    rep.did = req->req.did;
-    rep.pid = req->req.pid;
-    rep.msg_id = req->req.msg_id;
-    rep.server_read_start_timestamp_ns = req->read_start_timestamp_ns;
-    rep.server_read_end_timestamp_ns = req->read_end_timestamp_ns;
+    rep.client_did = req->Body.client_did;
+    rep.did = req->Body.did;
+    rep.pid = req->Body.pid;
+    rep.msg_id = req->Body.msg_id;
+    rep.server_read_start_timestamp_ns = req->ReadStartTimestampNS;
+    rep.server_read_end_timestamp_ns = req->ReadEndTimestampNS;
   }
 };
 

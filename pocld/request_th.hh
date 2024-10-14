@@ -38,11 +38,11 @@
 class RequestQueueThread {
   std::mutex ConnectionGuard;
   std::condition_variable ConnectionNotifier;
-  std::shared_ptr<Connection> Conn;
+  std::shared_ptr<Connection> InboundConnection;
   VirtualContextBase *virtualContext;
-  std::thread io_thread;
+  std::thread IOThread;
   ExitHelper *eh;
-  std::string id_str;
+  std::string ThreadIdentifier;
 
 public:
   RequestQueueThread(std::shared_ptr<Connection> Conn, VirtualContextBase *c,

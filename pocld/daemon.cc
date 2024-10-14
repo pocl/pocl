@@ -145,38 +145,38 @@ int listen_peers(void *data) {
     }
 
     std::string auth_hex =
-        std::accumulate(R.req.authkey, R.req.authkey + AUTHKEY_LENGTH,
+        std::accumulate(R.Body.authkey, R.Body.authkey + AUTHKEY_LENGTH,
                         std::string(), hexdigits);
     POCL_MSG_PRINT_GENERAL("PL: Incoming peer connection for session %" PRIu64
                            "\n",
-                           R.req.session);
+                           R.Body.session);
 
     std::unique_lock<std::mutex> l(d->mutex);
-    if (d->incoming_peers.find(R.req.session) == d->incoming_peers.end()) {
+    if (d->incoming_peers.find(R.Body.session) == d->incoming_peers.end()) {
       POCL_MSG_WARN("PL: Attempted peer connection to invalid session %" PRIu64
                     " from %s\n",
-                    R.req.session, addr_string.c_str());
+                    R.Body.session, addr_string.c_str());
     } else {
       POCL_MSG_PRINT_INFO("PL: Peer connection from %s to session %" PRIu64
                           ", %s\n",
-                          addr_string.c_str(), R.req.session,
+                          addr_string.c_str(), R.Body.session,
                           PeerConnection->describe().c_str());
       ReplyMsg_t Rep = {};
       Rep.message_type = MessageType_PeerHandshakeReply;
-      Rep.msg_id = R.req.msg_id;
-      Rep.m.peer_handshake.peer_id = d->SessionPeerId.at(R.req.session);
-      d->incoming_peers.at(R.req.session)
-          ->second.push_back({PeerConnection, R.req.m.peer_handshake.peer_id
+      Rep.msg_id = R.Body.msg_id;
+      Rep.m.peer_handshake.peer_id = d->SessionPeerId.at(R.Body.session);
+      d->incoming_peers.at(R.Body.session)
+          ->second.push_back({PeerConnection, R.Body.m.peer_handshake.peer_id
 #ifdef ENABLE_RDMA
                               ,
                               rdma_connection
 #endif
           });
-      d->incoming_peers.at(R.req.session)->first.notify_one();
+      d->incoming_peers.at(R.Body.session)->first.notify_one();
 #ifdef ENABLE_RDMA
       std::unique_lock<std::mutex> l2(d->vctx_map_mutex);
       d->peer_cm_id_to_vctx.insert(
-          {*rdma_connection->id(), d->vctx_map.at(R.req.session)});
+          {*rdma_connection->id(), d->vctx_map.at(R.Body.session)});
 #endif
       l.unlock();
       PeerConnection->writeFull(&Rep, sizeof(Rep));
@@ -470,8 +470,8 @@ PoclDaemon::performSessionSetup(std::shared_ptr<Connection> Conn, Request *R) {
   }
   session = ++LastSessionId;
   SessionKeys.insert(std::make_pair(session, authkey));
-  Conn->configure(R->req.m.get_session.fast_socket);
-  if (R->req.m.get_session.fast_socket)
+  Conn->configure(R->Body.m.get_session.fast_socket);
+  if (R->Body.m.get_session.fast_socket)
     connections.low_latency = Conn;
   else
     connections.bulk_throughput = Conn;
@@ -492,7 +492,7 @@ PoclDaemon::performSessionSetup(std::shared_ptr<Connection> Conn, Request *R) {
   connections.incoming_peer_queue = p;
   peer_listener_data.incoming_peers.insert({session, p});
   peer_listener_data.SessionPeerId.insert(
-      {session, uint64_t(R->req.m.get_session.peer_id)});
+      {session, uint64_t(R->Body.m.get_session.peer_id)});
   POCL_MSG_PRINT_INFO("Registered new client session %" PRIu64 " %s\n", session,
                       authkey_hex.c_str());
 
@@ -514,7 +514,7 @@ PoclDaemon::performSessionSetup(std::shared_ptr<Connection> Conn, Request *R) {
 #endif
 
   // Start virtual_cl_context thread
-  ctx = createVirtualContext(this, connections, session, R->req.m.get_session);
+  ctx = createVirtualContext(this, connections, session, R->Body.m.get_session);
 #ifdef ENABLE_RDMA
   if (Reply.m.get_session.use_rdma) {
     {
@@ -567,8 +567,6 @@ void PoclDaemon::readAllClientSocketsThread() {
       }
       ConnectionsChanged = false;
     }
-
-    POCL_MSG_WARN("NumListenFds: %d\n", (int)NumListenFds);
 
     /* These *really* ought to stay consistent */
     assert(pfds.size() == OpenClientConnections.size() &&
@@ -659,9 +657,9 @@ void PoclDaemon::readAllClientSocketsThread() {
           Request *R = IncompleteRequests.at(i);
           if (R->read(OpenClientConnections.at(i).get())) {
             if (R->IsFullyRead) {
-              if (R->req.message_type == MessageType_CreateOrAttachSession) {
-                int Fast = R->req.m.get_session.fast_socket;
-                uint64_t Session = R->req.session;
+              if (R->Body.message_type == MessageType_CreateOrAttachSession) {
+                int Fast = R->Body.m.get_session.fast_socket;
+                uint64_t Session = R->Body.session;
                 if (Session == 0) {
                   VirtualContextBase *ctx =
                       performSessionSetup(OpenClientConnections.at(i), R);
@@ -674,7 +672,7 @@ void PoclDaemon::readAllClientSocketsThread() {
                   std::unique_lock<std::mutex> L(SessionListMtx);
                   auto it = SessionKeys.find(Session);
                   if (it != SessionKeys.end()) {
-                    if (std::memcmp(it->second.data(), R->req.authkey,
+                    if (std::memcmp(it->second.data(), R->Body.authkey,
                                     AUTHKEY_LENGTH) == 0) {
                       auto cit = ClientSessions.find(Session);
                       assert(cit != ClientSessions.end());
@@ -691,19 +689,19 @@ void PoclDaemon::readAllClientSocketsThread() {
                   ReplyMsg_t Reply = {};
                   Reply.message_type = MessageType_CreateOrAttachSessionReply;
                   Reply.m.get_session.session = Session;
-                  memcpy(Reply.m.get_session.authkey, R->req.authkey,
+                  memcpy(Reply.m.get_session.authkey, R->Body.authkey,
                          AUTHKEY_LENGTH);
                   OpenClientConnections.at(i)->writeFull(&Reply, sizeof(Reply));
                 }
                 delete R;
               } else {
                 std::unique_lock<std::mutex> LSessions(SessionListMtx);
-                auto it = ClientSessions.find(R->req.session);
+                auto it = ClientSessions.find(R->Body.session);
                 VirtualContextBase *Ctx =
                     it == ClientSessions.end() ? nullptr : it->second;
                 LSessions.unlock();
                 if (Ctx) {
-                  switch (R->req.message_type) {
+                  switch (R->Body.message_type) {
                   case MessageType_ServerInfo:
                   case MessageType_ConnectPeer:
                   case MessageType_DeviceInfo:
@@ -751,7 +749,7 @@ void PoclDaemon::readAllClientSocketsThread() {
                   case MessageType_NotifyEvent: {
                     // TODO: this message should probably contain an actual
                     // status... (see also rdma thread)
-                    Ctx->notifyEvent(R->req.event_id, CL_COMPLETE);
+                    Ctx->notifyEvent(R->Body.event_id, CL_COMPLETE);
                     delete R;
                     break;
                   }
@@ -766,7 +764,7 @@ void PoclDaemon::readAllClientSocketsThread() {
                   POCL_MSG_ERR(
                       "Client sent request for nonexistent context %" PRIu64
                       ", ignoring \n",
-                      R->req.session);
+                      R->Body.session);
                   delete R;
                 }
               }

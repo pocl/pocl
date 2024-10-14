@@ -44,12 +44,12 @@ class ReplyQueueThread {
   std::mutex ConnectionGuard;
   std::condition_variable ConnectionNotifier;
   std::shared_ptr<Connection> Conn;
-  std::string id_str;
+  std::string ThreadIdentifier;
   VirtualContextBase *virtualContext;
-  std::vector<Reply *> io_inflight;
+  std::vector<Reply *> IOInflight;
   std::mutex io_mutex;
-  std::condition_variable io_cond;
-  std::thread io_thread;
+  std::condition_variable IONotifier;
+  std::thread IOThread;
   ExitHelper *eh;
   TrafficMonitor *netstat;
 

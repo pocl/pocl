@@ -175,21 +175,23 @@ void PeerHandler::handleIncomingPeers() {
       NewConnections->first.wait_for(l, std::chrono::seconds(1));
       continue;
     }
-    PeerConnection Conn = NewConnections->second.back();
+    PeerConnection PendingConnection = NewConnections->second.back();
     NewConnections->second.pop_back();
     l.unlock();
 
-    Conn.Conn->setMeter(Netstat);
+    PendingConnection.Conn->setMeter(Netstat);
     /* Handshake Request/Reply is handled by peer listener thread before
      * sending the fd here */
 
 #ifdef ENABLE_RDMA
-    Peer *p = new Peer(Conn.PeerId, id, ctx, eh, Conn.Conn, Conn.Rdma);
+    Peer *p = new Peer(PendingConnection.PeerId, id, ctx, eh,
+                       PendingConnection.Conn, PendingConnection.Rdma);
 #else
-    Peer *p = new Peer(Conn.PeerId, id, ctx, eh, Conn.Conn);
+    Peer *p =
+        new Peer(PendingConnection.PeerId, id, ctx, eh, PendingConnection.Conn);
 #endif
     std::unique_lock<std::mutex> map_lock(PeermapMutex);
-    Peers[Conn.PeerId].reset(p);
+    Peers[PendingConnection.PeerId].reset(p);
   }
 }
 
@@ -202,7 +204,7 @@ void PeerHandler::pushRequest(Request *r, uint32_t peer_id) {
   } else {
     POCL_MSG_ERR("Tried sending msg (ID: %" PRIu64
                  ") to nonexistent peer %" PRIu32 "\n",
-                 uint64_t(r->req.msg_id), peer_id);
+                 uint64_t(r->Body.msg_id), peer_id);
   }
 }
 
