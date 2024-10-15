@@ -84,8 +84,8 @@ public:
 
 protected:
   llvm::Value *getLinearWIIndexInRegion(llvm::Instruction *Instr) override;
-  llvm::Value *getLocalIdInRegion(llvm::Instruction *Instr,
-                                  size_t Dim) override;
+  llvm::Instruction *getLocalIdInRegion(llvm::Instruction *Instr,
+                                        size_t Dim) override;
 
 private:
   using BasicBlockVector = std::vector<llvm::BasicBlock *>;
@@ -176,7 +176,7 @@ bool WorkitemLoopsImpl::runOnFunction(Function &Func) {
   Changed |= handleLocalMemAllocas();
 
 #ifdef DUMP_CFGS
-  dumpCFG(F, F.getName().str() + "_after_wiloops.dot", nullptr,
+  dumpCFG(*F, F->getName().str() + "_after_wiloops.dot", nullptr,
           &OriginalParallelRegions);
 #endif
 
@@ -204,8 +204,7 @@ WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
                                     llvm::BasicBlock *ExitBB, bool PeeledFirst,
                                     int Dim, bool AddIncBlock,
                                     llvm::Value *DynamicLocalSize) {
-  Value *LocalIdVars[] = {LocalIdXGlobal, LocalIdYGlobal, LocalIdZGlobal};
-  Value *LocalIdVar = LocalIdVars[Dim];
+  Value *LocalIdVar = LocalIdGlobals[Dim];
 
   size_t LocalSizes[] = {WGLocalSizeX, WGLocalSizeY, WGLocalSizeZ};
   size_t LocalSizeForDim = LocalSizes[Dim];
@@ -434,45 +433,15 @@ void WorkitemLoopsImpl::releaseParallelRegions() {
 
 bool WorkitemLoopsImpl::processFunction(Function &F) {
 
-#if 0
-  // Replace get_global_id with loads from the _get_global_id magic
-  // global. TODO: Find a better place for this.
-  std::set<llvm::Instruction *> InstrsToDelete;
-  for (llvm::Function::iterator BB = F.begin(), BBE = F.end(); BB != BBE;
-       ++BB) {
-    for (llvm::BasicBlock::iterator II = BB->begin(); II != BB->end(); ++II) {
-      llvm::Instruction *Instr = &*II;
-      llvm::CallInst *Call = dyn_cast<llvm::CallInst>(Instr);
-      if (Call == nullptr)
-        continue;
-
-      auto Callee = Call->getCalledFunction();
-      if (Callee->isDeclaration() &&
-          Callee->getName().equals(GID_BUILTIN_NAME)) {
-        int Dim =
-            cast<llvm::ConstantInt>(Call->getArgOperand(0))->getZExtValue();
-        GlobalVariable *GIDGlobal = cast<GlobalVariable>(
-            M->getOrInsertGlobal(GID_G_NAME(Dim), pocl::SizeT(M)));
-        IRBuilder<> Builder(Call);
-        Instruction *GIDLoad = Builder.CreateLoad(pocl::SizeT(M), GIDGlobal);
-        Call->replaceAllUsesWith(GIDLoad);
-        InstrsToDelete.insert(Call);
-        ++II;
-        continue;
-      }
-    }
-  }
-  for (auto I : InstrsToDelete)
-    I->eraseFromParent();
-#endif
-
   releaseParallelRegions();
 
   K->getParallelRegions(LI, &OriginalParallelRegions);
 
+  handleWorkitemFunctions();
+
 #ifdef DUMP_CFGS
   F.dump();
-  dumpCFG(F, F.getName().str() + "_before_wiloops.dot",
+  dumpCFG(F, F.getName().str() + "_before_wiloops.dot", nullptr,
           &OriginalParallelRegions);
 #endif
 
@@ -807,11 +776,14 @@ WorkitemLoopsImpl::getLinearWIIndexInRegion(llvm::Instruction *Instr) {
   return getLinearWiIndex(Builder, M, ParRegion);
 }
 
-llvm::Value *WorkitemLoopsImpl::getLocalIdInRegion(llvm::Instruction *Instr,
-                                                   size_t Dim) {
+llvm::Instruction *
+WorkitemLoopsImpl::getLocalIdInRegion(llvm::Instruction *Instr, size_t Dim) {
   ParallelRegion *ParRegion = regionOfBlock(Instr->getParent());
-  assert(ParRegion != nullptr);
-  return ParRegion->getOrCreateIDLoad(LID_G_NAME(Dim));
+  if (ParRegion != nullptr) {
+    return ParRegion->getOrCreateIDLoad(LID_G_NAME(Dim));
+  }
+  IRBuilder<> Builder(Instr);
+  return Builder.CreateLoad(ST, LocalIdGlobals[Dim]);
 }
 
 /// Adds a value store to the context array after the given defining
@@ -1030,17 +1002,17 @@ bool WorkitemLoopsImpl::shouldNotBeContextSaved(llvm::Instruction *Instr) {
       return true;
   }
 
-  // _local_id or _global_id loads should not be replicated as it leads to
-  // problems in conditional branch case where the header node of the region is
-  // shared across the branches and thus the header node's ID loads might get
+  // Generated id loads should not be replicated as it leads to problems in
+  // conditional branch case where the header node of the region is shared
+  // across the peeled branches and thus the header node's ID loads might get
   // context saved which leads to egg-chicken problems.
-
   llvm::LoadInst *Load = dyn_cast<llvm::LoadInst>(Instr);
-  if (Load != NULL &&
-      (Load->getPointerOperand() == LocalIdZGlobal ||
-       Load->getPointerOperand() == LocalIdYGlobal ||
-       Load->getPointerOperand() == LocalIdXGlobal ||
-       Load->getPointerOperand()->getName().starts_with("_global_id")))
+  if (Load != NULL && (Load->getPointerOperand() == LocalIdGlobals[0] ||
+                       Load->getPointerOperand() == LocalIdGlobals[1] ||
+                       Load->getPointerOperand() == LocalIdGlobals[2] ||
+                       Load->getPointerOperand() == GlobalIdGlobals[0] ||
+                       Load->getPointerOperand() == GlobalIdGlobals[1] ||
+                       Load->getPointerOperand() == GlobalIdGlobals[2]))
     return true;
 
   // In case of uniform variables (same value for all work-items), there is no
@@ -1076,8 +1048,7 @@ llvm::BasicBlock *WorkitemLoopsImpl::appendIncBlock(llvm::BasicBlock *After,
                                                     llvm::BasicBlock *Before,
                                                     const std::string &BBName) {
 
-  llvm::Value *LocalIdVars[] = {LocalIdXGlobal, LocalIdYGlobal, LocalIdZGlobal};
-  llvm::Value *LocalIdVar = LocalIdVars[Dim];
+  llvm::Value *LocalIdVar = LocalIdGlobals[Dim];
   llvm::GlobalVariable *GlobalIdVar = GlobalIdIterators[Dim];
 
   llvm::LLVMContext &C = After->getContext();

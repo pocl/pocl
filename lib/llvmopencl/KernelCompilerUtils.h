@@ -27,7 +27,21 @@
 #define LID_G_NAME(DIM) (std::string("_local_id_") + (char)('x' + DIM))
 // Generates the name for the global magic variable for the global id iterator.
 #define GID_G_NAME(DIM) (std::string("_global_id_") + (char)('x' + DIM))
-// The name of the mangled get_global_id builtin function.
+// Generates the name for the global magic variable for the group id.
+#define GROUP_ID_G_NAME(DIM) (std::string("_group_id_") + (char)('x' + DIM))
+// Generates the name for the global magic variable for the local size.
+#define LS_G_NAME(DIM) (std::string("_local_size_") + (char)('x' + DIM))
+
+// The name of the mangled get_global_id() builtin function.
 #define GID_BUILTIN_NAME "_Z13get_global_idj"
+// The name of the mangled get_global_size() builtin function.
+#define GS_BUILTIN_NAME "_Z15get_global_sizej"
+// The name of the mangled get_group_id() builtin function.
+#define GROUP_ID_BUILTIN_NAME "_Z12get_group_idj"
+// The name of the mangled get_local_id() builtin function.
+#define LID_BUILTIN_NAME "_Z12get_local_idj"
+// The name of the mangled get_local_size() builtin function.
+#define LS_BUILTIN_NAME "_Z14get_local_sizej"
+
 
 #endif

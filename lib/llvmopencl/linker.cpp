@@ -578,6 +578,13 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
                             // A target might want to expose the C99 printf in
                             // case not supporting the OpenCL 1.2 printf.
                             f->getName() != "printf" &&
+                            // For CPU targets we will handle these using
+                            // the compiler.
+                            f->getName() != GID_BUILTIN_NAME &&
+                            f->getName() != GS_BUILTIN_NAME &&
+                            f->getName() != GROUP_ID_BUILTIN_NAME &&
+                            f->getName() != LID_BUILTIN_NAME &&
+                            f->getName() != LS_BUILTIN_NAME &&
                             f->getName() != pocl_sampler_handler &&
                             !f->getName().starts_with(llvm_intrins))) {
           Log.append("Cannot find symbol ");
