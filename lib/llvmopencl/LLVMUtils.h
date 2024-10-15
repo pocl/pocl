@@ -72,6 +72,10 @@ void eraseFunctionAndCallers(llvm::Function *Function);
 
 bool isAutomaticLocal(llvm::Function *F, llvm::GlobalVariable &Var);
 
+/// Returns true if \param Call is a work-item function call that can be
+/// directly analyzed and expanded by the kernel compiler.
+bool isCompilerExpandableWIFunctionCall(const llvm::CallInst &Call);
+
 POCL_EXPORT
 bool isGVarUsedByFunction(llvm::GlobalVariable *GVar, llvm::Function *F);
 

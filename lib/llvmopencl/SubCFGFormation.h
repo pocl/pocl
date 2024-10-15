@@ -157,7 +157,7 @@ public:
 
 protected:
   llvm::Value *getLinearWIIndexInRegion(llvm::Instruction *Instr);
-  llvm::Value *getLocalIdInRegion(llvm::Instruction *Instr, size_t Dim);
+  llvm::Instruction *getLocalIdInRegion(llvm::Instruction *Instr, size_t Dim);
 
 private:
   void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI,

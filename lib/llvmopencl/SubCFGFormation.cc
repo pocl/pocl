@@ -1232,17 +1232,19 @@ SubCFGFormation::getLinearWIIndexInRegion(llvm::Instruction *Instr) {
   return Region->getContiguousIdx();
 }
 
-llvm::Value *SubCFGFormation::getLocalIdInRegion(llvm::Instruction *Instr,
-                                                 size_t Dim) {
+llvm::Instruction *SubCFGFormation::getLocalIdInRegion(llvm::Instruction *Instr,
+                                                       size_t Dim) {
   SubCFG *Region = regionOfBlock(Instr->getParent());
 
   std::string VarName = LID_G_NAME(Dim);
-  // Find a load in the region load block to ensure it's defined before the
-  // referred instruction.
-  BasicBlock *LoadBB = Region->getLoadBB();
+  BasicBlock *LoadBB =
+      Region != nullptr ? Region->getLoadBB() : Instr->getParent();
   auto *GV = K->getParent()->getOrInsertGlobal(VarName, ST);
 
   for (auto &I : *LoadBB) {
+    // Ensure the local id load is defined before the referred instruction.
+    if (&I == Instr)
+      break;
     if (auto *LoadI = llvm::dyn_cast<llvm::LoadInst>(&I)) {
       if (LoadI->getPointerOperand() == GV)
         return &I;
@@ -1533,7 +1535,9 @@ SubCFGFormation::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
 
   handleLocalMemAllocas();
 
+  handleWorkitemFunctions();
   GenerateGlobalIdComputation();
+
   PreservedAnalyses PAChanged = PreservedAnalyses::none();
   PAChanged.preserve<WorkitemHandlerChooser>();
   return PAChanged;

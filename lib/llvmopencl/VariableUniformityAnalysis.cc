@@ -40,6 +40,7 @@ POP_COMPILER_DIAGS
 
 #include "Barrier.h"
 #include "Kernel.h"
+#include "KernelCompilerUtils.h"
 #include "LLVMUtils.h"
 #include "VariableUniformityAnalysis.h"
 #include "VariableUniformityAnalysisResult.hh"
@@ -171,8 +172,8 @@ void VariableUniformityAnalysisResult::analyzeBBDivergence(
     llvm::BasicBlock *PreviousUniformBB, llvm::PostDominatorTree &PDT) {
 
 #ifdef DEBUG_UNIFORMITY_ANALYSIS
-  std::cerr << "### Analyzing BB divergence (bb=" << bb->getName().str()
-            << ", prevUniform=" << previousUniformBB->getName().str() << ")"
+  std::cerr << "### Analyzing BB divergence (bb=" << BB->getName().str()
+            << ", prevUniform=" << PreviousUniformBB->getName().str() << ")"
             << std::endl;
 #endif
 
@@ -397,6 +398,19 @@ bool VariableUniformityAnalysisResult::isUniform(llvm::Function *F,
       setUniform(F, V, true);
       return true;
     }
+  } else if (llvm::CallInst *Call = dyn_cast<llvm::CallInst>(V)) {
+    auto Callee = Call->getCalledFunction();
+    if (Callee == nullptr) {
+      // Likely inline asm. Cannot analyze uniformity.
+      setUniform(F, V, false);
+      return false;
+    }
+    auto CalleeName = Callee->getName();
+    bool IsUniformBuiltin = CalleeName == GROUP_ID_BUILTIN_NAME ||
+                            CalleeName == GS_BUILTIN_NAME ||
+                            CalleeName == LS_BUILTIN_NAME;
+    setUniform(F, V, IsUniformBuiltin);
+    return IsUniformBuiltin;
   }
 
   if (isa<llvm::PHINode>(V)) {
