@@ -21,11 +21,11 @@
    IN THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
-#include "pocl_export.h"
-
 #ifndef POCL_BUILTIN_KERNELS_H
 #define POCL_BUILTIN_KERNELS_H
+
+#include "pocl_cl.h"
+#include "pocl_export.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -75,6 +75,18 @@ extern "C"
   int pocl_release_defined_builtin_attributes (BuiltinKernelId kernel_id,
                                                void *kernel_attributes);
 
+  POCL_EXPORT uint64_t pocl_serialize_cl_tensor_desc (const cl_tensor_desc *t,
+                                                      char **buf);
+  POCL_EXPORT uint64_t pocl_serialize_dbk_attribs (BuiltinKernelId id,
+                                                   const void *attributes,
+                                                   char **buf);
+
+  POCL_EXPORT int pocl_deserialize_cl_tensor_desc (cl_tensor_desc *t,
+                                                   const char **buf);
+
+  POCL_EXPORT int pocl_deserialize_dbk_attribs (BuiltinKernelId *id,
+                                                void **attributes,
+                                                const char **buf);
 #ifdef __cplusplus
 }
 #endif

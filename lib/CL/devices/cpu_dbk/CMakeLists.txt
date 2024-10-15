@@ -3,8 +3,13 @@ if(HAVE_LIBJPEG_TURBO)
     list(APPEND POCL_DEVICES_LINK_LIST PkgConfig::LIBJPEG_TURBO)
 endif()
 
+if(HAVE_ONNXRT)
+    list(APPEND POCL_DEVICES_LINK_LIST onnxruntime::onnxruntime)
+endif ()
+
 list(APPEND POCL_DEVICES_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/pocl_dbk_khr_jpeg_cpu.c ${CMAKE_CURRENT_SOURCE_DIR}/pocl_dbk_khr_jpeg_cpu.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/pocl_dbk_khr_onnxrt_cpu.c ${CMAKE_CURRENT_SOURCE_DIR}/pocl_dbk_khr_onnxrt_cpu.h
 )
 
 set(POCL_DEVICES_LINK_LIST ${POCL_DEVICES_LINK_LIST} PARENT_SCOPE)
