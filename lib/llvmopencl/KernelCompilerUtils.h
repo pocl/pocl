@@ -94,4 +94,13 @@
 #define BARRIER_BUILTIN_NAME "_Z7barrierj"
 #endif
 
+namespace PoCLMDKind {
+/// Metadata used by WILoops:
+static constexpr const char RequiredUniformBlock[] = "pocl.bb.required_uniform";
+/// Metadata used by CBS:
+static constexpr const char Arrayified[] = "pocl.arrayified";
+static constexpr const char InnerLoop[] = "pocl.loop.inner";
+static constexpr const char WorkItemLoop[] = "pocl.loop.workitem";
+}; // namespace PoCLMDKind
+
 #endif

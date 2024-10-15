@@ -246,8 +246,10 @@ int main()
         std::cout << "OK: CL gave correct results" << std::endl;
         return EXIT_SUCCESS;
     } else {
-        std::cout << "ERROR: CL gave wrong results" << std::endl;
+        std::cout << "ERROR: CL gave wrong results:" << std::endl;
         print_vec(cl_indices);
+        std::cout << "expected:" << std::endl;
+        print_vec(indices);
         return EXIT_FAILURE;
     }
 }

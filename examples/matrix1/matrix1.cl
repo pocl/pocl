@@ -4,6 +4,8 @@
  * https://github.com/CNugteren/myGEMM/blob/master/src/kernels.cl
  */
 
+#define printf(...)
+
 #define ITYPE uint
 
 // Simple version
@@ -65,12 +67,14 @@ myGEMM4 (const __global float *A, const __global float *B, __global float *C,
   for (ITYPE w = 0; w < WPT; w++)
     {
       acc[w] = 0.0f;
+      printf ("a. lid %d\n", get_local_id (0));
     }
 
   // Loop over all tiles
   const ITYPE numTiles = K / TS;
   for (ITYPE t = 0; t < numTiles; t++)
     {
+      printf ("b. lid %d\n", get_local_id (0));
 
       // Load one tile of A and B into local memory
       for (ITYPE w = 0; w < WPT; w++)
@@ -79,14 +83,21 @@ myGEMM4 (const __global float *A, const __global float *B, __global float *C,
           const ITYPE tiledCol = TS * t + col;
           Asub[col + w * RTS][row] = A[(tiledCol + w * RTS) * M + globalRow];
           Bsub[col + w * RTS][row] = B[(globalCol + w * RTS) * K + tiledRow];
+          printf ("c. lid %d\n", get_local_id (0));
         }
+
+      printf ("d. lid %d\n", get_local_id (0));
 
       // Synchronise to make sure the tile is loaded
       barrier (CLK_LOCAL_MEM_FENCE);
 
+      printf ("e. lid %d\n", get_local_id (0));
+
       // Perform the computation for a single tile
       for (ITYPE k = 0; k < TS; k++)
         {
+          printf ("f. lid %d\n", get_local_id (0));
+
           for (ITYPE w = 0; w < WPT; w++)
             {
 #ifdef USE_FMA
@@ -94,16 +105,22 @@ myGEMM4 (const __global float *A, const __global float *B, __global float *C,
 #else
               acc[w] += Asub[k][row] * Bsub[col + w * RTS][k];
 #endif
+              printf ("g. lid %d\n", get_local_id (0));
             }
         }
 
+      printf ("h. lid %d\n", get_local_id (0));
+
       // Synchronise before loading the next tile
       barrier (CLK_LOCAL_MEM_FENCE);
+
+      printf ("i. lid %d\n", get_local_id (0));
     }
 
   // Store the final results in C
   for (ITYPE w = 0; w < WPT; w++)
     {
+      printf ("j. lid %d\n", get_local_id (0));
       C[(globalCol + w * RTS) * M + globalRow] = acc[w];
     }
 }

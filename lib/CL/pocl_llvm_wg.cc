@@ -495,12 +495,13 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
 
   if (Dev->spmd) {
     addPass(Passes, "flatten-inline-all", PassType::Module);
-    addPass(Passes, "always-inline", PassType::Module);
   } else {
     addPass(Passes, "flatten-globals", PassType::Module);
     addPass(Passes, "flatten-barrier-subs", PassType::Module);
-    addPass(Passes, "always-inline", PassType::Module);
   }
+
+  addPass(Passes, "always-inline", PassType::Module);
+
   // this must be done AFTER inlining, see note above
   addPass(Passes, "automatic-locals", PassType::Module);
 

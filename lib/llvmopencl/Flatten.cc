@@ -113,14 +113,14 @@ static bool flattenAll(Module &M) {
       replacementAttr = Attribute::NoInline;
       linkage = llvm::GlobalValue::ExternalLinkage;
 #ifdef DEBUG_FLATTEN
-      std::cerr << "### NoInline for " << f->getName().str() << std::endl;
+      std::cerr << "### NoInline for " << F->getName().str() << std::endl;
 #endif
     } else {
       replaceThisAttr = Attribute::NoInline;
       replacementAttr = Attribute::AlwaysInline;
       linkage = llvm::GlobalValue::InternalLinkage;
 #ifdef DEBUG_FLATTEN
-      std::cerr << "### AlwaysInline for " << f->getName().str() << std::endl;
+      std::cerr << "### AlwaysInline for " << F->getName().str() << std::endl;
 #endif
     }
     F->setAttributes(F->getAttributes()
