@@ -149,7 +149,7 @@ ParallelRegion::replicate(ValueToValueMapTy &map,
 #ifdef DEBUG_REPLICATE
   Verify();
 #endif
-  LocalizeIDLoads();
+  localizeIDLoads();
 
   return new_region;
 }
@@ -367,7 +367,7 @@ ParallelRegion *ParallelRegion::Create(const SmallPtrSet<BasicBlock *, 8> &BBs,
     }
   }
 
-  NewRegion->LocalizeIDLoads();
+  NewRegion->localizeIDLoads();
 #ifdef DEBUG_CREATE
   assert(NewRegion->Verify());
 #endif
@@ -741,48 +741,17 @@ void ParallelRegion::InjectVariablePrintouts() {
   }
 }
 
-/**
- * Localizes all the loads to the the work-item identifiers.
- *
- * In case the code inside the region queries the WI id, it should not (re)use
- * one that is loaded in another region, but one that is loaded in the same
- * region. Otherwise, it ends up using the last id the previous PR work-item
- * loop got. This caused problems in cases where the local id was stored to a
- * temporary variable in an earlier region and that temp was reused later.
- *
- * The function scans for all accesses to the local and global ids and converts
- * them to loads inside the parallel region. Also converts calls to
- * get_global_id() declaration to the magic global variable calls. (TODO: Move
- * that functionality to a separate method).
- */
-void ParallelRegion::LocalizeIDLoads() {
-
-  // Replace get_global_id with loads from the _get_global_id magic
-  // global.
-  std::set<llvm::Instruction *> InstrsToDelete;
-  for (ParallelRegion::iterator BBI = begin(); BBI != end(); ++BBI) {
-    llvm::BasicBlock *BB = *BBI;
-    for (llvm::BasicBlock::iterator II = BB->begin(); II != BB->end(); ++II) {
-      llvm::Instruction *Instr = &*II;
-      llvm::CallInst *Call = dyn_cast<llvm::CallInst>(Instr);
-      if (Call == nullptr)
-        continue;
-
-      auto Callee = Call->getCalledFunction();
-      if (Callee != nullptr && Callee->isDeclaration() &&
-          Callee->getName() == GID_BUILTIN_NAME) {
-        int Dim =
-            cast<llvm::ConstantInt>(Call->getArgOperand(0))->getZExtValue();
-        llvm::Instruction *GIDLoad = getOrCreateIDLoad(GID_G_NAME(Dim));
-        Call->replaceAllUsesWith(GIDLoad);
-        InstrsToDelete.insert(Call);
-        continue;
-      }
-    }
-  }
-  for (auto I : InstrsToDelete)
-    I->eraseFromParent();
-
+/// Localizes all the loads to the the work-item identifiers.
+///
+/// In case the code inside the region queries the WI id, it should not (re)use
+/// one that is loaded in another region, but one that is loaded in the same
+/// region. Otherwise, it ends up using the last id the previous PR work-item
+/// loop got. This caused problems in cases where the local id was stored to a
+/// temporary variable in an earlier region and that temp was reused later.
+///
+/// The function scans for all accesses to the local and global ids and converts
+/// them to loads inside the parallel region.
+void ParallelRegion::localizeIDLoads() {
   // The id loads inside the parallel region.
   std::array<llvm::Instruction *, 6> RegionIDLoads = {
       getOrCreateIDLoad(LID_G_NAME(0)), getOrCreateIDLoad(LID_G_NAME(1)),

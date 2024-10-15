@@ -130,7 +130,7 @@ class Kernel;
     llvm::Instruction *getOrCreateIDLoad(std::string IDGlobalName,
                                          llvm::Instruction *Before = nullptr);
 
-    void LocalizeIDLoads();
+    void localizeIDLoads();
 
     int getID() const { return pRegionId; }
 

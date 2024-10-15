@@ -64,6 +64,12 @@ static bool flattenGlobals(Module &M) {
       Pending.push_back(GV);
   }
 
+  for (auto &WIFuncName : WIFuncNameVec) {
+    Function *WIFunc = M.getFunction(WIFuncName);
+    if (WIFunc != nullptr)
+      Pending.push_back(WIFunc);
+  }
+
   while (!Pending.empty()) {
     Value *Current = Pending.back();
     Pending.pop_back();

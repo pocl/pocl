@@ -1,7 +1,7 @@
 // Implementation of LLVMUtils, useful common LLVM-related functionality.
 //
 // Copyright (c) 2013-2019 Pekka Jääskeläinen
-//               2023 Pekka Jääskeläinen / Intel Finland Oy
+//               2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -47,6 +47,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "ImplicitLoopBarriers.h"
 #include "InlineKernels.hh"
 #include "IsolateRegions.h"
+#include "KernelCompilerUtils.h"
 #include "LoopBarriers.h"
 #include "MinLegalVecSize.hh"
 #include "OptimizeWorkItemFuncCalls.h"
@@ -708,6 +709,19 @@ llvm::Type *SizeT(llvm::Module *M) {
   unsigned long AddressBits;
   getModuleIntMetadata(*M, "device_address_bits", AddressBits);
   return IntegerType::get(M->getContext(), AddressBits);
+}
+
+bool isCompilerExpandableWIFunctionCall(const llvm::CallInst &Call) {
+  auto Callee = Call.getCalledFunction();
+  if (Callee == nullptr /* Inline asm? */ || !Callee->isDeclaration())
+    return false;
+  if (Callee->getName() != GID_BUILTIN_NAME &&
+      Callee->getName() != GS_BUILTIN_NAME &&
+      Callee->getName() != GROUP_ID_BUILTIN_NAME &&
+      Callee->getName() != LID_BUILTIN_NAME &&
+      Callee->getName() != LS_BUILTIN_NAME)
+    return false;
+  return isa<llvm::ConstantInt>(Call.getArgOperand(0));
 }
 
 } // namespace pocl

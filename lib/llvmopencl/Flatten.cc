@@ -84,7 +84,28 @@ static bool flattenAll(Module &M) {
     changed = true;
     decltype(Attribute::AlwaysInline) replaceThisAttr, replacementAttr;
     decltype(llvm::GlobalValue::ExternalLinkage) linkage;
-    if (pocl::isKernelToProcess(*F)) {
+
+    bool OnlyDynamicWIFuncCallsFound = false;
+    bool IsStaticWIFuncCall = false;
+    // Check if this is a WIF which is called only with constant
+    // arguments. We want to leave the calls intact to avoid cluttering
+    // the code. They will be expanded by
+    // WorkitemHandler::handleWorkitemFunctions().
+    // If there's even one caller that sets the dimidx dynamically,
+    // we have to retain the function.
+    Instruction::use_iterator UI = F->use_begin(), UE = F->use_end();
+    for (; UI != UE; ++UI) {
+      llvm::CallInst *Call = dyn_cast<llvm::CallInst>(UI->getUser());
+      if (Call == nullptr)
+        continue;
+      IsStaticWIFuncCall = isCompilerExpandableWIFunctionCall(*Call);
+      if (!IsStaticWIFuncCall)
+        break;
+    }
+
+    OnlyDynamicWIFuncCallsFound = IsStaticWIFuncCall && UI == UE;
+
+    if (pocl::isKernelToProcess(*F) || OnlyDynamicWIFuncCallsFound) {
       replaceThisAttr = Attribute::AlwaysInline;
       replacementAttr = Attribute::NoInline;
       linkage = llvm::GlobalValue::ExternalLinkage;

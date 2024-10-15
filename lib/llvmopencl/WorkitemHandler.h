@@ -49,6 +49,7 @@ protected:
   bool dominatesUse (llvm::DominatorTree &DT, llvm::Instruction &Inst,
                      unsigned OpNum);
 
+  llvm::Instruction *getGlobalSize(int Dim);
   llvm::Instruction *getGlobalIdOrigin(int dim);
   void GenerateGlobalIdComputation();
 
@@ -62,8 +63,8 @@ protected:
   virtual llvm::Value *getLinearWIIndexInRegion(llvm::Instruction *Instr) {
     return nullptr;
   };
-  virtual llvm::Value *getLocalIdInRegion(llvm::Instruction *Instr,
-                                          size_t Dim) {
+  virtual llvm::Instruction *getLocalIdInRegion(llvm::Instruction *Instr,
+                                                size_t Dim) {
     return nullptr;
   };
 
@@ -73,6 +74,7 @@ protected:
 
   bool canAnnotateParallelLoops();
   bool handleLocalMemAllocas();
+  void handleWorkitemFunctions();
 
   llvm::Instruction *getWorkGroupSizeInstr();
 
@@ -83,7 +85,14 @@ protected:
 
   // The Module global variables that hold the place of the current local
   // id until privatized.
-  llvm::Value *LocalIdZGlobal, *LocalIdYGlobal, *LocalIdXGlobal;
+  std::array<llvm::Value *, 3> LocalIdGlobals;
+  std::array<llvm::Value *, 3> LocalSizeGlobals;
+  std::array<llvm::Value *, 3> GlobalIdGlobals;
+  std::array<llvm::Value *, 3> GroupIdGlobals;
+
+  // Points to the global size computation instructions in the entry
+  // block of the currently handled kernel.
+  std::array<llvm::Instruction *, 3> GlobalSizes;
 
   // Points to the global id origin computation instructions in the entry
   // block of the currently handled kernel. To get the global id, the current
