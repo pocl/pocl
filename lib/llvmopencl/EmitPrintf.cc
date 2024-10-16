@@ -372,7 +372,7 @@ callBufferedPrintfStart(IRBuilder<> &Builder, SmallVector<llvm::Value *> &Args,
   FunctionType *FTy_alloc = FunctionType::get(PtrTy, Tys_alloc, false);
 
   auto PrintfAllocFn =
-      M->getOrInsertFunction(StringRef("__printf_alloc"), FTy_alloc, Attr);
+      M->getOrInsertFunction(StringRef("pocl_printf_alloc_stub"), FTy_alloc, Attr);
   return Builder.CreateCall(PrintfAllocFn, Alloc_args, "printf_alloc_fn");
 }
 
@@ -659,7 +659,7 @@ Value *pocl::emitPrintfCall(IRBuilder<> &Builder,
                               SkipFmtStr, Flags.DontAlign);
 
     // flush the buffer if requested by calling
-    // void __printf_flush_buffer(void* buffer, uint32_t bytes);
+    // void pocl_flush_printf_buffer(void* buffer, uint32_t bytes);
     if (Flags.FlushBuffer) {
       SmallVector<Value *, 2> Alloc_args;
       Alloc_args.push_back(StartPtr);
@@ -680,7 +680,7 @@ Value *pocl::emitPrintfCall(IRBuilder<> &Builder,
       FunctionType *FTy_alloc =
           FunctionType::get(Builder.getVoidTy(), Tys_alloc, false);
       auto PrintfAllocFn = M->getOrInsertFunction(
-          StringRef("__printf_flush_buffer"), FTy_alloc, Attr);
+          StringRef("pocl_flush_printf_buffer"), FTy_alloc, Attr);
       Builder.CreateCall(PrintfAllocFn, Alloc_args);
     }
 

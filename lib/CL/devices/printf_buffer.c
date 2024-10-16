@@ -746,7 +746,7 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
 #define IMM_FLUSH_BUFFER_SIZE 65536
 
 void
-__printf_flush_buffer (char *buffer, uint32_t buffer_size)
+pocl_flush_printf_buffer (char *buffer, uint32_t buffer_size)
 {
   param_t p = { 0 };
 
@@ -797,7 +797,7 @@ pocl_write_printf_buffer (char *printf_buffer, uint32_t bytes)
           return;
         }
 
-      __printf_flush_buffer (printf_buffer, single_entry_bytes);
+      pocl_flush_printf_buffer (printf_buffer, single_entry_bytes);
       printf_buffer += single_entry_bytes;
       bytes -= single_entry_bytes;
     }
