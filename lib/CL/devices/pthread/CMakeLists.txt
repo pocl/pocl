@@ -28,9 +28,6 @@ if(MSVC)
 endif(MSVC)
 
 set(SOURCES pocl-pthread.h pthread.c pthread_scheduler.c)
-if(APPLE)
-  list(APPEND SOURCES pthread_barrier.c)
-endif(APPLE)
 add_pocl_device_library(pocl-devices-pthread ${SOURCES})
 
 if(ENABLE_LOADABLE_DRIVERS)
