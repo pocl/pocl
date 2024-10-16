@@ -64,14 +64,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
    when compiling c++ code), this code uses whatever method is needed
    or, for VS2008 where neither is available, uses casting workarounds. */
 #ifdef _MSC_VER            /* MS compiler */
-#if _MSC_VER >= 1600 && defined(__cplusplus)  /* VS2010 or newer in C++ mode */
-#define LDECLTYPE(x) decltype(x)
-#else                     /* VS2008 or older (or VS2010 in C mode) */
-#define NO_DECLTYPE
-#define LDECLTYPE(x) char*
-#endif
+#  if _MSC_VER >= 1600 && defined(__cplusplus) /* VS2010 or newer in C++ mode */
+#    define LDECLTYPE(x) decltype(x)
+#  elif _MSC_VER >= 1928   /* VS2019 v16.8 for C and C++ mode */
+#    define LDECLTYPE(x) __typeof__(x)
+#  else                    /* VS2008 or older (or VS2010 in C mode) */
+#    define NO_DECLTYPE
+#    define LDECLTYPE(x) char*
+#  endif
 #else                      /* GNU, Sun and other compilers */
-#define LDECLTYPE(x) __typeof(x)
+#  define LDECLTYPE(x) __typeof(x)
 #endif
 
 /* for VS2008 we use some workarounds to get around the lack of decltype,
