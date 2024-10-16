@@ -19,22 +19,15 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
   cancel-in-progress: true
 
-env:
-  CTEST_FLAGS: "--output-on-failure --test-output-size-failed 128000 --test-output-size-passed 128000"
-  POCL_KERNEL_CACHE: "0"
-  POCL_MAX_WORK_GROUP_SIZE: "1024"
-  POCL_MEMORY_LIMIT: "2"
-  CCACHE_COMPRESS: "true"
-  CCACHE_COMPRESSLEVEL: "1"
-  CCACHE_MAXSIZE: "25000M"
-  CCACHE_BASEDIR: "${{ github.workspace }}"
-  CCACHE_DIR: "${{ github.workspace }}/../../../../ccache_storage"
-  EXAMPLES_DIR: "${{ github.workspace }}/../../../../examples"
-
 jobs:
   arm64_matrix:
     name: LLVM ${{ matrix.llvm }} - ARM64 ${{ matrix.config }}
     runs-on: [self-hosted, linux, arm64, ubuntu]
+    # Docker runners have action runner in the $HOME/actions-runner directory
+    env:
+      CCACHE_BASEDIR: "${{ github.workspace }}"
+      CCACHE_DIR: "${{ github.workspace }}/../../../../ccache_storage"
+      EXAMPLES_DIR: "${{ github.workspace }}/../../../../examples"
     strategy:
       fail-fast: false
       matrix:
@@ -44,6 +37,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871
+
+      - name: Load Env vars
+        id: load-env
+        run: |
+          cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
+        shell: bash
 
       - name: Run CMake
         id: cmake
