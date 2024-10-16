@@ -23,6 +23,12 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <math.h> /* Import INFINITY & NAN macros. */
+
+/* Undefined if NaN is not supported by the implementation.  */
+#ifndef NAN
+#  error "NaNs are not supported!"
+#endif
 
 /* printing largest double with %f formatter requires about ~1024 digits for
  * integral part, plus precision digits for decimal part, plus some space for
@@ -38,10 +44,6 @@
 #define FLOAT_T double
 #define FLOAT_INT_T int64_t
 #define FLOAT_UINT_T uint64_t
-
-#define NAN __builtin_nan ("1")
-#define INFINITY (__builtin_inf())
-#define SIGNBIT __builtin_signbit
 
 #define EXPBITS      0x7ff0000000000000L
 #define EXPBIAS      1023
