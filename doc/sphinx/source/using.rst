@@ -311,6 +311,7 @@ pocl.
  The following variables are available:
 
   * **POCL_PATH_CLANG** -- Path to the clang executable.
+  * **POCL_PATH_LD** -- Path to the ld executable used by clang.
   * **POCL_PATH_LLVM_LINK** -- Path to the llvm-link executable.
   * **POCL_PATH_LLVM_OPT** -- Path to the llvm-opt executable.
   * **POCL_PATH_LLVM_LLC** -- Path to the llc executable.

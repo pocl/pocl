@@ -1045,8 +1045,13 @@ int pocl_invoke_clang(cl_device_id Device, const char** Args) {
 
   const char **ArgsEnd = Args;
   while (*ArgsEnd++ != nullptr) {}
+  llvm::SmallVector<const char*, 0> ArgsArray(Args, ArgsEnd);
 
-  llvm::ArrayRef<const char*> ArgsArray(Args, ArgsEnd);
+  std::string LDPath;
+  if (const char* LDOverride = pocl_get_path("LD", nullptr)) {
+    LDPath = "--ld-path=" + std::string(LDOverride);
+    ArgsArray.push_back(LDPath.c_str());
+  }
 
   std::unique_ptr<clang::driver::Compilation> C(
       TheDriver.BuildCompilation(ArgsArray));
