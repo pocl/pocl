@@ -23,6 +23,10 @@
    IN THE SOFTWARE.
 */
 
+#ifdef __APPLE__
+#include "pthread_barrier.h"
+#endif
+
 #ifndef POCL_THREADS_C_H
 #define POCL_THREADS_C_H
 

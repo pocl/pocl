@@ -42,10 +42,6 @@
 #include "pocl_util.h"
 #include "utlist.h"
 
-#ifdef __APPLE__
-#include "pthread_barrier.h"
-#endif
-
 // debugging help. If defined, randomize the execution order by skipping 1-3
 // of the commands in the work queue.
 //#define CPU_RANDOMIZE_QUEUE

@@ -24,8 +24,10 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef PTHREAD_BARRIER_H
-#define PTHREAD_BARRIER_H
+#include "pocl_export.h"
+
+#ifndef POCL_PTHREAD_BARRIER_H
+#define POCL_PTHREAD_BARRIER_H
 
 #include <pthread.h>
 
@@ -47,6 +49,7 @@ extern "C" {
 #endif
 
 typedef struct {
+  char unused;
 } pthread_barrierattr_t;
 
 typedef struct {
@@ -60,16 +63,17 @@ typedef struct {
 int pthread_barrierattr_init(pthread_barrierattr_t *attr);
 int pthread_barrierattr_destroy(pthread_barrierattr_t *attr);
 
-int pthread_barrierattr_getpshared(const pthread_barrierattr_t *restrict attr,
-                                  int *restrict pshared);
-int pthread_barrierattr_setpshared(pthread_barrierattr_t *attr,
-                                  int pshared);
+int pthread_barrierattr_getpshared(const pthread_barrierattr_t * attr, int * pshared);
+int pthread_barrierattr_setpshared(pthread_barrierattr_t *attr, int pshared);
 
-int pthread_barrier_init(pthread_barrier_t *restrict barrier,
-                        const pthread_barrierattr_t *restrict attr,
+POCL_EXPORT
+int pthread_barrier_init(pthread_barrier_t *barrier,
+                        const pthread_barrierattr_t *attr,
                         unsigned int count);
+POCL_EXPORT
 int pthread_barrier_destroy(pthread_barrier_t *barrier);
 
+POCL_EXPORT
 int pthread_barrier_wait(pthread_barrier_t *barrier);
 
 #ifdef  __cplusplus
