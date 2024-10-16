@@ -1,5 +1,5 @@
 ---
-name: Build-only test matrix
+name: Build-only tests
 
 permissions:
   contents: read

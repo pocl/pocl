@@ -1,5 +1,5 @@
 ---
-name: Mac OS X test matrix
+name: Mac OS X / CPU tests
 
 permissions:
   contents: read
