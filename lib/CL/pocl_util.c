@@ -2491,7 +2491,7 @@ int
 pocl_fill_aligned_buf_with_pattern (void *__restrict__ ptr,
                                     size_t offset,
                                     size_t size,
-                                    const char *__restrict__ pattern,
+                                    const void *__restrict__ pattern,
                                     size_t pattern_size)
 {
   size_t i;
