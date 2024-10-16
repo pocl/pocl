@@ -2,6 +2,7 @@
 #   CMake build system files
 #
 #   Copyright (c) 2014-2019 pocl developers
+#                 2024 Pekka Jääskeläinen / Intel Finland Oy
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -100,8 +101,9 @@ add_test_pocl(NAME "workgroup/unconditional_barriers"
               EXPECTED_OUTPUT "basic_barriers_2_2_2_2.stdout"
               COMMAND "run_kernel" "basic_barriers.cl" 2 2 2 2)
 
+# This case should now automatically fall back to CBS.
 add_test_pocl(NAME "workgroup/conditional_barrier_loopvec"
-              EXPECTED_OUTPUT "cond_barriers_1_2_1_1_loopvec.stdout"
+              EXPECTED_OUTPUT "cond_barriers_1_2_1_1_cbs.stdout"
               COMMAND "run_kernel" "conditional_barriers.cl" 1 2 1 1
               WORKITEM_HANDLER "loopvec")
 add_test_pocl(NAME "workgroup/conditional_barrier_cbs"
@@ -138,6 +140,12 @@ add_test_pocl(NAME "workgroup/range_md_small_grid"
 add_test_pocl(NAME "workgroup/range_md_large_grid"
               EXPECTED_OUTPUT ""
               COMMAND "run_kernel" "range_md.cl" "1000" "128" "1" "1")
+
+# This used trigger a forever looping CFG case due to getting unstructured
+# CFG produced by jump threading.
+add_test_pocl(NAME "workgroup/do_while_with_barrier"
+              EXPECTED_OUTPUT ""
+              COMMAND "run_kernel" "do_while_with_barrier.cl" "1" "2" "1" "1")
 
 # These tests are now always ran with the basic device with a predefined
 # work-group execution order. Their printout verification depends

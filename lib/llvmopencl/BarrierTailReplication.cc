@@ -36,14 +36,13 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "Barrier.h"
 #include "BarrierTailReplication.h"
+#include "DebugHelpers.h"
 #include "LLVMUtils.h"
 #include "VariableUniformityAnalysis.h"
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
 
 POP_COMPILER_DIAGS
-
-//#define DEBUG_BARRIER_REPL
 
 #include <algorithm>
 #include <iostream>
@@ -97,6 +96,10 @@ bool BarrierTailReplicationImpl::runOnFunction(Function &F) {
   std::cerr << "### BTR on " << F.getName().str() << std::endl;
 #endif
 
+#ifdef POCL_KERNEL_COMPILER_DUMP_CFGS
+  dumpCFG(F, F.getName().str() + "_before_btr.dot", nullptr, nullptr);
+#endif
+
   bool changed = ProcessFunction(F);
 
   LI.verify(DT);
@@ -109,7 +112,11 @@ bool BarrierTailReplicationImpl::runOnFunction(Function &F) {
     {
       llvm::BasicBlock *bb = &*i;
       changed |= CleanupPHIs(bb);
-    }      
+    }
+
+#ifdef POCL_KERNEL_COMPILER_DUMP_CFGS
+  dumpCFG(F, F.getName().str() + "_after_btr.dot", nullptr, nullptr);
+#endif
 
   return changed;
 }
@@ -147,7 +154,7 @@ bool BarrierTailReplicationImpl::FindBarriersDFS(BasicBlock *BB,
 
   if (blockHasBarrier(BB)) {
 #ifdef DEBUG_BARRIER_REPL
-    std::cerr << "### block " << bb->getName().str() << " has barrier, RJS" << std::endl;
+    std::cerr << "### block " << BB->getName().str() << " has a barrier, RJS" << std::endl;
 #endif
     BasicBlockSet processed_bbs_rjs;
     changed = ReplicateJoinedSubgraphs(BB, BB, processed_bbs_rjs);
@@ -177,7 +184,7 @@ bool BarrierTailReplicationImpl::ReplicateJoinedSubgraphs(BasicBlock *Dominator,
   for (int i = 0, e = t->getNumSuccessors(); i != e; ++i) {
     BasicBlock *b = t->getSuccessor(i);
 #ifdef DEBUG_BARRIER_REPL
-    std::cerr << "### traversing from " << subgraph_entry->getName().str() 
+    std::cerr << "### traversing from " << SubgraphEntry->getName().str()
               << " to " << b->getName().str() << std::endl;
 #endif
 
@@ -201,13 +208,13 @@ bool BarrierTailReplicationImpl::ReplicateJoinedSubgraphs(BasicBlock *Dominator,
     }
     if (DT.dominates(Dominator, b)) {
 #ifdef DEBUG_BARRIER_REPL
-        std::cerr << "### " << dominator->getName().str() << " dominates "
+        std::cerr << "### " << Dominator->getName().str() << " dominates "
                   << b->getName().str() << std::endl;
 #endif
         changed |= ReplicateJoinedSubgraphs(Dominator, b, ProcessedBBs);
     } else {
 #ifdef DEBUG_BARRIER_REPL
-        std::cerr << "### " << dominator->getName().str() << " does not dominate "
+        std::cerr << "### " << Dominator->getName().str() << " does not dominate "
                   << b->getName().str() << " replicating " << std::endl;
 #endif
         BasicBlock *replicated_subgraph_entry =
@@ -343,7 +350,7 @@ void BarrierTailReplicationImpl::ReplicateBasicBlocks(BasicBlockVector &NewGraph
     NewGraph.push_back(NewBB);
 
 #ifdef DEBUG_BARRIER_REPL
-    std::cerr << "Replicated BB: " << new_b->getName().str() << std::endl;
+    std::cerr << "Replicated BB: " << NewBB->getName().str() << std::endl;
 #endif
 
     for (BasicBlock::iterator I2 = BB->begin(), E2 = BB->end();

@@ -72,13 +72,23 @@ bool chopBBs (llvm::Function &F, llvm::Pass &P);
   };
 };
 
-// Controls the debug output from Kernel.cc parallel region generation:
-//#define DEBUG_PR_CREATION
+// Controls the debug output from BarrierTailReplication.cc.
+//#define DEBUG_BARRIER_REPL
 
-// Controls the debug output from ImplicitConditionalBarriers.cc:
+// Controls the debug output from ImplicitConditionalBarriers.cc.
 //#define DEBUG_COND_BARRIERS
 
-// Controls the debug output from PHIsToAllocas.cc
+// Controls the debug output from PHIsToAllocas.cc.
 //#define DEBUG_PHIS_TO_ALLOCAS
+
+// Controls the debug output from Kernel.cc parallel region generation.
+//#define DEBUG_PR_CREATION
+
+// Controls the debug output from WorkitemLoops.cc parallel region generation.
+//#define DEBUG_WORK_ITEM_LOOPS
+
+// Enable CFG dumps from various spots during the kernel compilation.
+//#define POCL_KERNEL_COMPILER_DUMP_CFGS
+
 
 #endif
