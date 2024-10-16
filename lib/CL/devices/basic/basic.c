@@ -819,9 +819,6 @@ pocl_basic_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, size_t size)
   return pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, size);
 }
 
-static struct _pocl_basic_usm_allocation_t *usm_allocations = NULL;
-static pocl_lock_t usm_lock;
-
 void *
 pocl_basic_usm_alloc (cl_device_id dev, unsigned alloc_type,
                       cl_mem_alloc_flags_intel flags, size_t size,

@@ -310,7 +310,7 @@ pocl_dump_dot_task_graph (cl_context context, const char *file_name)
   size_t sg_ids = 0;
   /* Dump subgraphs (devices, command queues) and their nodes
    * (commands/events). */
-  for (int dev = 0; dev < ctx->num_devices; ++dev)
+  for (cl_uint dev = 0; dev < ctx->num_devices; ++dev)
     {
       cl_device_id device = ctx->devices[dev];
 
@@ -354,7 +354,7 @@ pocl_dump_dot_task_graph (cl_context context, const char *file_name)
             }
         }
     }
-  for (int dev = 0; dev < ctx->num_devices; ++dev)
+  for (cl_uint dev = 0; dev < ctx->num_devices; ++dev)
     {
       LL_FOREACH (ctx->default_queues[dev], q)
         {
