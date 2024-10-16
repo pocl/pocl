@@ -44,7 +44,7 @@ extern uint32_t _printf_buffer_capacity;
 /* flush the data in printf buffer to STDOUT */
 /* definition exist on the host side only */
 
-extern void __printf_flush_buffer (PRINTF_BUFFER_AS void *buffer,
+extern void pocl_flush_printf_buffer (PRINTF_BUFFER_AS void *buffer,
                                    uint32_t bytes);
 
 #endif
@@ -53,7 +53,7 @@ extern void __printf_flush_buffer (PRINTF_BUFFER_AS void *buffer,
  * this is the actual implementation */
 
 PRINTF_BUFFER_AS void *ATTRS
-__pocl_printf_alloc (PRINTF_BUFFER_AS char *__buffer,
+pocl_printf_alloc (PRINTF_BUFFER_AS char *__buffer,
                      PRINTF_BUFFER_AS uint32_t *__buffer_position,
                      uint32_t __buffer_capacity,
                      uint32_t bytes)
@@ -67,18 +67,18 @@ __pocl_printf_alloc (PRINTF_BUFFER_AS char *__buffer,
 }
 
 /* required by emitPrintfCall to allocate the storage for printf args.
- * this is a stub that will be replaced by __pocl_printf_alloc in Workgroup.cc
+ * this is a stub that will be replaced by pocl_printf_alloc in Workgroup.cc
  */
 PRINTF_BUFFER_AS void *ATTRS
-__printf_alloc (uint32_t bytes)
+pocl_printf_alloc_stub (uint32_t bytes)
 {
-  /* this ensures __pocl_printf_alloc is not optimized away */
-  PRINTF_BUFFER_AS void *retval = __pocl_printf_alloc (
+  /* this ensures pocl_printf_alloc is not optimized away */
+  PRINTF_BUFFER_AS void *retval = pocl_printf_alloc (
     _printf_buffer, _printf_buffer_position, _printf_buffer_capacity, bytes);
 
   /* this ensures the extern declaration is not optimized away*/
 #ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
-  __printf_flush_buffer (_printf_buffer, bytes);
+  pocl_flush_printf_buffer (_printf_buffer, bytes);
 #endif
 
   return retval;

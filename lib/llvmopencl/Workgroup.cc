@@ -317,8 +317,8 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
   // remove all functions that call the old printf. They should be
   // cloned with the new printf calls at this point, and they refer
   // to global variables
-  Function *NewPrintfAlloc = M.getFunction("__pocl_printf_alloc");
-  Function *OldPrintfAlloc = M.getFunction("__printf_alloc");
+  Function *NewPrintfAlloc = M.getFunction("pocl_printf_alloc");
+  Function *OldPrintfAlloc = M.getFunction("pocl_printf_alloc_stub");
 
   if (NewPrintfAlloc && OldPrintfAlloc) {
     // add functions that call OldPrintfAlloc but are not used anywhere
@@ -551,11 +551,11 @@ static bool callsPrintf(Function *F) {
       if (callee->getName() == "llvm.")
         continue;
 
-      if (callee->getName() == "__printf_alloc")
+      if (callee->getName() == "pocl_printf_alloc_stub")
         return true;
-      if (callee->getName() == "__pocl_printf_alloc")
+      if (callee->getName() == "pocl_printf_alloc")
         return true;
-      if (callee->getName() == "__printf_flush_buffer")
+      if (callee->getName() == "pocl_flush_printf_buffer")
         return true;
       if (callsPrintf(callee))
         return true;
@@ -610,7 +610,7 @@ static Function *cloneFunctionWithPrintfArgs(Value *pb, Value *pbp, Value *pbc,
   return NewF;
 }
 
-// Recursively replace __printf_alloc calls with __pocl_printf_alloc calls,
+// Recursively replace pocl_printf_alloc_stub calls with pocl_printf_alloc calls,
 // while propagating the required pocl_context->printf_buffer arguments.
 static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
                                Function *NewPrintfAlloc,
@@ -855,8 +855,8 @@ Function *WorkgroupImpl::createWrapper(Function *F,
   InlineFunction(*CI, IFI);
 
   if (DeviceSidePrintf) {
-    Function *NewPrintfAlloc = M->getFunction("__pocl_printf_alloc");
-    Function *OldPrintfAlloc = M->getFunction("__printf_alloc");
+    Function *NewPrintfAlloc = M->getFunction("pocl_printf_alloc");
+    Function *OldPrintfAlloc = M->getFunction("pocl_printf_alloc_stub");
     if (NewPrintfAlloc && OldPrintfAlloc) {
       replacePrintfCalls(PrintfBuf, PrintfBufPos, PrintfBufCapa, true,
                          NewPrintfAlloc, OldPrintfAlloc, *M, L, PrintfCache);

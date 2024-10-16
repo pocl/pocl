@@ -335,10 +335,10 @@ static void shared_copy(llvm::Module *program, const llvm::Module *lib,
  * by emitPrintfCall is:
  *
  * 1) get the format string length and argument sizes
- * 2) call __printf_alloc to allocate storage from device's printf buffer
+ * 2) call pocl_printf_alloc_stub to allocate storage from device's printf buffer
  *    to allocate the size from 0)
  * 3) store the arguments using Store or Memcpy instructions
- * 4) optionally call __printf_flush_buffer (if the device supports
+ * 4) optionally call pocl_flush_printf_buffer (if the device supports
  *    immediate flushing) to immediately print the buffer content
  *
  * At some point the host-side code in printf_buffer.c decodes
@@ -360,7 +360,7 @@ static void handleDeviceSidePrintf(
   // the device's builtin library (the definition is on the host side in
   // libpocl)
   bool DeviceSupportsImmediateFlush =
-      Lib->getFunction("__printf_flush_buffer") != nullptr;
+      Lib->getFunction("pocl_flush_printf_buffer") != nullptr;
 
   PrintfCallFlags PFlags;
   PFlags.PrintfBufferAS = ClDev->global_as_id;
@@ -399,12 +399,12 @@ static void handleDeviceSidePrintf(
   Function *CalledPrintf = Program->getFunction("printf");
   if (CalledPrintf) {
 
-    Function *PrintfAlloc = Lib->getFunction("__printf_alloc");
+    Function *PrintfAlloc = Lib->getFunction("pocl_printf_alloc_stub");
     assert(PrintfAlloc != nullptr);
-    copy_func_callgraph("__printf_alloc", Lib, Program, vvm);
-    copy_func_callgraph("__pocl_printf_alloc", Lib, Program, vvm);
+    copy_func_callgraph("pocl_printf_alloc_stub", Lib, Program, vvm);
+    copy_func_callgraph("pocl_printf_alloc", Lib, Program, vvm);
     if (DeviceSupportsImmediateFlush)
-      copy_func_callgraph("__printf_flush_buffer", Lib, Program, vvm);
+      copy_func_callgraph("pocl_flush_printf_buffer", Lib, Program, vvm);
 
     std::set<CallInst *> Calls;
     for (auto U : CalledPrintf->users()) {
