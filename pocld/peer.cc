@@ -26,6 +26,7 @@
 #include <sstream>
 #include <sys/socket.h>
 
+#include "common_cl.hh"
 #include "peer.hh"
 #include "shared_cl_context.hh"
 
@@ -66,6 +67,9 @@ Peer::~Peer() {
   if (writer.joinable())
     writer.join();
 #ifdef ENABLE_RDMA
+  Request *R = new Request{};
+  R->Body.message_type = MessageType_Shutdown;
+  rdma_out_queue.push(R);
   rdma_reader.reset();
   if (rdma_writer.joinable())
     rdma_writer.join();
@@ -139,7 +143,6 @@ void Peer::rdmaWriterThread() {
   std::shared_ptr<TrafficMonitor> Netstat = Conn->meter();
 
   RdmaBuffer<RequestMsg_t> cmd_buf(rdma->protectionDomain(), 1);
-
 
   while (!eh->exit_requested()) {
     Request *r = rdma_out_queue.pop();

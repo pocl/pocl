@@ -259,7 +259,6 @@ void PeerHandler::rdmaUnregisterBuffer(uint32_t id) {
 
 PeerHandler::~PeerHandler() {
   eh->requestExit("PH Shutdown", 0);
-  for (auto &t : Peers) {
-    t.second.reset();
-  }
+  if (IncomingPeerHandler.joinable())
+    IncomingPeerHandler.join();
 }

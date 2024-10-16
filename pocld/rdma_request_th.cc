@@ -22,6 +22,7 @@
 */
 
 #include "rdma_request_th.hh"
+#include <infiniband/verbs.h>
 
 RdmaRequestThread::RdmaRequestThread(
     VirtualContextBase *c, ExitHelper *e, std::shared_ptr<TrafficMonitor> tm,
@@ -35,6 +36,7 @@ RdmaRequestThread::RdmaRequestThread(
 
 RdmaRequestThread::~RdmaRequestThread() {
   eh->requestExit(id_str.c_str(), 0);
+  connection->disconnect();
   io_thread.join();
 }
 
@@ -83,6 +85,9 @@ void RdmaRequestThread::rdmaReaderThread() {
       eh->requestExit("RDMA receive failed", -1);
       break;
     }
+
+    if (wc.status != IBV_WC_SUCCESS)
+      break;
 
     if (netstat) {
       // The buffer contents are sent with IBV_WRITE and we have no way of

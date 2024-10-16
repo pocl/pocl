@@ -155,6 +155,9 @@ uint64_t transfer_size(const RequestMsg_t &msg) {
   case MessageType_MigrateD2D:
     return msg.m.migrate.size;
     break;
+  case MessageType_Shutdown:
+    return 0;
+    break;
   default:
     assert(!"Unhandled RDMA message");
     return 0;

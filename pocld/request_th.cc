@@ -75,7 +75,12 @@ void RequestQueueThread::readThread() {
       ConnectionNotifier.wait(l);
 
     pfd.fd = InboundConnection->pollableFd();
-    NumEvents = poll(&pfd, 1, -1);
+    /* HACK: Timeout after 1s so peer request threads don't get stuck when the
+     * session is being shut down. */
+    NumEvents = poll(&pfd, 1, 1000);
+    if (NumEvents == 0)
+      continue;
+
     if (NumEvents < 0) {
       int e = errno;
       if (e == EINTR)
