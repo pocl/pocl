@@ -52,7 +52,7 @@ jobs:
             cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
             -DWITH_LLVM_CONFIG=/opt/LLVM_${{ matrix.llvm }}0/bin/llvm-config \
-            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+            "$@" -B ${{ github.workspace }}/../build/arm64 ${{ github.workspace }}
           }
 
           rm -rf ${{ github.workspace }}/../build/arm64
