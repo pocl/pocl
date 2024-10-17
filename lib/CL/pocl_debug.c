@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "pocl_debug.h"
 #include "pocl_threads.h"
@@ -47,6 +48,13 @@ void pocl_debug_output_lock(void) { POCL_LOCK(console_mutex); }
 void pocl_debug_output_unlock(void) { POCL_UNLOCK(console_mutex); }
 
 void pocl_debug_messages_setup(const char *debug) {
+
+#ifdef _WIN32
+  pocl_stderr_is_a_tty = 0;
+#else
+  pocl_stderr_is_a_tty = isatty (STDERR_FILENO);
+#endif
+
   POCL_INIT_LOCK(console_mutex);
   POCL_INIT_LOCK (pocl_tg_dump_lock);
   POCL_INIT_COND (pocl_tg_dump_cond);
@@ -302,7 +310,7 @@ pocl_dump_dot_task_graph (cl_context context, const char *file_name)
   size_t sg_ids = 0;
   /* Dump subgraphs (devices, command queues) and their nodes
    * (commands/events). */
-  for (int dev = 0; dev < ctx->num_devices; ++dev)
+  for (cl_uint dev = 0; dev < ctx->num_devices; ++dev)
     {
       cl_device_id device = ctx->devices[dev];
 
@@ -346,7 +354,7 @@ pocl_dump_dot_task_graph (cl_context context, const char *file_name)
             }
         }
     }
-  for (int dev = 0; dev < ctx->num_devices; ++dev)
+  for (cl_uint dev = 0; dev < ctx->num_devices; ++dev)
     {
       LL_FOREACH (ctx->default_queues[dev], q)
         {

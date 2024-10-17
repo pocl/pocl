@@ -22,21 +22,22 @@ tools:
   * python3, llvm-spirv (version-compatible with LLVM) and spirv-tools (optional;
     required for SPIR-V support in CPU / CUDA; Vulkan driver supports SPIR-V through clspv)
 
-Installing requirements for Ubuntu
+Install requirements on Linux
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Note: The binary packages from https://apt.llvm.org/ are recommended
-(and tested for each release) instead of the binary tar balls or
-the packages included in the distribution. The following assumes
-apt.llvm.org is added to your apt repos::
+Note: For Ubuntu/Debian, PoCL supports the binary packages
+from https://apt.llvm.org/ - these usually support more
+(and newer) LLVM versions than Ubuntu/Debian.
+
+Install requirements for Ubuntu::
 
     apt install -y python3-dev libpython3-dev build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils libxml2-dev libclang-cpp${LLVM_VERSION}-dev libclang-cpp${LLVM_VERSION} llvm-${LLVM_VERSION}-dev
 
-Installing requirements for Arch Linux::
+Install requirements for Arch Linux::
 
     pacman -S gcc patch hwloc cmake git pkg-config make ninja ocl-icd clang llvm llvm-libs clinfo opencl-headers
 
-Installing requirements for Fedora::
+Install requirements for Fedora::
 
     dnf install gcc gcc-c++ clinfo hwloc-devel hwloc-libs cmake git-core pkgconfig make ninja-build ocl-icd ocl-icd-devel clang clang-devel clang-libs llvm llvm-devel llvm-libs patch redhat-rpm-config findutils
 
@@ -56,32 +57,13 @@ for Ubuntu earlier than 24.04, it can be installed from
 this PPA: https://launchpad.net/~ocl-icd/+archive/ubuntu/ppa
 
 If you don't have a sufficiently new ICD, and you want the tests/examples,
-then either
+then either:
+
  * disable building with ICD (-DENABLE_ICD=0)
  * disable the tests & examples (-DENABLE_TESTS=0 -DENABLE_EXAMPLES=0)
 
-Clang / LLVM Notes
-------------------
-
-**IMPORTANT NOTE!** Some targets (TCE and possibly HSA) require that
-you compile & build LLVM with RTTI on. It can be enabled on cmake command
-line, as follows::
-
-    cmake [other CMake options] -DLLVM_ENABLE_RTTI=ON -DLLVM_ENABLE_EH=ON <llvm-source-directory>
-
-Supported LLVM versions
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-  Note that pocl aims to support **the latest LLVM version** at the time
-  of pocl release, **plus the previous** LLVM version. All older LLVM
-  versions are supported with "best effort" basis; there might not be
-  CI continuously testing the code base nor anyone fixing their
-  possible breakage.
-
 Configure & Build
 -----------------
-
-
 
 CMake version 3.12 or higher is required.
 
@@ -96,7 +78,7 @@ The build+install is the usual CMake way::
 To see the default detected values, run ``cmake ..`` without any options,
 it will produce a summary.
 
-CMake variables
+Compiler support
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Since pocl includes a compiler for the kernels, it both compiles (producing
@@ -111,49 +93,20 @@ For host compiler, you should use the one which your LLVM was compiled
 with (because the LLVM-related parts of pocl take LLVM's CXXFLAGS from
 llvm-config and pass them to the host compiler).
 
-CMake host flags
-~~~~~~~~~~~~~~~~~~~~~~~~
+Clang / LLVM: target compiler supported versions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Compile C:
-  CMAKE_C_FLAGS
-  CMAKE_C_FLAGS_<build-type>
+Note that pocl aims to support **the latest LLVM version** at the time
+of pocl release, **plus the previous** LLVM version. All older LLVM
+versions are supported with "best effort" basis; there might not be
+CI continuously testing the code base nor anyone fixing their
+possible breakage.
 
-Compile C++:
-  CMAKE_CXX_FLAGS
-  CMAKE_CXX_FLAGS_<build-type>
-
-Building kernels and the kernel library, i.e. target flags
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-All of these empty by default. There are hardcoded defaults which may
-be overridden by setting these variables (rarely needed).
-
-Extra parameters to llc
-   EXTRA_HOST_LLC_FLAGS
-
-Extra parameters to clang
-   EXTRA_HOST_CLANG_FLAGS
-
-Extra parameters to linker (links kernel to shared library
-which is then dlopened):
-
-EXTRA_HOST_LD_FLAGS
-
-EXTRA_KERNEL_FLAGS
-  is applied to all kernel library compilation commands, IOW it's for
-  language-independent options
-
-EXTRA_KERNEL_{C,CL,CXX}_FLAGS
-  cmake variables for per-language options for kernel library compilation
 
 .. _pocl-cmake-variables:
 
-CMake: other options & features
+CMake options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Note that there are a few more packaging-related options described
-in ``README.packaging``.
 
 For multiple-item options like KERNELLIB_HOST_CPU_VARIANTS,
 use ";" as separator (you'll have to escape it for bash).
@@ -207,9 +160,9 @@ use ";" as separator (you'll have to escape it for bash).
   Available CPUs are listed by ``llc -mcpu=help``. See above for
   runtime CPU detection rules.
 
-  Note that there's another valid value on x86(64) platforms.
-  If set to ``distro``, the KERNELLIB_HOST_CPU_VARIANTS variable will be
-  set up with a few preselected sse/avx variants covering 99.99% of x86
+  Note that there's another available value on certain (x86, ppc) platforms.
+  If set to ``distro``, on x86, the KERNELLIB_HOST_CPU_VARIANTS variable will
+  be set up with a few preselected sse/avx variants covering 99.99% of x86
   processors, and the runtime CPU detection is slightly altered: pocl
   will find the suitable compiled library based on detected CPU features,
   so it cannot fail (at worst it'll degrade to SSE2 library).
@@ -236,6 +189,11 @@ use ";" as separator (you'll have to escape it for bash).
   Disabling this makes ENABLE_TESTSUITES option unavailable.
 
 - ``-DENABLE_POCLCC=ON/OFF`` enable/disable compilation of poclcc.
+
+- ``-DENABLE_POCL_BUILDING=OFF``
+  When OFF, POCL_BUILDING option (which causes pocl to look for required
+  files in build / source directories) will be ignored
+  and pocl will always look in installed paths only.
 
 - ``-DENABLE_CONFORMANCE=ON/OFF``
   Ensures that certain build options which would result in non-conformant pocl
@@ -265,15 +223,47 @@ use ";" as separator (you'll have to escape it for bash).
   the LLVM host CPU is forcibly set to 'skylake-avx512', and the internal
   tests are run through the Emulator. Mostly useful to test AVX512.
 
+- ``-DPOCL_ICD_ABSOLUTE_PATH=OFF``
+  The pocl.icd file (which the ICD loader uses to load the pocl lib)
+  by default has a full path to the installed libpocl.so file.
+  Set this option to OFF and pocl will only put the dynamic library
+  name into pocl.icd.
+
+Advanced CMake options: using extra flags for the builtin library
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+All of these empty by default. There are hardcoded defaults which may
+be overridden by setting these variables (rarely needed).
+
+Extra parameters to llc
+   EXTRA_HOST_LLC_FLAGS
+
+Extra parameters to clang
+   EXTRA_HOST_CLANG_FLAGS
+
+Extra parameters to linker (links kernel to shared library
+which is then dlopened):
+
+EXTRA_HOST_LD_FLAGS
+
+EXTRA_KERNEL_FLAGS
+  is applied to all kernel library compilation commands, IOW it's for
+  language-independent options
+
+EXTRA_KERNEL_{C,CL,CXX}_FLAGS
+  cmake variables for per-language options for kernel library compilation
+
 .. _pocl-without-llvm:
 
-LLVM-less build
+CMake: LLVM-less build
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can build a runtime-only pocl to run prebuilt pocl binaries on a device.
-To do this
+You can build a runtime-only pocl to run prebuilt pocl binaries on a CPU driver,
+or if you intend to only use PoCL with a driver that does not depend on LLVM.
 
-* First, build a pocl with LLVM somewhere.
+When building a LLVM-less build with a CPU driver:
+
+* First, build PoCL with LLVM somewhere.
 * on that machine, set up env vars required for your device (if any), then
   run ``bin/poclcc -l``. That should print something like::
 
@@ -297,23 +287,36 @@ The string after "HSTR:" is the device build hash.
 , `HOST_DEVICE_BUILD_HASH` can be set to anything you want. Reason being, fixed function
 accelerators don't require compiling OpenCL kernels, therefore, no hash will ever be matched. 
 
+Packaging PoCL
+--------------------------------------
+
+PoCL supports CPACK. Additionally, these CMake options are of interest:
+
+- ``-DKERNELLIB_HOST_CPU_VARIANTS=distro``
+  to enable support for most multiple CPU families with runtime detection (cpu driver)
+
+- ``-DPOCL_ICD_ABSOLUTE_PATH=OFF``
+  to not put absolute path into pocl.icd
+
+- ``-DENABLE_POCL_BUILDING=OFF``
+  to disable embedding the build path into libpocl
+
+- ``-DSTATIC_LLVM`` 
+  to link against Clang & LLVM static component libraries. This may help avoid
+  symbol clashes with other LLVM libraries linked in the same executable.
+
+
 Cross-compile PoCL
-------------------
+-------------------
+
 It's now possible to cross-compile pocl on x86-64 to run on ARM/MIPS/etc,
 There is a ToolchainExample.cmake file;
 copy it under different name, then follow the instructions in the file.
 
-Known build-time issues
-------------------------
-
-There are unsolved issues and bugs in pocl. See the bug listing
-for a complete listing at https://github.com/pocl/pocl/issues
-
 Building & running in Docker
 -----------------------------
 
-Make sure you have enough space (default location is usually ``/var/lib/docker``,
-required storage for standard pocl build is about 1.5 GB per container)
+Required storage for standard pocl build is about 1.5 GB per container)
 
 Build & start Pocl container
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -328,9 +331,6 @@ Build & start Pocl container
 
 Dockerfiles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Note that some images (e.g. RHEL and PHSA) may be impossible to build,
-due to not having a sufficiently new version of LLVM available.
 
 Dockerfiles are named according to what they build, or the release they're based on:
 
@@ -389,3 +389,41 @@ RISC-V specific build notes:
 
   from linker, then most likely PoCL used the incorrect ABI. You can explicitly
   specify the ABI to use with the HOST_CPU_TARGET_ABI CMake option.
+
+PowerPC support
+-----------------------------
+
+PoCL is used to provide OpenCL on IBM AC922 computers 
+featuring IBM Power9 processors and Nvidia Tesla V100 GPU 
+interconnected with NVlink v2 (up to 72 GByte/s). 
+This has been tested under debian_11 and Ubuntu_20.04.
+
+Officially, Nvidia does not support OpenCL on this platform 
+and the driver they are shipping is lacking the compiler part.
+
+## Building tricks (as of 04/2023):
+
+The PPC64le features 128-bit vector unit (Altivec/VSX) which 
+are easily confused by the C++ compiler with the C++ vector 
+instruction when using the compile option `-std=c++XX`.
+The corresponding code usually fails compiling.
+The trick is to pass the option `-std=gnu++XX`.
+
+For example, when configuring pocl:
+```
+cmake .. -DLLVM_CXXFLAGS="-std=gnu++14 ..." -DENABLE_CUDA=ON
+```
+
+The full list of  options for the CXXFLAGS is obtained with:
+```
+llvm-config --cxxflags|sed -e "s/std=c/std=gnu/"
+```
+Later on, the build continues with `make` ...
+
+Note the CUDA option to enable the GPU support on those computers.
+
+
+.. include:: android.rst
+
+.. include:: windows.rst
+

@@ -390,7 +390,7 @@ in the kernel dispatch packet.
 
 
 Adding new co-processor types
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The AlmaIF-driver is designed to generalize to different co-processors/accelerators than just those generated with OpenASIP
 (however, no other processor types are yet tested to our knowledge).

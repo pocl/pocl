@@ -292,10 +292,8 @@ pocl_setup_kernel_arg_array (kernel_run_command *k)
   cl_uint i;
   void **arguments;
   void **arguments2;
-  k->arguments = arguments
-      = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, ARGS_SIZE);
-  k->arguments2 = arguments2
-      = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, ARGS_SIZE);
+  k->arguments = arguments = malloc (ARGS_SIZE);
+  k->arguments2 = arguments2 = malloc (ARGS_SIZE);
 
   for (i = 0; i < meta->num_args; ++i)
     {
@@ -465,7 +463,7 @@ pocl_free_kernel_arg_array (kernel_run_command *k)
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
-          POCL_MEM_FREE (arguments2[i]);
+          pocl_aligned_free (arguments2[i]);
         }
     }
 

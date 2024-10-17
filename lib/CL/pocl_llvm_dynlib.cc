@@ -64,5 +64,6 @@ void *pocl_dynlib_symbol_address(void *, const char *SymbolName) {
 }
 
 const char *pocl_dynlib_pathname(void *Address) {
-  POCL_ABORT_UNIMPLEMENTED("pocl_dynlib_pathname using LLVM");
+  POCL_MSG_ERR("pocl_dynlib_pathname does not have C++/LLVM implementation\n");
+  return nullptr;
 }

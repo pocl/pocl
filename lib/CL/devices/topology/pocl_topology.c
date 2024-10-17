@@ -187,8 +187,7 @@ pocl_topology_detect_device_info(cl_device_id device)
 
   if (shared_cache_size > 0 && cacheline_size > 0)
     {
-      device->global_mem_cache_type
-          = 0x2; // CL_READ_WRITE_CACHE, without including all of CL/cl.h
+      device->global_mem_cache_type = CL_READ_WRITE_CACHE;
       device->global_mem_cacheline_size = cacheline_size;
       device->global_mem_cache_size = shared_cache_size;
     }
@@ -216,8 +215,7 @@ int
 pocl_topology_detect_device_info (cl_device_id device)
 {
   device->global_mem_cacheline_size = HOST_CPU_CACHELINE_SIZE;
-  device->global_mem_cache_type
-      = 0x2; // CL_READ_WRITE_CACHE, without including all of CL/cl.h
+  device->global_mem_cache_type = CL_READ_WRITE_CACHE;
 
   /* global mem cache size */
 
@@ -296,6 +294,19 @@ pocl_topology_detect_device_info (cl_device_id device)
 
 #else
 
-#error Dont know how to get HWLOC-provided values on this system!
+int
+pocl_topology_detect_device_info (cl_device_id device)
+{
+  /* sets up values which should be somewhat reasonable defaults */
+  device->max_compute_units = 4;
+  device->global_mem_size = (uint64_t)2 << 30;
+
+  device->global_mem_cache_type = CL_READ_WRITE_CACHE;
+  device->global_mem_cacheline_size = HOST_CPU_CACHELINE_SIZE;
+  device->global_mem_cache_size = 1024 * 1024;
+  device->local_mem_size = 1024 * 1024;
+  device->max_constant_buffer_size = 32 * 1024 * 1024;
+  return 0;
+}
 
 #endif

@@ -99,6 +99,11 @@ run_llvm_config(LLVM_VERSION_FULL --version)
 string(REGEX REPLACE "([0-9]+)\\.([0-9]+).*" "\\1.\\2" LLVM_VERSION "${LLVM_VERSION_FULL}")
 message(STATUS "LLVM_VERSION: ${LLVM_VERSION}")
 
+# required for sources..
+if((LLVM_VERSION_MAJOR LESS 14) OR (LLVM_VERSION_MAJOR GREATER 19))
+  message(FATAL_ERROR "LLVM version between 14.0 and 19.0 required, found: ${LLVM_VERSION_MAJOR}")
+endif()
+
 string(REPLACE "." ";" LLVM_VERSION_PARSED "${LLVM_VERSION}")
 list(GET LLVM_VERSION_PARSED 0 LLVM_VERSION_MAJOR)
 list(GET LLVM_VERSION_PARSED 1 LLVM_VERSION_MINOR)
@@ -166,31 +171,8 @@ endif()
 # however this causes clang to use MicrosoftCXXMangler, which does not
 # yet support mangling for extended vector types (with llvm 3.5)
 # so for now hardcode LLVM_HOST_TARGET to be x86_64-pc with windows
-if(WIN32)
+if(WIN32 AND (NOT MINGW))
   set(LLVM_HOST_TARGET "x86_64-pc")
-endif(WIN32)
-
-# required for sources..
-if(LLVM_VERSION MATCHES "^14[.]")
-  set(LLVM_MAJOR 14)
-  set(LLVM_14_0 1)
-elseif(LLVM_VERSION MATCHES "^15[.]")
-  set(LLVM_MAJOR 15)
-  set(LLVM_15_0 1)
-elseif(LLVM_VERSION MATCHES "^16[.]")
-  set(LLVM_MAJOR 16)
-  set(LLVM_16_0 1)
-elseif(LLVM_VERSION MATCHES "^17[.]")
-  set(LLVM_MAJOR 17)
-  set(LLVM_17_0 1)
-elseif(LLVM_VERSION MATCHES "^18[.]")
-  set(LLVM_MAJOR 18)
-  set(LLVM_18_0 1)
-elseif(LLVM_VERSION MATCHES "^19[.]")
-  set(LLVM_MAJOR 19)
-  set(LLVM_19_0 1)
-else()
-  message(FATAL_ERROR "LLVM version between 14.0 and 19.0 required, found: ${LLVM_VERSION}")
 endif()
 
 #############################################################
@@ -234,6 +216,11 @@ set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
 # this needs to be done with LLVM_LIB_MODE because it affects the output
 run_llvm_config(LLVM_SYSLIBS --system-libs ${LLVM_LIB_MODE})
 string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
+# TODO this hack is required for MinGW. Without it,
+# Clang link test reports missing symbols like GetFileVersionInfoSizeW
+if(MINGW)
+  set(LLVM_SYSLIBS "${LLVM_SYSLIBS} -lversion" CACHE STRING "llvm's syslibs" FORCE)
+endif()
 
 ####################################################################
 
@@ -242,11 +229,11 @@ if(STATIC_LLVM)
       clangParse clangSema clangRewrite clangRewriteFrontend
       clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
       clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangASTMatchers clangLex clangBasic)
-  if(LLVM_MAJOR GREATER 14)
+  if(LLVM_VERSION_MAJOR GREATER 14)
      list(APPEND CLANG_LIBNAMES clangSupport)
   endif()
   # must come after clangFrontend
-  if(LLVM_MAJOR GREATER 17)
+  if(LLVM_VERSION_MAJOR GREATER 17)
      list(INSERT CLANG_LIBNAMES 4 clangAPINotes)
   endif()
 else()
@@ -288,7 +275,6 @@ endmacro()
 
 find_program_or_die( CLANG "clang" "clang binary")
 execute_process(COMMAND "${CLANG}" "--version" OUTPUT_VARIABLE LLVM_CLANG_VERSION RESULT_VARIABLE CLANG_RES)
-# TODO this should be optional
 find_program_or_die( CLANGXX "clang++" "clang++ binary")
 execute_process(COMMAND "${CLANGXX}" "--version" OUTPUT_VARIABLE LLVM_CLANGXX_VERSION RESULT_VARIABLE CLANGXX_RES)
 if(CLANGXX_RES OR CLANG_RES)
@@ -310,7 +296,7 @@ if(ENABLE_LLVM_FILECHECKS)
 endif()
 
 if(NOT DEFINED LLVM_SPIRV)
-  find_program(LLVM_SPIRV NAMES "llvm-spirv${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "llvm-spirv-${LLVM_MAJOR}${CMAKE_EXECUTABLE_SUFFIX}" "llvm-spirv${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}")
+  find_program(LLVM_SPIRV NAMES "llvm-spirv${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "llvm-spirv-${LLVM_VERSION_MAJOR}${CMAKE_EXECUTABLE_SUFFIX}" "llvm-spirv${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}")
   if(LLVM_SPIRV)
     execute_process(
         COMMAND "${LLVM_SPIRV}" "--version"
@@ -320,7 +306,7 @@ if(NOT DEFINED LLVM_SPIRV)
     )
     if(${LLVM_SPIRV_VERSION_RETVAL} EQUAL 0)
         string(REGEX MATCH "LLVM version ([0-9]*)" LLVM_SPIRV_VERSION_MATCH ${LLVM_SPIRV_VERSION_VALUE})
-        if(NOT ${CMAKE_MATCH_1} EQUAL ${LLVM_MAJOR})
+        if(NOT ${CMAKE_MATCH_1} EQUAL ${LLVM_VERSION_MAJOR})
           unset(LLVM_SPIRV)
         endif()
     else()
@@ -329,8 +315,10 @@ if(NOT DEFINED LLVM_SPIRV)
   endif()
   if(LLVM_SPIRV)
     message(STATUS "Found llvm-spirv: ${LLVM_SPIRV}")
+    set(HAVE_LLVM_SPIRV ON CACHE BOOL "llvm-spirv")
   else()
     message(STATUS "Did NOT find llvm-spirv!")
+    set(HAVE_LLVM_SPIRV OFF CACHE BOOL "llvm-spirv")
   endif()
 endif()
 
@@ -547,108 +535,7 @@ endif()
 
 ####################################################################
 
-macro(CHECK_ALIGNOF TYPE TYPEDEF OUT_VAR)
-
-  if(NOT DEFINED "${OUT_VAR}")
-
-    custom_try_run_lli(TRUE "
-#ifndef offsetof
-#define offsetof(type, member) ((char *) &((type *) 0)->member - (char *) 0)
-#endif
-
-${TYPEDEF}" "typedef struct { char x; ${TYPE} y; } ac__type_alignof_;
-    int r = offsetof(ac__type_alignof_, y);
-    return r;" SIZEOF_STDOUT RESULT "${CLANG_TARGET_OPTION}${LLC_TRIPLE}")
-
-    #message(FATAL_ERROR "SIZEOF: ${SIZEOF_STDOUT} RES: ${RESULT}")
-    if(NOT ${RESULT})
-      message(SEND_ERROR "Could not determine align of(${TYPE})")
-      set(${OUT_VAR} "0" CACHE INTERNAL "Align of ${TYPE}")
-    else()
-      set(${OUT_VAR} "${RESULT}" CACHE INTERNAL "Align of ${TYPE}")
-    endif()
-
-  endif()
-
-endmacro()
-
-####################################################################
-#
-# - '-DNDEBUG' is a work-around for llvm bug 18253
-#
-# llvm-config does not always report the "-DNDEBUG" flag correctly
-# (see LLVM bug 18253). If LLVM and the pocl passes are built with
-# different NDEBUG settings, problems arise
-
-if(NOT DEFINED LLVM_NDEBUG_BUILD)
-
-  message(STATUS "Checking if LLVM is a DEBUG build")
-  separate_arguments(_FLAGS UNIX_COMMAND "${LLVM_CXXFLAGS}")
-
-  set(_TEST_SOURCE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/llvmNDEBUG.cc")
-  file(WRITE "${_TEST_SOURCE}"
-    "
-      #include <llvm/Support/Debug.h>
-      int main(int argc, char** argv) {
-        llvm::DebugFlag=true;
-      }
-    ")
-
-  set(TRY_COMPILE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS} -UNDEBUG")
-
-  try_compile(_TRY_SUCCESS ${CMAKE_BINARY_DIR} "${_TEST_SOURCE}"
-    CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
-    CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
-    LINK_LIBRARIES "${LLVM_LIBS} ${LLVM_SYSLIBS} ${LLVM_LDFLAGS}"
-    COMPILE_DEFINITIONS ${TRY_COMPILE_CXX_FLAGS}
-    OUTPUT_VARIABLE _TRY_COMPILE_OUTPUT
-  )
-
-  file(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeOutput.log"
-    "Test -NDEBUG flag: ${_TRY_COMPILE_OUTPUT}\n")
-
-  if(_TRY_SUCCESS)
-    message(STATUS "DEBUG build")
-    set(LLVM_NDEBUG_BUILD 0 CACHE INTERNAL "DNDEBUG")
-  else()
-    message(STATUS "Not a DEBUG build")
-    set(LLVM_NDEBUG_BUILD 1 CACHE INTERNAL "DNDEBUG")
-  endif()
-
-endif()
-
-if((NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG") AND LLVM_NDEBUG_BUILD)
-  message(STATUS "adding -DNDEBUG explicitly")
-  set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -DNDEBUG")
-endif()
-
-
-####################################################################
-
 if(ENABLE_HOST_CPU_DEVICES)
-
-# The option for specifying the target changed; try the modern syntax
-# first, and fall back to the old-style syntax if this failed
-
-if(NOT DEFINED CLANG_TARGET_OPTION)
-
-  custom_try_compile_clangxx("" "return 0;" RES "--target=${LLVM_HOST_TARGET}")
-  if(NOT RES)
-    set(CLANG_TGT "--target=")
-  else()
-    #EXECUTE_PROCESS(COMMAND "${CLANG}" "-target ${LLVM_HOST_TARGET}" "-x" "c" "/dev/null" "-S" RESULT_VARIABLE RES)
-    custom_try_compile_clangxx("" "return 0;" RES "-target ${LLVM_HOST_TARGET}")
-    if(NOT RES)
-      set(CLANG_TGT "-target ")
-    else()
-      message(FATAL_ERROR "Cannot determine Clang option to specify the target")
-    endif()
-  endif()
-
-  set(CLANG_TARGET_OPTION ${CLANG_TGT} CACHE INTERNAL "Clang option used to specify the target" )
-
-endif()
-
 
 # TODO: We need to set both target-triple and cpu-type when
 # building, since the ABI depends on both. We can either add flags
@@ -669,7 +556,7 @@ if(NOT DEFINED LLC_TRIPLE)
   set(_EMPTY_C_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/tripletfind.c")
   file(WRITE "${_EMPTY_C_FILE}" "")
 
-  execute_process(COMMAND ${CLANG} "${CLANG_TARGET_OPTION}${LLVM_HOST_TARGET}" -x c ${_EMPTY_C_FILE} -S -emit-llvm -o - RESULT_VARIABLE RES_VAR OUTPUT_VARIABLE OUTPUT_VAR)
+  execute_process(COMMAND ${CLANG} "--target=${LLVM_HOST_TARGET}" -x c ${_EMPTY_C_FILE} -S -emit-llvm -o - RESULT_VARIABLE RES_VAR OUTPUT_VARIABLE OUTPUT_VAR)
   if(RES_VAR)
     message(FATAL_ERROR "Error ${RES_VAR} while determining target triple")
   endif()
@@ -684,7 +571,6 @@ if(NOT DEFINED LLC_TRIPLE)
 
   set(LLC_TRIPLE "${LLC_TRIPLE}" CACHE INTERNAL "LLC_TRIPLE")
 endif()
-
 
 # FIXME: The cpu name printed by llc --version is the same cpu that will be
 # targeted if you pass -mcpu=native to llc, so we could replace this auto-detection
@@ -731,11 +617,11 @@ endif()
 # Some architectures have -march and -mcpu reversed
 if(NOT DEFINED CLANG_MARCH_FLAG)
   message(STATUS "Checking clang -march vs. -mcpu flag")
-  custom_try_compile_clang_silent("" "return 0;" RES ${CLANG_TARGET_OPTION}${LLC_TRIPLE} -march=${SELECTED_HOST_CPU})
+  custom_try_compile_clang_silent("" "return 0;" RES --target=${LLC_TRIPLE} -march=${SELECTED_HOST_CPU})
   if(NOT RES)
     set(CLANG_MARCH_FLAG "-march=")
   else()
-    custom_try_compile_clang_silent("" "return 0;" RES ${CLANG_TARGET_OPTION}${LLC_TRIPLE} -mcpu=${SELECTED_HOST_CPU})
+    custom_try_compile_clang_silent("" "return 0;" RES --target=${LLC_TRIPLE} -mcpu=${SELECTED_HOST_CPU})
     if(NOT RES)
       set(CLANG_MARCH_FLAG "-mcpu=")
     else()
@@ -745,6 +631,29 @@ if(NOT DEFINED CLANG_MARCH_FLAG)
   message(STATUS "  Using ${CLANG_MARCH_FLAG}")
 
   set(CLANG_MARCH_FLAG ${CLANG_MARCH_FLAG} CACHE INTERNAL "Clang option used to specify the target cpu")
+endif()
+
+if(NOT DEFINED ALIGNOF_DOUBLE16)
+
+  custom_try_run_lli(TRUE "
+#ifndef offsetof
+#define offsetof(type, member) ((char *) &((type *) 0)->member - (char *) 0)
+#endif
+
+  typedef double double16  __attribute__((__ext_vector_type__(16)));"
+
+  "typedef struct { char x; double16 y; } ac__type_alignof_;
+  int r = offsetof(ac__type_alignof_, y);
+  return r;"
+  SIZEOF_STDOUT RESULT "--target=${LLC_TRIPLE}")
+
+  if(NOT ${RESULT})
+    message(WARNING "Could not determine align of(double16)")
+    set(ALIGNOF_DOUBLE16 "128" CACHE INTERNAL "Align of double16")
+  else()
+    set(ALIGNOF_DOUBLE16 "${RESULT}" CACHE INTERNAL "Align of double16")
+  endif()
+
 endif()
 
 endif(ENABLE_HOST_CPU_DEVICES)
@@ -791,7 +700,7 @@ if(NOT CLANG_LINK_TEST)
               CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
               CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
               LINK_LIBRARIES "${LLVM_LDFLAGS} ${CLANG_LIBS} ${LLVM_LIBS} ${LLVM_SYSLIBS}"
-              COMPILE_DEFINITIONS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS} -DLLVM_MAJOR=${LLVM_MAJOR}"
+              COMPILE_DEFINITIONS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS} -DLLVM_MAJOR=${LLVM_VERSION_MAJOR}"
               OUTPUT_VARIABLE _TRY_COMPILE_OUTPUT)
 
   if(CLANG_LINK_TEST)
@@ -824,7 +733,7 @@ if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED HOST_CPU_SUPPORTS_FLOAT16)
   set(HOST_CPU_SUPPORTS_FLOAT16 0)
   message(STATUS "Checking host support for _Float16 type")
     custom_try_compile_clang_silent("_Float16 callfp16(_Float16 a) { return a * 1.8f16; };" "_Float16 x=callfp16((_Float16)argc);"
-    RESV ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${SELECTED_HOST_CPU})
+    RESV --target=${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${SELECTED_HOST_CPU})
   if(RESV EQUAL 0)
     set(HOST_CPU_SUPPORTS_FLOAT16 1)
   endif()

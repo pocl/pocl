@@ -356,7 +356,6 @@ __pocl_printf_float_libc (param_t *p, FLOAT_T f)
 void
 __pocl_printf_putchw (param_t *p)
 {
-  char ch;
   int n = p->width;
   /* For x (or X) conversion, a nonzero result has 0x (or 0X) prefixed to it.
    */

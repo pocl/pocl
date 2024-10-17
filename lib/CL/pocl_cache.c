@@ -316,6 +316,15 @@ pocl_cache_write_spirv (char *spirv_path,
 }
 
 int
+pocl_cache_write_kernel_asmfile (char *asmfile_path,
+                                 const char *asmfile_content,
+                                 uint64_t asmfile_size)
+{
+  return pocl_write_tempfile (asmfile_path, tempfile_pattern, ASM_EXT,
+                              asmfile_content, asmfile_size);
+}
+
+int
 pocl_cache_write_generic_objfile (char *objfile_path,
                                   const char *objfile_content,
                                   uint64_t objfile_size)

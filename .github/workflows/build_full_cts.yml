@@ -10,16 +10,6 @@ on:
 # at 14:01 every friday
     - cron: '01 14 * * 5'
 
-env:
-  CTEST_FLAGS: "--output-on-failure --test-output-size-failed 128000 --test-output-size-passed 128000 --test-output-truncation head --repeat until-pass:3"
-  POCL_KERNEL_CACHE: "0"
-  POCL_MAX_PTHREAD_COUNT: "2"
-  POCL_MAX_WORK_GROUP_SIZE: "1024"
-  POCL_MEMORY_LIMIT: "2"
-  CCACHE_COMPRESS: "true"
-  CCACHE_COMPRESSLEVEL: "1"
-  CCACHE_MAXSIZE: "25000M"
-
 jobs:
   cpu_cts:
     name: LLVM ${{ matrix.llvm }} - CPU ${{ matrix.config }}
@@ -27,9 +17,11 @@ jobs:
     timeout-minutes: 1600
     # CPU runners have action runner directly in the home directory
     env:
+      CCACHE_BASEDIR: "${{ github.workspace }}"
       CCACHE_DIR: "${{ github.workspace }}/../../../ccache_storage"
       EXAMPLES_DIR: "${{ github.workspace }}/../../../examples"
-      TSAN_OPTIONS: "second_deadlock_stack=1"
+      # full CTS launches thousands of tests, the compiler cache could grow to >10 GB -> avoid this
+      POCL_KERNEL_CACHE: "0"
     strategy:
       fail-fast: false
       matrix:
@@ -37,7 +29,13 @@ jobs:
         config: [cts_full, cts_full_spirv]
 
     steps:
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871
+      - name: Checkout
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871
+
+      - name: Load Env vars
+        id: load-env
+        run: |
+          cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
 
       - name: Run CMake
         id: cmake
@@ -82,8 +80,11 @@ jobs:
     runs-on: [self-hosted, linux, x64, full_cts_l0, full_cts_spirv_l0]
     timeout-minutes: 1600
     env:
+      CCACHE_BASEDIR: "${{ github.workspace }}"
       CCACHE_DIR: "${{ github.workspace }}/../../../../ccache_storage"
       EXAMPLES_DIR: "${{ github.workspace }}/../../../../examples"
+      # full CTS launches thousands of tests, the compiler cache could grow to >10 GB -> avoid this
+      POCL_KERNEL_CACHE: "0"
     strategy:
       fail-fast: false
       matrix:
@@ -91,7 +92,13 @@ jobs:
         config: [cts_full, cts_full_spirv]
 
     steps:
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871
+      - name: Checkout
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871
+
+      - name: Load Env vars
+        id: load-env
+        run: |
+          cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
 
       - name: Run CMake
         id: cmake

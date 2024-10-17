@@ -109,8 +109,17 @@ POname (clCloneKernel) (cl_kernel source_kernel,
           struct pocl_argument_info *pi = &(kernel->meta->arg_info[i]);
           if (p->is_set && sp->value != NULL) /* local args can have NULL */
             {
-              assert (p->size > 0);
-              p->value = malloc (p->size);
+              size_t arg_alignment, arg_alloc_size;
+              arg_alignment = pocl_size_ceil2 (p->size);
+              if (arg_alignment >= MAX_EXTENDED_ALIGNMENT)
+                arg_alignment = MAX_EXTENDED_ALIGNMENT;
+
+              arg_alloc_size = p->size;
+              if (arg_alloc_size < arg_alignment)
+                arg_alloc_size = arg_alignment;
+
+              assert (arg_alloc_size > 0);
+              p->value = pocl_aligned_malloc (arg_alignment, arg_alloc_size);
               memcpy (p->value, sp->value, p->size);
             }
           else
@@ -158,7 +167,7 @@ ERROR:
           for (i = 0; i < kernel->meta->num_args; ++i)
             {
               struct pocl_argument *p = &kernel->dyn_arguments[i];
-              POCL_MEM_FREE (p->value);
+              pocl_aligned_free (p->value);
             }
         }
     }

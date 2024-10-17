@@ -61,12 +61,12 @@ enum class OCLSpace : unsigned {
 };
 
 typedef struct {
-  int CPacked : 1;
-  int Restrict : 1;
-  int Volatile : 1;
-  int Constant : 1;
-  int ReadableImg : 1;
-  int WriteableImg : 1;
+  char CPacked;
+  char Restrict;
+  char Volatile;
+  char Constant;
+  char ReadableImg;
+  char WriteableImg;
 } ArgAttrs;
 
 struct OCLArgTypeInfo {

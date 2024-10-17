@@ -78,7 +78,7 @@ void free_kernel_run_command (kernel_run_command *k);
 #define new_kernel_run_command()                                              \
   (kernel_run_command *)pocl_aligned_malloc (HOST_CPU_CACHELINE_SIZE,         \
                                              sizeof (kernel_run_command))
-#define free_kernel_run_command(k) free (k)
+#define free_kernel_run_command(k) pocl_aligned_free (k)
 #endif
 
 POCL_EXPORT

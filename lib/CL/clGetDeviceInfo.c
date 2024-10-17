@@ -420,6 +420,9 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_COMMAND_BUFFER_REQUIRED_QUEUE_PROPERTIES_KHR:
     POCL_RETURN_GETINFO (cl_command_queue_properties, 0);
 
+  case CL_DEVICE_MUTABLE_DISPATCH_CAPABILITIES_KHR:
+    POCL_RETURN_GETINFO (cl_mutable_dispatch_fields_khr, 0);
+
   case CL_DEVICE_COMMAND_BUFFER_NUM_SYNC_DEVICES_KHR:
     if (device->ops->get_device_info_ext != NULL
         && device->ops->get_device_info_ext (device, param_name,

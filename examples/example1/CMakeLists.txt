@@ -74,12 +74,16 @@ add_test(NAME "examples/example1_poclbin"
             "-DCMD3=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/example1.bin"
             -P ${CMAKE_SOURCE_DIR}/cmake/multi_exec_test.cmake)
 
+# Force disable the WG specialization to test executing from the generic
+# binary only. This is to avoid the online compiler creating
+# a specialized WG function that is ran instead of the binary we
+# want to test here.
 set_tests_properties( "examples/example1_poclbin"
   PROPERTIES
     COST 3.0
     ${PROPS}
     PROCESSORS 1
-    ENVIRONMENT "POCL_KERNEL_CACHE=0"
+    ENVIRONMENT "POCL_KERNEL_CACHE=0;POCL_WORK_GROUP_SPECIALIZATION=0"
     LABELS "poclbin;internal;level0"
     DEPENDS "pocl_version_check")
 

@@ -1,0 +1,4 @@
+CTEST_FLAGS=--output-on-failure --test-output-size-failed 128000 --test-output-size-passed 128000
+CCACHE_COMPRESS=true
+CCACHE_COMPRESSLEVEL=1
+CCACHE_MAXSIZE=25000M

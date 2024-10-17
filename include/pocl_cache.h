@@ -38,6 +38,7 @@
 #define SHARED_LIB_EXT ".so"
 #define OBJ_EXT  ".so.o"
 #endif
+#define ASM_EXT ".S"
 
 /* The filename in which the work group (parallelizable) kernel LLVM bc is stored in
    the kernel's temp dir. */
@@ -76,6 +77,10 @@ int pocl_cache_write_kernel_objfile (char *objfile_path,
 int pocl_cache_write_spirv (char *spirv_path,
                             const char *spirv_content,
                             uint64_t file_size);
+
+int pocl_cache_write_kernel_asmfile (char *asmfile_path,
+                                     const char *asmfile_content,
+                                     uint64_t asmfile_size);
 
 POCL_EXPORT
 int pocl_cache_write_generic_objfile (char *objfile_path,

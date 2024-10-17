@@ -131,7 +131,7 @@ POname(clCreateKernel)(cl_program program,
   errcode = CL_SUCCESS;
 
   POCL_MSG_PRINT_GENERAL ("Created Kernel %s (%p)\n", kernel->name, kernel);
-  goto OUT;
+  goto EXIT_NO_ERROR;
 
 ERROR:
   if (kernel)
@@ -144,7 +144,7 @@ ERROR:
   POCL_MEM_FREE (kernel);
   kernel = NULL;
 
-OUT:
+EXIT_NO_ERROR:
   if(errcode_ret != NULL)
   {
     *errcode_ret = errcode;

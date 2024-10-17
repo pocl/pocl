@@ -15,4 +15,3 @@ Pocl currently supports the following device drivers:
    vulkan
    level0
    remote
-   android
