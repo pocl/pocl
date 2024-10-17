@@ -2834,9 +2834,9 @@ process_context_cb (pocl_async_callback_item *it)
 static void *
 pocl_async_callback_thread (void *data)
 {
+  POCL_LOCK (async_cb_lock);
   while (exit_pocl_async_callback_thread == CL_FALSE)
     {
-      POCL_LOCK (async_cb_lock);
       /* Event callback handling calls functions in the same order
          they were added if the status matches the specified one. */
       pocl_async_callback_item *it = NULL;
@@ -2849,10 +2849,10 @@ pocl_async_callback_thread (void *data)
         {
           POCL_WAIT_COND (async_cb_wake_cond, async_cb_lock);
         }
-      POCL_UNLOCK (async_cb_lock);
 
       if (it)
         {
+          POCL_UNLOCK (async_cb_lock);
           switch (it->type)
             {
             case POCL_CB_TYPE_EVENT:
@@ -2866,9 +2866,11 @@ pocl_async_callback_thread (void *data)
               break;
             }
           free (it);
+          POCL_LOCK (async_cb_lock);
         }
     }
 
+  POCL_UNLOCK (async_cb_lock);
   return NULL;
 }
 
