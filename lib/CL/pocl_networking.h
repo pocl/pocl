@@ -24,10 +24,28 @@
 
 #include <stdint.h>
 
-#include "pocl_export.h"
-
 #ifndef POCL_NETWORKING_H
 #define POCL_NETWORKING_H
+
+/** Tag for transport_info_t to indicate the type of the socket */
+typedef enum transport_domain_e
+{
+  /** Unix domain socket */
+  TransportDomain_Unix,
+  /** IPv4 or IPv6 */
+  TransportDomain_Inet,
+  /** VSOCK VirtIO socket */
+  TransportDomain_Vsock,
+} transport_domain_t;
+
+/** Wrapper struct that holds everything the communication (read/write)
+ * functions need to function, starting with a tag to indicate what kind of
+ * connection this is */
+typedef struct transport_info_s
+{
+  transport_domain_t domain;
+  int fd;
+} transport_info_t;
 
 #ifdef __cplusplus
 extern "C"
@@ -55,14 +73,14 @@ extern "C"
                                                     int is_fast,
                                                     int ai_family);
   /**
-   * host_freeaddrinfo - free addrinfo obtained from host_*() functions
+   * pocl_freeaddrinfo - free addrinfo obtained from host_*() functions
    * @ai: pointer to addrinfo to free
    *
-   * The addrinfos returned by host_*() functions may not have been allocated
+   * The addrinfos returned by pocl_*() functions may not have been allocated
    * by a call to getaddrinfo(3).  It is not safe to free them directly with
    * freeaddrinfo(3).  Use this function instead.
    */
-  extern void host_freeaddrinfo (struct addrinfo *ai);
+  extern void pocl_freeaddrinfo (struct addrinfo *ai);
 
   /*
    * vsock_hostname_addrinfo - Custom 'getaddrinfo' for vsock addresses

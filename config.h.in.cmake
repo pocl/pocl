@@ -51,8 +51,6 @@
 
 #cmakedefine ENABLE_SIGNAL_HANDLERS
 
-#cmakedefine ENABLE_VSOCK
-
 #cmakedefine ENABLE_RELOCATION
 
 #cmakedefine ENABLE_EGL_INTEROP
@@ -73,6 +71,8 @@
 #cmakedefine HAVE_FORK
 
 #cmakedefine HAVE_VFORK
+
+#cmakedefine HAVE_LINUX_VSOCK_H
 
 #cmakedefine HAVE_CLOCK_GETTIME
 

@@ -25,8 +25,10 @@
 #define PEER_HH
 
 #include <thread>
+#include <memory>
 
 #include "common.hh"
+#include "connection.hh"
 #include "guarded_queue.hh"
 
 #ifdef ENABLE_RDMA
@@ -44,7 +46,7 @@
 class Peer {
   uint64_t id;
   uint32_t handler_id;
-  std::atomic_int fd;
+  std::shared_ptr<Connection> Conn;
   VirtualContextBase *ctx;
   ExitHelper *eh;
 
@@ -53,7 +55,6 @@ class Peer {
   RequestQueueThreadUPtr reader;
   void writerThread();
   std::thread writer;
-  TrafficMonitor *netstat;
 #ifdef ENABLE_RDMA
   std::shared_ptr<RdmaConnection> rdma;
   RdmaRequestThreadUPtr rdma_reader;
@@ -68,11 +69,11 @@ class Peer {
 public:
 #ifdef ENABLE_RDMA
   Peer(uint64_t id, uint32_t handler_id, VirtualContextBase *ctx,
-       ExitHelper *eh, int fd, TrafficMonitor *tm,
-       std::shared_ptr<RdmaConnection> conn);
+       ExitHelper *eh, std::shared_ptr<Connection> Conn,
+       std::shared_ptr<RdmaConnection> Rdma);
 #else
   Peer(uint64_t id, uint32_t handler_id, VirtualContextBase *ctx,
-       ExitHelper *eh, int fd, TrafficMonitor *tm);
+       ExitHelper *eh, std::shared_ptr<Connection> Conn);
 #endif
   ~Peer();
 

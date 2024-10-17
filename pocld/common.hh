@@ -50,6 +50,7 @@ using float_time_point = std::chrono::time_point<Time, float_sec>;
 #define MS_PER_S 1000
 
 #include "pocl_debug.h"
+#include "pocl_networking.h"
 #include "request.hh"
 
 #ifdef ENABLE_RDMA
@@ -246,10 +247,6 @@ typedef std::array<size_t, 3> sizet_vec3;
 
 class TrafficMonitor;
 
-ssize_t read_full(int fd, void *p, size_t total, TrafficMonitor *);
-
-int write_full(int fd, void *p, size_t total, TrafficMonitor *);
-
 std::string describe_sockaddr(struct sockaddr *addr, unsigned addr_size);
 
 #ifdef ENABLE_RDMA
@@ -263,8 +260,10 @@ struct RdmaRemoteBufferData {
 };
 #endif
 
+class Connection;
+
 struct PeerConnection {
-  int Fd;
+  std::shared_ptr<Connection> Conn;
   uint64_t PeerId;
 #ifdef ENABLE_RDMA
   std::shared_ptr<RdmaConnection> Rdma;
@@ -272,8 +271,8 @@ struct PeerConnection {
 };
 
 struct ClientConnections_t {
-  int fd_command;
-  int fd_stream;
+  std::shared_ptr<Connection> low_latency;
+  std::shared_ptr<Connection> bulk_throughput;
   std::mutex *incoming_peer_mutex;
   std::pair<std::condition_variable, std::vector<PeerConnection>>
       *incoming_peer_queue;
@@ -322,12 +321,12 @@ public:
   Reply(Request *r)
       : rep(), req(r), extra_size(0), event(nullptr) {
     assert(req.get());
-    rep.client_did = req->req.client_did;
-    rep.did = req->req.did;
-    rep.pid = req->req.pid;
-    rep.msg_id = req->req.msg_id;
-    rep.server_read_start_timestamp_ns = req->read_start_timestamp_ns;
-    rep.server_read_end_timestamp_ns = req->read_end_timestamp_ns;
+    rep.client_did = req->Body.client_did;
+    rep.did = req->Body.did;
+    rep.pid = req->Body.pid;
+    rep.msg_id = req->Body.msg_id;
+    rep.server_read_start_timestamp_ns = req->ReadStartTimestampNS;
+    rep.server_read_end_timestamp_ns = req->ReadEndTimestampNS;
   }
 };
 

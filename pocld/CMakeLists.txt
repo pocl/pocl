@@ -43,7 +43,7 @@ set(SOURCES pocld.cc daemon.hh daemon.cc cmdline.h cmdline.c
             shared_cl_context.cc shared_cl_context.hh
             virtual_cl_context.cc virtual_cl_context.hh
             cmd_queue.cc cmd_queue.hh common.cc common.hh
-            request.hh request.cc
+            connection.hh connection.cc request.hh request.cc
             reply_th.cc reply_th.hh request_th.cc request_th.hh
             peer_handler.cc peer_handler.hh
             peer.cc peer.hh tracing.h traffic_monitor.hh traffic_monitor.cc)
@@ -127,6 +127,14 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
   find_package(Threads REQUIRED)
 
+  find_file(
+    HAVE_LINUX_VSOCK_H
+    NAMES
+      linux/vm_sockets.h
+    PATHS
+      /usr/include
+  )
+
   list(APPEND P_LINK_LIST ${OPENCL} Threads::Threads)
 
   set(POCL_INSTALL_PUBLIC_BINDIR "${CMAKE_INSTALL_PREFIX}/bin")
@@ -190,4 +198,3 @@ if (STANDALONE EQUAL 0)
   install(TARGETS pocld RUNTIME
         DESTINATION "${POCL_INSTALL_PUBLIC_BINDIR}")
 endif()
-

@@ -27,11 +27,11 @@
 #include "rdma_reply_th.hh"
 
 RdmaReplyThread::RdmaReplyThread(
-    VirtualContextBase *c, ExitHelper *e, TrafficMonitor *tm,
+    VirtualContextBase *c, ExitHelper *e, std::shared_ptr<TrafficMonitor> tm,
     const char *id_str, std::shared_ptr<RdmaConnection> conn,
     std::unordered_map<uint32_t, RdmaBufferData> *mem_regions,
     std::mutex *mem_regions_mutex)
-    : virtualContext(c), eh(e), netstat(tm), id_str(id_str), rdma(conn),
+    : virtualContext(c), eh(e), Netstat(tm), id_str(id_str), rdma(conn),
       mem_regions(mem_regions), mem_regions_mutex(mem_regions_mutex) {
   io_thread = std::thread{&RdmaReplyThread::rdmaWriterThread, this};
 }
@@ -71,8 +71,8 @@ void RdmaReplyThread::rdmaWriterThread() {
           WorkRequest::Send(0, {{*cmd_buf}}, WorkRequest::Flags::Signaled);
 
       /************** set up buffer contents transfer *************/
-      ptrdiff_t src_offset = transfer_src_offset(reply->req->req);
-      uint64_t data_size = transfer_size(reply->req->req);
+      ptrdiff_t src_offset = transfer_src_offset(reply->req->Body);
+      uint64_t data_size = transfer_size(reply->req->Body);
 
       POCL_MSG_PRINT_GENERAL(
           "%s: RDMA WRITE FOR MESSAGE ID: %" PRIu64 ", SIZE: %" PRIu64 "\n",
@@ -80,11 +80,11 @@ void RdmaReplyThread::rdmaWriterThread() {
       RdmaBufferData meta;
       {
         std::unique_lock<std::mutex> l(*mem_regions_mutex);
-        auto it = mem_regions->find(reply->req->req.obj_id);
+        auto it = mem_regions->find(reply->req->Body.obj_id);
         if (it == mem_regions->end()) {
           POCL_MSG_ERR("%s: ERROR: no RDMA memory region for buffer %" PRIu32
                        "\n",
-                       id_str.c_str(), uint32_t(reply->req->req.obj_id));
+                       id_str.c_str(), uint32_t(reply->req->Body.obj_id));
           eh->requestExit("RDMA transfer requested on unregistered buffer",
                           112);
           return;
@@ -114,8 +114,8 @@ void RdmaReplyThread::rdmaWriterThread() {
       data_wr.chain(std::move(cmd_wr));
 
       /******************* submit work requests *******************/
-      if (netstat)
-        netstat->txSubmitted(sizeof(ReplyMsg_t) + data_size);
+      if (Netstat.get())
+        Netstat->txSubmitted(sizeof(ReplyMsg_t) + data_size);
       try {
         rdma->post(data_wr);
       } catch (const std::runtime_error &e) {
@@ -137,14 +137,14 @@ void RdmaReplyThread::rdmaWriterThread() {
         break;
       }
 
-      if (netstat)
-        netstat->txConfirmed(sizeof(ReplyMsg_t) + data_size);
+      if (Netstat.get())
+        Netstat->txConfirmed(sizeof(ReplyMsg_t) + data_size);
 
-      virtualContext->notifyEvent(reply->req->req.event_id, CL_COMPLETE);
+      virtualContext->notifyEvent(reply->req->Body.event_id, CL_COMPLETE);
       Request peer_notice{};
-      peer_notice.req.msg_id = reply->rep.msg_id;
-      peer_notice.req.event_id = reply->req->req.event_id;
-      peer_notice.req.message_type = MessageType_NotifyEvent;
+      peer_notice.Body.msg_id = reply->rep.msg_id;
+      peer_notice.Body.event_id = reply->req->Body.event_id;
+      peer_notice.Body.message_type = MessageType_NotifyEvent;
       virtualContext->broadcastToPeers(peer_notice);
       delete reply;
     } else {

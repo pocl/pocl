@@ -42,7 +42,6 @@
 class PeerHandler {
   uint32_t id;
   VirtualContextBase *ctx;
-  std::thread listen_thread;
   ExitHelper *eh;
 
   std::mutex *NewConnectionsMutex;
@@ -55,13 +54,14 @@ class PeerHandler {
   std::thread IncomingPeerHandler;
   void handleIncomingPeers();
 
-  TrafficMonitor *netstat;
+  std::shared_ptr<TrafficMonitor> Netstat;
 
 public:
   PeerHandler(
       uint32_t id, std::mutex *m,
       std::pair<std::condition_variable, std::vector<PeerConnection>> *incoming,
-      VirtualContextBase *c, ExitHelper *eh, TrafficMonitor *tm);
+      VirtualContextBase *c, ExitHelper *eh,
+      std::shared_ptr<TrafficMonitor> tm);
   ~PeerHandler();
 
   cl_int connectPeer(uint64_t msg_id, const char *const address, uint16_t port,
@@ -78,12 +78,7 @@ public:
 #endif
 };
 
-#if 0
-// TOFIX: peers cannot be freed without crashing, let them leak for now.
 typedef std::unique_ptr<PeerHandler> PeerHandlerUPtr;
-#else
-typedef PeerHandler *PeerHandlerUPtr;
-#endif
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

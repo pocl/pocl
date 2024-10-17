@@ -251,8 +251,6 @@ option(ENABLE_POCL_BUILDING "When OFF, env var POCL_BUILDING has no effect. Defa
 
 option(ENABLE_PRINTF_IMMEDIATE_FLUSH "[currently only applies to CPU drivers] if enabled, printf is flushed immediately when encountered, instead of after all NDRange workgroups are finished" ON)
 
-option(ENABLE_VSOCK "Enable vsock transport in the remote driver" OFF)
-
 option(ENABLE_LLVM_FILECHECKS "Enable kernel compiler/autovectorizer filechecks using the given FileCheck binary defined in LLVM_FILECHECK_BIN. Note: the checks are tested against recent Intel X86/SIMD CPUs for now.")
 
 if(WIN32)
@@ -741,21 +739,14 @@ if(UNIX)
   CHECK_SYMBOL_EXISTS("dladdr"
                       "dlfcn.h"
                       HAVE_DLADDR)
-  if(ENABLE_VSOCK)
-    find_file(
-      HAVE_LINUX_VSOCK_H
-      NAMES
-        linux/vm_sockets.h
-      PATHS
-        /usr/include
-    )
 
-    if(NOT HAVE_LINUX_VSOCK_H)
-      message(FATAL_ERROR "Could not find vsock header file. Please \
-        make sure that the kernel is configured with vsock support.
-    ")
-    endif()
-  endif()
+  find_file(
+    HAVE_LINUX_VSOCK_H
+    NAMES
+      linux/vm_sockets.h
+    PATHS
+      /usr/include
+  )
 
   unset(CMAKE_REQUIRED_DEFINITIONS)
   unset(CMAKE_REQUIRED_FLAGS)
@@ -776,6 +767,7 @@ else()
   set(HAVE_UTIME 0)
   set(HAVE_DLADDR 0)
   set(HAVE_VALGRIND 0)
+  unset(HAVE_LINUX_VSOCK_H)
 endif()
 
 ######################################################################################
@@ -2372,6 +2364,9 @@ MESSAGE(STATUS "ENABLE_PROXY_DEVICE: ${ENABLE_PROXY_DEVICE}")
 MESSAGE(STATUS "ENABLE_PROXY_DEVICE_INTEROP: ${ENABLE_PROXY_DEVICE_INTEROP}")
 MESSAGE(STATUS "ENABLE_REMOTE_SERVER: ${ENABLE_REMOTE_SERVER}")
 MESSAGE(STATUS "ENABLE_REMOTE_CLIENT: ${ENABLE_REMOTE_CLIENT}")
+if (ENABLE_REMOTE_SERVER OR  ENABLE_REMOTE_CLIENT)
+  MESSAGE(STATUS "HAVE_LINUX_VSOCK_H: ${HAVE_LINUX_VSOCK_H}")
+endif ()
 MESSAGE(STATUS "ENABLE_D2D_MIG: ${ENABLE_D2D_MIG}")
 MESSAGE(STATUS "ENABLE_RDMA: ${ENABLE_RDMA}")
 MESSAGE(STATUS "ENABLE_CL_GET_GL_CONTEXT: ${ENABLE_CL_GET_GL_CONTEXT}")

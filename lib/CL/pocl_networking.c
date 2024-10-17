@@ -23,23 +23,26 @@
    IN THE SOFTWARE.
 */
 
+#include "config.h"
+
 #include <errno.h>
+#include <limits.h>
 #include <netdb.h>
-#include <netinet/tcp.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
+#include <sys/socket.h>
 #include <sys/time.h>
-#include <limits.h>
 
-#include "pocl_debug.h"
-#include "pocl_networking.h"
-#ifdef ENABLE_VSOCK
+#ifdef HAVE_LINUX_VSOCK_H
 #include <linux/vm_sockets.h>
 #endif
 
-#ifdef ENABLE_VSOCK
+#include "pocl_debug.h"
+#include "pocl_networking.h"
+
+#ifdef HAVE_LINUX_VSOCK_H
 /* Allocate an addrinfo for AF_VSOCK.  Free with host_freeaddrinfo(). */
 static struct addrinfo *
 vsock_alloc_addrinfo (struct sockaddr_vm **svm)
@@ -66,19 +69,6 @@ vsock_alloc_addrinfo (struct sockaddr_vm **svm)
   return &vai->ai;
 }
 
-void
-host_freeaddrinfo (struct addrinfo *ai)
-{
-  if (ai && ai->ai_family == AF_VSOCK)
-    {
-      free (ai->ai_canonname);
-      free (ai);
-      return;
-    }
-
-  freeaddrinfo (ai);
-}
-
 struct addrinfo *
 vsock_hostname_addrinfo (const char *hostname, uint16_t port)
 {
@@ -102,7 +92,7 @@ vsock_hostname_addrinfo (const char *hostname, uint16_t port)
   ai->ai_canonname = strdup (hostname);
   if (!ai->ai_canonname)
     {
-      host_freeaddrinfo (ai);
+      pocl_freeaddrinfo (ai);
       return NULL;
     }
 
@@ -116,15 +106,17 @@ struct addrinfo *
 pocl_resolve_address (const char *address, uint16_t port, int *error)
 {
   struct addrinfo *info = NULL;
-#ifdef ENABLE_VSOCK
-  if (strncmp (address, "vsock:", strlen ("vsock:")) == 0)
+  if (address && strncmp (address, "vsock:", strlen ("vsock:")) == 0)
     {
+#ifdef HAVE_LINUX_VSOCK_H
       info = vsock_hostname_addrinfo (address, port);
       if (info == NULL)
         *error = -EINVAL;
+#else
+      *error = -EINVAL;
+#endif
     }
   else
-#endif
     {
       struct addrinfo hint;
       memset (&hint, 0, sizeof (hint));
@@ -162,8 +154,23 @@ pocl_resolve_address (const char *address, uint16_t port, int *error)
       int err = getaddrinfo (address, portstr, &hint, &info);
       if (error)
         *error = err;
+    }
+  return info;
+}
 
-      return info;
+void
+pocl_freeaddrinfo (struct addrinfo *ai)
+{
+  if (ai)
+    {
+      if (ai->ai_family == AF_VSOCK)
+        {
+          free (ai->ai_canonname);
+          free (ai);
+          return;
+        }
+
+      freeaddrinfo (ai);
     }
 }
 
@@ -218,7 +225,7 @@ pocl_remote_client_set_socket_options (int socket_fd, int bufsize, int is_fast,
                         -1, "setsockopt(SO_SNDTIMEO) returned errno: %i\n",
                         errno);
 
-#ifdef ENABLE_VSOCK
+#ifdef HAVE_LINUX_VSOCK_H
   if (ai_family == AF_VSOCK)
     {
       return 0;

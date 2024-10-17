@@ -26,7 +26,7 @@
 #include <sstream>
 #include <sys/socket.h>
 
-#include "common.hh"
+#include "common_cl.hh"
 #include "peer.hh"
 #include "shared_cl_context.hh"
 
@@ -38,14 +38,13 @@ const char *request_to_str(RequestMessageType type);
 
 #ifdef ENABLE_RDMA
 Peer::Peer(uint64_t id, uint32_t handler_id, VirtualContextBase *ctx,
-           ExitHelper *eh, int fd, TrafficMonitor *tm,
+           ExitHelper *eh, std::shared_ptr<Connection> Conn,
            std::shared_ptr<RdmaConnection> conn)
-    : id(id), handler_id(handler_id), ctx(ctx), eh(eh), fd(fd), netstat(tm),
-      rdma(conn)
+    : id(id), handler_id(handler_id), ctx(ctx), eh(eh), Conn(Conn), rdma(conn)
 #else
 Peer::Peer(uint64_t id, uint32_t handler_id, VirtualContextBase *ctx,
-           ExitHelper *eh, int fd, TrafficMonitor *tm)
-    : id(id), handler_id(handler_id), ctx(ctx), eh(eh), fd(fd), netstat(tm)
+           ExitHelper *eh, std::shared_ptr<Connection> Conn)
+    : id(id), handler_id(handler_id), ctx(ctx), eh(eh), Conn(Conn)
 #endif
 {
   std::stringstream ss;
@@ -53,13 +52,13 @@ Peer::Peer(uint64_t id, uint32_t handler_id, VirtualContextBase *ctx,
 #ifdef ENABLE_RDMA
   // TODO: register all existing buffers for rdma, if the ability to add peers
   // after init is added
-  rdma_reader = RdmaRequestThreadUPtr(
-      new RdmaRequestThread(ctx, eh, netstat, (ss.str() + "_RDMA_R").c_str(),
-                            rdma, &local_memory_regions, &local_regions_mutex));
+  rdma_reader = RdmaRequestThreadUPtr(new RdmaRequestThread(
+      ctx, eh, Conn->meter(), (ss.str() + "_RDMA_R").c_str(), rdma,
+      &local_memory_regions, &local_regions_mutex));
   rdma_writer = std::thread(&Peer::rdmaWriterThread, this);
 #endif
-  reader = RequestQueueThreadUPtr(new RequestQueueThread(
-      &this->fd, ctx, eh, netstat, (ss.str() + "_R").c_str()));
+  reader = RequestQueueThreadUPtr(
+      new RequestQueueThread(Conn, ctx, eh, (ss.str() + "_R").c_str()));
   writer = std::thread(&Peer::writerThread, this);
 }
 
@@ -68,6 +67,9 @@ Peer::~Peer() {
   if (writer.joinable())
     writer.join();
 #ifdef ENABLE_RDMA
+  Request *R = new Request{};
+  R->Body.message_type = MessageType_Shutdown;
+  rdma_out_queue.push(R);
   rdma_reader.reset();
   if (rdma_writer.joinable())
     rdma_writer.join();
@@ -76,7 +78,7 @@ Peer::~Peer() {
 
 void Peer::pushRequest(Request *r) {
 #ifdef ENABLE_RDMA
-  if (pocl_request_is_rdma(&r->req, 1))
+  if (pocl_request_is_rdma(&r->Body, 1))
     rdma_out_queue.push(r);
   else
 #endif
@@ -91,46 +93,44 @@ void Peer::writerThread() {
       continue;
     }
 
-    uint32_t msg_size = request_size(r->req.message_type);
+    uint32_t msg_size = request_size(r->Body.message_type);
     POCL_MSG_PRINT_GENERAL(
         "PHW: SENDING MESSAGE, ID: %" PRIu64 " TYPE: %s SIZE: %" PRIu32
         ", TO %" PRIu64 "\n",
-        uint64_t(r->req.msg_id),
-        request_to_str(static_cast<RequestMessageType>(r->req.message_type)),
+        uint64_t(r->Body.msg_id),
+        request_to_str(static_cast<RequestMessageType>(r->Body.message_type)),
         msg_size, id);
 
-    CHECK_WRITE(write_full(fd, &msg_size, sizeof(uint32_t), netstat), "PHW");
-    CHECK_WRITE(write_full(fd, &r->req, msg_size, netstat), "PHW");
+    CHECK_WRITE(Conn->writeFull(&msg_size, sizeof(uint32_t)), "PHW");
+    CHECK_WRITE(Conn->writeFull(&r->Body, msg_size), "PHW");
 
-    assert(r->waitlist.size() == r->req.waitlist_size);
-    if (r->req.waitlist_size > 0) {
+    assert(r->Waitlist.size() == r->Body.waitlist_size);
+    if (r->Body.waitlist_size > 0) {
       POCL_MSG_PRINT_GENERAL("PHW: WRITING WAIT LIST: %" PRIu32 "\n",
-                             r->req.waitlist_size);
-      CHECK_WRITE(write_full(fd, r->waitlist.data(),
-                             r->req.waitlist_size * sizeof(uint64_t), netstat),
+                             r->Body.waitlist_size);
+      CHECK_WRITE(Conn->writeFull(r->Waitlist.data(),
+                                  r->Body.waitlist_size * sizeof(uint64_t)),
                   "PHW");
     }
 
-    assert(r->extra_data.size() >= r->extra_size);
-    if (r->extra_size > 0) {
-      POCL_MSG_PRINT_GENERAL("PHW: WRITING EXTRA: %" PRIuS "\n", r->extra_size);
-      CHECK_WRITE(write_full(fd, r->extra_data.data(), r->extra_size, netstat),
+    assert(r->ExtraData.size() >= r->ExtraDataSize);
+    if (r->ExtraDataSize > 0) {
+      POCL_MSG_PRINT_GENERAL("PHW: WRITING EXTRA: %" PRIuS "\n",
+                             r->ExtraDataSize);
+      CHECK_WRITE(Conn->writeFull(r->ExtraData.data(), r->ExtraDataSize),
                   "PHW");
     }
 
-    assert(r->extra_data2.size() >= r->extra_size2);
-    if (r->extra_size2 > 0) {
+    assert(r->ExtraData2.size() >= r->ExtraData2Size);
+    if (r->ExtraData2Size > 0) {
       POCL_MSG_PRINT_GENERAL("PHW: WRITING EXTRA2: %" PRIuS "\n",
-                             r->extra_size2);
-      CHECK_WRITE(
-          write_full(fd, r->extra_data2.data(), r->extra_size2, netstat),
-          "PHW");
+                             r->ExtraData2Size);
+      CHECK_WRITE(Conn->writeFull(r->ExtraData2.data(), r->ExtraData2Size),
+                  "PHW");
     }
 
     delete r;
   } while (!eh->exit_requested());
-
-  shutdown(fd, SHUT_WR);
 }
 
 #ifdef ENABLE_RDMA
@@ -138,6 +138,9 @@ void Peer::rdmaWriterThread() {
   std::stringstream ss;
   ss << "PEER_" << id << "_RDMA_W";
   std::string id_str = ss.str();
+
+  // Traffic is measured per peer, shared with the TCP connections
+  std::shared_ptr<TrafficMonitor> Netstat = Conn->meter();
 
   RdmaBuffer<RequestMsg_t> cmd_buf(rdma->protectionDomain(), 1);
 
@@ -149,28 +152,28 @@ void Peer::rdmaWriterThread() {
     }
 
     /************* set up command metadata transfer *************/
-    cmd_buf.at(0) = r->req;
+    cmd_buf.at(0) = r->Body;
 
-    uint32_t cmd_size = request_size(r->req.message_type);
+    uint32_t cmd_size = request_size(r->Body.message_type);
     WorkRequest cmd_wr = WorkRequest::Send(0, {{*cmd_buf, 0, cmd_size}},
                                            WorkRequest::Flags::Signaled |
                                                WorkRequest::Flags::Solicited);
 
     /************** set up buffer contents transfer *************/
-    ptrdiff_t src_offset = transfer_src_offset(r->req);
-    uint64_t data_size = transfer_size(r->req);
+    ptrdiff_t src_offset = transfer_src_offset(r->Body);
+    uint64_t data_size = transfer_size(r->Body);
 
     POCL_MSG_PRINT_GENERAL("%s: RDMA WRITE FOR MESSAGE ID: %" PRIu64
                            ", SIZE: %" PRIu64 "\n",
-                           id_str.c_str(), uint64_t(r->req.msg_id), data_size);
+                           id_str.c_str(), uint64_t(r->Body.msg_id), data_size);
     RdmaBufferData local;
     {
       std::unique_lock<std::mutex> l(local_regions_mutex);
-      auto it = local_memory_regions.find(r->req.obj_id);
+      auto it = local_memory_regions.find(r->Body.obj_id);
       if (it == local_memory_regions.end()) {
         POCL_MSG_ERR(
             "%s: ERROR: no local RDMA memory region for buffer %" PRIu32 "\n",
-            id_str.c_str(), uint32_t(r->req.obj_id));
+            id_str.c_str(), uint32_t(r->Body.obj_id));
         eh->requestExit("RDMA transfer requested on unregistered buffer", -1);
         break;
       }
@@ -179,11 +182,11 @@ void Peer::rdmaWriterThread() {
     RdmaRemoteBufferData remote;
     {
       std::unique_lock<std::mutex> l(remote_regions_mutex);
-      auto it = remote_memory_regions.find(r->req.obj_id);
+      auto it = remote_memory_regions.find(r->Body.obj_id);
       if (it == remote_memory_regions.end()) {
         POCL_MSG_ERR(
             "%s: ERROR: no remote RDMA memory region for buffer %" PRIu32 "\n",
-            id_str.c_str(), uint32_t(r->req.obj_id));
+            id_str.c_str(), uint32_t(r->Body.obj_id));
         eh->requestExit("RDMA transfer requested on unregistered buffer", -1);
         break;
       }
@@ -209,8 +212,8 @@ void Peer::rdmaWriterThread() {
     data_wr.chain(std::move(cmd_wr));
 
     /******************* submit work requests *******************/
-    if (netstat)
-      netstat->txSubmitted(cmd_size + data_size);
+    if (Netstat.get())
+      Netstat->txSubmitted(cmd_size + data_size);
 
     try {
       rdma->post(data_wr);
@@ -233,8 +236,8 @@ void Peer::rdmaWriterThread() {
       break;
     }
 
-    if (netstat)
-      netstat->txConfirmed(cmd_size + data_size);
+    if (Netstat.get())
+      Netstat->txConfirmed(cmd_size + data_size);
 
     delete r;
   }
@@ -279,11 +282,11 @@ bool Peer::rdmaRegisterBuffer(uint32_t buf_id, char *buf, size_t size) {
   // Very quick & dirty notification message that
   // grossly abuses the default message fields...
   Request *notif = new Request();
-  notif->req.message_type = MessageType_RdmaBufferRegistration;
-  notif->req.obj_id = buf_id;
-  notif->req.did = mem_region->rkey();
-  notif->req.msg_id = (uintptr_t)buf;
-  notif->req.cq_id = this->handler_id;
+  notif->Body.message_type = MessageType_RdmaBufferRegistration;
+  notif->Body.obj_id = buf_id;
+  notif->Body.did = mem_region->rkey();
+  notif->Body.msg_id = (uintptr_t)buf;
+  notif->Body.cq_id = this->handler_id;
   this->pushRequest(notif);
   return true;
 }

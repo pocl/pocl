@@ -1,25 +1,24 @@
-/* rdma.cc - wrapper classes to make RDMA more ergonomic
-
-   Copyright (c) 2023 Jan Solanti / Tampere University
-
-   Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to
-   deal in the Software without restriction, including without limitation the
-   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-   sell copies of the Software, and to permit persons to whom the Software is
-   furnished to do so, subject to the following conditions:
-
-   The above copyright notice and this permission notice shall be included in
-   all copies or substantial portions of the Software.
-
-   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-   IN THE SOFTWARE.
-*/
+// rdma.cc - wrapper classes to make RDMA more ergonomic
+//
+// Copyright (c) 2023-2024 Jan Solanti / Tampere University
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+// IN THE SOFTWARE.
 
 #include <netdb.h>
 
@@ -55,8 +54,8 @@ EventChannel::~EventChannel() {
 }
 
 void EventChannel::shutdown() {
-  stop_polling = 1;
   std::scoped_lock l(new_connection_mutex, shared_queue_mutex);
+  stop_polling = 1;
   shared_queue_cond.notify_all();
   new_connection_cond.notify_all();
 }
@@ -66,7 +65,7 @@ void EventChannel::poll_loop() {
   rdma_cm_event *event;
   while (!stop_polling) {
     err = rdma_get_cm_event(handle, &event);
-    if (err) {
+    if (err || event->event == RDMA_CM_EVENT_DISCONNECTED) {
       shutdown();
       return;
     }
@@ -97,8 +96,8 @@ void EventChannel::poll_loop() {
 
 rdma_cm_event *EventChannel::getNextForNewConnection(rdma_cm_id *cm_id) {
   rdma_cm_event *event = nullptr;
+  std::unique_lock<std::mutex> l(new_connection_mutex);
   while (!event && !stop_polling) {
-    std::unique_lock<std::mutex> l(new_connection_mutex);
     if (cm_id) {
       auto it = new_connection_queue.find(cm_id);
       assert(it != new_connection_queue.end());
@@ -132,8 +131,8 @@ void EventChannel::finalizeNewConnection(rdma_cm_id *cm_id) {
 
 rdma_cm_event *EventChannel::getNext() {
   rdma_cm_event *event = nullptr;
+  std::unique_lock<std::mutex> l(shared_queue_mutex);
   while (!event && !stop_polling) {
-    std::unique_lock<std::mutex> l(shared_queue_mutex);
     if (!stop_polling) {
       if (shared_queue.empty())
         shared_queue_cond.wait(l);
@@ -243,7 +242,7 @@ CompletionQueue::~CompletionQueue() {
 }
 
 WorkCompletion CompletionQueue::awaitCompletion() {
-  ibverbs::WorkCompletion wc;
+  ibverbs::WorkCompletion wc{};
 
   // ibv_req_notify_cq causes ONE (1) completion notification to be generated
   // for any work completion that arrives AFTER the call to ibv_req_notify_cq.
@@ -377,18 +376,16 @@ void WorkRequest::chain(const WorkRequest &n) {
 WorkRequest WorkRequest::Send(uint64_t wr_id,
                               const std::vector<ScatterGatherEntry> &sg_list,
                               WorkRequest::Flags flags) {
-  /*
-   * IBV_WR_SEND
-   *
-   * Write contents of the buffer regions specified in sg_list to the
-   * sg_list specified in a ReceiveRequest on the remote end. The
-   * ReceiveRequest will be consumed from the remote's queue. The sender
-   * has no way of knowing where data was written.
-   *
-   * Maximum size is 2^31 bytes for ReliableConnecion and Unconnected type
-   * queues and equal to the lowest MTU along the network path is for
-   * UreliableDatagram type queues.
-   */
+  // IBV_WR_SEND
+  //
+  // Write contents of the buffer regions specified in sg_list to the
+  // sg_list specified in a ReceiveRequest on the remote end. The
+  // ReceiveRequest will be consumed from the remote's queue. The sender
+  // has no way of knowing where data was written.
+  //
+  // Maximum size is 2^31 bytes for ReliableConnecion and Unconnected type
+  // queues and equal to the lowest MTU along the network path is for
+  // UreliableDatagram type queues.
 
   COMPUTE_TOTAL_SG_LENGTH;
   // only ReliableConnection is implemented for now
@@ -402,13 +399,12 @@ WorkRequest WorkRequest::Send(uint64_t wr_id,
 WorkRequest WorkRequest::Send(uint64_t wr_id,
                               const std::vector<ScatterGatherEntry> &sg_list,
                               uint32_t immediate, WorkRequest::Flags flags) {
-  /*
-   * IBV_WR_SEND_WITH_IMM
-   *
-   * Same as IBV_WR_SEND, but a 32 bit immediate value will be sent along with
-   * the request. This value will be available in the WorkCompletion
-   * associated with the ReceiveRequest that was consumed on the remote.
-   */
+
+  // IBV_WR_SEND_WITH_IMM
+  //
+  // Same as IBV_WR_SEND, but a 32 bit immediate value will be sent along with
+  // the request. This value will be available in the WorkCompletion
+  // associated with the ReceiveRequest that was consumed on the remote.
 
   WorkRequest w = WorkRequest::Send(wr_id, sg_list, flags);
   w.wr.opcode = IBV_WR_SEND_WITH_IMM;
@@ -419,15 +415,14 @@ WorkRequest WorkRequest::Send(uint64_t wr_id,
 WorkRequest WorkRequest::RdmaWrite(
     uint64_t wr_id, const std::vector<ScatterGatherEntry> &sg_list,
     uint64_t remote_addr, uint32_t rkey, WorkRequest::Flags flags) {
-  /*
-   * IBV_WR_RDMA_WRITE
-   *
-   * Write buffer contents from sg_list to the given virtual address /
-   * rkey as one continuous block. No ReceiveRequest will be consumed on
-   * the remote.
-   *
-   * Maximum size is 2^31 bytes.
-   */
+
+  // IBV_WR_RDMA_WRITE
+  //
+  // Write buffer contents from sg_list to the given virtual address /
+  // rkey as one continuous block. No ReceiveRequest will be consumed on
+  // the remote.
+  //
+  // Maximum size is 2^31 bytes.
 
   COMPUTE_TOTAL_SG_LENGTH;
   assert(total_sg_length <= 0x80000000);
@@ -444,14 +439,13 @@ WorkRequest::RdmaWrite(uint64_t wr_id,
                        const std::vector<ScatterGatherEntry> &sg_list,
                        uint64_t remote_addr, uint32_t rkey, uint32_t immediate,
                        WorkRequest::Flags flags) {
-  /*
-   * IBV_WR_RDMA_WRITE_WITH_IMM
-   *
-   * Same as IBV_WR_RDMA_WRITE, but a 32 bit immediate value will be sent
-   * along with the request and a ReceiveRequest WILL be consumed on the
-   * remote. The WorkCompletion associated with the consumed ReceiveRequest
-   * will contain the given immediate value.
-   */
+
+  // IBV_WR_RDMA_WRITE_WITH_IMM
+  //
+  // Same as IBV_WR_RDMA_WRITE, but a 32 bit immediate value will be sent
+  // along with the request and a ReceiveRequest WILL be consumed on the
+  // remote. The WorkCompletion associated with the consumed ReceiveRequest
+  // will contain the given immediate value.
 
   WorkRequest w =
       WorkRequest::RdmaWrite(wr_id, sg_list, remote_addr, rkey, flags);
@@ -464,14 +458,13 @@ WorkRequest
 WorkRequest::RdmaRead(uint64_t wr_id,
                       const std::vector<ScatterGatherEntry> &sg_list,
                       uint64_t remote_addr, uint32_t rkey, Flags flags) {
-  /*
-   * IBV_WR_RDMA_READ
-   *
-   * Read a continuous block from the specified remote virtual address /
-   * rkey and scatter the contents sequentially into the local buffers as
-   * specified in sg_list. No ReceiveRequest will be consumed on the
-   * remote. Maximum size is 2^31 bytes.
-   */
+
+  // IBV_WR_RDMA_READ
+  //
+  // Read a continuous block from the specified remote virtual address /
+  // rkey and scatter the contents sequentially into the local buffers as
+  // specified in sg_list. No ReceiveRequest will be consumed on the
+  // remote. Maximum size is 2^31 bytes.
 
   COMPUTE_TOTAL_SG_LENGTH;
   assert(total_sg_length <= 0x80000000);
@@ -487,15 +480,14 @@ WorkRequest WorkRequest::AtomicCompareAndSwap(
     uint64_t wr_id, const std::vector<ScatterGatherEntry> &sg_list,
     uint64_t remote_addr, uint32_t rkey, uint64_t compare, uint64_t swap,
     Flags flags) {
-  /*
-   * IBV_WR_ATOMIC_CMP_AND_SWP
-   *
-   * Read a 64 bit value from the remote virtual address / rkey, compare
-   * it to the value from wr.atomic.compare_add and if they are equal,
-   * write the value from wr.atomic.swap to that address atomically. The
-   * original value will be written to the local buffers as specified in
-   * sg_list. No ReceiverRequest will be consumed on the remote.
-   */
+
+  // IBV_WR_ATOMIC_CMP_AND_SWP
+  //
+  // Read a 64 bit value from the remote virtual address / rkey, compare
+  // it to the value from wr.atomic.compare_add and if they are equal,
+  // write the value from wr.atomic.swap to that address atomically. The
+  // original value will be written to the local buffers as specified in
+  // sg_list. No ReceiverRequest will be consumed on the remote.
 
   COMPUTE_TOTAL_SG_LENGTH;
   assert(total_sg_length >= sizeof(uint64_t));
@@ -512,15 +504,14 @@ WorkRequest WorkRequest::AtomicCompareAndSwap(
 WorkRequest WorkRequest::AtomicFetchAndAdd(
     uint64_t wr_id, const std::vector<ScatterGatherEntry> &sg_list,
     uint64_t remote_addr, uint32_t rkey, uint64_t add, Flags flags) {
-  /*
-   * IBV_WR_ATOMIC_FETCH_AND_ADD
-   *
-   * Read a 64 bit value from the remote virtual address / rkey, add the
-   * value from wr.atomic.compare_add to it and write the result back to
-   * the same address atomically. The original value will be written to
-   * the local buffers as specified in sg_list. No ReceiverRequest will be
-   * consumed on the remote.
-   */
+
+  // IBV_WR_ATOMIC_FETCH_AND_ADD
+  //
+  // Read a 64 bit value from the remote virtual address / rkey, add the
+  // value from wr.atomic.compare_add to it and write the result back to
+  // the same address atomically. The original value will be written to
+  // the local buffers as specified in sg_list. No ReceiverRequest will be
+  // consumed on the remote.
 
   COMPUTE_TOTAL_SG_LENGTH;
   assert(total_sg_length >= sizeof(uint64_t));
@@ -760,3 +751,5 @@ ibverbs::WorkCompletion RdmaConnection::awaitSendCompletion() {
 ibverbs::WorkCompletion RdmaConnection::awaitRecvCompletion() {
   return qp->recv_cq.awaitCompletion();
 }
+
+void RdmaConnection::disconnect() { rdma_disconnect(*cm_id); }

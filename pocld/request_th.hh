@@ -25,6 +25,8 @@
 #ifndef POCL_REMOTE_REQUEST_TH_HH
 #define POCL_REMOTE_REQUEST_TH_HH
 
+#include <condition_variable>
+
 #include "common.hh"
 #include "traffic_monitor.hh"
 #include "virtual_cl_context.hh"
@@ -34,19 +36,21 @@
 #endif
 
 class RequestQueueThread {
-  std::atomic_int *fd;
+  std::mutex ConnectionGuard;
+  std::condition_variable ConnectionNotifier;
+  std::shared_ptr<Connection> InboundConnection;
   VirtualContextBase *virtualContext;
-  std::thread io_thread;
+  std::thread IOThread;
   ExitHelper *eh;
-  std::string id_str;
-  TrafficMonitor *netstat;
+  std::string ThreadIdentifier;
 
 public:
-  RequestQueueThread(std::atomic_int *fd, VirtualContextBase *c, ExitHelper *eh,
-                     TrafficMonitor *tm, const char *id_str);
+  RequestQueueThread(std::shared_ptr<Connection> Conn, VirtualContextBase *c,
+                     ExitHelper *eh, const char *id_str);
 
   ~RequestQueueThread();
 
+  void setConnection(std::shared_ptr<Connection> NewConnection);
   void readThread();
 };
 
