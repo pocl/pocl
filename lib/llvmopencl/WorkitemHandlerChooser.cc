@@ -34,6 +34,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "CanonicalizeBarriers.h"
 #include "Kernel.h"
 #include "LLVMUtils.h"
+#include "SubCFGFormation.h"
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
 #include "WorkitemLoops.h"
@@ -87,11 +88,12 @@ WorkitemHandlerType ChooseWorkitemHandler(Function &F,
     Result = WorkitemHandlerType::LOOPS;
   }
 
-  // Check if this is a kernel WILoops is able and willing to handle.
-  // Otherwise, fall back to CBS.
   if (Result == WorkitemHandlerType::LOOPS &&
-      !WorkitemLoops::CanHandleKernel(F, AM))
+      !WorkitemLoops::canHandleKernel(F, AM))
     Result = WorkitemHandlerType::CBS;
+  else if (Result == WorkitemHandlerType::CBS &&
+           !SubCFGFormation::canHandleKernel(F, AM))
+    Result = WorkitemHandlerType::LOOPS;
 
   return Result;
 }

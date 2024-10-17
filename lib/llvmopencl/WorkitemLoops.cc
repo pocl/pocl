@@ -1114,8 +1114,7 @@ llvm::PreservedAnalyses WorkitemLoops::run(llvm::Function &F,
     return llvm::PreservedAnalyses::all();
 
   WorkitemHandlerType WIH = AM.getResult<WorkitemHandlerChooser>(F).WIH;
-  if (WIH != WorkitemHandlerType::LOOPS &&
-      !(WIH == WorkitemHandlerType::CBS && !hasWorkgroupBarriers(F)))
+  if (WIH != WorkitemHandlerType::LOOPS)
     return llvm::PreservedAnalyses::all();
 
   auto &DT = AM.getResult<llvm::DominatorTreeAnalysis>(F);
@@ -1133,7 +1132,7 @@ llvm::PreservedAnalyses WorkitemLoops::run(llvm::Function &F,
   return WIL.runOnFunction(F) ? PAChanged : PreservedAnalyses::all();
 }
 
-bool WorkitemLoops::CanHandleKernel(llvm::Function &K,
+bool WorkitemLoops::canHandleKernel(llvm::Function &K,
                                     llvm::FunctionAnalysisManager &AM) {
 
   // Do not handle kernels with barriers inside loops which have early exits

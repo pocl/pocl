@@ -152,6 +152,9 @@ public:
                               llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 
+  static bool canHandleKernel(llvm::Function &K,
+                              llvm::FunctionAnalysisManager &AM);
+
 protected:
   llvm::Value *getLinearWIIndexInRegion(llvm::Instruction *Instr);
   llvm::Value *getLocalIdInRegion(llvm::Instruction *Instr, size_t Dim);
