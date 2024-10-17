@@ -28,10 +28,21 @@
    anything. 
 
    The devices (actually, platforms) should override these to
-   implement proper block copies or similar. */
+   implement proper block copies or similar.
+
+   TODO the optnone,noinline are a workaround for a crash when
+   running tests/regression/test_program_from_binary_with_local_1_1_1.c
+   with and without DEVELOPER_MODE=ON
+*/
+
+#if __clang_major__ > 14
+#define ASYNC_WG_COPY_ATTRS overloadable,optnone,noinline
+#else
+#define ASYNC_WG_COPY_ATTRS overloadable
+#endif
 
 #define IMPLEMENT_ASYNC_COPY_FUNCS_SINGLE(GENTYPE)                      \
-  __attribute__((overloadable))                                         \
+  __attribute__((ASYNC_WG_COPY_ATTRS))                                  \
   event_t async_work_group_copy(__local GENTYPE *dst,                   \
                                 const __global GENTYPE *src,            \
                                 size_t num_gentypes,                    \
@@ -43,7 +54,7 @@
     return event;                                                       \
   }                                                                     \
                                                                         \
-  __attribute__((overloadable))                                         \
+  __attribute__((ASYNC_WG_COPY_ATTRS))                                  \
   event_t async_work_group_copy(__global GENTYPE *dst,                  \
                                 const __local GENTYPE *src,             \
                                 size_t num_gentypes,                    \
