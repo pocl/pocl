@@ -2720,7 +2720,8 @@ pocl_event_cb_push (cl_event event, int status)
   event_callback_item *tmp = NULL, *cb = NULL;
   LL_FOREACH_SAFE (event->callback_list, cb, tmp)
     {
-      if (cb->trigger_status == status)
+      if ((cb->trigger_status == status)
+          || (cb->trigger_status == CL_COMPLETE && status < CL_COMPLETE))
         {
           assert (event->callback_list);
           LL_DELETE (event->callback_list, cb);
@@ -2791,7 +2792,9 @@ process_event_cb (pocl_async_callback_item *it)
   while (cb)
     {
       next_cb = cb->next;
-      assert (cb->trigger_status == it->data.event_cb.status);
+      assert ((cb->trigger_status == it->data.event_cb.status)
+              || (cb->trigger_status == CL_COMPLETE
+                  && it->data.event_cb.status < CL_COMPLETE));
       cb->callback_function (event, cb->trigger_status, cb->user_data);
       free (cb);
       cb = next_cb;
