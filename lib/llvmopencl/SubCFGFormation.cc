@@ -1254,6 +1254,12 @@ llvm::Instruction *SubCFGFormation::getLocalIdInRegion(llvm::Instruction *Instr,
   return Builder.CreateLoad(ST, GV);
 }
 
+/// CBS does not handle kernels without barriers.
+bool SubCFGFormation::canHandleKernel(llvm::Function &K,
+                                      llvm::FunctionAnalysisManager &AM) {
+  return hasWorkgroupBarriers(K);
+}
+
 void moveAllocasToEntry(llvm::Function &F,
                         llvm::ArrayRef<llvm::BasicBlock *> Blocks) {
   llvm::SmallVector<llvm::AllocaInst *, 4> AllocaWL;
@@ -1507,9 +1513,6 @@ SubCFGFormation::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
 
   WorkitemHandlerType WIH = AM.getResult<pocl::WorkitemHandlerChooser>(F).WIH;
   if (WIH != WorkitemHandlerType::CBS)
-    return PreservedAnalyses::all();
-
-  if (!hasWorkgroupBarriers(F))
     return PreservedAnalyses::all();
 
   Initialize(cast<pocl::Kernel>(&F));
