@@ -1156,6 +1156,11 @@ else()
       endif()
 
     if(OPENCL_FOUND)
+      if(DEFINED OPENCL_VERSION AND (OPENCL_VERSION VERSION_GREATER_EQUAL "3.0.0"))
+        set(HAVE_OCL_ICD_30_COMPATIBLE 1 CACHE INTERNAL "ICD 3.0 compat")
+      else()
+        set(HAVE_OCL_ICD_30_COMPATIBLE 0 CACHE INTERNAL "ICD 3.0 compat")
+      endif()
       # no ocl-icd, but libopencl
       message(STATUS "libOpenCL (unknown ICD loader) found")
     else()
