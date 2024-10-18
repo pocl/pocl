@@ -15,7 +15,7 @@ standard which can be easily adapted for new targets.
 This section contains instructions for building PoCL in its default
 configuration and a subset of driver backends. You can find the full build
 instructions including a list of available options
-in the [user guide](http://portablecl.org/docs/html/install.html).
+in the [install guide](http://portablecl.org/docs/html/install.html).
 
 ### Requirements
 
@@ -37,24 +37,7 @@ tools:
     (optional; required for SPIR-V support in CPU / CUDA; Vulkan driver
     supports SPIR-V through clspv)
 
-On Ubuntu or Debian based distros you can install the relevant packages with
-```bash
-export LLVM_VERSION=<major LLVM version>
-apt install -y python3-dev libpython3-dev build-essential ocl-icd-libopencl1 \
-    cmake git pkg-config libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} \
-    llvm-${LLVM_VERSION} make ninja-build ocl-icd-libopencl1 ocl-icd-dev \
-    ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils \
-    libxml2-dev libclang-cpp${LLVM_VERSION}-dev libclang-cpp${LLVM_VERSION} \
-    llvm-${LLVM_VERSION}-dev
-```
-
-If your distro does not package the version of LLVM you wish to build against
-you might want to set up the
-[upstream LLVM package repository](https://apt.llvm.org/).
-
-If LLVM is linked to PoCL statically (-DSTATIC_LLVM=ON cmake option), then
-the `libpolly-${LLVM_VERSION}-dev libzstd-dev` packages might be also needed
-(at least on Ubuntu 22.04 with packages from apt.llvm.org).
+For more details, consult the install guide.
 
 ### Configure & Build
 
@@ -69,47 +52,13 @@ make
 make install
 ```
 
-### Supported LLVM Versions
-
-PoCL aims to support **the latest LLVM version** at the time of PoCL release, **plus the previous** LLVM version. All older LLVM versions are supported on a
-"best effort" basis; there might not be build bots continuously testing the code
-base nor anyone fixing their possible breakage.
-
-### OpenCL 3.0 support
-
-If you want PoCL built with ICD and OpenCL 3.0 support at platform level,
-you will need sufficiently new ocl-icd (2.3.x). For Ubuntu, it can be installed'
-from this PPA: https://launchpad.net/~ocl-icd/+archive/ubuntu/ppa
-Additionally, if you want the CPU device to report as 3.0 OpenCL
-you will need LLVM 14 or newer.
-
 ### GPU support on different architectures
 
 PoCL can be used to provide OpenCL driver on several architectures where the hardware manufacturer does not ship them 
 like Nvidia Tegra (ARM) or IBM Power servers. On PPC64le servers, there are specific instructions to handle the build 
-of PoCL in [README.PPC64le](./README.PPC64le).
+of PoCL in [install guide](http://portablecl.org/docs/html/install.html).
 See also [PoCL with CUDA driver](#pocl-with-cuda-driver) section for prebuilt
 binaries.
-
-### Windows
-
-Windows support has been unmaintained for a long time and building on Windows
-may or may not work. There are old instructions for building with Visual Studio
-in [README.Windows](./README.Windows) but with the builtin CMake support of more
-recent Visual Studio versions (2019+) it might be enough to install the
-dependencies (e.g. with `winget`) and simply open the main `CMakeLists.txt` file
-in Visual Studio and let it work its magic.
-
-Contributions for improving compatibility with Windows and more detailed and up
-to date build steps are welcome!
-
-### Notes
-
-Building on ARM platforms is possible but lacks a maintainer and there are
-[some gotchas](./README.ARM).
-
-If you are a distro maintainer, check [README.packaging](./README.packaging) for
-recommendations on build settings for packaged builds.
 
 ## Binary packages
 
@@ -170,4 +119,3 @@ visible, do
 
 PoCL is distributed under the terms of the MIT license. Contributions are expected
 to be made with the same terms.
-

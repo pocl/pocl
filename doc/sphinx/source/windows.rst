@@ -3,7 +3,7 @@ Windows support
 -----------------
 
 
-It is possible to build & use PoCL on Windows using MinGW (MSVC port is in progress). However, the setup requires a number of steps.
+It is possible to build & use PoCL on Windows using MinGW. However, the setup requires a number of steps.
 
 Prerequisites
 ~~~~~~~~~~~~~~~
