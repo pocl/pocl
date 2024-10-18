@@ -89,16 +89,22 @@ pocl_rm_rf(const char* path)
               snprintf(buf, len, "%s/%s", path, p->d_name);
 
               if (stat (buf, &statbuf) < 0)
-                POCL_ABORT ("Can't get stat() on %s\n", buf);
+                {
+                  POCL_MSG_ERR ("Can't get stat() on %s\n", buf);
+                  free (buf);
+                  return -1;
+                }
               if (S_ISDIR (statbuf.st_mode))
                 error = pocl_rm_rf (buf);
               if (S_ISREG (statbuf.st_mode) || S_ISLNK (statbuf.st_mode))
                 error = remove (buf);
-
               free(buf);
             }
           else
-            POCL_ABORT ("out of memory");
+            {
+              POCL_MSG_ERR ("out of memory");
+              return -1;
+            }
 
           p = readdir(d);
         }

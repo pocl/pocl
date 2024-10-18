@@ -373,10 +373,12 @@ pocl_setup_kernel_arg_array (kernel_run_command *k)
  *
  * they're set up by 1) memcpy from kernel_run_command, 2) all
  * local args are set to thread-local "local memory" storage. */
-void
-pocl_setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
-                                    kernel_run_command *k, char *local_mem,
-                                    size_t local_mem_size)
+int
+pocl_setup_kernel_arg_array_with_locals (void **arguments,
+                                         void **arguments2,
+                                         kernel_run_command *k,
+                                         char *local_mem,
+                                         size_t local_mem_size)
 {
   pocl_kernel_metadata_t *meta = k->kernel->meta;
   cl_uint i;
@@ -439,16 +441,18 @@ pocl_setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
                 {
                   total_auto_local_size += meta->local_sizes[j];
                 }
-              POCL_ABORT (
-                  "PoCL detected an OpenCL program error: "
-                  "%d automatic local buffer(s) with total size %lu "
-                  "bytes doesn't fit to the local memory of size %lu\n",
-                  meta->num_locals, total_auto_local_size, local_mem_size);
+              POCL_MSG_ERR (
+                "PoCL detected an OpenCL program error: "
+                "%d automatic local buffer(s) with total size %lu "
+                "bytes doesn't fit to the local memory of size %lu\n",
+                meta->num_locals, total_auto_local_size, local_mem_size);
+              return CL_FAILED;
             }
           start += size;
           start = align_ptr (start);
         }
     }
+  return CL_SUCCESS;
 }
 
 /* called from kernel teardown code.
@@ -977,8 +981,9 @@ pocl_xsmm_execute_dbk (cl_program program,
         break;
       }
     default:
-      POCL_ABORT_UNIMPLEMENTED ("this code path should have "
-                                "been eliminated earlier");
+      POCL_MSG_ERR ("this code path should have "
+                    "been eliminated earlier");
+      return CL_FAILED;
     }
 
   libxsmm_datatype InElemType = pocl_convert_to_libxsmm_type (InDtype);
@@ -1030,8 +1035,7 @@ pocl_cpu_execute_dbk (cl_program program,
   default:
       {
         POCL_MSG_ERR ("Unhandled DBK id %d.\n", meta->builtin_kernel_id);
-        POCL_ABORT_UNIMPLEMENTED (
-          "Requested DBK is not implemented on the CPU device.\n");
+        return CL_FAILED;
       }
     }
 }

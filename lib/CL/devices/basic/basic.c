@@ -508,8 +508,16 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
       cl_program program = kernel->program;
       if (!program->builtin_kernel_attributes)
         {
-          node->command.run.device_data
+          void *handle
             = pocl_check_kernel_dlhandle_cache (node, CL_TRUE, CL_TRUE);
+          if (handle == NULL)
+            {
+              pocl_update_event_running_unlocked (node->sync.event.event);
+              POCL_UNLOCK_OBJ (node->sync.event.event);
+              POCL_UPDATE_EVENT_FAILED (node->sync.event.event);
+              return;
+            }
+          node->command.run.device_data = handle;
         }
     }
 
@@ -553,7 +561,7 @@ pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
 
   if (finished->status < CL_COMPLETE)
     {
-      pocl_update_event_failed (event);
+      pocl_update_event_failed_locked (event);
       return;
     }
 
@@ -577,15 +585,19 @@ pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
     }
 }
 
-void
-pocl_basic_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
-                           cl_device_id device, int specialize)
+int
+pocl_basic_compile_kernel (_cl_command_node *cmd,
+                           cl_kernel kernel,
+                           cl_device_id device,
+                           int specialize)
 {
   char *saved_name = NULL;
+  if (cmd == NULL || cmd->type != CL_COMMAND_NDRANGE_KERNEL)
+    return CL_INVALID_OPERATION;
   pocl_sanitize_builtin_kernel_name (kernel, &saved_name);
-  if (cmd != NULL && cmd->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_check_kernel_dlhandle_cache (cmd, CL_FALSE, specialize);
+  void *handle = pocl_check_kernel_dlhandle_cache (cmd, CL_FALSE, specialize);
   pocl_restore_builtin_kernel_name (kernel, saved_name);
+  return handle == NULL ? CL_COMPILE_PROGRAM_FAILURE : CL_SUCCESS;
 }
 
 int
@@ -959,8 +971,8 @@ static int
 get_dbk_index (cl_program p, cl_kernel k)
 {
 
-  int dbk_index = -1;
-  for (int i = 0; i < p->num_builtin_kernels; ++i)
+  size_t dbk_index = SIZE_MAX;
+  for (size_t i = 0; i < p->num_builtin_kernels; ++i)
     {
       if (strcmp (p->builtin_kernel_names[i], k->name) == 0)
         {
@@ -977,7 +989,6 @@ pocl_basic_create_kernel (cl_device_id device,
                           cl_kernel k,
                           unsigned device_i)
 {
-
   /* no dbks, nothing to do */
   if (p->num_builtin_kernels < 1)
     return CL_SUCCESS;
@@ -1020,8 +1031,10 @@ pocl_basic_create_kernel (cl_device_id device,
       }
 #endif
     default:
-      POCL_ABORT ("pocl_basic_create_kernel called with unknown/unimplemented "
-                  "DBK kernel.\n");
+      POCL_RETURN_ERROR_ON (1, CL_INVALID_DBK_ID,
+                            "pocl_basic_create_kernel called with "
+                            "unknown/unimplemented "
+                            "DBK kernel.\n");
     }
 }
 
@@ -1070,7 +1083,8 @@ pocl_basic_free_kernel (cl_device_id device,
       }
 #endif
     default:
-      POCL_ABORT (
-        "pocl_basic_free_kernel called with unknown/unimplemented DBK kernel.\n");
+      POCL_RETURN_ERROR_ON (1, CL_INVALID_DBK_ID,
+                            "pocl_basic_free_kernel called with "
+                            "unknown/unimplemented DBK kernel.\n");
     }
 }

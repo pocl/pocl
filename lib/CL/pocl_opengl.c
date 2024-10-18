@@ -8,7 +8,9 @@ POname(clCreateFromGLBuffer)(cl_context      context,
                         cl_int *        errcode_ret)
 CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_ABORT_UNIMPLEMENTED("The entire clCreateFromGLBuffer call");
+  POCL_MSG_ERR ("The clCreateFromGLBuffer API is not implemented\n");
+  if (errcode_ret)
+    *errcode_ret = CL_INVALID_OPERATION;
   return NULL;
 }
 POsym(clCreateFromGLBuffer)
@@ -22,7 +24,9 @@ POname(clCreateFromGLRenderbuffer)(cl_context      context,
                         cl_int *        errcode_ret)
 CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_ABORT_UNIMPLEMENTED("The entire clCreateFromGLRenderbuffer call");
+  POCL_MSG_ERR ("The clCreateFromGLRenderbuffer API is not implemented\n");
+  if (errcode_ret)
+    *errcode_ret = CL_INVALID_OPERATION;
   return NULL;
 }
 POsym(clCreateFromGLRenderbuffer)
@@ -35,8 +39,8 @@ POname(clGetGLObjectInfo)(cl_mem        memobj,
                           cl_GLuint       *gl_object_name)
 CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_ABORT_UNIMPLEMENTED("The entire clGetGLObjectInfo call");
-  return CL_OUT_OF_RESOURCES;
+  POCL_MSG_ERR ("The clGetGLObjectInfo API is not implemented\n");
+  return CL_INVALID_OPERATION;
 }
 POsym(clGetGLObjectInfo)
 
@@ -51,7 +55,7 @@ POname(clGetGLTextureInfo) (cl_mem        memobj,
                             size_t  *param_value_size_ret)
 CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_ABORT_UNIMPLEMENTED("The entire clGetGLTextureInfo call");
-  return CL_OUT_OF_RESOURCES;
+  POCL_MSG_ERR ("The clGetGLTextureInfo API is not implemented\n");
+  return CL_INVALID_OPERATION;
 }
 POsym(clGetGLTextureInfo)

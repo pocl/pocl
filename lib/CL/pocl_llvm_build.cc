@@ -173,7 +173,8 @@ static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
                              unsigned device_i, std::string &Log) {
 
   llvm::Module *BuiltinLib = getKernelLibrary(Device, Context);
-  assert(BuiltinLib != NULL);
+  if (BuiltinLib == nullptr)
+    return true;
 
   if (Device->run_program_scope_variables_pass) {
     size_t TotalGVarBytes = 0;
@@ -842,7 +843,8 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
   PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
 
   llvm::Module *libmodule = getKernelLibrary(device, llvm_ctx);
-  assert(libmodule != NULL);
+  if (libmodule == nullptr)
+    return CL_LINK_PROGRAM_FAILURE;
 
   std::unique_ptr<llvm::Module> mod(
       new llvm::Module(StringRef("linked_program"), *llvm_ctx->Context));
@@ -993,26 +995,23 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
     kernellib_fallback += ".bc";
   }
 
-  llvm::Module *lib;
+  llvm::Module *lib = nullptr;
 
-  if (pocl_exists(kernellib.c_str()))
-    {
-      POCL_MSG_PRINT_LLVM("Using %s as the built-in lib.\n", kernellib.c_str());
-      lib = parseModuleIR(kernellib.c_str(), llvmContext);
-    }
-  else
-    {
-      if (device->kernellib_fallback_name && pocl_exists(kernellib_fallback.c_str()))
-        {
-          POCL_MSG_WARN("Using fallback %s as the built-in lib.\n",
-                        kernellib_fallback.c_str());
-          lib = parseModuleIR(kernellib_fallback.c_str(), llvmContext);
-        }
-      else
-        POCL_ABORT("Kernel library file %s doesn't exist.\n", kernellib.c_str());
-    }
-  assert (lib != NULL);
-  kernelLibraryMap->insert(std::make_pair(device, lib));
+  if (pocl_exists(kernellib.c_str())) {
+    POCL_MSG_PRINT_LLVM("Using %s as the built-in lib.\n", kernellib.c_str());
+    lib = parseModuleIR(kernellib.c_str(), llvmContext);
+  } else {
+    if (device->kernellib_fallback_name &&
+        pocl_exists(kernellib_fallback.c_str())) {
+      POCL_MSG_WARN("Using fallback %s as the built-in lib.\n",
+                    kernellib_fallback.c_str());
+      lib = parseModuleIR(kernellib_fallback.c_str(), llvmContext);
+    } else
+      POCL_MSG_ERR("Kernel library file %s doesn't exist.\n",
+                   kernellib.c_str());
+  }
+  if (lib)
+    kernelLibraryMap->insert(std::make_pair(device, lib));
 
   return lib;
 }

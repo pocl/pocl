@@ -1565,7 +1565,7 @@ pocl_remote_notify (cl_device_id device, cl_event event, cl_event finished)
 
   if (finished->status < CL_COMPLETE)
     {
-      pocl_update_event_failed (event);
+      pocl_update_event_failed_locked (event);
       return;
     }
 

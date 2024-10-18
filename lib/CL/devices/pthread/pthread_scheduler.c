@@ -436,7 +436,6 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
   if (num_groups == 0)
     {
       pocl_update_event_running (cmd->sync.event.event);
-
       POCL_UPDATE_EVENT_COMPLETE_MSG (cmd->sync.event.event,
                                       "NDRange Kernel        ");
 
@@ -444,14 +443,28 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
     }
 
   /* initialize the program gvars if required */
-  pocl_driver_build_gvar_init_kernel (program, dev_i, cmd->device,
-                                      pocl_cpu_gvar_init_callback);
+  if (pocl_driver_build_gvar_init_kernel (program, dev_i, cmd->device,
+                                          pocl_cpu_gvar_init_callback)
+      != 0)
+    {
+      pocl_update_event_running (cmd->sync.event.event);
+      POCL_UPDATE_EVENT_FAILED_MSG (cmd->sync.event.event,
+                                    "CPU: failed to compile GVar init kernel");
+      return NULL;
+    }
 
   char *saved_name = NULL;
   pocl_sanitize_builtin_kernel_name (kernel, &saved_name);
   void *ci = pocl_check_kernel_dlhandle_cache (cmd, CL_TRUE, CL_TRUE);
   cmd->command.run.device_data = ci;
   pocl_restore_builtin_kernel_name (kernel, saved_name);
+  if (ci == NULL)
+    {
+      pocl_update_event_running (cmd->sync.event.event);
+      POCL_UPDATE_EVENT_FAILED_MSG (cmd->sync.event.event,
+                                    "CPU: failed to compile kernel");
+      return NULL;
+    }
 
   run_cmd = new_kernel_run_command ();
   run_cmd->data = data;

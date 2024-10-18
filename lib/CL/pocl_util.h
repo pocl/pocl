@@ -305,8 +305,16 @@ void pocl_update_event_complete (const char *func, unsigned line,
                                  cl_event event, const char *msg);
 
 POCL_EXPORT
-int pocl_copy_command_node (_cl_command_node *dst_node,
-                            _cl_command_node *src_node);
+void pocl_update_event_failed (const char *func,
+                               unsigned line,
+                               cl_event event,
+                               const char *msg);
+
+POCL_EXPORT
+void pocl_update_event_failed_locked (cl_event event);
+
+POCL_EXPORT
+void pocl_update_event_device_lost (cl_event event);
 
 #define POCL_UPDATE_EVENT_COMPLETE_MSG(__event, msg)                          \
   pocl_update_event_complete (__func__, __LINE__, (__event), msg)
@@ -314,11 +322,15 @@ int pocl_copy_command_node (_cl_command_node *dst_node,
 #define POCL_UPDATE_EVENT_COMPLETE(__event)                                   \
   pocl_update_event_complete (__func__, __LINE__, (__event), NULL)
 
-POCL_EXPORT
-void pocl_update_event_failed (cl_event event);
+#define POCL_UPDATE_EVENT_FAILED(__event)                                     \
+pocl_update_event_failed (__func__, __LINE__, (__event), NULL)
+
+#define POCL_UPDATE_EVENT_FAILED_MSG(__event, msg)                            \
+pocl_update_event_failed (__func__, __LINE__, (__event), msg)
 
 POCL_EXPORT
-void pocl_update_event_device_lost (cl_event event);
+int pocl_copy_command_node (_cl_command_node *dst_node,
+                            _cl_command_node *src_node);
 
 const char*
 pocl_status_to_str (int status);

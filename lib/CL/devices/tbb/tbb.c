@@ -279,8 +279,8 @@ void pocl_tbb_notify(cl_device_id device, cl_event event, cl_event finished) {
   _cl_command_node *node = event->command;
 
   if (finished->status < CL_COMPLETE) {
-    pocl_update_event_failed(event);
-    return;
+      pocl_update_event_failed_locked (event);
+      return;
   }
 
   if (!node->ready)

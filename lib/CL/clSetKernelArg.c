@@ -140,7 +140,9 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
           return pocl_verify_dbk_kernel_arg (buf, &Attrs->c_in);
         if (arg_index == 3)
           return pocl_verify_dbk_kernel_arg (buf, &Attrs->c_out);
-        POCL_ABORT ("this should not be reached \n");
+        POCL_RETURN_ERROR_ON (1, CL_INVALID_ARG_INDEX,
+                              "invalid arg index to "
+                              "POCL_CDBI_DBK_EXP_GEMM");
       }
     case POCL_CDBI_DBK_EXP_MATMUL:
       {
@@ -152,7 +154,9 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
           return pocl_verify_dbk_kernel_arg (buf, &Attrs->b);
         if (arg_index == 2)
           return pocl_verify_dbk_kernel_arg (buf, &Attrs->c);
-        POCL_ABORT ("this should not be reached \n");
+        POCL_RETURN_ERROR_ON (1, CL_INVALID_ARG_INDEX,
+                              "invalid arg index to "
+                              "POCL_CDBI_DBK_EXP_MATMUL");
       }
     case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
     case POCL_CDBI_DBK_EXP_JPEG_DECODE:

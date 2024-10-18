@@ -598,14 +598,15 @@ void pocl_llvm_release_context(cl_context ctx) {
   if (data == NULL)
     return;
 
+  if (data->number_of_IRs > 0) {
+    POCL_MSG_ERR("still have IR references - can't release LLVM context !\n");
+    return;
+  }
+
   if (LLVMUseGlobalContext) {
     --GlobalLLVMContextRefcount;
     if (GlobalLLVMContextRefcount > 0)
       return;
-  }
-
-  if (data->number_of_IRs > 0) {
-    POCL_ABORT("still have references to IRs - can't release LLVM context !\n");
   }
 
   delete data->poclDiagPrinter;

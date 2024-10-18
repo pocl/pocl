@@ -107,10 +107,11 @@ POCL_EXPORT
 void pocl_setup_kernel_arg_array (kernel_run_command *k);
 
 POCL_EXPORT
-void pocl_setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
-                                         kernel_run_command *k,
-                                         char *local_mem,
-                                         size_t local_mem_size);
+int pocl_setup_kernel_arg_array_with_locals (void **arguments,
+                                             void **arguments2,
+                                             kernel_run_command *k,
+                                             char *local_mem,
+                                             size_t local_mem_size);
 
 POCL_EXPORT
 int pocl_tensor_type_size (cl_tensor_datatype T);

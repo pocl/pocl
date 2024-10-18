@@ -154,10 +154,10 @@ cl_int pocl_almaif_compile_uninit(unsigned j, cl_device_id dev) {
   return CL_SUCCESS;
 }
 
-void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
-                                cl_device_id device, int specialize) {
+int pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
+                               cl_device_id device, int specialize) {
   if (cmd->type != CL_COMMAND_NDRANGE_KERNEL) {
-    return;
+    return CL_INVALID_OPERATION;
   }
 
   if (kernel == NULL)
@@ -186,7 +186,7 @@ void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
 #endif
 
   if (pocl_offline_compile) {
-    return;
+    return CL_SUCCESS;
   }
   almaif_kernel_data_t *kd =
       (almaif_kernel_data_t *)kernel->data[cmd->program_device_i];
@@ -196,6 +196,8 @@ void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
 
   POCL_MSG_PRINT_ALMAIF("Loaded program to device\n");
   d->compilationData->current_kernel = kernel;
+
+  return CL_SUCCESS;
 }
 
 int pocl_almaif_create_kernel(cl_device_id device, cl_program program,

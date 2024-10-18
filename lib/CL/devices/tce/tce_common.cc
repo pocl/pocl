@@ -469,10 +469,10 @@ static void pocl_tce_write_kernel_descriptor(_cl_command_node *Command,
                               content.str().c_str(), content.str().size());
 }
 
-void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
-                             cl_device_id Device, int Specialize) {
+int pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
+                            cl_device_id Device, int Specialize) {
   if (Command->type != CL_COMMAND_NDRANGE_KERNEL)
-    return;
+    return CL_INVALID_OPERATION;
   _cl_command_run *RunCommand = &Command->command.run;
 
   void *Data = Command->device->data;
@@ -495,7 +495,7 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
     POCL_MSG_PRINT_GENERAL("TCE: pocl_llvm_generate_workgroup_function()"
                            " failed for kernel %s\n",
                            Kernel->name);
-    POCL_ABORT ("TCE compilation error\n");
+    return CL_COMPILE_PROGRAM_FAILURE;
   }
 
   // 12 == strlen (POCL_PARALLEL_BC_FILENAME)
@@ -509,7 +509,6 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
                                   Command->program_device_i,
                                   Kernel, "", Command, Specialize);
   RunCommand->device_data = strdup(CacheDir);
-
   POCL_MSG_PRINT_TCE("CACHE DIR: %s\n", CacheDir);
 
   if (Dev->isNewKernel(RunCommand)) {
@@ -532,17 +531,19 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
       POCL_MEASURE_START(TCE_COMPILATION);
       Error = system(BuildCmd.c_str());
       POCL_MEASURE_FINISH(TCE_COMPILATION);
-      if (Error != 0)
-        POCL_ABORT("Error while running tcecc.\n");
+      if (Error != 0) {
+        POCL_UNLOCK(Dev->tce_compile_lock);
+        POCL_MSG_ERR("Error while running tcecc.\n");
+        return CL_COMPILE_PROGRAM_FAILURE;
+      }
     }
   }
 
   pocl_restore_builtin_kernel_name(Kernel, Save);
 
   POCL_UNLOCK(Dev->tce_compile_lock);
+  return CL_SUCCESS;
 }
-
-
 
 #define CHECK_AND_ALIGN_ARGBUFFER(DSIZE)                                      \
   do                                                                          \
@@ -1175,7 +1176,7 @@ pocl_tce_notify (cl_device_id device, cl_event event, cl_event finished)
   _cl_command_node *node = event->command;
 
   if (finished->status < CL_COMPLETE) {
-    pocl_update_event_failed(event);
+    pocl_update_event_failed_locked(event);
     return;
   }
 

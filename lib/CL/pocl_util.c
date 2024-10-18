@@ -2190,9 +2190,17 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
   }
 }
 
+void
+pocl_update_event_failed (const char *func,
+                          unsigned line,
+                          cl_event event,
+                          const char *msg)
+{
+  pocl_update_event_finished (CL_FAILED, func, line, event, msg);
+}
 
 void
-pocl_update_event_failed (cl_event event)
+pocl_update_event_failed_locked (cl_event event)
 {
   POCL_UNLOCK_OBJ (event);
   pocl_update_event_finished (CL_FAILED, NULL, 0, event, NULL);

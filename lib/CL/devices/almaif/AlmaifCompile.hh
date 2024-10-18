@@ -75,8 +75,8 @@ int pocl_almaif_compile_init(unsigned j, cl_device_id dev,
 cl_int pocl_almaif_compile_uninit(unsigned j, cl_device_id dev);
 
 extern "C" {
-void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
-                                cl_device_id device, int specialize);
+int pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
+                               cl_device_id device, int specialize);
 int pocl_almaif_create_kernel(cl_device_id device, cl_program, cl_kernel kernel,
                               unsigned device_i);
 int pocl_almaif_free_kernel(cl_device_id device, cl_program program,

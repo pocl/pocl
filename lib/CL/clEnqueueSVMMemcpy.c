@@ -124,8 +124,11 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
   else
     {
       if (command_buffer)
-        POCL_ABORT_UNIMPLEMENTED (
-            "host to host memcopy command buffering unimplemented");
+        {
+          POCL_RETURN_ERROR_ON (1, CL_INVALID_OPERATION,
+                                "host to host memcopy "
+                                "command buffering unimplemented");
+        }
 
       /* Copy between non-SVM allocated host pointers. Can be a system SVM
          or any region of memory (even if the device wouldn't support system
