@@ -753,8 +753,10 @@ struct pocl_device_ops {
   /** Optional: If the driver uses the default build_poclbinary implementation
    * from common_driver.c, that implementation calls this to compile a
    * "dynamic WG size" kernel. */
-  void (*compile_kernel) (_cl_command_node *cmd, cl_kernel kernel,
-                          cl_device_id device, int specialize);
+  int (*compile_kernel) (_cl_command_node *cmd,
+                         cl_kernel kernel,
+                         cl_device_id device,
+                         int specialize);
 
   /** Optional: If the target can utilize the basic Clang-driven steps for
    * other compilation steps, but the final linkage step, this function can be

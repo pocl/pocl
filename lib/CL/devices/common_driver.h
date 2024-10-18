@@ -156,10 +156,10 @@ POCL_EXPORT
 int pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i);
 
 POCL_EXPORT
-void pocl_driver_build_gvar_init_kernel (cl_program program,
-                                         cl_uint dev_i,
-                                         cl_device_id device,
-                                         gvar_init_callback_t callback);
+int pocl_driver_build_gvar_init_kernel (cl_program program,
+                                        cl_uint dev_i,
+                                        cl_device_id device,
+                                        gvar_init_callback_t callback);
 
 POCL_EXPORT
 void pocl_cpu_gvar_init_callback (cl_program program,

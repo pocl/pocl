@@ -42,7 +42,7 @@ CL_API_SUFFIX__VERSION_1_0
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  POCL_ABORT_UNIMPLEMENTED("The entire clEnqueueWaitForEvents call");
-  return CL_SUCCESS;
+  POCL_RETURN_ERROR_ON (1, CL_INVALID_OPERATION,
+                        "clEnqueueWaitForEvents is not implemented\n");
 }
 POsym(clEnqueueWaitForEvents)

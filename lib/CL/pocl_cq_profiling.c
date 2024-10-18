@@ -138,6 +138,11 @@ pocl_cq_profiling_register_event (cl_event event)
 
   unsigned cq_events_pos = POCL_ATOMIC_INC (cq_events_collected) - 1;
   if (cq_events_pos >= POCL_CQ_PROFILING_MAX_EVENTS)
-    POCL_ABORT ("CQ profiler reached the limit on tracked events.");
-  profiled_cq_events[cq_events_pos] = event;
+    {
+      POCL_MSG_ERR ("CQ profiler reached the limit on tracked events.");
+    }
+  else
+    {
+      profiled_cq_events[cq_events_pos] = event;
+    }
 }

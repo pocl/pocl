@@ -413,7 +413,7 @@ static void addPass(std::vector<std::string> &Passes, std::string PassName,
     Passes.push_back(Temp);
     break;
   default:
-    POCL_ABORT("unknown pass type");
+    POCL_MSG_ERR("pocl_llvm_wg: addPass(): unknown pass type\n");
   }
 }
 
@@ -440,7 +440,7 @@ static void addAnalysis(std::vector<std::string> &Passes, std::string PassName,
     Passes.push_back(Temp);
     break;
   default:
-    POCL_ABORT("unknown pass type");
+    POCL_MSG_ERR("pocl_llvm_wg: addPass(): unknown analysis type\n");
   }
 }
 

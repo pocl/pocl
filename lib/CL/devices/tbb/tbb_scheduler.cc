@@ -180,14 +180,25 @@ prepareKernelCommand(pocl_tbb_scheduler_data *SchedData,
   }
 
   /* initialize the program gvars if required */
-  pocl_driver_build_gvar_init_kernel(Program, DevI, Cmd->device,
-                                     pocl_cpu_gvar_init_callback);
+  if (pocl_driver_build_gvar_init_kernel(Program, DevI, Cmd->device,
+                                         pocl_cpu_gvar_init_callback) != 0) {
+    pocl_update_event_running(Cmd->sync.event.event);
+    POCL_UPDATE_EVENT_FAILED_MSG(Cmd->sync.event.event,
+                                 "CPU: failed to compile GVar init kernel");
+    return NULL;
+  }
 
   char *SavedName = NULL;
   pocl_sanitize_builtin_kernel_name(Kernel, &SavedName);
   void *ci = pocl_check_kernel_dlhandle_cache(Cmd, CL_TRUE, CL_TRUE);
   Cmd->command.run.device_data = ci;
   pocl_restore_builtin_kernel_name(Kernel, SavedName);
+  if (ci == NULL) {
+    pocl_update_event_running(Cmd->sync.event.event);
+    POCL_UPDATE_EVENT_FAILED_MSG(Cmd->sync.event.event,
+                                 "CPU: failed to compile kernel");
+    return NULL;
+  }
 
   RunCmd = new_kernel_run_command();
   RunCmd->data = SchedData;

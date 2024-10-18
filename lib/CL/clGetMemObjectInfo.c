@@ -103,8 +103,11 @@ POname (clGetMemObjectInfo) (
           POCL_MSG_PRINT_MEMORY (
               "Got dev ptr %p for device %zu (gmem id %d).\n", p->device_addr,
               i, dev->global_mem_id);
-          if (*addr != 0 && (cl_mem_device_address_EXT)p->device_addr != *addr)
-            POCL_ABORT ("All devices do not have the same cl_mem address!");
+          cl_mem_device_address_EXT dev_addr
+            = (cl_mem_device_address_EXT)p->device_addr;
+          POCL_RETURN_ERROR_ON (
+            (*addr != 0 && dev_addr != *addr), CL_INVALID_MEM_OBJECT,
+            "All devices do not have the same cl_mem address!");
           *addr = (cl_mem_device_address_EXT)p->device_addr;
         }
       return CL_SUCCESS;

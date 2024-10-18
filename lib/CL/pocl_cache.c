@@ -546,13 +546,16 @@ pocl_cache_init_topdir ()
       needed = snprintf (cache_topdir, POCL_MAX_PATHNAME_LENGTH, "%s", tmp_path);
     } else {
 #ifdef __ANDROID__
-        POCL_ABORT ("Please set the POCL_CACHE_DIR env var to your app's cache directory (Context.getCacheDir())\n");
+      POCL_MSG_ERR ("Please set the POCL_CACHE_DIR env var to your app's "
+                    "cache directory (Context.getCacheDir())\n");
+      return CL_FAILED;
 
 #elif defined(_WIN32)
         tmp_path = getenv("LOCALAPPDATA");
         if (!tmp_path)
-            tmp_path = getenv("TEMP");
-        assert(tmp_path);
+          tmp_path = getenv ("TEMP");
+        if (tmp_path == NULL)
+          return CL_FAILED;
         needed = snprintf (cache_topdir, POCL_MAX_PATHNAME_LENGTH, "%s\\pocl",
                            tmp_path);
 #else
@@ -584,7 +587,7 @@ pocl_cache_init_topdir ()
   if (needed >= POCL_MAX_PATHNAME_LENGTH)
     {
       POCL_MSG_ERR ("pocl: cache path longer than maximum filename length\n");
-      return 1;
+      return CL_FAILED;
     }
 
     assert(strlen(cache_topdir) > 0);
@@ -603,7 +606,7 @@ pocl_cache_init_topdir ()
             "installed from your linux distribution's packages should "
             "work.\n",
             cache_topdir);
-        return 1;
+        return CL_FAILED;
       }
 
     strncpy (tempfile_pattern, cache_topdir, POCL_MAX_PATHNAME_LENGTH);
@@ -629,7 +632,7 @@ pocl_cache_init_topdir ()
 
     cache_topdir_initialized = 1;
 
-    return 0;
+    return CL_SUCCESS;
 }
 
 /* Create the new program cachedir, invalidating the old program

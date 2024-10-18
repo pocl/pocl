@@ -1012,7 +1012,11 @@ pocl_driver_build_poclbinary (cl_program program, cl_uint device_i)
 
       /* Force generate a generic WG function to ensure all local sizes
          can be executed using the binary. */
-      device->ops->compile_kernel (&cmd, kernel, device, 0);
+      if (device->ops->compile_kernel (&cmd, kernel, device, 0) != 0)
+        {
+          POCL_UNLOCK_OBJ (program);
+          return CL_INVALID_OPERATION;
+        }
       /* Then generate specialized ones as requested via the
          POCL_BINARY_SPECIALIZE_WG configuration option. */
       char *temp
@@ -1066,15 +1070,23 @@ pocl_driver_build_poclbinary (cl_program program, cl_uint device_i)
           free (param1);
           free (param2);
 
-          device->ops->compile_kernel (&cmd, kernel, device, 1);
+          if (device->ops->compile_kernel (&cmd, kernel, device, 1) != 0)
+            {
+              POCL_UNLOCK_OBJ (program);
+              return CL_INVALID_OPERATION;
+            }
         }
       free (temp);
     }
 
-  pocl_driver_build_gvar_init_kernel (program, device_i, device, NULL);
+  if (pocl_driver_build_gvar_init_kernel (program, device_i, device, NULL)
+      != 0)
+    {
+      POCL_UNLOCK_OBJ (program);
+      return CL_INVALID_OPERATION;
+    }
 
   POCL_UNLOCK_OBJ (program);
-
   return CL_SUCCESS;
 }
 
@@ -1178,13 +1190,15 @@ pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i)
 * \param [in] dev_i index into program->devices[] corresponding to device
 * \param [in] callback either NULL or a callback
 */
-void
-pocl_driver_build_gvar_init_kernel (cl_program program, cl_uint dev_i,
-                                    cl_device_id device, gvar_init_callback_t callback)
+int
+pocl_driver_build_gvar_init_kernel (cl_program program,
+                                    cl_uint dev_i,
+                                    cl_device_id device,
+                                    gvar_init_callback_t callback)
 {
 #ifdef ENABLE_HOST_CPU_DEVICES
   if (device->run_program_scope_variables_pass == CL_FALSE)
-    return;
+    return CL_SUCCESS;
 
   if (program->global_var_total_size[dev_i] > 0 && program->gvar_storage[dev_i] == NULL)
     {
@@ -1231,13 +1245,16 @@ pocl_driver_build_gvar_init_kernel (cl_program program, cl_uint dev_i,
       fake_cmd.command.run.pc.global_offset[2] = 0;
       fake_cmd.command.run.pc.global_var_buffer = program->gvar_storage[dev_i];
 
-      device->ops->compile_kernel (&fake_cmd, &fake_kernel, device, 0);
+      if (device->ops->compile_kernel (&fake_cmd, &fake_kernel, device, 0)
+          != 0)
+        return CL_INVALID_OPERATION;
 
       if (callback) {
         callback (program, dev_i, &fake_cmd);
       }
     }
 #endif
+  return CL_SUCCESS;
 }
 
 

@@ -54,7 +54,8 @@ pocl_validate_khr_jpeg (BuiltinKernelId kernel_id,
       }
 
     default:
-      POCL_ABORT ("pocl_validate_khr_jpeg called with wrong kernel_id.\n");
+      POCL_MSG_ERR ("pocl_validate_khr_jpeg called with wrong kernel_id.\n");
+      return CL_FAILED;
     }
 }
 
@@ -75,8 +76,9 @@ pocl_copy_dbk_attributes_khr_jpeg (BuiltinKernelId kernel_id,
     case POCL_CDBI_DBK_EXP_JPEG_DECODE:
       return NULL;
     default:
-      POCL_ABORT ("pocl_copy_dbk_attributes_khr_jpeg called with "
-                  "wrong kernel_id.\n");
+      POCL_MSG_ERR ("pocl_copy_dbk_attributes_khr_jpeg called with "
+                    "wrong kernel_id.\n");
+      return NULL;
     }
 }
 
@@ -98,7 +100,8 @@ pocl_release_dbk_attributes_khr_jpeg (BuiltinKernelId kernel_id,
         return CL_SUCCESS;
       }
     default:
-      POCL_ABORT ("pocl_copy_dbk_attributes_khr_jpeg called with "
-                  "wrong kernel_id.\n");
+      POCL_RETURN_ERROR_ON (1, CL_INVALID_DBK_ID,
+                            "pocl_copy_dbk_attributes_khr_jpeg called with "
+                            "wrong kernel_id.\n");
     }
 }
