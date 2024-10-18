@@ -1,23 +1,28 @@
-kernel 
-void test_min_max() {
-/*    +FAIL: max(a,b)[0] type=uint2 a=0x15b348c9 b=0xf88e7d07 want=0xf88e7d07 got=0x15b348c9
-      +FAIL: min(a,b)[0] type=uint2 a=0x15b348c9 b=0xf88e7d07 want=0x15b348c9 got=0xf88e7d07 */
-    volatile uint2 a = (uint2)(0x15b348c9, 0x15b348c9);
-    volatile uint2 b = (uint2)(0xf88e7d07, 0xf88e7d07);
-    uint2 max_ = max(a, b);
-    uint2 min_ = min(a, b);
-    if (max_[0] != 0xf88e7d07 || min_[0] != 0x15b348c9) {
-        printf("max(a,b)[0] type=uint2 a=0x15b348c9 b=0xf88e7d07 want=0xf88e7d07 got=%x\n", max_[0]);
-        printf("min(a,b)[0] type=uint2 a=0x15b348c9 b=0xf88e7d07 want=0x15b348c9 got=%x\n", min_[0]);
-    }
+#pragma OPENCL EXTENSION cl_khr_fp16 : enable
 
-    volatile float4 va = (float4)(3.0f, 5.0f, -2.0f, -9.0f);
-    volatile float4 vb = (float4)(2.0f, -4.4f, -1.0f, -20.0f); 
-    float4 vmax = max(va, vb);
-    float4 vmin = min(va, vb);
+global half a = INFINITY;
+global half b = 1.0h;
+global half8 va = (half8)(INFINITY);
+global half8 vb = (half8)(1.0h);
 
-    if (any(vmax != (float4)(3.0f, 5.0f, -1.0f, -9.0f)) ||
-        any(vmin != (float4)(2.0f, -4.4f, -2.0f, -20.0f))) {
-        printf("min or max on float4 failed.\n");
-    }
+/* This prevents compiler to optimize away test inputs without volatile keyword.
+ */
+kernel void touch_testdata(half a_init, half b_init, half va_init,
+                           half vb_init) {
+  a = a_init;
+  b = b_init;
+  va = va_init;
+  vb = vb_init;
+}
+
+kernel
+void test_halfs() {
+  if (!isinf(a))
+    printf("FAIL at line %d\n", __LINE__ - 1);
+  if (isinf(b))
+    printf("FAIL at line %d\n", __LINE__ - 1);
+  if (!all(isinf(va) == (short8)(-1)))
+    printf("FAIL at line %d\n", __LINE__ - 1);
+  if (!all(isinf(vb) == (short8)(0)))
+    printf("FAIL at line %d\n", __LINE__ - 1);
 }
