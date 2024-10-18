@@ -47,7 +47,7 @@ jobs:
           - llvm: 15
             config: TBB
           - llvm: 16
-            config: basic
+            config: static
           - llvm: 18
             config: install
 
@@ -105,7 +105,7 @@ jobs:
           elif [ "${{ matrix.config }}" == "TBB" ]; then
             runCMake -DENABLE_ICD=1 -DENABLE_TBB_DEVICE=1
           elif [ "${{ matrix.config }}" == "basic" ]; then
-            runCMake -DENABLE_ICD=1
+            runCMake -DENABLE_ICD=1 -DENABLE_LLVM_FILECHECKS=1
           elif [ "${{ matrix.config }}" == "static" ]; then
             runCMake -DENABLE_ICD=1 -DSTATIC_LLVM=1
           elif [ "${{ matrix.config }}" == "devel" ]; then
