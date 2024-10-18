@@ -767,7 +767,9 @@ pocl_exec_command (_cl_command_node *node)
       break;
 
     default:
-      POCL_ABORT_UNIMPLEMENTED("");
+      pocl_update_event_running (event);
+      POCL_UPDATE_EVENT_FAILED_MSG (event,
+              "pocl_exec_command: Unknown command type\n");
       break;
     }
 }
@@ -991,10 +993,10 @@ pocl_release_dlhandle_cache (void *dlhandle_cache_item)
  * of the generic one.
  * @returns The filename of the built binary in the disk.
  */
-char *
-pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
+int
+pocl_check_kernel_disk_cache (char *module_fn, _cl_command_node *command,
+                              int specialized)
 {
-  char *module_fn = NULL;
   _cl_command_run *run_cmd = &command->command.run;
   cl_kernel k = run_cmd->kernel;
   cl_program p = k->program;
@@ -1003,13 +1005,12 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
   /* First try to find a static WG binary for the local size as they
      are always more efficient than the dynamic ones.  Also, in case
      of reqd_wg_size, there might not be a dynamic sized one at all.  */
-  module_fn = malloc (POCL_MAX_PATHNAME_LENGTH);
   pocl_cache_final_binary_path (module_fn, p, dev_i, k, command, specialized);
 
   if (pocl_exists (module_fn))
     {
       POCL_MSG_PRINT_INFO ("Using a cached WG function: %s\n", module_fn);
-      return module_fn;
+      return CL_SUCCESS;
     }
 
   /* static WG binary for the local size does not exist. If we have the LLVM IR
@@ -1021,22 +1022,25 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
       int error = llvm_codegen (module_fn, dev_i, k, command->device, command,
                                 specialized);
       POCL_UNLOCK (pocl_llvm_codegen_lock);
-      if (error)
-        POCL_ABORT ("Final linking of kernel %s failed.\n", k->name);
+      if (error) {
+        POCL_MSG_ERR ("Final linking of kernel %s failed.\n", k->name);
+        return -1;
+      }
       POCL_MSG_PRINT_INFO ("Built a %sWG function: %s\n",
                            specialized ? "specialized " : "generic ",
                            module_fn);
-      return module_fn;
+      return CL_SUCCESS;
 #else
       /* TODO: This should be caught earlier. */
-      if (!p->pocl_binaries[dev_i])
-        POCL_ABORT ("pocl device without online compilation support"
+      if (!p->pocl_binaries[dev_i]) {
+        POCL_MSG_ERR ("pocl device without online compilation support"
                     " cannot compile LLVM IRs to machine code!\n");
+        return -1;
+      }
 #endif
     }
   else
     {
-      module_fn = malloc (POCL_MAX_PATHNAME_LENGTH);
       /* First try to find a specialized WG binary, if allowed by the
          command. */
       if (!run_cmd->force_generic_wg_func)
@@ -1046,8 +1050,10 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
         {
           /* Then check for a dynamic (non-specialized) kernel. */
           pocl_cache_final_binary_path (module_fn, p, dev_i, k, command, 0);
-          if (!pocl_exists (module_fn))
-            POCL_ABORT ("Generic WG function binary does not exist.\n");
+          if (!pocl_exists (module_fn)) {
+            POCL_MSG_ERR("Generic WG function binary does not exist.\n");
+            return -1;
+          }
           POCL_MSG_PRINT_INFO ("Using a cached generic WG function: %s\n",
                                module_fn);
         }
@@ -1055,7 +1061,7 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
         POCL_MSG_PRINT_INFO ("Using a cached specialized WG function: %s\n",
                              module_fn);
     }
-  return module_fn;
+  return CL_SUCCESS;
 }
 
 
@@ -1144,7 +1150,10 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   size_t max_grid_width = pocl_cmd_max_grid_dim_width (run_cmd);
   ci->max_grid_dim_width = max_grid_width;
 
-  char *module_fn = pocl_check_kernel_disk_cache (command, specialize);
+  char module_fn[POCL_MAX_PATHNAME_LENGTH];
+  int err = pocl_check_kernel_disk_cache (module_fn, command, specialize);
+  if (err)
+    return NULL;
 
   ci->dlhandle = pocl_dynlib_open (module_fn, 0, 1);
 
@@ -1160,19 +1169,20 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
                 "pocl_kernel_%s_workgroup", run_cmd->kernel->name);
       ci->wg = pocl_dynlib_symbol_address (ci->dlhandle, workgroup_string);
 
-      if (ci->wg == NULL)
-      POCL_ABORT (
+      if (ci->wg == NULL) {
+        POCL_MSG_ERR (
         "pocl_dynlib_symbol_address(\"%s\", \"%s\") failed with '%s'.\n"
         "note: missing symbols in the kernel binary might be"
         " reported as 'file not found' errors.\n",
         module_fn, workgroup_string, dl_error);
+        return NULL;
+      }
     }
 
   run_cmd->wg = ci->wg;
   DL_PREPEND (pocl_dlhandle_cache, ci);
 
   POCL_UNLOCK (pocl_dlhandle_lock);
-  POCL_MEM_FREE (module_fn);
 
   return ci;
 }
@@ -1236,8 +1246,9 @@ pocl_setup_device_for_system_memory (cl_device_id device)
                        (unsigned)(device->global_mem_size >> 30));
     }
 
-  if (device->global_mem_size < MIN_MAX_MEM_ALLOC_SIZE)
-    POCL_ABORT("Not enough memory to run on this device.\n");
+  if (device->global_mem_size < MIN_MAX_MEM_ALLOC_SIZE) {
+    POCL_MSG_ERR ("Not enough memory to run on this device.\n");
+  }
 
   /* Maximum allocation size: we don't have hardware limits, so we
    * can potentially allocate the whole memory for a single buffer, unless
@@ -2050,8 +2061,8 @@ pocl_setup_builtin_kernels_with_version (cl_device_id dev)
 
   if (i != dev->num_builtin_kernels)
     {
-      POCL_ABORT ("Builtin kernels with version list construction failed. "
-                  "There are %u built-in kernels, but only %u were found\n",
-                  dev->num_builtin_kernels, i);
+      POCL_MSG_ERR ("Builtin kernels with version list construction failed. "
+                    "There are %u built-in kernels, but only %u were found\n",
+                    dev->num_builtin_kernels, i);
     }
 }

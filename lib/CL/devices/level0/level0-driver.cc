@@ -76,7 +76,7 @@
 
 using namespace pocl;
 
-static void pocl_level0_abort_on_ze_error(int permit_quiet_exit,
+static void pocl_level0_abort_on_ze_error(int unused,
                                           ze_result_t status, unsigned line,
                                           const char *func, const char *code) {
   const char *str = code;

@@ -246,8 +246,6 @@ POname(clGetProgramInfo)(cl_program program,
           /* only when param_value is non-NULL */
           if (size > param_value_size)
             return CL_INVALID_VALUE;
-          /* should not break from the switch clause
-             because of POCL_ABORT_UNIMPLEMENTED */
           for (i = 0; i < num_kernels; ++i)
             {
               if (i == 0)

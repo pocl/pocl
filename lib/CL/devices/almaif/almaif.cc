@@ -794,7 +794,7 @@ void pocl_almaif_notify(cl_device_id Device, cl_event Event, cl_event Finished) 
   _cl_command_node *volatile Node = Event->command;
 
   if (Finished->status < CL_COMPLETE) {
-    pocl_update_event_failed(Event);
+    pocl_update_event_failed_locked(Event);
     return;
   }
 

@@ -753,7 +753,7 @@ struct pocl_device_ops {
   /** Optional: If the driver uses the default build_poclbinary implementation
    * from common_driver.c, that implementation calls this to compile a
    * "dynamic WG size" kernel. */
-  void (*compile_kernel) (_cl_command_node *cmd, cl_kernel kernel,
+  int (*compile_kernel) (_cl_command_node *cmd, cl_kernel kernel,
                           cl_device_id device, int specialize);
 
   /** Optional: The driver should free the content of "program->data" here,
