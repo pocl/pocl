@@ -37,16 +37,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [17, 18]
-        # basic = simplest pthread build
-        # devel = with devel options
+        llvm: [18, 19]
         # cts_spirv = cts with SPIR-V
         # tier1 = includes CTS without SPIR-V
-        # asan, tsan, ubsan = sanitizers
         # chipstar 1.1 only supports LLVM up to 17
-        config: [cts_spirv, tier1, chipstar, asan, tsan, ubsan]
-        exclude:
-          - llvm: 18
+        # chipstar 1.2 only supports LLVM up to 19
+        # asan, tsan, ubsan = sanitizers
+        config: [cts_spirv, tier1, asan, tsan, ubsan]
+        include:
+          - llvm: 19
             config: chipstar
 
     steps:
@@ -177,7 +176,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [17, 18]
+        llvm: [18, 19]
         # basic = simplest pthread build
         # devel = with devel options
         # cts_spirv = cts with SPIR-V
@@ -191,7 +190,9 @@ jobs:
           - llvm: 15
             config: TBB
           - llvm: 16
-            config: basic
+            config: OpenMP
+          - llvm: 17
+            config: TBB
           - llvm: 18
             config: static
 
@@ -235,7 +236,7 @@ jobs:
         run: |
           runCMake() {
             BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
-            cmake -DDEVELOPER_MODE=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             "-DCMAKE_C_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
             "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
             -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} \
@@ -249,7 +250,7 @@ jobs:
           elif [ "${{ matrix.config }}" == "TBB" ]; then
             runCMake -DENABLE_ICD=1 -DENABLE_TBB_DEVICE=1
           elif [ "${{ matrix.config }}" == "basic" ]; then
-            runCMake -DENABLE_ICD=1
+            runCMake -DENABLE_ICD=1 -DENABLE_LLVM_FILECHECKS=1
           elif [ "${{ matrix.config }}" == "static" ]; then
             runCMake -DENABLE_ICD=1 -DSTATIC_LLVM=1
           elif [ "${{ matrix.config }}" == "devel" ]; then
@@ -465,7 +466,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [17, 18]
+        llvm: [18, 19]
         config: [cuda]
 
     steps:
@@ -611,7 +612,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [18]
+        llvm: [18, 19]
         config: [basic]
 
     steps:
@@ -655,13 +656,18 @@ jobs:
 
 
   level_zero_matrix:
-    name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
+    name: LLVM ${{ matrix.llvm }} - Level Zero - CTS ${{ matrix.conformance }}
     runs-on: [self-hosted, linux, level_zero]
     strategy:
       fail-fast: false
       matrix:
-        llvm: [17, 18]
-        config: [level_zero]
+        include:
+          - llvm: 17
+            conformance: 0
+          - llvm: 18
+            conformance: 0
+          - llvm: 19
+            conformance: 1
 
     steps:
       - name: Checkout
@@ -687,7 +693,7 @@ jobs:
           mkdir -p ${EXAMPLES_DIR}/build_level0
           mkdir -p ${EXAMPLES_DIR}/source
           # test both with and without ENABLE_CONFORMANCE
-          if [ ${{ matrix.llvm }} -eq 17 ]; then
+          if [ ${{ matrix.conformance }} -eq 0 ]; then
             runCMake -DENABLE_LEVEL0=1 -DENABLE_HOST_CPU_DEVICES=0 -DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }}
           else
             runCMake -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_level0 -DENABLE_LEVEL0=1 -DENABLE_HOST_CPU_DEVICES=0 -DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }}
@@ -700,7 +706,7 @@ jobs:
 
       - name: Build Examples
         id: build_examples
-        if: ${{ matrix.llvm == 18 }}
+        if: ${{ matrix.conformance == 1 }}
         timeout-minutes: 120
         run: |
           cd ${{ github.workspace }}/build/examples/conformance && make -j4 conformance
