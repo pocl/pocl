@@ -1047,6 +1047,13 @@ void WorkgroupImpl::createDefaultWorkgroupLauncher(llvm::Function *F) {
       M->getOrInsertFunction(FuncName + "_workgroup", LauncherFuncT);
   Function *WorkGroup = dyn_cast<Function>(fc.getCallee());
 
+  Triple TT(F->getParent()->getTargetTriple());
+  if (TT.getEnvironment() == llvm::Triple::MSVC) {
+    // dllexport is needed for exposing the symbol in the kernel module
+    // when MSVC-based toolchain is used.
+    WorkGroup->setDLLStorageClass(GlobalValue::DLLExportStorageClass);
+  }
+
   // Propagate the DISubprogram to the launcher so we get debug data emitted
   // in case the kernel is inlined to it.
   if (auto *KernelSp = F->getSubprogram()) {
