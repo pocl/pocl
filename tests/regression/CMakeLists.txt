@@ -155,7 +155,13 @@ set_tests_properties(
     PROCESSORS 1
     DEPENDS "pocl_version_check"
     LABELS "internal;regression")
+  set_tests_properties(
+    "regression/test_program_from_binary_with_local_1_1_1_${VARIANT}"
+    PROPERTIES
+      ENVIRONMENT "POCL_WORK_GROUP_SPECIALIZATION=0"
+   )
 endforeach()
+
 
 add_test_pocl(NAME "regression/test_alignment_with_dynamic_wg_114" COMMAND "test_alignment_with_dynamic_wg" 1 1 4)
 

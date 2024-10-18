@@ -28,6 +28,7 @@
 #define POCL_EXPORT __attribute__ ((visibility ("default")))
 #else
 #define POCL_EXPORT
+#error dont know how to define POCL_EXPORT
 #endif
 
 #endif

@@ -594,7 +594,7 @@ pocl_basic_free_program (cl_device_id device, cl_program program,
 {
   pocl_driver_free_program (device, program, dev_i);
   program->global_var_total_size[dev_i] = 0;
-  POCL_MEM_FREE (program->gvar_storage[dev_i]);
+  pocl_aligned_free (program->gvar_storage[dev_i]);
   return 0;
 }
 /*********************** IMAGES ********************************/
@@ -818,9 +818,6 @@ pocl_basic_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, size_t size)
 {
   return pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, size);
 }
-
-static struct _pocl_basic_usm_allocation_t *usm_allocations = NULL;
-static pocl_lock_t usm_lock;
 
 void *
 pocl_basic_usm_alloc (cl_device_id dev, unsigned alloc_type,

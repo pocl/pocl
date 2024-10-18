@@ -455,8 +455,6 @@ endforeach()
 
 set_property(TEST ${OCL_30_TESTS_FULL}
              APPEND PROPERTY LABELS "conformance_30_only")
-set_property(TEST "${TS_NAME}${TS_SUFFIX}_non_uniform_work_group"
-             PROPERTY ENVIRONMENT "POCL_MEMORY_LIMIT=4")
 endfunction()
 
 # add the full testsuite with online compilation from sources
@@ -1005,8 +1003,10 @@ foreach(CTSTEST IN LISTS CTS_MICRO_LIST)
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
 endforeach()
 
+# note that the environment variables must be set for this test
+# this is to workaround a bug: https://github.com/KhronosGroup/OpenCL-CTS/issues/1142
 set_property(TEST "${TS_NAME}${TS_SUFFIX}_non_uniform_work_group"
-             PROPERTY ENVIRONMENT "POCL_MEMORY_LIMIT=4")
+             PROPERTY ENVIRONMENT "POCL_MEMORY_LIMIT=4;POCL_MAX_WORK_GROUP_SIZE=1024")
 
 endfunction()
 

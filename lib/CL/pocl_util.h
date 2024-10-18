@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "pocl_cl.h"
 
 #ifdef __cplusplus
@@ -103,7 +104,9 @@ size_t pocl_align_value (size_t value, size_t alignment);
 
 POCL_EXPORT
 void *pocl_aligned_malloc(size_t alignment, size_t size);
-#define pocl_aligned_free(x) POCL_MEM_FREE(x)
+
+POCL_EXPORT
+void pocl_aligned_free (void *ptr);
 
 /* locks / unlocks two events in order of their event-id.
  * This avoids any potential deadlocks of threads should
@@ -360,7 +363,8 @@ POCL_EXPORT
 int pocl_escape_quoted_whitespace (char *temp_options, char *replace_me);
 
 POCL_EXPORT
-int pocl_fill_aligned_buf_with_pattern (void *__restrict__ ptr, size_t offset,
+int pocl_fill_aligned_buf_with_pattern (void *__restrict__ ptr,
+                                        size_t offset,
                                         size_t size,
                                         const void *__restrict__ pattern,
                                         size_t pattern_size);

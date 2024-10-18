@@ -257,7 +257,7 @@ extern pocl_obj_id_t last_object_id;
 #  define POsym(name)
 #  define POsymAlways(name)
 
-#elif defined(_WIN32)
+#elif defined(_WIN32) && !defined(__MINGW32__)
 /* Visual Studio does not support this magic either */
 #  define POname(name) name
 #  define POdeclsym(name)

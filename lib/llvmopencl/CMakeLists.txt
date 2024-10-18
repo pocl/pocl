@@ -40,7 +40,6 @@ set(LLVMPASSES_SOURCES "AllocasToEntry.cc"
                        "DebugHelpers.cc"
                        "DebugHelpers.h"
                        "EmitPrintf.cc"
-                       "EmitPrintf.hh"
                        "Flatten.cc"
                        "FlattenGlobals.cc"
                        "FlattenBarrierSubs.cc"
@@ -62,7 +61,6 @@ set(LLVMPASSES_SOURCES "AllocasToEntry.cc"
                        "LoopBarriers.cc"
                        "LoopBarriers.h"
                        "MinLegalVecSize.cc"
-                       "MinLegalVecSize.hh"
                        "OptimizeWorkItemFuncCalls.cc"
                        "OptimizeWorkItemFuncCalls.h"
                        "OptimizeWorkItemGVars.cc"
@@ -75,8 +73,6 @@ set(LLVMPASSES_SOURCES "AllocasToEntry.cc"
                        "ProgramScopeVariables.h"
                        "RemoveBarrierCalls.cc"
                        "RemoveBarrierCalls.h"
-                       "SVMOffset.cc"
-                       "SVMOffset.hh"
                        "SubCFGFormation.cc"
                        "SubCFGFormation.h"
                        "VariableUniformityAnalysis.cc"
@@ -92,17 +88,11 @@ set(LLVMPASSES_SOURCES "AllocasToEntry.cc"
                        "WorkitemLoops.h")
 
 if (ENABLE_REMOTE_SERVER)
-  list(APPEND LLVMPASSES_SOURCES
-    "SVMOffset.cc"
-    "SVMOffset.hh")
+  list(APPEND LLVMPASSES_SOURCES "SVMOffset.cc")
 endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LLVM_CFLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}")
-
-include_directories(${LLVM_INCLUDE_DIRS})
-include_directories(../CL)
-include_directories(../CL/devices)
 
 if(MSVC)
   set_source_files_properties( ${LLVMPASSES_SOURCES} PROPERTIES LANGUAGE CXX )
@@ -113,6 +103,10 @@ endif(MSVC)
 #noinst_LTLIBRARIES = libllvmpasses.la
 add_library("llvmpasses" OBJECT ${LLVMPASSES_SOURCES})
 harden("llvmpasses")
+
+target_include_directories(llvmpasses PRIVATE "${CMAKE_SOURCE_DIR}/lib/CL")
+target_include_directories(llvmpasses PRIVATE "${CMAKE_SOURCE_DIR}/lib/CL/devices")
+target_include_directories(llvmpasses PRIVATE ${LLVM_INCLUDE_DIR})
 
 if(OCL_ICD_INCLUDE_DIRS)
   target_include_directories("llvmpasses" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})

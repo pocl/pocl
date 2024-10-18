@@ -10,7 +10,7 @@ configured during creation of the OpenCL program. The extension draft goes more 
 specific way, therefore please check below for building and usage instructions.
 
 exp_jpeg_encode And exp_jpeg_decode
-____
+______________________________________
 
 An experimental set of DBKs dedicated to compressing raw RGB images to JPEG and back.
 

@@ -395,7 +395,6 @@ pocl_get_device_type_count(cl_device_type device_type)
   return count;
 }
 
-
 cl_int
 pocl_uninit_devices ()
 {
@@ -554,7 +553,6 @@ pocl_init_devices ()
 #ifdef POCL_DEBUG_MESSAGES
   const char* debug = pocl_get_string_option ("POCL_DEBUG", "0");
   pocl_debug_messages_setup (debug);
-  pocl_stderr_is_a_tty = isatty(fileno(stderr));
 #endif
 
   POCL_GOTO_ERROR_ON ((pocl_cache_init_topdir ()), CL_DEVICE_NOT_FOUND,

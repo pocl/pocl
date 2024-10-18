@@ -379,6 +379,7 @@ pocl_kernel_copy_args (cl_kernel kernel,
             arg_alloc_size = arg_alignment;
 
           arg->value = pocl_aligned_malloc (arg_alignment, arg_alloc_size);
+          POCL_RETURN_ERROR_COND ((arg->value == NULL), CL_OUT_OF_HOST_MEMORY);
           memcpy (arg->value, src_arguments[i].value, arg->size);
         }
     }

@@ -67,6 +67,12 @@ static inline char* strtok_r(char *str, const char *delim, char **saveptr) {
 #include <sys/utime.h>
 #define utime _utime;
 
+#define sleep(x) Sleep(x)
+
+static inline int setenv(const char *name, const char *value, int overwrite) {
+  return _putenv_s(name, value);
+}
+
 #ifdef _MSC_VER
 
 #define RTLD_NOW 1

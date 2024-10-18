@@ -116,7 +116,9 @@ set(POCL_VERSION_BASE ${VERSION_STRING})
 # required b/c SHARED libs defaults to ON while OBJECT defaults to OFF
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # CMake doesn't add "-pie" by default for executables (CMake issue #14983)
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie")
+if(UNIX)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie")
+endif()
 
 enable_testing()
 
@@ -312,7 +314,8 @@ option(ENABLE_EXAMPLES "Build examples. Defaults to ON" ON)
 
 option(ENABLE_RDMA "Enable usage of RDMA libraries for memory allocations. Requires libRDMAcm and libverbs" OFF)
 
-OPTION(RENAME_POCL "rename PoCL's ocl functions to PO<ocl_function>. Allows an user to call both PoCL and another ocl application" OFF)
+option(RENAME_POCL "rename PoCL's ocl functions to PO<ocl_function>. Allows an user to call both PoCL and another ocl application" OFF)
+
 
 ##########################################################
 
@@ -912,14 +915,18 @@ if(UNIX)
     # MacOS ld outputs useless warnings like
     # ld: warning: -macosx_version_min not specificed, assuming 10.7
     # suppress them with -w.
-    set(DEFAULT_HOST_LD_FLAGS "-dynamiclib -w -lm")
+    set(DEFAULT_HOST_LD_FLAGS "-dynamiclib -w -lm -nostartfiles")
   elseif(ANDROID)
+    # TODO shouldn't Android use -nostartfiles ?
     set(DEFAULT_HOST_LD_FLAGS "-L/system/lib/ -shared -ldl -lc /system/lib/crtbegin_so.o /system/lib/crtend_so.o")
   else()
-    set(DEFAULT_HOST_LD_FLAGS "-shared")
+    set(DEFAULT_HOST_LD_FLAGS "-shared -nostartfiles")
   endif()
   set(LIBMATH "-lm")
 elseif(WIN32)
+  if(MINGW)
+    set(DEFAULT_HOST_LD_FLAGS "--shared -nostartfiles")
+  endif()
   set(LIBMATH)
 endif()
 
@@ -1246,7 +1253,7 @@ file(WRITE "${CMAKE_BINARY_DIR}/pocl_build_timestamp.h" "#define POCL_BUILD_TIME
 
 # Host (basic/pthread) driver setup
 
-set(DEFAULT_HOST_CLANG_FLAGS "${CLANG_TARGET_OPTION}${LLC_TRIPLE}")
+set(DEFAULT_HOST_CLANG_FLAGS "--target=${LLC_TRIPLE}")
 set(DEFAULT_HOST_LLC_FLAGS "-relocation-model=pic -mtriple=${LLC_TRIPLE}")
 
 # Option for users to define Clang's --target-abi argument.
@@ -1871,14 +1878,8 @@ endif()
 
 ##########################################################
 
-if (ENABLE_LLVM AND NOT CMAKE_CROSSCOMPILING)
-  CHECK_ALIGNOF("double16" "typedef double double16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_DOUBLE16)
-else()
-  set(ALIGNOF_DOUBLE16 128)
-endif()
-
-if(ALIGNOF_DOUBLE16 LESS 128)
-  set(ALIGNOF_DOUBLE16 128)
+if(NOT DEFINED ALIGNOF_DOUBLE16)
+  set(ALIGNOF_DOUBLE16 "128" CACHE INTERNAL "Align of double16")
 endif()
 
 set(MAX_EXTENDED_ALIGNMENT "${ALIGNOF_DOUBLE16}")
@@ -2044,11 +2045,9 @@ endif()
 ##########################################################
 
 if(UNIX)
-
   configure_file("${CMAKE_SOURCE_DIR}/pocl.pc.in.cmake" "${CMAKE_BINARY_DIR}/pocl.pc" @ONLY)
   install(FILES "${CMAKE_BINARY_DIR}/pocl.pc"
           DESTINATION "${POCL_INSTALL_PKGCONFIG_DIR}" COMPONENT "dev")
-
 endif()
 
 # For now always use a mirror copy of ocml, but allow overriding
@@ -2292,7 +2291,6 @@ if (ENABLE_LLVM)
   MESSAGE(STATUS "LLVM_ALL_TARGETS: ${LLVM_ALL_TARGETS}")
   MESSAGE(STATUS "LLVM_HOST_TARGET: ${LLVM_HOST_TARGET}")
   if(ENABLE_HOST_CPU_DEVICES)
-  MESSAGE(STATUS "CLANG_TARGET_OPTION: ${CLANG_TARGET_OPTION}")
   MESSAGE(STATUS "CLANG_MARCH_FLAG: ${CLANG_MARCH_FLAG}")
   MESSAGE(STATUS "LLC_TRIPLE: ${LLC_TRIPLE}")
   MESSAGE(STATUS "LLC_HOST_CPU_AUTO: ${LLC_HOST_CPU_AUTO}")

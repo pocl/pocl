@@ -1581,7 +1581,9 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
                                   llvm::CodeGenFileType::AssemblyFile)
 #endif
   ) {
-    POCL_ABORT("The target supports neither obj nor asm emission!");
+    POCL_MSG_ERR(
+        "llvm_codegen: The target supports neither obj nor asm emission!");
+    return -1;
   }
 
 #ifdef DUMP_LLVM_PASS_TIMINGS
@@ -1600,9 +1602,8 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
   char ObjFileName[POCL_MAX_PATHNAME_LENGTH];
 
   std::string AsmStr = SOS.str().str();
-  pocl_write_tempfile(AsmFileName, "/tmp/pocl-asm", ".s", AsmStr.c_str(),
-                      AsmStr.size());
-  pocl_mk_tempname(ObjFileName, "/tmp/pocl-obj", ".o", nullptr);
+  pocl_cache_write_kernel_asmfile(AsmFileName, AsmStr.c_str(), AsmStr.size());
+  pocl_cache_tempname(ObjFileName, OBJ_EXT, nullptr);
 
   const char *Args[] = {pocl_get_path("CLANG", CLANG),
                         AsmFileName,
@@ -1613,14 +1614,15 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
   int Res = pocl_invoke_clang(Device, Args);
 
   if (Res == 0) {
-    if (pocl_read_file(ObjFileName, Output, OutputSize))
-      POCL_ABORT("Could not read the object file.");
+    if (pocl_read_file(ObjFileName, Output, OutputSize)) {
+      POCL_MSG_ERR("Could not read the object file.");
+      return -1;
+    }
   }
 
   pocl_remove(AsmFileName);
   pocl_remove(ObjFileName);
   return Res;
-
 }
 
 void populateModulePM(void *Passes, void *Module, unsigned OptL, unsigned SizeL,

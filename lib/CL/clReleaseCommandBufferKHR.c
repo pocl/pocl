@@ -27,6 +27,8 @@
 
 #if defined(__FreeBSD__)
 #include <stdlib.h>
+#elif defined(__WIN32)
+#include <malloc.h>
 #else
 #include <alloca.h>
 #endif
@@ -96,8 +98,8 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
                   if (ai->type == POCL_ARG_TYPE_SAMPLER)
                     POname (clReleaseSampler) (
                         cmd->command.run.arguments[i].value);
-                  if (cmd->command.run.arguments[i].value != NULL)
-                    POCL_MEM_FREE (cmd->command.run.arguments[i].value);
+                  else if (cmd->command.run.arguments[i].value != NULL)
+                    pocl_aligned_free (cmd->command.run.arguments[i].value);
                 }
               POname (clReleaseKernel) (cmd->command.run.kernel);
               POCL_MEM_FREE (cmd->command.run.arguments);
@@ -109,10 +111,13 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
             case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
               break;
             case CL_COMMAND_FILL_BUFFER:
-              POCL_MEM_FREE (cmd->command.memfill.pattern);
+              pocl_aligned_free (cmd->command.memfill.pattern);
               break;
             case CL_COMMAND_SVM_MEMFILL:
-              POCL_MEM_FREE (cmd->command.svm_fill.pattern);
+              pocl_aligned_free (cmd->command.svm_fill.pattern);
+              break;
+            case CL_COMMAND_SVM_MEMFILL_RECT_POCL:
+              pocl_aligned_free (cmd->command.svm_fill_rect.pattern);
               break;
             case CL_COMMAND_FILL_IMAGE:
               break;

@@ -24,13 +24,13 @@
 #ifndef POCL_DEBUG_H
 #define POCL_DEBUG_H
 
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _WIN32
-#  include <stdint.h>
-#  include <stddef.h> // size_t
+#if defined(_WIN32) && !defined(__MINGW32__)
 #  define PRIu64 "I64u"
 #  define PRIX64 "I64x"
 #  define PRIXPTR "p"
@@ -51,6 +51,9 @@
 // size_t print spec
 #ifndef PRIuS
 # define PRIuS "zu"
+#endif
+#ifndef PRId64
+# define PRId64 PRIu64
 #endif
 
 #if defined(__ANDROID__)
