@@ -93,7 +93,7 @@ using FunctionVec = std::vector<llvm::Function *>;
 
 class WorkgroupImpl {
 public:
-  bool runOnModule(Module &M, FunctionVec &OldKernels);
+  bool runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM);
 
 private:
   llvm::Function *createWrapper(llvm::Function *F,
@@ -185,7 +185,7 @@ private:
   unsigned long DeviceMaxWItemSizes[3];
 };
 
-bool WorkgroupImpl::runOnModule(Module &M, FunctionVec &OldKernels) {
+bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
 
   this->M = &M;
   this->C = &M.getContext();
@@ -310,7 +310,81 @@ bool WorkgroupImpl::runOnModule(Module &M, FunctionVec &OldKernels) {
     Function *NewKernel = i->second;
     // this should not happen
     assert(OldKernel != NewKernel);
-    OldKernels.push_back(OldKernel);
+    FAM.clear(*OldKernel, "parallel.bc");
+    OldKernel->eraseFromParent();
+  }
+
+  // remove all functions that call the old printf. They should be
+  // cloned with the new printf calls at this point, and they refer
+  // to global variables
+  Function *NewPrintfAlloc = M.getFunction("__pocl_printf_alloc");
+  Function *OldPrintfAlloc = M.getFunction("__printf_alloc");
+
+  if (NewPrintfAlloc && OldPrintfAlloc) {
+    // add functions that call OldPrintfAlloc but are not used anywhere
+    // to PrintfCache; this can happen e.g. b/c of inlining
+    std::set<llvm::Function *> Removed;
+    for (auto U : OldPrintfAlloc->users()) {
+      if (Instruction *I = dyn_cast<Instruction>(U)) {
+        auto OldF = I->getParent()->getParent();
+        if (OldF == nullptr)
+          continue;
+        if (OldF->getNumUses() != 0)
+          continue;
+        if (PrintfCache.find(OldF) == PrintfCache.end()) {
+          PrintfCache.insert(std::make_pair(OldF, OldF));
+        }
+      }
+    }
+
+    // remove the old functions that were cloned
+    bool AtLeastOneRemoved;
+    do {
+      AtLeastOneRemoved = false;
+      for (auto [OldF, NewF] : PrintfCache) {
+        if (Removed.count(OldF))
+          continue;
+        if (OldF->getNumUses() == 0) {
+          FAM.clear(*OldF, "parallel.bc");
+          OldF->eraseFromParent();
+          Removed.insert(OldF);
+          AtLeastOneRemoved = true;
+        }
+      }
+    } while (AtLeastOneRemoved);
+
+    if (OldPrintfAlloc->getNumUses() == 0) {
+      OldPrintfAlloc->eraseFromParent();
+    } else {
+      // if we still have users, at least replace the body
+      // with ret nullptr. This allows us to erase
+      // the global variables
+
+      // drop all BBs
+      while (!OldPrintfAlloc->empty())
+        OldPrintfAlloc->back().eraseFromParent();
+
+      // create BB with "ret nullptr"
+      BasicBlock *BB =
+          BasicBlock::Create(M.getContext(), "entry", OldPrintfAlloc);
+      auto PtrTy = cast<PointerType>(OldPrintfAlloc->getReturnType());
+      ConstantPointerNull *NullPtr = ConstantPointerNull::get(PtrTy);
+
+      llvm::IRBuilder<> Builder(M.getContext());
+      Builder.SetInsertPoint(BB);
+      Builder.CreateRet(NullPtr);
+    }
+    // remove the global variables
+    GlobalVariable *GV;
+    GV = M.getGlobalVariable("_printf_buffer");
+    if (GV && GV->getNumUses() == 0)
+      GV->eraseFromParent();
+    GV = M.getGlobalVariable("_printf_buffer_position");
+    if (GV && GV->getNumUses() == 0)
+      GV->eraseFromParent();
+    GV = M.getGlobalVariable("_printf_buffer_capacity");
+    if (GV && GV->getNumUses() == 0)
+      GV->eraseFromParent();
   }
 
   return true;
@@ -479,6 +553,8 @@ static bool callsPrintf(Function *F) {
 
       if (callee->getName() == "__printf_alloc")
         return true;
+      if (callee->getName() == "__pocl_printf_alloc")
+        return true;
       if (callee->getName() == "__printf_flush_buffer")
         return true;
       if (callsPrintf(callee))
@@ -506,7 +582,7 @@ static Function *cloneFunctionWithPrintfArgs(Value *pb, Value *pbp, Value *pbc,
   FunctionType *FT =
       FunctionType::get(F->getReturnType(), Parameters, F->isVarArg());
   Function *NewF = Function::Create(FT, F->getLinkage(), "", M);
-  NewF->takeName(F);
+  NewF->setName(F->getName() + ".with_printf");
 
   ValueToValueMapTy VV;
   Function::arg_iterator j = NewF->arg_begin();
@@ -537,12 +613,13 @@ static Function *cloneFunctionWithPrintfArgs(Value *pb, Value *pbp, Value *pbc,
 // Recursively replace __printf_alloc calls with __pocl_printf_alloc calls,
 // while propagating the required pocl_context->printf_buffer arguments.
 static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
-                               Function *poclPrintfAlloc, Module &M,
+                               Function *NewPrintfAlloc,
+                               Function *ReplacedPrintfAlloc, Module &M,
                                Function *L, FunctionMapping &printfCache) {
 
   // If none of the kernels use printf(), it will not be linked into the
   // module.
-  if (poclPrintfAlloc == nullptr) {
+  if (NewPrintfAlloc == nullptr || ReplacedPrintfAlloc == nullptr) {
     return;
   }
 
@@ -577,7 +654,7 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
       if (oldF == nullptr)
         continue;
 
-      if (oldF->getName() == "__printf_alloc") {
+      if (oldF == ReplacedPrintfAlloc) {
         ops.clear();
         ops.push_back(pb);
         ops.push_back(pbp);
@@ -589,8 +666,8 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
           ops.push_back(Operand);
         }
 
-        CallInst *NewCI = CallInst::Create(poclPrintfAlloc, ops);
-        NewCI->setCallingConv(poclPrintfAlloc->getCallingConv());
+        CallInst *NewCI = CallInst::Create(NewPrintfAlloc, ops);
+        NewCI->setCallingConv(NewPrintfAlloc->getCallingConv());
         auto *CB = dyn_cast<CallBase>(CallInstr);
         NewCI->setTailCall(CB->isTailCall());
 
@@ -637,8 +714,8 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
       needsPrintf = callsPrintf(oldF);
       if (needsPrintf) {
         newF = cloneFunctionWithPrintfArgs(pb, pbp, pbc, oldF, &M);
-        replacePrintfCalls(nullptr, nullptr, nullptr, false, poclPrintfAlloc, M,
-                           newF, printfCache);
+        replacePrintfCalls(nullptr, nullptr, nullptr, false, NewPrintfAlloc,
+                           ReplacedPrintfAlloc, M, newF, printfCache);
 
         printfCache.insert(
             std::pair<llvm::Function *, llvm::Function *>(oldF, newF));
@@ -765,21 +842,6 @@ Function *WorkgroupImpl::createWrapper(Function *F,
                                           F->getSubprogram()->getLine(), 0,
                                           L->getSubprogram(), nullptr, true));
   }
-  // needed for printf
-  InlineFunctionInfo IFI;
-  InlineFunction(*CI, IFI);
-
-  if (DeviceSidePrintf) {
-
-    Function *PoclPrintfFun = M->getFunction("__pocl_printf_alloc");
-    if (PoclPrintfFun) {
-      replacePrintfCalls(PrintfBuf, PrintfBufPos, PrintfBufCapa, true,
-                         PoclPrintfFun, *M, L, PrintfCache);
-      PoclPrintfFun->removeFnAttr(Attribute::NoInline);
-      PoclPrintfFun->removeFnAttr(Attribute::OptimizeNone);
-      PoclPrintfFun->addFnAttr(Attribute::AlwaysInline);
-    }
-  }
 
   // SPMD machines might need a special calling convention to mark the
   // kernels that should be executed in SPMD fashion. For MIMD/CPU,
@@ -787,6 +849,19 @@ Function *WorkgroupImpl::createWrapper(Function *F,
   // function.
   if (DeviceIsSPMD)
     L->setCallingConv(F->getCallingConv());
+
+  // needed for printf
+  InlineFunctionInfo IFI;
+  InlineFunction(*CI, IFI);
+
+  if (DeviceSidePrintf) {
+    Function *NewPrintfAlloc = M->getFunction("__pocl_printf_alloc");
+    Function *OldPrintfAlloc = M->getFunction("__printf_alloc");
+    if (NewPrintfAlloc && OldPrintfAlloc) {
+      replacePrintfCalls(PrintfBuf, PrintfBufPos, PrintfBufCapa, true,
+                         NewPrintfAlloc, OldPrintfAlloc, *M, L, PrintfCache);
+    }
+  }
 
   return L;
 }
@@ -1702,12 +1777,7 @@ llvm::PreservedAnalyses Workgroup::run(llvm::Module &M,
   PAChanged.preserve<VariableUniformityAnalysis>();
 
   auto &FAM = AM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
-  FunctionVec OldKernels;
-  bool Ret = WGI.runOnModule(M, OldKernels);
-  for (auto K : OldKernels) {
-    FAM.clear(*K, "parallel.bc");
-    K->eraseFromParent();
-  }
+  bool Ret = WGI.runOnModule(M, FAM);
 
   // remove the declaration of the pocl.barrier because it's invalid.
   for (auto &Func : M.functions()) {

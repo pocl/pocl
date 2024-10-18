@@ -602,6 +602,15 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
     handleDeviceSidePrintf(Program, Lib, Log, vvm, ClDev);
 
   replaceIntrinsics(Program, Lib, vvm, ClDev);
+
+  for (fi = Program->begin(), fe = Program->end(); fi != fe; fi++) {
+    if (fi->isDeclaration())
+      continue;
+    if (!fi->hasName()) {
+      fi->setName("__anonymous_function");
+    }
+  }
+
   return 0;
 }
 
