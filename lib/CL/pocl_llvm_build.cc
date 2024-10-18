@@ -1046,7 +1046,7 @@ int pocl_invoke_clang(cl_device_id Device, const char** Args) {
                                   Device->llvm_target_triplet, Diags);
 
   const char **ArgsEnd = Args;
-  while (*ArgsEnd++ != nullptr) {}
+  while (*ArgsEnd != nullptr) { ArgsEnd++; }
   llvm::SmallVector<const char*, 0> ArgsArray(Args, ArgsEnd);
 
   int NumExtraArgs;
