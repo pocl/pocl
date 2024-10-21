@@ -67,3 +67,31 @@ pocl_get_path (const char *name, const char *default_value)
   snprintf (key, sizeof (key), "POCL_PATH_%s", name);
   return pocl_get_string_option (key, default_value);
 }
+
+/* Returns `n` null-terminated strings representing arguments
+   for an invocation. Can be set using the POCL_ARGS env vars.
+   If the env var is not set, returns NULL and sets `n` to zero. */
+char *
+pocl_get_args (const char *name, int *n)
+{
+  char key[256];
+  snprintf (key, sizeof (key), "POCL_ARGS_%s", name);
+  const char *val = getenv (key);
+  if (val == NULL)
+    {
+      *n = 0;
+      return NULL;
+    }
+
+  char *args = strdup (val);
+  *n = 1;
+  for (char *p = args; *p; ++p)
+    {
+      if (*p == ';')
+        {
+          *p = 0;
+          ++(*n);
+        }
+    }
+  return args;
+}

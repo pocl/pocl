@@ -1047,14 +1047,18 @@ int pocl_invoke_clang(cl_device_id Device, const char** Args) {
   while (*ArgsEnd++ != nullptr) {}
   llvm::SmallVector<const char*, 0> ArgsArray(Args, ArgsEnd);
 
-  std::string LDPath;
-  if (const char* LDOverride = pocl_get_path("LD", nullptr)) {
-    LDPath = "--ld-path=" + std::string(LDOverride);
-    ArgsArray.push_back(LDPath.c_str());
+  int NumExtraArgs;
+  const char *ExtraArgs = pocl_get_args("CLANG", &NumExtraArgs);
+  const char *ExtraArg = ExtraArgs;
+  for (int i = 0; i < NumExtraArgs; ++i) {
+    ArgsArray.push_back(ExtraArg);
+    ExtraArg += strlen(ExtraArg) + 1;
   }
 
   std::unique_ptr<clang::driver::Compilation> C(
       TheDriver.BuildCompilation(ArgsArray));
+
+  free((void *)ExtraArgs);
 
   if (C && !C->containsError()) {
     SmallVector<std::pair<int, const clang::driver::Command *>, 4> FailingCommands;

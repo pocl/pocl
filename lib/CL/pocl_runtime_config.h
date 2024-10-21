@@ -43,6 +43,9 @@ const char* pocl_get_string_option(const char *key, const char *default_value);
 POCL_EXPORT
 const char *pocl_get_path (const char *name, const char *default_value);
 
+POCL_EXPORT
+char *pocl_get_args (const char *name, int *n);
+
 #ifdef __cplusplus
 }
 #endif
