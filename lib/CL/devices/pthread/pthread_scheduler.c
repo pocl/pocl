@@ -27,10 +27,8 @@
 #include <sched.h>
 #endif
 
-#include <pthread.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
 
 #include "common.h"
 #include "common_driver.h"
@@ -714,7 +712,7 @@ pocl_pthread_driver_thread (void *p)
         {
           pocl_aligned_free (td->printf_buffer);
           pocl_aligned_free (td->local_mem);
-          pthread_exit (NULL);
+          return NULL;
         }
     }
 }
