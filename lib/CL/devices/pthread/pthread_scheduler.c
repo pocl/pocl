@@ -638,9 +638,12 @@ RETRY:
             {
 #ifdef ENABLE_HOST_CPU_DEVICES_OPENMP
               run_cmd = pocl_pthread_prepare_kernel (cmd->device->data, cmd);
-              work_group_scheduler (run_cmd, td);
-              finalize_kernel_command (td, run_cmd);
-              run_cmd = NULL;
+              if (run_cmd)
+                {
+                  work_group_scheduler (run_cmd, td);
+                  finalize_kernel_command (td, run_cmd);
+                  run_cmd = NULL;
+                }
 #else
               pocl_pthread_prepare_kernel (cmd->device->data, cmd);
 #endif
