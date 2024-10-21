@@ -59,7 +59,6 @@ pocl_get_string_option (const char *key, const char *default_value)
   return val != NULL ? val : default_value;
 }
 
-/* Returns a string, but can be overriden by a POCL_PATH env var. */
 const char *
 pocl_get_path (const char *name, const char *default_value)
 {
@@ -68,9 +67,6 @@ pocl_get_path (const char *name, const char *default_value)
   return pocl_get_string_option (key, default_value);
 }
 
-/* Returns `n` null-terminated strings representing arguments
-   for an invocation. Can be set using the POCL_ARGS env vars.
-   If the env var is not set, returns NULL and sets `n` to zero. */
 char *
 pocl_get_args (const char *name, int *n)
 {
