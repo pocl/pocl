@@ -92,7 +92,7 @@ endif()
 if(CUSTOM_CHIP_GIT_TAG)
   set(CHIP_GIT_TAG "${CUSTOM_CHIP_GIT_TAG}")
 else()
-  set(CHIP_GIT_TAG "v1.1")
+  set(CHIP_GIT_TAG "v1.2")
 endif()
 
 # set up env variables. Unfortunately this is necessary even just to build chipStar
@@ -136,11 +136,12 @@ ExternalProject_Add(
   ${GIT_OPTIONS}
   CONFIGURE_COMMAND "${CMAKE_COMMAND}" ${CMAKE_CALL_ENV}
     ${UPSTREAM_CMAKE_ARGS}
+    "-DCMAKE_CXX_COMPILER_PATH=${CLANGXX}"
+    "-DCMAKE_C_COMPILER_PATH=${CLANG}"
     "-DLLVM_CONFIG_BIN=${LLVM_CONFIG}"
-    "-DCHIP_EXT_FLOAT_ATOMICS=OFF"
     "${TS_BASEDIR}/src/${TS_NAME}"
   UPDATE_COMMAND ${CMAKE_COMMAND} -E echo "update step disabled"
-  PATCH_COMMAND ${BASH} -c "if [ ! -e ${TS_BASEDIR}/src/${TS_NAME}/PATCHED ] $<SEMICOLON> then ${PATCH_EXEC} -N -r- -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/HIP_tests_catch.patch $<SEMICOLON> ${CMAKE_COMMAND} -E touch ${TS_BASEDIR}/src/${TS_NAME}/PATCHED $<SEMICOLON> fi"
+  PATCH_COMMAND ${BASH} -c "if [ ! -e ${TS_BASEDIR}/src/${TS_NAME}/PATCHED ] $<SEMICOLON> then ${PATCH_EXEC} -N -r- -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/chipstar_1_2.patch $<SEMICOLON> ${CMAKE_COMMAND} -E touch ${TS_BASEDIR}/src/${TS_NAME}/PATCHED $<SEMICOLON> fi"
   BUILD_COMMAND ${CMAKE_COMMAND} ${CMAKE_CALL_ENV} --build . --parallel ${HOST_CPU_CORECOUNT} --target all build_tests
   INSTALL_COMMAND ${CMAKE_COMMAND} -E echo "install step disabled"
 )
