@@ -369,10 +369,24 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
 
   pc->global_var_buffer = program->gvar_storage[dev_i];
 
+  /* since basic driver runs in the user program's thread, save flags
+   * to avoid influencing the environment on return */
   unsigned rm = pocl_save_rm ();
-  pocl_set_default_rm ();
   unsigned ftz = pocl_save_ftz ();
-  pocl_set_ftz (kernel->program->flush_denorms);
+
+  /* Flush to zero is only set once at start of kernel (because FTZ is
+   * a compilation option) */
+  cl_device_fp_config supports_any_denorms
+    = (cmd->device->half_fp_config
+       | cmd->device->single_fp_config
+       | cmd->device->double_fp_config)
+      & CL_FP_DENORM;
+  if (supports_any_denorms)
+    pocl_set_ftz (kernel->program->flush_denorms);
+  else
+    pocl_set_ftz (1);
+  /* Rounding mode change is deprecated & only supported by OpenCL 1.0 */
+  pocl_set_default_rm ();
 
   for (z = 0; z < pc->num_groups[2]; ++z)
     for (y = 0; y < pc->num_groups[1]; ++y)

@@ -140,6 +140,8 @@
 
 #cmakedefine HOST_CPU_FORCED
 
+#cmakedefine HOST_CPU_ENABLE_DENORMS
+
 #define HOST_LD_FLAGS  "@HOST_LD_FLAGS@"
 
 #define HOST_LLC_FLAGS  "@HOST_LLC_FLAGS@"

@@ -1357,6 +1357,9 @@ __opencl_c_atomic_scope_device __opencl_c_program_scope_global_variables \
 __opencl_c_atomic_scope_all_devices __opencl_c_generic_address_space \
 __opencl_c_work_group_collective_functions")
 
+# enabled by default
+option(HOST_CPU_ENABLE_DENORMS "enable denorm support for CPU devices" ON)
+
 # Host CPU device: Unfinished/undertested extensions only advertised when conformance
 # is OFF.
 if(NOT ENABLE_CONFORMANCE)
@@ -2349,6 +2352,7 @@ if (ENABLE_LLVM)
   MESSAGE(STATUS "SELECTED_HOST_CPU: ${SELECTED_HOST_CPU}")
   MESSAGE(STATUS "HOST_CPU_FORCED: ${HOST_CPU_FORCED}")
   MESSAGE(STATUS "HOST_CPU_SUPPORTS_FLOAT16: ${HOST_CPU_SUPPORTS_FLOAT16}")
+  MESSAGE(STATUS "HOST_CPU_ENABLE_DENORMS: ${HOST_CPU_ENABLE_DENORMS}")
   endif()
 endif()
 MESSAGE(STATUS "")
