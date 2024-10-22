@@ -1311,6 +1311,11 @@ struct _cl_device_id {
   /* cl_khr_pci_bus_info */
   cl_device_pci_bus_info_khr pci_bus_info;
 
+  /* command buffer related properties */
+  cl_mutable_dispatch_fields_khr cmdbuf_mutable_dispatch_capabilities;
+  cl_command_queue_properties cmdbuf_required_properties;
+  cl_device_command_buffer_capabilities_khr cmdbuf_capabilities;
+
   struct _cl_device_id *next;
 };
 
@@ -1525,8 +1530,8 @@ struct _cl_command_buffer_khr
   pocl_lock_t mutex;
 
   /* Queues that this command buffer was created for */
-  cl_uint num_queues;
   cl_command_queue *queues;
+  cl_uint num_queues;
 
   /* List of flags that this command buffer was created with */
   cl_uint num_properties;
@@ -1543,12 +1548,7 @@ struct _cl_command_buffer_khr
   cl_uint num_syncpoints;
 
   _cl_command_node *cmds;
-};
-
-struct _cl_mutable_command_khr
-{
-  /* Unused in cl_khr_command_buffer but required in public API and used by
-   * follow-up extensions. */
+  cl_bool is_mutable;
 };
 
 #define POCL_ON_SUB_MISALIGN(mem, que, operation)                             \

@@ -1008,6 +1008,12 @@ endforeach()
 set_property(TEST "${TS_NAME}${TS_SUFFIX}_non_uniform_work_group"
              PROPERTY ENVIRONMENT "POCL_MEMORY_LIMIT=4;POCL_MAX_WORK_GROUP_SIZE=1024")
 
+# this is required b/c there is a problem with one test in mutable extension:
+# it does not take into account that changing global size (without local size)
+# can result in change of local size (because the runtime calculates optimal size)
+set_property(TEST "${TS_NAME}${TS_SUFFIX}_cl_khr_command_buffer_mutable"
+             PROPERTY ENVIRONMENT "POCL_MEMORY_LIMIT=4;POCL_MAX_WORK_GROUP_SIZE=1024")
+
 endfunction()
 
 # add the micro testsuite with online compilation from sources

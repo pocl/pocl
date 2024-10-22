@@ -37,25 +37,27 @@ POname (clCommandBarrierWithWaitListKHR) (
     cl_mutable_command_khr *mutable_handle) CL_API_SUFFIX__VERSION_1_2
 {
   cl_int errcode;
-  _cl_command_node *cmd = NULL;
 
   CMDBUF_VALIDATE_COMMON_HANDLES;
+  SETUP_MUTABLE_HANDLE;
 
   errcode = pocl_create_recorded_command (
-    &cmd, command_buffer, command_queue, CL_COMMAND_BARRIER,
+    mutable_handle, command_buffer, command_queue, CL_COMMAND_BARRIER,
     num_sync_points_in_wait_list, sync_point_wait_list, NULL);
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  cmd->command.barrier.has_wait_list = num_sync_points_in_wait_list != 0;
-  errcode = pocl_command_record (command_buffer, cmd, sync_point);
+  (*mutable_handle)->command.barrier.has_wait_list
+    = num_sync_points_in_wait_list != 0;
+
+  errcode = pocl_command_record (command_buffer, *mutable_handle, sync_point);
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
   return CL_SUCCESS;
 
 ERROR:
-  pocl_mem_manager_free_command (cmd);
+  pocl_mem_manager_free_command (*mutable_handle);
   return errcode;
 }
 POsym (clCommandBarrierWithWaitListKHR)

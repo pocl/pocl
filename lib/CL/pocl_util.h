@@ -547,23 +547,44 @@ while (0)
     {                                                                         \
       POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_buffer)),         \
                               CL_INVALID_COMMAND_BUFFER_KHR);                 \
-      POCL_RETURN_ERROR_COND (                                                \
-        (command_queue == NULL && command_buffer->num_queues > 1),            \
-        CL_INVALID_COMMAND_QUEUE);                                            \
-      int queue_in_buffer = 0;                                                \
-      for (unsigned ii = 0; ii < command_buffer->num_queues; ++ii)            \
+      cl_device_id dev = command_buffer->queues[0]->device;                   \
+      if (strstr (dev->extensions, "cl_khr_command_buffer_multi_device"))     \
         {                                                                     \
-          queue_in_buffer |= (command_queue == command_buffer->queues[ii]);   \
+          POCL_RETURN_ERROR_COND (                                            \
+            (command_queue == NULL && command_buffer->num_queues > 1),        \
+            CL_INVALID_COMMAND_QUEUE);                                        \
+          int queue_in_buffer = 0;                                            \
+          for (unsigned ii = 0; ii < command_buffer->num_queues; ++ii)        \
+            {                                                                 \
+              queue_in_buffer                                                 \
+                |= (command_queue == command_buffer->queues[ii]);             \
+            }                                                                 \
+          POCL_RETURN_ERROR_COND (                                            \
+            (command_queue != NULL && !queue_in_buffer),                      \
+            CL_INVALID_COMMAND_QUEUE);                                        \
         }                                                                     \
-      POCL_RETURN_ERROR_COND ((command_queue != NULL && !queue_in_buffer),    \
-                              CL_INVALID_COMMAND_QUEUE);                      \
-      POCL_RETURN_ERROR_COND ((mutable_handle != NULL), CL_INVALID_VALUE);    \
+      else                                                                    \
+        {                                                                     \
+          POCL_RETURN_ERROR_ON (                                              \
+            (command_queue != NULL), CL_INVALID_COMMAND_QUEUE,                \
+            "device does not support cl_khr_command_buffer_multi_device");    \
+        }                                                                     \
+      if (dev->cmdbuf_mutable_dispatch_capabilities == 0)                     \
+        {                                                                     \
+          POCL_RETURN_ERROR_COND ((mutable_handle != NULL),                   \
+                                  CL_INVALID_VALUE);                          \
+        }                                                                     \
       errcode = pocl_cmdbuf_choose_recording_queue (command_buffer,           \
                                                     &command_queue);          \
       if (errcode != CL_SUCCESS)                                              \
         return errcode;                                                       \
     }                                                                         \
   while (0)
+
+#define SETUP_MUTABLE_HANDLE                                                  \
+  _cl_command_node *cmd_temp = NULL;                                          \
+  if (mutable_handle == NULL)                                                 \
+    mutable_handle = &cmd_temp;
 
 /*  A class implemented with C macros, resembling LLVM's SmallVector
  *  includes locking for access
