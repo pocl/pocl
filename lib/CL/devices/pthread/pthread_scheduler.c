@@ -55,7 +55,6 @@ struct pool_thread_data
   unsigned long executed_commands;
   /* per-CU (= per-thread) local memory */
   void *local_mem;
-  unsigned current_ftz;
   unsigned num_threads;
   /* index of this particular thread
    * [0, num_threads-1]
@@ -289,14 +288,19 @@ work_group_scheduler (kernel_run_command *k,
   assert (pc.printf_buffer_position != NULL);
 
   /* Flush to zero is only set once at start of kernel (because FTZ is
-   * a compilation option), but we need to reset rounding mode after every
-   * iteration (since it can be changed during kernel execution). */
+   * a compilation option) */
   unsigned flush = k->kernel->program->flush_denorms;
-  if (thread_data->current_ftz != flush)
-    {
-      pocl_set_ftz (flush);
-      thread_data->current_ftz = flush;
-    }
+  cl_device_fp_config supports_any_denorms
+    = (k->device->half_fp_config
+       | k->device->single_fp_config
+       | k->device->double_fp_config)
+      & CL_FP_DENORM;
+  if (supports_any_denorms)
+    pocl_set_ftz (flush);
+  else
+    pocl_set_ftz (1);
+  /* Rounding mode change is deprecated & only supported by OpenCL 1.0 */
+  pocl_set_default_rm ();
 
   unsigned slice_size = k->pc.num_groups[0] * k->pc.num_groups[1];
   unsigned row_size = k->pc.num_groups[0];
@@ -320,9 +324,8 @@ work_group_scheduler (kernel_run_command *k,
           printf("### exec_wg: gid_x %zu, gid_y %zu, gid_z %zu\n",
                  gids[0], gids[1], gids[2]);
 #endif
-          pocl_set_default_rm ();
-          k->workgroup ((uint8_t*)arguments, (uint8_t*)&pc,
-			gids[0], gids[1], gids[2]);
+          k->workgroup ((uint8_t *)arguments, (uint8_t *)&pc,
+                        gids[0], gids[1], gids[2]);
         }
     }
   while (get_wg_index_range (k, &start_index, &end_index, &last_wgs,
@@ -367,10 +370,18 @@ work_group_scheduler (kernel_run_command *k,
     uint32_t position = 0;
     pc.printf_buffer_position = &position;
 
-    unsigned rm = pocl_save_rm ();
+    unsigned flush = k->kernel->program->flush_denorms;
+    cl_device_fp_config supports_any_denorms
+      = (k->device->half_fp_config
+       | k->device->single_fp_config
+       | k->device->double_fp_config)
+      & CL_FP_DENORM;
+    if (supports_any_denorms)
+      pocl_set_ftz (flush);
+    else
+      pocl_set_ftz (1);
+    /* Rounding mode change is deprecated & only supported by OpenCL 1.0 */
     pocl_set_default_rm ();
-    unsigned ftz = pocl_save_ftz ();
-    pocl_set_ftz (program->flush_denorms);
 
     size_t x, y, z;
     /* runtime = set scheduling according to environment variable OMP_SCHEDULE
@@ -381,10 +392,6 @@ work_group_scheduler (kernel_run_command *k,
         for (x = 0; x < pc.num_groups[0]; ++x)
           ((pocl_workgroup_func)k->workgroup) ((uint8_t *)arguments,
                                                (uint8_t *)&pc, x, y, z);
-
-    pocl_restore_rm (rm);
-    pocl_restore_ftz (ftz);
-
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
     pocl_write_printf_buffer ((char *)pc.printf_buffer, position);
 #endif
@@ -691,9 +698,7 @@ pocl_pthread_driver_thread (void *p)
   struct pool_thread_data *td = (struct pool_thread_data*)p;
   int do_exit = 0;
   assert (td);
-  /* some random value, doesn't matter as long as it's not a valid bool - to
-   * force a first FTZ setup */
-  td->current_ftz = 213;
+
   td->num_threads = scheduler.num_threads;
   td->printf_buffer = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
                                            scheduler.printf_buf_size);

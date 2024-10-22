@@ -123,14 +123,21 @@ public:
     /* Flush to zero is only set once at the start of the kernel execution
      * because FTZ is a compilation option. */
     unsigned Flush = K->kernel->program->flush_denorms;
-    pocl_set_ftz(Flush);
+    cl_device_fp_config supports_any_denorms =
+        (K->device->half_fp_config
+         | K->device->single_fp_config
+         | K->device->double_fp_config)
+        & CL_FP_DENORM;
+    if (supports_any_denorms)
+      pocl_set_ftz(Flush);
+    else
+      pocl_set_ftz(1);
+    /* Rounding mode change is deprecated & only supported by OpenCL 1.0 */
+    pocl_set_default_rm();
 
     for (size_t X = r.pages().begin(); X != r.pages().end(); X++) {
       for (size_t Y = r.rows().begin(); Y != r.rows().end(); Y++) {
         for (size_t Z = r.cols().begin(); Z != r.cols().end(); Z++) {
-          /* Rounding mode must be reset after every iteration
-           * since it can be changed during kernel execution. */
-          pocl_set_default_rm();
           K->workgroup((uint8_t *)Arguments.data(), (uint8_t *)&PC, X, Y, Z);
         }
       }

@@ -183,6 +183,19 @@ pocl_cpu_init_common (cl_device_id device)
   /* 0 is the host memory shared with all drivers that use it */
   device->global_mem_id = 0;
 
+#ifndef HOST_CPU_ENABLE_DENORMS
+  if (device->single_fp_config)
+    device->single_fp_config = device->single_fp_config & (~CL_FP_DENORM);
+  if (device->half_fp_config)
+    device->half_fp_config = device->half_fp_config & (~CL_FP_DENORM);
+#ifndef ENABLE_CONFORMANCE
+  /* denorm is mandatory for FP64, but when conformance=OFF
+   * we can disable it also for FP64 */
+  if (device->double_fp_config)
+    device->double_fp_config = device->double_fp_config & (~CL_FP_DENORM);
+#endif
+#endif
+
   device->version_of_latest_passed_cts = HOST_DEVICE_LATEST_CTS_PASS;
   device->extensions = HOST_DEVICE_EXTENSIONS;
 
