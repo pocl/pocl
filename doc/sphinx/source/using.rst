@@ -311,12 +311,22 @@ pocl.
  The following variables are available:
 
   * **POCL_PATH_CLANG** -- Path to the clang executable.
-  * **POCL_PATH_LD** -- Path to the ld executable used by clang.
   * **POCL_PATH_LLVM_LINK** -- Path to the llvm-link executable.
   * **POCL_PATH_LLVM_OPT** -- Path to the llvm-opt executable.
   * **POCL_PATH_LLVM_LLC** -- Path to the llc executable.
   * **POCL_PATH_LLVM_SPIRV** -- Path to the llvm-spirv executable.
   * **POCL_PATH_SPIRV_LINK** -- Path to the spirv-link executable.
+
+- **POCL_ARGS_XXX**
+
+ String. These variables can be used to pass additional arguments to executables
+ that pocl invokes during compilation, linking, etc. Multiple arguments can be
+ passed by separating them with a semicolon.
+
+ The following variables are available:
+
+  * **POCL_ARGS_CLANG** -- Additional arguments to pass to clang.
+
 
 - **POCL_SIGFPE_HANDLER**
 

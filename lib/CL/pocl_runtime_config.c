@@ -59,11 +59,35 @@ pocl_get_string_option (const char *key, const char *default_value)
   return val != NULL ? val : default_value;
 }
 
-/* Returns a string, but can be overriden by a POCL_PATH env var. */
 const char *
 pocl_get_path (const char *name, const char *default_value)
 {
   char key[256];
   snprintf (key, sizeof (key), "POCL_PATH_%s", name);
   return pocl_get_string_option (key, default_value);
+}
+
+char *
+pocl_get_args (const char *name, int *n)
+{
+  char key[256];
+  snprintf (key, sizeof (key), "POCL_ARGS_%s", name);
+  const char *val = getenv (key);
+  if (val == NULL)
+    {
+      *n = 0;
+      return NULL;
+    }
+
+  char *args = strdup (val);
+  *n = 1;
+  for (char *p = args; *p; ++p)
+    {
+      if (*p == ';')
+        {
+          *p = 0;
+          ++(*n);
+        }
+    }
+  return args;
 }
