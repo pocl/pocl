@@ -497,7 +497,6 @@ struct _cl_command_node
   cl_command_type type;
   _cl_command_node *next; // for linked-list storage
   _cl_command_node *prev;
-  cl_int buffered;
 
   /***
    * Command buffers use sync points as a template for synchronizing commands
@@ -523,14 +522,17 @@ struct _cl_command_node
   /* The index of the targeted device in the **program** device list. */
   unsigned program_device_i;
   cl_int ready;
-
-  /* Fields needed by buffered commands only: */
+  /* true if the node belongs to a cl_command_buffer_khr */
+  cl_int buffered;
 
   /* Which of the command queues in the command buffer's queue list
    * this command was recorded for. */
   cl_uint queue_idx;
   /* List of buffers this command accesses, used for inserting migrations */
   pocl_buffer_migration_info *migr_infos;
+
+  /* pointer to command buffer or NULL */
+  cl_command_buffer_khr cmd_buffer;
 };
 
 /**

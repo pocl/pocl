@@ -34,7 +34,6 @@ POname (clCreateCommandBufferKHR) (
 {
   int errcode = 0;
   cl_command_buffer_khr cmdbuf = NULL;
-
   POCL_GOTO_ERROR_COND ((num_queues > 1
                          && strstr (queues[0]->device->extensions,
                                     "cl_khr_command_buffer_multi_device")
@@ -63,6 +62,7 @@ POname (clCreateCommandBufferKHR) (
     }
 
   cl_uint num_properties = 0;
+  cl_bool property_mutable = 0;
   if (properties != NULL)
     {
       const cl_command_buffer_properties_khr *key = 0;
@@ -91,15 +91,19 @@ POname (clCreateCommandBufferKHR) (
 
           const cl_command_buffer_properties_khr *val = key + 1;
           cl_command_buffer_properties_khr tmp = *val;
+          /*
+          #define CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR              (1 << 0)
+          #define CL_COMMAND_BUFFER_DEVICE_SIDE_SYNC_KHR              (1 << 2)
+          #define CL_COMMAND_BUFFER_MUTABLE_KHR                       (1 << 1)
+          */
           switch (*key)
             {
             case CL_COMMAND_BUFFER_FLAGS_KHR:
               /* Simultaneous use is always supported, no action needed */
               tmp &= ~CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR;
-
-              /* If any of the devices associated with 'queues' does not
-               * support a requested capability, error out with
-               * CL_INVALID_PROPERTY */
+              /* some devices support mutable cmd buffers */
+              property_mutable = tmp & CL_COMMAND_BUFFER_MUTABLE_KHR;
+              tmp &= ~CL_COMMAND_BUFFER_MUTABLE_KHR;
 
               /* Any flag bits not handled above are invalid */
               POCL_GOTO_ERROR_ON (
@@ -114,6 +118,22 @@ POname (clCreateCommandBufferKHR) (
         }
     }
 
+  /* If any of the devices associated with 'queues' does not
+   * support a requested capability, error out with
+   * CL_INVALID_PROPERTY */
+  if (property_mutable)
+    {
+      for (unsigned i = 0; i < num_queues; ++i)
+        {
+          POCL_GOTO_ERROR_ON (
+            (queues[i]->device->cmdbuf_mutable_dispatch_capabilities == 0),
+            CL_INVALID_PROPERTY,
+            "CL_COMMAND_BUFFER_MUTABLE_KHR requested but queue %u / device %s"
+            " does not support it\n",
+            i, queues[i]->device->short_name);
+        }
+    }
+
   cmdbuf = calloc (1, sizeof (struct _cl_command_buffer_khr));
   if (cmdbuf == NULL)
     {
@@ -125,6 +145,7 @@ POname (clCreateCommandBufferKHR) (
 
   cmdbuf->state = CL_COMMAND_BUFFER_STATE_RECORDING_KHR;
   cmdbuf->num_queues = num_queues;
+  cmdbuf->is_mutable = property_mutable;
   cmdbuf->queues
       = (cl_command_queue *)calloc (num_queues, sizeof (cl_command_queue));
   memcpy (cmdbuf->queues, queues, num_queues * sizeof (cl_command_queue));

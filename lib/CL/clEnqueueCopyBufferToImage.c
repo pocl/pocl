@@ -40,7 +40,6 @@ pocl_copy_buffer_to_image_common (
     cl_event *event,
     const cl_sync_point_khr *sync_point_wait_list,
     cl_sync_point_khr *sync_point,
-    cl_mutable_command_khr *mutable_handle,
     _cl_command_node **cmd)
 {
   cl_int errcode;
@@ -73,10 +72,10 @@ pocl_copy_buffer_to_image_common (
       else
         {
           return POname (clCommandCopyBufferRectKHR) (
-              command_buffer, command_queue, NULL, src_buffer, dst_image->buffer,
-              src_origin, i1d_origin, i1d_region, dst_image->image_row_pitch,
-              0, dst_image->image_row_pitch, 0, num_items_in_wait_list,
-              sync_point_wait_list, sync_point, mutable_handle);
+            command_buffer, command_queue, NULL, src_buffer, dst_image->buffer,
+            src_origin, i1d_origin, i1d_region, dst_image->image_row_pitch, 0,
+            dst_image->image_row_pitch, 0, num_items_in_wait_list,
+            sync_point_wait_list, sync_point, cmd);
         }
     }
 
@@ -140,9 +139,8 @@ CL_API_SUFFIX__VERSION_1_0
                           CL_DEVICE_NOT_AVAILABLE);
 
   errcode = pocl_copy_buffer_to_image_common (
-      NULL, command_queue, src_buffer, dst_image, src_offset, dst_origin,
-      region, num_events_in_wait_list, event_wait_list, event, NULL, NULL,
-      NULL, &cmd);
+    NULL, command_queue, src_buffer, dst_image, src_offset, dst_origin, region,
+    num_events_in_wait_list, event_wait_list, event, NULL, NULL, &cmd);
 
   if (errcode != CL_SUCCESS)
     return errcode;

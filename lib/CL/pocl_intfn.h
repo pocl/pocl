@@ -213,12 +213,16 @@ POdeclsym(clCommandWriteBufferPOCL)
 POdeclsym(clCommandWriteBufferRectPOCL)
 POdeclsym(clCommandWriteImagePOCL)
 
+/* cl_khr_command_buffer_mutable_dispatch */
+POdeclsym (clUpdateMutableCommandsKHR)
+POdeclsym (clGetMutableCommandInfoKHR)
+
 /* cl_pocl_svm_rect */
 POdeclsym(clEnqueueSVMMemFillRectPOCL)
 POdeclsym(clEnqueueSVMMemcpyRectPOCL)
 
 /* cl_ext_buffer_device_address */
-POdeclsym (clSetKernelArgDevicePointerEXT);
+POdeclsym (clSetKernelArgDevicePointerEXT)
 
 /* cl_exp_defined_builtin_kernels */
 POdeclsym (clCreateProgramWithDefinedBuiltInKernels)

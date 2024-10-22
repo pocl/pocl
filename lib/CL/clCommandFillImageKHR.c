@@ -40,25 +40,24 @@ POname (clCommandFillImageKHR) (
     cl_mutable_command_khr *mutable_handle) CL_API_SUFFIX__VERSION_1_2
 {
   cl_int errcode;
-  _cl_command_node *cmd = NULL;
-
   CMDBUF_VALIDATE_COMMON_HANDLES;
+  SETUP_MUTABLE_HANDLE;
 
   errcode = pocl_fill_image_common (
-      command_buffer, command_queue, image, fill_color, origin, region,
-      num_sync_points_in_wait_list, NULL, NULL, sync_point_wait_list,
-      sync_point, mutable_handle, &cmd);
+    command_buffer, command_queue, image, fill_color, origin, region,
+    num_sync_points_in_wait_list, NULL, NULL, sync_point_wait_list, sync_point,
+    mutable_handle);
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  errcode = pocl_command_record (command_buffer, cmd, sync_point);
+  errcode = pocl_command_record (command_buffer, *mutable_handle, sync_point);
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
   return CL_SUCCESS;
 
 ERROR:
-  pocl_mem_manager_free_command (cmd);
+  pocl_mem_manager_free_command (*mutable_handle);
   return errcode;
 }
 POsym (clCommandFillImageKHR)
