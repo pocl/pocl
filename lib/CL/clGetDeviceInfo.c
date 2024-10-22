@@ -409,16 +409,15 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   /** cl_khr_command_buffer queries **/
   case CL_DEVICE_COMMAND_BUFFER_CAPABILITIES_KHR:
     POCL_RETURN_GETINFO (cl_device_command_buffer_capabilities_khr,
-                         CL_COMMAND_BUFFER_CAPABILITY_KERNEL_PRINTF_KHR
-                           | CL_COMMAND_BUFFER_CAPABILITY_SIMULTANEOUS_USE_KHR
-                           | CL_COMMAND_BUFFER_CAPABILITY_OUT_OF_ORDER_KHR
-                           | CL_COMMAND_BUFFER_CAPABILITY_MULTIPLE_QUEUE_KHR);
+                         device->cmdbuf_capabilities);
 
   case CL_DEVICE_COMMAND_BUFFER_REQUIRED_QUEUE_PROPERTIES_KHR:
-    POCL_RETURN_GETINFO (cl_command_queue_properties, 0);
+    POCL_RETURN_GETINFO (cl_command_queue_properties,
+                         device->cmdbuf_required_properties);
 
   case CL_DEVICE_MUTABLE_DISPATCH_CAPABILITIES_KHR:
-    POCL_RETURN_GETINFO (cl_mutable_dispatch_fields_khr, 0);
+    POCL_RETURN_GETINFO (cl_mutable_dispatch_fields_khr,
+                         device->cmdbuf_mutable_dispatch_capabilities);
 
   case CL_DEVICE_COMMAND_BUFFER_NUM_SYNC_DEVICES_KHR:
     if (device->ops->get_device_info_ext != NULL

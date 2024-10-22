@@ -59,6 +59,15 @@ POname (clRemapCommandBufferKHR) (cl_command_buffer_khr command_buffer,
       return NULL;
     }
 
+  cl_command_buffer_properties_khr *props = NULL;
+  cl_command_buffer_properties_khr mutable_props[] = {
+    (cl_properties)CL_COMMAND_BUFFER_FLAGS_KHR,
+    (cl_properties)CL_COMMAND_BUFFER_MUTABLE_KHR,
+    (cl_properties)0 };
+  if (command_buffer->is_mutable) {
+    props = mutable_props;
+  }
+
   _cl_command_node *cmd;
   LL_FOREACH (command_buffer->cmds, cmd)
   {
@@ -149,15 +158,14 @@ POname (clRemapCommandBufferKHR) (cl_command_buffer_khr command_buffer,
                 work_dim > 1 ? (local_size[1] * groups[1]) : 0,
                 work_dim > 2 ? (local_size[2] * groups[2]) : 0 };
 
-          /* Re-record cmd using the original command's kernel arguments.
-           *
-           * TODO: pass along kernel command properties */
+          /* Re-record cmd using the original command's kernel arguments. */
+          _cl_command_node *mutable_h = NULL;
           errcode = pocl_record_ndrange_kernel (
-            new_cmdbuf, new_queue, NULL, cmd->command.run.kernel,
+            new_cmdbuf, new_queue, props, cmd->command.run.kernel,
             cmd->command.run.arguments, work_dim,
             cmd->command.run.pc.global_offset, global_size, local_size,
             cmd->sync.syncpoint.num_sync_points_in_wait_list,
-            cmd->sync.syncpoint.sync_point_wait_list, NULL);
+            cmd->sync.syncpoint.sync_point_wait_list, NULL, &mutable_h);
         }
         break;
 

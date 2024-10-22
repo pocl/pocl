@@ -48,9 +48,9 @@ CL_API_SUFFIX__VERSION_1_2
   POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
                           CL_DEVICE_NOT_AVAILABLE);
 
-  errcode = pocl_fill_image_common (
-      NULL, command_queue, image, fill_color, origin, region,
-      num_events_in_wait_list, event_wait_list, event, NULL, NULL, NULL, &cmd);
+  errcode = pocl_fill_image_common (NULL, command_queue, image, fill_color,
+                                    origin, region, num_events_in_wait_list,
+                                    event_wait_list, event, NULL, NULL, &cmd);
 
   if (errcode != CL_SUCCESS)
     return errcode;

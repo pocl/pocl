@@ -306,6 +306,17 @@ pocl_cpu_init_common (cl_device_id device)
   device->local_mem_size = pocl_get_int_option ("POCL_CPU_LOCAL_MEM_SIZE",
                                                 device->local_mem_size);
 
+  device->cmdbuf_capabilities
+    = CL_COMMAND_BUFFER_CAPABILITY_SIMULTANEOUS_USE_KHR
+      | CL_COMMAND_BUFFER_CAPABILITY_KERNEL_PRINTF_KHR
+      | CL_COMMAND_BUFFER_CAPABILITY_OUT_OF_ORDER_KHR
+      | CL_COMMAND_BUFFER_CAPABILITY_MULTIPLE_QUEUE_KHR;
+  device->cmdbuf_required_properties = 0;
+  /* Local size (and offset) is not so simple to change,
+   * because of specialization */
+  device->cmdbuf_mutable_dispatch_capabilities
+    = CL_MUTABLE_DISPATCH_GLOBAL_SIZE_KHR | CL_MUTABLE_DISPATCH_LOCAL_SIZE_KHR | CL_MUTABLE_DISPATCH_GLOBAL_OFFSET_KHR;
+
   return ret;
 }
 
