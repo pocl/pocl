@@ -219,12 +219,6 @@ if [ -e "${CL_DEV_INFO}" ]; then
   fi
   BUILD_OPTIONS="$BUILD_OPTIONS -D__OPENCL_C_VERSION__=${DEV_C_VER}"
 
-  if [ "$DEV_C_VER" -ge "200" ]; then
-    SPIRV_ENV="--spirv-target-env=CL2.0"
-  else
-    SPIRV_ENV="--spirv-target-env=CL1.2"
-  fi
-
   for EXT in $CL_DEVICE_EXTENSIONS ; do
     CL_EXT_DEFS="${CL_EXT_DEFS} -D${EXT}"
     CL_EXTS="${CL_EXTS},+${EXT}"

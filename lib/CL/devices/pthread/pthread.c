@@ -172,13 +172,24 @@ pocl_pthread_uninit (unsigned j, cl_device_id device)
 {
   if (scheduler_initialized)
     {
-      pthread_scheduler_uninit (device);
+      pthread_scheduler_uninit ();
       scheduler_initialized = 0;
     }
 
   POCL_MEM_FREE (device->data);
   return CL_SUCCESS;
 }
+
+#ifdef ENABLE_PTHREAD_FINISH_FN
+void __attribute__ ((destructor)) pthread_finish_fn (void)
+{
+  if (scheduler_initialized)
+    {
+      pthread_scheduler_uninit ();
+      scheduler_initialized = 0;
+    }
+}
+#endif
 
 cl_int
 pocl_pthread_reinit (unsigned j, cl_device_id device, const char *parameters)

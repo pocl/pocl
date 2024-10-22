@@ -35,7 +35,7 @@ target_link_libraries("example1" ${POCLU_LINK_OPTIONS})
 add_test(NAME "examples/example1_dot_product" COMMAND "example1")
 
 if (ENABLE_SPIRV)
-	add_test(NAME "examples/example1_spirv" COMMAND "example1" "v")
+  add_test(NAME "examples/example1_spirv" COMMAND "example1" "v")
   list(APPEND SPIREX "examples/example1_spirv")
 endif()
 

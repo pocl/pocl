@@ -1,0 +1,151 @@
+---
+name: Linux / CPU x86-64 on GH tests
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - 'CHANGES'
+      - 'COPYING'
+      - 'CREDITS'
+      - 'LICENSE'
+      - 'README.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  CCACHE_BASEDIR: "${{ github.workspace }}"
+  CCACHE_DIR: "${{ github.workspace }}/../../../../ccache_storage"
+  EXAMPLES_DIR: "${{ github.workspace }}/../../../../examples"
+
+jobs:
+  # jobs run on Github-hosted runners.
+  # TODO: move more self-hosted to Github-hosted
+  # unfortunately sanitizers don't work on Github-hosted runners,
+  # probably some limitation of Virtual address space
+  # (sanitizer-built binaries require >=20 terabytes of Virt AS)
+  github_test_matrix:
+    name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # basic = simplest pthread build
+        # devel = with devel options
+        # install = install PoCL system-wide and run tests
+        llvm: [17, 18]
+        config: [basic, devel]
+        include:
+          - llvm: 14
+            config: OpenMP
+          - llvm: 15
+            config: TBB
+          - llvm: 16
+            config: static
+          - llvm: 18
+            config: install
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871
+
+      - name: Load Env vars
+        id: load-env
+        run: |
+          cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
+
+      - name: Install prerequisites and ocl-icd
+        run: >
+          sudo apt update -y &&
+          sudo apt install -y wget gpg python3-dev libpython3-dev build-essential ocl-icd-libopencl1 cmake make git pkg-config libhwloc-dev zlib1g-dev libtbb2-dev &&
+          wget -qO- "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xd1e4ec6482cdd1da8bf1566a593b02af628bafbf" | sudo gpg --dearmor -o /usr/share/keyrings/ocl-icd.gpg &&
+          echo "deb [signed-by=/usr/share/keyrings/ocl-icd.gpg] https://ppa.launchpadcontent.net/ocl-icd/ppa/ubuntu jammy main" >/tmp/ocl-icd.list &&
+          sudo mv /tmp/ocl-icd.list /etc/apt/sources.list.d/ &&
+          sudo apt update -y &&
+          sudo apt install -y ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev
+
+      - name: Install LLVM <16
+        if: ${{ matrix.llvm <= 15 }}
+        run: >
+          export LLVM_VERSION=${{ matrix.llvm }} &&
+          sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION}
+
+      - name: Install LLVM 16+
+        if: ${{ matrix.llvm > 15 }}
+        run: >
+          export LLVM_VERSION=${{ matrix.llvm }} &&
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/llvm-snapshot.gpg &&
+          echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/jammy/ llvm-toolchain-jammy-${LLVM_VERSION} main" >/tmp/llvm.list &&
+          sudo mv /tmp/llvm.list /etc/apt/sources.list.d/ &&
+          sudo apt update -y &&
+          sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} libpolly-${LLVM_VERSION}-dev
+
+      - name: CMake
+        id: cmake
+        run: |
+          runCMake() {
+            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            cmake -DDEVELOPER_MODE=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            "-DCMAKE_C_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
+            "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
+            -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} \
+            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+          }
+
+          rm -rf ${{ github.workspace }}/build
+          mkdir ${{ github.workspace }}/build
+          if [ "${{ matrix.config }}" == "OpenMP" ]; then
+            runCMake -DENABLE_ICD=1 -DENABLE_HOST_CPU_DEVICES_OPENMP=1
+          elif [ "${{ matrix.config }}" == "TBB" ]; then
+            runCMake -DENABLE_ICD=1 -DENABLE_TBB_DEVICE=1
+          elif [ "${{ matrix.config }}" == "basic" ]; then
+            runCMake -DENABLE_ICD=1 -DENABLE_LLVM_FILECHECKS=1
+          elif [ "${{ matrix.config }}" == "static" ]; then
+            runCMake -DENABLE_ICD=1 -DSTATIC_LLVM=1
+          elif [ "${{ matrix.config }}" == "devel" ]; then
+            runCMake -DENABLE_RELOCATION=0 -DDEVELOPER_MODE=1 -DENABLE_VALGRIND=1 -DENABLE_EXTRA_VALIDITY_CHECKS=1
+          elif [ "${{ matrix.config }}" == "install" ]; then
+            runCMake -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_ICD=1 -DKERNELLIB_HOST_CPU_VARIANTS=distro -DPOCL_ICD_ABSOLUTE_PATH=OFF -DENABLE_POCL_BUILDING=OFF
+          else
+            echo "Unknown configuration" && exit 1
+          fi
+
+      - name: Build PoCL
+        id: build_pocl
+        timeout-minutes: 20
+        run: |
+          cd ${{ github.workspace }}/build && make -j$(nproc)
+
+      - name: Install PoCL
+        id: install_pocl
+        if: ${{ matrix.config == 'install' }}
+        timeout-minutes: 5
+        run: |
+          # remove CTestCustom.cmake - it contains POCL_BUILDING and OCL_ICD_VENDORS incompatible with install config
+          cd ${{ github.workspace }}/build && sudo make install && rm CTestCustom.cmake
+          # remove the built libpocl.so library
+          cd ${{ github.workspace }}/build/lib/CL && make clean
+
+      - name: Run Tests
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+        id: ctest
+        timeout-minutes: 120
+        run: |
+          runCTest() {
+            cd ${{ github.workspace }}/build && ctest -j$(nproc) $CTEST_FLAGS "$@"
+          }
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          # the pocl_test_dlopen tests try to dlopen libraries from the build dir; however, we removed them at install step
+          if [ "${{ matrix.config }}" == "install" ]; then
+            runCTest -L internal -E pocl_test_dlopen_
+          else
+            runCTest -L internal
+          fi

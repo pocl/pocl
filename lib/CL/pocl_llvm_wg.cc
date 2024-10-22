@@ -993,9 +993,10 @@ static int convertBCorSPV(char *InputPath,
     CompilationArgs.push_back(ALLOW_EXTS);
   // TODO ze_device_module_properties_t.spirvVersionSupported
   CompilationArgs.push_back("--spirv-max-version=1.4");
-  CompilationArgs.push_back("--spirv-target-env=CL2.0");
-  if (reverse)
+  if (reverse) {
     CompilationArgs.push_back("-r");
+    CompilationArgs.push_back("--spirv-target-env=CL2.0");
+  }
   CompilationArgs.push_back("-o");
   CompilationArgs.push_back(HiddenOutputPath);
   CompilationArgs.push_back(HiddenInputPath);

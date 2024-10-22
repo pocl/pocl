@@ -1,4 +1,5 @@
 /* OpenCL runtime library: time measurement utility functions
+   implemented using C++11 standard library
 
    Copyright (c) 2024 Michal Babej / Intel Finland Oy
 

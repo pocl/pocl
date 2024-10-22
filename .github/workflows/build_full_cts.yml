@@ -1,5 +1,5 @@
 ---
-name: Weekly full CTS runs
+name: Linux / CPU + GPU weekly full CTS
 
 permissions:
   contents: read

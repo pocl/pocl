@@ -2,7 +2,7 @@
 #   CMake build system files
 #
 #   Copyright (c) 2017 Michal Babej / Tampere University of Technology
-#   Copyright (c) 2022-24 Michal Babej / Tampere University of Technology
+#   Copyright (c) 2022-24 Michal Babej / Intel Finland Oy
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -85,7 +85,7 @@ if(CUSTOM_CTS_GIT_TAG)
   set(CTS_GIT_TAG "${CUSTOM_CTS_GIT_TAG}")
 else()
   # Use PoCL's fork which has pending fixes.
-  set(CTS_GIT_TAG "v2024.10.09")
+  set(CTS_GIT_TAG "v2024.10.18")
 endif()
 
 set(TS_BUILDDIR "${TS_BUILDDIR}/test_conformance")
