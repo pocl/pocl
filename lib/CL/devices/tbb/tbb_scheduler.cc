@@ -122,7 +122,14 @@ public:
     /* Flush to zero is only set once at the start of the kernel execution
      * because FTZ is a compilation option. */
     unsigned Flush = K->kernel->program->flush_denorms;
-    pocl_set_ftz(Flush);
+    cl_device_fp_config supports_any_denorms =
+        (K->device->half_fp_config
+         | K->device->single_fp_config
+         | K->device->double_fp_config) & CL_FP_DENORM;
+    if (supports_any_denorms)
+      pocl_set_ftz (Flush);
+    else
+      pocl_set_ftz(1);
 
     for (size_t X = r.pages().begin(); X != r.pages().end(); X++) {
       for (size_t Y = r.rows().begin(); Y != r.rows().end(); Y++) {
