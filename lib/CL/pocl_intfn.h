@@ -32,6 +32,8 @@
 extern "C" {
 #endif
 
+/* clang-format off */
+
 POdeclsym(clBuildProgram)
 POdeclsym(clLinkProgram)
 POdeclsym(clCompileProgram)
@@ -220,6 +222,8 @@ POdeclsym (clSetKernelArgDevicePointerEXT);
 
 /* cl_exp_defined_builtin_kernels */
 POdeclsym (clCreateProgramWithDefinedBuiltInKernels)
+
+/* clang-format on */
 
 #ifdef __cplusplus
 }
