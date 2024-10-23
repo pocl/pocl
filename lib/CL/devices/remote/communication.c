@@ -1391,7 +1391,7 @@ start_engines (remote_server_data_t *d, remote_device_data_t *devd,
                       pocl_remote_writer_pthread, a);
 
   d->fast_write_queue = calloc (1, sizeof (network_queue));
-  SETUP_NETW_Q (d->fast_write_queue, &d->slow_connection);
+  SETUP_NETW_Q (d->fast_write_queue, &d->fast_connection);
   SETUP_NETW_Q_ARG (a, d, d->fast_write_queue);
   POCL_CREATE_THREAD (d->fast_write_queue->thread_id,
                       pocl_remote_writer_pthread, a);
