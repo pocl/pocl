@@ -59,8 +59,8 @@ main (int argc, char **argv)
   const char *explicit_binary_path = (argc > 2) ? argv[2] : NULL;
 
   const char *basename = "example2";
-  err = poclu_load_program (context, device, basename, spirv, poclbin,
-                            explicit_binary_path, NULL, &program);
+  err = poclu_load_program (platform, context, device, basename, spirv,
+                            poclbin, explicit_binary_path, NULL, &program);
   if (err != CL_SUCCESS)
     goto ERROR;
 

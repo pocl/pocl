@@ -69,8 +69,8 @@ main (int argc, char **argv)
 
   const char *sourcefile = SRCDIR "/tests/runtime/migration_test";
   const char *basename = "migration_test";
-  err = poclu_load_program_multidev (context, devices, num_devices, sourcefile,
-                                     0, 0, NULL, NULL, &program);
+  err = poclu_load_program_multidev (platform, context, devices, num_devices,
+                                     sourcefile, 0, 0, NULL, NULL, &program);
   if (err != CL_SUCCESS)
     goto ERROR;
 
