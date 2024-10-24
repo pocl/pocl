@@ -39,6 +39,8 @@ int pocl_tensor_type_is_int (cl_tensor_datatype T);
 
 int pocl_tensor_type_size (cl_tensor_datatype T);
 
+size_t pocl_tensor_data_size (const cl_tensor_desc *t);
+
 cl_bool pocl_tensor_dtype_value_equals (const cl_tensor_datatype DType,
                                         const cl_tensor_datatype_value *Value,
                                         cl_double doubleConst,

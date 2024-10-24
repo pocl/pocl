@@ -30,9 +30,11 @@
 #include "pocl_util.h"
 #include "pocl_context.h"
 #include "pocl_workgroup_func.h"
-
 #ifdef HAVE_LIBJPEG_TURBO
 #include "cpu_dbk/pocl_dbk_khr_jpeg_cpu.h"
+#endif
+#ifdef HAVE_ONNXRT
+#include "cpu_dbk/pocl_dbk_khr_onnxrt_cpu.h"
 #endif
 
 /* Generic struct for CPU device drivers.

@@ -2394,13 +2394,26 @@ pocl_network_setup_peer_mesh ()
  *
  */
 cl_int
-pocl_network_build_or_link_program (
-    remote_device_data_t *ddata, const void *payload, size_t payload_size,
-    int is_binary, int is_builtin, int is_spirv, uint32_t prog_id,
-    const char *options, char **kernel_meta_bytes, size_t *kernel_meta_size,
-    uint32_t *devices, uint32_t *platforms, size_t num_devices,
-    char **build_logs, char **binaries, size_t *binary_sizes,
-    size_t svm_region_offset, int compile_only, int link_only)
+pocl_network_build_or_link_program (remote_device_data_t *ddata,
+                                    const void *payload,
+                                    size_t payload_size,
+                                    int is_binary,
+                                    int is_builtin,
+                                    int is_dbk,
+                                    int is_spirv,
+                                    uint32_t prog_id,
+                                    const char *options,
+                                    char **kernel_meta_bytes,
+                                    size_t *kernel_meta_size,
+                                    uint32_t *devices,
+                                    uint32_t *platforms,
+                                    size_t num_devices,
+                                    char **build_logs,
+                                    char **binaries,
+                                    size_t *binary_sizes,
+                                    size_t svm_region_offset,
+                                    int compile_only,
+                                    int link_only)
 {
   size_t i, j;
   REMOTE_SERV_DATA2;
@@ -2418,6 +2431,8 @@ pocl_network_build_or_link_program (
   else if (is_spirv)
     nc.request.message_type = compile_only ?
       MessageType_CompileProgramFromSPIRV : MessageType_BuildProgramFromSPIRV;
+  else if (is_dbk)
+    nc.request.message_type = MessageType_BuildProgramWithDefinedBuiltins;
   else if (is_builtin)
     nc.request.message_type = MessageType_BuildProgramWithBuiltins;
   else if (is_binary)
