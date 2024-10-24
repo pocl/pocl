@@ -469,10 +469,10 @@ static void pocl_tce_write_kernel_descriptor(_cl_command_node *Command,
                               content.str().c_str(), content.str().size());
 }
 
-void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
-                             cl_device_id Device, int Specialize) {
+int pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
+                            cl_device_id Device, int Specialize) {
   if (Command->type != CL_COMMAND_NDRANGE_KERNEL)
-    return;
+    return CL_INVALID_OPERATION;
   _cl_command_run *RunCommand = &Command->command.run;
 
   void *Data = Command->device->data;
@@ -1175,7 +1175,7 @@ pocl_tce_notify (cl_device_id device, cl_event event, cl_event finished)
   _cl_command_node *node = event->command;
 
   if (finished->status < CL_COMPLETE) {
-    pocl_update_event_failed(event);
+    pocl_update_event_failed_locked(event);
     return;
   }
 

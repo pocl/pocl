@@ -925,7 +925,7 @@ if(UNIX)
   set(LIBMATH "-lm")
 elseif(WIN32)
   if(MINGW)
-    set(DEFAULT_HOST_LD_FLAGS "--shared -nostartfiles")
+    set(DEFAULT_HOST_LD_FLAGS "--shared")
   endif()
   set(LIBMATH)
 endif()
@@ -1299,7 +1299,6 @@ set(HOST_DEVICE_CL_VERSION_MINOR 0)
 set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
 cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
 cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes \
-cl_khr_command_buffer cl_khr_command_buffer_multi_device \
 cl_intel_unified_shared_memory cl_ext_buffer_device_address")
 
 # Host CPU device: list of OpenCL 3.0 features that are always enabled
@@ -1312,11 +1311,15 @@ __opencl_c_atomic_scope_device __opencl_c_program_scope_global_variables \
 __opencl_c_atomic_scope_all_devices __opencl_c_generic_address_space \
 __opencl_c_work_group_collective_functions")
 
+# enabled by default when conformance=ON
+option(HOST_CPU_ENABLE_DENORMS "enable denorm support for CPU devices" ON)
+
 # Host CPU device: Unfinished/undertested extensions only advertised when conformance
 # is OFF.
 if(NOT ENABLE_CONFORMANCE)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} \
       cl_pocl_svm_rect cl_pocl_command_buffer_svm \
+      cl_khr_command_buffer cl_khr_command_buffer_multi_device cl_khr_command_buffer_mutable_dispatch \
       cl_pocl_command_buffer_host_buffer")
 
   if (HAVE_LIBXSMM)
@@ -2303,6 +2306,7 @@ if (ENABLE_LLVM)
   MESSAGE(STATUS "SELECTED_HOST_CPU: ${SELECTED_HOST_CPU}")
   MESSAGE(STATUS "HOST_CPU_FORCED: ${HOST_CPU_FORCED}")
   MESSAGE(STATUS "HOST_CPU_SUPPORTS_FLOAT16: ${HOST_CPU_SUPPORTS_FLOAT16}")
+  MESSAGE(STATUS "HOST_CPU_ENABLE_DENORMS: ${HOST_CPU_ENABLE_DENORMS}")
   endif()
 endif()
 MESSAGE(STATUS "")

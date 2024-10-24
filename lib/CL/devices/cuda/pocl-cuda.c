@@ -1704,11 +1704,11 @@ pocl_cuda_free_program (cl_device_id device, cl_program program,
   return CL_SUCCESS;
 }
 
-void
+int
 pocl_cuda_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                           cl_device_id device, int specialize)
 {
-  return;
+  return CL_SUCCESS;
 }
 
 int
@@ -2526,7 +2526,7 @@ pocl_cuda_finalize_command (cl_device_id device, cl_event event)
 
   pocl_update_event_running (event);
   if (event->status < 0)
-    pocl_update_event_failed (event);
+    POCL_UPDATE_EVENT_FAILED_MSG (event, "CUDA event failed");
   else
     POCL_UPDATE_EVENT_COMPLETE_MSG (event, "CUDA event");
 }

@@ -122,7 +122,14 @@ public:
     /* Flush to zero is only set once at the start of the kernel execution
      * because FTZ is a compilation option. */
     unsigned Flush = K->kernel->program->flush_denorms;
-    pocl_set_ftz(Flush);
+    cl_device_fp_config supports_any_denorms =
+        (K->device->half_fp_config
+         | K->device->single_fp_config
+         | K->device->double_fp_config) & CL_FP_DENORM;
+    if (supports_any_denorms)
+      pocl_set_ftz (Flush);
+    else
+      pocl_set_ftz(1);
 
     for (size_t X = r.pages().begin(); X != r.pages().end(); X++) {
       for (size_t Y = r.rows().begin(); Y != r.rows().end(); Y++) {
@@ -179,14 +186,25 @@ prepareKernelCommand(pocl_tbb_scheduler_data *SchedData,
   }
 
   /* initialize the program gvars if required */
-  pocl_driver_build_gvar_init_kernel(Program, DevI, Cmd->device,
-                                     pocl_cpu_gvar_init_callback);
+  if (pocl_driver_build_gvar_init_kernel(Program, DevI, Cmd->device,
+                                      pocl_cpu_gvar_init_callback) != 0) {
+    pocl_update_event_running(Cmd->sync.event.event);
+    POCL_UPDATE_EVENT_FAILED_MSG (Cmd->sync.event.event,
+                                 "CPU: failed to compile GVar init kernel");
+    return NULL;
+  }
 
   char *SavedName = NULL;
   pocl_sanitize_builtin_kernel_name(Kernel, &SavedName);
   void *ci = pocl_check_kernel_dlhandle_cache(Cmd, CL_TRUE, CL_TRUE);
   Cmd->command.run.device_data = ci;
   pocl_restore_builtin_kernel_name(Kernel, SavedName);
+  if (ci == NULL) {
+    pocl_update_event_running(Cmd->sync.event.event);
+    POCL_UPDATE_EVENT_FAILED_MSG (Cmd->sync.event.event,
+                                 "CPU: failed to compile kernel");
+    return NULL;
+  }
 
   RunCmd = new_kernel_run_command();
   RunCmd->data = SchedData;

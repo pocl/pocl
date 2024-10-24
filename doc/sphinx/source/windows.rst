@@ -51,8 +51,9 @@ From `C:\Workspace\git`, run `git-bash.exe`. In this shell execute the following
     mkdir build
     cd build
     cmake -G Ninja -DENABLE_HWLOC=1 -DENABLE_ICD=0 -DENABLE_LLVM=1 -DSTATIC_LLVM=1 \
+       -DWITH_LLVM_CONFIG=/c/Workspace/llvm/bin/llvm-config.exe \
     -DCMAKE_C_COMPILER=/c/Workspace/llvm/bin/clang.exe -DCMAKE_CXX_COMPILER=/c/Workspace/llvm/bin/clang++.exe \
-    -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_PLATFORM_CPP=1 -DVISIBILITY_HIDDEN=0 ..
+    -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_LOADABLE_DRIVERS=0 ..
     ninja -j4
 
 Running tests from the build directory

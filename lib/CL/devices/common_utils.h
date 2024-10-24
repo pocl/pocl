@@ -105,7 +105,7 @@ POCL_EXPORT
 void pocl_setup_kernel_arg_array (kernel_run_command *k);
 
 POCL_EXPORT
-void pocl_setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
+int pocl_setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
                                          kernel_run_command *k,
                                          char *local_mem,
                                          size_t local_mem_size);

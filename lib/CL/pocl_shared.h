@@ -84,36 +84,37 @@ cl_int pocl_kernel_copy_args (cl_kernel kernel,
                               struct pocl_argument *src_arguments,
                               _cl_command_run *command);
 
-cl_int pocl_ndrange_kernel_common (
-  cl_command_buffer_khr command_buffer,
-  cl_command_queue command_queue,
-  const cl_command_properties_khr *properties,
-  cl_kernel kernel,
-  struct pocl_argument *src_arguments,
-  cl_uint work_dim,
-  const size_t *global_work_offset,
-  const size_t *global_work_size,
-  const size_t *local_work_size,
-  cl_uint num_items_in_wait_list,
-  const cl_event *event_wait_list,
-  cl_event *event_p,
-  const cl_sync_point_khr *sync_point_wait_list,
-  cl_sync_point_khr *sync_point_p,
-  _cl_command_node **cmd);
+cl_int
+pocl_ndrange_kernel_common (cl_command_buffer_khr command_buffer,
+                            cl_command_queue command_queue,
+                            cl_mutable_dispatch_fields_khr updatable_fields,
+                            cl_kernel kernel,
+                            struct pocl_argument *src_arguments,
+                            cl_uint work_dim,
+                            const size_t *global_work_offset,
+                            const size_t *global_work_size,
+                            const size_t *local_work_size,
+                            cl_uint num_items_in_wait_list,
+                            const cl_event *event_wait_list,
+                            cl_event *event_p,
+                            const cl_sync_point_khr *sync_point_wait_list,
+                            cl_sync_point_khr *sync_point_p,
+                            _cl_command_node **cmd_ptr);
 
-cl_int pocl_record_ndrange_kernel (
-  cl_command_buffer_khr command_buffer,
-  cl_command_queue command_queue,
-    const cl_command_properties_khr *properties,
-  cl_kernel kernel,
-  struct pocl_argument *src_arguments,
-  cl_uint work_dim,
-  const size_t *global_work_offset,
-  const size_t *global_work_size,
-  const size_t *local_work_size,
-  cl_uint num_items_in_wait_list,
-  const cl_sync_point_khr *sync_point_wait_list,
-  cl_sync_point_khr *sync_point_p);
+cl_int
+pocl_record_ndrange_kernel (cl_command_buffer_khr command_buffer,
+                            cl_command_queue command_queue,
+                            const cl_command_properties_khr *properties,
+                            cl_kernel kernel,
+                            struct pocl_argument *src_arguments,
+                            cl_uint work_dim,
+                            const size_t *global_work_offset,
+                            const size_t *global_work_size,
+                            const size_t *local_work_size,
+                            cl_uint num_items_in_wait_list,
+                            const cl_sync_point_khr *sync_point_wait_list,
+                            cl_sync_point_khr *sync_point_p,
+                            _cl_command_node **cmd_ptr);
 
 cl_int pocl_rect_copy (cl_command_buffer_khr command_buffer,
                        cl_command_queue command_queue,
@@ -160,22 +161,34 @@ cl_int pocl_copy_buffer_rect_common (
     cl_sync_point_khr *sync_point, _cl_command_node **cmd);
 
 cl_int pocl_copy_buffer_to_image_common (
-    cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
-    cl_mem src_buffer, cl_mem dst_image, size_t src_offset,
-    const size_t *dst_origin, const size_t *region,
-    cl_uint num_items_in_wait_list, const cl_event *event_wait_list,
-    cl_event *event, const cl_sync_point_khr *sync_point_wait_list,
-    cl_sync_point_khr *sync_point, cl_mutable_command_khr *mutable_handle,
-    _cl_command_node **cmd);
+  cl_command_buffer_khr command_buffer,
+  cl_command_queue command_queue,
+  cl_mem src_buffer,
+  cl_mem dst_image,
+  size_t src_offset,
+  const size_t *dst_origin,
+  const size_t *region,
+  cl_uint num_items_in_wait_list,
+  const cl_event *event_wait_list,
+  cl_event *event,
+  const cl_sync_point_khr *sync_point_wait_list,
+  cl_sync_point_khr *sync_point,
+  _cl_command_node **cmd);
 
 cl_int pocl_copy_image_to_buffer_common (
-    cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
-    cl_mem src_image, cl_mem dst_buffer, const size_t *src_origin,
-    const size_t *region, size_t dst_offset, cl_uint num_items_in_wait_list,
-    const cl_event *event_wait_list, cl_event *event,
-    const cl_sync_point_khr *sync_point_wait_list,
-    cl_sync_point_khr *sync_point, cl_mutable_command_khr *mutable_handle,
-    _cl_command_node **cmd);
+  cl_command_buffer_khr command_buffer,
+  cl_command_queue command_queue,
+  cl_mem src_image,
+  cl_mem dst_buffer,
+  const size_t *src_origin,
+  const size_t *region,
+  size_t dst_offset,
+  cl_uint num_items_in_wait_list,
+  const cl_event *event_wait_list,
+  cl_event *event,
+  const cl_sync_point_khr *sync_point_wait_list,
+  cl_sync_point_khr *sync_point,
+  _cl_command_node **cmd);
 
 cl_int pocl_copy_image_common (
     cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
@@ -193,14 +206,18 @@ cl_int pocl_fill_buffer_common (
     const cl_sync_point_khr *sync_point_wait_list,
     cl_sync_point_khr *sync_point, _cl_command_node **cmd);
 
-cl_int pocl_fill_image_common (
-    cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
-    cl_mem image, const void *fill_color, const size_t *origin,
-    const size_t *region, cl_uint num_items_in_wait_list,
-    const cl_event *event_wait_list, cl_event *event,
-    const cl_sync_point_khr *sync_point_wait_list,
-    cl_sync_point_khr *sync_point, cl_mutable_command_khr *mutable_handle,
-    _cl_command_node **cmd);
+cl_int pocl_fill_image_common (cl_command_buffer_khr command_buffer,
+                               cl_command_queue command_queue,
+                               cl_mem image,
+                               const void *fill_color,
+                               const size_t *origin,
+                               const size_t *region,
+                               cl_uint num_items_in_wait_list,
+                               const cl_event *event_wait_list,
+                               cl_event *event,
+                               const cl_sync_point_khr *sync_point_wait_list,
+                               cl_sync_point_khr *sync_point,
+                               _cl_command_node **cmd);
 
 cl_int pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
                                cl_command_queue command_queue,
@@ -353,6 +370,14 @@ pocl_write_buffer_rect_common (cl_command_buffer_khr command_buffer,
                                const cl_sync_point_khr *sync_point_wait_list,
                                cl_sync_point_khr *sync_point,
                                _cl_command_node **cmd);
+
+cl_int
+pocl_kernel_calc_wg_size (cl_device_id dev, cl_kernel kernel,
+                          unsigned device_i,
+                          cl_uint work_dim, const size_t *global_work_offset,
+                          const size_t *global_work_size,
+                          const size_t *local_work_size, size_t *global_offset,
+                          size_t *local_size, size_t *num_groups);
 
 /* this one is NOT implemented for command buffers */
 cl_int pocl_svm_migrate_mem_common (cl_command_type command_type,

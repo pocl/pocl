@@ -1007,6 +1007,7 @@ pocl_command_record (cl_command_buffer_khr command_buffer,
   if (sync_point != NULL)
     *sync_point = command_buffer->num_syncpoints + 1;
   command_buffer->num_syncpoints++;
+  cmd->cmd_buffer = command_buffer;
   POCL_UNLOCK (command_buffer->mutex);
   return CL_SUCCESS;
 }
@@ -1151,6 +1152,8 @@ pocl_unmap_command_finished (cl_device_id dev, _cl_command_t *cmd)
 void
 pocl_ndrange_node_cleanup (_cl_command_node *node)
 {
+  if (node == NULL)
+    return;
   cl_uint i;
   for (i = 0; i < node->command.run.kernel->meta->num_args; ++i)
     {
@@ -2206,7 +2209,14 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
 
 
 void
-pocl_update_event_failed (cl_event event)
+pocl_update_event_failed (const char *func, unsigned line,
+                                   cl_event event, const char *msg)
+{
+  pocl_update_event_finished (CL_FAILED, func, line, event, msg);
+}
+
+void
+pocl_update_event_failed_locked (cl_event event)
 {
   POCL_UNLOCK_OBJ (event);
   pocl_update_event_finished (CL_FAILED, NULL, 0, event, NULL);

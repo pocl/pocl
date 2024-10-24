@@ -212,9 +212,14 @@ CL_API_SUFFIX__VERSION_1_2
   if (strcmp (func_name, "clCreateCommandQueueWithPropertiesKHR") == 0)
     return (void *)&POname (clCreateCommandQueueWithProperties);
 
+  if (strcmp (func_name, "clUpdateMutableCommandsKHR") == 0)
+    return (void *)&POname (clUpdateMutableCommandsKHR);
+
+  if (strcmp (func_name, "clGetMutableCommandInfoKHR") == 0)
+    return (void *)&POname (clGetMutableCommandInfoKHR);
+
   if (strcmp (func_name, "clCreateProgramWithDefinedBuiltInKernels") == 0)
     return (void *)&POname (clCreateProgramWithDefinedBuiltInKernels);
-
 
   POCL_MSG_ERR ("unknown platform extension requested: %s\n", func_name);
   return NULL;

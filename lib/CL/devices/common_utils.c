@@ -168,6 +168,19 @@ pocl_cpu_init_common (cl_device_id device)
   /* 0 is the host memory shared with all drivers that use it */
   device->global_mem_id = 0;
 
+#ifndef HOST_CPU_ENABLE_DENORMS
+  if (device->single_fp_config)
+    device->single_fp_config = device->single_fp_config & (~CL_FP_DENORM);
+  if (device->half_fp_config)
+    device->half_fp_config = device->half_fp_config & (~CL_FP_DENORM);
+#ifndef ENABLE_CONFORMANCE
+  /* denorm is mandatory for FP64, but when conformance=OFF
+   * we can disable it also for FP64 */
+  if (device->double_fp_config)
+    device->double_fp_config = device->double_fp_config & (~CL_FP_DENORM);
+#endif
+#endif
+
   device->version_of_latest_passed_cts = HOST_DEVICE_LATEST_CTS_PASS;
   device->extensions = HOST_DEVICE_EXTENSIONS;
 
@@ -278,6 +291,17 @@ pocl_cpu_init_common (cl_device_id device)
   device->local_mem_size = pocl_get_int_option ("POCL_CPU_LOCAL_MEM_SIZE",
                                                 device->local_mem_size);
 
+  device->cmdbuf_capabilities
+    = CL_COMMAND_BUFFER_CAPABILITY_SIMULTANEOUS_USE_KHR
+      | CL_COMMAND_BUFFER_CAPABILITY_KERNEL_PRINTF_KHR
+      | CL_COMMAND_BUFFER_CAPABILITY_OUT_OF_ORDER_KHR
+      | CL_COMMAND_BUFFER_CAPABILITY_MULTIPLE_QUEUE_KHR;
+  device->cmdbuf_required_properties = 0;
+  /* Local size (and offset) is not so simple to change,
+   * because of specialization */
+  device->cmdbuf_mutable_dispatch_capabilities
+    = CL_MUTABLE_DISPATCH_GLOBAL_SIZE_KHR;
+
   return ret;
 }
 
@@ -358,7 +382,7 @@ pocl_setup_kernel_arg_array (kernel_run_command *k)
  *
  * they're set up by 1) memcpy from kernel_run_command, 2) all
  * local args are set to thread-local "local memory" storage. */
-void
+int
 pocl_setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
                                     kernel_run_command *k, char *local_mem,
                                     size_t local_mem_size)
@@ -424,16 +448,18 @@ pocl_setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
                 {
                   total_auto_local_size += meta->local_sizes[j];
                 }
-              POCL_ABORT (
+              POCL_MSG_ERR (
                   "PoCL detected an OpenCL program error: "
                   "%d automatic local buffer(s) with total size %lu "
                   "bytes doesn't fit to the local memory of size %lu\n",
                   meta->num_locals, total_auto_local_size, local_mem_size);
+              return CL_FAILED;
             }
           start += size;
           start = align_ptr (start);
         }
     }
+  return CL_SUCCESS;
 }
 
 /* called from kernel teardown code.
@@ -937,8 +963,9 @@ pocl_xsmm_execute_dbk (cl_program program,
         break;
       }
     default:
-      POCL_ABORT_UNIMPLEMENTED ("this code path should have "
-                                "been eliminated earlier");
+      POCL_MSG_ERR ("this code path should have "
+                    "been eliminated earlier");
+      return CL_FAILED;
     }
 
   libxsmm_datatype InElemType = pocl_convert_to_libxsmm_type (InDtype);
@@ -978,8 +1005,7 @@ pocl_cpu_execute_dbk (cl_program program,
     default:
       {
         POCL_MSG_ERR ("Unhandled DBK id %d.\n", meta->builtin_kernel_id);
-        POCL_ABORT_UNIMPLEMENTED (
-          "Requested DBK is not implemented on the CPU device.\n");
+        return CL_FAILED;
       }
     }
 }
