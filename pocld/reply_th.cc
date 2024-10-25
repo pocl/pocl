@@ -140,29 +140,16 @@ void ReplyQueueThread::setConnection(
 }
 
 void ReplyQueueThread::writeThread() {
-  // XXX: Change into a ring buffer?
-  std::queue<Reply *> Backup;
-  bool Resending = false;
   size_t i = 0;
   while (1) {
   RETRY:
     if (eh->exit_requested())
       return;
 
-    if (Backup.empty())
-      Resending = false;
     std::unique_lock<std::mutex> InflightLock(io_mutex);
-    if ((IOInflight.size() > 0 || Resending)) {
+    if ((IOInflight.size() > 0)) {
       Reply *reply = IOInflight[i];
       InflightLock.unlock();
-
-      // If we need to resend old messages, disregard the inflight queue
-      if (Resending) {
-        reply = Backup.front();
-        POCL_MSG_PRINT_GENERAL("%s: Resending old replies, %" PRIuS
-                               " remaining\n",
-                               ThreadIdentifier.c_str(), Backup.size());
-      }
 
       cl_int Status =
           (reply->event.get() == nullptr)
@@ -263,36 +250,27 @@ void ReplyQueueThread::writeThread() {
         TP_MSG_SENT(reply->rep.msg_id, reply->rep.did, reply->rep.failed,
                     reply->rep.message_type);
 
-        if (Resending) {
-          delete reply;
-          Backup.pop();
-        } else {
-          if (reply->event.get() != nullptr) {
-            virtualContext->notifyEvent(reply->req->Body.event_id, Status);
-            Request peer_notice{};
-            peer_notice.Body.msg_id = reply->rep.msg_id;
-            peer_notice.Body.event_id = reply->req->Body.event_id;
-            peer_notice.Body.message_type = MessageType_NotifyEvent;
-            virtualContext->broadcastToPeers(peer_notice);
-          }
-
-          // swap the current element into last place and pop it off the vector
-          InflightLock.lock();
-          if (i != IOInflight.size() - 1) {
-            std::swap(IOInflight[i], IOInflight[IOInflight.size() - 1]);
-          }
-          IOInflight.pop_back();
-
-          // move to next item (now in the old place of the current item)
-          i = i % std::max(IOInflight.size(), (size_t)1);
-          InflightLock.unlock();
-
-          Backup.push(reply);
-          if (Backup.size() > 5) {
-            delete Backup.front();
-            Backup.pop();
-          }
+        if (reply->event.get() != nullptr) {
+          virtualContext->notifyEvent(reply->req->Body.event_id, Status);
+          Request PeerNotice{};
+          PeerNotice.Body.msg_id = reply->rep.msg_id;
+          PeerNotice.Body.event_id = reply->req->Body.event_id;
+          PeerNotice.Body.message_type = MessageType_NotifyEvent;
+          virtualContext->broadcastToPeers(PeerNotice);
         }
+
+        // swap the current element into last place and pop it off the vector
+        InflightLock.lock();
+        if (i != IOInflight.size() - 1) {
+          std::swap(IOInflight[i], IOInflight[IOInflight.size() - 1]);
+        }
+        IOInflight.pop_back();
+
+        // move to next item (now in the old place of the current item)
+        i = i % std::max(IOInflight.size(), (size_t)1);
+        InflightLock.unlock();
+
+        delete reply;
       } else {
         InflightLock.lock();
         i = (i + 1) % IOInflight.size();

@@ -683,15 +683,22 @@ void PoclDaemon::readAllClientSocketsThread() {
                         cit->second->replaceConnections(
                             nullptr, OpenClientConnections.at(i));
                       SocketContexts.at(i) = cit->second;
+                      L.unlock();
+
+                      ReplyMsg_t Reply = {};
+                      Reply.message_type =
+                          MessageType_CreateOrAttachSessionReply;
+                      Reply.m.get_session.session = Session;
+                      memcpy(Reply.m.get_session.authkey, R->Body.authkey,
+                             AUTHKEY_LENGTH);
+                      OpenClientConnections.at(i)->writeFull(&Reply,
+                                                             sizeof(Reply));
+                    } else {
+                      POCL_MSG_ERR(
+                          "Client attempted to connect with invalid key\n");
+                      DroppedConnections.push_back(OpenClientConnections.at(i));
                     }
                   }
-                  L.unlock();
-                  ReplyMsg_t Reply = {};
-                  Reply.message_type = MessageType_CreateOrAttachSessionReply;
-                  Reply.m.get_session.session = Session;
-                  memcpy(Reply.m.get_session.authkey, R->Body.authkey,
-                         AUTHKEY_LENGTH);
-                  OpenClientConnections.at(i)->writeFull(&Reply, sizeof(Reply));
                 }
                 delete R;
               } else {
@@ -825,6 +832,18 @@ void PoclDaemon::readAllClientSocketsThread() {
           continue;
         VContext->requestExit(0,
                               "Client disconnected and reconnect not enabled.");
+        std::unique_lock<std::mutex> L(SessionListMtx);
+        uint64_t Session = 0;
+        for (auto it : ClientSessions) {
+          if (it.second == VContext) {
+            Session = it.first;
+            break;
+          }
+        }
+        if (Session != 0) {
+          SessionKeys.erase(Session);
+          ClientSessions.erase(Session);
+        }
         delete VContext;
       }
     }

@@ -173,6 +173,32 @@ struct network_command
   } data;
 };
 
+/** Wrapper struct that holds everything the communication (read/write)
+ * functions need to function, starting with a tag to indicate what kind of
+ * connection this is */
+typedef struct remote_connection_s
+{
+  transport_domain_t domain;
+  int fd;
+  /* Sync objects for avoiding races in reconnect procedures */
+  sync_t setup_guard;
+  /* Sync objects for avoiding a race condition between a writer picking up
+   * the connection fd, the reader closing it and the writer trying to perform
+   * a write with the now incorrect value of the fd. */
+  sync_t *writer_guard;
+  /* Running counter so threads can detect a connection change even if the new
+   * fd has the same value as the old one. */
+  unsigned reconnect_count;
+  /* Pipe endpoint that the reader should include when polling the connection
+   * fd so the writer can wake it up if a reconnect becomes necessary. */
+  int notify_pipe_r;
+  /* Pipe endpoint that the writer should write a single byte to if it detects
+   * the need for reconnecting. */
+  int notify_pipe_w;
+  /* Flag for determining the socket options to use when (re)connecting */
+  int is_fast;
+} remote_connection_t;
+
 #define INITIAL_ARRAY_CAP 1024
 
 /* in nanoseconds */
@@ -196,17 +222,16 @@ typedef struct remote_server_data_s
   uint64_t session;
   uint8_t authkey[AUTHKEY_LENGTH];
   uint32_t available;
-  sync_t setup_lock;
   int threads_awaiting_reconnect;
 
   /* PoCL-Remote uses two sockets with parameters tuned for their respective
    * purposes: */
   /** Connection optimized for large bulk data transfers, mainly intended for
    * transferring buffer contents */
-  transport_info_t slow_connection;
+  remote_connection_t slow_connection;
   /** Connection optimized for low latency with small messages, used for
    * commands that are not expected to carry large amounts of data */
-  transport_info_t fast_connection;
+  remote_connection_t fast_connection;
 
   uint32_t num_platforms;
   uint32_t num_devices;
