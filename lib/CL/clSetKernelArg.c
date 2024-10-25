@@ -220,6 +220,40 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
           }
         return CL_SUCCESS;
       }
+    case CL_DBK_DNN_NMS_EXP:
+      {
+        const cl_dbk_attributes_exp_dnn_nms *attrs
+          = (const cl_dbk_attributes_exp_dnn_nms *)meta->builtin_kernel_attrs;
+        switch (arg_index)
+          {
+          case 0:
+          case 1:
+            return ((attrs->num_boxes > 0)
+                    && buf->size >= (size_t)attrs->num_boxes)
+                     ? CL_SUCCESS
+                     : CL_INVALID_ARG_VALUE;
+          case 2:
+            return CL_SUCCESS;
+          case 3:
+            {
+              int res;
+              if (attrs->top_k > 0)
+                res = (buf->size >= (size_t)attrs->top_k)
+                        ? CL_SUCCESS
+                        : CL_INVALID_ARG_VALUE;
+              else
+                res = ((attrs->num_boxes > 0)
+                       && buf->size >= (size_t)attrs->num_boxes)
+                        ? CL_SUCCESS
+                        : CL_INVALID_ARG_VALUE;
+              return res;
+            }
+          default:
+            POCL_RETURN_ERROR (CL_INVALID_ARG_INDEX,
+                               "invalid arg index to "
+                               "POCL_CDBI_DBK_EXP_DNN_NMS.\n");
+          }
+      }
   default:
       {
         POCL_MSG_ERR ("pocl_verify_dbk_kernel_args called on "

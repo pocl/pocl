@@ -36,6 +36,7 @@
 #ifdef HAVE_ONNXRT
 #include "cpu_dbk/pocl_dbk_khr_onnxrt_cpu.h"
 #endif
+#include "cpu_dbk/pocl_dbk_khr_dnn_utils.hh"
 #include "cpu_dbk/pocl_dbk_khr_img_cpu.h"
 
 /* Generic struct for CPU device drivers.
