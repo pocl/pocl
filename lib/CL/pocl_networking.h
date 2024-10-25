@@ -30,6 +30,8 @@
 /** Tag for transport_info_t to indicate the type of the socket */
 typedef enum transport_domain_e
 {
+  /** Initial value, indicates an invalid connection */
+  TransportDomain_Unset,
   /** Unix domain socket */
   TransportDomain_Unix,
   /** IPv4 or IPv6 */
@@ -37,15 +39,6 @@ typedef enum transport_domain_e
   /** VSOCK VirtIO socket */
   TransportDomain_Vsock,
 } transport_domain_t;
-
-/** Wrapper struct that holds everything the communication (read/write)
- * functions need to function, starting with a tag to indicate what kind of
- * connection this is */
-typedef struct transport_info_s
-{
-  transport_domain_t domain;
-  int fd;
-} transport_info_t;
 
 #ifdef __cplusplus
 extern "C"
