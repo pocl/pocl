@@ -25,9 +25,10 @@
 
 #include "pocl_tensor_util.h"
 
+#include "dbk/pocl_dbk_khr_dnn_utils_shared.h"
+#include "dbk/pocl_dbk_khr_img_shared.h"
 #include "dbk/pocl_dbk_khr_jpeg_shared.h"
 #include "dbk/pocl_dbk_khr_onnxrt_shared.h"
-#include "dbk/pocl_dbk_khr_img_shared.h"
 
 #include <string.h>
 
@@ -438,6 +439,11 @@ pocl_init_builtin_kernel_metadata ()
     BIKD_DBK (POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT, "exp_img_color_convert", 2,
               BI_ARG_READ_BUF ("uint8_t*", "input"),
               BI_ARG_WRITE_BUF ("uint8_t*", "output"), ),
+    BIKD_DBK (POCL_CDBI_DBK_EXP_DNN_NMS, "exp_dnn_nms", 4,
+              BI_ARG_READ_BUF ("int32_t*", "boxes"),
+              BI_ARG_READ_BUF ("float*", "scores"),
+              BI_ARG_WRITE_BUF ("int32_t*", "index_count"),
+              BI_ARG_WRITE_BUF ("int32_t*", "indices"), ),
 
   };
   memcpy (pocl_BIDescriptors, temporary_BIDescriptors,
@@ -882,6 +888,10 @@ pocl_validate_dbk_attributes (cl_dbk_id_exp kernel_id,
 #endif
     case POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT:
       return pocl_validate_img_attrs (kernel_id, kernel_attributes);
+#ifdef HAVE_OPENCV
+    case POCL_CDBI_DBK_EXP_DNN_NMS:
+      return pocl_validate_dnn_utils_attrs (kernel_id, kernel_attributes);
+#endif
     default:
       break;
     }
@@ -949,6 +959,10 @@ pocl_copy_defined_builtin_attributes (cl_dbk_id_exp kernel_id,
 #endif
     case POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT:
       return pocl_copy_img_attrs (kernel_id, kernel_attributes);
+#ifdef HAVE_OPENCV
+    case POCL_CDBI_DBK_EXP_DNN_NMS:
+      return pocl_copy_dnn_utils_attrs (kernel_id, kernel_attributes);
+#endif
     default:
       break;
     }
@@ -996,6 +1010,13 @@ pocl_release_defined_builtin_attributes (cl_dbk_id_exp kernel_id,
 #endif
     case POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT:
       return pocl_release_img_attrs (kernel_id, kernel_attributes);
+#ifdef HAVE_OPENCV
+    case POCL_CDBI_DBK_EXP_DNN_NMS:
+      {
+        pocl_release_dnn_utils_attrs (kernel_id, kernel_attributes);
+        return CL_SUCCESS;
+      }
+#endif
     default:
       break;
     }
@@ -1160,8 +1181,17 @@ pocl_serialize_dbk_attribs (cl_dbk_id_exp id,
           }
         break;
       }
+    case POCL_CDBI_DBK_EXP_DNN_NMS:
+      {
+        const cl_dbk_attributes_exp_dnn_nms *attr = attributes;
+        SERIALIZE (attr->score_threshold);
+        SERIALIZE (attr->nms_threshold);
+        SERIALIZE (attr->top_k);
+        SERIALIZE (attr->num_boxes);
+        break;
+      }
     default:
-      break;
+      POCL_ABORT ("Could not serialize DBK, Unknown id: %d.\n", id);
     }
 
   return total;
@@ -1378,8 +1408,22 @@ pocl_deserialize_dbk_attribs (cl_dbk_id_exp *id,
         *attributes = attr;
         break;
       }
+    case POCL_CDBI_DBK_EXP_DNN_NMS:
+      {
+        cl_dbk_attributes_exp_dnn_nms *attrs
+          = malloc (sizeof (cl_dbk_attributes_exp_dnn_nms));
+        DESERIALIZE (attrs->score_threshold);
+        DESERIALIZE (attrs->nms_threshold);
+        DESERIALIZE (attrs->top_k);
+        DESERIALIZE (attrs->num_boxes);
+        *attributes = attrs;
+        break;
+      }
     default:
-      break;
+      {
+        POCL_MSG_ERR ("Could not deserialize DBK, unknown id: %lu.\n", dbk_id);
+        break;
+      }
     }
 
   return 1;

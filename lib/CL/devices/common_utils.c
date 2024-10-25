@@ -303,6 +303,9 @@ pocl_cpu_init_common (cl_device_id device)
 #ifdef HAVE_ONNXRT
                   "onnx_inference_exp;"
 #endif
+#ifdef HAVE_OPENCV
+                  "exp_dnn_nms;"
+#endif
         );
       device->num_builtin_kernels = 5
 #ifdef HAVE_LIBXSMM
@@ -312,6 +315,9 @@ pocl_cpu_init_common (cl_device_id device)
                                     + 2
 #endif
 #ifdef HAVE_ONNXRT
+                                    + 1
+#endif
+#ifdef HAVE_OPENCV
                                     + 1
 #endif
         ;
@@ -836,6 +842,10 @@ pocl_cpu_supports_dbk (cl_device_id device,
 #endif
     case CL_DBK_IMG_COLOR_CONVERT:
       return CL_SUCCESS;
+#ifdef HAVE_OPENCV
+    case CL_DBK_DNN_NMS_EXP:
+      return pocl_validate_dbk_attributes (kernel_id, kernel_attributes, NULL);
+#endif
     default:
       POCL_RETURN_ERROR (
         CL_DBK_UNSUPPORTED_EXP,
@@ -863,6 +873,9 @@ pocl_cpu_build_defined_builtin (cl_program program, cl_uint device_i)
   return CL_SUCCESS;
 #endif
 #ifdef HAVE_ONNXRT
+  return CL_SUCCESS;
+#endif
+#ifdef HAVE_OPENCV
   return CL_SUCCESS;
 #endif
   /* TODO: is it necessary to return an error here or can it be caught earlier
@@ -1197,6 +1210,11 @@ pocl_cpu_execute_dbk (cl_program program,
     case CL_DBK_IMG_COLOR_CONVERT:
       return pocl_cpu_execute_dbk_exp_img_yuv2rgb (program, kernel, meta,
                                                    dev_i, arguments);
+#ifdef HAVE_OPENCV
+    case CL_DBK_DNN_NMS_EXP:
+      return pocl_cpu_execute_dbk_khr_dnn_nms (program, kernel, meta, dev_i,
+                                               arguments);
+#endif
     default:
       {
         POCL_MSG_ERR ("Unhandled DBK id %d.\n", meta->builtin_kernel_id);

@@ -207,6 +207,7 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "dbk/pocl_dbk_khr_jpeg_shared.c" "dbk/pocl_dbk_khr_jpeg_shared.h"
                    "dbk/pocl_dbk_khr_onnxrt_shared.c" "dbk/pocl_dbk_khr_onnxrt_shared.h"
                    "dbk/pocl_dbk_khr_img_shared.c" "dbk/pocl_dbk_khr_img_shared.h"
+                   "dbk/pocl_dbk_khr_dnn_utils_shared.c" "dbk/pocl_dbk_khr_dnn_utils_shared.h"
 )
 
 unset(EXTRA_LLVM_SOURCES)

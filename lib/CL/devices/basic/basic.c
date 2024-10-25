@@ -1042,6 +1042,10 @@ pocl_basic_create_kernel (cl_device_id device,
 #endif
     case POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT:
       return CL_SUCCESS;
+#ifdef HAVE_OPENCV
+    case POCL_CDBI_DBK_EXP_DNN_NMS:
+      return CL_SUCCESS;
+#endif
     default:
       POCL_RETURN_ERROR (CL_DBK_INVALID_ID_EXP,
                          "pocl_basic_create_kernel called with "
@@ -1098,6 +1102,10 @@ pocl_basic_free_kernel (cl_device_id device,
 #endif
     case POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT:
       return CL_SUCCESS;
+#ifdef HAVE_OPENCV
+    case POCL_CDBI_DBK_EXP_DNN_NMS:
+      return CL_SUCCESS;
+#endif
     default:
       POCL_RETURN_ERROR (CL_DBK_INVALID_ID_EXP,
                          "pocl_basic_free_kernel called with "
