@@ -149,6 +149,12 @@ ERROR:
   CHECK_CL_ERROR (clReleaseProgram (program_b));
   CHECK_CL_ERROR (clReleaseKernel (kernel_a));
   CHECK_CL_ERROR (clReleaseProgram (program_a));
+  if (event_c)
+    CHECK_CL_ERROR (clReleaseEvent (event_c));
+  if (event_b)
+    CHECK_CL_ERROR (clReleaseEvent (event_b));
+  if (event_a)
+    CHECK_CL_ERROR (clReleaseEvent (event_a));
 
 EARLY_EXIT:
   for (i = 0; i < num_devices; ++i)
