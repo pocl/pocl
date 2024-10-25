@@ -362,14 +362,26 @@ void cpu_setup_vector_widths(cl_device_id dev) {
   Features = llvm::sys::getHostCPUFeatures();
 #endif
 
-  unsigned lane_width = 1;
+  // set the minimum vec size to word size
+#if HOST_DEVICE_ADDRESS_BITS == 64
+  unsigned lane_width = 8;
+#else
+  unsigned lane_width = 4;
+#endif
   if (Res) {
-    if ((Features["sse"]) || (Features["neon"]))
+#if defined(__arm__) || defined(__aarch64__)
+    if (Features["sve"] || Features["sve2"] || Features["neon"])
+      lane_width = 16;
+#endif
+#if defined(__i386__) || defined(_M_IX86) || \
+    defined(__x86_64__) || defined(_M_X64)
+    if (Features["sse"])
       lane_width = 16;
     if (Features["avx"])
       lane_width = 32;
     if (Features["avx512f"])
       lane_width = 64;
+#endif
   }
   dev->native_vector_width_in_bits = lane_width * 8;
 

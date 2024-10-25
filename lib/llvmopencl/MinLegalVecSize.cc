@@ -225,6 +225,11 @@ static bool fixMinVecSize(Module &M) {
       continue;
     if (pocl::isKernelToProcess(*F))
       continue;
+    if (F->hasName()) {
+      auto FindIt = std::find(DIFuncNameVec.begin(), DIFuncNameVec.end(), F->getName());
+      if (FindIt != DIFuncNameVec.end())
+        continue;
+    }
 
     llvm::Attribute Attr = F->getFnAttribute("min-legal-vector-width");
     if (!Attr.isValid())
@@ -245,10 +250,7 @@ static bool fixMinVecSize(Module &M) {
               << " larger than NativeVec: " << DeviceNativeVectorWidth
               << ", force-inlining\n";
 #endif
-
-    F->addFnAttr(Attribute::AlwaysInline);
-    F->removeFnAttr(Attribute::NoInline);
-    F->removeFnAttr(Attribute::OptimizeNone);
+    markFunctionAlwaysInline(F);
   }
 
   return false;

@@ -58,9 +58,14 @@ typedef std::map<llvm::Function*, llvm::Function*> FunctionMapping;
 constexpr unsigned NumWorkgroupVariables = 21;
 extern const char *WorkgroupVariablesArray[];
 extern const std::vector<std::string> WorkgroupVariablesVector;
+// work-item function names
 constexpr unsigned NumWIFuncNames = 11;
 extern const char *WIFuncNameArray[];
 extern const std::vector<std::string> WIFuncNameVec;
+// functions that should not be inlined before workgroup pass: WI funcs + printf funcs
+constexpr unsigned NumDIFuncNames = 13;
+extern const char *DIFuncNameArray[];
+extern const std::vector<std::string> DIFuncNameVec;
 
 void regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels);
 

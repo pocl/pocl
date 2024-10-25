@@ -668,6 +668,23 @@ const char *WIFuncNameArray[NumWIFuncNames] = {"_Z13get_global_idj",
 const std::vector<std::string> WIFuncNameVec(WIFuncNameArray,
                                              WIFuncNameArray + NumWIFuncNames);
 
+const char *DIFuncNameArray[NumDIFuncNames] = {"_Z13get_global_idj",
+                                               "_Z17get_global_offsetj",
+                                               "_Z15get_global_sizej",
+                                               "_Z12get_group_idj",
+                                               "_Z12get_local_idj",
+                                               "_Z14get_local_sizej",
+                                               "_Z23get_enqueued_local_sizej",
+                                               "_Z14get_num_groupsj",
+                                               "_Z20get_global_linear_idv",
+                                               "_Z19get_local_linear_idv",
+                                               "_Z12get_work_dimv",
+                                               "pocl_printf_alloc",
+                                               "pocl_printf_alloc_stub"};
+
+const std::vector<std::string> DIFuncNameVec(DIFuncNameArray,
+                                             DIFuncNameArray + NumDIFuncNames);
+
 // register all PoCL analyses & passes with an LLVM PassBuilder instance,
 // so that it can parse them from string representation
 void registerPassBuilderPasses(llvm::PassBuilder &PB) {

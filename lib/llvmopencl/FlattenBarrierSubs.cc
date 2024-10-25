@@ -84,9 +84,7 @@ static bool recursivelyInlineBarrierUsers(Function *F, bool ChangeInlineFlag) {
   }
 
   if (ChangeInlineFlag & BarrierIsCalled) {
-    F->removeFnAttr(Attribute::NoInline);
-    F->removeFnAttr(Attribute::OptimizeNone);
-    F->addFnAttr(Attribute::AlwaysInline);
+    markFunctionAlwaysInline(F);
     F->setLinkage(llvm::GlobalValue::InternalLinkage);
 #ifdef DEBUG_FLATTEN_SUBS
     std::cerr << "### FlattenBarrierSubs: AlwaysInline ENABLED on "
