@@ -1018,6 +1018,65 @@ set_build_log (cl_device_id proxy_dev, cl_program program,
 
 /******************************************************************************/
 
+/// Get the binary data and size of the underlying program and store them in
+/// the PoCL program.
+
+/// \param program [out] program to store binary data in.
+/// \param device_index [in] index of the device in the program.
+/// \param proxied_program [in] program to quiry for binary data.
+/// \return OpenCL status number.
+static int populate_program_binaries(cl_program program, cl_uint device_index,
+                                     cl_program proxied_program) {
+  cl_int err;
+  size_t binary_size = 0;
+  err = clGetProgramInfo(proxied_program, CL_PROGRAM_BINARY_SIZES,
+                         sizeof(binary_size), &binary_size, NULL);
+  if (err != CL_SUCCESS) {
+    POCL_MSG_ERR("Proxy could not get binary sizes.\n");
+    return CL_OUT_OF_RESOURCES;
+  }
+  assert(binary_size > 0);
+
+  char *binary = (char *)malloc(binary_size);
+  assert(binary);
+  err = clGetProgramInfo(proxied_program, CL_PROGRAM_BINARIES, sizeof(binary),
+                         &binary, NULL);
+  if (err != CL_SUCCESS) {
+    POCL_MSG_ERR("Proxy could not get program binary.\n");
+    return CL_OUT_OF_RESOURCES;
+  }
+  program->binary_sizes[device_index] = (size_t)binary_size;
+  program->binaries[device_index] = (unsigned char *)binary;
+  POCL_MSG_PRINT_PROXY("BINARY SIZE [%u]: %zu \n", device_index,
+                       program->binary_sizes[device_index]);
+  return CL_SUCCESS;
+}
+
+/// Cache the binary of the proxied program.
+
+/// \param program [in] PoCL program containing the proxied binary.
+/// \param device_index [in] index of the binary to be cached.
+/// \return OpenCL status code.
+static int proxy_cache_binary(cl_program program, cl_uint device_index) {
+  cl_int err;
+  char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
+  char temp_path[POCL_MAX_PATHNAME_LENGTH];
+  pocl_cache_create_program_cachedir(program, device_index, NULL, 0,
+                                     program_bc_path);
+
+  if (!pocl_exists(program_bc_path)) {
+    err = pocl_cache_write_generic_objfile(
+        temp_path, (char *)program->binaries[device_index],
+        program->binary_sizes[device_index]);
+    if (err != 0) {
+      POCL_MSG_ERR("Proxy could not write binary back.\n");
+      return CL_OUT_OF_RESOURCES;
+    }
+    pocl_rename(temp_path, program_bc_path);
+  }
+  return CL_SUCCESS;
+}
+
 int
 pocl_proxy_build_source (cl_program program, cl_uint device_i,
                          cl_uint num_input_headers,
@@ -1103,25 +1162,14 @@ pocl_proxy_build_source (cl_program program, cl_uint device_i,
   // some platforms are broken
   if (d->backend->supports_binaries)
     {
-      err = clGetProgramInfo (prog, CL_PROGRAM_BINARY_SIZES,
-                              sizeof (binary_size), &binary_size, NULL);
-      assert (err == CL_SUCCESS);
-      assert (binary_size > 0);
+    err = populate_program_binaries(program, device_i, prog);
+    if (err != CL_SUCCESS)
+      return err;
 
-      char *binary = (char *)malloc (binary_size);
-      assert (binary);
-      err = clGetProgramInfo (prog, CL_PROGRAM_BINARIES, sizeof (binary),
-                              &binary, NULL);
-      assert (err == CL_SUCCESS);
-      program->binary_sizes[device_i] = (size_t)binary_size;
-      program->binaries[device_i] = (unsigned char *)binary;
-      POCL_MSG_PRINT_PROXY ("BINARY SIZE [%u]: %zu \n", device_i,
-                            program->binary_sizes[device_i]);
-
-      // TODO program->binaries, program->binary_sizes set up, but caching on
-      // them is wrong
-      pocl_SHA1_Update (&hash_ctx, (uint8_t *)program->binaries[device_i],
-                        program->binary_sizes[device_i]);
+    // TODO program->binaries, program->binary_sizes set up, but caching on
+    // them is wrong
+    pocl_SHA1_Update(&hash_ctx, (uint8_t *)program->binaries[device_i],
+                     program->binary_sizes[device_i]);
     }
   else
     {
@@ -1154,19 +1202,9 @@ pocl_proxy_build_source (cl_program program, cl_uint device_i,
 
   if (d->backend->supports_binaries)
     {
-      char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
-      char temp_path[POCL_MAX_PATHNAME_LENGTH];
-      pocl_cache_create_program_cachedir (program, device_i, NULL, 0,
-                                          program_bc_path);
-
-      if (!pocl_exists (program_bc_path))
-        {
-          err = pocl_cache_write_generic_objfile (
-              temp_path, (char *)program->binaries[device_i],
-              program->binary_sizes[device_i]);
-          assert (err == 0);
-          pocl_rename (temp_path, program_bc_path);
-        }
+    err = proxy_cache_binary(program, device_i);
+    if (err != CL_SUCCESS)
+      return err;
     }
 
   program->data[device_i] = (void *)prog;
@@ -1177,8 +1215,8 @@ int
 pocl_proxy_build_binary (cl_program program, cl_uint device_i,
                          int link_program, int spir_build)
 {
-  proxy_device_data_t *d
-      = (proxy_device_data_t *)program->devices[device_i]->data;
+  cl_device_id pocl_device = program->devices[device_i];
+  proxy_device_data_t *d = (proxy_device_data_t *)pocl_device->data;
   cl_context context = program->context->proxied_context;
 
   POCL_RETURN_ERROR_ON(
@@ -1224,24 +1262,7 @@ pocl_proxy_build_binary (cl_program program, cl_uint device_i,
                                     program->program_il_size, &err);
     }
 
-    /* put spir-v in cache if successful */
-    if (err == CL_SUCCESS) {
-      char spirv_path[POCL_MAX_PATHNAME_LENGTH];
-      pocl_cache_tempname(spirv_path, ".spv", NULL);
-      err = pocl_write_file(spirv_path, program->program_il,
-                            program->program_il_size, 0);
-      POCL_RETURN_ERROR_ON((err != 0), CL_BUILD_PROGRAM_FAILURE,
-                           "failed to write the SPIR-V file into cache\n");
-      pocl_cache_create_program_cachedir(program, device_i, program->program_il,
-                                         program->program_il_size, spirv_path);
-    }
   } else {
-    // TODO should binary be already loaded ?
-    assert(program->pocl_binaries[device_i]);
-    char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
-    pocl_cache_program_bc_path(program_bc_path, program, device_i);
-
-    assert(pocl_exists(program_bc_path));
     assert(program->binaries[device_i]);
     assert(program->binary_sizes[device_i] > 0);
     const unsigned char *binary = program->binaries[device_i];
@@ -1259,7 +1280,42 @@ pocl_proxy_build_binary (cl_program program, cl_uint device_i,
   if (err)
     return err;
 
-  POCL_MSG_PRINT_PROXY ("Num kernels: %zu\n", program->num_kernels);
+  // cache and store built program binary.
+  if (spir_build) {
+    SHA1_CTX hash_ctx;
+    pocl_SHA1_Init(&hash_ctx);
+
+    err = populate_program_binaries(program, device_i, prog);
+    if (err != CL_SUCCESS)
+      return err;
+
+    // TODO program->binaries, program->binary_sizes set up, but caching on
+    // them is wrong
+    pocl_SHA1_Update(&hash_ctx, (uint8_t *)program->binaries[device_i],
+                     program->binary_sizes[device_i]);
+    assert(program->build_hash[device_i][2] == 0);
+
+    char *dev_hash = pocl_device->ops->build_hash(pocl_device);
+    pocl_SHA1_Update(&hash_ctx, (const uint8_t *)dev_hash, strlen(dev_hash));
+    free(dev_hash);
+
+    uint8_t digest[SHA1_DIGEST_SIZE];
+    pocl_SHA1_Final(&hash_ctx, digest);
+
+    unsigned char *hashstr = program->build_hash[device_i];
+    size_t i;
+    for (i = 0; i < SHA1_DIGEST_SIZE; i++) {
+      *hashstr++ = (digest[i] & 0x0F) + 65;
+      *hashstr++ = ((digest[i] & 0xF0) >> 4) + 65;
+    }
+    *hashstr = 0;
+
+    program->build_hash[device_i][2] = '/';
+
+    err = proxy_cache_binary(program, device_i);
+    if (err != CL_SUCCESS)
+      return err;
+  }
 
   program->data[device_i] = (void *)prog;
   return CL_SUCCESS;
