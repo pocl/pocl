@@ -123,6 +123,7 @@ typedef enum
   CL_DBK_JPEG_DECODE_EXP = 41,
   CL_DBK_ONNX_INFERENCE_EXP = 42,
   CL_DBK_IMG_COLOR_CONVERT = 43,
+  CL_DBK_DNN_NMS_EXP = 44,
   POCL_CDBI_LAST,
   POCL_CDBI_JIT_COMPILER = 0xFFFF
 } cl_dbk_id_exp; /* NOTE: the spec (v0.3.1) has an error (_exp is missing). */
@@ -319,5 +320,22 @@ typedef struct
   pocl_image_attr_t input_image;
   pocl_image_attr_t output_image;
 } cl_dbk_attributes_exp_img_color_convert;
+
+/**
+ * name: "exp_dnn_nms"
+ *
+ * Attributes for performing Non-Maximum Suppression (NMS) on bounding boxes.
+ */
+typedef struct
+{
+  /* The confidence threshold to consider bounding boxes. */
+  cl_float score_threshold;
+  /* The overlapping threshold for suppression. */
+  cl_float nms_threshold;
+  /* Return at most K indices. */
+  cl_int top_k;
+  /* The number of input bounding boxes. */
+  cl_int num_boxes;
+} cl_dbk_attributes_exp_dnn_nms;
 
 #endif /* OPENCL_EXP_DEFINED_BUILTIN_KERNELS */

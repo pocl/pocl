@@ -1248,6 +1248,12 @@ if(ENABLE_HOST_CPU_DEVICES AND NOT ENABLE_CONFORMANCE)
     message(STATUS "libjpeg-turbo v3.0.0+ not found, disabled")
   endif()
 
+  find_package(OpenCV COMPONENTS dnn)
+  set(HAVE_OPENCV ${OpenCV_FOUND})
+  if(NOT ${HAVE_OPENCV})
+    message(STATUS "OpenCV not found, disabled")
+  endif()
+
 endif()
 
 ######################################################################################
@@ -1507,7 +1513,7 @@ if(NOT ENABLE_CONFORMANCE)
       cl_khr_command_buffer cl_khr_command_buffer_multi_device cl_khr_command_buffer_mutable_dispatch \
       cl_pocl_command_buffer_host_buffer")
 
-  if (HAVE_LIBXSMM OR HAVE_ONNXRT OR HAVE_LIBJPEG_TURBO)
+  if (HAVE_LIBXSMM OR HAVE_ONNXRT OR HAVE_LIBJPEG_TURBO OR HAVE_OPENCV)
     set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} \
       cl_exp_tensor cl_exp_defined_builtin_kernels")
   endif()
@@ -2436,6 +2442,8 @@ MESSAGE(STATUS "HAVE_GLEW: ${HAVE_GLEW}")
 MESSAGE(STATUS "HAVE_LIBXSMM: ${HAVE_LIBXSMM}")
 MESSAGE(STATUS "HAVE_LIBJPEG_TURBO: ${HAVE_LIBJPEG_TURBO}")
 MESSAGE(STATUS "HAVE_ONNXRT: ${HAVE_ONNXRT}")
+MESSAGE(STATUS "HAVE_OPENCV: ${HAVE_OPENCV}")
+
 MESSAGE(STATUS "HOST_AS_FLAGS: ${HOST_AS_FLAGS}")
 MESSAGE(STATUS "HOST_CLANG_FLAGS: ${HOST_CLANG_FLAGS}")
 MESSAGE(STATUS "HOST_LD_FLAGS: ${HOST_LD_FLAGS}")

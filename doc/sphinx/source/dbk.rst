@@ -100,3 +100,11 @@ _____________________
 An experimental DBK that is similar in concept to OpenVX's color convert node.
 It is currently limited to nv12 to RGB, but lays down the groundwork for more
 image manipulation DBKs.
+
+exp_dnn_nms
+___________
+
+An experimental DBK that performs Non-Maximum Suppression (NMS) on a set of
+bounding boxes. It currently makes use of OpenCV's dnn utils. The bounding boxes
+are represented as four cl_int variables in the following order:
+(x, y, width, height). The (0,0) coordinates is the top left.
