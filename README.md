@@ -28,37 +28,78 @@ tools:
     `libtinfo-dev`...)
   * CMake 3.9 or newer
   * GNU make or ninja
-  * pkg-config
-  * pthread (should be installed by default)
-  * hwloc v1.0 or newer (e.g. `libhwloc-dev`) - optional
-  * python3 (for support of LLVM bitcode with SPIR target; optional
-    but enabled by default)
-  * llvm-spirv (version-compatible with LLVM) and spirv-tools
-    (optional; required for SPIR-V support in CPU / CUDA; Vulkan driver
-    supports SPIR-V through clspv)
+  * Optional: pkg-config
+  * Optional: hwloc v1.0 or newer (e.g. `libhwloc-dev`)
+  * Optional (but enabled by default): python3 (for support of LLVM bitcode with SPIR target)
+  * Optional: llvm-spirv (version-compatible with LLVM) and spirv-tools
+    (required for SPIR-V support in CPU / CUDA; Vulkan driver supports SPIR-V through clspv)
 
-For more details, consult the install guide.
+For more details, consult the [install guide](http://portablecl.org/docs/html/install.html).
 
-### Configure & Build
+Building PoCL follows the usual CMake build steps. Note however, that PoCL
+can be used from the build directory (without installing it system-wide).
 
-Building PoCL follows the usual CMake workflow, i.e.:
-```bash
-cd <directory-with-pocl-sources>
-mkdir build
-cd build
-cmake ..
-make
-# and optionally
-make install
-```
+## Supported environments
 
-### GPU support on different architectures
+### CI status:
 
-PoCL can be used to provide OpenCL driver on several architectures where the hardware manufacturer does not ship them 
-like Nvidia Tegra (ARM) or IBM Power servers. On PPC64le servers, there are specific instructions to handle the build 
-of PoCL in [install guide](http://portablecl.org/docs/html/install.html).
-See also [PoCL with CUDA driver](#pocl-with-cuda-driver) section for prebuilt
-binaries.
+![x86-64](https://github.com/pocl/pocl/actions/workflows/build_linux_gh.yml/badge.svg?event=push&branch=main)
+![x86-64](https://github.com/pocl/pocl/actions/workflows/build_linux.yml/badge.svg?event=push&branch=main)
+![ARM64](https://github.com/pocl/pocl/actions/workflows/build_arm64.yml/badge.svg?event=push&branch=main)
+![CUDA](https://github.com/pocl/pocl/actions/workflows/build_cuda.yml/badge.svg?event=push&branch=main)
+![Level Zero](https://github.com/pocl/pocl/actions/workflows/build_level0.yml/badge.svg?event=push&branch=main)
+![Vulkan](https://github.com/pocl/pocl/actions/workflows/build_openasip_vulkan.yml/badge.svg?event=push&branch=main)
+![OpenASIP](https://github.com/pocl/pocl/actions/workflows/build_openasip_vulkan.yml/badge.svg?event=push&branch=main)
+![Remote](https://github.com/pocl/pocl/actions/workflows/build_remote.yml/badge.svg?event=push&branch=main)
+![Apple M1](https://github.com/pocl/pocl/actions/workflows/build_macos.yml/badge.svg?event=push&branch=main)
+
+### Support Matrix legend:
+
+:large_orange_diamond: Tested in CI extensively, including OpenCL-CTS tests
+
+:green_circle: : Tested in CI
+
+:yellow_circle: : Should work, but is untested
+
+:x: : Unsupported
+
+### Linux
+
+| CPU device  |     LLVM 14    |     LLVM 15    |     LLVM 16     |     LLVM 17    |     LLVM 18     |
+|:------------|:--------------:|:---------------:|:--------------:|:---------------:|:---------------:|
+| [x86-64](https://github.com/pocl/pocl/actions/workflows/build_linux_gh.yml) | :green_circle: | :green_circle:  | :green_circle: | :large_orange_diamond: | :large_orange_diamond: |
+| [ARM64](https://github.com/pocl/pocl/actions/workflows/build_arm64.yml) | :yellow_circle: | :yellow_circle: |:yellow_circle: | :yellow_circle: | :green_circle:  |
+| i686    | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
+| ARM32   | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
+| RISC-V  | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
+| PowerPC | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
+
+| GPU device  |     LLVM 17    |     LLVM 18     |
+|:------------|:--------------:|:---------------:|
+| [CUDA SM5.0](https://github.com/pocl/pocl/actions/workflows/build_cuda.yml) | :green_circle: | :green_circle: |
+| CUDA SM other than 5.0  | :yellow_circle: | :yellow_circle: |
+| [Level Zero](https://github.com/pocl/pocl/actions/workflows/build_level0.yml) | :green_circle: | :green_circle: |
+| [Vulkan](https://github.com/pocl/pocl/actions/workflows/build_openasip_vulkan.yml) | :green_circle: | :x: |
+
+| Special device |    LLVM 17    |     LLVM 18     |
+|:---------------|:-------------:|:---------------:|
+| [OpenASIP](https://github.com/pocl/pocl/actions/workflows/build_openasip_vulkan.yml) | :green_circle: | :x:            |
+| [Remote](https://github.com/pocl/pocl/actions/workflows/build_remote.yml) | :yellow_circle: | :green_circle:  |
+| Remote + RDMA  | :yellow_circle: | :green_circle:  |
+
+
+### Mac OS X
+
+| CPU device  |     LLVM 16    |     LLVM 17     |
+|:------------|:--------------:|:---------------:|
+| [Apple M1](https://github.com/pocl/pocl/actions/workflows/build_macos.yml) | :green_circle: | :green_circle:  |
+
+### Windows
+
+| CPU device  |     LLVM-MinGW 18    |  LLVM-MinGW 19  |
+|:------------|:--------------:|:---------------:|
+| x86-64      | :yellow_circle: | :yellow_circle:  |
+
 
 ## Binary packages
 
