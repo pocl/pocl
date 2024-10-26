@@ -58,6 +58,10 @@ add_test_pocl(NAME "kernel/test_hadd"
               COMMAND "kernel" "test_hadd")
 
 
+# convert_type_{4,8,16} + hadd/as_type/bitselect produce very large kernels
+# that can cause LLVM to spend extremely long time on optimization,
+# and Level Zero can timeout executing kernels.
+# enable the tests but add "long" label so ctest can skip easily
 
 set(VARIANTS "loopvec;cbs")
 foreach(VARIANT ${VARIANTS})
@@ -69,26 +73,11 @@ foreach(VARIANT ${VARIANTS})
       COST 40.0
       PROCESSORS 1
       DEPENDS "pocl_version_check"
-      LABELS "kernel")
+      LABELS "internal;kernel;long")
 endforeach()
 
-set_tests_properties( "kernel/test_hadd_loopvec"
-  PROPERTIES
-    COST 40.0
-    PROCESSORS 1
-    DEPENDS "pocl_version_check"
-    LABELS "internal;kernel")
-
-
-# convert_type_{4,8,16} on some machines takes >1 hour,
-# so only add convert_type_1/2 to internal tests to keep them reasonably fast.
 
 foreach(VARIANT ${VARIANTS})
-  set_tests_properties( "kernel/test_as_type_${VARIANT}" "kernel/test_bitselect_${VARIANT}"
-    "kernel/test_convert_type_1_${VARIANT}" "kernel/test_convert_type_2_${VARIANT}"
-    "kernel/test_hadd_${VARIANT}"
-    PROPERTIES
-      LABELS "internal;kernel")
   # TODO: works on LLVM 15 but fails with LLVM 16, most likely reason:
   # https://github.com/pocl/pocl/issues/1525
   # https://github.com/grpc/grpc/issues/14587
@@ -268,6 +257,13 @@ foreach(VARIANT ${VARIANTS})
       COST 120
       DEPENDS "pocl_version_check"
       LABELS "internal;kernel")
+
+  set_property(TEST
+    "kernel/test_printf_${VARIANT}"
+    "kernel/test_printf_vectors_${VARIANT}"
+    "kernel/test_printf_vectors_ulongn_${VARIANT}"
+    APPEND PROPERTY LABELS "mingw_fail")
+
 endforeach()
 
 ######################################################################

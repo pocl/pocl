@@ -1434,7 +1434,7 @@ int main(int argc, char** argv)
       use_subdev = 1;
 
   printf("Reading sources...\n");
-  FILE *const source1_file = fopen(SRCDIR "/ML_BSSN_CL_RHS1.cl", "r");
+  FILE *const source1_file = fopen (SRCDIR "/ML_BSSN_CL_RHS1.cl", "rb");
   assert(source1_file != NULL && "ML_BSSN_CL_RHS1.cl not found!");
   fseek(source1_file, 0, SEEK_END);
   size_t const source1_size = ftell(source1_file);
@@ -1444,7 +1444,7 @@ int main(int argc, char** argv)
   source1[source1_size] = '\0';
   fclose(source1_file);
 
-  FILE *const source2_file = fopen(SRCDIR "/ML_BSSN_CL_RHS2.cl", "r");
+  FILE *const source2_file = fopen (SRCDIR "/ML_BSSN_CL_RHS2.cl", "rb");
   assert(source2_file != NULL && "ML_BSSN_CL_RHS2.cl not found!");
   fseek(source2_file, 0, SEEK_END);
   size_t const source2_size = ftell(source2_file);
