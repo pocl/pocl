@@ -45,9 +45,9 @@ main (void)
   int i;
   int error = 0;
 
-  source_file = fopen("trig.cl", "r");
+  source_file = fopen ("trig.cl", "rb");
   if (source_file == NULL)
-    source_file = fopen (SRCDIR "/trig.cl", "r");
+    source_file = fopen (SRCDIR "/trig.cl", "rb");
 
   assert(source_file != NULL && "trig.cl not found!");
 

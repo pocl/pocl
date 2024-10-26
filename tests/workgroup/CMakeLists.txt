@@ -166,6 +166,11 @@ foreach(VARIANT ${VARIANTS})
 endforeach()
 
 set_property(TEST
+  "workgroup/issue_548_convergent_propagation_loopvec"
+  "workgroup/issue_548_convergent_propagation_cbs"
+  APPEND PROPERTY LABELS "mingw_fail")
+
+set_property(TEST
   "workgroup/unconditional_barriers_loopvec"
   "workgroup/unbarriered_for_loops_loopvec"
   "workgroup/barriered_for_loops_loopvec"

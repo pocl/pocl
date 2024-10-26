@@ -255,6 +255,14 @@ list(REMOVE_ITEM TCE_TESTS
 
 set_property(TEST ${TCE_TESTS} APPEND PROPERTY LABELS "tce")
 
+# Label tests that fail with MinGW build
+set_property(TEST
+  "regression/test_flatten_barrier_subs_loopvec"
+  "regression/test_flatten_barrier_subs_cbs"
+  "regression/infinite_loop_loopvec"
+  "regression/infinite_loop_cbs"
+  APPEND PROPERTY LABELS "mingw_fail")
+
 # Label tests that work with CUDA backend
 set_property(TEST
   "regression/issues_with_local_pointers_loopvec"

@@ -164,6 +164,10 @@ if(HAVE_LIBJPEG_TURBO)
     LABELS "internal;runtime")
 endif()
 
+set_property(TEST
+  "runtime/test_large_buf"
+  APPEND PROPERTY LABELS "mingw_fail")
+
 add_test(NAME "runtime/test_queue_creation_with_hints" COMMAND "test_queue_creation_with_hints")
 
 add_test(NAME "runtime/test_dbk_matmul" COMMAND test_dbk_matmul)
