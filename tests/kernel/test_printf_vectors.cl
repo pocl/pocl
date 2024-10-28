@@ -8,9 +8,9 @@ kernel void test_printf_vectors()
   printf("%v4hlg\n", (float4)(90.0f, 9.0f, 0.9f, 1.986546E+33));
   printf("%v4hlF\n", (float4)(8.0f, INFINITY, -INFINITY, NAN));
 
-  printf("%v4hla\n", (float4)(10.0f, 3.88E-43f, 4.0E23f, 0.0f));
-  printf("%v4hla\n", (float4)(90.0f, 9.0f, 0.9f, 0.09f));
-  printf("%v4hla\n", (float4)(4096.0f, 1.0f, 0.125f, 0.0078125f));
+  printf("%.2v4hla\n", (float4)(10.0f, 3.88E-43f, 4.0E23f, 0.0f));
+  printf("%.6v4hla\n", (float4)(90.0f, 9.0f, 0.9f, 0.09f));
+  printf("%.0v4hla\n", (float4)(4096.0f, 1.0f, 0.125f, 0.0078125f));
 
   printf("%#v2hhx\n",(char2)(0xFA,0xFB));
   printf("%#v2hx\n",(short2)(0x1234,0x8765));
