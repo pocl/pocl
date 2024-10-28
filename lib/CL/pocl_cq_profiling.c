@@ -62,7 +62,8 @@ pocl_atexit ()
   unsigned long total_commands = 0;
   unsigned long different_kernels = 0;
 
-  struct kernel_stats kernel_statistics[cq_events_collected];
+  struct kernel_stats *kernel_statistics
+      = alloca (cq_events_collected * sizeof (struct kernel_stats));
   bzero_s (&kernel_statistics, sizeof (kernel_statistics));
 
   /* First statistics computation round. */

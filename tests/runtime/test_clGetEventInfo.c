@@ -5,7 +5,7 @@
 
 #define MAX_PLATFORMS 32
 #define MAX_DEVICES   32
-
+#define BUF_SIZE 1024
 int
 main(void)
 {
@@ -33,12 +33,13 @@ main(void)
           context = clCreateContext (NULL, 1, &devices[j], NULL, NULL, &err);
           queue = clCreateCommandQueue (context, devices[j], 0, &err);
 
-          const int buf_size = 1024;
-          cl_int host_buf[buf_size];
+          cl_int host_buf[BUF_SIZE];
 
           buf = clCreateBuffer (context, CL_MEM_READ_WRITE,
-                                sizeof (cl_int) * buf_size, NULL, &err);
-          CHECK_CL_ERROR(clEnqueueReadBuffer(queue, buf, CL_TRUE, 0, sizeof(cl_int) * buf_size, &host_buf, 0, NULL, &buf_event));
+                                sizeof (cl_int) * BUF_SIZE, NULL, &err);
+          CHECK_CL_ERROR (clEnqueueReadBuffer (
+              queue, buf, CL_TRUE, 0, sizeof (cl_int) * BUF_SIZE, &host_buf, 0,
+              NULL, &buf_event));
           CHECK_CL_ERROR(clFinish(queue));
           size_t param_val_size_ret;
           CHECK_CL_ERROR(clGetEventInfo(buf_event, CL_EVENT_COMMAND_QUEUE, sizeof(cl_command_queue), &event_command_queue, &param_val_size_ret));

@@ -1341,10 +1341,10 @@ WorkgroupImpl::createArgBufferWorkgroupLauncher(Function *Func,
 
   LLVMValueRef F = wrap(Func);
   uint64_t ArgCount = LLVMCountParams(F);
-  uint64_t ArgBufferOffsets[ArgCount];
+  std::vector<uint64_t> ArgBufferOffsets(ArgCount);
   LLVMModuleRef M = wrap(this->M);
 
-  computeArgBufferOffsets(F, ArgBufferOffsets);
+  computeArgBufferOffsets(F, ArgBufferOffsets.data());
 
   LLVMContextRef LLVMContext = LLVMGetModuleContext(M);
 
@@ -1386,7 +1386,7 @@ WorkgroupImpl::createArgBufferWorkgroupLauncher(Function *Func,
 
   LLVMPositionBuilderAtEnd(Builder, Block);
 
-  LLVMValueRef Args[ArgCount];
+  std::vector<LLVMValueRef> Args(ArgCount);
   LLVMValueRef ArgBuffer = LLVMGetParam(WrapperKernel, 0);
   size_t i = 0;
   for (; i < ArgCount - HiddenArgs; ++i) {
@@ -1445,7 +1445,7 @@ WorkgroupImpl::createArgBufferWorkgroupLauncher(Function *Func,
           "local_arg", unwrap(Block)));
       Args[i] = LocalArgAlloca;
     } else {
-      Args[i] = createArgBufferLoad(Builder, ArgBuffer, ArgBufferOffsets,
+      Args[i] = createArgBufferLoad(Builder, ArgBuffer, ArgBufferOffsets.data(),
                                     LLVMContext, F, i);
     }
   }
@@ -1466,7 +1466,8 @@ WorkgroupImpl::createArgBufferWorkgroupLauncher(Function *Func,
   assert (i == ArgCount);
 
   LLVMTypeRef FnTy = wrap(Func->getFunctionType());
-  LLVMValueRef Call = LLVMBuildCall2(Builder, FnTy, F, Args, ArgCount, "");
+  LLVMValueRef Call =
+      LLVMBuildCall2(Builder, FnTy, F, Args.data(), ArgCount, "");
   LLVMBuildRetVoid(Builder);
 
   llvm::CallInst *CallI = llvm::dyn_cast<llvm::CallInst>(llvm::unwrap(Call));
@@ -1530,8 +1531,8 @@ void WorkgroupImpl::createGridLauncher(Function *KernFunc, Function *WGFunc,
     LLVMTypeOf(LLVMGetParam(RunnerFunc, 2))};
 
   uint64_t KernArgCount = LLVMCountParams(Kernel);
-  uint64_t KernArgBufferOffsets[KernArgCount];
-  computeArgBufferOffsets(Kernel, KernArgBufferOffsets);
+  std::vector<uint64_t> KernArgBufferOffsets(KernArgCount);
+  computeArgBufferOffsets(Kernel, KernArgBufferOffsets.data());
 
   // The second argument in the native phsa interface is auxiliary
   // driver-specific data that is passed as the last argument to
@@ -1542,8 +1543,8 @@ void WorkgroupImpl::createGridLauncher(Function *KernFunc, Function *WGFunc,
   // Load the pointer to the pocl context (in global memory),
   // assuming it is stored as the 4th last argument in the kernel.
   LLVMValueRef PoclCtx =
-      createArgBufferLoad(Builder, ArgBuffer, KernArgBufferOffsets, LLVMContext,
-                          Kernel, KernArgCount - HiddenArgs);
+      createArgBufferLoad(Builder, ArgBuffer, KernArgBufferOffsets.data(),
+                          LLVMContext, Kernel, KernArgCount - HiddenArgs);
 
   LLVMValueRef Args[4] = {
       LLVMBuildPointerCast(Builder, WGF, ArgTypes[0], "wg_func"),

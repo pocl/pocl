@@ -163,7 +163,7 @@ main (int _argc, char **_argv)
 
   /*** Main test ***/
   {
-    uint8_t img_src[buf_size];
+    uint8_t *img_src = malloc (buf_size);
     for (size_t i = 0; i < img_npixels; ++i)
       {
         for (size_t j = 0; j < img_channels; ++j)
@@ -219,6 +219,7 @@ main (int _argc, char **_argv)
 
     CHECK_CL_ERROR (clReleaseEvent (write_src_event));
     CHECK_CL_ERROR (clReleaseEvent (command_buf_event));
+    free (img_src);
   }
 
   CHECK_CL_ERROR (ext.clReleaseCommandBufferKHR (command_buffer));

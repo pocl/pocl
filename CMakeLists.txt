@@ -75,6 +75,7 @@ macro(setup_cached_var VARNAME DESCRIPTION DOCS_FEATURE_IS_UNAVAILABLE DOCS_REQU
 endmacro()
 
 include(CheckCCompilerFlag)
+include(CheckCXXCompilerFlag)
 include(CPackComponent)
 macro(pass_through_cpack_vars)
   get_cmake_property(cpackVarsToPassthrough VARIABLES)
@@ -104,6 +105,18 @@ if(UNIX)
   else()
     message(WARNING "Don't know how to forbid this compiler from allowing implicit function declarations.")
   endif()
+endif()
+
+# MSVC does not support VLA in C++. Not even in C because it supports
+# C11 and later where the VLAs are optional. Ban VLAs for maintaining
+# MSVC portability.
+check_c_compiler_flag("-Werror=vla" HAVE_C_WERROR_VLA)
+check_cxx_compiler_flag("-Werror=vla" HAVE_CXX_WERROR_VLA)
+if(HAVE_C_WERROR_VLA)
+  add_compile_options("$<$<COMPILE_LANGUAGE:C>:-Werror=vla>")
+endif()
+if(HAVE_CXX_WERROR_VLA)
+  add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Werror=vla>")
 endif()
 
 set(MAJOR_VERSION 6)

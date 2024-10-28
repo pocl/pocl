@@ -196,8 +196,8 @@ main (int _argc, char **_argv)
       sizeof (cl_command_buffer_state_khr), &cmdbuf_state, NULL));
   TEST_ASSERT (cmdbuf_state == CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR);
 
-  cl_int src1[frame_elements];
-  cl_int src2[frame_elements];
+  cl_int *src1 = malloc (frame_elements * sizeof (cl_int));
+  cl_int *src2 = malloc (frame_elements * sizeof (cl_int));
   for (size_t frame_index = 0; frame_index < frame_count; frame_index++)
     {
       for (size_t i = 0; i < frame_elements; ++i)
@@ -253,6 +253,8 @@ main (int _argc, char **_argv)
 
   CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
 
+  free (src1);
+  free (src2);
   printf ("OK\n");
   return EXIT_SUCCESS;
 #else

@@ -41,8 +41,7 @@ std::vector<std::string> getKernelNames(cl_program Program) {
 			     0, NULL,
 			     &KernelNamesSize));
 
-
-  char Names[KernelNamesSize + 1];
+  std::vector<char> Names(KernelNamesSize + 1);
   CHECK_ERR(clGetProgramInfo(Program, CL_PROGRAM_KERNEL_NAMES,
 			     KernelNamesSize, &Names[0],
 			     &KernelNamesSize));
@@ -51,8 +50,8 @@ std::vector<std::string> getKernelNames(cl_program Program) {
   Names[KernelNamesSize] = 0;
 
   std::vector<std::string> KernelNames;
-  //Construct a stream from the string
-  std::stringstream StreamData(Names);
+  // Construct a stream from the string
+  std::stringstream StreamData(Names.data());
   std::string Kern;
   while (std::getline(StreamData, Kern, ';')) {
     KernelNames.push_back(Kern);

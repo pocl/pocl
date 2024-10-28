@@ -114,8 +114,8 @@ main (int _argc, char **_argv)
           CHECK_CL_ERROR (clGetDeviceInfo (
             devices[j], CL_DEVICE_COMMAND_BUFFER_NUM_SYNC_DEVICES_KHR,
             sizeof (cl_uint), &num_sync_devices, NULL));
-          cl_device_id *sync_devices = (cl_device_id *)alloca (
-            sizeof (cl_device_id) * num_sync_devices);
+          cl_device_id *sync_devices
+              = malloc (sizeof (cl_device_id) * num_sync_devices);
           CHECK_CL_ERROR (clGetDeviceInfo (
             devices[j], CL_DEVICE_COMMAND_BUFFER_SYNC_DEVICES_KHR,
             sizeof (cl_device_id) * num_sync_devices, sync_devices, NULL));
@@ -139,6 +139,7 @@ main (int _argc, char **_argv)
                   return 77;
                 }
             }
+          free (sync_devices);
         }
     }
 
@@ -288,8 +289,8 @@ main (int _argc, char **_argv)
   TEST_ASSERT (cmdbuf_state == CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR);
 
   /* Enqueue N-queue buffer normally */
-  cl_int src1[frame_elements];
-  cl_int src2[frame_elements];
+  cl_int *src1 = malloc (sizeof (cl_int) * frame_elements);
+  cl_int *src2 = malloc (sizeof (cl_int) * frame_elements);
   for (size_t frame_index = 0; frame_index < frame_count; frame_index++)
     {
       for (size_t i = 0; i < frame_elements; ++i)
@@ -397,6 +398,8 @@ main (int _argc, char **_argv)
   CHECK_CL_ERROR (clReleaseContext (context));
 
   free (devices);
+  free (src1);
+  free (src2);
 
   printf ("OK\n");
   return EXIT_SUCCESS;
