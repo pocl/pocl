@@ -134,7 +134,7 @@ jobs:
 
       - name: Cache CTest timings
         id: cache_ctest
-        uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a
         with:
           path: ${{ github.workspace }}/build/Testing/Temporary/CTestCostData.txt
           key: ctest-cache-${{ steps.cmake_version.outputs.version }}-${{ runner.name }}-${{ matrix.config }}
