@@ -46,12 +46,14 @@ static const char *prog_src_two = "kernel void\n"
 int test_context(cl_context ctx, const char *prog_src, int mul,
   int ndevs, cl_device_id *devs) {
   cl_int err;
-  cl_command_queue queue[ndevs];
   cl_program prog;
   cl_kernel krn;
   cl_mem buf;
-  cl_event evt[ndevs];
   cl_int i;
+
+  cl_command_queue *queue = malloc (ndevs * sizeof (cl_command_queue));
+  cl_event *evt = malloc (ndevs * sizeof (cl_event));
+  TEST_ASSERT (queue && evt);
 
   prog = clCreateProgramWithSource(ctx, 1, &prog_src, NULL, &err);
   CHECK_OPENCL_ERROR_IN("create program");
@@ -106,6 +108,8 @@ int test_context(cl_context ctx, const char *prog_src, int mul,
 
   CHECK_OPENCL_ERROR_IN("cleanup");
 
+  free (queue);
+  free (evt);
   return CL_SUCCESS;
 
 }

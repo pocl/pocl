@@ -126,9 +126,10 @@ main (int argc, char **argv)
                                 local_work_size, 0, NULL, NULL);
   CHECK_CL_ERROR2 (err);
 
+  cl_int *kern_output = NULL;
   if (num_args == 1)
     {
-      cl_int kern_output[grid_size];
+      kern_output = malloc (grid_size * sizeof (cl_int));
       err = clEnqueueReadBuffer (cmd_queue, outbuf, CL_TRUE, 0,
                                  grid_size * sizeof (cl_int), kern_output, 0,
                                  NULL, NULL);
@@ -157,6 +158,7 @@ ERROR:
 
   free (source);
   free (devices);
+  free (kern_output);
 
   if (err == CL_SUCCESS)
     {
