@@ -222,18 +222,12 @@ PoclDaemon::~PoclDaemon() {
   if (pl_rdma_event_th.joinable())
     pl_rdma_event_th.join();
 #endif
-  for (auto &t : ClientSessionThreads) {
-    if (t.second.joinable())
-      t.second.join();
-  }
 }
 
 VirtualContextBase *createVirtualContext(PoclDaemon *d,
                                          ClientConnections_t conns,
                                          uint64_t session,
                                          CreateOrAttachSessionMsg_t &params);
-void startVirtualContextMainloop(VirtualContextBase *ctx);
-
 static std::string find_default_ip_address() {
   char *listen_addr = NULL;
   char buf[INET_ADDRSTRLEN];
@@ -534,8 +528,6 @@ PoclDaemon::performSessionSetup(std::shared_ptr<Connection> Conn, Request *R) {
   }
 #endif
   ClientSessions.insert({session, ctx});
-  ClientSessionThreads.insert(
-      {session, std::move(std::thread(startVirtualContextMainloop, ctx))});
   return ctx;
 }
 

@@ -107,9 +107,10 @@ class VirtualCLContext : public VirtualContextBase {
   size_t current_printf_position;
   std::mutex printf_lock;
 
-  std::condition_variable main_cond;
-  std::mutex main_mutex;
-  std::deque<Request *> main_que;
+  std::thread MainThread;
+  std::condition_variable MainCond;
+  std::mutex MainMutex;
+  std::deque<Request *> MainQueue;
 
 #ifdef ENABLE_RDMA
   std::shared_ptr<RdmaConnection> client_rdma;
@@ -141,6 +142,9 @@ public:
   ~VirtualCLContext() {
     // stop threads
     assert(ExitSignal.exit_requested());
+    MainCond.notify_one();
+    if (MainThread.joinable())
+      MainThread.join();
     POCL_MSG_PRINT_GENERAL("VCTX: DEST\n");
 
     // Wake up IO threads in case they were waiting for a connection
@@ -148,7 +152,7 @@ public:
     WriteSlow->setConnection(nullptr);
 
     // make sure no shared context tries to broadcast stuff
-    std::unique_lock<std::mutex> lock(main_mutex);
+    std::unique_lock<std::mutex> lock(MainMutex);
     for (auto i : SharedContextList) {
       delete i;
     }
@@ -274,6 +278,7 @@ size_t VirtualCLContext::init(PoclDaemon *d, ClientConnections_t conns,
                                           conns.incoming_peer_queue, this,
                                           &ExitSignal, netstat));
   initPlatforms();
+  MainThread = std::move(std::thread(&VirtualCLContext::run, this));
 
   POCL_MSG_PRINT_INFO("Created shared contexts for %" PRIuS
                       " platforms / %" PRIuS " devices\n",
@@ -329,9 +334,9 @@ void VirtualCLContext::nonQueuedPush(Request *req) {
   POCL_MSG_PRINT_GENERAL("VCTX NON-QUEUED PUSH (msg: %" PRIu64 ")\n",
                          uint64_t(req->Body.msg_id));
 
-  std::unique_lock<std::mutex> lock(main_mutex);
-  main_que.push_back(req);
-  main_cond.notify_one();
+  std::unique_lock<std::mutex> lock(MainMutex);
+  MainQueue.push_back(req);
+  MainCond.notify_one();
 }
 
 void VirtualCLContext::queuedPush(Request *req) {
@@ -358,7 +363,7 @@ void VirtualCLContext::requestExit(int code, const char *reason) {
 }
 
 void VirtualCLContext::broadcastToPeers(const Request &req) {
-  std::unique_lock<std::mutex> lock(main_mutex);
+  std::unique_lock<std::mutex> lock(MainMutex);
   peers->broadcast(req);
 }
 
@@ -415,10 +420,10 @@ int VirtualCLContext::run() {
       return e;
     }
 
-    std::unique_lock<std::mutex> lock(main_mutex);
-    if (main_que.size() > 0) {
-      Request *request = main_que.front();
-      main_que.pop_front();
+    std::unique_lock<std::mutex> lock(MainMutex);
+    if (MainQueue.size() > 0) {
+      Request *request = MainQueue.front();
+      MainQueue.pop_front();
       lock.unlock();
 
       reply = nullptr;
@@ -554,7 +559,7 @@ int VirtualCLContext::run() {
       auto now = std::chrono::system_clock::now();
       std::chrono::duration<unsigned long> d(3);
       now += d;
-      main_cond.wait_until(lock, now);
+      MainCond.wait_until(lock, now);
     }
   }
 }
@@ -1143,6 +1148,3 @@ VirtualContextBase *createVirtualContext(PoclDaemon *d,
   return vctx;
 }
 
-void startVirtualContextMainloop(VirtualContextBase *ctx) {
-  static_cast<VirtualCLContext *>(ctx)->run();
-}
