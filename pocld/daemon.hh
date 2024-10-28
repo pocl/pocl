@@ -125,7 +125,6 @@ private:
   size_t NumListenFds;
   std::mutex SessionListMtx;
   std::unordered_map<uint64_t, VirtualContextBase *> ClientSessions;
-  std::unordered_map<uint64_t, std::thread> ClientSessionThreads;
   std::unordered_map<uint64_t, std::array<uint8_t, AUTHKEY_LENGTH>> SessionKeys;
   std::atomic_uint64_t LastSessionId;
   std::thread ClientPoller;
