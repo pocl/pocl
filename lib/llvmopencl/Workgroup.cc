@@ -49,6 +49,7 @@ POP_COMPILER_DIAGS
 #include "Barrier.h"
 #include "BarrierTailReplication.h"
 #include "CanonicalizeBarriers.h"
+#include "DebugHelpers.h"
 #include "KernelCompilerUtils.h"
 #include "LLVMUtils.h"
 #include "ProgramScopeVariables.h"
@@ -56,6 +57,7 @@ POP_COMPILER_DIAGS
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
 
+#include "pocl_file_util.h"
 #include "pocl_llvm_api.h"
 
 #include <iostream>
@@ -1526,39 +1528,51 @@ void WorkgroupImpl::createGridLauncher(Function *KernFunc, Function *WGFunc,
   LLVMValueRef RunnerFunc = LLVMGetNamedFunction(M, "_pocl_run_all_wgs");
   assert (RunnerFunc != nullptr);
 
-  LLVMTypeRef ArgTypes[] = {
-    LLVMTypeOf(LLVMGetParam(RunnerFunc, 0)),
-    LLVMTypeOf(LLVMGetParam(RunnerFunc, 1)),
-    LLVMTypeOf(LLVMGetParam(RunnerFunc, 2))};
+  LLVMTypeRef RunnerArgTypes[] = {LLVMTypeOf(LLVMGetParam(RunnerFunc, 0)),
+                                  LLVMTypeOf(LLVMGetParam(RunnerFunc, 1)),
+                                  LLVMTypeOf(LLVMGetParam(RunnerFunc, 2)),
+                                  LLVMTypeOf(LLVMGetParam(RunnerFunc, 3))};
 
   uint64_t KernArgCount = LLVMCountParams(Kernel);
   uint64_t KernArgBufferOffsets[KernArgCount];
   computeArgBufferOffsets(Kernel, KernArgBufferOffsets);
 
   // The second argument in the native phsa interface is auxiliary
-  // driver-specific data that is passed as the last argument to
-  // the grid launcher.
+  // driver-specific data that is passed as the last argument to the grid
+  // launcher.
   LLVMValueRef AuxParam = LLVMGetParam(Launcher, 1);
   LLVMValueRef ArgBuffer = LLVMGetParam(Launcher, 2);
 
-  // Load the pointer to the pocl context (in global memory),
-  // assuming it is stored as the 4th last argument in the kernel.
+  // Load the pointer to the pocl context (in global memory), assuming it is
+  // stored as the 4th last argument in the kernel.
   LLVMValueRef PoclCtx =
       createArgBufferLoad(Builder, ArgBuffer, KernArgBufferOffsets, LLVMContext,
                           Kernel, KernArgCount - HiddenArgs);
 
   LLVMValueRef Args[4] = {
-      LLVMBuildPointerCast(Builder, WGF, ArgTypes[0], "wg_func"),
-      LLVMBuildPointerCast(Builder, ArgBuffer, ArgTypes[1], "args"),
-      LLVMBuildPointerCast(Builder, PoclCtx, ArgTypes[2], "ctx"),
-      LLVMBuildPointerCast(Builder, AuxParam, ArgTypes[1], "aux")};
+      LLVMBuildPointerCast(Builder, WGF, RunnerArgTypes[0], "wg_func"),
+      LLVMBuildPointerCast(Builder, ArgBuffer, RunnerArgTypes[1], "args"),
+      LLVMBuildPointerCast(Builder, PoclCtx, RunnerArgTypes[2], "ctx"),
+      LLVMBuildPointerCast(Builder, AuxParam, RunnerArgTypes[3], "aux")};
 
-  LLVMTypeRef FnTy = LLVMGetCalledFunctionType(RunnerFunc);
-  LLVMValueRef Call = LLVMBuildCall2(Builder, FnTy, RunnerFunc, Args, 4, "");
+  LLVMTypeRef RunnerFnTy = LLVMFunctionType(VoidType, RunnerArgTypes, 4, 0);
+  LLVMValueRef Call =
+      LLVMBuildCall2(Builder, RunnerFnTy, RunnerFunc, Args, 4, "");
   LLVMBuildRetVoid(Builder);
 
   InlineFunctionInfo IFI;
   InlineFunction(*dyn_cast<CallInst>(llvm::unwrap(Call)), IFI);
+
+  LLVMTypeRef VoidPtrType = LLVMPointerType(VoidType, 0);
+
+  // Add a fixed name global variable which points to the generated grid
+  // launcher, if there is a declaration by that name. If there is, we
+  // have a device main that refers to it.
+  LLVMValueRef GridLauncherGlobal = LLVMGetNamedGlobal(M, "pocl_grid_launcher");
+  if (GridLauncherGlobal != nullptr) {
+    LLVMSetExternallyInitialized(GridLauncherGlobal, false);
+    LLVMSetInitializer(GridLauncherGlobal, Launcher);
+  }
 }
 
 /**
