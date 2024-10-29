@@ -756,6 +756,16 @@ struct pocl_device_ops {
   void (*compile_kernel) (_cl_command_node *cmd, cl_kernel kernel,
                           cl_device_id device, int specialize);
 
+  /** Optional: If the target can utilize the basic Clang-driven steps for
+   * other compilation steps, but the final linkage step, this function can be
+   * used to define them.
+   *
+   * \param final_binary The target filename for the finalized binary.
+   * \param wg_func_obj The binary for the generated work-group function.
+   * \return Non-zero on error.
+   */
+  int (*finalize_binary) (const char *final_binary, const char *wg_func_obj);
+
   /** Optional: The driver should free the content of "program->data" here,
    * if it fills it. */
   int (*free_program) (cl_device_id device, cl_program program,

@@ -208,31 +208,40 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
 
   POCL_MSG_PRINT_INFO ("Linking final module\n");
 
-  /* Link through Clang driver interface which knows the correct toolchains
-     for all of its targets.  */
-  const char *cmd_line[64]
-    = { pocl_get_path ("CLANG", CLANG), "-o", tmp_module, tmp_objfile };
-  unsigned last_arg_idx = 4;
-  /* Immediate flush enabled results in "__printf_flush_buffer" symbol
-   * referenced it the built kernel.so, however that function exists only
-   * on the host side; therefore link to libpocl.so which provides it */
+  /* If the device has a custom linkage/binary generation step, call it
+     instead of the default Clang-driven linkage step. It's likely a
+     non-host target in that case. */
+  if (device->ops->finalize_binary != NULL)
+    {
+      error = device->ops->finalize_binary (tmp_module, tmp_objfile);
+    }
+  else
+    {
+      /* Link through Clang driver interface which knows the correct toolchains
+         for all of its targets.  */
+      const char *cmd_line[64]
+        = { pocl_get_path ("CLANG", CLANG), "-o", tmp_module, tmp_objfile };
+      unsigned last_arg_idx = 4;
+      /* Immediate flush enabled results in "__printf_flush_buffer" symbol
+       * referenced it the built kernel.so, however that function exists only
+       * on the host side; therefore link to libpocl.so which provides it */
 #ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
 #ifdef HAVE_DLFCN_H
-  const char *fname = pocl_dynlib_pathname ((void *)pocl_cache_tempname);
-  assert (fname != NULL);
-  cmd_line[last_arg_idx++] = fname;
+      const char *fname = pocl_dynlib_pathname ((void *)pocl_cache_tempname);
+      assert (fname != NULL);
+      cmd_line[last_arg_idx++] = fname;
 #else
 #error ENABLE_PRINTF_IMMEDIATE_FLUSH requires HAVE_DLFCN_H
 #endif
 #endif
-  const char **last_arg = &cmd_line[last_arg_idx];
-  const char **device_ld_arg = device->final_linkage_flags;
-  while ((*last_arg++ = *device_ld_arg++))
-    {
+      const char **last_arg = &cmd_line[last_arg_idx];
+      const char **device_ld_arg = device->final_linkage_flags;
+      while ((*last_arg++ = *device_ld_arg++))
+        {
+        }
+
+      error = pocl_invoke_clang (device, cmd_line);
     }
-
-  error = pocl_invoke_clang (device, cmd_line);
-
   if (error)
     {
       POCL_MSG_PRINT_LLVM ("Linking kernel.so.o -> kernel.so has failed\n");
