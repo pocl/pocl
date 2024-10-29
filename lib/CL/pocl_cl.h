@@ -1135,6 +1135,13 @@ struct _cl_device_id {
   /* The program scope variable pass takes program-scope variables and replaces
      them by references into a buffer, and creates an initializer kernel. */
   cl_bool run_program_scope_variables_pass;
+  /* Some architectures (x86) trap when encountering undefined behavior (UB)
+   * of div/rem, and have no way to disable this behavior. ARM has optional
+   * trapping, and RISC-V has mandatory non-trapping. OpenCL explicitly
+   * forbids raising exceptions on division for any values that trigger UB.
+   * This pass adds checks of input operands to div/rem so that UB is
+   * never triggered. */
+  cl_bool run_sanitize_divrem_pass;
 
   /* If CL_TRUE, pocl_llvm_build_program will ignore pocl's OpenCL headers
    * that perform built-in renames during OpenCL C build and relies on
@@ -1176,6 +1183,7 @@ struct _cl_device_id {
   const char* llvm_cpu; /* the llvm CPU variant to use */
   const char *llvm_abi; /* the ABI to use */
   const char* llvm_fp_contract_mode; /* the floating point contract mde to use */
+  /* function to replace intrinsic at linking stage */
   llvm_intrin_replace_fn llvm_intrin_replace;
 
   /* A running number (starting from zero) across all the device instances.

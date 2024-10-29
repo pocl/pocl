@@ -265,6 +265,12 @@ pocl_cpu_init_common (cl_device_id device)
   device->llvm_cpu = OCL_KERNEL_TARGET_CPU;
   if (device->llvm_cpu == NULL)
     device->llvm_cpu = pocl_get_llvm_cpu_name ();
+
+#ifndef ENABLE_SIGFPE_HANDLER
+  if (strstr (OCL_KERNEL_TARGET, "x86") != NULL)
+    device->run_sanitize_divrem_pass = CL_TRUE;
+#endif
+
 #endif
 
   pocl_init_default_device_infos (device, HOST_DEVICE_EXTENSIONS);
