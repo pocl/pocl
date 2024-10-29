@@ -39,6 +39,7 @@
 #endif
 
 #include <pthread.h>
+#include <signal.h>
 
 typedef pthread_barrier_t pocl_barrier_t;
 typedef pthread_mutex_t pocl_lock_t;
@@ -105,6 +106,16 @@ extern "C"
   while (0)
 
 #define PTHREAD_CHECK(code) PTHREAD_CHECK2 (0, code)
+
+#define POCL_IGNORE_SIGNAL_IN_THREAD(s)                                       \
+  do                                                                          \
+    {                                                                         \
+      sigset_t signal_mask;                                                   \
+      sigemptyset (&signal_mask);                                             \
+      sigaddset (&signal_mask, SIGPIPE);                                      \
+      PTHREAD_CHECK (pthread_sigmask (SIG_BLOCK, &signal_mask, NULL));        \
+    }                                                                         \
+  while (0)
 
 /* Generic functionality for handling different types of
    OpenCL (host) objects. */
