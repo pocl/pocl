@@ -189,7 +189,7 @@ main (int argc, char const *argv[])
   void *output_array = malloc (input_size);
   clEnqueueReadBuffer (queues[0], output_buf, CL_TRUE, 0, input_size,
                        output_array, 1, &size_read_event, NULL);
-  poclu_write_file (argv[4], output_array, input_size);
+  poclu_write_binfile (argv[4], output_array, input_size);
   free (output_array);
 #endif
 

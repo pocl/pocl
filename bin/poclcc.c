@@ -406,7 +406,7 @@ main(int argc, char **argv)
   CHECK_CL_ERROR(clReleaseProgram(program));
   CHECK_CL_ERROR(clReleaseContext(context));
 
-  if (poclu_write_file(output_file, binary, binary_sizes))
+  if (poclu_write_binfile (output_file, binary, binary_sizes))
     ERRNO_EXIT(output_file);
 
   free(binary);
