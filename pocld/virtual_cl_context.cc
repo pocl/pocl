@@ -152,7 +152,7 @@ public:
     WriteSlow->setConnection(nullptr);
 
     // make sure no shared context tries to broadcast stuff
-    std::unique_lock<std::mutex> lock(MainMutex);
+    std::unique_lock<std::mutex> Lock(MainMutex);
     for (auto i : SharedContextList) {
       delete i;
     }
@@ -334,7 +334,7 @@ void VirtualCLContext::nonQueuedPush(Request *req) {
   POCL_MSG_PRINT_GENERAL("VCTX NON-QUEUED PUSH (msg: %" PRIu64 ")\n",
                          uint64_t(req->Body.msg_id));
 
-  std::unique_lock<std::mutex> lock(MainMutex);
+  std::unique_lock<std::mutex> Lock(MainMutex);
   MainQueue.push_back(req);
   MainCond.notify_one();
 }
@@ -363,7 +363,7 @@ void VirtualCLContext::requestExit(int code, const char *reason) {
 }
 
 void VirtualCLContext::broadcastToPeers(const Request &req) {
-  std::unique_lock<std::mutex> lock(MainMutex);
+  std::unique_lock<std::mutex> Lock(MainMutex);
   peers->broadcast(req);
 }
 
@@ -420,11 +420,11 @@ int VirtualCLContext::run() {
       return e;
     }
 
-    std::unique_lock<std::mutex> lock(MainMutex);
+    std::unique_lock<std::mutex> Lock(MainMutex);
     if (MainQueue.size() > 0) {
       Request *request = MainQueue.front();
       MainQueue.pop_front();
-      lock.unlock();
+      Lock.unlock();
 
       reply = nullptr;
       if (request->Body.message_type != MessageType_MigrateD2D &&
@@ -559,7 +559,7 @@ int VirtualCLContext::run() {
       auto now = std::chrono::system_clock::now();
       std::chrono::duration<unsigned long> d(3);
       now += d;
-      MainCond.wait_until(lock, now);
+      MainCond.wait_until(Lock, now);
     }
   }
 }
