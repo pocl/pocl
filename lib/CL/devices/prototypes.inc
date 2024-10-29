@@ -88,6 +88,8 @@
   void pocl_##__DRV__##_compile_kernel (_cl_command_node *node,               \
                                          cl_kernel kernel,                    \
                                          cl_device_id device, int specialize);\
+  int pocl_##__DRV__##_finalize_binary (const char* final_binary,             \
+                                        const char *wg_func_obj);             \
   int pocl_##__DRV__##_init_queue (cl_device_id device,                       \
                                    cl_command_queue queue);                   \
   int pocl_##__DRV__##_free_queue (cl_device_id device,                       \
