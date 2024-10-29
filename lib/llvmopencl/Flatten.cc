@@ -105,7 +105,10 @@ static bool flattenAll(Module &M) {
 
     OnlyDynamicWIFuncCallsFound = IsStaticWIFuncCall && UI == UE;
 
-    if (pocl::isKernelToProcess(*F) || OnlyDynamicWIFuncCallsFound) {
+    if (pocl::isKernelToProcess(*F) || OnlyDynamicWIFuncCallsFound ||
+        // If the target defines a main for the kernel command, we should keep
+        // it globally accessible.
+        F->getName() == "main") {
       replaceThisAttr = Attribute::AlwaysInline;
       replacementAttr = Attribute::NoInline;
       linkage = llvm::GlobalValue::ExternalLinkage;
