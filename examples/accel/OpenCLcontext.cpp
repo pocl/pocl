@@ -355,7 +355,7 @@ bool OpenCL_Context::processCameraFrame(unsigned char* input, unsigned long *out
 #ifdef DUMP_FRAMES
     char filename[1024];
     std::snprintf(filename, 1024, "/tmp/carla_%u_%zu.raw", imgID, *output);
-    FILE* outfile = std::fopen(filename, "w");
+    FILE *outfile = std::fopen(filename, "wb");
     std::fwrite(input, 1, InputBufferSize, outfile);
     std::fclose(outfile);
     ++imgID;

@@ -251,12 +251,13 @@ poclu_read_file (const char *filename)
   return res;
 }
 
-int
-poclu_write_file (const char *filename, char *content, size_t size)
+static int
+poclu_write_file_in_mode (const char *filename, char *content, size_t size,
+                          const char *mode)
 {
   FILE *file;
 
-  file = fopen (filename, "w");
+  file = fopen (filename, mode);
   if (file == NULL)
     return -1;
 
@@ -270,6 +271,18 @@ poclu_write_file (const char *filename, char *content, size_t size)
     return -1;
 
   return 0;
+}
+
+int
+poclu_write_file (const char *filename, char *content, size_t size)
+{
+  return poclu_write_file_in_mode (filename, content, size, "w");
+}
+
+int
+poclu_write_binfile (const char *filename, char *content, size_t size)
+{
+  return poclu_write_file_in_mode (filename, content, size, "wb");
 }
 
 int

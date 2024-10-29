@@ -302,6 +302,13 @@ POCLU_API int POCLU_CALL poclu_write_file (const char *filename, char *content,
 int poclu_parse_version_string (const char *string);
 
 /**
+ * Same as poclu_write_file() but with contents written into the file in
+ * binary mode.
+ */
+POCLU_API int POCLU_CALL poclu_write_binfile (const char *filename,
+                                              char *content, size_t size);
+
+/**
  * \brief wrapper for poclu_load_program_multidev, see it for details.
  */
 int poclu_load_program (cl_platform_id platform,

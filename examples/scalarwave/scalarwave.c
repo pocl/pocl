@@ -121,7 +121,8 @@ main(void)
       return 77;
     }
 
-  FILE *const source_file = fopen(SRCDIR "/examples/scalarwave/scalarwave.cl", "r");
+  FILE *const source_file
+      = fopen (SRCDIR "/examples/scalarwave/scalarwave.cl", "rb");
   TEST_ASSERT (source_file != NULL && "scalarwave.cl not found!");
   
   fseek(source_file, 0, SEEK_END);

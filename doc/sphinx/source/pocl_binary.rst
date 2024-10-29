@@ -54,7 +54,7 @@ Here is an example on how to create a program from a file:
    size_t binary_size;
    FILE *f;
 
-   f = fopen("youfile", "r"); // LLVM IR file or POCLCC binary file
+   f = fopen("youfile", "rb"); // LLVM IR file or POCLCC binary file
 
    fseek(f, 0, SEEK_END);
    binary_size = ftell(f);
@@ -62,7 +62,7 @@ Here is an example on how to create a program from a file:
 
    binary = malloc(binary_size);
    fread(binary, 1, binary_size, f);
-   
+
    fclose(f);
 
    cl_platform_id platform_id;
