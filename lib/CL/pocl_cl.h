@@ -1126,6 +1126,11 @@ struct _cl_device_id {
   /* The program scope variable pass takes program-scope variables and replaces
      them by references into a buffer, and creates an initializer kernel. */
   cl_bool run_program_scope_variables_pass;
+  /* Some architectures (x86) have trapping div-by-zero and no way to
+     disable this behavior. OpenCL explicitly forbids raising exceptions on
+     division for any values that trigger UB. Therefore we must check arguments
+     to div & rem instructions. */
+  cl_bool run_safe_division_pass;
 
   /* If CL_TRUE, pocl_llvm_build_program will ignore pocl's OpenCL headers
    * that perform built-in renames during OpenCL C build and relies on
@@ -1167,6 +1172,7 @@ struct _cl_device_id {
   const char* llvm_cpu; /* the llvm CPU variant to use */
   const char *llvm_abi; /* the ABI to use */
   const char* llvm_fp_contract_mode; /* the floating point contract mde to use */
+  /* function to replace intrinsic at linking stage */
   llvm_intrin_replace_fn llvm_intrin_replace;
 
   /* A running number (starting from zero) across all the device instances.

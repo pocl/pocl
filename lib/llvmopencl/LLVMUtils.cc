@@ -54,6 +54,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "PHIsToAllocas.h"
 #include "ParallelRegion.h"
 #include "RemoveBarrierCalls.h"
+#include "SafeDivision.h"
 #include "SubCFGFormation.h"
 #include "VariableUniformityAnalysis.h"
 #include "WorkItemAliasAnalysis.h"
@@ -690,6 +691,7 @@ void registerPassBuilderPasses(llvm::PassBuilder &PB) {
   AutomaticLocals::registerWithPB(PB);
   BarrierTailReplication::registerWithPB(PB);
   CanonicalizeBarriers::registerWithPB(PB);
+  SafeDivision::registerWithPB(PB);
   FlattenAll::registerWithPB(PB);
   FlattenBarrierSubs::registerWithPB(PB);
   FlattenGlobals::registerWithPB(PB);
