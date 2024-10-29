@@ -251,7 +251,10 @@ bool WorkgroupImpl::runOnModule(Module &M, FunctionVec &OldKernels) {
     // linker's switch --wrap=symbol, where calls to the "symbol" are replaced
     // with "__wrap_symbol" at link time.  These functions may not be referenced
     // until final link and being deleted by LLVM optimizations before it.
-    if (!i->isDeclaration() && !i->getName().starts_with("__wrap_"))
+    // Also, if there's a main aux function, we want to keep it as it will be
+    // likely used in the kernel command functionality for the device.
+    if (!i->isDeclaration() && !i->getName().starts_with("__wrap_") &&
+        i->getName() != "main")
       i->setLinkage(Function::InternalLinkage);
   }
 
