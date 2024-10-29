@@ -153,7 +153,6 @@ POname (clCreateCommandBufferKHR) (
   return cmdbuf;
 
 ERROR:
-  POCL_MEM_FREE (seen_keys);
   if (cmdbuf)
     {
       POCL_MEM_FREE (cmdbuf->queues);
