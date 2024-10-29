@@ -35,8 +35,6 @@
 
 #include "config.h"
 
-#include <signal.h>
-
 #ifdef ENABLE_LLVM_PLATFORM_SUPPORT
 
 #include "pocl_threads_cpp.hh"
@@ -46,15 +44,5 @@
 #include "pocl_threads_c.h"
 
 #endif
-
-#define POCL_IGNORE_SIGNAL_IN_THREAD(s)                                       \
-  do                                                                          \
-    {                                                                         \
-      sigset_t signal_mask;                                                   \
-      sigemptyset (&signal_mask);                                             \
-      sigaddset (&signal_mask, SIGPIPE);                                      \
-      PTHREAD_CHECK (pthread_sigmask (SIG_BLOCK, &signal_mask, NULL));        \
-    }                                                                         \
-  while (0)
 
 #endif // POCL_THREADS_H
