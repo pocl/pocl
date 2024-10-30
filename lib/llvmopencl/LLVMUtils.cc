@@ -413,6 +413,7 @@ void markFunctionAlwaysInline(llvm::Function *F) {
   for (auto U: F->users()) {
     if (CallInst *CI = dyn_cast<CallInst>(U)) {
       CI->removeFnAttr(Attribute::NoInline);
+      CI->removeFnAttr(Attribute::OptimizeNone);
     }
   }
 }
