@@ -62,7 +62,7 @@ typedef cl_uint             cl_command_buffer_state_khr;
 typedef cl_properties       cl_command_buffer_properties_khr;
 typedef cl_bitfield         cl_command_buffer_flags_khr;
 typedef cl_properties       cl_command_properties_khr;
-/* PoCL change: typedef'd here to pointer to a command node */
+/* PoCL change: typedef'd here to point to a command node */
 typedef struct _cl_command_node *cl_mutable_command_khr;
 
 /* cl_device_info */

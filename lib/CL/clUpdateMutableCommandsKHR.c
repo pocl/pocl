@@ -100,8 +100,8 @@ POname (clUpdateMutableCommandsKHR) (
           : cfg->command->command.run.pc.work_dim;
       unsigned copy_size = sizeof (size_t) * work_dim;
 
-      // PoCL does not store Global worksize, only the number of WGs.
-      // recalculate Global worksize
+      /* PoCL does not store Global worksize, only the number of WGs.
+       * recalculate Global worksize */
       size_t *LS = cfg->command->command.run.pc.local_size;
       size_t *NG = cfg->command->command.run.pc.num_groups;
       size_t orig_global_work_size[] = { LS[0] * NG[0],

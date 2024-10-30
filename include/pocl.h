@@ -544,7 +544,8 @@ struct _cl_command_node
   /* List of buffers this command accesses, used for inserting migrations */
   pocl_buffer_migration_info *migr_infos;
 
-  /* pointer to command buffer or NULL */
+  /* back pointer to the command buffer, when this command is recorded
+   * in a cl_khr_command_buffer. NULL for other (non-buffered) commands */
   cl_command_buffer_khr cmd_buffer;
 };
 

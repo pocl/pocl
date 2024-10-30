@@ -38,6 +38,142 @@
 #include "topology/pocl_topology.h"
 #include "utlist.h"
 
+/* required for setting SSE/AVX flush denorms to zero flag */
+#if defined(__x86_64__) && defined(__GNUC__)
+#include <x86intrin.h>
+#endif
+
+void
+pocl_restore_ftz (unsigned ftz)
+{
+#if defined(__x86_64__) && defined(__GNUC__)
+
+#ifdef _MM_FLUSH_ZERO_ON
+  if (ftz & _MM_FLUSH_ZERO_ON)
+    _MM_SET_FLUSH_ZERO_MODE (_MM_FLUSH_ZERO_ON);
+  else
+    _MM_SET_FLUSH_ZERO_MODE (_MM_FLUSH_ZERO_OFF);
+#endif
+#ifdef _MM_DENORMALS_ZERO_ON
+  if (ftz & _MM_DENORMALS_ZERO_ON)
+    _MM_SET_DENORMALS_ZERO_MODE (_MM_DENORMALS_ZERO_ON);
+  else
+    _MM_SET_DENORMALS_ZERO_MODE (_MM_DENORMALS_ZERO_OFF);
+#endif
+
+#endif
+}
+
+unsigned
+pocl_save_ftz ()
+{
+#if defined(__x86_64__) && defined(__GNUC__)
+
+  unsigned s = 0;
+#ifdef _MM_FLUSH_ZERO_ON
+  if (_MM_GET_FLUSH_ZERO_MODE ())
+    s |= _MM_FLUSH_ZERO_ON;
+  else
+    s &= (~_MM_FLUSH_ZERO_ON);
+#endif
+#ifdef _MM_DENORMALS_ZERO_ON
+  if (_MM_GET_DENORMALS_ZERO_MODE ())
+    s |= _MM_DENORMALS_ZERO_ON;
+  else
+    s &= (~_MM_DENORMALS_ZERO_ON);
+#endif
+  return s;
+
+#else
+  return 0;
+#endif
+}
+
+void
+pocl_set_ftz (unsigned ftz)
+{
+#if defined(__x86_64__) && defined(__GNUC__)
+  if (ftz)
+    {
+#ifdef _MM_FLUSH_ZERO_ON
+      _MM_SET_FLUSH_ZERO_MODE (_MM_FLUSH_ZERO_ON);
+#endif
+
+#ifdef _MM_DENORMALS_ZERO_ON
+      _MM_SET_DENORMALS_ZERO_MODE (_MM_DENORMALS_ZERO_ON);
+#endif
+    }
+  else
+    {
+#ifdef _MM_FLUSH_ZERO_OFF
+      _MM_SET_FLUSH_ZERO_MODE (_MM_FLUSH_ZERO_OFF);
+#endif
+
+#ifdef _MM_DENORMALS_ZERO_OFF
+      _MM_SET_DENORMALS_ZERO_MODE (_MM_DENORMALS_ZERO_OFF);
+#endif
+    }
+#endif
+}
+
+void
+pocl_set_default_rm ()
+{
+#if defined(__x86_64__) && defined(__GNUC__) && defined(_MM_ROUND_NEAREST)
+  unsigned rm = _MM_GET_ROUNDING_MODE ();
+  if (rm != _MM_ROUND_NEAREST)
+    _MM_SET_ROUNDING_MODE (_MM_ROUND_NEAREST);
+#endif
+}
+
+unsigned
+pocl_save_rm ()
+{
+#if defined(__x86_64__) && defined(__GNUC__) && defined(_MM_ROUND_NEAREST)
+  return _MM_GET_ROUNDING_MODE ();
+#else
+  return 0;
+#endif
+}
+
+void
+pocl_restore_rm (unsigned rm)
+{
+#if defined(__x86_64__) && defined(__GNUC__) && defined(_MM_ROUND_NEAREST)
+  _MM_SET_ROUNDING_MODE (rm);
+#endif
+}
+
+void
+pocl_cpu_save_rm_and_ftz (unsigned *rm, unsigned *ftz)
+{
+  *rm = pocl_save_rm ();
+  *ftz = pocl_save_ftz ();
+}
+
+void
+pocl_cpu_restore_rm_and_ftz (unsigned rm, unsigned ftz)
+{
+  pocl_restore_rm (rm);
+  pocl_restore_ftz (ftz);
+}
+
+void
+pocl_cpu_setup_rm_and_ftz (cl_device_id dev, cl_program prog)
+{
+  /* Flush to zero is only set once at start of kernel (because FTZ is
+   * a compilation option) */
+  cl_device_fp_config supports_any_denorms
+    = (dev->half_fp_config | dev->single_fp_config | dev->double_fp_config)
+      & CL_FP_DENORM;
+  if (supports_any_denorms)
+    pocl_set_ftz (prog->flush_denorms);
+  else
+    pocl_set_ftz (1);
+  /* Rounding mode change is deprecated & only supported by OpenCL 1.0 */
+  pocl_set_default_rm ();
+}
+
 #ifdef HAVE_LIBXSMM
 #include <libxsmm.h>
 #endif
@@ -312,10 +448,11 @@ pocl_cpu_init_common (cl_device_id device)
       | CL_COMMAND_BUFFER_CAPABILITY_OUT_OF_ORDER_KHR
       | CL_COMMAND_BUFFER_CAPABILITY_MULTIPLE_QUEUE_KHR;
   device->cmdbuf_required_properties = 0;
-  /* Local size (and offset) is not so simple to change,
-   * because of specialization */
+  /* TBD: arguments, in particular buffers, require more work
+   * because of migration commands */
   device->cmdbuf_mutable_dispatch_capabilities
-    = CL_MUTABLE_DISPATCH_GLOBAL_SIZE_KHR | CL_MUTABLE_DISPATCH_LOCAL_SIZE_KHR | CL_MUTABLE_DISPATCH_GLOBAL_OFFSET_KHR;
+    = CL_MUTABLE_DISPATCH_GLOBAL_SIZE_KHR | CL_MUTABLE_DISPATCH_LOCAL_SIZE_KHR
+      | CL_MUTABLE_DISPATCH_GLOBAL_OFFSET_KHR;
 
   return ret;
 }

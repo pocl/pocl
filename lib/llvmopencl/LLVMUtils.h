@@ -62,7 +62,9 @@ extern const std::vector<std::string> WorkgroupVariablesVector;
 constexpr unsigned NumWIFuncNames = 11;
 extern const char *WIFuncNameArray[];
 extern const std::vector<std::string> WIFuncNameVec;
-// functions that should not be inlined before workgroup pass: WI funcs + printf funcs
+// functions that should not be inlined because they're required by other
+// passes: WI funcs are required by FlattenGlobals pass Printf funcs
+// (pocl_printf_alloc etc) must exist until Workgroup pass
 constexpr unsigned NumDIFuncNames = 13;
 extern const char *DIFuncNameArray[];
 extern const std::vector<std::string> DIFuncNameVec;

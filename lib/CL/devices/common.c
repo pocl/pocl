@@ -222,9 +222,10 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
       const char *cmd_line[64]
         = { pocl_get_path ("CLANG", CLANG), "-o", tmp_module, tmp_objfile };
       unsigned last_arg_idx = 4;
-      /* immediate flush enabled results in "pocl_flush_printf_buffer" symbol
-       * referenced it the built kernel.so, however that function exists only
-       * on the host side; therefore link to libpocl.so which provides it */
+      /* ENABLE_PRINTF_IMMEDIATE_FLUSH results in "pocl_flush_printf_buffer"
+       * symbol referenced in the built kernel.so; however that function exists
+       * only on the host side, therefore link to libpocl.so which provides it
+       */
 #ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
 #ifdef HAVE_DLFCN_H
       const char *fname = pocl_dynlib_pathname ((void *)pocl_cache_tempname);
