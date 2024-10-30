@@ -1989,10 +1989,12 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
   /* Prepare kernel arguments */
   void *null = NULL;
   unsigned sharedMemBytes = 0;
-  void *params[meta->num_args + meta->num_locals + 4];
-  unsigned sharedMemOffsets[meta->num_args + meta->num_locals];
+  void **params
+      = alloca (sizeof (void *) * (meta->num_args + meta->num_locals + 4));
+  unsigned *sharedMemOffsets
+      = alloca (sizeof (unsigned) * (meta->num_args + meta->num_locals));
   unsigned constantMemBytes = 0;
-  unsigned constantMemOffsets[meta->num_args];
+  unsigned *constantMemOffsets = alloca (sizeof (unsigned) * meta->num_args);
   unsigned globalOffsets[3];
 
   CUresult result;

@@ -332,7 +332,7 @@ writev_full (transport_info_t *connection,
              remote_server_data_t *sinfo)
 {
 
-  struct iovec ary[num];
+  struct iovec *ary = alloca (sizeof (struct iovec) * num);
   size_t total = 0;
   int res = 0;
   unsigned i;

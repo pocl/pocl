@@ -4088,7 +4088,7 @@ pocl_vulkan_run (void *data, _cl_command_node *cmd)
   VkPipeline pipeline;
   VkShaderModule compute_shader = NULL;
   VkPushConstantRange pushc_range;
-  char pushc_data[d->max_pushc_size];
+  char *pushc_data = alloca (d->max_pushc_size);
   char *goffs_start = NULL;
 
   pocl_vulkan_setup_kernel_arguments (
