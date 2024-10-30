@@ -98,16 +98,17 @@ public:
     kernel_run_command *K = RunCmd;
     pocl_kernel_metadata_t *Meta = K->kernel->meta;
     const size_t CurThreadID = tbb::this_task_arena::current_thread_index();
-    void *Arguments[Meta->num_args + Meta->num_locals + 1];
-    void *Arguments2[Meta->num_args + Meta->num_locals + 1];
+    const size_t NumArgs = Meta->num_args + Meta->num_locals + 1;
+    std::vector<void *> Arguments(NumArgs);
+    std::vector<void *> Arguments2(NumArgs);
     char *LocalMem = SchedData->local_mem_global_ptr +
                      (SchedData->local_mem_size * CurThreadID);
     uchar *PrintfBuffer = SchedData->printf_buf_global_ptr +
                           (SchedData->printf_buf_size * CurThreadID);
     struct pocl_context PC;
 
-    pocl_setup_kernel_arg_array_with_locals((void **)&Arguments,
-                                            (void **)&Arguments2, K, LocalMem,
+    pocl_setup_kernel_arg_array_with_locals(Arguments.data(), Arguments2.data(),
+                                            K, LocalMem,
                                             SchedData->local_mem_size);
     memcpy(&PC, &K->pc, sizeof(struct pocl_context));
 
@@ -130,7 +131,7 @@ public:
           /* Rounding mode must be reset after every iteration
            * since it can be changed during kernel execution. */
           pocl_set_default_rm();
-          K->workgroup((uint8_t *)Arguments, (uint8_t *)&PC, X, Y, Z);
+          K->workgroup((uint8_t *)Arguments.data(), (uint8_t *)&PC, X, Y, Z);
         }
       }
     }
@@ -139,8 +140,8 @@ public:
     pocl_write_printf_buffer((char *)PC.printf_buffer, Position);
 #endif
 
-    pocl_free_kernel_arg_array_with_locals((void **)&Arguments,
-                                           (void **)&Arguments2, K);
+    pocl_free_kernel_arg_array_with_locals(Arguments.data(), Arguments2.data(),
+                                           K);
   }
   WorkGroupScheduler(kernel_run_command *K, const pocl_tbb_scheduler_data *D)
       : RunCmd(K), SchedData(D) {}
