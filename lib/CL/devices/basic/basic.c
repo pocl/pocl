@@ -371,22 +371,9 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
 
   /* since basic driver runs in the user program's thread, save flags
    * to avoid influencing the environment on return */
-  unsigned rm = pocl_save_rm ();
-  unsigned ftz = pocl_save_ftz ();
-
-  /* Flush to zero is only set once at start of kernel (because FTZ is
-   * a compilation option) */
-  cl_device_fp_config supports_any_denorms
-    = (cmd->device->half_fp_config
-       | cmd->device->single_fp_config
-       | cmd->device->double_fp_config)
-      & CL_FP_DENORM;
-  if (supports_any_denorms)
-    pocl_set_ftz (kernel->program->flush_denorms);
-  else
-    pocl_set_ftz (1);
-  /* Rounding mode change is deprecated & only supported by OpenCL 1.0 */
-  pocl_set_default_rm ();
+  unsigned rm, ftz;
+  pocl_cpu_save_rm_and_ftz (&rm, &ftz);
+  pocl_cpu_setup_rm_and_ftz (cmd->device, program);
 
   for (z = 0; z < pc->num_groups[2]; ++z)
     for (y = 0; y < pc->num_groups[1]; ++y)
@@ -394,8 +381,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
         ((pocl_workgroup_func) cmd->command.run.wg)
 	  ((uint8_t *)arguments, (uint8_t *)pc, x, y, z);
 
-  pocl_restore_rm (rm);
-  pocl_restore_ftz (ftz);
+  pocl_cpu_restore_rm_and_ftz (rm, ftz);
 
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
   pocl_write_printf_buffer ((char *)d->printf_buffer, position);

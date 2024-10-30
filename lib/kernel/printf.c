@@ -72,7 +72,14 @@ pocl_printf_alloc (PRINTF_BUFFER_AS char *__buffer,
 PRINTF_BUFFER_AS void *ATTRS
 pocl_printf_alloc_stub (uint32_t bytes)
 {
-  /* this ensures pocl_printf_alloc is not optimized away */
+  /* this ensures pocl_printf_alloc is not optimized away, because
+   * at linker.cpp EmitPrintf() replaces calls of "printf" with calls
+   * to this stub; then Workgroup pass replaces the stub with the actual
+   * "pocl_printf_alloc" calls with proper parameters.
+   *
+   * TODO: both of these will be unnecessary when we use -O0 and get rid
+   * of the "middle" optimization between PoCL passes.
+   */
   PRINTF_BUFFER_AS void *retval = pocl_printf_alloc (
     _printf_buffer, _printf_buffer_position, _printf_buffer_capacity, bytes);
 

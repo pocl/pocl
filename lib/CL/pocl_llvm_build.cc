@@ -842,16 +842,16 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
   PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
   PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
 
-  llvm::Module *libmodule = getKernelLibrary(device, llvm_ctx);
-  if (libmodule == nullptr)
+  llvm::Module *LibraryModule = getKernelLibrary(device, llvm_ctx);
+  if (LibraryModule == nullptr)
     return CL_LINK_PROGRAM_FAILURE;
 
   std::unique_ptr<llvm::Module> mod(
       new llvm::Module(StringRef("linked_program"), *llvm_ctx->Context));
   llvm::Module *LinkedModule = nullptr;
   std::unique_ptr<llvm::Module> TempModule;
-  mod->setTargetTriple(libmodule->getTargetTriple());
-  mod->setDataLayout(libmodule->getDataLayout());
+  mod->setTargetTriple(LibraryModule->getTargetTriple());
+  mod->setDataLayout(LibraryModule->getDataLayout());
   mod->setPICLevel(PICLevel::BigPIC);
 
 
@@ -874,7 +874,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
       TempModule.reset(Ptr);
     }
 
-    error = pocl_convert_spir_bitcode_to_target(TempModule.get(), libmodule,
+    error = pocl_convert_spir_bitcode_to_target(TempModule.get(), LibraryModule,
                                                 device);
     POCL_RETURN_ERROR_ON((error != CL_SUCCESS), CL_LINK_PROGRAM_FAILURE,
                          "could not convert SPIR to Target\n");
@@ -970,50 +970,53 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
   if (kernelLibraryMap->find(device) != kernelLibraryMap->end())
     return kernelLibraryMap->at(device);
 
-  std::string kernellib_common, kernellib, kernellib_fallback;
+  std::string BuiltinLibraryCommon, BuiltinLibrary, BuiltinLibraryFallback;
 
 #ifdef ENABLE_POCL_BUILDING
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
-    kernellib_common = BUILDDIR;
-    kernellib_common += "/lib/kernel/";
-    kernellib_common += device->kernellib_subdir;
+    BuiltinLibraryCommon = BUILDDIR;
+    BuiltinLibraryCommon += "/lib/kernel/";
+    BuiltinLibraryCommon += device->kernellib_subdir;
   } else // POCL_BUILDING == 0, use install dir
 #endif
   {
     char temp[POCL_MAX_PATHNAME_LENGTH];
     pocl_get_private_datadir(temp);
-    kernellib_common = temp;
+    BuiltinLibraryCommon = temp;
   }
 
-  kernellib_common += "/";
+  BuiltinLibraryCommon += "/";
 
-  kernellib = kernellib_common + device->kernellib_name;
-  kernellib += ".bc";
+  BuiltinLibrary = BuiltinLibraryCommon + device->kernellib_name;
+  BuiltinLibrary += ".bc";
 
   if (device->kernellib_fallback_name) {
-    kernellib_fallback = kernellib_common + device->kernellib_fallback_name;
-    kernellib_fallback += ".bc";
+    BuiltinLibraryFallback =
+        BuiltinLibraryCommon + device->kernellib_fallback_name;
+    BuiltinLibraryFallback += ".bc";
   }
 
-  llvm::Module *lib = nullptr;
+  llvm::Module *BuiltinLibModule = nullptr;
 
-  if (pocl_exists(kernellib.c_str())) {
-    POCL_MSG_PRINT_LLVM("Using %s as the built-in lib.\n", kernellib.c_str());
-    lib = parseModuleIR(kernellib.c_str(), llvmContext);
+  if (pocl_exists(BuiltinLibrary.c_str())) {
+    POCL_MSG_PRINT_LLVM("Using %s as the built-in lib.\n",
+                        BuiltinLibrary.c_str());
+    BuiltinLibModule = parseModuleIR(BuiltinLibrary.c_str(), llvmContext);
   } else {
     if (device->kernellib_fallback_name &&
-        pocl_exists(kernellib_fallback.c_str())) {
+        pocl_exists(BuiltinLibraryFallback.c_str())) {
       POCL_MSG_WARN("Using fallback %s as the built-in lib.\n",
-                    kernellib_fallback.c_str());
-      lib = parseModuleIR(kernellib_fallback.c_str(), llvmContext);
+                    BuiltinLibraryFallback.c_str());
+      BuiltinLibModule =
+          parseModuleIR(BuiltinLibraryFallback.c_str(), llvmContext);
     } else
       POCL_MSG_ERR("Kernel library file %s doesn't exist.\n",
-                   kernellib.c_str());
+                   BuiltinLibrary.c_str());
   }
-  if (lib)
-    kernelLibraryMap->insert(std::make_pair(device, lib));
+  if (BuiltinLibModule)
+    kernelLibraryMap->insert(std::make_pair(device, BuiltinLibModule));
 
-  return lib;
+  return BuiltinLibModule;
 }
 
 /**

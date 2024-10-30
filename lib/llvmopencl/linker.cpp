@@ -437,13 +437,14 @@ static void handleDeviceSidePrintf(
 static void replaceIntrinsics(llvm::Module *Program, const llvm::Module *Lib,
                               ValueToValueMapTy &vvm, cl_device_id ClDev) {
   llvm_intrin_replace_fn IntrinRepl = ClDev->llvm_intrin_replace;
+  if (IntrinRepl == nullptr)
+    return;
   std::map<Function *, Function *> EraseMap;
   llvm::Module::iterator FI, FE;
   StringRef LlvmIntrins("llvm.");
   for (FI = Program->begin(), FE = Program->end(); FI != FE; FI++) {
     if (FI->isDeclaration()) {
-      if (IntrinRepl && FI->hasName() &&
-          FI->getName().starts_with(LlvmIntrins)) {
+      if (FI->hasName() && FI->getName().starts_with(LlvmIntrins)) {
         const char *ReplacementName =
             IntrinRepl(FI->getName().data(), FI->getName().size());
         if (ReplacementName) {

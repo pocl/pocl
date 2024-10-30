@@ -289,20 +289,7 @@ work_group_scheduler (kernel_run_command *k,
   assert (pc.printf_buffer_capacity > 0);
   assert (pc.printf_buffer_position != NULL);
 
-  /* Flush to zero is only set once at start of kernel (because FTZ is
-   * a compilation option) */
-  unsigned flush = k->kernel->program->flush_denorms;
-  cl_device_fp_config supports_any_denorms
-    = (k->device->half_fp_config
-       | k->device->single_fp_config
-       | k->device->double_fp_config)
-      & CL_FP_DENORM;
-  if (supports_any_denorms)
-    pocl_set_ftz (flush);
-  else
-    pocl_set_ftz (1);
-  /* Rounding mode change is deprecated & only supported by OpenCL 1.0 */
-  pocl_set_default_rm ();
+  pocl_cpu_setup_rm_and_ftz (k->device, k->kernel->program);
 
   unsigned slice_size = k->pc.num_groups[0] * k->pc.num_groups[1];
   unsigned row_size = k->pc.num_groups[0];
@@ -372,18 +359,7 @@ work_group_scheduler (kernel_run_command *k,
     uint32_t position = 0;
     pc.printf_buffer_position = &position;
 
-    unsigned flush = k->kernel->program->flush_denorms;
-    cl_device_fp_config supports_any_denorms
-      = (k->device->half_fp_config
-       | k->device->single_fp_config
-       | k->device->double_fp_config)
-      & CL_FP_DENORM;
-    if (supports_any_denorms)
-      pocl_set_ftz (flush);
-    else
-      pocl_set_ftz (1);
-    /* Rounding mode change is deprecated & only supported by OpenCL 1.0 */
-    pocl_set_default_rm ();
+    pocl_cpu_setup_rm_and_ftz (k->device, k->kernel->program);
 
     size_t x, y, z;
     /* runtime = set scheduling according to environment variable OMP_SCHEDULE

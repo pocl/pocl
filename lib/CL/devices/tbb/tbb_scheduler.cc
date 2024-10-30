@@ -120,20 +120,7 @@ public:
     assert(PC.printf_buffer_capacity > 0);
     assert(PC.printf_buffer_position != NULL);
 
-    /* Flush to zero is only set once at the start of the kernel execution
-     * because FTZ is a compilation option. */
-    unsigned Flush = K->kernel->program->flush_denorms;
-    cl_device_fp_config supports_any_denorms =
-        (K->device->half_fp_config
-         | K->device->single_fp_config
-         | K->device->double_fp_config)
-        & CL_FP_DENORM;
-    if (supports_any_denorms)
-      pocl_set_ftz(Flush);
-    else
-      pocl_set_ftz(1);
-    /* Rounding mode change is deprecated & only supported by OpenCL 1.0 */
-    pocl_set_default_rm();
+    pocl_cpu_setup_rm_and_ftz(RunCmd->device, K->kernel->program);
 
     for (size_t X = r.pages().begin(); X != r.pages().end(); X++) {
       for (size_t Y = r.rows().begin(); Y != r.rows().end(); Y++) {

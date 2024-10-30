@@ -52,25 +52,6 @@ POCL_EXPORT
 uint32_t pocl_byteswap_uint32_t (uint32_t word, char should_swap);
 float byteswap_float (float word, char should_swap);
 
-/* set rounding mode */
-POCL_EXPORT
-void pocl_restore_rm (unsigned rm);
-/* get current rounding mode */
-POCL_EXPORT
-unsigned pocl_save_rm ();
-/* set OpenCL's default (round to nearest) rounding mode */
-POCL_EXPORT
-void pocl_set_default_rm ();
-
-
-/* sets the flush-denorms-to-zero flag on the CPU, if supported */
-POCL_EXPORT
-void pocl_set_ftz (unsigned ftz);
-/* saves / restores cpu flags*/
-POCL_EXPORT
-unsigned pocl_save_ftz (void);
-POCL_EXPORT
-void pocl_restore_ftz (unsigned ftz);
 
 #ifdef ENABLE_SIGNAL_HANDLERS
 void pocl_install_sigfpe_handler ();
@@ -304,12 +285,22 @@ POCL_EXPORT
 void pocl_update_event_complete (const char *func, unsigned line,
                                  cl_event event, const char *msg);
 
+/**
+ * Should be called by a driver when the event execution fails for some reason
+ *
+ * Sets the event status to failure (CL_FAILED) and does all the required
+ * cleanup work (releasing memory, notifying others waiting on the event, etc)
+ */
 POCL_EXPORT
 void pocl_update_event_failed (const char *func,
                                unsigned line,
                                cl_event event,
                                const char *msg);
 
+/**
+ * Same as pocl_update_event_failed, except assumes the event is locked.
+ * TODO this should be reimplemented
+ */
 POCL_EXPORT
 void pocl_update_event_failed_locked (cl_event event);
 
