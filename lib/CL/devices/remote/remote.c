@@ -842,14 +842,14 @@ pocl_remote_build_source (cl_program program, cl_uint device_i,
   unsigned num_relevant_devices = 0;
   unsigned num_devices = program->num_devices;
 
-  uint32_t relevant_devices[num_devices];
-  uint32_t relevant_platforms[num_devices];
+  uint32_t *relevant_devices = alloca (sizeof (uint32_t) * num_devices);
+  uint32_t *relevant_platforms = alloca (sizeof (uint32_t) * num_devices);
 
-  unsigned build_indexes[num_devices];
-  char *build_logs[num_devices];
+  unsigned *build_indexes = alloca (sizeof (unsigned) * num_devices);
+  char **build_logs = alloca (sizeof (char *) * num_devices);
 
-  char *binaries[num_devices];
-  size_t binary_sizes[num_devices];
+  char **binaries = alloca (sizeof (char *) * num_devices);
+  size_t *binary_sizes = alloca (sizeof (size_t) * num_devices);
 
   size_t total_binary_request_size = sizeof (uint32_t);
   int err;
@@ -942,14 +942,14 @@ pocl_remote_build_binary (cl_program program, cl_uint device_i,
   unsigned num_relevant_devices = 0;
   unsigned num_devices = program->num_devices;
 
-  uint32_t relevant_devices[num_devices];
-  uint32_t relevant_platforms[num_devices];
+  uint32_t *relevant_devices = alloca (sizeof (uint32_t) * num_devices);
+  uint32_t *relevant_platforms = alloca (sizeof (uint32_t) * num_devices);
 
-  unsigned build_indexes[num_devices];
-  char *build_logs[num_devices];
+  unsigned *build_indexes = alloca (sizeof (unsigned) * num_devices);
+  char **build_logs = alloca (sizeof (char *) * num_devices);
 
-  char *binaries[num_devices];
-  size_t binary_sizes[num_devices];
+  char **binaries = alloca (sizeof (char *) * num_devices);
+  size_t *binary_sizes = alloca (sizeof (size_t) * num_devices);
 
   size_t total_binary_request_size = sizeof (uint32_t);
   int err;
@@ -1111,14 +1111,14 @@ int pocl_remote_link_program (cl_program program, cl_uint device_i,
   unsigned num_relevant_devices = 0;
   unsigned num_devices = program->num_devices;
 
-  uint32_t relevant_devices[num_devices];
-  uint32_t relevant_platforms[num_devices];
+  uint32_t *relevant_devices = alloca (sizeof (uint32_t) * num_devices);
+  uint32_t *relevant_platforms = alloca (sizeof (uint32_t) * num_devices);
 
-  unsigned build_indexes[num_devices];
-  char *build_logs[num_devices];
+  unsigned *build_indexes = alloca (sizeof (unsigned) * num_devices);
+  char **build_logs = alloca (sizeof (char *) * num_devices);
 
-  char *binaries[num_devices];
-  size_t binary_sizes[num_devices];
+  char **binaries = alloca (sizeof (char *) * num_devices);
+  size_t *binary_sizes = alloca (sizeof (size_t) * num_devices);
 
   size_t total_binary_request_size = sizeof (uint32_t);
   int err;
@@ -1140,7 +1140,8 @@ int pocl_remote_link_program (cl_program program, cl_uint device_i,
   char *kernel_meta_bytes = NULL;
   size_t kernel_meta_size = 0;
 
-  uint32_t input_prog_ids[num_input_programs + 1];
+  uint32_t *input_prog_ids
+      = alloca (sizeof (uint32_t) * (num_input_programs + 1));
   input_prog_ids[0] = num_input_programs;
   for (i = 0; i < num_input_programs; ++i)
     input_prog_ids[i + 1] = input_programs[i]->id;

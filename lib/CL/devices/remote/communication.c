@@ -371,7 +371,7 @@ connection_writev_full (remote_connection_t *connection,
                         remote_server_data_t *sinfo)
 {
 
-  struct iovec ary[num];
+  struct iovec *ary = alloca (sizeof (struct iovec) * num);
   size_t total = 0;
   int res = 0;
   unsigned i;
