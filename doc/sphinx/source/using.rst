@@ -327,6 +327,11 @@ pocl.
 
   * **POCL_ARGS_CLANG** -- Additional arguments to pass to clang.
 
+- **POCL_PLATFORM_NAME_OVERRIDE**
+
+ Overrides the platform name reported by PoCL. For example, setting the platform
+ "PoCL (Intel OpenCL compat)" will allow running OneDNN applications, which will
+ fail to create a device if 'Intel' and 'OpenCL' are not in the platform string.
 
 - **POCL_SIGFPE_HANDLER**
 

@@ -218,7 +218,8 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
       POCL_RETURN_GETINFO (cl_version, pocl_numeric_version);
 
     case CL_PLATFORM_NAME:
-      POCL_RETURN_GETINFO_STR("Portable Computing Language");
+      POCL_RETURN_GETINFO_STR (pocl_get_string_option (
+        "POCL_PLATFORM_NAME_OVERRIDE", "Portable Computing Language"));
 
     case CL_PLATFORM_VENDOR:
       POCL_RETURN_GETINFO_STR("The pocl project");
