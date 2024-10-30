@@ -53,8 +53,8 @@ function(compile_c_to_bc FILENAME SUBDIR BC_FILE_LIST)
         DEPENDS "${FULL_F_PATH}"
         "${CMAKE_SOURCE_DIR}/include/pocl_types.h"
         "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
-        COMMAND "${CLANG}" ${OPAQUE_OPT} ${CLANG_FLAGS} ${DEVICE_CL_FLAGS} "-O1"
-        ${KERNEL_C_FLAGS} "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
+        COMMAND "${CLANG}" ${OPAQUE_OPT} ${CLANG_FLAGS} ${DEVICE_CL_FLAGS}
+        ${KERNEL_C_FLAGS} "-O0" "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         "-I${CMAKE_SOURCE_DIR}/include"
         "-include" "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
         COMMENT "Building C to LLVM bitcode ${BC_FILE}"
@@ -74,7 +74,7 @@ function(compile_cc_to_bc FILENAME SUBDIR BC_FILE_LIST)
     add_custom_command(OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
         COMMAND  "${CLANGXX}" ${OPAQUE_OPT} ${CLANG_FLAGS} ${KERNEL_CXX_FLAGS}
-        ${DEVICE_C_FLAGS} "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}" "-O1"
+        ${DEVICE_C_FLAGS} "-O0" "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         COMMENT "Building C++ to LLVM bitcode ${BC_FILE}"
         VERBATIM)
 endfunction()
@@ -131,7 +131,7 @@ function(compile_cl_to_bc FILENAME SUBDIR BC_FILE_LIST EXTRA_CONFIG)
           ${DEPENDLIST}
         COMMAND "${CLANG}" ${OPAQUE_OPT} ${CLANG_FLAGS}
         ${KERNEL_CL_FLAGS} ${DEVICE_CL_FLAGS}
-        "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
+        "-o" "${BC_FILE}" "-O0" "-c" "${FULL_F_PATH}"
         ${INCLUDELIST}
         COMMENT "Building CL to LLVM bitcode ${BC_FILE}"
         VERBATIM)
@@ -159,7 +159,7 @@ function(compile_sleef_c_to_bc EXT FILENAME SUBDIR BCLIST)
         "-I" "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/arch"
         "-I" "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/libm"
         "-I" "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/include"
-        "-O1" "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
+        "-O0" "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         COMMENT "Building SLEEF to LLVM bitcode ${BC_FILE}"
         VERBATIM)
 endfunction()
@@ -297,14 +297,8 @@ function(make_kernel_bc OUTPUT_VAR NAME SUBDIR USE_SLEEF EXTRA_BC EXTRA_CONFIG)
     math(EXPR INDEX "${INDEX} + ${BCSUBLIST_LENGTH}")
   endwhile()
 
-  # don't waste time optimizing the kernels IR when in developer mode
-  if(DEVELOPER_MODE)
-    set(LINK_OPT_COMMAND COMMAND "${LLVM_LINK}" "-o" "${KERNEL_BC}" ${FINAL_LINK_INPUTS})
-  else()
-    set(LINK_CMD COMMAND "${LLVM_LINK}" "-o" "kernel-${NAME}-unoptimized.bc" ${FINAL_LINK_INPUTS})
-    set(OPT_CMD COMMAND "${LLVM_OPT}" ${LLC_FLAGS} "-O3" "-fp-contract=off" "-o" "${KERNEL_BC}" "kernel-${NAME}-unoptimized.bc")
-    set(LINK_OPT_COMMAND ${LINK_CMD} ${OPT_CMD})
-  endif()
+  # optimizing the bitcode library IR has undesirable side-effects. avoid them completely
+  set(LINK_OPT_COMMAND COMMAND "${LLVM_LINK}" "-o" "${KERNEL_BC}" ${FINAL_LINK_INPUTS})
 
   if(USE_SLEEF)
     list(APPEND FINAL_LINK_INPUTS "sleef_config_${VARIANT}")
@@ -313,7 +307,7 @@ function(make_kernel_bc OUTPUT_VAR NAME SUBDIR USE_SLEEF EXTRA_BC EXTRA_CONFIG)
   add_custom_command( OUTPUT "${KERNEL_BC}"
         DEPENDS ${FINAL_LINK_INPUTS}
         ${LINK_OPT_COMMAND}
-        COMMENT "Linking & optimizing Kernel bitcode ${KERNEL_BC}"
+        COMMENT "Linking final bitcode library: ${KERNEL_BC}"
         VERBATIM)
 
 endfunction()

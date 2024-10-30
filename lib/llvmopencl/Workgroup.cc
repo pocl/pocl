@@ -267,6 +267,15 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
   // extra printf arguments.
   FunctionMapping PrintfCache;
 
+  // Remove the OptNone&NoInline keywords from all functions;
+  for (Module::iterator It = M.begin(), e = M.end(); It != e; ++It) {
+    Function &F = *It;
+    if (!isKernelToProcess(F)) {
+      markFunctionAlwaysInline(&F);
+      F.removeFnAttr(Attribute::AlwaysInline);
+    }
+  }
+
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     Function &OrigKernel = *i;
     if (!isKernelToProcess(OrigKernel)) continue;
