@@ -272,14 +272,14 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
     if (!isKernelToProcess(OrigKernel)) continue;
     Function *L = createWrapper(&OrigKernel, PrintfCache);
     KernelsMap[&OrigKernel] = L;
+    // always inline the Original Kernel into the workgroup launcher
+    markFunctionAlwaysInline(L);
 
     privatizeContext(L);
 
     if (DeviceUsingArgBufferLauncher) {
       Function *WGLauncher =
         createArgBufferWorkgroupLauncher(L, OrigKernel.getName().str());
-      L->addFnAttr(Attribute::NoInline);
-      L->removeFnAttr(Attribute::AlwaysInline);
 
       WGLauncher->addFnAttr(Attribute::AlwaysInline);
       WGLauncher->removeFnAttr(Attribute::OptimizeNone);
@@ -860,6 +860,7 @@ Function *WorkgroupImpl::createWrapper(Function *F,
     if (NewPrintfAlloc && OldPrintfAlloc) {
       replacePrintfCalls(PrintfBuf, PrintfBufPos, PrintfBufCapa, true,
                          NewPrintfAlloc, OldPrintfAlloc, *M, L, PrintfCache);
+      markFunctionAlwaysInline(NewPrintfAlloc);
     }
   }
 
@@ -1138,6 +1139,7 @@ void WorkgroupImpl::createDefaultWorkgroupLauncher(llvm::Function *F) {
 
   SmallVector<Value *, 8> Arguments;
   size_t i = 0;
+  const DataLayout &DL = M->getDataLayout();
   for (Function::const_arg_iterator ii = F->arg_begin(), ee = F->arg_end();
        ii != ee; ++ii) {
 
@@ -1164,7 +1166,6 @@ void WorkgroupImpl::createDefaultWorkgroupLauncher(llvm::Function *F) {
       // The size is passed directly instead of the pointer.
       PointerType *ParamType = dyn_cast<PointerType>(ArgType);
       assert(ParamType != nullptr);
-      const DataLayout &DL = M->getDataLayout();
 
       uint64_t ParamByteSize = DL.getTypeStoreSize(ParamType);
       Type *SizeIntType = IntegerType::get(*C, ParamByteSize * 8);
@@ -1186,10 +1187,32 @@ void WorkgroupImpl::createDefaultWorkgroupLauncher(llvm::Function *F) {
                                  MAX_EXTENDED_ALIGNMENT),
                                  "local_arg", Block);
     } else {
-      // If it's a pass by value pointer argument, we just pass the pointer
-      // as is to the function, no need to load from it first.
       if (ii->hasByValAttr()) {
-        Arg = Builder.CreatePointerCast(Pointer, ArgType);
+
+        // If it's a pass-by-value pointer argument, we can pass the pointer
+        // as is to the function, but only if the alignment of the arg is
+        // <= than preferred alignment; otherwise it could crash
+        // (chipStar test tests/runtime/TestAlignAttrRuntime)
+        //
+        // this can also be solved by inlining the WG func into launcher
+        auto ArgAlign = ii->getParamAlign().valueOrOne();
+        Type *BVType = ii->getParamByValType();
+        auto PrefAlign = DL.getPrefTypeAlign(BVType);
+
+        if (ArgAlign <= PrefAlign) {
+          Arg = Builder.CreatePointerCast(Pointer, ArgType);
+        } else {
+#ifdef DEBUG_WORK_GROUP_GEN
+          std::cerr << "WORKGROUP: arg alignment is larger, creating load\n";
+#endif
+          uint64_t ArgTypeSize = DL.getTypeStoreSize(BVType);
+          Value *Src = Builder.CreatePointerCast(Pointer, ArgType);
+          unsigned AddrSp = DL.getAllocaAddrSpace();
+          AllocaInst *AI = new AllocaInst(BVType, AddrSp, nullptr, ArgAlign);
+          Builder.Insert(AI);
+          Builder.CreateMemCpy(AI, Align(1), Src, Align(1), ArgTypeSize);
+          Arg = AI;
+        }
       } else {
         Arg = Builder.CreatePointerCast(Pointer, ArgType->getPointerTo());
         Arg = Builder.CreateLoad(ArgType, Arg);
