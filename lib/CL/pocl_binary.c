@@ -32,10 +32,6 @@
 #include "pocl_file_util.h"
 #include "pocl_llvm.h"
 
-#include <sys/stat.h>
-#include <dirent.h>
-#include <libgen.h>
-
 /* pocl binary identifier */
 #define POCLCC_STRING_ID "poclbin"
 #define POCLCC_STRING_ID_LENGTH 8
@@ -321,13 +317,17 @@ pocl_binary_get_kernel_count (cl_program program, unsigned device_i)
 }
 /***********************************************************/
 
-/* serializes a single file. */
-static unsigned char*
-serialize_file(char* path, size_t basedir_offset, unsigned char* buffer)
+/** Serializes a single file into the 'buffer'
+ *
+ * Copies the contents of a existing file pointed by 'path' +
+ * 'basedir_offset' string.
+ */
+static unsigned char *
+serialize_file (const char *path, size_t basedir_offset, unsigned char *buffer)
 {
   char* content;
   uint64_t fsize;
-  char* p = path + basedir_offset;
+  const char *p = path + basedir_offset;
   BUFFER_STORE_STR(p);
   pocl_read_file(path, &content, &fsize);
   BUFFER_STORE_STR2(content, fsize);
@@ -335,41 +335,40 @@ serialize_file(char* path, size_t basedir_offset, unsigned char* buffer)
   return buffer;
 }
 
-/* recursively serializes files/directories by calling
+/** recursively serializes files/directories by calling
  * either itself (on directory), or serialize_file (on files) */
-static unsigned char*
-recursively_serialize_path (char* path,
-                            size_t basedir_offset,
-                            unsigned char* buffer)
+static unsigned char *
+recursively_serialize_path (const char *path, size_t basedir_offset,
+                            unsigned char *buffer)
 {
-  struct stat st;
-  if (stat (path, &st) != 0)
-    return buffer;
 
-  if (S_ISREG (st.st_mode))
-    buffer = serialize_file (path, basedir_offset, buffer);
-
-  if (S_ISDIR (st.st_mode))
+  switch (pocl_get_file_type (path))
     {
-      DIR *d;
-      struct dirent *entry;
-      char subpath[POCL_MAX_PATHNAME_LENGTH];
-
-      strncpy (subpath, path, POCL_MAX_PATHNAME_LENGTH - 1);
-      char* p = subpath + strlen(subpath);
-      *p++ = '/';
-      d = opendir (path);
-      while ((entry = readdir (d)))
-        {
-          if (strcmp (entry->d_name, ".") == 0) continue;
-          if (strcmp (entry->d_name, "..") == 0) continue;
-          strcpy (p, entry->d_name);
-          buffer =
-            recursively_serialize_path (subpath, basedir_offset, buffer);
-        }
-      closedir (d);
+    default:
+      POCL_MSG_WARN ("Skipping non-file/-directory: '%s'\n", path);
+      return buffer;
+    case POCL_FS_REGULAR:
+      return serialize_file (path, basedir_offset, buffer);
+    case POCL_FS_DIRECTORY:
+      {
+        pocl_dir_iter d;
+        if (pocl_dir_iterator (path, &d))
+          {
+            POCL_MSG_WARN ("Failed to scan directory: '%s'\n", path);
+            return buffer;
+          }
+        while (pocl_dir_next_entry (d))
+          {
+            const char *entry_path = pocl_dir_iter_get_path (d);
+            buffer = recursively_serialize_path (entry_path, basedir_offset,
+                                                 buffer);
+          }
+        pocl_release_dir_iterator (&d);
+        return buffer;
+      }
     }
 
+  assert (!"UNREACHABLE!");
   return buffer;
 }
 
@@ -548,10 +547,9 @@ deserialize_file (unsigned char* buffer,
   if (pocl_exists (fullpath))
     goto RET;
 
-  char* dir = strdup (basedir);
-  char* dirpath = dirname (dir);
-  if (!pocl_exists (dirpath))
-    pocl_mkdir_p (dirpath);
+  char *dir = pocl_parent_path (strdup (basedir));
+  if (!pocl_exists (dir))
+    pocl_mkdir_p (dir);
   free (dir);
 
   if (len == 0)
