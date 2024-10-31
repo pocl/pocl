@@ -280,13 +280,27 @@ POCLU_API char *POCLU_CALL poclu_read_binfile (const char *filename,
  */
 POCLU_API int POCLU_CALL poclu_write_file (const char *filename, char *content,
                                            size_t size);
+
+/**
+ * Parse a platform or device version string.
+ *
+ * \param string [in] string in the format specified by OpenCL.
+ * \return An integer in the form of \<major\>\<minor\>0 or -1 on an error.
+ */
+int poclu_parse_version_string (const char *string);
+
 /**
  * \brief wrapper for poclu_load_program_multidev, see it for details.
  */
-int poclu_load_program (cl_context context, cl_device_id device,
-                        const char *basename, int spirv, int poclbin,
+int poclu_load_program (cl_platform_id platform,
+                        cl_context context,
+                        cl_device_id device,
+                        const char *basename,
+                        int spirv,
+                        int poclbin,
                         const char *explicit_binary,
-                        const char *extra_build_opts, cl_program *p);
+                        const char *extra_build_opts,
+                        cl_program *p);
 /**
  * \brief create a program from different sources
  *
@@ -311,10 +325,16 @@ int poclu_load_program (cl_context context, cl_device_id device,
  *
  * \warning all devices need to be of the same type or else an error will be thrown.
  */
-int poclu_load_program_multidev (cl_context context, cl_device_id *devices,
-                                 cl_uint num_devices, const char *basename, int spirv, int poclbin,
+int poclu_load_program_multidev (cl_platform_id platform,
+                                 cl_context context,
+                                 cl_device_id *devices,
+                                 cl_uint num_devices,
+                                 const char *basename,
+                                 int spirv,
+                                 int poclbin,
                                  const char *explicit_binary,
-                                 const char *extra_build_opts, cl_program *p);
+                                 const char *extra_build_opts,
+                                 cl_program *p);
 
 /**
  * \brief print program build log of each device to stderr.

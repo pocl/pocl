@@ -1,6 +1,7 @@
 /* proxy.c - a pocl device driver which delegates to proxied OpenCL devices
 
    Copyright (c) 2021 Michal Babej / Tampere University
+                 2024 Robin Bijl / Tampere University
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -26,9 +27,9 @@
 #include "libopencl_stub/rename_stub.h"
 #endif
 
-#include "pocl_proxy.h"
 #include "common.h"
 #include "devices.h"
+#include "pocl_proxy.hpp"
 
 #include <assert.h>
 #if !defined(__FreeBSD__)
@@ -40,17 +41,20 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "common_driver.h"
+#include "pocl_cache.h"
+#include "pocl_cl.h"
+#include "pocl_file_util.h"
+#include "pocl_image_util.h"
+#include "pocl_mem_management.h"
+#include "pocl_spirv_utils.hh"
+#include "pocl_timing.h"
+#include "pocl_util.h"
+#include "spirv_parser.hh"
+#include "utlist.h"
 #include <CL/cl.h>
 #include <CL/cl_egl.h>
-#include "pocl_cl.h"
-#include "pocl_cache.h"
-#include "pocl_timing.h"
-#include "pocl_file_util.h"
-#include "pocl_util.h"
-#include "pocl_mem_management.h"
-#include "pocl_image_util.h"
-#include "common_driver.h"
-#include "utlist.h"
+#include <CL/cl_ext.h>
 
 #ifdef ENABLE_ICD
 #error This driver cannot be built when pocl is to be linked against ICD
@@ -67,6 +71,7 @@ typedef struct proxy_platform_data_s
   char has_gl_interop;
   char provides_metadata;
   char supports_binaries;
+  char supports_il;
 } proxy_platform_data_t;
 
 typedef struct proxy_device_data_s
@@ -146,7 +151,7 @@ pocl_proxy_init_device_ops (struct pocl_device_ops *ops)
   ops->build_binary = pocl_proxy_build_binary;
   ops->free_program = pocl_proxy_free_program;
   ops->setup_metadata = pocl_proxy_setup_metadata;
-  ops->supports_binary = NULL;
+  ops->supports_binary = pocl_proxy_supports_binary;
 
   ops->join = pocl_proxy_join;
   ops->submit = pocl_proxy_submit;
@@ -254,7 +259,10 @@ pocl_proxy_probe (struct pocl_device_ops *ops)
       else
         platforms[i].provides_metadata = 1;
 #endif
+
       platforms[i].supports_binaries = platforms[i].provides_metadata;
+      platforms[i].supports_il =
+          (char)(strstr(platform_extensions, "cl_khr_il_program") != NULL);
 
 #if defined(ENABLE_OPENGL_INTEROP) || defined(ENABLE_EGL_INTEROP)
       if (strstr (platform_extensions, "cl_khr_gl_sharing")
@@ -634,6 +642,7 @@ pocl_proxy_init (unsigned j, cl_device_id dev, const char *parameters)
     return CL_OUT_OF_HOST_MEMORY;
   dev->data = d;
   dev->available = &d->available;
+  dev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
 
   d->backend = &platforms[plat_i];
   d->platform_id = platforms[plat_i].id;
@@ -677,12 +686,13 @@ pocl_proxy_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
       = mem->flags
         & (CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY | CL_MEM_READ_WRITE
            | CL_MEM_HOST_WRITE_ONLY);
+  /* buffer to be created */
+  cl_mem buf = NULL;
 
   /* proxy driver doesn't preallocate */
   if ((mem->flags & CL_MEM_ALLOC_HOST_PTR) && (mem->mem_host_ptr == NULL))
     goto ERROR;
 
-  cl_mem buf = NULL;
   if (mem->is_image)
     {
 #ifdef ENABLE_OPENGL_INTEROP
@@ -771,31 +781,20 @@ pocl_proxy_free (cl_device_id device, cl_mem mem)
                          p->mem_ptr, mem->size);
 }
 
-#define MAX_TESTED_ARG_SIZE 128
-
-static int
-get_kernel_metadata (pocl_kernel_metadata_t *meta, cl_uint num_devices,
-                     cl_program prog, cl_device_id device, cl_kernel kernel)
-{
+/**
+ * Populate kernel metadata like kernel attributes, local mem size and
+ * kernel compile work group size.
+ *
+ * \param meta [out] used to store results.
+ * \param device [in] used to get values specific to that device.
+ * \param kernel [in] kernel to get values of.
+ * \return OpenCL status.
+ */
+static int get_kernel_info(pocl_kernel_metadata_t *meta, cl_device_id device,
+                           cl_kernel kernel) {
   char string_value[POCL_MAX_PATHNAME_LENGTH];
   int err;
   size_t size;
-
-  // device-specific
-  assert (meta->data == NULL);
-  meta->data = (void **)calloc (num_devices, sizeof (void *));
-  meta->has_arg_metadata = (-1);
-
-  err = clGetKernelInfo (kernel, CL_KERNEL_FUNCTION_NAME, 0, NULL, &size);
-  assert (err == CL_SUCCESS);
-  assert (size > 0);
-  assert (size < POCL_MAX_PATHNAME_LENGTH);
-
-  err = clGetKernelInfo (kernel, CL_KERNEL_FUNCTION_NAME, size, string_value,
-                         NULL);
-  assert (err == CL_SUCCESS);
-  meta->name = (char *)malloc (size);
-  memcpy (meta->name, string_value, size);
 
   err = clGetKernelInfo (kernel, CL_KERNEL_ATTRIBUTES, 0, NULL, &size);
   assert (err == CL_SUCCESS);
@@ -815,7 +814,6 @@ get_kernel_metadata (pocl_kernel_metadata_t *meta, cl_uint num_devices,
   cl_ulong local_mem_size = 0;
   err = clGetKernelWorkGroupInfo (kernel, device, CL_KERNEL_LOCAL_MEM_SIZE,
                                   sizeof (cl_ulong), &local_mem_size, NULL);
-  // TODO
   assert (err == CL_SUCCESS);
 
   meta->num_locals = 1;
@@ -826,12 +824,51 @@ get_kernel_metadata (pocl_kernel_metadata_t *meta, cl_uint num_devices,
   err = clGetKernelWorkGroupInfo (kernel, device,
                                   CL_KERNEL_COMPILE_WORK_GROUP_SIZE,
                                   sizeof (reqd_wg_size), &reqd_wg_size, NULL);
-  // TODO
   assert (err == CL_SUCCESS);
 
   meta->reqd_wg_size[0] = reqd_wg_size[0];
   meta->reqd_wg_size[1] = reqd_wg_size[1];
   meta->reqd_wg_size[2] = reqd_wg_size[2];
+  return CL_SUCCESS;
+}
+
+#define MAX_TESTED_ARG_SIZE 128
+
+/**
+ * Populate kernel metadata by querying the underlying OpenCL implementation.
+ *
+ * \param meta [out] resulting metadata.
+ * \param num_devices [in] used to allocate data.
+ * \param prog [in] underlying OpenCL program.
+ * \param device [in] specific device to query.
+ * \param kernel [in] specific kernel to query.
+ * \return OpenCL status.
+ */
+static int get_kernel_metadata(pocl_kernel_metadata_t *meta,
+                               cl_uint num_devices, cl_program prog,
+                               cl_device_id device, cl_kernel kernel) {
+  char string_value[POCL_MAX_PATHNAME_LENGTH];
+  int err;
+  size_t size;
+
+  // device-specific
+  assert(meta->data == NULL);
+  meta->data = (void **)calloc(num_devices, sizeof(void *));
+  meta->has_arg_metadata = (-1);
+
+  err = clGetKernelInfo(kernel, CL_KERNEL_FUNCTION_NAME, 0, NULL, &size);
+  assert(err == CL_SUCCESS);
+  assert(size > 0);
+  assert(size < POCL_MAX_PATHNAME_LENGTH);
+
+  err = clGetKernelInfo(kernel, CL_KERNEL_FUNCTION_NAME, size, string_value,
+                        NULL);
+  assert(err == CL_SUCCESS);
+  meta->name = (char *)malloc(size);
+  memcpy(meta->name, string_value, size);
+
+  err = get_kernel_info(meta, device, kernel);
+  assert(err == CL_SUCCESS);
 
   cl_uint num_args;
 
@@ -865,36 +902,36 @@ get_kernel_metadata (pocl_kernel_metadata_t *meta, cl_uint num_devices,
       //      if (err == CL_KERNEL_ARG_INFO_NOT_AVAILABLE)
       //        pi->access_qualifier = CL_KERNEL_ARG_ACCESS_NONE;
       //      else
-      assert (err == CL_SUCCESS);
+      assert(err == CL_SUCCESS);
 
       err = clGetKernelArgInfo (kernel, i, CL_KERNEL_ARG_ADDRESS_QUALIFIER,
                                 sizeof (pi->address_qualifier),
                                 &pi->address_qualifier, NULL);
-      assert (err == CL_SUCCESS);
+      assert(err == CL_SUCCESS);
 
       err = clGetKernelArgInfo (kernel, i, CL_KERNEL_ARG_TYPE_QUALIFIER,
                                 sizeof (pi->type_qualifier),
                                 &pi->type_qualifier, NULL);
-      assert (err == CL_SUCCESS);
+      assert(err == CL_SUCCESS);
 
       err = clGetKernelArgInfo (kernel, i, CL_KERNEL_ARG_TYPE_NAME, 0, NULL,
                                 &size);
-      assert (err == CL_SUCCESS);
-      assert (size < POCL_MAX_PATHNAME_LENGTH);
+      assert(err == CL_SUCCESS);
+      assert(size < POCL_MAX_PATHNAME_LENGTH);
       err = clGetKernelArgInfo (kernel, i, CL_KERNEL_ARG_TYPE_NAME, size,
                                 string_value, NULL);
-      assert (err == CL_SUCCESS);
+      assert(err == CL_SUCCESS);
       pi->type_name = (char *)malloc (size);
       memcpy (pi->type_name, string_value, size);
       // 2 because size includes terminating NULL character
       int is_pointer = (pi->type_name[size - 2] == '*');
 
       err = clGetKernelArgInfo (kernel, i, CL_KERNEL_ARG_NAME, 0, NULL, &size);
-      assert (err == CL_SUCCESS);
-      assert (size < POCL_MAX_PATHNAME_LENGTH);
+      assert(err == CL_SUCCESS);
+      assert(size < POCL_MAX_PATHNAME_LENGTH);
       err = clGetKernelArgInfo (kernel, i, CL_KERNEL_ARG_NAME, size,
                                 string_value, NULL);
-      assert (err == CL_SUCCESS);
+      assert(err == CL_SUCCESS);
       pi->name = (char *)malloc (size + 1);
       memcpy (pi->name, string_value, size);
       pi->name[size] = 0;
@@ -945,7 +982,7 @@ get_kernel_metadata (pocl_kernel_metadata_t *meta, cl_uint num_devices,
                             meta->name, i, pi->name, pi->type_name, is_pointer,
                             pi->type, pi->type_size);
     }
-  return 0;
+    return CL_SUCCESS;
 }
 
 static void
@@ -981,6 +1018,65 @@ set_build_log (cl_device_id proxy_dev, cl_program program,
 
 /******************************************************************************/
 
+/// Get the binary data and size of the underlying program and store them in
+/// the PoCL program.
+
+/// \param program [out] program to store binary data in.
+/// \param device_index [in] index of the device in the program.
+/// \param proxied_program [in] program to quiry for binary data.
+/// \return OpenCL status number.
+static int populate_program_binaries(cl_program program, cl_uint device_index,
+                                     cl_program proxied_program) {
+  cl_int err;
+  size_t binary_size = 0;
+  err = clGetProgramInfo(proxied_program, CL_PROGRAM_BINARY_SIZES,
+                         sizeof(binary_size), &binary_size, NULL);
+  if (err != CL_SUCCESS) {
+    POCL_MSG_ERR("Proxy could not get binary sizes.\n");
+    return CL_OUT_OF_RESOURCES;
+  }
+  assert(binary_size > 0);
+
+  char *binary = (char *)malloc(binary_size);
+  assert(binary);
+  err = clGetProgramInfo(proxied_program, CL_PROGRAM_BINARIES, sizeof(binary),
+                         &binary, NULL);
+  if (err != CL_SUCCESS) {
+    POCL_MSG_ERR("Proxy could not get program binary.\n");
+    return CL_OUT_OF_RESOURCES;
+  }
+  program->binary_sizes[device_index] = (size_t)binary_size;
+  program->binaries[device_index] = (unsigned char *)binary;
+  POCL_MSG_PRINT_PROXY("BINARY SIZE [%u]: %zu \n", device_index,
+                       program->binary_sizes[device_index]);
+  return CL_SUCCESS;
+}
+
+/// Cache the binary of the proxied program.
+
+/// \param program [in] PoCL program containing the proxied binary.
+/// \param device_index [in] index of the binary to be cached.
+/// \return OpenCL status code.
+static int proxy_cache_binary(cl_program program, cl_uint device_index) {
+  cl_int err;
+  char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
+  char temp_path[POCL_MAX_PATHNAME_LENGTH];
+  pocl_cache_create_program_cachedir(program, device_index, NULL, 0,
+                                     program_bc_path);
+
+  if (!pocl_exists(program_bc_path)) {
+    err = pocl_cache_write_generic_objfile(
+        temp_path, (char *)program->binaries[device_index],
+        program->binary_sizes[device_index]);
+    if (err != 0) {
+      POCL_MSG_ERR("Proxy could not write binary back.\n");
+      return CL_OUT_OF_RESOURCES;
+    }
+    pocl_rename(temp_path, program_bc_path);
+  }
+  return CL_SUCCESS;
+}
+
 int
 pocl_proxy_build_source (cl_program program, cl_uint device_i,
                          cl_uint num_input_headers,
@@ -1007,7 +1103,6 @@ pocl_proxy_build_source (cl_program program, cl_uint device_i,
                         options);
 
   assert (program->source);
-  // context, num_sources, sources, source_lens, &err);
   size_t len = strlen (program->source);
   const char *source = program->source;
   prog = clCreateProgramWithSource (context, 1, &source, &len, &err);
@@ -1067,25 +1162,14 @@ pocl_proxy_build_source (cl_program program, cl_uint device_i,
   // some platforms are broken
   if (d->backend->supports_binaries)
     {
-      err = clGetProgramInfo (prog, CL_PROGRAM_BINARY_SIZES,
-                              sizeof (binary_size), &binary_size, NULL);
-      assert (err == CL_SUCCESS);
-      assert (binary_size > 0);
+    err = populate_program_binaries(program, device_i, prog);
+    if (err != CL_SUCCESS)
+      return err;
 
-      char *binary = (char *)malloc (binary_size);
-      assert (binary);
-      err = clGetProgramInfo (prog, CL_PROGRAM_BINARIES, sizeof (binary),
-                              &binary, NULL);
-      assert (err == CL_SUCCESS);
-      program->binary_sizes[device_i] = (size_t)binary_size;
-      program->binaries[device_i] = (unsigned char *)binary;
-      POCL_MSG_PRINT_PROXY ("BINARY SIZE [%u]: %zu \n", device_i,
-                            program->binary_sizes[device_i]);
-
-      // TODO program->binaries, program->binary_sizes set up, but caching on
-      // them is wrong
-      pocl_SHA1_Update (&hash_ctx, (uint8_t *)program->binaries[device_i],
-                        program->binary_sizes[device_i]);
+    // TODO program->binaries, program->binary_sizes set up, but caching on
+    // them is wrong
+    pocl_SHA1_Update(&hash_ctx, (uint8_t *)program->binaries[device_i],
+                     program->binary_sizes[device_i]);
     }
   else
     {
@@ -1118,19 +1202,9 @@ pocl_proxy_build_source (cl_program program, cl_uint device_i,
 
   if (d->backend->supports_binaries)
     {
-      char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
-      char temp_path[POCL_MAX_PATHNAME_LENGTH];
-      pocl_cache_create_program_cachedir (program, device_i, NULL, 0,
-                                          program_bc_path);
-
-      if (!pocl_exists (program_bc_path))
-        {
-          err = pocl_cache_write_generic_objfile (
-              temp_path, (char *)program->binaries[device_i],
-              program->binary_sizes[device_i]);
-          assert (err == 0);
-          pocl_rename (temp_path, program_bc_path);
-        }
+    err = proxy_cache_binary(program, device_i);
+    if (err != CL_SUCCESS)
+      return err;
     }
 
   program->data[device_i] = (void *)prog;
@@ -1141,13 +1215,13 @@ int
 pocl_proxy_build_binary (cl_program program, cl_uint device_i,
                          int link_program, int spir_build)
 {
-  proxy_device_data_t *d
-      = (proxy_device_data_t *)program->devices[device_i]->data;
+  cl_device_id pocl_device = program->devices[device_i];
+  proxy_device_data_t *d = (proxy_device_data_t *)pocl_device->data;
   cl_context context = program->context->proxied_context;
 
-  POCL_RETURN_ERROR_ON ((!d->backend->supports_binaries),
-                        CL_BUILD_PROGRAM_FAILURE,
-                        "This device does not support binaries.\n");
+  POCL_RETURN_ERROR_ON(
+      (!d->backend->supports_binaries && !d->backend->supports_il),
+      CL_BUILD_PROGRAM_FAILURE, "This device does not support binaries.\n");
 
   assert (program->data[device_i] == NULL);
   assert (program->id);
@@ -1163,24 +1237,41 @@ pocl_proxy_build_binary (cl_program program, cl_uint device_i,
   strcat (options, " -cl-kernel-arg-info");
   POCL_MSG_PRINT_PROXY ("BINARY BUILD: options %s \n", options);
 
-  // TODO should binary be already loaded ?
-  assert (program->pocl_binaries[device_i]);
-  char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
-  pocl_cache_program_bc_path (program_bc_path, program, device_i);
-
-  assert (pocl_exists (program_bc_path));
-  assert (program->binaries[device_i]);
-  assert (program->binary_sizes[device_i] > 0);
-  const unsigned char *binary = program->binaries[device_i];
-  size_t size = program->binary_sizes[device_i];
-
   assert (link_program);
-
-  // context, num_devices, devices, sizes, binaries, binary_statuses, &err);
   cl_int status = CL_INVALID_VALUE;
-  size_t temp_size = (size_t)size;
-  prog = clCreateProgramWithBinary (context, 1, &d->device_id, &temp_size,
-                                    &binary, &status, &err);
+
+  if (spir_build) {
+    assert(program->program_il != NULL);
+    assert(program->program_il_size > 0);
+    prog = clCreateProgramWithIL(context, (const void *)program->program_il,
+                                 program->program_il_size, &err);
+
+    // if the first one fails, try the other function
+    if (err != CL_SUCCESS) {
+      clCreateProgramWithILKHR_fn create_program_func =
+          reinterpret_cast<clCreateProgramWithILKHR_fn>(
+              clGetExtensionFunctionAddressForPlatform(
+                  d->platform_id, "clCreateProgramWithILKHR"));
+      if (create_program_func == nullptr) {
+        POCL_MSG_ERR("Proxy could not find clCreateProgramWithILKHR function "
+                     "pointer.\n");
+        return CL_OUT_OF_RESOURCES;
+      }
+
+      program = create_program_func(context, (const void *)program->program_il,
+                                    program->program_il_size, &err);
+    }
+
+  } else {
+    assert(program->binaries[device_i]);
+    assert(program->binary_sizes[device_i] > 0);
+    const unsigned char *binary = program->binaries[device_i];
+    size_t size = program->binary_sizes[device_i];
+    size_t temp_size = (size_t)size;
+    prog = clCreateProgramWithBinary(context, 1, &d->device_id, &temp_size,
+                                     &binary, &status, &err);
+  }
+
   if (err)
     return err;
 
@@ -1189,7 +1280,42 @@ pocl_proxy_build_binary (cl_program program, cl_uint device_i,
   if (err)
     return err;
 
-  POCL_MSG_PRINT_PROXY ("Num kernels: %zu\n", program->num_kernels);
+  // cache and store built program binary.
+  if (spir_build) {
+    SHA1_CTX hash_ctx;
+    pocl_SHA1_Init(&hash_ctx);
+
+    err = populate_program_binaries(program, device_i, prog);
+    if (err != CL_SUCCESS)
+      return err;
+
+    // TODO program->binaries, program->binary_sizes set up, but caching on
+    // them is wrong
+    pocl_SHA1_Update(&hash_ctx, (uint8_t *)program->binaries[device_i],
+                     program->binary_sizes[device_i]);
+    assert(program->build_hash[device_i][2] == 0);
+
+    char *dev_hash = pocl_device->ops->build_hash(pocl_device);
+    pocl_SHA1_Update(&hash_ctx, (const uint8_t *)dev_hash, strlen(dev_hash));
+    free(dev_hash);
+
+    uint8_t digest[SHA1_DIGEST_SIZE];
+    pocl_SHA1_Final(&hash_ctx, digest);
+
+    unsigned char *hashstr = program->build_hash[device_i];
+    size_t i;
+    for (i = 0; i < SHA1_DIGEST_SIZE; i++) {
+      *hashstr++ = (digest[i] & 0x0F) + 65;
+      *hashstr++ = ((digest[i] & 0xF0) >> 4) + 65;
+    }
+    *hashstr = 0;
+
+    program->build_hash[device_i][2] = '/';
+
+    err = proxy_cache_binary(program, device_i);
+    if (err != CL_SUCCESS)
+      return err;
+  }
 
   program->data[device_i] = (void *)prog;
   return CL_SUCCESS;
@@ -1276,55 +1402,119 @@ pocl_proxy_setup_metadata (cl_device_id device, cl_program program,
   proxy_device_data_t *d = (proxy_device_data_t *)device->data;
   cl_program proxy_prog = (cl_program)program->data[program_device_i];
 
-  if (d->backend->provides_metadata)
-    {
-      assert (program->kernel_meta == NULL);
-      POCL_MSG_PRINT_PROXY ("Setting up Kernel metadata\n");
-
-      int err = clCreateKernelsInProgram (proxy_prog, 0, NULL, &num_kernels);
-      if (err)
-        {
-          POCL_MSG_ERR ("proxy metadata setup error 1: %i", err);
-          return err;
-        }
-
-      if (num_kernels > 0)
-        {
-          pocl_kernel_metadata_t *p = (pocl_kernel_metadata_t *)calloc (
-              num_kernels, sizeof (pocl_kernel_metadata_t));
-          cl_kernel *kernels
-              = (cl_kernel *)alloca (num_kernels * sizeof (cl_kernel));
-          assert (p);
-          err = clCreateKernelsInProgram (proxy_prog, num_kernels, kernels,
-                                          NULL);
-          if (err)
-            {
-              POCL_MSG_ERR ("proxy metadata setup error 2: %i", err);
-              return err;
-            }
-          cl_uint i;
-          for (i = 0; i < num_kernels; ++i)
-            {
-              get_kernel_metadata (p + i, program->num_devices, proxy_prog,
-                                   d->device_id, kernels[i]);
-              err = clReleaseKernel (kernels[i]);
-              assert (err == CL_SUCCESS);
-            }
-
-          program->kernel_meta = p;
-        }
-      else
-        {
-          POCL_MSG_WARN ("Program has zero kernels.\n");
-          program->kernel_meta = NULL;
-        }
-
-      program->num_kernels = num_kernels;
-      POCL_MSG_PRINT_PROXY ("Num kernels: %zu\n", program->num_kernels);
-      return 1;
-    }
-  else
+  if (!d->backend->provides_metadata || !d->backend->supports_il)
     return 0;
+
+  assert(program->kernel_meta == NULL);
+  POCL_MSG_PRINT_PROXY("Setting up Kernel metadata\n");
+
+  int err = clCreateKernelsInProgram(proxy_prog, 0, NULL, &num_kernels);
+  if (err) {
+    POCL_MSG_ERR("proxy metadata setup error 1: %i", err);
+    return 0;
+  }
+
+  program->num_kernels = num_kernels;
+  if (num_kernels < 1) {
+    POCL_MSG_WARN("Program has zero kernels.\n");
+    program->kernel_meta = NULL;
+    return 0;
+  }
+
+  pocl_kernel_metadata_t *p = (pocl_kernel_metadata_t *)calloc(
+      num_kernels, sizeof(pocl_kernel_metadata_t));
+  cl_kernel *kernels = (cl_kernel *)alloca(num_kernels * sizeof(cl_kernel));
+  assert(p);
+  err = clCreateKernelsInProgram(proxy_prog, num_kernels, kernels, NULL);
+  if (err) {
+    POCL_MSG_ERR("proxy metadata setup error 2: %i", err);
+    return 0;
+  }
+
+  if (d->backend->supports_il && program->program_il_size > 0) {
+
+    SPIRVParser::OpenCLFunctionInfoMap infoMap;
+    bool parseRet = SPIRVParser::parseSPIRV((const int32_t *)program->program_il,
+                               program->program_il_size / 4, infoMap);
+
+    if (!parseRet) {
+      POCL_MSG_WARN("Proxy could not parse SPIR-V metadata.\n");
+      return 0;
+    }
+    assert(infoMap.size() == num_kernels);
+
+    char string_value[POCL_MAX_PATHNAME_LENGTH];
+    int index = 0;
+    for (auto &argInfo : infoMap) {
+      mapToPoCLMetadata(argInfo, program->num_devices, &p[index]);
+
+      err = get_kernel_info(&p[index], d->device_id, kernels[index]);
+      if (err != CL_SUCCESS) {
+        POCL_MSG_WARN("Proxy could not get kernel info of SPIR-V kernel.\n");
+        return 0;
+      }
+
+      // these checks are there to make sure that the results match
+
+      err = clGetKernelInfo(kernels[index], CL_KERNEL_FUNCTION_NAME,
+                            POCL_MAX_PATHNAME_LENGTH, string_value, NULL);
+      assert(strcmp(p[index].name, string_value) == 0);
+
+      cl_uint prox_num_args;
+      err = clGetKernelInfo(kernels[index], CL_KERNEL_NUM_ARGS,
+                            sizeof(prox_num_args), &prox_num_args, NULL);
+      assert(err == CL_SUCCESS);
+      assert(p[index].num_args == prox_num_args);
+
+      err = clReleaseKernel(kernels[index]);
+      assert(err == CL_SUCCESS);
+      index++;
+    }
+
+  } else {
+    for (cl_uint i = 0; i < num_kernels; ++i) {
+      err = get_kernel_metadata(p + i, program->num_devices, proxy_prog,
+                                d->device_id, kernels[i]);
+      if (err != CL_SUCCESS) {
+        POCL_MSG_WARN("Failed to kernel metadata for index %d.\n", i);
+        return 0;
+      }
+
+      err = clReleaseKernel(kernels[i]);
+      assert(err == CL_SUCCESS);
+    }
+  }
+
+  program->kernel_meta = p;
+
+  POCL_MSG_PRINT_PROXY("Num kernels: %zu\n", program->num_kernels);
+  return 1;
+}
+
+int pocl_proxy_supports_binary(cl_device_id device, size_t length,
+                               const char *binary) {
+  // Check that the proxy device supports SPIR-V, see link for more details
+  // on the SPIR-V extension:
+  // https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/cl_khr_il_program.html
+  cl_int err;
+  proxy_device_data_t *d = (proxy_device_data_t *)device->data;
+  size_t extension_length = 0;
+  err = clGetDeviceInfo(d->device_id, CL_DEVICE_EXTENSIONS, 0, NULL,
+                        &extension_length);
+  if (err != CL_SUCCESS) {
+    return 0;
+  }
+  char *extensions = (char *)malloc(extension_length);
+  err = clGetDeviceInfo(d->device_id, CL_DEVICE_EXTENSIONS, extension_length,
+                        extensions, NULL);
+  int extension_support = 1;
+  if (err != CL_SUCCESS || strstr(extensions, "cl_khr_il_program") == NULL)
+    extension_support = 0;
+
+  free(extensions);
+
+  return extension_support &&
+         pocl_bitcode_is_spirv_execmodel_kernel(binary, length);
 }
 
 int
@@ -1371,6 +1561,10 @@ pocl_proxy_init_queue (cl_device_id device, cl_command_queue queue)
 {
   assert (queue->data == NULL);
 
+  unsigned context_device_i = 0;
+  int err = CL_SUCCESS;
+  cl_command_queue cq = NULL;
+
   proxy_device_data_t *d = (proxy_device_data_t *)device->data;
   cl_context proxy_context = queue->context->proxied_context;
 
@@ -1380,10 +1574,8 @@ pocl_proxy_init_queue (cl_device_id device, cl_command_queue queue)
     goto ERROR;
   queue->data = qd;
 
-  int err = CL_SUCCESS;
-  cl_command_queue cq
-      = clCreateCommandQueue (proxy_context, d->device_id,
-                              (queue->properties & (~CL_QUEUE_HIDDEN)), &err);
+  cq = clCreateCommandQueue(proxy_context, d->device_id,
+                            (queue->properties & (~CL_QUEUE_HIDDEN)), &err);
   if (err != CL_SUCCESS)
     {
       goto ERROR;
@@ -1396,7 +1588,6 @@ pocl_proxy_init_queue (cl_device_id device, cl_command_queue queue)
 
   qd->proxied_id = cq;
   qd->queue = queue;
-  unsigned context_device_i = 0;
   for (context_device_i = 0; context_device_i < queue->context->num_devices;
        ++context_device_i)
     {
@@ -1500,8 +1691,8 @@ pocl_proxy_submit (_cl_command_node *node, cl_command_queue cq)
   cl_event e = node->sync.event.event;
   assert (e->data == NULL);
 
-  pocl_proxy_event_data_t *e_d = NULL;
-  e_d = calloc (1, sizeof (pocl_proxy_event_data_t));
+  pocl_proxy_event_data_t *e_d =
+      (pocl_proxy_event_data_t *)calloc(1, sizeof(pocl_proxy_event_data_t));
   assert (e_d);
 
   POCL_INIT_COND (e_d->event_cond);
@@ -2200,6 +2391,7 @@ proxy_exec_command (_cl_command_node *node, cl_device_id dev,
   const char *cstr = NULL;
   cl_command_queue cq_id = qd->proxied_id;
   unsigned context_device_i = qd->context_device_i;
+  cl_mem m = NULL;
 
   pocl_update_event_running (event);
 
@@ -2207,7 +2399,7 @@ proxy_exec_command (_cl_command_node *node, cl_device_id dev,
     {
     case CL_COMMAND_MIGRATE_MEM_OBJECTS:
       assert (cmd->migrate.num_buffers > 0);
-      cl_mem m = node->migr_infos->buffer;
+      m = node->migr_infos->buffer;
 
       switch (cmd->migrate.type)
         {

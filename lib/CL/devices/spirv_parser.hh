@@ -26,6 +26,7 @@
 #ifndef HIP_COMMON_HH
 #define HIP_COMMON_HH
 
+#include "pocl_cl.h"
 #include "pocl_export.h"
 
 #include <map>

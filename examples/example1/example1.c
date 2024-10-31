@@ -72,8 +72,8 @@ main (int argc, char **argv)
   const char *explicit_binary_path = (argc > 2) ? argv[2] : NULL;
 
   const char *basename = "example1";
-  err = poclu_load_program_multidev (context, devices, num_devices, basename,
-                                     spirv, poclbin,
+  err = poclu_load_program_multidev (platform, context, devices, num_devices,
+                                     basename, spirv, poclbin,
                                      explicit_binary_path, NULL, &program);
 
   if (err != CL_SUCCESS)

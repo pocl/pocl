@@ -29,6 +29,7 @@
 #include "poclu.h"
 
 #define N 128
+#define INFO_BUF_SIZE 1024
 
 #ifdef __cplusplus
 #define CALLAPI "C"
@@ -43,9 +44,27 @@ extern CALLAPI int exec_integer_mad_kernel (cl_context context,
                                             cl_uint *srcA, cl_uint *srcB,
                                             cl_uint *dst);
 
+/**
+ * Simple multiply and add (MAD) program with different run options.
+ *
+ * Passing nothing runs the program normally. Passing 'v' (for SPIR-V) or 'b'
+ * (for pocl binaries) runs the program with those options. In those cases, it
+ * is also possible to pass the binary path as the second argument.
+ *
+ * \return OpenCL status number
+ */
 int
 main (int argc, char **argv)
 {
+
+  if (argc > 1 && !(argv[1][0] == 'v' || argv[1][0] == 'b'))
+    {
+      printf ("unknown argument '%c', options are 'v' for spir-v or 'b' for "
+              "pocl binaries.\n",
+              argv[1][0]);
+      return -1;
+    }
+
   cl_uint *srcA = NULL, *srcB = NULL;
   cl_uint *dst = NULL;
   int i, err, spirv, poclbin;
@@ -61,13 +80,23 @@ main (int argc, char **argv)
   err = poclu_get_any_device2 (&context, &device, &queue, &platform);
   CHECK_OPENCL_ERROR_IN ("clCreateContext");
 
+  char *info_buf = malloc (INFO_BUF_SIZE);
+  err = clGetPlatformInfo (platform, CL_PLATFORM_NAME, INFO_BUF_SIZE, info_buf,
+                           NULL);
+  CHECK_OPENCL_ERROR_IN ("clGetPlatformInfo");
+  printf ("Platform name: %s\n", info_buf);
+  err = clGetPlatformInfo (platform, CL_PLATFORM_VERSION, INFO_BUF_SIZE,
+                           info_buf, NULL);
+  CHECK_OPENCL_ERROR_IN ("clGetPlatformInfo");
+  printf ("Platform version: %s\n", info_buf);
+
   spirv = (argc > 1 && argv[1][0] == 'v');
   poclbin = (argc > 1 && argv[1][0] == 'b');
   const char *explicit_binary_path = (argc > 2) ? argv[2] : NULL;
 
   const char *basename = "example0";
-  err = poclu_load_program (context, device, basename, spirv, poclbin,
-                            explicit_binary_path, NULL, &program);
+  err = poclu_load_program (platform, context, device, basename, spirv,
+                            poclbin, explicit_binary_path, NULL, &program);
   if (err != CL_SUCCESS)
     goto FINISH;
 

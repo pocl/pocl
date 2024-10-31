@@ -38,8 +38,8 @@ int call_test(const char *name)
   CHECK_OPENCL_ERROR_IN ("poclu_get_any_device");
 
   /* read source code */
-  err = poclu_load_program (context, device, filename, 0, 0, NULL, Options,
-                            &program);
+  err = poclu_load_program (pid, context, device, filename, 0, 0, NULL,
+                            Options, &program);
   CHECK_OPENCL_ERROR_IN ("clCreateProgram call failed\n");
 
   /* execute the kernel with give name */

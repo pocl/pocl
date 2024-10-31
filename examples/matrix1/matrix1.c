@@ -399,8 +399,9 @@ main (int argc, char **argv)
 
   /*****************************************************************************/
 
-  err = poclu_load_program (context, device, "matrix1", spirv, poclbin,
-                            explicit_binary_path, extra_opts, &program);
+  err
+    = poclu_load_program (platform, context, device, "matrix1", spirv, poclbin,
+                          explicit_binary_path, extra_opts, &program);
   if (err != CL_SUCCESS)
     goto FINISH;
 
