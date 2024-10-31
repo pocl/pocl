@@ -100,7 +100,7 @@
 #endif
 
 #ifdef __linux__
-#define ALIGN_CACHE(x) x __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)))
+#define ALIGN_CACHE(x) POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) x
 #else
 #define ALIGN_CACHE(x) x
 #endif

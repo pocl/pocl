@@ -347,6 +347,7 @@ public:
     out << "#include <pocl_device.h>" << std::endl << std::endl;
 
     out << "#undef ALIGN4" << std::endl;
+    // The __attribute__s are fine here as the code is passed to clang.
     out << "#define ALIGN4 __attribute__ ((aligned (4)))" << std::endl;
     out << "#define __local__ __attribute__((address_space(" <<  TTA_ASID_LOCAL<< ")))" << std::endl;
     out << "#define __global__ __attribute__((address_space(" << TTA_ASID_GLOBAL << ")))" << std::endl;

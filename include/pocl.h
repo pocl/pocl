@@ -67,6 +67,19 @@ typedef uint64_t pocl_obj_id_t;
 #define CL_KHRONOS_VENDOR_ID_POCL 0x10006
 #endif
 
+#if __cplusplus >= 201103L
+#  define POCL_ALIGNAS(x) alignas(x)
+#elif __STDC_VERSION__ >= 201112L /* C11 */
+#  define POCL_ALIGNAS(x) _Alignas(x)
+#elif defined(_MSC_VER)
+#  define POCL_ALIGNAS(x) __declspec(align(x))
+#elif defined(__clang__) || defined(__GNUC__)
+#  define POCL_ALIGNAS(x) __attribute__ ((aligned (x)))
+#else
+/* Emit an error for potential correctness issues if alignas() is ignored. */
+#  error "Don't know alignas() counterpart for this compiler!"
+#endif
+
 /* represents a single buffer to host memory mapping */
 typedef struct mem_mapping
 {

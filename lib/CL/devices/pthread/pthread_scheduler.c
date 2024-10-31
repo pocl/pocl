@@ -50,7 +50,7 @@ static void* pocl_pthread_driver_thread (void *p);
 
 struct pool_thread_data
 {
-  pocl_thread_t thread __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) pocl_thread_t thread;
 
   unsigned long executed_commands;
   /* per-CU (= per-thread) local memory */
@@ -64,14 +64,13 @@ struct pool_thread_data
   unsigned index;
   /* printf buffer*/
   void *printf_buffer;
-} __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+};
 
 typedef struct scheduler_data_
 {
-  pocl_cond_t wake_pool __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  pocl_lock_t wq_lock_fast __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  _cl_command_node *work_queue
-      __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) pocl_cond_t wake_pool;
+  POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) pocl_lock_t wq_lock_fast;
+  POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) _cl_command_node *work_queue;
 
   unsigned num_threads;
   unsigned printf_buf_size;
@@ -85,9 +84,8 @@ typedef struct scheduler_data_
   kernel_run_command *kernel_queue;
 #endif
 
-  pocl_barrier_t init_barrier
-    __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-} scheduler_data __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) pocl_barrier_t init_barrier;
+} scheduler_data;
 
 static scheduler_data scheduler;
 

@@ -522,6 +522,7 @@ void pocl_almaif_openasip_produce_standalone_program(AlmaifData *D,
   out << "#include \"almaif-tce-device-defs.h\"" << std::endl << std::endl;
 
   out << "#undef ALIGN4" << std::endl;
+  // Using __attribute__ is fine here as the code is passed to clang.
   out << "#define ALIGN4 __attribute__ ((aligned (4)))" << std::endl;
 
   /* The standalone binary shall have the same input data as in the original

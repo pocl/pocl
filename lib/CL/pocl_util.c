@@ -2679,10 +2679,8 @@ struct _pocl_async_callback_item
 };
 
 static pocl_async_callback_item *async_callback_list = NULL;
-static pocl_cond_t async_cb_wake_cond
-  __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-static pocl_lock_t async_cb_lock
-  __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) static pocl_cond_t async_cb_wake_cond;
+POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) static pocl_lock_t async_cb_lock;
 static int exit_pocl_async_callback_thread = CL_FALSE;
 static pocl_thread_t async_callback_thread_id = 0;
 

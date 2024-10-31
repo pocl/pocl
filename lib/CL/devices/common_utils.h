@@ -40,11 +40,11 @@
 typedef struct kernel_run_command kernel_run_command;
 struct kernel_run_command
 {
-  pocl_lock_t lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) pocl_lock_t lock;
   void *data;
   cl_kernel kernel;
   cl_device_id device;
-  struct pocl_context pc __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) struct pocl_context pc;
   _cl_command_node *cmd;
   pocl_workgroup_func workgroup;
   struct pocl_argument *kernel_args;
@@ -60,7 +60,7 @@ struct kernel_run_command
 
   size_t remaining_wgs;
   size_t wgs_dealt;
-} __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+};
 
 #ifdef __cplusplus
 extern "C"
