@@ -313,12 +313,10 @@ typedef struct pocl_vulkan_device_data_s
   _cl_command_node *work_queue;
 
   /* driver wake + lock */
-  pthread_cond_t wakeup_cond
-      __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  pocl_lock_t wq_lock_fast __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) pthread_cond_t wakeup_cond;
+  POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) pocl_lock_t wq_lock_fast;
 
-  size_t driver_thread_exit_requested
-      __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) size_t driver_thread_exit_requested;
   /* device pthread */
   pthread_t driver_pthread_id;
 

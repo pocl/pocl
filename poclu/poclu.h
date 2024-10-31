@@ -41,6 +41,18 @@
 extern "C" {
 #endif
 
+#if __cplusplus >= 201103L
+#  define POCLU_ALIGNAS(x) alignas(x)
+#elif __STDC_VERSION__ >= 201112L /* C11 */
+#  define POCLU_ALIGNAS(x) _Alignas(x)
+#elif defined(_MSC_VER)
+#  define POCLU_ALIGNAS(x) __declspec(align(x))
+#elif defined(__clang__) || defined(__GNUC__)
+#  define POCLU_ALIGNAS(x) __attribute__ ((aligned (x)))
+#else
+#  error "Don't know alignas/aligned/align counterpart for this compiler!"
+#endif
+
 /**
 * \brief Byte swap functions for endianness swapping between the host
 * (current CPU) and a target device.

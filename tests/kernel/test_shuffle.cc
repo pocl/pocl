@@ -44,11 +44,11 @@ class TestShuffle {
 
   cl_program prog;
 
-  D in1 [16] __attribute__ ((aligned (128)));
-  D in2 [16] __attribute__ ((aligned (128)));
-  D out [16] __attribute__ ((aligned (128)));
-  M mask1 [16] __attribute__ ((aligned (128)));
-  M mask2 [16] __attribute__ ((aligned (128)));
+  POCLU_ALIGNAS(128) D in1 [16];
+  POCLU_ALIGNAS(128) D in2 [16];
+  POCLU_ALIGNAS(128) D out [16];
+  POCLU_ALIGNAS(128) M mask1 [16];
+  POCLU_ALIGNAS(128) M mask2 [16];
   const char* ocl_type;
   unsigned size;
   cl_int errcode;

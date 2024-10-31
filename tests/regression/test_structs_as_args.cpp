@@ -22,6 +22,7 @@
 */
 
 #include "pocl_opencl.h"
+#include "poclu.h"
 
 // Enable OpenCL C++ exceptions
 #define CL_HPP_ENABLE_EXCEPTIONS
@@ -55,7 +56,7 @@ struct int_pair {
 
 // i386 has a default alignment of 4 even for 64-bit types
 #ifdef __i386__
-#define CL_LONG_ALIGNMENT __attribute__((aligned(8)))
+#define CL_LONG_ALIGNMENT POCLU_ALIGNAS(8)
 #else
 #define CL_LONG_ALIGNMENT
 #endif

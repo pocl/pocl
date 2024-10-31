@@ -42,8 +42,7 @@ void pocl_almaif_openasip_produce_standalone_program(AlmaifData *D,
 char *pocl_almaif_openasip_init_build(void *data);
 
 typedef struct openasip_backend_data_s {
-  pocl_lock_t openasip_compile_lock
-      __attribute__((aligned(HOST_CPU_CACHELINE_SIZE)));
+  POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) pocl_lock_t openasip_compile_lock;
   std::string machine_file;
   int core_count;
 } openasip_backend_data_t;

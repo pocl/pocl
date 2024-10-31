@@ -51,13 +51,11 @@ extern "C"
 
   typedef struct
   {
-    pocl_cond_t wake_meta_thread
-      __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-    pocl_lock_t wq_lock_fast
-      __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+    POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) pocl_cond_t wake_meta_thread;
+    POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) pocl_lock_t wq_lock_fast;
     _cl_command_node *work_queue;
 
-    size_t local_mem_size __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+    POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) size_t local_mem_size;
     char *local_mem_global_ptr;
 
     uchar *printf_buf_global_ptr;
@@ -71,8 +69,7 @@ extern "C"
 
     pocl_thread_t meta_thread;
     int meta_thread_shutdown_requested;
-  } pocl_tbb_scheduler_data
-      __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  } pocl_tbb_scheduler_data;
 
   size_t tbb_get_numa_nodes ();
 
