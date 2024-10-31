@@ -163,6 +163,9 @@ pocl_cpu_init_common (cl_device_id device)
                   "exp_jpeg_encode;"
                   "exp_jpeg_decode;"
 #endif
+#ifdef HAVE_ONNXRT
+                  "exp_onnx_inference;"
+#endif
         );
       device->num_builtin_kernels = 4
 #ifdef HAVE_LIBXSMM
@@ -171,7 +174,10 @@ pocl_cpu_init_common (cl_device_id device)
 #ifdef HAVE_LIBJPEG_TURBO
                                     + 2
 #endif
-        ;
+#ifdef HAVE_ONNXRT
+                                    + 1
+#endif
+          ;
     }
 
   /* 0 is the host memory shared with all drivers that use it */
@@ -659,6 +665,10 @@ pocl_cpu_supports_dbk (cl_device_id device,
     case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
       return pocl_validate_dbk_attributes (kernel_id, kernel_attributes, NULL);
 #endif
+#ifdef HAVE_ONNXRT
+    case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
+      return pocl_validate_dbk_attributes (kernel_id, kernel_attributes, NULL);
+#endif
     default:
       POCL_RETURN_ERROR_ON (
         1, CL_UNSUPPORTED_DBK,
@@ -683,6 +693,9 @@ pocl_cpu_build_defined_builtin (cl_program program, cl_uint device_i)
   return CL_SUCCESS;
 #endif
 #ifdef HAVE_LIBJPEG_TURBO
+  return CL_SUCCESS;
+#endif
+#ifdef HAVE_ONNXRT
   return CL_SUCCESS;
 #endif
   /* TODO: is it necessary to return an error here or can it be caught earlier
@@ -711,6 +724,24 @@ pocl_cpu_get_ptr (struct pocl_argument *arg, unsigned global_mem_id)
   char *ptr = (char *)(mem->device_ptrs[global_mem_id].mem_ptr);
   ptr += arg->offset;
   return (void *)ptr;
+}
+
+/**
+ * Get the size of the arg mem_obj that belongs to the global_mem_id.
+ *
+ * \return 0 if arg->value is NULL or is_raw_ptr, otherwise the size of the mem_obj.
+ */
+static size_t
+pocl_cpu_get_memsize (struct pocl_argument *arg, unsigned global_mem_id)
+{
+  if (arg->value == NULL)
+    return 0;
+
+  if (arg->is_raw_ptr)
+    return 0;
+
+  cl_mem mem = *(cl_mem *)(arg->value);
+  return mem->size;
 }
 
 #ifdef HAVE_LIBXSMM
@@ -890,7 +921,7 @@ pocl_cpu_execute_gemm_anytype (char *Aptr,
   return CL_SUCCESS;
 }
 
-int
+static int
 pocl_xsmm_execute_dbk (cl_program program,
                        cl_kernel kernel,
                        pocl_kernel_metadata_t *meta,
@@ -984,7 +1015,19 @@ pocl_cpu_execute_dbk (cl_program program,
       return pocl_cpu_execute_dbk_khr_jpeg_decode (program, kernel, meta,
                                                    dev_i, arguments);
 #endif
-    default:
+#ifdef HAVE_ONNXRT
+    case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
+      {
+        cl_device_id dev = program->devices[dev_i];
+        unsigned mem_id = dev->global_mem_id;
+        return pocl_perform_ort_inference (
+            kernel->data[dev_i], pocl_cpu_get_ptr (&arguments[0], mem_id),
+            pocl_cpu_get_ptr (&arguments[1], mem_id),
+            pocl_cpu_get_ptr (&arguments[2], mem_id),
+            pocl_cpu_get_ptr (&arguments[3], mem_id));
+      }
+#endif
+  default:
       {
         POCL_MSG_ERR ("Unhandled DBK id %d.\n", meta->builtin_kernel_id);
         POCL_ABORT_UNIMPLEMENTED (

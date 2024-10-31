@@ -86,6 +86,8 @@ const char *request_to_str(RequestMessageType type) {
     return "LinkProgram";
   case MessageType_BuildProgramWithBuiltins:
     return "BuildProgramWithBuiltins";
+  case MessageType_BuildProgramWithDefinedBuiltins:
+      return "BuildProgramWithDefinedBuiltins";
   case MessageType_FreeProgram:
     return "FreeProgram";
 
@@ -135,10 +137,8 @@ const char *request_to_str(RequestMessageType type) {
 
   case MessageType_Shutdown:
     return "Shutdown";
-
-  default:
-    return "UNKNOWN";
   }
+    return "UNKNOWN";
 }
 
 #define RETURN_UNLESS_DONE(call)                                               \
@@ -224,6 +224,7 @@ bool Request::read(Connection *Conn) {
     this->ExtraData2Size = Body->m.build_program.options_len;
     /* intentional fall through to setting payload (i.e. binary) size */
   case MessageType_BuildProgramWithBuiltins:
+  case MessageType_BuildProgramWithDefinedBuiltins:
     this->ExtraDataSize = Body->m.build_program.payload_size;
     break;
   /*****************************/

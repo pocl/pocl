@@ -43,6 +43,7 @@
 #define clReleaseCommandQueue POclReleaseCommandQueue
 #define clGetCommandQueueInfo POclGetCommandQueueInfo
 #define clCreateBuffer POclCreateBuffer
+#define clCreateBufferWithProperties POclCreateBufferWithProperties
 #define clCreateSubBuffer POclCreateSubBuffer
 #define clCreateImage POclCreateImage
 #define clCreatePipe POclCreatePipe

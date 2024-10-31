@@ -23,9 +23,11 @@
    IN THE SOFTWARE.
 */
 
+#include "CL/cl.h"
 #include "config.h"
 #include "pocl_cl.h"
 #include "pocl_debug.h"
+#include "pocl_tensor_util.h"
 #include "pocl_util.h"
 #include <assert.h>
 #include <stdbool.h>
@@ -155,7 +157,63 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
     case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
     case POCL_CDBI_DBK_EXP_JPEG_DECODE:
       return CL_SUCCESS;
-    default:
+    case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
+      {
+        const cl_dbk_attributes_exp_onnx_inference *attrs
+          = (const cl_dbk_attributes_exp_onnx_inference *)
+              meta->builtin_kernel_attrs;
+
+        /* Input offsets */
+        if (arg_index == 0
+            && buf->size < attrs->num_inputs * sizeof (uint64_t))
+          return CL_OUT_OF_RESOURCES;
+
+        /* Input tensor data */
+        if (arg_index == 1)
+          {
+            size_t total_input_size = 0;
+            for (size_t i = 0; i < attrs->num_inputs; ++i)
+              {
+                size_t data_len
+                  = pocl_tensor_type_size (attrs->input_tensor_descs[i].dtype);
+                for (size_t dim = 0; dim < attrs->input_tensor_descs[i].rank;
+                     ++dim)
+                  {
+                    data_len *= attrs->input_tensor_descs[i].shape[dim];
+                  }
+                total_input_size += data_len;
+              }
+            if (buf->size < total_input_size)
+              return CL_OUT_OF_RESOURCES;
+          }
+
+        /* Output offsets */
+        if (arg_index == 2
+            && buf->size < attrs->num_outputs * sizeof (uint64_t))
+          return CL_OUT_OF_RESOURCES;
+
+        /* Output tensor data */
+        if (arg_index == 3)
+          {
+            size_t total_output_size = 0;
+            for (size_t i = 0; i < attrs->num_outputs; ++i)
+              {
+                size_t data_len = pocl_tensor_type_size (
+                  attrs->output_tensor_descs[i].dtype);
+                for (size_t dim = 0; dim < attrs->output_tensor_descs[i].rank;
+                     ++dim)
+                  {
+                    data_len *= attrs->output_tensor_descs[i].shape[dim];
+                  }
+                total_output_size += data_len;
+              }
+
+            if (buf->size < total_output_size)
+              return CL_OUT_OF_RESOURCES;
+          }
+        return CL_SUCCESS;
+      }
+  default:
       {
         POCL_MSG_ERR ("pocl_verify_dbk_kernel_args called on "
                       "unknown/unsupported DBK type %d.\n",

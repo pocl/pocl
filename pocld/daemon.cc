@@ -21,6 +21,7 @@
    IN THE SOFTWARE.
 */
 
+#include <algorithm>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 #include <memory>
@@ -33,6 +34,7 @@
 #include <sys/poll.h>
 #include <unistd.h>
 
+#include "common_cl.hh"
 #include "connection.hh"
 #include "pocl_debug.h"
 #include "pocl_networking.h"
@@ -720,6 +722,7 @@ void PoclDaemon::readAllClientSocketsThread() {
                   case MessageType_CompileProgramFromSource:
                   case MessageType_CompileProgramFromSPIRV:
                   case MessageType_BuildProgramWithBuiltins:
+                  case MessageType_BuildProgramWithDefinedBuiltins:
                   case MessageType_LinkProgram:
                   case MessageType_FreeProgram:
                   case MessageType_MigrateD2D:

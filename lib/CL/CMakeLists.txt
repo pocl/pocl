@@ -139,7 +139,6 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clSetProgramSpecializationConstant.c"
                    "clCloneKernel.c"
                    "clEnqueueSVMMigrateMem.c"
-
                    "clSVMAlloc.c" "clSVMFree.c" "clEnqueueSVMFree.c"
                    "clEnqueueSVMMap.c" "clEnqueueSVMUnmap.c"
                    "clEnqueueSVMMemcpy.c" "clEnqueueSVMMemFill.c"
@@ -204,6 +203,7 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "pocl_timing.h" "pocl_threads.h" "pocl_file_util.h"
                    # dbks
                    "dbk/pocl_dbk_khr_jpeg_shared.c" "dbk/pocl_dbk_khr_jpeg_shared.h"
+                   "dbk/pocl_dbk_khr_onnxrt_shared.c" "dbk/pocl_dbk_khr_onnxrt_shared.h"
 )
 
 unset(EXTRA_LLVM_SOURCES)

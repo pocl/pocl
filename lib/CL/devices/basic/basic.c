@@ -1010,6 +1010,15 @@ pocl_basic_create_kernel (cl_device_id device,
         return status;
       }
 #endif
+#ifdef HAVE_ONNXRT
+    case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
+      {
+        status = pocl_create_ort_instance (
+            p->builtin_kernel_attributes[dbk_index],
+            (onnxrt_instance_t **)&k->data[device_i]);
+        return status;
+      }
+#endif
     default:
       POCL_ABORT ("pocl_basic_create_kernel called with unknown/unimplemented "
                   "DBK kernel.\n");
@@ -1049,6 +1058,14 @@ pocl_basic_free_kernel (cl_device_id device,
     case POCL_CDBI_DBK_EXP_JPEG_DECODE:
       {
         status = pocl_cpu_destroy_dbk_khr_jpeg_decode (&(k->data[device_i]));
+        return status;
+      }
+#endif
+#ifdef HAVE_ONNXRT
+    case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
+      {
+        status = pocl_destroy_ort_instance (
+            (onnxrt_instance_t **)&(k->data[device_i]));
         return status;
       }
 #endif

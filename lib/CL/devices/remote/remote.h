@@ -26,7 +26,6 @@
 #define POCL_REMOTE_H
 
 #include "bufalloc.h"
-#include "config.h"
 #include "pocl_cl.h"
 #include "pocl_icd.h"
 

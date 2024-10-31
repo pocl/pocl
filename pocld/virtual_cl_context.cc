@@ -211,7 +211,7 @@ private:
   void FreeBuffer(Request *req, Reply *rep);
 
   void BuildOrLinkProgram(Request *req, Reply *rep, bool is_binary,
-                          bool is_builtin, bool is_spirv,
+                          bool is_builtin, bool is_dbk, bool is_spirv,
                           bool CompileOnly = false, bool LinkOnly = false);
 
   void FreeProgram(Request *req, Reply *rep);
@@ -464,27 +464,31 @@ int VirtualCLContext::run() {
         break;
 
       case MessageType_BuildProgramFromBinary:
-        BuildOrLinkProgram(request, reply, true, false, false);
+        BuildOrLinkProgram(request, reply, true, false, false, false);
         break;
 
       case MessageType_BuildProgramFromSource:
-        BuildOrLinkProgram(request, reply, false, false, false);
+        BuildOrLinkProgram(request, reply, false, false, false, false);
         break;
 
       case MessageType_CompileProgramFromSource:
-        BuildOrLinkProgram(request, reply, false, false, false, true);
+        BuildOrLinkProgram(request, reply, false, false, false, false, true);
         break;
 
       case MessageType_BuildProgramFromSPIRV:
-        BuildOrLinkProgram(request, reply, false, false, true);
+        BuildOrLinkProgram(request, reply, false, false, false, true);
         break;
 
       case MessageType_CompileProgramFromSPIRV:
-        BuildOrLinkProgram(request, reply, false, false, true, true);
+        BuildOrLinkProgram(request, reply, false, false, false, true, true);
         break;
 
       case MessageType_BuildProgramWithBuiltins:
-        BuildOrLinkProgram(request, reply, false, true, false);
+        BuildOrLinkProgram(request, reply, false, true, false, false);
+        break;
+
+      case MessageType_BuildProgramWithDefinedBuiltins:
+        BuildOrLinkProgram(request, reply, false, true, true, false);
         break;
 
       case MessageType_LinkProgram:
@@ -717,8 +721,8 @@ void VirtualCLContext::FreeBuffer(Request *req, Reply *rep) {
 
 void VirtualCLContext::BuildOrLinkProgram(Request *req, Reply *rep,
                                           bool is_binary, bool is_builtin,
-                                          bool is_spirv, bool CompileOnly,
-                                          bool LinkOnly) {
+                                          bool is_dbk, bool is_spirv,
+                                          bool CompileOnly, bool LinkOnly) {
   INIT_VARS;
   CHECK_ID_NOT_EXISTS(ProgramIDset, CL_INVALID_PROGRAM);
 
@@ -790,9 +794,9 @@ void VirtualCLContext::BuildOrLinkProgram(Request *req, Reply *rep,
     }
     if (DevList.size() > 0) {
       err = SharedContextList[i]->buildOrLinkProgram(
-          id, DevList, source, source_len, is_binary, is_builtin, is_spirv,
-          options, InputBinaries, OutputBinaries, build_logs, num_kernels,
-          m.svm_region_offset, CompileOnly, LinkOnly);
+          id, DevList, source, source_len, is_binary, is_builtin, is_dbk,
+          is_spirv, options, InputBinaries, OutputBinaries, build_logs,
+          num_kernels, m.svm_region_offset, CompileOnly, LinkOnly);
       if (err == CL_SUCCESS) {
         ProgramContexts.push_back(SharedContextList[i]);
       } else

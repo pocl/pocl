@@ -30,16 +30,14 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <map>
 #include <sstream>
 
 #include "bufalloc.h"
 #include "cmd_queue.hh"
 #include "common.hh"
 #include "config.h"
-#include "pocl.h"
+#include "pocl_builtin_kernels.h"
 #include "pocl_runtime_config.h"
-#include "pocl_util.h"
 #include "shared_cl_context.hh"
 #include "spirv_parser.hh"
 #include "virtual_cl_context.hh"
@@ -91,6 +89,8 @@ class SharedCLContext final : public SharedContextBase {
 
   std::vector<cl::Device> CLDevices;
   std::vector<cl::Device> CLDevicesWithSVMSupport;
+
+  clCreateProgramWithDefinedBuiltInKernels_fn createProgramWithDBKs;
 
   std::unordered_map<uint32_t, clSamplerPtr> SamplerIDmap;
   std::unordered_map<uint32_t, clImagePtr> ImageIDmap;
@@ -210,8 +210,8 @@ public:
 
   virtual int buildOrLinkProgram(
       uint32_t program_id, std::vector<uint32_t> &DeviceList, char *source,
-      size_t source_size, bool is_binary, bool is_builtin, bool is_spirv,
-      const char *options,
+      size_t source_size, bool is_binary, bool is_builtin, bool is_dbk,
+      bool is_spirv, const char *options,
       std::unordered_map<uint64_t, std::vector<unsigned char>> &input_binaries,
       std::unordered_map<uint64_t, std::vector<unsigned char>> &output_binaries,
       std::unordered_map<uint64_t, std::string> &build_logs,
@@ -561,6 +561,10 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
                                  VirtualContextBase *v,
                                  ReplyQueueThread *s, ReplyQueueThread *f) {
   p->getDevices(CL_DEVICE_TYPE_ALL, &CLDevices);
+
+  createProgramWithDBKs = (clCreateProgramWithDefinedBuiltInKernels_fn)
+      clGetExtensionFunctionAddressForPlatform(
+          (*p)(), "clCreateProgramWithDefinedBuiltInKernels");
 
   cl_context_properties Properties[] = {
       CL_CONTEXT_PLATFORM, reinterpret_cast<intptr_t>(p->operator()()),
@@ -1351,8 +1355,8 @@ bool createSPIRVWithSVMOffset(const std::vector<unsigned char> *InputSPV,
 
 int SharedCLContext::buildOrLinkProgram(
     uint32_t program_id, std::vector<uint32_t> &DeviceList, char *src,
-    size_t src_size, bool is_binary, bool is_builtin, bool is_spirv,
-    const char *options,
+    size_t src_size, bool is_binary, bool is_builtin, bool is_dbk,
+    bool is_spirv, const char *options,
     std::unordered_map<uint64_t, std::vector<unsigned char>> &InputBinaries,
     std::unordered_map<uint64_t, std::vector<unsigned char>> &output_binaries,
     std::unordered_map<uint64_t, std::string> &build_logs, size_t &num_kernels,
@@ -1462,6 +1466,58 @@ int SharedCLContext::buildOrLinkProgram(
     program->uptr = std::move(Prog);
 
     is_spirv = true;
+
+  } else if (is_dbk) {
+
+    POCL_MSG_PRINT_GENERAL("BUILDING DEFINED BUILTIN KERNELS\n");
+    if (!createProgramWithDBKs) {
+      POCL_MSG_ERR("Attempted building a program with defined builtin kernels "
+                   "but platform does not support "
+                   "clCreateProgramWithDefinedBuiltinKernels!\n");
+      return CL_OUT_OF_RESOURCES;
+    }
+
+    uint64_t num_kernels;
+    std::vector<const char *> kernel_names;
+    std::vector<BuiltinKernelId> kernel_ids;
+    std::vector<void *> kernel_attributes;
+
+    const char *cursor = src;
+    memcpy(&num_kernels, cursor, sizeof(num_kernels));
+    cursor += sizeof(num_kernels);
+
+    kernel_names.resize(num_kernels);
+    kernel_ids.resize(num_kernels);
+    kernel_attributes.resize(num_kernels);
+
+    for (size_t i = 0; i < num_kernels; ++i) {
+      uint64_t name_len;
+      memcpy(&name_len, cursor, sizeof(name_len));
+      cursor += sizeof(name_len);
+      kernel_names[i] = cursor;
+      cursor += name_len;
+      pocl_deserialize_dbk_attribs(&kernel_ids[i], &kernel_attributes[i],
+                                   &cursor);
+    }
+
+    cl_program prog = createProgramWithDBKs(
+        ContextWithAllDevices(), program->devices.size(),
+        (cl_device_id *)program->devices.data(), num_kernels, kernel_ids.data(),
+        kernel_names.data(), (const void **)kernel_attributes.data(), NULL,
+        &err);
+
+    for (size_t i = 0; i < num_kernels; ++i) {
+      pocl_release_defined_builtin_attributes(kernel_ids[i],
+                                              kernel_attributes[i]);
+    }
+
+    if (err != CL_SUCCESS) {
+      POCL_MSG_ERR("CreateProgramWithDefinedBuiltinKernels() failed\n");
+      return err;
+    }
+    clProgramPtr pp(new cl::Program(prog));
+    p = pp.get();
+    program->uptr = std::move(pp);
 
   } else if (is_builtin) {
 

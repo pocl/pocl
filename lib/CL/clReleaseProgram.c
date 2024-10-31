@@ -30,11 +30,12 @@
 #  include "vccompat.hpp"
 #endif
 
-#include "pocl_cl.h"
-#include "pocl_util.h"
-#include "pocl_cache.h"
-#include "pocl_llvm.h"
 #include "devices.h"
+#include "pocl_builtin_kernels.h"
+#include "pocl_cache.h"
+#include "pocl_cl.h"
+#include "pocl_llvm.h"
+#include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
@@ -120,6 +121,16 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
         POCL_MEM_FREE (program->builtin_kernel_names[i]);
       POCL_MEM_FREE (program->builtin_kernel_names);
       POCL_MEM_FREE (program->concated_builtin_names);
+
+      if (program->builtin_kernel_attributes != NULL)
+        {
+          for (i = 0; i < program->num_builtin_kernels; ++i)
+            pocl_release_defined_builtin_attributes (
+              program->builtin_kernel_ids[i],
+              program->builtin_kernel_attributes[i]);
+        }
+      POCL_MEM_FREE (program->builtin_kernel_ids);
+      POCL_MEM_FREE (program->builtin_kernel_attributes);
 
       POCL_DESTROY_OBJECT (program);
       POCL_MEM_FREE (program);

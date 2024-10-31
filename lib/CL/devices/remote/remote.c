@@ -36,11 +36,14 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include "CL/cl_exp_defined_builtin_kernels.h"
 #include "common_driver.h"
+#include "pocl_builtin_kernels.h"
 #include "pocl_cache.h"
 #include "pocl_cl.h"
 #include "pocl_file_util.h"
 #include "pocl_mem_management.h"
+#include "pocl_tensor_util.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
 #include "utlist.h"
@@ -349,9 +352,11 @@ pocl_remote_init_device_ops (struct pocl_device_ops *ops)
   ops->link_program = pocl_remote_link_program;
   ops->build_binary = pocl_remote_build_binary;
   ops->build_builtin = pocl_remote_build_builtin;
+  ops->build_defined_builtin = pocl_remote_build_defined_builtin;
   ops->free_program = pocl_remote_free_program;
   ops->setup_metadata = pocl_remote_setup_metadata;
   ops->supports_binary = pocl_remote_supports_binary;
+  ops->supports_dbk = pocl_remote_supports_dbk;
 
   ops->join = pocl_remote_join;
   ops->submit = pocl_remote_submit;
@@ -748,7 +753,8 @@ setup_relevant_devices (cl_program program, cl_device_id device,
               assert (pocl_exists (program_bc_path));
               assert (program->binaries[real_i]);
 
-              binaries[num_relevant_devices] = program->binaries[real_i];
+              binaries[num_relevant_devices]
+                = (char *)program->binaries[real_i];
               *total_binary_request_size += sizeof (uint32_t);
               binary_sizes[num_relevant_devices]
                   = program->binary_sizes[real_i];
@@ -866,11 +872,11 @@ pocl_remote_build_source (cl_program program, cl_uint device_i,
   size_t kernel_meta_size = 0;
 
   err = pocl_network_build_or_link_program (
-      d, program->source, strlen (program->source), CL_FALSE, CL_FALSE,
-      CL_FALSE, prog_id, program->compiler_options, &kernel_meta_bytes,
-      &kernel_meta_size, relevant_devices, relevant_platforms,
-      num_relevant_devices, build_logs, binaries, binary_sizes,
-      d->svm_region_offset, !link_program, 0);
+    d, program->source, strlen (program->source), CL_FALSE, CL_FALSE, CL_FALSE,
+    CL_FALSE, prog_id, program->compiler_options, &kernel_meta_bytes,
+    &kernel_meta_size, relevant_devices, relevant_platforms,
+    num_relevant_devices, build_logs, binaries, binary_sizes,
+    d->svm_region_offset, !link_program, 0);
 
   setup_build_logs (program, num_relevant_devices, build_indexes, build_logs);
 
@@ -896,7 +902,7 @@ pocl_remote_build_source (cl_program program, cl_uint device_i,
         program->data[real_i] = pd;
         program->binary_sizes[real_i] = binary_sizes[i];
         binary_sizes[i] = 0;
-        program->binaries[real_i] = binaries[i];
+        program->binaries[real_i] = (unsigned char *)binaries[i];
         binaries[i] = NULL;
 
         assert (program->binary_sizes[real_i] > 0);
@@ -983,11 +989,11 @@ pocl_remote_build_binary (cl_program program, cl_uint device_i,
     assert ((size_t)(buf - buffer) == total_binary_request_size);
 
     err = pocl_network_build_or_link_program (
-        d, buffer, total_binary_request_size, CL_TRUE, CL_FALSE, spirv_build,
-        prog_id, program->compiler_options, &kernel_meta_bytes,
-        &kernel_meta_size, relevant_devices, relevant_platforms,
-        num_relevant_devices, build_logs, NULL, NULL, d->svm_region_offset,
-        !link_program, 0);
+      d, buffer, total_binary_request_size, CL_TRUE, CL_FALSE, CL_FALSE,
+      spirv_build, prog_id, program->compiler_options, &kernel_meta_bytes,
+      &kernel_meta_size, relevant_devices, relevant_platforms,
+      num_relevant_devices, build_logs, NULL, NULL, d->svm_region_offset,
+      !link_program, 0);
     free (buffer);
   }
 
@@ -1067,13 +1073,86 @@ pocl_remote_build_builtin (cl_program program, cl_uint device_i)
   char *build_log = NULL;
 
   int err = pocl_network_build_or_link_program (
-      d, program->concated_builtin_names,
-      strlen (program->concated_builtin_names), CL_FALSE, CL_TRUE, CL_FALSE,
-      prog_id, program->compiler_options, &kernel_meta_bytes,
-      &kernel_meta_size,
-      &d->remote_device_index,   // relevant_devices,
-      &d->remote_platform_index, // relevant_platforms,,
-      1, &build_log, NULL, 0, 0, 0, 0);
+    d, program->concated_builtin_names,
+    strlen (program->concated_builtin_names), CL_FALSE, CL_TRUE, CL_FALSE,
+    CL_FALSE, prog_id, program->compiler_options, &kernel_meta_bytes,
+    &kernel_meta_size,
+    &d->remote_device_index,   // relevant_devices,
+    &d->remote_platform_index, // relevant_platforms,,
+    1, &build_log, NULL, 0, 0, 0, 0);
+
+  if (err)
+    return err;
+
+  program_data_t *pd = malloc (sizeof (program_data_t));
+  pd->kernel_meta_bytes = kernel_meta_bytes;
+  pd->kernel_meta_size = kernel_meta_size;
+  pd->refcount = 1;
+
+  program->data[device_i] = pd;
+
+  return CL_SUCCESS;
+}
+
+int
+pocl_remote_build_defined_builtin (cl_program program, cl_uint device_i)
+{
+  cl_device_id device = program->devices[device_i];
+  remote_device_data_t *d = device->data;
+  assert (strncmp (device->ops->device_name, remote_device_name, 7) == 0);
+
+  assert (program->num_builtin_kernels > 0);
+
+  uint32_t prog_id = program->id;
+  assert (prog_id);
+
+  if (program->data[device_i] != NULL)
+    {
+      POCL_MSG_PRINT_REMOTE ("Program %i already built for device %u \n",
+                             prog_id, device_i);
+      return CL_SUCCESS;
+    }
+  else
+    POCL_MSG_PRINT_REMOTE (
+      "Building Program %i with defined builtins for device %u \n", prog_id,
+      device_i);
+
+  size_t payload_size = sizeof (uint64_t);
+  for (size_t i = 0; i < program->num_builtin_kernels; ++i)
+    {
+      payload_size += sizeof (uint64_t);
+      payload_size += strlen (program->builtin_kernel_names[i]) + 1;
+      payload_size += pocl_serialize_dbk_attribs (
+        program->builtin_kernel_ids[i], program->builtin_kernel_attributes[i],
+        NULL);
+    }
+  char *payload = malloc (payload_size);
+  char *cursor = payload;
+  uint64_t num_dbks = program->num_builtin_kernels;
+  memcpy (cursor, &num_dbks, sizeof (num_dbks));
+  cursor += sizeof (num_dbks);
+  for (size_t i = 0; i < program->num_builtin_kernels; ++i)
+    {
+      uint64_t name_len = strlen (program->builtin_kernel_names[i]) + 1;
+      memcpy (cursor, &name_len, sizeof (name_len));
+      cursor += sizeof (name_len);
+      memcpy (cursor, program->builtin_kernel_names[i], name_len);
+      cursor += name_len;
+      pocl_serialize_dbk_attribs (program->builtin_kernel_ids[i],
+                                  program->builtin_kernel_attributes[i],
+                                  &cursor);
+    }
+
+  char *kernel_meta_bytes = NULL;
+  size_t kernel_meta_size = 0;
+  char *build_log = NULL;
+
+  int err = pocl_network_build_or_link_program (
+    d, payload, payload_size, CL_FALSE, CL_TRUE, CL_TRUE, CL_FALSE, prog_id,
+    program->compiler_options, &kernel_meta_bytes, &kernel_meta_size,
+    &d->remote_device_index,   // relevant_devices,
+    &d->remote_platform_index, // relevant_platforms,,
+    1, &build_log, NULL, 0, 0, 0, 0);
 
   if (err)
     return err;
@@ -1150,10 +1229,11 @@ int pocl_remote_link_program (cl_program program, cl_uint device_i,
       = sizeof (uint32_t) + sizeof (uint32_t) * num_input_programs;
 
   err = pocl_network_build_or_link_program (
-      d, (const void *)&input_prog_ids[0], total_binary_request_size, 0, 0, 0,
-      target_prog_id, program->compiler_options, &kernel_meta_bytes,
-      &kernel_meta_size, relevant_devices, relevant_platforms,
-      num_relevant_devices, build_logs, binaries, binary_sizes, 0, 0, 1);
+    d, (const void *)&input_prog_ids[0], total_binary_request_size, CL_FALSE,
+    CL_FALSE, CL_FALSE, CL_FALSE, target_prog_id, program->compiler_options,
+    &kernel_meta_bytes, &kernel_meta_size, relevant_devices,
+    relevant_platforms, num_relevant_devices, build_logs, binaries,
+    binary_sizes, 0, 0, 1);
 
   ///////////////////////////////////////////////////////////////////////////
 
@@ -1182,7 +1262,7 @@ int pocl_remote_link_program (cl_program program, cl_uint device_i,
         program->data[real_i] = pd;
         program->binary_sizes[real_i] = binary_sizes[i];
         binary_sizes[i] = 0;
-        program->binaries[real_i] = binaries[i];
+        program->binaries[real_i] = (unsigned char *)binaries[i];
         binaries[i] = NULL;
 
         assert (program->binary_sizes[real_i] > 0);
@@ -1212,6 +1292,33 @@ pocl_remote_supports_binary (cl_device_id device, size_t length,
       && strncmp (device->supported_spir_v_versions, "SPIR-V", 6) == 0)
     return 1;
   /* We should delegate to the remote here to be strict. */
+  return 0;
+}
+
+extern pocl_kernel_metadata_t pocl_BIDescriptors[BIKERNELS];
+
+int
+pocl_remote_supports_dbk (cl_device_id device,
+                          BuiltinKernelId kernel_id,
+                          const void *kernel_attributes)
+{
+  if (strstr (device->extensions, "cl_exp_defined_builtin_kernels") != NULL)
+    {
+      for (size_t i = 0; i < BIKERNELS; ++i)
+        {
+          pocl_kernel_metadata_t *meta = &pocl_BIDescriptors[i];
+          if (kernel_id != meta->builtin_kernel_id)
+            continue;
+
+          if (strstr (device->builtin_kernel_list, meta->name) == NULL)
+            return pocl_validate_dbk_attributes (kernel_id, kernel_attributes,
+                                                 NULL)
+                   == CL_SUCCESS;
+
+          return 0;
+        }
+    }
+
   return 0;
 }
 
