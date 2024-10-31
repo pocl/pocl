@@ -40,7 +40,9 @@
 #endif
 
 #if defined(_WIN32)
+#define NOMINMAX
 #include <fileapi.h>
+#include <windows.h>
 #endif
 
 #include <fstream>
@@ -370,5 +372,81 @@ int pocl_write_module(void *module, const char* path) {
                           TmpPath, ".temp.bc");
 }
 #endif
+
+char *pocl_parent_path(char *Path) {
+  llvm::StringRef OrigPath(Path);
+  llvm::StringRef Result = path::parent_path(OrigPath);
+  // The result is just a substring of the Path.
+  assert(OrigPath.starts_with(Result));
+  Path[Result.size()] = '\0';
+  return Path;
+}
+
+pocl_file_type pocl_get_file_type(const char *path) {
+
+  switch (fs::get_file_type(path, false)) {
+  default:
+    return POCL_FS_STATUS_ERROR;
+  case fs::file_type::regular_file:
+    return POCL_FS_REGULAR;
+  case fs::file_type::directory_file:
+    return POCL_FS_DIRECTORY;
+  case fs::file_type::file_not_found:
+    return POCL_FS_NOT_FOUND;
+  }
+  assert(!"UNREACHABLE!");
+  return POCL_FS_STATUS_ERROR;
+}
+
+static const fs::directory_iterator DirIteratorEnd;
+
+struct DirIteratorHandle {
+  fs::directory_iterator It;
+  bool First = true;
+};
+
+int pocl_dir_iterator(const char *path, pocl_dir_iter *iter) {
+  assert(iter && "iter must not be nullptr!");
+  std::error_code EC;
+  auto It = fs::directory_iterator(path, EC);
+  if (EC)
+    return -1;
+
+  auto *DIH = new DirIteratorHandle;
+  DIH->It = It;
+  iter->handle = static_cast<void *>(DIH);
+  return 0;
+}
+
+int pocl_dir_next_entry(pocl_dir_iter iter) {
+  assert(iter.handle && "Must call pocl_dir_iterator() first!");
+  auto *DIH = static_cast<DirIteratorHandle *>(iter.handle);
+  if (DIH->It == DirIteratorEnd)
+    return 0; // Empty directory or ran out of entries.
+
+  if (DIH->First) {
+    DIH->First = false;
+    return 1;
+  }
+
+  std::error_code EC;
+  return DIH->It.increment(EC) != DirIteratorEnd && !EC;
+}
+
+const char *pocl_dir_iter_get_path(pocl_dir_iter iter) {
+  assert(iter.handle && "Must call pocl_dir_iterator() first!");
+  auto *DIH = static_cast<DirIteratorHandle *>(iter.handle);
+  assert(!DIH->First && "Must call pocl_dir_next_entry() first!");
+  assert(DIH->It != DirIteratorEnd && "Invalid directory iterator.");
+  return DIH->It->path().c_str();
+}
+
+void pocl_release_dir_iterator(pocl_dir_iter *iter) {
+  assert(iter && "Invalid pocl_dir_iter handle!");
+  if (!iter->handle)
+    return;
+  delete static_cast<DirIteratorHandle *>(iter->handle);
+  iter->handle = nullptr;
+}
 
 /****************************************************************************/
