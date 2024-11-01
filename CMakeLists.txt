@@ -223,8 +223,6 @@ endif()
 
 option(ENABLE_LLVM "Build pocl with LLVM. Default is ON." ON)
 
-option(STATIC_LLVM "If ON, link to static LLVM libraries. OFF (default) = link to shared LLVM libraries." OFF)
-
 option(BUILD_SHARED_LIBS "ON=Build shared libs, OFF=static libs" ON)
 
 option(POCL_DEBUG_MESSAGES
@@ -268,6 +266,15 @@ option(ENABLE_POCL_BUILDING "When OFF, env var POCL_BUILDING has no effect. Defa
 option(ENABLE_PRINTF_IMMEDIATE_FLUSH "[currently only applies to CPU drivers] if enabled, printf is flushed immediately when encountered, instead of after all NDRange workgroups are finished" ON)
 
 option(ENABLE_LLVM_FILECHECKS "Enable kernel compiler/autovectorizer filechecks using the given FileCheck binary defined in LLVM_FILECHECK_BIN. Note: the checks are tested against recent Intel X86/SIMD CPUs for now.")
+
+if(ENABLE_LEVEL0)
+  set(DEFAULT_STATIC_LLVM ON)
+else()
+  set(DEFAULT_STATIC_LLVM OFF)
+endif()
+
+option(STATIC_LLVM "If ON, link to static LLVM libraries. OFF (default) = link to shared LLVM libraries." ${DEFAULT_STATIC_LLVM})
+
 
 if(WIN32)
   set(DEFAULT_LLVM_PLATFORM_SUPPORT ON)
