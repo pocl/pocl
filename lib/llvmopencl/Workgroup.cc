@@ -139,7 +139,7 @@ private:
                                    LLVMValueRef ArgBufferPtr,
                                    uint64_t *ArgBufferOffsets,
                                    LLVMContextRef Ctx, LLVMValueRef F,
-                                   unsigned ParamIndex);
+                                   unsigned ParamIndex, std::string Name);
 
   llvm::Value *getRequiredSubgroupSize(llvm::Function &F);
 
@@ -1383,12 +1383,6 @@ LLVMValueRef WorkgroupImpl::createAllocaMemcpyForStruct(
   return LocalArgAlloca;
 }
 
-LLVMValueRef WorkgroupImpl::createArgBufferLoad(LLVMBuilderRef Builder,
-                                                LLVMValueRef ArgBufferPtr,
-                                                uint64_t *ArgBufferOffsets,
-                                                LLVMContextRef Ctx,
-                                                LLVMValueRef F,
-                                                unsigned ParamIndex) {
 /// Creates a load to get an argument from an argument buffer.
 ///
 /// \param Builder The LLVM IR builder to use.
@@ -1397,6 +1391,11 @@ LLVMValueRef WorkgroupImpl::createArgBufferLoad(LLVMBuilderRef Builder,
 /// \param Ctx LLVM Context to use.
 /// \param F The function with the arguments.
 /// \param ParamIndex The index of the argument.
+/// \param Name The name to give for the load (for IR readability).
+LLVMValueRef WorkgroupImpl::createArgBufferLoad(
+    LLVMBuilderRef Builder, LLVMValueRef ArgBufferPtr,
+    uint64_t *ArgBufferOffsets, LLVMContextRef Ctx, LLVMValueRef F,
+    unsigned ParamIndex, std::string Name) {
 
   LLVMValueRef Param = LLVMGetParam(F, ParamIndex);
   LLVMTypeRef ParamType = LLVMTypeOf(Param);
@@ -1440,7 +1439,7 @@ LLVMValueRef WorkgroupImpl::createArgBufferLoad(LLVMBuilderRef Builder,
     LLVMValueRef ArgOffsetBitcast =
         LLVMBuildPointerCast(Builder, ArgByteOffset, DestTy, "arg_ptr");
     LLVMTypeRef LoadTy = ParamType;
-    return LLVMBuildLoad2(Builder, LoadTy, ArgOffsetBitcast, "");
+    return LLVMBuildLoad2(Builder, LoadTy, ArgOffsetBitcast, Name.c_str());
   }
 }
 
@@ -1565,8 +1564,9 @@ WorkgroupImpl::createArgBufferWorkgroupLauncher(Function *Func,
           "local_arg", unwrap(Block)));
       Args[i] = LocalArgAlloca;
     } else {
-      Args[i] = createArgBufferLoad(Builder, ArgBuffer, ArgBufferOffsets.data(),
-                                    LLVMContext, F, i);
+      Args[i] = createArgBufferLoad(
+          Builder, ArgBuffer, ArgBufferOffsets.data(), LLVMContext, F, i,
+          std::string("kernel_arg_") + std::to_string(i));
     }
   }
 
@@ -1664,9 +1664,9 @@ void WorkgroupImpl::createGridLauncher(Function *KernFunc, Function *WGFunc,
 
   // Load the pointer to the pocl context (in global memory), assuming it is
   // stored as the 4th last argument in the kernel.
-  LLVMValueRef PoclCtx =
-      createArgBufferLoad(Builder, ArgBuffer, KernArgBufferOffsets.data(),
-                          LLVMContext, Kernel, KernArgCount - HiddenArgs);
+  LLVMValueRef PoclCtx = createArgBufferLoad(
+      Builder, ArgBuffer, KernArgBufferOffsets.data(), LLVMContext, Kernel,
+      KernArgCount - HiddenArgs, "pocl_context");
 
   LLVMValueRef Args[4] = {
       LLVMBuildPointerCast(Builder, WGF, RunnerArgTypes[0], "wg_func"),
