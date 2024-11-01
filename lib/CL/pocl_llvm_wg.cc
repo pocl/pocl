@@ -652,7 +652,7 @@ static bool runKernelCompilerPasses(cl_device_id Device, llvm::Module &Mod,
   addStage2PassesToPipeline(Device, Passes2);
   std::string P2 = convertPassesToPipelineString(Passes2);
 
-  Error E = PM.build(Device, P1, Optimize ? 2 : 1, 0, P2, Optimize ? 3 : 0, 0);
+  Error E = PM.build(Device, P1, Optimize ? 1 : 0, 0, P2, Optimize ? 3 : 0, 0);
   if (E) {
     std::cerr << "LLVM: failed to create compilation pipeline";
     return false;
@@ -1288,7 +1288,7 @@ static int pocl_llvm_run_pocl_passes(llvm::Module *Bitcode,
   std::string Opts;
   if (Program->compiler_options)
     Opts.assign(Program->compiler_options);
-  bool Optimize = Opts.find("-cl-opt-disable") != std::string::npos;
+  bool Optimize = (Opts.find("-cl-opt-disable") == std::string::npos);
 #ifdef DUMP_LLVM_PASS_TIMINGS
   llvm::TimePassesIsEnabled = true;
 #endif
@@ -1704,7 +1704,12 @@ void populateModulePM(void *Passes, void *Module, unsigned OptL, unsigned SizeL,
       break;
     }
   }
-  ModulePassManager MPM = PB.buildPerModuleDefaultPipeline(Opt);
+  ModulePassManager MPM;
+  if (Opt == OptimizationLevel::O0) {
+    MPM = PB.buildO0DefaultPipeline(Opt);
+  } else {
+    MPM = PB.buildPerModuleDefaultPipeline(Opt);
+  }
   if (Module) {
     llvm::Module *Mod = (llvm::Module *)Module;
     MPM.run(*Mod, MAM);
