@@ -530,7 +530,7 @@ static void replaceIntrinsics(llvm::Module *Program, const llvm::Module *Lib,
 using namespace pocl;
 
 int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
-         cl_device_id ClDev) {
+         cl_device_id ClDev, bool StripAllDebugInfo) {
 
   assert(Program);
   assert(Lib);
@@ -657,7 +657,11 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
 
   shared_copy(Program, Lib, Log, vvm);
 
-  removeDuplicateDbgInfo(Program);
+  if (StripAllDebugInfo) {
+    llvm::StripDebugInfo(*Program);
+  } else {
+    removeDuplicateDbgInfo(Program);
+  }
 
   fixCallingConv(Program, Log);
 
