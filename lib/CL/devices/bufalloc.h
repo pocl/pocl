@@ -1,7 +1,7 @@
 /* OpenCL runtime/device driver library: custom buffer allocator
 
    Copyright (c) 2011 Tampere University of Technology
-                 2023 Pekka Jääskeläinen / Intel Finland Oy
+                 2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -47,8 +47,7 @@ typedef pocl_lock_t ba_lock_t;
 #define BA_UNLOCK(LOCK) POCL_UNLOCK(LOCK)
 #define BA_INIT_LOCK(LOCK) POCL_INIT_LOCK(LOCK)
 
-/* The qualifier to add in case using non-default
-   address space. */
+/* The qualifier to add in case using non-default address space. */
 #ifndef AS_QUALIFIER
 #define AS_QUALIFIER
 #endif
@@ -148,13 +147,35 @@ struct memory_region
   ba_lock_t lock;
 };
 
+/**
+ * Allocates a chunk of memory from the given memory region.
+ *
+ * \return The chunk, or NULL if no space available in the region.
+ */
 POCL_EXPORT
 chunk_info_t *pocl_alloc_buffer_from_region (memory_region_t *region,
                                              size_t size);
 
+/**
+ * Allocates a chunk of memory from the given memory region and returns its
+ * starting address.
+ *
+ * \return The address, or NULL if no space available in the region.
+ */
 POCL_EXPORT
 void *pocl_bufalloc (memory_region_t *region, size_t size);
 
+/**
+ * Allocates a chunk of memory from one of the given memory regions.
+ *
+ * The address ranges of the different regions must not overlap. Searches
+ * through the regions in the order of the region pointer array.
+ *
+ * \param regions A linked list of region pointers.
+ * \param size The size of the chunk to allocate.
+ * \return The start address of the chunk, or 0 if no space available
+ * in the buffer.
+ */
 POCL_EXPORT
 chunk_info_t *pocl_alloc_buffer(memory_region_t *regions, size_t size);
 
@@ -167,14 +188,17 @@ void pocl_free_chunk (chunk_info_t *chunk);
 /**
  * Initializes a memory allocation region (address space) with default
  * attributes.
- *
- * @param start The starting address.
- * @param size Size of the address space.
  */
 POCL_EXPORT
 void pocl_init_mem_region (
     memory_region_t *region, memory_address_t start, size_t size);
 
+/**
+ * Creates a reference to a part of a chunk.
+ *
+ * @todo Register to the parent also so it can free the
+ * child references.
+ */
 chunk_info_t *create_sub_chunk (chunk_info_t *parent, size_t offset, size_t size);
 
 void

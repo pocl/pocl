@@ -1389,6 +1389,14 @@ LLVMValueRef WorkgroupImpl::createArgBufferLoad(LLVMBuilderRef Builder,
                                                 LLVMContextRef Ctx,
                                                 LLVMValueRef F,
                                                 unsigned ParamIndex) {
+/// Creates a load to get an argument from an argument buffer.
+///
+/// \param Builder The LLVM IR builder to use.
+/// \param ArgBufferPtr The LLVM IR Value pointing to the arg buffer.
+/// \param ArgBufferOffsets The offsets of arguments in the buffer.
+/// \param Ctx LLVM Context to use.
+/// \param F The function with the arguments.
+/// \param ParamIndex The index of the argument.
 
   LLVMValueRef Param = LLVMGetParam(F, ParamIndex);
   LLVMTypeRef ParamType = LLVMTypeOf(Param);
@@ -1436,15 +1444,17 @@ LLVMValueRef WorkgroupImpl::createArgBufferLoad(LLVMBuilderRef Builder,
   }
 }
 
-/**
- * Creates a work group launcher with all the argument data passed
- * in a single argument buffer.
- *
- * All argument values, including pointers are stored directly in the
- * argument buffer with natural alignment. The rules for populating the
- * buffer are those of the HSA kernel calling convention. The name of
- * the generated function is KERNELNAME_workgroup_argbuffer.
- */
+/// Creates a work group launcher with all the argument data passed
+/// in a single argument buffer.
+///
+/// All argument values, including pointers are stored directly in the
+/// argument buffer with natural alignment. The rules for populating the
+/// buffer are those of the HSA kernel calling convention. The name of
+/// the generated function is KERNELNAME_workgroup_argbuffer.
+///
+/// \param Func The kernel to generate the launcher for.
+/// \param KernName The prefix for the launcher function's name, which will
+/// be called 'KernName_workgroup_argbuffer'.
 Function *
 WorkgroupImpl::createArgBufferWorkgroupLauncher(Function *Func,
                                                 std::string KernName) {

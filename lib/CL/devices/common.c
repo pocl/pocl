@@ -1017,10 +1017,11 @@ pocl_release_dlhandle_cache (void *dlhandle_cache_item)
  * if not, builds the kernel, caches it, and returns the file name of the
  * end result.
  *
- * @param command The kernel run command.
- * @param specialized 1 if should check the per-command specialized one instead
+ * \param module_fn [out] The file name of the final binary.
+ * \param command The kernel run command.
+ * \param specialized 1 if should check the per-command specialized one instead
  * of the generic one.
- * @returns The filename of the built binary in the disk.
+ * \returns The filename of the built binary in the disk.
  */
 int
 pocl_check_kernel_disk_cache (char *module_fn,

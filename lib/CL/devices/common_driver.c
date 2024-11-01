@@ -487,8 +487,7 @@ pocl_driver_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
   if (mem->has_device_address)
     p->is_pinned = 1;
 
-  POCL_MSG_PRINT_MEMORY ("Basic device ALLOC %p / size %zu \n", p->mem_ptr,
-                         mem->size);
+  POCL_MSG_PRINT_MEMORY ("ALLOC %p / size %zu \n", p->mem_ptr, mem->size);
 
   return CL_SUCCESS;
 }
