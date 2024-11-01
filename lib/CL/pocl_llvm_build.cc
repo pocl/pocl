@@ -184,7 +184,11 @@ static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
     Program->global_var_total_size[device_i] = TotalGVarBytes;
   }
 
-  if (link(Mod, BuiltinLib, Log, Device))
+  std::string Opts;
+  if (Program->compiler_options)
+    Opts.assign(Program->compiler_options);
+  bool DebugRequested = (Opts.find("-g") != std::string::npos);
+  if (link(Mod, BuiltinLib, Log, Device, !DebugRequested))
     return true;
 
   raw_string_ostream OS(Log);
