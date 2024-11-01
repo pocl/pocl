@@ -458,7 +458,9 @@ static void replaceIntrinsics(llvm::Module *Program, const llvm::Module *Lib,
     }
   }
 
-  for (auto [Intrin, Repl] : EraseMap) {
+  for (auto It : EraseMap) {
+    llvm::Function *Intrin = It.first;
+    llvm::Function *Repl = It.second;
     Intrin->replaceAllUsesWith(Repl);
     Intrin->eraseFromParent();
   }
