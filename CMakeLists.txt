@@ -100,8 +100,16 @@ if(UNIX)
         set(FORBID_IMPLICIT_FUNCTIONS ${FORBID_IMPLICIT_FUNCTIONS} "-Werror=incompatible-pointer-types")
     endif()
     add_compile_options("$<$<COMPILE_LANGUAGE:C>:${FORBID_IMPLICIT_FUNCTIONS}>")
-
     add_compile_options("-Wno-ignored-attributes")
+
+    check_c_compiler_flag("-Werror=return-type" HAVE_C_WERROR_RETURN_TYPE)
+    check_cxx_compiler_flag("-Werror=return-type" HAVE_CXX_WERROR_RETURN_TYPE)
+    if(HAVE_C_WERROR_RETURN_TYPE)
+      add_compile_options("$<$<COMPILE_LANGUAGE:C>:-Werror=return-type>")
+    endif()
+    if(HAVE_CXX_WERROR_RETURN_TYPE)
+      add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Werror=return-type>")
+    endif()
 
   else()
     message(WARNING "Don't know how to forbid this compiler from allowing implicit function declarations.")
