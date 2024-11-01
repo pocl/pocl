@@ -222,6 +222,8 @@
 
 #define LLVM_VERIFY_MODULE_DEFAULT @LLVM_VERIFY_MODULE_DEFAULT@
 
+#cmakedefine LLVM_OPAQUE_POINTERS
+
 #endif
 
 
@@ -290,8 +292,6 @@
 
 
 #cmakedefine USE_POCL_MEMMANAGER
-
-#cmakedefine LLVM_OPAQUE_POINTERS
 
 #cmakedefine RENAME_POCL
 
