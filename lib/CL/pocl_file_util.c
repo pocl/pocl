@@ -374,8 +374,6 @@ pocl_mk_tempdir (char *output, const char *prefix)
 #endif
 }
 
-/* write content[count] into a temporary file, and return the tempfile name in
- * output_path */
 int
 pocl_write_tempfile (char *output_path,
                      const char *prefix,
