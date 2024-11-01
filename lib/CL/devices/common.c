@@ -193,8 +193,19 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
                           tmp_objfile, (size_t)objfile_size);
     }
 
-  /* temporary filename for kernel.so */
-  if (pocl_cache_tempname (tmp_module, SHARED_LIB_EXT, NULL))
+  /* Temporary filename for kernel.so. Create it in the parallel.bc's
+     directory to enable a potential customized finalization step to
+     create multiple files next to it. */
+  char parallel_bc_dir[POCL_MAX_PATHNAME_LENGTH + 2];
+
+  pocl_cache_kernel_cachedir_path (parallel_bc_dir, program, device_i, kernel,
+                                   "", command, specialize);
+
+  size_t dir_len = strlen (parallel_bc_dir);
+  parallel_bc_dir[dir_len] = '/';
+  parallel_bc_dir[dir_len + 1] = 0;
+
+  if (pocl_mk_tempname (tmp_module, parallel_bc_dir, SHARED_LIB_EXT, NULL))
     {
       POCL_MSG_PRINT_LLVM ("Creating temporary kernel.so file"
                            " for kernel %s FAILED\n",
