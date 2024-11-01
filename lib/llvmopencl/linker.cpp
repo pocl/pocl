@@ -40,6 +40,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugLoc.h"
+#include <llvm/ADT/StringExtras.h>
 #include <llvm/ADT/StringSet.h>
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/Function.h>
@@ -69,6 +70,55 @@ using namespace llvm;
 #define DB_PRINT(...)
 
 namespace pocl {
+
+// this whole class is only necessary for LLVM 14 and LLVM 15 with
+// non-opaque-pointers; with opaque pointers it simply returns the same type
+//
+// The purpose is to remap "opencl.XYZ" opaque types when they're linked in from
+// the builtin library. Without the remapping, the CloneFunctionInto will create
+// a duplicate of the opaque type with the name "opencl.XYZ.number" but will not
+// correct all of the instructions, resulting in broken bitcode.
+// Note that this is mainly a problem with LLVM 14 and disabled optimization of
+// the bitcode library; optimization at build time can almost completely remove
+// the use of offending types, therefore the problem won't manifest.
+// Newer LLVM versions don't use opaque types for OpenCL images/events etc.
+class PoclTypeRemapper : public ValueMapTypeRemapper {
+public:
+  PoclTypeRemapper() {}
+  virtual ~PoclTypeRemapper() {}
+
+  virtual Type *remapType(Type *SrcTy) {
+#ifndef LLVM_OPAQUE_POINTERS
+    PointerType *PT = dyn_cast<PointerType>(SrcTy);
+    if (PT) {
+      auto PointedType = PT->getNonOpaquePointerElementType();
+      Type *RemappedPT = remapType(PointedType);
+      return PointerType::get(RemappedPT, PT->getAddressSpace());
+    }
+    if (!SrcTy->isStructTy())
+      return SrcTy;
+    StructType *ST = dyn_cast<StructType>(SrcTy);
+    if (!ST->isOpaque())
+      return SrcTy;
+    if (!ST->hasName())
+      return SrcTy;
+    StringRef Name = ST->getName();
+    // In theory, there could be >10 aliased names, but meh
+    bool EndsWithDotNum = Name.size() > 2 && Name[Name.size() - 2] == '.' &&
+                          isdigit(Name[Name.size() - 1]);
+    if (Name.starts_with("opencl.") && EndsWithDotNum) {
+      auto NameWithoutSuffix = Name.substr(0, Name.size() - 2);
+      StructType *RetVal =
+          StructType::getTypeByName(SrcTy->getContext(), NameWithoutSuffix);
+      assert(RetVal);
+      StringRef NewName = RetVal->getName();
+      DB_PRINT("REMAPPING TYPE:   %s  TO:   %s\n", Name.data(), NewName.data());
+      return RetVal;
+    }
+#endif
+    return SrcTy;
+  }
+};
 
 // A workaround for issue #889. In some cases, functions seem
 // to get multiple DISubprogram nodes attached. This causes
@@ -194,85 +244,95 @@ find_called_functions(llvm::Function *F,
 
 // Copies one function from one module to another
 // does not inspect it for callgraphs
-static void
-CopyFunc(const llvm::StringRef Name,
-         const llvm::Module *  From,
-         llvm::Module *        To,
-         ValueToValueMapTy &   VVMap) {
+static void CopyFunc(const llvm::StringRef Name, const llvm::Module *From,
+                     llvm::Module *To, ValueToValueMapTy &VVMap,
+                     PoclTypeRemapper *TypeMap) {
 
-    llvm::Function *SrcFunc = From->getFunction(Name);
-    // TODO: is this the linker error "not found", and not an assert?
-    assert(SrcFunc && "Did not find function to copy in kernel library");
-    llvm::Function *DstFunc = To->getFunction(Name);
+  llvm::Function *SrcFunc = From->getFunction(Name);
+  // TODO: is this the linker error "not found", and not an assert?
+  assert(SrcFunc && "Did not find function to copy in kernel library");
+  llvm::Function *DstFunc = To->getFunction(Name);
 
-    if (DstFunc == NULL) {
-        DB_PRINT("   %s not found in destination module, creating\n",
-                 Name.data());
-        DstFunc =
-        Function::Create(cast<FunctionType>(SrcFunc->getValueType()),
-                           SrcFunc->getLinkage(),
-                           SrcFunc->getName(),
-                           To);
-        DstFunc->copyAttributesFrom(SrcFunc);
-    } else if (DstFunc->size() > 0) {
-      // We have already encountered and copied this function.
-      return;
-    }
-    VVMap[SrcFunc] = DstFunc;
+  if (DstFunc == NULL) {
+    DB_PRINT("   %s not found in destination module, creating\n", Name.data());
+    DstFunc = Function::Create(cast<FunctionType>(SrcFunc->getValueType()),
+                               SrcFunc->getLinkage(), SrcFunc->getName(), To);
+    DstFunc->copyAttributesFrom(SrcFunc);
+  } else if (DstFunc->size() > 0) {
+    // We have already encountered and copied this function.
+    return;
+  }
+  VVMap[SrcFunc] = DstFunc;
 
-    Function::arg_iterator j = DstFunc->arg_begin();
-    for (Function::const_arg_iterator i = SrcFunc->arg_begin(),
-         e = SrcFunc->arg_end();
-         i != e; ++i) {
-        j->setName(i->getName());
-        VVMap[&*i] = &*j;
-        ++j;
-    }
-    if (!SrcFunc->isDeclaration()) {
-        SmallVector<ReturnInst*, 8> RI;          // Ignore returns cloned.
-        DB_PRINT("  cloning %s\n", Name.data());
+  Function::arg_iterator DstArgI = DstFunc->arg_begin();
+  for (Function::const_arg_iterator SrcArgI = SrcFunc->arg_begin(),
+                                    SrcArgE = SrcFunc->arg_end();
+       SrcArgI != SrcArgE; ++SrcArgI) {
+    DstArgI->setName(SrcArgI->getName());
+    VVMap[&*SrcArgI] = &*DstArgI;
+    ++DstArgI;
+  }
+  if (!SrcFunc->isDeclaration()) {
+    SmallVector<ReturnInst *, 8> RI; // Ignore returns cloned.
+    DB_PRINT("  cloning %s\n", Name.data());
 
-        CloneFunctionIntoAbs(DstFunc, SrcFunc, VVMap, RI, false);
-    } else {
-        DB_PRINT("  found %s, but its a declaration, do nothing\n",
-                 Name.data());
-    }
+    llvm::ClonedCodeInfo CodeInfo;
+    CloneFunctionIntoAbs(DstFunc, SrcFunc, VVMap, RI,
+                         false,     // same module
+                         "",        // suffix
+                         &CodeInfo, // codeInfo
+                         TypeMap,   // type remapper
+                         nullptr);  // materializer
+  } else {
+    DB_PRINT("  found %s, but its a declaration, do nothing\n", Name.data());
+  }
 }
 
 /* Copy function F and all the functions in its call graph
  * that are defined in 'from', into 'to', adding the mappings to
  * 'vvm'.
  */
-static int
-copy_func_callgraph(const llvm::StringRef func_name,
-                    const llvm::Module *  from,
-                    llvm::Module *        to,
-                    ValueToValueMapTy &   vvm) {
-    llvm::StringSet<> callees;
-    llvm::Function *RootFunc = from->getFunction(func_name);
-    if (RootFunc == NULL)
-      return -1;
-    DB_PRINT("copying function %s with callgraph\n", RootFunc->getName().data());
+static int CopyFuncCallgraph(const llvm::StringRef FuncName,
+                               const llvm::Module *From, llvm::Module *To,
+                               ValueToValueMapTy &VVMap,
+                               PoclTypeRemapper *TypeMapper) {
+  llvm::StringSet<> Callees;
+  llvm::Function *RootFunc = From->getFunction(FuncName);
+  if (RootFunc == NULL)
+    return -1;
+  DB_PRINT("copying function %s with callgraph\n", RootFunc->getName().data());
 
-    find_called_functions(RootFunc, callees);
+  find_called_functions(RootFunc, Callees);
 
-    // First copy the callees of func, then the function itself.
-    // Recurse into callees to handle the case where kernel library
-    // functions call other kernel library functions.
-    llvm::StringSet<>::iterator ci,ce;
-    for (ci = callees.begin(), ce = callees.end(); ci != ce; ci++) {
-      llvm::StringRef Name = ci->getKey();
-      llvm::Function *SrcFunc = from->getFunction(Name);
-      if (!SrcFunc->isDeclaration()) {
-        copy_func_callgraph(Name, from, to, vvm);
-      } else {
-        DB_PRINT("%s is declaration, not recursing into it!\n",
-                 SrcFunc->getName().str().c_str());
-      }
-      CopyFunc(Name, from, to, vvm);
+  // First copy the callees of func, then the function itself.
+  // Recurse into callees to handle the case where kernel library
+  // functions call other kernel library functions.
+  llvm::StringSet<>::iterator CalleI, CalleEnd;
+  for (CalleI = Callees.begin(), CalleEnd = Callees.end();
+       CalleI != CalleEnd; CalleI++) {
+    llvm::StringRef Name = CalleI->getKey();
+    llvm::Function *SrcFunc = From->getFunction(Name);
+    if (!SrcFunc->isDeclaration()) {
+      CopyFuncCallgraph(Name, From, To, VVMap, TypeMapper);
+    } else {
+      DB_PRINT("%s is declaration, not recursing into it!\n",
+               SrcFunc->getName().str().c_str());
     }
-    CopyFunc(func_name, from, to, vvm);
-    return 0;
+    CopyFunc(Name, From, To, VVMap, TypeMapper);
+  }
+  CopyFunc(FuncName, From, To, VVMap, TypeMapper);
+  return 0;
+}
+
+static int CopyFuncCallgraph(const llvm::StringRef FuncName,
+                               const llvm::Module *From, llvm::Module *To,
+                               ValueToValueMapTy &VVMap) {
+#ifndef LLVM_OPAQUE_POINTERS
+  PoclTypeRemapper TypeMapper;
+  return CopyFuncCallgraph(FuncName, From, To, VVMap, &TypeMapper);
+#else
+  return CopyFuncCallgraph(FuncName, From, To, VVMap, nullptr);
+#endif
 }
 
 static void shared_copy(llvm::Module *program, const llvm::Module *lib,
@@ -401,10 +461,10 @@ static void handleDeviceSidePrintf(
 
     Function *PrintfAlloc = Lib->getFunction("pocl_printf_alloc_stub");
     assert(PrintfAlloc != nullptr);
-    copy_func_callgraph("pocl_printf_alloc_stub", Lib, Program, vvm);
-    copy_func_callgraph("pocl_printf_alloc", Lib, Program, vvm);
+    CopyFuncCallgraph("pocl_printf_alloc_stub", Lib, Program, vvm);
+    CopyFuncCallgraph("pocl_printf_alloc", Lib, Program, vvm);
     if (DeviceSupportsImmediateFlush)
-      copy_func_callgraph("pocl_flush_printf_buffer", Lib, Program, vvm);
+      CopyFuncCallgraph("pocl_flush_printf_buffer", Lib, Program, vvm);
 
     std::set<CallInst *> Calls;
     for (auto U : CalledPrintf->users()) {
@@ -448,7 +508,7 @@ static void replaceIntrinsics(llvm::Module *Program, const llvm::Module *Lib,
         const char *ReplacementName =
             IntrinRepl(FI->getName().data(), FI->getName().size());
         if (ReplacementName) {
-          copy_func_callgraph(ReplacementName, Lib, Program, vvm);
+          CopyFuncCallgraph(ReplacementName, Lib, Program, vvm);
           Function *Repl = Program->getFunction(ReplacementName);
           assert(Repl);
           EraseMap[&*FI] = Repl;
@@ -535,7 +595,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
   for (di = DeclaredFunctions.begin(), de = DeclaredFunctions.end();
        di != de; di++) {
       llvm::StringRef r = di->getKey();
-      if (copy_func_callgraph(r, Lib, Program, vvm)) {
+      if (CopyFuncCallgraph(r, Lib, Program, vvm)) {
         Function *f = Program->getFunction(r);
 
         if (f->getName() == "__to_local" ||
@@ -638,12 +698,12 @@ int copyKernelFromBitcode(const char* Name, llvm::Module *ParallelBC,
   }
 
   const StringRef KernelName(Name);
-  copy_func_callgraph(KernelName, Program, ParallelBC, vvm);
+  CopyFuncCallgraph(KernelName, Program, ParallelBC, vvm);
 
   if (DevAuxFuncs) {
     const char **Func = DevAuxFuncs;
     while (*Func != nullptr) {
-      copy_func_callgraph(*Func++, Program, ParallelBC, vvm);
+      CopyFuncCallgraph(*Func++, Program, ParallelBC, vvm);
     }
   }
 
@@ -759,7 +819,7 @@ bool moveProgramScopeVarsOutOfProgramBc(llvm::LLVMContext *Context,
       } else {
           if (F->getCallingConv() == llvm::CallingConv::SPIR_FUNC)
           POCL_MSG_WARN("Copying non-kernel function %s\n", FName.c_str());
-          copy_func_callgraph(F->getName(), ProgramBC, OutputBC, VVM);
+          CopyFuncCallgraph(F->getName(), ProgramBC, OutputBC, VVM);
           Function *DestF = OutputBC->getFunction(FName);
           assert(DestF);
           DestF->setDSOLocal(false);
