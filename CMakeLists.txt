@@ -1111,7 +1111,7 @@ function(print_target_properties target)
 endfunction()
 
 if(ENABLE_HOST_CPU_DEVICES AND NOT ENABLE_CONFORMANCE)
-  find_package(onnxruntime)
+  find_package(onnxruntime QUIET)
   set(HAVE_ONNXRT ${onnxruntime_FOUND})
   if(${HAVE_ONNXRT})
     print_target_properties(onnxruntime::onnxruntime)
