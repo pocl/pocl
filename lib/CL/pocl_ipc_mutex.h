@@ -50,7 +50,7 @@ int pocl_ipc_mutex_create (const char *name, pocl_ipc_mutex_t *ipc_mtx);
  * has locked the mutex. The mutex is unlocked in case the process
  * holding the lock terminates without unlocking first.
  *
- * The 'ípc_mtx' must be a valid object created by pocl_ipc_mutex_create().
+ * The 'ipc_mtx' must be a valid object created by pocl_ipc_mutex_create().
  *
  * If mutex is locked successfully, zero is returned. Otherwise, on an error,
  * non-zero is returned.  */
@@ -58,7 +58,7 @@ int pocl_ipc_mutex_lock (pocl_ipc_mutex_t ipc_mtx);
 
 /** Combined variant of pocl_ipc_mutex_create() and pocl_ipc_mutex_lock().  */
 int pocl_ipc_mutex_create_and_lock (const char *name,
-                                      pocl_ipc_mutex_t *ipc_mtx);
+                                    pocl_ipc_mutex_t *ipc_mtx);
 
 /** Releases the mutex.
  *

@@ -127,8 +127,8 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
                                 command, specialize);
 
 #ifdef _WIN32
-  // Avoid race condition of multiple processes accessing same files.
-  char MtxName[MAX_PATH];
+  /* Avoid race condition of multiple processes accessing same files. */
+  char MtxName[MAX_PATH];  /* MAX_PATH is defined by Windows API.  */
   strncpy (MtxName, program->build_hash[device_i], MAX_PATH);
   MtxName[MAX_PATH - 1] = '\0';
   pocl_ipc_mutex_t ipc_mtx;
