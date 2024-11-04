@@ -54,6 +54,9 @@ typedef struct _pocl_thread_t *pocl_thread_t;
 #error Need atomic_inc() builtin for this compiler
 #endif
 
+#define POCL_SET_THREAD_STACK_SIZE(N) (void *)0
+#define POCL_GET_THREAD_STACK_SIZE() 0
+
 #ifdef __cplusplus
 extern "C" {
 #endif

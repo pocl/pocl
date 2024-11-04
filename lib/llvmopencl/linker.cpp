@@ -120,6 +120,8 @@ public:
   }
 };
 
+using ValueToSizeTMapTy = ValueMap<const Value *, size_t>;
+
 // A workaround for issue #889. In some cases, functions seem
 // to get multiple DISubprogram nodes attached. This causes
 // the llvm::verifyModule to complain, and
@@ -333,6 +335,68 @@ static int CopyFuncCallgraph(const llvm::StringRef FuncName,
 #else
   return CopyFuncCallgraph(FuncName, From, To, VVMap, nullptr);
 #endif
+}
+
+/* Estimates the size of stack frame used by a function and all functions
+ * it calls. Since OpenCL forbids recursion, we can error out if it happens.
+ * The estimate should be the worst-case, since the code at this point
+ * is not optimized at all, and the optimization should move some
+ * variables to registers.
+ */
+static size_t estimateFunctionStackSize(llvm::Function *Func,
+                                        const llvm::Module *Mod,
+                                        std::vector<Function *> &CallChain,
+                                        ValueToSizeTMapTy &StackSizesMap) {
+  if (Func == nullptr)
+    return 0;
+  DB_PRINT("estimating function stack size of %s\n", Func->getName().data());
+  size_t TotalSize = 0;
+  CallChain.push_back(Func);
+
+  for (auto FIter = Func->begin(); FIter != Func->end(); FIter++) {
+    for (auto BIter = FIter->begin(); BIter != FIter->end(); BIter++) {
+
+      AllocaInst *AI = dyn_cast<AllocaInst>(BIter);
+      if (AI) {
+        auto AllocatedType = AI->getAllocatedType();
+        const llvm::DataLayout &DL = Mod->getDataLayout();
+#if LLVM_MAJOR > 15
+        if (auto AllocaSize = AI->getAllocationSize(DL)) {
+          TotalSize += AllocaSize->getKnownMinValue();
+        }
+#else
+        if (auto AllocaSize = AI->getAllocationSizeInBits(DL)) {
+          TotalSize += AllocaSize->getKnownMinSize();
+        }
+#endif
+        continue;
+      }
+
+      CallInst *CI = dyn_cast<CallInst>(BIter);
+      Function *Callee;
+      if (CI && (Callee = CI->getCalledFunction())) {
+
+        if (std::find(CallChain.begin(), CallChain.end(), Callee) !=
+            CallChain.end()) {
+          DB_PRINT("error: encountered recursion!\n");
+          CallChain.pop_back();
+          return 0;
+        }
+
+        auto It = StackSizesMap.find(Callee);
+        if (It != StackSizesMap.end()) {
+          TotalSize += It->second;
+        } else {
+          TotalSize +=
+              estimateFunctionStackSize(Callee, Mod, CallChain, StackSizesMap);
+        }
+      }
+    }
+  }
+
+  CallChain.pop_back();
+  StackSizesMap.insert(std::make_pair(Func, TotalSize));
+  return TotalSize;
 }
 
 static void shared_copy(llvm::Module *program, const llvm::Module *lib,
@@ -670,11 +734,24 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
 
   replaceIntrinsics(Program, Lib, vvm, ClDev);
 
+  std::vector<Function *> CallChain;
+  ValueToSizeTMapTy FuncStackSizeMap;
   for (fi = Program->begin(), fe = Program->end(); fi != fe; fi++) {
     if (fi->isDeclaration())
       continue;
     if (!fi->hasName()) {
       fi->setName("__anonymous_function");
+    }
+    if (isKernelToProcess(*fi)) {
+      size_t EstStackSize =
+          estimateFunctionStackSize(&*fi, Program, CallChain, FuncStackSizeMap);
+      DB_PRINT("Kernel %s Estimated stack size: %zu \n", fi->getName().data(),
+               EstStackSize);
+      if (EstStackSize > 0) {
+        std::string MetadataKey = fi->getName().str();
+        MetadataKey.append(".meta.est.stack.size");
+        setModuleIntMetadata(Program, MetadataKey.c_str(), EstStackSize);
+      }
     }
   }
 

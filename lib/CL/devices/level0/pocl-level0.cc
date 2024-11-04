@@ -85,13 +85,14 @@ private:
   void getSubmitBatchUnlocked(BatchType &SubmitBatch);
 };
 
-static void pocl_level0_local_size_optimizer(cl_device_id Dev, cl_kernel Kernel,
-                                             unsigned DeviceI, size_t GlobalX,
-                                             size_t GlobalY, size_t GlobalZ,
-                                             size_t *LocalX, size_t *LocalY,
-                                             size_t *LocalZ) {
-  assert(Kernel->data[DeviceI] != nullptr);
-  Level0Kernel *L0Kernel = (Level0Kernel *)Kernel->data[DeviceI];
+static void pocl_level0_local_size_optimizer(cl_device_id Dev, cl_kernel Ker,
+                                             unsigned DeviceI,
+                                             size_t MaxGroupSize,
+                                             size_t GlobalX, size_t GlobalY,
+                                             size_t GlobalZ, size_t *LocalX,
+                                             size_t *LocalY, size_t *LocalZ) {
+  assert(Ker->data[DeviceI] != nullptr);
+  Level0Kernel *L0Kernel = (Level0Kernel *)Ker->data[DeviceI];
   ze_kernel_handle_t HKernel = L0Kernel->getAnyCreated();
 
   uint32_t SuggestedX = 0;
@@ -116,8 +117,8 @@ static void pocl_level0_local_size_optimizer(cl_device_id Dev, cl_kernel Kernel,
         "pocl_level0_local_size_optimizer : HKernel == nullptr\n");
   }
 
-  pocl_default_local_size_optimizer(Dev, Kernel, DeviceI, GlobalX, GlobalY,
-                                    GlobalZ, LocalX, LocalY, LocalZ);
+  pocl_default_local_size_optimizer(Dev, Ker, DeviceI, MaxGroupSize, GlobalX,
+                                    GlobalY, GlobalZ, LocalX, LocalY, LocalZ);
 }
 
 static int pocl_level0_verify_ndrange_sizes(const size_t *GlobalOffsets,

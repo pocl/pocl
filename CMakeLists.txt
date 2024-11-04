@@ -1373,7 +1373,16 @@ __opencl_c_atomic_scope_all_devices __opencl_c_generic_address_space \
 __opencl_c_work_group_collective_functions")
 
 # enabled by default
+# when disabled, depending on setting of ENABLE_CONFORMANCE, denorms are disabled
+# (FTZ and DAZ = on) for all floats (conformance=OFF) or all but fp64 (conformance=ON)
 option(HOST_CPU_ENABLE_DENORMS "enable denorm support for CPU devices" ON)
+
+# when enabled, the compiler estimates the worst-case stack size used by a kernel's
+# workgroup function, and limits the workgroup size of the kernel accordingly (via
+# CL_KERNEL_WORK_GROUP_SIZE property); however, not all tests check the property,
+# and they try to enqueue larger WG sizes, which fails the tests. Mainly a problem
+# with AMD SDK, piglit & chipStar tests.
+option(HOST_CPU_ENABLE_STACK_SIZE_CHECK "enable stack size checking for CPU devices" OFF)
 
 # Host CPU device: Unfinished/undertested extensions only advertised when conformance
 # is OFF.
@@ -2368,6 +2377,7 @@ if (ENABLE_LLVM)
   MESSAGE(STATUS "HOST_CPU_FORCED: ${HOST_CPU_FORCED}")
   MESSAGE(STATUS "HOST_CPU_SUPPORTS_FLOAT16: ${HOST_CPU_SUPPORTS_FLOAT16}")
   MESSAGE(STATUS "HOST_CPU_ENABLE_DENORMS: ${HOST_CPU_ENABLE_DENORMS}")
+  MESSAGE(STATUS "HOST_CPU_ENABLE_STACK_SIZE_CHECK: ${HOST_CPU_ENABLE_STACK_SIZE_CHECK}")
   endif()
 endif()
 MESSAGE(STATUS "")
