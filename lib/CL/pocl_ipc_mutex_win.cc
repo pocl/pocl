@@ -1,7 +1,7 @@
 /* pocl_ipc_mutex.h: Named interprocess mutex that does not cause deadlock if a
    process dies or exits without unlocking.
 
-   Copyright (c) 2024 Henry Linjam‰ki / Intel Finland Oy
+   Copyright (c) 2024 Henry Linjam√§ki / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
