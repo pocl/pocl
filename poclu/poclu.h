@@ -281,7 +281,7 @@ POCLU_API int POCLU_CALL poclu_supports_extension (cl_device_id dev,
 POCLU_API char *POCLU_CALL poclu_read_binfile (const char *filename,
                                                size_t *len);
 /**
- * \brief write content to a file.
+ * \brief write content to a file in text mode.
  *
  * filename can absolute or relative, according to the fopen
  * implementation on system.
