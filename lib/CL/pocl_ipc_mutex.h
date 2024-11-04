@@ -1,6 +1,6 @@
 /* pocl_ipc_mutex.h: Named interprocess mutex
 
-   Copyright (c) 2024 Henry Linjam‰ki / Intel Finland Oy
+   Copyright (c) 2024 Henry Linjam√§ki / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -20,7 +20,7 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
    IN THE SOFTWARE.
 */
-/* This header hosts API for named interprocess mutex that does not
+/* \file pocl_ip_mutex.h named interprocess mutex that does not
  * cause deadlock if a process dies or exits without unlocking
  * first. Beware that deadlocks are still possible within process if a
  * thread forgets to unlock the mutex.  */
@@ -50,7 +50,7 @@ int pocl_ipc_mutex_create (const char *name, pocl_ipc_mutex_t *ipc_mtx);
  * has locked the mutex. The mutex is unlocked in case the process
  * holding the lock terminates without unlocking first.
  *
- * The 'Ìpc_mtx' must be a valid object created by pocl_ipc_mutex_create().
+ * The '√≠pc_mtx' must be a valid object created by pocl_ipc_mutex_create().
  *
  * If mutex is locked successfully, zero is returned. Otherwise, on an error,
  * non-zero is returned.  */
