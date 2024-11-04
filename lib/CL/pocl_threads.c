@@ -62,3 +62,40 @@ pocl_timed_wait (pocl_cond_t *c, pocl_lock_t *m, unsigned long usec)
 
   PTHREAD_CHECK2 (ETIMEDOUT, pthread_cond_timedwait (c, m, &now));
 }
+
+int
+pocl_set_thread_stack_size (size_t ThreadStackSize)
+{
+  pthread_attr_t PTAttr;
+#ifdef __linux__
+  if (pthread_getattr_np (pthread_self (), &PTAttr))
+    return -1;
+  int err = pthread_attr_setstacksize (&PTAttr, ThreadStackSize);
+  pthread_attr_destroy (&PTAttr);
+  return err;
+#else
+  return -1;
+#endif
+}
+
+size_t
+pocl_get_thread_stack_size ()
+{
+  pthread_attr_t PTAttr;
+  size_t ThreadStackSize = 0;
+#ifdef __linux__
+  if (pthread_getattr_np (pthread_self (), &PTAttr))
+    return -1;
+  if (pthread_attr_getstacksize (&PTAttr, &ThreadStackSize))
+    ThreadStackSize = 0;
+  pthread_attr_destroy (&PTAttr);
+#endif
+#ifdef __APPLE__
+  ThreadStackSize = pthread_get_stacksize_np (pthread_self ());
+#endif
+#if DEBUG_PTHREADS
+  POCL_MSG_PRINT_INFO ("Thread %zu |||  stack size: %zu\n",
+                       (size_t)pthread_self (), ThreadStackSize);
+#endif
+  return ThreadStackSize;
+}

@@ -920,12 +920,22 @@ struct pocl_device_ops {
   /**
    * The device can override this function to perform driver-specific
    * optimizations to the local size dimensions, whenever the decision
-   * is left to the runtime. */
-  void (*compute_local_size) (cl_device_id dev, cl_kernel kernel,
+   * is left to the runtime.
+   *
+   * @param max_group_size The maximum total size of the WG; either
+   *        device->max_work_group_size, or if present:
+   *        kernel->meta->max_workgroup_size[device_i] (this can be smaller)
+   * */
+  void (*compute_local_size) (cl_device_id dev,
+                              cl_kernel kernel,
                               unsigned device_i,
-                              size_t global_x, size_t global_y,
-                              size_t global_z, size_t *local_x,
-                              size_t *local_y, size_t *local_z);
+                              size_t max_group_size,
+                              size_t global_x,
+                              size_t global_y,
+                              size_t global_z,
+                              size_t *local_x,
+                              size_t *local_y,
+                              size_t *local_z);
 
   /* verifies that the device can run the requested WG sizes/offsets.
    * better to do this at enqueueNDRange time, than handling
@@ -1174,6 +1184,11 @@ struct _cl_device_id {
      runtime/driver allocate the local space. */
   int device_alloca_locals;
 
+  /* Optional property. If the device uses stack and has stack size limitation
+   * (e.g. it does not convert all private memory to registers/spills),
+   * it should set up this property*/
+  size_t work_group_stack_size;
+
   /* If > 0, specialized versions of the work-group functions are generated
      which assume each grid dimension is of at most the given width. This
      assumption can be then taken in account in IR optimization and codegen
@@ -1188,7 +1203,6 @@ struct _cl_device_id {
      The flags will be added after the following command line:
      clang -o final.bin input.obj [flags]
   */
-
   const char **final_linkage_flags;
 
   /* Auxiliary functions required by the device binary which should

@@ -105,6 +105,11 @@ pocl_kernel_calc_wg_size (cl_device_id dev, cl_kernel kernel,
   max_local_z
       = work_dim > 2 ? dev->max_work_item_sizes[2] : 1;
   max_group_size = dev->max_work_group_size;
+  if (kernel->meta && kernel->meta->max_workgroup_size
+      && kernel->meta->max_workgroup_size[device_i])
+    {
+      max_group_size = kernel->meta->max_workgroup_size[device_i];
+    }
 
   if (local_work_size != NULL)
     {
@@ -119,9 +124,9 @@ pocl_kernel_calc_wg_size (cl_device_id dev, cl_kernel kernel,
           "Local worksize dimensions are equal to zero\n");
 
       POCL_RETURN_ERROR_ON (
-          (total_local_size > max_group_size),
-          CL_INVALID_WORK_GROUP_SIZE,
-          "Local worksize dimensions exceed device's max workgroup size\n");
+        (total_local_size > max_group_size), CL_INVALID_WORK_GROUP_SIZE,
+        "Local worksize dimensions (%zu) exceed the device's (or kernel's) "
+        "max workgroup size (%zu)\n", total_local_size, max_group_size);
 
       POCL_RETURN_ERROR_ON (
           (local_x > max_local_x), CL_INVALID_WORK_ITEM_SIZE,
@@ -184,15 +189,13 @@ pocl_kernel_calc_wg_size (cl_device_id dev, cl_kernel kernel,
   else if (local_work_size == NULL)
     {
       if (dev->ops->compute_local_size)
-        dev->ops->compute_local_size (dev, kernel, device_i,
-                                          global_x, global_y,
-                                          global_z, &local_x, &local_y,
-                                          &local_z);
+        dev->ops->compute_local_size (dev, kernel, device_i, max_group_size,
+                                      global_x, global_y, global_z, &local_x,
+                                      &local_y, &local_z);
       else
-        pocl_default_local_size_optimizer (dev, kernel, device_i,
-                                           global_x, global_y,
-                                           global_z, &local_x, &local_y,
-                                           &local_z);
+        pocl_default_local_size_optimizer (
+          dev, kernel, device_i, max_group_size, global_x, global_y, global_z,
+          &local_x, &local_y, &local_z);
     }
 
   POCL_MSG_PRINT_INFO (

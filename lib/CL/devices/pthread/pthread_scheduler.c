@@ -61,6 +61,7 @@ struct pool_thread_data
   unsigned index;
   /* printf buffer*/
   void *printf_buffer;
+  size_t thread_stack_size;
 };
 
 typedef struct scheduler_data_
@@ -143,6 +144,14 @@ pthread_scheduler_init (cl_device_id device)
       pthread_scheduler_uninit (device);
       return CL_OUT_OF_HOST_MEMORY;
     }
+
+#ifdef HOST_CPU_ENABLE_STACK_SIZE_CHECK
+  size_t min_thread_stack_size = SIZE_MAX;
+  for (i = 0; i < num_worker_threads; ++i)
+    min_thread_stack_size = min (scheduler.thread_pool[i].thread_stack_size,
+                                 min_thread_stack_size);
+  device->work_group_stack_size = min_thread_stack_size;
+#endif
 
   return CL_SUCCESS;
 }
@@ -676,6 +685,17 @@ pocl_pthread_driver_thread (void *p)
   td->num_threads = scheduler.num_threads;
   td->printf_buffer = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
                                            scheduler.printf_buf_size);
+
+#ifdef HOST_CPU_ENABLE_STACK_SIZE_CHECK
+  /* Try to set the stack size to 8MB */
+  POCL_SET_THREAD_STACK_SIZE (8 * 1024 * 1024);
+  size_t stack_size = POCL_GET_THREAD_STACK_SIZE ();
+  /* if the call fails, set a safe minimum */
+  if (stack_size == 0)
+    stack_size = 512 * 1024;
+  /* keep some margin for the thread's own data */
+  td->thread_stack_size = stack_size * 3 / 4;
+#endif
 
   assert (scheduler.local_mem_size > 0);
   td->local_mem = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,

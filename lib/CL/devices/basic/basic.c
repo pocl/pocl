@@ -221,6 +221,17 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   device->num_partition_properties = 0;
   device->num_partition_types = 0;
 
+#ifdef HOST_CPU_ENABLE_STACK_SIZE_CHECK
+  size_t stack_size = POCL_GET_THREAD_STACK_SIZE ();
+  /* if the call fails, set a safe minimum */
+  if (stack_size == 0)
+    stack_size = 512 * 1024;
+  /* since the basic device does not have its own thread,
+   * it also doesn't have its own stack -> try to
+   * keep the max stack size very low. */
+  device->work_group_stack_size = stack_size / 2;
+#endif
+
   assert (device->printf_buffer_size > 0);
   d->printf_buffer
     = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, device->printf_buffer_size);

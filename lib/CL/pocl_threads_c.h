@@ -33,7 +33,7 @@
 
 #include "pocl_export.h"
 
-/* To get adaptive mutex type */
+/* To get adaptive mutex type & pthread attrs */
 #ifndef __USE_GNU
 #define __USE_GNU
 #endif
@@ -116,6 +116,14 @@ extern "C"
       PTHREAD_CHECK (pthread_sigmask (SIG_BLOCK, &signal_mask, NULL));        \
     }                                                                         \
   while (0)
+
+POCL_EXPORT
+int pocl_set_thread_stack_size (size_t ThreadStackSize);
+POCL_EXPORT
+size_t pocl_get_thread_stack_size ();
+
+#define POCL_SET_THREAD_STACK_SIZE(N) pocl_set_thread_stack_size (N)
+#define POCL_GET_THREAD_STACK_SIZE() pocl_get_thread_stack_size ()
 
 /* Generic functionality for handling different types of
    OpenCL (host) objects. */
