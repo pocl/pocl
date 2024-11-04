@@ -34,8 +34,9 @@ int main(int argc, char **argv)
   krn_src = poclu_read_file(SRCDIR "/tests/runtime/test_kernel_cache_includes.cl");
   TEST_ASSERT(krn_src);
 
-  err = poclu_write_file(BUILDDIR "/tests/runtime/test_include.h", first_include,
-                         sizeof(first_include)-1);
+  err = poclu_write_file_in_mode (BUILDDIR "/tests/runtime/test_include.h",
+                                  first_include, sizeof (first_include) - 1,
+                                  "w");
   TEST_ASSERT(err == 0);
 
   program = clCreateProgramWithSource(ctx, 1, &krn_src, NULL, &err);
@@ -61,8 +62,9 @@ int main(int argc, char **argv)
   program2 = clCreateProgramWithSource(ctx, 1, &krn_src, NULL, &err);
   CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource 2");
 
-  err = poclu_write_file(BUILDDIR "/tests/runtime/test_include.h", second_include,
-                         sizeof(second_include)-1);
+  err = poclu_write_file_in_mode (BUILDDIR "/tests/runtime/test_include.h",
+                                  second_include, sizeof (second_include) - 1,
+                                  "w");
   TEST_ASSERT(err == 0);
 
   err = clBuildProgram(program2, 0, NULL, NULL, NULL, NULL);

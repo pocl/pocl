@@ -280,18 +280,20 @@ POCLU_API int POCLU_CALL poclu_supports_extension (cl_device_id dev,
  */
 POCLU_API char *POCLU_CALL poclu_read_binfile (const char *filename,
                                                size_t *len);
+
 /**
- * \brief write content to a file in text mode.
+ * Write content to a file in the given mode.
  *
- * filename can absolute or relative, according to the fopen
+ * The file can absolute or relative path, according to the fopen
  * implementation on system.
- * @param filename [in] string to the file.
- * @param content [in] string to be written.
- * @param size [in] size of the content.
- * @return -1 if there is any error otherwise 0.
+ *
+ * \param size The number of bytes to be written.
+ * \param mode The mode is in fopen().
+ * \return -1 if there is any error, otherwise 0.
  */
-POCLU_API int POCLU_CALL poclu_write_file (const char *filename, char *content,
-                                           size_t size);
+POCLU_API int POCLU_CALL poclu_write_file_in_mode (const char *file,
+                                                   char *content, size_t size,
+                                                   const char *mode);
 
 /**
  * Parse a platform or device version string.
@@ -302,11 +304,10 @@ POCLU_API int POCLU_CALL poclu_write_file (const char *filename, char *content,
 int poclu_parse_version_string (const char *string);
 
 /**
- * Same as poclu_write_file() but with contents written into the file in
- * binary mode.
+ * Same as poclu_write_file(file, content, size, "wb").
  */
-POCLU_API int POCLU_CALL poclu_write_binfile (const char *filename,
-                                              char *content, size_t size);
+POCLU_API int POCLU_CALL poclu_write_binfile (const char *file, char *content,
+                                              size_t size);
 
 /**
  * \brief wrapper for poclu_load_program_multidev, see it for details.
