@@ -94,6 +94,7 @@
     .type_qualifier = CL_KERNEL_ARG_TYPE_NONE, .type_size = 0                 \
   }
 
+/* TODO: IS_DBK is currently not used */
 /* initializers for builtin kernel */
 #define BIKD_FULL(ID, NAME, NARGS, IS_DBK, LOCAL_SIZE, ARGUMENTS...)          \
   {                                                                           \
@@ -108,11 +109,12 @@
          | POCL_HAS_KERNEL_ARG_NAME),                                         \
     .reqd_wg_size = { 0, 0, 0 }, .wg_size_hint = { 0, 0, 0 },                 \
     .vectypehint = { 0 }, .total_argument_storage_size = 0,                   \
-    .max_subgroups = 0, .compile_subgroups = 0, .max_workgroup_size = NULL,   \
+    .max_subgroups = NULL, .compile_subgroups = NULL,                         \
+    .max_workgroup_size = NULL,                                               \
     .preferred_wg_multiple = NULL, .local_mem_size = NULL,                    \
     .private_mem_size = NULL, .spill_mem_size = NULL, .build_hash = NULL,     \
-    .builtin_kernel_id = ID, .builtin_max_global_work = { 0, 0, 0 },          \
-    .data = NULL                                                              \
+    .builtin_kernel_id = ID, .builtin_kernel_attrs = NULL,                    \
+    .builtin_max_global_work = {{ 0, 0, 0 }}, .data = NULL                    \
   }
 
 // BIKD for non-DBK
