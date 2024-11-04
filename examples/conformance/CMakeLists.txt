@@ -1234,3 +1234,12 @@ foreach(CTSTEST IN ITEMS conformance_main_multiples conformance_main_c11_atomics
     APPEND PROPERTY
     LABELS "long")
 endforeach()
+
+# fails currently because of a SPIR-V issue; the non-SPIR-V
+# version of the test works as expected.
+# See https://github.com/pocl/pocl/issues/1582
+# and https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/2468
+if(LLVM_VERSION VERSION_GREATER_EQUAL 19.0)
+  set_property(TEST conformance_spirv_basic_micro_progvar
+    PROPERTY DISABLED 1)
+endif()
