@@ -433,7 +433,7 @@ pocl_write_tempfile (char *output_path,
 char *
 pocl_parent_path (char *path)
 {
-  return dirname (path);
+  return strcpy(path, dirname (path));
 }
 
 pocl_file_type
