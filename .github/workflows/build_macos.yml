@@ -16,6 +16,10 @@ on:
       - 'LICENSE'
       - 'README.*'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
 env:
   POCL_CACHE_DIR: "/tmp/GH_POCL_CACHE"
   CTEST_FLAGS: "--output-on-failure --test-output-size-failed 128000 --test-output-size-passed 128000"
