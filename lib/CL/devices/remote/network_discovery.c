@@ -24,6 +24,7 @@
 */
 
 #include <stdatomic.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -61,27 +62,26 @@ AvahiServiceBrowser **service_browser = NULL;
   while (0)
 
 /**
- * This structure contains remote server inforamtion about remote server found
+ * Represents information about a remote server discovered on the network.
+ *
+ * This structure contains remote server information about remote servers found
  * through discovery. A hash table handle (`UT_hash_handle`) is included to
  * allow instances of this struct to be managed in a hash table, preventing
  * redundant entries when the same server is discovered multiple times.
- *
- * \brief Represents information about a remote server discovered on the
- * network.
  */
 typedef struct server_info_t
 {
-  char *id;             // Unique ID with which server advertises itself
-  char *domain;         // Domain name in which the server was found
-  char *ip_port;        // "IP:port"
-  cl_uint device_count; // Number of devices in the remote server
+  char *id;             /* Unique ID with which server advertises itself */
+  char *domain;         /* Domain name in which the server was found */
+  char *ip_port;        /* "IP:port" */
+  cl_uint device_count; /* Number of devices in the remote server */
   UT_hash_handle hh;
 } server_info;
 
 /* Function pointer for the callback defined in pocl runtime to dynamically
  * add and initialize devices in the discovered remote server.
  */
-cl_int (*disco_dev_init) (const char *, unsigned);
+cl_int (*add_discovered_device) (const char *, unsigned);
 
 /* Function pointer for the callback defined in pocl-r driver to reconnect
  * to a know server with same session.
@@ -93,7 +93,30 @@ unsigned dev_type_idx;
 static server_info *server_table = NULL;
 static pocl_lock_t server_info_lock = POCL_LOCK_INITIALIZER;
 
-void
+/*
+ * Network Discovery Overview
+ *
+ * This file handles network discovery of remote servers, allowing different
+ * discovery methods to run simultaneously. Currently, DNS-based discovery
+ * using Avahi and DHT-based discovery using OpenDHT are supported. The remote
+ * driver initiates network discovery by calling init_network_discovery, which
+ * starts the discovery methods in independent threads based on build options.
+ *
+ * After initialization, each discovery method operates in the background to
+ * find advertised remote servers. Each method has specific callbacks to
+ * process discovered servers, extracting necessary information like the
+ * server ID, domain, and IP address. All discovery methods share a single
+ * hash table for storing server details.
+ *
+ * The callbacks invoke handle_server_discovery, which decides if a server
+ * should be added, reconnected, or ignored based on the provided information.
+ * If a server needs to be added, register_server is called; if it needs
+ * reconnection, a reconnect callback is triggered. handle_server_discovery
+ * manages server handling, allowing each discovery method to operate
+ * independently but share a common data structure for discovered servers.
+ */
+
+static void
 destroy_server_info_table (server_info *info)
 {
   server_info *current;
@@ -118,14 +141,14 @@ register_server (const char *id,
                  cl_uint device_count,
                  server_info *p_info)
 {
-  if (!device_count)
+  if (device_count == 0)
     {
       POCL_MSG_ERR ("Resolver called with zero devices.\n");
       return;
     }
 
   server_info *new_server = p_info;
-  if (!new_server)
+  if (new_server == NULL)
     {
       new_server = (server_info *)calloc (1, sizeof (*new_server));
       new_server->id = strndup (id, strlen (id));
@@ -141,11 +164,11 @@ register_server (const char *id,
       snprintf (dev_param, sizeof (dev_param), "%s/%d", new_server->ip_port,
                 i);
 
-      cl_int err = disco_dev_init (dev_param, dev_type_idx);
+      cl_int err = add_discovered_device (dev_param, dev_type_idx);
 
       if (err)
         {
-          if (!p_info)
+          if (p_info == NULL)
             {
               FREE_INFO (new_server);
               POCL_MEM_FREE (new_server);
@@ -155,7 +178,7 @@ register_server (const char *id,
         }
     }
 
-  if (!p_info)
+  if (p_info == NULL)
     {
       HASH_ADD_KEYPTR (hh, server_table, new_server->ip_port,
                        strlen (new_server->ip_port), new_server);
@@ -167,11 +190,11 @@ register_server (const char *id,
  * decides to add, reconnect or ignore the passed server and its devices.
  */
 static void
-resolver (const char *id,
-          const char *domain,
-          const char *server_key,
-          const char *type,
-          cl_uint device_count)
+handle_server_discovery (const char *id,
+                         const char *domain,
+                         const char *server_key,
+                         const char *type,
+                         cl_uint device_count)
 {
   POCL_LOCK (server_info_lock);
 
@@ -179,13 +202,14 @@ resolver (const char *id,
 
   /* address && id -> reconnect normally
    * !address && id -> ignore new address
-   * address && !id -> session changed, add as new service but need to
-   * handle repeatr address in find or create new server function !address &&
-   * !id -> add as a new service */
+   * address && !id -> session changed, add as a new server. The repeated
+   * address handeled in find or create new server function
+   * !address && !id -> add as a new service
+   */
 
   HASH_FIND_STR (head, server_key, p_info);
 
-  if (p_info)
+  if (p_info != NULL)
     {
       if (!strncmp (p_info->id, id, SERVER_ID_SIZE))
         {
@@ -213,7 +237,7 @@ resolver (const char *id,
             break;
         }
 
-      if (p_info)
+      if (p_info != NULL)
         {
           POCL_MSG_PRINT_REMOTE (
             "Avahi / DHT resolver: Server '%s' of type '%s' in "
@@ -242,7 +266,7 @@ resolver (const char *id,
 static void
 clear_avahi ()
 {
-  if (service_browser)
+  if (service_browser != NULL)
     {
       for (int i = 0; i < domain_count; i++)
         avahi_service_browser_free (service_browser[i]);
@@ -251,13 +275,13 @@ clear_avahi ()
       service_browser = NULL;
     }
 
-  if (avahi_client)
+  if (avahi_client != NULL)
     {
       avahi_client_free (avahi_client);
       avahi_client = NULL;
     }
 
-  if (avahi_threaded_poll)
+  if (avahi_threaded_poll != NULL)
     {
       avahi_threaded_poll_free (avahi_threaded_poll);
       avahi_threaded_poll = NULL;
@@ -300,7 +324,7 @@ avahi_resolve_callback (AvahiServiceResolver *r,
       cl_uint dev_count = strlen (text) - 2;
       avahi_free (text);
 
-      resolver (name, domain, server_key, type, dev_count);
+      handle_server_discovery (name, domain, server_key, type, dev_count);
 
       break;
 
@@ -388,7 +412,7 @@ avahi_client_callback (AvahiClient *c,
  * Initialize Avahi thread and listener to look for remote servers in local
  * and other specified domains.
  */
-cl_int
+static cl_int
 init_avahi_discovery ()
 {
   cl_int errcode = CL_SUCCESS;
@@ -410,7 +434,8 @@ init_avahi_discovery ()
    * .local are used to search for available remote servers that are being
    * advertised through m-DNS or are registered in name servers of the
    * specified domain(s). */
-  const char *env = pocl_get_string_option (POCL_REMOTE_SEARCH_DOMAINS, NULL);
+  const char *env
+    = pocl_get_string_option (POCL_REMOTE_SEARCH_DOMAINS_ENV, NULL);
   if (env && *env)
     {
       /* Count the number of domains in which discovery should be conducted */
@@ -435,7 +460,7 @@ init_avahi_discovery ()
       /* Initialize browser for .local domain */
       service_browser[0] = avahi_service_browser_new (
         avahi_client, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC,
-        POCL_REMOTE_DNS_SRV_TYPE, NULL, 0, avahi_browser_callback, NULL);
+        POCL_REMOTE_DNS_SRV_TYPE_ENV, NULL, 0, avahi_browser_callback, NULL);
       POCL_GOTO_ERROR_ON (
         !service_browser[0], CL_OUT_OF_RESOURCES,
         "Avahi failed to create service browser with error: %s\n",
@@ -468,7 +493,7 @@ init_avahi_discovery ()
 
       service_browser[0] = avahi_service_browser_new (
         avahi_client, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC,
-        POCL_REMOTE_DNS_SRV_TYPE, NULL, 0, avahi_browser_callback, NULL);
+        POCL_REMOTE_DNS_SRV_TYPE_ENV, NULL, 0, avahi_browser_callback, NULL);
       POCL_GOTO_ERROR_ON (
         !service_browser[0], CL_OUT_OF_RESOURCES,
         "Avahi failed to create service browser with error: %s\n",
@@ -509,7 +534,7 @@ struct listen_context
   size_t count;
 };
 
-bool
+static bool
 dht_value_callback (const dht_value *value, bool expired, void *user_data)
 {
 
@@ -548,12 +573,12 @@ dht_value_callback (const dht_value *value, bool expired, void *user_data)
   POCL_MEM_FREE (ddata);
   dev_count = dev_count / 4;
 
-  resolver (id, common_key, key, "DHT", dev_count);
+  handle_server_discovery (id, common_key, key, "DHT", dev_count);
 
   return true;
 }
 
-void
+static void
 listen_context_free (void *user_data)
 {
   struct listen_context *ctx = (struct listen_context *)user_data;
@@ -568,7 +593,7 @@ dht_shutdown_callback (void *user_data)
   atomic_store (&ctx->stop, true);
 }
 
-dht_infohash
+static dht_infohash
 get_hash (const char *key_str)
 {
   dht_infohash key;
@@ -584,7 +609,7 @@ get_hash (const char *key_str)
  * Initialize DHT node and start the listener on the DHT network and the given
  * key.
  */
-cl_int
+static cl_int
 init_dht_discovery ()
 {
   cl_int errcode = CL_SUCCESS;
@@ -594,15 +619,21 @@ init_dht_discovery ()
   dht_runner_config_default (&dht_config);
 
   /* Port to start the DHT taken from environment or default used.*/
-  const int port = pocl_get_int_option (POCL_REMOTE_DHT_PORT, 4222);
+  const int port = pocl_get_int_option (POCL_REMOTE_DHT_PORT_ENV, 4222);
   /* DHT bootstrap node taken from environment or default used.*/
   const char *bootstrap
-    = pocl_get_string_option (POCL_REMOTE_DHT_BOOTSTRAP, "bootstrap.jami.net");
+    = pocl_get_string_option (POCL_REMOTE_DHT_BOOTSTRAP_ENV, NULL);
+  if (bootstrap == NULL)
+    {
+      POCL_MSG_ERR ("DHT bootstrap node environment variable not specified, "
+                    "disocvery failed! \n");
+      return CL_OUT_OF_RESOURCES;
+    }
   /* Common key used by the servers and clients participating in the DHT
    * network to find or publish remote server information. Taken from
    * environment or default used. */
-  common_key
-    = pocl_get_string_option (POCL_REMOTE_DHT_KEY, "poclremoteservernetwork");
+  common_key = pocl_get_string_option (POCL_REMOTE_DHT_KEY_ENV,
+                                       "poclremoteservernetwork");
 
   dht_runner_run_config (node, port, &dht_config);
   dht_runner_bootstrap (node, bootstrap, NULL);
@@ -627,17 +658,17 @@ init_dht_discovery ()
 /*****************************************************************************/
 
 /**
- * Function called by the remote driver to initialize network disocvery
+ * Function called by the remote driver to initialize network discovery
  * methods.
  */
 cl_int
-init_network_discovery (cl_int (*disco_dev_init_callback) (const char *,
+init_network_discovery (cl_int (*add_discovered_device_c) (const char *,
                                                            unsigned),
                         cl_int (*reconnect_callback) (const char *),
                         unsigned pocl_dev_type_idx)
 {
   cl_int errcode = CL_SUCCESS;
-  disco_dev_init = disco_dev_init_callback;
+  add_discovered_device = add_discovered_device_c;
   reconnect = reconnect_callback;
   dev_type_idx = pocl_dev_type_idx;
 

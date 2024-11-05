@@ -648,15 +648,15 @@ pocl_remote_reconnect_rediscover (const char *address_with_port)
     }
 
   free (addr);
-  
-  POCL_LOCK(d->slow_connection.discovery_reconnect_guard.mutex);
-  POCL_BROADCAST_COND(d->slow_connection.discovery_reconnect_guard.cond);
-  POCL_UNLOCK(d->slow_connection.discovery_reconnect_guard.mutex);
 
-  POCL_LOCK(d->fast_connection.discovery_reconnect_guard.mutex);
-  POCL_BROADCAST_COND(d->fast_connection.discovery_reconnect_guard.cond);
-  POCL_UNLOCK(d->fast_connection.discovery_reconnect_guard.mutex);
-  
+  POCL_LOCK (d->slow_connection.discovery_reconnect_guard.mutex);
+  POCL_BROADCAST_COND (d->slow_connection.discovery_reconnect_guard.cond);
+  POCL_UNLOCK (d->slow_connection.discovery_reconnect_guard.mutex);
+
+  POCL_LOCK (d->fast_connection.discovery_reconnect_guard.mutex);
+  POCL_BROADCAST_COND (d->fast_connection.discovery_reconnect_guard.cond);
+  POCL_UNLOCK (d->fast_connection.discovery_reconnect_guard.mutex);
+
   return CL_SUCCESS;
 }
 
@@ -677,6 +677,7 @@ finish_running_cmd (network_command *running_cmd,
   /* When a server is lost while some application is running then the running
    * commands certain fields have to be accordingly modified.
    *
+   * TODO:
    * IMPORTANT: To handle losing server in case of migration commands. For
    * migration command from server-1 to server-2, the command is written in
    * the inflight queue of server-2. If, server-1 fails after the client
@@ -883,7 +884,6 @@ pocl_remote_reader_pthread (void *aa)
 
   while (!this->exit_requested)
     {
-
       POCL_LOCK (connection->setup_guard.mutex);
       int fd = connection->fd;
       reader_reconnects = connection->reconnect_count;
@@ -892,9 +892,32 @@ pocl_remote_reader_pthread (void *aa)
         {
           POCL_LOCK (connection->setup_guard.mutex);
         TRY_RECONNECT:
-          
+          {
           int reconnected = pocl_remote_reconnect_socket (remote, connection);
-          if (reconnected == CL_SUCCESS)
+          if (reconnected != CL_SUCCESS)
+            {
+              if (connection->reconnect_attempts
+                  >= POCL_REMOTE_RECONNECT_MAX_ATTEMPTS)
+                {
+                  network_command *cmd = NULL;
+                  POCL_LOCK (inflight->mutex);
+                  /* Each command in the inflight queue of the failed server
+                   * has to be handled and marked as failed to prevent
+                   * deadlock. */
+                  DL_FOREACH (inflight->queue, cmd)
+                    {
+                      DL_DELETE (inflight->queue, cmd);
+                      finish_running_cmd (cmd, NETCMD_FAILED);
+                    }
+                  POCL_UNLOCK (inflight->mutex);
+                  POCL_LOCK (connection->discovery_reconnect_guard.mutex);
+                  POCL_WAIT_COND (connection->discovery_reconnect_guard.cond,
+                                  connection->discovery_reconnect_guard.mutex);
+                  POCL_UNLOCK (connection->discovery_reconnect_guard.mutex);
+                }
+              goto TRY_RECONNECT;
+            }
+          else
             {
               fd = connection->fd;
               reader_reconnects = connection->reconnect_count;
@@ -902,26 +925,7 @@ pocl_remote_reader_pthread (void *aa)
               POCL_BROADCAST_COND (connection->setup_guard.cond);
               POCL_UNLOCK (connection->setup_guard.mutex);
             }
-          else if (connection->reconnect_attempts >= POCL_REMOTE_RECONNECT_MAX_ATTEMPTS)
-            {
-              network_command *cmd = NULL;
-              POCL_LOCK (inflight->mutex);
-              /* Each command in the inflight queue of the failed server has to
-               * be handled and marked as failed to prevent deadlock. */
-              DL_FOREACH (inflight->queue, cmd)
-                {
-                  DL_DELETE (inflight->queue, cmd);
-                  finish_running_cmd (cmd, NETCMD_FAILED);
-                }
-              POCL_UNLOCK (inflight->mutex);
-              printf("\nI was here\n");
-              POCL_LOCK(connection->discovery_reconnect_guard.mutex);
-              POCL_WAIT_COND (connection->discovery_reconnect_guard.cond, connection->discovery_reconnect_guard.mutex);
-              POCL_UNLOCK(connection->discovery_reconnect_guard.mutex);
-              goto TRY_RECONNECT;
-            }
-          else
-            goto TRY_RECONNECT;
+          }
         }
 
       /* Block until there is something to read. This is especially needed to
@@ -1641,9 +1645,15 @@ find_or_create_server (const char *address_with_port, unsigned port,
     if ((strncmp (rsd->address_with_port, address_with_port, l) == 0)
         && (strlen (rsd->address_with_port) == l))
       {
-        /* This availability condition is necessary to check, in case an 'old'
-         * server joins with new session through discovery, then it should be
-         * treated as a new server as removing 'old' servers is not supported.
+        /* A server is identified by its IP and port. However, the same IP and
+         * port may represent different sessions over time. The variable
+         * 'available' is set to 'CL_FALSE' when a connection to a server is
+         * lost. If a server is found with an IP and port that matches an entry
+         * in the list, it indicates a previously connected server that was
+         * disconnected. This check ensures that servers which were marked
+         * unavailable are correctly handled. When a server joins with a new
+         * session via discovery, it should be treated as a new server, as the
+         * removal of 'old' servers is not supported.
          */
         if (!rsd->available)
           continue;

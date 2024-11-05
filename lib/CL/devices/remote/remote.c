@@ -381,7 +381,7 @@ pocl_remote_init_device_ops (struct pocl_device_ops *ops)
 
 #if defined(ENABLE_REMOTE_DISCOVERY_AVAHI)                                    \
   || defined(ENABLE_REMOTE_DISCOVERY_DHT)
-  ops->init_discovery = pocl_remote_init_discovery;
+  ops->init_discovery = pocl_remote_init_device_discovery;
 #endif
 }
 
@@ -642,11 +642,11 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
 #if defined(ENABLE_REMOTE_DISCOVERY_AVAHI)                                    \
   || defined(ENABLE_REMOTE_DISCOVERY_DHT)
 cl_int
-pocl_remote_init_discovery (cl_int (*disco_dev_init_callback) (const char *,
-                                                               unsigned),
-                            unsigned pocl_dev_type_idx)
+pocl_remote_init_device_discovery (
+  cl_int (*add_discovered_device) (const char *, unsigned),
+  unsigned pocl_dev_type_idx)
 {
-  return init_network_discovery (disco_dev_init_callback,
+  return init_network_discovery (add_discovered_device,
                                  pocl_remote_reconnect_rediscover,
                                  pocl_dev_type_idx);
 }
@@ -2803,14 +2803,14 @@ pocl_remote_get_device_info_ext (cl_device_id device,
           pocl_remote_get_traffic_stats (param_value, device));
       }
 
-    case CL_DEVICE_REMOTE_SERVER_IP:
+    case CL_DEVICE_REMOTE_SERVER_IP_POCL:
       {
         remote_device_data_t *dev_data = (remote_device_data_t *)device->data;
         remote_server_data_t *server = dev_data->server;
         POCL_RETURN_GETINFO_STR (server->address);
       }
 
-    case CL_DEVICE_REMOTE_SERVER_PORT:
+    case CL_DEVICE_REMOTE_SERVER_PORT_POCL:
       {
         remote_device_data_t *dev_data = (remote_device_data_t *)device->data;
         remote_server_data_t *server = dev_data->server;

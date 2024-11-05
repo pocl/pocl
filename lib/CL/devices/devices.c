@@ -235,13 +235,16 @@ extern pocl_lock_t pocl_context_handling_lock;
 
 POCL_EXPORT int pocl_offline_compile = 0;
 
-// first setup
+/* first setup */
 static unsigned first_init_done = 0;
 static unsigned init_in_progress = 0;
 static unsigned device_count[POCL_NUM_DEVICE_TYPES];
-unsigned dev_index;
+/* Indexes each device added to the platform by setting the device id. First
+ * used and modified during init, to index devices present since launch. May
+ * also used and modified when devices are dynamically added. */
+static unsigned dev_index;
 
-// after calling drivers uninit, we may have to re-init the devices.
+/* after calling drivers uninit, we may have to re-init the devices. */
 static unsigned devices_active = 0;
 
 extern pocl_lock_t pocl_init_lock;
@@ -513,8 +516,8 @@ FINISH:
  * device discovery. Can be called by any and more than one device drivers.
  */
 cl_int
-disco_dev_init_callback (const char *dev_parameters,
-                         unsigned pocl_dev_type_idx)
+add_discovered_device_callback (const char *dev_parameters,
+                                unsigned pocl_dev_type_idx)
 {
   assert (first_init_done);
 
@@ -582,9 +585,10 @@ pocl_init_device_discovery ()
   pocl_stderr_is_a_tty = isatty (fileno (stderr));
 #endif
 
-  /* If device discovery is disable by the env variable then return CL_SUCCESS.
+  /* If device discovery is disabled by the env variable then return
+   * CL_SUCCESS.
    */
-  if (!pocl_get_bool_option (POCL_DISCOVERY, 0))
+  if (!pocl_get_bool_option (POCL_DISCOVERY_ENV, 0))
     goto ERROR;
 
   for (unsigned i = 0; i < POCL_NUM_DEVICE_TYPES; i++)
@@ -592,8 +596,8 @@ pocl_init_device_discovery ()
       if (pocl_device_ops[i].init_discovery == NULL)
         continue;
 
-      errcode
-        = pocl_device_ops[i].init_discovery (&disco_dev_init_callback, i);
+      errcode = pocl_device_ops[i].init_discovery (
+        &add_discovered_device_callback, i);
       POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), errcode,
                           "Discovery initialization failed for device: %s \n",
                           pocl_device_ops[i].device_name);
@@ -744,7 +748,7 @@ pocl_init_devices ()
    * then, we return with CL_SUCCESS after which discovery process is
    * initialised. The disocvery process may find devices, hence we don't return
    * with error. */
-  if (pocl_get_bool_option (POCL_DISCOVERY, 0) && 0 == pocl_num_devices)
+  if (pocl_get_bool_option (POCL_DISCOVERY_ENV, 0) && 0 == pocl_num_devices)
     {
       POCL_MSG_WARN (
         "No devices found by probing: %s=%s. Trying through discovery. \n",

@@ -230,6 +230,11 @@ pocl.
  POCL_TTASIM0_PARAMETERS will be passed to the first ttasim driver instantiated
  and POCL_TTASIM1_PARAMETERS to the second one.
 
+- **POCL_DISCOVERY**
+
+ Used to enable or disable device discovery. See :ref:`remote-discovery-label`
+ for details on discovery.
+
 - **POCL_DRIVER_VERSION_OVERRIDE**
 
   Can be used to override the driver version reported by PoCL.
@@ -339,6 +344,19 @@ pocl.
  Overrides the platform name reported by PoCL. For example, setting the platform
  "PoCL (Intel OpenCL compat)" will allow running OneDNN applications, which will
  fail to create a device if 'Intel' and 'OpenCL' are not in the platform string.
+
+- **POCL_REMOTE_XXX**
+
+ These variables are used to configure different aspects of the remote driver
+ and daemon. See :ref:`remote_label` for details.
+
+  * **POCL_REMOTE_SEARCH_DOMAINS** -- To specify DNS domains for unicast-DNS-SD
+                                   based discovery queries.
+  * **POCL_REMOTE_DHT_PORT** -- To specify a port for the DHT node to operate.
+  * **POCL_REMOTE_DHT_BOOTSTRAP** -- To specify a bootstrap node to connect to
+                                  an existing DHT network.
+  * **POCL_REMOTE_DHT_KEY** -- To specify the common key for server and client
+                            nodes to use when publishing or listening.
 
 - **POCL_SIGFPE_HANDLER**
 

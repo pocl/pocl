@@ -35,6 +35,9 @@
 #include "guarded_queue.hh"
 #endif
 #include "virtual_cl_context.hh"
+#ifdef ENABLE_REMOTE_ADVERTISEMENT_AVAHI
+#include "avahi_advertise.hh"
+#endif
 
 /** Helper struct to hold the port numbers that the server listens on */
 struct ServerPorts {
@@ -130,6 +133,9 @@ private:
   std::thread ClientPoller;
   peer_listener_data_t peer_listener_data;
   std::thread peer_listener_th;
+#ifdef ENABLE_REMOTE_ADVERTISEMENT_AVAHI
+  AvahiAdvertise *avahiAdvertiseP;
+#endif
 #ifdef ENABLE_RDMA
   RdmaListener rdma_listener;
   std::thread pl_rdma_event_th;

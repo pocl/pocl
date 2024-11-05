@@ -52,10 +52,6 @@
 
 #include "daemon.hh"
 
-#ifdef ENABLE_REMOTE_ADVERTISEMENT_AVAHI
-#include "avahi_advertise.h"
-#endif
-
 #ifdef ENABLE_REMOTE_ADVERTISEMENT_DHT
 #include "dht_advertise.hh"
 #endif
@@ -228,7 +224,7 @@ int listen_rdmacm_events(rdmacm::EventChannelPtr cm_channel,
 #ifdef ENABLE_REMOTE_ADVERTISEMENT_AVAHI
 
 /// Called to initialize and start mDNS service advertisement using avahi
-void StartAvahiAdvert(addrinfo *RA, struct ServerPorts &Ports) {
+AvahiAdvertise *StartAvahiAdvert(addrinfo *RA, struct ServerPorts &Ports) {
 
   // Get the platform and device information to add to DNS TXT field.
   std::vector<cl::Platform> PlatformList;
@@ -330,8 +326,10 @@ void StartAvahiAdvert(addrinfo *RA, struct ServerPorts &Ports) {
     }
   }
 
-  init_avahi_advertisement(SrvID.c_str(), SrvID.length(), IfIndex, IpProto,
-                           Ports.command, DevTypes.c_str(), DevTypes.length());
+  AvahiAdvertise *avahiAdvertisePtr = new AvahiAdvertise;
+  avahiAdvertisePtr->launchAvahiAdvertisement(SrvID, IfIndex, IpProto,
+                                              Ports.command, DevTypes);
+  return avahiAdvertisePtr;
 }
 
 #endif
@@ -458,7 +456,7 @@ void StartDHTAdvert(addrinfo *RA, struct ServerPorts &Ports) {
     }
   }
 
-  DHTThread = std::move(std::thread(init_dht_advertisement, InfoArray));
+  DHTThread = std::move(std::thread(initDHTAdvertisement, InfoArray));
 }
 #endif
 
@@ -467,6 +465,13 @@ PoclDaemon::~PoclDaemon() {
     ClientPoller.join();
   if (peer_listener_th.joinable())
     peer_listener_th.join();
+#ifdef ENABLE_REMOTE_ADVERTISEMENT_AVAHI
+  delete avahiAdvertiseP;
+#endif
+#ifdef ENABLE_REMOTE_ADVERTISEMENT_DHT
+  if (DHTThread.joinable())
+    DHTThread.join();
+#endif
 #ifdef ENABLE_RDMA
   if (client_rdma_event_th.joinable())
     client_rdma_event_th.join();
@@ -553,7 +558,7 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports,
   }
 
 #ifdef ENABLE_REMOTE_ADVERTISEMENT_AVAHI
-  StartAvahiAdvert(ResolvedAddress, Ports);
+  avahiAdvertiseP = StartAvahiAdvert(ResolvedAddress, Ports);
 #endif
 #ifdef ENABLE_REMOTE_ADVERTISEMENT_DHT
   StartDHTAdvert(ResolvedAddress, Ports);

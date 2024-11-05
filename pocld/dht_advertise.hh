@@ -1,4 +1,4 @@
-/* dht_advertise.h - part of pocl-daemon that establishes DHT based discovery
+/* dht_advertise.hh - part of pocl-daemon that establishes DHT based discovery
  service to advertise the remote server and its devices.
 
 
@@ -26,13 +26,10 @@
 #ifndef CREATE_DHT_SERVICE_H
 #define CREATE_DHT_SERVICE_H
 
-#include "CL/cl.h"
+#include "pocl_networking.h"
+#include <cstdint>
 #include <vector>
 
-#define POCL_REMOTE_DHT_PORT "POCL_REMOTE_DHT_PORT"
-#define POCL_REMOTE_DHT_BOOTSTRAP "POCL_REMOTE_DHT_BOOTSTRAP"
-#define POCL_REMOTE_DHT_KEY "POCL_REMOTE_DHT_KEY"
-
-void init_dht_advertisement(std::vector<uint8_t> info);
+void initDHTAdvertisement(std::vector<uint8_t> info);
 
 #endif

@@ -80,7 +80,7 @@ list(APPEND P_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/../lib/CL/devices
 
 ############################################
 if(ENABLE_REMOTE_ADVERTISEMENT_AVAHI)
-  list(APPEND SOURCES avahi_advertise.c avahi_advertise.h)
+  list(APPEND SOURCES avahi_advertise.cc avahi_advertise.hh)
   find_library(AVAHI_COMMON_LIB NAMES avahi-common REQUIRED)
   find_library(AVAHI_CLIENT_LIB NAMES avahi-client REQUIRED)
   list(APPEND P_LINK_LIST ${AVAHI_COMMON_LIB} ${AVAHI_CLIENT_LIB})

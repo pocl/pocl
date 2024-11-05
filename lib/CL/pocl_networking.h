@@ -40,6 +40,10 @@ typedef enum transport_domain_e
   TransportDomain_Vsock,
 } transport_domain_t;
 
+#define POCL_REMOTE_DHT_PORT_ENV "POCL_REMOTE_DHT_PORT"
+#define POCL_REMOTE_DHT_BOOTSTRAP_ENV "POCL_REMOTE_DHT_BOOTSTRAP"
+#define POCL_REMOTE_DHT_KEY_ENV "POCL_REMOTE_DHT_KEY"
+
 #ifdef __cplusplus
 extern "C"
 {

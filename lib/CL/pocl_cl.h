@@ -512,12 +512,12 @@ struct pocl_device_ops {
   /**
    * Initialize discovery mechanism in the driver to dynamically find new
    * devices
-   * @param disco_dev_init_callback callback in runtime to init found devices
-   * @param pocl_dev_type_idx index for the device type in runtime's device
+   * \param add_discovered_device callback in runtime to init found devices
+   * \param pocl_dev_type_idx index for the device type in runtime's device
    *                          handle.
    */
-  cl_int (*init_discovery) (cl_int (*disco_dev_init_callback) (const char *,
-                                                               unsigned),
+  cl_int (*init_discovery) (cl_int (*add_discovered_device) (const char *,
+                                                             unsigned),
                             unsigned pocl_dev_type_idx);
 
   /****** Memory management APIs. */

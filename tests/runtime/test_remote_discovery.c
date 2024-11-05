@@ -64,11 +64,11 @@ main (void)
         {
 
           size_t ip_size;
-          err = clGetDeviceInfo (devices[j], CL_DEVICE_REMOTE_SERVER_IP, 0,
-                                 NULL, &ip_size);
+          err = clGetDeviceInfo (devices[j], CL_DEVICE_REMOTE_SERVER_IP_POCL,
+                                 0, NULL, &ip_size);
           CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo");
           char *ip = (char *)malloc (ip_size);
-          err = clGetDeviceInfo (devices[j], CL_DEVICE_REMOTE_SERVER_IP,
+          err = clGetDeviceInfo (devices[j], CL_DEVICE_REMOTE_SERVER_IP_POCL,
                                  ip_size, ip, NULL);
           CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo");
 

@@ -58,22 +58,27 @@ void SetConfig(dht::DhtRunner::Config *cfg) {
 /// \param info contains the serialized data that is to be published on the DHT
 /// network. Data fields shared through info should be known to the client.
 
-void init_dht_advertisement(std::vector<uint8_t> info) {
+void initDHTAdvertisement(std::vector<uint8_t> info) {
 
   dht::DhtRunner node;
   dht::DhtRunner::Config cfg{};
   SetConfig(&cfg);
 
   // Port to start the DHT taken from environment or default used.
-  const int port = pocl_get_int_option(POCL_REMOTE_DHT_PORT, 4222);
+  const int port = pocl_get_int_option(POCL_REMOTE_DHT_PORT_ENV, 4222);
   // DHT bootstrap node taken from environment or default used.
   const char *bootstrap =
-      pocl_get_string_option(POCL_REMOTE_DHT_BOOTSTRAP, "bootstrap.jami.net");
+      pocl_get_string_option(POCL_REMOTE_DHT_BOOTSTRAP_ENV, NULL);
+  if (bootstrap == NULL) {
+    POCL_MSG_ERR("DHT Bootstrap node environment variable not specified, "
+                 "server advertisement failed! \n");
+    return;
+  }
   // Common key used by the servers and clients participating in the DHT network
   // to find or publish remote server information. Taken from environment or
   // default used.
-  const char *common_key =
-      pocl_get_string_option(POCL_REMOTE_DHT_KEY, "poclremoteservernetwork");
+  const char *common_key = pocl_get_string_option(POCL_REMOTE_DHT_KEY_ENV,
+                                                  "poclremoteservernetwork");
 
   // Start the DHT node
   node.run(port, cfg);
@@ -98,7 +103,7 @@ void init_dht_advertisement(std::vector<uint8_t> info) {
 
     node.putSigned(hash, dht::Value(info.data(), info.size()), [](bool ok) {
       if (not ok) {
-        std::cout << "Message publishing failed !" << std::endl;
+        POCL_MSG_ERR("Message publishing failed ! \n");
       }
     });
     std::this_thread::sleep_for(timeWindow);

@@ -26,19 +26,25 @@
 #ifndef NETWORK_DISCOVERY_H
 #define NETWORK_DISCOVERY_H
 
+#include "pocl_networking.h"
 #include <CL/cl.h>
 
-#define POCL_REMOTE_DNS_SRV_TYPE "_pocl._tcp"
-#define POCL_REMOTE_SEARCH_DOMAINS "POCL_REMOTE_SEARCH_DOMAINS"
-#define POCL_REMOTE_DHT_PORT "POCL_REMOTE_DHT_PORT"
-#define POCL_REMOTE_DHT_BOOTSTRAP "POCL_REMOTE_DHT_BOOTSTRAP"
-#define POCL_REMOTE_DHT_KEY "POCL_REMOTE_DHT_KEY"
+#define POCL_REMOTE_DNS_SRV_TYPE_ENV "_pocl._tcp"
+#define POCL_REMOTE_SEARCH_DOMAINS_ENV "POCL_REMOTE_SEARCH_DOMAINS"
+
+#ifdef __GNUC__
+#pragma GCC visibility push(hidden)
+#endif
 
 #define SERVER_ID_SIZE 32
 
-cl_int init_network_discovery (cl_int (*disco_dev_init_callback) (const char *,
-                                                                  unsigned),
+cl_int init_network_discovery (cl_int (*add_discovered_device) (const char *,
+                                                                unsigned),
                                cl_int (*reconnect_callback) (const char *),
                                unsigned pocl_dev_type_idx);
+
+#ifdef __GNUC__
+#pragma GCC visibility pop
+#endif
 
 #endif

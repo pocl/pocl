@@ -382,6 +382,7 @@ Then, build a SYCL program of your choice as instructed in the DPC++ documentati
   ./simple-sycl-app
   The results are correct!
 
+.. _remote-discovery-label:
 
 Dynamic Device Management and Network Discovery
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -405,9 +406,9 @@ devices can be dynamically added to the platform.
 
 The following new enumerations have been added to the clGetDeviceInfo():
 
-* ``CL_DEVICE_REMOTE_SERVER_IP``: Retrieves the IP address of the remote server.
+* ``CL_DEVICE_REMOTE_SERVER_IP_POCL``: Retrieves the IP address of the remote server.
 
-* ``CL_DEVICE_REMOTE_SERVER_PORT``: Retrieves the port of the remote server.
+* ``CL_DEVICE_REMOTE_SERVER_PORT_POCL``: Retrieves the port of the remote server.
 
 **Discovery Build and Environment Variables**
 
@@ -433,7 +434,7 @@ The following environment variables are introduced to control and customize
 discovery and advertisement:
 
 * ``POCL_DISCOVERY`` (bool): Located in devices.h and utilized in devices.c.
-  This variable allows users to enable or disable network discovery entirely.
+  This variable allows users to enable or disable device discovery entirely.
 
 * ``POCL_REMOTE_SEARCH_DOMAINS`` (string): Introduced in network_discovery.h
   and used in network_discovery.c. This variable specifies DNS domains for
@@ -450,7 +451,7 @@ discovery and advertisement:
 * ``POCL_REMOTE_DHT_BOOTSTRAP`` (string): Introduced in network_discovery.h and
   dht_advertise.h, and utilized in network_discovery.c and
   dht_advertise.c. This variable specifies a bootstrap node to connect to
-  an existing DHT network. Set to "bootstrap.jami.net" by default.
+  an existing DHT network. Set to ``NULL`` by default.
 
 * ``POCL_REMOTE_DHT_KEY`` (string): Introduced in network_discovery.h and
   dht_advertise.h, and used in network_discovery.c and
