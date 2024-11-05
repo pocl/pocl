@@ -444,9 +444,8 @@ process_command_ndrange_properties (
             continue;
           }
         default:
-          POCL_RETURN_ERROR_ON (1, CL_INVALID_VALUE,
-                                "Unknown property value in "
-                                "cl_command_properties_khr\n");
+          POCL_RETURN_ERROR (CL_INVALID_VALUE, "Unknown property value in "
+                                               "cl_command_properties_khr\n");
         }
     }
 

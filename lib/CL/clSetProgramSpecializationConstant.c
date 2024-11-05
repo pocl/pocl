@@ -60,7 +60,7 @@ POname(clSetProgramSpecializationConstant)
         }
     }
 
-  POCL_RETURN_ERROR_ON (1, CL_INVALID_SPEC_ID,
-                        "Unknown specialization constant ID %u\n", spec_id);
+  POCL_RETURN_ERROR (CL_INVALID_SPEC_ID,
+                     "Unknown specialization constant ID %u\n", spec_id);
 }
 POsym (clSetProgramSpecializationConstant)

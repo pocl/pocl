@@ -100,8 +100,8 @@ pocl_release_dbk_attributes_khr_jpeg (BuiltinKernelId kernel_id,
         return CL_SUCCESS;
       }
     default:
-      POCL_RETURN_ERROR_ON (1, CL_INVALID_DBK_ID,
-                            "pocl_copy_dbk_attributes_khr_jpeg called with "
-                            "wrong kernel_id.\n");
+      POCL_RETURN_ERROR (CL_INVALID_DBK_ID,
+                         "pocl_copy_dbk_attributes_khr_jpeg called with "
+                         "wrong kernel_id.\n");
     }
 }

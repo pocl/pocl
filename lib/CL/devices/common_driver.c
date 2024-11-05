@@ -64,7 +64,7 @@ int pocl_setup_builtin_metadata (cl_device_id device, cl_program program,
           newp[newl] = 0;                                                     \
           program->build_log[device_i] = newp;                                \
         }                                                                     \
-      POCL_RETURN_ERROR_ON (1, err, __VA_ARGS__);                             \
+      POCL_RETURN_ERROR (err, __VA_ARGS__);                                   \
     }                                                                         \
   while (0)
 
@@ -798,8 +798,8 @@ pocl_driver_build_source (cl_program program, cl_uint device_i,
                                   link_builtin_lib);
 
 #else
-  POCL_RETURN_ERROR_ON (1, CL_BUILD_PROGRAM_FAILURE,
-                        "This device requires LLVM to build from sources\n");
+  POCL_RETURN_ERROR (CL_BUILD_PROGRAM_FAILURE,
+                     "This device requires LLVM to build from sources\n");
 #endif
 }
 
@@ -881,8 +881,8 @@ pocl_driver_link_program (cl_program program, cl_uint device_i,
                         "Linking of program failed\n");
   return CL_SUCCESS;
 #else
-  POCL_RETURN_ERROR_ON (1, CL_BUILD_PROGRAM_FAILURE,
-                        "This device requires LLVM to link binaries\n");
+  POCL_RETURN_ERROR (CL_BUILD_PROGRAM_FAILURE,
+                     "This device requires LLVM to link binaries\n");
 
 #endif
 }
