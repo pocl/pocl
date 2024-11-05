@@ -865,8 +865,8 @@ pocl_validate_dbk_attributes (BuiltinKernelId kernel_id,
   default:
       break;
     }
-  POCL_RETURN_ERROR_ON (1, CL_INVALID_DBK_ID, "Unknown builtin kernel ID: %u.\n",
-                        kernel_id);
+  POCL_RETURN_ERROR (CL_INVALID_DBK_ID, "Unknown builtin kernel ID: %u.\n",
+                     kernel_id);
 }
 
 void *
@@ -963,8 +963,8 @@ pocl_release_defined_builtin_attributes (BuiltinKernelId kernel_id,
     default:
       break;
     }
-  POCL_RETURN_ERROR_ON (1, CL_INVALID_DBK_ID, "Unknown builtin kernel ID: %u.\n",
-                        kernel_id);
+  POCL_RETURN_ERROR (CL_INVALID_DBK_ID, "Unknown builtin kernel ID: %u.\n",
+                     kernel_id);
 }
 
 /** Helper functions for (de)serializing dbk attributes in the remote driver */

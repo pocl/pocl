@@ -81,7 +81,7 @@ pocl_svm_memcpy_rect_common (cl_command_buffer_khr command_buffer,
     const char *s = (const char *)src_ptr;
     char *d = (char *)dst_ptr;
     if (((s <= d) && (s + size > d)) || ((d <= s) && (d + size > s)))
-      POCL_RETURN_ERROR_ON (1, CL_MEM_COPY_OVERLAP, "overlapping copy \n");
+      POCL_RETURN_ERROR ( CL_MEM_COPY_OVERLAP, "overlapping copy \n");
   */
   size_t src_buf_size = 0;
   errcode = pocl_svm_check_pointer (context, src_ptr, 1, &src_buf_size);

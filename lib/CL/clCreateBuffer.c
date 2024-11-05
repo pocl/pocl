@@ -384,8 +384,8 @@ pocl_parse_cl_mem_properties (const cl_mem_properties *prop_ptr,
             return CL_SUCCESS;
           }
         default:
-          POCL_RETURN_ERROR_ON (1, CL_INVALID_PROPERTY,
-                                "Unknown cl_mem property %zu", *prop_ptr);
+          POCL_RETURN_ERROR (CL_INVALID_PROPERTY,
+                             "Unknown cl_mem property %zu", *prop_ptr);
         }
     }
   return CL_OUT_OF_HOST_MEMORY;
