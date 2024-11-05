@@ -618,8 +618,6 @@ RETRY:
     {
       POCL_UNLOCK (scheduler.wq_lock_fast);
 
-      assert (pocl_command_is_ready (cmd->sync.event.event));
-
       if (cmd->type == CL_COMMAND_NDRANGE_KERNEL)
         {
           cl_kernel kernel = cmd->command.run.kernel;
