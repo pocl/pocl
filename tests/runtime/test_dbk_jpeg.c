@@ -201,7 +201,7 @@ main (int argc, char const *argv[])
                             write_event, decode_event };
   size_t all_events_size = sizeof (all_events) / sizeof (all_events[0]);
   clWaitForEvents (all_events_size, all_events);
-  for (int i = 0; i < all_events_size; i++)
+  for (size_t i = 0; i < all_events_size; i++)
     clReleaseEvent (all_events[i]);
 
   TEST_ASSERT (jpeg_size_value > 0);
@@ -220,7 +220,7 @@ main (int argc, char const *argv[])
   clReleaseKernel (decode_kernel);
   clReleaseProgram (program);
   clReleaseContext (context);
-  for (int i = 0; i < num_devices; i++)
+  for (cl_uint i = 0; i < num_devices; i++)
     {
       clReleaseDevice (devices[i]);
       clReleaseCommandQueue (queues[i]);

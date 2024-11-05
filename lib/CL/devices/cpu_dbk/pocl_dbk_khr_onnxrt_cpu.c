@@ -249,7 +249,6 @@ pocl_destroy_ort_instance (onnxrt_instance_t **onnxrt)
   *onnxrt = NULL;
   free (ort);
 
-ERROR:
   return CL_SUCCESS;
 }
 

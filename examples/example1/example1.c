@@ -49,7 +49,8 @@ main (int argc, char **argv)
   cl_float4 *srcA = NULL;
   cl_float4 *srcB = NULL;
   cl_float *dst = NULL;
-  int i, err, spirv, poclbin;
+  int err, spirv, poclbin;
+  cl_uint i;
 
   cl_context context = NULL;
   cl_platform_id platform = NULL;

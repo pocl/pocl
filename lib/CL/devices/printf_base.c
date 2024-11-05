@@ -24,8 +24,7 @@
 
 #include "printf_base.h"
 
-#include <stddef.h>
-#include <stdint.h>
+#include <limits.h>
 #include <stdio.h>
 
 void
@@ -51,7 +50,7 @@ void
 __pocl_printf_ul_base (param_t *p, UINT_T num)
 {
   char temp[SMALL_BUF_SIZE];
-  unsigned i = 0, j = 0;
+  int i = 0, j = 0;
   unsigned digit;
   unsigned base = p->base;
   while (num > 0)
@@ -78,7 +77,7 @@ void
 __pocl_printf_ul16 (param_t *p, UINT_T num)
 {
   char temp[SMALL_BUF_SIZE];
-  unsigned i = 0, j = 0;
+  int i = 0, j = 0;
   unsigned digit;
   const unsigned base = 16;
   char digit_offset = (p->flags.uc ? 'A' : 'a');
@@ -432,17 +431,17 @@ __pocl_printf_puts_ljust (param_t *p,
 {
   char c;
   unsigned written = 0;
-  if (max_width < 0)
-    max_width = INT32_MAX;
+  unsigned max_width_u = max_width >= 0 ? max_width : UINT_MAX;
+
   while ((c = *string++))
     {
-      if (written < max_width)
+      if (written < max_width_u)
         __pocl_printf_putcf (p, c);
       ++written;
     }
   while (written < width)
     {
-      if (written < max_width)
+      if (written < max_width_u)
         __pocl_printf_putcf (p, ' ');
       ++written;
     }
@@ -457,8 +456,7 @@ __pocl_printf_puts_rjust (param_t *p,
 {
   char c;
   unsigned i, strleng = 0, written = 0;
-  if (max_width < 0)
-    max_width = INT32_MAX;
+  unsigned max_width_u = max_width >= 0 ? max_width : UINT_MAX;
 
   const char *tmp = string;
   while ((c = *tmp++))
@@ -466,14 +464,14 @@ __pocl_printf_puts_rjust (param_t *p,
 
   for (i = strleng; i < width; ++i)
     {
-      if (written < max_width)
+      if (written < max_width_u)
         __pocl_printf_putcf (p, ' ');
       ++written;
     }
 
   while ((c = *string++))
     {
-      if (written < max_width)
+      if (written < max_width_u)
         __pocl_printf_putcf (p, c);
       ++written;
     }

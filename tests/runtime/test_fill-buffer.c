@@ -107,35 +107,35 @@ main (void)
                                                    NULL, NULL));
 
               CHECK_CL_ERROR (clFinish (queue));
-              for (int i = 0; i < pattern_size * 2; i++)
+              for (int k = 0; k < pattern_size * 2; k++)
                 {
-                  if (host_buf1[i] != 1)
+                  if (host_buf1[k] != 1)
                     {
-                      printf ("Expected value at %d: 1, actual value: %d\n", i,
-                              host_buf1[i]);
+                      printf ("Expected value at %d: 1, actual value: %d\n", k,
+                              host_buf1[k]);
                       return EXIT_FAILURE;
                     }
                 }
-              for (int i = buf_size - pattern_size; i < buf_size; i++)
+              for (size_t k = buf_size - pattern_size; k < buf_size; k++)
                 {
-                  if (host_buf1[i] != 1)
+                  if (host_buf1[k] != 1)
                     {
-                      printf ("Expected value at %d: 1, actual value: %d\n", i,
-                              host_buf1[i]);
+                      printf ("Expected value at %zu: 1, actual value: %d\n",
+                              k, host_buf1[k]);
                       return EXIT_FAILURE;
                     }
                 }
-              for (int i = pattern_size * 2; i < buf_size - pattern_size;
-                   i += pattern_size)
+              for (size_t k = pattern_size * 2; k < buf_size - pattern_size;
+                   k += pattern_size)
                 {
-                  for (int j = 0; j < pattern_size; j++)
+                  for (int l = 0; l < pattern_size; l++)
                     {
-                      cl_char expected_value = *((char *)&(pattern) + j);
-                      if (host_buf1[i + j] != expected_value)
+                      cl_char expected_value = *((char *)&(pattern) + l);
+                      if (host_buf1[k + l] != expected_value)
                         {
                           printf (
-                              "Expected value at %d: %d, actual value: %d\n",
-                              i + j, expected_value, host_buf1[i + j]);
+                            "Expected value at %zu: %d, actual value: %d\n",
+                            k + l, expected_value, host_buf1[k + l]);
                           return EXIT_FAILURE;
                         }
                     }
