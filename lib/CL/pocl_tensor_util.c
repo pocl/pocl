@@ -346,9 +346,9 @@ pocl_tensor_dtype_value_equals (const cl_tensor_datatype DType,
     case CL_TENSOR_DTYPE_INT64:
       return (Value->l == longConst);
     case CL_TENSOR_DTYPE_UINT64:
-      return (Value->l == ulongConst);
+      return ((cl_ulong)Value->l == ulongConst);
     case CL_TENSOR_DTYPE_INT32:
-      return ((cl_long)Value->l == longConst);
+      return (Value->l == longConst);
     case CL_TENSOR_DTYPE_UINT32:
       return ((cl_ulong)Value->i == ulongConst);
     case CL_TENSOR_DTYPE_INT16:

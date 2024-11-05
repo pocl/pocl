@@ -23,6 +23,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_compiler_macros.h"
 #include "pocl_mem_management.h"
 #include "pocl_util.h"
 #include "utlist.h"
@@ -97,6 +98,7 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
 
   /* Release the "mapping reference" which keeps the buffer alive until the
      mapping is on. The command execution should also retain/release. */
+  POCL_UNUSED
   int newrefc;
   POCL_RELEASE_OBJECT (memobj, newrefc);
 

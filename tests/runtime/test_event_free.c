@@ -144,7 +144,7 @@ int main(int argc, char **argv)
    */
 
   if (has_img) {
-    cl_uint4 color = {0,0,0,0};
+    cl_uint4 color = {{0,0,0,0}};
     const size_t origin[] = {0, 0, 0};
     const size_t region[] = {1, 1, 1};
 

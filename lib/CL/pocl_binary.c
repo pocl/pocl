@@ -874,7 +874,7 @@ pocl_binary_get_kernels_metadata (cl_program program, unsigned device_i)
       BUFFER_READ(len, uint64_t);
       assert (len > 0);
       buffer += len;
-      assert (buffer - start <= max_len);
+      assert ((size_t) (buffer - start) <= max_len);
     }
 
   unsigned j;

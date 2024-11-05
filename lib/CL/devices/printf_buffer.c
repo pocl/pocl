@@ -26,6 +26,7 @@
 
 #include "printf_buffer.h"
 #include "common.h"
+#include "pocl_compiler_macros.h"
 #include "pocl_debug.h"
 #include "printf_base.h"
 
@@ -559,6 +560,7 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                           {
                             /* .. else fallthrough to double */
                             alloca_length = 8;
+                            POCL_FALLTHROUGH;
                           }
                       case 8:
                         __pocl_print_floats_double (p, buffer, vector_length);

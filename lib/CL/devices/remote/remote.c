@@ -1017,7 +1017,7 @@ pocl_remote_build_binary (cl_program program, cl_uint device_i,
 
       program->data[real_i] = pd;
       assert ((!spirv_build && program->binary_sizes[real_i] > 0)
-              || spirv_build && program->program_il_size > 0);
+              || (spirv_build && program->program_il_size > 0));
       assert ((!spirv_build && program->binaries[real_i] != NULL)
               || (spirv_build && program->program_il != NULL));
 
@@ -2736,7 +2736,7 @@ pocl_remote_set_kernel_exec_info_ext (cl_device_id dev,
     case CL_KERNEL_EXEC_INFO_SVM_PTRS:
     case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL:
       {
-        for (int i = 0; i < param_value_size / sizeof (void *); ++i)
+        for (size_t i = 0; i < param_value_size / sizeof (void *); ++i)
           {
             struct _pocl_ptr_list_node *n
                 = malloc (sizeof (struct _pocl_ptr_list_node));

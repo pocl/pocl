@@ -886,9 +886,14 @@ pocl_copy_defined_builtin_attributes (BuiltinKernelId kernel_id,
           = (cl_dbk_attributes_exp_gemm *)kernel_attributes;
         memcpy (attrs, src, sizeof (cl_dbk_attributes_exp_gemm));
         err = pocl_copy_tensor_desc_layout (&attrs->a, &src->a);
-        err = pocl_copy_tensor_desc_layout (&attrs->b, &src->b);
-        err = pocl_copy_tensor_desc_layout (&attrs->c_in, &src->c_in);
-        err = pocl_copy_tensor_desc_layout (&attrs->c_out, &src->c_out);
+        err |= pocl_copy_tensor_desc_layout(&attrs->b, &src->b);
+        err |= pocl_copy_tensor_desc_layout(&attrs->c_in, &src->c_in);
+        err |= pocl_copy_tensor_desc_layout(&attrs->c_out, &src->c_out);
+        if (err != CL_SUCCESS) {
+          POCL_MSG_WARN("Could not copy POCL_CDBI_DBK_EXP_GEMM attributes (err: %d).\n", err);
+          free(attrs);
+          return NULL;
+        }
 
         return attrs;
       }
@@ -903,9 +908,13 @@ pocl_copy_defined_builtin_attributes (BuiltinKernelId kernel_id,
         memcpy (attrs, src, sizeof (cl_dbk_attributes_exp_matmul));
 
         err = pocl_copy_tensor_desc_layout (&attrs->a, &src->a);
-        err = pocl_copy_tensor_desc_layout (&attrs->b, &src->b);
-        err = pocl_copy_tensor_desc_layout (&attrs->c, &src->c);
-
+        err |= pocl_copy_tensor_desc_layout (&attrs->b, &src->b);
+        err |= pocl_copy_tensor_desc_layout (&attrs->c, &src->c);
+        if (err != CL_SUCCESS) {
+          POCL_MSG_WARN("Could not copy POCL_CDBI_DBK_EXP_MATMUL attributes (err: %d).\n", err);
+          free(attrs);
+          return NULL;
+        }
         return attrs;
       }
     case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
