@@ -30,7 +30,6 @@
 #include "printf_base.h"
 
 #include <assert.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -145,23 +144,18 @@ DEFINE_PRINT_FLOATS (double)
 /**************************************************************************/
 
 #define FORWARD_BUFFER(SIZE)                                                  \
-  buffer += SIZE;                                                             \
-  if (buffer_size < SIZE)                                                     \
+  buffer += (SIZE);                                                           \
+  if (buffer_size < (SIZE))                                                   \
     {                                                                         \
       POCL_MSG_ERR (                                                          \
         "printf error: exhausted arguments before format string end\n");      \
       return -1;                                                              \
     }                                                                         \
-  buffer_size -= SIZE;
+  buffer_size -= (SIZE);
 
 uint32_t
 __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
 {
-
-  char bf[BUFSIZE];
-  for (unsigned i = 0; i < BUFSIZE; ++i)
-    bf[i] = 0;
-  p->bf = bf;
   char ch = 0;
 
   /* fetch & decode the control dword */
@@ -365,7 +359,7 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
               DEBUG_PRINTF (("[printf:precision=%d]\n", precision));
 
               /* Vector specifier */
-              uint32_t vector_length = 0;
+              int32_t vector_length = 0;
               if (ch == 'v')
                 {
                   ch = *format++;
@@ -377,7 +371,7 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                             "printf error: vector-length is zero\n");
                           return -1;
                         }
-                      if (vector_length > (UINT32_MAX - 9) / 10)
+                      if (vector_length > 16)
                         {
                           POCL_MSG_ERR (
                             "printf error: vector-length overflow\n");
@@ -391,7 +385,7 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                         || vector_length == 16))
                     {
                       POCL_MSG_ERR (
-                        "printf error: unrecognize vector length (%u)\n",
+                        "printf error: unrecognized vector length (%d)\n",
                         vector_length);
                       return -1;
                     }
@@ -608,8 +602,8 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                         return -1;
                       }
                     DEBUG_PRINTF (("[printf:char4]\n"));
-                    bf[0] = (char)*buffer;
-                    bf[1] = 0;
+                    p->bf[0] = (char)*buffer;
+                    p->bf[1] = 0;
                     /* char is always promoted to int32 */
                     FORWARD_BUFFER (sizeof (int32_t));
                     __pocl_printf_putchw (p);
@@ -749,6 +743,9 @@ void
 pocl_flush_printf_buffer (char *buffer, uint32_t buffer_size)
 {
   param_t p = { 0 };
+  char bf[BUFSIZE];
+  memset (bf, 0, BUFSIZE);
+  p.bf = bf;
 
   char result[IMM_FLUSH_BUFFER_SIZE];
   p.printf_buffer = result;
