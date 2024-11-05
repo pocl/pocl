@@ -947,12 +947,12 @@ FINISH_VER_SETUP:
              migrations. */
           /* Create an event dep chain through the migration commands. */
           POname (clRetainEvent) (last_migration_event);
-          pocl_create_event_sync (last_migration_event, *prev_migr_event);
+          pocl_create_event_sync (*prev_migr_event, last_migration_event);
           if (*prev_migr_event != NULL)
             POname (clReleaseEvent) (*prev_migr_event);
           *prev_migr_event = last_migration_event;
         }
-      pocl_create_event_sync (user_cmd, last_migration_event);
+      pocl_create_event_sync (last_migration_event, user_cmd);
       /* if the event itself only reads from the buffer,
        * set the last buffer updating event to the last_mig_event,
        * instead of the actual command event;
