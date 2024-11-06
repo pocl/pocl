@@ -171,9 +171,9 @@ libclc-pocl/log2.cl
 libclc-pocl/logb.cl
 # currently unused
 #libclc/log1p.cl
-#libclc-pocl/frexp.cl
-#libclc-pocl/expfrexp.cl
-#libclc-pocl/frfrexp.cl
+libclc-pocl/frexp.cl
+libclc-pocl/expfrexp.cl
+libclc-pocl/frfrexp.cl
 libclc-pocl/pown.cl
 libclc-pocl/powr.cl
 libclc-pocl/pow.cl
@@ -219,9 +219,9 @@ sleef-pocl/floor.cl
 sleef-pocl/fma.cl
 sleef-pocl/fmax.cl
 sleef-pocl/fmin.cl
-sleef-pocl/expfrexp.cl
-sleef-pocl/frfrexp.cl
-sleef-pocl/frexp.cl
+#sleef-pocl/expfrexp.cl
+#sleef-pocl/frfrexp.cl
+#sleef-pocl/frexp.cl
 sleef-pocl/hypot.cl
 sleef-pocl/ilogb.cl
 sleef-pocl/ldexp.cl

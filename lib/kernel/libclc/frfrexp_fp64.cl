@@ -24,15 +24,6 @@
 _CL_OVERLOADABLE _CL_ALWAYSINLINE vtype
 _cl_frfrexp(vtype x)
 {
-
-  // denorms
-  itype cond = (fabs(x) < (vtype)DBL_MIN);
-  x = cond ? (x * 0x1p63) : x;
-
-  vtype ret = as_vtype((as_utype(x) & (utype)MANTSIGNBITS_DP64 )
-                       | (utype)HALFEXPBITS_DP64);
-
-  ret = (x == (vtype)0.0) ? x : ret;
-  ret = (isnan(x) | isinf(x)) ? x : ret;
-  return ret;
+  inttype temp;
+  return frexp (x, &temp);
 }
