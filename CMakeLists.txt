@@ -2216,7 +2216,7 @@ endif()
 
 ##########################################################
 
-if(UNIX)
+if(UNIX OR MINGW)
   configure_file("${CMAKE_SOURCE_DIR}/pocl.pc.in.cmake" "${CMAKE_BINARY_DIR}/pocl.pc" @ONLY)
   install(FILES "${CMAKE_BINARY_DIR}/pocl.pc"
           DESTINATION "${POCL_INSTALL_PKGCONFIG_DIR}" COMPONENT "dev")
