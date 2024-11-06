@@ -1417,8 +1417,10 @@ pocl_print_system_memory_stats()
 }
 
 /* default WG size in each dimension & total WG size.
- * this should be reasonable for CPU */
-#define DEFAULT_WG_SIZE 8192
+ * this should be reasonable for CPU.
+ * setting this to 8192 causes some tests to fail,
+ * because of stack overflow. */
+#define DEFAULT_WG_SIZE 4096
 
 static const char *final_ld_flags[] = { HOST_LD_FLAGS_ARRAY, NULL };
 
