@@ -351,8 +351,12 @@ macro(custom_try_compile_any SILENT COMPILER SUFFIX SOURCE RES_VAR)
 
   math(EXPR LSIZE "${ARGC} - 4")
 
-  execute_process(COMMAND "${COMPILER}" ${ARGN} "${RANDOM_FILENAME}" RESULT_VARIABLE RESV OUTPUT_VARIABLE OV ERROR_VARIABLE EV)
-  if(${RESV} AND (NOT ${SILENT}))
+  execute_process(COMMAND "${COMPILER}" ${ARGN} "${RANDOM_FILENAME}"
+                  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+                  RESULT_VARIABLE RESV
+                  OUTPUT_VARIABLE OV
+                  ERROR_VARIABLE EV)
+  if((NOT ${RESV} EQUAL 0) AND (NOT ${SILENT}))
     message(STATUS " ########## The command: ")
     string(REPLACE ";" " " ARGN_STR "${ARGN}")
     message(STATUS "${COMPILER} ${ARGN_STR} ${RANDOM_FILENAME}")
@@ -397,23 +401,33 @@ endmacro()
 
 # clang++ try-compile macro
 macro(custom_try_compile_clangxx SOURCE1 SOURCE2 RES_VAR)
-  custom_try_compile_c_cxx("${CLANGXX}" "cc" "${SOURCE1}" "${SOURCE2}" ${RES_VAR}  "-c" ${ARGN})
+  string(RANDOM RNDNAME)
+  set(RANDOM_FILENAME "${CMAKE_BINARY_DIR}/compile_test_${RNDNAME}.o")
+  custom_try_compile_c_cxx("${CLANGXX}" "cc" "${SOURCE1}" "${SOURCE2}" ${RES_VAR} "-o" "${RANDOM_FILENAME}" "-c" ${ARGN})
+  file(REMOVE "${RANDOM_FILENAME}")
 endmacro()
 
 # clang++ try-compile macro
 macro(custom_try_compile_clang SOURCE1 SOURCE2 RES_VAR)
-  custom_try_compile_c_cxx("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR}  "-c" ${ARGN})
+  string(RANDOM RNDNAME)
+  set(RANDOM_FILENAME "${CMAKE_BINARY_DIR}/compile_test_${RNDNAME}.o")
+  custom_try_compile_c_cxx("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR} "-o" "${RANDOM_FILENAME}" "-c" ${ARGN})
+  file(REMOVE "${RANDOM_FILENAME}")
 endmacro()
 
 # clang++ try-compile macro
 macro(custom_try_compile_clang_silent SOURCE1 SOURCE2 RES_VAR)
-  custom_try_compile_c_cxx_silent("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR} "-c" ${ARGN})
+  string(RANDOM RNDNAME)
+  set(RANDOM_FILENAME "${CMAKE_BINARY_DIR}/compile_test_${RNDNAME}.o")
+  custom_try_compile_c_cxx_silent("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR} "-o" "${RANDOM_FILENAME}" "-c" ${ARGN})
+  file(REMOVE "${RANDOM_FILENAME}")
 endmacro()
 
 # clang++ try-link macro
 macro(custom_try_link_clang SOURCE1 SOURCE2 RES_VAR)
-  set(RANDOM_FILENAME "${CMAKE_BINARY_DIR}/compile_test_${RNDNAME}.${SUFFIX}")
-  custom_try_compile_c_cxx_silent("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR}  "-o" "${RANDOM_FILENAME}" ${ARGN})
+  string(RANDOM RNDNAME)
+  set(RANDOM_FILENAME "${CMAKE_BINARY_DIR}/compile_test_${RNDNAME}${CMAKE_EXECUTABLE_SUFFIX}")
+  custom_try_compile_c_cxx_silent("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR} "-o" "${RANDOM_FILENAME}" ${ARGN})
   file(REMOVE "${RANDOM_FILENAME}")
 endmacro()
 
@@ -432,7 +446,7 @@ macro(custom_try_run_exe SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
     execute_process(COMMAND "${OUTF}" RESULT_VARIABLE RESV OUTPUT_VARIABLE ${OUTPUT_VAR} ERROR_VARIABLE EV)
     set(${RES_VAR} ${RESV})
     file(REMOVE "${OUTF}")
-    if(${RESV})
+    if(NOT ${RESV} EQUAL 0)
       message(STATUS " ########## Running ${OUTF}")
       message(STATUS " ########## Exited with nonzero status: ${RESV}")
       if(${${OUTPUT_VAR}})
@@ -449,10 +463,8 @@ endmacro()
 macro(custom_try_run_lli SILENT SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
 # this uses "lli" - the interpreter, so we can run any -target
 # TODO variable for target !!
-  set(OUTF "${CMAKE_BINARY_DIR}/try_run.bc")
-  if(EXISTS "${OUTF}")
-    file(REMOVE "${OUTF}")
-  endif()
+  string(RANDOM RNDNAME)
+  set(OUTF "${CMAKE_BINARY_DIR}/lli_test_${RNDNAME}.bc")
   custom_try_compile_c_cxx("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" RESV "-o" "${OUTF}" "-x" "c" "-emit-llvm" "-c" ${ARGN})
   set(${OUTPUT_VAR} "")
   set(${RES_VAR} "")
@@ -462,7 +474,7 @@ macro(custom_try_run_lli SILENT SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
     execute_process(COMMAND "${LLVM_LLI}" "-force-interpreter" "${OUTF}" RESULT_VARIABLE RESV OUTPUT_VARIABLE ${OUTPUT_VAR} ERROR_VARIABLE EV)
     set(${RES_VAR} ${RESV})
     file(REMOVE "${OUTF}")
-    if(${RESV} AND (NOT ${SILENT}))
+    if((NOT ${RESV} EQUAL 0) AND (NOT ${SILENT}))
       message(STATUS " ########## The command ${LLVM_LLI} -force-interpreter ${OUTF}")
       message(STATUS " ########## Exited with nonzero status: ${RESV}")
       if(${${OUTPUT_VAR}})
