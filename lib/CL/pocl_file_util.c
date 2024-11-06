@@ -90,16 +90,17 @@ pocl_rm_rf(const char* path)
               struct stat statbuf;
               snprintf(buf, len, "%s/%s", path, p->d_name);
 
-              if (stat (buf, &statbuf) < 0)
+              if (lstat (buf, &statbuf) < 0)
                 {
-                  POCL_MSG_ERR ("Can't get stat() on %s\n", buf);
+                  POCL_MSG_ERR ("Can't get lstat() on %s\n", buf);
                   free (buf);
                   return -1;
                 }
-              if (S_ISDIR (statbuf.st_mode))
+              if (S_ISDIR (statbuf.st_mode) && !S_ISLNK (statbuf.st_mode))
                 error = pocl_rm_rf (buf);
-              if (S_ISREG (statbuf.st_mode) || S_ISLNK (statbuf.st_mode))
+              else
                 error = remove (buf);
+
               free(buf);
             }
           else
