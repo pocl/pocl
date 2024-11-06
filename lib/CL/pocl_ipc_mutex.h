@@ -42,7 +42,8 @@ typedef struct pocl_ipc_mutex_s
  *
  * On success, the return value is zero and a valid mutex object returned
  * via 'ipc_mtx'.  */
-int pocl_ipc_mutex_create (const char *name, pocl_ipc_mutex_t *ipc_mtx);
+int
+pocl_ipc_mutex_create (const char *name, pocl_ipc_mutex_t *ipc_mtx);
 
 /** Lock the mutex.
  *
@@ -54,21 +55,25 @@ int pocl_ipc_mutex_create (const char *name, pocl_ipc_mutex_t *ipc_mtx);
  *
  * If mutex is locked successfully, zero is returned. Otherwise, on an error,
  * non-zero is returned.  */
-int pocl_ipc_mutex_lock (pocl_ipc_mutex_t ipc_mtx);
+int
+pocl_ipc_mutex_lock (pocl_ipc_mutex_t ipc_mtx);
 
 /** Combined variant of pocl_ipc_mutex_create() and pocl_ipc_mutex_lock().  */
-int pocl_ipc_mutex_create_and_lock (const char *name,
-                                    pocl_ipc_mutex_t *ipc_mtx);
+int
+pocl_ipc_mutex_create_and_lock (const char *name,
+                                pocl_ipc_mutex_t *ipc_mtx);
 
 /** Releases the mutex.
  *
  * The behavior is undefined if the mutex is still locked.  */
-void pocl_ipc_mutex_release (pocl_ipc_mutex_t *ipc_mtx);
+void
+pocl_ipc_mutex_release (pocl_ipc_mutex_t *ipc_mtx);
 
 /** Unlocks the mutex and then releases the mutex object
  *
  * The behavior is undefined if the mutex has not been locked.  */
-void pocl_ipc_mutex_unlock_and_release (pocl_ipc_mutex_t *ipc_mtx);
+void
+pocl_ipc_mutex_unlock_and_release (pocl_ipc_mutex_t *ipc_mtx);
 
 #ifdef __cplusplus
 }
