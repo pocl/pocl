@@ -225,7 +225,7 @@ int pocl_read_file(const char *path, char **content, uint64_t *filesize) {
   ec = fs::openFileForRead(p, fd);
   if (ec) {
     POCL_MSG_ERR("failed to open file %s\n", path);
-    goto ERROR;
+    goto EXIT_ERROR;
   }
   fh = fs::convertFDToNativeFile(fd);
 
@@ -233,7 +233,7 @@ int pocl_read_file(const char *path, char **content, uint64_t *filesize) {
     char *reallocated = (char *)realloc(ptr, (total_size + CHUNK_SIZE + 1));
     if (reallocated == nullptr) {
       POCL_MSG_ERR("failed to realloc mem for reading %s\n", path);
-      goto ERROR;
+      goto EXIT_ERROR;
     }
     ptr = reallocated;
 
@@ -242,7 +242,7 @@ int pocl_read_file(const char *path, char **content, uint64_t *filesize) {
     if (!Res) {
       auto E = Res.takeError();
       POCL_MSG_ERR("failed to read file %s\n", path);
-      goto ERROR;
+      goto EXIT_ERROR;
     }
     actually_read = Res.get();
     if (actually_read > 0)
@@ -253,7 +253,7 @@ int pocl_read_file(const char *path, char **content, uint64_t *filesize) {
   ec = fs::closeFile(fh);
   if (ec) {
     POCL_MSG_ERR("failed to close file %s\n", path);
-    goto ERROR;
+    goto EXIT_ERROR;
   }
 
   /* add an extra NULL character for strings */
@@ -262,7 +262,7 @@ int pocl_read_file(const char *path, char **content, uint64_t *filesize) {
   *filesize = (uint64_t)total_size;
   return 0;
 
-ERROR:
+EXIT_ERROR:
   free(ptr);
   return -1;
 }
