@@ -203,7 +203,7 @@ pocl_read_file(const char* path, char** content, uint64_t *filesize)
   if (ptr == NULL)
     return -1;
 
-  FILE *f = fopen (path, "r");
+  FILE *f = fopen (path, "rb");
   if (f == NULL) {
     POCL_MSG_ERR ("fopen( %s ) failed\n", path);
     goto ERROR;
