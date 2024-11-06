@@ -28,7 +28,7 @@
 # See the License for more information.
 #=============================================================================
 
-if(WIN32)
+if(WIN32 AND NOT MINGW)
   find_path(Hwloc_INCLUDE_DIR
     NAMES
       hwloc.h
