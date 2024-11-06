@@ -1501,11 +1501,10 @@ attributes #0 = { alwaysinline nounwind "correctly-rounded-divide-sqrt-fp-math"=
 !opencl.ocl.version = !{!0}
 !opencl.spir.version = !{!0}
 !llvm.ident = !{!1}
-!llvm.module.flags = !{!2, !3}
+!llvm.module.flags = !{!2}
 
 !0 = !{i32 1, i32 2}
 !1 = !{!"clang version 12.0.0"}
-!2 = !{i32 1, !"wchar_size", i32 4}
-!3 = !{i32 7, !"PIC Level", i32 2}
+!2 = !{i32 7, !"PIC Level", i32 2}
 
 """)
