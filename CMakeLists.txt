@@ -732,7 +732,7 @@ endif()
 
 ######################################################################################
 
-if(UNIX)
+if(UNIX OR MINGW)
   include(CheckCSourceCompiles)
   include(CheckSymbolExists)
 
