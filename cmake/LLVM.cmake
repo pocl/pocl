@@ -216,10 +216,11 @@ set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
 # this needs to be done with LLVM_LIB_MODE because it affects the output
 run_llvm_config(LLVM_SYSLIBS --system-libs ${LLVM_LIB_MODE})
 string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
+string(REPLACE " " ";" LLVM_SYSLIBS "${LLVM_SYSLIBS}")
 # TODO this hack is required for MinGW. Without it,
 # Clang link test reports missing symbols like GetFileVersionInfoSizeW
 if(MINGW)
-  set(LLVM_SYSLIBS "${LLVM_SYSLIBS} -lversion" CACHE STRING "llvm's syslibs" FORCE)
+  list(APPEND LLVM_SYSLIBS "-lversion")
 endif()
 
 ####################################################################
