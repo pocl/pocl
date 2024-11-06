@@ -1717,7 +1717,9 @@ pocl_run_command_capture_output (char *capture_string,
       while ((r = read (out[0], buf, 4096)) > 0)
         {
           if (total_bytes + r > capture_limit)
-            break;
+            /* Read out the bytes even if they don't fit to the buffer to
+               not block the pipe. */
+            continue;
           memcpy (capture_string + total_bytes, buf, r);
           total_bytes += r;
         }
