@@ -490,11 +490,22 @@ set(COMMAND_USES_TERMINAL USES_TERMINAL)
 
 include(GNUInstallDirs)
 
-# for libpocl.so
-set(POCL_INSTALL_PUBLIC_LIBDIR "${CMAKE_INSTALL_FULL_LIBDIR}" CACHE PATH "POCL public libdir")
+# for (lib)pocl.(so|dll|dylib)
+if(WIN32)
+  set(POCL_INSTALL_PUBLIC_LIBDIR "${CMAKE_INSTALL_FULL_BINDIR}" CACHE PATH "POCL public libdir")
+else()
+  set(POCL_INSTALL_PUBLIC_LIBDIR "${CMAKE_INSTALL_FULL_LIBDIR}" CACHE PATH "POCL public libdir")
+endif()
 
-# for libpocl-devices-*.so
-set(POCL_INSTALL_PRIVATE_LIBDIR "${CMAKE_INSTALL_FULL_LIBDIR}/pocl" CACHE PATH "POCL private libdir")
+# for (lib)pocl-devices-*.(so|dll|dylib)
+set(POCL_INSTALL_PRIVATE_LIBDIR "${POCL_INSTALL_PUBLIC_LIBDIR}/pocl" CACHE PATH "POCL private libdir")
+
+# for libpocl.(a|dll.a)
+if(WIN32)
+  set(POCL_INSTALL_STATIC_LIBDIR "${CMAKE_INSTALL_FULL_LIBDIR}" CACHE PATH "POCL public libdir")
+else()
+  set(POCL_INSTALL_STATIC_LIBDIR "${POCL_INSTALL_PUBLIC_LIBDIR}/static" CACHE PATH "POCL public libdir")
+endif()
 
 # for pocl.icd
 set(POCL_INSTALL_ICD_VENDORDIR "${CMAKE_INSTALL_FULL_SYSCONFDIR}/OpenCL/vendors" CACHE PATH "POCL ICD file destination")

@@ -32,8 +32,19 @@ if(ENABLE_LOADABLE_DRIVERS)
       target_include_directories(${name} SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
     endif()
     target_link_libraries(${name} PUBLIC ${POCL_PUBLIC_LINK_LIST} PRIVATE ${POCL_LIBRARY_NAME} ${POCL_PRIVATE_LINK_LIST})
-    set_target_properties(${name} PROPERTIES PREFIX "lib" SUFFIX ".so")
-    install(TARGETS ${name} LIBRARY DESTINATION "${POCL_INSTALL_PRIVATE_LIBDIR}" COMPONENT "lib")
+    if(UNIX)
+      set_target_properties(${name} PROPERTIES PREFIX "lib" SUFFIX ".so")
+    elseif(WIN32)
+      set_target_properties(${name} PROPERTIES PREFIX "" SUFFIX ".dll")
+    elseif(APPLE)
+      set_target_properties(${name} PROPERTIES PREFIX "lib" SUFFIX ".dylib")
+    endif()
+    install(TARGETS ${name}
+            LIBRARY DESTINATION ${POCL_INSTALL_PRIVATE_LIBDIR}
+            COMPONENT "lib"
+            RUNTIME DESTINATION ${POCL_INSTALL_PRIVATE_LIBDIR}
+            COMPONENT "lib"
+    )
   endfunction()
 
 else()
