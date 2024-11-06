@@ -191,7 +191,6 @@ add_test(NAME piglit_cl_custom_r600_create_release_buffer_bug
 add_test(NAME piglit_cl_custom_run_simple_kernel
          COMMAND "${TS_BUILDDIR}/bin/cl-custom-run-simple-kernel")
 
-
 # disabled due to having hardcoded subbuffer alignment,
 # which is not compatible with pocl's basic/pthread
 # subbuffer alignment requirements
@@ -200,6 +199,7 @@ add_test(NAME piglit_cl_custom_run_simple_kernel
 
 add_test(NAME piglit_cl_program_bitcoin_phatk
          COMMAND "${TS_BUILDDIR}/bin/cl-program-bitcoin-phatk")
+
 add_test(NAME piglit_cl_program_max_work_item_sizes
          COMMAND "${TS_BUILDDIR}/bin/cl-program-max-work-item-sizes")
 
@@ -260,9 +260,16 @@ set_tests_properties(
     FAIL_REGULAR_EXPRESSION "fail"
     LABELS "piglit")
 
+# disabled because of stack size requirement & not checking max workgroup size
+unset(EXTRA_TEST)
+if(HOST_CPU_ENABLE_STACK_SIZE_CHECK)
+  set(EXTRA_TEST piglit_cl_program_bitcoin_phatk)
+endif()
+
 set_tests_properties(
   # these fail with OpenCL 3.0,
   # but work with 1.2
+  ${EXTRA_TEST}
   piglit_cl_api_create_command_queue
   piglit_cl_api_get_command_queue_info
   piglit_cl_api_get_device_info
