@@ -70,24 +70,27 @@ struct pocl_context {
 
 
 /* Copy a 64b context struct to a 32b one. */
-#define POCL_CONTEXT_COPY64TO32(__DST, __SRC)				\
-  do {									\
-    struct pocl_context *__src = (struct pocl_context *)__SRC;		\
-    struct pocl_context32 *__dst = (struct pocl_context32 *)__DST;	\
-    __dst->work_dim = __src->work_dim;					\
-    __dst->num_groups[0] = __src->num_groups[0];			\
-    __dst->num_groups[1] = __src->num_groups[1];			\
-    __dst->num_groups[2] = __src->num_groups[2];			\
-    __dst->global_offset[0] = __src->global_offset[0];			\
-    __dst->global_offset[1] = __src->global_offset[1];			\
-    __dst->global_offset[2] = __src->global_offset[2];			\
-    __dst->local_size[0] = __src->local_size[0];			\
-    __dst->local_size[1] = __src->local_size[1];			\
-    __dst->local_size[2] = __src->local_size[2];			\
-    __dst->printf_buffer = __src->printf_buffer;			\
-    __dst->printf_buffer_position = __src->printf_buffer_position;	\
-    __dst->printf_buffer_capacity = __src->printf_buffer_capacity;	\
-  } while (0)
+#define POCL_CONTEXT_COPY64TO32(__DST, __SRC)                                 \
+  do                                                                          \
+    {                                                                         \
+      struct pocl_context *__src = (struct pocl_context *)__SRC;              \
+      struct pocl_context32 *__dst = (struct pocl_context32 *)__DST;          \
+      __dst->work_dim = __src->work_dim;                                      \
+      __dst->num_groups[0] = __src->num_groups[0];                            \
+      __dst->num_groups[1] = __src->num_groups[1];                            \
+      __dst->num_groups[2] = __src->num_groups[2];                            \
+      __dst->global_offset[0] = __src->global_offset[0];                      \
+      __dst->global_offset[1] = __src->global_offset[1];                      \
+      __dst->global_offset[2] = __src->global_offset[2];                      \
+      __dst->local_size[0] = __src->local_size[0];                            \
+      __dst->local_size[1] = __src->local_size[1];                            \
+      __dst->local_size[2] = __src->local_size[2];                            \
+      __dst->printf_buffer = (uintptr_t)__src->printf_buffer & 0xFFFFFFFF;    \
+      __dst->printf_buffer_position                                           \
+        = (uintptr_t)__src->printf_buffer_position & 0xFFFFFFFF;              \
+      __dst->printf_buffer_capacity = __src->printf_buffer_capacity;          \
+    }                                                                         \
+  while (0)
 
 #define POCL_CONTEXT_SIZE(__BITNESS)					\
   (__BITNESS == 64 ?							\
