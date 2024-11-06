@@ -30,8 +30,7 @@
 #include <cassert>
 #include <string>
 
-extern "C" int pocl_ipc_mutex_create(const char *Name,
-                                     pocl_ipc_mutex_t *IpcMtx) {
+int pocl_ipc_mutex_create(const char *Name, pocl_ipc_mutex_t *IpcMtx) {
   assert(IpcMtx && "IpcMtx must not be nullptr!");
   if (std::string(Name).size() > MAX_PATH) {
     POCL_MSG_ERR("The mutex name exceeds an OS limit.");
@@ -48,7 +47,7 @@ extern "C" int pocl_ipc_mutex_create(const char *Name,
   return 0;
 }
 
-extern "C" int pocl_ipc_mutex_lock(pocl_ipc_mutex_t IpcMtx) {
+int pocl_ipc_mutex_lock(pocl_ipc_mutex_t IpcMtx) {
   assert(IpcMtx.handle && "pocl_ipc_mutex_create() must be called first!");
   auto MtxHandle = static_cast<HANDLE>(IpcMtx.handle);
   switch (WaitForSingleObject(MtxHandle, INFINITE)) {
@@ -73,8 +72,7 @@ extern "C" int pocl_ipc_mutex_lock(pocl_ipc_mutex_t IpcMtx) {
   return 0;
 }
 
-extern "C" int pocl_ipc_mutex_create_and_lock(const char *Name,
-                                              pocl_ipc_mutex_t *IpcMtx) {
+int pocl_ipc_mutex_create_and_lock(const char *Name, pocl_ipc_mutex_t *IpcMtx) {
   assert(IpcMtx && "IpcMtx must not be nullptr!");
   if (int error = pocl_ipc_mutex_create(Name, IpcMtx))
     return error;
@@ -85,7 +83,7 @@ extern "C" int pocl_ipc_mutex_create_and_lock(const char *Name,
   return 0;
 }
 
-extern "C" void pocl_ipc_mutex_release(pocl_ipc_mutex_t *IpcMtx) {
+void pocl_ipc_mutex_release(pocl_ipc_mutex_t *IpcMtx) {
   assert(IpcMtx && "Invalid pocl_ipc_mutex_t handle!");
   auto MtxHandle = static_cast<HANDLE>(IpcMtx->handle);
   if (!CloseHandle(MtxHandle)) {
@@ -96,7 +94,7 @@ extern "C" void pocl_ipc_mutex_release(pocl_ipc_mutex_t *IpcMtx) {
   IpcMtx->handle = NULL;
 }
 
-extern "C" void pocl_ipc_mutex_unlock_and_release(pocl_ipc_mutex_t *IpcMtx) {
+void pocl_ipc_mutex_unlock_and_release(pocl_ipc_mutex_t *IpcMtx) {
   assert(IpcMtx && "Invalid pocl_ipc_mutex_t handle!");
   if (IpcMtx->handle == nullptr)
     return;
