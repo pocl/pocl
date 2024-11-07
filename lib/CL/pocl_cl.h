@@ -1187,7 +1187,11 @@ struct _cl_device_id {
   /* Optional property. If the device uses stack for work-item context data and
    * has limited stack size, this property can be used to guide the work-group
    * size computation selection to take the stack size in account. It should
-   * be set to the maximum number of bytes that can be stored on the stack. */
+   * be set to the maximum number of bytes that can be stored on the stack.
+   *
+   * If the property is zero, the work-group size computation is only limited
+   * by device's max_work_group_size property, and PoCL assumes the device's
+   * compiler can always handle the work-item context data correctly. */
   size_t work_group_stack_size;
 
   /* If > 0, specialized versions of the work-group functions are generated
