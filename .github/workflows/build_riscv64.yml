@@ -1,0 +1,77 @@
+---
+name: Linux / CPU RISC-V 64 tests
+
+permissions:
+  contents: read
+
+on:
+  push:
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - 'CHANGES'
+      - 'COPYING'
+      - 'CREDITS'
+      - 'LICENSE'
+      - 'README.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  POCL_MAX_WORK_GROUP_SIZE: "1024"
+  CCACHE_BASEDIR: "${{ github.workspace }}"
+  CCACHE_DIR: "${{ github.workspace }}/../../../../ccache_storage"
+  EXAMPLES_DIR: "${{ github.workspace }}/../../../../examples"
+  BUILD_DIR: "${{ github.workspace }}/build"
+
+jobs:
+  arm64_matrix:
+    name: LLVM ${{ matrix.llvm }} - RISC-V 64 ${{ matrix.config }}
+    runs-on: [self-hosted, linux, RISCV64]
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm: [18]
+        config: [basic]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Load Env vars
+        id: load-env
+        run: |
+          cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
+
+      - name: Run CMake
+        id: cmake
+        run: |
+          runCMake() {
+            BUILD_FLAGS="-O1 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DHOST_CPU_TARGET_ABI=lp64d -DLLC_HOST_CPU=sifive-u74 \
+            -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
+            -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} \
+            "$@" -B $BUILD_DIR ${{ github.workspace }}
+          }
+
+          rm -rf $BUILD_DIR
+          mkdir -p $BUILD_DIR
+          runCMake -DENABLE_ICD=1
+
+      - name: Run Build
+        id: build
+        run: |
+          cd $BUILD_DIR && make -j$(nproc)
+
+      - name: Run Tests
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+        id: ctest
+        timeout-minutes: 120
+        run: |
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          cd $BUILD_DIR && ctest -j$(nproc) $CTEST_FLAGS -L internal -LE 'long'

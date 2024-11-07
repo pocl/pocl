@@ -496,7 +496,7 @@ static void handleDeviceSidePrintf(
     // unnecessary complication for CPU devices
     PFlags.StorePtrInsteadOfMD5 = true;
     PFlags.AlwaysStoreFmtPtr = false;
-#if defined(__arm__) || defined(__aarch64__)
+#if defined(__arm__) || defined(__aarch64__) || defined(__riscv)
     /* ARM seems to promote char2 to int */
     PFlags.ArgPromotionChar2 = true;
 #endif

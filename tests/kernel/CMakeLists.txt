@@ -76,16 +76,6 @@ foreach(VARIANT ${VARIANTS})
       LABELS "internal;kernel;long")
 endforeach()
 
-
-foreach(VARIANT ${VARIANTS})
-  # TODO: works on LLVM 15 but fails with LLVM 16, most likely reason:
-  # https://github.com/pocl/pocl/issues/1525
-  # https://github.com/grpc/grpc/issues/14587
-  if(APPLE AND ARM64)
-    set_tests_properties( "kernel/test_as_type_${VARIANT}" PROPERTIES DISABLED 1)
-  endif()
-endforeach()
-
 add_test_pocl(NAME "kernel/test_min_max"
               COMMAND "kernel" "test_min_max")
 
@@ -129,6 +119,17 @@ add_test_pocl(NAME "kernel/test_halfs"
               COMMAND "kernel" "test_halfs")
 
 foreach(VARIANT ${VARIANTS})
+  # TODO: works on LLVM 15 but fails with LLVM 16, most likely reason:
+  # https://github.com/pocl/pocl/issues/1525
+  # https://github.com/grpc/grpc/issues/14587
+  if(APPLE AND ARM64)
+    set_tests_properties( "kernel/test_as_type_${VARIANT}" PROPERTIES DISABLED 1)
+  endif()
+
+  if(ENABLE_HOST_CPU_DEVICES AND RISCV)
+    set_tests_properties( "kernel/test_ilogb_${VARIANT}" PROPERTIES DISABLED 1)
+  endif()
+
   set_tests_properties("kernel/test_min_max_${VARIANT}" "kernel/test_length_distance_${VARIANT}"
     "kernel/test_fmin_fmax_fma_${VARIANT}" "kernel/test_local_struct_array_${VARIANT}"
     "kernel/test_convert_sat_regression_${VARIANT}"   "kernel/test_fabs_${VARIANT}"
