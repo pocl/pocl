@@ -224,6 +224,10 @@ if(APPLE)
   list(APPEND POCL_LIB_SOURCES "pthread_barrier.c")
 endif()
 
+if(WIN32)
+  list(APPEND POCL_LIB_SOURCES "pocl_ipc_mutex_win.cc")
+endif()
+
 set(LIBPOCL_OBJS "$<TARGET_OBJECTS:libpocl_unlinked_objs>"
                  "$<TARGET_OBJECTS:pocl_cache>")
 

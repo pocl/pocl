@@ -39,6 +39,7 @@
 #include <utlist.h>
 
 #ifdef _WIN32
+#include "pocl_ipc_mutex.h"
 #include "vccompat.hpp"
 #endif
 
@@ -124,6 +125,19 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   char final_binary_path[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_final_binary_path (final_binary_path, program, device_i, kernel,
                                 command, specialize);
+
+#ifdef _WIN32
+  /* Avoid race condition of multiple processes accessing same files. */
+  char MtxName[MAX_PATH];  /* MAX_PATH is defined by Windows API.  */
+  strncpy (MtxName, program->build_hash[device_i], MAX_PATH);
+  MtxName[MAX_PATH - 1] = '\0';
+  pocl_ipc_mutex_t ipc_mtx;
+  error = pocl_ipc_mutex_create_and_lock (MtxName, &ipc_mtx);
+  assert (!error && "IPC mutex lock failure!");
+  // For release builds, continue despite not having the mutex - maybe we are
+  // in luck not having a race condition.
+  int have_locked_mutex = !error;
+#endif
 
   if (pocl_exists (final_binary_path))
     goto FINISH;
@@ -251,6 +265,7 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
 
   /* rename temporary kernel.so */
   error = pocl_rename (tmp_module, final_binary_path);
+
   if (error)
     {
       POCL_MSG_PRINT_LLVM (
@@ -279,6 +294,10 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
     }
 
 FINISH:
+#ifdef _WIN32
+  if (have_locked_mutex)
+    pocl_ipc_mutex_unlock_and_release (&ipc_mtx);
+#endif
   pocl_destroy_llvm_module (llvm_module, kernel->context);
   POCL_MEM_FREE (objfile);
   POCL_MEASURE_FINISH (llvm_codegen);
