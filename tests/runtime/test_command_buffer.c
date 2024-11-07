@@ -55,6 +55,12 @@ main (int _argc, char **_argv)
 
   ext.clCreateCommandBufferKHR = clGetExtensionFunctionAddressForPlatform (
       platform, "clCreateCommandBufferKHR");
+  if (ext.clCreateCommandBufferKHR == NULL)
+    {
+      printf ("ERROR: Command buffers are not supported\n");
+      return 77;
+    }
+
   ext.clCommandCopyBufferKHR = clGetExtensionFunctionAddressForPlatform (
       platform, "clCommandCopyBufferKHR");
   ext.clCommandCopyBufferRectKHR = clGetExtensionFunctionAddressForPlatform (
@@ -223,9 +229,9 @@ main (int _argc, char **_argv)
           sizeof (cl_int) * frame_elements, 1, &command_buf_event, NULL, &err);
       CHECK_OPENCL_ERROR_IN ("clEnqueueMapBuffer");
 
-      for (size_t i = 0; i < frame_elements; ++i)
+      for (cl_int i = 0; i < (int)frame_elements; ++i)
         {
-          TEST_ASSERT (buf_map[i] == (2 * (i + frame_index) + 1));
+          TEST_ASSERT (buf_map[i] == (2 * (i + (int)frame_index) + 1));
         }
       CHECK_CL_ERROR (clEnqueueUnmapMemObject (command_queue, buffer_dst,
                                                buf_map, 0, NULL, NULL));
