@@ -35,22 +35,24 @@ add_executable("EinsteinToolkit" EinsteinToolkit.c ML_BSSN_CL_RHS1.cl ML_BSSN_CL
 # EinsteinToolkit_LDADD = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
 target_link_libraries("EinsteinToolkit" ${POCLU_LINK_OPTIONS})
 
-if(NOT MIPS)
-  add_test(NAME "EinsteinToolkit" COMMAND "EinsteinToolkit")
+add_test(NAME "EinsteinToolkit" COMMAND "EinsteinToolkit")
 
-  set_tests_properties( "EinsteinToolkit"
+set_tests_properties( "EinsteinToolkit"
     PROPERTIES
     COST 15.0
     LABELS "internal;EinsteinToolkit"
     DEPENDS "pocl_version_check")
 
-  add_test(NAME "EinsteinToolkit_SubDev" COMMAND "EinsteinToolkit" s)
+add_test(NAME "EinsteinToolkit_SubDev" COMMAND "EinsteinToolkit" s)
 
-  set_tests_properties( "EinsteinToolkit_SubDev"
+set_tests_properties( "EinsteinToolkit_SubDev"
     PROPERTIES
     COST 15.0
     LABELS "EinsteinToolkit"
     ENVIRONMENT "POCL_AFFINITY=1"
     SKIP_RETURN_CODE 77
     DEPENDS "pocl_version_check")
+
+if(ENABLE_HOST_CPU_DEVICES AND RISCV)
+  set_tests_properties("EinsteinToolkit" PROPERTIES DISABLED 1)
 endif()

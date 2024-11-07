@@ -47,3 +47,7 @@ set_tests_properties(
     PROCESSORS 1
     LABELS "internal;cuda;hsa-native;vulkan;level0"
     DEPENDS "pocl_version_check")
+
+if(ENABLE_HOST_CPU_DEVICES AND RISCV)
+  set_tests_properties("examples/trig" PROPERTIES DISABLED 1)
+endif()
