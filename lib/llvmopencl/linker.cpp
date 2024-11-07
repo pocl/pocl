@@ -719,11 +719,10 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
 
   shared_copy(Program, Lib, Log, vvm);
 
-  if (StripAllDebugInfo) {
+  if (StripAllDebugInfo)
     llvm::StripDebugInfo(*Program);
-  } else {
+  else
     removeDuplicateDbgInfo(Program);
-  }
 
   fixCallingConv(Program, Log);
 
