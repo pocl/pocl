@@ -1705,11 +1705,10 @@ void populateModulePM(void *Passes, void *Module, unsigned OptL, unsigned SizeL,
     }
   }
   ModulePassManager MPM;
-  if (Opt == OptimizationLevel::O0) {
+  if (Opt == OptimizationLevel::O0)
     MPM = PB.buildO0DefaultPipeline(Opt);
-  } else {
+  else
     MPM = PB.buildPerModuleDefaultPipeline(Opt);
-  }
   if (Module) {
     llvm::Module *Mod = (llvm::Module *)Module;
     MPM.run(*Mod, MAM);
