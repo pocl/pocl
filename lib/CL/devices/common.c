@@ -1151,7 +1151,6 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 {
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   pocl_dlhandle_cache_item *ci = NULL;
-  const char *dl_error = NULL;
   _cl_command_run *run_cmd = &command->command.run;
 
   /* Brute force mechanism to test relying on generic work-group functions
@@ -1186,7 +1185,10 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   char module_fn[POCL_MAX_PATHNAME_LENGTH];
   int err = pocl_check_kernel_disk_cache (module_fn, command, specialize);
   if (err)
-    return NULL;
+    {
+      POCL_UNLOCK (pocl_dlhandle_lock);
+      return NULL;
+    }
 
   ci->dlhandle = pocl_dynlib_open (module_fn, 0, 1);
 
@@ -1204,11 +1206,11 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 
       if (ci->wg == NULL)
         {
-          POCL_MSG_ERR (
-            "pocl_dynlib_symbol_address(\"%s\", \"%s\") failed with '%s'.\n"
-            "note: missing symbols in the kernel binary might be"
-            " reported as 'file not found' errors.\n",
-            module_fn, workgroup_string, dl_error);
+          POCL_MSG_ERR ("pocl_dynlib_symbol_address(\"%s\", \"%s\") failed.\n"
+                        "note: missing symbols in the kernel binary might be"
+                        " reported as 'file not found' errors.\n",
+                        module_fn, workgroup_string);
+          POCL_UNLOCK (pocl_dlhandle_lock);
           return NULL;
         }
     }
