@@ -396,6 +396,30 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
       GV->eraseFromParent();
   }
 
+  // Remove all WI-related functions and global variables;
+  // all of these should be privatized now. Functions first because
+  // they still refer to the global variables
+  for (auto Name : WIFuncNameVec) {
+    Function *F = M.getFunction(Name);
+    if (F && F->getNumUses() == 0) {
+      FAM.clear(*F, "parallel.bc");
+      F->eraseFromParent();
+    }
+  }
+
+  for (auto Name : WorkgroupVariablesVector) {
+    GlobalVariable *GV = M.getGlobalVariable(Name);
+    if (GV && GV->getNumUses() == 0) {
+      GV->eraseFromParent();
+    }
+  }
+
+  // remove the declaration of the pocl.barrier placeholder
+  if (auto *F = M.getFunction(BARRIER_FUNCTION_NAME)) {
+    FAM.clear(*F, "parallel.bc");
+    F->eraseFromParent();
+  }
+
   return true;
 }
 
@@ -1827,43 +1851,6 @@ llvm::PreservedAnalyses Workgroup::run(llvm::Module &M,
 
   auto &FAM = AM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
   bool Ret = WGI.runOnModule(M, FAM);
-
-  // remove the declaration of the pocl.barrier because it's invalid.
-  for (auto &Func : M.functions()) {
-    if (!Func.isDeclaration())
-      continue;
-    if (!Func.hasName())
-      continue;
-    if (Func.getName() == BARRIER_FUNCTION_NAME) {
-      FAM.clear(Func, "parallel.bc");
-      Func.eraseFromParent();
-      break;
-    }
-  }
-
-  std::vector<llvm::GlobalVariable *> GVarsToDelete;
-  // remove the declarations of global variables
-  for (auto &GV : M.globals()) {
-    llvm::GlobalVariable *GVar = &GV;
-
-    if (!GVar->hasName()) {
-      continue;
-    }
-
-    if (std::find(WorkgroupVariablesVector.begin(), WorkgroupVariablesVector.end(),
-                  GVar->getName().str()) == WorkgroupVariablesVector.end()) {
-      continue;
-    }
-    if (GVar->getNumUses() > 0) {
-      continue;
-    }
-
-    GVarsToDelete.push_back(GVar);
-  }
-
-  for (llvm::GlobalVariable *GVar : GVarsToDelete) {
-    GVar->eraseFromParent();
-  }
 
 #ifdef DEBUG_WORK_GROUP_GEN
   std::cerr << "### After Workgroup:\n";
