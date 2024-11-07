@@ -177,9 +177,18 @@ static void fixCallingConv(llvm::Module *Mod, std::string &Log) {
         CallInst *CallInstr = dyn_cast<CallInst>(Instr);
         Function *Callee = CallInstr->getCalledFunction();
 
-        if ((Callee == nullptr) || Callee->getName().starts_with("llvm.") ||
-            Callee->isDeclaration())
+        if ((Callee == nullptr) || Callee->isDeclaration())
           continue;
+        if (Callee->hasName() && Callee->getName().starts_with("llvm."))
+          continue;
+
+        if (Callee->getCallingConv() == llvm::CallingConv::SPIR_FUNC ||
+            CallInstr->getCallingConv() == llvm::CallingConv::SPIR_FUNC) {
+          // Loosen the CC to the default one. It should be always the
+          // preferred one to SPIR_FUNC at this stage.
+          Callee->setCallingConv(llvm::CallingConv::C);
+          CallInstr->setCallingConv(llvm::CallingConv::C);
+        }
 
         if (CallInstr->getCallingConv() != Callee->getCallingConv()) {
           std::string CalleeName, CallerName;
