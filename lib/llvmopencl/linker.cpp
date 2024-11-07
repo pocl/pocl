@@ -295,9 +295,9 @@ static void CopyFunc(const llvm::StringRef Name, const llvm::Module *From,
  * 'vvm'.
  */
 static int CopyFuncCallgraph(const llvm::StringRef FuncName,
-                               const llvm::Module *From, llvm::Module *To,
-                               ValueToValueMapTy &VVMap,
-                               PoclTypeRemapper *TypeMapper) {
+                             const llvm::Module *From, llvm::Module *To,
+                             ValueToValueMapTy &VVMap,
+                             PoclTypeRemapper *TypeMapper) {
   llvm::StringSet<> Callees;
   llvm::Function *RootFunc = From->getFunction(FuncName);
   if (RootFunc == NULL)
@@ -361,13 +361,11 @@ static size_t estimateFunctionStackSize(llvm::Function *Func,
         auto AllocatedType = AI->getAllocatedType();
         const llvm::DataLayout &DL = Mod->getDataLayout();
 #if LLVM_MAJOR > 15
-        if (auto AllocaSize = AI->getAllocationSize(DL)) {
+        if (auto AllocaSize = AI->getAllocationSize(DL))
           TotalSize += AllocaSize->getKnownMinValue();
-        }
 #else
-        if (auto AllocaSize = AI->getAllocationSizeInBits(DL)) {
+        if (auto AllocaSize = AI->getAllocationSizeInBits(DL))
           TotalSize += AllocaSize->getKnownMinSize();
-        }
 #endif
         continue;
       }
@@ -384,12 +382,11 @@ static size_t estimateFunctionStackSize(llvm::Function *Func,
         }
 
         auto It = StackSizesMap.find(Callee);
-        if (It != StackSizesMap.end()) {
+        if (It != StackSizesMap.end())
           TotalSize += It->second;
-        } else {
+        else
           TotalSize +=
               estimateFunctionStackSize(Callee, Mod, CallChain, StackSizesMap);
-        }
       }
     }
   }

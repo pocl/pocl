@@ -268,8 +268,7 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
   FunctionMapping PrintfCache;
 
   // Remove the OptNone&NoInline keywords from all functions;
-  for (Module::iterator It = M.begin(), e = M.end(); It != e; ++It) {
-    Function &F = *It;
+  for (Function &F : M) {
     if (!isKernelToProcess(F)) {
       markFunctionAlwaysInline(&F);
       F.removeFnAttr(Attribute::AlwaysInline);
@@ -409,9 +408,8 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
 
   for (auto Name : WorkgroupVariablesVector) {
     GlobalVariable *GV = M.getGlobalVariable(Name);
-    if (GV && GV->getNumUses() == 0) {
+    if (GV && GV->getNumUses() == 0)
       GV->eraseFromParent();
-    }
   }
 
   // remove the declaration of the pocl.barrier placeholder
