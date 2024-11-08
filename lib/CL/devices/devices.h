@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 /* The number of available devices. */
-extern unsigned int pocl_num_devices;
+extern uint64_t pocl_num_devices;
 extern struct _cl_device_id *pocl_devices;
 
 const char *pocl_get_device_name (unsigned index);

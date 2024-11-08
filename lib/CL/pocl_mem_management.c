@@ -1060,7 +1060,8 @@ pocl_find_raw_ptr_with_vm_ptr (cl_context context, const void *host_ptr)
     {
       if (item->vm_ptr == NULL)
         continue;
-      if (item->vm_ptr <= host_ptr && item->vm_ptr + item->size > host_ptr)
+      if (item->vm_ptr <= host_ptr
+          && (char *)item->vm_ptr + item->size > (const char *)host_ptr)
         {
           break;
         }
@@ -1078,7 +1079,8 @@ pocl_find_raw_ptr_with_dev_ptr (cl_context context, const void *dev_ptr)
     {
       if (item->dev_ptr == NULL)
         continue;
-      if (item->dev_ptr <= dev_ptr && item->dev_ptr + item->size > dev_ptr)
+      if (item->dev_ptr <= dev_ptr
+          && (char *)item->dev_ptr + item->size > (const char *)dev_ptr)
         break;
     }
   POCL_UNLOCK_OBJ (context);

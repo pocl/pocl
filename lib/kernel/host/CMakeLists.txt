@@ -33,7 +33,6 @@ as_type.cl
 async_work_group_copy.cl
 async_work_group_strided_copy.cl
 atomics.cl
-barrier.ll
 bitselect.cl
 clamp.cl
 clamp_int.cl
@@ -241,6 +240,12 @@ sleef-pocl/sqrt.cl
 sleef-pocl/tgamma.cl
 sleef-pocl/trunc.cl
 )
+
+if(KERNEL_TRIPLE_TARGETS_MSVC_TOOLCHAIN)
+  list(APPEND SOURCES_WITH_SLEEF barrier-msvc.ll)
+else()
+  list(APPEND SOURCES_WITH_SLEEF barrier.ll)
+endif()
 
 if(HOST_CPU_ENABLE_CL_KHR_FP16)
   list(REMOVE_ITEM SOURCES_WITH_SLEEF

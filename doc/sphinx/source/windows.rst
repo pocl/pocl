@@ -2,11 +2,79 @@
 Windows support
 -----------------
 
+It is possible to build & use PoCL on Windows using MinGW and
+Microsoft Visual Studio (MSVC). Building PoCL on MSVC is recommended
+and easiest route. The MinGW route takes more steps in building which
+involves and currently requires cross-compilation in a linux machine.
 
-It is possible to build & use PoCL on Windows using MinGW. However, the setup requires a number of steps.
+Prerequisites for MSVC Route
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Prerequisites
-~~~~~~~~~~~~~~~
+* Microsoft Visual Studio Community or Professional edition, at least
+  version 2019.
+* Optional: `Ninja <https://ninja-build.org/>`_.
+
+
+Building LLVM using MSVC
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Open Windows PowerShell and choose a directory as workspace for building LLVM
+and PoCL and then::
+
+  git clone https://github.com/llvm/llvm-project.git
+  cd llvm-project
+  git checkout release/<llvm-version>.x
+  cd ..
+  cmake -S llvm-project\llvm -B build-llvm -DLLVM_ENABLE_PROJECTS=clang -DLLVM_TARGETS_TO_BUILD=X86 -DCMAKE_INSTALL_PREFIX=<llvm-install-path>\install-llvm
+  cmake --build build-llvm --config Release
+  cmake --install install-llvm --config Release
+
+Where:
+
+* ``<llvm-version>`` is LLVM major version to be built - e.g. ``19``.
+
+* ``<llvm-install-path>`` is a directory to install the LLVM into and
+  used in the PoCL building section ahead.
+
+This should build 64-bit static libraries.
+
+Building PoCL Using MSVC
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Source MSVC SDK environment using the command in the PowerShell::
+
+  '& C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1 -Arch amd64 -HostArch amd64'
+
+If you have professional edition installed instead, replace ``Community`` with
+``Professional`` in the above command.
+
+Configure and build PoCL::
+
+  git clone https://github.com/pocl/pocl.git
+  cmake -S pocl -B build-pocl -DCMAKE_INSTALL_PREFIX=<pocl-install>\install-pocl -DENABLE_ICD=0 -DENABLE_LLVM=1 -DWITH_LLVM_CONFIG=<llvm-install-path>\bin\llvm-config.exe -DENABLE_LOADABLE_DRIVERS=0 -DSTATIC_LLVM=ON -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL -DBUILD_SHARED_LIBS=OFF -G "Ninja"
+  cmake --build build-pocl
+  cmake --install build-pocl
+
+Where ``<llvm-install-path>`` is the directory where the LLVM is
+installed in the previous section. This builds PoCL as static library
+and building PoCL as dynamic library (``-DBUILD_SHARED_LIBS=ON``) is
+not supported yet. ``-G Ninja`` can be replaced with ``-G NMake
+Makefiles`` but the building will be very slow.
+
+
+Running tests from the build directory (MSVC)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To run PoCL's internal tests delve into the build directory and run::
+
+  $env:POCL_BUILDING = '1'
+  ctest -j<N>
+
+Where ``<N>`` is a number of tests to be run in parallel.
+
+
+Prerequisites for MinGW Route
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * a Linux machine with enough memory & space to cross-compile LLVM, and an environment for building containers (docker/podman)
 * a Windows machine with UCRT runtime (this comes built-in since Windows 10, available as separate download for earlier versions)
@@ -23,8 +91,8 @@ On the Linux machine, install docker/podman, then execute::
 This will produce a file named `llvm-mingw-<TAG>-ucrt-x86_64.zip`, this should contain the required full installation of LLVM 19 + MinGW.
 Copy the file to the Windows machine.
 
-Building PoCL
-~~~~~~~~~~~~~~~~~
+Building PoCL using MinGW
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 On the Windows machine, follow these steps:
 
@@ -56,8 +124,8 @@ From `C:\Workspace\git`, run `git-bash.exe`. In this shell execute the following
     -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_LOADABLE_DRIVERS=0 ..
     ninja -j4
 
-Running tests from the build directory
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Running tests from the build directory (MinGW)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 On Windows, RPATH is not embedded into binaries. You must set the PATH environment variable to contain
 paths of all required DLL libraries; with the packages you've installed in previous step, the DLLs are

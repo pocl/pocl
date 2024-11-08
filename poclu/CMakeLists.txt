@@ -25,10 +25,6 @@
 
 set_opencl_header_includes()
 
-if(MSVC)
-  set_source_files_properties( bswap.c misc.c PROPERTIES LANGUAGE CXX )
-endif(MSVC)
-
 add_library("poclu" STATIC bswap.c misc.c)
 
 harden("poclu")

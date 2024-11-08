@@ -654,17 +654,14 @@ const std::vector<std::string>
     WorkgroupVariablesVector(WorkgroupVariablesArray,
                              WorkgroupVariablesArray+NumWorkgroupVariables);
 
-const char *WIFuncNameArray[NumWIFuncNames] = {"_Z13get_global_idj",
-                                               "_Z17get_global_offsetj",
-                                               "_Z15get_global_sizej",
-                                               "_Z12get_group_idj",
-                                               "_Z12get_local_idj",
-                                               "_Z14get_local_sizej",
-                                               "_Z23get_enqueued_local_sizej",
-                                               "_Z14get_num_groupsj",
-                                               "_Z20get_global_linear_idv",
-                                               "_Z19get_local_linear_idv",
-                                               "_Z12get_work_dimv"};
+const char *WIFuncNameArray[] = {
+    GID_BUILTIN_NAME,        GOFF_BUILTIN_NAME,    GS_BUILTIN_NAME,
+    GROUP_ID_BUILTIN_NAME,   LID_BUILTIN_NAME,     LS_BUILTIN_NAME,
+    ENQUEUE_LS_BUILTIN_NAME, NGROUPS_BUILTIN_NAME, GLID_BUILTIN_NAME,
+    LLID_BUILTIN_NAME,       WDIM_BUILTIN_NAME};
+
+constexpr unsigned NumWIFuncNames =
+    sizeof(WIFuncNameArray) / sizeof(const char *);
 
 const std::vector<std::string> WIFuncNameVec(WIFuncNameArray,
                                              WIFuncNameArray + NumWIFuncNames);

@@ -35,7 +35,11 @@
 #include "pocl_rdma.h"
 #endif
 
+#ifdef _MSC_VER
+#include "vccompat.hpp"
+#else
 #include <unistd.h>
+#endif
 
 extern unsigned cl_context_count;
 extern pocl_lock_t pocl_context_handling_lock;

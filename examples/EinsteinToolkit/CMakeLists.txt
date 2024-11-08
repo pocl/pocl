@@ -30,9 +30,6 @@ add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 ${OPENCL_CFLAGS}")
 add_compile_options(${OPENCL_CFLAGS} -std=c99)
 
-if (MSVC)
-  set_source_files_properties( EinsteinToolkit.c PROPERTIES LANGUAGE CXX )
-endif(MSVC)
 add_executable("EinsteinToolkit" EinsteinToolkit.c ML_BSSN_CL_RHS1.cl ML_BSSN_CL_RHS2.cl)
 
 # EinsteinToolkit_LDADD = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la

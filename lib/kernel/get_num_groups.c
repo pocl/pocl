@@ -25,8 +25,13 @@ extern const size_t _num_groups_x;
 extern const size_t _num_groups_y;
 extern const size_t _num_groups_z;
 
+#if _MSC_VER
+size_t _CL_READNONE _CL_OPTNONE
+__identifier ("?get_num_groups@@$$J0YAKI@Z") (unsigned int dimindx)
+#else
 size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
 get_num_groups (unsigned int dimindx)
+#endif
 {
   switch(dimindx)
     {

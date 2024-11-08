@@ -30,11 +30,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "config.h"
 #include "pocl_opencl.h"
 #include "CL/cl_ext.h"
+
+#if defined(_WIN32) && !defined(__MINGW32__)
+#include <io.h> /* import _access */
+#else
+#include <unistd.h>
+#endif
+
+static int
+poclu_file_exists (const char *path)
+{
+#if defined(_WIN32) && !defined(__MINGW32__)
+  return _access (path, 0) == 0;
+#else
+  /* TODO: Does mingw provide access()? */
+  return access (path, F_OK) == 0;
+#endif
+}
 
 cl_context
 poclu_create_any_context2 (cl_platform_id *platform)
@@ -379,7 +395,11 @@ fail2:
   free (devices);
 
 fail:
+#ifdef _MSC_VER
+  check_cl_error (err, __LINE__, __func__);
+#else
   check_cl_error (err, __LINE__, __PRETTY_FUNCTION__);
+#endif
   return err;
 }
 
@@ -490,23 +510,23 @@ pocl_getpath (char *path, size_t len, const char *explicit_binary,
     }
 
   snprintf (path, len, "%s%s", basename, ext);
-  if (access (path, F_OK) == 0)
+  if (poclu_file_exists (path))
     return CL_SUCCESS;
 
   snprintf (path, len, "%s/%s%s", BUILDDIR, basename, ext);
-  if (access (path, F_OK) == 0)
+  if (poclu_file_exists (path))
     return CL_SUCCESS;
 
   snprintf (path, len, "%s/%s%s", SRCDIR, basename, ext);
-  if (access (path, F_OK) == 0)
+  if (poclu_file_exists (path))
     return CL_SUCCESS;
 
   snprintf (path, len, "%s/tests/%s%s", SRCDIR, basename, ext);
-  if (access (path, F_OK) == 0)
+  if (poclu_file_exists (path))
     return CL_SUCCESS;
 
   snprintf (path, len, "%s/examples/%s/%s%s", SRCDIR, basename, basename, ext);
-  if (access (path, F_OK) == 0)
+  if (poclu_file_exists (path))
     return CL_SUCCESS;
 
   fprintf (stderr,

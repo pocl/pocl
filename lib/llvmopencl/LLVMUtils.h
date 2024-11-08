@@ -59,8 +59,6 @@ constexpr unsigned NumWorkgroupVariables = 21;
 extern const char *WorkgroupVariablesArray[];
 extern const std::vector<std::string> WorkgroupVariablesVector;
 // work-item function names
-constexpr unsigned NumWIFuncNames = 11;
-extern const char *WIFuncNameArray[];
 extern const std::vector<std::string> WIFuncNameVec;
 // functions that should not be inlined because they're required by other
 // passes: WI funcs are required by FlattenGlobals pass Printf funcs

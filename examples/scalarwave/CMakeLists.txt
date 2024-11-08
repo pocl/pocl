@@ -27,9 +27,6 @@ add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
 add_compile_options(${OPENCL_CFLAGS} -std=c99)
 
-if (MSVC)
-  set_source_files_properties( scalarwave.c PROPERTIES LANGUAGE CXX )
-endif(MSVC)
 add_executable("scalarwave" scalarwave.c scalarwave.cl)
 
 target_link_libraries("scalarwave" ${POCLU_LINK_OPTIONS})

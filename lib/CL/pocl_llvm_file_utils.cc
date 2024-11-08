@@ -41,6 +41,7 @@
 
 #if defined(_WIN32)
 #define NOMINMAX
+#include <windows.h>
 #include <fileapi.h>
 #include <windows.h>
 #endif

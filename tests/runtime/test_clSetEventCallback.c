@@ -1,43 +1,61 @@
-/* Tests clSetEventCallback() 
+/* Tests clSetEventCallback()
 
    Copyright (c) 2013 Ville Korhonen / Tampere University of Technology
-   
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
-
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#if _MSC_VER
+#include <windows.h>
+#define sleep(x) Sleep ((x) * 1000)
+#else
 #include <unistd.h>
+#endif
 
+#if !defined(__STDC_NO_THREADS__) && __STDC_VERSION__ >= 201112L
+#include <threads.h>
+mtx_t mutex;
+static void
+init_mutex ()
+{
+  mtx_init (&mutex, mtx_plain);
+}
+#define LOCK mtx_lock (&mutex)
+#define UNLOCK mtx_unlock (&mutex)
+#else
 #include <pthread.h>
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+static void
+init_mutex ()
+{
+}
+#define LOCK pthread_mutex_lock (&mutex)
+#define UNLOCK pthread_mutex_unlock (&mutex)
+#endif
 
 #include "poclu.h"
 
 int submit = 0;
 int running = 0;
 int complete = 0;
-
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-#define LOCK pthread_mutex_lock(&mutex)
-#define UNLOCK pthread_mutex_unlock(&mutex)
-
 
 void callback_function(cl_event event, 
                        cl_int   event_command_exec_status, 
@@ -95,6 +113,8 @@ int main()
   cl_context context = NULL;
   cl_device_id device = NULL;
   cl_command_queue queue = NULL;
+
+  init_mutex ();
 
   CHECK_CL_ERROR (
     poclu_get_any_device2 (&context, &device, &queue, &platform));

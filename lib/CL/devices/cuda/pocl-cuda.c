@@ -176,7 +176,7 @@ typedef struct pocl_cuda_device_data_s
 
 } pocl_cuda_device_data_t;
 
-extern unsigned int pocl_num_devices;
+extern uint64_t pocl_num_devices;
 
 void *pocl_cuda_submit_thread (void *);
 void *pocl_cuda_finalize_thread (void *);

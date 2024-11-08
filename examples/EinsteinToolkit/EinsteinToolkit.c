@@ -45,7 +45,7 @@ int const niters = 10;
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>
+#include <time.h>
 
 #include "pocl_opencl.h"
 
@@ -1473,17 +1473,13 @@ int main(int argc, char** argv)
   double min_elapsed = HUGE_VAL;
   double avg_elapsed = 0.0;
   for (int n=0; n<niters; ++n) {
-    struct timeval tv0;
-    gettimeofday(&tv0, NULL);
-    exec_ML_BSSN_CL_RHS1(&cctkGH, &cctk_arguments);
-    exec_ML_BSSN_CL_RHS2(&cctkGH, &cctk_arguments);
-    struct timeval tv1;
-    gettimeofday(&tv1, NULL);
-    double const elapsed =
-      (tv1.tv_sec + 1.0e-6 * tv1.tv_usec) -
-      (tv0.tv_sec + 1.0e-6 * tv0.tv_usec);
-    min_elapsed = elapsed < min_elapsed ? elapsed : min_elapsed;
-    avg_elapsed += elapsed;
+      double tv0 = (double)clock ();
+      exec_ML_BSSN_CL_RHS1 (&cctkGH, &cctk_arguments);
+      exec_ML_BSSN_CL_RHS2 (&cctkGH, &cctk_arguments);
+      double tv1 = (double)clock ();
+      double const elapsed = (tv1 - tv0) / CLOCKS_PER_SEC;
+      min_elapsed = elapsed < min_elapsed ? elapsed : min_elapsed;
+      avg_elapsed += elapsed;
   }
   avg_elapsed /= niters;
   printf("End timing\n");
