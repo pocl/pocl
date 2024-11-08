@@ -488,6 +488,7 @@ static void handleDeviceSidePrintf(
   PFlags.IsBuffered = true;
   PFlags.DontAlign = true;
   PFlags.FlushBuffer = DeviceSupportsImmediateFlush;
+  PFlags.Pointers32Bit = ClDev->address_bits == 32;
 
   if (ClDev->type == CL_DEVICE_TYPE_CPU) {
     // for CPU, store constant format strings as simply a pointer

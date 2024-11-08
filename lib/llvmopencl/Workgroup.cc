@@ -122,7 +122,8 @@ private:
   void privatizeContext(llvm::Function *F);
 
   llvm::Value *createLoadFromContext(llvm::IRBuilder<> &Builder,
-                                     int StructFieldIndex, int FieldIndex);
+                                     int StructFieldIndex, int FieldIndex,
+                                     std::string Name);
 
   void addGEPs(llvm::IRBuilder<> &Builder, int StructFieldIndex,
                const char *FormatStr);
@@ -525,7 +526,8 @@ void WorkgroupImpl::addRangeMetadataForPCField(llvm::Instruction *Instr,
 // the given element.
 llvm::Value *WorkgroupImpl::createLoadFromContext(IRBuilder<> &Builder,
                                                   int StructFieldIndex,
-                                                  int FieldIndex = -1) {
+                                                  int FieldIndex = -1,
+                                                  std::string Name = "") {
 
   Value *GEP, *Ptr;
   GEP = Builder.CreateStructGEP(PoclContextT, ContextArg, StructFieldIndex);
@@ -560,9 +562,7 @@ llvm::Value *WorkgroupImpl::createLoadFromContext(IRBuilder<> &Builder,
     FinalType = AT->getArrayElementType();
   }
 
-  Load = Builder.CreateLoad(
-      FinalType,
-      Ptr);
+  Load = Builder.CreateLoad(FinalType, Ptr, Name.c_str());
   addRangeMetadataForPCField(Load, StructFieldIndex, FieldIndex);
   return Load;
 }
@@ -860,9 +860,12 @@ Function *WorkgroupImpl::createWrapper(Function *F,
   Value *PrintfBuf, *PrintfBufPos, *PrintfBufCapa;
   PrintfBuf = PrintfBufPos = PrintfBufCapa = nullptr;
   if (DeviceSidePrintf) {
-    PrintfBuf = createLoadFromContext(Builder, PC_PRINTF_BUFFER);
-    PrintfBufPos = createLoadFromContext(Builder, PC_PRINTF_BUFFER_POSITION);
-    PrintfBufCapa = createLoadFromContext(Builder, PC_PRINTF_BUFFER_CAPACITY);
+    PrintfBuf =
+        createLoadFromContext(Builder, PC_PRINTF_BUFFER, -1, "printf_buffer");
+    PrintfBufPos = createLoadFromContext(Builder, PC_PRINTF_BUFFER_POSITION, -1,
+                                         "printf_buffer_write_pos");
+    PrintfBufCapa = createLoadFromContext(Builder, PC_PRINTF_BUFFER_CAPACITY,
+                                          -1, "printf_buffer_capacity");
   }
 
   CallInst *CI = Builder.CreateCall(F, ArrayRef<Value *>(FuncArgs));
@@ -1123,20 +1126,17 @@ void WorkgroupImpl::privatizeContext(Function *F) {
 
   if (DeviceSidePrintf) {
     // Privatize _printf_buffer
-    privatizeGlobals(
-      F, Builder, {"_printf_buffer"}, {
-        createLoadFromContext(
-          Builder, PC_PRINTF_BUFFER)});
+    privatizeGlobals(F, Builder, {"_printf_buffer"},
+                     {createLoadFromContext(Builder, PC_PRINTF_BUFFER, -1,
+                                            "printf_buffer")});
 
-    privatizeGlobals(
-      F, Builder, {"_printf_buffer_position"}, {
-        createLoadFromContext(
-          Builder, PC_PRINTF_BUFFER_POSITION)});
+    privatizeGlobals(F, Builder, {"_printf_buffer_position"},
+                     {createLoadFromContext(Builder, PC_PRINTF_BUFFER_POSITION,
+                                            -1, "printf_buffer_pos")});
 
-    privatizeGlobals(
-      F, Builder, {"_printf_buffer_capacity"}, {
-        createLoadFromContext(
-          Builder, PC_PRINTF_BUFFER_CAPACITY)});
+    privatizeGlobals(F, Builder, {"_printf_buffer_capacity"},
+                     {createLoadFromContext(Builder, PC_PRINTF_BUFFER_CAPACITY,
+                                            -1, "printf_buffer_capacity")});
   }
 }
 

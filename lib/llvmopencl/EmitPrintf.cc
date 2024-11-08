@@ -608,6 +608,8 @@ Value *pocl::emitPrintfCall(IRBuilder<> &Builder,
       FlagsOrValue |= PRINTF_BUFFER_CTWORD_FLOAT_PR;
     if (Flags.IsBigEndian)
       FlagsOrValue |= PRINTF_BUFFER_CTWORD_BIG_ENDIAN;
+    if (Flags.Pointers32Bit)
+      FlagsOrValue |= PRINTF_BUFFER_CTWORD_32BIT_POINTERS;
 
     if (FlagsOrValue)
       ControlDWord =
