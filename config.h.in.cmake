@@ -230,9 +230,6 @@
 
 
 
-/* Defined to greatest expected alignment for extended types, in bytes. */
-#define MAX_EXTENDED_ALIGNMENT @MAX_EXTENDED_ALIGNMENT@
-
 #define PRINTF_BUFFER_SIZE @PRINTF_BUFFER_SIZE@
 
 /* used in lib/CL/devices/basic */

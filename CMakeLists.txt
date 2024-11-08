@@ -1992,14 +1992,6 @@ endif()
 
 ##########################################################
 
-if(NOT DEFINED ALIGNOF_DOUBLE16)
-  set(ALIGNOF_DOUBLE16 "128" CACHE INTERNAL "Align of double16")
-endif()
-
-set(MAX_EXTENDED_ALIGNMENT "${ALIGNOF_DOUBLE16}")
-
-##########################################################
-
 
 string(TOUPPER "${CMAKE_BUILD_TYPE}" BTYPE)
 if("${CMAKE_C_FLAGS_${BTYPE}}" MATCHES "DNDEBUG")

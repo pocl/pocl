@@ -79,6 +79,11 @@ typedef uint64_t pocl_obj_id_t;
 #  error "Don't know alignas() counterpart for this compiler!"
 #endif
 
+/* Always align buffer allocations, context data, and kernel arguments to
+   sizeof(double16) to enforce easier vectorization for targets with naturally
+   aligned loads/stores. */
+#define MAX_EXTENDED_ALIGNMENT 128
+
 /* represents a single buffer to host memory mapping */
 typedef struct mem_mapping
 {
