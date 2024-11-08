@@ -207,7 +207,6 @@
 
 #define LLVM_LLC "@LLVM_LLC@"
 
-#cmakedefine HAVE_LLVM_SPIRV
 #define LLVM_SPIRV "@LLVM_SPIRV@"
 
 #define LLVM_OPT "@LLVM_OPT@"

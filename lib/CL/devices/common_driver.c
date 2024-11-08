@@ -561,7 +561,7 @@ pocl_reload_program_bc (char *program_bc_path, cl_program program,
 static int
 pocl_regen_spirv_binary (cl_program program, cl_uint device_i)
 {
-#ifdef LLVM_SPIRV
+#ifdef ENABLE_SPIRV
   int errcode = CL_SUCCESS;
   cl_device_id device = program->devices[device_i];
   int spec_constants_changed = 0;
