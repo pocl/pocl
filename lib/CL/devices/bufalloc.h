@@ -196,7 +196,7 @@ void pocl_init_mem_region (
 /**
  * Creates a reference to a part of a chunk.
  *
- * @todo Register to the parent also so it can free the
+ * \todo Register to the parent also so it can free the
  * child references.
  */
 chunk_info_t *create_sub_chunk (chunk_info_t *parent, size_t offset, size_t size);
