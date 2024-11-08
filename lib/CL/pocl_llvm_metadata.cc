@@ -518,9 +518,9 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
           TD->getTypeAllocSize(locals[i]->getInitializer()->getType());
       meta->local_sizes[i] = auto_local_size;
 
-      #ifdef DEBUG_POCL_LLVM_API
-          printf("### automatic local %d size %u\n", i, auto_local_size);
-      #endif
+#ifdef DEBUG_POCL_LLVM_API
+      printf("### automatic local %d size %u\n", i, auto_local_size);
+#endif
     }
 
     i = 0;

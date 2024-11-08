@@ -1184,9 +1184,10 @@ struct _cl_device_id {
      runtime/driver allocate the local space. */
   int device_alloca_locals;
 
-  /* Optional property. If the device uses stack and has stack size limitation
-   * (e.g. it does not convert all private memory to registers/spills),
-   * it should set up this property*/
+  /* Optional property. If the device uses stack for work-item context data and
+   * has limited stack size, this property can be used to guide the work-group
+   * size recommendation/selection to take the stack size in account. It should
+   * be set to the maximum number of bytes that can be stored on the stack. */
   size_t work_group_stack_size;
 
   /* If > 0, specialized versions of the work-group functions are generated
