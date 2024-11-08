@@ -31,11 +31,6 @@ if(ENABLE_RDMA)
     list(APPEND POCL_REMOTE_CLIENT_SOURCES ../../pocl_rdma.h ../../pocl_rdma.c)
 endif()
 
-if(MSVC)
-  set_source_files_properties(${POCL_REMOTE_CLIENT_SOURCES}
-                              PROPERTIES LANGUAGE CXX)
-endif(MSVC)
-
 add_pocl_device_library("pocl-devices-remote" ${POCL_REMOTE_CLIENT_SOURCES})
 
 if(ENABLE_LOADABLE_DRIVERS AND ENABLE_RDMA)

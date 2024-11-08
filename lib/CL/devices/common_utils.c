@@ -603,10 +603,10 @@ pocl_setup_kernel_arg_array_with_locals (void **arguments,
                   total_auto_local_size += meta->local_sizes[j];
                 }
               POCL_MSG_ERR (
-                "PoCL detected an OpenCL program error: "
-                "%d automatic local buffer(s) with total size %lu "
-                "bytes doesn't fit to the local memory of size %lu\n",
-                meta->num_locals, total_auto_local_size, local_mem_size);
+                  "PoCL detected an OpenCL program error: "
+                  "%d automatic local buffer(s) with total size %zu "
+                  "bytes doesn't fit to the local memory of size %zu\n",
+                  meta->num_locals, total_auto_local_size, local_mem_size);
               return CL_FAILED;
             }
           start += size;
@@ -835,8 +835,8 @@ pocl_cpu_supports_dbk (cl_device_id device,
       return pocl_validate_dbk_attributes (kernel_id, kernel_attributes, NULL);
 #endif
     default:
-      POCL_RETURN_ERROR_ON (
-        1, CL_UNSUPPORTED_DBK,
+      POCL_RETURN_ERROR (
+        CL_UNSUPPORTED_DBK,
         "The CPU driver does not support DBK (kernel id %d).\n", kernel_id);
     }
 }
@@ -865,8 +865,8 @@ pocl_cpu_build_defined_builtin (cl_program program, cl_uint device_i)
 #endif
   /* TODO: is it necessary to return an error here or can it be caught earlier
      on? */
-  POCL_RETURN_ERROR_ON (
-    1, CL_BUILD_PROGRAM_FAILURE,
+  POCL_RETURN_ERROR (
+    CL_BUILD_PROGRAM_FAILURE,
     "The CPU driver has not been compiled with support for DBKs\n");
 }
 

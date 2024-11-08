@@ -25,9 +25,6 @@
 
 add_compile_options(${OPENCL_CFLAGS})
 
-if (MSVC)
-  set_source_files_properties( vecadd.c vecadd_exec.c PROPERTIES LANGUAGE CXX )
-endif(MSVC)
 add_executable("vecadd" vecadd.c vecadd_exec.c vecadd.cl)
 
 target_link_libraries("vecadd" ${POCLU_LINK_OPTIONS})

@@ -30,9 +30,6 @@ set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
   test_llvm_segfault_issue_889
 )
 foreach(PROG ${C_PROGRAMS_TO_BUILD})
-  if(MSVC)
-    set_source_files_properties( "${PROG}.c" PROPERTIES LANGUAGE CXX )
-  endif(MSVC)
   add_executable("${PROG}" "${PROG}.c")
   target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
 endforeach()
@@ -220,9 +217,17 @@ add_test_pocl(NAME "regression/struct_kernel_arguments" COMMAND "test_structs_as
 
 add_test_pocl(NAME "regression/vector_kernel_arguments" COMMAND "test_vectors_as_args")
 
+# Label tests that also work with TCE
+
 set(TCE_TESTS "regression/barrier_between_two_for_loops_loopvec"
   "regression/for-loop_with_computation_after_the_brexit_loopvec"
   "regression/early_return_before_a_barrier_region_loopvec")
+
+# TODO fails with TCE + LLVM 6, issue #609
+# it seems to have worked with LLVM up to 16/17; fails again with PR #1613
+list(REMOVE_ITEM TCE_TESTS "regression/barrier_between_two_for_loops_loopvec" )
+
+set_property(TEST ${TCE_TESTS} APPEND PROPERTY LABELS "tce")
 
 set(VARIANTS "loopvec;cbs")
 foreach(VARIANT ${VARIANTS})
@@ -247,13 +252,6 @@ foreach(VARIANT ${VARIANTS})
       LABELS "internal;regression")
 endforeach()
 
-# Label tests that also work with TCE
-
-# TODO fails with TCE + LLVM 6, issue #609
-list(REMOVE_ITEM TCE_TESTS
-  "regression/barrier_between_two_for_loops_LOOPS" )
-
-set_property(TEST ${TCE_TESTS} APPEND PROPERTY LABELS "tce")
 
 # Label tests that fail with MinGW build
 set_property(TEST

@@ -36,7 +36,8 @@ CL_API_ENTRY cl_int CL_API_ENTRY POname (clGetHostTimer) (
   if (device->ops->get_synchronized_timestamps)
     return device->ops->get_synchronized_timestamps (device, NULL,
                                                      host_timestamp);
-  POCL_RETURN_ERROR_ON(1, CL_INVALID_OPERATION, "Selected device "
-                       "does not support timestamp synchronization\n");
+  POCL_RETURN_ERROR (CL_INVALID_OPERATION,
+                     "Selected device "
+                     "does not support timestamp synchronization\n");
 }
 POsym(clGetHostTimer)

@@ -23,10 +23,9 @@
 
 #include "pocl_opencl.h"
 
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+#include <string.h>
 
 #define ARRAY_SIZE(arr) (sizeof(arr)/sizeof(*arr))
 

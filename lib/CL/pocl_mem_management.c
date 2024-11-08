@@ -947,12 +947,12 @@ FINISH_VER_SETUP:
              migrations. */
           /* Create an event dep chain through the migration commands. */
           POname (clRetainEvent) (last_migration_event);
-          pocl_create_event_sync (last_migration_event, *prev_migr_event);
+          pocl_create_event_sync (*prev_migr_event, last_migration_event);
           if (*prev_migr_event != NULL)
             POname (clReleaseEvent) (*prev_migr_event);
           *prev_migr_event = last_migration_event;
         }
-      pocl_create_event_sync (user_cmd, last_migration_event);
+      pocl_create_event_sync (last_migration_event, user_cmd);
       /* if the event itself only reads from the buffer,
        * set the last buffer updating event to the last_mig_event,
        * instead of the actual command event;
@@ -1060,7 +1060,8 @@ pocl_find_raw_ptr_with_vm_ptr (cl_context context, const void *host_ptr)
     {
       if (item->vm_ptr == NULL)
         continue;
-      if (item->vm_ptr <= host_ptr && item->vm_ptr + item->size > host_ptr)
+      if (item->vm_ptr <= host_ptr
+          && (char *)item->vm_ptr + item->size > (const char *)host_ptr)
         {
           break;
         }
@@ -1078,7 +1079,8 @@ pocl_find_raw_ptr_with_dev_ptr (cl_context context, const void *dev_ptr)
     {
       if (item->dev_ptr == NULL)
         continue;
-      if (item->dev_ptr <= dev_ptr && item->dev_ptr + item->size > dev_ptr)
+      if (item->dev_ptr <= dev_ptr
+          && (char *)item->dev_ptr + item->size > (const char *)dev_ptr)
         break;
     }
   POCL_UNLOCK_OBJ (context);

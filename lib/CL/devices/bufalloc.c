@@ -179,11 +179,6 @@ append_new_chunk (memory_region_t *region,
   return new_chunk;
 }
 
-/**
- * Allocates a chunk of memory from the given memory region.
- *
- * @return The chunk, or NULL if no space available in the region.
- */
 chunk_info_t *
 pocl_alloc_buffer_from_region (memory_region_t *region, size_t size)
 {
@@ -240,12 +235,6 @@ pocl_alloc_buffer_from_region (memory_region_t *region, size_t size)
   return chunk;
 }
 
-/**
- * Allocates a chunk of memory from the given memory region and returns its
- * starting address.
- *
- * @return The address, or NULL if no space available in the region.
- */
 void *
 pocl_bufalloc (memory_region_t *region, size_t size)
 {
@@ -255,18 +244,6 @@ pocl_bufalloc (memory_region_t *region, size_t size)
   else
     return (void *)chunk->start_address;
 }
-
-/**
- * Allocates a chunk of memory from one of the given memory regions.
- *
- * The address ranges of the different regions must not overlap. Searches
- * through the regions in the order of the region pointer array.
- *
- * @param regions A linked list of region pointers.
- * @param size The size of the chunk to allocate.
- * @return The start address of the chunk, or 0 if no space available
- * in the buffer.
- */
 
 #ifndef BUFALLOC_NO_MULTIPLE_REGIONS 
 chunk_info_t *
@@ -284,12 +261,6 @@ pocl_alloc_buffer (memory_region_t *regions, size_t size)
 }
 #endif
 
-/**
- * Creates a reference to a part of a chunk.
- *
- * @todo Register to the parent also so it can free the
- * child references.
- */
 #ifndef BUFALLOC_NO_SUB_CHUNKS
 chunk_info_t *
 create_sub_chunk (chunk_info_t *parent, size_t offset, size_t size)
@@ -313,11 +284,9 @@ create_sub_chunk (chunk_info_t *parent, size_t offset, size_t size)
  * @return A pointer to the coalesced chunk, or the second chunk in case
  * coalsecing could not be done.
  */
-
 #ifndef BUFALLOC_NO_CHUNK_COALESCING
-static chunk_info_t * 
-coalesce_chunks (chunk_info_t* first, 
-                 chunk_info_t* second)
+static chunk_info_t *
+coalesce_chunks (chunk_info_t *first, chunk_info_t *second)
 {
   if (first == NULL) return second;
   if (second == NULL) return first;

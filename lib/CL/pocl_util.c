@@ -255,16 +255,9 @@ pocl_lock_events_inorder (cl_event ev1, cl_event ev2)
 {
   assert (ev1 != ev2);
   assert (ev1->id != ev2->id);
-  if (ev1->id < ev2->id)
-    {
-      POCL_LOCK_OBJ (ev1);
-      POCL_LOCK_OBJ (ev2);
-    }
-  else
-    {
-      POCL_LOCK_OBJ (ev2);
-      POCL_LOCK_OBJ (ev1);
-    }
+
+  POCL_LOCK_OBJ (ev1);
+  POCL_LOCK_OBJ (ev2);
 }
 
 void
@@ -272,16 +265,9 @@ pocl_unlock_events_inorder (cl_event ev1, cl_event ev2)
 {
   assert (ev1 != ev2);
   assert (ev1->id != ev2->id);
-  if (ev1->id < ev2->id)
-    {
-      POCL_UNLOCK_OBJ (ev1);
-      POCL_UNLOCK_OBJ (ev2);
-    }
-  else
-    {
-      POCL_UNLOCK_OBJ (ev2);
-      POCL_UNLOCK_OBJ (ev1);
-    }
+
+  POCL_UNLOCK_OBJ (ev1);
+  POCL_UNLOCK_OBJ (ev2);
 }
 
 
@@ -349,7 +335,7 @@ check_for_circular_dep (cl_event waiting_event, cl_event notifier_event)
 }
 
 int
-pocl_create_event_sync (cl_event waiting_event, cl_event notifier_event)
+pocl_create_event_sync (cl_event notifier_event, cl_event waiting_event)
 {
   event_node *notify_target = NULL;
   event_node *wait_list_item = NULL;
@@ -361,7 +347,7 @@ pocl_create_event_sync (cl_event waiting_event, cl_event notifier_event)
                          " , notifier %" PRIu64 "\n",
                          waiting_event->id, notifier_event->id);
 
-  pocl_lock_events_inorder (waiting_event, notifier_event);
+  pocl_lock_events_inorder (notifier_event, waiting_event);
 
   assert (notifier_event->pocl_refcount != 0);
   assert (waiting_event != notifier_event);
@@ -399,7 +385,7 @@ pocl_create_event_sync (cl_event waiting_event, cl_event notifier_event)
     }
 
 FINISH:
-  pocl_unlock_events_inorder (waiting_event, notifier_event);
+  pocl_unlock_events_inorder (notifier_event, waiting_event);
   return CL_SUCCESS;
 }
 
@@ -490,7 +476,7 @@ pocl_create_command_struct (_cl_command_node **cmd,
   for (i = 0; i < num_events; ++i)
     {
       cl_event wle = wait_list[i];
-      pocl_create_event_sync ((*event), wle);
+      pocl_create_event_sync (wle, (*event));
     }
   POCL_MSG_PRINT_EVENTS (
       "Created immediate command struct: CMD %p (event %" PRIu64
@@ -914,8 +900,8 @@ void pocl_command_enqueue (cl_command_queue command_queue,
       POCL_MSG_PRINT_EVENTS ("In-order Q; adding event syncs\n");
       if (command_queue->last_event.event)
         {
-          pocl_create_event_sync (node->sync.event.event,
-                                  command_queue->last_event.event);
+          pocl_create_event_sync (command_queue->last_event.event,
+                                  node->sync.event.event);
         }
     }
   else if ((node->type == CL_COMMAND_BARRIER
@@ -928,7 +914,7 @@ void pocl_command_enqueue (cl_command_queue command_queue,
       POCL_MSG_PRINT_EVENTS ("Barrier; adding event syncs\n");
       DL_FOREACH (command_queue->events, event)
         {
-          pocl_create_event_sync (node->sync.event.event, event);
+          pocl_create_event_sync (event, node->sync.event.event);
         }
     }
 
@@ -938,8 +924,8 @@ void pocl_command_enqueue (cl_command_queue command_queue,
     {
       if (command_queue->barrier)
         {
-          pocl_create_event_sync (node->sync.event.event,
-                                  command_queue->barrier);
+          pocl_create_event_sync (command_queue->barrier,
+                                  node->sync.event.event);
         }
     }
   DL_APPEND (command_queue->events, node->sync.event.event);
@@ -1004,7 +990,7 @@ pocl_command_push (_cl_command_node *node,
       CDL_PREPEND ((*pending_list), node);
       return;
     }
-  if (pocl_command_is_ready (node->sync.event.event))
+  if (node->sync.event.event->wait_list == NULL)
     {
       pocl_update_event_submitted (node->sync.event.event);
       CDL_PREPEND ((*ready_list), node);
@@ -1717,7 +1703,9 @@ pocl_run_command_capture_output (char *capture_string,
       while ((r = read (out[0], buf, 4096)) > 0)
         {
           if (total_bytes + r > capture_limit)
-            break;
+            /* Read out the bytes even if they don't fit to the buffer to
+               not block the pipe. */
+            continue;
           memcpy (capture_string + total_bytes, buf, r);
           total_bytes += r;
         }

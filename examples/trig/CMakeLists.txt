@@ -27,9 +27,6 @@ add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
 add_compile_options(${OPENCL_CFLAGS})
 
-if(MSVC)
-  set_source_files_properties( trig.c trig_exec.c PROPERTIES LANGUAGE CXX )
-endif(MSVC)
 add_executable("trig" trig.c trig.cl trig_exec.c)
 
 target_link_libraries("trig" ${POCLU_LINK_OPTIONS})

@@ -24,7 +24,7 @@
 #
 #=============================================================================
 
-cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 cmake_policy(SET CMP0067 OLD)
 
 project(pocl)
@@ -37,6 +37,7 @@ MESSAGE(STATUS "CMAKE_LIBRARY_ARCHITECTURE: ${CMAKE_LIBRARY_ARCHITECTURE}")
 set(LATEST_KNOWN_CXX_STD_VERSION "20")
 # this is required for lib/CL/pocl_threads.cc
 set(SUPPORTED_CXX_STD_VERSION "17")
+set(SUPPORTED_C_STD_VERSION "99")
 
 option(ENABLE_LATEST_CXX_STD "Upgrade C++ standard version to ${LATEST_KNOWN_CXX_STD_VERSION}. Required to get rid of unused variables warnings in compilers not supporting [[gnu::*]] attributes. Can bring other benefits, including performance and efficiency ones. Before a pull request build with this disabled." OFF)
 if(ENABLE_LATEST_CXX_STD)
@@ -47,6 +48,23 @@ endif()
 set(POCL_CMAKE_CXX_STANDARD ${CMAKE_CXX_STANDARD})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+if(MSVC)
+  set(SUPPORTED_C_STD_VERSION "11")
+
+  # Enables __VA_ARGS__ for C++ on MSVC. For some reason the feature, conformant
+  # since C++11, is not enabled by default in the MSVC compiler.
+  add_compile_options(/Zc:preprocessor)
+
+  # Enable conformant respond from __cplusplus. Otherwise, the value is 199711L
+  # regardless of the C++ standard.
+  add_compile_options($<$<COMPILE_LANGUAGE:CXX>:/Zc:__cplusplus>)
+
+  # TODO: Check other Zc options. We might still have some
+  #       leg-shooters enabled.
+endif()
+
+set(CMAKE_C_STANDARD "${SUPPORTED_C_STD_VERSION}")
 
 # if variable FEATURE_X isn't defined, sets it to DEFAULT_FEATURE_X;
 # also, if DEFAULT_FEATURE_X is 0, prevents FEATURE_X being 1
@@ -100,8 +118,16 @@ if(UNIX)
         set(FORBID_IMPLICIT_FUNCTIONS ${FORBID_IMPLICIT_FUNCTIONS} "-Werror=incompatible-pointer-types")
     endif()
     add_compile_options("$<$<COMPILE_LANGUAGE:C>:${FORBID_IMPLICIT_FUNCTIONS}>")
-
     add_compile_options("-Wno-ignored-attributes")
+
+    check_c_compiler_flag("-Werror=return-type" HAVE_C_WERROR_RETURN_TYPE)
+    check_cxx_compiler_flag("-Werror=return-type" HAVE_CXX_WERROR_RETURN_TYPE)
+    if(HAVE_C_WERROR_RETURN_TYPE)
+      add_compile_options("$<$<COMPILE_LANGUAGE:C>:-Werror=return-type>")
+    endif()
+    if(HAVE_CXX_WERROR_RETURN_TYPE)
+      add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Werror=return-type>")
+    endif()
 
   else()
     message(WARNING "Don't know how to forbid this compiler from allowing implicit function declarations.")
@@ -219,13 +245,18 @@ if(HAVE_GIT)
        set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.${GIT_COMMIT}")
 endif()
 
+set(BUILD_SHARED_LIBS_DEFAULT ON)
+if(MSVC)
+  # Building PoCL as shared library does not work yet.
+  set(BUILD_SHARED_LIBS_DEFAULT OFF)
+endif()
+
 ##################################################################################
 
 option(ENABLE_LLVM "Build pocl with LLVM. Default is ON." ON)
 
-option(STATIC_LLVM "If ON, link to static LLVM libraries. OFF (default) = link to shared LLVM libraries." OFF)
-
-option(BUILD_SHARED_LIBS "ON=Build shared libs, OFF=static libs" ON)
+option(BUILD_SHARED_LIBS "ON=Build shared libs, OFF=static libs"
+  ${BUILD_SHARED_LIBS_DEFAULT})
 
 option(POCL_DEBUG_MESSAGES
   "Enable debug messages from pocl (useful for OpenCL developers), must be enabled at runtime, with env var POCL_DEBUG"
@@ -268,6 +299,15 @@ option(ENABLE_POCL_BUILDING "When OFF, env var POCL_BUILDING has no effect. Defa
 option(ENABLE_PRINTF_IMMEDIATE_FLUSH "[currently only applies to CPU drivers] if enabled, printf is flushed immediately when encountered, instead of after all NDRange workgroups are finished" ON)
 
 option(ENABLE_LLVM_FILECHECKS "Enable kernel compiler/autovectorizer filechecks using the given FileCheck binary defined in LLVM_FILECHECK_BIN. Note: the checks are tested against recent Intel X86/SIMD CPUs for now.")
+
+if(ENABLE_LEVEL0)
+  set(DEFAULT_STATIC_LLVM ON)
+else()
+  set(DEFAULT_STATIC_LLVM OFF)
+endif()
+
+option(STATIC_LLVM "If ON, link to static LLVM libraries. OFF (default) = link to shared LLVM libraries." ${DEFAULT_STATIC_LLVM})
+
 
 if(WIN32)
   set(DEFAULT_LLVM_PLATFORM_SUPPORT ON)
@@ -332,6 +372,10 @@ option(RENAME_POCL "Rename PoCL's OpenCL functions to PO<ocl_function>. Allows a
 
 
 ##########################################################
+
+if(MSVC AND BUILD_SHARED_LIBS)
+  message(FATAL_ERROR "Building shared libraries are not supported on MSVC yet!")
+endif()
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   set(HOST_DEVICE_ADDRESS_BITS 64)
@@ -908,10 +952,20 @@ endif()
 #
 # no-jump-tables is to avoid LLVM optimization passes introducing switch tables,
 # which the variable uniformity analysis cannot analyze
-set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector -fPIC -fno-jump-tables ${OPAQUE_PTR_FLAGS}")
-set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fPIC -fno-jump-tables ${OPAQUE_PTR_FLAGS}")
-set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fPIC -fno-jump-tables ${OPAQUE_PTR_FLAGS}")
 
+# TODO: Should match "msvc" environment component in the
+#       LLC_TRIPLE. Now assuming MSVC implies target triple that
+#       invokes MSVC toolchain in Clang.
+if (MSVC)
+  set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector ${OPAQUE_PTR_FLAGS}")
+  set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector ${OPAQUE_PTR_FLAGS}")
+  set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector ${OPAQUE_PTR_FLAGS}")
+  set(KERNEL_TRIPLE_TARGETS_MSVC_TOOLCHAIN 1)
+else()
+  set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector -fPIC -fno-jump-tables ${OPAQUE_PTR_FLAGS}")
+  set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fPIC -fno-jump-tables ${OPAQUE_PTR_FLAGS}")
+  set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fPIC -fno-jump-tables ${OPAQUE_PTR_FLAGS}")
+endif()
 
 set(EXTRA_KERNEL_FLAGS "" CACHE STRING "Extra arguments to all kernel compilation commands (defaults to empty)")
 set(EXTRA_KERNEL_CL_FLAGS "" CACHE STRING "Extra arguments to kernel CL compiler (defaults to empty)")
@@ -938,9 +992,7 @@ if(UNIX)
   endif()
   set(LIBMATH "-lm")
 elseif(WIN32)
-  if(MINGW)
-    set(DEFAULT_HOST_LD_FLAGS "--shared")
-  endif()
+  set(DEFAULT_HOST_LD_FLAGS "--shared")
   set(LIBMATH)
 endif()
 
@@ -1104,7 +1156,7 @@ function(print_target_properties target)
 endfunction()
 
 if(ENABLE_HOST_CPU_DEVICES AND NOT ENABLE_CONFORMANCE)
-  find_package(onnxruntime)
+  find_package(onnxruntime QUIET)
   set(HAVE_ONNXRT ${onnxruntime_FOUND})
   if(${HAVE_ONNXRT})
     print_target_properties(onnxruntime::onnxruntime)
@@ -1344,7 +1396,6 @@ set(HOST_DEVICE_CL_VERSION_MINOR 0)
 set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
 cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
 cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes \
-cl_khr_command_buffer cl_khr_command_buffer_multi_device cl_khr_command_buffer_mutable_dispatch \
 cl_intel_unified_shared_memory cl_ext_buffer_device_address")
 
 # Host CPU device: list of OpenCL 3.0 features that are always enabled
@@ -1358,13 +1409,23 @@ __opencl_c_atomic_scope_all_devices __opencl_c_generic_address_space \
 __opencl_c_work_group_collective_functions")
 
 # enabled by default
+# when disabled, depending on setting of ENABLE_CONFORMANCE, denorms are disabled
+# (FTZ and DAZ = on) for all floats (conformance=OFF) or all but fp64 (conformance=ON)
 option(HOST_CPU_ENABLE_DENORMS "enable denorm support for CPU devices" ON)
+
+# when enabled, the compiler estimates the worst-case stack size used by a kernel's
+# workgroup function, and limits the workgroup size of the kernel accordingly (via
+# CL_KERNEL_WORK_GROUP_SIZE property); however, not all tests check the property,
+# and they try to enqueue larger WG sizes, which fails the tests. Mainly a problem
+# with AMD SDK, piglit & chipStar tests.
+option(HOST_CPU_ENABLE_STACK_SIZE_CHECK "enable stack size checking for CPU devices" OFF)
 
 # Host CPU device: Unfinished/undertested extensions only advertised when conformance
 # is OFF.
 if(NOT ENABLE_CONFORMANCE)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} \
       cl_pocl_svm_rect cl_pocl_command_buffer_svm \
+      cl_khr_command_buffer cl_khr_command_buffer_multi_device cl_khr_command_buffer_mutable_dispatch \
       cl_pocl_command_buffer_host_buffer")
 
   if (HAVE_LIBXSMM OR HAVE_ONNXRT OR HAVE_LIBJPEG_TURBO)
@@ -2353,6 +2414,7 @@ if (ENABLE_LLVM)
   MESSAGE(STATUS "HOST_CPU_FORCED: ${HOST_CPU_FORCED}")
   MESSAGE(STATUS "HOST_CPU_SUPPORTS_FLOAT16: ${HOST_CPU_SUPPORTS_FLOAT16}")
   MESSAGE(STATUS "HOST_CPU_ENABLE_DENORMS: ${HOST_CPU_ENABLE_DENORMS}")
+  MESSAGE(STATUS "HOST_CPU_ENABLE_STACK_SIZE_CHECK: ${HOST_CPU_ENABLE_STACK_SIZE_CHECK}")
   endif()
 endif()
 MESSAGE(STATUS "")

@@ -120,9 +120,13 @@ main(void)
 
         std::cout << "OK" << std::endl;
 
-        /* Force exit of the process regardless of the running kernel thread
-           by replacing the process with a dummy process. */
+        // Force exit of the process regardless of the running kernel thread
+        // by replacing the process with a dummy process.
+#if __cplusplus >= 201103L  && !defined(__APPLE__) // C++11
+        std::quick_exit(EXIT_SUCCESS);
+#else
         execlp("true", "true", NULL);
+#endif
     } 
     catch (cl::Error &err) {
          std::cerr
@@ -132,7 +136,9 @@ main(void)
              << err.err()
              << ")"
              << std::endl;
+         return EXIT_FAILURE;
     }
-
+    std::cerr << "UNREACHABLE. Perhaps there was an uncaught STL exception."
+              << std::endl;
     return EXIT_FAILURE;
 }

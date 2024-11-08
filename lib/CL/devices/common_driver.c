@@ -28,7 +28,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "pocl_cl.h"
 #include "pocl_timing.h"
@@ -53,7 +52,7 @@ int pocl_setup_builtin_metadata (cl_device_id device, cl_program program,
   do                                                                          \
     {                                                                         \
       char temp[1024];                                                        \
-      ssize_t written = snprintf (temp, 1024, __VA_ARGS__);                   \
+      int written = snprintf (temp, 1024, __VA_ARGS__);                       \
       if (written > 0)                                                        \
         {                                                                     \
           size_t l = strlen (program->build_log[device_i]);                   \
@@ -64,7 +63,7 @@ int pocl_setup_builtin_metadata (cl_device_id device, cl_program program,
           newp[newl] = 0;                                                     \
           program->build_log[device_i] = newp;                                \
         }                                                                     \
-      POCL_RETURN_ERROR_ON (1, err, __VA_ARGS__);                             \
+      POCL_RETURN_ERROR (err, __VA_ARGS__);                                   \
     }                                                                         \
   while (0)
 
@@ -430,7 +429,7 @@ pocl_driver_get_mapping_ptr (void *data, pocl_mem_identifier *mem_id,
 
   if (mem->mem_host_ptr != NULL)
     {
-      map->host_ptr = mem->mem_host_ptr + map->offset;
+      map->host_ptr = (char *)mem->mem_host_ptr + map->offset;
     }
   else
     {
@@ -451,7 +450,7 @@ pocl_driver_free_mapping_ptr (void *data, pocl_mem_identifier *mem_id,
 
   /* e.g. remote never has a mem_host_ptr but can have a map host_ptr */
   if (((mem->mem_host_ptr != NULL)
-       && map->host_ptr != (mem->mem_host_ptr + map->offset))
+       && map->host_ptr != ((char *)mem->mem_host_ptr + map->offset))
       || (mem->mem_host_ptr == NULL && map->host_ptr != NULL))
     pocl_aligned_free (map->host_ptr);
 
@@ -487,8 +486,7 @@ pocl_driver_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
   if (mem->has_device_address)
     p->is_pinned = 1;
 
-  POCL_MSG_PRINT_MEMORY ("Basic device ALLOC %p / size %zu \n", p->mem_ptr,
-                         mem->size);
+  POCL_MSG_PRINT_MEMORY ("ALLOC %p / size %zu \n", p->mem_ptr, mem->size);
 
   return CL_SUCCESS;
 }
@@ -799,8 +797,8 @@ pocl_driver_build_source (cl_program program, cl_uint device_i,
                                   link_builtin_lib);
 
 #else
-  POCL_RETURN_ERROR_ON (1, CL_BUILD_PROGRAM_FAILURE,
-                        "This device requires LLVM to build from sources\n");
+  POCL_RETURN_ERROR (CL_BUILD_PROGRAM_FAILURE,
+                     "This device requires LLVM to build from sources\n");
 #endif
 }
 
@@ -882,8 +880,8 @@ pocl_driver_link_program (cl_program program, cl_uint device_i,
                         "Linking of program failed\n");
   return CL_SUCCESS;
 #else
-  POCL_RETURN_ERROR_ON (1, CL_BUILD_PROGRAM_FAILURE,
-                        "This device requires LLVM to link binaries\n");
+  POCL_RETURN_ERROR (CL_BUILD_PROGRAM_FAILURE,
+                     "This device requires LLVM to link binaries\n");
 
 #endif
 }
@@ -1045,7 +1043,7 @@ pocl_driver_build_poclbinary (cl_program program, cl_uint device_i)
 
           char *param1 = NULL, *param2 = NULL;
           int params_found
-              = sscanf (token, "%lu-%lu-%lu-%m[^-]-%m[^-]",
+              = sscanf (token, "%zu-%zu-%zu-%m[^-]-%m[^-]",
                         &cmd.command.run.pc.local_size[0],
                         &cmd.command.run.pc.local_size[1],
                         &cmd.command.run.pc.local_size[2], &param1, &param2);

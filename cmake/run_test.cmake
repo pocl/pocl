@@ -38,6 +38,8 @@ else()
 endif()
 
 if(output_blessed)
+  # Convert Windows newline convention to Unix.  
+  string(REPLACE "\n\r" "\n" stdout "${stdout}")
 
   string(RANDOM RAND_STR)
   set(RANDOM_FILE "/tmp/cmake_testrun_${RAND_STR}")

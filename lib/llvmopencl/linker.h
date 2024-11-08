@@ -26,6 +26,8 @@
 
 #include "llvm/IR/Module.h"
 
+#include "pocl_cl.h" // cl_device_id
+
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
 #endif
@@ -40,7 +42,7 @@
  * log is used to report errors if we run into undefined symbols
  */
 int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
-         cl_device_id ClDev);
+         cl_device_id ClDev, bool StripAllDebugInfo);
 
 int copyKernelFromBitcode(const char* Name, llvm::Module *ParallelBC,
                           const llvm::Module *Program,

@@ -230,6 +230,8 @@ bool Level0Program::addFinishedBuild(Level0BuildUPtr Build) {
   default:
     assert(0 && "Unknown switch value in addFinishedBuild");
   }
+  assert(!"UNREACHABLE!");
+  return false;
 }
 
 template <class Build>

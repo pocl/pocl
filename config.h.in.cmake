@@ -142,6 +142,8 @@
 
 #cmakedefine HOST_CPU_ENABLE_DENORMS
 
+#cmakedefine HOST_CPU_ENABLE_STACK_SIZE_CHECK
+
 #define HOST_LD_FLAGS  "@HOST_LD_FLAGS@"
 
 #define HOST_LLC_FLAGS  "@HOST_LLC_FLAGS@"
@@ -222,6 +224,8 @@
 
 #define LLVM_VERIFY_MODULE_DEFAULT @LLVM_VERIFY_MODULE_DEFAULT@
 
+#cmakedefine LLVM_OPAQUE_POINTERS
+
 #endif
 
 
@@ -291,8 +295,8 @@
 
 #cmakedefine USE_POCL_MEMMANAGER
 
-#cmakedefine LLVM_OPAQUE_POINTERS
-
 #cmakedefine RENAME_POCL
+
+#cmakedefine KERNEL_TRIPLE_TARGETS_MSVC_TOOLCHAIN
 
 #endif

@@ -76,15 +76,17 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
       if (command_buffer)
         errcode = POname (clCommandCopyBufferKHR) (
             command_buffer, NULL, NULL, src_svm_ptr->shadow_cl_mem,
-            dst_svm_ptr->shadow_cl_mem, src_ptr - src_svm_ptr->vm_ptr,
-            dst_ptr - dst_svm_ptr->vm_ptr, size, num_items_in_wait_list,
-            sync_point_wait_list, sync_point, NULL);
+            dst_svm_ptr->shadow_cl_mem,
+            (char *)src_ptr - (char *)src_svm_ptr->vm_ptr,
+            (char *)dst_ptr - (char *)dst_svm_ptr->vm_ptr, size,
+            num_items_in_wait_list, sync_point_wait_list, sync_point, NULL);
       else
         errcode = POname (clEnqueueCopyBuffer) (
             command_queue, src_svm_ptr->shadow_cl_mem,
-            dst_svm_ptr->shadow_cl_mem, src_ptr - src_svm_ptr->vm_ptr,
-            dst_ptr - dst_svm_ptr->vm_ptr, size, num_items_in_wait_list,
-            event_wait_list, event);
+            dst_svm_ptr->shadow_cl_mem,
+            (char *)src_ptr - (char *)src_svm_ptr->vm_ptr,
+            (char *)dst_ptr - (char *)dst_svm_ptr->vm_ptr, size,
+            num_items_in_wait_list, event_wait_list, event);
     }
   else if (dst_svm_ptr != NULL && src_svm_ptr == NULL)
     {
@@ -93,14 +95,14 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
         {
           errcode = POname (clCommandWriteBufferPOCL) (
               command_buffer, NULL, dst_svm_ptr->shadow_cl_mem,
-              dst_ptr - dst_svm_ptr->vm_ptr, size, src_ptr,
+              (char *)dst_ptr - (char *)dst_svm_ptr->vm_ptr, size, src_ptr,
               num_items_in_wait_list, sync_point_wait_list, sync_point, NULL);
         }
       else
         {
           errcode = POname (clEnqueueWriteBuffer) (
               command_queue, dst_svm_ptr->shadow_cl_mem, CL_FALSE,
-              dst_ptr - dst_svm_ptr->vm_ptr, size, src_ptr,
+              (char *)dst_ptr - (char *)dst_svm_ptr->vm_ptr, size, src_ptr,
               num_items_in_wait_list, event_wait_list, event);
         }
     }
@@ -110,14 +112,14 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
         {
           errcode = POname (clCommandReadBufferPOCL) (
               command_buffer, NULL, src_svm_ptr->shadow_cl_mem,
-              src_ptr - src_svm_ptr->vm_ptr, size, dst_ptr,
+              (char *)src_ptr - (char *)src_svm_ptr->vm_ptr, size, dst_ptr,
               num_items_in_wait_list, sync_point_wait_list, sync_point, NULL);
         }
       else
         {
           errcode = POname (clEnqueueReadBuffer) (
               command_queue, src_svm_ptr->shadow_cl_mem, CL_FALSE,
-              src_ptr - src_svm_ptr->vm_ptr, size, dst_ptr,
+              (char *)src_ptr - (char *)src_svm_ptr->vm_ptr, size, dst_ptr,
               num_items_in_wait_list, event_wait_list, event);
         }
     }
@@ -125,9 +127,9 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
     {
       if (command_buffer)
         {
-          POCL_RETURN_ERROR_ON (1, CL_INVALID_OPERATION,
-                                "host to host memcopy "
-                                "command buffering unimplemented");
+          POCL_RETURN_ERROR (CL_INVALID_OPERATION,
+                             "host to host memcopy "
+                             "command buffering unimplemented");
         }
 
       /* Copy between non-SVM allocated host pointers. Can be a system SVM

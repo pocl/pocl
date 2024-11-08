@@ -35,10 +35,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <utlist.h>
 
 #ifdef _WIN32
+#include "pocl_ipc_mutex.h"
 #include "vccompat.hpp"
 #endif
 
@@ -125,6 +125,19 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   pocl_cache_final_binary_path (final_binary_path, program, device_i, kernel,
                                 command, specialize);
 
+#ifdef _WIN32
+  /* Avoid race condition of multiple processes accessing same files. */
+  char MtxName[MAX_PATH];  /* MAX_PATH is defined by Windows API.  */
+  strncpy (MtxName, program->build_hash[device_i], MAX_PATH);
+  MtxName[MAX_PATH - 1] = '\0';
+  pocl_ipc_mutex_t ipc_mtx;
+  error = pocl_ipc_mutex_create_and_lock (MtxName, &ipc_mtx);
+  assert (!error && "IPC mutex lock failure!");
+  // For release builds, continue despite not having the mutex - maybe we are
+  // in luck not having a race condition.
+  int have_locked_mutex = !error;
+#endif
+
   if (pocl_exists (final_binary_path))
     goto FINISH;
 
@@ -193,8 +206,19 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
                           tmp_objfile, (size_t)objfile_size);
     }
 
-  /* temporary filename for kernel.so */
-  if (pocl_cache_tempname (tmp_module, SHARED_LIB_EXT, NULL))
+  /* Temporary filename for kernel.so. Create it in the parallel.bc's
+     directory to enable a potential customized finalization step to
+     create multiple files next to it. */
+  char parallel_bc_dir[POCL_MAX_PATHNAME_LENGTH + 2];
+
+  pocl_cache_kernel_cachedir_path (parallel_bc_dir, program, device_i, kernel,
+                                   "", command, specialize);
+
+  size_t dir_len = strlen (parallel_bc_dir);
+  parallel_bc_dir[dir_len] = '/';
+  parallel_bc_dir[dir_len + 1] = 0;
+
+  if (pocl_mk_tempname (tmp_module, parallel_bc_dir, SHARED_LIB_EXT, NULL))
     {
       POCL_MSG_PRINT_LLVM ("Creating temporary kernel.so file"
                            " for kernel %s FAILED\n",
@@ -222,6 +246,20 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
       const char *cmd_line[64]
         = { pocl_get_path ("CLANG", CLANG), "-o", tmp_module, tmp_objfile };
       unsigned last_arg_idx = 4;
+
+#ifdef _MSC_VER
+      /* NOTE: This intended for targets having 'msvc' triple component.
+       * These options, passed to MSVC's linker:
+       * - prevent *.exp and *.lib files to be generated and wasting disk
+       *   space.
+       * - suppress "Creating library *.lib and object *.exp" to be written
+       *   stdout which messes up regex checking on some internal tests.  */
+      cmd_line[last_arg_idx++] = "-Xlinker";
+      cmd_line[last_arg_idx++] = "-noexp";
+      cmd_line[last_arg_idx++] = "-Xlinker";
+      cmd_line[last_arg_idx++] = "-noimplib";
+#endif
+
       /* ENABLE_PRINTF_IMMEDIATE_FLUSH results in "pocl_flush_printf_buffer"
        * symbol referenced in the built kernel.so; however that function exists
        * only on the host side, therefore link to libpocl.so which provides it
@@ -251,6 +289,7 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
 
   /* rename temporary kernel.so */
   error = pocl_rename (tmp_module, final_binary_path);
+
   if (error)
     {
       POCL_MSG_PRINT_LLVM (
@@ -279,6 +318,10 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
     }
 
 FINISH:
+#ifdef _WIN32
+  if (have_locked_mutex)
+    pocl_ipc_mutex_unlock_and_release (&ipc_mtx);
+#endif
   pocl_destroy_llvm_module (llvm_module, kernel->context);
   POCL_MEM_FREE (objfile);
   POCL_MEASURE_FINISH (llvm_codegen);
@@ -998,10 +1041,11 @@ pocl_release_dlhandle_cache (void *dlhandle_cache_item)
  * if not, builds the kernel, caches it, and returns the file name of the
  * end result.
  *
- * @param command The kernel run command.
- * @param specialized 1 if should check the per-command specialized one instead
+ * \param module_fn [out] The file name of the final binary.
+ * \param command The kernel run command.
+ * \param specialized 1 if should check the per-command specialized one instead
  * of the generic one.
- * @returns The filename of the built binary in the disk.
+ * \returns The filename of the built binary in the disk.
  */
 int
 pocl_check_kernel_disk_cache (char *module_fn,
@@ -1132,7 +1176,6 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 {
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   pocl_dlhandle_cache_item *ci = NULL;
-  const char *dl_error = NULL;
   _cl_command_run *run_cmd = &command->command.run;
 
   /* Brute force mechanism to test relying on generic work-group functions
@@ -1167,7 +1210,10 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   char module_fn[POCL_MAX_PATHNAME_LENGTH];
   int err = pocl_check_kernel_disk_cache (module_fn, command, specialize);
   if (err)
-    return NULL;
+    {
+      POCL_UNLOCK (pocl_dlhandle_lock);
+      return NULL;
+    }
 
   ci->dlhandle = pocl_dynlib_open (module_fn, 0, 1);
 
@@ -1185,11 +1231,11 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 
       if (ci->wg == NULL)
         {
-          POCL_MSG_ERR (
-            "pocl_dynlib_symbol_address(\"%s\", \"%s\") failed with '%s'.\n"
-            "note: missing symbols in the kernel binary might be"
-            " reported as 'file not found' errors.\n",
-            module_fn, workgroup_string, dl_error);
+          POCL_MSG_ERR ("pocl_dynlib_symbol_address(\"%s\", \"%s\") failed.\n"
+                        "note: missing symbols in the kernel binary might be"
+                        " reported as 'file not found' errors.\n",
+                        module_fn, workgroup_string);
+          POCL_UNLOCK (pocl_dlhandle_lock);
           return NULL;
         }
     }
@@ -1386,8 +1432,10 @@ pocl_print_system_memory_stats()
 }
 
 /* default WG size in each dimension & total WG size.
- * this should be reasonable for CPU */
-#define DEFAULT_WG_SIZE 8192
+ * this should be reasonable for CPU.
+ * setting this to 8192 causes some tests to fail,
+ * because of stack overflow. */
+#define DEFAULT_WG_SIZE 4096
 
 static const char *final_ld_flags[] = { HOST_LD_FLAGS_ARRAY, NULL };
 

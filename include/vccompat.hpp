@@ -25,30 +25,21 @@
    THE SOFTWARE.
 */
 
-#ifndef VCCOMPAT_HPP
+#if !defined(VCCOMPAT_HPP) && defined(_WIN32)
 #define VCCOMPAT_HPP
 
+/* Suppress min/max macros in windows.h.  They wreck havoc on C++ code.  */
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 #define __restrict__ __restrict
-#define restrict __restrict
 
 #include <intrin.h>
 #define __builtin_popcount __popcnt
 
 // ERROR is used as label for goto in some OCL API functions
 #undef ERROR
-
-// if this causes linking problems, use inline function below...
-#define snprintf _snprintf
-
-/*
-static inline int snprintf(char *str, size_t size, const char *format, ...) {
-  va_list args;
-  va_start(args, format);
-  _snprintf(str, size, format, args);
-  va_end(args);
-}
-*/
 
 #ifdef _MSC_VER
 static inline char* strtok_r(char *str, const char *delim, char **saveptr) {
@@ -67,7 +58,9 @@ static inline char* strtok_r(char *str, const char *delim, char **saveptr) {
 #include <sys/utime.h>
 #define utime _utime;
 
-#define sleep(x) Sleep(x)
+// Sleep takes milliseconds.
+#define sleep(x) Sleep(x * 1000)
+#define usleep(x) Sleep((x / 1000) ? x / 1000 : 1)
 
 static inline int setenv(const char *name, const char *value, int overwrite) {
   return _putenv_s(name, value);
@@ -78,21 +71,6 @@ static inline int setenv(const char *name, const char *value, int overwrite) {
 #define RTLD_NOW 1
 #define RTLD_LOCAL 1
 
-/**
- * dl compatibility functions
- */
-
-static inline void* dlopen(const char* filename, int flags) {
-  return (void*)LoadLibrary(filename);
-}
-
-static inline int dlerror(void) {
-  return GetLastError();
-}
-
-static inline void *dlsym(void* handle, const char *symbol) {
-  return GetProcAddress((HMODULE)handle, symbol);
-}
 #endif
 
 /**

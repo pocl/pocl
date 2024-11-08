@@ -23,10 +23,6 @@
 #
 #=============================================================================
 
-if(MSVC)
-  set_source_files_properties(pocl_proxy.hpp pocl_proxy.cpp PROPERTIES LANGUAGE CXX )
-endif(MSVC)
-
 add_pocl_device_library("pocl-devices-proxy" pocl_proxy.hpp pocl_proxy.cpp)
 
 # an option parameter to link to libopencl-stub instead.

@@ -139,7 +139,7 @@ private:
                                    LLVMValueRef ArgBufferPtr,
                                    uint64_t *ArgBufferOffsets,
                                    LLVMContextRef Ctx, LLVMValueRef F,
-                                   unsigned ParamIndex);
+                                   unsigned ParamIndex, std::string Name);
 
   llvm::Value *getRequiredSubgroupSize(llvm::Function &F);
 
@@ -267,6 +267,14 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
   // extra printf arguments.
   FunctionMapping PrintfCache;
 
+  // Remove the OptNone&NoInline keywords from all functions;
+  for (Function &F : M) {
+    if (!isKernelToProcess(F)) {
+      markFunctionAlwaysInline(&F);
+      F.removeFnAttr(Attribute::AlwaysInline);
+    }
+  }
+
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     Function &OrigKernel = *i;
     if (!isKernelToProcess(OrigKernel)) continue;
@@ -385,6 +393,29 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
     GV = M.getGlobalVariable("_printf_buffer_capacity");
     if (GV && GV->getNumUses() == 0)
       GV->eraseFromParent();
+  }
+
+  // Remove all WI-related functions and global variables;
+  // all of these should be privatized now. Functions first because
+  // they still refer to the global variables
+  for (auto Name : WIFuncNameVec) {
+    Function *F = M.getFunction(Name);
+    if (F && F->getNumUses() == 0) {
+      FAM.clear(*F, "parallel.bc");
+      F->eraseFromParent();
+    }
+  }
+
+  for (auto Name : WorkgroupVariablesVector) {
+    GlobalVariable *GV = M.getGlobalVariable(Name);
+    if (GV && GV->getNumUses() == 0)
+      GV->eraseFromParent();
+  }
+
+  // remove the declaration of the pocl.barrier placeholder
+  if (auto *F = M.getFunction(BARRIER_FUNCTION_NAME)) {
+    FAM.clear(*F, "parallel.bc");
+    F->eraseFromParent();
   }
 
   return true;
@@ -1383,12 +1414,19 @@ LLVMValueRef WorkgroupImpl::createAllocaMemcpyForStruct(
   return LocalArgAlloca;
 }
 
-LLVMValueRef WorkgroupImpl::createArgBufferLoad(LLVMBuilderRef Builder,
-                                                LLVMValueRef ArgBufferPtr,
-                                                uint64_t *ArgBufferOffsets,
-                                                LLVMContextRef Ctx,
-                                                LLVMValueRef F,
-                                                unsigned ParamIndex) {
+/// Creates a load to get an argument from an argument buffer.
+///
+/// \param Builder The LLVM IR builder to use.
+/// \param ArgBufferPtr The LLVM IR Value pointing to the arg buffer.
+/// \param ArgBufferOffsets The offsets of arguments in the buffer.
+/// \param Ctx LLVM Context to use.
+/// \param F The function with the arguments.
+/// \param ParamIndex The index of the argument.
+/// \param Name The name to give for the load (for IR readability).
+LLVMValueRef WorkgroupImpl::createArgBufferLoad(
+    LLVMBuilderRef Builder, LLVMValueRef ArgBufferPtr,
+    uint64_t *ArgBufferOffsets, LLVMContextRef Ctx, LLVMValueRef F,
+    unsigned ParamIndex, std::string Name) {
 
   LLVMValueRef Param = LLVMGetParam(F, ParamIndex);
   LLVMTypeRef ParamType = LLVMTypeOf(Param);
@@ -1432,19 +1470,21 @@ LLVMValueRef WorkgroupImpl::createArgBufferLoad(LLVMBuilderRef Builder,
     LLVMValueRef ArgOffsetBitcast =
         LLVMBuildPointerCast(Builder, ArgByteOffset, DestTy, "arg_ptr");
     LLVMTypeRef LoadTy = ParamType;
-    return LLVMBuildLoad2(Builder, LoadTy, ArgOffsetBitcast, "");
+    return LLVMBuildLoad2(Builder, LoadTy, ArgOffsetBitcast, Name.c_str());
   }
 }
 
-/**
- * Creates a work group launcher with all the argument data passed
- * in a single argument buffer.
- *
- * All argument values, including pointers are stored directly in the
- * argument buffer with natural alignment. The rules for populating the
- * buffer are those of the HSA kernel calling convention. The name of
- * the generated function is KERNELNAME_workgroup_argbuffer.
- */
+/// Creates a work group launcher with all the argument data passed
+/// in a single argument buffer.
+///
+/// All argument values, including pointers are stored directly in the
+/// argument buffer with natural alignment. The rules for populating the
+/// buffer are those of the HSA kernel calling convention. The name of
+/// the generated function is KERNELNAME_workgroup_argbuffer.
+///
+/// \param Func The kernel to generate the launcher for.
+/// \param KernName The prefix for the launcher function's name, which will
+/// be called 'KernName_workgroup_argbuffer'.
 Function *
 WorkgroupImpl::createArgBufferWorkgroupLauncher(Function *Func,
                                                 std::string KernName) {
@@ -1555,8 +1595,9 @@ WorkgroupImpl::createArgBufferWorkgroupLauncher(Function *Func,
           "local_arg", unwrap(Block)));
       Args[i] = LocalArgAlloca;
     } else {
-      Args[i] = createArgBufferLoad(Builder, ArgBuffer, ArgBufferOffsets.data(),
-                                    LLVMContext, F, i);
+      Args[i] = createArgBufferLoad(
+          Builder, ArgBuffer, ArgBufferOffsets.data(), LLVMContext, F, i,
+          std::string("kernel_arg_") + std::to_string(i));
     }
   }
 
@@ -1654,9 +1695,9 @@ void WorkgroupImpl::createGridLauncher(Function *KernFunc, Function *WGFunc,
 
   // Load the pointer to the pocl context (in global memory), assuming it is
   // stored as the 4th last argument in the kernel.
-  LLVMValueRef PoclCtx =
-      createArgBufferLoad(Builder, ArgBuffer, KernArgBufferOffsets.data(),
-                          LLVMContext, Kernel, KernArgCount - HiddenArgs);
+  LLVMValueRef PoclCtx = createArgBufferLoad(
+      Builder, ArgBuffer, KernArgBufferOffsets.data(), LLVMContext, Kernel,
+      KernArgCount - HiddenArgs, "pocl_context");
 
   LLVMValueRef Args[4] = {
       LLVMBuildPointerCast(Builder, WGF, RunnerArgTypes[0], "wg_func"),
@@ -1808,43 +1849,6 @@ llvm::PreservedAnalyses Workgroup::run(llvm::Module &M,
 
   auto &FAM = AM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
   bool Ret = WGI.runOnModule(M, FAM);
-
-  // remove the declaration of the pocl.barrier because it's invalid.
-  for (auto &Func : M.functions()) {
-    if (!Func.isDeclaration())
-      continue;
-    if (!Func.hasName())
-      continue;
-    if (Func.getName() == BARRIER_FUNCTION_NAME) {
-      FAM.clear(Func, "parallel.bc");
-      Func.eraseFromParent();
-      break;
-    }
-  }
-
-  std::vector<llvm::GlobalVariable *> GVarsToDelete;
-  // remove the declarations of global variables
-  for (auto &GV : M.globals()) {
-    llvm::GlobalVariable *GVar = &GV;
-
-    if (!GVar->hasName()) {
-      continue;
-    }
-
-    if (std::find(WorkgroupVariablesVector.begin(), WorkgroupVariablesVector.end(),
-                  GVar->getName().str()) == WorkgroupVariablesVector.end()) {
-      continue;
-    }
-    if (GVar->getNumUses() > 0) {
-      continue;
-    }
-
-    GVarsToDelete.push_back(GVar);
-  }
-
-  for (llvm::GlobalVariable *GVar : GVarsToDelete) {
-    GVar->eraseFromParent();
-  }
 
 #ifdef DEBUG_WORK_GROUP_GEN
   std::cerr << "### After Workgroup:\n";

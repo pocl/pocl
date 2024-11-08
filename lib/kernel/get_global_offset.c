@@ -25,8 +25,13 @@ extern const size_t _global_offset_x;
 extern const size_t _global_offset_y;
 extern const size_t _global_offset_z;
 
+#if _MSC_VER
+size_t _CL_READNONE _CL_OPTNONE
+__identifier ("?get_global_offset@@$$J0YAKI@Z") (unsigned int dimindx)
+#else
 size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
 get_global_offset (unsigned int dimindx)
+#endif
 {
   switch(dimindx)
     {

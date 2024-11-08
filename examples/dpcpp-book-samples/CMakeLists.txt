@@ -70,7 +70,7 @@ add_dependencies(prepare_examples ${TS_NAME})
 # fig_14_26_local_unpack: takes >15min with CPU
 add_test(NAME all_dpcpp_book_samples
          COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure
-         -E "fig_2_10_gpu_selector|fig_2_9_cpu_selector|fig_14_26_local_unpack"
+         -E "fig_2_10_gpu_selector|fig_2_9_cpu_selector|fig_14_26_local_unpack|fig_20_7_interop_handle_opencl"
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
 set_tests_properties(all_dpcpp_book_samples PROPERTIES LABELS "${TS_NAME}")

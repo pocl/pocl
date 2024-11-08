@@ -33,7 +33,7 @@
 
 #include "pocl_export.h"
 
-/* To get adaptive mutex type */
+/* To get adaptive mutex type & pthread attrs */
 #ifndef __USE_GNU
 #define __USE_GNU
 #endif
@@ -63,13 +63,14 @@ typedef pthread_t pocl_thread_t;
   __sync_val_compare_and_swap (ptr, oldval, newval)
 
 #elif defined(_WIN32)
-#define POCL_ATOMIC_ADD(x, val) InterlockedAdd64 (&x, val);
-#define POCL_ATOMIC_INC(x) InterlockedIncrement64 (&x)
-#define POCL_ATOMIC_DEC(x) InterlockedDecrement64 (&x)
-#define POCL_ATOMIC_LOAD(x) InterlockedOr64 (&x, 0)
-#define POCL_ATOMIC_STORE(x, val) InterlockedExchange64 (&x, val)
+#define POCL_ATOMIC_ADD(x, val) InterlockedAdd64 ((volatile LONG64 *)&x, val);
+#define POCL_ATOMIC_INC(x) InterlockedIncrement64 ((volatile LONG64 *)&x)
+#define POCL_ATOMIC_DEC(x) InterlockedDecrement64 ((volatile LONG64 *)&x)
+#define POCL_ATOMIC_LOAD(x) InterlockedOr64 ((volatile LONG64 *)&x, 0)
+#define POCL_ATOMIC_STORE(x, val)                                             \
+  InterlockedExchange64 ((volatile LONG64 *)&x, val)
 #define POCL_ATOMIC_CAS(ptr, oldval, newval)                                  \
-  InterlockedCompareExchange64 (ptr, newval, oldval)
+  InterlockedCompareExchange64 ((volatile LONG64 *)ptr, newval, oldval)
 #else
 #error Need atomic_inc() builtin for this compiler
 #endif
@@ -116,6 +117,14 @@ extern "C"
       PTHREAD_CHECK (pthread_sigmask (SIG_BLOCK, &signal_mask, NULL));        \
     }                                                                         \
   while (0)
+
+POCL_EXPORT
+int pocl_set_thread_stack_size (size_t ThreadStackSize);
+POCL_EXPORT
+size_t pocl_get_thread_stack_size ();
+
+#define POCL_SET_THREAD_STACK_SIZE(N) pocl_set_thread_stack_size (N)
+#define POCL_GET_THREAD_STACK_SIZE() pocl_get_thread_stack_size ()
 
 /* Generic functionality for handling different types of
    OpenCL (host) objects. */

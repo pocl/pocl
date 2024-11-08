@@ -261,8 +261,8 @@ POname(clGetProgramInfo)(cl_program program,
       return CL_SUCCESS;
     }
   default:
-    POCL_RETURN_ERROR_ON(1, CL_INVALID_VALUE,
-                         "Parameter %i not implemented\n", param_name);
+    POCL_RETURN_ERROR (CL_INVALID_VALUE, "Parameter %i not implemented\n",
+                       param_name);
   }
 
 }

@@ -23,9 +23,6 @@
 #
 #=============================================================================
 
-if(MSVC)
-  set_source_files_properties( pocl-hsa.c pocl-hsa.h PROPERTIES LANGUAGE CXX )
-endif(MSVC)
 add_pocl_device_library(pocl-devices-hsa pocl-hsa.c pocl-hsa.h)
 if(ENABLE_LOADABLE_DRIVERS)
   target_link_libraries(pocl-devices-hsa PRIVATE ${HSALIB} ${PTHREAD_LIBRARY})

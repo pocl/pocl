@@ -244,11 +244,14 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
 
     /* cl_khr_command_buffer_multi_device */
     case CL_PLATFORM_COMMAND_BUFFER_CAPABILITIES_KHR:
+#ifdef ENABLE_CONFORMANCE
+      POCL_RETURN_GETINFO (cl_platform_command_buffer_capabilities_khr, 0);
+#else
       POCL_RETURN_GETINFO (cl_platform_command_buffer_capabilities_khr,
                            CL_COMMAND_BUFFER_PLATFORM_UNIVERSAL_SYNC_KHR
                              | CL_COMMAND_BUFFER_PLATFORM_REMAP_QUEUES_KHR
                              | CL_COMMAND_BUFFER_PLATFORM_AUTOMATIC_REMAP_KHR);
-
+#endif
     default:
       return CL_INVALID_VALUE;
   }

@@ -36,10 +36,10 @@
 #  define PRIXPTR "p"
 #  define PRIuS "Iu"
 #else
-# ifndef __STDC_FORMAT_MACROS
-# define __STDC_FORMAT_MACROS
-# endif
-# include <inttypes.h>
+#  ifndef __STDC_FORMAT_MACROS
+#  define __STDC_FORMAT_MACROS
+#  endif
+#  include <inttypes.h>
 #endif
 
 #include "config.h"
@@ -497,6 +497,14 @@ POCL_EXPORT
 
 #endif
 
+#define POCL_RETURN_ERROR(err_code, ...)                                      \
+        POCL_MSG_ERR2 (#err_code, __VA_ARGS__);                               \
+        return err_code
+
+#define POCL_GOTO_ERROR(err_code, ...)                                        \
+        POCL_MSG_ERR2 (#err_code, __VA_ARGS__);                               \
+        errcode = err_code;                                                   \
+        goto err_code
 
 #define POCL_GOTO_ERROR_ON(cond, err_code, ...)                             \
   do                                                                        \
@@ -510,16 +518,16 @@ POCL_EXPORT
     }                                                                       \
   while (0)
 
-#define POCL_RETURN_ERROR_ON(cond, err_code, ...)                           \
-  do                                                                        \
-    {                                                                       \
-      if (cond)                                                             \
-        {                                                                   \
-            POCL_MSG_ERR2(#err_code, __VA_ARGS__);                          \
-            return err_code;                                                \
-        }                                                                   \
-    }                                                                       \
-  while (0)
+#define POCL_RETURN_ERROR_ON(cond, err_code, ...)                             \
+        do                                                                    \
+          {                                                                   \
+            if (cond)                                                         \
+              {                                                               \
+                POCL_MSG_ERR2 (#err_code, __VA_ARGS__);                       \
+                return err_code;                                              \
+              }                                                               \
+          }                                                                   \
+        while (0)
 
 #define POCL_RETURN_ERROR_COND(cond, err_code)                              \
   do                                                                        \

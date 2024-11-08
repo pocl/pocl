@@ -33,7 +33,6 @@ as_type.cl
 async_work_group_copy.cl
 async_work_group_strided_copy.cl
 atomics.cl
-barrier.ll
 bitselect.cl
 clamp.cl
 clamp_int.cl
@@ -171,9 +170,9 @@ libclc-pocl/log2.cl
 libclc-pocl/logb.cl
 # currently unused
 #libclc/log1p.cl
-#libclc-pocl/frexp.cl
-#libclc-pocl/expfrexp.cl
-#libclc-pocl/frfrexp.cl
+libclc-pocl/frexp.cl
+libclc-pocl/expfrexp.cl
+libclc-pocl/frfrexp.cl
 libclc-pocl/pown.cl
 libclc-pocl/powr.cl
 libclc-pocl/pow.cl
@@ -219,9 +218,9 @@ sleef-pocl/floor.cl
 sleef-pocl/fma.cl
 sleef-pocl/fmax.cl
 sleef-pocl/fmin.cl
-sleef-pocl/expfrexp.cl
-sleef-pocl/frfrexp.cl
-sleef-pocl/frexp.cl
+#sleef-pocl/expfrexp.cl
+#sleef-pocl/frfrexp.cl
+#sleef-pocl/frexp.cl
 sleef-pocl/hypot.cl
 sleef-pocl/ilogb.cl
 sleef-pocl/ldexp.cl
@@ -241,6 +240,12 @@ sleef-pocl/sqrt.cl
 sleef-pocl/tgamma.cl
 sleef-pocl/trunc.cl
 )
+
+if(KERNEL_TRIPLE_TARGETS_MSVC_TOOLCHAIN)
+  list(APPEND SOURCES_WITH_SLEEF barrier-msvc.ll)
+else()
+  list(APPEND SOURCES_WITH_SLEEF barrier.ll)
+endif()
 
 if(HOST_CPU_ENABLE_CL_KHR_FP16)
   list(REMOVE_ITEM SOURCES_WITH_SLEEF

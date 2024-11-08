@@ -119,7 +119,7 @@ pocl_create_command_struct (_cl_command_node **cmd,
                             const cl_event *wait_list,
                             pocl_buffer_migration_info *migration_infos);
 
-int pocl_create_event_sync (cl_event waiting_event, cl_event notifier_event);
+int pocl_create_event_sync (cl_event notifier_event, cl_event waiting_event);
 
 cl_int pocl_create_command_migrate (
   _cl_command_node **cmd,

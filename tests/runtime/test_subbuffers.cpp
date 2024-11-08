@@ -133,8 +133,9 @@ int TestOutputDataDecomposition() {
       cl::CommandQueue Queue(Context, Devices[i % Devices.size()], 0);
       Queues.push_back(Queue);
 
-      cl_buffer_region Region{.origin = i * WorkShare * sizeof(cl_int),
-                              .size = (WorkShare - Uncovered) * sizeof(cl_int)};
+      cl_buffer_region Region;
+      Region.origin = i * WorkShare * sizeof(cl_int);
+      Region.size = (WorkShare - Uncovered) * sizeof(cl_int);
 
       std::cout << "Q" << i << " sub-buffer origin element " << i * WorkShare
                 << " last element "

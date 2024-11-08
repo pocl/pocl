@@ -25,9 +25,6 @@
 
 add_compile_options(${OPENCL_CFLAGS})
 
-if (MSVC)
-  set_source_files_properties( matadd.c matadd_exec.c PROPERTIES LANGUAGE CXX )
-endif(MSVC)
 add_executable("matadd" matadd.c matadd_exec.c matadd.cl)
 
 target_link_libraries("matadd" ${POCLU_LINK_OPTIONS})

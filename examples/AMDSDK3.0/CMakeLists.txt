@@ -162,6 +162,13 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
       set_tests_properties("AMD_30_${SAMPLE}" PROPERTIES LABELS "amdsdk_30")
     endforeach()
 
+    # disabled because of stack size requirement & not checking max workgroup size
+    if(HOST_CPU_ENABLE_STACK_SIZE_CHECK)
+      foreach(SAMPLE IN ImageOverlap MonteCarloAsianMultiGPU MatrixMulImage SimpleImage)
+        set_tests_properties("AMD_30_${SAMPLE}" PROPERTIES DISABLED 1)
+      endforeach()
+    endif()
+
     # AMD_30_HeatPDE
     # AMD_30_FineGrainSVMCAS
     set_tests_properties(

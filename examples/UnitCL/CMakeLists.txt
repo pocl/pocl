@@ -167,13 +167,13 @@ VariousNDRangeValues/clEnqueueNDRangeKernelWorkItemTest
 ZeroDimensions/clEnqueueNDRangeKernelZeroDimension
 )
 
-foreach(TEST_NAME IN TEST_NAMES)
+foreach(TEST_NAME IN LISTS TEST_NAMES)
   string(REPLACE "/" "_" NORM_TEST_NAME "${TS_NAME}_${TEST_NAME}")
-add_test(NAME "${NORM_TEST_NAME}"
-         COMMAND "${TS_BUILDDIR}/bin/UnitCL" "--gtest-filter=${TEST_NAME}*"
-set_property(TEST "${NORM_TEST_NAME}"
+  add_test(NAME "${NORM_TEST_NAME}"
+         COMMAND "${TS_BUILDDIR}/bin/UnitCL" "--gtest-filter=${TEST_NAME}*")
+  set_property(TEST "${NORM_TEST_NAME}"
          PROPERTY LABELS ${TS_NAME})
-set_property(TEST "${NORM_TEST_NAME}"
+  set_property(TEST "${NORM_TEST_NAME}"
          PROPERTY ENVIRONMENT "POCL_MEMORY_LIMIT=8")
 endforeach()
 

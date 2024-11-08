@@ -96,12 +96,12 @@
 
 /* TODO: IS_DBK is currently not used */
 /* initializers for builtin kernel */
-#define BIKD_FULL(ID, NAME, NARGS, IS_DBK, LOCAL_SIZE, ARGUMENTS...)          \
+#define BIKD_FULL(ID, NAME, NARGS, IS_DBK, LOCAL_SIZE, ...)                   \
   {                                                                           \
     .num_args = NARGS, .num_locals = ((LOCAL_SIZE > 0) ? 1 : 0),              \
     .local_sizes = (LOCAL_SIZE > 0) ? (size_t[]){ LOCAL_SIZE } : NULL,        \
     .name = NAME, .attributes = NULL,                                         \
-    .arg_info = (pocl_argument_info[NARGS]){ ARGUMENTS },                     \
+    .arg_info = (pocl_argument_info[NARGS]){ __VA_ARGS__ },                   \
     .has_arg_metadata                                                         \
       = (POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER                                \
          | POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER                               \
@@ -865,8 +865,8 @@ pocl_validate_dbk_attributes (BuiltinKernelId kernel_id,
   default:
       break;
     }
-  POCL_RETURN_ERROR_ON (1, CL_INVALID_DBK_ID, "Unknown builtin kernel ID: %u.\n",
-                        kernel_id);
+  POCL_RETURN_ERROR (CL_INVALID_DBK_ID, "Unknown builtin kernel ID: %u.\n",
+                     kernel_id);
 }
 
 void *
@@ -963,8 +963,8 @@ pocl_release_defined_builtin_attributes (BuiltinKernelId kernel_id,
     default:
       break;
     }
-  POCL_RETURN_ERROR_ON (1, CL_INVALID_DBK_ID, "Unknown builtin kernel ID: %u.\n",
-                        kernel_id);
+  POCL_RETURN_ERROR (CL_INVALID_DBK_ID, "Unknown builtin kernel ID: %u.\n",
+                     kernel_id);
 }
 
 /** Helper functions for (de)serializing dbk attributes in the remote driver */

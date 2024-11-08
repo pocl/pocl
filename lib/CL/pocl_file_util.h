@@ -72,6 +72,13 @@ POCL_EXPORT
 int pocl_write_file(const char* path, const char* content,
                     uint64_t count, int append);
 
+/** Write \param content with size \param count into a temporary file, and
+ * return the tempfile name in \param output_path.
+ *
+ * \param prefix Temp filename's prefix.
+ * \param suffix Temp filename's suffix.
+ */
+POCL_EXPORT
 int pocl_write_tempfile (char *output_path,
                          const char *prefix,
                          const char *suffix,

@@ -25,9 +25,6 @@
 
 add_compile_options(${OPENCL_CFLAGS})
 
-if (MSVC)
-  set_source_files_properties( boxadd.c boxadd_exec.c PROPERTIES LANGUAGE CXX )
-endif(MSVC)
 add_executable("boxadd" boxadd.c boxadd_exec.c boxadd.cl)
 
 target_link_libraries("boxadd" ${POCLU_LINK_OPTIONS})

@@ -40,7 +40,7 @@ jobs:
         # basic = simplest pthread build
         # devel = with devel options
         # install = install PoCL system-wide and run tests
-        llvm: [17, 18]
+        llvm: [18, 19]
         config: [basic, devel]
         include:
           - llvm: 14
@@ -48,8 +48,12 @@ jobs:
           - llvm: 15
             config: TBB
           - llvm: 16
-            config: static
+            config: OpenMP
+          - llvm: 17
+            config: TBB
           - llvm: 18
+            config: static
+          - llvm: 19
             config: install
 
     steps:
@@ -92,7 +96,7 @@ jobs:
         run: |
           runCMake() {
             BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
-            cmake -DDEVELOPER_MODE=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             "-DCMAKE_C_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
             "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
             -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} \
@@ -108,7 +112,7 @@ jobs:
           elif [ "${{ matrix.config }}" == "basic" ]; then
             runCMake -DENABLE_ICD=1 -DENABLE_LLVM_FILECHECKS=1
           elif [ "${{ matrix.config }}" == "static" ]; then
-            runCMake -DENABLE_ICD=1 -DSTATIC_LLVM=1
+            runCMake -DENABLE_ICD=1 -DSTATIC_LLVM=1 -DDEVELOPER_MODE=ON
           elif [ "${{ matrix.config }}" == "devel" ]; then
             runCMake -DENABLE_RELOCATION=0 -DDEVELOPER_MODE=1 -DENABLE_VALGRIND=1 -DENABLE_EXTRA_VALIDITY_CHECKS=1
           elif [ "${{ matrix.config }}" == "install" ]; then

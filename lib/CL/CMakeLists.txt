@@ -224,6 +224,10 @@ if(APPLE)
   list(APPEND POCL_LIB_SOURCES "pthread_barrier.c")
 endif()
 
+if(WIN32)
+  list(APPEND POCL_LIB_SOURCES "pocl_ipc_mutex_win.cc")
+endif()
+
 set(LIBPOCL_OBJS "$<TARGET_OBJECTS:libpocl_unlinked_objs>"
                  "$<TARGET_OBJECTS:pocl_cache>")
 
@@ -288,10 +292,6 @@ if(HAVE_LTTNG_UST)
   add_compile_options(${LTTNG_UST_CFLAGS})
   list(APPEND POCL_LIB_SOURCES "pocl_lttng.c" "pocl_lttng.h")
 endif()
-
-if(MSVC)
-  set_source_files_properties( ${POCL_LIB_SOURCES} PROPERTIES LANGUAGE CXX )
-endif(MSVC)
 
 # this is so that we don't compile twice when building both libpocl and libOpenCL
 add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})

@@ -39,7 +39,6 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <utlist.h>
 
 #include "pocl_cache.h"
@@ -220,6 +219,17 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   device->max_sub_devices = 0;
   device->num_partition_properties = 0;
   device->num_partition_types = 0;
+
+#ifdef HOST_CPU_ENABLE_STACK_SIZE_CHECK
+  size_t stack_size = POCL_GET_THREAD_STACK_SIZE ();
+  /* if the call fails, set a safe minimum */
+  if (stack_size == 0)
+    stack_size = 512 * 1024;
+  /* since the basic device does not have its own thread,
+   * it also doesn't have its own stack -> try to
+   * keep the max stack size very low. */
+  device->work_group_stack_size = stack_size / 2;
+#endif
 
   assert (device->printf_buffer_size > 0);
   d->printf_buffer
@@ -418,7 +428,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
   if (!cmd->device->device_alloca_locals)
     for (i = 0; i < meta->num_locals; ++i)
       {
-        POCL_MEM_FREE (*(void **)(arguments[meta->num_args + i]));
+        pocl_aligned_free (*(void **)(arguments[meta->num_args + i]));
         POCL_MEM_FREE (arguments[meta->num_args + i]);
       }
   free (arguments);
@@ -678,7 +688,7 @@ cl_int pocl_basic_write_image_rect (  void *data,
 
   const void *__restrict__ ptr
       = src_host_ptr ? src_host_ptr : src_mem_id->mem_ptr;
-  ptr += src_offset;
+  ptr = (char *)ptr + src_offset;
   const size_t zero_origin[3] = { 0 };
   size_t px = dst_image->image_elem_size * dst_image->image_channels;
   if (src_row_pitch == 0)
@@ -722,7 +732,7 @@ cl_int pocl_basic_read_image_rect(  void *data,
       dst_row_pitch, dst_slice_pitch, dst_offset);
 
   void *__restrict__ ptr = dst_host_ptr ? dst_host_ptr : dst_mem_id->mem_ptr;
-  ptr += dst_offset;
+  ptr = (char *)ptr + dst_offset;
   const size_t zero_origin[3] = { 0 };
   size_t px = src_image->image_elem_size * src_image->image_channels;
   if (dst_row_pitch == 0)
@@ -934,8 +944,8 @@ pocl_basic_get_subgroup_info_ext (cl_device_id device,
           }
       }
     default:
-      POCL_RETURN_ERROR_ON (1, CL_INVALID_VALUE, "Unknown param_name: %u\n",
-                            param_name);
+      POCL_RETURN_ERROR (CL_INVALID_VALUE, "Unknown param_name: %u\n",
+                         param_name);
     }
 }
 
@@ -1031,10 +1041,10 @@ pocl_basic_create_kernel (cl_device_id device,
       }
 #endif
     default:
-      POCL_RETURN_ERROR_ON (1, CL_INVALID_DBK_ID,
-                            "pocl_basic_create_kernel called with "
-                            "unknown/unimplemented "
-                            "DBK kernel.\n");
+      POCL_RETURN_ERROR (CL_INVALID_DBK_ID,
+                         "pocl_basic_create_kernel called with "
+                         "unknown/unimplemented "
+                         "DBK kernel.\n");
     }
 }
 
@@ -1083,8 +1093,8 @@ pocl_basic_free_kernel (cl_device_id device,
       }
 #endif
     default:
-      POCL_RETURN_ERROR_ON (1, CL_INVALID_DBK_ID,
-                            "pocl_basic_free_kernel called with "
-                            "unknown/unimplemented DBK kernel.\n");
+      POCL_RETURN_ERROR (CL_INVALID_DBK_ID,
+                         "pocl_basic_free_kernel called with "
+                         "unknown/unimplemented DBK kernel.\n");
     }
 }

@@ -28,7 +28,7 @@ if(DEFINED WITH_LLVM_CONFIG AND WITH_LLVM_CONFIG)
   # search for preferred version
   if(IS_ABSOLUTE "${WITH_LLVM_CONFIG}")
     if(EXISTS "${WITH_LLVM_CONFIG}")
-      set(LLVM_CONFIG "${WITH_LLVM_CONFIG}")
+      set(LLVM_CONFIG "${WITH_LLVM_CONFIG}" CACHE PATH "path of llvm-config")
     endif()
   else()
     find_program(LLVM_CONFIG NAMES "${WITH_LLVM_CONFIG}")
@@ -49,12 +49,14 @@ else()
     DOC "llvm-config executable")
 endif()
 
-set(WITH_LLVM_CONFIG "${WITH_LLVM_CONFIG}" CACHE PATH "Path to preferred llvm-config")
 
 if(NOT LLVM_CONFIG)
   message(FATAL_ERROR "llvm-config not found !")
 else()
   file(TO_CMAKE_PATH "${LLVM_CONFIG}" LLVM_CONFIG)
+  if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
+    file(REAL_PATH "${LLVM_CONFIG}"  LLVM_CONFIG)
+  endif()
   message(STATUS "Using llvm-config: ${LLVM_CONFIG}")
   if(LLVM_CONFIG MATCHES "llvmtce-config${CMAKE_EXECUTABLE_SUFFIX}$")
     set(LLVM_BINARY_SUFFIX "")
@@ -137,6 +139,7 @@ run_llvm_config(LLVM_ASSERTS_BUILD --assertion-mode)
 if(MSVC)
   string(REPLACE "-L${LLVM_LIBDIR}" "" LLVM_LDFLAGS "${LLVM_LDFLAGS}")
   string(STRIP "${LLVM_LDFLAGS}" LLVM_LDFLAGS)
+  file(TO_CMAKE_PATH "${LLVM_LDFLAGS}" LLVM_LDFLAGS)
 endif()
 
 if(LLVM_BUILD_MODE MATCHES "Debug")
@@ -172,7 +175,12 @@ endif()
 # yet support mangling for extended vector types (with llvm 3.5)
 # so for now hardcode LLVM_HOST_TARGET to be x86_64-pc with windows
 if(WIN32 AND (NOT MINGW))
-  set(LLVM_HOST_TARGET "x86_64-pc")
+  # Using the following target causes clang to invoke gcc for linking
+  # instead of MSVC's link.exe.
+  # TODO: lower LLVM version requirement until the above issue is hit.
+  if (NOT MSVC OR LLVM_VERSION_MAJOR LESS 18)
+    set(LLVM_HOST_TARGET "x86_64-pc")
+  endif()
 endif()
 
 #############################################################
@@ -188,6 +196,7 @@ endif()
 unset(LLVM_LIBS)
 run_llvm_config(LLVM_LIBS --libs ${LLVM_LIB_MODE})
 string(STRIP "${LLVM_LIBS}" LLVM_LIBS)
+file(TO_CMAKE_PATH "${LLVM_LIBS}" LLVM_LIBS)
 if(NOT LLVM_LIBS)
   message(FATAL_ERROR "llvm-config --libs did not return anything, perhaps wrong setting of STATIC_LLVM ?")
 endif()
@@ -202,11 +211,15 @@ foreach(LIBFLAG ${LLVM_LIBS})
 endforeach()
 
 foreach(LIBNAME ${LLVM_LIBNAMES})
-  find_library(L_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
-  if(NOT L_LIBFILE_${LIBNAME})
-    message(FATAL_ERROR "Could not find LLVM library ${LIBNAME}, perhaps wrong setting of STATIC_LLVM ?")
+  if(EXISTS ${LIBNAME})
+    list(APPEND LLVM_LIBFILES "${LIBNAME}")
+  else()
+    find_library(L_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
+    if(NOT L_LIBFILE_${LIBNAME})
+      message(FATAL_ERROR "Could not find LLVM library ${LIBNAME}, perhaps wrong setting of STATIC_LLVM ?")
+    endif()
+    list(APPEND LLVM_LIBFILES "${L_LIBFILE_${LIBNAME}}")
   endif()
-  list(APPEND LLVM_LIBFILES "${L_LIBFILE_${LIBNAME}}")
 endforeach()
 
 set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
@@ -217,10 +230,12 @@ set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
 run_llvm_config(LLVM_SYSLIBS --system-libs ${LLVM_LIB_MODE})
 string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
 string(REPLACE " " ";" LLVM_SYSLIBS "${LLVM_SYSLIBS}")
-# TODO this hack is required for MinGW. Without it,
-# Clang link test reports missing symbols like GetFileVersionInfoSizeW
+
+# Clang library depends on this system library.
 if(MINGW)
   list(APPEND LLVM_SYSLIBS "-lversion")
+elseif(MSVC)
+  list(APPEND LLVM_SYSLIBS version.lib)
 endif()
 
 ####################################################################
@@ -248,7 +263,6 @@ else()
 endif()
 
 foreach(LIBNAME ${CLANG_LIBNAMES})
-  list(APPEND CLANG_LIBS "-l${LIBNAME}")
   find_library(C_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
   if(NOT C_LIBFILE_${LIBNAME})
     message(FATAL_ERROR "Could not find Clang library ${LIBNAME}, perhaps wrong setting of STATIC_LLVM ?")
@@ -267,7 +281,7 @@ macro(find_program_or_die OUTPUT_VAR PROG_NAME DOCSTRING)
     NO_CMAKE_PATH
     NO_CMAKE_ENVIRONMENT_PATH
   )
-  if(${OUTPUT_VAR})
+  if(EXISTS "${${OUTPUT_VAR}}")
     message(STATUS "Found ${PROG_NAME}: ${${OUTPUT_VAR}}")
   else()
     message(FATAL_ERROR "${PROG_NAME} executable not found!")
@@ -352,8 +366,12 @@ macro(custom_try_compile_any SILENT COMPILER SUFFIX SOURCE RES_VAR)
 
   math(EXPR LSIZE "${ARGC} - 4")
 
-  execute_process(COMMAND "${COMPILER}" ${ARGN} "${RANDOM_FILENAME}" RESULT_VARIABLE RESV OUTPUT_VARIABLE OV ERROR_VARIABLE EV)
-  if(${RESV} AND (NOT ${SILENT}))
+  execute_process(COMMAND "${COMPILER}" ${ARGN} "${RANDOM_FILENAME}"
+                  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+                  RESULT_VARIABLE RESV
+                  OUTPUT_VARIABLE OV
+                  ERROR_VARIABLE EV)
+  if((NOT ${RESV} EQUAL 0) AND (NOT ${SILENT}))
     message(STATUS " ########## The command: ")
     string(REPLACE ";" " " ARGN_STR "${ARGN}")
     message(STATUS "${COMPILER} ${ARGN_STR} ${RANDOM_FILENAME}")
@@ -398,23 +416,33 @@ endmacro()
 
 # clang++ try-compile macro
 macro(custom_try_compile_clangxx SOURCE1 SOURCE2 RES_VAR)
-  custom_try_compile_c_cxx("${CLANGXX}" "cc" "${SOURCE1}" "${SOURCE2}" ${RES_VAR}  "-c" ${ARGN})
+  string(RANDOM RNDNAME)
+  set(RANDOM_FILENAME "${CMAKE_BINARY_DIR}/compile_test_${RNDNAME}.o")
+  custom_try_compile_c_cxx("${CLANGXX}" "cc" "${SOURCE1}" "${SOURCE2}" ${RES_VAR} "-o" "${RANDOM_FILENAME}" "-c" ${ARGN})
+  file(REMOVE "${RANDOM_FILENAME}")
 endmacro()
 
 # clang++ try-compile macro
 macro(custom_try_compile_clang SOURCE1 SOURCE2 RES_VAR)
-  custom_try_compile_c_cxx("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR}  "-c" ${ARGN})
+  string(RANDOM RNDNAME)
+  set(RANDOM_FILENAME "${CMAKE_BINARY_DIR}/compile_test_${RNDNAME}.o")
+  custom_try_compile_c_cxx("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR} "-o" "${RANDOM_FILENAME}" "-c" ${ARGN})
+  file(REMOVE "${RANDOM_FILENAME}")
 endmacro()
 
 # clang++ try-compile macro
 macro(custom_try_compile_clang_silent SOURCE1 SOURCE2 RES_VAR)
-  custom_try_compile_c_cxx_silent("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR} "-c" ${ARGN})
+  string(RANDOM RNDNAME)
+  set(RANDOM_FILENAME "${CMAKE_BINARY_DIR}/compile_test_${RNDNAME}.o")
+  custom_try_compile_c_cxx_silent("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR} "-o" "${RANDOM_FILENAME}" "-c" ${ARGN})
+  file(REMOVE "${RANDOM_FILENAME}")
 endmacro()
 
 # clang++ try-link macro
 macro(custom_try_link_clang SOURCE1 SOURCE2 RES_VAR)
-  set(RANDOM_FILENAME "${CMAKE_BINARY_DIR}/compile_test_${RNDNAME}.${SUFFIX}")
-  custom_try_compile_c_cxx_silent("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR}  "-o" "${RANDOM_FILENAME}" ${ARGN})
+  string(RANDOM RNDNAME)
+  set(RANDOM_FILENAME "${CMAKE_BINARY_DIR}/compile_test_${RNDNAME}${CMAKE_EXECUTABLE_SUFFIX}")
+  custom_try_compile_c_cxx_silent("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR} "-o" "${RANDOM_FILENAME}" ${ARGN})
   file(REMOVE "${RANDOM_FILENAME}")
 endmacro()
 
@@ -433,7 +461,7 @@ macro(custom_try_run_exe SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
     execute_process(COMMAND "${OUTF}" RESULT_VARIABLE RESV OUTPUT_VARIABLE ${OUTPUT_VAR} ERROR_VARIABLE EV)
     set(${RES_VAR} ${RESV})
     file(REMOVE "${OUTF}")
-    if(${RESV})
+    if(NOT ${RESV} EQUAL 0)
       message(STATUS " ########## Running ${OUTF}")
       message(STATUS " ########## Exited with nonzero status: ${RESV}")
       if(${${OUTPUT_VAR}})
@@ -450,10 +478,8 @@ endmacro()
 macro(custom_try_run_lli SILENT SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
 # this uses "lli" - the interpreter, so we can run any -target
 # TODO variable for target !!
-  set(OUTF "${CMAKE_BINARY_DIR}/try_run.bc")
-  if(EXISTS "${OUTF}")
-    file(REMOVE "${OUTF}")
-  endif()
+  string(RANDOM RNDNAME)
+  set(OUTF "${CMAKE_BINARY_DIR}/lli_test_${RNDNAME}.bc")
   custom_try_compile_c_cxx("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" RESV "-o" "${OUTF}" "-x" "c" "-emit-llvm" "-c" ${ARGN})
   set(${OUTPUT_VAR} "")
   set(${RES_VAR} "")
@@ -463,7 +489,7 @@ macro(custom_try_run_lli SILENT SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
     execute_process(COMMAND "${LLVM_LLI}" "-force-interpreter" "${OUTF}" RESULT_VARIABLE RESV OUTPUT_VARIABLE ${OUTPUT_VAR} ERROR_VARIABLE EV)
     set(${RES_VAR} ${RESV})
     file(REMOVE "${OUTF}")
-    if(${RESV} AND (NOT ${SILENT}))
+    if((NOT ${RESV} EQUAL 0) AND (NOT ${SILENT}))
       message(STATUS " ########## The command ${LLVM_LLI} -force-interpreter ${OUTF}")
       message(STATUS " ########## Exited with nonzero status: ${RESV}")
       if(${${OUTPUT_VAR}})
@@ -673,7 +699,7 @@ if(NOT LLVM_LINK_TEST)
   try_compile(LLVM_LINK_TEST ${CMAKE_BINARY_DIR} "${LLVM_LINK_TEST_FILENAME}"
               CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
               CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
-              LINK_LIBRARIES "${LLVM_LDFLAGS} ${LLVM_LIBS} ${LLVM_SYSLIBS}"
+              LINK_LIBRARIES "${LLVM_LDFLAGS}" "${LLVM_LIBS}" "${LLVM_SYSLIBS}"
               COMPILE_DEFINITIONS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}"
               OUTPUT_VARIABLE _TRY_COMPILE_OUTPUT)
 
@@ -697,11 +723,18 @@ if(NOT CLANG_LINK_TEST)
 
   set(CLANG_LINK_TEST_FILENAME "${CMAKE_SOURCE_DIR}/cmake/LinkTestClang.cc")
 
+  set(CXX_COMPAT_FLAGS "")
+  if (MSVC)
+    set(CXX_COMPAT_FLAGS "/Zc:preprocessor")
+  endif()
+
   try_compile(CLANG_LINK_TEST ${CMAKE_BINARY_DIR} "${CLANG_LINK_TEST_FILENAME}"
               CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
               CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
-              LINK_LIBRARIES "${LLVM_LDFLAGS} ${CLANG_LIBS} ${LLVM_LIBS} ${LLVM_SYSLIBS}"
-              COMPILE_DEFINITIONS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS} -DLLVM_MAJOR=${LLVM_VERSION_MAJOR}"
+              LINK_LIBRARIES ${LLVM_LDFLAGS} ${CLANG_LIBFILES} ${LLVM_LIBS}
+              ${LLVM_SYSLIBS}
+              COMPILE_DEFINITIONS ${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}
+	      ${CXX_COMPAT_FLAGS} -DLLVM_MAJOR=${LLVM_VERSION_MAJOR}
               OUTPUT_VARIABLE _TRY_COMPILE_OUTPUT)
 
   if(CLANG_LINK_TEST)

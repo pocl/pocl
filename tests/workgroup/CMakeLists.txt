@@ -28,9 +28,6 @@ add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 include_directories("${CMAKE_SOURCE_DIR}/lib/CL")
 add_compile_options(${OPENCL_CFLAGS})
 
-if(MSVC)
-  set_source_files_properties( run_kernel.c PROPERTIES LANGUAGE CXX )
-endif(MSVC)
 add_executable("run_kernel" "run_kernel.c")
 target_link_libraries("run_kernel" ${POCLU_LINK_OPTIONS})
 
