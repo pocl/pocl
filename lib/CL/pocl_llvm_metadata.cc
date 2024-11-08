@@ -38,7 +38,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include <iostream>
 #include <map>
-#include <pthread.h>
 #include <sstream>
 #include <string>
 
