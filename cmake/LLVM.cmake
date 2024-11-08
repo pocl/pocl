@@ -660,29 +660,6 @@ if(NOT DEFINED CLANG_MARCH_FLAG)
   set(CLANG_MARCH_FLAG ${CLANG_MARCH_FLAG} CACHE INTERNAL "Clang option used to specify the target cpu")
 endif()
 
-if(NOT DEFINED ALIGNOF_DOUBLE16)
-
-  custom_try_run_lli(TRUE "
-#ifndef offsetof
-#define offsetof(type, member) ((char *) &((type *) 0)->member - (char *) 0)
-#endif
-
-  typedef double double16  __attribute__((__ext_vector_type__(16)));"
-
-  "typedef struct { char x; double16 y; } ac__type_alignof_;
-  int r = offsetof(ac__type_alignof_, y);
-  return r;"
-  SIZEOF_STDOUT RESULT "--target=${LLC_TRIPLE}")
-
-  if(NOT ${RESULT})
-    message(WARNING "Could not determine align of(double16)")
-    set(ALIGNOF_DOUBLE16 "128" CACHE INTERNAL "Align of double16")
-  else()
-    set(ALIGNOF_DOUBLE16 "${RESULT}" CACHE INTERNAL "Align of double16")
-  endif()
-
-endif()
-
 endif(ENABLE_HOST_CPU_DEVICES)
 
 ####################################################################
