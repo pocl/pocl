@@ -224,6 +224,10 @@ add_test_pocl(NAME "kernel/test_printf_vectors"
               EXPECTED_OUTPUT "test_printf_vectors_expout.txt"
               COMMAND "kernel" "test_printf_vectors")
 
+add_test_pocl(NAME "kernel/test_printf_vectors_doublen"
+              EXPECTED_OUTPUT "test_printf_vectors_doublen_expout.txt"
+              COMMAND "kernel" "test_printf_vectors_doublen")
+
 add_test_pocl(NAME "kernel/test_printf_vectors_ulongn"
               EXPECTED_OUTPUT "test_printf_vectors_ulongn_expout.txt"
               COMMAND "kernel" "test_printf_vectors_ulongn")

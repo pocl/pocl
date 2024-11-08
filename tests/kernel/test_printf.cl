@@ -168,6 +168,7 @@ kernel void test_printf()
 
   printf("|%c|%4c|%-4c|\n", 'a', 'b', 'c');
   printf("|%s|%4s|%-4s|%4s|%.4s|\n", "aa", "bb", "cc", "dddddddddd", "eeeeee");
-  // Print 32b pointers so they come out the same on 64-bit and 32-bit targets.
+  /* Print 32b pointers so they come out the same on 64-bit and 32-bit targets.
+   */
   printf("|%p|%12p|%-12p|\n", (void*)0x2349aacc, (void*)0xdeaddeed, (void*)0x92820384);
 }
