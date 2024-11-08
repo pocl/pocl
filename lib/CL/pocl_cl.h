@@ -1186,7 +1186,7 @@ struct _cl_device_id {
 
   /* Optional property. If the device uses stack for work-item context data and
    * has limited stack size, this property can be used to guide the work-group
-   * size recommendation/selection to take the stack size in account. It should
+   * size computation selection to take the stack size in account. It should
    * be set to the maximum number of bytes that can be stored on the stack. */
   size_t work_group_stack_size;
 

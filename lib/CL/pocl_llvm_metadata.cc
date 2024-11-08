@@ -730,14 +730,12 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
     } else
       meta->attributes = nullptr;
 
-#ifdef HOST_CPU_ENABLE_STACK_SIZE_CHECK
     /* If the program is compiled with -cl-opt-disable, or the opt
      * has some problem that hinders optimization, allocas might
      * not be optimized away at all. In that case, the estimated
      * stack size might be the actual stack size.
      * Set the kernel limit on workgroup size accordingly. */
-    if ((Device->type == CL_DEVICE_TYPE_CPU) &&
-        (Device->work_group_stack_size > 0)) {
+    if (Device->work_group_stack_size > 0) {
       unsigned long EstStackSize = 0;
       std::string MetadataKey(meta->name);
       MetadataKey.append(".meta.est.stack.size");
@@ -756,7 +754,6 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
                             meta->name, meta->max_workgroup_size[device_i]);
       }
     }
-#endif
   } // for each kernel
 
   delete TD;
