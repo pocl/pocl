@@ -1677,7 +1677,7 @@ pocl_init_default_device_infos (cl_device_id dev,
 
   dev->profiling_timer_resolution = pocl_gettimer_resolution ();
 
-  dev->endian_little = !(WORDS_BIGENDIAN);
+  dev->endian_little = CL_TRUE;
   dev->compiler_available = CL_TRUE;
   dev->linker_available = CL_TRUE;
   dev->spmd = CL_FALSE;
