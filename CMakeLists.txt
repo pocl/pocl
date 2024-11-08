@@ -1206,7 +1206,7 @@ else()
       NAMES
         ocl_icd.h
     )
-  elseif("${OCL_ICD_LIBRARIES}" STREQUAL "")
+  elseif(NOT OCL_ICD_LIBRARIES)
     # OCL_ICD_LIBRARIES is set to empty because of a bug in ocl-icd.pc
     unset(OCL_ICD_LIBRARIES CACHE)
   endif()
