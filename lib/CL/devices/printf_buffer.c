@@ -173,6 +173,9 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
   uint32_t char2_promotion = control_dword & PRINTF_BUFFER_CTWORD_CHAR2_PR;
   uint32_t float_promotion = control_dword & PRINTF_BUFFER_CTWORD_FLOAT_PR;
   uint32_t big_endian = control_dword & PRINTF_BUFFER_CTWORD_BIG_ENDIAN;
+  uint32_t pointer_size_bytes
+    = control_dword & PRINTF_BUFFER_CTWORD_32BIT_POINTERS ? 4 : 8;
+
   if (big_endian)
     {
       POCL_MSG_ERR ("printf error: printf for big endian devices not yet"
@@ -707,8 +710,8 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                       }
 
                     const void *val;
-                    memcpy (&val, buffer, sizeof (val));
-                    FORWARD_BUFFER (sizeof (val));
+                    memcpy (&val, buffer, pointer_size_bytes);
+                    FORWARD_BUFFER (pointer_size_bytes);
                     DEBUG_PRINTF (("[printf:ptr:%p]\n", val));
                     __pocl_printf_ptr (p, val);
                     DEBUG_PRINTF (

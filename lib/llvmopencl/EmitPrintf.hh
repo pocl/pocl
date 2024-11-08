@@ -38,6 +38,7 @@ struct PrintfCallFlags {
   bool ArgPromotionChar2 = false;    // Clang promotes char2 to int
   bool ArgPromotionFloat = true;     // Clang promotes float to double
   bool IsBigEndian = false;          // device is big-endian
+  bool Pointers32Bit = false;        // device's pointer width is 32bits
 };
 
 llvm::Value *emitPrintfCall(llvm::IRBuilder<> &Builder,
