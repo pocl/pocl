@@ -891,9 +891,10 @@ pocl_remote_reader_pthread (void *aa)
       if (fd < 0)
         {
           POCL_LOCK (connection->setup_guard.mutex);
+          int reconnected;
         TRY_RECONNECT:
-          {
-          int reconnected = pocl_remote_reconnect_socket (remote, connection);
+
+          reconnected = pocl_remote_reconnect_socket (remote, connection);
           if (reconnected != CL_SUCCESS)
             {
               if (connection->reconnect_attempts
@@ -925,7 +926,6 @@ pocl_remote_reader_pthread (void *aa)
               POCL_BROADCAST_COND (connection->setup_guard.cond);
               POCL_UNLOCK (connection->setup_guard.mutex);
             }
-          }
         }
 
       /* Block until there is something to read. This is especially needed to

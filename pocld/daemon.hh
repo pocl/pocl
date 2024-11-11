@@ -136,6 +136,11 @@ private:
 #ifdef ENABLE_REMOTE_ADVERTISEMENT_AVAHI
   AvahiAdvertise *avahiAdvertiseP;
 #endif
+#ifdef ENABLE_REMOTE_ADVERTISEMENT_DHT
+  std::thread DHTThread;
+  friend void StartDHTAdvert(PoclDaemon *d, addrinfo *RA,
+                             struct ServerPorts &Ports);
+#endif
 #ifdef ENABLE_RDMA
   RdmaListener rdma_listener;
   std::thread pl_rdma_event_th;

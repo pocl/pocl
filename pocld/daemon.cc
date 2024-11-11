@@ -70,10 +70,6 @@
     }                                                                          \
   } while (0)
 
-#ifdef ENABLE_REMOTE_ADVERTISEMENT_DHT
-std::thread DHTThread;
-#endif
-
 int listen_peers(void *data) {
   peer_listener_data_t *d = (peer_listener_data_t *)data;
 
@@ -224,7 +220,8 @@ int listen_rdmacm_events(rdmacm::EventChannelPtr cm_channel,
 #ifdef ENABLE_REMOTE_ADVERTISEMENT_AVAHI
 
 /// Called to initialize and start mDNS service advertisement using avahi
-AvahiAdvertise *StartAvahiAdvert(addrinfo *RA, struct ServerPorts &Ports) {
+static AvahiAdvertise *StartAvahiAdvert(addrinfo *RA,
+                                        struct ServerPorts &Ports) {
 
   // Get the platform and device information to add to DNS TXT field.
   std::vector<cl::Platform> PlatformList;
@@ -337,7 +334,7 @@ AvahiAdvertise *StartAvahiAdvert(addrinfo *RA, struct ServerPorts &Ports) {
 #ifdef ENABLE_REMOTE_ADVERTISEMENT_DHT
 /// Called to initialize and start DHT based service advertisement using
 /// OpenDHT.
-void StartDHTAdvert(addrinfo *RA, struct ServerPorts &Ports) {
+void StartDHTAdvert(PoclDaemon *d, addrinfo *RA, struct ServerPorts &Ports) {
 
   // Generate a 32 char unique random server identifier when the daemon process
   // (re)starts. The server ID is needed as 'service name' for advertising the
@@ -456,7 +453,7 @@ void StartDHTAdvert(addrinfo *RA, struct ServerPorts &Ports) {
     }
   }
 
-  DHTThread = std::move(std::thread(initDHTAdvertisement, InfoArray));
+  d->DHTThread = std::move(std::thread(initDHTAdvertisement, InfoArray));
 }
 #endif
 
@@ -561,7 +558,7 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports,
   avahiAdvertiseP = StartAvahiAdvert(ResolvedAddress, Ports);
 #endif
 #ifdef ENABLE_REMOTE_ADVERTISEMENT_DHT
-  StartDHTAdvert(ResolvedAddress, Ports);
+  StartDHTAdvert(this, ResolvedAddress, Ports);
 #endif
 
   addrinfo *ai = ResolvedAddress;

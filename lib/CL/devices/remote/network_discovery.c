@@ -42,10 +42,10 @@
 #include <avahi-common/malloc.h>
 #include <avahi-common/thread-watch.h>
 
-AvahiThreadedPoll *avahi_threaded_poll = NULL;
-AvahiClient *avahi_client = NULL;
-cl_int domain_count = 0;
-AvahiServiceBrowser **service_browser = NULL;
+static AvahiThreadedPoll *avahi_threaded_poll = NULL;
+static AvahiClient *avahi_client = NULL;
+static cl_int domain_count = 0;
+static AvahiServiceBrowser **service_browser = NULL;
 #endif
 
 #if defined(ENABLE_REMOTE_DISCOVERY_DHT)
@@ -81,12 +81,12 @@ typedef struct server_info_t
 /* Function pointer for the callback defined in pocl runtime to dynamically
  * add and initialize devices in the discovered remote server.
  */
-cl_int (*add_discovered_device) (const char *, unsigned);
+static cl_int (*add_discovered_device) (const char *, unsigned);
 
 /* Function pointer for the callback defined in pocl-r driver to reconnect
  * to a know server with same session.
  */
-cl_int (*reconnect) (const char *);
+static cl_int (*reconnect) (const char *);
 
 unsigned dev_type_idx;
 
@@ -519,7 +519,7 @@ ERROR:
 /*****************************************************************************/
 #if defined(ENABLE_REMOTE_DISCOVERY_DHT)
 
-const char *common_key = NULL;
+static const char *common_key = NULL;
 
 struct op_context
 {
@@ -586,7 +586,7 @@ listen_context_free (void *user_data)
   POCL_MEM_FREE (ctx);
 }
 
-void
+static void
 dht_shutdown_callback (void *user_data)
 {
   struct op_context *ctx = (struct op_context *)user_data;
@@ -667,21 +667,23 @@ init_network_discovery (cl_int (*add_discovered_device_c) (const char *,
                         cl_int (*reconnect_callback) (const char *),
                         unsigned pocl_dev_type_idx)
 {
-  cl_int errcode = CL_SUCCESS;
+  cl_int avahi_err = CL_SUCCESS;
+  cl_int dht_err = CL_SUCCESS;
   add_discovered_device = add_discovered_device_c;
   reconnect = reconnect_callback;
   dev_type_idx = pocl_dev_type_idx;
 
 #if defined(ENABLE_REMOTE_DISCOVERY_AVAHI)
-  errcode = init_avahi_discovery ();
-  if (errcode != CL_SUCCESS)
-    return errcode;
+  avahi_err = init_avahi_discovery ();
 #endif
 
 #if defined(ENABLE_REMOTE_DISCOVERY_DHT)
-  errcode = init_dht_discovery ();
-  if (errcode != CL_SUCCESS)
-    return errcode;
+  dht_err = init_dht_discovery ();
 #endif
-  return errcode;
+
+  /* Only return an error if both methods failed. */
+  if (avahi_err != CL_SUCCESS && dht_err != CL_SUCCESS)
+    return avahi_err;
+
+  return CL_SUCCESS;
 }
