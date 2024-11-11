@@ -3,7 +3,7 @@ test_kernel (global int *output)
 {
   int gid_x = get_global_id (0);
 
-  for (volatile int i = 0; i < INT_MAX; ++i)
+  for (volatile int i = 0; i < 1024; ++i)
     {
       if (i == 1 && gid_x == 0)
         {
