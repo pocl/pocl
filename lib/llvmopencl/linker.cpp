@@ -58,6 +58,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "pocl_cl.h"
 #include "pocl_llvm_api.h"
 
+#include "Barrier.h"
 #include "EmitPrintf.hh"
 #include "KernelCompilerUtils.h"
 #include "LLVMUtils.h"
@@ -451,6 +452,53 @@ static void shared_copy(llvm::Module *program, const llvm::Module *lib,
     program->eraseNamedMetadata(DebugCU);
 }
 
+// Special handling for the AS cast operators: They do not use
+// type mangling, which complicates the implementation which
+// can be called with pointer arguments with different AS based
+// on compilation input (OpenCL C source vs SPIR-V).
+//
+// Here, we replace the calls directly with address
+// space casts. This works for uniform address space targets (CPUs),
+// while the disjoint AS targets can override the implementation
+// as needed.
+static bool convertAddrSpaceOperator(llvm::Function *Func, std::string &Log) {
+  if (Func == nullptr) {
+    return true;
+  }
+
+  if (!Func->isDeclaration()) {
+    // If the builtin library provides an implementation, don't touch it
+    return true;
+  }
+
+  for (auto *U : Func->users()) {
+    if (llvm::CallInst *Call = dyn_cast<llvm::CallInst>(U)) {
+      PointerType *ArgPT =
+          dyn_cast<PointerType>(Call->getArgOperand(0)->getType());
+      PointerType *RetPT =
+          dyn_cast<PointerType>(Call->getFunctionType()->getReturnType());
+      if (ArgPT == nullptr || RetPT == nullptr) {
+        Log.append("Invalid use of operator __to_{local,global,private}");
+        return false;
+      }
+      if (ArgPT->getAddressSpace() == RetPT->getAddressSpace()) {
+        Value *V = Call->getArgOperand(0);
+        Call->replaceAllUsesWith(V);
+        Call->eraseFromParent();
+      } else {
+        llvm::AddrSpaceCastInst *AsCast = new llvm::AddrSpaceCastInst(
+            Call->getArgOperand(0), Call->getFunctionType()->getReturnType(),
+            Func->getName() + ".as_cast", Call);
+        Call->replaceAllUsesWith(AsCast);
+        Call->eraseFromParent();
+      }
+    }
+  }
+
+  Func->eraseFromParent();
+  return true;
+}
+
 /* Replace printf calls with generated bitcode that stores the format-string
  * and the arguments to a printf buffer. The replacement bitcode generated
  * by emitPrintfCall is:
@@ -607,26 +655,26 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
     }
   }
 
-  llvm::Module::iterator fi, fe;
+  llvm::Module::iterator FI, FE;
 
   // Inspect the program, find undefined functions
-  for (fi = Program->begin(), fe = Program->end(); fi != fe; fi++) {
-    if (fi->isDeclaration()) {
-      DB_PRINT("%s is not defined\n", fi->getName().data());
-      DeclaredFunctions.insert(fi->getName());
+  for (FI = Program->begin(), FE = Program->end(); FI != FE; FI++) {
+    if (FI->isDeclaration()) {
+      DB_PRINT("Pre-link: %s is not defined\n", fi->getName().data());
+      DeclaredFunctions.insert(FI->getName());
       continue;
     }
 
     // anonymous functions have no name, which breaks the algorithm later
     // when it searches for undefined functions in the kernel library.
     // assign a name here, this should be made unique by setName()
-    if (!fi->hasName()) {
-      fi->setName("__anonymous_function");
+    if (!FI->hasName()) {
+      FI->setName("__anonymous_function");
     }
     DB_PRINT("Function '%s' is defined\n", fi->getName().data());
     // Find all functions the program source calls
     // TODO: is there no direct way?
-    find_called_functions(&*fi, DeclaredFunctions);
+    find_called_functions(&*FI, DeclaredFunctions);
   }
 
   // Copy all the globals from lib to program.
@@ -647,74 +695,52 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
   // For each undefined function in program,
   // clone it from the lib to the program module,
   // if found in lib
-  bool found_all_undefined = true;
-
-  // this one is a handled with a special pocl LLVM pass
-  StringRef pocl_sampler_handler("__translate_sampler_initializer");
-  // ignore undefined llvm intrinsics
-  StringRef llvm_intrins("llvm.");
-  llvm::StringSet<>::iterator di,de;
-  for (di = DeclaredFunctions.begin(), de = DeclaredFunctions.end();
-       di != de; di++) {
-      llvm::StringRef r = di->getKey();
-      if (CopyFuncCallgraph(r, Lib, Program, vvm)) {
-        Function *f = Program->getFunction(r);
-
-        if (f->getName() == "__to_local" ||
-            f->getName() == "__to_global" ||
-            f->getName() == "__to_private") {
-
-          // Special handling for the AS cast built-ins: They do not use
-          // type mangling, which complicates the CPU implementation which
-          // sometimes gets all-0 AS input and sometimes not (SPIR-V).
-          // Here, in case the target doesn't define these built-ins in the
-          // bitcode library, we replace the calls directly with address
-          // space casts. This works for uniform address space targets (CPUs),
-          // while the disjoint AS targets can override the implementation
-          // as needed.
-          for (auto *U : f->users()) {
-            if (llvm::CallInst *Call = dyn_cast<llvm::CallInst>(U)) {
-            PointerType *ArgPT =
-                dyn_cast<PointerType>(Call->getArgOperand(0)->getType());
-            PointerType *RetPT =
-                dyn_cast<PointerType>(Call->getFunctionType()->getReturnType());
-            if (ArgPT == nullptr || RetPT == nullptr) {
-              Log.append("Invalid use of operator __to_{local,global,private}");
-              found_all_undefined = false;
-              break;
-            }
-            if (ArgPT->getAddressSpace() == RetPT->getAddressSpace()) {
-              Value *V = Call->getArgOperand(0);
-              Call->replaceAllUsesWith(V);
-              Call->eraseFromParent();
-            } else {
-              llvm::AddrSpaceCastInst *AsCast = new llvm::AddrSpaceCastInst(
-                  Call->getArgOperand(0),
-                  Call->getFunctionType()->getReturnType(),
-                  f->getName() + ".as_cast", Call);
-              Call->replaceAllUsesWith(AsCast);
-              Call->eraseFromParent();
-            }
-            }
-          }
-          continue;
-        }
-
-        if ((f == NULL) || (f->isDeclaration() &&
-                            // A target might want to expose the C99 printf in
-                            // case not supporting the OpenCL 1.2 printf.
-                            f->getName() != "printf" &&
-                            f->getName() != pocl_sampler_handler &&
-                            !f->getName().starts_with(llvm_intrins))) {
-          Log.append("Cannot find symbol ");
-          Log.append(r.str());
-          Log.append(" in kernel library\n");
-          found_all_undefined = false;
-        }
-      }
+  for (auto &DeclIter : DeclaredFunctions) {
+    llvm::StringRef FName = DeclIter.getKey();
+    CopyFuncCallgraph(FName, Lib, Program, vvm);
   }
 
-  if (!found_all_undefined)
+  convertAddrSpaceOperator(Program->getFunction("__to_local"), Log);
+  convertAddrSpaceOperator(Program->getFunction("__to_private"), Log);
+  convertAddrSpaceOperator(Program->getFunction("__to_global"), Log);
+
+  // check all function declarations in the program
+  // *after* we have linked functions from the library
+  DeclaredFunctions.clear();
+  for (auto &F : *Program) {
+    if (F.isDeclaration()) {
+      DB_PRINT("Post-link: %s is not defined\n", F.getName().data());
+      DeclaredFunctions.insert(F.getName());
+      continue;
+    }
+  }
+
+  bool FoundAllUndefined = true;
+  // this one is a handled with a special pocl LLVM pass
+  StringRef pocl_sampler_handler("__translate_sampler_initializer");
+
+  if (Program->getTargetTriple().compare(0, 5, "nvptx") != 0) {
+    for (auto &DeclIter : DeclaredFunctions) {
+      llvm::StringRef FName = DeclIter.getKey();
+      Function *F = Program->getFunction(FName);
+
+      if ((F == NULL) ||
+          (F->isDeclaration() &&
+           // A target might want to expose the C99 printf in
+           // case not supporting the OpenCL 1.2 printf.
+           F->getName() != "printf" && F->getName() != pocl_sampler_handler &&
+           !F->getName().starts_with("llvm.") &&
+           F->getName() != BARRIER_FUNCTION_NAME &&
+           F->getName() != "__pocl_work_group_alloca")) {
+        Log.append("Cannot find symbol ");
+        Log.append(FName.str());
+        Log.append(" in kernel library\n");
+        FoundAllUndefined = false;
+      }
+    }
+  }
+
+  if (!FoundAllUndefined)
     return 1;
 
   shared_copy(Program, Lib, Log, vvm);
@@ -733,19 +759,19 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
 
   std::vector<Function *> CallChain;
   ValueToSizeTMapTy FuncStackSizeMap;
-  for (fi = Program->begin(), fe = Program->end(); fi != fe; fi++) {
-    if (fi->isDeclaration())
+  for (auto &F : *Program) {
+    if (F.isDeclaration())
       continue;
-    if (!fi->hasName()) {
-      fi->setName("__anonymous_function");
+    if (!F.hasName()) {
+      F.setName("__anonymous_function");
     }
-    if (isKernelToProcess(*fi)) {
+    if (isKernelToProcess(F)) {
       size_t EstStackSize =
-          estimateFunctionStackSize(&*fi, Program, CallChain, FuncStackSizeMap);
+          estimateFunctionStackSize(&F, Program, CallChain, FuncStackSizeMap);
       DB_PRINT("Kernel %s Estimated stack size: %zu \n", fi->getName().data(),
                EstStackSize);
       if (EstStackSize > 0) {
-        std::string MetadataKey = fi->getName().str();
+        std::string MetadataKey = F.getName().str();
         MetadataKey.append(".meta.est.stack.size");
         setModuleIntMetadata(Program, MetadataKey.c_str(), EstStackSize);
       }
