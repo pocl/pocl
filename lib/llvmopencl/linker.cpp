@@ -179,27 +179,54 @@ static void fixCallingConv(llvm::Module *Mod, std::string &Log) {
 
         if ((Callee == nullptr) || Callee->isDeclaration())
           continue;
-        if (Callee->hasName() && Callee->getName().starts_with("llvm."))
+        // all functions should have name at this point
+        assert(Callee->hasName());
+        if (Callee->getName().starts_with("llvm."))
           continue;
 
+        // Loosen the CC to the default one. It should be always the
+        // preferred one to SPIR_FUNC at this stage.
+        // note: this is necessary for working SPIR-V on Apple ARM64 target
+        // note: must not change the SPIR_KERNEL CC because of MinLegalVecSize
         if (Callee->getCallingConv() == llvm::CallingConv::SPIR_FUNC ||
             CallInstr->getCallingConv() == llvm::CallingConv::SPIR_FUNC) {
-          // Loosen the CC to the default one. It should be always the
-          // preferred one to SPIR_FUNC at this stage.
           Callee->setCallingConv(llvm::CallingConv::C);
           CallInstr->setCallingConv(llvm::CallingConv::C);
         }
 
+        // special handling for DebugInfo of SPIR-V from llvm-spirv translator
+        if ((Callee->getName().starts_with("__anonymous_function")) &&
+            (F->getCallingConv() == llvm::CallingConv::SPIR_KERNEL)) {
+          // This is an SPIR-V entry point wrapper function: SPIR-V
+          // translator generates these because OpenCL allows calling
+          // kernels from kernels like they were device side functions
+          // whereas SPIR-V entry points cannot call other entry points.
+          std::string CalleeName("_spirv_wrapped_");
+          CalleeName += F->getName().str();
+          Callee->setName(CalleeName);
+
+          // The SPIR-V translator loses the kernel's original DISubprogram
+          // info, leaving it to the wrapper, thus even after inlining the
+          // function to the kernel we do not get any debug info (LLVM checks
+          // for DISubprogram for each function it generates the debug info
+          // for). Just reuse the DISubprogram in the kernel here in that case.
+          if (Callee->getSubprogram() != nullptr &&
+            F->getSubprogram() == nullptr &&
+            Callee->getSubprogram()->getName() == F->getName()) {
+            F->setSubprogram(pocl::mimicDISubprogram(
+              Callee->getSubprogram(), CalleeName, nullptr));
+            CallInstr->setDebugLoc(llvm::DILocation::get(
+              Callee->getContext(), Callee->getSubprogram()->getLine(), 0,
+              F->getSubprogram(), nullptr, true));
+          }
+        }
+
         if (CallInstr->getCallingConv() != Callee->getCallingConv()) {
           std::string CalleeName, CallerName;
-          if (F->hasName())
-            CallerName = F->getName().str();
-          else
-            CallerName = "unnamed";
-          if (Callee->hasName())
-            CalleeName = Callee->getName().str();
-          else
-            CalleeName = "unnamed";
+          assert(F->hasName());
+          CallerName = F->getName().str();
+          assert(Callee->hasName());
+          CalleeName = Callee->getName().str();
 
           Log.append("Warning: CallingConv mismatch: \n Caller is: ");
           Log.append(CallerName);
