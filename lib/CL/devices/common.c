@@ -362,8 +362,9 @@ pocl_fill_dev_image_t (dev_image_t *di, struct pocl_argument *parg,
   di->_data = (mem->device_ptrs[device->global_mem_id].mem_ptr);
 }
 
-/**
- * executes given command. Call with node->sync.event.event UNLOCKED.
+/** Executes a given command using the default PoCL driver hooks.
+ *
+ * Call with node->sync.event.event UNLOCKED.
  */
 void
 pocl_exec_command (_cl_command_node *node)
@@ -1811,6 +1812,12 @@ pocl_init_default_device_infos (cl_device_id dev,
                   "org.khronos.openvx.scale_image.bl.u8;"
                   "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32;");
       dev->num_builtin_kernels = 4;
+    }
+  else
+    {
+      dev->num_builtin_kernels = 0;
+      dev->builtin_kernel_list = "";
+      dev->builtin_kernels_with_version = NULL;
     }
 
   SETUP_DEVICE_CL_VERSION (dev, HOST_DEVICE_CL_VERSION_MAJOR,

@@ -65,7 +65,7 @@ int TestOutputDataDecomposition() {
 
     cl_context_properties cprops[] = {
         CL_CONTEXT_PLATFORM, (cl_context_properties)(PlatformList[0])(), 0};
-    cl::Context Context(CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU, cprops);
+    cl::Context Context(CL_DEVICE_TYPE_ALL, cprops);
 
     std::vector<cl::Device> Devices = Context.getInfo<CL_CONTEXT_DEVICES>();
 
@@ -126,7 +126,7 @@ int TestOutputDataDecomposition() {
     std::vector<cl::CommandQueue> Queues;
     std::vector<cl::Event> KernelEvents;
     // Spawn a bunch of kernel commands in their independent command queues
-    // (which could target different devices) to process their piece of the
+    // (which can target different devices) to process their piece of the
     // data.
     for (size_t i = 0; i < NumParallelQueues; ++i) {
 

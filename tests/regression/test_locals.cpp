@@ -1,17 +1,17 @@
 /* Issues with __local pointers (lp:918801)
 
    Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
-   
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -35,26 +35,26 @@
 #define WORK_ITEMS 2
 #define BUFFER_SIZE (WORK_ITEMS)
 
+static char kernelSourceCode[] = R"OPENCLC(
+kernel void test_kernel (global float *a, local int *local_buf, private int scalar)
+{
+   int lid = get_local_id(0);
+   local int automatic_local_scalar;
+   local int automatic_local_buf[2];
 
-static char
-kernelSourceCode[] = 
-"kernel void test_kernel (global float *a, local int *local_buf, private int scalar)\n"
-"{\n"
-"   int gid = get_local_id(0); \n"
-"   local int automatic_local_scalar; \n"
-"   local int automatic_local_buf[2];\n"
-"\n"
-"   __local int *p;\n"
-"\n"
-"   p = automatic_local_buf;\n"
-"   p[gid] = gid + scalar;\n"
-"   p = local_buf;\n"
-"   p[gid] = a[gid];\n"
-"   automatic_local_scalar = scalar;\n"
-"   barrier(CLK_LOCAL_MEM_FENCE);\n"
-"   a[gid] = automatic_local_buf[gid] + local_buf[gid] + automatic_local_scalar;\n"
-"   \n"
-"}\n";
+   __local int *p;
+
+   p = automatic_local_buf;
+   p[lid] = lid + scalar;
+   p = local_buf;
+   p[lid] = a[lid];
+   automatic_local_scalar = scalar;
+
+   barrier(CLK_LOCAL_MEM_FENCE);
+
+   a[lid] = automatic_local_buf[lid] + local_buf[lid] + automatic_local_scalar;
+}
+)OPENCLC";
 
 int
 main(void)
@@ -71,7 +71,7 @@ main(void)
         // Pick first platform
         cl_context_properties cprops[] = {
             CL_CONTEXT_PLATFORM, (cl_context_properties)(platformList[0])(), 0};
-        cl::Context context(CL_DEVICE_TYPE_CPU|CL_DEVICE_TYPE_GPU, cprops);
+        cl::Context context(CL_DEVICE_TYPE_ALL, cprops);
 
         // Query the set of devices attched to the context
         std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
@@ -90,11 +90,9 @@ main(void)
         // Build program
         program.build(devices);
 
-        cl::Buffer aBuffer = cl::Buffer(
-            context, 
-            CL_MEM_COPY_HOST_PTR,
-            BUFFER_SIZE * sizeof(float), 
-            (void *) &A[0]);
+        cl::Buffer aBuffer =
+            cl::Buffer(context, CL_MEM_COPY_HOST_PTR,
+                       BUFFER_SIZE * sizeof(float), (void *)&A[0]);
 
         // Create kernel object
         cl::Kernel kernel(program, "test_kernel");
@@ -106,22 +104,18 @@ main(void)
 
         // Create command queue
         cl::CommandQueue queue(context, devices[0], 0);
- 
+
         // Do the work
-        queue.enqueueNDRangeKernel(
-            kernel, 
-            cl::NullRange, 
-            cl::NDRange(WORK_ITEMS),
-            cl::NDRange(WORK_ITEMS));
- 
+        queue.enqueueNDRangeKernel(kernel, cl::NullRange,
+                                   cl::NDRange(WORK_ITEMS),
+                                   cl::NDRange(WORK_ITEMS));
+
         // Map aBuffer to host pointer. This enforces a sync with 
         // the host backing space, remember we choose GPU device.
-        float * res = (float *) queue.enqueueMapBuffer(
+        float *res = (float *)queue.enqueueMapBuffer(
             aBuffer,
-            CL_TRUE, // block 
-            CL_MAP_READ,
-            0,
-            BUFFER_SIZE * sizeof(float));
+            CL_TRUE, // block
+            CL_MAP_READ, 0, BUFFER_SIZE * sizeof(float));
 
         res[0] = poclu_bswap_cl_float (dev_id, res[0]);
         res[1] = poclu_bswap_cl_float (dev_id, res[1]);
@@ -129,6 +123,7 @@ main(void)
         if (!success) {
             std::cout << "FAIL: " << res[0] << " " << res[1] << std::endl;
             std::cout << "res@" << std::hex << res << std::endl;
+            std::cout << "A@" << std::hex << A << std::endl;
         }
 
         // Finally release our hold on accessing the memory

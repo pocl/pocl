@@ -594,7 +594,7 @@ int pocl_llvm_build_program(cl_program program,
   BuiltinRenamesH = IncludeRoot + "/include/_builtin_renames.h";
   PoclTypesH = IncludeRoot + "/include/pocl_types.h";
 
-  if (device->use_only_clang_opencl_headers == CL_FALSE) {
+  if (!device->use_only_clang_opencl_headers) {
     po.Includes.push_back(PoclTypesH);
     po.Includes.push_back(BuiltinRenamesH);
   }

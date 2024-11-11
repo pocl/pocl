@@ -30,6 +30,15 @@
 
 #include <string>
 
+// To silence warnings due to tce_config.h redefining these.
+#ifdef HAVE_DLFCN_H
+#undef HAVE_DLFCN_H
+#endif
+
+#ifdef LLVM_VERSION
+#undef LLVM_VERSION
+#endif
+
 #include "TCEString.hh"
 #include "pocl_device.h"
 
@@ -114,7 +123,6 @@ class TCEDevice {
   cl_device_id parent;
 
   bool needsByteSwap;
-  volatile bool shutdownRequested;
 
   const TTAProgram::Program* currentProgram;
   const TTAMachine::Machine* machine_;
@@ -123,8 +131,11 @@ class TCEDevice {
   uint32_t statusAddr;
 
   uint32_t curKernelAddr;
+  uint64_t globalCycleCount;
+
   cl_bool available;
   cl_kernel curKernel;
+  volatile bool shutdownRequested;
 
   size_t curLocalX;
   size_t curLocalY;
@@ -133,8 +144,6 @@ class TCEDevice {
   size_t curGoffsX;
   size_t curGoffsY;
   size_t curGoffsZ;
-
-  uint64_t globalCycleCount;
 
   pocl_lock_t wq_lock;
   pocl_cond_t wakeup_cond;

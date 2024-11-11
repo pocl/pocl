@@ -74,43 +74,47 @@ struct test_struct {
 
 #undef CL_LONG_ALIGNMENT
 
-static char
-kernelSourceCode[] = 
-"typedef struct int_single {\n"
-"    int a; \n"
-"} int_single;\n"
-"typedef struct int_pair {\n"
-"    long a;\n"
-"    long b;\n"
-"} int_pair;\n"
-"typedef struct test_struct {\n"
-"    int elementA;\n"
-"    int elementB;\n"
-"    long elementC;\n"
-"    char elementD;\n"
-"    long elementE;\n"
-"    float elementF;\n"
-"    short elementG;\n"
-"    long elementH;\n"
-"} test_struct;\n"
-"\n"
-"kernel void test_single(int_single input, global int* output) {"
-" output[0] = input.a;\n"
-"}\n"
-"kernel void test_pair(int_pair input, global int* output) {"
-" output[0] = (int)input.a;\n"
-" output[1] = (int)input.b;\n"
-"}\n"
-"kernel void test_kernel(test_struct input, global int* output) {"
-" output[0] = input.elementA;\n"
-" output[1] = input.elementB;\n"
-" output[2] = (int)input.elementC;\n"
-" output[3] = (int)input.elementD;\n"
-" output[4] = (int)input.elementE;\n"
-" output[5] = (int)input.elementF;\n"
-" output[6] = (int)input.elementG;\n"
-" output[7] = (int)input.elementH;\n"
-"}\n";
+static char kernelSourceCode[] =
+    "typedef struct int_single {\n"
+    "    int a; \n"
+    "} int_single;\n"
+    "typedef struct int_pair {\n"
+    "    long a;\n"
+    "    long b;\n"
+    "} int_pair;\n"
+    "typedef struct test_struct {\n"
+    "    int elementA;\n"
+    "    int elementB;\n"
+    "    long elementC;\n"
+    "    char elementD;\n"
+    "    long elementE;\n"
+    "    float elementF;\n"
+    "    short elementG;\n"
+    "    long elementH;\n"
+    "} test_struct;\n"
+    "\n"
+    "kernel void test_single(int_single input, global int* output) {"
+    " output[0] = input.a;\n"
+    "}\n"
+    "kernel void test_pair(int_pair input, global int* output) {"
+    " output[0] = (int)input.a;\n"
+    " output[1] = (int)input.b;\n"
+    "}\n"
+    "kernel void test_kernel(test_struct input, global int* output) {"
+    " printf (\"INPUT elementA %d sizeof==%d\\n\", (int)input.elementA, sizeof "
+    "(input.elementA));\n"
+
+    " output[0] = input.elementA;\n"
+    " output[1] = input.elementB;\n"
+    " printf (\"INPUT elementC %d sizeof==%d\\n\", (int)input.elementC, sizeof "
+    "(input.elementC));\n"
+    " output[2] = (int)input.elementC;\n"
+    " output[3] = (int)input.elementD;\n"
+    " output[4] = (int)input.elementE;\n"
+    " output[5] = (int)input.elementF;\n"
+    " output[6] = (int)input.elementG;\n"
+    " output[7] = (int)input.elementH;\n"
+    "}\n";
 
 int
 main(void)
@@ -157,11 +161,9 @@ main(void)
         program.build(devices);
 
         // Create buffer for that uses the host ptr C
-        cl::Buffer cBuffer = cl::Buffer(
-            context, 
-            CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, 
-            8 * sizeof(int), 
-            (void *) &buffer_storage[0]);
+        cl::Buffer cBuffer =
+            cl::Buffer(context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR,
+                       8 * sizeof(int), (void *)&buffer_storage[0]);
 
         // Create command queue
         cl::CommandQueue queue(context, devices[0], 0);
@@ -178,27 +180,21 @@ main(void)
         kernel_single.setArg(1, cBuffer);
 
         // Do the work
-        queue.enqueueNDRangeKernel(
-            kernel_single, 
-            cl::NullRange, 
-            cl::NDRange(1),
-            cl::NullRange
-        );
+        queue.enqueueNDRangeKernel(kernel_single, cl::NullRange, cl::NDRange(1),
+                                   cl::NullRange);
 
-        // Map cBuffer to host pointer. This enforces a sync with 
-        // the host backing space, remember we choose GPU device.
-        int* output = (int*)queue.enqueueMapBuffer(
-            cBuffer,
-            CL_TRUE, // block 
-            CL_MAP_READ,
-            0,
-            1 * sizeof(int));
+        // Map cBuffer to host pointer. This enforces a sync with
+        // the host backing space.
+        int *output =
+            (int *)queue.enqueueMapBuffer(cBuffer,
+                                          CL_TRUE, // block
+                                          CL_MAP_READ, 0, 1 * sizeof(int));
 
         if (*output != 1234567) {
-           std::cout 
-               << "Small struct failure - size: 4 bytes expected: 123456 actual: "
-               << *output << std::endl;
-           ok = false;
+          std::cout << "Small struct failure - size: 4 bytes expected: 123456 "
+                       "actual: "
+                    << *output << std::endl;
+          ok = false;
         }
 
         queue.enqueueUnmapMemObject(cBuffer, output);
@@ -221,21 +217,19 @@ main(void)
             cl::NDRange(1),
             cl::NullRange
         );
+        queue.finish();
 
-        // Map cBuffer to host pointer. This enforces a sync with 
+        // Map cBuffer to host pointer. This enforces a sync with
         // the host backing space, remember we choose GPU device.
-        output = (int*)queue.enqueueMapBuffer(
-            cBuffer,
-            CL_TRUE, // block 
-            CL_MAP_READ,
-            0,
-            2 * sizeof(int));
+        output = (int *)queue.enqueueMapBuffer(cBuffer,
+                                               CL_TRUE, // block
+                                               CL_MAP_READ, 0, 2 * sizeof(int));
 
         if ((output[0] != -5588) || (output[1] != 8855)) {
-           std::cout 
-               << "Small struct failure - size: 8 bytes expected: (-5588, 8855) actual: ("
-               << output[0] << ", " << output[1] << ")" << std::endl;
-           ok = false;
+          std::cout << "Small struct failure - size: 8 bytes expected: (-5588, "
+                       "8855) actual: ("
+                    << output[0] << ", " << output[1] << ")" << std::endl;
+          ok = false;
         }
 
         queue.enqueueUnmapMemObject(cBuffer, output);
@@ -252,36 +246,27 @@ main(void)
         kernel.setArg(1, cBuffer);
 
         // Do the work
-        queue.enqueueNDRangeKernel(
-            kernel, 
-            cl::NullRange, 
-            cl::NDRange(1),
-            cl::NullRange
-        );
+        queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(1),
+                                   cl::NullRange);
 
-        // Map cBuffer to host pointer. This enforces a sync with 
-        // the host backing space, remember we choose GPU device.
-        output = (int*)queue.enqueueMapBuffer(
-            cBuffer,
-            CL_TRUE, // block 
-            CL_MAP_READ,
-            0,
-            8 * sizeof(int));
+        // Map cBuffer to host pointer. This enforces a sync with
+        // the host backing space.
+        output = (int *)queue.enqueueMapBuffer(cBuffer,
+                                               CL_TRUE, // block
+                                               CL_MAP_READ, 0, 8 * sizeof(int));
 
         for (int i = 0; i < 8; i++) {
             int correct = i + 1;
             if (output[i] != correct) {
-                std::cout 
-                    << "F(" << i << ": " << output[i] << " != " << correct 
-                    << ") ";
-                ok = false;
+              std::cout << "F(" << i << ": " << output[i] << " != " << correct
+                        << ") ";
+              ok = false;
             }
         }
 
         queue.enqueueUnmapMemObject(cBuffer, (void *)output);
         queue.finish();
-    } 
-    catch (cl::Error &err) {
+    } catch (cl::Error &err) {
         std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
                   << std::endl;
         return EXIT_FAILURE;

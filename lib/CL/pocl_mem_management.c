@@ -574,18 +574,18 @@ update_subbuffer_versioning_data (cl_mem updated_buf)
  * defined using commands, buffers, command queues and events.
  *
  * Attempts to use direct copies from a device instead of a device-host-device
- * hip in case there is an accessible peer device with a fresh copy available.
+ * hop in case there is an accessible peer device with a fresh copy available.
  *
- * @param ev_export_p Optional output parameter for the export event.
- * @param dev Destination device
- * @param user_cmd The event that marks the command that uses the data of the
+ * \param ev_export_p Optional output parameter for the export event.
+ * \param dev Destination device
+ * \param user_cmd The event that marks the command that uses the data of the
  * buffer.
- * @param mem The buffer to migrate.
- * @param gmem Identifier of the global memory where the mem should be
+ * \param mem The buffer to migrate.
+ * \param gmem Identifier of the global memory where the mem should be
  * migrated.
- * @param migration_size Max number of bytes to migrate (caller has to read
+ * \param migration_size Max number of bytes to migrate (caller has to read
  *                       content size from mem->size_buffer if applicable).
- * @param last_migr_event Input/output for dep-chaining the created migration
+ * \param last_migr_event Input/output for dep-chaining the created migration
  * command an event dependency is created to it if non-NULL. The new migration
  * command will be overwritten to it (after reference release).
  */
