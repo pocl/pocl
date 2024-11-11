@@ -34,8 +34,6 @@ struct PrintfCallFlags {
                                      // it as pointer instead of MD5
   bool AlwaysStoreFmtPtr = false; // if true, always store the FmtStr directly
                                   // in the buffer
-  bool ArgPromotionCharShort = true; // Clang promotes char/short
-  bool ArgPromotionChar2 = false;    // Clang promotes char2 to int
   bool ArgPromotionFloat = true;     // Clang promotes float to double
   bool IsBigEndian = false;          // device is big-endian
   bool Pointers32Bit = false;        // device's pointer width is 32bits

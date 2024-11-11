@@ -326,7 +326,11 @@ callBufferedPrintfStart(IRBuilder<> &Builder, SmallVector<llvm::Value *> &Args,
             StringData(StringRef(), LenWithNull, LenWithNullAligned, false));
       }
     } else {
-      TypeSize AllocSize = DL.getTypeAllocSize(Args[i]->getType());
+      Type *T = Args[i]->getType();
+      TypeSize AllocSize = DL.getTypeAllocSize(T);
+      // stores of Ints&Vectors <= 64bits are expanded to 64bits
+      if (T->isIntOrIntVectorTy() && (DL.getTypeSizeInBits(T) < 64))
+        AllocSize = TypeSize::get(8, false);
       llvm::AllocaInst *AI = dyn_cast<AllocaInst>(Args[i]);
       if (AI) {
         // byval arguments are passed as pointers/allocas.
@@ -427,18 +431,34 @@ static Value *processNonStringArg(Value *Arg, IRBuilder<> &Builder) {
   const DataLayout &DL = Builder.GetInsertBlock()->getModule()->getDataLayout();
   auto Ty = Arg->getType();
 
+  // store at least 64 bits for every Int & Vector smaller than 64bits.
+  // This is to avoid having to deal with various rules for
+  // int & vector promotions by different backends
+  // (x86, ARM, RISC-V etc...) */
+
   if (auto IntTy = dyn_cast<IntegerType>(Ty)) {
     if (IntTy->getBitWidth() < 64) {
       return Builder.CreateZExt(Arg, Builder.getInt64Ty());
     }
   }
 
+  auto VecTy = dyn_cast<VectorType>(Ty);
+  if (VecTy && (DL.getTypeSizeInBits(Ty) < 64)) {
+    Type *IntT = IntegerType::get(Ty->getContext(), DL.getTypeSizeInBits(VecTy));
+    Value *VecAsInt = Builder.CreateBitCast(Arg, IntT);
+    Type *ExtT = IntegerType::get(Ty->getContext(), 64);
+    return Builder.CreateZExt(VecAsInt, ExtT);
+  }
+
+  // float cast is disabled; not all devices support fp64
+  // TODO: add a bool argument to make this upstreamable
+#if 0
   if (Ty->isFloatingPointTy()) {
     if (DL.getTypeAllocSize(Ty) < 8) {
       return Builder.CreateFPExt(Arg, Builder.getDoubleTy());
     }
   }
-
+#endif
   return Arg;
 }
 
@@ -494,10 +514,7 @@ callBufferedPrintfArgPush(IRBuilder<> &Builder,
         continue;
       }
     } else {
-      if (DontAlign)
-        WhatToStore.push_back(Args[i]);
-      else
-        WhatToStore.push_back(processNonStringArg(Args[i], Builder));
+      WhatToStore.push_back(processNonStringArg(Args[i], Builder));
     }
 
     for (Value *toStore : WhatToStore) {
@@ -600,10 +617,6 @@ Value *pocl::emitPrintfCall(IRBuilder<> &Builder,
     uint32_t FlagsOrValue = 0;
     if (SkipFmtStr)
       FlagsOrValue |= PRINTF_BUFFER_CTWORD_SKIP_FMT_STR;
-    if (Flags.ArgPromotionCharShort)
-      FlagsOrValue |= PRINTF_BUFFER_CTWORD_CHAR_SHORT_PR;
-    if (Flags.ArgPromotionChar2)
-      FlagsOrValue |= PRINTF_BUFFER_CTWORD_CHAR2_PR;
     if (Flags.ArgPromotionFloat)
       FlagsOrValue |= PRINTF_BUFFER_CTWORD_FLOAT_PR;
     if (Flags.IsBigEndian)
