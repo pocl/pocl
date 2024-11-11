@@ -2,6 +2,7 @@
    drivers.
 
    Copyright (c) 2012-2019 Pekka Jääskeläinen / Tampere University of Technology
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -72,8 +73,8 @@ typedef struct tce_queue_data_s {
 
 TCEDevice::TCEDevice(cl_device_id dev, const char *adfName)
     : local_as(NULL), global_as(NULL), private_as(NULL), machine_file(adfName),
-      parent(dev), currentProgram(NULL), curKernelAddr(0), curKernel(NULL),
-      shutdownRequested(false), globalCycleCount(0), available(CL_TRUE),
+      parent(dev), currentProgram(NULL), curKernelAddr(0), globalCycleCount(0),
+      available(CL_TRUE), curKernel(NULL), shutdownRequested(false),
       work_queue(NULL) {
 
   POCL_INIT_LOCK(wq_lock);
@@ -126,7 +127,7 @@ TCEDevice::writeWordToDevice(uint32_t dest_addr, uint32_t word) {
 
 uint32_t
 TCEDevice::readWordFromDevice(uint32_t addr) {
-  uint32_t result;
+  uint32_t result = 0;
   copyDeviceToHost(addr, &result, sizeof(result));
   return pocl_byteswap_uint32_t(result, needsByteSwap);
 }
@@ -335,7 +336,6 @@ ERROR:
 void
 pocl_tce_free (cl_device_id device, cl_mem mem) {
 
-  TCEDevice *d = (TCEDevice*)device->data;
   pocl_mem_identifier *p = &mem->device_ptrs[device->global_mem_id];
   assert (p->mem_ptr != NULL);
 
@@ -761,10 +761,10 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
         d->printf_position_chunk->start_address, d->needsByteSwap);
     d->writeWordToDevice(d->printf_position_chunk->start_address, 0);
     POCL_MSG_PRINT_TCE(
-        "Device side printf buffer=%d, position: %d and capacity %d \n",
-        d->printf_buffer->start_address,
-        d->printf_position_chunk->start_address,
-        cmd->device->printf_buffer_size);
+        "Device side printf buffer=%x, position: %u and capacity %u\n",
+        (unsigned)d->printf_buffer->start_address,
+        (int)d->printf_position_chunk->start_address,
+        (unsigned)cmd->device->printf_buffer_size);
 
     POCL_MSG_PRINT_TCE("COPYING %u bytes to CONTEXT: %u \n",
                        (uint32_t)sizeof(struct pocl_context32),

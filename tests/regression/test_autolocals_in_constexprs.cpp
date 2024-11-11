@@ -62,7 +62,7 @@ main(void)
     // Pick first platform
     cl_context_properties cprops[] = {
       CL_CONTEXT_PLATFORM, (cl_context_properties)(platformList[0])(), 0};
-    cl::Context context(CL_DEVICE_TYPE_CPU|CL_DEVICE_TYPE_GPU, cprops);
+    cl::Context context(CL_DEVICE_TYPE_ALL, cprops);
 
     // Query the set of devices attched to the context
     std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
