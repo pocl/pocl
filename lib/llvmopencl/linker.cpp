@@ -580,10 +580,6 @@ static void handleDeviceSidePrintf(
     // unnecessary complication for CPU devices
     PFlags.StorePtrInsteadOfMD5 = true;
     PFlags.AlwaysStoreFmtPtr = false;
-#if defined(__arm__) || defined(__aarch64__) || defined(__riscv)
-    /* ARM seems to promote char2 to int */
-    PFlags.ArgPromotionChar2 = true;
-#endif
   } else {
     // for non-CPU devices, always store the format string in the buffer,
     // even if it's a constant format string, since we cannot use pointers
@@ -591,8 +587,6 @@ static void handleDeviceSidePrintf(
     PFlags.AlwaysStoreFmtPtr = true;
   }
 
-  // C promotion of char/short -> int32
-  PFlags.ArgPromotionCharShort = true;
   // C promotion of float -> double only if device supports double
   if (ClDev->double_fp_config == 0) {
     PFlags.ArgPromotionFloat = false;

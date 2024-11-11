@@ -36,6 +36,7 @@
 #ifndef _WIN32
 #include <unistd.h>
 #endif
+#include <stdarg.h>
 
 #if 0
 
@@ -162,19 +163,16 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
   char ch = 0;
 
   /* fetch & decode the control dword */
-  uint32_t control_dword;
-  memcpy (&control_dword, buffer, sizeof (uint32_t));
+  uint32_t ctr_dword;
+  memcpy (&ctr_dword, buffer, sizeof (uint32_t));
   FORWARD_BUFFER (sizeof (uint32_t));
   /* if this flag is set, the fmt str is a constant stored as pointer
    * otherwise it's a dynamic string stored directly in the buffer */
-  uint32_t skip_fmt_str = control_dword & PRINTF_BUFFER_CTWORD_SKIP_FMT_STR;
-  uint32_t char_short_promotion
-    = control_dword & PRINTF_BUFFER_CTWORD_CHAR_SHORT_PR;
-  uint32_t char2_promotion = control_dword & PRINTF_BUFFER_CTWORD_CHAR2_PR;
-  uint32_t float_promotion = control_dword & PRINTF_BUFFER_CTWORD_FLOAT_PR;
-  uint32_t big_endian = control_dword & PRINTF_BUFFER_CTWORD_BIG_ENDIAN;
+  uint32_t skip_fmt_str = ctr_dword & PRINTF_BUFFER_CTWORD_SKIP_FMT_STR;
+  uint32_t float_promotion = ctr_dword & PRINTF_BUFFER_CTWORD_FLOAT_PR;
+  uint32_t big_endian = ctr_dword & PRINTF_BUFFER_CTWORD_BIG_ENDIAN;
   uint32_t pointer_size_bytes
-    = control_dword & PRINTF_BUFFER_CTWORD_32BIT_POINTERS ? 4 : 8;
+    = ctr_dword & PRINTF_BUFFER_CTWORD_32BIT_POINTERS ? 4 : 8;
 
   if (big_endian)
     {
@@ -182,7 +180,7 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                     "implemented\n");
       return -1;
     }
-  assert ((control_dword >> PRINTF_BUFFER_CTWORD_FLAG_BITS)
+  assert ((ctr_dword >> PRINTF_BUFFER_CTWORD_FLAG_BITS)
           == (buffer_size + sizeof (uint32_t)));
 
   const char *format;
@@ -398,38 +396,38 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                 }
 
               /* Length modifier */
-              uint32_t length = 0;
+              uint32_t element_size = 0;
               if (ch == 'h')
                 {
                   ch = *format++;
                   if (ch == 'h')
                     {
                       ch = *format++;
-                      length = 1; /* "hh" -> char */
+                      element_size = 1; /* "hh" -> char */
                     }
                   else if (ch == 'l')
                     {
                       ch = *format++;
-                      length = 4; /* "hl" -> int */
+                      element_size = 4; /* "hl" -> int */
                     }
                   else
                     {
-                      length = 2; /* "h" -> short */
+                      element_size = 2; /* "h" -> short */
                     }
                 }
               else if (ch == 'l')
                 {
                   ch = *format++;
-                  length = 8; /* "l" -> long */
+                  element_size = 8; /* "l" -> long */
                 }
-              if (vector_length > 0 && length == 0)
+              if (vector_length > 0 && element_size == 0)
                 {
                   POCL_MSG_ERR (
                     "printf error: vector-length used without element size\n");
                   return -1;
                 }
 
-              if (vector_length == 0 && length == 4)
+              if (vector_length == 0 && element_size == 4)
                 {
                   POCL_MSG_ERR (
                     "printf error: hl modifier used without vector length\n");
@@ -444,7 +442,7 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
 
               DEBUG_PRINTF (("[printf:vector_length=%d]\n", vector_length));
 
-              DEBUG_PRINTF (("[printf:length=%d]\n", length));
+              DEBUG_PRINTF (("[printf:elem_length=%d]\n", element_size));
 
               p->flags = flags;
               p->conv = ch;
@@ -477,36 +475,41 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                       precision = p->precision = 1;
                     p->base = base;
                     DEBUG_PRINTF (("[printf:int:conversion=%c]\n", ch));
-                    if (length == 0)
-                      length = 4;
-                    alloca_length *= length;
-                    switch (length)
+                    if (element_size == 0)
+                      element_size = 4;
+                    alloca_length *= element_size;
+                    switch (element_size)
                       {
                       default:
                         return -1;
                       case 1:
                         __pocl_print_ints_uchar (p, buffer, vector_length,
                                                  is_unsigned);
-                        if (char_short_promotion && vector_length == 1)
+                        /* stores of integers & vectors of size <= 64bits
+                         * are expanded to 64bits in the EmitPrintf. This
+                         * is to avoid having to deal with various rules for
+                         * int & vector promotions by different backends
+                         * (x86, ARM, RISC-V etc...) */
+                        if (vector_length <= 8)
                           {
-                            alloca_length = 4;
-                          }
-                        if (char2_promotion && vector_length == 2)
-                          {
-                            alloca_length = 4;
+                            alloca_length = 8;
                           }
                         break;
                       case 2:
                         __pocl_print_ints_ushort (p, buffer, vector_length,
                                                   is_unsigned);
-                        if (char_short_promotion && vector_length == 1)
+                        if (vector_length <= 4)
                           {
-                            alloca_length = 4;
+                            alloca_length = 8;
                           }
                         break;
                       case 4:
                         __pocl_print_ints_uint (p, buffer, vector_length,
                                                 is_unsigned);
+                        if (vector_length <= 2)
+                          {
+                            alloca_length = 8;
+                          }
                         break;
                       case 8:
                         __pocl_print_ints_ulong (p, buffer, vector_length,
@@ -539,10 +542,10 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                     DEBUG_PRINTF (
                       ("[printf:float:conversion=%c|promotion=%u]\n", ch,
                        (unsigned)float_promotion));
-                    if (length == 0)
-                      length = 4;
-                    alloca_length *= length;
-                    switch (length)
+                    if (element_size == 0)
+                      element_size = 4;
+                    alloca_length *= element_size;
+                    switch (element_size)
                       {
                       default:
                       case 2:
@@ -602,7 +605,7 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                         return -1;
                       }
                     DEBUG_PRINTF (("[printf:char3]\n"));
-                    if (length != 0)
+                    if (element_size != 0)
                       {
                         POCL_MSG_ERR ("printf error: length-modifier used "
                                       "with '%%c' conversion\n");
@@ -611,8 +614,8 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                     DEBUG_PRINTF (("[printf:char4]\n"));
                     p->bf[0] = (char)*buffer;
                     p->bf[1] = 0;
-                    /* char is always promoted to int32 */
-                    FORWARD_BUFFER (sizeof (int32_t));
+                    /* char is always promoted to int64 */
+                    FORWARD_BUFFER (sizeof (int64_t));
                     __pocl_printf_putchw (p);
                     DEBUG_PRINTF (
                       ("[printf:after char:buffer=%p buffer_size=%u]\n",
@@ -638,7 +641,7 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                                       "'%%s' conversion\n");
                         return -1;
                       }
-                    if (length != 0)
+                    if (element_size != 0)
                       {
                         POCL_MSG_ERR ("printf error: length-modifier used "
                                       "with '%%s' conversion\n");
@@ -702,7 +705,7 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                                       "'%%p' conversion\n");
                         return -1;
                       }
-                    if (length != 0)
+                    if (element_size != 0)
                       {
                         POCL_MSG_ERR ("printf error: length-modifier used "
                                       "with '%%p' conversion\n");
