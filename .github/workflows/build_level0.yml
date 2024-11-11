@@ -91,4 +91,8 @@ jobs:
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
           # exclude long tests
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j2 $CTEST_FLAGS -LE long
+          if [ ${{ matrix.conformance }} -eq 0 ]; then
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j2 $CTEST_FLAGS -LE long
+          else
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j2 $CTEST_FLAGS -L conformance_suite_micro_main -LE long
+          fi

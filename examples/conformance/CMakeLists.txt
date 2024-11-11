@@ -100,7 +100,7 @@ if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
     "-l" "${SPIRV_VAL}")
 else()
   message(WARNING "spirv tools not found - disabling SPIRV tests in CTS")
-  set(CTS_INSTALL_COMMAND echo "INSTALLED")
+  set(CTS_INSTALL_COMMAND "")
 endif()
 
 set(UPSTREAM_CMAKE_ARGS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
@@ -146,6 +146,43 @@ set(MATH_FUNC_LIST acos acosh acospi asin asinh asinpi atan atanh atanpi atan2 a
   half_exp2 half_exp10 half_log half_log2 half_log10 half_powr
   half_recip half_rsqrt half_sin half_sqrt half_tan add subtract divide
   divide_cr multiply assignment not)
+
+#################################################################################
+
+# List of CTS tests *disabled* for LevelZero driver;
+# these will not have level0 label assigned
+
+set(CTS_LEVEL0_BLACKLIST
+  # disabled. Fails since CTS 2024.10.09; this CTS added
+  # testcase printf("%s", "") which causes crash in L0
+  conformance_main_printf
+  conformance_spirv_printf
+
+  # disabled. Fails because of a bug in the L0 driver
+  # when ProgScope variable points to another ProgScope var
+  conformance_main_basic_micro_progvar
+  conformance_spirv_basic_micro_progvar
+  conformance_main_basic
+  conformance_spirv_basic
+
+  # disabled. Fails since CTS 2024.10.09;
+  # this CTS checks FP16 ULP precision
+  conformance_main_math_micro_divide
+  conformance_main_math_micro_divide_cr
+  conformance_spirv_math_micro_divide
+  conformance_spirv_math_micro_divide_cr
+  conformance_main_math_full_divide
+  conformance_main_math_full_divide_cr
+  conformance_spirv_math_full_divide
+  conformance_spirv_math_full_divide_cr
+
+  # disabled. Fails since CTS 2024.10.09;
+  # this CTS checks FP16 ULP precision
+  conformance_main_math_micro_fract
+  conformance_spirv_math_micro_fract
+  conformance_main_math_full_fract
+  conformance_spirv_math_full_fract
+)
 
 
 #################################################################################
@@ -451,6 +488,14 @@ foreach(CTSTEST IN LISTS CTS_FULL_LIST)
   set_property(TEST ${CTSTEST}
     PROPERTY
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
+  if(ENABLE_LEVEL0)
+    if(CTSTEST IN_LIST CTS_LEVEL0_BLACKLIST)
+      message(STATUS "disabling test ${CTSTEST} for Level0")
+    else()
+      set_property(TEST ${CTSTEST}
+        APPEND PROPERTY LABELS "level0")
+    endif()
+  endif()
 endforeach()
 
 set_property(TEST ${OCL_30_TESTS_FULL}
@@ -1001,6 +1046,14 @@ foreach(CTSTEST IN LISTS CTS_MICRO_LIST)
   set_property(TEST ${CTSTEST}
     PROPERTY
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
+  if(ENABLE_LEVEL0)
+    if(CTSTEST IN_LIST CTS_LEVEL0_BLACKLIST)
+      message(STATUS "disabling test ${CTSTEST} for Level0")
+    else()
+      set_property(TEST ${CTSTEST}
+        APPEND PROPERTY LABELS "level0")
+    endif()
+  endif()
 endforeach()
 
 # note that the environment variables must be set for this test
@@ -1030,201 +1083,6 @@ add_cts_micro_tests("conformance_suite_micro_spirv" "_spirv"
                    "--compilation-cache-path" "${CACHE_DIR}")
 endif()
 
-#################################################################################
-
-# List of CTS tests enabled for LevelZero driver
-
-set(CTS_LEVEL0_LIST
-  conformance_main_api
-  conformance_main_commonfns
-  conformance_main_compiler_micro
-  conformance_main_computeinfo
-  conformance_main_contractions
-  conformance_main_geometrics
-  conformance_main_images_cl_copy_images
-  conformance_main_images_cl_fill_images
-  conformance_main_images_cl_read_write_images
-  conformance_main_images_cl_get_info
-  conformance_main_images_cl_get_info_min
-  conformance_main_images_cl_get_info_max
-  conformance_main_images_cl_get_info_random
-  conformance_main_mem_host_flags
-  conformance_main_multiples
-  conformance_main_non_uniform_work_group
-  # disabled. Fails since CTS 2024.10.09; this CTS added
-  # testcase printf("%s", "") which causes crash in L0
-  #conformance_main_printf
-  conformance_main_profiling
-  conformance_main_subgroups_micro
-  conformance_main_cl_khr_command_buffer
-  conformance_main_cl_khr_command_buffer_mutable
-  conformance_main_api_micro_ocl_30
-  conformance_main_basic_micro_other_ocl_30
-  # disabled. Fails because of a bug in the L0 driver
-  #conformance_main_basic_micro_progvar
-  conformance_main_SVM_micro_1
-  conformance_main_SVM_micro_2
-
-  conformance_main_allocations_micro_buffer
-  conformance_main_allocations_micro_image
-
-  conformance_main_integer_ops_micro_ocl_30
-  conformance_main_generic_AS_micro
-
-  conformance_main_basic_micro_math
-  conformance_main_basic_micro_image
-  conformance_main_basic_micro_other
-
-  conformance_main_basic_micro_memory_1
-  conformance_main_basic_micro_memory_2
-
-  conformance_main_buffers_micro_read
-  conformance_main_buffers_micro_write
-
-  conformance_main_buffers_micro_fill
-  conformance_main_buffers_micro_var1
-  conformance_main_buffers_micro_var2
-
-  conformance_main_buffers_micro_map_read
-  conformance_main_buffers_micro_map_write
-  conformance_main_vectors_micro
-
-  conformance_main_c11_atomics_micro_1
-  conformance_main_c11_atomics_micro_2
-  conformance_main_c11_atomics_micro_3
-  conformance_main_c11_atomics_micro_4
-
-  conformance_main_math_micro_acos
-  conformance_main_math_micro_acosh
-  conformance_main_math_micro_acospi
-  conformance_main_math_micro_asin
-  conformance_main_math_micro_asinh
-  conformance_main_math_micro_asinpi
-  conformance_main_math_micro_atan
-  conformance_main_math_micro_atanh
-  conformance_main_math_micro_atanpi
-  conformance_main_math_micro_atan2
-  conformance_main_math_micro_atan2pi
-  conformance_main_math_micro_add
-  conformance_main_math_micro_assignment
-
-  conformance_main_math_micro_cbrt
-  conformance_main_math_micro_ceil
-  conformance_main_math_micro_copysign
-  conformance_main_math_micro_cos
-  conformance_main_math_micro_cosh
-  conformance_main_math_micro_cospi
-
-  # disabled. Fails since CTS 2024.10.09;
-  # this CTS checks FP16 ULP precision
-  # conformance_main_math_micro_divide
-  # conformance_main_math_micro_divide_cr
-
-  conformance_main_math_micro_exp
-  conformance_main_math_micro_exp2
-  conformance_main_math_micro_exp10
-  conformance_main_math_micro_expm1
-
-  conformance_main_math_micro_fabs
-  conformance_main_math_micro_fdim
-  conformance_main_math_micro_floor
-  conformance_main_math_micro_fma
-  conformance_main_math_micro_fmax
-  conformance_main_math_micro_fmin
-  conformance_main_math_micro_fmod
-  # disabled. Fails since CTS 2024.10.09;
-  # this CTS checks FP16 ULP precision
-  # conformance_main_math_micro_fract
-  conformance_main_math_micro_frexp
-
-  conformance_main_math_micro_hypot
-  conformance_main_math_micro_half_cos
-  conformance_main_math_micro_half_divide
-  conformance_main_math_micro_half_exp
-  conformance_main_math_micro_half_exp2
-  conformance_main_math_micro_half_exp10
-  conformance_main_math_micro_half_log
-  conformance_main_math_micro_half_log2
-  conformance_main_math_micro_half_log10
-  conformance_main_math_micro_half_powr
-  conformance_main_math_micro_half_recip
-  conformance_main_math_micro_half_rsqrt
-  conformance_main_math_micro_half_sin
-  conformance_main_math_micro_half_sqrt
-  conformance_main_math_micro_half_tan
-
-  conformance_main_math_micro_ilogb
-  conformance_main_math_micro_isequal
-  conformance_main_math_micro_isfinite
-  conformance_main_math_micro_isgreater
-  conformance_main_math_micro_isgreaterequal
-  conformance_main_math_micro_isinf
-  conformance_main_math_micro_isless
-  conformance_main_math_micro_islessequal
-  conformance_main_math_micro_islessgreater
-  conformance_main_math_micro_isnan
-  conformance_main_math_micro_isnormal
-  conformance_main_math_micro_isnotequal
-  conformance_main_math_micro_isordered
-  conformance_main_math_micro_isunordered
-
-  conformance_main_math_micro_ldexp
-  conformance_main_math_micro_lgamma
-  conformance_main_math_micro_lgamma_r
-  conformance_main_math_micro_log
-  conformance_main_math_micro_log2
-  conformance_main_math_micro_log10
-  conformance_main_math_micro_log1p
-  conformance_main_math_micro_logb
-
-  conformance_main_math_micro_mad
-  conformance_main_math_micro_maxmag
-  conformance_main_math_micro_minmag
-  conformance_main_math_micro_modf
-  conformance_main_math_micro_multiply
-
-  conformance_main_math_micro_nan
-  conformance_main_math_micro_nextafter
-  conformance_main_math_micro_not
-
-  conformance_main_math_micro_pow
-  conformance_main_math_micro_pown
-  conformance_main_math_micro_powr
-
-  conformance_main_math_micro_remainder
-  conformance_main_math_micro_remquo
-  conformance_main_math_micro_rint
-  conformance_main_math_micro_rootn
-  conformance_main_math_micro_round
-  conformance_main_math_micro_rsqrt
-
-  conformance_main_math_micro_signbit
-  conformance_main_math_micro_sin
-  conformance_main_math_micro_sincos
-  conformance_main_math_micro_sinh
-  conformance_main_math_micro_sinpi
-  conformance_main_math_micro_sqrt
-  conformance_main_math_micro_sqrt_cr
-  conformance_main_math_micro_subtract
-
-  conformance_main_math_micro_tan
-  conformance_main_math_micro_tanh
-  conformance_main_math_micro_tanpi
-  conformance_main_math_micro_trunc
-)
-
-if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
-  list(APPEND CTS_LEVEL0_LIST
-    conformance_main_spirv_new_micro_0
-    conformance_main_spirv_new_micro_1
-    conformance_main_spirv_new_micro_2)
-endif()
-
-foreach(CTSTEST IN LISTS CTS_LEVEL0_LIST)
-  set_property(TEST ${CTSTEST}
-    APPEND PROPERTY
-    LABELS "level0")
-endforeach()
 
 # mark tests that take long, need to avoid them in CI
 foreach(CTSTEST IN ITEMS conformance_main_multiples conformance_main_c11_atomics_micro_1
