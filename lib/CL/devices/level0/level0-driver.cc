@@ -60,6 +60,8 @@
 #ifndef ENABLE_CONFORMANCE
 // fails some corner cases (with CL_RGBA + CL_FLOAT + 3D image, some CTS
 // test fails b/c of GPU rounding a pixel channel value 1e-38 to zero)
+// host synchronization when ``CL_MEM_USE_HOST_PTR`` is used works with
+// buffers, but doesn't work with Images.
 #define ENABLE_IMAGES
 // subgroups require device queries which aren't yet available in L0
 #define ENABLE_SUBGROUPS

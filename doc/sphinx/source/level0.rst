@@ -6,21 +6,24 @@ Level Zero driver
 
 This driver uses libze and LLVM/Clang to run OpenCL code on GPU devices via Level Zero API.
 
-The implementation is work-in-progress, but usable for various applications.
+The implementation is almost complete, there are a few remaining issues.
 
 Installation
 -------------
 
 Required:
 
- * Clang+LLVM: 17 and 18 should work, older may work but are untested.
+ * Clang+LLVM: 17, 18 and 19 should work, older may work but are untested.
+   It's highly recommended to use a LLVM built with static component libraries (this is the default)
  * Level Zero ICD + development files (level-zero and level-zero-devel)
  * Level Zero drivers (on Ubuntu, intel-level-zero-gpu)
  * SPIRV-LLVM-Translator from Khronos (https://github.com/KhronosGroup/SPIRV-LLVM-Translator)
    Must be built for the corresponding Clang/LLVM branch.
-   Preferably the `llvm-spirv` binary should be in the same path as `llvm-config`,
-   otherwise PoCL's CMake could pick up a different (wrong) `llvm-spirv`.
- * SPIR-V tools (in particular, `spirv-link`)
+   PoCL will utilize libLLVMSPIRV library if it's available, otherwise
+   it will fallback to llvm-spirv binary
+
+Note the driver is known to fail more tests with LLVM 16 because of unsolved
+bugs related to opaque-pointer changes in LLVM and SPIRV-LLVM-Translator.
 
 The libze_loader + headers should support at least Level Zero specification version 1.11;
 older may work but are untested.
@@ -39,39 +42,27 @@ After build, it can be tested without installation (in the build directory)::
 
     OCL_ICD_VENDORS=$PWD/ocl-vendors/pocl-tests.icd POCL_BUILDING=1 POCL_DEVICES=level0 ./examples/example1/example1
 
+or::
+    ./tools/scripts/run_level0_tests
+
 This assumes that `libOpenCL.so` is the opensource ocl-icd loader; for other ICD loaders
 you will need to somehow point them to the built `libpocl.so`. For the meaning of environment
 variables, see :ref:`pocl-env-variables`.
 
-What's implemented (some were not tested)
--------------------------------------------
- * buffer read/write/map/unmap
- * kernel execution
- * image support
- * sampler support
- * Spec constants
- * subgroups
- * SVM
- * 64bit buffer support (specialization)
- * caching native binaries
+Known issues / broken features
+-------------------------------
 
-Unfinished / non-optimal
--------------------------
+These features are currently disabled when PoCL is built with ENABLE_CONFORMANCE=ON.
 
- * kernel argument metadata parsing (``type_name`` is
-   not parsed ATM, the other argument attributes are)
- * host synchronization when ``CL_MEM_USE_HOST_PTR`` is used (works with
-   buffers, but doesn't work with Images)
- * all buffers are allocated using shared memory (``zeMemAllocShared``),
-   this might be a performance problem on dGPUs.
-   TODO: investigate & possibly use the virtual + physical memory APIs.
+ * Images: host synchronization when ``CL_MEM_USE_HOST_PTR`` is used works with
+   buffers, but doesn't work with Images.
+ * Subgroups: require device queries which aren't yet available through L0 API
+ * Program-scope variables: fails a particular use case from OpenCL-cts
+ * FP64: this is emulated on most consumer hardware, and fails math tests
+ * 64bit atomics: can cause a GPU hang
 
-Doesnt work / missing
------------------------
-
- * support for row_pitch/slice_pitch arguments of Image APIs
-   ... there are actually two Level0 extension APIs that have the row/pitch arguments,
-   but they currently return ``ZE_RESULT_ERROR_UNSUPPORTED_FEATURE``
+The last two features may work on some hardware but fail on other; the other features
+require fixes in software.
 
 Extra features / tunables
 --------------------------
@@ -81,14 +72,6 @@ compiled lazily only when launched via clEnqueueNDRangeKernel, instead of eagerl
 at clBuildProgram-time). Useful with programs that have thousands of kernels
 (e.g. from heavily templated code). See :ref:`pocl-env-variables` for accepted values.
 
-Known Bugs
------------
-
-The FP64 support, on some devices, is software emulated. Kernels using FP64
-might not produce results with accuracy that is required by the OpenCL standard.
-
-Certain tests may pass on some GPUs but not others. Also, the driver is known to fail more
-tests with LLVM 16 because of unsolved bugs related to opaque-pointer changes in LLVM and SPIRV-LLVM-Translator.
 
 Testing
 ---------
