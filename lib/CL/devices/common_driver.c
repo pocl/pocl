@@ -131,18 +131,17 @@ pocl_driver_copy_with_size (void *data, pocl_mem_identifier *dst_mem_id,
     memcpy (dst_ptr + dst_offset, src_ptr + src_offset, size);
 }
 
-/* required for PoCL's command buffer extensions */
 void
-pocl_driver_svm_copy_rect (cl_device_id dev,
-                           void *__restrict__ dst_ptr,
-                           const void *__restrict__ src_ptr,
-                           const size_t *__restrict__ const dst_origin,
-                           const size_t *__restrict__ const src_origin,
-                           const size_t *__restrict__ const region,
-                           size_t dst_row_pitch,
-                           size_t dst_slice_pitch,
-                           size_t src_row_pitch,
-                           size_t src_slice_pitch)
+pocl_driver_copy_rect_memcpy (cl_device_id dev,
+                              void *__restrict__ dst_ptr,
+                              const void *__restrict__ src_ptr,
+                              const size_t *__restrict__ const dst_origin,
+                              const size_t *__restrict__ const src_origin,
+                              const size_t *__restrict__ const region,
+                              size_t dst_row_pitch,
+                              size_t dst_slice_pitch,
+                              size_t src_row_pitch,
+                              size_t src_slice_pitch)
 {
   char const *__restrict const adjusted_src_ptr
       = (char const *)src_ptr + src_origin[0] + src_row_pitch * src_origin[1]
@@ -204,9 +203,9 @@ pocl_driver_copy_rect (void *data,
   void *__restrict__ src_ptr = src_mem_id->mem_ptr;
   void *__restrict__ dst_ptr = dst_mem_id->mem_ptr;
 
-  pocl_driver_svm_copy_rect (NULL, dst_ptr, src_ptr, dst_origin, src_origin,
-                             region, dst_row_pitch, dst_slice_pitch,
-                             src_row_pitch, src_slice_pitch);
+  pocl_driver_copy_rect_memcpy (NULL, dst_ptr, src_ptr, dst_origin, src_origin,
+                                region, dst_row_pitch, dst_slice_pitch,
+                                src_row_pitch, src_slice_pitch);
 }
 
 void
@@ -256,18 +255,17 @@ pocl_driver_svm_fill_rect (cl_device_id dev,
 }
 
 void
-pocl_driver_write_rect (void *data, const void *__restrict__ const host_ptr,
-                        pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
-                        const size_t *__restrict__ const buffer_origin,
-                        const size_t *__restrict__ const host_origin,
-                        const size_t *__restrict__ const region,
-                        size_t const buffer_row_pitch,
-                        size_t const buffer_slice_pitch,
-                        size_t const host_row_pitch,
-                        size_t const host_slice_pitch)
+pocl_driver_write_rect_memcpy (void *dev_data,
+                               const void *__restrict__ const host_ptr,
+                               char *device_ptr,
+                               const size_t *__restrict__ const buffer_origin,
+                               const size_t *__restrict__ const host_origin,
+                               const size_t *__restrict__ const region,
+                               size_t const buffer_row_pitch,
+                               size_t const buffer_slice_pitch,
+                               size_t const host_row_pitch,
+                               size_t const host_slice_pitch)
 {
-  void *__restrict__ device_ptr = dst_mem_id->mem_ptr;
-
   char *__restrict const adjusted_device_ptr
       = (char *)device_ptr + buffer_origin[0]
         + buffer_row_pitch * buffer_origin[1]
@@ -315,18 +313,36 @@ pocl_driver_write_rect (void *data, const void *__restrict__ const host_ptr,
 }
 
 void
-pocl_driver_read_rect (void *data, void *__restrict__ const host_ptr,
-                       pocl_mem_identifier *src_mem_id, cl_mem src_buf,
-                       const size_t *__restrict__ const buffer_origin,
-                       const size_t *__restrict__ const host_origin,
-                       const size_t *__restrict__ const region,
-                       size_t const buffer_row_pitch,
-                       size_t const buffer_slice_pitch,
-                       size_t const host_row_pitch,
-                       size_t const host_slice_pitch)
+pocl_driver_write_rect (void *data,
+                        const void *__restrict__ const host_ptr,
+                        pocl_mem_identifier *dst_mem_id,
+                        cl_mem dst_buf,
+                        const size_t *__restrict__ const buffer_origin,
+                        const size_t *__restrict__ const host_origin,
+                        const size_t *__restrict__ const region,
+                        size_t const buffer_row_pitch,
+                        size_t const buffer_slice_pitch,
+                        size_t const host_row_pitch,
+                        size_t const host_slice_pitch)
 {
-  void *__restrict__ device_ptr = src_mem_id->mem_ptr;
+  void *__restrict__ device_ptr = dst_mem_id->mem_ptr;
+  pocl_driver_write_rect_memcpy (
+    data, host_ptr, device_ptr, buffer_origin, host_origin, region,
+    buffer_row_pitch, buffer_slice_pitch, host_row_pitch, host_slice_pitch);
+}
 
+void
+pocl_driver_read_rect_memcpy (void *data,
+                              void *__restrict__ const host_ptr,
+                              char *device_ptr,
+                              const size_t *__restrict__ const buffer_origin,
+                              const size_t *__restrict__ const host_origin,
+                              const size_t *__restrict__ const region,
+                              size_t const buffer_row_pitch,
+                              size_t const buffer_slice_pitch,
+                              size_t const host_row_pitch,
+                              size_t const host_slice_pitch)
+{
   char const *__restrict const adjusted_device_ptr
       = (char const *)device_ptr + buffer_origin[2] * buffer_slice_pitch
         + buffer_origin[1] * buffer_row_pitch + buffer_origin[0];
@@ -369,6 +385,25 @@ pocl_driver_read_rect (void *data, void *__restrict__ const host_ptr,
                       + buffer_slice_pitch * k,
                   region[0]);
     }
+}
+
+void
+pocl_driver_read_rect (void *data,
+                       void *__restrict__ const host_ptr,
+                       pocl_mem_identifier *src_mem_id,
+                       cl_mem src_buf,
+                       const size_t *__restrict__ const buffer_origin,
+                       const size_t *__restrict__ const host_origin,
+                       const size_t *__restrict__ const region,
+                       size_t const buffer_row_pitch,
+                       size_t const buffer_slice_pitch,
+                       size_t const host_row_pitch,
+                       size_t const host_slice_pitch)
+{
+  void *__restrict__ device_ptr = src_mem_id->mem_ptr;
+  pocl_driver_read_rect_memcpy (
+    data, host_ptr, device_ptr, buffer_origin, host_origin, region,
+    buffer_row_pitch, buffer_slice_pitch, host_row_pitch, host_slice_pitch);
 }
 
 void
@@ -785,8 +820,8 @@ pocl_driver_build_source (cl_program program, cl_uint device_i,
                           const char **header_include_names,
                           int link_builtin_lib)
 {
-  assert (program->devices[device_i]->compiler_available == CL_TRUE);
-  assert (program->devices[device_i]->linker_available == CL_TRUE);
+  assert (program->devices[device_i]->compiler_available);
+  assert (program->devices[device_i]->linker_available);
 
 #ifdef ENABLE_LLVM
 

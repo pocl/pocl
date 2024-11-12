@@ -8,35 +8,92 @@ extern "C"
 {
 #endif
 
-  typedef void (*gvar_init_callback_t)(cl_program program, cl_uint dev_i,
-                                       _cl_command_node *fake_cmd);
+typedef void (*gvar_init_callback_t)(cl_program program, cl_uint dev_i,
+                                     _cl_command_node *fake_cmd);
 
 POCL_EXPORT
-  void pocl_driver_read (void *data, void *__restrict__ dst_host_ptr,
-                         pocl_mem_identifier *src_mem_id, cl_mem src_buf,
-                         size_t offset, size_t size);
+void pocl_driver_read (void *data, void *__restrict__ dst_host_ptr,
+                       pocl_mem_identifier *src_mem_id, cl_mem src_buf,
+                       size_t offset, size_t size);
+
+/**
+ * Helper function for implementing rect read with an host-side memcpy.
+ */
 POCL_EXPORT
-  void pocl_driver_read_rect (void *data, void *__restrict__ dst_host_ptr,
-                              pocl_mem_identifier *src_mem_id, cl_mem src_buf,
-                              const size_t *buffer_origin,
-                              const size_t *host_origin, const size_t *region,
-                              size_t buffer_row_pitch,
-                              size_t buffer_slice_pitch, size_t host_row_pitch,
-                              size_t host_slice_pitch);
+void
+pocl_driver_read_rect_memcpy (void *data,
+                              void *__restrict__ const host_ptr,
+                              char *device_ptr,
+                              const size_t *__restrict__ const buffer_origin,
+                              const size_t *__restrict__ const host_origin,
+                              const size_t *__restrict__ const region,
+                              size_t const buffer_row_pitch,
+                              size_t const buffer_slice_pitch,
+                              size_t const host_row_pitch,
+                              size_t const host_slice_pitch);
+
+/**
+ * Driver hook-compatibile function for implementing rect read with
+ * a host-side memcpy.
+ *
+ * Can be typically used directly for CPU (host) drivers.
+ */
 POCL_EXPORT
-  void pocl_driver_write (void *data, const void *__restrict__ src_host_ptr,
-                          pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
-                          size_t offset, size_t size);
+void pocl_driver_read_rect (void *data,
+                            void *__restrict__ dst_host_ptr,
+                            pocl_mem_identifier *src_mem_id,
+                            cl_mem src_buf,
+                            const size_t *buffer_origin,
+                            const size_t *host_origin,
+                            const size_t *region,
+                            size_t buffer_row_pitch,
+                            size_t buffer_slice_pitch,
+                            size_t host_row_pitch,
+                            size_t host_slice_pitch);
+
 POCL_EXPORT
-  void pocl_driver_write_rect (void *data,
-                               const void *__restrict__ src_host_ptr,
-                               pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
-                               const size_t *buffer_origin,
-                               const size_t *host_origin, const size_t *region,
-                               size_t buffer_row_pitch,
-                               size_t buffer_slice_pitch,
-                               size_t host_row_pitch, size_t host_slice_pitch);
+void pocl_driver_write (void *data,
+                        const void *__restrict__ src_host_ptr,
+                        pocl_mem_identifier *dst_mem_id,
+                        cl_mem dst_buf,
+                        size_t offset,
+                        size_t size);
+
+/**
+ * Helper function for implementing rect write with an host-side memcpy.
+ */
 POCL_EXPORT
+void pocl_driver_write_rect_memcpy (
+  void *dev_data,
+  const void *__restrict__ const host_ptr,
+  char *device_ptr,
+  const size_t *__restrict__ const buffer_origin,
+  const size_t *__restrict__ const host_origin,
+  const size_t *__restrict__ const region,
+  size_t const buffer_row_pitch,
+  size_t const buffer_slice_pitch,
+  size_t const host_row_pitch,
+  size_t const host_slice_pitch);
+
+/**
+ * Driver hook-compatibile function for implementing rect write with
+ * an host-side memcpy.
+ *
+ * Can be typically used directly for CPU (host) drivers.
+ */
+POCL_EXPORT
+void pocl_driver_write_rect (void *data,
+                             const void *__restrict__ src_host_ptr,
+                             pocl_mem_identifier *dst_mem_id,
+                             cl_mem dst_buf,
+                             const size_t *buffer_origin,
+                             const size_t *host_origin,
+                             const size_t *region,
+                             size_t buffer_row_pitch,
+                             size_t buffer_slice_pitch,
+                             size_t host_row_pitch,
+                             size_t host_slice_pitch);
+  POCL_EXPORT
   void pocl_driver_copy (void *data, pocl_mem_identifier *dst_mem_id,
                          cl_mem dst_buf, pocl_mem_identifier *src_mem_id,
                          cl_mem src_buf, size_t dst_offset, size_t src_offset,
@@ -107,17 +164,20 @@ void pocl_driver_svm_fill_rect (cl_device_id dev,
                                 void *__restrict__ pattern,
                                 size_t pattern_size);
 
+/**
+ * Helper function for implementing write rect with an host-side memcpy.
+ */
 POCL_EXPORT
-void pocl_driver_svm_copy_rect (cl_device_id dev,
-                                void *__restrict__ dst_ptr,
-                                const void *__restrict__ src_ptr,
-                                const size_t *__restrict__ const dst_origin,
-                                const size_t *__restrict__ const src_origin,
-                                const size_t *__restrict__ const region,
-                                size_t dst_row_pitch,
-                                size_t dst_slice_pitch,
-                                size_t src_row_pitch,
-                                size_t src_slice_pitch);
+void pocl_driver_copy_rect_memcpy (cl_device_id dev,
+                                   void *__restrict__ dst_ptr,
+                                   const void *__restrict__ src_ptr,
+                                   const size_t *__restrict__ const dst_origin,
+                                   const size_t *__restrict__ const src_origin,
+                                   const size_t *__restrict__ const region,
+                                   size_t dst_row_pitch,
+                                   size_t dst_slice_pitch,
+                                   size_t src_row_pitch,
+                                   size_t src_slice_pitch);
 
 POCL_EXPORT
 int pocl_driver_build_source (cl_program program,
