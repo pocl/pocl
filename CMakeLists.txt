@@ -1373,10 +1373,11 @@ endif()
 
 # FP16 support requires _Float16 type
 # LLVM <15 doesn't support _Float16;
-# LLVM 15 crashes on some code; LLVM 16 seems to work
+# LLVM 15 crashes on some code; LLVM 16 seems to work but fails with ldexp
 # CONFORMANCE=ON disables FP16 b/c PoCL support is incomplete
-if((LLVM_VERSION_MAJOR GREATER_EQUAL 16)
+if((LLVM_VERSION_MAJOR GREATER_EQUAL 17)
    AND (NOT ENABLE_CONFORMANCE)
+   AND (NOT RISCV)
    AND HOST_CPU_SUPPORTS_FLOAT16)
   message(STATUS "Host support for cl_khr_fp16 enabled")
   set(HOST_CPU_ENABLE_CL_KHR_FP16 1)
