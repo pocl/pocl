@@ -37,12 +37,12 @@ jobs:
       # Source MSVC tools. This is a known way to have the PoCL configuration
       # step to pick up MSVC compiler (cl.exe) instead of MinGW's gcc.
       - name: Setup MSVC Developer Command Prompt
-        uses: TheMrMilchmann/setup-msvc-dev@v3.0.1
+        uses: TheMrMilchmann/setup-msvc-dev@fb19abb8a41b3cf0340f5d1be17d420309232be6
         with:
           arch: x64
 
       - name: Install Ninja
-        uses: turtlesec-no/get-ninja@main
+        uses: llvm/actions/install-ninja@a1ea791b03c8e61f53a0e66f2f73db283aa0f01e
 
       # Building LLVM from sources because the official binary
       # packages doesn't include libraries or llvm-config.exe.
