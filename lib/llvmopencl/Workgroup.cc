@@ -64,7 +64,7 @@ POP_COMPILER_DIAGS
 #include <map>
 #include <sstream>
 
-#if _MSC_VER
+#if _WIN32
 #  include "vccompat.hpp"
 #endif
 

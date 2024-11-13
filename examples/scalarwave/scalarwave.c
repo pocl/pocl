@@ -3,7 +3,7 @@
 #define _BSD_SOURCE             // define M_PI
 #define _DEFAULT_SOURCE
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #  include "vccompat.hpp"
 #endif
 
