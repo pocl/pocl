@@ -57,7 +57,7 @@ main (int _argc, char **_argv)
       platform, "clCreateCommandBufferKHR");
   if (ext.clCreateCommandBufferKHR == NULL)
     {
-      printf ("ERROR: Command buffers are not supported\n");
+      printf ("Command buffers are not supported, skipping test\n");
       return 77;
     }
 
