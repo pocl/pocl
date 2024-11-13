@@ -1,0 +1,126 @@
+---
+name: Windows / MinGW / CPU tests
+
+permissions:
+  contents: read
+
+on:
+  push:
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - 'CHANGES'
+      - 'COPYING'
+      - 'CREDITS'
+      - 'LICENSE'
+      - 'README.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  mingw_test_matrix:
+    name: LLVM ${{ matrix.llvm_version }} - MinGW ${{ matrix.config }}
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm_version: [18, 19]
+        config: [cpu]
+
+    steps:
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-hwloc
+            mingw-w64-x86_64-pkg-config
+            mingw-w64-x86_64-opencl-icd
+            mingw-w64-x86_64-opencl-headers
+            mingw-w64-x86_64-dlfcn
+
+      - name: Checkout PoCL
+        uses: actions/checkout@v4
+
+      - name: Setup Build Environment
+        run: |
+          # Convert the Windows workspace path to an MSYS2 compatible one
+          WORKSPACE=$(cygpath -u "${{ github.workspace }}")
+          echo "WORKSPACE=${WORKSPACE}" >> $GITHUB_ENV
+
+      - name: Checkout LLVM
+        id: checkout-llvm
+        uses: actions/checkout@v4
+        with:
+          repository: llvm/llvm-project
+          ref: release/${{ matrix.llvm_version }}.x
+          path: llvm-project
+
+      - name: Restore Cached LLVM
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: install-llvm
+          key: llvm-mingw-${{ matrix.llvm_version }}-${{ runner.os }}-${{ steps.checkout-llvm.outputs.commit }}
+
+      - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
+        name: Configure LLVM
+        run: |
+          cmake -S llvm-project/llvm -B build-llvm \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLLVM_ENABLE_PROJECTS=clang \
+            -DLLVM_TARGETS_TO_BUILD=host \
+            -DCMAKE_INSTALL_PREFIX=${{ env.WORKSPACE }}/install-llvm \
+            -DLLVM_BUILD_LLVM_DYLIB=ON \
+            -DLLVM_LINK_LLVM_DYLIB=ON \
+            -G "Ninja"
+
+      - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
+        name: Build LLVM
+        run: |
+          cmake --build build-llvm
+          cmake --install build-llvm
+
+      - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
+        name: Save LLVM
+        uses: actions/cache/save@v4
+        with:
+          path: install-llvm
+          key: llvm-mingw-${{ matrix.llvm_version }}-${{ runner.os }}-${{ steps.checkout-llvm.outputs.commit }}
+
+      - name: Load Env vars
+        id: load-env
+        run: |
+          cat ${{ env.WORKSPACE }}/.github/variables.txt >> $GITHUB_ENV
+
+      - name: Configure PoCL
+        run: |
+          cmake -S ${{ env.WORKSPACE }} -B ${{ env.WORKSPACE }}/build-pocl \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=${{ env.WORKSPACE }}/install-pocl \
+            -DWITH_LLVM_CONFIG=${{ env.WORKSPACE }}/install-llvm/bin/llvm-config.exe \
+            -G "Ninja"
+
+      - name: Build PoCL
+        run: |
+          cmake --build ${{ env.WORKSPACE }}/build-pocl
+
+      - name: Run Tests
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+        timeout-minutes: 120
+        run: |
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir -p ${{ env.POCL_CACHE_DIR }}
+          cd ${{ env.WORKSPACE }}/build-pocl
+          ctest -j4 $CTEST_FLAGS -L internal
