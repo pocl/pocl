@@ -424,17 +424,13 @@ pocl_cpu_init_common (cl_device_id device)
 
   /* old env variable */
   int max_threads = pocl_get_int_option ("POCL_MAX_PTHREAD_COUNT", 0);
-
   if (max_threads <= 0)
-    max_threads = pocl_get_int_option ("POCL_CPU_MAX_CU_COUNT", fallback);
-
-  /* old env variable */
-  int min_threads = pocl_get_int_option ("POCL_PTHREAD_MIN_THREADS", 0);
-  if (min_threads <= 0)
-    min_threads = pocl_get_int_option ("POCL_CPU_MIN_CU_COUNT", 1);
+    max_threads = pocl_get_int_option ("POCL_CPU_MAX_CU_COUNT", 0);
+  if (max_threads <= 0)
+    max_threads = pocl_get_int_option ("POCL_MAX_COMPUTE_UNITS", fallback);
 
   device->max_compute_units
-      = max ((unsigned)max_threads, (unsigned)min_threads);
+      = max ((unsigned)max_threads, (unsigned)1);
 
   pocl_cpuinfo_detect_device_info (device);
   pocl_set_buffer_image_limits (device);

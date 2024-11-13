@@ -123,9 +123,14 @@ cl_int pocl_tbb_init(unsigned j, cl_device_id device, const char *parameters) {
    * TBD unify behaviour between drivers (make pthread NUMA aware?).
    */
   int max_threads = pocl_get_int_option ("POCL_CPU_MAX_CU_COUNT", -1);
-  tbb_init_arena (dd, one_device_per_numa_node, max_threads);
+  if (max_threads <= 0)
+    max_threads = pocl_get_int_option ("POCL_MAX_COMPUTE_UNITS", -1);
+  if (max_threads <= 0)
+    max_threads = -1;
 
+  tbb_init_arena (dd, one_device_per_numa_node, max_threads);
   device->max_compute_units = tbb_get_num_threads (dd);
+
   /* subdevices not supported ATM */
   device->max_sub_devices = 0;
   device->num_partition_properties = 0;

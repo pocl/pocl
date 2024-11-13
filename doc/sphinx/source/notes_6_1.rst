@@ -39,6 +39,12 @@ Work-group vectorization improvements
 Miscellaneous
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+* New env variable POCL_MAX_COMPUTE_UNITS. This is similar to
+  existing POCL_CPU_MAX_CU_COUNT, but is not driver-specific,
+  hence can be used to limit the CU count of all drivers that
+  support limiting CU count. If both are specified, the driver
+  specific variable takes precedence.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Remote driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
