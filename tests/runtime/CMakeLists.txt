@@ -157,6 +157,7 @@ if(HAVE_LIBJPEG_TURBO)
     PROPERTIES
     COST 2.0
     PROCESSORS 1
+    SKIP_RETURN_CODE 77
     DEPENDS "pocl_version_check"
     LABELS "internal;runtime")
 endif()
