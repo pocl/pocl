@@ -78,6 +78,9 @@ calculate_PSNR (int const height,
  * Arguments to use with test data:
  * 640 480 <abs path to tram.rgb>
  */
+
+#define BUILTIN_KERNELS_STR_LEN 32768
+
 int
 main (int argc, char const *argv[])
 {
@@ -108,6 +111,27 @@ main (int argc, char const *argv[])
   int err = poclu_get_multiple_devices (&platform, &context, 0, &num_devices,
                                         &devices, &queues, 0);
   CHECK_OPENCL_ERROR_IN ("poclu_get_multiple_devices");
+
+  char builtin_list[BUILTIN_KERNELS_STR_LEN];
+
+  for (cl_uint i = 0; i < num_devices; ++i) {
+    size_t size_ret = 0;
+    int err = clGetDeviceInfo(devices[i], CL_DEVICE_BUILT_IN_KERNELS, 0, 0,
+                             &size_ret);
+    CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo");
+    TEST_ASSERT(size_ret < BUILTIN_KERNELS_STR_LEN);
+    builtin_list[0] = 0;
+    err = clGetDeviceInfo(devices[i], CL_DEVICE_BUILT_IN_KERNELS,
+                          size_ret, builtin_list, 0 );
+    CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo");
+    if ((strstr(builtin_list, "exp_jpeg_encode") == NULL)
+        || (strstr(builtin_list, "exp_jpeg_decode") == NULL))
+        {
+           printf("one of the devices does not support exp_jpeg_encode"
+                  "or exp_jpeg_decode, skipping test\n");
+           return 77;
+        }
+  }
 
   clCreateProgramWithDefinedBuiltInKernels_fn createProgramWithDBKs;
   createProgramWithDBKs = (clCreateProgramWithDefinedBuiltInKernels_fn)
