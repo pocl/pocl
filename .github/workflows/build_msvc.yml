@@ -1,0 +1,124 @@
+---
+name: Windows / MS Visual Studio / CPU tests
+
+permissions:
+  contents: read
+
+on:
+  push:
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - 'CHANGES'
+      - 'COPYING'
+      - 'CREDITS'
+      - 'LICENSE'
+      - 'README.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  msvc_test_matrix:
+    name: LLVM ${{ matrix.llvm_version }} - ${{ matrix.config }}
+    runs-on: [windows-2022]
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm_version: [18, 19]
+        config: [cpu]
+
+    steps:
+      - name: Checkout PoCL
+        uses: actions/checkout@v4
+
+      # Source MSVC tools. This is a known way to have the PoCL configuration
+      # step to pick up MSVC compiler (cl.exe) instead of MinGW's gcc.
+      - name: Setup MSVC Developer Command Prompt
+        uses: TheMrMilchmann/setup-msvc-dev@fb19abb8a41b3cf0340f5d1be17d420309232be6
+        with:
+          arch: x64
+
+      - name: Install Ninja
+        uses: llvm/actions/install-ninja@a1ea791b03c8e61f53a0e66f2f73db283aa0f01e
+
+      # Building LLVM from sources because the official binary
+      # packages doesn't include libraries or llvm-config.exe.
+      - name: Checkout LLVM
+        id: checkout-llvm
+        uses: actions/checkout@v4
+        with:
+          repository: llvm/llvm-project
+          ref: release/${{ matrix.llvm_version }}.x
+          path: llvm-project
+
+      - name: Restore Cached LLVM
+        id: cache-llvm
+        uses: actions/cache@v4
+        with:
+          path: install-llvm\**
+          key: llvm-${{ matrix.llvm_version }}-${{ runner.os }}-${{ steps.checkout-llvm.outputs.commit }}
+
+      - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
+        name: Configure LLVM
+        run:
+          cmake -S llvm-project\llvm -B build-llvm
+              -DCMAKE_BUILD_TYPE=Release
+              -DLLVM_ENABLE_PROJECTS=clang
+              -DLLVM_TARGETS_TO_BUILD=host
+              -DCMAKE_INSTALL_PREFIX=install-llvm
+              -G "Ninja"
+
+      - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
+        name: Install LLVM
+        run: |
+          cmake --build build-llvm
+          cmake --install build-llvm
+
+      # Save the LLVM installation result so we don't have to rebuild
+      # it in case a PoCL step fail ahead.
+      - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
+        name: Save LLVM
+        uses: actions/cache/save@v4
+        with:
+          path: install-llvm\**
+          key: llvm-${{ matrix.llvm_version }}-${{ runner.os }}-${{ steps.checkout-llvm.outputs.commit }}
+
+      - name: Load Env vars
+        id: load-env
+        run: |
+          cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
+
+      # Keep this aligned with the Windows/MSVC build instructions
+      # (docs/sphinx/source/windows.rst). This configuration step is
+      # intended to pick up MSVC as the compiler, but if the
+      # environment is not set properly, it might pick up MinGW-gcc instead.
+      - name: Configure PoCL
+        run:
+          cmake -S . -B build-pocl
+              -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install-pocl
+              -DENABLE_ICD=0
+              -DENABLE_LLVM=1
+              -DWITH_LLVM_CONFIG=${{ github.workspace }}\install-llvm\bin\llvm-config.exe
+              -DENABLE_LOADABLE_DRIVERS=0
+              -DSTATIC_LLVM=ON
+              -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL
+              -DBUILD_SHARED_LIBS=OFF
+              -G "Ninja"
+
+      - name: Build PoCL
+        run: cmake --build build-pocl
+
+      - name: Run Tests
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+        timeout-minutes: 120
+        run: |
+          if (Test-Path -path ${{ env.POCL_CACHE_DIR }}) {
+            rm -r ${{ env.POCL_CACHE_DIR }}
+          }
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          cd ${{ github.workspace }}\build-pocl
+          & ${{ github.workspace }}\tools\scripts\run_cpu_tests.ps1 $CTEST_FLAGS -j$Env:NUMBER_OF_PROCESSORS
