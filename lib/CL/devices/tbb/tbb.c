@@ -48,10 +48,6 @@
 #include "tbb.h"
 #include "tbb_scheduler.h"
 
-#ifdef OCS_AVAILABLE
-#include "pocl_llvm.h"
-#endif
-
 /* Initializes scheduler. Must be called before any kernel enqueue */
 static void tbb_scheduler_init (cl_device_id device);
 static void tbb_scheduler_uninit (cl_device_id device);
@@ -120,7 +116,14 @@ cl_int pocl_tbb_init(unsigned j, cl_device_id device, const char *parameters) {
 
   pocl_tbb_scheduler_data *dd = calloc (1, sizeof (pocl_tbb_scheduler_data));
   device->data = (void *)dd;
-  tbb_init_arena (dd, one_device_per_numa_node);
+
+  /* note: this is deliberately not using device->max_compute_units,
+   * even though it has been setup by pocl_cpu_init_common() earlier.
+   * The setup in that code does not take into account NUMA nodes.
+   * TBD unify behaviour between drivers (make pthread NUMA aware?).
+   */
+  int max_threads = pocl_get_int_option ("POCL_CPU_MAX_CU_COUNT", -1);
+  tbb_init_arena (dd, one_device_per_numa_node, max_threads);
 
   device->max_compute_units = tbb_get_num_threads (dd);
   /* subdevices not supported ATM */
