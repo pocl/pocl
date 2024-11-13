@@ -56,11 +56,15 @@ static inline char* strtok_r(char *str, const char *delim, char **saveptr) {
 #define srandom(x) srand(x)
 
 #include <sys/utime.h>
-#define utime _utime;
+#define utime _utime
 
+#ifdef _MSC_VER
 // Sleep takes milliseconds.
 #define sleep(x) Sleep(x * 1000)
 #define usleep(x) Sleep((x / 1000) ? x / 1000 : 1)
+#else
+#include <unistd.h>
+#endif
 
 static inline int setenv(const char *name, const char *value, int overwrite) {
   return _putenv_s(name, value);
