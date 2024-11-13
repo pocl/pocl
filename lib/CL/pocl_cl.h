@@ -366,8 +366,7 @@ typedef struct pocl_argument_info {
 
 /* Struct for storing information of a cl_mem that should
    be migrated to the device before executing a kernel. */
-typedef struct _pocl_buffer_migration_info
-  pocl_buffer_migration_info;
+/* typedef is in pocl.h */
 struct _pocl_buffer_migration_info
 {
   /* The buffer to migrate (can be a sub-buffer). */
