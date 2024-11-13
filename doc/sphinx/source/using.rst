@@ -289,6 +289,13 @@ pocl.
  to be at most this number. For certain devices, this is can only be lower than
  their hardware limits.
 
+- **POCL_MAX_COMPUTE_UNITS**
+
+ Limits the maximum number of Compute Units for drivers which support limiting
+ the CU count. The default is for each driver to determine the CU count based
+ on hardware properties. If both this and driver specific env var are specified,
+ the driver specific variable takes precedence.
+
 - **POCL_MEMORY_LIMIT**
 
  Integer option, unit: gigabytes. Limits the total global memory size

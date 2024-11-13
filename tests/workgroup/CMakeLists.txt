@@ -158,7 +158,7 @@ foreach(VARIANT ${VARIANTS})
       DEPENDS "pocl_version_check"
       LABELS "internal;workgroup")
   set_property(TEST ${TEST_LIST}
-    APPEND PROPERTY ENVIRONMENT "POCL_DEVICES=basic")
+    APPEND PROPERTY ENVIRONMENT "POCL_MAX_COMPUTE_UNITS=1")
   
 endforeach()
 
