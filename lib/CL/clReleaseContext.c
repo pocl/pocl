@@ -35,7 +35,7 @@
 #include "pocl_rdma.h"
 #endif
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include "vccompat.hpp"
 #else
 #include <unistd.h>
