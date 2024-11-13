@@ -110,6 +110,7 @@ static int
 get_program_spec_constants (cl_program program, char *program_bc_spirv)
 {
   program->num_spec_consts = 0;
+  return CL_SUCCESS;
 }
 #endif // fork
 
