@@ -75,7 +75,7 @@ extern "C"
 
   size_t tbb_get_num_threads (pocl_tbb_scheduler_data *SchedData);
 
-  void tbb_init_arena (pocl_tbb_scheduler_data *SchedData, int OnePerNode);
+  void tbb_init_arena (pocl_tbb_scheduler_data *SchedData, int OnePerNode, int MaxThreads);
 
   void tbb_release_arena (pocl_tbb_scheduler_data *SchedData);
 

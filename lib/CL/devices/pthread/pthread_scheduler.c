@@ -40,6 +40,10 @@
 #include "pocl_util.h"
 #include "utlist.h"
 
+#ifdef ENABLE_HOST_CPU_DEVICES_OPENMP
+#include <omp.h>
+#endif
+
 // debugging help. If defined, randomize the execution order by skipping 1-3
 // of the commands in the work queue.
 //#define CPU_RANDOMIZE_QUEUE
@@ -345,6 +349,8 @@ work_group_scheduler (kernel_run_command *k,
   cl_program program = kernel->program;
   pocl_kernel_metadata_t *meta = k->kernel->meta;
 
+  omp_set_dynamic(0);
+  omp_set_num_threads(k->device->max_compute_units);
 #pragma omp parallel
   {
     const size_t num_args = meta->num_args + meta->num_locals + 1;
@@ -369,12 +375,13 @@ work_group_scheduler (kernel_run_command *k,
     size_t x, y, z;
     /* runtime = set scheduling according to environment variable OMP_SCHEDULE
      */
-#pragma omp for collapse(3) schedule(runtime)
+#pragma omp for ordered collapse(3) schedule(runtime)
     for (z = 0; z < pc.num_groups[2]; ++z)
       for (y = 0; y < pc.num_groups[1]; ++y)
         for (x = 0; x < pc.num_groups[0]; ++x)
           ((pocl_workgroup_func)k->workgroup) ((uint8_t *)arguments,
                                                (uint8_t *)&pc, x, y, z);
+
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
     pocl_write_printf_buffer ((char *)pc.printf_buffer, position);
 #endif

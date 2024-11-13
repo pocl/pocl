@@ -66,13 +66,16 @@ size_t tbb_get_numa_nodes() {
   return NumaIndexes.size();
 }
 
-void tbb_init_arena(pocl_tbb_scheduler_data *SchedData, int OnePerNode) {
+void tbb_init_arena(pocl_tbb_scheduler_data *SchedData, int OnePerNode, int MaxThreads) {
   TBBArena *TBBA = new TBBArena;
   SchedData->tbb_arena = TBBA;
   if (OnePerNode) {
     assert(LastInitializedNumaIndex < NumaIndexes.size());
     TBBA->NumaIdx = NumaIndexes[LastInitializedNumaIndex];
-    TBBA->Arena.initialize(tbb::task_arena::constraints(TBBA->NumaIdx));
+    auto Cont = tbb::task_arena::constraints(TBBA->NumaIdx);
+    if (MaxThreads > 0)
+      Cont.max_concurrency = MaxThreads;
+    TBBA->Arena.initialize(Cont);
   } else {
     TBBA->NumaIdx = UINT32_MAX;
     TBBA->Arena.initialize();
