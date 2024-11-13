@@ -47,7 +47,7 @@ jobs:
         config: [basic, devel]
         include:
           - llvm: 14
-            config: OpenMP
+            config: static
           - llvm: 15
             config: TBB
           - llvm: 16
@@ -55,7 +55,7 @@ jobs:
           - llvm: 17
             config: TBB
           - llvm: 18
-            config: static
+            config: OpenMP
           - llvm: 19
             config: install
 
