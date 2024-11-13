@@ -54,6 +54,12 @@ main (int _argc, char **_argv)
 
   ext.clCreateCommandBufferKHR = clGetExtensionFunctionAddressForPlatform (
       platform, "clCreateCommandBufferKHR");
+  if (ext.clCreateCommandBufferKHR == NULL)
+    {
+      printf ("Command buffers are not supported, skipping test\n");
+      return 77;
+    }
+
   ext.clCommandCopyBufferToImageKHR
       = clGetExtensionFunctionAddressForPlatform (
           platform, "clCommandCopyBufferToImageKHR");
