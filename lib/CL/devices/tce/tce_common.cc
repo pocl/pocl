@@ -545,17 +545,15 @@ int pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
   return CL_SUCCESS;
 }
 
-#define CHECK_AND_ALIGN_ARGBUFFER(DSIZE)                                      \
-  do                                                                          \
-    {                                                                         \
-      if (write_pos + (DSIZE) > last_pos)                                     \
-        POCL_ABORT (                                                          \
-            "pocl-tce: kernel arguments do not fit into argbuffer!\n");       \
-      unsigned unaligned = (intptr_t)write_pos % DSIZE;                       \
-      if (unaligned > 0)                                                      \
-        write_pos += (DSIZE - unaligned);                                     \
-    }                                                                         \
-  while (0)
+#define CHECK_AND_ALIGN_ARGBUFFER(DSIZE)                                       \
+  do {                                                                         \
+    if (write_pos + (DSIZE) > last_pos)                                        \
+      POCL_ABORT("tce: too many kernel arguments!\n");                         \
+    int AlignTarget = MAX_EXTENDED_ALIGNMENT;                                  \
+    unsigned T = (intptr_t)write_pos % AlignTarget;                            \
+    if (T > 0)                                                                 \
+      write_pos += (AlignTarget - T);                                          \
+  } while (0)
 
 void
 pocl_tce_run(void *data, _cl_command_node* cmd)
@@ -613,10 +611,11 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
   __kernel_exec_cmd dev_cmd;
   dev_cmd.kernel_meta = pocl_byteswap_uint32_t(kernelAddr, d->needsByteSwap);
 
-  /* assume 8KB is enough for kernargs */
-  char *temp = (char *)alloca(8200);
+  const size_t KernArgsSize = 8 * 1024;
+  char *temp =
+      (char *)pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, KernArgsSize);
   char *write_pos = temp;
-  char *last_pos = temp + 8192;
+  char *last_pos = temp + KernArgsSize;
 
   struct pocl_argument *al;
 
@@ -857,6 +856,7 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
        i != tempChunks.end(); ++i) 
     pocl_free_chunk(*i);
 
+  free(temp);
   pocl_free_chunk(kernargs);
   pocl_free_chunk(context);
 

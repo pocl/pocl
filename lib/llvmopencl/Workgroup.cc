@@ -1340,7 +1340,12 @@ static void computeArgBufferOffsets(LLVMValueRef F,
     // TODO: This is a target specific type? We would like to get the
     // natural size or the "packed size" instead...
     uint64_t ByteSize = getArgumentSize(cast<Argument>(*unwrap(Param)));
-    uint64_t Alignment = pocl_size_ceil2_64(ByteSize);
+
+    // Always align each argument by the max extended alignment so we can push
+    // structs and vectors to the buffer without needing to inspect the
+    // content/alignment preferences of the structs. This naturally is a bit
+    // wasteful, but should not matter in the big picture.
+    uint64_t Alignment = MAX_EXTENDED_ALIGNMENT;
 
     assert(ByteSize > 0 && "Arg type size is zero?");
     Offset = align64(Offset, Alignment);
