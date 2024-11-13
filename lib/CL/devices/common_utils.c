@@ -438,6 +438,7 @@ pocl_cpu_init_common (cl_device_id device)
   device->local_mem_size = pocl_get_int_option ("POCL_CPU_LOCAL_MEM_SIZE",
                                                 device->local_mem_size);
 
+#ifndef ENABLE_CONFORMANCE
   device->cmdbuf_capabilities
     = CL_COMMAND_BUFFER_CAPABILITY_SIMULTANEOUS_USE_KHR
       | CL_COMMAND_BUFFER_CAPABILITY_KERNEL_PRINTF_KHR
@@ -449,6 +450,7 @@ pocl_cpu_init_common (cl_device_id device)
   device->cmdbuf_mutable_dispatch_capabilities
     = CL_MUTABLE_DISPATCH_GLOBAL_SIZE_KHR | CL_MUTABLE_DISPATCH_LOCAL_SIZE_KHR
       | CL_MUTABLE_DISPATCH_GLOBAL_OFFSET_KHR;
+#endif
 
   return ret;
 }
