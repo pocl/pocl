@@ -51,6 +51,7 @@ can be used from the build directory (without installing it system-wide).
 ![OpenASIP+Vulkan](https://github.com/pocl/pocl/actions/workflows/build_openasip_vulkan.yml/badge.svg?event=push&branch=main)
 ![Remote](https://github.com/pocl/pocl/actions/workflows/build_remote.yml/badge.svg?event=push&branch=main)
 ![Apple M1](https://github.com/pocl/pocl/actions/workflows/build_macos.yml/badge.svg?event=push&branch=main)
+![Windows](https://github.com/pocl/pocl/actions/workflows/build_msvc.yml/badge.svg?event=push&branch=main)
 
 ### Support Matrix legend:
 
@@ -95,9 +96,10 @@ can be used from the build directory (without installing it system-wide).
 
 ### Windows
 
-| CPU device  |     LLVM-MinGW 18    |  LLVM-MinGW 19  |
+| CPU device  |     LLVM 18    |  LLVM 19        |
 |:------------|:--------------:|:---------------:|
-| x86-64      | :yellow_circle: | :yellow_circle:  |
+| MinGW / x86-64   | :yellow_circle: | :yellow_circle:  |
+| MSVC / x86-64   | :green_circle: | :green_circle:  |
 
 
 ## Binary packages
