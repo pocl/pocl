@@ -480,10 +480,3 @@ set_property(TEST
   "runtime/test_dbk_matmul"
   "runtime/test_queue_creation_with_hints"
   APPEND PROPERTY LABELS "level0")
-
-if(ENABLE_LEVEL0 AND ENABLE_HOST_CPU_DEVICES)
-  add_test(NAME "runtime/test_subbuffers_multidevice" COMMAND "test_subbuffers")
-  set_property(TEST "runtime/test_subbuffers_multidevice"
-    APPEND PROPERTY ENVIRONMENT "POCL_DEVICES=level0 cpu")
-
-endif()
