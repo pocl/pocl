@@ -132,7 +132,9 @@ endif()
 
 string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_OBJ_ROOT "${LLVM_OBJ_ROOT}")
 run_llvm_config(LLVM_ALL_TARGETS --targets-built)
-run_llvm_config(LLVM_HOST_TARGET --host-target)
+if (NOT DEFINED LLVM_HOST_TARGET)
+  run_llvm_config(LLVM_HOST_TARGET --host-target)
+endif()
 run_llvm_config(LLVM_BUILD_MODE --build-mode)
 run_llvm_config(LLVM_ASSERTS_BUILD --assertion-mode)
 
