@@ -2483,6 +2483,9 @@ pocl_svm_check_get_pointer (cl_context context, const void *svm_ptr, size_t size
   char *svm_alloc_start = NULL;
   DL_FOREACH (context->raw_ptrs, item)
   {
+    if (item->vm_ptr == NULL)
+      continue;
+
     svm_alloc_start = (char *)item->vm_ptr;
     svm_alloc_end = svm_alloc_start + item->size;
     if (((char *)svm_ptr >= svm_alloc_start)
