@@ -797,7 +797,7 @@ struct pocl_device_ops {
    * Note: the attributes have been already validated by runtime at this point
    */
   int (*supports_dbk) (cl_device_id device,
-                       BuiltinKernelId kernel_id,
+                       cl_dbk_id_exp kernel_id,
                        const void *kernel_attributes);
 
   /** Optional: If the driver needs to use hardware resources
@@ -1772,9 +1772,9 @@ struct _cl_mem {
 
   /* Tensor Properties */
   cl_uint tensor_rank;
-  cl_tensor_shape tensor_shape[CL_MEM_MAX_TENSOR_RANK];
-  cl_tensor_datatype tensor_dtype;
-  cl_tensor_layout_type tensor_layout_type;
+  cl_tensor_shape_exp tensor_shape[CL_MEM_MAX_TENSOR_RANK_EXP];
+  cl_tensor_datatype_exp tensor_dtype;
+  cl_tensor_layout_type_exp tensor_layout_type;
   void *tensor_layout;
   // properties
   char is_tensor;
@@ -1830,7 +1830,7 @@ typedef struct pocl_kernel_metadata_s
   /* per-device array of hashes */
   pocl_kernel_hash_t *build_hash;
 
-  /* enum BuiltinKernelId */
+  /* enum cl_dbk_id_exp */
   unsigned builtin_kernel_id;
   /* only for defined builtin kernels */
   void *builtin_kernel_attrs;
@@ -1880,7 +1880,7 @@ struct _cl_program {
   char **builtin_kernel_names;
   char *concated_builtin_names;
   // relevant only for DefinedBuiltinKernels:
-  BuiltinKernelId *builtin_kernel_ids;
+  cl_dbk_id_exp *builtin_kernel_ids;
   void **builtin_kernel_attributes;
 
   /* Poclcc binary format.  */

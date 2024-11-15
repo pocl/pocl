@@ -33,61 +33,71 @@
 #define OPENCL_EXP_TENSOR_H
 #include <CL/cl.h>
 
+/* Based on spec v0.2.0
+ * https://github.com/KhronosGroup/OpenCL-Docs/pull/1006
+ */
+
 /* types for describing dimensions & stride */
-typedef cl_ulong cl_tensor_shape;
-typedef cl_ulong cl_tensor_stride;
-typedef cl_uint cl_tensor_dim;
+typedef cl_ulong cl_tensor_shape_exp;
+typedef cl_ulong cl_tensor_stride_exp;
+typedef cl_uint cl_tensor_dim_exp;
 
-typedef cl_uint cl_tensor_datatype;
+typedef cl_uint cl_tensor_datatype_exp;
 /* cl_tensor_datatype values. List of the datatypes for Tensor data */
+/* NOTE: CL_TENSOR_DTYPE_UNKNOWN is not in the spec (v0.2.0). Preserved for
+ * internal use. */
 #define CL_TENSOR_DTYPE_UNKNOWN 0
-#define CL_TENSOR_DTYPE_FP64 1
-#define CL_TENSOR_DTYPE_INT64 2
-#define CL_TENSOR_DTYPE_UINT64 3
-#define CL_TENSOR_DTYPE_FP32 4
-#define CL_TENSOR_DTYPE_INT32 5
-#define CL_TENSOR_DTYPE_UINT32 6
-#define CL_TENSOR_DTYPE_FP16 7
-#define CL_TENSOR_DTYPE_INT16 8
-#define CL_TENSOR_DTYPE_UINT16 9
-#define CL_TENSOR_DTYPE_FP8 10
-#define CL_TENSOR_DTYPE_INT8 11
-#define CL_TENSOR_DTYPE_UINT8 12
-#define CL_TENSOR_DTYPE_INT4 13
-#define CL_TENSOR_DTYPE_UINT4 14
-#define CL_TENSOR_DTYPE_LAST 15
 
-/* cl_tensor_datatype_value is used to pass POD data to DBKs (like Alpha & Beta
- * parameters to the GEMM); the actual type used is implied. In case of
- * GEMM, the datatype is implied the same as COut Tensor datatype.
- * TODO: this could be done with passing a void* pointer, however
- * this avoids the need for malloc & memcpy */
-typedef union
-{
-  cl_char c;
-  cl_short s;
-  cl_int i;
-  cl_long l;
-  cl_half h;
-  cl_float f;
-  cl_double d;
-  char raw[sizeof (cl_double)];
-} cl_tensor_datatype_value;
+#define CL_TENSOR_DTYPE_UINT4_EXP 1
+#define CL_TENSOR_DTYPE_UINT8_EXP 2
+#define CL_TENSOR_DTYPE_UINT16_EXP 3
+#define CL_TENSOR_DTYPE_UINT32_EXP 4
+#define CL_TENSOR_DTYPE_UINT64_EXP 5
+
+#define CL_TENSOR_DTYPE_INT4_EXP 6
+#define CL_TENSOR_DTYPE_INT8_EXP 7
+#define CL_TENSOR_DTYPE_INT16_EXP 8
+#define CL_TENSOR_DTYPE_INT32_EXP 9
+#define CL_TENSOR_DTYPE_INT64_EXP 10
+
+/* https://discourse.llvm.org/t/rethink-on-approach-to-low-precision-fp-types/
+   suggests that there are lot more floating-point types. Perhaps,
+   tensor data types should be represented as a bitfield. E.g.
+   cl_tensor_datatype_exp fp8e4m3 = CL_FLOAT_KIND | CL_EXPONENT_BITS_4 |
+   CL_MANTISSA_BITS_3? */
+#define CL_TENSOR_DTYPE_FP8E4M3_EXP 11
+#define CL_TENSOR_DTYPE_FP8E5M2_EXP 12
+#define CL_TENSOR_DTYPE_FP16_EXP 13
+#define CL_TENSOR_DTYPE_FP32_EXP 14
+#define CL_TENSOR_DTYPE_FP64_EXP 15
+
+#define CL_TENSOR_DTYPE_BFLOAT16_EXP 16
+
+#define CL_TENSOR_DTYPE_COMPLEX64_EXP 17
+#define CL_TENSOR_DTYPE_COMPLEX128_EXP 18
+
+/* NOTE: CL_TENSOR_DTYPELAST is not in the spec (v0.2.0). Preserved for
+ * internal use. */
+#define CL_TENSOR_DTYPE_LAST 19
 
 /* cl_tensor_layout_type describes the type of layout struct in cl_tensor_desc */
-typedef cl_uint cl_tensor_layout_type;
+typedef cl_uint cl_tensor_layout_type_exp;
 
 /* CL_TENSOR_LAYOUT_NONE: corresponding layout pointer is expected to be NULL;
  * TODO: does this make sense ? the idea is that the driver
  * could pick the "optimal" storage mode for a Tensor. However,
  * this would likely result in extra memcpy (when the user data is copied
  * to driver storage). */
-#define CL_TENSOR_LAYOUT_NONE 0
-/* corresponding layout pointer points to struct cl_tensor_layout_blas */
-#define CL_TENSOR_LAYOUT_BLAS 1
+#define CL_TENSOR_LAYOUT_OPAQUE_EXP 0
+/* corresponding layout pointer points to struct cl_tensor_layout_blas_exp */
+#define CL_TENSOR_LAYOUT_BLAS_EXP 1
+/* corresponding layout pointer points to struct
+ * cl_tensor_layout_blas_pitched_exp */
+/* NOTE: This layout variant is considered to be removed due to lack of use
+ *       cases.  */
+#define CL_TENSOR_LAYOUT_BLAS_PITCHED_EXP 2
 /* corresponding layout pointer points to struct cl_tensor_layout_ml */
-#define CL_TENSOR_LAYOUT_ML 2
-
+#define CL_TENSOR_LAYOUT_ML_EXP 3
 
 /* cl_tensor_properties for setting extra properties on a cl_mem Tensor.
  * Tensor with a Mutable property means that a clSetKernelArg on DBK with
@@ -96,22 +106,22 @@ typedef cl_uint cl_tensor_layout_type;
  * cl_tensor_desc given at clCreateProgramWithDBKs() time.
  * Devices that don't support Mutable attributes should return an error
  * at Program build time. */
-typedef cl_properties cl_tensor_properties;
+typedef cl_properties cl_tensor_properties_exp;
 
-#define CL_TENSOR_PROPERTY_NONE 0
+/* NOTE: This is not in the spec (v0.2.0). Preserved for internal use. */
+#define CL_TENSOR_PROPERTY_NONE_EXP 0
 /* allow the tensor to be mutable with respect to shape */
-#define CL_TENSOR_PROPERTY_MUTABLE_SHAPE 1
+#define CL_TENSOR_PROPERTY_MUTABLE_SHAPE_EXP 1
 /* allow the tensor to be mutable with respect to data types */
-#define CL_TENSOR_PROPERTY_MUTABLE_DTYPE 2
+#define CL_TENSOR_PROPERTY_MUTABLE_DTYPE_EXP 2
 /* allow the tensor to be mutable with respect to layout */
-#define CL_TENSOR_PROPERTY_MUTABLE_LAYOUT 3
-
+#define CL_TENSOR_PROPERTY_MUTABLE_LAYOUT_EXP 3
 
 /*********************** Additions to cl_mem_object_type ********************/
 
 /* A clCreateBufferWithProperties() property value that implies next
  * property is a pointer to cl_tensor_desc. */
-#define CL_MEM_TENSOR 0x8000
+#define CL_MEM_TENSOR_EXP 0x8000
 
 /* TBC: A clCreateSubBuffer() cl_buffer_create_type used for creating a
  * subtensor for the purpose of:
@@ -119,26 +129,26 @@ typedef cl_properties cl_tensor_properties;
  * splitting large tensors to smaller ones.
  * reshaping existing tensor to another.
  * coercing data type of an existing tensor to other type of same size.
- #define CL_MEM_TENSOR_VIEW 0x8001 */
+ #define CL_MEM_TENSOR_VIEW_EXP 0x8001 */
 
 /* Maximum tensor rank that can be used in the structs defined below */
 /* TODO is there a good reason to make this non-fixed size */
-#define CL_MEM_MAX_TENSOR_RANK 20
+#define CL_MEM_MAX_TENSOR_RANK_EXP 20
 
 /* Maximum number of tensor properties */
-#define CL_MAX_TENSOR_PROPERTIES 16
+#define CL_MAX_TENSOR_PROPERTIES_EXP 16
 
 /* cl_tensor_desc is a struct that must be passed with CL_MEM_TENSOR in
  * properties array of clCreateBufferWithProperties() */
-typedef struct _cl_tensor_desc
+typedef struct _cl_tensor_desc_exp
 {
   /* The rank of the tensor. <= CL_MEM_MAX_TENSOR_RANK */
   cl_uint rank;
 
   /* The element type of the tensor. */
-  cl_tensor_datatype dtype;
+  cl_tensor_datatype_exp dtype;
   /* 0-terminated array of Tensor properties */
-  cl_tensor_properties properties[CL_MAX_TENSOR_PROPERTIES];
+  cl_tensor_properties_exp properties[CL_MAX_TENSOR_PROPERTIES_EXP];
 
   /* The shape of the tensor described by an array. Describes number
    * of elements in the tensor dimensions starting with "outermost"
@@ -150,7 +160,7 @@ typedef struct _cl_tensor_desc
    * * length of the array must be at least <rank> elements.
    * * TBC: A dimension can be zero meaning the size is unspecified. However,
    *   commands involving tensors must have fully specified shape. */
-  cl_tensor_shape shape[CL_MEM_MAX_TENSOR_RANK];
+  cl_tensor_shape_exp shape[CL_MEM_MAX_TENSOR_RANK_EXP];
 
   /* Optional data layout description. Must be NULL or one of
    * cl_tensor_layout_* structures in the below.
@@ -159,13 +169,13 @@ typedef struct _cl_tensor_desc
    * used for transferring data from or to tensor. If a pointer to the
    * tensor data is aquired (somehow), dereferencing that pointer is
    * undefined behavior. */
-  void *layout;
-  cl_tensor_layout_type layout_type;
+  const void *layout;
+  cl_tensor_layout_type_exp layout_type;
 
-} cl_tensor_desc;
+} cl_tensor_desc_exp;
 
 /* Describes Tensor data layout using terms related to BLAS APIs. */
-typedef struct _cl_tensor_layout_blas
+typedef struct _cl_tensor_layout_blas_pitched_exp
 {
   /* Leading tensor dimensions. This describes which elements along
    * tensor dimensions are laid out first in the memory. Tensor
@@ -184,7 +194,7 @@ typedef struct _cl_tensor_layout_blas
    *
    * * Each tensor dimension 0..<tensor_rank - 1> must appear once in
    *   the array. */
-  cl_tensor_dim leading_dims[CL_MEM_MAX_TENSOR_RANK];
+  cl_tensor_dim_exp leading_dims[CL_MEM_MAX_TENSOR_RANK_EXP];
 
   /* Strides of the leading dimensions. Array length must be at least
    * (tensor_rank - 1) and following assertion must hold:
@@ -199,7 +209,7 @@ typedef struct _cl_tensor_layout_blas
    * TBC: Allow leading_strides == 0 (undefined) in which case the
    *      tensor data is non-strided (e.g. for matrices with no gaps
    *      between columns/rows) for convenience? */
-  cl_tensor_stride leading_strides[CL_MEM_MAX_TENSOR_RANK];
+  cl_tensor_stride_exp leading_strides[CL_MEM_MAX_TENSOR_RANK_EXP];
 
   /* TBC: This field specifies an optional alignment guarantee for the
    * first element (an element at coordinate = (0, 0, ..., 0)). The
@@ -207,26 +217,35 @@ typedef struct _cl_tensor_layout_blas
    * the dtype. This could also be a layout extension.
    *size_t base_alignment; */
 
-} cl_tensor_layout_blas;
+} cl_tensor_layout_blas_pitched_exp;
+
+/* Same as cl_tensor_layout_blas_pitched_exp but does not have member
+   for describing pitches/strides. */
+typedef struct _cl_tensor_layout_blas_exp
+{
+  cl_tensor_dim_exp leading_dims[CL_MEM_MAX_TENSOR_RANK_EXP];
+} cl_tensor_layout_blas_exp;
 
 /* Describes the Tensor data layout using terms related to ML models.
  * (These can be also expressed with BLAS layout type) */
-typedef cl_uint cl_tensor_layout_ml_type;
+typedef cl_uint cl_tensor_layout_ml_type_exp;
+/* NOTE: ..._ML_UNKNOWN not in the spec (v0.2.0). Preserved for internal
+ * use.  */
 #define CL_TENSOR_LAYOUT_ML_UNKNOWN 0
-#define CL_TENSOR_LAYOUT_ML_C 1
-#define CL_TENSOR_LAYOUT_ML_NC 2
-#define CL_TENSOR_LAYOUT_ML_CN 3
-#define CL_TENSOR_LAYOUT_ML_HW 4
-#define CL_TENSOR_LAYOUT_ML_CHW 5
-#define CL_TENSOR_LAYOUT_ML_NCHW 6
-#define CL_TENSOR_LAYOUT_ML_NHWC 7
+#define CL_TENSOR_LAYOUT_ML_C_EXP 1
+#define CL_TENSOR_LAYOUT_ML_NC_EXP 2
+#define CL_TENSOR_LAYOUT_ML_CN_EXP 3
+#define CL_TENSOR_LAYOUT_ML_HW_EXP 4
+#define CL_TENSOR_LAYOUT_ML_CHW_EXP 5
+#define CL_TENSOR_LAYOUT_ML_NCHW_EXP 6
+#define CL_TENSOR_LAYOUT_ML_NHWC_EXP 7
+/* NOTE: ..._ML_LAST not in the spec (v0.2.0). Preserved for internal
+ * use.  */
 #define CL_TENSOR_LAYOUT_ML_LAST 8
 
-
-
-typedef struct _cl_tensor_layout_ml
+typedef struct _cl_tensor_layout_ml_exp
 {
-  cl_tensor_layout_ml_type ml_type;
-} cl_tensor_layout_ml;
+  cl_tensor_layout_ml_type_exp ml_type;
+} cl_tensor_layout_ml_exp;
 
 #endif /* OPENCL_EXP_TENSOR_H */

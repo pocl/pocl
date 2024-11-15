@@ -56,7 +56,7 @@
 
 // NOTE: This enum contains highly experimental built-in kernel IDs, that are
 // subject to change in future PoCL releases without any deprecation period.
-enum BuiltinKernelId : uint16_t
+enum cl_dbk_id_exp : uint16_t
 {
   // CD = custom device, BI = built-in
   // 1D array byte copy, get_global_size(0) defines the size of data to copy

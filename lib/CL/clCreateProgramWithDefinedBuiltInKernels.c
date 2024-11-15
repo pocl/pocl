@@ -30,7 +30,7 @@
 
 /*
  * num_kernel - number of kernels (K)
- * kernel_ids - array of K enum values, must be valid BuiltinKernelId
+ * kernel_ids - array of K enum values, must be valid cl_dbk_id_exp
  * kernel_names - array of K strings, these are user-chosen kernel names for
  * each kernel, must be unique within program
  * kernel_attributes - array of K structs that contain attrs
@@ -38,12 +38,12 @@
  */
 
 CL_API_ENTRY cl_program CL_API_CALL
-POname (clCreateProgramWithDefinedBuiltInKernels) (
+POname (clCreateProgramWithDefinedBuiltInKernelsEXP) (
   cl_context context,
   cl_uint num_devices,
   const cl_device_id *device_list,
   cl_uint num_kernels,
-  const BuiltinKernelId *kernel_ids,
+  const cl_dbk_id_exp *kernel_ids,
   const char **kernel_names,
   const void **kernel_attributes,
   cl_int *device_support,
@@ -55,7 +55,7 @@ POname (clCreateProgramWithDefinedBuiltInKernels) (
   char **builtin_names = NULL;
   size_t concated_kernel_names_size = 0;
   char *concated_kernel_names = NULL;
-  BuiltinKernelId *builtin_kernel_ids = NULL;
+  cl_dbk_id_exp *builtin_kernel_ids = NULL;
   void **builtin_kernel_attrs = NULL;
 
   POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
@@ -87,7 +87,7 @@ POname (clCreateProgramWithDefinedBuiltInKernels) (
                         CL_OUT_OF_HOST_MEMORY);
 
   builtin_kernel_ids
-    = (BuiltinKernelId *)calloc (num_kernels, sizeof (BuiltinKernelId));
+    = (cl_dbk_id_exp *)calloc (num_kernels, sizeof (cl_dbk_id_exp));
   POCL_GOTO_ERROR_COND ((builtin_kernel_ids == NULL), CL_OUT_OF_HOST_MEMORY);
 
   builtin_kernel_attrs = (void **)calloc (num_kernels, sizeof (void *));
@@ -194,4 +194,4 @@ ERROR:
     *errcode_ret = errcode;
   return NULL;
 }
-POsym (clCreateProgramWithDefinedBuiltInKernels)
+POsym (clCreateProgramWithDefinedBuiltInKernelsEXP)

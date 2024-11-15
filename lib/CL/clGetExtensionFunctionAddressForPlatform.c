@@ -224,8 +224,8 @@ CL_API_SUFFIX__VERSION_1_2
     return (void *)&POname (clGetMutableCommandInfoKHR);
 #endif
 
-  if (strcmp (func_name, "clCreateProgramWithDefinedBuiltInKernels") == 0)
-    return (void *)&POname (clCreateProgramWithDefinedBuiltInKernels);
+  if (strcmp (func_name, "clCreateProgramWithDefinedBuiltInKernelsEXP") == 0)
+    return (void *)&POname (clCreateProgramWithDefinedBuiltInKernelsEXP);
 
   POCL_MSG_ERR ("unknown platform extension requested: %s\n", func_name);
   return NULL;

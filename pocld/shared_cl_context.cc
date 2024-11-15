@@ -90,7 +90,7 @@ class SharedCLContext final : public SharedContextBase {
   std::vector<cl::Device> CLDevices;
   std::vector<cl::Device> CLDevicesWithSVMSupport;
 
-  clCreateProgramWithDefinedBuiltInKernels_fn createProgramWithDBKs;
+  clCreateProgramWithDefinedBuiltInKernelsEXP_fn createProgramWithDBKs;
 
   std::unordered_map<uint32_t, clSamplerPtr> SamplerIDmap;
   std::unordered_map<uint32_t, clImagePtr> ImageIDmap;
@@ -562,9 +562,9 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
                                  ReplyQueueThread *s, ReplyQueueThread *f) {
   p->getDevices(CL_DEVICE_TYPE_ALL, &CLDevices);
 
-  createProgramWithDBKs = (clCreateProgramWithDefinedBuiltInKernels_fn)
+  createProgramWithDBKs = (clCreateProgramWithDefinedBuiltInKernelsEXP_fn)
       clGetExtensionFunctionAddressForPlatform(
-          (*p)(), "clCreateProgramWithDefinedBuiltInKernels");
+          (*p)(), "clCreateProgramWithDefinedBuiltInKernelsEXP");
 
   cl_context_properties Properties[] = {
       CL_CONTEXT_PLATFORM, reinterpret_cast<intptr_t>(p->operator()()),
@@ -1479,7 +1479,7 @@ int SharedCLContext::buildOrLinkProgram(
 
     uint64_t num_kernels;
     std::vector<const char *> kernel_names;
-    std::vector<BuiltinKernelId> kernel_ids;
+    std::vector<cl_dbk_id_exp> kernel_ids;
     std::vector<void *> kernel_attributes;
 
     const char *cursor = src;

@@ -24,31 +24,30 @@
 #include "pocl_dbk_khr_jpeg_shared.h"
 
 int
-pocl_validate_khr_jpeg (BuiltinKernelId kernel_id,
-                        const void *kernel_attributes)
+pocl_validate_khr_jpeg (cl_dbk_id_exp kernel_id, const void *kernel_attributes)
 {
 
   switch (kernel_id)
     {
-    case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
+    case CL_DBK_JPEG_ENCODE_EXP:
       {
-        cl_dbk_attributes_exp_jpeg_encode *attrs
-          = (cl_dbk_attributes_exp_jpeg_encode *)kernel_attributes;
+        cl_dbk_attributes_jpeg_encode_exp *attrs
+          = (cl_dbk_attributes_jpeg_encode_exp *)kernel_attributes;
         POCL_RETURN_ERROR_ON ((1 > attrs->height || attrs->height > 65535),
-                              CL_INVALID_DBK_ATTRIBUTE,
+                              CL_DBK_INVALID_ATTRIBUTE_EXP,
                               "Height not between (0, 65535].\n");
         POCL_RETURN_ERROR_ON ((1 > attrs->width || attrs->width > 65535),
-                              CL_INVALID_DBK_ATTRIBUTE,
+                              CL_DBK_INVALID_ATTRIBUTE_EXP,
                               "Width not between (0, 65535].\n");
         POCL_RETURN_ERROR_ON ((0 > attrs->quality || attrs->quality > 100),
-                              CL_INVALID_DBK_ATTRIBUTE,
+                              CL_DBK_INVALID_ATTRIBUTE_EXP,
                               "Quality not between [0, 100].\n");
         return CL_SUCCESS;
       }
-    case POCL_CDBI_DBK_EXP_JPEG_DECODE:
+    case CL_DBK_JPEG_DECODE_EXP:
       {
         POCL_RETURN_ERROR_ON (kernel_attributes != NULL,
-                              CL_INVALID_DBK_ATTRIBUTE,
+                              CL_DBK_INVALID_ATTRIBUTE_EXP,
                               "decode attributes should be null. \n");
         return CL_SUCCESS;
       }
@@ -60,20 +59,20 @@ pocl_validate_khr_jpeg (BuiltinKernelId kernel_id,
 }
 
 void *
-pocl_copy_dbk_attributes_khr_jpeg (BuiltinKernelId kernel_id,
+pocl_copy_dbk_attributes_khr_jpeg (cl_dbk_id_exp kernel_id,
                                    const void *kernel_attributes)
 {
 
   switch (kernel_id)
     {
-    case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
+    case CL_DBK_JPEG_ENCODE_EXP:
       {
-        void *ret = malloc (sizeof (cl_dbk_attributes_exp_jpeg_encode));
+        void *ret = malloc (sizeof (cl_dbk_attributes_jpeg_encode_exp));
         memcpy (ret, kernel_attributes,
-                sizeof (cl_dbk_attributes_exp_jpeg_encode));
+                sizeof (cl_dbk_attributes_jpeg_encode_exp));
         return ret;
       }
-    case POCL_CDBI_DBK_EXP_JPEG_DECODE:
+    case CL_DBK_JPEG_DECODE_EXP:
       return NULL;
     default:
       POCL_MSG_ERR ("pocl_copy_dbk_attributes_khr_jpeg called with "
@@ -83,25 +82,27 @@ pocl_copy_dbk_attributes_khr_jpeg (BuiltinKernelId kernel_id,
 }
 
 int
-pocl_release_dbk_attributes_khr_jpeg (BuiltinKernelId kernel_id,
+pocl_release_dbk_attributes_khr_jpeg (cl_dbk_id_exp kernel_id,
                                       void *kernel_attributes)
 {
 
   switch (kernel_id)
     {
-    case POCL_CDBI_DBK_EXP_JPEG_ENCODE:
+    case CL_DBK_JPEG_ENCODE_EXP:
       {
         POCL_MEM_FREE (kernel_attributes);
         return CL_SUCCESS;
       }
-    case POCL_CDBI_DBK_EXP_JPEG_DECODE:
+    case CL_DBK_JPEG_DECODE_EXP:
       {
         POCL_MEM_FREE (kernel_attributes);
         return CL_SUCCESS;
       }
     default:
-      POCL_RETURN_ERROR (CL_INVALID_DBK_ID,
+      POCL_RETURN_ERROR (CL_DBK_INVALID_ID_EXP,
                          "pocl_copy_dbk_attributes_khr_jpeg called with "
                          "wrong kernel_id.\n");
     }
+  assert (!"UNREACHABLE");
+  return CL_DBK_INVALID_ID_EXP;
 }

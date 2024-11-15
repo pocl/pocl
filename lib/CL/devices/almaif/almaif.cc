@@ -403,10 +403,10 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
 
   if (D->Dev->isDBDevice()) {
 #ifdef HAVE_DBDEVICE
-    std::vector<BuiltinKernelId> bik_list =
+    std::vector<cl_dbk_id_exp> bik_list =
         ((DBDevice *)(D->Dev))->supportedBuiltinKernels();
 
-    for (const BuiltinKernelId &kernelId : bik_list) {
+    for (const cl_dbk_id_exp &kernelId : bik_list) {
 
       bool found = false;
       for (size_t i = 0; i < BIKERNELS; ++i) {
@@ -430,7 +430,7 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   } else {
     while ((paramToken = strtok_r(NULL, ",", &savePtr))) {
       auto token = strtoul(paramToken, NULL, 0);
-      BuiltinKernelId kernelId = static_cast<BuiltinKernelId>(token);
+      cl_dbk_id_exp kernelId = static_cast<cl_dbk_id_exp>(token);
 
       bool found = false;
       for (size_t i = 0; i < BIKERNELS; ++i) {
@@ -858,9 +858,9 @@ void scheduleNDRange(AlmaifData *data, _cl_command_node *cmd, size_t arg_size,
 #ifdef HAVE_DBDEVICE
   if (data->Dev->isDBDevice()) {
     ((DBDevice *)(data->Dev))
-        ->programBIKernelBitstream((BuiltinKernelId)kernelID);
+        ->programBIKernelBitstream((cl_dbk_id_exp)kernelID);
     ((DBDevice *)(data->Dev))
-        ->programBIKernelFirmware((BuiltinKernelId)kernelID);
+        ->programBIKernelFirmware((cl_dbk_id_exp)kernelID);
   }
 #endif
 

@@ -88,7 +88,7 @@ cl_int pocl_cpu_init_common (cl_device_id device);
 
 POCL_EXPORT
 int pocl_cpu_supports_dbk (cl_device_id device,
-                           BuiltinKernelId kernel_id,
+                           cl_dbk_id_exp kernel_id,
                            const void *kernel_attributes);
 POCL_EXPORT
 int pocl_cpu_build_defined_builtin (cl_program program, cl_uint device_i);
@@ -114,10 +114,10 @@ int pocl_setup_kernel_arg_array_with_locals (void **arguments,
                                              size_t local_mem_size);
 
 POCL_EXPORT
-int pocl_tensor_type_size (cl_tensor_datatype T);
+int pocl_tensor_type_size (cl_tensor_datatype_exp dtype);
 
 POCL_EXPORT
-int pocl_tensor_type_is_int (cl_tensor_datatype T);
+int pocl_tensor_type_is_int (cl_tensor_datatype_exp dtype);
 
 POCL_EXPORT
 void pocl_free_kernel_arg_array (kernel_run_command *k);

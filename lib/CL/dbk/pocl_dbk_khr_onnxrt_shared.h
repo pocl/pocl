@@ -30,11 +30,11 @@
 #include "pocl_export.h"
 
 POCL_EXPORT
-cl_dbk_attributes_exp_onnx_inference *pocl_copy_onnx_inference_dbk_attributes (
-  const cl_dbk_attributes_exp_onnx_inference *src);
+cl_dbk_attributes_onnx_inference_exp *pocl_copy_onnx_inference_dbk_attributes (
+  const cl_dbk_attributes_onnx_inference_exp *src);
 
 POCL_EXPORT
 void pocl_release_onnx_inference_dbk_attributes (
-  cl_dbk_attributes_exp_onnx_inference *attrs);
+  cl_dbk_attributes_onnx_inference_exp *attrs);
 
 #endif //_POCL_DBK_KHR_ONNXRT_SHARED_H_

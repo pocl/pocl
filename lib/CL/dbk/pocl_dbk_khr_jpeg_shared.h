@@ -26,13 +26,13 @@
 
 #include "pocl_builtin_kernels.h"
 
-int pocl_validate_khr_jpeg (BuiltinKernelId kernel_id,
+int pocl_validate_khr_jpeg (cl_dbk_id_exp kernel_id,
                             const void *kernel_attributes);
 
-int pocl_release_dbk_attributes_khr_jpeg (BuiltinKernelId kernel_id,
+int pocl_release_dbk_attributes_khr_jpeg (cl_dbk_id_exp kernel_id,
                                           void *kernel_attributes);
 
-void *pocl_copy_dbk_attributes_khr_jpeg (BuiltinKernelId kernel_id,
+void *pocl_copy_dbk_attributes_khr_jpeg (cl_dbk_id_exp kernel_id,
                                          const void *kernel_attributes);
 
 #endif //_POCL_DBK_KHR_JPEG_SHARED_H_

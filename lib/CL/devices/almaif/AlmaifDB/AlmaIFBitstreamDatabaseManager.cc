@@ -166,7 +166,7 @@ void AlmaIFBitstreamDatabaseManager::parseBIKernels(
   int64_t BikIDLong = json_getInteger(Bik);
   assert(BikIDLong < 0xFFFF);
 
-  BuiltinKernelId BikID = (BuiltinKernelId)BikIDLong;
+  cl_dbk_id_exp BikID = (cl_dbk_id_exp)BikIDLong;
   SupportedBIKernels_[ProgFilesInfo.FpgaType].push_back(
       {BikID, ProgFilesInfo.FpgaType, ProgFilesInfo.BitstreamPath,
        ProgFilesInfo.FirmwarePath, ProgFilesInfo.KernelName});
@@ -249,7 +249,7 @@ AlmaIFBitstreamDatabaseManager::deviceTypeEnum2String(DEVICE_TYPE DeviceType) {
 }
 
 const AlmaIFBitstreamDatabaseManager::ProgrammingFiles &
-AlmaIFBitstreamDatabaseManager::getBitstreamFile(BuiltinKernelId BikID,
+AlmaIFBitstreamDatabaseManager::getBitstreamFile(cl_dbk_id_exp BikID,
                                                  DEVICE_TYPE UsedDeviceType) {
 
   for (const ProgrammingFiles &Iter : SupportedBIKernels_[UsedDeviceType]) {
@@ -261,7 +261,7 @@ AlmaIFBitstreamDatabaseManager::getBitstreamFile(BuiltinKernelId BikID,
 }
 
 const AlmaIFBitstreamDatabaseManager::ProgrammingFiles &
-AlmaIFBitstreamDatabaseManager::getFirmwareFile(BuiltinKernelId BikID,
+AlmaIFBitstreamDatabaseManager::getFirmwareFile(cl_dbk_id_exp BikID,
                                                 DEVICE_TYPE UsedDeviceType) {
 
   for (const ProgrammingFiles &Iter : SupportedBIKernels_[UsedDeviceType]) {
@@ -272,13 +272,13 @@ AlmaIFBitstreamDatabaseManager::getFirmwareFile(BuiltinKernelId BikID,
   POCL_ABORT("Built in kernel %d firmware not found\n", BikID);
 }
 
-std::vector<BuiltinKernelId>
+std::vector<cl_dbk_id_exp>
 AlmaIFBitstreamDatabaseManager::supportedBuiltinKernels(
     DEVICE_TYPE UsedDeviceType) {
 
-  std::vector<BuiltinKernelId> Output;
+  std::vector<cl_dbk_id_exp> Output;
   for (const ProgrammingFiles &Iter : SupportedBIKernels_[UsedDeviceType]) {
-    Output.push_back((BuiltinKernelId)Iter.BikID);
+    Output.push_back((cl_dbk_id_exp)Iter.BikID);
   }
   return Output;
 }

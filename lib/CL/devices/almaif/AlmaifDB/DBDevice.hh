@@ -60,10 +60,10 @@ public:
   void freePipe(pocl_mem_identifier *P) override;
   size_t pointerDeviceOffset(pocl_mem_identifier *P) override;
 
-  virtual void programBIKernelFirmware(BuiltinKernelId BikID);
-  virtual void programBIKernelBitstream(BuiltinKernelId BikID);
+  virtual void programBIKernelFirmware(cl_dbk_id_exp BikID);
+  virtual void programBIKernelBitstream(cl_dbk_id_exp BikID);
 
-  virtual std::vector<BuiltinKernelId> supportedBuiltinKernels();
+  virtual std::vector<cl_dbk_id_exp> supportedBuiltinKernels();
   virtual void discoverDeviceParameters();
   int pipeCount() override;
 

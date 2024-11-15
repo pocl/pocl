@@ -225,7 +225,7 @@ POdeclsym(clEnqueueSVMMemcpyRectPOCL)
 POdeclsym (clSetKernelArgDevicePointerEXT)
 
 /* cl_exp_defined_builtin_kernels */
-POdeclsym (clCreateProgramWithDefinedBuiltInKernels)
+POdeclsym (clCreateProgramWithDefinedBuiltInKernelsEXP)
 
 /* clang-format on */
 
