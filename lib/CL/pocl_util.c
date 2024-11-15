@@ -1647,16 +1647,56 @@ pocl_run_command (const char **args)
   PROCESS_INFORMATION pi;
   ZeroMemory(&pi, sizeof(pi));
   DWORD dwProcessFlags = 0;
-  char * cmd = strdup(args[0]);
-  int p = CreateProcess(NULL, cmd, NULL, NULL, 1, dwProcessFlags, NULL, NULL, &si, &pi) != 0;
-  if (!p)
+
+  // Calculate required buffer size for all arguments
+  size_t total_len = 0;
+  for (const char **arg = args; *arg != NULL; arg++) {
+    // Account for spaces, quotes, and worst-case escaping
+    total_len += strlen(*arg) * 2 + 3;
+  }
+
+  char *cmd = (char*)malloc(total_len);
+  if (!cmd) return EXIT_FAILURE;
+  cmd[0] = '\0';
+
+  // Build command line with proper escaping
+  for (const char **arg = args; *arg != NULL; arg++) {
+    // Add space between arguments
+    if (arg != args) strcat(cmd, " ");
+
+    // Check if we need quotes (contains space or empty)
+    int needs_quotes = (strchr(*arg, ' ') != NULL) || (*arg[0] == '\0');
+    if (needs_quotes) strcat(cmd, "\"");
+
+    // Copy and escape argument
+    char *dst = cmd + strlen(cmd);
+    for (const char *src = *arg; *src != '\0'; src++) {
+      if (*src == '"')
+        *dst++ = '\\';
+      *dst++ = *src;
+    }
+    *dst = '\0';
+    if (needs_quotes) strcat(cmd, "\"");
+  }
+
+  POCL_MSG_PRINT_INFO ("Running command: %s\n", cmd);
+  int success = CreateProcess(NULL, cmd, NULL, NULL, TRUE,
+                            dwProcessFlags, NULL, NULL, &si, &pi);
+  free(cmd);
+
+  if (!success)
     return EXIT_FAILURE;
+
   DWORD waitRc = WaitForSingleObject(pi.hProcess, INFINITE);
   if (waitRc == WAIT_FAILED)
     return EXIT_FAILURE;
+
   DWORD exit_code = 0;
-  p = GetExitCodeProcess(pi.hProcess, &exit_code) != 0;
-  if (!p)
+  success = GetExitCodeProcess(pi.hProcess, &exit_code);
+
+  CloseHandle(pi.hProcess);
+  CloseHandle(pi.hThread);
+  if (!success)
     return EXIT_FAILURE;
   return exit_code;
 #else
