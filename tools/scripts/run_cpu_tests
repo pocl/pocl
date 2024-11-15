@@ -39,10 +39,10 @@ TEST_TYPE=$1
 if [ "$TEST_TYPE" = "cbs" ]; then
   export POCL_WORK_GROUP_METHOD=cbs
   ctest -L internal $@
-if [ "$TEST_TYPE" = "loopvec" ]; then
+elif [ "$TEST_TYPE" = "loopvec" ]; then
   export POCL_WORK_GROUP_METHOD=loopvec
   ctest -L internal $@
-if [ "$TEST_TYPE" = "mingw" ]; then
+elif [ "$TEST_TYPE" = "mingw" ]; then
   ctest -L internal -LE mingw_fail $@
 else
   ctest -L internal $@
