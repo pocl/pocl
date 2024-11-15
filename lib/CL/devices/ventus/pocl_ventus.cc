@@ -120,6 +120,8 @@ static const char *ventus_objdump_flags[] = {
   NULL
 };
 
+static std::map<uint64_t, uint> program_ids;
+
 void
 pocl_ventus_init_device_ops(struct pocl_device_ops *ops)
 {
@@ -277,7 +279,7 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->endian_little = CL_TRUE;
 
   dev->max_mem_alloc_size = 500 * 1024 * 1024; //100M
-  dev->mem_base_addr_align = 4;
+  dev->mem_base_addr_align = 128;
 
   dev->max_constant_buffer_size = 32768;     // TODO: Update this to conformant to OCL 2.0 // no cpmstant buffer now
   dev->local_mem_size = 64 * 1024;     // TODO: Update this to conformant to OCL 2.0 // 64kB per SM
@@ -295,7 +297,10 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->max_work_item_sizes[0] = 1024;
   dev->max_work_item_sizes[1] = 1024;
   dev->max_work_item_sizes[2] = 1024;
-  dev->max_parameter_size = 64;
+  dev->execution_capabilities = CL_EXEC_KERNEL;
+  dev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
+  dev->max_parameter_size = 1024;
+  dev->max_constant_args = 8;
   dev->max_compute_units = 16 * 32; // 16 SM comprise 16 int32 and 16 fp32 cores
   dev->max_clock_frequency = 100; // TODO: This is frequency in MHz
   dev->address_bits = 32;
@@ -386,6 +391,12 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
       it->second++;
   else
       knl_name_list[meta->name] = 0;
+
+  if(program_ids.find(uint64_t(kernel->program)) == program_ids.end()) {
+      printf("ERROR: program id not found\n");
+      exit(10);
+  }
+  uint id = program_ids[uint64_t(kernel->program)];
 
     uint64_t num_thread=[]{
 	  char* numVar = std::getenv("NUM_THREAD");
@@ -511,6 +522,8 @@ step5 make a writefile for chisel
               else
                 {
                   cl_mem m = (*(cl_mem *)(al->value));
+                  err=pocl_ventus_alloc_mem_obj(cmd->device, m, m->mem_host_ptr);
+                  assert(err == CL_SUCCESS);
                   ptr = malloc(sizeof(uint64_t));
                   memcpy(ptr,m->device_ptrs[cmd->device->global_mem_id].mem_ptr,sizeof(uint64_t));
 
@@ -670,9 +683,11 @@ step5 make a writefile for chisel
    * clCreateKernel.c line 79
    ***********************************************************************************************************/
 	uint32_t kernel_entry;
+  char filename[256] = "object";
+  strcat(filename, std::to_string(id).c_str());
   #ifdef __linux__
     std::string kernel_name(meta->name);
-    std::string kernel_entry_cmd = std::string(R"(nm -s object.riscv | grep -w 'T' | grep -w )") +kernel_name+ std::string(R"( | grep -o '^[^ ]*')");
+    std::string kernel_entry_cmd = std::string(R"(nm -s )") + filename + std::string(R"(.riscv | grep -w 'T' | grep -w )") +kernel_name+ std::string(R"( | grep -o '^[^ ]*')");
     FILE *fp0 = popen(kernel_entry_cmd.c_str(), "r");
     if(fp0 == NULL) {
         POCL_MSG_ERR("running compile kernel failed");
@@ -717,21 +732,25 @@ step5 make a writefile for chisel
       assert(pocl_exists(ventus_assembler.c_str()));
     }
   	system((std::string("chmod +x ") + assembler_path).c_str());
-  	assembler_path += " object";
+        assembler_path = assembler_path + std::string(" ") + std::string(filename);
   	system(assembler_path.c_str());
-	  POCL_MSG_PRINT_VENTUS("Vmem file has been written to object.vmem\n");
+	  POCL_MSG_PRINT_VENTUS("Vmem file has been written to %s.vmem\n", filename);
   #elif
     POCL_MSG_ERR("This operate system is not supported now by ventus, please use linux! \n");
     exit(1);
   #endif
 
 	//pass in vmem file
-	char filename[]="object.riscv";
+	char binary_filename[256];
+        strcpy(binary_filename, filename);
+        strcat(binary_filename, ".riscv");
 	///将text段搬到ddr(not related to spike),并且起始地址必须是0x80000000(spike专用)，verilator需要先解析出vmem,然后上传程序段
-	vt_upload_kernel_file(d->vt_device,filename,0);
+	vt_upload_kernel_file(d->vt_device,binary_filename,0);
   #ifdef PRINT_CHISEL_TESTCODE
     //this file includes all kernels of executable file, kernel actually to be executed is determined by metadata.
-	std::ifstream vmem_file("object.vmem");
+        char vmem_filename[256];
+        strcpy(vmem_filename, filename);
+	std::ifstream vmem_file(strcat(vmem_filename, ".vmem"));
 	vmem_file.seekg(0, vmem_file.end);
 	auto size = vmem_file.tellg();
 	std::string content;
@@ -880,7 +899,9 @@ step5 make a writefile for chisel
   // move print buffer back or wait to read?
 
     // rename log file from spike and add index for log
-    const char* sp_logname = "object.riscv.log";
+    char sp_logname[256];
+    strcpy(sp_logname, filename);
+    strcat(sp_logname, ".riscv.log");
     char newName[256]; // 假设文件名不超过 255 个字符
     FILE* logfp = fopen(sp_logname, "r");
     if(logfp) {
@@ -1326,12 +1347,15 @@ pocl_ventus_memfill (void *data, pocl_mem_identifier *dst_mem_id,
                      const void *__restrict__ pattern, size_t pattern_size)
 {
   struct vt_device_data_t *d = (struct vt_device_data_t *)data;
-  void *host_ptr = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, size);
+  void *host_ptr = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, size + offset);
   assert(host_ptr);
   pocl_fill_aligned_buf_with_pattern (host_ptr, 0, size, pattern, pattern_size);
   int err = vt_copy_to_dev(d->vt_device, *((uint64_t*)(dst_mem_id->mem_ptr)) + offset, host_ptr, size, 0, 0);
   assert(0 == err);
-  POCL_MEM_FREE(host_ptr);
+  err = vt_copy_from_dev(d->vt_device, *((uint64_t*)(dst_mem_id->mem_ptr)), host_ptr, size + offset, 0, 0);
+  assert(0 == err);
+  dst_buf->mem_host_ptr = host_ptr;
+  dst_buf->size = size + offset;
 }
 
 cl_int
@@ -1427,18 +1451,28 @@ int pocl_ventus_post_build_program (cl_program program, cl_uint device_i) {
 
   char program_bc_path[POCL_FILENAME_LENGTH];
 
+  static uint counter = 0;
+  program_ids.insert(std::pair<uint64_t, uint>(uint64_t(program), counter));
+  counter++;
+
 
   //pocl_cache_create_program_cachedir(program, device_i, program->source,
   //                                     strlen(program->source),
   //                                     program_bc_path);
   //TODO: move .cl and .riscv file into program_bc_path, and let spike read file from this path.
-  std::ofstream outfile("object.cl");
+  char filename[256] = "object";
+  std::string id = std::to_string(program_ids[uint64_t(program)]);
+  strcat(filename, id.c_str());
+  char cl_filename[256];
+  strcpy(cl_filename, filename);
+  strcat(cl_filename, ".cl");
+  std::ofstream outfile(cl_filename);
   outfile << program->source;
   outfile.close();
 
   cl_device_id device = program->devices[device_i];
 
-    ss_cmd << clang_path <<" -cl-std=CL2.0 " << "-target " << device->llvm_target_triplet << " -mcpu=" << device->llvm_cpu  << " object.cl " << " -o " << "object.riscv ";
+    ss_cmd << clang_path <<" -cl-std=CL2.0 " << "-target " << device->llvm_target_triplet << " -mcpu=" << device->llvm_cpu  << " " << cl_filename << "  " << " -o " << filename << ".riscv ";
 	for(int i = 0; ventus_final_ld_flags[i] != NULL; i++) {
 		ss_cmd << ventus_final_ld_flags[i];
 	}
