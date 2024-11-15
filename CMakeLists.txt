@@ -906,6 +906,10 @@ if(NOT DEFINED DEFAULT_ENABLE_IPO)
 
     if(DEVELOPER_MODE)
       set(IPO 0)
+    elseif(MINGW)
+      # XXX: IPO on MinGW runs into linker errors (such as `two or more sections
+      # for .gnu.lto__ZN4llvm12DenseMapInfoIPKNS_8MetadataEvE7isEqualES3_S3_.65576.2f694590`)
+      set(IPO 0)
     else()
       include(CheckIPOSupported)
       check_ipo_supported(RESULT IPO OUTPUT IPO_OUTPUT)
