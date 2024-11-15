@@ -38,12 +38,17 @@ else()
 endif()
 
 if(output_blessed)
-  # Convert Windows newline convention to Unix.  
-  string(REPLACE "\n\r" "\n" stdout "${stdout}")
-
   string(RANDOM RAND_STR)
-  set(RANDOM_FILE "/tmp/cmake_testrun_${RAND_STR}")
+  set(RANDOM_FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake_testrun_${RAND_STR}")
   file(WRITE "${RANDOM_FILE}" "${stdout}")
+
+  # On Windows, CMake automatically converts newlines. Simply replacing '\r\n'
+  # does not survive, so instead read (and trigger conversion of) the reference.
+  if (WIN32)
+    file(READ "${output_blessed}" output_blessed_content)
+    set(output_blessed "${RANDOM_FILE}_blessed")
+    file(WRITE "${output_blessed}" "${output_blessed_content}")
+  endif()
 
   if( sort_output )
     message(STATUS "SORTING FILE")
