@@ -440,11 +440,6 @@ static void pocl_tce_write_kernel_descriptor(_cl_command_node *Command,
           << "void _pocl_kernel_" << meta->name
           << "_workgroup(uint8_t* args, uint8_t* ctx, "
           << "uint32_t, uint32_t, uint32_t);" << std::endl
-
-          << "void _pocl_kernel_" << meta->name
-          << "_workgroup_fast(uint8_t* args, uint8_t* ctx, "
-          << "uint32_t, uint32_t, uint32_t);" << std::endl
-
           << "void " << meta->name << "_workgroup_argbuffer("
           << "uint8_t "
           << "__attribute__((address_space(" << device->global_as_id << ")))"

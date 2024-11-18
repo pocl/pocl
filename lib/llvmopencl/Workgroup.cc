@@ -106,7 +106,6 @@ private:
                                                    std::string KernName);
 
   void createDefaultWorkgroupLauncher(llvm::Function *F);
-  void createFastWorkgroupLauncher(llvm::Function *F);
 
   std::vector<llvm::Value *> globalHandlesToContextStructLoads(
       llvm::IRBuilder<> &Builder,
@@ -299,11 +298,6 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
       // call/handle the single-WI kernel function directly.
     } else {
       createDefaultWorkgroupLauncher(L);
-#ifdef TCE_AVAILABLE
-      // This is used only by TCE anymore. TODO: Replace all with the
-      // ArgBuffer one.
-      createFastWorkgroupLauncher(L);
-#endif
     }
   }
 
@@ -1728,106 +1722,6 @@ void WorkgroupImpl::createGridLauncher(Function *KernFunc, Function *WGFunc,
     LLVMSetExternallyInitialized(GridLauncherGlobal, false);
     LLVMSetInitializer(GridLauncherGlobal, Launcher);
   }
-}
-
-/**
- * Creates a work group launcher more suitable for the heterogeneous
- * host-device setup  (called KERNELNAME_workgroup_fast).
- *
- * 1) Pointer arguments are stored directly as pointers to the
- *    buffers in the argument buffer.
- *
- * 2) Scalar values are loaded from the global memory address
- *    space.
- *
- * This should minimize copying of data and memory allocation
- * at the device.
- */
-void WorkgroupImpl::createFastWorkgroupLauncher(llvm::Function *F) {
-
-  IRBuilder<> Builder(M->getContext());
-
-  std::string funcName = "";
-  funcName = F->getName().str();
-
-  FunctionCallee fc = M->getOrInsertFunction(
-                         funcName + "_workgroup_fast", LauncherFuncT);
-  Function *WorkGroup = dyn_cast<Function>(fc.getCallee());
-  assert(WorkGroup != NULL);
-
-  Builder.SetInsertPoint(BasicBlock::Create(M->getContext(), "", WorkGroup));
-
-  Function::arg_iterator ai = WorkGroup->arg_begin();
-  Argument *AI = &*ai;
-
-  SmallVector<Value*, 8> arguments;
-  size_t i = 0;
-  for (Function::const_arg_iterator ii = F->arg_begin(), ee = F->arg_end();
-       ii != ee; ++ii, ++i) {
-
-    if (i == F->arg_size() - 4)
-      break;
-
-    Value *V;
-    Type *T = ii->getType();
-    Type* I32Ty = Type::getInt32Ty(M->getContext());
-
-#ifndef LLVM_OPAQUE_POINTERS
-    Value *GEP = Builder.CreateGEP(AI->getType()->getPointerElementType(), AI,
-                                   ConstantInt::get(I32Ty, i));
-    Value *Pointer =
-        Builder.CreateLoad(GEP->getType()->getPointerElementType(), GEP);
-#else
-    Type *I8Ty = Type::getInt8Ty(M->getContext());
-    Type *I8PtrTy = I8Ty->getPointerTo(AI->getType()->getPointerAddressSpace());
-    Value *GEP = Builder.CreateGEP(I8PtrTy, AI, ConstantInt::get(I32Ty, i));
-    Value *Pointer = Builder.CreateLoad(I8PtrTy, GEP);
-#endif
-
-    if (T->isPointerTy()) {
-      if (!ii->hasByValAttr()) {
-        // Assume the pointer is directly in the arg array.
-        V = Builder.CreatePointerCast(Pointer, T);
-        arguments.push_back(V);
-        continue;
-      } else {
-        // It's a pass by value pointer argument, use the underlying
-        // element type in subsequent load.
-#if LLVM_MAJOR < 15
-        T = T->getPointerElementType();
-#else
-        T = ii->getParamByValType();
-#endif
-      }
-    }
-
-    // If it's a pass by value pointer argument, we just pass the pointer
-    // as is to the function, no need to load from it first.
-
-    if (ii->hasByValAttr() && (((PointerType *)T)->getAddressSpace() != DeviceGlobalASid)) {
-      V = Builder.CreatePointerCast(Pointer, T->getPointerTo());
-    } else {
-      V = Builder.CreatePointerCast(Pointer, T->getPointerTo(DeviceGlobalASid));
-    }
-
-    if (!ii->hasByValAttr()) {
-      V = Builder.CreateLoad(T, V);
-    }
-
-    arguments.push_back(V);
-  }
-
-  ++ai;
-  arguments.push_back(&*ai);
-  ++ai;
-  arguments.push_back(&*ai);
-  ++ai;
-  arguments.push_back(&*ai);
-  ++ai;
-  arguments.push_back(&*ai);
-
-  Builder.CreateCall(F, ArrayRef<Value *>(arguments));
-  Builder.CreateRetVoid();
 }
 
 // The subgroup size is currently defined for the CPU implementations

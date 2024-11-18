@@ -230,10 +230,6 @@ void pocl_openasip_write_kernel_descriptor(char *content, size_t content_size,
            "void _pocl_kernel_%s"
            "_workgroup(uint8_t* args, uint8_t*, "
            "uint32_t, uint32_t, uint32_t);\n"
-           "void _pocl_kernel_%s"
-           "_workgroup_fast(uint8_t* args, uint8_t*, "
-           "uint32_t, uint32_t, uint32_t);\n"
-
            "void %s"
            "_workgroup_argbuffer("
            "uint8_t "
