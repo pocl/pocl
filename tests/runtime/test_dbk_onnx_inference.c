@@ -53,7 +53,7 @@ main (int _argc, char **_argv)
 {
   struct
   {
-    clCreateProgramWithDefinedBuiltInKernels_fn
+    clCreateProgramWithDefinedBuiltInKernelsEXP_fn
       clCreateProgramWithDefinedBuiltInKernels;
   } ext;
 
@@ -94,33 +94,34 @@ main (int _argc, char **_argv)
   fclose (f);
   TEST_ASSERT (bytes_read == model_size);
 
-  cl_tensor_layout_ml tensor_layout = { CL_TENSOR_LAYOUT_ML_C };
-  cl_tensor_desc tensor_desc = { 1,
-                                 CL_TENSOR_DTYPE_FP32,
-                                 { CL_TENSOR_PROPERTY_NONE },
-                                 { num_elements },
-                                 &tensor_layout,
-                                 CL_TENSOR_LAYOUT_ML };
-  cl_dbk_id_exp dbk_id = POCL_CDBI_DBK_EXP_ONNX_INFERENCE;
+  cl_tensor_layout_ml_exp tensor_layout = { CL_TENSOR_LAYOUT_ML_C_EXP };
+  cl_tensor_desc_exp tensor_desc = { 1,
+                                     CL_TENSOR_DTYPE_FP32_EXP,
+                                     { CL_TENSOR_PROPERTY_NONE_EXP },
+                                     { num_elements },
+                                     &tensor_layout,
+                                     CL_TENSOR_LAYOUT_ML_EXP };
+  cl_dbk_id_exp dbk_id = CL_DBK_ONNX_INFERENCE_EXP;
   const char *dbk_name = "exp_onnx_inference";
   const char *input_tensor_names[] = { "A", "B" };
   const char *output_tensor_names[] = { "C" };
   /* All tensors have the same format */
-  cl_tensor_desc input_tensor_descs[] = { tensor_desc, tensor_desc };
-  cl_tensor_desc output_tensor_descs[] = { tensor_desc };
+  cl_tensor_desc_exp input_tensor_descs[] = { tensor_desc, tensor_desc };
+  cl_tensor_desc_exp output_tensor_descs[] = { tensor_desc };
 
   /* The test model also has IN_MIN but let's not specify that one */
   const char *initializer_names[] = { "IN_MAX" };
   float f1 = 1.0f;
   const float *initializer_data[] = { &f1 };
-  cl_tensor_desc initializer_tensor_descs[] = { { 1,
-                                                  CL_TENSOR_DTYPE_FP32,
-                                                  { CL_TENSOR_PROPERTY_NONE },
-                                                  { 1 },
-                                                  &tensor_layout,
-                                                  CL_TENSOR_LAYOUT_ML } };
+  cl_tensor_desc_exp initializer_tensor_descs[]
+    = { { 1,
+          CL_TENSOR_DTYPE_FP32_EXP,
+          { CL_TENSOR_PROPERTY_NONE_EXP },
+          { 1 },
+          &tensor_layout,
+          CL_TENSOR_LAYOUT_ML_EXP } };
 
-  const cl_dbk_attributes_exp_onnx_inference onnx_inference_attributes
+  const cl_dbk_attributes_onnx_inference_exp onnx_inference_attributes
     = { model_size, model_bytes, 2, input_tensor_names, input_tensor_descs, 1,
         output_tensor_names, output_tensor_descs,
         /* The below attributes are optional and can be left zeroed out */
@@ -138,7 +139,7 @@ main (int _argc, char **_argv)
   CHECK_CL_ERROR (error);
 
   cl_mem_properties mem_props[]
-    = { CL_MEM_TENSOR, (cl_mem_properties)&tensor_desc, 0 };
+    = { CL_MEM_TENSOR_EXP, (cl_mem_properties)&tensor_desc, 0 };
 
   float *test_data = NULL;
   MALLOC_CHECKED (test_data, sizeof (float) * num_elements * 2);

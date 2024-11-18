@@ -1032,7 +1032,7 @@ pocl_basic_create_kernel (cl_device_id device,
       }
 #endif
 #ifdef HAVE_ONNXRT
-    case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
+    case CL_DBK_ONNX_INFERENCE_EXP:
       {
         status = pocl_create_ort_instance (
             p->builtin_kernel_attributes[dbk_index],
@@ -1087,7 +1087,7 @@ pocl_basic_free_kernel (cl_device_id device,
       }
 #endif
 #ifdef HAVE_ONNXRT
-    case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
+    case CL_DBK_ONNX_INFERENCE_EXP:
       {
         status = pocl_destroy_ort_instance (
             (onnxrt_instance_t **)&(k->data[device_i]));

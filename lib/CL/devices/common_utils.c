@@ -829,7 +829,7 @@ pocl_cpu_supports_dbk (cl_device_id device,
       return pocl_validate_dbk_attributes (kernel_id, kernel_attributes, NULL);
 #endif
 #ifdef HAVE_ONNXRT
-    case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
+    case CL_DBK_ONNX_INFERENCE_EXP:
       return pocl_validate_dbk_attributes (kernel_id, kernel_attributes, NULL);
 #endif
     default:
@@ -1197,7 +1197,7 @@ pocl_cpu_execute_dbk (cl_program program,
                                                    dev_i, arguments);
 #endif
 #ifdef HAVE_ONNXRT
-    case POCL_CDBI_DBK_EXP_ONNX_INFERENCE:
+    case CL_DBK_ONNX_INFERENCE_EXP:
       {
         cl_device_id dev = program->devices[dev_i];
         unsigned mem_id = dev->global_mem_id;

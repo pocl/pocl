@@ -33,8 +33,9 @@
 typedef struct onnxrt_instance onnxrt_instance_t;
 
 POCL_EXPORT
-cl_int pocl_create_ort_instance (const cl_dbk_attributes_exp_onnx_inference *attrs,
-                                 onnxrt_instance_t **onnxrt);
+cl_int
+pocl_create_ort_instance (const cl_dbk_attributes_onnx_inference_exp *attrs,
+                          onnxrt_instance_t **onnxrt);
 
 POCL_EXPORT
 cl_int pocl_destroy_ort_instance (onnxrt_instance_t **onnxrt);
