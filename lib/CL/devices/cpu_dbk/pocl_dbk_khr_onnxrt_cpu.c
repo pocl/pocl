@@ -105,36 +105,44 @@ ort_to_cl_error_code (OrtStatusPtr status)
 }
 
 static ONNXTensorElementDataType
-cl_to_onnxrt_tensor_element_type (cl_tensor_datatype dtype)
+cl_to_onnxrt_tensor_element_type (cl_tensor_datatype_exp dtype)
 {
   switch (dtype)
     {
-    case CL_TENSOR_DTYPE_FP64:
+    case CL_TENSOR_DTYPE_FP64_EXP:
       return ONNX_TENSOR_ELEMENT_DATA_TYPE_DOUBLE;
-    case CL_TENSOR_DTYPE_INT64:
+    case CL_TENSOR_DTYPE_INT64_EXP:
       return ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64;
-    case CL_TENSOR_DTYPE_UINT64:
+    case CL_TENSOR_DTYPE_UINT64_EXP:
       return ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT64;
-    case CL_TENSOR_DTYPE_FP32:
+    case CL_TENSOR_DTYPE_FP32_EXP:
       return ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT;
-    case CL_TENSOR_DTYPE_INT32:
+    case CL_TENSOR_DTYPE_INT32_EXP:
       return ONNX_TENSOR_ELEMENT_DATA_TYPE_INT32;
-    case CL_TENSOR_DTYPE_UINT32:
+    case CL_TENSOR_DTYPE_UINT32_EXP:
       return ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT32;
-    case CL_TENSOR_DTYPE_FP16:
+    case CL_TENSOR_DTYPE_FP16_EXP:
       return ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT16;
-    case CL_TENSOR_DTYPE_INT16:
+    case CL_TENSOR_DTYPE_INT16_EXP:
       return ONNX_TENSOR_ELEMENT_DATA_TYPE_INT16;
-    case CL_TENSOR_DTYPE_UINT16:
+    case CL_TENSOR_DTYPE_UINT16_EXP:
       return ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT16;
-    case CL_TENSOR_DTYPE_FP8:
+    case CL_TENSOR_DTYPE_FP8E5M2_EXP:
       return ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT8E5M2;
-    case CL_TENSOR_DTYPE_INT8:
+    case CL_TENSOR_DTYPE_FP8E4M3_EXP:
+    {
+      /* TODO: map to a more appropriate datatype */
+      POCL_MSG_WARN("mapping CL_TENSOR_DTYPE_FP8E4M3_EXP to "
+                    "ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT8E4M3FN, this may lead "
+                    "to unexpected results");
+      return ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT8E4M3FN;
+    }
+    case CL_TENSOR_DTYPE_INT8_EXP:
       return ONNX_TENSOR_ELEMENT_DATA_TYPE_INT8;
-    case CL_TENSOR_DTYPE_UINT8:
+    case CL_TENSOR_DTYPE_UINT8_EXP:
       return ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT8;
-    case CL_TENSOR_DTYPE_INT4:
-    case CL_TENSOR_DTYPE_UINT4:
+    case CL_TENSOR_DTYPE_INT4_EXP:
+    case CL_TENSOR_DTYPE_UINT4_EXP:
     case CL_TENSOR_DTYPE_LAST:
     case CL_TENSOR_DTYPE_UNKNOWN:
     default:
@@ -182,13 +190,13 @@ pocl_create_ort_instance (const cl_dbk_attributes_onnx_inference_exp *attrs,
       initializers = malloc (sizeof (OrtValue *) * attrs->num_initializers);
       for (size_t i = 0; i < attrs->num_initializers; ++i)
         {
-          const cl_tensor_desc *meta = &attrs->initializer_tensor_descs[i];
+          const cl_tensor_desc_exp *meta = &attrs->initializer_tensor_descs[i];
           void *ptr = (void *)attrs->initializer_data[i];
           size_t len = pocl_tensor_type_size (meta->dtype);
           size_t shape_len = meta->rank;
           ONNXTensorElementDataType type
             = cl_to_onnxrt_tensor_element_type (meta->dtype);
-          int64_t shape[CL_MEM_MAX_TENSOR_RANK] = { 0 };
+          int64_t shape[CL_MEM_MAX_TENSOR_RANK_EXP] = { 0 };
           for (size_t dim = 0; dim < shape_len; ++dim)
             {
               shape[dim] = meta->shape[dim];
@@ -271,7 +279,7 @@ pocl_perform_ort_inference (onnxrt_instance_t *ort,
                             char *output_storage)
 {
   cl_int err = CL_SUCCESS;
-  const cl_dbk_attributes_exp_onnx_inference *attrs = ort->attributes;
+  const cl_dbk_attributes_onnx_inference_exp *attrs = ort->attributes;
   OrtValue **outputs = NULL;
   OrtValue **inputs = NULL;
   OrtRunOptions *run_options = NULL;
@@ -292,13 +300,13 @@ pocl_perform_ort_inference (onnxrt_instance_t *ort,
   inputs = calloc (num_inputs, sizeof (OrtValue *));
   for (size_t i = 0; i < num_inputs; ++i)
     {
-      const cl_tensor_desc *meta = &attrs->input_tensor_descs[i];
+      const cl_tensor_desc_exp *meta = &attrs->input_tensor_descs[i];
       void *ptr = input_data + input_offsets[i];
       size_t len = pocl_tensor_type_size (meta->dtype);
       size_t shape_len = meta->rank;
       ONNXTensorElementDataType type
         = cl_to_onnxrt_tensor_element_type (meta->dtype);
-      int64_t shape[CL_MEM_MAX_TENSOR_RANK] = { 0 };
+      int64_t shape[CL_MEM_MAX_TENSOR_RANK_EXP] = { 0 };
       for (size_t dim = 0; dim < shape_len; ++dim)
         {
           shape[dim] = meta->shape[dim];
@@ -310,13 +318,13 @@ pocl_perform_ort_inference (onnxrt_instance_t *ort,
   outputs = calloc (num_outputs, sizeof (OrtValue *));
   for (size_t i = 0; i < num_outputs; ++i)
     {
-      const cl_tensor_desc *meta = &attrs->output_tensor_descs[i];
+      const cl_tensor_desc_exp *meta = &attrs->output_tensor_descs[i];
       void *ptr = output_storage + output_offsets[i];
       size_t len = pocl_tensor_type_size (meta->dtype);
       size_t shape_len = meta->rank;
       ONNXTensorElementDataType type
         = cl_to_onnxrt_tensor_element_type (meta->dtype);
-      int64_t shape[CL_MEM_MAX_TENSOR_RANK] = { 0 };
+      int64_t shape[CL_MEM_MAX_TENSOR_RANK_EXP] = { 0 };
       for (size_t dim = 0; dim < shape_len; ++dim)
         {
           shape[dim] = meta->shape[dim];
