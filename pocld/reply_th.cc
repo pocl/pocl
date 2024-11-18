@@ -110,8 +110,8 @@ static const char *reply_to_str(ReplyMessageType type) {
 ReplyQueueThread::ReplyQueueThread(
     std::shared_ptr<Connection> OutboundConnection, VirtualContextBase *c,
     ExitHelper *e, const char *id_str)
-    : Conn(OutboundConnection), virtualContext(c), eh(e),
-      ThreadIdentifier(id_str) {
+    : Conn(OutboundConnection), ThreadIdentifier(id_str), virtualContext(c),
+      eh(e) {
   IOThread = std::thread{&ReplyQueueThread::writeThread, this};
 }
 

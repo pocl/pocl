@@ -263,9 +263,9 @@ bool measure_platform(cl::Platform &platform, int index) {
     cl::Kernel kern(prog, "acc_kernel");
 
     std::vector<cl::CommandQueue> command_queues(devices.size());
-    testing_buffer buffer = {cl::Buffer(ctx, CL_MEM_READ_WRITE,
-                                        options.buffer_size * sizeof(uint32_t),
-                                        nullptr)};
+    testing_buffer buffer;
+    buffer.buffer = cl::Buffer(ctx, CL_MEM_READ_WRITE,
+                               options.buffer_size * sizeof(uint32_t), nullptr);
     std::vector<std::vector<double>> timings_by_device(devices.size());
     for (size_t i = 0; i < devices.size(); ++i) {
       command_queues[i] = cl::CommandQueue(ctx, devices[i],
@@ -287,8 +287,8 @@ bool measure_platform(cl::Platform &platform, int index) {
       print_progress(i + 1, options.sample_count + options.warmup_rounds,
                      starttime);
     }
-    for (int i = 0; i < timings_by_device.size(); ++i)
-      timings_by_device[i].clear();
+    for (auto &i : timings_by_device)
+      i.clear();
 
     for (int i = 0; i < options.sample_count; ++i) {
       run_iteration(kern, command_queues, buffer, timings_by_device);

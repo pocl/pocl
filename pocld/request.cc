@@ -26,6 +26,7 @@
 #include <chrono>
 #include <unistd.h>
 
+#include "pocl_compiler_macros.h"
 #include "pocl_debug.h"
 #include "request.hh"
 #include "tracing.h"
@@ -223,6 +224,7 @@ bool Request::read(Connection *Conn) {
   case MessageType_LinkProgram:
     this->ExtraData2Size = Body->m.build_program.options_len;
     /* intentional fall through to setting payload (i.e. binary) size */
+    POCL_FALLTHROUGH;
   case MessageType_BuildProgramWithBuiltins:
   case MessageType_BuildProgramWithDefinedBuiltins:
     this->ExtraDataSize = Body->m.build_program.payload_size;
