@@ -2547,7 +2547,10 @@ pocl_network_build_or_link_program (remote_device_data_t *ddata,
 
   POCL_MSG_PRINT_REMOTE ("Compile/Build/LinkProgram %p\n", netcmd);
 
-  SEND_REQ_FAST;
+  /* The build command contains the source payload which can be orders
+   * of magnitudes bigger than other commands, so send this command on the slow
+   * queue which is better equipped for large payloads.*/
+  SEND_REQ_SLOW;
 
   wait_on_netcmd (netcmd);
 
