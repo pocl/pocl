@@ -332,25 +332,24 @@ pocl_get_devices (cl_device_type device_type, cl_device_id *devices,
   unsigned int dev_added = 0;
   cl_device_id device;
 
-  cl_device_type device_type_tmp = device_type;
-  if (device_type_tmp == CL_DEVICE_TYPE_ALL)
-    {
-      device_type_tmp = ~CL_DEVICE_TYPE_CUSTOM;
-    }
-
   LL_FOREACH_ATOMIC (pocl_devices, device)
   {
     if (!pocl_offline_compile && (*device->available == CL_FALSE))
       continue;
 
-    if (device_type_tmp == CL_DEVICE_TYPE_DEFAULT)
+    if (device_type == CL_DEVICE_TYPE_DEFAULT)
       {
+        /* according to spec, DEFAULT query must not return
+         * a custom device UNLESS it's the only device */
+        if (device->type == CL_DEVICE_TYPE_CUSTOM && device->next)
+          continue;
+
         devices[dev_added] = device;
         ++dev_added;
         break;
       }
 
-    if (device->type & device_type_tmp)
+    if (device->type & device_type)
       {
         if (dev_added < num_devices)
           {
@@ -372,10 +371,9 @@ pocl_get_device_type_count(cl_device_type device_type)
   unsigned int count = 0;
   cl_device_id device;
 
-  cl_device_type device_type_tmp = device_type;
-  if (device_type_tmp == CL_DEVICE_TYPE_ALL)
+  if (device_type == CL_DEVICE_TYPE_DEFAULT)
     {
-      device_type_tmp = ~CL_DEVICE_TYPE_CUSTOM;
+      return pocl_devices ? 1 : 0;
     }
 
   LL_FOREACH_ATOMIC (pocl_devices, device)
@@ -383,10 +381,7 @@ pocl_get_device_type_count(cl_device_type device_type)
     if (!pocl_offline_compile && (*device->available == CL_FALSE))
       continue;
 
-    if (device_type_tmp == CL_DEVICE_TYPE_DEFAULT)
-      return 1;
-
-    if (device->type & device_type_tmp)
+    if (device->type & device_type)
       {
         ++count;
       }
