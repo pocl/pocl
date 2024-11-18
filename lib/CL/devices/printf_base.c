@@ -431,7 +431,7 @@ __pocl_printf_puts_ljust (param_t *p,
 {
   char c;
   unsigned written = 0;
-  unsigned max_width_u = max_width >= 0 ? max_width : UINT_MAX;
+  unsigned max_width_u = max_width >= 0 ? (unsigned)max_width : UINT_MAX;
 
   while ((c = *string++))
     {
@@ -456,7 +456,7 @@ __pocl_printf_puts_rjust (param_t *p,
 {
   char c;
   unsigned i, strleng = 0, written = 0;
-  unsigned max_width_u = max_width >= 0 ? max_width : UINT_MAX;
+  unsigned max_width_u = max_width >= 0 ? (unsigned)max_width : UINT_MAX;
 
   const char *tmp = string;
   while ((c = *tmp++))

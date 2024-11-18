@@ -219,11 +219,11 @@ int TestOutputDataDecomposition() {
 
     // Check the data after the parallel sub-buffer launches.
     for (size_t i = 0; i < NumData; ++i) {
-      int Share = i / WorkShare;
+      size_t Share = i / WorkShare;
       if (i >= WorkShare * Share &&
           i < WorkShare * Share + WorkShare - Uncovered &&
           i < WorkShare * NumParallelQueues) {
-        if (AfterSubBufCContents[i] != i + 2) {
+        if ((size_t)AfterSubBufCContents[i] != i + 2) {
           std::cerr << "ERROR: after sub-bufs " << i << " was "
                     << AfterSubBufCContents[i] << " expected " << i + 2
                     << std::endl;
@@ -244,11 +244,11 @@ int TestOutputDataDecomposition() {
 
     // Check the data before the last kernel launch.
     for (size_t i = 0; i < NumData; ++i) {
-      int Share = i / WorkShare;
+      size_t Share = i / WorkShare;
       if (i >= WorkShare * Share &&
           i < WorkShare * Share + WorkShare - Uncovered &&
           i < WorkShare * NumParallelQueues) {
-        if (NewBufCContents[i] != i + 2 + 2) {
+        if ((size_t)NewBufCContents[i] != i + 2 + 2) {
           std::cerr << "ERROR: " << i << " was " << NewBufCContents[i]
                     << " expected " << i + 2 + 2 << std::endl;
           AllOK = false;
@@ -268,12 +268,12 @@ int TestOutputDataDecomposition() {
     // In the final state there should be one additional 2 addition in the
     // last manipulated part of the array.
     for (size_t i = 0; i < NumData; ++i) {
-      int Share = i / WorkShare;
+      size_t Share = i / WorkShare;
       if (i >= WorkShare * Share &&
           i < WorkShare * Share + WorkShare - Uncovered &&
           i < WorkShare * NumParallelQueues) {
         if (i < (WorkShare * (NumParallelQueues - 1))) {
-          if (FinalBufCContents[i] != i + 2 + 2) {
+          if ((size_t)FinalBufCContents[i] != i + 2 + 2) {
             std::cerr << "ERROR: final " << i << " was " << FinalBufCContents[i]
                       << " expected " << i + 2 + 2 << std::endl;
             AllOK = false;
@@ -281,7 +281,7 @@ int TestOutputDataDecomposition() {
           }
         } else if (i < (WorkShare * NumParallelQueues)) {
           // The part which was not touched by sub-buffers.
-          if (FinalBufCContents[i] != i + 2 + 2 + 2) {
+          if ((size_t)FinalBufCContents[i] != i + 2 + 2 + 2) {
             std::cerr << "ERROR: final " << i << " was " << FinalBufCContents[i]
                       << " expected " << i + 2 + 2 << std::endl;
             AllOK = false;

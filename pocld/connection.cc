@@ -33,7 +33,7 @@
 
 Connection::Connection(transport_domain_t Domain, int Fd,
                        std::shared_ptr<TrafficMonitor> Meter)
-    : Domain(Domain), Fd(Fd), Meter(Meter) {}
+    : Meter(Meter), Domain(Domain), Fd(Fd) {}
 
 Connection::~Connection() {
   shutdown(Fd, SHUT_RDWR);

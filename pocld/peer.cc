@@ -44,7 +44,7 @@ Peer::Peer(uint64_t id, uint32_t handler_id, VirtualContextBase *ctx,
 #else
 Peer::Peer(uint64_t id, uint32_t handler_id, VirtualContextBase *ctx,
            ExitHelper *eh, std::shared_ptr<Connection> Conn)
-    : id(id), handler_id(handler_id), ctx(ctx), eh(eh), Conn(Conn)
+    : id(id), handler_id(handler_id), Conn(Conn), ctx(ctx), eh(eh)
 #endif
 {
   std::stringstream ss;

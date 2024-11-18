@@ -69,12 +69,12 @@ PeerHandler::PeerHandler(
     uint32_t id, std::mutex *m,
     std::pair<std::condition_variable, std::vector<PeerConnection>> *incoming,
     VirtualContextBase *c, ExitHelper *e, std::shared_ptr<TrafficMonitor> tm)
-    : id(id), NewConnectionsMutex(m), NewConnections(incoming), ctx(c), eh(e),
+    : id(id), ctx(c), eh(e), NewConnectionsMutex(m), NewConnections(incoming),
       Netstat(tm) {
   IncomingPeerHandler = std::thread(&PeerHandler::handleIncomingPeers, this);
 }
 
-const void set_socket_options(int fd, const char *label) {
+void set_socket_options(int fd, const char *label) {
   int one = 1;
 #ifdef SO_REUSEADDR
   if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)))

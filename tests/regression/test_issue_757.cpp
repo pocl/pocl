@@ -31,7 +31,7 @@ __kernel void __attribute__ ((reqd_work_group_size(128, 1, 1))) grudge_assign_0(
 
 int main(int argc, char *argv[]) {
   int n = 8;
-  unsigned successful = 0;
+  int successful = 0;
 
   cl::Platform platform = cl::Platform::getDefault();
   cl::Device device = cl::Device::getDefault();
