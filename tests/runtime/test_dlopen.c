@@ -28,6 +28,8 @@
 #ifdef __APPLE__
 #define SHLIB_EXT "dylib"
 #define SHLIB_ORIGIN "@loader_path"
+#elif defined(_WIN32)
+#error "Windows not supported"
 #else
 #define SHLIB_EXT "so"
 #define SHLIB_ORIGIN "$ORIGIN"
@@ -41,8 +43,9 @@ main (int argc, char **argv)
   char libdevice[4096] = "";
   if (argc > 1)
     snprintf (libdevice, sizeof (libdevice),
-              SHLIB_ORIGIN "/../../lib/CL/devices/%s/libpocl-devices-%s.so", argv[1],
-              argv[1]);
+              SHLIB_ORIGIN
+              "/../../lib/CL/devices/%s/libpocl-devices-%s." SHLIB_EXT,
+              argv[1], argv[1]);
 
 #ifdef BUILD_ICD
   void *handle_libpocl = dlopen (libpocl, RTLD_NOW | RTLD_GLOBAL);
