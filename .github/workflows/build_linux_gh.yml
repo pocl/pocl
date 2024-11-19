@@ -37,13 +37,17 @@ jobs:
   # (sanitizer-built binaries require >=20 terabytes of Virt AS)
   github_test_matrix:
     name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
-    runs-on: ubuntu-latest
+    # 24.04 is required for libxsmm-dev
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         # basic = simplest pthread build
         # devel = with devel options
         # install = install PoCL system-wide and run tests
+        # static = statically linked LLVM component libraries
+        # TBB, OpenMP = CPU drivers with TBB/OpenMP support
+        # DBK = ONNX / libjpeg-turbo DBKs enabled
         llvm: [18, 19]
         config: [basic, devel]
         include:
@@ -59,6 +63,8 @@ jobs:
             config: OpenMP
           - llvm: 19
             config: install
+          - llvm: 18
+            config: DBKs
 
     steps:
       - name: Checkout
@@ -95,9 +101,25 @@ jobs:
           sudo apt update -y &&
           sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} libpolly-${LLVM_VERSION}-dev
 
+      - name: Install ONNX & libjpeg-turbo
+        if: ${{ matrix.config == 'DBKs' }}
+        run: >
+           sudo apt install -y libopenblas-dev libxsmm-dev
+           sudo wget -q -O libjpeg-turbo.deb https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/3.0.4/libjpeg-turbo-official_3.0.4_amd64.deb &&
+           sudo dpkg -i libjpeg-turbo.deb &&
+           sudo wget -q -O /tmp/onnx-runtime.tgz https://github.com/microsoft/onnxruntime/releases/download/v1.19.2/onnxruntime-linux-x64-1.19.2.tgz &&
+           sudo mkdir /opt/onnx && sudo tar -xf /tmp/onnx-runtime.tgz -C /opt/onnx --strip-components=1 &&
+           sudo ln -s /opt/libjpeg-turbo/lib64 /opt/libjpeg-turbo/lib &&
+           sudo ln -s /opt/onnx/lib /opt/onnx/lib64 &&
+           sudo mv /opt/onnx/include /opt/onnxruntime && sudo mkdir /opt/onnx/include && sudo mv /opt/onnxruntime /opt/onnx/include/ &&
+           find /opt/libjpeg-turbo && find /opt/onnx
+
       - name: CMake
         id: cmake
         run: |
+          if [ "${{ matrix.config }}" == "DBKs" ]; then
+            export "CMAKE_PREFIX_PATH=/opt/libjpeg-turbo/lib/cmake:/opt/onnx/lib/cmake"
+          fi
           runCMake() {
             BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
             cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
@@ -121,6 +143,8 @@ jobs:
             runCMake -DENABLE_RELOCATION=0 -DDEVELOPER_MODE=1 -DENABLE_VALGRIND=1 -DENABLE_EXTRA_VALIDITY_CHECKS=1
           elif [ "${{ matrix.config }}" == "install" ]; then
             runCMake -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_ICD=1 -DKERNELLIB_HOST_CPU_VARIANTS=distro -DPOCL_ICD_ABSOLUTE_PATH=OFF -DENABLE_POCL_BUILDING=OFF
+          elif [ "${{ matrix.config }}" == "DBKs" ]; then
+            runCMake -DENABLE_ICD=1 -DENABLE_HOST_CPU_DEVICES=1
           else
             echo "Unknown configuration" && exit 1
           fi
