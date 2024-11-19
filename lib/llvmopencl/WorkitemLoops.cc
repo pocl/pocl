@@ -443,7 +443,6 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
 #endif
 
   K->getParallelRegions(LI, &OriginalParallelRegions);
-
   handleWorkitemFunctions();
 
 #ifdef DUMP_CFGS
