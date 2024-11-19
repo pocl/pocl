@@ -387,10 +387,6 @@ option(RENAME_POCL "Rename PoCL's OpenCL functions to PO<ocl_function>. Allows a
 
 ##########################################################
 
-if(MSVC AND BUILD_SHARED_LIBS)
-  message(FATAL_ERROR "Building shared libraries are not supported on MSVC yet!")
-endif()
-
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   set(HOST_DEVICE_ADDRESS_BITS 64)
 elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)

@@ -23,10 +23,9 @@
 #ifndef _POCL_DBK_KHR_ONNXRT_SHARED_H_
 #define _POCL_DBK_KHR_ONNXRT_SHARED_H_
 
-#include <CL/cl_exp_defined_builtin_kernels.h>
-#include <CL/cl_platform.h>
 #include <stddef.h>
 
+#include "pocl_cl.h"
 #include "pocl_export.h"
 
 POCL_EXPORT

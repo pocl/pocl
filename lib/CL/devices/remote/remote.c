@@ -36,7 +36,6 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#include "CL/cl_exp_defined_builtin_kernels.h"
 #include "common_driver.h"
 #include "pocl_builtin_kernels.h"
 #include "pocl_cache.h"
@@ -48,7 +47,6 @@
 #include "pocl_timing.h"
 #include "pocl_util.h"
 #include "utlist.h"
-#include <CL/cl.h>
 
 #include "communication.h"
 #include "messages.h"

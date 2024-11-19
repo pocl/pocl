@@ -41,6 +41,7 @@
 #endif
 
 #include "pocl.h"
+
 #include "pocl_debug.h"
 #include "pocl_hash.h"
 #include "pocl_runtime_config.h"
@@ -51,7 +52,6 @@
 #endif
 
 #include <CL/cl_egl.h>
-#include <CL/opencl.h>
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2

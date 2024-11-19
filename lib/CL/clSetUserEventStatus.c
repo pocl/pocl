@@ -21,8 +21,8 @@
    THE SOFTWARE.
 */
 
-#include "common.h"
 #include "pocl_cl.h"
+#include "common.h"
 #include "pocl_timing.h"
 
 CL_API_ENTRY cl_int CL_API_CALL

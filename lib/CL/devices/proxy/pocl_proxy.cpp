@@ -52,9 +52,7 @@
 #include "pocl_util.h"
 #include "spirv_parser.hh"
 #include "utlist.h"
-#include <CL/cl.h>
 #include <CL/cl_egl.h>
-#include <CL/cl_ext.h>
 
 #ifdef ENABLE_ICD
 #error This driver cannot be built when pocl is to be linked against ICD

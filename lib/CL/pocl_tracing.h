@@ -24,7 +24,8 @@
 #ifndef POCL_TRACING_H
 #define POCL_TRACING_H
 
-#include <CL/opencl.h>
+#include "pocl_cl.h"
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
