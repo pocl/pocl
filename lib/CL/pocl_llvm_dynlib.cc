@@ -66,9 +66,9 @@ void *pocl_dynlib_symbol_address(void *, const char *SymbolName) {
 const char *pocl_dynlib_pathname(void *Address) {
 #ifdef _WIN32
   HMODULE Hm;
-  if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+  if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
           GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-          (LPCSTR) &Address, &Hm) == 0)
+          (LPCWSTR) &Address, &Hm) == 0)
   {
       int Ret = GetLastError();
       POCL_MSG_ERR("GetModuleHandleEx failed, error = %d\n", Ret);
@@ -83,13 +83,16 @@ const char *pocl_dynlib_pathname(void *Address) {
       Hm = (HMODULE) mbi.AllocationBase;
   }
 
-  static char path[MAX_PATH];
-  if (GetModuleFileName(Hm, path, sizeof(path)) == 0)
+  WCHAR wpath[MAX_PATH]{};
+  if (GetModuleFileNameW(Hm, wpath, ARRAYSIZE(wpath)) == 0)
   {
       int Ret = GetLastError();
       POCL_MSG_ERR("GetModuleFileName failed, error = %d\n", Ret);
       return nullptr;
   }
+
+  static char path[MAX_PATH];
+  WideCharToMultiByte(CP_UTF8, 0, wpath, -1, path, ARRAYSIZE(path), NULL, NULL);
   return path;
 #else
   POCL_MSG_ERR("pocl_dynlib_pathname does not have C++/LLVM implementation\n");
