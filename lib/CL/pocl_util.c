@@ -1452,7 +1452,9 @@ pocl_setup_context (cl_context context)
         props |= CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
       context->default_queues[i]
         = POname (clCreateCommandQueue) (context, dev, props, &err);
-      assert (err == CL_SUCCESS);
+      POCL_RETURN_ERROR_ON (
+        (err != CL_SUCCESS), CL_INVALID_CONTEXT,
+        "could not create default command queue for the context\n");
       assert (context->default_queues[i]);
     }
 
