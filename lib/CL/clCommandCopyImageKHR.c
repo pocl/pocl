@@ -21,8 +21,6 @@
    IN THE SOFTWARE.
 */
 
-#include <CL/cl_ext.h>
-
 #include "pocl_cl.h"
 #include "pocl_mem_management.h"
 #include "pocl_shared.h"
