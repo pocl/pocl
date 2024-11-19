@@ -67,28 +67,26 @@ const char *pocl_dynlib_pathname(void *Address) {
 #ifdef _WIN32
   HMODULE Hm;
   if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-          GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-          (LPCWSTR) &Address, &Hm) == 0)
-  {
-      int Ret = GetLastError();
-      POCL_MSG_ERR("GetModuleHandleEx failed, error = %d\n", Ret);
+                             GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                         (LPCWSTR)&Address, &Hm) == 0) {
+    int Ret = GetLastError();
+    POCL_MSG_ERR("GetModuleHandleEx failed, error = %d\n", Ret);
 
-      // undocumented hack from https://stackoverflow.com/a/2396380
-      MEMORY_BASIC_INFORMATION mbi;
-      size_t Len = VirtualQuery(Address, &mbi, sizeof(mbi));
-      if (Len != sizeof(mbi)) {
-        POCL_MSG_ERR("VirtualQuery failed", Ret);
-        return nullptr;
-      }
-      Hm = (HMODULE) mbi.AllocationBase;
+    // undocumented hack from https://stackoverflow.com/a/2396380
+    MEMORY_BASIC_INFORMATION mbi;
+    size_t Len = VirtualQuery(Address, &mbi, sizeof(mbi));
+    if (Len != sizeof(mbi)) {
+      POCL_MSG_ERR("VirtualQuery failed", Ret);
+      return nullptr;
+    }
+    Hm = (HMODULE)mbi.AllocationBase;
   }
 
   WCHAR wpath[MAX_PATH]{};
-  if (GetModuleFileNameW(Hm, wpath, ARRAYSIZE(wpath)) == 0)
-  {
-      int Ret = GetLastError();
-      POCL_MSG_ERR("GetModuleFileName failed, error = %d\n", Ret);
-      return nullptr;
+  if (GetModuleFileNameW(Hm, wpath, ARRAYSIZE(wpath)) == 0) {
+    int Ret = GetLastError();
+    POCL_MSG_ERR("GetModuleFileName failed, error = %d\n", Ret);
+    return nullptr;
   }
 
   static char path[MAX_PATH];
