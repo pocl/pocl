@@ -290,7 +290,7 @@ get_pocl_device_lib_path (char *result, char *device_name, int absolute_path)
 #ifdef _WIN32
           strcat (result, "pocl-devices-");
 #else
-           strcat (result, "libpocl-devices-");
+          strcat (result, "libpocl-devices-");
 #endif
           strcat (result, device_name);
 #if defined(_WIN32)
@@ -298,18 +298,18 @@ get_pocl_device_lib_path (char *result, char *device_name, int absolute_path)
 #elif defined(__APPLE__)
           strcat (result, ".dylib");
 #else
-           strcat (result, ".so");
+          strcat (result, ".so");
 #endif
         }
     }
   else
     {
-       strcat (result, POCL_INSTALL_PRIVATE_LIBDIR_REL);
-       strcat (result, POCL_PATH_SEPARATOR);
+      strcat (result, POCL_INSTALL_PRIVATE_LIBDIR_REL);
+      strcat (result, POCL_PATH_SEPARATOR);
 #ifdef _WIN32
       strcat (result, "pocl-devices-");
 #else
-       strcat (result, "libpocl-devices-");
+      strcat (result, "libpocl-devices-");
 #endif
       strcat (result, device_name);
 #if defined(_WIN32)
@@ -317,7 +317,7 @@ get_pocl_device_lib_path (char *result, char *device_name, int absolute_path)
 #elif defined(__APPLE__)
       strcat (result, ".dylib");
 #else
-       strcat (result, ".so");
+      strcat (result, ".so");
 #endif
     }
 }

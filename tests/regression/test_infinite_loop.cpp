@@ -122,7 +122,7 @@ main(void)
 
         // Force exit of the process regardless of the running kernel thread
         // by replacing the process with a dummy process.
-#if __cplusplus >= 201103L && /* C++11 */ \
+#if __cplusplus >= 201103L && /* C++11 */                                      \
     !defined(__APPLE__) && !(defined(__MINGW64__))
         std::quick_exit(EXIT_SUCCESS);
 #else
