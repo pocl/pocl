@@ -65,7 +65,7 @@ main (int _argc, char **_argv)
 
   ext.clCreateProgramWithDefinedBuiltInKernels
     = clGetExtensionFunctionAddressForPlatform (
-      platform, "clCreateProgramWithDefinedBuiltInKernels");
+      platform, "clCreateProgramWithDefinedBuiltInKernelsEXP");
   if (!ext.clCreateProgramWithDefinedBuiltInKernels)
     {
       fprintf (

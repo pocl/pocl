@@ -1139,9 +1139,10 @@ endif()
 
 if(LIBXSMM_FOUND AND TARGET BLAS::BLAS)
   set(HAVE_LIBXSMM 1)
+  message(STATUS "Found both libxsmm and libblas, XSMM enabled")
 else()
   set(HAVE_LIBXSMM 0)
-  message(STATUS "libxsmm or libblas not found, disabled")
+  message(STATUS "libxsmm or libblas not found, XSMM disabled")
 endif()
 
 function(print_target_properties target)
@@ -1163,26 +1164,38 @@ function(print_target_properties target)
 endfunction()
 
 if(ENABLE_HOST_CPU_DEVICES AND NOT ENABLE_CONFORMANCE)
+
   find_package(onnxruntime QUIET)
   set(HAVE_ONNXRT ${onnxruntime_FOUND})
   if(${HAVE_ONNXRT})
-    print_target_properties(onnxruntime::onnxruntime)
     # TODO: this is a hack, just passing onnxruntime::onnxruntime
     # to include_directories should probably work
     get_target_property(onnxruntime_INCLUDE_DIRS onnxruntime::onnxruntime INTERFACE_INCLUDE_DIRECTORIES)
     get_target_property(onnxruntime_IMPORTED_CONFIGURATIONS onnxruntime::onnxruntime IMPORTED_CONFIGURATIONS)
-    message("Found ONNXRuntime headers at ${onnxruntime_INCLUDE_DIRS} for configs ${onnxruntime_IMPORTED_CONFIGURATIONS}")
+    message(STATUS "ONNXRuntime version ${onnxruntime_VERSION} found, with headers at ${onnxruntime_INCLUDE_DIRS} for configs ${onnxruntime_IMPORTED_CONFIGURATIONS}")
   else()
     message(STATUS "ONNXRuntime not found, disabled")
   endif()
 
-  pkg_search_module(LIBJPEG_TURBO IMPORTED_TARGET
-          libjpeg-turbo>=3.0.0 libturbojpeg>=3.0.0)
-  if(NOT LIBJPEG_TURBO_FOUND)
+  find_package(LIBJPEG_TURBO 3.0.0 QUIET CONFIG NAMES libjpeg-turbo libturbojpeg)
+  set(HAVE_LIBJPEG_TURBO ${LIBJPEG_TURBO_FOUND})
+  if(HAVE_LIBJPEG_TURBO)
+    if(BUILD_SHARED_LIBS)
+      set(LIBJPEG_TARGET libjpeg-turbo::turbojpeg)
+    else()
+      set(LIBJPEG_TARGET libjpeg-turbo::turbojpeg-static)
+    endif()
+    if(TARGET ${LIBJPEG_TARGET})
+      message(STATUS "libjpeg-turbo v${LIBJPEG_TURBO_VERSION} found, using CMake target ${LIBJPEG_TARGET}")
+    else()
+      message(WARNING "libjpeg-turbo v${LIBJPEG_TURBO_VERSION} found, but CMake target ${LIBJPEG_TARGET} not found")
+    endif()
+  else()
     message(STATUS "libjpeg-turbo v3.0.0+ not found, disabled")
   endif()
-  set(HAVE_LIBJPEG_TURBO ${LIBJPEG_TURBO_FOUND})
+
 endif()
+
 ######################################################################################
 
 if(NOT DEFINED DEFAULT_ENABLE_ICD)

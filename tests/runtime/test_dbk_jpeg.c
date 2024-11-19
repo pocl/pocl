@@ -90,7 +90,6 @@ main (int argc, char const *argv[])
   errno = 0;
   char *end_ptr;
   int width = (int)strtol (argv[1], &end_ptr, 10);
-  printf ("errno: %d, %s, %d\n", errno, strerror (errno), *end_ptr);
   TEST_ASSERT (errno == 0 && *end_ptr == '\0');
   int height = (int)strtol (argv[2], &end_ptr, 10);
   TEST_ASSERT (errno == 0 && *end_ptr == '\0');
@@ -124,11 +123,11 @@ main (int argc, char const *argv[])
     err = clGetDeviceInfo(devices[i], CL_DEVICE_BUILT_IN_KERNELS,
                           size_ret, builtin_list, 0 );
     CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo");
-    if ((strstr(builtin_list, "exp_jpeg_encode") == NULL)
-        || (strstr(builtin_list, "exp_jpeg_decode") == NULL))
+    if ((strstr(builtin_list, "jpeg_encode") == NULL)
+        || (strstr(builtin_list, "jpeg_decode") == NULL))
         {
-           printf("one of the devices does not support exp_jpeg_encode"
-                  "or exp_jpeg_decode, skipping test\n");
+           printf("one of the devices does not support jpeg_encode "
+                  "or jpeg_decode DBK, skipping test\n");
            return 77;
         }
   }

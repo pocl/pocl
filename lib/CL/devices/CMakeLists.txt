@@ -195,7 +195,7 @@ if(HAVE_LIBXSMM) # for includedir flags
   target_link_libraries("pocl-devices" PRIVATE PkgConfig::LIBXSMM)
 endif()
 if(HAVE_LIBJPEG_TURBO)
-  target_link_libraries("pocl-devices" PRIVATE PkgConfig::LIBJPEG_TURBO)
+  target_link_libraries("pocl-devices" PRIVATE ${LIBJPEG_TARGET})
 endif ()
 if(HAVE_ONNXRT)
   target_link_libraries("pocl-devices" PRIVATE onnxruntime::onnxruntime)

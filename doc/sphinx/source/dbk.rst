@@ -9,7 +9,7 @@ configured during creation of the OpenCL program. The extension draft goes more 
 `github <https://github.com/KhronosGroup/OpenCL-Docs/pull/1007>`_. Some of these DBKs require PoCL to be built in a
 specific way, therefore please check below for building and usage instructions.
 
-exp_jpeg_encode And exp_jpeg_decode
+jpeg_encode_exp and jpeg_decode_exp
 ______________________________________
 
 An experimental set of DBKs dedicated to compressing raw RGB images to JPEG and back.
