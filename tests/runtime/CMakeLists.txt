@@ -168,10 +168,26 @@ set_property(TEST
 
 add_test(NAME "runtime/test_queue_creation_with_hints" COMMAND "test_queue_creation_with_hints")
 
-add_test(NAME "runtime/test_dbk_matmul" COMMAND test_dbk_matmul)
+if(HAVE_LIBXSMM)
+  add_test(NAME "runtime/test_dbk_matmul" COMMAND test_dbk_matmul)
+  set_tests_properties("runtime/test_dbk_matmul"
+    PROPERTIES
+    COST 2.0
+    PROCESSORS 1
+    SKIP_RETURN_CODE 77
+    DEPENDS "pocl_version_check"
+    LABELS "internal;runtime")
+endif()
 
 if(HAVE_ONNXRT)
   add_test(NAME "runtime/test_dbk_onnx_inference" COMMAND "test_dbk_onnx_inference")
+  set_tests_properties("runtime/test_dbk_onnx_inference"
+    PROPERTIES
+    COST 2.0
+    PROCESSORS 1
+    SKIP_RETURN_CODE 77
+    DEPENDS "pocl_version_check"
+    LABELS "internal;runtime")
 endif()
 
 set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
@@ -214,7 +230,6 @@ set_tests_properties(
   "runtime/test_device_address"
   "runtime/test_svm"
   "runtime/test_large_buf"
-  "runtime/test_dbk_matmul"
   PROPERTIES SKIP_RETURN_CODE 77)
 
 if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
@@ -386,14 +401,12 @@ set_property(TEST
   "runtime/test_compile_n_link"
   "runtime/test_svm"
   "runtime/test_subbuffers"
-  "runtime/test_dbk_matmul"
   "runtime/test_queue_creation_with_hints"
   APPEND PROPERTY LABELS "cuda")
 
 # Label tests that work with TCE backend
 set_property(TEST
   "runtime/test_fill-buffer"
-  "runtime/test_dbk_matmul"
   "runtime/test_queue_creation_with_hints"
   APPEND PROPERTY LABELS "tce")
 
@@ -417,7 +430,6 @@ set_property(TEST
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
   "runtime/test_deviceside_enqueue"
-  "runtime/test_dbk_matmul"
   "runtime/test_queue_creation_with_hints"
   APPEND PROPERTY LABELS "hsa-native")
 
@@ -433,7 +445,6 @@ set_property(TEST
   "runtime/test_event_free"
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
-  "runtime/test_dbk_matmul"
   "runtime/test_queue_creation_with_hints"
   APPEND PROPERTY LABELS "proxy")
 
@@ -444,7 +455,6 @@ set_property(TEST
   "runtime/test_event_free"
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
-  "runtime/test_dbk_matmul"
   "runtime/test_queue_creation_with_hints"
   APPEND PROPERTY LABELS "vulkan")
 
@@ -452,7 +462,6 @@ if (ENABLE_TCE)
     # Label tests that work with Almaif (with compiler) backend
     set_property(TEST
         "runtime/test_fill-buffer"
-        "runtime/test_dbk_matmul"
         "runtime/test_queue_creation_with_hints"
         APPEND PROPERTY LABELS "almaif")
 endif()
@@ -477,6 +486,5 @@ set_property(TEST
   "runtime/test_device_address"
   "runtime/test_svm"
   "runtime/test_subbuffers"
-  "runtime/test_dbk_matmul"
   "runtime/test_queue_creation_with_hints"
   APPEND PROPERTY LABELS "level0")
