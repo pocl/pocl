@@ -96,9 +96,10 @@ jobs:
           sudo apt update -y &&
           sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} mlir-${LLVM_VERSION}-tools libllvmlibc-${LLVM_VERSION}-dev libpolly-${LLVM_VERSION}-dev spirv-tools
 
-      - name: Install ONNX & libjpeg-turbo
+      - name: Install XSMM & ONNX & libjpeg-turbo
         if: ${{ matrix.config == 'DBKs' }}
         run: >
+           sudo apt install -y libopenblas-dev &&
            sudo wget -q -O libjpeg-turbo.deb https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/3.0.4/libjpeg-turbo-official_3.0.4_amd64.deb &&
            sudo dpkg -i libjpeg-turbo.deb &&
            sudo wget -q -O /tmp/onnx-runtime.tgz https://github.com/microsoft/onnxruntime/releases/download/v1.19.2/onnxruntime-linux-x64-1.19.2.tgz &&
@@ -106,13 +107,14 @@ jobs:
            sudo ln -s /opt/libjpeg-turbo/lib64 /opt/libjpeg-turbo/lib &&
            sudo ln -s /opt/onnx/lib /opt/onnx/lib64 &&
            sudo mv /opt/onnx/include /opt/onnxruntime && sudo mkdir /opt/onnx/include && sudo mv /opt/onnxruntime /opt/onnx/include/ &&
-           find /opt/libjpeg-turbo && find /opt/onnx
+           sudo bash -c 'mkdir /opt/source && cd /opt/source && git clone https://github.com/libxsmm/libxsmm.git && cd libxsmm && make -j3 STATIC=0 FORTRAN=0 AVX=2 install DESTDIR=/opt/xsmm'
 
       - name: CMake
         id: cmake
         run: |
           if [ "${{ matrix.config }}" == "DBKs" ]; then
             export "CMAKE_PREFIX_PATH=/opt/libjpeg-turbo/lib/cmake:/opt/onnx/lib/cmake"
+            export "PKG_CONFIG_PATH=/opt/xsmm/lib"
           fi
           runCMake() {
             BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
@@ -142,6 +144,11 @@ jobs:
           else
             echo "Unknown configuration" && exit 1
           fi
+
+      - name: Check XSMM, ONNX & libjpeg-turbo were found & enabled
+        if: ${{ matrix.config == 'DBKs' }}
+        run: >
+           cd ${{ github.workspace }}/build && grep 'define HAVE_ONNXRT' config.h && grep 'define HAVE_LIBJPEG_TURBO' config.h && grep 'define HAVE_LIBXSMM' config.h
 
       - name: Build PoCL
         id: build_pocl
