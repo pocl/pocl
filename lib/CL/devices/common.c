@@ -244,7 +244,7 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
       /* Link through Clang driver interface which knows the correct toolchains
          for all of its targets.  */
       const char *cmd_line[64]
-        = { pocl_get_path ("CLANG", CLANG), "-o", tmp_module, tmp_objfile };
+        = { pocl_get_path ("CLANG", CLANGCC), "-o", tmp_module, tmp_objfile };
       unsigned last_arg_idx = 4;
 
 #ifdef _MSC_VER

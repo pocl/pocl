@@ -179,7 +179,7 @@
 
 #ifdef BUILD_LEVEL0
 
-#define CLANG "@CLANG@"
+#define CLANGCC "@CLANG@"
 
 #define LLVM_SPIRV "@LLVM_SPIRV@"
 
@@ -197,7 +197,7 @@
 
 #cmakedefine KERNELLIB_HOST_DISTRO_VARIANTS
 
-#define CLANG "@CLANG@"
+#define CLANGCC "@CLANG@"
 
 #define CLANG_RESOURCE_DIR "@CLANG_RESOURCE_DIR@"
 

@@ -39,6 +39,7 @@ else()
     NAMES
       "llvmtce-config"
       "llvm-config"
+      "llvm-config-mp-20.0" "llvm-config-mp-20" "llvm-config-20" "llvm-config200"
       "llvm-config-mp-19.0" "llvm-config-mp-19" "llvm-config-19" "llvm-config190"
       "llvm-config-mp-18.0" "llvm-config-mp-18" "llvm-config-18" "llvm-config180"
       "llvm-config-mp-17.0" "llvm-config-mp-17" "llvm-config-17" "llvm-config170"
@@ -102,8 +103,8 @@ string(REGEX REPLACE "([0-9]+)\\.([0-9]+).*" "\\1.\\2" LLVM_VERSION "${LLVM_VERS
 message(STATUS "LLVM_VERSION: ${LLVM_VERSION}")
 
 # required for sources..
-if((LLVM_VERSION_MAJOR LESS 14) OR (LLVM_VERSION_MAJOR GREATER 19))
-  message(FATAL_ERROR "LLVM version between 14.0 and 19.0 required, found: ${LLVM_VERSION_MAJOR}")
+if((LLVM_VERSION_MAJOR LESS 14) OR (LLVM_VERSION_MAJOR GREATER 20))
+  message(FATAL_ERROR "LLVM version between 14.0 and 20.0 required, found: ${LLVM_VERSION_MAJOR}")
 endif()
 
 string(REPLACE "." ";" LLVM_VERSION_PARSED "${LLVM_VERSION}")

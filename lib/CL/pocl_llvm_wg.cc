@@ -1616,7 +1616,7 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
                          ? (std::string(CLANG_MARCH_FLAG) + Device->llvm_cpu)
                          : "";
 
-  const char *Args[] = {pocl_get_path("CLANG", CLANG),
+  const char *Args[] = {pocl_get_path("CLANG", CLANGCC),
                         AsmFileName,
                         "-c",
                         "-o",
