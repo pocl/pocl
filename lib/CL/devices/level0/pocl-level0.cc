@@ -1042,13 +1042,13 @@ static int pocl_level0_setup_spirv_metadata(cl_device_id Device,
 #ifdef ENABLE_NPU
 
 static bool pocl_npu_is_layout_gemm(cl_uint Rank, const void *Layout) {
-  const cl_tensor_layout_ml *Ptr = (cl_tensor_layout_ml *)Layout;
+  const cl_tensor_layout_ml_exp *Ptr = (cl_tensor_layout_ml_exp *)Layout;
 
   // supported layouts from openvino compiler plugin / "rankToLegacyLayoutString":
   // C, NC, CHW, NCHW, NCDHW
-  if (Ptr->ml_type == CL_TENSOR_LAYOUT_ML_NC && Rank == 2)
+  if (Ptr->ml_type == CL_TENSOR_LAYOUT_ML_NC_EXP && Rank == 2)
     return true;
-  if (Ptr->ml_type == CL_TENSOR_LAYOUT_ML_CHW && Rank == 3)
+  if (Ptr->ml_type == CL_TENSOR_LAYOUT_ML_CHW_EXP && Rank == 3)
     return true;
   return false;
 }
@@ -1056,33 +1056,33 @@ static bool pocl_npu_is_layout_gemm(cl_uint Rank, const void *Layout) {
 int
 pocl_npu_validate_khr_gemm (cl_bool TransA,
                             cl_bool TransB,
-                            const cl_tensor_desc *TenA,
-                            const cl_tensor_desc *TenB,
-                            const cl_tensor_desc *TenCIOpt,
-                            const cl_tensor_desc *TenCOut,
-                            const cl_tensor_datatype_value *Alpha,
-                            const cl_tensor_datatype_value *Beta)
+                            const cl_tensor_desc_exp *TenA,
+                            const cl_tensor_desc_exp *TenB,
+                            const cl_tensor_desc_exp *TenCIOpt,
+                            const cl_tensor_desc_exp *TenCOut,
+                            const cl_tensor_datatype_value_exp *Alpha,
+                            const cl_tensor_datatype_value_exp *Beta)
 {
 
   /* datatype match between A&B and CIopt&COut already checked in
    * initial validation (pocl_validate_khr_gemm) */
 
   /* currently FP 16-64 and INT 8-64 are supported */
-  POCL_RETURN_ERROR_ON ((TenA->dtype == CL_TENSOR_DTYPE_FP8E4M3
-                         || TenA->dtype == CL_TENSOR_DTYPE_FP8E5M2
-                         || TenA->dtype == CL_TENSOR_DTYPE_INT4
-                         || TenCOut->dtype == CL_TENSOR_DTYPE_FP8E4M3
-                         || TenCOut->dtype == CL_TENSOR_DTYPE_FP8E5M2
-                         || TenCOut->dtype == CL_TENSOR_DTYPE_INT4),
-                        CL_INVALID_TENSOR_DATATYPE,
+  POCL_RETURN_ERROR_ON ((TenA->dtype == CL_TENSOR_DTYPE_FP8E4M3_EXP
+                         || TenA->dtype == CL_TENSOR_DTYPE_FP8E5M2_EXP
+                         || TenA->dtype == CL_TENSOR_DTYPE_INT4_EXP
+                         || TenCOut->dtype == CL_TENSOR_DTYPE_FP8E4M3_EXP
+                         || TenCOut->dtype == CL_TENSOR_DTYPE_FP8E5M2_EXP
+                         || TenCOut->dtype == CL_TENSOR_DTYPE_INT4_EXP),
+                        CL_INVALID_TENSOR_DATATYPE_EXP,
                         "Datatype support not yet implemented. NPU supports "
                         "only FP16/32/64 and INT8/16/32/64 currently\n");
 
-//  POCL_RETURN_ERROR_ON (((TenA->dtype != CL_TENSOR_DTYPE_FP16
-//                         && TenA->dtype != CL_TENSOR_DTYPE_INT8)
+//  POCL_RETURN_ERROR_ON (((TenA->dtype != CL_TENSOR_DTYPE_FP16_EXP
+//                         && TenA->dtype != CL_TENSOR_DTYPE_INT8_EXP)
 //                         ||
-//                        (TenCOut->dtype != CL_TENSOR_DTYPE_FP16
-//                         && TenCOut->dtype != CL_TENSOR_DTYPE_INT8)),
+//                        (TenCOut->dtype != CL_TENSOR_DTYPE_FP16_EXP
+//                         && TenCOut->dtype != CL_TENSOR_DTYPE_INT8_EXP)),
 //                        CL_INVALID_DBK_DATATYPE,
 //                        "Datatype support not yet implemented. NPU supports "
 //                        "only FP16 and INT8 currently\n");
@@ -1090,20 +1090,20 @@ pocl_npu_validate_khr_gemm (cl_bool TransA,
   /* type mixing check */
   POCL_RETURN_ERROR_ON ((pocl_tensor_type_is_int (TenA->dtype)
                          != pocl_tensor_type_is_int (TenCOut->dtype)),
-                        CL_INVALID_TENSOR_DATATYPE,
+                        CL_INVALID_TENSOR_DATATYPE_EXP,
                         "Datatype mixing (INT & FP) not supported\n");
 
   POCL_RETURN_ERROR_ON ((pocl_tensor_type_size (TenA->dtype)
                          > pocl_tensor_type_size (TenCOut->dtype)),
-                        CL_INVALID_TENSOR_DATATYPE,
+                        CL_INVALID_TENSOR_DATATYPE_EXP,
                         "Datatype of C is smaller than A\n");
 
   /* check validity of data layouts of the tensors. */
-  POCL_RETURN_ERROR_ON ((TenA->layout_type != CL_TENSOR_LAYOUT_ML
-                        || TenB->layout_type != CL_TENSOR_LAYOUT_ML
-                        || TenCOut->layout_type != CL_TENSOR_LAYOUT_ML
-                        || (TenCIOpt && TenCIOpt->layout_type != CL_TENSOR_LAYOUT_ML)),
-                        CL_INVALID_TENSOR_LAYOUT, "GEMM on NPU device only supports ML layouts\n"
+  POCL_RETURN_ERROR_ON ((TenA->layout_type != CL_TENSOR_LAYOUT_ML_EXP
+                        || TenB->layout_type != CL_TENSOR_LAYOUT_ML_EXP
+                        || TenCOut->layout_type != CL_TENSOR_LAYOUT_ML_EXP
+                        || (TenCIOpt && TenCIOpt->layout_type != CL_TENSOR_LAYOUT_ML_EXP)),
+                        CL_INVALID_TENSOR_LAYOUT_EXP, "GEMM on NPU device only supports ML layouts\n"
                         );
 
   POCL_RETURN_ERROR_ON ((!pocl_npu_is_layout_gemm(TenA->rank, TenA->layout)
@@ -1111,7 +1111,7 @@ pocl_npu_validate_khr_gemm (cl_bool TransA,
       || !pocl_npu_is_layout_gemm(TenCOut->rank, TenCOut->layout)
       || (TenCIOpt &&
           !pocl_npu_is_layout_gemm(TenCIOpt->rank, TenCIOpt->layout))),
-      CL_INVALID_TENSOR_LAYOUT,
+      CL_INVALID_TENSOR_LAYOUT_EXP,
       "GEMM on NPU device only supports C, NC, CHW, NCHW, NCDHW layouts\n");
 
   return CL_SUCCESS;

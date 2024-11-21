@@ -83,33 +83,33 @@ bool instantiateTemplateGEMM(const void* KernelAttrs,
   ModelXMLInstance = GEMM_XML_Template;
   BuildFlagsInstance = GEMM_Flags_Template;
   ReplaceMapT ReplaceMap;
-  cl_tensor_layout_ml *L = nullptr;
+  cl_tensor_layout_ml_exp *L = nullptr;
 
   // TODO alpha, beta
 
-  const cl_dbk_attributes_exp_gemm *Attrs
-    = (const cl_dbk_attributes_exp_gemm *)KernelAttrs;
+  const cl_dbk_attributes_gemm_exp *Attrs
+    = (const cl_dbk_attributes_gemm_exp *)KernelAttrs;
   ReplaceMap["SHAPE_M"] = std::to_string(Attrs->a.shape[0]);
   ReplaceMap["SHAPE_K"] = std::to_string(Attrs->a.shape[1]);
   assert(Attrs->a.shape[1] == Attrs->b.shape[0]);
   //ReplaceMap["SHAPE_K"] = std::to_string(Attrs->b.shape[0]);
   ReplaceMap["SHAPE_N"] = std::to_string(Attrs->b.shape[1]);
 
-  assert(Attrs->a.layout_type == CL_TENSOR_LAYOUT_ML);
+  assert(Attrs->a.layout_type == CL_TENSOR_LAYOUT_ML_EXP);
 
   ReplaceMap["INPUT_PREC"] = dtype2precision(Attrs->a.dtype);
   ReplaceMap["OUTPUT_PREC"] = dtype2precision(Attrs->c_out.dtype);
   ReplaceMap["INPUT_ELEM_TYPE"] = dtype2elemtype(Attrs->a.dtype);
   ReplaceMap["INPUT_ELEM_TYPE"] = dtype2elemtype(Attrs->c_out.dtype);
 
-  assert(Attrs->a.layout_type == CL_TENSOR_LAYOUT_ML);
-  L = (cl_tensor_layout_ml *)Attrs->a.layout;
+  assert(Attrs->a.layout_type == CL_TENSOR_LAYOUT_ML_EXP);
+  L = (cl_tensor_layout_ml_exp *)Attrs->a.layout;
   ReplaceMap["INPUT_LAYOUT"] = layout2str(L->ml_type);
-  L = (cl_tensor_layout_ml *)Attrs->b.layout;
+  L = (cl_tensor_layout_ml_exp *)Attrs->b.layout;
   ReplaceMap["INPUT_LAYOUT"] = layout2str(L->ml_type);
 
-  assert(Attrs->c_out.layout_type == CL_TENSOR_LAYOUT_ML);
-  L = (cl_tensor_layout_ml *)Attrs->c_out.layout;
+  assert(Attrs->c_out.layout_type == CL_TENSOR_LAYOUT_ML_EXP);
+  L = (cl_tensor_layout_ml_exp *)Attrs->c_out.layout;
   ReplaceMap["OUTPUT_LAYOUT"] = layout2str(L->ml_type);
 
   ReplaceMap["TRANSPOSE_A"] = Attrs->trans_a ? "true" : "false";

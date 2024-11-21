@@ -74,7 +74,7 @@ static std::tuple<cl::Platform, cl::Device, std::string> findDeviceWithMatmulDBK
         std::cerr << "Selected device: " << D.getInfo<CL_DEVICE_NAME>() << "\n";
         return std::make_tuple(P, D, Name);
       } else {
-        std::cerr << "Device " << D.getInfo<CL_DEVICE_NAME>() << " does not support BIKD exp_matmul\n";
+        std::cerr << "Device " << D.getInfo<CL_DEVICE_NAME>() << " does not support BIKD matmul_exp\n";
       }
     }
   }

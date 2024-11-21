@@ -1169,7 +1169,7 @@ static const Level0Model Level0GraphModels[NumLevel0GraphModels] = {
     .BuildFlags =  R"RAW(--inputs_precisions="data:U8" --inputs_layouts="data:NCHW"  --outputs_precisions="dot:FP16" --outputs_layouts="dot:NC" --config NPU_PLATFORM="3720" LOG_LEVEL="LOG_DEBUG")RAW",
   },
   Level0Model{
-    .Name = "exp_gemm",
+    .Name = "gemm_exp",
     .DBK_ID = CL_DBK_GEMM_EXP,
     .Format = ZE_GRAPH_FORMAT_NGRAPH_LITE,
     .NGraphXml = "",
@@ -1178,7 +1178,7 @@ static const Level0Model Level0GraphModels[NumLevel0GraphModels] = {
     .instantiateModel = instantiateTemplateGEMM
   },
   Level0Model{
-    .Name = "exp_matmul",
+    .Name = "matmul_exp",
     .DBK_ID = CL_DBK_MATMUL_EXP,
     .Format = ZE_GRAPH_FORMAT_NGRAPH_LITE,
     .NGraphXml = "",
