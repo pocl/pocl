@@ -729,8 +729,8 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 		# instr index, LLVM IR expects instructions to be numbered from 1
 		llvm_i = 1
 
-		# arg without qualifiers, saved for mangling name compression
-		last_pure_arg = None
+		# args without qualifiers, saved for mangling name compression
+		saved_pure_args = []
 
 		# ARM does not coerce return types, x86-64 does
 		if ARM_CALLING_ABI:
@@ -768,11 +768,25 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 			#   Dv2_cPULocalDv2_c -> Dv2_cPULocalS_
 			pure_arg = pure_arg_type(cast)
 			actual_arg = cast
-			if pure_arg == last_pure_arg and last_pure_arg.startswith("D") and (not last_pure_arg.startswith("Dh")):
-				actual_arg = replace_arg_type(actual_arg, "S_")
-			if pure_arg == last_pure_arg and last_pure_arg == '12memory_order':
-				actual_arg = replace_arg_type(actual_arg, "S4_")
-			last_pure_arg = pure_arg
+
+			replaced = False
+			if len(pure_arg) > 1 and pure_arg != "Dh":
+				for idx, prev_arg in enumerate(saved_pure_args):
+					if pure_arg != prev_arg:
+						continue
+					compressed_arg = "S_"
+					if idx > 0:
+						# _Z16_cl_write_imagei14ocl_image3d_woDv4_i -> S0_
+						# _Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicjPU9CLprivatejj12memory_order -> S4
+						if actual_arg == "12memory_order":
+							compressed_arg = "S" + str(idx+1) + "_"
+						else:
+							compressed_arg = "S" + str(idx-1) + "_"
+					actual_arg = replace_arg_type(actual_arg, compressed_arg)
+					replaced = True
+					break
+			if not replaced:
+				saved_pure_args.append(pure_arg)
 
 			# convert arg type to SPIR mangled type with AS
 			# e.g. "Pi" -> "PU3AS3i"
