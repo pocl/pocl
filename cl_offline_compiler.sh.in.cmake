@@ -95,7 +95,7 @@ fi
 CL_IS_30=false
 CL_FAST_MATH=false
 CL_UNSAFE_MATH=false
-BUILD_OPTIONS=""
+BUILD_OPTIONS="-cl-opt-disable"
 CL_STD="-cl-std=CL1.2"
 
 for i in "$@"; do
@@ -255,18 +255,14 @@ if [ "$DEBUG" = "true" ]; then
   echo "OUTPUT: ${OUTPUT}"
 fi
 
-if [ "$CL_OFFLINE_COMPILER_DISABLE_OPT" = "1" ]; then
-  BUILD_OPTIONS="${BUILD_OPTIONS} -cl-opt-disable"
-fi
-
-ALL_OPTIONS="--target=${TARGET} -x cl ${CL_STD} ${BUILD_OPTIONS} -o ${TEMP_BC_FILE} -emit-llvm -c ${SOURCE}"
+CLANG_OPTIONS="--target=${TARGET} -x cl ${CL_STD} ${BUILD_OPTIONS} -o ${TEMP_BC_FILE} -emit-llvm -c ${SOURCE}"
 
 LLVM_SPIRV_OPTIONS="--spirv-gen-kernel-arg-name-md --spirv-max-version=1.2 -o ${TEMP_SPV_FILE} ${TEMP_BC_FILE}"
 
 if [ "$DEBUG" = "true" ]; then
-  echo "Running @CLANG@ ${ALL_OPTIONS}"
+  echo "Running @CLANG@ ${CLANG_OPTIONS}"
 fi
-@CLANG@ ${ALL_OPTIONS} || exit 1
+@CLANG@ ${CLANG_OPTIONS} || exit 1
 
 if [ "$DEBUG" = "true" ]; then
   echo "Running @LLVM_SPIRV@ ${LLVM_SPIRV_OPTIONS}"
