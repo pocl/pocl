@@ -56,7 +56,7 @@ jobs:
         id: cmake
         run: |
           runCMake() {
-            BUILD_FLAGS="-O1 -ggdb -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-format"
+            BUILD_FLAGS="-O1 -ggdb -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-format -Wno-unused-function"
             cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DENABLE_EXAMPLES=0 -DENABLE_TESTS=0 \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo "-DCMAKE_C_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
             "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
