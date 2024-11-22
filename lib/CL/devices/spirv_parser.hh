@@ -97,7 +97,7 @@ bool parseSPIRV(const int32_t *Stream, size_t NumWords,
                 OpenCLFunctionInfoMap &FuncInfoMap);
 
 POCL_EXPORT
-void applyAtomicCmpXchgWorkaround(const int32_t *InStream, size_t NumWords,
+bool applyAtomicCmpXchgWorkaround(const int32_t *InStream, size_t NumWords,
                                   std::vector<uint8_t> &OutStream);
 
 } // namespace SPIRVParser
