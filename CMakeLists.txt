@@ -2133,8 +2133,13 @@ rename_if_different("${CMAKE_BINARY_DIR}/pocl_version.h.new" "${CMAKE_BINARY_DIR
 configure_file("pocl_opencl.h.in.cmake" "pocl_opencl.h.new")
 rename_if_different("${CMAKE_BINARY_DIR}/pocl_opencl.h.new" "${CMAKE_BINARY_DIR}/pocl_opencl.h" 0)
 
-configure_file("cl_offline_compiler.sh.in.cmake" "cl_offline_compiler.sh.in.new" @ONLY)
-rename_if_different("${CMAKE_BINARY_DIR}/cl_offline_compiler.sh.in.new" "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh" 1)
+configure_file("cl_offline_compiler.sh.in.cmake" "cl_offline_compiler.sh.config.new" @ONLY)
+rename_if_different(
+  "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh.config.new"
+  "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh.config" 1)
+file(GENERATE
+  OUTPUT "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh"
+  INPUT "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh.config")
 
 include_directories("${CMAKE_BINARY_DIR}")
 
