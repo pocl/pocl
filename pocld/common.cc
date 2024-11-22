@@ -95,7 +95,7 @@ static const char *const hex_digits = "0123456789abcdef";
 std::string hexdigits(std::string acc, uint8_t x) {
   acc.push_back(hex_digits[(x & 0xf0) >> 4]);
   acc.push_back(hex_digits[(x & 0x0f) >> 0]);
-  return std::move(acc);
+  return acc;
 }
 
 std::string describe_sockaddr(struct sockaddr *addr, unsigned addr_size) {

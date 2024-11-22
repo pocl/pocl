@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
     UseVsock = false;
   }
   if ((error = server.launch(
-           std::move(std::string(ai.address_arg ? ai.address_arg : "")),
+           std::string(ai.address_arg ? ai.address_arg : ""),
            listen_ports, UseVsock)))
     return error;
 
