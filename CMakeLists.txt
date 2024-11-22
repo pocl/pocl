@@ -1044,7 +1044,9 @@ if(WIN32 AND (NOT MINGW))
 
 elseif(UNIX)
 
-  if (CMAKE_CROSSCOMPILING AND (NOT ENABLE_HOST_CPU_DEVICES) AND (NOT ENABLE_HSA))
+  # if proxy uses opencl-stub then dlfcn is required.
+  if (CMAKE_CROSSCOMPILING AND (NOT ENABLE_HOST_CPU_DEVICES) AND (NOT ENABLE_HSA)
+        AND (NOT PROXY_USE_LIBOPENCL_STUB))
     message(STATUS "Cross-compiling without CPU/HSA devices -> skipping LIBDL search")
   else()
 
@@ -1682,6 +1684,9 @@ if(ENABLE_PROXY_DEVICE)
 
   endif()
 
+  # an option parameter to link to libopencl-stub
+  # source code: https://github.com/krrishnarraj/libopencl-stub
+  OPTION(PROXY_USE_LIBOPENCL_STUB "link the proxy device to libopencl-stub instead of system opencl" OFF)
   if(RENAME_POCL AND PROXY_USE_LIBOPENCL_STUB)
     message(FATAL_ERROR "RENAME_POCL and PROXY_USE_LIBOPENCL_STUB can not be used together")
   endif()
