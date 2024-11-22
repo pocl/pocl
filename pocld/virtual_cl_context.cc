@@ -779,7 +779,7 @@ void VirtualCLContext::BuildOrLinkProgram(Request *req, Reply *rep,
 
       std::vector<unsigned char> binary(buf, buf + bin_size);
       buf += bin_size;
-      assert((buf - buffer) <= (size_t)m.payload_size);
+      assert((size_t)(buf - buffer) <= (size_t)m.payload_size);
       uint64_t id = ((uint64_t)m.platforms[i] << 32) + m.devices[i];
       InputBinaries[id] = std::move(binary);
     }
