@@ -53,7 +53,7 @@ main (int _argc, char **_argv)
   cl_context context = NULL;
   cl_device_id *devices = NULL;
   cl_command_queue *queues = NULL;
-  cl_uint i = 0, num_devices = 0;
+  cl_uint num_devices = 0;
 
   int err = poclu_get_multiple_devices (&platform, &context, 0, &num_devices,
                                         &devices, &queues, 0);
@@ -120,7 +120,7 @@ main (int _argc, char **_argv)
             devices[j], CL_DEVICE_COMMAND_BUFFER_SYNC_DEVICES_KHR,
             sizeof (cl_device_id) * num_sync_devices, sync_devices, NULL));
 
-          for (unsigned i = 0; i < num_devices; ++i)
+          for (cl_uint i = 0; i < num_devices; ++i)
             {
               int can_sync = 1;
               if (i != j)
@@ -170,7 +170,7 @@ main (int _argc, char **_argv)
   cl_int error;
 
   const char *code = STR (kernel void vector_addition (
-    global const int *tile1, global const int *tile2, global int *res) {
+    global const uint *tile1, global const uint *tile2, global uint *res) {
     size_t index = get_global_id (0);
     res[index] = tile1[index] + tile2[index];
   });
@@ -186,11 +186,11 @@ main (int _argc, char **_argv)
 
   size_t frame_count = 60;
   size_t frame_elements = 1024;
-  size_t frame_size = frame_elements * sizeof (cl_int);
+  size_t frame_size = frame_elements * sizeof (cl_uint);
 
   size_t tile_count = 16;
   size_t tile_elements = frame_elements / tile_count;
-  size_t tile_size = tile_elements * sizeof (cl_int);
+  size_t tile_size = tile_elements * sizeof (cl_uint);
 
   cl_mem buffer_tile1
     = clCreateBuffer (context, CL_MEM_READ_ONLY, tile_size, NULL, &error);
@@ -202,12 +202,9 @@ main (int _argc, char **_argv)
     = clCreateBuffer (context, CL_MEM_WRITE_ONLY, tile_size, NULL, &error);
   CHECK_CL_ERROR (error);
 
-  CHECK_CL_ERROR (
-    clSetKernelArg (kernel, 0, sizeof (buffer_tile1), &buffer_tile1));
-  CHECK_CL_ERROR (
-    clSetKernelArg (kernel, 1, sizeof (buffer_tile2), &buffer_tile2));
-  CHECK_CL_ERROR (
-    clSetKernelArg (kernel, 2, sizeof (buffer_res), &buffer_res));
+  CHECK_CL_ERROR (clSetKernelArg (kernel, 0, sizeof (cl_mem), &buffer_tile1));
+  CHECK_CL_ERROR (clSetKernelArg (kernel, 1, sizeof (cl_mem), &buffer_tile2));
+  CHECK_CL_ERROR (clSetKernelArg (kernel, 2, sizeof (cl_mem), &buffer_res));
 
   /* Adapted from test_command_buffer in order to cover a wide range of
    * commands in the remap operation */
@@ -241,7 +238,7 @@ main (int _argc, char **_argv)
        * of 8x8 tiles */
       size_t src_origin[3] = { 0, tile_index * 8, 0 };
       size_t dst_origin[3] = { 0, 0, 0 };
-      size_t tile_region[3] = { 8 * sizeof (cl_int), 8, 1 };
+      size_t tile_region[3] = { 8 * sizeof (cl_uint), 8, 1 };
       CHECK_CL_ERROR (ext.clCommandCopyBufferRectKHR (
         command_buffer, queues[tile_index % num_devices], NULL, buffer_src2,
         buffer_tile2, src_origin, dst_origin, tile_region, tile_region[0], 0,
@@ -289,8 +286,8 @@ main (int _argc, char **_argv)
   TEST_ASSERT (cmdbuf_state == CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR);
 
   /* Enqueue N-queue buffer normally */
-  cl_int *src1 = malloc (sizeof (cl_int) * frame_elements);
-  cl_int *src2 = malloc (sizeof (cl_int) * frame_elements);
+  cl_uint *src1 = malloc (sizeof (cl_uint) * frame_elements);
+  cl_uint *src2 = malloc (sizeof (cl_uint) * frame_elements);
   for (size_t frame_index = 0; frame_index < frame_count; frame_index++)
     {
       for (size_t i = 0; i < frame_elements; ++i)
@@ -311,10 +308,9 @@ main (int _argc, char **_argv)
         ext.clEnqueueCommandBufferKHR (num_devices, queues, command_buffer, 2,
                                        write_src_events, &command_buf_event));
 
-      cl_int err;
-      cl_int *buf_map = clEnqueueMapBuffer (
+      cl_uint *buf_map = clEnqueueMapBuffer (
         queues[0], buffer_dst, CL_TRUE, CL_MAP_READ, 0,
-        sizeof (cl_int) * frame_elements, 1, &command_buf_event, NULL, &err);
+        sizeof (cl_uint) * frame_elements, 1, &command_buf_event, NULL, &err);
       CHECK_OPENCL_ERROR_IN ("clEnqueueMapBuffer");
 
       for (size_t i = 0; i < frame_elements; ++i)
@@ -357,10 +353,9 @@ main (int _argc, char **_argv)
       CHECK_CL_ERROR (ext.clEnqueueCommandBufferKHR (
         1, queues, remapped_cmdbuf, 2, write_src_events, &command_buf_event));
 
-      cl_int err;
-      cl_int *buf_map = clEnqueueMapBuffer (
+      cl_uint *buf_map = clEnqueueMapBuffer (
         queues[0], buffer_dst, CL_TRUE, CL_MAP_READ, 0,
-        sizeof (cl_int) * frame_elements, 1, &command_buf_event, NULL, &err);
+        sizeof (cl_uint) * frame_elements, 1, &command_buf_event, NULL, &err);
       CHECK_OPENCL_ERROR_IN ("clEnqueueMapBuffer");
 
       for (size_t i = 0; i < frame_elements; ++i)
@@ -376,7 +371,7 @@ main (int _argc, char **_argv)
       CHECK_CL_ERROR (clReleaseEvent (command_buf_event));
     }
 
-  for (unsigned i = 0; i < num_devices; ++i)
+  for (cl_uint i = 0; i < num_devices; ++i)
     {
       CHECK_CL_ERROR (clReleaseCommandQueue (queues[i]));
     }

@@ -98,6 +98,7 @@ pocl_check_tensor_layout (cl_uint rank,
                                   "twice!\n");
             defined_dims |= (1u << ld[i]);
           }
+        return CL_SUCCESS;
       }
     case CL_TENSOR_LAYOUT_BLAS_PITCHED_EXP:
       {
