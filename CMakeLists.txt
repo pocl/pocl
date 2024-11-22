@@ -1165,17 +1165,36 @@ endfunction()
 
 if(ENABLE_HOST_CPU_DEVICES AND NOT ENABLE_CONFORMANCE)
 
-  find_package(onnxruntime QUIET)
-  set(HAVE_ONNXRT ${onnxruntime_FOUND})
-  if(${HAVE_ONNXRT})
-    # TODO: this is a hack, just passing onnxruntime::onnxruntime
-    # to include_directories should probably work
-    get_target_property(onnxruntime_INCLUDE_DIRS onnxruntime::onnxruntime INTERFACE_INCLUDE_DIRECTORIES)
-    get_target_property(onnxruntime_IMPORTED_CONFIGURATIONS onnxruntime::onnxruntime IMPORTED_CONFIGURATIONS)
-    message(STATUS "ONNXRuntime version ${onnxruntime_VERSION} found, with headers at ${onnxruntime_INCLUDE_DIRS} for configs ${onnxruntime_IMPORTED_CONFIGURATIONS}")
-  else()
-    message(STATUS "ONNXRuntime not found, disabled")
+  set(HAVE_ONNXRT OFF)
+  if (ANDROID)
+    if (NOT ORT_ANDROID_DIR)
+      message("ONNX on Android requires \"ORT_ANDROID_DIR\" to point to the files described in:
+      https://onnxruntime.ai/docs/install/#cc-1, but is missing.")
+    else ()
+      # Find_package does not find the package, so create a library ourselves.
+      add_library(onnxruntime::onnxruntime SHARED IMPORTED)
+      # Assumes that ORT_ANDROID_DIR points to the root of the unpacked .aar.
+      set_target_properties(onnxruntime::onnxruntime PROPERTIES IMPORTED_LOCATION
+              "${ORT_ANDROID_DIR}/jni/${ANDROID_ABI}/libonnxruntime.so")
+      set_target_properties(onnxruntime::onnxruntime PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
+              "${ORT_ANDROID_DIR}/headers")
+      set(HAVE_ONNXRT ON)
+    endif ()
+  else ()
+    find_package(onnxruntime QUIET)
+    set(HAVE_ONNXRT ${onnxruntime_FOUND})
+    if (${HAVE_ONNXRT})
+      # TODO: this is a hack, just passing onnxruntime::onnxruntime
+      # to include_directories should probably work
+      get_target_property(onnxruntime_INCLUDE_DIRS onnxruntime::onnxruntime INTERFACE_INCLUDE_DIRECTORIES)
+      get_target_property(onnxruntime_IMPORTED_CONFIGURATIONS onnxruntime::onnxruntime IMPORTED_CONFIGURATIONS)
+      message(STATUS "ONNXRuntime version ${onnxruntime_VERSION} found, with headers at ${onnxruntime_INCLUDE_DIRS} for configs ${onnxruntime_IMPORTED_CONFIGURATIONS}")
+    endif()
   endif()
+
+  if (NOT ${HAVE_ONNXRT})
+    message(STATUS "ONNXRuntime not found, disabled")
+  endif ()
 
   find_package(LIBJPEG_TURBO 3.0.0 QUIET CONFIG NAMES libjpeg-turbo libturbojpeg)
   set(HAVE_LIBJPEG_TURBO ${LIBJPEG_TURBO_FOUND})
