@@ -26,7 +26,6 @@
 #ifndef HIP_COMMON_HH
 #define HIP_COMMON_HH
 
-#include "pocl_cl.h"
 #include "pocl_export.h"
 
 #include <map>
@@ -35,8 +34,6 @@
 #include <string>
 #include <vector>
 
-namespace SPIRVParser {
-
 #ifndef HAVE_SIZE_T_3
 #define HAVE_SIZE_T_3
 typedef struct
@@ -44,6 +41,8 @@ typedef struct
   size_t size[3];
 } size_t_3;
 #endif
+
+namespace SPIRVParser {
 
 enum class OCLType : unsigned {
   POD,
