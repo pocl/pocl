@@ -35,18 +35,20 @@
 #include "spirv.hh"
 #include "spirv_parser.hh"
 
-#include "pocl_debug.h"
-
 // uncomment to enable extra messages from the parser
 //#define DEBUG_SPIRV_PARSER
 
 #ifdef DEBUG_SPIRV_PARSER
+#include "pocl_debug.h"
 #define logTrace(...) POCL_MSG_PRINT_INFO(__VA_ARGS__);
-#else
-#define logTrace(...) ((void)0)
-#endif
 #define logWarn(...) POCL_MSG_WARN(__VA_ARGS__);
 #define logError(...) POCL_MSG_ERR(__VA_ARGS__);
+#else
+#define logTrace(...) ((void)0)
+#define logWarn(...) fprintf(stderr, __VA_ARGS__)
+#define logError(...) fprintf(stderr, __VA_ARGS__)
+#endif
+
 
 namespace SPIRVParser {
 
