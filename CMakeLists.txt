@@ -1432,9 +1432,8 @@ cl_intel_unified_shared_memory cl_ext_buffer_device_address")
 # .... seems like a bug in CTS, but needs to be investigated.
 set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes  __opencl_c_images \
 __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
-__opencl_c_atomic_scope_device __opencl_c_program_scope_global_variables \
-__opencl_c_atomic_scope_all_devices __opencl_c_generic_address_space \
-__opencl_c_work_group_collective_functions")
+__opencl_c_atomic_scope_device __opencl_c_atomic_scope_all_devices \
+__opencl_c_generic_address_space __opencl_c_work_group_collective_functions")
 
 # enabled by default
 # when disabled, depending on setting of ENABLE_CONFORMANCE, denorms are disabled
@@ -1464,7 +1463,8 @@ if(NOT ENABLE_CONFORMANCE)
 cl_khr_subgroup_shuffle cl_intel_subgroups cl_intel_subgroups_short cl_intel_subgroups_char \
 cl_ext_float_atomics cl_intel_required_subgroup_size")
   # read-write images are still partially broken
-  set( HOST_DEVICE_FEATURES_30  "${HOST_DEVICE_FEATURES_30} __opencl_c_read_write_images")
+  # program-scope variables work on OpenCL C input, but breaks with SPIR-V input (llvm-spirv bugs)
+  set(HOST_DEVICE_FEATURES_30  "${HOST_DEVICE_FEATURES_30} __opencl_c_read_write_images __opencl_c_program_scope_global_variables")
 endif()
 
 # Extensions that are considered feature-complete (preferably CTS-tested).
