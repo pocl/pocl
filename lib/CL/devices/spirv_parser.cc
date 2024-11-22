@@ -723,7 +723,7 @@ public:
     const int32_t *PastHeaderPtr = InStream;
     HeaderOK_ = parseHeader(PastHeaderPtr, NumWords);
     if (!HeaderOK_) {
-      logError("SPIR-V parser: Corrupted header.\n");
+      logError("SPIR-V parser: corrupted header, or not a SPIR-V file.\n");
       return false;
     }
 
@@ -1060,13 +1060,15 @@ bool parseSPIRV(const int32_t *Stream, size_t NumWords,
   return Mod.fillModuleInfo(Output);
 }
 
-void applyAtomicCmpXchgWorkaround(const int32_t *InStream, size_t NumWords,
+bool applyAtomicCmpXchgWorkaround(const int32_t *InStream, size_t NumWords,
                                   std::vector<uint8_t> &OutStream) {
   SPIRVmodule Mod;
   std::vector<int32_t> Out;
-  Mod.applyCmpXchgWorkaround(InStream, NumWords, Out);
+  if (!Mod.applyCmpXchgWorkaround(InStream, NumWords, Out))
+    return false;
   OutStream.resize(Out.size() * 4);
   std::memcpy(OutStream.data(), Out.data(), Out.size() * 4);
+  return true;
 }
 
 } // namespace SPIRVParser

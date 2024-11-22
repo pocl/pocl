@@ -27,8 +27,15 @@ set_opencl_header_includes()
 
 add_executable(poclcc poclcc.c)
 harden(poclcc)
-
 target_link_libraries(poclcc poclu ${OPENCL_LIBS})
+
+# TODO refactor spirv-parser into its own library
+set(SPVSRC "${CMAKE_SOURCE_DIR}/lib/CL/devices")
+add_executable(spirv_fix_atomic_compare_exchange spirv_fix_atomic_compare_exchange.cc
+  "${SPVSRC}/spirv_parser.hh" "${SPVSRC}/spirv_parser.cc")
+harden(spirv_fix_atomic_compare_exchange)
+target_link_libraries(spirv_fix_atomic_compare_exchange poclu ${OPENCL_LIBS})
+target_include_directories(spirv_fix_atomic_compare_exchange PRIVATE "${SPVSRC}")
 
 install(TARGETS "poclcc" RUNTIME
         DESTINATION "${POCL_INSTALL_PUBLIC_BINDIR}" COMPONENT "poclcc")
