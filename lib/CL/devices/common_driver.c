@@ -591,12 +591,12 @@ pocl_reload_program_bc (char *program_bc_path, cl_program program,
   return 0;
 }
 
+#ifdef ENABLE_SPIRV
 /* if some SPIR-V spec constants were changed, use llvm-spirv --spec-const=...
  * to generate new LLVM bitcode from SPIR-V */
 static int
 pocl_regen_spirv_binary (cl_program program, cl_uint device_i)
 {
-#ifdef ENABLE_SPIRV
   int errcode = CL_SUCCESS;
   cl_device_id device = program->devices[device_i];
   int spec_constants_changed = 0;
@@ -678,10 +678,8 @@ ERROR:
         pocl_remove (program_bc_spirv);
     }
   return errcode;
-#else
-  return -1;
-#endif
 }
+#endif
 
 /* Converts SPIR-V / SPIR to LLVM IR, and links it to pocl's kernel library */
 static int
