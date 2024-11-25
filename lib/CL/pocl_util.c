@@ -77,6 +77,7 @@
 #include "utlist.h"
 #include "utlist_addon.h"
 
+/* #define DEBUG_EVENT_DEPS */
 
 uint32_t
 pocl_byteswap_uint32_t (uint32_t word, char should_swap)
@@ -316,6 +317,7 @@ pocl_create_event (cl_event *event,
   return CL_SUCCESS;
 }
 
+#ifdef DEBUG_EVENT_DEPS
 static int
 check_for_circular_dep (cl_event waiting_event, cl_event notifier_event)
 {
@@ -333,6 +335,7 @@ check_for_circular_dep (cl_event waiting_event, cl_event notifier_event)
   }
   return 0;
 }
+#endif
 
 int
 pocl_create_event_sync (cl_event notifier_event, cl_event waiting_event)
@@ -368,7 +371,9 @@ pocl_create_event_sync (cl_event notifier_event, cl_event waiting_event)
   if (!notify_target || !wait_list_item)
     return CL_OUT_OF_HOST_MEMORY;
 
-  /* check_for_circular_dep (waiting_event, notifier_event); */
+#ifdef DEBUG_EVENT_DEPS
+  check_for_circular_dep (waiting_event, notifier_event);
+#endif
 
   notify_target->event = waiting_event;
   wait_list_item->event = notifier_event;

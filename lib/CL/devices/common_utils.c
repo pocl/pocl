@@ -889,24 +889,6 @@ pocl_cpu_get_ptr (struct pocl_argument *arg, unsigned global_mem_id)
   return (void *)ptr;
 }
 
-/**
- * Get the size of the arg mem_obj that belongs to the global_mem_id.
- *
- * \return 0 if arg->value is NULL or is_raw_ptr, otherwise the size of the mem_obj.
- */
-static size_t
-pocl_cpu_get_memsize (struct pocl_argument *arg, unsigned global_mem_id)
-{
-  if (arg->value == NULL)
-    return 0;
-
-  if (arg->is_raw_ptr)
-    return 0;
-
-  cl_mem mem = *(cl_mem *)(arg->value);
-  return mem->size;
-}
-
 #ifdef HAVE_LIBXSMM
 
 static cl_bool

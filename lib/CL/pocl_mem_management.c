@@ -29,6 +29,8 @@
 #include "utlist.h"
 #include <string.h>
 
+/* #define DEBUG_MIGRATIONS */
+
 #ifndef USE_POCL_MEMMANAGER
 
 cl_event pocl_mem_manager_new_event ()
@@ -373,6 +375,7 @@ out:
   return retv;
 }
 
+#ifdef DEBUG_MIGRATIONS
 static void
 pocl_dump_migration_infos (pocl_buffer_migration_info *mis)
 {
@@ -394,6 +397,7 @@ pocl_dump_migration_infos (pocl_buffer_migration_info *mis)
                  mi->buffer->parent->latest_version);
     }
 }
+#endif
 
 /** Creates an implicit sub-buffer to patch up a part left by another
    sub-buffers which ends before an unaligned address.
@@ -461,7 +465,7 @@ pocl_convert_to_subbuffer_migrations (pocl_buffer_migration_info *buffer_usage,
   pocl_buffer_migration_info *extra_migrations = NULL;
   pocl_buffer_migration_info *patch_migrations = NULL;
 
-#if 0
+#ifdef DEBUG_MIGRATIONS
   fprintf (stderr, "Original migrations:\n");
   pocl_dump_migration_infos (buffer_usage);
 #endif
@@ -533,7 +537,7 @@ pocl_convert_to_subbuffer_migrations (pocl_buffer_migration_info *buffer_usage,
   LL_CONCAT (patch_migrations, buffer_usage);
   LL_CONCAT (patch_migrations, extra_migrations);
 
-#if 0
+#ifdef DEBUG_MIGRATIONS
   fprintf (stderr, "Updated sub-buffer-based migrations:\n");
   pocl_dump_migration_infos (patch_migrations);
 #endif
