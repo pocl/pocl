@@ -33,7 +33,7 @@ pocl_cpu_execute_dbk_exp_img_yuv2rgb (cl_program program,
 {
 
   cl_device_id dev = program->devices[dev_i];
-  cl_dbk_attributes_exp_img_color_convert *attrs = meta->builtin_kernel_attrs;
+  cl_dbk_attributes_img_color_convert_exp *attrs = meta->builtin_kernel_attrs;
   unsigned mem_id = dev->global_mem_id;
   uint8_t *input = pocl_cpu_get_ptr (&arguments[0], mem_id);
   uint8_t *output = pocl_cpu_get_ptr (&arguments[1], mem_id);

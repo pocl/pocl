@@ -84,7 +84,7 @@ main (int argc, char const *argv[])
         POCL_DF_IMAGE_NV12 };
   pocl_image_attr_t output_attrs = input_attrs;
   output_attrs.format = POCL_DF_IMAGE_RGB;
-  cl_dbk_attributes_exp_img_color_convert convert_attrs
+  cl_dbk_attributes_img_color_convert_exp convert_attrs
     = { input_attrs, output_attrs };
   const void *attributes[] = { &convert_attrs };
   cl_int device_support[] = { 0 };

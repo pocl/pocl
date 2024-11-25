@@ -31,8 +31,8 @@ pocl_validate_img_attrs (cl_dbk_id_exp kernel_id,
     {
     case CL_DBK_IMG_COLOR_CONVERT_EXP:
       {
-        cl_dbk_attributes_exp_img_color_convert *attrs
-          = (cl_dbk_attributes_exp_img_color_convert *)kernel_attributes;
+        cl_dbk_attributes_img_color_convert_exp *attrs
+          = (cl_dbk_attributes_img_color_convert_exp *)kernel_attributes;
         pocl_image_attr_t input_attr = attrs->input_image;
         pocl_image_attr_t output_attr = attrs->output_image;
 
@@ -88,15 +88,17 @@ pocl_copy_img_attrs (cl_dbk_id_exp kernel_id, const void *kernel_attributes)
 {
   switch (kernel_id)
     {
+
     case CL_DBK_IMG_COLOR_CONVERT_EXP:
       {
-        void *ret = malloc (sizeof (cl_dbk_attributes_exp_img_color_convert));
+        void *ret = malloc (sizeof (cl_dbk_attributes_img_color_convert_exp));
         memcpy (ret, kernel_attributes,
-                sizeof (cl_dbk_attributes_exp_img_color_convert));
+                sizeof (cl_dbk_attributes_img_color_convert_exp));
         return ret;
       }
     default:
       POCL_ABORT ("pocl_copy_img_attrs called with "
                   "wrong kernel_id\n");
+
     }
 }

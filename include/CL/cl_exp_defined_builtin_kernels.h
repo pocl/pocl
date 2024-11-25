@@ -319,7 +319,7 @@ typedef struct
 {
   pocl_image_attr_t input_image;
   pocl_image_attr_t output_image;
-} cl_dbk_attributes_exp_img_color_convert;
+} cl_dbk_attributes_img_color_convert_exp;
 
 /**
  * name: "exp_dnn_nms"
