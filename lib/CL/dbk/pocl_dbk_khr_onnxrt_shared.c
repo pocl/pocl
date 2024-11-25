@@ -127,6 +127,12 @@ pocl_copy_onnx_inference_dbk_attributes (
                   data_len);
         }
     }
+  else
+    {
+      attrs->initializer_names = NULL;
+      attrs->initializer_data = NULL;
+      attrs->initializer_tensor_descs = NULL;
+    }
 
   return attrs;
 
