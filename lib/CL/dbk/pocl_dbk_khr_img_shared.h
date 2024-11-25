@@ -27,13 +27,14 @@
 
 #include "pocl_builtin_kernels.h"
 
-int pocl_validate_img_attrs (BuiltinKernelId kernel_id,
+
+int pocl_validate_img_attrs (cl_dbk_id_exp kernel_id,
                              const void *kernel_attributes);
 
-int pocl_release_img_attrs (BuiltinKernelId kernel_id,
+int pocl_release_img_attrs (cl_dbk_id_exp kernel_id,
                             void *kernel_attributes);
 
-void *pocl_copy_img_attrs (BuiltinKernelId kernel_id,
+void *pocl_copy_img_attrs (cl_dbk_id_exp kernel_id,
                            const void *kernel_attributes);
 
 #endif //_DBK_IMG_SHARED_H_
