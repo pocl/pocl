@@ -1095,6 +1095,19 @@ pocl_serialize_cl_tensor_desc (const cl_tensor_desc_exp *t, char **buf)
 }
 
 uint64_t
+pocl_serialize_image_attr (const pocl_image_attr_t *t, char **buf)
+{
+
+  uint64_t total = 0;
+  SERIALIZE (t->width);
+  SERIALIZE (t->height);
+  SERIALIZE (t->color_space);
+  SERIALIZE (t->channel_range);
+  SERIALIZE (t->format);
+  return total;
+}
+
+uint64_t
 pocl_serialize_dbk_attribs (cl_dbk_id_exp id,
                             const void *attributes,
                             char **buf)
@@ -1190,6 +1203,13 @@ pocl_serialize_dbk_attribs (cl_dbk_id_exp id,
         SERIALIZE (attr->num_boxes);
         break;
       }
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
+      {
+        const cl_dbk_attributes_img_color_convert_exp *attr = attributes;
+        total += pocl_serialize_image_attr (&(attr->input_image), buf);
+        total += pocl_serialize_image_attr (&(attr->output_image), buf);
+        break;
+      }
     default:
       POCL_ABORT ("Could not serialize DBK, Unknown id: %d.\n", id);
     }
@@ -1267,6 +1287,18 @@ pocl_deserialize_cl_tensor_desc (cl_tensor_desc_exp *t, const char **buf)
   else
     t->layout = NULL;
 
+  return 1;
+}
+
+int
+pocl_deserialize_image_attr (pocl_image_attr_t *t, const char **buf)
+{
+
+  DESERIALIZE (t->width);
+  DESERIALIZE (t->height);
+  DESERIALIZE (t->color_space);
+  DESERIALIZE (t->channel_range);
+  DESERIALIZE (t->format);
   return 1;
 }
 
@@ -1416,6 +1448,15 @@ pocl_deserialize_dbk_attribs (cl_dbk_id_exp *id,
         DESERIALIZE (attrs->nms_threshold);
         DESERIALIZE (attrs->top_k);
         DESERIALIZE (attrs->num_boxes);
+        *attributes = attrs;
+        break;
+      }
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
+      {
+        cl_dbk_attributes_img_color_convert_exp *attrs
+          = malloc (sizeof (cl_dbk_attributes_img_color_convert_exp));
+        pocl_deserialize_image_attr (&(attrs->input_image), buf);
+        pocl_deserialize_image_attr (&(attrs->output_image), buf);
         *attributes = attrs;
         break;
       }
