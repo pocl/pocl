@@ -24,23 +24,22 @@
 #include "pocl_dbk_khr_dnn_utils_shared.h"
 
 int
-pocl_validate_dnn_utils_attrs (BuiltinKernelId kernel_id,
-                               const void *kernel_attributes)
-{
+pocl_validate_dnn_utils_attrs (cl_dbk_id_exp kernel_id,
+                               const void *kernel_attributes){
   switch (kernel_id)
     {
-    case POCL_CDBI_DBK_EXP_DNN_NMS:
+    case CL_DBK_DNN_NMS_EXP:
       {
         cl_dbk_attributes_exp_dnn_nms *attrs
           = (cl_dbk_attributes_exp_dnn_nms *)kernel_attributes;
         POCL_RETURN_ERROR_ON (
           (attrs->nms_threshold > 1.0f || attrs->nms_threshold < 0.0f),
-          CL_INVALID_DBK_ATTRIBUTE, "nms_threshold not between [0.0, 1.0].\n");
+          CL_DBK_INVALID_ATTRIBUTE_EXP, "nms_threshold not between [0.0, 1.0].\n");
         POCL_RETURN_ERROR_ON (
           (attrs->score_threshold > 1.0f || attrs->score_threshold < 0.0f),
-          CL_INVALID_DBK_ATTRIBUTE,
+          CL_DBK_INVALID_ATTRIBUTE_EXP,
           "score_threshold not between [0.0, 1.0].\n");
-        POCL_RETURN_ERROR_ON ((attrs->top_k < 0), CL_INVALID_DBK_ATTRIBUTE,
+        POCL_RETURN_ERROR_ON ((attrs->top_k < 0), CL_DBK_INVALID_ATTRIBUTE_EXP,
                               "top_k not larger than zero.\n");
         return CL_SUCCESS;
       }
@@ -51,12 +50,11 @@ pocl_validate_dnn_utils_attrs (BuiltinKernelId kernel_id,
 }
 
 int
-pocl_release_dnn_utils_attrs (BuiltinKernelId kernel_id,
-                              void *kernel_attributes)
-{
+pocl_release_dnn_utils_attrs (cl_dbk_id_exp kernel_id,
+                              void *kernel_attributes){
   switch (kernel_id)
     {
-    case POCL_CDBI_DBK_EXP_DNN_NMS:
+    case CL_DBK_DNN_NMS_EXP:
       {
         POCL_MEM_FREE (kernel_attributes);
         return CL_SUCCESS;
@@ -68,12 +66,11 @@ pocl_release_dnn_utils_attrs (BuiltinKernelId kernel_id,
 }
 
 void *
-pocl_copy_dnn_utils_attrs (BuiltinKernelId kernel_id,
-                           const void *kernel_attributes)
-{
+pocl_copy_dnn_utils_attrs (cl_dbk_id_exp kernel_id,
+                           const void *kernel_attributes){
   switch (kernel_id)
     {
-    case POCL_CDBI_DBK_EXP_DNN_NMS:
+    case CL_DBK_DNN_NMS_EXP:
       {
         void *ret = malloc (sizeof (cl_dbk_attributes_exp_dnn_nms));
         memcpy (ret, kernel_attributes,

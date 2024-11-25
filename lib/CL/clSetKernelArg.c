@@ -162,7 +162,7 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
       }
     case CL_DBK_JPEG_ENCODE_EXP:
     case CL_DBK_JPEG_DECODE_EXP:
-    case CL_DBK_IMG_COLOR_CONVERT:
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
       return CL_SUCCESS;
     case CL_DBK_ONNX_INFERENCE_EXP:
       {

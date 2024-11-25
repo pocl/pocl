@@ -291,7 +291,7 @@ pocl_cpu_init_common (cl_device_id device)
                   "org.khronos.openvx.scale_image.nn.u8;"
                   "org.khronos.openvx.scale_image.bl.u8;"
                   "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32;"
-                  "exp_img_color_convert;"
+                  "img_color_convert_exp;"
 #ifdef HAVE_LIBXSMM
                   "gemm_exp;"
                   "matmul_exp;"
@@ -304,7 +304,7 @@ pocl_cpu_init_common (cl_device_id device)
                   "onnx_inference_exp;"
 #endif
 #ifdef HAVE_OPENCV
-                  "exp_dnn_nms;"
+                  "dnn_nms_exp;"
 #endif
         );
       device->num_builtin_kernels = 5
@@ -840,7 +840,7 @@ pocl_cpu_supports_dbk (cl_device_id device,
     case CL_DBK_ONNX_INFERENCE_EXP:
       return pocl_validate_dbk_attributes (kernel_id, kernel_attributes, NULL);
 #endif
-    case CL_DBK_IMG_COLOR_CONVERT:
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
       return CL_SUCCESS;
 #ifdef HAVE_OPENCV
     case CL_DBK_DNN_NMS_EXP:
@@ -1207,7 +1207,7 @@ pocl_cpu_execute_dbk (cl_program program,
             pocl_cpu_get_ptr (&arguments[3], mem_id));
       }
 #endif
-    case CL_DBK_IMG_COLOR_CONVERT:
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
       return pocl_cpu_execute_dbk_exp_img_yuv2rgb (program, kernel, meta,
                                                    dev_i, arguments);
 #ifdef HAVE_OPENCV

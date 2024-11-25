@@ -24,12 +24,12 @@
 #include "pocl_dbk_khr_img_shared.h"
 
 int
-pocl_validate_img_attrs (BuiltinKernelId kernel_id,
+pocl_validate_img_attrs (cl_dbk_id_exp kernel_id,
                          const void *kernel_attributes)
 {
   switch (kernel_id)
     {
-    case POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT:
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
       {
         cl_dbk_attributes_exp_img_color_convert *attrs
           = (cl_dbk_attributes_exp_img_color_convert *)kernel_attributes;
@@ -38,20 +38,20 @@ pocl_validate_img_attrs (BuiltinKernelId kernel_id,
 
         POCL_RETURN_ERROR_ON ((input_attr.format != POCL_DF_IMAGE_NV12
                                || output_attr.format != POCL_DF_IMAGE_RGB),
-                              CL_INVALID_DBK_ATTRIBUTE,
+                              CL_DBK_INVALID_ATTRIBUTE_EXP,
                               "other color conversions than nv12->rgb have "
                               "not been implemented yet.\n");
 
         POCL_RETURN_ERROR_ON (
           (input_attr.color_space != POCL_COLOR_SPACE_BT709
            || output_attr.color_space != POCL_COLOR_SPACE_BT709),
-          CL_INVALID_DBK_ATTRIBUTE,
+          CL_DBK_INVALID_ATTRIBUTE_EXP,
           "other color spaces that BT709 have not been implemented yet.\n");
 
         POCL_RETURN_ERROR_ON (
           (input_attr.channel_range != POCL_CHANNEL_RANGE_FULL
            || output_attr.channel_range != POCL_CHANNEL_RANGE_FULL),
-          CL_INVALID_DBK_ATTRIBUTE,
+          CL_DBK_INVALID_ATTRIBUTE_EXP,
           "other than channel ranges than POCL_CHANNEL_RANGE_FULL have not "
           "been implemented yet.\n");
 
@@ -68,11 +68,11 @@ pocl_validate_img_attrs (BuiltinKernelId kernel_id,
 }
 
 int
-pocl_release_img_attrs (BuiltinKernelId kernel_id, void *kernel_attributes)
+pocl_release_img_attrs (cl_dbk_id_exp kernel_id, void *kernel_attributes)
 {
   switch (kernel_id)
     {
-    case POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT:
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
       {
         POCL_MEM_FREE (kernel_attributes);
         return CL_SUCCESS;
@@ -84,11 +84,11 @@ pocl_release_img_attrs (BuiltinKernelId kernel_id, void *kernel_attributes)
 }
 
 void *
-pocl_copy_img_attrs (BuiltinKernelId kernel_id, const void *kernel_attributes)
+pocl_copy_img_attrs (cl_dbk_id_exp kernel_id, const void *kernel_attributes)
 {
   switch (kernel_id)
     {
-    case POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT:
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
       {
         void *ret = malloc (sizeof (cl_dbk_attributes_exp_img_color_convert));
         memcpy (ret, kernel_attributes,

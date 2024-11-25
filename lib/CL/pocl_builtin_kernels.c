@@ -436,10 +436,10 @@ pocl_init_builtin_kernel_metadata ()
               BI_ARG_READ_BUF ("unsigned char*", "inputs"),
               BI_ARG_READ_BUF ("unsigned long*", "output_offsets"),
               BI_ARG_WRITE_BUF ("unsigned char*", "outputs"), ),
-    BIKD_DBK (POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT, "exp_img_color_convert", 2,
+    BIKD_DBK (CL_DBK_IMG_COLOR_CONVERT_EXP, "img_color_convert_exp", 2,
               BI_ARG_READ_BUF ("uint8_t*", "input"),
               BI_ARG_WRITE_BUF ("uint8_t*", "output"), ),
-    BIKD_DBK (POCL_CDBI_DBK_EXP_DNN_NMS, "exp_dnn_nms", 4,
+    BIKD_DBK (CL_DBK_DNN_NMS_EXP, "dnn_nms_exp", 4,
               BI_ARG_READ_BUF ("int32_t*", "boxes"),
               BI_ARG_READ_BUF ("float*", "scores"),
               BI_ARG_WRITE_BUF ("int32_t*", "index_count"),
@@ -886,10 +886,10 @@ pocl_validate_dbk_attributes (cl_dbk_id_exp kernel_id,
         return CL_SUCCESS;
       }
 #endif
-    case POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT:
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
       return pocl_validate_img_attrs (kernel_id, kernel_attributes);
 #ifdef HAVE_OPENCV
-    case POCL_CDBI_DBK_EXP_DNN_NMS:
+    case CL_DBK_DNN_NMS_EXP:
       return pocl_validate_dnn_utils_attrs (kernel_id, kernel_attributes);
 #endif
     default:
@@ -957,10 +957,10 @@ pocl_copy_defined_builtin_attributes (cl_dbk_id_exp kernel_id,
     case CL_DBK_ONNX_INFERENCE_EXP:
       return pocl_copy_onnx_inference_dbk_attributes (kernel_attributes);
 #endif
-    case POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT:
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
       return pocl_copy_img_attrs (kernel_id, kernel_attributes);
 #ifdef HAVE_OPENCV
-    case POCL_CDBI_DBK_EXP_DNN_NMS:
+    case CL_DBK_DNN_NMS_EXP:
       return pocl_copy_dnn_utils_attrs (kernel_id, kernel_attributes);
 #endif
     default:
@@ -1008,10 +1008,10 @@ pocl_release_defined_builtin_attributes (cl_dbk_id_exp kernel_id,
         return CL_SUCCESS;
       }
 #endif
-    case POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT:
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
       return pocl_release_img_attrs (kernel_id, kernel_attributes);
 #ifdef HAVE_OPENCV
-    case POCL_CDBI_DBK_EXP_DNN_NMS:
+    case CL_DBK_DNN_NMS_EXP:
       {
         pocl_release_dnn_utils_attrs (kernel_id, kernel_attributes);
         return CL_SUCCESS;
@@ -1181,7 +1181,7 @@ pocl_serialize_dbk_attribs (cl_dbk_id_exp id,
           }
         break;
       }
-    case POCL_CDBI_DBK_EXP_DNN_NMS:
+    case CL_DBK_DNN_NMS_EXP:
       {
         const cl_dbk_attributes_exp_dnn_nms *attr = attributes;
         SERIALIZE (attr->score_threshold);
@@ -1408,7 +1408,7 @@ pocl_deserialize_dbk_attribs (cl_dbk_id_exp *id,
         *attributes = attr;
         break;
       }
-    case POCL_CDBI_DBK_EXP_DNN_NMS:
+    case CL_DBK_DNN_NMS_EXP:
       {
         cl_dbk_attributes_exp_dnn_nms *attrs
           = malloc (sizeof (cl_dbk_attributes_exp_dnn_nms));
