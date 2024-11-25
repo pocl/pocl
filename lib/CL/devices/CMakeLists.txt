@@ -109,7 +109,9 @@ if(ENABLE_PROXY_DEVICE)
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
     "$<TARGET_OBJECTS:pocl-devices-proxy>")
   # link to libOpenCL(-stub)
-  list(APPEND POCL_DEVICES_LINK_LIST OpenCL)
+  if(NOT PROXY_USE_LIBOPENCL_STUB)
+    list(APPEND POCL_DEVICES_LINK_LIST OpenCL)
+  endif()
 
 endif()
 

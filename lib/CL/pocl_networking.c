@@ -34,6 +34,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <ctype.h>
 
 #ifdef HAVE_LINUX_VSOCK_H
 #include <linux/vm_sockets.h>

@@ -25,9 +25,6 @@
 
 add_pocl_device_library("pocl-devices-proxy" pocl_proxy.hpp pocl_proxy.cpp)
 
-# an option parameter to link to libopencl-stub instead.
-# source code: https://github.com/krrishnarraj/libopencl-stub
-OPTION(PROXY_USE_LIBOPENCL_STUB "link the proxy device to libopencl-stub instead of system opencl" OFF)
 if(PROXY_USE_LIBOPENCL_STUB)
 
     set(STUB_SOURCES libopencl_stub/openclstub.c libopencl_stub/openclstub.h libopencl_stub/rename_stub.h)
