@@ -71,12 +71,12 @@ main (int argc, char const *argv[])
                                         &devices, &queues, 0);
   CHECK_OPENCL_ERROR_IN ("poclu_get_multiple_devices");
 
-  clCreateProgramWithDefinedBuiltInKernels_fn createProgramWithDBKs;
-  createProgramWithDBKs = (clCreateProgramWithDefinedBuiltInKernels_fn)
+  clCreateProgramWithDefinedBuiltInKernelsEXP_fn createProgramWithDBKs;
+  createProgramWithDBKs = (clCreateProgramWithDefinedBuiltInKernelsEXP_fn)
     clGetExtensionFunctionAddressForPlatform (
       platform, "clCreateProgramWithDefinedBuiltInKernelsEXP");
   TEST_ASSERT (createProgramWithDBKs != NULL);
-  BuiltinKernelId dbk_ids[] = { POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT };
+  cl_dbk_id_exp dbk_ids[] = { CL_DBK_IMG_COLOR_CONVERT_EXP };
   const char *kernel_names[] = { "exp_img_color_convert" };
 
   pocl_image_attr_t input_attrs

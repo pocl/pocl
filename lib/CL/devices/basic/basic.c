@@ -1040,10 +1040,10 @@ pocl_basic_create_kernel (cl_device_id device,
         return status;
       }
 #endif
-    case POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT:
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
       return CL_SUCCESS;
 #ifdef HAVE_OPENCV
-    case POCL_CDBI_DBK_EXP_DNN_NMS:
+    case CL_DBK_DNN_NMS_EXP:
       return CL_SUCCESS;
 #endif
     default:
@@ -1100,10 +1100,10 @@ pocl_basic_free_kernel (cl_device_id device,
         return status;
       }
 #endif
-    case POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT:
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
       return CL_SUCCESS;
 #ifdef HAVE_OPENCV
-    case POCL_CDBI_DBK_EXP_DNN_NMS:
+    case CL_DBK_DNN_NMS_EXP:
       return CL_SUCCESS;
 #endif
     default:
