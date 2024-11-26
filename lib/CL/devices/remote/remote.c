@@ -1337,16 +1337,15 @@ pocl_remote_supports_dbk (cl_device_id device,
           if (kernel_id != meta->builtin_kernel_id)
             continue;
 
-          if (strstr (device->builtin_kernel_list, meta->name) == NULL)
+          if (strstr (device->builtin_kernel_list, meta->name) != NULL)
             return pocl_validate_dbk_attributes (kernel_id, kernel_attributes,
-                                                 NULL)
-                   == CL_SUCCESS;
+                                                 NULL);
 
-          return 0;
+          return CL_DBK_UNSUPPORTED_EXP;
         }
     }
 
-  return 0;
+  return CL_DBK_UNSUPPORTED_EXP;
 }
 
 int
