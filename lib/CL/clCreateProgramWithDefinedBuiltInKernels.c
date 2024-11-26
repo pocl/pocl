@@ -110,7 +110,11 @@ POname (clCreateProgramWithDefinedBuiltInKernelsEXP) (
       unsigned num_supported_kernels = 0;
       cl_device_id dev = device_list[i];
       if (dev->ops->supports_dbk == NULL)
-        continue;
+        {
+          if (device_support)
+            device_support[i] = CL_DBK_UNSUPPORTED_EXP;
+          continue;
+        }
       for (j = 0; j < num_kernels; ++j)
         {
           errcode = dev->ops->supports_dbk (dev, kernel_ids[j],
