@@ -39,6 +39,7 @@ jobs:
 
       - name: Run CMake
         id: cmake
+        timeout-minutes: 60
         run: |
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
@@ -54,6 +55,7 @@ jobs:
 
       - name: Run Build
         id: build
+        timeout-minutes: 60
         run: |
           cd ${{ github.workspace }}/build && make -j$(nproc) && make -j$(nproc) prepare_examples
 
@@ -102,6 +104,7 @@ jobs:
 
       - name: Run CMake
         id: cmake
+        timeout-minutes: 60
         run: |
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
@@ -118,6 +121,7 @@ jobs:
 
       - name: Run Build
         id: build
+        timeout-minutes: 60
         run: |
           cd ${{ github.workspace }}/build && make -j4 && make -j4 prepare_examples
 
@@ -125,7 +129,6 @@ jobs:
         env:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         id: ctest
-        timeout-minutes: 450
         run: |
           runCTest() {
             cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j4 $CTEST_FLAGS "$@"
