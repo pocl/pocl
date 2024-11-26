@@ -522,10 +522,9 @@ step5 make a writefile for chisel
               else
                 {
                   cl_mem m = (*(cl_mem *)(al->value));
-                  err=pocl_ventus_alloc_mem_obj(cmd->device, m, m->mem_host_ptr);
-                  assert(err == CL_SUCCESS);
                   ptr = malloc(sizeof(uint64_t));
                   memcpy(ptr,m->device_ptrs[cmd->device->global_mem_id].mem_ptr,sizeof(uint64_t));
+                  *(uint64_t*)ptr += al->offset;
 
                   #ifdef PRINT_CHISEL_TESTCODE
                     if (m->device_ptrs[cmd->device->global_mem_id].extra == 0) {
@@ -1091,9 +1090,9 @@ void pocl_ventus_free(cl_device_id device, cl_mem memobj) {
   by the OpenCL runtime and not be directly accessible
   to the host program.*/
   if (flags & CL_MEM_USE_HOST_PTR) {
-//    abort(); //TODO
+    vt_one_buf_free(d->vt_device,memobj->size,&dev_mem_addr,0,0);
   } else {
-    vt_buf_free(d->vt_device,memobj->size,&dev_mem_addr,0,0);
+    vt_one_buf_free(d->vt_device,memobj->size,&dev_mem_addr,0,0);
     free(memobj->mem_host_ptr);
     memobj->mem_host_ptr = NULL;
   }
@@ -1159,12 +1158,6 @@ void pocl_ventus_write(void *data,
                        size_t offset,
                        size_t size) {
   struct vt_device_data_t *d = (struct vt_device_data_t *)data;
-  void *tmp_data = malloc(size);
-  if (!(CL_MEM_USE_HOST_PTR & dst_buf->flags)) {
-    memcpy(tmp_data, host_ptr, size);
-    dst_buf->mem_host_ptr = tmp_data;
-  }
-
   int err = vt_copy_to_dev(d->vt_device,*((uint64_t*)(dst_mem_id->mem_ptr))+offset,host_ptr,size,0,0);
   assert(0 == err);
 }
@@ -1347,15 +1340,12 @@ pocl_ventus_memfill (void *data, pocl_mem_identifier *dst_mem_id,
                      const void *__restrict__ pattern, size_t pattern_size)
 {
   struct vt_device_data_t *d = (struct vt_device_data_t *)data;
-  void *host_ptr = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, size + offset);
+  void *host_ptr = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, size);
   assert(host_ptr);
   pocl_fill_aligned_buf_with_pattern (host_ptr, 0, size, pattern, pattern_size);
   int err = vt_copy_to_dev(d->vt_device, *((uint64_t*)(dst_mem_id->mem_ptr)) + offset, host_ptr, size, 0, 0);
   assert(0 == err);
-  err = vt_copy_from_dev(d->vt_device, *((uint64_t*)(dst_mem_id->mem_ptr)), host_ptr, size + offset, 0, 0);
-  assert(0 == err);
-  dst_buf->mem_host_ptr = host_ptr;
-  dst_buf->size = size + offset;
+  POCL_MEM_FREE(host_ptr);
 }
 
 cl_int
