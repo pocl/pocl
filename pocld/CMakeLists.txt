@@ -79,6 +79,19 @@ list(APPEND P_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/../lib/CL")
 list(APPEND P_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/../lib/CL/devices")
 
 ############################################
+if(ENABLE_REMOTE_ADVERTISEMENT_AVAHI)
+  list(APPEND SOURCES avahi_advertise.cc avahi_advertise.hh)
+  find_library(AVAHI_COMMON_LIB NAMES avahi-common REQUIRED)
+  find_library(AVAHI_CLIENT_LIB NAMES avahi-client REQUIRED)
+  list(APPEND P_LINK_LIST ${AVAHI_COMMON_LIB} ${AVAHI_CLIENT_LIB})
+endif()
+
+if(ENABLE_REMOTE_ADVERTISEMENT_DHT)
+  list(APPEND SOURCES dht_advertise.cc dht_advertise.hh)
+  find_library(DHT_LIB NAMES opendht REQUIRED)
+  list(APPEND P_LINK_LIST ${DHT_LIB})
+endif()
+############################################
 
 if(RDMA_USE_SVM)
   set(ENABLE_RDMA 1)

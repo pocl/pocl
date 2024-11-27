@@ -49,6 +49,12 @@ Miscellaneous
 Remote driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+* The remote driver now includes support for dynamic device addition
+  and network discovery. This new feature allows discovery of remote
+  servers located in LAN or WAN environments and enables runtime
+  addition of discovered devices to the remote client's platform.
+  Network discovery is performed thorugh mDNS, unicast-DNS-SD, and
+  DHT-based mechanisms, using Avahi and OpenDHT libraries.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Level Zero driver

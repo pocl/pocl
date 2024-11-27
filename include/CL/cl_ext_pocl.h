@@ -147,12 +147,16 @@ typedef cl_int (CL_API_CALL *clSetKernelArgDevicePointerEXT_fn) (
 
 #define CL_DEVICE_REMOTE_TRAFFIC_STATS_POCL 0x4501
 
-/***********************************
-* cl_pocl_svm_rect +
-* cl_pocl_command_buffer_svm +
-* cl_pocl_command_buffer_host_buffer
-* extensions
-************************************/
+#define CL_DEVICE_REMOTE_SERVER_IP_POCL 0x4503
+
+#define CL_DEVICE_REMOTE_SERVER_PORT_POCL 0x4504
+
+  /***********************************
+   * cl_pocl_svm_rect +
+   * cl_pocl_command_buffer_svm +
+   * cl_pocl_command_buffer_host_buffer
+   * extensions
+   ************************************/
 
 #ifdef cl_khr_command_buffer
 

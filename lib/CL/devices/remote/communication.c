@@ -424,6 +424,7 @@ connection_init (remote_connection_t *connection,
   int pipe_pair[2];
   int pipe_res = pipe (pipe_pair);
   connection->is_fast = is_fast;
+  connection->reconnect_attempts = 0;
 
   if (pipe_res != 0)
     POCL_MSG_ERR ("Failed to open socket notification pipe: %s\n",
@@ -596,6 +597,8 @@ pocl_remote_reconnect_socket (remote_server_data_t *remote,
     connection->is_fast ? remote->fast_port : remote->slow_port,
     connection->is_fast ? "fast" : "slow");
 
+  connection->reconnect_attempts += 1;
+
   int res = connection_connect (
     remote, connection,
     connection->is_fast ? remote->fast_port : remote->slow_port,
@@ -611,6 +614,52 @@ pocl_remote_reconnect_socket (remote_server_data_t *remote,
   return res;
 }
 
+/**
+ * A server with the same session may get re-discovered after it was previously
+ * disconnected. Instead of re-adding the server anew, we re-connect to the
+ * previous instance of the server.
+ */
+cl_int
+pocl_remote_reconnect_rediscover (const char *address_with_port)
+{
+  remote_server_data_t *d = NULL;
+  char *temp = strchr (address_with_port, '/');
+  char *addr;
+
+  if (temp)
+    addr = strndup (address_with_port, (temp - address_with_port));
+  else
+    addr = strdup (address_with_port);
+
+  size_t len = strlen (addr);
+
+  DL_FOREACH (servers, d)
+    {
+      if ((strncmp (d->address_with_port, address_with_port, len) == 0)
+          && (strlen (d->address_with_port) == len))
+        break;
+    }
+
+  if (d == NULL)
+    {
+      POCL_MSG_ERR ("Could not attempt reconnect. Server corresponding to "
+                    "given paramenters not found.\n");
+      return -1;
+    }
+
+  free (addr);
+
+  POCL_LOCK (d->slow_connection.discovery_reconnect_guard.mutex);
+  POCL_BROADCAST_COND (d->slow_connection.discovery_reconnect_guard.cond);
+  POCL_UNLOCK (d->slow_connection.discovery_reconnect_guard.mutex);
+
+  POCL_LOCK (d->fast_connection.discovery_reconnect_guard.mutex);
+  POCL_BROADCAST_COND (d->fast_connection.discovery_reconnect_guard.cond);
+  POCL_UNLOCK (d->fast_connection.discovery_reconnect_guard.mutex);
+
+  return CL_SUCCESS;
+}
+
 /*****************************************************************************/
 
 /* Communication thread loops */
@@ -621,15 +670,41 @@ pocl_remote_reconnect_socket (remote_server_data_t *remote,
  * finished callback and cleans up the netcmd when done.
  */
 static void
-finish_running_cmd (network_command *running_cmd)
+finish_running_cmd (network_command *running_cmd,
+                    network_command_status_t status)
 {
+
+  /* When a server is lost while some application is running then the running
+   * commands certain fields have to be accordingly modified.
+   *
+   * TODO:
+   * IMPORTANT: To handle losing server in case of migration commands. For
+   * migration command from server-1 to server-2, the command is written in
+   * the inflight queue of server-2. If, server-1 fails after the client
+   * successfully sends the migration command to server-1, we have an
+   * undefined state. The client can't know if server-1 failed before or after
+   * the migration completed. Even though all incomplete commands in server-1's
+   * inflight queue are marked as failed, the migration command is written in
+   * server-2's inflight queue. Command in server-2's inflight queue will be
+   * expected to be completed at some point and it may or may not get
+   * completed. This can cause deadlock and needs to handled. */
+
+  running_cmd->status = status;
+  if (status == NETCMD_FAILED)
+    {
+      running_cmd->reply.message_type = MessageType_Failure;
+      running_cmd->reply.failed = 1;
+      running_cmd->reply.fail_details = CL_DEVICE_NOT_AVAILABLE;
+      running_cmd->reply.data_size = 0;
+      running_cmd->reply.obj_id = 0;
+      running_cmd->reply.did = running_cmd->request.did;
+      running_cmd->reply.pid = running_cmd->request.pid;
+    }
   running_cmd->client_read_end_timestamp_ns = pocl_gettimemono_ns ();
 
   TP_MSG_RECEIVED (running_cmd->reply.msg_id, running_cmd->event_id,
                    running_cmd->reply.client_did, running_cmd->reply.did,
                    running_cmd->reply.message_type, 1);
-
-  running_cmd->status = NETCMD_FINISHED;
 
   if (running_cmd->synchronous)
     {
@@ -809,26 +884,48 @@ pocl_remote_reader_pthread (void *aa)
 
   while (!this->exit_requested)
     {
-
       POCL_LOCK (connection->setup_guard.mutex);
       int fd = connection->fd;
       reader_reconnects = connection->reconnect_count;
       POCL_UNLOCK (connection->setup_guard.mutex);
       if (fd < 0)
         {
+          POCL_LOCK (connection->setup_guard.mutex);
+          int reconnected;
         TRY_RECONNECT:
 
-          POCL_LOCK (connection->setup_guard.mutex);
-          int reconnected = pocl_remote_reconnect_socket (remote, connection);
-          if (reconnected == CL_SUCCESS)
+          reconnected = pocl_remote_reconnect_socket (remote, connection);
+          if (reconnected != CL_SUCCESS)
+            {
+              if (connection->reconnect_attempts
+                  >= POCL_REMOTE_RECONNECT_MAX_ATTEMPTS)
+                {
+                  network_command *cmd = NULL;
+                  POCL_LOCK (inflight->mutex);
+                  /* Each command in the inflight queue of the failed server
+                   * has to be handled and marked as failed to prevent
+                   * deadlock. */
+                  DL_FOREACH (inflight->queue, cmd)
+                    {
+                      DL_DELETE (inflight->queue, cmd);
+                      finish_running_cmd (cmd, NETCMD_FAILED);
+                    }
+                  POCL_UNLOCK (inflight->mutex);
+                  POCL_LOCK (connection->discovery_reconnect_guard.mutex);
+                  POCL_WAIT_COND (connection->discovery_reconnect_guard.cond,
+                                  connection->discovery_reconnect_guard.mutex);
+                  POCL_UNLOCK (connection->discovery_reconnect_guard.mutex);
+                }
+              goto TRY_RECONNECT;
+            }
+          else
             {
               fd = connection->fd;
               reader_reconnects = connection->reconnect_count;
+              connection->reconnect_attempts = 0;
               POCL_BROADCAST_COND (connection->setup_guard.cond);
               POCL_UNLOCK (connection->setup_guard.mutex);
             }
-          else
-            goto TRY_RECONNECT;
         }
 
       /* Block until there is something to read. This is especially needed to
@@ -923,7 +1020,7 @@ pocl_remote_reader_pthread (void *aa)
       POCL_LOCK (inflight->mutex);
       DL_DELETE (inflight->queue, running_cmd);
       POCL_UNLOCK (inflight->mutex);
-      finish_running_cmd (running_cmd);
+      finish_running_cmd (running_cmd, NETCMD_FINISHED);
     }
   return NULL;
 }
@@ -1016,7 +1113,7 @@ pocl_remote_rdma_reader_pthread (void *aa)
       DL_DELETE (this->queue, cmd);
       POCL_UNLOCK (this->mutex);
 
-      finish_running_cmd (cmd);
+      finish_running_cmd (cmd, NETCMD_FINISHED);
 
       POCL_LOCK (this->mutex);
     }
@@ -1180,6 +1277,7 @@ pocl_remote_writer_pthread (void *aa)
 {
   network_queue_arg *a = aa;
   network_queue *this = a->ours;
+  network_queue *inflight = a->in_flight;
   remote_server_data_t *remote = a->remote;
   remote_connection_t *connection = a->connection;
   POCL_MEM_FREE (a);
@@ -1547,6 +1645,19 @@ find_or_create_server (const char *address_with_port, unsigned port,
     if ((strncmp (rsd->address_with_port, address_with_port, l) == 0)
         && (strlen (rsd->address_with_port) == l))
       {
+        /* A server is identified by its IP and port. However, the same IP and
+         * port may represent different sessions over time. The variable
+         * 'available' is set to 'CL_FALSE' when a connection to a server is
+         * lost. If a server is found with an IP and port that matches an entry
+         * in the list, it indicates a previously connected server that was
+         * disconnected. This check ensures that servers which were marked
+         * unavailable are correctly handled. When a server joins with a new
+         * session via discovery, it should be treated as a new server, as the
+         * removal of 'old' servers is not supported.
+         */
+        if (!rsd->available)
+          continue;
+
         ++rsd->refcount;
         return rsd;
       }
@@ -2562,20 +2673,22 @@ pocl_network_build_or_link_program (remote_device_data_t *ddata,
   char *buf = buffer;
 
   /* read build log also for failed builds */
-
-  uint32_t build_log_len;
-  READ_BYTES (build_log_len);
-  assert (build_log_len == num_devices);
-  assert (build_logs);
-  for (i = 0; i < num_devices; ++i)
+  if (netcmd->status != NETCMD_FAILED)
     {
+      uint32_t build_log_len;
       READ_BYTES (build_log_len);
-      if (build_log_len > 0)
+      assert (build_log_len == num_devices);
+      assert (build_logs);
+      for (i = 0; i < num_devices; ++i)
         {
-          READ_STRING (build_logs[i], build_log_len);
+          READ_BYTES (build_log_len);
+          if (build_log_len > 0)
+            {
+              READ_STRING (build_logs[i], build_log_len);
+            }
+          else
+            build_logs[i] = NULL;
         }
-      else
-        build_logs[i] = NULL;
     }
 
   if (netcmd->reply.failed)

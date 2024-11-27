@@ -316,6 +316,14 @@ else()
 endif()
 option(ENABLE_LLVM_PLATFORM_SUPPORT "Enable platform support using C++ STL and LLVM's Support library" ${DEFAULT_LLVM_PLATFORM_SUPPORT})
 
+option(ENABLE_REMOTE_DISCOVERY_AVAHI "Enable remote disocvery in remote device for linux using avahi" OFF)
+
+option(ENABLE_REMOTE_DISCOVERY_DHT "Enable remote disocvery in remote device for linux using DHT" OFF)
+
+option(ENABLE_REMOTE_ADVERTISEMENT_AVAHI "Enable remote server advertisement using avahi" OFF)
+
+option(ENABLE_REMOTE_ADVERTISEMENT_DHT "Enable remote server advertisement using DHT" OFF)
+
 if (ENABLE_PROXY_DEVICE)
   set(VISIBILITY_HIDDEN_DEFAULT OFF)
 else()
