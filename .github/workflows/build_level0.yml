@@ -31,7 +31,7 @@ env:
 
 jobs:
   level_zero_matrix:
-    name: LLVM ${{ matrix.llvm }} - Level Zero - CTS ${{ matrix.conformance }}
+    name: LLVM ${{ matrix.llvm }} - Level Zero - CTS ${{ matrix.conformance }} - NPU ${{ matrix.npu }}
     runs-on: [self-hosted, linux, level_zero]
     strategy:
       fail-fast: false
@@ -39,10 +39,13 @@ jobs:
         include:
           - llvm: 17
             conformance: 0
+            npu: 0
           - llvm: 18
             conformance: 0
+            npu: 1
           - llvm: 19
             conformance: 1
+            npu: 0
 
     steps:
       - name: Checkout
@@ -69,7 +72,11 @@ jobs:
           mkdir -p ${EXAMPLES_DIR}/source
           # test both with and without ENABLE_CONFORMANCE
           if [ ${{ matrix.conformance }} -eq 0 ]; then
-            runCMake -DENABLE_LEVEL0=1 -DENABLE_HOST_CPU_DEVICES=0 -DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }}
+            if [ ${{ matrix.npu }} -eq 0 ]; then
+              runCMake -DENABLE_LEVEL0=1 -DENABLE_HOST_CPU_DEVICES=0 -DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }}
+            else
+              runCMake -DENABLE_LEVEL0=1 -DENABLE_NPU=1 -DENABLE_HOST_CPU_DEVICES=0 -DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }}
+            fi
           else
             runCMake -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_level0 -DENABLE_LEVEL0=1 -DENABLE_HOST_CPU_DEVICES=0 -DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }}
           fi

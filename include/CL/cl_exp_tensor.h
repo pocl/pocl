@@ -236,12 +236,13 @@ typedef cl_uint cl_tensor_layout_ml_type_exp;
 #define CL_TENSOR_LAYOUT_ML_NC_EXP 2
 #define CL_TENSOR_LAYOUT_ML_CN_EXP 3
 #define CL_TENSOR_LAYOUT_ML_HW_EXP 4
-#define CL_TENSOR_LAYOUT_ML_CHW_EXP 5
-#define CL_TENSOR_LAYOUT_ML_NCHW_EXP 6
-#define CL_TENSOR_LAYOUT_ML_NHWC_EXP 7
+#define CL_TENSOR_LAYOUT_ML_WH_EXP 5
+#define CL_TENSOR_LAYOUT_ML_CHW_EXP 6
+#define CL_TENSOR_LAYOUT_ML_NCHW_EXP 7
+#define CL_TENSOR_LAYOUT_ML_NHWC_EXP 8
 /* NOTE: ..._ML_LAST not in the spec (v0.2.0). Preserved for internal
  * use.  */
-#define CL_TENSOR_LAYOUT_ML_LAST 8
+#define CL_TENSOR_LAYOUT_ML_LAST 9
 
 typedef struct _cl_tensor_layout_ml_exp
 {

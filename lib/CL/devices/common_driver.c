@@ -39,8 +39,7 @@
 
 #include "pocl_workgroup_func.h"
 
-int pocl_setup_builtin_metadata (cl_device_id device, cl_program program,
-                                 unsigned program_device_i);
+#include "pocl_builtin_kernels.h"
 
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"

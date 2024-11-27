@@ -62,6 +62,12 @@ Level Zero driver
 
 Various improvements were made:
 
+* Added support for Intel NPU (or "AI Boost" in the CPU specification)
+  as a custom device. Source compilation is not supported yet but GEMM
+  and matrix multiplications can be offloaded to the NPU device using
+  DBKs. Note that the feature is in very experimental stage and the
+  provided DBKs maybe subject to changes.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 CUDA driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -35,8 +35,10 @@ int pocl_copy_tensor_desc2mem (cl_mem mem, const cl_tensor_desc_exp *tdesc);
 int pocl_copy_tensor_desc_layout (cl_tensor_desc_exp *dest,
                                   const cl_tensor_desc_exp *src);
 
+POCL_EXPORT
 int pocl_tensor_type_is_int (cl_tensor_datatype_exp dtype);
 
+POCL_EXPORT
 int pocl_tensor_type_size (cl_tensor_datatype_exp dtype);
 
 size_t pocl_tensor_data_size (const cl_tensor_desc_exp *t);

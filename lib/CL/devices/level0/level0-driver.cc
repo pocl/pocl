@@ -1,4 +1,4 @@
-/// level0-driver.cc - driver for LevelZero Compute API devices.
+﻿/// level0-driver.cc - driver for LevelZero Compute API devices.
 ///
 /// Copyright (c) 2022-2023 Michal Babej / Intel Finland Oy
 ///
@@ -36,6 +36,7 @@
 #include "imagefill.h"
 #include "memfill.h"
 
+#include <algorithm>
 #include <cstring>
 #include <iomanip>
 #include <iostream>
@@ -111,10 +112,18 @@ void Level0Queue::runThread() {
     BatchType WorkBatch;
     ShouldExit = WorkHandler->getWorkOrWait(&Command, WorkBatch);
     if (Command != nullptr) {
-      assert(pocl_command_is_ready(Command->sync.event.event));
-      assert(Command->sync.event.event->status == CL_SUBMITTED);
-      execCommand(Command);
-      reset();
+      // for NPU, execute only the NDRangeKernel using L0 CMD Q
+      if (Device->prefersZeQueues() ||
+          Command->type == CL_COMMAND_NDRANGE_KERNEL) {
+        assert(pocl_command_is_ready(Command->sync.event.event));
+        assert(Command->sync.event.event->status == CL_SUBMITTED);
+        execCommand(Command);
+        reset();
+      } else if (Device->prefersHostQueues()) {
+        pocl_exec_command(Command);
+      } else {
+        POCL_ABORT_UNIMPLEMENTED("unknown device type\n");
+      }
     }
     if (!WorkBatch.empty()) {
       execCommandBatch(WorkBatch);
@@ -521,7 +530,6 @@ void Level0Queue::syncMemHostPtrs() {
 void Level0Queue::execCommand(_cl_command_node *Cmd) {
 
   cl_event event = Cmd->sync.event.event;
-  ze_result_t res;
 
   const char *Msg = nullptr;
   appendEventToList(Cmd, &Msg);
@@ -590,6 +598,7 @@ void Level0Queue::execCommandBatch(BatchType &Batch) {
   }
 
   POCL_MEASURE_FINISH(ZeListExec);
+
   for (auto E : Batch) {
     assert(!Msgs.empty());
     const char *Msg = Msgs.front();
@@ -666,6 +675,7 @@ void Level0Queue::read(void *__restrict__ HostPtr,
     POCL_MSG_PRINT_LEVEL0("Read skipped, HostPtr == DevPtr\n");
     return;
   }
+
   POCL_MSG_PRINT_LEVEL0("READ from: %p to: %p offs: %zu size: %zu \n",
                         DevPtr, HostPtr, Offset, Size);
   allocNextFreeEvent();
@@ -1558,6 +1568,90 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   cl_kernel Kernel = Cmd->command.run.kernel;
   cl_program Program = Kernel->program;
   unsigned DeviceI = Cmd->program_device_i;
+  if (Program->num_builtin_kernels > 0)
+    runBuiltinKernel(RunCmd, Dev, Event, Program, Kernel, DeviceI);
+  else
+    runNDRangeKernel(RunCmd, Dev, Event, Program, Kernel, DeviceI,
+                     Cmd->migr_infos);
+}
+
+void Level0Queue::runBuiltinKernel(_cl_command_run *RunCmd, cl_device_id Dev,
+                                   cl_event Event, cl_program Program,
+                                   cl_kernel Kernel, unsigned DeviceI) {
+#ifdef ENABLE_NPU
+
+  assert(Program->data[DeviceI] != nullptr);
+  Level0BuiltinProgram *L0Program =
+      (Level0BuiltinProgram *)Program->data[DeviceI];
+  assert(Kernel->data[DeviceI] != nullptr);
+  Level0BuiltinKernel *L0Kernel = (Level0BuiltinKernel *)Kernel->data[DeviceI];
+  ze_graph_handle_t GraphH = nullptr;
+  bool Res = Device->getBestBuiltinKernel(L0Program, L0Kernel, GraphH);
+  assert(Res == true);
+  assert(GraphH);
+
+  // TODO this lock should be moved not re-locked
+  // necessary to lock the kernel, since we're setting up kernel arguments
+  // setting WG sizes and so on; this lock is released after
+  // zeCommandListAppendKernel
+  // TODO this might be not enough: we might need to hold the lock until after
+  // zeQueueSubmit
+  std::lock_guard<std::mutex> KernelLockGuard(L0Kernel->getMutex());
+
+  graph_dditable_ext_t *Ext = Device->getDriver()->getGraphExt();
+  assert(Ext);
+  ze_result_t ZeRes = ZE_RESULT_SUCCESS;
+
+  struct pocl_argument *PoclArg = RunCmd->arguments;
+
+  assert(Kernel->meta->num_locals == 0);
+  unsigned i = 0;
+  unsigned graphArgIndex = 0;
+  for (i = 0; i < Kernel->meta->num_args; ++i) {
+    if (ARG_IS_LOCAL(Kernel->meta->arg_info[i]) ||
+        Kernel->meta->arg_info[i].type != POCL_ARG_TYPE_POINTER) {
+      POCL_MSG_ERR("NPU driver only supports pointer args");
+      LEVEL0_CHECK_ABORT(ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    }
+    // pointer
+    assert(PoclArg[i].size == sizeof(void *));
+    if (PoclArg[i].value == NULL) {
+      POCL_MSG_ERR("NPU driver only supports non-NULL pointer args");
+      LEVEL0_CHECK_ABORT(ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    }
+    // non-null ptr
+    void *MemPtr = nullptr;
+    assert(PoclArg[i].is_raw_ptr == 0);
+
+    cl_mem arg_buf = (*(cl_mem *)(PoclArg[i].value));
+    pocl_mem_identifier *memid = &arg_buf->device_ptrs[Dev->global_mem_id];
+    MemPtr = memid->mem_ptr;
+    POCL_MSG_PRINT_LEVEL0("NPU: setting argument %u to: %p\n", graphArgIndex,
+                          MemPtr);
+    LEVEL0_CHECK_ABORT(
+        Ext->pfnSetArgumentValue(GraphH, graphArgIndex++, MemPtr));
+  }
+
+  POCL_MSG_PRINT_LEVEL0("NPU: append GraphInitialize\n");
+  allocNextFreeEvent();
+  LEVEL0_CHECK_ABORT(Ext->pfnAppendGraphInitialize(
+      CmdListH, GraphH, CurrentEventH, PreviousEventH ? 1 : 0,
+      PreviousEventH ? &PreviousEventH : nullptr));
+
+  POCL_MSG_PRINT_LEVEL0("NPU: append GraphExecute\n");
+  allocNextFreeEvent();
+  LEVEL0_CHECK_ABORT(Ext->pfnAppendGraphExecute(
+      CmdListH, GraphH, nullptr, CurrentEventH, PreviousEventH ? 1 : 0,
+      PreviousEventH ? &PreviousEventH : nullptr));
+#else
+  POCL_MSG_ERR("Can't execute builtin kernels without VPU support");
+#endif
+}
+
+void Level0Queue::runNDRangeKernel(_cl_command_run *RunCmd, cl_device_id Dev,
+                                   cl_event Event, cl_program Program,
+                                   cl_kernel Kernel, unsigned DeviceI,
+                                   pocl_buffer_migration_info *MigInfos) {
   struct pocl_context *PoclCtx = &RunCmd->pc;
 
   assert(Program->data[DeviceI] != nullptr);
@@ -1575,8 +1669,8 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   }
 
   bool Needs64bitPtrs = false;
-  pocl_buffer_migration_info *MI;
-  LL_FOREACH (Cmd->migr_infos, MI) {
+  pocl_buffer_migration_info *MI = nullptr;
+  LL_FOREACH (MigInfos, MI) {
     if (MI->buffer->size > UINT32_MAX) {
       Needs64bitPtrs = true;
       break;
@@ -1614,9 +1708,12 @@ void Level0Queue::run(_cl_command_node *Cmd) {
     void *Ptr = I.first;
     size_t Size = I.second;
     MemPtrsToMakeResident[Ptr] = Size;
+    if (Size > UINT32_MAX) {
+      Needs64bitPtrs = true;
+    }
   }
 
-  if (setupKernelArgs(ModuleH, KernelH, Dev, Cmd->program_device_i, RunCmd)) {
+  if (setupKernelArgs(ModuleH, KernelH, Dev, DeviceI, RunCmd)) {
     POCL_MSG_ERR("Level0: Failed to setup kernel arguments\n");
     return;
   }
@@ -1644,7 +1741,6 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   LEVEL0_CHECK_ABORT(zeCommandListAppendLaunchKernel(CmdListH, KernelH,
                      &LaunchFuncArgs, CurrentEventH, PreviousEventH ? 1 : 0,
                      PreviousEventH ? &PreviousEventH : nullptr));
-
 }
 
 Level0Queue::Level0Queue(Level0WorkQueueInterface *WH,
@@ -2000,7 +2096,7 @@ bool Level0Device::setupDeviceProperties(bool HasIPVersionExt) {
          sizeof(DeviceProperties.uuid));
   memcpy(ClDev->driver_uuid, Driver->getUUID(), sizeof(DeviceProperties.uuid));
   ClDev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT;
-  // TODO externalMemProperties
+
   ClDev->mem_base_addr_align = 4096;
   ClDev->host_unified_memory = Integrated ? CL_TRUE : CL_FALSE;
   ClDev->max_clock_frequency = DeviceProperties.coreClockRate;
@@ -2061,6 +2157,9 @@ bool Level0Device::setupDeviceProperties(bool HasIPVersionExt) {
     ClDev->on_host_queue_props
         = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;
     ClDev->version_of_latest_passed_cts = "v2000-12-31-01";
+  } else {
+    // FPGA / VPU custom devices
+    ClDev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
   }
 
   MaxCommandQueuePriority = DeviceProperties.maxCommandQueuePriority;
@@ -2093,7 +2192,7 @@ bool Level0Device::setupComputeProperties() {
   ComputeProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_PROPERTIES;
   ComputeProperties.pNext = nullptr;
   Res = zeDeviceGetComputeProperties(DeviceHandle, &ComputeProperties);
-  if (Res != ZE_RESULT_SUCCESS) {
+  if (Res != ZE_RESULT_SUCCESS || ComputeProperties.maxTotalGroupSize == 0) {
     POCL_MSG_PRINT_LEVEL0("%s: zeDeviceGetComputeProperties failed\n",
                           ClDev->short_name);
     // some defaults
@@ -2380,11 +2479,11 @@ bool Level0Device::setupMemoryProperties(bool &HasUSMCapability) {
   MemAccessProperties.pNext = nullptr;
   Res2 = zeDeviceGetMemoryAccessProperties(DeviceHandle, &MemAccessProperties);
 
+  ClDev->global_mem_size = ClDev->max_mem_alloc_size;
   if (Res1 != ZE_RESULT_SUCCESS || Res2 != ZE_RESULT_SUCCESS) {
     // ClDev->max_mem_alloc_size was setup in setupDeviceProperties()
     POCL_MSG_PRINT_LEVEL0("%s: zeDeviceGetMemoryProperties() failed\n",
                           ClDev->short_name);
-    ClDev->global_mem_size = ClDev->max_mem_alloc_size;
     HasUSMCapability = false;
     return false;
   }
@@ -2399,7 +2498,7 @@ bool Level0Device::setupMemoryProperties(bool &HasUSMCapability) {
 
   if (int MemLimit = pocl_get_int_option("POCL_MEMORY_LIMIT", 0)) {
     uint64_t MemInGBytes = std::max((ClDev->global_mem_size >> 30), 1UL);
-    if (MemLimit > 0 && MemLimit <= MemInGBytes) {
+    if (MemLimit > 0 && (uint64_t)MemLimit <= MemInGBytes) {
       ClDev->global_mem_size = (size_t)MemLimit << 30;
     }
   }
@@ -2535,10 +2634,11 @@ bool Level0Device::setupImageProperties() {
 }
 
 bool Level0Device::setupPCIAddress() {
-  ze_pci_ext_properties_t PCIProps = {
-    .stype = ZE_STRUCTURE_TYPE_PCI_EXT_PROPERTIES,
-    .pNext = nullptr
-  };
+  ze_pci_ext_properties_t PCIProps = {.stype =
+                                          ZE_STRUCTURE_TYPE_PCI_EXT_PROPERTIES,
+                                      .pNext = nullptr,
+                                      .address = {0},
+                                      .maxSpeed = {0}};
 
   ze_result_t Res = zeDevicePciGetPropertiesExt(DeviceHandle, &PCIProps);
   if (Res != ZE_RESULT_SUCCESS)
@@ -2607,19 +2707,19 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     return;
   }
 
-/*
-#if 0
-  // support for importing external memory, currently not implemented
+  // test support for importing/exporting external memory
   ze_device_external_memory_properties_t ExternalMemProperties{};
   ExternalMemProperties.stype =
       ZE_STRUCTURE_TYPE_DEVICE_EXTERNAL_MEMORY_PROPERTIES;
   ExternalMemProperties.pNext = nullptr;
-  Res =
+  ze_result_t Res =
       zeDeviceGetExternalMemoryProperties(DeviceHandle, &ExternalMemProperties);
-  if (Res != ZE_RESULT_SUCCESS) {
-    return;
+  if (Res == ZE_RESULT_SUCCESS) {
+    HasDMABufImport = ExternalMemProperties.memoryAllocationImportTypes &
+                      ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+    HasDMABufExport = ExternalMemProperties.memoryAllocationExportTypes &
+                      ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
   }
-#endif
 
 #if 0
   /// support for subdevices. Currently unimplemented
@@ -2629,7 +2729,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   ze_device_handle_t subDevices[2] = {};
   zeDeviceGetSubDevices(device, &subDeviceCount, subDevices);
 #endif
-*/
 
   setupComputeProperties();
 
@@ -2714,6 +2813,11 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                       " cl_khr_int64_extended_atomics");
   }
 
+  if (ClDev->type == CL_DEVICE_TYPE_CUSTOM) {
+    Extensions.append(" cl_exp_tensor"
+                      " cl_exp_defined_builtin_kernels");
+  }
+
   if (ClDev->half_fp_config != 0u) {
     Extensions.append(" cl_khr_fp16");
     OpenCL30Features.append(" __opencl_c_fp16");
@@ -2784,6 +2888,21 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     pocl_setup_ils_with_version(ClDev);
   }
 
+  if (ClDev->type == CL_DEVICE_TYPE_CUSTOM ||
+      ClDev->type == CL_DEVICE_TYPE_ACCELERATOR) {
+    ClDev->extensions = Extensions.c_str();
+    ClDev->features = "";
+    pocl_setup_extensions_with_version(ClDev);
+
+#ifdef ENABLE_NPU
+    pocl::getNpuGraphModelsList(BuiltinKernels, NumBuiltinKernels);
+    POCL_MSG_PRINT_LEVEL0("NPU BiK list:\n %s\n", BuiltinKernels.c_str());
+    ClDev->builtin_kernel_list = BuiltinKernels.data();
+    ClDev->num_builtin_kernels = NumBuiltinKernels;
+
+    pocl_setup_builtin_kernels_with_version(ClDev);
+#endif
+  }
 
   // calculate KernelCacheHash
   //
@@ -2830,6 +2949,8 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   for (unsigned i = 0; i < 4; ++i)
     EventPools.emplace_back(this, EventPoolSize);
 
+  Alloc.reset(new Level0DefaultAllocator{Driver, this});
+
   POCL_MSG_PRINT_LEVEL0("Device %s initialized & available\n", ClDev->short_name);
   this->Available = CL_TRUE;
 }
@@ -2838,12 +2959,17 @@ Level0CompilationJobScheduler &Level0Device::getJobSched() {
   return Driver->getJobSched();
 }
 
+cl_device_id Level0Device::getClDev() {
+  return Driver->getClDevForHandle(DeviceHandle);
+}
+
 Level0Device::~Level0Device() {
   UniversalQueues.uninit();
   ComputeQueues.uninit();
   CopyQueues.uninit();
   destroyHelperKernels();
   EventPools.clear();
+  Alloc->clear(this);
 }
 
 static void calculateHash(uint8_t *BuildHash,
@@ -2988,16 +3114,23 @@ void Level0Device::pushCommand(_cl_command_node *Command) {
 }
 
 void Level0Device::pushCommandBatch(BatchType Batch) {
-  if (UniversalQueues.available())
+  if (supportsCmdQBatching()) {
     UniversalQueues.pushCommandBatch(Batch);
-  else {
+  } else {
     POCL_ABORT_UNIMPLEMENTED("this code path should not be entered - BUG\n");
   }
 }
 
-void *Level0Device::allocSharedMem(uint64_t Size, bool EnableCompression,
-                                   ze_device_mem_alloc_flags_t DevFlags,
-                                   ze_host_mem_alloc_flags_t HostFlags) {
+ze_event_handle_t Level0Device::getNewEvent() {
+  std::lock_guard<std::mutex> Guard(EventPoolLock);
+  if (EventPools.front().isEmpty())
+    EventPools.emplace_front(this, EventPoolSize);
+  return EventPools.front().getEvent();
+}
+
+void *Level0Device::allocUSMSharedMem(uint64_t Size, bool EnableCompression,
+                                      ze_device_mem_alloc_flags_t DevFlags,
+                                      ze_host_mem_alloc_flags_t HostFlags) {
   void *Ptr = nullptr;
   ze_device_mem_alloc_desc_t MemAllocDesc = {
       ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, nullptr, DevFlags, GlobalMemOrd};
@@ -3027,15 +3160,8 @@ void *Level0Device::allocSharedMem(uint64_t Size, bool EnableCompression,
   return Ptr;
 }
 
-ze_event_handle_t Level0Device::getNewEvent() {
-  std::lock_guard<std::mutex> Guard(EventPoolLock);
-  if (EventPools.front().isEmpty())
-    EventPools.emplace_front(this, EventPoolSize);
-  return EventPools.front().getEvent();
-}
-
-void *Level0Device::allocDeviceMem(uint64_t Size,
-                                   ze_device_mem_alloc_flags_t DevFlags) {
+void *Level0Device::allocUSMDeviceMem(uint64_t Size,
+                                      ze_device_mem_alloc_flags_t DevFlags) {
   void *Ptr = nullptr;
   ze_device_mem_alloc_desc_t MemAllocDesc = {
       ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, nullptr, DevFlags, GlobalMemOrd};
@@ -3043,34 +3169,33 @@ void *Level0Device::allocDeviceMem(uint64_t Size,
   uint64_t NextPowerOf2 = pocl_size_ceil2_64(Size);
   uint64_t Align = std::min(NextPowerOf2, (uint64_t)MAX_EXTENDED_ALIGNMENT);
 
-  ze_result_t Res = zeMemAllocDevice(ContextHandle, &MemAllocDesc, Size, Align,
-                                     DeviceHandle, &Ptr);
-  LEVEL0_CHECK_RET(nullptr, Res);
+  LEVEL0_CHECK_RET(nullptr, zeMemAllocDevice(ContextHandle, &MemAllocDesc, Size,
+                                             Align, DeviceHandle, &Ptr));
   return Ptr;
 }
 
-void *Level0Device::allocHostMem(uint64_t Size,
-                                 ze_device_mem_alloc_flags_t HostFlags) {
+void *Level0Device::allocUSMHostMem(uint64_t Size,
+                                    ze_device_mem_alloc_flags_t HostFlags,
+                                    void *pNext) {
   void *Ptr = nullptr;
   ze_host_mem_alloc_desc_t HostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC,
-                                       nullptr, HostFlags};
+                                       pNext, HostFlags};
 
   uint64_t NextPowerOf2 = pocl_size_ceil2_64(Size);
   uint64_t Align = std::min(NextPowerOf2, (uint64_t)MAX_EXTENDED_ALIGNMENT);
 
-  ze_result_t Res = zeMemAllocHost(ContextHandle, &HostDesc, Size, Align, &Ptr);
-  LEVEL0_CHECK_RET(nullptr, Res);
+  LEVEL0_CHECK_RET(nullptr,
+                   zeMemAllocHost(ContextHandle, &HostDesc, Size, Align, &Ptr));
   return Ptr;
 }
 
-void Level0Device::freeMem(void *Ptr) {
+void Level0Device::freeUSMMem(void *Ptr) {
   if (Ptr == nullptr)
     return;
-  ze_result_t Res = zeMemFree(ContextHandle, Ptr);
-  LEVEL0_CHECK_ABORT_NO_EXIT(Res);
+  LEVEL0_CHECK_ABORT_NO_EXIT(zeMemFree(ContextHandle, Ptr));
 }
 
-bool Level0Device::freeMemBlocking(void *Ptr) {
+bool Level0Device::freeUSMMemBlocking(void *Ptr) {
   if (Ptr == nullptr)
     return true;
 
@@ -3375,7 +3500,7 @@ void Level0Device::freeSampler(ze_sampler_handle_t SamplerH) {
   LEVEL0_CHECK_ABORT_NO_EXIT(Res);
 }
 
-int Level0Device::createProgram(cl_program Program, cl_uint DeviceI) {
+int Level0Device::createSpirvProgram(cl_program Program, cl_uint DeviceI) {
 
   int Res = pocl_bitcode_is_spirv_execmodel_kernel(Program->program_il,
                                                    Program->program_il_size);
@@ -3453,15 +3578,112 @@ int Level0Device::createProgram(cl_program Program, cl_uint DeviceI) {
   return CL_SUCCESS;
 }
 
+int Level0Device::createBuiltinProgram(cl_program Program, cl_uint DeviceI) {
+#ifdef ENABLE_NPU
+
+  assert(Program->data[DeviceI] == nullptr);
+  char ProgramCacheDir[POCL_MAX_PATHNAME_LENGTH];
+  char ProgramBcPath[POCL_MAX_PATHNAME_LENGTH];
+  // TODO: better input to Hash value calculation.
+  std::string Hash{Program->concated_builtin_names};
+  int errcode = pocl_cache_create_program_cachedir(
+      Program, DeviceI, (char *)Hash.data(), Hash.size(), ProgramBcPath);
+
+  pocl_cache_program_path(ProgramCacheDir, Program, DeviceI);
+
+  std::string BuildLog;
+  Level0BuiltinProgram *ProgramData =
+      Driver->getJobSched().createBuiltinProgram(
+          ContextHandle, DeviceHandle, BuildLog, Program->num_builtin_kernels,
+          Program->builtin_kernel_names, Program->builtin_kernel_ids,
+          Program->builtin_kernel_attributes, ProgramCacheDir, KernelCacheHash);
+
+  if (ProgramData == nullptr) {
+    if (!BuildLog.empty()) {
+      pocl_append_to_buildlog(Program, DeviceI, strdup(BuildLog.c_str()),
+                              BuildLog.size());
+      POCL_MSG_WARN("Build log: \n%s", BuildLog.c_str());
+    }
+    POCL_RETURN_ERROR_ON(1, CL_BUILD_PROGRAM_FAILURE,
+                         "Failed to compile program\n");
+  }
+
+  Program->data[DeviceI] = ProgramData;
+  return CL_SUCCESS;
+#else
+  std::string BuildLog("Builtin programs on non-NPU devices are not supported");
+  pocl_append_to_buildlog(Program, DeviceI, strdup(BuildLog.c_str()),
+                          BuildLog.size());
+  return CL_BUILD_PROGRAM_FAILURE;
+#endif
+}
+
 int Level0Device::freeProgram(cl_program Program, cl_uint DeviceI) {
+  // module can be NULL if compilation fails.
   if (Program->data[DeviceI] == nullptr) {
     return CL_SUCCESS;
   }
 
-  Level0Program *ProgramData = (Level0Program *)Program->data[DeviceI];
-  Driver->getJobSched().releaseProgram(ProgramData);
-  Program->data[DeviceI] = nullptr;
+  if (Program->num_builtin_kernels > 0) {
+#ifdef ENABLE_NPU
+    Level0BuiltinProgram *ProgramData =
+        (Level0BuiltinProgram *)Program->data[DeviceI];
+    Driver->getJobSched().releaseBuiltinProgram(ProgramData);
+    Program->data[DeviceI] = nullptr;
+#else
+    return CL_OUT_OF_RESOURCES;
+#endif
+  } else {
+    Level0Program *ProgramData = (Level0Program *)Program->data[DeviceI];
+    Driver->getJobSched().releaseProgram(ProgramData);
+    Program->data[DeviceI] = nullptr;
+  }
   return CL_SUCCESS;
+}
+
+int Level0Device::createKernel(cl_program Program, cl_kernel Kernel,
+                               unsigned ProgramDeviceI) {
+  if (Program->num_builtin_kernels > 0) {
+#ifdef ENABLE_NPU
+    Level0BuiltinProgram *L0Program =
+        (Level0BuiltinProgram *)Program->data[ProgramDeviceI];
+    Level0BuiltinKernel *Ker =
+        Driver->getJobSched().createBuiltinKernel(L0Program, Kernel->name);
+    Kernel->data[ProgramDeviceI] = Ker;
+#else
+    return CL_OUT_OF_RESOURCES;
+#endif
+  } else {
+    Level0Program *L0Program = (Level0Program *)Program->data[ProgramDeviceI];
+    Level0Kernel *Ker =
+        Driver->getJobSched().createKernel(L0Program, Kernel->name);
+    Kernel->data[ProgramDeviceI] = Ker;
+  }
+
+  return Kernel->data[ProgramDeviceI] == nullptr ? CL_OUT_OF_RESOURCES
+                                                 : CL_SUCCESS;
+}
+
+int Level0Device::freeKernel(cl_program Program, cl_kernel Kernel,
+                             unsigned ProgramDeviceI) {
+  bool Res;
+  if (Program->num_builtin_kernels > 0) {
+#ifdef ENABLE_NPU
+    Level0BuiltinProgram *L0Program =
+        (Level0BuiltinProgram *)Program->data[ProgramDeviceI];
+    Level0BuiltinKernel *Ker =
+        (Level0BuiltinKernel *)Kernel->data[ProgramDeviceI];
+    Res = Driver->getJobSched().releaseBuiltinKernel(L0Program, Ker);
+#else
+    return CL_OUT_OF_RESOURCES;
+#endif
+  } else {
+    Level0Program *L0Program = (Level0Program *)Program->data[ProgramDeviceI];
+    Level0Kernel *Ker = (Level0Kernel *)Kernel->data[ProgramDeviceI];
+    Res = Driver->getJobSched().releaseKernel(L0Program, Ker);
+  }
+
+  return Res == true ? CL_SUCCESS : CL_INVALID_KERNEL;
 }
 
 bool Level0Device::getBestKernel(Level0Program *Program, Level0Kernel *Kernel,
@@ -3472,6 +3694,14 @@ bool Level0Device::getBestKernel(Level0Program *Program, Level0Kernel *Kernel,
   return Driver->getJobSched().getBestKernel(Program, Kernel, LargeOffset,
                                              LocalWGSize, Mod, Ker);
 }
+
+#ifdef ENABLE_NPU
+bool Level0Device::getBestBuiltinKernel(Level0BuiltinProgram *Program,
+                                        Level0BuiltinKernel *Kernel,
+                                        ze_graph_handle_t &Graph) {
+  return Driver->getJobSched().getBestBuiltinKernel(Program, Kernel, Graph);
+}
+#endif
 
 bool Level0Device::getMemfillKernel(unsigned PatternSize,
                                     Level0Kernel **L0Kernel,
@@ -3665,25 +3895,11 @@ uint32_t Level0Device::getMaxWGSizeForKernel(Level0Kernel *Kernel) {
 #endif
 }
 
-static constexpr unsigned MaxLevel0Devices = 1024;
-
-Level0Driver::Level0Driver() {
-  ze_result_t Res = zeInit(ZE_INIT_FLAG_GPU_ONLY);
-  if (Res != ZE_RESULT_SUCCESS) {
-    POCL_MSG_ERR("zeInit FAILED\n");
-    return;
-  }
-  uint32_t DriverCount = 1;
-  Res = zeDriverGet(&DriverCount, &DriverH);
-  if (Res != ZE_RESULT_SUCCESS) {
-    POCL_MSG_ERR("zeDriverGet FAILED\n");
-    return;
-  }
-
+Level0Driver::Level0Driver(ze_driver_handle_t DrvHandle) : DriverH(DrvHandle) {
   ze_driver_properties_t DriverProperties = {};
   DriverProperties.stype = ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES;
   DriverProperties.pNext = nullptr;
-  Res = zeDriverGetProperties(DriverH, &DriverProperties);
+  ze_result_t Res = zeDriverGetProperties(DriverH, &DriverProperties);
   if (Res != ZE_RESULT_SUCCESS) {
     POCL_MSG_ERR("zeDriverGetProperties FAILED\n");
     return;
@@ -3727,25 +3943,56 @@ Level0Driver::Level0Driver() {
   }
 
   uint32_t DeviceCount = 0;
-  ze_device_handle_t DeviceArray[MaxLevel0Devices];
   Res = zeDeviceGet(DriverH, &DeviceCount, nullptr);
-  if (Res != ZE_RESULT_SUCCESS || DeviceCount == 0
-          || DeviceCount > MaxLevel0Devices) {
+  if (Res != ZE_RESULT_SUCCESS || DeviceCount == 0) {
     POCL_MSG_ERR("zeDeviceGet 1 FAILED\n");
     return;
   }
 
-  Res = zeDeviceGet(DriverH, &DeviceCount, DeviceArray);
-  if (Res != ZE_RESULT_SUCCESS || DeviceCount == 0) {
+  if (DeviceCount == 0) {
+    POCL_MSG_ERR("zeDriver: zero devices available\n");
+    return;
+  }
+
+  std::vector<ze_device_handle_t> DeviceArray;
+  DeviceArray.resize(DeviceCount);
+  Devices.resize(DeviceCount);
+  DeviceHandles.resize(DeviceCount);
+
+  Res = zeDeviceGet(DriverH, &DeviceCount, DeviceArray.data());
+  if (Res != ZE_RESULT_SUCCESS) {
     POCL_MSG_ERR("zeDeviceGet 2 FAILED\n");
     return;
   }
 
-  Devices.resize(DeviceCount);
-  DeviceHandles.resize(DeviceCount);
   for (uint32_t i = 0; i < DeviceCount; ++i) {
     DeviceHandles[i] = DeviceArray[i];
   }
+  ze_device_properties_t DeviceProperties;
+  Res = zeDeviceGetProperties(DeviceHandles[0], &DeviceProperties);
+  if (Res != ZE_RESULT_SUCCESS) {
+    POCL_MSG_ERR("zeDeviceGetProperties FAILED\n");
+    return;
+  }
+
+#ifdef ENABLE_NPU
+  Res = zeDriverGetExtensionFunctionAddress(
+      DriverH, GRAPH_EXT_NAME, reinterpret_cast<void **>(&GraphDDITableExt));
+  if (Res != ZE_RESULT_SUCCESS)
+    GraphDDITableExt = nullptr;
+
+  Res = zeDriverGetExtensionFunctionAddress(
+      DriverH, ZE_PROFILING_DATA_EXT_NAME,
+      reinterpret_cast<void **>(&GraphProfDDITableExt));
+  if (Res != ZE_RESULT_SUCCESS)
+    GraphProfDDITableExt = nullptr;
+
+  if (!GraphDDITableExt || !GraphProfDDITableExt) {
+    POCL_MSG_PRINT_LEVEL0("Failed to initialize LevelZero Graph Ext "
+                          "for driver %u\n",
+                          DriverProperties.driverVersion);
+  }
+#endif
 
   if (!JobSched.init(DriverH, DeviceHandles)) {
     Devices.clear();
@@ -3753,6 +4000,7 @@ Level0Driver::Level0Driver() {
     POCL_MSG_ERR("Failed to initialize compilation job scheduler\n");
     return;
   }
+  assert(Devices[0].get() == nullptr);
 }
 
 Level0Driver::~Level0Driver() {
@@ -3765,12 +4013,12 @@ Level0Driver::~Level0Driver() {
 
 Level0Device *Level0Driver::createDevice(unsigned Index, cl_device_id Dev,
                                          const char *Params) {
-  if (Index >= Devices.size()) {
-    return nullptr;
-  }
+  assert(Index < Devices.size());
   assert(Devices[Index].get() == nullptr);
   Devices[Index].reset(
       new Level0Device(this, DeviceHandles[Index], Dev, Params));
+  POCL_MSG_PRINT_LEVEL0("createDEVICE | Cl Dev %p | Dri %p | Dev %p \n", Dev,
+                        DriverH, Devices[Index].get());
   ++NumDevices;
   HandleToIDMap[DeviceHandles[Index]] = Dev;
   return Devices[Index].get();
@@ -3786,4 +4034,211 @@ void Level0Driver::releaseDevice(Level0Device *Dev) {
       --NumDevices;
     }
   }
+}
+
+Level0Device *Level0Driver::getExportDevice() {
+  // first find device which can only export not import
+  for (auto &Device : Devices) {
+    if (Device->supportsExportByDmaBuf() && !Device->supportsImportByDmaBuf()) {
+      return Device.get();
+    }
+  }
+
+  // then find any dev that can export
+  for (auto &Device : Devices) {
+    if (Device->supportsExportByDmaBuf()) {
+      return Device.get();
+    }
+  }
+
+  return nullptr;
+}
+
+bool Level0Driver::getImportDevices(std::vector<Level0Device *> &ImportDevices,
+                                    Level0Device *ExcludeDev) {
+  unsigned UnsupportingDevices = 0;
+  for (auto &Device : Devices) {
+    if (ExcludeDev && Device.get() == ExcludeDev)
+      continue;
+    if (Device->supportsImportByDmaBuf())
+      ImportDevices.push_back(Device.get());
+    else
+      ++UnsupportingDevices;
+  }
+  return UnsupportingDevices == 0;
+}
+
+void *Level0DefaultAllocator::allocBuffer(uintptr_t Key, Level0Device *,
+                                          ze_device_mem_alloc_flags_t DevFlags,
+                                          ze_host_mem_alloc_flags_t HostFlags,
+                                          size_t Size, bool &IsHostAccessible) {
+  if (Device->isHostUnifiedMemory()) {
+    IsHostAccessible = true;
+    if (Device->supportsSingleSharedUSM()) {
+      // iGPU
+      return Device->allocUSMSharedMem(Size, /* Compress */ false, DevFlags,
+                                       HostFlags);
+    } else {
+      // NPU device uses L0 Host Mem
+      return Device->allocUSMHostMem(Size, HostFlags);
+    }
+  } else {
+    IsHostAccessible = false;
+    // dGPU
+    return Device->allocUSMDeviceMem(Size, DevFlags);
+  }
+}
+
+bool Level0DefaultAllocator::freeBuffer(uintptr_t Key, Level0Device *,
+                                        void *Ptr) {
+  Device->freeUSMMem(Ptr);
+  return true;
+}
+
+void *Level0DMABufAllocator::allocBuffer(uintptr_t Key, Level0Device *D,
+                                         ze_device_mem_alloc_flags_t DevFlags,
+                                         ze_host_mem_alloc_flags_t HostFlags,
+                                         size_t Size, bool &IsHostAccessible) {
+  assert(D->isHostUnifiedMemory());
+  IsHostAccessible = true;
+  auto ImportIt = std::find(ImportDevices.begin(), ImportDevices.end(), D);
+  bool DevIsImport = ImportIt != ImportDevices.end();
+  bool DevIsExport = ExportDevice == D;
+  assert(DevIsExport || DevIsImport);
+
+  // we must have an available filedescriptor -> do an Export allocation first
+  void *ExportPtr =
+      Allocations[Key].allocExport(ExportDevice, DevFlags, HostFlags, Size);
+  if (DevIsExport)
+    return ExportPtr;
+  if (ExportPtr == nullptr)
+    return nullptr;
+
+  assert(Allocations[Key].isValid());
+  assert(DevIsImport);
+  return Allocations[Key].allocImport(D, DevFlags, HostFlags, Size);
+}
+
+bool Level0DMABufAllocator::freeBuffer(uintptr_t Key, Level0Device *D,
+                                       void *Ptr) {
+  assert(D->isHostUnifiedMemory());
+  if (!Allocations[Key].isValid())
+    return false;
+
+  auto ImportIt = std::find(ImportDevices.begin(), ImportDevices.end(), D);
+  bool DevIsImport = ImportIt != ImportDevices.end();
+  bool DevIsExport = ExportDevice == D;
+  assert(DevIsExport || DevIsImport);
+
+  return Allocations[Key].free(D);
+}
+
+bool Level0DMABufAllocator::clear(Level0Device *D) {
+  for (auto &A : Allocations) {
+    A.second.free(D);
+  }
+  return true;
+}
+
+void *DMABufAllocation::allocExport(Level0Device *D,
+                                    ze_device_mem_alloc_flags_t DevFlags,
+                                    ze_host_mem_alloc_flags_t HostFlags,
+                                    size_t Size) {
+  if (ExportPtr != nullptr)
+    return ExportPtr;
+
+  ze_external_memory_export_desc_t descExport = {};
+  descExport.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC;
+  descExport.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+
+  void *Ptr = D->allocUSMHostMem(Size, HostFlags, &descExport);
+  POCL_MSG_PRINT_LEVEL0("ALLOCATED: %p SIZE: %zu | FROM ExportDev: %s\n", Ptr,
+                        Size, D->getClDev()->short_name);
+
+  // only one export device is supported, all others must be import devices
+  assert(FD < 0);
+  ze_external_memory_export_fd_t FdExport = {};
+  FdExport.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD;
+  FdExport.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+
+  ze_memory_allocation_properties_t propAlloc = {};
+  propAlloc.stype = ZE_STRUCTURE_TYPE_MEMORY_ALLOCATION_PROPERTIES;
+  propAlloc.pNext = &FdExport;
+
+  ze_result_t Res =
+      zeMemGetAllocProperties(D->getContextHandle(), Ptr, &propAlloc, nullptr);
+  assert(Res == ZE_RESULT_SUCCESS);
+  assert(FdExport.fd != 0);
+
+  if (Ptr && FdExport.fd >= 0) {
+    ExportDev = D;
+    ExportPtr = Ptr;
+    FD = FdExport.fd;
+    return Ptr;
+  } else {
+    return nullptr;
+  }
+}
+
+void *DMABufAllocation::allocImport(Level0Device *D,
+                                    ze_device_mem_alloc_flags_t DevFlags,
+                                    ze_host_mem_alloc_flags_t HostFlags,
+                                    size_t Size) {
+  if (BufferImportMap[D] != nullptr)
+    return BufferImportMap[D];
+
+  // export mem must be allocated before import is called
+  assert(ExportDev);
+  assert(ExportPtr);
+  assert(FD >= 0);
+
+  ze_external_memory_import_fd_t FdImport = {};
+  FdImport.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD;
+  FdImport.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+  FdImport.fd = FD;
+
+  void *Ptr = D->allocUSMHostMem(Size, HostFlags, &FdImport);
+  POCL_MSG_PRINT_LEVEL0("ALLOCATED: %p SIZE: %zu | FROM ImportDev: %s\n", Ptr,
+                        Size, D->getClDev()->short_name);
+
+  if (Ptr)
+    BufferImportMap[D] = Ptr;
+  return Ptr;
+}
+
+bool DMABufAllocation::free(Level0Device *D) {
+  if (D == ExportDev) {
+    if (BufferImportMap.empty()) {
+      D->freeUSMMem(ExportPtr);
+      ExportPtr = nullptr;
+      ExportDev = nullptr;
+    } else {
+      POCL_MSG_PRINT_LEVEL0("Not freeing Export alloc "
+                            "because Import(s) remain\n");
+      return false; // can we release export mem while we have active imports?
+    }
+  } else {
+    auto It = BufferImportMap.find(D);
+    if (It == BufferImportMap.end()) {
+      // this is OK in general; the allocation
+      // could be freed earlier for a particular device
+#if 0
+      POCL_MSG_PRINT_LEVEL0("Could not find allocation "
+                            "for Device %p in the ImportMap\n",
+                            D);
+#endif
+      return false;
+    }
+    D->freeUSMMem(It->second);
+    BufferImportMap.erase(D);
+  }
+  return true;
+}
+
+DMABufAllocation::~DMABufAllocation() {
+  for (auto &[Dev, Ptr] : BufferImportMap) {
+    Dev->freeUSMMem(Ptr);
+  }
+  if (ExportDev && ExportPtr)
+    ExportDev->freeUSMMem(ExportPtr);
 }

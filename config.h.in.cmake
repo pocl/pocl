@@ -189,6 +189,8 @@
 
 #define CLANGCC "@CLANG@"
 
+#cmakedefine ENABLE_NPU
+
 #define LLVM_SPIRV "@LLVM_SPIRV@"
 
 #cmakedefine ENABLE_LEVEL0_EXTRA_FEATURES

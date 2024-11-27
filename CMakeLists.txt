@@ -274,6 +274,8 @@ option(ENABLE_VULKAN "Experimental and incomplete driver that uses the Vulkan AP
 
 option(ENABLE_LEVEL0 "Experimental and incomplete driver that uses the Level Zero API for controlling the device. Please refer to the user manual for the status and open tasks" OFF)
 
+option(ENABLE_NPU "Experimental support for Intel NPU (requires LevelZero driver)" OFF)
+
 option(ENABLE_TBB_DEVICE "Enable the Intel TBB device driver." OFF)
 
 option(ENABLE_HOST_CPU_DEVICES "Add host CPUs as OpenCL devices (cpu & cpu-minimal)." ON)

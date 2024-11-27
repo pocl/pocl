@@ -42,11 +42,21 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 /// IN THE SOFTWARE.
 
+#include <ze_api.h>
+
+#include "config.h"
+
+#ifdef ENABLE_NPU
+#include <ze_graph_ext.h>
+#include <ze_graph_profiling_ext.h>
+
+#define GRAPH_EXT_NAME "ZE_extension_graph_1_5"
+#define GRAPH_EXT_VERSION ZE_GRAPH_EXT_VERSION_1_5
+typedef ze_graph_dditable_ext_t graph_dditable_ext_t;
+#endif
 
 #ifndef POCL_LIB_CL_DEVICES_LEVEL0_LEVEL0_COMPILATION_HH
 #define POCL_LIB_CL_DEVICES_LEVEL0_LEVEL0_COMPILATION_HH
-
-#include <ze_api.h>
 
 #include <condition_variable>
 #include <list>
@@ -106,8 +116,14 @@ struct BuildSpecialization {
 class Level0Kernel;
 typedef std::shared_ptr<Level0Kernel> Level0KernelSPtr;
 
+class Level0ProgramBase;
+typedef std::shared_ptr<Level0ProgramBase> Level0ProgramBaseSPtr;
+
 class Level0Program;
 typedef std::shared_ptr<Level0Program> Level0ProgramSPtr;
+
+class Level0BuildBase;
+typedef std::unique_ptr<Level0BuildBase> Level0BuildBaseUPtr;
 
 class Level0Build;
 typedef std::unique_ptr<Level0Build> Level0BuildUPtr;
@@ -126,6 +142,18 @@ typedef std::shared_ptr<Level0CompilationJob> Level0CompilationJobSPtr;
 
 class Level0CompilerThread;
 class Level0CompilationJobScheduler;
+
+#ifdef ENABLE_NPU
+class Level0BuiltinKernel;
+typedef std::shared_ptr<Level0BuiltinKernel> Level0BuiltinKernelSPtr;
+
+class Level0BuiltinProgram;
+typedef std::shared_ptr<Level0BuiltinProgram> Level0BuiltinProgramSPtr;
+
+class Level0BuiltinProgramBuild;
+typedef std::unique_ptr<Level0BuiltinProgramBuild>
+    Level0BuiltinProgramBuildUPtr;
+#endif
 
 ///
 /// \brief Stores a map of Specializations to ZE kernel+module handles,
@@ -185,6 +213,38 @@ private:
   bool createForBuild(BuildSpecialization Spec, ze_module_handle_t Mod);
 };
 
+class Level0ProgramBase {
+public:
+  Level0ProgramBase(ze_context_handle_t Ctx, ze_device_handle_t Dev,
+                    const char *CDir, const std::string &UUID)
+      : CacheDir(CDir), CacheUUID(UUID), ContextH(Ctx), DeviceH(Dev) {}
+  virtual ~Level0ProgramBase() {};
+
+  virtual bool init() = 0;
+  virtual bool addFinishedBuild(Level0BuildBaseUPtr Build) = 0;
+  ze_device_handle_t getDevice() const { return DeviceH; }
+  const std::string &getBuildLog() const { return BuildLog; }
+  const std::string &getCacheDir() const { return CacheDir; }
+  const std::string &getCacheUUID() const { return CacheUUID; }
+
+protected:
+  /// all data except Builds, Kernels, ExtractedSPIRV,
+  /// ProgramLLVMCtx & BuildLog are const
+  std::mutex Mutex;
+
+  /// cl_program's pocl cache dir
+  std::string CacheDir;
+  /// UUID used to determine compatibility of native binaries in cache
+  std::string CacheUUID;
+
+  /// compilation output
+  std::string BuildLog;
+
+  /// these are the destination Context/Device, not the build thread's
+  /// Context/Device (though the device is the same for both, context isn't)
+  ze_context_handle_t ContextH;
+  ze_device_handle_t DeviceH;
+};
 
 ///
 /// \brief Stores a set of specialized builds for a particular
@@ -197,7 +257,7 @@ private:
 /// Since there might still be a compile job scheduled/running that will need
 /// the instance, it needs to be handled properly (-> std::shared_ptr)
 ///
-class Level0Program {
+class Level0Program : public Level0ProgramBase {
 
 public:
   Level0Program(ze_context_handle_t Ctx,
@@ -209,8 +269,8 @@ public:
                 std::vector<char> &ProgramBCData,
                 const char* CDir,
                 const std::string &UUID);
-  bool init();
-  ~Level0Program();
+  virtual bool init() override;
+  virtual ~Level0Program();
 
   Level0Program(Level0Program const &) = delete;
   Level0Program& operator=(Level0Program const &) = delete;
@@ -220,15 +280,8 @@ public:
   const std::vector<uint8_t> &getSPIRV() const { return SPIRV; }
   const std::vector<uint8_t> &getLinkinSPIRV() const { return LinkinSPIRV; }
   ze_module_constants_t getSpecConstants() const { return SpecConstants; }
-  ze_device_handle_t getDevice() { return DeviceH; }
-  const std::string &getBuildLog() { return BuildLog; }
-  const std::string &getCacheDir() { return CacheDir; }
-  const std::string &getCacheUUID() { return CacheUUID; }
   bool isJITCompiled() const { return JITCompilation; }
   bool isOptimized() const { return Optimize; }
-
-  /// DISABLED: used by device->ops->setup_metadata to get kernel metadata
-  // ze_module_handle_t getAnyHandle();
 
   /// for cl_kernel creation device->ops callback
   Level0Kernel *createKernel(const std::string Name);
@@ -254,7 +307,7 @@ public:
   ///        of error, updates the program build log and drops the Build
   /// \param [in] Build the build to process
   ///
-  bool addFinishedBuild(Level0BuildUPtr Build);
+  virtual bool addFinishedBuild(Level0BuildBaseUPtr Build) override;
 
   ///
   /// \brief extractKernelSPIRV extracts the SPIR-V of a single kernel from the
@@ -265,14 +318,9 @@ public:
   ///
   bool extractKernelSPIRV(std::string &KernelName, std::vector<uint8_t> &SPIRV);
 
-  bool getKernelSPtr(Level0Kernel *Kernel, Level0KernelSPtr &KernelS);
-
   Level0JITProgramBuild *getLinkinBuild(BuildSpecialization Spec);
 
 private:
-  /// all data except Builds, Kernels, ExtractedSPIRV,
-  /// ProgramLLVMCtx & BuildLog are const
-  std::mutex Mutex;
   /// full program builds with specializations
   std::list<Level0ProgramBuildUPtr> ProgBuilds;
   /// kernel builds with specializations, for JIT compilation
@@ -289,13 +337,8 @@ private:
   void *ProgramLLVMCtx;
 
   std::list<Level0KernelSPtr> Kernels;
-  std::string BuildLog;
 
   ////////////////////////////////////////////////////////////////////////
-  /// cl_program's pocl cache dir
-  std::string CacheDir;
-  /// UUID used to determine compatibility of native binaries in cache
-  std::string CacheUUID;
 
   /// SPIR-V binary (= compilation input)
   std::vector<uint8_t> SPIRV;
@@ -312,9 +355,6 @@ private:
   std::vector<const void*> ConstantVoidPtrs;
   std::vector<std::vector<uint8_t>> ConstantValues;
 
-  ze_context_handle_t ContextH;
-  ze_device_handle_t DeviceH;
-
   /// true = compile each kernel separately before launch
   /// false = compile the whole program once
   bool JITCompilation;
@@ -323,59 +363,158 @@ private:
   /// setup the ze_module_constants_t from cl_program's Spec constant data.
   void setupSpecConsts(uint32_t NumSpecs, const uint32_t *SpecIDs,
                       const void **SpecValues, size_t *SpecValSizes);
+};
 
-  //  Level0Build *findBuild(bool LargeOffset, bool KernelBuilds);
+#ifdef ENABLE_NPU
+class Level0BuiltinKernel {
+public:
+  Level0BuiltinKernel(const std::string N); //, ze_graph_handle_t G);
+  ~Level0BuiltinKernel() {};
+
+  Level0BuiltinKernel(Level0BuiltinKernel const &) = delete;
+  Level0BuiltinKernel &operator=(Level0BuiltinKernel const &) = delete;
+  Level0BuiltinKernel(Level0BuiltinKernel const &&) = delete;
+  Level0BuiltinKernel &operator=(Level0BuiltinKernel &&) = delete;
+
+  /// this is necessary for the Level0Queue's run() function to lock the kernel
+  std::mutex &getMutex() { return Mutex; }
+
+  const std::string &getName() { return Name; }
+  const std::string &getCacheUUID() { return CacheUUID; }
+
+private:
+  std::mutex Mutex;
+  ze_graph_handle_t GraphH;
+
+  std::string Name;
+  std::string CacheUUID;
+};
+
+class Level0BuiltinProgram : public Level0ProgramBase {
+public:
+  Level0BuiltinProgram(ze_context_handle_t Ctx, ze_device_handle_t Dev,
+                       size_t NumBuiltinKernels, char **BuiltinKernelNames,
+                       void *BuiltinKernelIDs,    // IDs for DBKs
+                       void **BuiltinKernelAttrs, // Attrs for DBKs
+                       const char *CDir, const std::string &UUID);
+  virtual bool init() override;
+  virtual ~Level0BuiltinProgram();
+
+  Level0BuiltinProgram(Level0BuiltinProgram const &) = delete;
+  Level0BuiltinProgram &operator=(Level0BuiltinProgram const &) = delete;
+  Level0BuiltinProgram(Level0BuiltinProgram const &&) = delete;
+  Level0BuiltinProgram &operator=(Level0BuiltinProgram &&) = delete;
+
+  const std::vector<std::string> &getKernelNames() { return KernelNames; }
+  const std::vector<unsigned> &getKernelIDs() { return KernelIDs; }
+  const std::vector<void *> &getKernelAttrs() { return KernelAttrs; }
+  bool isDBK() const { return IsDBK; }
+
+  /// for cl_kernel creation device->ops callback
+  Level0BuiltinKernel *
+  createKernel(const std::string Name); //, ze_graph_handle_t G);
+  /// for cl_kernel deletion device->ops callback
+  bool releaseKernel(Level0BuiltinKernel *Kernel);
+
+  ///
+  /// \brief returns the best available specialization of a Kernel,
+  ///        for the given set of specialization options
+  /// \param [in] Kernel the Level0Kernel to search for
+  /// \param [out] Ker the ze_graph_handle_t of the found specialization, or
+  /// null
+  /// \returns false if can't find any build for the kernel
+  ///
+  bool getBestKernel(Level0BuiltinKernel *MKernel, ze_graph_handle_t &Ker);
+
+  ///
+  /// \brief addFinishedBuild adds a finished program/kernel build to the
+  ///        member holding builds (if the build was successful), or in case
+  ///        of error, updates the program build log and drops the Build
+  /// \param [in] Build the build object to process
+  ///
+  virtual bool addFinishedBuild(Level0BuildBaseUPtr Build) override;
+
+private:
+  std::vector<std::string> KernelNames;
+  std::vector<unsigned> KernelIDs;
+  std::vector<void *> KernelAttrs;
+
+  Level0BuiltinProgramBuildUPtr FinishedBuild;
+
+  std::list<Level0BuiltinKernelSPtr> Kernels;
+
+  /// helper Queue in the destination Context, for initialization of graphs
+  ze_command_queue_handle_t QueueH;
+  ze_command_list_handle_t ListH;
+  bool IsDBK;
+};
+
+void getNpuGraphModelsList(std::string &Out, unsigned &NumKernels);
+#endif
+
+class Level0BuildBase {
+public:
+  enum class BuildType { Kernel, Program, JITProgram, BuiltinProgram, Unknown };
+
+  Level0BuildBase(bool S, BuildType T) : BuildSuccessful(S), Type(T) {};
+  virtual ~Level0BuildBase() {};
+
+  bool isSuccessful() const { return BuildSuccessful; }
+  std::string &&getBuildLog() { return std::move(BuildLog); }
+  BuildType getBuildType() { return Type; }
+
+  // run the Build in the provided ZE Context.
+  virtual void run(ze_context_handle_t ContextH) = 0;
+
+  bool isEqual(Level0BuildBase *Other) {
+    if (Type == Other->Type)
+      return false;
+    return compareSameClass(Other);
+  };
+
+protected:
+  /// compares the instances of same subclass
+  virtual bool compareSameClass(Level0BuildBase *Other) { return false; }
+  bool BuildSuccessful;
+  BuildType Type;
+  /// build log for failed builds
+  std::string BuildLog;
 };
 
 ///
 /// \brief Abstract class for a single build of a program or kernel (to a native
-/// binary)
-///        with a particular set of specializations
+/// binary) with a particular set of specializations
 ///
-class Level0Build {
+class Level0Build : public Level0BuildBase {
 
 public:
-  Level0Build(BuildSpecialization S, Level0Program *Prog)
-      : Program(Prog), ModuleH(nullptr), Spec(S), BuildSuccessful(false),
-        Type(BuildType::Unknown) {
-    DeviceH = Program->getDevice();
-  }
+  Level0Build(BuildSpecialization S, Level0Program *Prog, BuildType T)
+      : Level0BuildBase(false, T), Program(Prog), ModuleH(nullptr), Spec(S) {}
   virtual ~Level0Build();
-
-  enum class BuildType { Kernel, Program, JITProgram, Unknown };
 
   Level0Build(Level0Build const &) = delete;
   Level0Build &operator=(Level0Build const &) = delete;
   Level0Build(Level0Build const &&) = delete;
   Level0Build &operator=(Level0Build &&) = delete;
 
-  bool isSuccessful() const { return BuildSuccessful; }
   bool isDebug() const { return Spec.Debug; }
   bool isOptimized() const { return Spec.Optimize; }
   bool isLargeOffset() const { return Spec.LargeOffsets; }
   bool isSmallWG() const { return Spec.SmallWGSize; }
-  std::string &&getBuildLog() { return std::move(BuildLog); }
-  BuildType getBuildType() { return Type; }
 
   ze_module_handle_t getModuleHandle() { return ModuleH; }
   BuildSpecialization getSpec() { return Spec; }
-  ze_device_handle_t getDevice() { return DeviceH; }
-
-  // TODO make generic
-  virtual void run(ze_context_handle_t ContextH) = 0;
 
   // Level0 specific (TODO make generic virtual)
   /// loads the built Native Binary, in a particular context & device
   virtual bool loadBinary(ze_context_handle_t ContextH,
                           ze_device_handle_t DeviceH);
 
-  virtual bool isEqual(Level0Build *Other);
+  virtual bool compareSameClass(Level0BuildBase *Other) override;
 
 protected:
   /// compiled binary in ZE native format
   std::vector<uint8_t> NativeBinary;
-  /// build log for failed builds
-  std::string BuildLog;
 
   /// assumes this pointer is valid & alive during the whole build duration,
   /// should be OK because CompilationJob keeps a shared_ptr
@@ -386,12 +525,130 @@ protected:
   ///  not the compilation thread's context.
   ze_module_handle_t ModuleH;
 
-  ze_device_handle_t DeviceH;
-
   BuildSpecialization Spec;
-  bool BuildSuccessful;
-  BuildType Type;
 };
+
+#ifdef ENABLE_NPU
+struct Level0BuiltinKernelBuildResult {
+  /// VPU binary + Shave(VLIW) binary, in native format
+  std::vector<uint8_t> VpuNativeBinary;
+  std::vector<uint8_t> ShaveNativeBinary;
+
+  ///  this handle is valid for the *target* (loadBinary) context,
+  ///  not the compilation thread's context.
+  ze_graph_handle_t GraphHFinal;
+  graph_dditable_ext_t *GraphDDITable;
+
+  Level0BuiltinKernelBuildResult(Level0BuiltinKernelBuildResult const &) =
+      delete;
+  Level0BuiltinKernelBuildResult &
+  operator=(Level0BuiltinKernelBuildResult const &) = delete;
+
+  Level0BuiltinKernelBuildResult(Level0BuiltinKernelBuildResult &&O) {
+    VpuNativeBinary = std::move(O.VpuNativeBinary);
+    ShaveNativeBinary = std::move(O.ShaveNativeBinary);
+    GraphHFinal = O.GraphHFinal;
+    O.GraphHFinal = nullptr;
+    GraphDDITable = O.GraphDDITable;
+    O.GraphDDITable = nullptr;
+  }
+  Level0BuiltinKernelBuildResult &
+  operator=(Level0BuiltinKernelBuildResult &&O) {
+    VpuNativeBinary = std::move(O.VpuNativeBinary);
+    ShaveNativeBinary = std::move(O.ShaveNativeBinary);
+    GraphHFinal = O.GraphHFinal;
+    O.GraphHFinal = nullptr;
+    GraphDDITable = O.GraphDDITable;
+    O.GraphDDITable = nullptr;
+    return *this;
+  }
+
+  Level0BuiltinKernelBuildResult(graph_dditable_ext_t *DDI)
+      : GraphHFinal(nullptr), GraphDDITable(DDI) {}
+
+  ~Level0BuiltinKernelBuildResult() {
+    if (GraphHFinal) {
+      GraphDDITable->pfnDestroy(GraphHFinal);
+    }
+  }
+};
+
+typedef bool (*instantiateModelTemplate_fn)(const void *KernelAttrs,
+                                            std::string &ModelXMLInstance,
+                                            std::string &BuildFlagsInstance);
+
+struct Level0Model {
+  std::string Name;
+  unsigned DBK_ID;
+  ze_graph_format_t Format;
+  std::string NativeBin;
+  std::string NativeShaveBin;
+  std::string NGraphXml;
+  std::string NGraphBin;
+  const std::string BuildFlags;
+  instantiateModelTemplate_fn instantiateModel;
+};
+
+class Level0BuiltinProgramBuild : public Level0BuildBase {
+public:
+  Level0BuiltinProgramBuild(Level0BuiltinProgram *Prog,
+                            graph_dditable_ext_t *DDITable)
+      : Level0BuildBase(false, BuildType::BuiltinProgram), Program(Prog),
+        GraphDDITable(DDITable), VPUModel("MTL") {}
+  virtual ~Level0BuiltinProgramBuild() { KernelBuilds.clear(); }
+
+  Level0BuiltinProgramBuild(Level0BuiltinProgramBuild const &) = delete;
+  Level0BuiltinProgramBuild &
+  operator=(Level0BuiltinProgramBuild const &) = delete;
+  Level0BuiltinProgramBuild(Level0BuiltinProgramBuild const &&) = delete;
+  Level0BuiltinProgramBuild &operator=(Level0BuiltinProgramBuild &&) = delete;
+
+  virtual void run(ze_context_handle_t ContextH) override;
+
+  virtual bool compareSameClass(Level0BuildBase *Other) override;
+
+  /// loads the built Native Binary, for each kernel separately,
+  /// in a particular context & device (queue is req for initialization)
+  bool loadBinaries(ze_context_handle_t ContextH, ze_device_handle_t DeviceH,
+                    ze_command_queue_handle_t QueueH,
+                    ze_command_list_handle_t ListH);
+
+  ze_graph_handle_t getGraphHandle(std::string KernelName);
+
+private:
+  /// loads stored model from filesystem and puts it into out,
+  /// optionally calling compileFromXmlBin if the model is in XML format
+  bool loadModel(ze_context_handle_t ContextH, ze_device_handle_t DeviceH,
+                 const Level0Model *M, const void *KernelAttrs,
+                 Level0BuiltinKernelBuildResult &Out);
+
+  /// loads a single Native Binary, in destination context & device
+  bool loadBinary(ze_context_handle_t ContextH, ze_device_handle_t DeviceH,
+                  ze_command_queue_handle_t QueueH,
+                  ze_command_list_handle_t ListH,
+                  Level0BuiltinKernelBuildResult &Out);
+
+  /// compiles a graph from XML+Bin to Native VPU binary
+  bool compileFromXmlBin(ze_context_handle_t ContextH,
+                         ze_device_handle_t DeviceH,
+                         const std::vector<uint8_t> &ModelXml,
+                         const std::vector<uint8_t> &ModelBin,
+                         const std::string &BuildFlags,
+                         std::string ProgCachePath, std::string ProgNativeDir,
+                         Level0BuiltinKernelBuildResult &Out);
+
+  std::map<std::string, Level0BuiltinKernelBuildResult> KernelBuilds;
+
+  /// assumes this pointer is valid & alive during the whole build duration,
+  /// should be OK because CompilationJob keeps a shared_ptr
+  Level0BuiltinProgram *Program;
+
+  graph_dditable_ext_t *GraphDDITable;
+
+  // TODO set this to something
+  std::string VPUModel;
+};
+#endif
 
 ///
 /// \brief a single build of a SPIRV program to a native ZE binary
@@ -401,9 +658,7 @@ class Level0ProgramBuild : public Level0Build {
 
 public:
   Level0ProgramBuild(BuildSpecialization Spec, Level0Program *Prog)
-      : Level0Build(Spec, Prog) {
-    Type = BuildType::Program;
-  }
+      : Level0Build(Spec, Prog, BuildType::Program) {}
   ~Level0ProgramBuild() override {}
 
   Level0ProgramBuild(Level0ProgramBuild const &) = delete;
@@ -411,7 +666,7 @@ public:
   Level0ProgramBuild(Level0ProgramBuild const &&) = delete;
   Level0ProgramBuild &operator=(Level0ProgramBuild &&) = delete;
 
-  void run(ze_context_handle_t ContextH) override;
+  virtual void run(ze_context_handle_t ContextH) override;
 };
 
 ///
@@ -433,7 +688,7 @@ public:
   Level0JITProgramBuild(Level0JITProgramBuild const &&) = delete;
   Level0JITProgramBuild &operator=(Level0JITProgramBuild &&) = delete;
 
-  void run(ze_context_handle_t ContextH) override;
+  virtual void run(ze_context_handle_t ContextH) override;
 };
 
 ///
@@ -443,14 +698,10 @@ public:
 class Level0KernelBuild : public Level0Build {
 
 public:
-  Level0KernelBuild(BuildSpecialization Spec,
-                    std::string KernelName,
-                    std::string CacheUUID,
-                    Level0Program *Prog)
-   : Level0Build(Spec, Prog), KernelName(KernelName),
-     KernelCacheUUID(CacheUUID), LinkinModuleH(nullptr) {
-    Type = BuildType::Kernel;
-  }
+  Level0KernelBuild(BuildSpecialization Spec, std::string KernelName,
+                    std::string CacheUUID, Level0Program *Prog)
+      : Level0Build(Spec, Prog, BuildType::Kernel), KernelName(KernelName),
+        KernelCacheUUID(CacheUUID), LinkinModuleH(nullptr) {}
   ~Level0KernelBuild() override {}
 
   Level0KernelBuild(Level0KernelBuild const &) = delete;
@@ -459,12 +710,12 @@ public:
   Level0KernelBuild &operator=(Level0KernelBuild &&) = delete;
 
   const std::string getKernelName() { return KernelName; }
-  void run(ze_context_handle_t ContextH) override;
+  virtual void run(ze_context_handle_t ContextH) override;
 
   virtual bool loadBinary(ze_context_handle_t ContextH,
                           ze_device_handle_t DeviceH) override;
 
-  virtual bool isEqual(Level0Build *Other) override;
+  virtual bool compareSameClass(Level0BuildBase *Other) override;
 
 private:
   std::string KernelName;
@@ -481,8 +732,8 @@ private:
 class Level0CompilationJob {
 
 public:
-  Level0CompilationJob(bool HiPrio, Level0ProgramSPtr Prog,
-                       Level0BuildUPtr BuildPtr)
+  Level0CompilationJob(bool HiPrio, Level0ProgramBaseSPtr Prog,
+                       Level0BuildBaseUPtr BuildPtr)
       : Build(std::move(BuildPtr)), Program(Prog), HighPrio(HiPrio),
         Finished(false), Successful(false) {}
   ~Level0CompilationJob() = default;
@@ -494,10 +745,15 @@ public:
 
   bool isHighPrio() const { return HighPrio; }
   // for cancel_builds_for_program
-  bool isForProgram(Level0Program *Prog) const { return Program.get() == Prog; }
-  bool isBuildEqual(Level0Build *B) const { return Build->isEqual(B); }
+  bool isForProgram(Level0ProgramBase *Prog) const {
+    return Program.get() == Prog;
+  }
+  bool isForDevice(ze_device_handle_t Dev) const {
+    return Program->getDevice() == Dev;
+  }
+  bool isForBuild(Level0BuildBase *B) const { return Build->isEqual(B); }
   // for preferred device comparison
-  ze_device_handle_t getDevice() { return Build->getDevice(); }
+  ze_device_handle_t getDevice() { return Program->getDevice(); }
   void signalFinished();
   bool isSuccessful() const { return Successful; }
   void waitForFinish();
@@ -509,11 +765,12 @@ private:
   std::condition_variable Cond;
 
   /// Level0Build instance
-  Level0BuildUPtr Build;
+  Level0BuildBaseUPtr Build;
+
   /// needed to hand over the build when it's finished,
   /// and also to ensure Program is not freed while
   /// any build is in progress
-  Level0ProgramSPtr Program;
+  Level0ProgramBaseSPtr Program;
 
   bool HighPrio;
   bool Finished;
@@ -531,10 +788,6 @@ private:
 ///
 
 class Level0CompilerJobQueue {
-
-  /// push job into queue, without acquiring mutex
-  void pushWorkUnlocked(Level0CompilationJobSPtr Job);
-
 public:
   Level0CompilerJobQueue() = default;
   ~Level0CompilerJobQueue() = default;
@@ -562,10 +815,10 @@ public:
   void finishedWork(Level0CompilationJob *Job);
 
   Level0CompilationJobSPtr findOrCreateWork(bool HiPrio,
-                                            Level0ProgramSPtr &Prog,
-                                            Level0BuildUPtr BuildU);
+                                            Level0ProgramBaseSPtr Prog,
+                                            Level0BuildBaseUPtr BuildU);
   /// cancels jobs for a program which are *not* yet running
-  void cancelAllJobsForProgram(Level0Program *Program);
+  void cancelAllJobsForProgram(Level0ProgramBase *Program);
   /// cancel all jobs & signal an exit
   void clearAndExit();
 
@@ -583,9 +836,11 @@ private:
               ze_device_handle_t PreferredDevice);
 
   static Level0CompilationJobSPtr
-      findJob2(std::list<Level0CompilationJobSPtr> &Queue,
-               Level0Program *Prog,
-               Level0Build *Build);
+  findJob2(std::list<Level0CompilationJobSPtr> &Queue, Level0ProgramBase *Prog,
+           Level0BuildBase *Build);
+
+  /// push job into queue, without acquiring mutex
+  void pushWorkUnlocked(Level0CompilationJobSPtr Job);
 };
 
 ///
@@ -600,10 +855,10 @@ private:
 class Level0CompilerThread {
 
 public:
-  Level0CompilerThread(Level0CompilerJobQueue* Queue,
-                       ze_device_handle_t PrefDev,
-                       ze_driver_handle_t Drv)
-    : DriverH(Drv), PreferredDeviceH(PrefDev), JobQueue(Queue), ThreadContextH(nullptr) { }
+  Level0CompilerThread(Level0CompilerJobQueue *Queue,
+                       ze_device_handle_t PrefDev, ze_driver_handle_t Drv)
+      : DriverH(Drv), PreferredDeviceH(PrefDev), JobQueue(Queue),
+        ThreadContextH(nullptr) {}
   ~Level0CompilerThread();
 
   Level0CompilerThread(Level0CompilerThread const &) = delete;
@@ -621,6 +876,8 @@ private:
   ze_device_handle_t PreferredDeviceH;
   std::thread Thread;
   Level0CompilerJobQueue* JobQueue;
+
+  /// context specific to this thread
   ze_context_handle_t ThreadContextH;
 
   /// std::thread runs this method;
@@ -670,20 +927,52 @@ public:
                      ze_module_handle_t &Mod,
                      ze_kernel_handle_t &Ker);
 
+#ifdef ENABLE_NPU
+  Level0BuiltinProgram *
+  createBuiltinProgram(ze_context_handle_t Ctx, ze_device_handle_t Dev,
+                       std::string &BuildLog, size_t num_builtin_kernels,
+                       char **builtin_kernel_names, void *builtin_kernel_ids,
+                       void **builtin_kernel_attributes, const char *CDir,
+                       const std::string &UUID);
+
+  bool releaseBuiltinProgram(Level0BuiltinProgram *Prog);
+
+  Level0BuiltinKernel *createBuiltinKernel(Level0BuiltinProgram *Prog,
+                                           const char *Name);
+
+  bool releaseBuiltinKernel(Level0BuiltinProgram *Prog,
+                            Level0BuiltinKernel *Kernel);
+
+  bool getBestBuiltinKernel(Level0BuiltinProgram *Program,
+                            Level0BuiltinKernel *Kernel,
+                            ze_graph_handle_t &Graph);
+#endif
+
 private:
+  std::mutex ProgramsLock;
   ze_driver_handle_t DriverH = nullptr;
+#ifdef ENABLE_NPU
+  graph_dditable_ext_t *GraphDDITable;
+  ze_graph_profiling_dditable_ext_t *GraphProfDDITable;
+#endif
   std::vector<std::unique_ptr<Level0CompilerThread>> CompilerThreads;
   std::unique_ptr<Level0CompilerJobQueue> JobQueue;
-  /// list of all programs.
+  /// list of all programs that were built & not released yet
   std::list<Level0ProgramSPtr> Programs;
-  std::mutex ProgramsLock;
+#ifdef ENABLE_NPU
+  /// list of all builtin programs
+  std::list<Level0BuiltinProgramSPtr> BuiltinPrograms;
+  Level0BuiltinProgramSPtr findProgram(Level0BuiltinProgram *Prog);
+#endif
 
-  bool findProgram(Level0Program *Prog, Level0ProgramSPtr &Program);
+  Level0ProgramSPtr findProgram(Level0Program *Prog);
+  template <class P, class SPtr>
+  SPtr findProgram(P *Prog, std::list<SPtr> &List, bool erase = false);
+
   void addCompilationJob(Level0CompilationJobSPtr Job);
 
-  bool createAndWaitKernelJITBuilds(Level0ProgramSPtr &Program,
-                                    Level0Kernel *Kernel,
-                                    bool LargeOffsets,
+  bool createAndWaitKernelJITBuilds(Level0ProgramSPtr Program,
+                                    Level0Kernel *Kernel, bool LargeOffsets,
                                     bool SmallWG);
 
   ///
@@ -698,14 +987,17 @@ private:
   /// \param [in] Optimize specialization option
   /// \returns nullptr if ShouldExit==true, otherwise blocks
   ///
-  bool createProgramBuilds(Level0ProgramSPtr &Program,
-                           std::string &BuildLog,
+  bool createProgramBuilds(Level0ProgramSPtr Program, std::string &BuildLog,
                            bool DeviceSupports64bitBuffers,
                            bool Optimize = true);
 
-  bool createProgramBuildFullOptions(Level0ProgramSPtr &Program,
-                                     std::string &BuildLog,
-                                     bool WaitForFinish,
+#ifdef ENABLE_NPU
+  bool createAndWaitBuiltinProgramBuilds(Level0BuiltinProgramSPtr Program,
+                                         std::string &BuildLog);
+#endif
+
+  bool createProgramBuildFullOptions(Level0ProgramSPtr Program,
+                                     std::string &BuildLog, bool WaitForFinish,
                                      bool Optimize = true,
                                      bool LargeOffsets = false,
                                      bool SmallWG = false,

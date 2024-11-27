@@ -34,6 +34,10 @@
 #include "pocl_timing.h"
 #include "pocl_util.h"
 
+#ifdef ENABLE_NPU
+#include "npu_dbk.h"
+#endif
+
 #include <algorithm>
 #include <atomic>
 #include <cassert>
@@ -45,18 +49,28 @@
 
 using namespace pocl;
 
-Level0Kernel::Level0Kernel(const std::string N) : Name(N) {
+static std::string getStringHash(const uint8_t *Data, size_t Size) {
+  std::string Out;
   SHA1_CTX Ctx;
   uint8_t Digest[SHA1_DIGEST_SIZE];
   pocl_SHA1_Init(&Ctx);
-  pocl_SHA1_Update(&Ctx, (const uint8_t *)N.data(), N.size());
+  pocl_SHA1_Update(&Ctx, Data, Size);
   pocl_SHA1_Final(&Ctx, Digest);
   for (unsigned i = 0; i < SHA1_DIGEST_SIZE; i++) {
     char Lo = (Digest[i] & 0x0F) + 65;
-    CacheUUID.append(1, Lo);
+    Out.append(1, Lo);
     char Hi = ((Digest[i] & 0xF0) >> 4) + 65;
-    CacheUUID.append(1, Hi);
+    Out.append(1, Hi);
   }
+  return Out;
+}
+
+static std::string getStringHash(const std::string &Input) {
+  return getStringHash((const uint8_t *)Input.data(), Input.size());
+}
+
+Level0Kernel::Level0Kernel(const std::string N) : Name(N) {
+  CacheUUID = getStringHash(N);
 }
 
 Level0Kernel::~Level0Kernel() {
@@ -71,19 +85,20 @@ Level0Kernel::~Level0Kernel() {
 
 bool Level0Kernel::createForBuild(BuildSpecialization Spec,
                                   ze_module_handle_t Mod) {
-  ze_kernel_handle_t hKernel = nullptr;
-  ze_module_handle_t hModule = Mod;
+  ze_kernel_handle_t KernelH = nullptr;
+  ze_module_handle_t ModuleH = Mod;
   ze_kernel_desc_t KernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC, nullptr,
                                  0, // flags
                                  Name.c_str()};
   //  POCL_MSG_WARN("Using kernel name: %s, MODULE: %p\n", Name.c_str(), Mod);
-  ze_result_t Res = zeKernelCreate(hModule, &KernelDesc, &hKernel);
+  ze_result_t Res = zeKernelCreate(ModuleH, &KernelDesc, &KernelH);
   if (Res != ZE_RESULT_SUCCESS) {
-    POCL_MSG_ERR("Failed to create ZE kernel: %x\n", (unsigned)Res);
+    POCL_MSG_ERR("Failed to create ZE kernel %s: %x\n", Name.c_str(),
+                 (unsigned)Res);
     return false;
   }
 
-  KernelHandles[Spec] = hKernel;
+  KernelHandles[Spec] = KernelH;
   return true;
 }
 
@@ -159,9 +174,9 @@ Level0Program::Level0Program(ze_context_handle_t Ctx, ze_device_handle_t Dev,
                              std::vector<uint8_t> &SpvData,
                              std::vector<char> &ProgramBCData, const char *CDir,
                              const std::string &UUID)
-    : ProgramLLVMCtx(nullptr), CacheDir(CDir), CacheUUID(UUID), SPIRV(SpvData),
-      ProgramBC(ProgramBCData), ContextH(Ctx), DeviceH(Dev),
-      JITCompilation(EnableJIT), Optimize(Optimize) {
+    : Level0ProgramBase(Ctx, Dev, CDir, UUID), ProgramLLVMCtx(nullptr),
+      SPIRV(SpvData), ProgramBC(ProgramBCData), JITCompilation(EnableJIT),
+      Optimize(Optimize) {
   setupSpecConsts(NumSpecs, SpecIDs, SpecValues, SpecValSizes);
 }
 
@@ -200,30 +215,35 @@ bool Level0Program::init() {
   return true;
 }
 
-bool Level0Program::addFinishedBuild(Level0BuildUPtr Build) {
+bool Level0Program::addFinishedBuild(Level0BuildBaseUPtr B) {
 
   std::lock_guard<std::mutex> LockGuard(Mutex);
-  BuildLog.append(Build->getBuildLog());
+  BuildLog.append(B->getBuildLog());
+  Level0BuildBase::BuildType BT = B->getBuildType();
+  assert(BT == Level0BuildBase::BuildType::Kernel ||
+         BT == Level0BuildBase::BuildType::JITProgram ||
+         BT == Level0BuildBase::BuildType::Program);
 
+  Level0Build *Build = static_cast<Level0Build *>(B.get());
   if (!Build->isSuccessful() || !Build->loadBinary(ContextH, DeviceH)) {
-    POCL_MSG_ERR("build not successful or couldn't load binary\n");
+    BuildLog.append("Error: build not successful or "
+                    "couldn't load built binary\n");
     return false;
   }
-  switch (Build->getBuildType()) {
-  case Level0Build::BuildType::Kernel: {
-    Level0KernelBuildUPtr P(static_cast<Level0KernelBuild *>(Build.release()));
+  switch (BT) {
+  case Level0BuildBase::BuildType::Kernel: {
+    Level0KernelBuildUPtr P(static_cast<Level0KernelBuild *>(B.release()));
     KernBuilds.push_back(std::move(P));
     return true;
   }
-  case Level0Build::BuildType::Program: {
-    Level0ProgramBuildUPtr P(
-        static_cast<Level0ProgramBuild *>(Build.release()));
+  case Level0BuildBase::BuildType::Program: {
+    Level0ProgramBuildUPtr P(static_cast<Level0ProgramBuild *>(B.release()));
     ProgBuilds.push_back(std::move(P));
     return true;
   }
-  case Level0Build::BuildType::JITProgram: {
+  case Level0BuildBase::BuildType::JITProgram: {
     Level0JITProgramBuildUPtr P(
-        static_cast<Level0JITProgramBuild *>(Build.release()));
+        static_cast<Level0JITProgramBuild *>(B.release()));
     JITProgBuilds.push_back(std::move(P));
     return true;
   }
@@ -352,19 +372,6 @@ bool Level0Program::releaseKernel(Level0Kernel *Kernel) {
   return true;
 }
 
-bool Level0Program::getKernelSPtr(Level0Kernel *Kernel,
-                                  Level0KernelSPtr &KernelS) {
-  std::lock_guard<std::mutex> LockGuard(Mutex);
-
-  auto Iter = std::find_if(Kernels.begin(), Kernels.end(),
-      [&Kernel](Level0KernelSPtr &K) { return K.get() == Kernel; });
-
-  if (Iter == Kernels.end())
-    return false;
-
-  KernelS = *Iter;
-  return true;
-}
 
 void Level0Program::setupSpecConsts(uint32_t NumSpecs, const uint32_t *SpecIDs,
                                     const void **SpecValues,
@@ -681,14 +688,11 @@ bool Level0Build::loadBinary(ze_context_handle_t ContextH,
                       nullptr, BuildLog, ModuleH);
 }
 
-bool Level0Build::isEqual(Level0Build *Other) {
-  if (Type != Other->Type)
+bool Level0Build::compareSameClass(Level0BuildBase *Other) {
+  Level0Build *OtherBuild = static_cast<Level0Build *>(Other);
+  if (Program != OtherBuild->Program)
     return false;
-  if (DeviceH != Other->DeviceH)
-    return false;
-  if (Program != Other->Program)
-    return false;
-  if (Spec != Other->Spec)
+  if (Spec != OtherBuild->Spec)
     return false;
   return true;
 }
@@ -701,10 +705,7 @@ bool Level0KernelBuild::loadBinary(ze_context_handle_t ContextH,
                       true, LinkinModuleH, BuildLog, ModuleH);
 }
 
-bool Level0KernelBuild::isEqual(Level0Build *Other) {
-  if (!Level0Build::isEqual(Other))
-    return false;
-
+bool Level0KernelBuild::compareSameClass(Level0BuildBase *Other) {
   Level0KernelBuild *OtherK = static_cast<Level0KernelBuild *>(Other);
   if (KernelName != OtherK->KernelName)
     return false;
@@ -816,6 +817,821 @@ void Level0KernelBuild::run(ze_context_handle_t ContextH) {
   POCL_MEASURE_FINISH(compilation);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ENABLE_NPU
+bool Level0BuiltinProgramBuild::compareSameClass(Level0BuildBase *Other) {
+  Level0BuiltinProgramBuild *OtherBuild =
+      static_cast<Level0BuiltinProgramBuild *>(Other);
+  if (Program != OtherBuild->Program)
+    return false;
+  return true;
+}
+
+static void getModelNativeCachePath(Level0BuiltinProgram *Program,
+                                    const std::vector<uint8_t> &ModelXml,
+                                    const std::vector<uint8_t> &ModelBin,
+                                    const std::string &Name,
+                                    const std::string &BuildFlags,
+                                    std::string &ProgCachePath,
+                                    std::string &ProgNativeDir) {
+  ProgCachePath = Program->getCacheDir();
+  ProgCachePath.append("/native/");
+  ProgCachePath.append(Program->getCacheUUID());
+  ProgNativeDir = ProgCachePath;
+
+  ProgCachePath.append("/");
+  ProgCachePath.append(Name);
+  ProgCachePath.append("_");
+
+  std::vector<uint8_t> Temp;
+  Temp.insert(Temp.end(), Name.begin(), Name.end());
+  if (!BuildFlags.empty())
+    Temp.insert(Temp.end(), BuildFlags.begin(), BuildFlags.end());
+  if (ModelXml.size())
+    Temp.insert(Temp.end(), ModelXml.begin(), ModelXml.end());
+  if (ModelBin.size())
+    Temp.insert(Temp.end(), ModelBin.begin(), ModelBin.end());
+
+  ProgCachePath.append(getStringHash(Temp.data(), Temp.size()));
+
+  ProgCachePath.append(".vpu");
+}
+
+static bool findModelInNativeCache(
+    Level0BuiltinProgram *Program, const std::vector<uint8_t> &ModelXml,
+    const std::vector<uint8_t> &ModelBin, const std::string &BuildFlags,
+    const std::string &Name, std::string &ProgCachePath,
+    std::string &ProgNativeDir, Level0BuiltinKernelBuildResult &Out) {
+  // TODO KernelCacheUUID ? NPU driver version ?
+  getModelNativeCachePath(Program, ModelXml, ModelBin, Name, BuildFlags,
+                          ProgCachePath, ProgNativeDir);
+
+  char *Binary = nullptr;
+  uint64_t BinarySize = 0;
+  if (pocl_exists(ProgCachePath.c_str()) != 0 &&
+      pocl_read_file(ProgCachePath.c_str(), &Binary, &BinarySize) == 0) {
+
+    POCL_MSG_PRINT_LEVEL0("Found native Model binary in cache:  %s \n",
+                          ProgCachePath.c_str());
+    Out.VpuNativeBinary.insert(Out.VpuNativeBinary.end(), (uint8_t *)Binary,
+                               (uint8_t *)(Binary + BinarySize));
+    POCL_MEM_FREE(Binary);
+    return true;
+  } else {
+    POCL_MSG_PRINT_LEVEL0("Native binary not found in cache.\n");
+  }
+
+  return false;
+}
+
+bool Level0BuiltinProgramBuild::loadBinary(
+    ze_context_handle_t FinalContextH, ze_device_handle_t FinalDeviceH,
+    ze_command_queue_handle_t QueueH, ze_command_list_handle_t ListH,
+    Level0BuiltinKernelBuildResult &Out) {
+  BuildLog.append("Creating graph");
+
+  ze_activation_kernel_desc_t ActKernelDesc = {};
+  if (!Out.ShaveNativeBinary.empty()) {
+    ActKernelDesc = {.stype = ZE_STRUCTURE_TYPE_GRAPH_ACTIVATION_KERNEL,
+                     .pNext = nullptr,
+                     .kernelDataSize = Out.ShaveNativeBinary.size(),
+                     .pKernelData = Out.ShaveNativeBinary.data()};
+  }
+
+  assert(!Out.VpuNativeBinary.empty());
+  assert(BuildSuccessful);
+  ze_graph_desc_t GraphDesc = {
+      .stype = ZE_STRUCTURE_TYPE_GRAPH_DESC_PROPERTIES,
+      .pNext = !Out.ShaveNativeBinary.empty() ? &ActKernelDesc : nullptr,
+      .format = ZE_GRAPH_FORMAT_NATIVE,
+      .inputSize = Out.VpuNativeBinary.size(),
+      .pInput = Out.VpuNativeBinary.data(),
+      .pBuildFlags = nullptr};
+
+  ze_graph_handle_t TempH = nullptr;
+  ze_result_t Res =
+      GraphDDITable->pfnCreate(FinalContextH, FinalDeviceH, &GraphDesc, &TempH);
+  assert(Out.GraphHFinal == nullptr);
+  Out.GraphHFinal = TempH;
+  if (Res != ZE_RESULT_SUCCESS) {
+    BuildLog.append("Graph create failed with error: ");
+    BuildLog.append(std::to_string(Res));
+    BuildLog.append("\n");
+    return false;
+  } else {
+    BuildLog.append("Graph create SUCCESS\n ");
+  }
+
+  const uint64_t SyncTimeout = 2'000'000'000; // 2 seconds
+  bool Success = (zeCommandListReset(ListH) == ZE_RESULT_SUCCESS);
+  Res = GraphDDITable->pfnAppendGraphInitialize(ListH, Out.GraphHFinal, nullptr,
+                                                0, nullptr);
+  Success = Success && (Res == ZE_RESULT_SUCCESS);
+  Success = Success && (zeCommandListClose(ListH) == ZE_RESULT_SUCCESS);
+  Success = Success && (zeCommandQueueExecuteCommandLists(
+                            QueueH, 1, &ListH, nullptr) == ZE_RESULT_SUCCESS);
+  Success = Success && (zeCommandQueueSynchronize(QueueH, SyncTimeout) ==
+                        ZE_RESULT_SUCCESS);
+
+  if (Success) {
+    POCL_MSG_PRINT_LEVEL0("Graph ready: %p\n", TempH);
+    return true;
+  } else {
+    BuildLog.append("Graph compiled but initialization failed\n");
+    return false;
+  }
+}
+
+bool Level0BuiltinProgramBuild::compileFromXmlBin(
+    ze_context_handle_t ContextH, ze_device_handle_t DeviceH,
+    const std::vector<uint8_t> &ModelXml, const std::vector<uint8_t> &ModelBin,
+    const std::string &BuildFlags, std::string ProgCachePath,
+    std::string ProgNativeDir, Level0BuiltinKernelBuildResult &Out) {
+
+  BuildLog.append("Starting BuiltinProgram Graph compilation\n");
+  std::vector<uint8_t> Model;
+
+  ze_device_graph_properties_t pDeviceGraphProperties;
+  GraphDDITable->pfnDeviceGetGraphProperties(DeviceH, &pDeviceGraphProperties);
+
+  ze_graph_compiler_version_info_t version = {
+      .major = pDeviceGraphProperties.compilerVersion.major,
+      .minor = pDeviceGraphProperties.compilerVersion.minor};
+
+  uint64_t XmlLen = ModelXml.size();
+  if (XmlLen <= 22) { // strlen(<?xml version="1.0"?>)
+    BuildLog.append("broken XML file\n");
+    return false;
+  }
+  uint64_t BinLen = ModelBin.size();
+
+  uint32_t NumInputs = 2;
+  uint64_t ModelSize = sizeof(version) + sizeof(NumInputs) + sizeof(XmlLen) +
+                       XmlLen + sizeof(BinLen) + BinLen;
+
+  Model.resize(ModelSize);
+
+  uint64_t offset = 0;
+  memcpy(Model.data(), &version, sizeof(version));
+  offset += sizeof(version);
+
+  memcpy(Model.data() + offset, &NumInputs, sizeof(NumInputs));
+  offset += sizeof(NumInputs);
+
+  memcpy(Model.data() + offset, &XmlLen, sizeof(XmlLen));
+  offset += sizeof(XmlLen);
+
+  memcpy(Model.data() + offset, ModelXml.data(), XmlLen);
+  offset += XmlLen;
+
+  memcpy(Model.data() + offset, &BinLen, sizeof(BinLen));
+  offset += sizeof(BinLen);
+
+  // Binaries are optional, XML is mandatory
+  if (BinLen) {
+    memcpy(Model.data() + offset, ModelBin.data(), BinLen);
+    offset += BinLen;
+  }
+
+  assert(offset == ModelSize);
+
+  ze_graph_desc_t GraphDesc = {.stype = ZE_STRUCTURE_TYPE_GRAPH_DESC_PROPERTIES,
+                               .pNext = nullptr,
+                               .format = ZE_GRAPH_FORMAT_NGRAPH_LITE,
+                               .inputSize = Model.size(),
+                               .pInput = Model.data(),
+                               .pBuildFlags = BuildFlags.c_str()};
+
+  auto Deleter = [this](ze_graph_handle_t ptr) {
+    if (ptr)
+      this->GraphDDITable->pfnDestroy(ptr);
+  };
+
+  std::unique_ptr<std::remove_pointer_t<ze_graph_handle_t>, decltype(Deleter)>
+      TempGraphH(nullptr, Deleter);
+  ze_graph_handle_t GraphH = nullptr;
+  ze_result_t Res =
+      GraphDDITable->pfnCreate(ContextH, DeviceH, &GraphDesc, &GraphH);
+  TempGraphH.reset(GraphH);
+
+  uint32_t logSize = 0;
+  ze_result_t Res2 =
+      GraphDDITable->pfnBuildLogGetString(TempGraphH.get(), &logSize, nullptr);
+  if (Res2 == ZE_RESULT_SUCCESS && logSize > 0) {
+    std::string TempBuildLog;
+    TempBuildLog.resize(logSize + 1, 0);
+    Res = GraphDDITable->pfnBuildLogGetString(TempGraphH.get(), &logSize,
+                                              TempBuildLog.data());
+    BuildLog.append(TempBuildLog);
+  }
+
+  if (Res != ZE_RESULT_SUCCESS) {
+    char Msg[128];
+    snprintf(Msg, 128, "BuiltinProgram Graph compilation failed with : %0x\n",
+             Res);
+    Msg[127] = 0;
+    BuildLog.append(Msg);
+    return false;
+  }
+
+  size_t NativeSize = 0;
+  Res =
+      GraphDDITable->pfnGetNativeBinary(TempGraphH.get(), &NativeSize, nullptr);
+  if (Res != ZE_RESULT_SUCCESS || NativeSize == 0) {
+    POCL_MSG_ERR("LevelZero: Failed to get Native binary SIZE for Graph\n");
+    BuildLog.append("Failed to get Native binary SIZE for Graph\n");
+    return false;
+  }
+
+  Out.VpuNativeBinary.resize(NativeSize, 0);
+  Res = GraphDDITable->pfnGetNativeBinary(TempGraphH.get(), &NativeSize,
+                                          Out.VpuNativeBinary.data());
+  if (Res != ZE_RESULT_SUCCESS || NativeSize == 0) {
+    BuildLog.append("Failed to get Native binary for Graph\n");
+    return false;
+  }
+
+  Out.GraphHFinal = nullptr;
+
+  if (pocl_mkdir_p(ProgNativeDir.c_str()) != 0) {
+    BuildLog.append("Graph compilation: failed to create cache dir\n");
+  }
+  if (pocl_write_file(ProgCachePath.c_str(), (char *)Out.VpuNativeBinary.data(),
+                      (uint64_t)NativeSize, 0) != 0) {
+    BuildLog.append("Graph compilation: failed to write cache file\n");
+  }
+
+  BuildLog.append("BuiltinProgram Graph compilation successful\n");
+  return true;
+}
+
+static void getArgTypeAndSize(ze_graph_argument_properties_t &graphArgProps,
+                              size_t &TotalSize, std::string &TypeName) {
+
+  TotalSize = 1;
+  for (int i = 0; i < ZE_MAX_GRAPH_ARGUMENT_DIMENSIONS_SIZE; i++)
+    TotalSize *= graphArgProps.dims[i];
+
+  switch (graphArgProps.devicePrecision) {
+  case ZE_GRAPH_ARGUMENT_PRECISION_FP64:
+  case ZE_GRAPH_ARGUMENT_PRECISION_UINT64:
+  case ZE_GRAPH_ARGUMENT_PRECISION_INT64:
+    TotalSize *= sizeof(uint64_t);
+    break;
+  case ZE_GRAPH_ARGUMENT_PRECISION_FP32:
+  case ZE_GRAPH_ARGUMENT_PRECISION_INT32:
+  case ZE_GRAPH_ARGUMENT_PRECISION_UINT32:
+    TotalSize *= sizeof(uint32_t);
+    break;
+  case ZE_GRAPH_ARGUMENT_PRECISION_BF16:
+  case ZE_GRAPH_ARGUMENT_PRECISION_FP16:
+  case ZE_GRAPH_ARGUMENT_PRECISION_INT16:
+  case ZE_GRAPH_ARGUMENT_PRECISION_UINT16:
+    TotalSize *= sizeof(uint16_t);
+    break;
+  case ZE_GRAPH_ARGUMENT_PRECISION_INT8:
+  case ZE_GRAPH_ARGUMENT_PRECISION_UINT8:
+    TotalSize *= sizeof(uint8_t);
+    break;
+  case ZE_GRAPH_ARGUMENT_PRECISION_INT4:
+  case ZE_GRAPH_ARGUMENT_PRECISION_UINT4:
+    TotalSize /= 2;
+    break;
+  default:
+    POCL_MSG_ERR("Invalid Graph Argument Precision\n");
+  }
+
+  switch (graphArgProps.devicePrecision) {
+  case ZE_GRAPH_ARGUMENT_PRECISION_FP64:
+    TypeName = "double";
+    break;
+  case ZE_GRAPH_ARGUMENT_PRECISION_UINT64:
+    TypeName = "ulong";
+    break;
+  case ZE_GRAPH_ARGUMENT_PRECISION_INT64:
+    TypeName = "long";
+    break;
+  case ZE_GRAPH_ARGUMENT_PRECISION_FP32:
+    TypeName = "float";
+    break;
+  case ZE_GRAPH_ARGUMENT_PRECISION_INT32:
+    TypeName = "int";
+    break;
+  case ZE_GRAPH_ARGUMENT_PRECISION_UINT32:
+    TypeName = "uint";
+    break;
+  case ZE_GRAPH_ARGUMENT_PRECISION_BF16:
+    TypeName = "bfloat16";
+    break;
+  case ZE_GRAPH_ARGUMENT_PRECISION_FP16:
+    TypeName = "half";
+    break;
+  case ZE_GRAPH_ARGUMENT_PRECISION_INT16:
+    TypeName = "short";
+    break;
+  case ZE_GRAPH_ARGUMENT_PRECISION_UINT16:
+    TypeName = "ushort";
+    break;
+  case ZE_GRAPH_ARGUMENT_PRECISION_INT8:
+    TypeName = "char";
+    break;
+  case ZE_GRAPH_ARGUMENT_PRECISION_UINT8:
+    TypeName = "uchar";
+    break;
+  case ZE_GRAPH_ARGUMENT_PRECISION_INT4:
+  case ZE_GRAPH_ARGUMENT_PRECISION_UINT4:
+    TypeName = "fourbit";
+    break;
+    break;
+  default:
+    POCL_MSG_ERR("Invalid Graph Argument Precision\n");
+  }
+
+  assert(TotalSize != 0);
+}
+
+constexpr unsigned NumLevel0GraphModels = 3;
+static const Level0Model Level0GraphModels[NumLevel0GraphModels] = {
+    Level0Model{
+        .Name = "pocl.googlenet.v1.fp32",
+        .DBK_ID = 0,
+        .Format = ZE_GRAPH_FORMAT_NGRAPH_LITE,
+        .NGraphXml = "googlenet-v1.xml",
+        .NGraphBin = "googlenet-v1.bin",
+        .BuildFlags =
+            R"RAW(--inputs_precisions="data:U8" --inputs_layouts="data:NCHW"  --outputs_precisions="dot:FP16" --outputs_layouts="dot:NC" --config NPU_PLATFORM="3720" LOG_LEVEL="LOG_DEBUG")RAW",
+    },
+    Level0Model{.Name = "gemm_exp",
+                .DBK_ID = CL_DBK_GEMM_EXP,
+                .Format = ZE_GRAPH_FORMAT_NGRAPH_LITE,
+                .NGraphXml = "",
+                .NGraphBin = "",
+                .BuildFlags = "",
+                .instantiateModel = instantiateTemplateGEMM},
+    Level0Model{.Name = "matmul_exp",
+                .DBK_ID = CL_DBK_MATMUL_EXP,
+                .Format = ZE_GRAPH_FORMAT_NGRAPH_LITE,
+                .NGraphXml = "",
+                .NGraphBin = "",
+                .BuildFlags = "",
+                .instantiateModel = instantiateTemplateMATMUL},
+};
+
+// returns semicolon separated list of recognized models (TODO: excluding DBKs
+// ?)
+void pocl::getNpuGraphModelsList(std::string &Out, unsigned &NumKernels) {
+  for (unsigned I = 0; I < NumLevel0GraphModels; ++I) {
+    if (I > 0)
+      Out.append(";");
+    if (Level0GraphModels[I].Name.size())
+      Out.append(Level0GraphModels[I].Name);
+  }
+}
+
+static bool readFile(const std::string &BasePath, const std::string &Filename,
+                     std::vector<uint8_t> &Output, std::string &BLog) {
+  char *Binary = nullptr;
+  uint64_t BinarySize = 0;
+
+  std::string FullPath(BasePath);
+  FullPath.append("/");
+  FullPath.append(Filename);
+  if (pocl_read_file(FullPath.c_str(), &Binary, &BinarySize)) {
+    BLog.append("Can't read file: ");
+    BLog.append(FullPath.c_str());
+    BLog.append("\n");
+    return false;
+  }
+  Output.insert(Output.begin(), Binary, Binary + BinarySize);
+  free(Binary);
+  return true;
+}
+
+// TODO collision-free replacement
+void replaceAllStringsInMap(std::string &Buffer, const ReplaceMapT RepMap) {
+  for (auto &It : RepMap) {
+    const std::string Old(It.first);
+    const std::string &New = It.second;
+    size_t Pos = std::string::npos;
+    size_t Len = Old.size();
+    while ((Pos = Buffer.find(Old)) != std::string::npos) {
+      Buffer.replace(Pos, Len, New);
+    }
+  }
+}
+
+// converts cl_tensor_datatype to precision metadata
+const char *dtype2precision(cl_tensor_datatype_exp dtype) {
+  switch (dtype) {
+  case CL_TENSOR_DTYPE_FP64_EXP:
+    return "FP64";
+  case CL_TENSOR_DTYPE_FP32_EXP:
+    return "FP32";
+  case CL_TENSOR_DTYPE_FP16_EXP:
+    return "FP16";
+  case CL_TENSOR_DTYPE_INT64_EXP:
+    return "INT64";
+  case CL_TENSOR_DTYPE_UINT64_EXP:
+    return "UINT64";
+  case CL_TENSOR_DTYPE_INT32_EXP:
+    return "INT32";
+  case CL_TENSOR_DTYPE_UINT32_EXP:
+    return "UINT32";
+  case CL_TENSOR_DTYPE_INT16_EXP:
+    return "INT16";
+  case CL_TENSOR_DTYPE_UINT16_EXP:
+    return "UINT16";
+  case CL_TENSOR_DTYPE_INT8_EXP:
+    return "INT8";
+  case CL_TENSOR_DTYPE_UINT8_EXP:
+    return "UINT8";
+  case CL_TENSOR_DTYPE_INT4_EXP:
+    return "INT4";
+  case CL_TENSOR_DTYPE_UINT4_EXP:
+    return "UINT4";
+  default:
+  case CL_TENSOR_DTYPE_FP8E4M3_EXP: // return "F8E4M3";
+  case CL_TENSOR_DTYPE_FP8E5M2_EXP: // return "F8E5M2";
+  case CL_TENSOR_DTYPE_UNKNOWN:
+    return "UNDEFINED";
+  }
+  return nullptr;
+}
+
+// converts cl_tensor_datatype to OpenVINO element tyep
+const char *dtype2elemtype(cl_tensor_datatype_exp dtype) {
+  switch (dtype) {
+  case CL_TENSOR_DTYPE_FP64_EXP:
+    return "F64";
+  case CL_TENSOR_DTYPE_INT64_EXP:
+    return "I64";
+  case CL_TENSOR_DTYPE_UINT64_EXP:
+    return "U64";
+  case CL_TENSOR_DTYPE_FP32_EXP:
+    return "F32";
+  case CL_TENSOR_DTYPE_INT32_EXP:
+    return "I32";
+  case CL_TENSOR_DTYPE_UINT32_EXP:
+    return "U32";
+  case CL_TENSOR_DTYPE_FP16_EXP:
+    return "F16";
+  case CL_TENSOR_DTYPE_INT16_EXP:
+    return "I16";
+  case CL_TENSOR_DTYPE_UINT16_EXP:
+    return "U16";
+  case CL_TENSOR_DTYPE_FP8E4M3_EXP:
+    return "F8E4M3";
+  case CL_TENSOR_DTYPE_FP8E5M2_EXP:
+    return "F8E5M2";
+  case CL_TENSOR_DTYPE_INT8_EXP:
+    return "I8";
+  case CL_TENSOR_DTYPE_UINT8_EXP:
+    return "U8";
+  case CL_TENSOR_DTYPE_INT4_EXP:
+    return "I4";
+  case CL_TENSOR_DTYPE_UINT4_EXP:
+    return "U4";
+  default:
+  case CL_TENSOR_DTYPE_UNKNOWN:
+    return "UNDEFINED";
+  }
+  return nullptr;
+}
+
+const char *layout2str(cl_tensor_layout_ml_type_exp l) {
+  switch (l) {
+  case CL_TENSOR_LAYOUT_ML_C_EXP:
+    return "C";
+  case CL_TENSOR_LAYOUT_ML_NC_EXP:
+    return "NC";
+  case CL_TENSOR_LAYOUT_ML_CN_EXP:
+    return "CN";
+  case CL_TENSOR_LAYOUT_ML_HW_EXP:
+    return "HW";
+  case CL_TENSOR_LAYOUT_ML_WH_EXP:
+    return "WH";
+  case CL_TENSOR_LAYOUT_ML_CHW_EXP:
+    return "CHW";
+  case CL_TENSOR_LAYOUT_ML_NCHW_EXP:
+    return "NCHW";
+  case CL_TENSOR_LAYOUT_ML_NHWC_EXP:
+    return "NHWC";
+  default:
+    return "NULL";
+  }
+}
+
+
+/// @brief Loads a native model from disk cache, or builds an XML+BIN model,
+/// or builds a DBK template model
+bool Level0BuiltinProgramBuild::loadModel(ze_context_handle_t ContextH,
+                                          ze_device_handle_t DeviceH,
+                                          const Level0Model *M,
+                                          const void *KernelAttrs,
+                                          Level0BuiltinKernelBuildResult &Out) {
+  char ModelDirectoryPath[POCL_MAX_PATHNAME_LENGTH];
+  std::string PartialPath("/level0/");
+  assert(!VPUModel.empty());
+  PartialPath.append(VPUModel);
+  PartialPath.append("/");
+  PartialPath.append(M->Name);
+  pocl_get_srcdir_or_datadir(ModelDirectoryPath, "/lib/CL/devices", "",
+                             PartialPath.c_str());
+
+  if (M->Format == ZE_GRAPH_FORMAT_NATIVE) {
+    std::vector<uint8_t> NativeBin;
+    std::vector<uint8_t> NativeShaveBin;
+    BuildLog.append("Loading native Model\n");
+
+    if (!readFile(ModelDirectoryPath, M->NativeBin, NativeBin, BuildLog)) {
+      return false;
+    }
+    if (!M->NativeShaveBin.empty() &&
+        !readFile(ModelDirectoryPath, M->NativeShaveBin, NativeShaveBin,
+                  BuildLog)) {
+      return false;
+    }
+    Out.GraphHFinal = nullptr;
+    Out.ShaveNativeBinary = std::move(NativeShaveBin);
+    Out.VpuNativeBinary = std::move(NativeBin);
+    BuildLog.append("Native Model loaded\n");
+    return true;
+  }
+
+  if (M->Format == ZE_GRAPH_FORMAT_NGRAPH_LITE) {
+    std::vector<uint8_t> ModelXml;
+    std::vector<uint8_t> ModelBin;
+    std::string BuildFlags;
+
+    std::string ProgCachePath;
+    std::string ProgNativeDir;
+
+    if (M->DBK_ID != 0) {
+      BuildLog.append("Creating Model XML & Bin from DBK Template\n");
+      std::string ModelXMLInstance;
+      std::string BuildFlagsInstance;
+      assert(M->instantiateModel);
+      if (!M->instantiateModel(KernelAttrs, ModelXMLInstance,
+                               BuildFlagsInstance))
+        return false;
+      BuildLog.append("\n");
+      BuildLog.append("@@@ MODEL: \n");
+      BuildLog.append(ModelXMLInstance);
+      BuildLog.append("\n");
+      BuildLog.append("@@@ BUILD FLAGS: \n");
+      BuildLog.append(BuildFlagsInstance);
+      BuildLog.append("\n");
+      ModelXml.insert(ModelXml.end(), ModelXMLInstance.begin(),
+                      ModelXMLInstance.end());
+      BuildFlags.insert(BuildFlags.end(), BuildFlagsInstance.begin(),
+                        BuildFlagsInstance.end());
+    } else {
+      BuildLog.append("Loading Model XML & Bin\n");
+
+      if (!readFile(ModelDirectoryPath, M->NGraphXml, ModelXml, BuildLog)) {
+        return false;
+      }
+      if (!readFile(ModelDirectoryPath, M->NGraphBin, ModelBin, BuildLog)) {
+        return false;
+      }
+      BuildFlags = M->BuildFlags;
+    }
+
+    if (findModelInNativeCache(Program, ModelXml, ModelBin, BuildFlags, M->Name,
+                               ProgCachePath, ProgNativeDir, Out)) {
+      BuildLog.append("Model XML & Bin loaded, found cached "
+                      "Native Model, not building\n");
+      return true;
+    }
+
+    BuildLog.append("Model XML & Bin loaded, compiling\n");
+    return compileFromXmlBin(ContextH, DeviceH, ModelXml, ModelBin, BuildFlags,
+                             ProgCachePath, ProgNativeDir, Out);
+  }
+
+  BuildLog.append("Unknown model format\n");
+  return false;
+}
+
+bool Level0BuiltinProgramBuild::loadBinaries(ze_context_handle_t ContextH,
+                                             ze_device_handle_t DeviceH,
+                                             ze_command_queue_handle_t QueueH,
+                                             ze_command_list_handle_t ListH) {
+  for (auto &[KernelName, KernelBuild] : KernelBuilds) {
+    if (!loadBinary(ContextH, DeviceH, QueueH, ListH, KernelBuild)) {
+      BuildLog.append("Creating Graph from native binary for kernel ");
+      BuildLog.append(KernelName);
+      BuildLog.append(" in target context failed\n");
+      return false;
+    }
+  }
+  return true;
+}
+
+ze_graph_handle_t
+Level0BuiltinProgramBuild::getGraphHandle(std::string KernelName) {
+  auto It = KernelBuilds.find(KernelName);
+  if (It == KernelBuilds.end()) {
+    POCL_MSG_ERR("getGraphHandle: unknown kernel %s\n", KernelName.c_str());
+    return nullptr;
+  }
+  return It->second.GraphHFinal;
+}
+
+void Level0BuiltinProgramBuild::run(ze_context_handle_t ContextH) {
+
+  POCL_MEASURE_START(compilation);
+
+  POCL_MSG_PRINT_LEVEL0("Measuring BuiltinProgram compilation\n");
+
+  auto KerIDs = Program->getKernelIDs();
+  auto KerNames = Program->getKernelNames();
+  auto KerAttrs = Program->getKernelAttrs();
+  size_t NumKernels = KerNames.size();
+  std::vector<const Level0Model *> BK_Models;
+  // DBK builtin kernels
+  assert(NumKernels > 0);
+
+  BuildSuccessful = true;
+  for (unsigned KerIdx = 0; KerIdx < NumKernels; ++KerIdx) {
+    unsigned KerID = KerIDs[KerIdx];
+    const std::string &KName = KerNames[KerIdx];
+    const Level0Model *Model = nullptr;
+    for (unsigned i = 0; i < NumLevel0GraphModels; ++i) {
+      if (Program->isDBK()) {
+        if (Level0GraphModels[i].DBK_ID == KerID) {
+          Model = &Level0GraphModels[i];
+          break;
+        }
+      } else {
+        if (Level0GraphModels[i].Name == KName) {
+          Model = &Level0GraphModels[i];
+          break;
+        }
+      }
+    }
+    if (Model == nullptr) {
+      BuildLog.append("BUG: unknown DBK kernel with ID: ");
+      BuildLog.append(std::to_string(KerIDs[KerIdx]));
+      BuildLog.append(" Name: ");
+      BuildLog.append(KName);
+      BuildSuccessful = false;
+      break;
+    } else {
+      BK_Models.emplace_back(Model);
+    }
+  }
+
+  if (!BuildSuccessful)
+    return;
+
+  for (unsigned KerIdx = 0; KerIdx < NumKernels; ++KerIdx) {
+    Level0BuiltinKernelBuildResult Temp{GraphDDITable};
+    BuildSuccessful =
+        loadModel(ContextH, Program->getDevice(), BK_Models[KerIdx],
+                  Program->isDBK() ? KerAttrs[KerIdx] : nullptr, Temp);
+    if (BuildSuccessful)
+      KernelBuilds.emplace(KerNames[KerIdx], std::move(Temp));
+    else
+      break;
+  }
+  Program = nullptr;
+
+  POCL_MEASURE_FINISH(compilation);
+}
+
+Level0BuiltinProgram::Level0BuiltinProgram(
+    ze_context_handle_t Ctx, ze_device_handle_t Dev, size_t NumBuiltinKernels,
+    char **BuiltinKernelNames,
+    void *BuiltinKernelIDs,    // IDs for DBKs
+    void **BuiltinKernelAttrs, // Attrs for DBKs
+    const char *CDir, const std::string &UUID)
+    : Level0ProgramBase(Ctx, Dev, CDir, UUID), QueueH(nullptr), ListH(nullptr) {
+
+  unsigned *IDs = reinterpret_cast<unsigned *>(BuiltinKernelIDs);
+  if (BuiltinKernelIDs) {
+    IsDBK = true;
+    assert(BuiltinKernelAttrs);
+    for (size_t i = 0; i < NumBuiltinKernels; ++i) {
+      KernelNames.emplace_back(BuiltinKernelNames[i]);
+      KernelIDs.emplace_back(IDs[i]);
+      KernelAttrs.emplace_back(BuiltinKernelAttrs[i]);
+    }
+  } else {
+    IsDBK = false;
+    for (size_t i = 0; i < NumBuiltinKernels; ++i) {
+      KernelNames.emplace_back(BuiltinKernelNames[i]);
+    }
+  }
+}
+
+bool Level0BuiltinProgram::init() {
+  ze_command_queue_desc_t CmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
+                                          nullptr,
+                                          0, // TODO ordinal hardcoded to 0
+                                          0, // index
+                                          0, // flags
+                                          ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS,
+                                          ZE_COMMAND_QUEUE_PRIORITY_NORMAL};
+
+  ze_command_list_desc_t CmdListDesc = {
+      ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC, nullptr, 0, // TODO ordi hardcoded
+      ZE_COMMAND_LIST_FLAG_RELAXED_ORDERING |
+          ZE_COMMAND_LIST_FLAG_MAXIMIZE_THROUGHPUT};
+
+  ze_result_t Res;
+  Res = zeCommandQueueCreate(ContextH, DeviceH, &CmdQueueDesc, &QueueH);
+  if (Res == ZE_RESULT_SUCCESS) {
+    Res = zeCommandListCreate(ContextH, DeviceH, &CmdListDesc, &ListH);
+  }
+
+  return (QueueH != nullptr && ListH != nullptr);
+}
+
+Level0BuiltinProgram::~Level0BuiltinProgram() {
+  if (QueueH)
+    zeCommandQueueDestroy(QueueH);
+  if (ListH)
+    zeCommandListDestroy(ListH);
+}
+
+bool Level0BuiltinProgram::addFinishedBuild(Level0BuildBaseUPtr B) {
+
+  std::lock_guard<std::mutex> LockGuard(Mutex);
+  BuildLog.append(B->getBuildLog());
+  Level0BuildBase::BuildType BT = B->getBuildType();
+  assert(BT == Level0BuildBase::BuildType::BuiltinProgram);
+
+  Level0BuiltinProgramBuild *Build =
+      static_cast<Level0BuiltinProgramBuild *>(B.release());
+  BuildLog.append(Build->getBuildLog());
+
+  if (!Build->isSuccessful() ||
+      !Build->loadBinaries(ContextH, DeviceH, QueueH, ListH)) {
+    BuildLog.append("Error: build not successful or "
+                    "couldn't load built binary\n");
+    return false;
+  }
+
+  FinishedBuild.reset(Build);
+  return true;
+}
+
+// TODO make a copy of graph on createKernel ?
+Level0BuiltinKernel *
+Level0BuiltinProgram::createKernel(const std::string Name) {
+  std::lock_guard<std::mutex> LockGuard(Mutex);
+  Level0BuiltinKernelSPtr Kernel = std::make_shared<Level0BuiltinKernel>(Name);
+  Kernels.push_back(Kernel);
+  return Kernel.get();
+}
+
+// TODO release copy of graph on createKernel ?
+bool Level0BuiltinProgram::releaseKernel(Level0BuiltinKernel *Kernel) {
+  std::lock_guard<std::mutex> LockGuard(Mutex);
+
+  auto Iter = std::find_if(
+      Kernels.begin(), Kernels.end(),
+      [&Kernel](Level0BuiltinKernelSPtr &K) { return K.get() == Kernel; });
+
+  if (Iter == Kernels.end())
+    return false;
+
+  Kernels.erase(Iter);
+  return true;
+}
+
+bool Level0BuiltinProgram::getBestKernel(Level0BuiltinKernel *BKernel,
+                                         ze_graph_handle_t &Ker) {
+  std::lock_guard<std::mutex> LockGuard(Mutex);
+  assert((bool)FinishedBuild);
+
+  auto It = std::find_if(Kernels.begin(), Kernels.end(),
+                         [BKernel](const Level0BuiltinKernelSPtr &V) {
+                           Level0BuiltinKernel *JK = V.get();
+                           return JK == BKernel;
+                         });
+
+  if (It == Kernels.end())
+    return false;
+
+  Ker = FinishedBuild->getGraphHandle(BKernel->getName());
+  return true;
+}
+
+Level0BuiltinKernel::Level0BuiltinKernel(const std::string N) : Name(N) {
+  CacheUUID = getStringHash(N);
+}
+
+#endif
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 void Level0CompilationJob::signalFinished() {
   std::lock_guard<std::mutex> LockGuard(Mutex);
   Finished = true;
@@ -922,16 +1738,19 @@ void Level0CompilerJobQueue::finishedWork(Level0CompilationJob *Job) {
 
 Level0CompilationJobSPtr
 Level0CompilerJobQueue::findJob2(std::list<Level0CompilationJobSPtr> &Queue,
-                                 Level0Program *Prog, Level0Build *Build) {
+                                 Level0ProgramBase *Prog,
+                                 Level0BuildBase *Build) {
 
   if (Queue.empty()) {
     return Level0CompilationJobSPtr(nullptr);
   }
 
-  auto Iter = std::find_if(
-      Queue.begin(), Queue.end(), [&Prog, &Build](Level0CompilationJobSPtr &J) {
-        return J->isForProgram(Prog) && J->isBuildEqual(Build);
-      });
+  ze_device_handle_t Dev = Prog->getDevice();
+  auto Iter = std::find_if(Queue.begin(), Queue.end(),
+                           [&Prog, &Build, Dev](Level0CompilationJobSPtr &J) {
+                             return J->isForProgram(Prog) &&
+                                    J->isForBuild(Build) && J->isForDevice(Dev);
+                           });
 
   if (Iter == Queue.end()) {
     return Level0CompilationJobSPtr(nullptr);
@@ -940,13 +1759,12 @@ Level0CompilerJobQueue::findJob2(std::list<Level0CompilationJobSPtr> &Queue,
   return *Iter;
 }
 
-Level0CompilationJobSPtr
-Level0CompilerJobQueue::findOrCreateWork(bool HiPrio, Level0ProgramSPtr &ProgS,
-                                         Level0BuildUPtr BuildU) {
+Level0CompilationJobSPtr Level0CompilerJobQueue::findOrCreateWork(
+    bool HiPrio, Level0ProgramBaseSPtr ProgS, Level0BuildBaseUPtr BuildU) {
 
   std::unique_lock<std::mutex> UniqLock(Mutex);
-  Level0Build *Build = BuildU.get();
-  Level0Program *Prog = ProgS.get();
+  Level0BuildBase *Build = BuildU.get();
+  Level0ProgramBase *Prog = ProgS.get();
 
   Level0CompilationJobSPtr Res;
   Res = findJob2(InProgressJobs, Prog, Build);
@@ -966,7 +1784,8 @@ Level0CompilerJobQueue::findOrCreateWork(bool HiPrio, Level0ProgramSPtr &ProgS,
   return Res;
 }
 
-void Level0CompilerJobQueue::cancelAllJobsForProgram(Level0Program *Program) {
+void Level0CompilerJobQueue::cancelAllJobsForProgram(
+    Level0ProgramBase *Program) {
   std::lock_guard<std::mutex> LockGuard(Mutex);
   HighPrioJobs.remove_if([Program](Level0CompilationJobSPtr &J) {
     return J->isForProgram(Program);
@@ -987,6 +1806,7 @@ bool Level0CompilerThread::init() {
     POCL_MSG_ERR("Compiler thread: failed to create L0 Context\n");
     return false;
   }
+
   Thread = std::thread(&Level0CompilerThread::run, this);
   return true;
 }
@@ -1023,11 +1843,32 @@ Level0CompilerThread::~Level0CompilerThread() {
 bool Level0CompilationJobScheduler::init(
     ze_driver_handle_t H, std::vector<ze_device_handle_t> &DevicesH) {
 
-  JobQueue = std::make_unique<Level0CompilerJobQueue>();
   DriverH = H;
+
+#ifdef ENABLE_NPU
+  ze_result_t Res;
+  Res = zeDriverGetExtensionFunctionAddress(
+      DriverH, GRAPH_EXT_NAME, reinterpret_cast<void **>(&GraphDDITable));
+  if (Res != ZE_RESULT_SUCCESS)
+    GraphDDITable = nullptr;
+
+  Res = zeDriverGetExtensionFunctionAddress(
+      DriverH, ZE_PROFILING_DATA_EXT_NAME,
+      reinterpret_cast<void **>(&GraphProfDDITable));
+  if (Res != ZE_RESULT_SUCCESS)
+    GraphProfDDITable = nullptr;
+
+  if (!GraphDDITable || !GraphProfDDITable) {
+    POCL_MSG_PRINT_LEVEL0(
+        "JobScheduler: Failed to initialize LevelZero Graph Ext\n");
+  }
+#endif
+
+  JobQueue = std::make_unique<Level0CompilerJobQueue>();
   unsigned NumDevices = DevicesH.size();
   unsigned NumThreads = std::min((NumDevices * 2), std::thread::hardware_concurrency());
   assert(NumDevices > 0);
+
   for (unsigned i = 0; i < NumThreads; ++i) {
     ze_device_handle_t PreferredDeviceH = DevicesH[i % NumDevices];
     CompilerThreads.emplace_back(
@@ -1087,38 +1928,49 @@ Level0Program *Level0CompilationJobScheduler::createProgram(ze_context_handle_t 
 bool Level0CompilationJobScheduler::releaseProgram(Level0Program *Prog) {
   JobQueue->cancelAllJobsForProgram(Prog);
 
-  std::lock_guard<std::mutex> Lock(ProgramsLock);
-
-  auto Iter =
-      std::find_if(Programs.begin(), Programs.end(),
-                   [&Prog](Level0ProgramSPtr &P) { return P.get() == Prog; });
-
-  if (Iter == Programs.end())
-    return false;
-
-  Programs.erase(Iter);
-  return true;
+  Level0ProgramSPtr Program =
+      findProgram<Level0Program, Level0ProgramSPtr>(Prog, Programs, true);
+  return (bool)Program;
 }
 
-bool Level0CompilationJobScheduler::findProgram(Level0Program *Prog,
-                                                Level0ProgramSPtr &Program) {
+template <class P, class SPtr>
+SPtr Level0CompilationJobScheduler::findProgram(P *Prog, std::list<SPtr> &List,
+                                                bool erase) {
   std::lock_guard<std::mutex> Lock(ProgramsLock);
+  SPtr Program;
 
-  auto Iter =
-      std::find_if(Programs.begin(), Programs.end(),
-                   [&Prog](Level0ProgramSPtr &P) { return P.get() == Prog; });
+  auto Iter = std::find_if(List.begin(), List.end(),
+                           [&Prog](SPtr &Parg) { return Parg.get() == Prog; });
 
-  if (Iter == Programs.end())
-    return false;
+  if (Iter == List.end())
+    return Program;
 
-  Program = *Iter;
-  return true;
+  if (erase)
+    List.erase(Iter);
+  else
+    Program = *Iter;
+
+  return Program;
+}
+
+#ifdef ENABLE_NPU
+Level0BuiltinProgramSPtr
+Level0CompilationJobScheduler::findProgram(Level0BuiltinProgram *Prog) {
+  return findProgram<Level0BuiltinProgram, Level0BuiltinProgramSPtr>(
+      Prog, BuiltinPrograms);
+}
+#endif
+
+Level0ProgramSPtr
+Level0CompilationJobScheduler::findProgram(Level0Program *Prog) {
+  return findProgram<Level0Program, Level0ProgramSPtr>(Prog, Programs);
 }
 
 Level0Kernel *Level0CompilationJobScheduler::createKernel(Level0Program *Prog,
                                                           const char *Name) {
-  Level0ProgramSPtr Program;
-  if (!findProgram(Prog, Program)) {
+  Level0ProgramSPtr Program = findProgram(Prog);
+
+  if (!Program) {
     POCL_MSG_ERR("cannot find a program %p\n", Prog);
     return nullptr;
   }
@@ -1159,19 +2011,17 @@ Level0Kernel *Level0CompilationJobScheduler::createKernel(Level0Program *Prog,
 
 bool Level0CompilationJobScheduler::releaseKernel(Level0Program *Prog,
                                                   Level0Kernel *Kernel) {
-  Level0ProgramSPtr Program;
-  if (!findProgram(Prog, Program)) {
+  Level0ProgramSPtr Program = findProgram(Prog);
+  if (!Program) {
     POCL_MSG_ERR("cannot find a program %p\n", Prog);
     return false;
   }
   return Program->releaseKernel(Kernel);
 }
 
-
-bool Level0CompilationJobScheduler::createProgramBuilds(Level0ProgramSPtr &Program,
-                                                        std::string &BuildLog,
-                                                        bool DeviceSupports64bitBuffers,
-                                                        bool Optimize) {
+bool Level0CompilationJobScheduler::createProgramBuilds(
+    Level0ProgramSPtr Program, std::string &BuildLog,
+    bool DeviceSupports64bitBuffers, bool Optimize) {
   if (!createProgramBuildFullOptions(Program, BuildLog,
                                      true, // wait
                                      Optimize,
@@ -1192,14 +2042,9 @@ bool Level0CompilationJobScheduler::createProgramBuilds(Level0ProgramSPtr &Progr
   return true;
 }
 
-
-bool Level0CompilationJobScheduler::createProgramBuildFullOptions(Level0ProgramSPtr &Program,
-                                                                      std::string &BuildLog,
-                                                                      bool WaitForFinish,
-                                                                      bool Optimize,
-                                                                      bool LargeOffsets,
-                                                                      bool SmallWG,
-                                                                      bool HighPrio) {
+bool Level0CompilationJobScheduler::createProgramBuildFullOptions(
+    Level0ProgramSPtr Program, std::string &BuildLog, bool WaitForFinish,
+    bool Optimize, bool LargeOffsets, bool SmallWG, bool HighPrio) {
 
   BuildSpecialization Spec = { Optimize, LargeOffsets, false, SmallWG };
   Level0ProgramBuildUPtr ProgBuild;
@@ -1226,15 +2071,9 @@ bool Level0CompilationJobScheduler::createProgramBuildFullOptions(Level0ProgramS
   return true;
 }
 
-bool Level0CompilationJobScheduler::createAndWaitKernelJITBuilds(Level0ProgramSPtr &Program,
-                                                                 Level0Kernel *Kernel,
-                                                                 bool LargeOffsets,
-                                                                 bool SmallWG) {
-
-  Level0KernelSPtr KernelS;
-  bool Res = Program->getKernelSPtr(Kernel, KernelS);
-  assert(Res);
-  assert(KernelS);
+bool Level0CompilationJobScheduler::createAndWaitKernelJITBuilds(
+    Level0ProgramSPtr Program, Level0Kernel *Kernel, bool LargeOffsets,
+    bool SmallWG) {
 
   BuildSpecialization Spec = {Program->isOptimized(), LargeOffsets, false,
                               SmallWG};
@@ -1246,8 +2085,6 @@ bool Level0CompilationJobScheduler::createAndWaitKernelJITBuilds(Level0ProgramSP
   return KernBuildJob->isSuccessful();
 }
 
-
-
 bool Level0CompilationJobScheduler::getBestKernel(Level0Program *Prog,
                                   Level0Kernel *Kernel,
                                   bool MustUseLargeOffsets,
@@ -1255,8 +2092,8 @@ bool Level0CompilationJobScheduler::getBestKernel(Level0Program *Prog,
                                   ze_module_handle_t &Mod,
                                   ze_kernel_handle_t &Ker)
 {
-  Level0ProgramSPtr Program;
-  if (!findProgram(Prog, Program)) {
+  Level0ProgramSPtr Program = findProgram(Prog);
+  if (!Program) {
     POCL_MSG_ERR("cannot find a program %p\n", Prog);
     return false;
   }
@@ -1287,3 +2124,92 @@ bool Level0CompilationJobScheduler::getBestKernel(Level0Program *Prog,
   }
   return Res;
 }
+
+#ifdef ENABLE_NPU
+Level0BuiltinProgram *Level0CompilationJobScheduler::createBuiltinProgram(
+    ze_context_handle_t Ctx, ze_device_handle_t Dev, std::string &BuildLog,
+    size_t num_builtin_kernels, char **builtin_kernel_names,
+    void *builtin_kernel_ids, void **builtin_kernel_attributes,
+    const char *CDir, const std::string &UUID) {
+
+  if (!GraphDDITable || !GraphProfDDITable) {
+    BuildLog.append("Failed to initialize LevelZero Graph Ext - "
+                    "cannot create program\n");
+    return nullptr;
+  }
+
+  Level0BuiltinProgramSPtr Prog = std::make_shared<Level0BuiltinProgram>(
+      Ctx, Dev, num_builtin_kernels, builtin_kernel_names, builtin_kernel_ids,
+      builtin_kernel_attributes, CDir, UUID);
+  if (!Prog->init()) {
+    BuildLog.append("failed to initialize Level0BuiltinProgram\n");
+    return nullptr;
+  }
+
+  bool Res = createAndWaitBuiltinProgramBuilds(Prog, BuildLog);
+  if (!Res) {
+    BuildLog.append("failed to build Level0BuiltinProgram\n");
+    return nullptr;
+  }
+
+  std::lock_guard<std::mutex> Lock(ProgramsLock);
+  BuiltinPrograms.push_back(Prog);
+  return Prog.get();
+}
+
+bool Level0CompilationJobScheduler::createAndWaitBuiltinProgramBuilds(
+    Level0BuiltinProgramSPtr Program, std::string &BuildLog) {
+  Level0BuiltinProgramBuildUPtr ProgBuild =
+      std::make_unique<Level0BuiltinProgramBuild>(Program.get(), GraphDDITable);
+
+  Level0CompilationJobSPtr ProgBuildJob =
+      JobQueue->findOrCreateWork(true, Program, std::move(ProgBuild));
+  ProgBuildJob->waitForFinish();
+  BuildLog.append(Program->getBuildLog());
+  return ProgBuildJob->isSuccessful();
+}
+
+bool Level0CompilationJobScheduler::releaseBuiltinProgram(
+    Level0BuiltinProgram *Prog) {
+  JobQueue->cancelAllJobsForProgram(Prog);
+  Level0BuiltinProgramSPtr Program =
+      findProgram<Level0BuiltinProgram, Level0BuiltinProgramSPtr>(
+          Prog, BuiltinPrograms, true);
+  return (bool)Program;
+}
+
+Level0BuiltinKernel *
+Level0CompilationJobScheduler::createBuiltinKernel(Level0BuiltinProgram *Prog,
+                                                   const char *Name) {
+  Level0BuiltinProgramSPtr Program = findProgram(Prog);
+
+  if (!Program) {
+    POCL_MSG_ERR("Cannot find program %p\n", Prog);
+    return nullptr;
+  }
+
+  return Program->createKernel(Name);
+}
+
+bool Level0CompilationJobScheduler::releaseBuiltinKernel(
+    Level0BuiltinProgram *Prog, Level0BuiltinKernel *Kernel) {
+  Level0BuiltinProgramSPtr Program = findProgram(Prog);
+  if (!Program) {
+    POCL_MSG_ERR("Cannot find program %p\n", Prog);
+    return false;
+  }
+  return Program->releaseKernel(Kernel);
+}
+
+bool Level0CompilationJobScheduler::getBestBuiltinKernel(
+    Level0BuiltinProgram *Prog, Level0BuiltinKernel *Kernel,
+    ze_graph_handle_t &Graph) {
+  Level0BuiltinProgramSPtr Program = findProgram(Prog);
+  if (!Program) {
+    POCL_MSG_ERR("Cannot find program %p\n", Prog);
+    return false;
+  }
+  return Program->getBestKernel(Kernel, Graph);
+}
+
+#endif
