@@ -1,3 +1,5 @@
+// Copied from https://github.com/intel/level-zero-npu-extensions.
+// clang-format off
 /*
 *
 * Copyright (C) 2021-2023 Intel Corporation
