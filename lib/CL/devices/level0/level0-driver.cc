@@ -2491,11 +2491,11 @@ bool Level0Device::setupMemoryProperties(bool &HasUSMCapability) {
   MemAccessProperties.pNext = nullptr;
   Res2 = zeDeviceGetMemoryAccessProperties(DeviceHandle, &MemAccessProperties);
 
+  ClDev->global_mem_size = ClDev->max_mem_alloc_size;
   if (Res1 != ZE_RESULT_SUCCESS || Res2 != ZE_RESULT_SUCCESS) {
     // ClDev->max_mem_alloc_size was setup in setupDeviceProperties()
     POCL_MSG_PRINT_LEVEL0("%s: zeDeviceGetMemoryProperties() failed\n",
                           ClDev->short_name);
-    ClDev->global_mem_size = ClDev->max_mem_alloc_size;
     HasUSMCapability = false;
     return false;
   }
