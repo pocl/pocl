@@ -208,19 +208,12 @@ private:
 
   void appendEventToList(_cl_command_node *Cmd, const char **Msg);
 
-  void runBuiltinKernel(_cl_command_run *RunCmd,
-                        cl_device_id Dev,
-                        cl_event Event,
-                        cl_program Program,
-                        cl_kernel Kernel,
+  void runBuiltinKernel(_cl_command_run *RunCmd, cl_device_id Dev,
+                        cl_event Event, cl_program Program, cl_kernel Kernel,
                         unsigned DeviceI);
-  void runNDRangeKernel(_cl_command_run *RunCmd,
-                        cl_device_id Dev,
-                        cl_event Event,
-                        cl_program Program,
-                        cl_kernel Kernel,
-                        unsigned DeviceI,
-                        pocl_buffer_migration_info *MigInfos);
+  void runNDRangeKernel(_cl_command_run *RunCmd, cl_device_id Dev,
+                        cl_event Event, cl_program Program, cl_kernel Kernel,
+                        unsigned DeviceI, pocl_buffer_migration_info *MigInfos);
 
   void execCommand(_cl_command_node *Cmd);
   void execCommandBatch(BatchType &Batch);
@@ -295,22 +288,6 @@ public:
                             bool &IsHostAccessible) = 0;
   virtual bool freeBuffer(uintptr_t Key, Level0Device *D, void *Ptr) = 0;
   virtual bool clear(Level0Device *D) = 0;
-
-  /*
-    virtual void *allocUSMSharedMem(uint64_t Size, bool EnableCompression =
-    false, ze_device_mem_alloc_flags_t DevFlags =
-                             ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED,
-                         ze_host_mem_alloc_flags_t HostFlags =
-                             ZE_HOST_MEM_ALLOC_FLAG_BIAS_CACHED |
-                             ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT |
-                             ZE_HOST_MEM_ALLOC_FLAG_BIAS_WRITE_COMBINED) = 0;
-    virtual void *allocUSMDeviceMem(uint64_t Size, ze_device_mem_alloc_flags_t
-    DevFlags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED) = 0; virtual void
-    *allocUSMHostMem(uint64_t Size, ze_device_mem_alloc_flags_t HostFlags =
-                                          ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED)
-    = 0; virtual void freeUSMMem(void *Ptr) = 0; virtual bool
-    freeUSMMemBlocking(void *Ptr) = 0;
-  */
 };
 
 using Level0AllocatorSPtr = std::shared_ptr<Level0Allocator>;
@@ -374,10 +351,9 @@ public:
   int createBuiltinProgram(cl_program Program, cl_uint DeviceI);
   int freeProgram(cl_program Program, cl_uint DeviceI);
 
-  int createKernel(cl_program Program,
-                   cl_kernel Kernel, unsigned ProgramDeviceI);
-  int freeKernel(cl_program Program,
-                 cl_kernel Kernel, unsigned ProgramDeviceI);
+  int createKernel(cl_program Program, cl_kernel Kernel,
+                   unsigned ProgramDeviceI);
+  int freeKernel(cl_program Program, cl_kernel Kernel, unsigned ProgramDeviceI);
 
   bool getBestKernel(Level0Program *Program, Level0Kernel *Kernel,
                      bool LargeOffset, unsigned LocalWGSize,
@@ -454,9 +430,9 @@ public:
   }
   uint32_t getIPVersion() { return DeviceIPVersion; }
 
-  bool supportsCmdQBatching() { return
-        UniversalQueues.available() &&
-        ClDev->type == CL_DEVICE_TYPE_GPU; }
+  bool supportsCmdQBatching() {
+    return UniversalQueues.available() && ClDev->type == CL_DEVICE_TYPE_GPU;
+  }
   // for GPU, prefer L0 queues for all commands, as most commands can be
   // implemented using L0 API calls, and the few that can't (e.g. for
   // imagefill) we have implemented via kernels
@@ -536,7 +512,6 @@ private:
   bool setupCacheProperties();
   bool setupImageProperties();
   bool setupPCIAddress();
-
 };
 
 typedef std::unique_ptr<Level0Device> Level0DeviceUPtr;
@@ -582,9 +557,9 @@ private:
   ze_context_handle_t ContextH = nullptr;
 
 #ifdef ENABLE_NPU
-  /** @brief Pointer to the Level Zero API graph extension DDI table */
+  /// @brief Pointer to the Level Zero API graph extension DDI table.
   graph_dditable_ext_t *GraphDDITableExt = nullptr;
-  /** @brief Pointer to the Level Zero API graph extension profiling DDI table */
+  /// @brief Pointer to the Level Zero API graph extension profiling DDI table.
   ze_graph_profiling_dditable_ext_t *GraphProfDDITableExt = nullptr;
 #endif
 
@@ -600,7 +575,7 @@ using Level0DriverUPtr = std::unique_ptr<Level0Driver>;
 class Level0DefaultAllocator : public Level0Allocator {
 public:
   Level0DefaultAllocator(Level0Driver *Dr, Level0Device *Dev)
-      : Driver(Dr), Device(Dev){};
+      : Driver(Dr), Device(Dev) {};
 
   // the default allocator ignores the Device argument, since there is only one
   virtual void *allocBuffer(uintptr_t Key, Level0Device *,
@@ -651,7 +626,7 @@ class Level0DMABufAllocator : public Level0Allocator {
 public:
   Level0DMABufAllocator(Level0Device *ExDev,
                         const std::vector<Level0Device *> &ImDev)
-      : ImportDevices(ImDev), ExportDevice(ExDev){};
+      : ImportDevices(ImDev), ExportDevice(ExDev) {};
 
   virtual void *allocBuffer(uintptr_t Key, Level0Device *D,
                             ze_device_mem_alloc_flags_t DevFlags,

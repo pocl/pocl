@@ -90,7 +90,6 @@ private:
   void getSubmitBatchUnlocked(BatchType &SubmitBatch);
 };
 
-
 static void pocl_level0_local_size_optimizer(cl_device_id Dev, cl_kernel Ker,
                                              unsigned DeviceI,
                                              size_t MaxGroupSize,
@@ -106,7 +105,7 @@ static void pocl_level0_local_size_optimizer(cl_device_id Dev, cl_kernel Ker,
   Level0Kernel *L0Kernel = (Level0Kernel *)Ker->data[DeviceI];
   ze_kernel_handle_t HKernel = L0Kernel->getAnyCreated();
 
-  if (GlobalX == 1 && GlobalY ==1 && GlobalZ == 1) {
+  if (GlobalX == 1 && GlobalY == 1 && GlobalZ == 1) {
     *LocalX = *LocalY = *LocalZ = 1;
     return;
   }
@@ -310,10 +309,10 @@ static int readProgramSpv(cl_program Program, cl_uint DeviceI,
 
 char *pocl_level0_build_hash(cl_device_id ClDevice) {
   char *Res = (char *)malloc(32);
-  if (ClDevice->type == CL_DEVICE_TYPE_GPU
-      || ClDevice->type == CL_DEVICE_TYPE_CPU) {
+  if (ClDevice->type == CL_DEVICE_TYPE_GPU ||
+      ClDevice->type == CL_DEVICE_TYPE_CPU) {
     snprintf(Res, 32, "pocl-level0-spirv");
-  // Intel FPGA Emulation uses device type Accelerator
+    // Intel FPGA Emulation uses device type Accelerator
   } else if (ClDevice->type == CL_DEVICE_TYPE_ACCELERATOR) {
     snprintf(Res, 32, "pocl-level0-fpga");
   } else if (ClDevice->type == CL_DEVICE_TYPE_CUSTOM) {
@@ -392,35 +391,35 @@ cl_int pocl_level0_init(unsigned J, cl_device_id ClDevice,
 cl_int pocl_level0_uninit(unsigned J, cl_device_id ClDevice) {
   Level0Device *Device = (Level0Device *)ClDevice->data;
 
-/*
-  GPUDriverInstance->releaseDevice(Device);
-  // TODO should this be done at all ?
-  if (GPUDriverInstance->empty()) {
-    delete GPUDriverInstance;
-    GPUDriverInstance = nullptr;
-  }
-*/
+  // GPUDriverInstance->releaseDevice(Device);
+  // // TODO should this be done at all ?
+  // if (GPUDriverInstance->empty()) {
+  //   delete GPUDriverInstance;
+  //   GPUDriverInstance = nullptr;
+  // }
+
   return CL_SUCCESS;
 }
 
 cl_int pocl_level0_reinit(unsigned J, cl_device_id ClDevice, const char *parameters) {
 
-/*
-  if (GPUDriverInstance == nullptr) {
-    GPUDriverInstance = new Level0Driver();
-  }
-  assert(J < GPUDriverInstance->getNumDevices());
-  POCL_MSG_PRINT_LEVEL0("Initializing device %u\n", J);
+  /*
+    if (GPUDriverInstance == nullptr) {
+      GPUDriverInstance = new Level0Driver();
+    }
+    assert(J < GPUDriverInstance->getNumDevices());
+    POCL_MSG_PRINT_LEVEL0("Initializing device %u\n", J);
 
-  // TODO: parameters are not passed (this works ATM because they're ignored)
-  Level0Device *Device = GPUDriverInstance->createDevice(J, ClDevice, nullptr);
+    // TODO: parameters are not passed (this works ATM because they're ignored)
+    Level0Device *Device = GPUDriverInstance->createDevice(J, ClDevice,
+    nullptr);
 
-  if (Device == nullptr) {
-    return CL_FAILED;
-  }
+    if (Device == nullptr) {
+      return CL_FAILED;
+    }
 
-  ClDevice->data = (void *)Device;
-*/
+    ClDevice->data = (void *)Device;
+  */
 
   return CL_SUCCESS;
 }
@@ -685,8 +684,7 @@ int pocl_level0_supports_binary(cl_device_id Device, size_t Length,
                                 const char *Binary) {
 
   if (Device->compiler_available == CL_TRUE &&
-      Device->linker_available == CL_TRUE &&
-      Device->num_ils_with_version > 0 &&
+      Device->linker_available == CL_TRUE && Device->num_ils_with_version > 0 &&
       pocl_bitcode_is_spirv_execmodel_kernel(Binary, Length) != 0) {
     return 1;
   }
@@ -820,8 +818,7 @@ int pocl_level0_link_program(cl_program Program, cl_uint DeviceI,
   cl_device_id Dev = Program->devices[DeviceI];
   Level0Device *Device = (Level0Device *)Dev->data;
 
-  if (Dev->compiler_available == CL_FALSE ||
-      Dev->linker_available == CL_FALSE) {
+  if (!Dev->compiler_available || !Dev->linker_available) {
     POCL_RETURN_ERROR_ON(1, CL_BUILD_PROGRAM_FAILURE,
                          "This device cannot link binaries\n");
   }
@@ -1038,14 +1035,13 @@ static int pocl_level0_setup_spirv_metadata(cl_device_id Device,
   return 1;
 }
 
-
 #ifdef ENABLE_NPU
 
 static bool pocl_npu_is_layout_gemm(cl_uint Rank, const void *Layout) {
   const cl_tensor_layout_ml_exp *Ptr = (cl_tensor_layout_ml_exp *)Layout;
 
-  // supported layouts from openvino compiler plugin / "rankToLegacyLayoutString":
-  // C, NC, CHW, NCHW, NCDHW
+  // supported layouts from openvino compiler plugin /
+  // "rankToLegacyLayoutString": C, NC, CHW, NCHW, NCDHW
   if (Ptr->ml_type == CL_TENSOR_LAYOUT_ML_NC_EXP && Rank == 2)
     return true;
   if (Ptr->ml_type == CL_TENSOR_LAYOUT_ML_CHW_EXP && Rank == 3)
@@ -1053,64 +1049,54 @@ static bool pocl_npu_is_layout_gemm(cl_uint Rank, const void *Layout) {
   return false;
 }
 
-int
-pocl_npu_validate_khr_gemm (cl_bool TransA,
-                            cl_bool TransB,
-                            const cl_tensor_desc_exp *TenA,
-                            const cl_tensor_desc_exp *TenB,
-                            const cl_tensor_desc_exp *TenCIOpt,
-                            const cl_tensor_desc_exp *TenCOut,
-                            const cl_tensor_datatype_value_exp *Alpha,
-                            const cl_tensor_datatype_value_exp *Beta)
-{
+int pocl_npu_validate_khr_gemm(cl_bool TransA, cl_bool TransB,
+                               const cl_tensor_desc_exp *TenA,
+                               const cl_tensor_desc_exp *TenB,
+                               const cl_tensor_desc_exp *TenCIOpt,
+                               const cl_tensor_desc_exp *TenCOut,
+                               const cl_tensor_datatype_value_exp *Alpha,
+                               const cl_tensor_datatype_value_exp *Beta) {
 
-  /* datatype match between A&B and CIopt&COut already checked in
-   * initial validation (pocl_validate_khr_gemm) */
+  // datatype match between A&B and CIopt&COut already checked in initial
+  // validation (pocl_validate_khr_gemm)
 
-  /* currently FP 16-64 and INT 8-64 are supported */
-  POCL_RETURN_ERROR_ON ((TenA->dtype == CL_TENSOR_DTYPE_FP8E4M3_EXP
-                         || TenA->dtype == CL_TENSOR_DTYPE_FP8E5M2_EXP
-                         || TenA->dtype == CL_TENSOR_DTYPE_INT4_EXP
-                         || TenCOut->dtype == CL_TENSOR_DTYPE_FP8E4M3_EXP
-                         || TenCOut->dtype == CL_TENSOR_DTYPE_FP8E5M2_EXP
-                         || TenCOut->dtype == CL_TENSOR_DTYPE_INT4_EXP),
-                        CL_INVALID_TENSOR_DATATYPE_EXP,
-                        "Datatype support not yet implemented. NPU supports "
-                        "only FP16/32/64 and INT8/16/32/64 currently\n");
+  // currently FP 16-64 and INT 8-64 are supported.
+  POCL_RETURN_ERROR_ON((TenA->dtype == CL_TENSOR_DTYPE_FP8E4M3_EXP ||
+                        TenA->dtype == CL_TENSOR_DTYPE_FP8E5M2_EXP ||
+                        TenA->dtype == CL_TENSOR_DTYPE_INT4_EXP ||
+                        TenCOut->dtype == CL_TENSOR_DTYPE_FP8E4M3_EXP ||
+                        TenCOut->dtype == CL_TENSOR_DTYPE_FP8E5M2_EXP ||
+                        TenCOut->dtype == CL_TENSOR_DTYPE_INT4_EXP),
+                       CL_INVALID_TENSOR_DATATYPE_EXP,
+                       "Datatype support not yet implemented. NPU supports "
+                       "only FP16/32/64 and INT8/16/32/64 currently\n");
 
-//  POCL_RETURN_ERROR_ON (((TenA->dtype != CL_TENSOR_DTYPE_FP16_EXP
-//                         && TenA->dtype != CL_TENSOR_DTYPE_INT8_EXP)
-//                         ||
-//                        (TenCOut->dtype != CL_TENSOR_DTYPE_FP16_EXP
-//                         && TenCOut->dtype != CL_TENSOR_DTYPE_INT8_EXP)),
-//                        CL_INVALID_DBK_DATATYPE,
-//                        "Datatype support not yet implemented. NPU supports "
-//                        "only FP16 and INT8 currently\n");
+  // type mixing check.
+  POCL_RETURN_ERROR_ON((pocl_tensor_type_is_int(TenA->dtype) !=
+                        pocl_tensor_type_is_int(TenCOut->dtype)),
+                       CL_INVALID_TENSOR_DATATYPE_EXP,
+                       "Datatype mixing (INT & FP) not supported\n");
 
-  /* type mixing check */
-  POCL_RETURN_ERROR_ON ((pocl_tensor_type_is_int (TenA->dtype)
-                         != pocl_tensor_type_is_int (TenCOut->dtype)),
-                        CL_INVALID_TENSOR_DATATYPE_EXP,
-                        "Datatype mixing (INT & FP) not supported\n");
+  POCL_RETURN_ERROR_ON((pocl_tensor_type_size(TenA->dtype) >
+                        pocl_tensor_type_size(TenCOut->dtype)),
+                       CL_INVALID_TENSOR_DATATYPE_EXP,
+                       "Datatype of C is smaller than A\n");
 
-  POCL_RETURN_ERROR_ON ((pocl_tensor_type_size (TenA->dtype)
-                         > pocl_tensor_type_size (TenCOut->dtype)),
-                        CL_INVALID_TENSOR_DATATYPE_EXP,
-                        "Datatype of C is smaller than A\n");
+  // check validity of data layouts of the tensors.
+  POCL_RETURN_ERROR_ON(
+      (TenA->layout_type != CL_TENSOR_LAYOUT_ML_EXP ||
+       TenB->layout_type != CL_TENSOR_LAYOUT_ML_EXP ||
+       TenCOut->layout_type != CL_TENSOR_LAYOUT_ML_EXP ||
+       (TenCIOpt && TenCIOpt->layout_type != CL_TENSOR_LAYOUT_ML_EXP)),
+      CL_INVALID_TENSOR_LAYOUT_EXP,
+      "GEMM on NPU device only supports ML layouts\n");
 
-  /* check validity of data layouts of the tensors. */
-  POCL_RETURN_ERROR_ON ((TenA->layout_type != CL_TENSOR_LAYOUT_ML_EXP
-                        || TenB->layout_type != CL_TENSOR_LAYOUT_ML_EXP
-                        || TenCOut->layout_type != CL_TENSOR_LAYOUT_ML_EXP
-                        || (TenCIOpt && TenCIOpt->layout_type != CL_TENSOR_LAYOUT_ML_EXP)),
-                        CL_INVALID_TENSOR_LAYOUT_EXP, "GEMM on NPU device only supports ML layouts\n"
-                        );
-
-  POCL_RETURN_ERROR_ON ((!pocl_npu_is_layout_gemm(TenA->rank, TenA->layout)
-      || !pocl_npu_is_layout_gemm(TenB->rank, TenB->layout)
-      || !pocl_npu_is_layout_gemm(TenCOut->rank, TenCOut->layout)
-      || (TenCIOpt &&
-          !pocl_npu_is_layout_gemm(TenCIOpt->rank, TenCIOpt->layout))),
+  POCL_RETURN_ERROR_ON(
+      (!pocl_npu_is_layout_gemm(TenA->rank, TenA->layout) ||
+       !pocl_npu_is_layout_gemm(TenB->rank, TenB->layout) ||
+       !pocl_npu_is_layout_gemm(TenCOut->rank, TenCOut->layout) ||
+       (TenCIOpt &&
+        !pocl_npu_is_layout_gemm(TenCIOpt->rank, TenCIOpt->layout))),
       CL_INVALID_TENSOR_LAYOUT_EXP,
       "GEMM on NPU device only supports C, NC, CHW, NCHW, NCDHW layouts\n");
 
@@ -1118,23 +1104,19 @@ pocl_npu_validate_khr_gemm (cl_bool TransA,
 }
 #endif
 
-
-int pocl_level0_supports_dbk (cl_device_id device,
-                              cl_dbk_id_exp kernel_id,
-                              const void *kernel_attributes) {
+int pocl_level0_supports_dbk(cl_device_id device, cl_dbk_id_exp kernel_id,
+                             const void *kernel_attributes) {
 #ifdef ENABLE_NPU
-  /* check for NPU specific requirements on Tensors */
-  return pocl_validate_dbk_attributes (kernel_id, kernel_attributes,
-                                       pocl_npu_validate_khr_gemm );
+  // check for NPU specific requirements on Tensors.
+  return pocl_validate_dbk_attributes(kernel_id, kernel_attributes,
+                                      pocl_npu_validate_khr_gemm);
 
 #else
-  POCL_RETURN_ERROR_ON (1, CL_DBK_UNSUPPORTED_EXP,
-                        "The LevelZero driver must be compiled with enabled "
-                        "NPU to support tensor DBKs\n");
+  POCL_RETURN_ERROR_ON(1, CL_DBK_UNSUPPORTED_EXP,
+                       "The LevelZero driver must be compiled with enabled "
+                       "NPU to support tensor DBKs\n");
 #endif
-
 }
-
 
 int pocl_level0_setup_metadata(cl_device_id Dev, cl_program Program,
                                unsigned ProgramDeviceI) {
@@ -1154,14 +1136,12 @@ int pocl_level0_setup_metadata(cl_device_id Dev, cl_program Program,
   return 0;
 }
 
-
 int pocl_level0_create_kernel(cl_device_id Dev, cl_program Program,
                               cl_kernel Kernel, unsigned ProgramDeviceI) {
   assert(Program->data[ProgramDeviceI] != nullptr);
   Level0Device *Device = (Level0Device *)Dev->data;
   return Device->createKernel(Program, Kernel, ProgramDeviceI);
 }
-
 
 int pocl_level0_free_kernel(cl_device_id Dev, cl_program Program,
                             cl_kernel Kernel, unsigned ProgramDeviceI) {
@@ -1170,7 +1150,6 @@ int pocl_level0_free_kernel(cl_device_id Dev, cl_program Program,
   Level0Device *Device = (Level0Device *)Dev->data;
   return Device->freeKernel(Program, Kernel, ProgramDeviceI);
 }
-
 
 int pocl_level0_build_poclbinary(cl_program Program, cl_uint DeviceI) {
 
@@ -1195,15 +1174,6 @@ int pocl_level0_build_builtin(cl_program Program, cl_uint DeviceI) {
 
   return Device->createBuiltinProgram(Program, DeviceI);
 }
-
-/*
-int pocl_level0_build_defined_builtin(cl_program Program, cl_uint DeviceI) {
-  cl_device_id Dev = Program->devices[DeviceI];
-  Level0Device *Device = (Level0Device *)Dev->data;
-
-  return Device->createDefinedBuiltinProgram(Program, DeviceI);
-}
-*/
 
 int pocl_level0_init_queue(cl_device_id Dev, cl_command_queue Queue) {
   PoclL0QueueData *QD = new PoclL0QueueData;
@@ -1562,7 +1532,7 @@ void pocl_level0_free(cl_device_id ClDevice, cl_mem Mem) {
     P->version = 0;
   } else {
     Device->freeBuffer((uintptr_t)Mem, P->mem_ptr);
-    assert (Mem->mem_host_ptr != nullptr);
+    assert(Mem->mem_host_ptr != nullptr);
   }
 
   if (Mem->mem_host_ptr != nullptr && Mem->mem_host_ptr == P->mem_ptr) {

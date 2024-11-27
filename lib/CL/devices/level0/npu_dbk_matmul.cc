@@ -1,7 +1,7 @@
 
-#include <string>
-#include <map>
 #include <cassert>
+#include <map>
+#include <string>
 
 #include "CL/opencl.h"
 
@@ -74,19 +74,19 @@ const char *MATMUL_XML_Template = R"(
 </net>
 )";
 
-const char *MATMUL_Flags_Template = R"RAW(--inputs_precisions="x1:INPUT_PREC x2:INPUT_PREC" --inputs_layouts="x1:INPUT_LAYOUT x2:INPUT_LAYOUT" --outputs_precisions="model/dot/MatMul:OUTPUT_PREC" --outputs_layouts="model/dot/MatMul:OUTPUT_LAYOUT" --config   NPU_PLATFORM="3720" PERFORMANCE_HINT="LATENCY")RAW";
+const char *MATMUL_Flags_Template =
+    R"RAW(--inputs_precisions="x1:INPUT_PREC x2:INPUT_PREC" --inputs_layouts="x1:INPUT_LAYOUT x2:INPUT_LAYOUT" --outputs_precisions="model/dot/MatMul:OUTPUT_PREC" --outputs_layouts="model/dot/MatMul:OUTPUT_LAYOUT" --config   NPU_PLATFORM="3720" PERFORMANCE_HINT="LATENCY")RAW";
 
-
-bool instantiateTemplateMATMUL(const void* KernelAttrs,
-                                    std::string &ModelXMLInstance,
-                                    std::string &BuildFlagsInstance) {
+bool instantiateTemplateMATMUL(const void *KernelAttrs,
+                               std::string &ModelXMLInstance,
+                               std::string &BuildFlagsInstance) {
   ModelXMLInstance = MATMUL_XML_Template;
   BuildFlagsInstance = MATMUL_Flags_Template;
   ReplaceMapT ReplaceMap;
   cl_tensor_layout_ml_exp *L = nullptr;
 
-  const cl_dbk_attributes_matmul_exp *Attrs
-    = (const cl_dbk_attributes_matmul_exp *)KernelAttrs;
+  const cl_dbk_attributes_matmul_exp *Attrs =
+      (const cl_dbk_attributes_matmul_exp *)KernelAttrs;
   ReplaceMap["SHAPE_M"] = std::to_string(Attrs->a.shape[0]);
   ReplaceMap["SHAPE_K"] = std::to_string(Attrs->a.shape[1]);
   assert(Attrs->a.shape[1] == Attrs->b.shape[0]);
@@ -117,6 +117,5 @@ bool instantiateTemplateMATMUL(const void* KernelAttrs,
   replaceAllStringsInMap(BuildFlagsInstance, ReplaceMap);
   return true;
 }
-
 
 #endif // NPU_GEMM_H

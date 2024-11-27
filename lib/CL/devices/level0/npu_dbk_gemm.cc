@@ -1,7 +1,7 @@
 
-#include <string>
-#include <map>
 #include <cassert>
+#include <map>
+#include <string>
 
 #include "CL/opencl.h"
 
@@ -9,7 +9,6 @@
 
 #ifndef NPU_GEMM_H
 #define NPU_GEMM_H
-
 
 const char *GEMM_XML_Template = R"(
 <?xml version="1.0"?>
@@ -75,9 +74,10 @@ const char *GEMM_XML_Template = R"(
 </net>
 )";
 
-const char *GEMM_Flags_Template = R"RAW(--inputs_precisions="x1:INPUT_PREC x2:INPUT_PREC" --inputs_layouts="x1:INPUT_LAYOUT x2:INPUT_LAYOUT" --outputs_precisions="model/dot/MatMul:OUTPUT_PREC" --outputs_layouts="model/dot/MatMul:OUTPUT_LAYOUT" --config   NPU_PLATFORM="3720" PERFORMANCE_HINT="LATENCY")RAW";
+const char *GEMM_Flags_Template =
+    R"RAW(--inputs_precisions="x1:INPUT_PREC x2:INPUT_PREC" --inputs_layouts="x1:INPUT_LAYOUT x2:INPUT_LAYOUT" --outputs_precisions="model/dot/MatMul:OUTPUT_PREC" --outputs_layouts="model/dot/MatMul:OUTPUT_LAYOUT" --config   NPU_PLATFORM="3720" PERFORMANCE_HINT="LATENCY")RAW";
 
-bool instantiateTemplateGEMM(const void* KernelAttrs,
+bool instantiateTemplateGEMM(const void *KernelAttrs,
                              std::string &ModelXMLInstance,
                              std::string &BuildFlagsInstance) {
   ModelXMLInstance = GEMM_XML_Template;
@@ -87,12 +87,12 @@ bool instantiateTemplateGEMM(const void* KernelAttrs,
 
   // TODO alpha, beta
 
-  const cl_dbk_attributes_gemm_exp *Attrs
-    = (const cl_dbk_attributes_gemm_exp *)KernelAttrs;
+  const cl_dbk_attributes_gemm_exp *Attrs =
+      (const cl_dbk_attributes_gemm_exp *)KernelAttrs;
   ReplaceMap["SHAPE_M"] = std::to_string(Attrs->a.shape[0]);
   ReplaceMap["SHAPE_K"] = std::to_string(Attrs->a.shape[1]);
   assert(Attrs->a.shape[1] == Attrs->b.shape[0]);
-  //ReplaceMap["SHAPE_K"] = std::to_string(Attrs->b.shape[0]);
+  // ReplaceMap["SHAPE_K"] = std::to_string(Attrs->b.shape[0]);
   ReplaceMap["SHAPE_N"] = std::to_string(Attrs->b.shape[1]);
 
   assert(Attrs->a.layout_type == CL_TENSOR_LAYOUT_ML_EXP);
@@ -119,6 +119,5 @@ bool instantiateTemplateGEMM(const void* KernelAttrs,
   replaceAllStringsInMap(BuildFlagsInstance, ReplaceMap);
   return true;
 }
-
 
 #endif // NPU_GEMM_H

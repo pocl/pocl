@@ -49,12 +49,12 @@ bool DevSupportsColMajor;
 bool DevSupportsRowMajor;
 bool DevSupportsStrides;
 
-static std::tuple<cl::Platform, cl::Device, std::string> findDeviceWithMatmulDBK() noexcept {
+static std::tuple<cl::Platform, cl::Device, std::string>
+findDeviceWithMatmulDBK() noexcept {
   std::vector<cl::Platform> Platforms;
   std::vector<cl::Device> Devices;
   cl::Platform::get(&Platforms);
   cl::Device Device;
-
 
   for (auto P : Platforms) {
     P.getDevices(CL_DEVICE_TYPE_ALL, &Devices);
@@ -65,7 +65,8 @@ static std::tuple<cl::Platform, cl::Device, std::string> findDeviceWithMatmulDBK
       std::string Exts = D.getInfo<CL_DEVICE_EXTENSIONS>();
       std::string Name = D.getInfo<CL_DEVICE_NAME>();
       if (Exts.find("cl_exp_defined_builtin_kernels") == std::string::npos) {
-        std::cerr << "Device " << Name << " does not support cl_exp_defined_builtin_kernels\n";
+        std::cerr << "Device " << Name
+                  << " does not support cl_exp_defined_builtin_kernels\n";
         continue;
       }
 
@@ -74,7 +75,8 @@ static std::tuple<cl::Platform, cl::Device, std::string> findDeviceWithMatmulDBK
         std::cerr << "Selected device: " << D.getInfo<CL_DEVICE_NAME>() << "\n";
         return std::make_tuple(P, D, Name);
       } else {
-        std::cerr << "Device " << D.getInfo<CL_DEVICE_NAME>() << " does not support BIKD matmul_exp\n";
+        std::cerr << "Device " << D.getInfo<CL_DEVICE_NAME>()
+                  << " does not support BIKD matmul_exp\n";
       }
     }
   }
@@ -89,19 +91,18 @@ class TensorLayoutBLAS {
   cl_tensor_layout_blas_pitched_exp Layout;
 
 public:
-  TensorLayoutBLAS() {
-    memset(&Layout, 0, sizeof(Layout));
-  }
+  TensorLayoutBLAS() { memset(&Layout, 0, sizeof(Layout)); }
   TensorLayoutBLAS(std::initializer_list<cl_tensor_dim_exp> TheLeadingDims,
                    std::initializer_list<size_t> TheLeadingStrides)
       : LeadingDims(TheLeadingDims), LeadingStrides(TheLeadingStrides) {
     memcpy(Layout.leading_dims, LeadingDims.data(),
            LeadingDims.size() * sizeof(cl_tensor_dim_exp));
-    memcpy(Layout.leading_strides, LeadingStrides.data(), LeadingStrides.size()*sizeof(size_t) );
+    memcpy(Layout.leading_strides, LeadingStrides.data(),
+           LeadingStrides.size() * sizeof(size_t));
   }
 
-  TensorLayoutBLAS& operator=(const TensorLayoutBLAS& Other) = default;
-  TensorLayoutBLAS& operator=(TensorLayoutBLAS&& Other) = delete;
+  TensorLayoutBLAS &operator=(const TensorLayoutBLAS &Other) = default;
+  TensorLayoutBLAS &operator=(TensorLayoutBLAS &&Other) = delete;
   cl_tensor_layout_blas_pitched_exp *get() noexcept { return &Layout; }
 
   // In elements.
@@ -162,7 +163,8 @@ public:
     Desc.layout = &LayoutML;
 
     StorageSize = elementSize();
-    for (unsigned i = 0; i < Shape.size(); ++i) StorageSize *= Shape[i];
+    for (unsigned i = 0; i < Shape.size(); ++i)
+      StorageSize *= Shape[i];
   }
 
   const cl_tensor_desc_exp *get() const noexcept { return &Desc; }
@@ -222,7 +224,8 @@ void doFloatMatmul(bool ColumnMajor, unsigned Transpose, unsigned M, unsigned N,
   TensorDesc ATDesc({M, K}, CL_TENSOR_DTYPE_FP32_EXP);
   TensorDesc BTDesc({K, N}, CL_TENSOR_DTYPE_FP32_EXP);
   TensorDesc CTDesc({M, N}, CL_TENSOR_DTYPE_FP32_EXP);
-  cl_tensor_layout_ml_type_exp MLType = ColumnMajor ? CL_TENSOR_LAYOUT_ML_CN_EXP : CL_TENSOR_LAYOUT_ML_NC_EXP;
+  cl_tensor_layout_ml_type_exp MLType =
+      ColumnMajor ? CL_TENSOR_LAYOUT_ML_CN_EXP : CL_TENSOR_LAYOUT_ML_NC_EXP;
 
   if (DevUsesLayoutTypeML) {
     ATDesc.setLayout(MLType);
@@ -279,7 +282,8 @@ void doFloatMatmul(bool ColumnMajor, unsigned Transpose, unsigned M, unsigned N,
                                      cl::NDRange{1, 1}, cl::NullRange);
   EXPECT(Status == CL_SUCCESS);
 
-  Status = CmdQ.enqueueReadBuffer(CTensor, CL_FALSE, 0, CTDesc.getStorageSize(), Result.data() );
+  Status = CmdQ.enqueueReadBuffer(CTensor, CL_FALSE, 0, CTDesc.getStorageSize(),
+                                  Result.data());
   EXPECT(Status == CL_SUCCESS);
 
   Status = CmdQ.finish();
@@ -417,7 +421,7 @@ int main() {
   }
 
   if (DevSupportsColMajor && DevSupportsStrides) {
-  std::cout << "--- Matmul 3 ---" << std::endl;
+    std::cout << "--- Matmul 3 ---" << std::endl;
     // Strided inputs.
     doFloatMatmul(COL_MAJOR, TRANSPOSE_NONE, 2, 2, 2,
                   {1.0f, 2.0f, 999.0f, 999.0f, 999.0f,   //
