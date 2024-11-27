@@ -93,31 +93,64 @@ static void printBasicBlock(
     s << "wi-loop exit\\n";
   } else {
     // analyze the contents of the BB
-    int previousNonBarriers = 0;
-    for (llvm::BasicBlock::iterator instr = b->begin();
-         instr != b->end(); ++instr) {
+    int PreviousNonHighlighted = 0;
+    for (llvm::BasicBlock::iterator Instr = b->begin(); Instr != b->end();
+         ++Instr) {
 
-        if (isa<Barrier>(instr)) {
-          s << "BARRIER\\n";
-          previousNonBarriers = 0;
-        } else if (isa<BranchInst>(instr)) {
-          s << "branch\\n";
-          previousNonBarriers = 0;
-        } else if (isa<PHINode>(instr)) {
-          s << "PHI\\n";
-          previousNonBarriers = 0;
-        } else if (isa<ReturnInst>(instr)) {
-          s << "RETURN\\n";
-          previousNonBarriers = 0;
-        } else if (isa<UnreachableInst>(instr)) {
-          s << "UNREACHABLE\\n";
-          previousNonBarriers = 0;
+      llvm::CallInst *Call = dyn_cast<CallInst>(Instr);
+      if (Call != nullptr && Call->getCalledFunction() != nullptr &&
+          Call->getCalledFunction()->getName().str() == "printf") {
+        // Highlight printfs and try to print their format string
+        // for spotting basic blocks with printfs of interest.
+        std::string FmtString = "...";
+
+        int MaxCharsToPrint = 20;
+        llvm::GlobalVariable *FmtStrArg =
+            dyn_cast<llvm::GlobalVariable>(Call->getArgOperand(0));
+        s << "printf(\\\"";
+        if (FmtStrArg != nullptr) {
+          Constant *Initializer = FmtStrArg->getInitializer();
+          int CharI = 0;
+          while (Constant *Char = Initializer->getAggregateElement(CharI++)) {
+            if (--MaxCharsToPrint == 0)
+              break;
+            char CharVal =
+                (char)Char->getUniqueInteger().extractBitsAsZExtValue(8, 0);
+            if (CharVal == 0)
+              break;
+            if (CharVal == '\n')
+              s << "\\\\n";
+            else
+              s << CharVal;
+          }
+          if (MaxCharsToPrint == 0)
+            s << "...";
         } else {
-          if (previousNonBarriers == 0)
-            s << "...program instructions...\\n";
-          previousNonBarriers++;
+          s << "...";
         }
+        s << "\\\", ...)\\n";
+        PreviousNonHighlighted = 0;
+      } else if (isa<Barrier>(Instr)) {
+        s << "BARRIER\\n";
+        PreviousNonHighlighted = 0;
+      } else if (isa<BranchInst>(Instr)) {
+        s << "branch\\n";
+        PreviousNonHighlighted = 0;
+      } else if (isa<PHINode>(Instr)) {
+        s << "PHI\\n";
+        PreviousNonHighlighted = 0;
+      } else if (isa<ReturnInst>(Instr)) {
+        s << "RETURN\\n";
+        PreviousNonHighlighted = 0;
+      } else if (isa<UnreachableInst>(Instr)) {
+        s << "UNREACHABLE\\n";
+        PreviousNonHighlighted = 0;
+      } else {
+        if (PreviousNonHighlighted == 0)
+          s << "...program instructions...\\n";
+        PreviousNonHighlighted++;
       }
+    }
   }
   s << "\"";
   s << "]";
