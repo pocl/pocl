@@ -2171,9 +2171,11 @@ configure_file("cl_offline_compiler.sh.in.cmake" "cl_offline_compiler.sh.config.
 rename_if_different(
   "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh.config.new"
   "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh.config" 1)
-file(GENERATE
-  OUTPUT "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh"
-  INPUT "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh.config")
+if(ENABLE_SPIRV)
+  file(GENERATE
+    OUTPUT "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh"
+    INPUT "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh.config")
+endif()
 
 include_directories("${CMAKE_BINARY_DIR}")
 
@@ -2290,7 +2292,7 @@ set(POCLU_LINK_OPTIONS poclu ${OPENCL_LIBS} ${LIBMATH})
 message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 
 # poclcc bin
-if(ENABLE_POCLCC)
+if(ENABLE_POCLCC OR ENABLE_SPIRV)
     add_subdirectory("bin")
 endif()
 
