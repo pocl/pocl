@@ -1181,6 +1181,7 @@ pocl_remote_build_defined_builtin (cl_program program, cl_uint device_i)
     &d->remote_platform_index, // relevant_platforms,,
     1, &build_log, NULL, 0, 0, 0, 0);
 
+  free(payload);
   if (err)
     return err;
 
