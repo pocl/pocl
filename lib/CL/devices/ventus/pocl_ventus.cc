@@ -648,9 +648,14 @@ step5 make a writefile for chisel
     }
     POCL_MSG_PRINT_VENTUS("Allocating kernel arg buffer entry:\n");
   uint64_t arg_dev_mem_addr;
-  err = vt_buf_alloc(d->vt_device, abuf_size, &arg_dev_mem_addr,0,0,0);
-  if (err != 0) {
-    abort();
+  if (abuf_size == 0) {
+    arg_dev_mem_addr = 0;
+  } else {
+    err = vt_buf_alloc(d->vt_device, abuf_size, &arg_dev_mem_addr,0,0,0);
+    if (err != 0) {
+      printf("ERROR: vt_buf_alloc failed\n");
+      abort();
+    }
   }
 
   #ifdef PRINT_CHISEL_TESTCODE
@@ -662,9 +667,12 @@ step5 make a writefile for chisel
     fp_write_file(fp_data,abuf_args_data,abuf_size);
   #endif
 
-  err = vt_copy_to_dev(d->vt_device,arg_dev_mem_addr,abuf_args_data, abuf_size, 0,0);
-  if (err != 0) {
-    abort();
+  if (abuf_size > 0) {
+    err = vt_copy_to_dev(d->vt_device,arg_dev_mem_addr,abuf_args_data, abuf_size, 0,0);
+    if (err != 0) {
+      printf("ERROR: vt_copy_to_dev failed\n");
+      abort();
+    }
   }
   /**********************************************************************************************************/
 
@@ -917,7 +925,9 @@ step5 make a writefile for chisel
 
     err |= vt_one_buf_free(d->vt_device, KNL_MAX_METADATA_SIZE, &knl_dev_mem_addr, 0, 0);
     err |= vt_one_buf_free(d->vt_device, pds_src_size, &pds_dev_mem_addr, 0, 0);
-    err |= vt_one_buf_free(d->vt_device, abuf_size, &arg_dev_mem_addr, 0, 0);
+    if (abuf_size > 0) {
+      err |= vt_one_buf_free(d->vt_device, abuf_size, &arg_dev_mem_addr, 0, 0);
+    }
     assert(0 == err);
     for (i = 0; i < meta->num_args; ++i)
     {
