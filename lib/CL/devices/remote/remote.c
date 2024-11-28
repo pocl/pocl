@@ -54,7 +54,8 @@
 #include "messages.h"
 
 #if defined(ENABLE_REMOTE_DISCOVERY_AVAHI)                                    \
-  || defined(ENABLE_REMOTE_DISCOVERY_DHT)
+  || defined(ENABLE_REMOTE_DISCOVERY_DHT)                                     \
+  || defined(ENABLE_REMOTE_DISCOVERY_ANDROID)
 #include "network_discovery.h"
 #endif
 
@@ -380,7 +381,8 @@ pocl_remote_init_device_ops (struct pocl_device_ops *ops)
   ops->free_sampler = pocl_remote_free_sampler;
 
 #if defined(ENABLE_REMOTE_DISCOVERY_AVAHI)                                    \
-  || defined(ENABLE_REMOTE_DISCOVERY_DHT)
+  || defined(ENABLE_REMOTE_DISCOVERY_DHT)                                     \
+  || defined(ENABLE_REMOTE_DISCOVERY_ANDROID)
   ops->init_discovery = pocl_remote_init_device_discovery;
 #endif
 }
@@ -640,7 +642,8 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
 }
 
 #if defined(ENABLE_REMOTE_DISCOVERY_AVAHI)                                    \
-  || defined(ENABLE_REMOTE_DISCOVERY_DHT)
+  || defined(ENABLE_REMOTE_DISCOVERY_DHT)                                     \
+  || defined(ENABLE_REMOTE_DISCOVERY_ANDROID)
 cl_int
 pocl_remote_init_device_discovery (
   cl_int (*add_discovered_device) (const char *, unsigned),

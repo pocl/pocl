@@ -24,6 +24,10 @@
 #ifndef POCL_REMOTE_SHARED_H
 #define POCL_REMOTE_SHARED_H
 
+#if defined(ENABLE_REMOTE_DISCOVERY_ANDROID)
+#include <CL/cl_platform.h>
+#endif
+
 #define DEFAULT_POCL_REMOTE_PORT 10998
 
 #define MAX_REMOTE_BUILDPROGRAM_SIZE (16 << 20)
@@ -31,5 +35,35 @@
 #define MAX_REMOTE_DEVICES 512
 
 #define MAX_REMOTE_PARAM_LENGTH 256
+
+#if defined(ENABLE_REMOTE_DISCOVERY_ANDROID)
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+  /**
+   * Helper function used to dynamically add a remote server and its devices.
+   * It is currently only used by android where the network discovery is
+   * performed using android network libraries and the discovered servers are
+   * added using this function. The function is implemented in the remote
+   * driver in network_discovery.c.
+   *
+   * \param id [in] Unique ID with which server advertises itself.
+   * \param domain [in] Domain name in which the server was found.
+   * \param server_key [in] Combination of "IP:port"
+   * \param type [in] Type of the discovered service. Eg type: "_pocl._tcp"
+   * \param device_count [in] Number of devices in the remote server.
+   */
+  void pocl_remote_discovery_add_server (const char *id,
+                                         const char *domain,
+                                         const char *server_key,
+                                         const char *type,
+                                         cl_uint device_count);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
 
 #endif
