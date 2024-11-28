@@ -125,6 +125,8 @@ run_llvm_config(LLVM_LIBDIR --libdir)
 string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_LIBDIR "${LLVM_LIBDIR}")
 run_llvm_config(LLVM_INCLUDEDIR --includedir)
 string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_INCLUDEDIR "${LLVM_INCLUDEDIR}")
+run_llvm_config(LLVM_CMAKEDIR --cmakedir)
+string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_CMAKEDIR "${LLVM_CMAKEDIR}")
 
 if(LLVM_VERSION_MAJOR LESS 16)
   run_llvm_config(LLVM_SRC_ROOT --src-root)

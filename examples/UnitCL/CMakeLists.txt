@@ -38,6 +38,11 @@ if(ENABLE_ICD AND (NOT OPENCL_LIBRARIES))
   return()
 endif()
 
+if(NOT ENABLE_LLVM)
+  message(STATUS "Disabling ${TS_NAME}, requires LLVM")
+  return()
+endif()
+
 # for SPIR-V tests
 find_program(SPIRV_AS "spirv-as")
 find_program(SPIRV_VAL "spirv-val")
@@ -64,6 +69,11 @@ if(CMAKE_CXX_COMPILER_LAUNCHER)
   list(APPEND UPSTREAM_CMAKE_ARGS "-DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}")
 endif()
 
+unset(BUILD_OPTS)
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.28)
+  set(BUILD_OPTS BUILD_JOB_SERVER_AWARE)
+endif()
+
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
@@ -74,10 +84,10 @@ ExternalProject_Add(
     ${UPSTREAM_CMAKE_ARGS}
     -DCA_ENABLE_DOCUMENTATION=0 # disable docs
     -DCA_ENABLE_API=cl          # disable Vulkan
-    -DCA_RUNTIME_COMPILER_ENABLED=0 # disable runtime compiler
+    -DCA_LLVM_INSTALL_DIR=${LLVM_PREFIX} # required for online compiler
     -DCA_CL_ENABLE_OFFLINE_KERNEL_TESTS=0 # disable offline tests (needs CLC or runtime compiler)
     "${TS_BASEDIR}/src/${TS_NAME}"
-  BUILD_COMMAND ${CMAKE_COMMAND} --build ${TS_BUILDDIR}/source/cl/test/UnitCL
+  ${BUILD_OPTS} BUILD_COMMAND ${CMAKE_COMMAND} --build ${TS_BUILDDIR}/source/cl/test/UnitCL
   INSTALL_COMMAND ""
 )
 
