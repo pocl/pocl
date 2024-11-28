@@ -59,6 +59,7 @@ jobs:
             llvmdev=${{ matrix.llvm_version }}
             clangdev=${{ matrix.llvm_version }}
             ninja
+            zlib
 
       - name: Load Env vars
         id: load-env
