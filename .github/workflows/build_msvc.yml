@@ -80,7 +80,7 @@ jobs:
           set "CXX=clang-cl.exe"
           cmake -S . -B build-pocl ^
               -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install-pocl ^
-              -DCMAKE_PREFIX_PATH=%CONDA_PREFIX%\Library ^
+              -DCMAKE_PREFIX_PATH=%MAMBA_ROOT_PREFIX%\envs\pocl-deps\Library ^
               -DENABLE_ICD=0 ^
               -DENABLE_LLVM=1 ^
               -DENABLE_LOADABLE_DRIVERS=OFF ^
