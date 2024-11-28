@@ -78,8 +78,8 @@ jobs:
       # environment is not set properly, it might pick up MinGW-gcc instead.
       - name: Configure PoCL
         run: |
-          set "CC=clang-cl.exe"
-          set "CXX=clang-cl.exe"
+          set "CC=cl.exe"
+          set "CXX=cl.exe"
           set "DEPS_DIR=%MAMBA_ROOT_PREFIX%\envs\pocl-deps\Library"
           :: Fix an issue with llvm-config on windows
           copy %DEPS_DIR%\lib\zstd.lib %DEPS_DIR%\lib\zstd.dll.lib
