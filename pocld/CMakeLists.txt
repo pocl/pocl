@@ -47,6 +47,7 @@ set(SOURCES pocld.cc daemon.hh daemon.cc cmdline.h cmdline.c
             ../lib/CL/pocl_compiler_macros.h
             ../lib/CL/dbk/pocl_dbk_khr_jpeg_shared.c
             ../lib/CL/dbk/pocl_dbk_khr_onnxrt_shared.c
+            ../lib/CL/dbk/pocl_dbk_khr_img_shared.c
             shared_cl_context.cc shared_cl_context.hh
             virtual_cl_context.cc virtual_cl_context.hh
             cmd_queue.cc cmd_queue.hh common.cc common.hh

@@ -122,6 +122,7 @@ typedef enum
    */
   CL_DBK_JPEG_DECODE_EXP = 41,
   CL_DBK_ONNX_INFERENCE_EXP = 42,
+  CL_DBK_IMG_COLOR_CONVERT = 43,
   POCL_CDBI_LAST,
   POCL_CDBI_JIT_COMPILER = 0xFFFF
 } cl_dbk_id_exp; /* NOTE: the spec (v0.3.1) has an error (_exp is missing). */
@@ -260,5 +261,63 @@ typedef struct _cl_dbk_attributes_onnx_inference_exp
   const cl_tensor_desc_exp *initializer_tensor_descs;
   const char **initializer_data;
 } cl_dbk_attributes_onnx_inference_exp;
+
+/**
+ * Collection of different color spaces that can be used
+ * to populate entries in pocl_image_attr_t.
+ */
+enum pocl_color_space_e
+{
+  POCL_COLOR_SPACE_BT601_525,
+  POCL_COLOR_SPACE_BT709,
+  POCL_COLOR_SPACE_DEFAULT = POCL_COLOR_SPACE_BT709,
+};
+
+/**
+ * Collection of different image formats that can be used
+ * to populate entries in pocl_image_attr_t.
+ * @todo describe each type
+ */
+enum pocl_format_e
+{
+  POCL_DF_IMAGE_RGB,
+  POCL_DF_IMAGE_NV12,
+  POCL_DF_IMAGE_NV21,
+  POCL_DF_IMAGE_IYUV,
+};
+
+/**
+ * Collection of image channel ranges that can be used
+ * to populate entries in pocl_image_attr_t.
+ */
+enum pocl_channel_range_e
+{
+  POCL_CHANNEL_RANGE_FULL,
+  POCL_CHANNEL_RANGE_RESTRICTED,
+};
+
+/**
+ * Attributes to describe image data. See \ref pocl_channel_range_e,
+ * \ref pocl_format_e and \ref pocl_color_space_e for valid values.
+ */
+typedef struct
+{
+  cl_int width;
+  cl_int height;
+  cl_int color_space;
+  cl_int channel_range;
+  cl_int format;
+} pocl_image_attr_t;
+
+/**
+ * name: "exp_img_color_convert"
+ *
+ * Attributes for converting between different image formats.
+ */
+typedef struct
+{
+  pocl_image_attr_t input_image;
+  pocl_image_attr_t output_image;
+} cl_dbk_attributes_exp_img_color_convert;
 
 #endif /* OPENCL_EXP_DEFINED_BUILTIN_KERNELS */

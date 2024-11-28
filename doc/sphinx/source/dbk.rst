@@ -89,3 +89,10 @@ configuration files of ONNX Runtime:
     cd build
     cmake .. -Donnxruntime_DIR=${HOME}/onnxruntime-bin/lib/cmake/onnxruntime
     make -j$(nproc)
+
+img_color_convert_exp
+_____________________
+
+An experimental DBK that is similar in concept to OpenVX's color convert node.
+It is currently limited to nv12 to RGB, but lays down the groundwork for more
+image manipulation DBKs. 
