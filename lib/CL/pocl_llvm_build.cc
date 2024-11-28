@@ -49,6 +49,7 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
+#include <llvm/Support/VirtualFileSystem.h>
 
 #if LLVM_VERSION_MAJOR > 15
 #include "llvm/TargetParser/Host.h"
@@ -618,7 +619,7 @@ int pocl_llvm_build_program(cl_program program,
 #if LLVM_MAJOR < 20
   CI.createDiagnostics(diagsBuffer, false);
 #else
-  CI.createDiagnostics(CI.getVirtualFileSystem(), diagsBuffer, false);
+  CI.createDiagnostics(*llvm::vfs::getRealFileSystem(), diagsBuffer, false);
 #endif
   FrontendOptions &fe = pocl_build.getFrontendOpts();
   // The CreateFromArgs created an stdin input which we should remove first.
