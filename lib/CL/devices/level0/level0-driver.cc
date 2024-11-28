@@ -4212,6 +4212,7 @@ bool DMABufAllocation::free(Level0Device *D) {
       D->freeUSMMem(ExportPtr);
       ExportPtr = nullptr;
       ExportDev = nullptr;
+      FD = -1;
     } else {
       POCL_MSG_PRINT_LEVEL0("Not freeing Export alloc "
                             "because Import(s) remain\n");
