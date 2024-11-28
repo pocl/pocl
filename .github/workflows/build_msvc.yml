@@ -24,6 +24,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: cmd /C call {0}
+
 jobs:
   msvc_test_matrix:
     name: LLVM ${{ matrix.llvm_version }} - ${{ matrix.config }} - shared libs:${{ matrix.shared_libs }}
@@ -46,55 +50,23 @@ jobs:
         with:
           arch: x64
 
-      - name: Install Ninja
-        uses: llvm/actions/install-ninja@a1ea791b03c8e61f53a0e66f2f73db283aa0f01e
-
-      # Building LLVM from sources because the official binary
-      # packages doesn't include libraries or llvm-config.exe.
-      - name: Checkout LLVM
-        id: checkout-llvm
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: mamba-org/setup-micromamba@v2
         with:
-          repository: llvm/llvm-project
-          ref: release/${{ matrix.llvm_version }}.x
-          path: llvm-project
-
-      - name: Restore Cached LLVM
-        id: cache-llvm
-        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57
-        with:
-          path: install-llvm\**
-          key: llvm-${{ matrix.llvm_version }}-${{ runner.os }}-${{ steps.checkout-llvm.outputs.commit }}
-
-      - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
-        name: Configure LLVM
-        run:
-          cmake -S llvm-project\llvm -B build-llvm
-              -DCMAKE_BUILD_TYPE=Release
-              -DLLVM_ENABLE_PROJECTS=clang
-              -DLLVM_TARGETS_TO_BUILD=host
-              -DCMAKE_INSTALL_PREFIX=install-llvm
-              -G "Ninja"
-
-      - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
-        name: Install LLVM
-        run: |
-          cmake --build build-llvm
-          cmake --install build-llvm
-
-      # Save the LLVM installation result so we don't have to rebuild
-      # it in case a PoCL step fail ahead.
-      - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
-        name: Save LLVM
-        uses: actions/cache/save@1bd1e32a3bdc45362d1e726936510720a7c30a57
-        with:
-          path: install-llvm\**
-          key: llvm-${{ matrix.llvm_version }}-${{ runner.os }}-${{ steps.checkout-llvm.outputs.commit }}
+          environment-name: pocl-deps
+          init-shell: cmd.exe
+          create-args: >-
+            llvmdev=${{ matrix.llvm_version }}
+            clangdev=${{ matrix.llvm_version }}
+            ninja
 
       - name: Load Env vars
         id: load-env
         run: |
           cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
+
+      - name: Check llvm
+        run:
+          where llvm-config.exe
 
       # Keep this aligned with the Windows/MSVC build instructions
       # (docs/sphinx/source/windows.rst). This configuration step is
@@ -106,7 +78,6 @@ jobs:
               -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install-pocl
               -DENABLE_ICD=0
               -DENABLE_LLVM=1
-              -DWITH_LLVM_CONFIG=${{ github.workspace }}\install-llvm\bin\llvm-config.exe
               -DENABLE_LOADABLE_DRIVERS=OFF
               -DSTATIC_LLVM=ON
               -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL
