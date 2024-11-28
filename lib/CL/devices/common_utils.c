@@ -291,6 +291,7 @@ pocl_cpu_init_common (cl_device_id device)
                   "org.khronos.openvx.scale_image.nn.u8;"
                   "org.khronos.openvx.scale_image.bl.u8;"
                   "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32;"
+                  "exp_img_color_convert;"
 #ifdef HAVE_LIBXSMM
                   "gemm_exp;"
                   "matmul_exp;"
@@ -303,7 +304,7 @@ pocl_cpu_init_common (cl_device_id device)
                   "onnx_inference_exp;"
 #endif
         );
-      device->num_builtin_kernels = 4
+      device->num_builtin_kernels = 5
 #ifdef HAVE_LIBXSMM
                                     + 2
 #endif
@@ -313,7 +314,7 @@ pocl_cpu_init_common (cl_device_id device)
 #ifdef HAVE_ONNXRT
                                     + 1
 #endif
-          ;
+        ;
     }
 
   /* 0 is the host memory shared with all drivers that use it */
@@ -833,6 +834,8 @@ pocl_cpu_supports_dbk (cl_device_id device,
     case CL_DBK_ONNX_INFERENCE_EXP:
       return pocl_validate_dbk_attributes (kernel_id, kernel_attributes, NULL);
 #endif
+    case CL_DBK_IMG_COLOR_CONVERT:
+      return CL_SUCCESS;
     default:
       POCL_RETURN_ERROR (
         CL_DBK_UNSUPPORTED_EXP,
@@ -1191,7 +1194,10 @@ pocl_cpu_execute_dbk (cl_program program,
             pocl_cpu_get_ptr (&arguments[3], mem_id));
       }
 #endif
-  default:
+    case CL_DBK_IMG_COLOR_CONVERT:
+      return pocl_cpu_execute_dbk_exp_img_yuv2rgb (program, kernel, meta,
+                                                   dev_i, arguments);
+    default:
       {
         POCL_MSG_ERR ("Unhandled DBK id %d.\n", meta->builtin_kernel_id);
         return CL_FAILED;
