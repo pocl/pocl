@@ -9,6 +9,7 @@ on:
     branches:
       - 'main'
       - 'release*'
+      - 'ms-visual-studio'
   workflow_dispatch:
   pull_request:
     paths-ignore:
@@ -73,7 +74,9 @@ jobs:
       # intended to pick up MSVC as the compiler, but if the
       # environment is not set properly, it might pick up MinGW-gcc instead.
       - name: Configure PoCL
-        run:
+        run: |
+          set CC=clang-cl.exe
+          set CXX=clang-cl.exe
           cmake -S . -B build-pocl
               -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install-pocl
               -DENABLE_ICD=0
