@@ -60,6 +60,7 @@ jobs:
             clangdev=${{ matrix.llvm_version }}
             ninja
             zlib
+            winpthreads-devel
 
       - name: Load Env vars
         id: load-env
