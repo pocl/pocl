@@ -40,8 +40,9 @@ jobs:
         # proxy - proxy driver
         # accel - almaif driver
         # no_llvm_no_debug - pthread driver + ENABLE_LLVM=0 + POCL_DEBUG_MESSAGES=0
+        # only_lib - build only libpocl, no examples or binaries
         # android is currently disabled, need to check NDK license if we can use it in CI
-        config: [cross, proxy, accel, no_llvm_no_debug]
+        config: [cross, proxy, accel, no_llvm_no_debug, only_lib]
 
     steps:
       - name: Checkout
@@ -73,6 +74,8 @@ jobs:
             runCMake -DENABLE_ALMAIF_DEVICE=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_LLVM=0 -DENABLE_HOST_CPU_DEVICES=0
           elif [ "${{ matrix.config }}" == "no_llvm_no_debug" ]; then
             runCMake -DHOST_DEVICE_BUILD_HASH=1234567 -DENABLE_LLVM=0 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DPOCL_DEBUG_MESSAGES:BOOL=OFF
+          elif [ "${{ matrix.config }}" == "only_lib" ]; then
+            runCMake -DHOST_DEVICE_BUILD_HASH=1234567 -DENABLE_LLVM=0 -DENABLE_ICD=0 -DENABLE_LLVM=0 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_EXAMPLES=0 -DENABLE_POCLCC=0
           elif [ "${{ matrix.config }}" == "proxy" ]; then
             runCMake -DENABLE_PROXY_DEVICE=1 -DENABLE_PROXY_DEVICE_INTEROP=1 -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LLVM=0 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DVISIBILITY_HIDDEN=0
           else
