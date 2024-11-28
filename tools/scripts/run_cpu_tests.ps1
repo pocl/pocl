@@ -23,14 +23,14 @@
 $env:POCL_BUILDING = '1'
 $env:POCL_DEVICES = 'cpu'
 
-if (!$Env:OCL_ICD_VENDORS) {
-    $Env:OCL_ICD_VENDORS = "" + (Get-Location) + "\ocl-vendors"
+if (!$Env:OCL_ICD_FILENAMES) {
+    $Env:OCL_ICD_FILENAMES = "" + (Get-Location) + "\lib\CL\pocl.dll"
 }
 
-if (Test-Path -Path $Env:OCL_ICD_VENDORS) {
-    write-host "Using OCL_ICD_VENDORS: $Env:OCL_ICD_VENDORS"
+if (Test-Path -Path $Env:OCL_ICD_FILENAMES) {
+    write-host "Using OCL_ICD_FILENAMES: $Env:OCL_ICD_FILENAMES"
 } else {
-    $Env:OCL_ICD_VENDORS = ""
+    $Env:OCL_ICD_FILENAMES = ""
 }
 
 $TEST_TYPE = $args[0]

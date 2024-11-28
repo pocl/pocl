@@ -225,6 +225,12 @@ endif ()
 if(HAVE_OPENCV)
   target_link_libraries("pocl-devices" PRIVATE opencv_dnn)
 endif ()
+if(BUILD_SHARED_LIBS AND MSVC)
+  # Inject __declspec(dllexport).
+  target_compile_definitions("pocl-devices" PRIVATE EXPORT_POCL_LIB)
+  target_compile_definitions("pocl-devices" INTERFACE IMPORT_POCL_LIB)
+endif()
+
 
 set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
     "$<TARGET_OBJECTS:pocl-devices>")

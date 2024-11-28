@@ -265,6 +265,11 @@ if (ENABLE_LLVM)
   add_library("lib_cl_llvm" OBJECT ${LLVM_API_SOURCES})
   target_include_directories(lib_cl_llvm PRIVATE ${LLVM_INCLUDE_DIRS})
   harden("lib_cl_llvm")
+  if(BUILD_SHARED_LIBS AND MSVC)
+    # Inject __declspec(dllexport).
+    target_compile_definitions(lib_cl_llvm PRIVATE EXPORT_POCL_LIB)
+    target_compile_definitions(lib_cl_llvm INTERFACE IMPORT_POCL_LIB)
+  endif()
 
   if(OCL_ICD_INCLUDE_DIRS)
     target_include_directories("lib_cl_llvm" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
@@ -300,6 +305,7 @@ add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
 if(BUILD_SHARED_LIBS AND MSVC)
   # Inject __declspec(dllexport).
   target_compile_definitions(libpocl_unlinked_objs PRIVATE EXPORT_POCL_LIB)
+  target_compile_definitions(libpocl_unlinked_objs INTERFACE IMPORT_POCL_LIB)
 endif()
 
 harden("libpocl_unlinked_objs")
@@ -350,6 +356,11 @@ set(POCL_TRANSITIVE_LIBS ${POCL_PRIVATE_LINK_LIST} PARENT_SCOPE)
 #################################################################
 
 add_library("${POCL_LIBRARY_NAME}" ${LIBPOCL_OBJS})
+if(BUILD_SHARED_LIBS AND MSVC)
+  # Inject __declspec(dllexport).
+  target_compile_definitions("${POCL_LIBRARY_NAME}" PRIVATE EXPORT_POCL_LIB)
+  target_compile_definitions("${POCL_LIBRARY_NAME}" INTERFACE IMPORT_POCL_LIB)
+endif()
 
 harden("${POCL_LIBRARY_NAME}")
 
