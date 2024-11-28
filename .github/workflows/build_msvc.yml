@@ -78,13 +78,13 @@ jobs:
         run: |
           set "CC=clang-cl.exe"
           set "CXX=clang-cl.exe"
-          cmake -S . -B build-pocl
-              -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install-pocl
-              -DENABLE_ICD=0
-              -DENABLE_LLVM=1
-              -DENABLE_LOADABLE_DRIVERS=OFF
-              -DSTATIC_LLVM=ON
-              -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL
+          cmake -S . -B build-pocl ^
+              -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install-pocl ^
+              -DENABLE_ICD=0 ^
+              -DENABLE_LLVM=1 ^
+              -DENABLE_LOADABLE_DRIVERS=OFF ^
+              -DSTATIC_LLVM=ON ^
+              -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL ^
               -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }}
               -G "Ninja"
 
