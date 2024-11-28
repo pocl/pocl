@@ -66,8 +66,9 @@ jobs:
           cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
 
       - name: Check llvm
-        run:
+        run: |
           where llvm-config.exe
+          where clang-cl.exe
 
       # Keep this aligned with the Windows/MSVC build instructions
       # (docs/sphinx/source/windows.rst). This configuration step is
@@ -75,8 +76,8 @@ jobs:
       # environment is not set properly, it might pick up MinGW-gcc instead.
       - name: Configure PoCL
         run: |
-          set CC=clang-cl.exe
-          set CXX=clang-cl.exe
+          set "CC=clang-cl.exe"
+          set "CXX=clang-cl.exe"
           cmake -S . -B build-pocl
               -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install-pocl
               -DENABLE_ICD=0
