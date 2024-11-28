@@ -27,6 +27,7 @@
 
 #include "dbk/pocl_dbk_khr_jpeg_shared.h"
 #include "dbk/pocl_dbk_khr_onnxrt_shared.h"
+#include "dbk/pocl_dbk_khr_img_shared.h"
 
 #include <string.h>
 
@@ -434,6 +435,9 @@ pocl_init_builtin_kernel_metadata ()
               BI_ARG_READ_BUF ("unsigned char*", "inputs"),
               BI_ARG_READ_BUF ("unsigned long*", "output_offsets"),
               BI_ARG_WRITE_BUF ("unsigned char*", "outputs"), ),
+    BIKD_DBK (POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT, "exp_img_color_convert", 2,
+              BI_ARG_READ_BUF ("uint8_t*", "input"),
+              BI_ARG_WRITE_BUF ("uint8_t*", "output"), ),
 
   };
   memcpy (pocl_BIDescriptors, temporary_BIDescriptors,
@@ -876,7 +880,9 @@ pocl_validate_dbk_attributes (cl_dbk_id_exp kernel_id,
         return CL_SUCCESS;
       }
 #endif
-  default:
+    case POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT:
+      return pocl_validate_img_attrs (kernel_id, kernel_attributes);
+    default:
       break;
     }
   POCL_RETURN_ERROR (CL_DBK_INVALID_ID_EXP, "Unknown builtin kernel ID: %u.\n",
@@ -941,7 +947,9 @@ pocl_copy_defined_builtin_attributes (cl_dbk_id_exp kernel_id,
     case CL_DBK_ONNX_INFERENCE_EXP:
       return pocl_copy_onnx_inference_dbk_attributes (kernel_attributes);
 #endif
-  default:
+    case POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT:
+      return pocl_copy_img_attrs (kernel_id, kernel_attributes);
+    default:
       break;
     }
   POCL_MSG_ERR ("Unknown builtin kernel ID: %u", kernel_id);
@@ -986,6 +994,8 @@ pocl_release_defined_builtin_attributes (cl_dbk_id_exp kernel_id,
         return CL_SUCCESS;
       }
 #endif
+    case POCL_CDBI_DBK_EXP_IMG_COLOR_CONVERT:
+      return pocl_release_img_attrs (kernel_id, kernel_attributes);
     default:
       break;
     }

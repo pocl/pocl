@@ -93,3 +93,10 @@ configuration files of ONNX Runtime:
 
 If you downloaded a prebuilt binary, replace `${HOME}/onnxruntime-bin` in the
 cmake command with the path where you unpacked the bundle to.
+
+img_color_convert_exp
+_____________________
+
+An experimental DBK that is similar in concept to OpenVX's color convert node.
+It is currently limited to nv12 to RGB, but lays down the groundwork for more
+image manipulation DBKs.

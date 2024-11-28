@@ -45,7 +45,8 @@ set(C_PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clSetMemObjectDestructorCallback test_dbk_jpeg
   test_cl_pocl_content_size test_cl_pocl_content_size_migration
   test_deviceside_enqueue test_command_buffer test_command_buffer_images
-  test_command_buffer_multi_device test_queue_creation_with_hints test_remote_discovery)
+  test_command_buffer_multi_device test_queue_creation_with_hints
+  test_remote_discovery test_dbk_color_convert)
 
 if(HAVE_ONNXRT)
   list(APPEND C_PROGRAMS_TO_BUILD test_dbk_onnx_inference)
@@ -56,9 +57,11 @@ set(CXX_PROGRAMS_TO_BUILD test_device_address test_svm test_large_buf
 
 add_compile_options(${OPENCL_CFLAGS} -I${CMAKE_SOURCE_DIR}/include)
 
+add_library(image_test_utils STATIC image_test_utils.c image_test_utils.h)
+
 foreach(PROG ${C_PROGRAMS_TO_BUILD})
   add_executable("${PROG}" "${PROG}.c")
-  target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
+  target_link_libraries("${PROG}"  image_test_utils ${POCLU_LINK_OPTIONS})
 endforeach()
 
 foreach(PROG ${CXX_PROGRAMS_TO_BUILD})

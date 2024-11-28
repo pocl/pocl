@@ -12,6 +12,7 @@ endif ()
 
 list(APPEND POCL_DEVICES_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/pocl_dbk_khr_jpeg_cpu.c ${CMAKE_CURRENT_SOURCE_DIR}/pocl_dbk_khr_jpeg_cpu.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/pocl_dbk_khr_img_cpu.c ${CMAKE_CURRENT_SOURCE_DIR}/pocl_dbk_khr_img_cpu.h
 )
 
 set(POCL_DEVICES_LINK_LIST ${POCL_DEVICES_LINK_LIST} PARENT_SCOPE)
