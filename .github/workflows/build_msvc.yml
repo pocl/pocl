@@ -92,6 +92,7 @@ jobs:
               -DSTATIC_LLVM=ON ^
               -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL ^
               -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }}
+              -DCMAKE_BUILD_TYPE=Release ^
               -G "Ninja"
 
       - name: Build PoCL

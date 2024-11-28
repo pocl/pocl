@@ -328,7 +328,7 @@ option(ENABLE_REMOTE_ADVERTISEMENT_AVAHI "Enable remote server advertisement usi
 
 option(ENABLE_REMOTE_ADVERTISEMENT_DHT "Enable remote server advertisement using DHT" OFF)
 
-if (ENABLE_PROXY_DEVICE)
+if (ENABLE_PROXY_DEVICE OR MSVC)
   set(VISIBILITY_HIDDEN_DEFAULT OFF)
 else()
   set(VISIBILITY_HIDDEN_DEFAULT ON)
