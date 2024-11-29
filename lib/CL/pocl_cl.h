@@ -1578,6 +1578,7 @@ struct _cl_command_buffer_khr
 
   _cl_command_node *cmds;
   cl_bool is_mutable;
+  cl_bool assert_no_more_wgs;
 };
 
 #define POCL_ON_SUB_MISALIGN(mem, que, operation)                             \
