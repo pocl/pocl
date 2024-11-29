@@ -54,7 +54,9 @@ jobs:
       - uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: pocl-deps
-          init-shell: cmd.exe
+          init-shell: >-
+            cmd.exe
+            powershell
           create-args: >-
             llvmdev=${{ matrix.llvm_version }}
             clangdev=${{ matrix.llvm_version }}
@@ -102,6 +104,7 @@ jobs:
         env:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         timeout-minutes: 120
+        shell: pwsh
         run: |
           if (Test-Path -path ${{ env.POCL_CACHE_DIR }}) {
             rm -r ${{ env.POCL_CACHE_DIR }}
