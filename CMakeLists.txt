@@ -1268,12 +1268,6 @@ endif()
 
 if(NOT DEFINED DEFAULT_ENABLE_ICD)
 
-if (MSVC)
-  message(STATUS "Building ICD not yet supported on Windows.")
-  set(DEFAULT_ENABLE_ICD 0 CACHE INTERNAL "Going to use ICD loader")
-
-else()
-
   # pkg-config doesn't work with cross-compiling
   if(PKG_CONFIG_EXECUTABLE)
     pkg_check_modules(OCL_ICD ocl-icd>=1.3)
@@ -1355,8 +1349,6 @@ else()
   endif()
 
   set(DEFAULT_ENABLE_ICD ${HAVE_OCL_ICD_30_COMPATIBLE} CACHE INTERNAL "ICD loader availability")
-
-endif()
 
 endif()
 
