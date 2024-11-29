@@ -47,6 +47,7 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_alignment_with_dynamic_wg2 test_alignment_with_dynamic_wg3
   test_issue_893 test_issue_1435 test_builtin_args test_issue_1390
   test_workitem_func_outside_kernel test_program_scope_vars test_issue_1548
+  test_bitshift_ub
 )
 
 if (MSVC)
@@ -77,6 +78,13 @@ add_test_pocl(NAME "regression/test_issue_577" COMMAND "test_issue_577")
 add_test_pocl(NAME "regression/test_issue_757" COMMAND "test_issue_757")
 
 add_test_pocl(NAME "regression/test_issue_1435" COMMAND "test_issue_1435")
+
+if(NOT WIN32)
+  add_test(NAME "regression/test_bitshift_ub" COMMAND "test_bitshift_ub")
+  set_tests_properties("regression/test_bitshift_ub" PROPERTIES
+    LABELS "internal;regression"
+    SKIP_RETURN_CODE 77)
+endif()
 
 add_test_pocl(NAME "regression/test_workitem_func_outside_kernel" COMMAND "test_workitem_func_outside_kernel")
 
