@@ -82,8 +82,6 @@ jobs:
           set "DEPS_DIR=%MAMBA_ROOT_PREFIX%\envs\pocl-deps\Library"
           :: Fix an issue with llvm-config on windows
           copy %DEPS_DIR%\lib\zstd.lib %DEPS_DIR%\lib\zstd.dll.lib
-          :: Set library dirs
-          set "LIB=%LIB%;%DEPS_DIR%\lib"
           cmake -S . -B build-pocl ^
               -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install-pocl ^
               -DCMAKE_PREFIX_PATH=%DEPS_DIR% ^
