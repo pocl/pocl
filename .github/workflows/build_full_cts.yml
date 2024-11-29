@@ -7,8 +7,8 @@ permissions:
 on:
   workflow_dispatch:
   schedule:
-# at 14:01 every friday
-    - cron: '01 14 * * 5'
+# at 12:17 UTC every friday
+    - cron: '17 12 * * 5'
 
 jobs:
   cpu_cts:

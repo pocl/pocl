@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Checkout PoCL
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       # Source MSVC tools. This is a known way to have the PoCL configuration
       # step to pick up MSVC compiler (cl.exe) instead of MinGW's gcc.
@@ -52,7 +52,7 @@ jobs:
       # packages doesn't include libraries or llvm-config.exe.
       - name: Checkout LLVM
         id: checkout-llvm
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           repository: llvm/llvm-project
           ref: release/${{ matrix.llvm_version }}.x
@@ -60,7 +60,7 @@ jobs:
 
       - name: Restore Cached LLVM
         id: cache-llvm
-        uses: actions/cache@v4
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a
         with:
           path: install-llvm\**
           key: llvm-${{ matrix.llvm_version }}-${{ runner.os }}-${{ steps.checkout-llvm.outputs.commit }}
@@ -85,7 +85,7 @@ jobs:
       # it in case a PoCL step fail ahead.
       - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
         name: Save LLVM
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@6849a6489940f00c2f30c0fb92c6274307ccb58a
         with:
           path: install-llvm\**
           key: llvm-${{ matrix.llvm_version }}-${{ runner.os }}-${{ steps.checkout-llvm.outputs.commit }}

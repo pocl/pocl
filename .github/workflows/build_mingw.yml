@@ -35,7 +35,7 @@ jobs:
 
     steps:
       - name: Setup MSYS2
-        uses: msys2/setup-msys2@v2
+        uses: msys2/setup-msys2@c52d1fa9c7492275e60fe763540fb601f5f232a1 # v2.25.0
         with:
           msystem: MINGW64
           update: true
@@ -47,7 +47,7 @@ jobs:
             mingw-w64-x86_64-pkg-config
 
       - name: Checkout PoCL
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Setup Build Environment
         run: |
@@ -57,7 +57,7 @@ jobs:
 
       - name: Checkout LLVM
         id: checkout-llvm
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           repository: llvm/llvm-project
           ref: release/${{ matrix.llvm_version }}.x
@@ -65,10 +65,10 @@ jobs:
 
       - name: Restore Cached LLVM
         id: cache-llvm
-        uses: actions/cache@v4
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a
         with:
           path: install-llvm
-          key: llvm-mingw-${{ matrix.llvm_version }}-${{ runner.os }}-${{ steps.checkout-llvm.outputs.commit }}
+          key: llvm-mingw-${{ matrix.llvm_version }}-${{ runner.os }}
 
       - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
         name: Configure LLVM
@@ -91,10 +91,10 @@ jobs:
 
       - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
         name: Save LLVM
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@6849a6489940f00c2f30c0fb92c6274307ccb58a
         with:
           path: install-llvm
-          key: llvm-mingw-${{ matrix.llvm_version }}-${{ runner.os }}-${{ steps.checkout-llvm.outputs.commit }}
+          key: llvm-mingw-${{ matrix.llvm_version }}-${{ runner.os }}
 
       - name: Load Env vars
         id: load-env
