@@ -64,7 +64,7 @@ POname (clCreateCommandBufferKHR) (
   cl_uint num_properties = 0;
   cl_command_buffer_properties_khr *seen_keys = NULL;
   cl_bool property_mutable = 0;
-  cl_bool property_asserts = 0;
+  cl_bool property_assert_no_more_wgs = 0;
   if (properties != NULL)
     {
       const cl_command_buffer_properties_khr *key = 0;
@@ -116,7 +116,10 @@ POname (clCreateCommandBufferKHR) (
               break;
 
             case CL_COMMAND_BUFFER_MUTABLE_DISPATCH_ASSERTS_KHR:
-              property_asserts = (val & CL_MUTABLE_DISPATCH_ASSERT_NO_ADDITIONAL_WORK_GROUPS_KHR) > 0;
+              property_assert_no_more_wgs
+                = (val
+                   & CL_MUTABLE_DISPATCH_ASSERT_NO_ADDITIONAL_WORK_GROUPS_KHR)
+                  > 0;
               break;
 
             default:
@@ -154,6 +157,7 @@ POname (clCreateCommandBufferKHR) (
   cmdbuf->state = CL_COMMAND_BUFFER_STATE_RECORDING_KHR;
   cmdbuf->num_queues = num_queues;
   cmdbuf->is_mutable = property_mutable;
+  cmdbuf->assert_no_more_wgs = property_assert_no_more_wgs;
   cmdbuf->queues
       = (cl_command_queue *)calloc (num_queues, sizeof (cl_command_queue));
   memcpy (cmdbuf->queues, queues, num_queues * sizeof (cl_command_queue));
