@@ -2388,7 +2388,20 @@ bool Level0Device::setupModuleProperties(bool &SupportsInt64Atomics,
 
   ClDev->device_side_printf = 0;
   ClDev->printf_buffer_size = ModuleProperties.printfBufferSize;
+  // leaving the default gives an error with CTS test_api:
+  //
+  // error: Total size of kernel arguments exceeds limit!
+  //        Total arguments size: 2060, limit: 2048
+  // in kernel: 'get_kernel_arg_info'
+  //
+  // this is a bug in the CTS, fixed in our branch,
+  // but this workaround is needed for upstream CTS
   ClDev->max_parameter_size = ModuleProperties.maxArgumentsSize;
+#ifdef ENABLE_CONFORMANCE
+  if (ModuleProperties.maxArgumentsSize > 256) {
+    ClDev->max_parameter_size = ModuleProperties.maxArgumentsSize - 64;
+  }
+#endif
   return true;
 }
 
