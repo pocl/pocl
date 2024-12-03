@@ -334,7 +334,9 @@ else()
   set(VISIBILITY_HIDDEN_DEFAULT ON)
 endif()
 option(VISIBILITY_HIDDEN "Build with -fvisibility=hidden -fvisibility-inlines-hidden" ${VISIBILITY_HIDDEN_DEFAULT})
-if(VISIBILITY_HIDDEN)
+
+if(VISIBILITY_HIDDEN AND NOT MSVC)
+  # MSVC ignores the following options and spams warnings about them.
   add_compile_options(-fvisibility=hidden)
   add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fvisibility-inlines-hidden>)
 endif()
