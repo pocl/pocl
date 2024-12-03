@@ -536,6 +536,14 @@ endif()
 ######################################################################################
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+include(pocl_utils)
+
+if(WIN32 AND NOT ENABLE_ICD AND BUILD_SHARED_LIBS)
+  # To have executables link to PoCL built OpenCL.dll instead of a system one
+  # we resort to symlinks which require elevated permissions or developer mode
+  # enabled.
+  pocl_assert_symlinks_works()
+endif()
 
 option(HARDENING_ENABLE "Enable hardening against various attacks. May worsen performance" OFF)
 if(HARDENING_ENABLE)
