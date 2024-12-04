@@ -40,14 +40,14 @@
 
 static OrtApi *ort_api = NULL;
 
-typedef struct onnxrt_instance
+struct onnxrt_instance
 {
   OrtEnv *env;
   OrtMemoryInfo *mem_info;
   OrtSession *session;
   OrtSessionOptions *session_options;
   const cl_dbk_attributes_onnx_inference_exp *attributes;
-} onnxrt_instance_t;
+};
 
 static void
 pocl_ort_logger (void *_param,
