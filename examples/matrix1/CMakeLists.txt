@@ -26,8 +26,8 @@
 add_compile_options(${OPENCL_CFLAGS} -std=c99)
 
 add_executable("matrix1" matrix1.c matrix1.cl)
-
 target_link_libraries("matrix1" ${POCLU_LINK_OPTIONS})
+add_symlink_to_built_opencl_dynlib(matrix1)
 
 add_test(NAME "examples/matrix1" COMMAND "matrix1" 512)
 

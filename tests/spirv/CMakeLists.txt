@@ -30,6 +30,7 @@ add_compile_options( -Wno-deprecated -Wno-deprecated-declarations)
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
 add_executable("spirv_printf" printf.cc)
+add_symlink_to_built_opencl_dynlib("spirv_printf")
 
 target_link_libraries("spirv_printf" ${POCLU_LINK_OPTIONS})
 
