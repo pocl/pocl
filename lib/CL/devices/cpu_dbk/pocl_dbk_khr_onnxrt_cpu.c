@@ -29,7 +29,6 @@
 #include "CL/cl_exp_tensor.h"
 #include "onnxruntime_c_api.h"
 
-#include "pocl_builtin_kernels.h"
 #include "pocl_cl.h"
 #include "pocl_debug.h"
 #include "pocl_dbk_khr_onnxrt_cpu.h"
@@ -37,7 +36,7 @@
 
 /* Update as needed, but make sure to remove uses of deprecated functions when
  * doing so. */
-#define TARGET_ORT_API_VERSION 16
+#define TARGET_ORT_API_VERSION 17
 
 static OrtApi *ort_api = NULL;
 

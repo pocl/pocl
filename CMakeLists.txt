@@ -1144,14 +1144,17 @@ endif()
 ######################################################################################
 
 if(ENABLE_HOST_CPU_DEVICES AND PKG_CONFIG_FOUND AND NOT ENABLE_CONFORMANCE)
+  # PoCL requires libxsmm to support LIBXSMM_DATATYPE_F16, which was added after the
+  # 1.17 release. Until there is a new release, building libxsmm from git and
+  # manually updating the version number in version.txt before building is necessary.
   if(BUILD_SHARED_LIBS)
-    pkg_check_modules(LIBXSMM IMPORTED_TARGET libxsmm-shared>=1.15)
+    pkg_check_modules(LIBXSMM IMPORTED_TARGET libxsmm-shared>1.17.0)
   endif()
   if(NOT LIBXSMM_FOUND)
-    pkg_check_modules(LIBXSMM IMPORTED_TARGET libxsmm-static>=1.15)
+    pkg_check_modules(LIBXSMM IMPORTED_TARGET libxsmm-static>1.17.0)
   endif()
   if(NOT LIBXSMM_FOUND)
-    pkg_check_modules(LIBXSMM IMPORTED_TARGET libxsmm>=1.15)
+    pkg_check_modules(LIBXSMM IMPORTED_TARGET libxsmm>1.17.0)
   endif()
 
   # libxsmm needs BLAS as fallback
@@ -1166,6 +1169,8 @@ if(LIBXSMM_FOUND AND TARGET BLAS::BLAS)
 else()
   set(HAVE_LIBXSMM 0)
   message(STATUS "libxsmm or libblas not found, XSMM disabled")
+  message(STATUS "NOTE: If you meant to use a git build of libxsmm you may have to manually bump "
+          "the version in its version.txt before building.")
 endif()
 
 function(print_target_properties target)
@@ -1204,7 +1209,9 @@ if(ENABLE_HOST_CPU_DEVICES AND NOT ENABLE_CONFORMANCE)
       set(HAVE_ONNXRT ON)
     endif ()
   else ()
-    find_package(onnxruntime QUIET)
+    # PoCL requires SetUserLoggingFunction which was introduced in 1.17,
+    # search for a version that is compatible with this.
+    find_package(onnxruntime 1.17 QUIET)
     set(HAVE_ONNXRT ${onnxruntime_FOUND})
     if (${HAVE_ONNXRT})
       # TODO: this is a hack, just passing onnxruntime::onnxruntime
