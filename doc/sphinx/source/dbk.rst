@@ -61,7 +61,8 @@ Building with a custom ONNX Runtime
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Some popular Linux distributions don't provide prebuilt packages of ONNX Runtime
-so you may have to
+so you may have to `grab a prebuilt copy from Github
+<https://github.com/microsoft/onnxruntime/releases>` or
 `build your own <https://onnxruntime.ai/docs/build/inferencing.html>` and tell
 CMake where to find it. Steps for building a suitable copy of ONNX Runtime (run
 outside of the PoCL source tree) are as follows:
@@ -89,3 +90,6 @@ configuration files of ONNX Runtime:
     cd build
     cmake .. -Donnxruntime_DIR=${HOME}/onnxruntime-bin/lib/cmake/onnxruntime
     make -j$(nproc)
+
+If you downloaded a prebuilt binary, replace `${HOME}/onnxruntime-bin` in the
+cmake command with the path where you unpacked the bundle to.
