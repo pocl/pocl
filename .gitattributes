@@ -36,3 +36,7 @@ tools/scripts/devel-configure                   export-ignore
 # should we include these ?
 android/      export-ignore
 windows/      export-ignore
+
+# raw image files
+*.nv12 binary
+*.rgb binary

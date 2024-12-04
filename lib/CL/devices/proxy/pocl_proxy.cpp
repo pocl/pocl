@@ -1402,7 +1402,7 @@ pocl_proxy_setup_metadata (cl_device_id device, cl_program program,
   proxy_device_data_t *d = (proxy_device_data_t *)device->data;
   cl_program proxy_prog = (cl_program)program->data[program_device_i];
 
-  if (!d->backend->provides_metadata || !d->backend->supports_il)
+  if (!(d->backend->provides_metadata || d->backend->supports_il))
     return 0;
 
   assert(program->kernel_meta == NULL);

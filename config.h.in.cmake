@@ -108,6 +108,8 @@
 
 #cmakedefine HAVE_ONNXRT
 
+#cmakedefine HAVE_OPENCV
+
 #cmakedefine HAVE_OCL_ICD
 #cmakedefine HAVE_OCL_ICD_30_COMPATIBLE
 
