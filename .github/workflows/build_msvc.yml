@@ -106,10 +106,10 @@ jobs:
               -DENABLE_ICD=0
               -DENABLE_LLVM=1
               -DWITH_LLVM_CONFIG=${{ github.workspace }}\install-llvm\bin\llvm-config.exe
-              -DENABLE_LOADABLE_DRIVERS=0
+              -DENABLE_LOADABLE_DRIVERS=OFF
               -DSTATIC_LLVM=ON
               -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL
-              -DBUILD_SHARED_LIBS=OFF
+              -DBUILD_SHARED_LIBS=ON
               -G "Ninja"
 
       - name: Build PoCL
