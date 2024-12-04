@@ -27,8 +27,8 @@
 add_compile_options(${OPENCL_CFLAGS})
 
 add_executable("example0" example0.c example0_exec.c example0.cl)
-
 target_link_libraries("example0" ${POCLU_LINK_OPTIONS})
+add_symlink_to_built_opencl_dynlib(example0)
 
 add_test_pocl(NAME "examples/example0" COMMAND "example0" LLVM_FILECHECK "example0.fc" WORKITEM_HANDLER "loopvec")
 

@@ -45,6 +45,8 @@ if(ENABLE_POCLCC)
 
   set("CPACK_DEBIAN_POCLCC_PACKAGE_NAME" "poclcc")
   list(APPEND CPACK_DEBIAN_POCLCC_PACKAGE_DEPENDS "opencl-icd")
+
+  add_symlink_to_built_opencl_dynlib(poclcc)
 endif()
 
 pass_through_cpack_vars()

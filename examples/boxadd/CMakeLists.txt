@@ -26,8 +26,8 @@
 add_compile_options(${OPENCL_CFLAGS})
 
 add_executable("boxadd" boxadd.c boxadd_exec.c boxadd.cl)
-
 target_link_libraries("boxadd" ${POCLU_LINK_OPTIONS})
+add_symlink_to_built_opencl_dynlib("boxadd")
 
 add_test(NAME "examples/boxadd" COMMAND "boxadd")
 
