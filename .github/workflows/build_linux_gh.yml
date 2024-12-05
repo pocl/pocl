@@ -107,7 +107,7 @@ jobs:
            sudo ln -s /opt/libjpeg-turbo/lib64 /opt/libjpeg-turbo/lib &&
            sudo ln -s /opt/onnx/lib /opt/onnx/lib64 &&
            sudo mv /opt/onnx/include /opt/onnxruntime && sudo mkdir /opt/onnx/include && sudo mv /opt/onnxruntime /opt/onnx/include/ &&
-           sudo bash -c 'mkdir /opt/source && cd /opt/source && git clone https://github.com/libxsmm/libxsmm.git && cd libxsmm && make -j3 STATIC=0 FORTRAN=0 AVX=2 install DESTDIR=/opt/xsmm'
+           sudo bash -c 'mkdir /opt/source && cd /opt/source && git clone https://github.com/libxsmm/libxsmm.git && cd libxsmm && echo "unstable-1.17.1" > version.txt && make -j3 STATIC=0 FORTRAN=0 AVX=2 install DESTDIR=/opt/xsmm'
 
       - name: CMake
         id: cmake
