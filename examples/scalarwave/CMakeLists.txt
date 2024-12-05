@@ -28,8 +28,8 @@ add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 add_compile_options(${OPENCL_CFLAGS} -std=c99)
 
 add_executable("scalarwave" scalarwave.c scalarwave.cl)
-
 target_link_libraries("scalarwave" ${POCLU_LINK_OPTIONS})
+add_symlink_to_built_opencl_dynlib("scalarwave")
 
 add_test_pocl(NAME "examples/scalarwave" COMMAND "scalarwave" EXPECTED_OUTPUT "scalarwave_expout.txt")
 

@@ -31,6 +31,7 @@ add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 add_compile_options(${OPENCL_CFLAGS} -std=c99)
 
 add_executable("EinsteinToolkit" EinsteinToolkit.c ML_BSSN_CL_RHS1.cl ML_BSSN_CL_RHS2.cl)
+add_symlink_to_built_opencl_dynlib("EinsteinToolkit")
 
 # EinsteinToolkit_LDADD = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
 target_link_libraries("EinsteinToolkit" ${POCLU_LINK_OPTIONS})

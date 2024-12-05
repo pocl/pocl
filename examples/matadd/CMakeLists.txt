@@ -26,8 +26,8 @@
 add_compile_options(${OPENCL_CFLAGS})
 
 add_executable("matadd" matadd.c matadd_exec.c matadd.cl)
-
 target_link_libraries("matadd" ${POCLU_LINK_OPTIONS})
+add_symlink_to_built_opencl_dynlib(matadd)
 
 add_test(NAME "examples/matadd" COMMAND "matadd")
 
