@@ -1475,7 +1475,7 @@ set(HOST_DEVICE_CL_VERSION_MINOR 0)
 # Host CPU device: list of extensions that are always enabled, for both OpenCL 1.2 and 3.0
 set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
 cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
-cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes \
+cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes cl_ext_float_atomics \
 cl_intel_unified_shared_memory cl_ext_buffer_device_address")
 
 # Host CPU device: list of OpenCL 3.0 features that are always enabled
@@ -1513,7 +1513,7 @@ if(NOT ENABLE_CONFORMANCE)
   endif()
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroups cl_khr_subgroup_ballot \
 cl_khr_subgroup_shuffle cl_intel_subgroups cl_intel_subgroups_short cl_intel_subgroups_char \
-cl_ext_float_atomics cl_intel_required_subgroup_size")
+cl_intel_required_subgroup_size")
   # read-write images are still partially broken
   # program-scope variables work on OpenCL C input, but breaks with SPIR-V input (llvm-spirv bugs)
   set(HOST_DEVICE_FEATURES_30  "${HOST_DEVICE_FEATURES_30} __opencl_c_read_write_images __opencl_c_program_scope_global_variables")
