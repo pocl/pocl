@@ -387,7 +387,8 @@ static size_t estimateFunctionStackSize(llvm::Function *Func,
   if (Func == nullptr)
     return 0;
   DB_PRINT("estimating function stack size of %s\n", Func->getName().data());
-  size_t TotalSize = 0;
+  size_t TotalSelfSize = 0;
+  size_t TotalSubSize = 0;
   CallChain.push_back(Func);
 
   for (auto FIter = Func->begin(); FIter != Func->end(); FIter++) {
@@ -399,10 +400,10 @@ static size_t estimateFunctionStackSize(llvm::Function *Func,
         const llvm::DataLayout &DL = Mod->getDataLayout();
 #if LLVM_MAJOR > 15
         if (auto AllocaSize = AI->getAllocationSize(DL))
-          TotalSize += AllocaSize->getKnownMinValue();
+          TotalSelfSize += AllocaSize->getKnownMinValue();
 #else
         if (auto AllocaSize = AI->getAllocationSizeInBits(DL))
-          TotalSize += AllocaSize->getKnownMinSize();
+          TotalSelfSize += AllocaSize->getKnownMinSize();
 #endif
         continue;
       }
@@ -410,7 +411,6 @@ static size_t estimateFunctionStackSize(llvm::Function *Func,
       CallInst *CI = dyn_cast<CallInst>(BIter);
       Function *Callee;
       if (CI && (Callee = CI->getCalledFunction())) {
-
         if (std::find(CallChain.begin(), CallChain.end(), Callee) !=
             CallChain.end()) {
           DB_PRINT("error: encountered recursion!\n");
@@ -419,15 +419,19 @@ static size_t estimateFunctionStackSize(llvm::Function *Func,
         }
 
         auto It = StackSizesMap.find(Callee);
-        if (It != StackSizesMap.end())
-          TotalSize += It->second;
-        else
-          TotalSize +=
+        if (It != StackSizesMap.end()) {
+          TotalSubSize = std::max(It->second, TotalSubSize);
+        } else {
+          size_t SubSize =
               estimateFunctionStackSize(Callee, Mod, CallChain, StackSizesMap);
+          StackSizesMap.insert(std::make_pair(Callee, SubSize));
+          TotalSubSize = std::max(SubSize, TotalSubSize);
+        }
       }
     }
   }
 
+  size_t TotalSize = TotalSelfSize + TotalSubSize;
   CallChain.pop_back();
   StackSizesMap.insert(std::make_pair(Func, TotalSize));
   return TotalSize;
