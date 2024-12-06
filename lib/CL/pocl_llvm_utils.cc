@@ -538,7 +538,20 @@ void InitializeLLVM() {
       O = opts["debug"];
       assert(O && "could not find LLVM option 'debug'");
       O->addOccurrence(1, StringRef("debug"), StringRef("true"), false);
+#if 0
+      O = opts["debug-only"];
+      assert(O && "could not find LLVM option 'debug'");
+      O->addOccurrence(1, StringRef("debug-only"), StringRef("inline"), false);
+#endif
     }
+    O = opts["inline-threshold"];
+    assert(O && "inline-threshold not found");
+    O->addOccurrence(1, StringRef("inline-threshold"), StringRef("1200"));
+#if 0
+    O = opts["inline-enable-cost-benefit-analysis"];
+    assert(O && "inline-enable-cost-benefit-analysis not found");
+    O->addOccurrence(1, StringRef("inline-enable-cost-benefit-analysis"), StringRef("true"));
+#endif
   }
 }
 

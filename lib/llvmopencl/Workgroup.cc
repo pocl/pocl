@@ -267,21 +267,15 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
   // extra printf arguments.
   FunctionMapping PrintfCache;
 
-  // Remove the OptNone&NoInline keywords from all functions;
-  for (Function &F : M) {
-    if (!isKernelToProcess(F)) {
-      markFunctionAlwaysInline(&F);
-      F.removeFnAttr(Attribute::AlwaysInline);
-    }
-  }
-
+  // TODO perhaps pass "-cl-opt-disable" build opt as bool module metadata
+  bool IsDebugEnabled = false;
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     Function &OrigKernel = *i;
     if (!isKernelToProcess(OrigKernel)) continue;
+    if (OrigKernel.hasMetadata("dbg"))
+      IsDebugEnabled = true;
     Function *L = createWrapper(&OrigKernel, PrintfCache);
     KernelsMap[&OrigKernel] = L;
-    // always inline the Original Kernel into the workgroup launcher
-    markFunctionAlwaysInline(L);
 
     privatizeContext(L);
 
@@ -411,6 +405,77 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
   if (auto *F = M.getFunction(BARRIER_FUNCTION_NAME)) {
     FAM.clear(*F, "parallel.bc");
     F->eraseFromParent();
+  }
+
+  // Unify some attributes among all functions; this is necessary because
+  // -O0 compiled builtin library has many attributes setup differently than
+  // -O2 compiled user code, and the inliner will check&refuse to inline.
+  // See hasCompatibleFnAttrs in llvm/include/llvm/IR/Attributes.inc
+  // and getAttributeBasedInliningDecision in llvm/lib/Analysis/InlineCost.cpp
+  std::string TargetCPU;
+  std::string TargetFeatures;
+  for (Function &F : M) {
+    if (TargetCPU.empty() && F.hasFnAttribute("target-cpu")) {
+      TargetCPU = F.getFnAttribute("target-cpu").getValueAsString().str();
+    }
+    if (TargetFeatures.empty() && F.hasFnAttribute("target-features")) {
+      TargetFeatures =
+          F.getFnAttribute("target-features").getValueAsString().str();
+    }
+  }
+
+  for (Function &F : M.functions()) {
+    if (F.isDeclaration())
+      continue;
+
+    // removes optnone/noinline/alwaysinline from F & its callsites
+    markFunctionAlwaysInline(&F);
+    F.removeFnAttr(Attribute::AlwaysInline);
+
+    // these are checked in LLVM's areInlineCompatible -> hasCompatibleFnArgs
+    F.removeFnAttr(Attribute::SafeStack);
+    F.removeFnAttr(Attribute::ShadowCallStack);
+    F.removeFnAttr(Attribute::NoProfile);
+    F.removeFnAttr(Attribute::StackProtect);
+    F.removeFnAttr(Attribute::StackProtectReq);
+    F.removeFnAttr(Attribute::StackProtectStrong);
+    // denorm & strictFP must be compatible
+    // TODO strictfp should depend on program's build opts
+    // denormals are handled by the driver / execution environment
+    F.removeFnAttr(Attribute::StrictFP);
+    F.removeFnAttr("denormal-fp-math");
+    F.removeFnAttr("denormal-fp-math-f32");
+    F.addFnAttr("no-trapping-math", "true");
+    // required because the InlineCost -> areInlineCompatible also calls
+    // TTI->areInlineCompatible; X86TTIImpl::areInlineCompatible checks CPU
+    // features; this might require even more attrs (target-abi?) for RISC-V
+    if (!TargetCPU.empty())
+      F.addFnAttr("target-cpu", TargetCPU);
+    if (!TargetFeatures.empty())
+      F.addFnAttr("target-features", TargetFeatures);
+
+    // the following settings are not necessary for inlining,
+    // but should improve optimization
+    F.removeFnAttr("use-sample-profile");
+    F.removeFnAttr("stack-protector-buffer-size");
+    if (IsDebugEnabled)
+      F.addFnAttr("frame-pointer", "all");
+    else
+      F.removeFnAttr("frame-pointer");
+
+    // these should be safe to enable
+    F.addFnAttr(Attribute::NoBuiltin);
+    F.addFnAttr(Attribute::NoFree);
+    // recursion forbidden by OpenCL
+    F.addFnAttr(Attribute::NoRecurse);
+    // no exceptions or return by callback
+    F.addFnAttr(Attribute::NoCallback);
+    F.addFnAttr(Attribute::NoUnwind);
+#if 0
+    // It appears OpenCL follows C99 in which they are NOT UB.
+    // This breaks infinite for loops when enabled.
+    F.addFnAttr(Attribute::WillReturn);
+#endif
   }
 
   return true;
@@ -772,7 +837,8 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
   }
 }
 
-// Create a wrapper for the kernel and add pocl-specific hidden arguments.
+// Create a wrapper named "_pocl_kernel_<original-kernel-name>"
+// for the kernel and add pocl-specific hidden arguments.
 // Also inlines the wrapped function to the wrapper.
 Function *WorkgroupImpl::createWrapper(Function *F,
                                        FunctionMapping &PrintfCache) {
@@ -1139,7 +1205,8 @@ void WorkgroupImpl::privatizeContext(Function *F) {
 // actual buffers and that scalar data is loaded from the default memory.
 void WorkgroupImpl::createDefaultWorkgroupLauncher(llvm::Function *F) {
 
-  IRBuilder<> Builder(M->getContext());
+  LLVMContext &C = F->getContext();
+  IRBuilder<> Builder(C);
 
   std::string FuncName = "";
   FuncName = F->getName().str();
@@ -1147,7 +1214,17 @@ void WorkgroupImpl::createDefaultWorkgroupLauncher(llvm::Function *F) {
   FunctionCallee fc =
       M->getOrInsertFunction(FuncName + "_workgroup", LauncherFuncT);
   Function *WorkGroup = dyn_cast<Function>(fc.getCallee());
+  // copy only the function attributes (not the param/ret attributes)
+  AttributeSet KernelFnAttrSet = F->getAttributes().getFnAttrs();
+  AttributeList WorkgAttrL = WorkGroup->getAttributes();
+  AttributeList WorkTempL = WorkgAttrL.removeAttributesAtIndex(
+      C, AttributeList::AttrIndex::FunctionIndex);
+  AttrBuilder AtB(C, KernelFnAttrSet);
+  AttributeList NewWorkL = WorkTempL.addAttributesAtIndex(
+      C, AttributeList::AttrIndex::FunctionIndex, AtB);
+  WorkGroup->setAttributes(NewWorkL);
 
+  WorkGroup->setLinkage(Function::ExternalLinkage);
   Triple TT(F->getParent()->getTargetTriple());
   if (TT.getEnvironment() == llvm::Triple::MSVC) {
     // dllexport is needed for exposing the symbol in the kernel module
@@ -1200,7 +1277,7 @@ void WorkgroupImpl::createDefaultWorkgroupLauncher(llvm::Function *F) {
       assert(ParamType != nullptr);
 
       uint64_t ParamByteSize = DL.getTypeStoreSize(ParamType);
-      Type *SizeIntType = IntegerType::get(*C, ParamByteSize * 8);
+      Type *SizeIntType = IntegerType::get(C, ParamByteSize * 8);
       Value *LocalArgByteSize = Builder.CreatePointerCast(Pointer, SizeIntType);
 
 #ifdef LLVM_OPAQUE_POINTERS
@@ -1272,6 +1349,9 @@ void WorkgroupImpl::createDefaultWorkgroupLauncher(llvm::Function *F) {
   }
 
   Builder.CreateRetVoid();
+
+  InlineFunctionInfo IFI;
+  InlineFunction(*CI, IFI);
 }
 
 static inline uint64_t
@@ -1605,6 +1685,9 @@ WorkgroupImpl::createArgBufferWorkgroupLauncher(Function *Func,
 
   llvm::CallInst *CallI = llvm::dyn_cast<llvm::CallInst>(llvm::unwrap(Call));
   CallI->setCallingConv(Func->getCallingConv());
+
+  InlineFunctionInfo IFI;
+  InlineFunction(*dyn_cast<CallInst>(llvm::unwrap(Call)), IFI);
 
   LLVMDisposeBuilder(Builder);
   return llvm::dyn_cast<llvm::Function>(llvm::unwrap(WrapperKernel));
