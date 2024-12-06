@@ -89,7 +89,7 @@ jobs:
           cmake -S . -B build-pocl ^
               -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install-pocl ^
               -DCMAKE_PREFIX_PATH=%DEPS_DIR% ^
-              -DENABLE_ICD=1 ^
+              -DENABLE_ICD=0 ^
               -DENABLE_LLVM=1 ^
               -DENABLE_LOADABLE_DRIVERS=OFF ^
               -DSTATIC_LLVM=ON ^
