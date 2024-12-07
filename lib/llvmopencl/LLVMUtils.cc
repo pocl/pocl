@@ -39,6 +39,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "BarrierTailReplication.h"
 #include "CanonicalizeBarriers.h"
 #include "DebugHelpers.h"
+#include "FixBitshiftUB.h"
 #include "Flatten.hh"
 #include "FlattenBarrierSubs.hh"
 #include "FlattenGlobals.hh"
@@ -658,7 +659,7 @@ const char *WIFuncNameArray[] = {
     GID_BUILTIN_NAME,        GOFF_BUILTIN_NAME,    GS_BUILTIN_NAME,
     GROUP_ID_BUILTIN_NAME,   LID_BUILTIN_NAME,     LS_BUILTIN_NAME,
     ENQUEUE_LS_BUILTIN_NAME, NGROUPS_BUILTIN_NAME, GLID_BUILTIN_NAME,
-    LLID_BUILTIN_NAME,       WDIM_BUILTIN_NAME};
+    LLID_BUILTIN_NAME,       WDIM_BUILTIN_NAME,    "__pocl_work_group_alloca"};
 
 constexpr unsigned NumWIFuncNames =
     sizeof(WIFuncNameArray) / sizeof(const char *);
@@ -690,6 +691,7 @@ void registerPassBuilderPasses(llvm::PassBuilder &PB) {
   AutomaticLocals::registerWithPB(PB);
   BarrierTailReplication::registerWithPB(PB);
   CanonicalizeBarriers::registerWithPB(PB);
+  FixBitshiftUB::registerWithPB(PB);
   FlattenAll::registerWithPB(PB);
   FlattenBarrierSubs::registerWithPB(PB);
   FlattenGlobals::registerWithPB(PB);

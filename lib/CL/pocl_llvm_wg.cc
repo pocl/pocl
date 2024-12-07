@@ -609,6 +609,7 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
   // dynamic stack which is problematic for some architectures.
   addPass(Passes, "allocastoentry");
 
+  addPass(Passes, "fix-bitshift-ub");
   // Convert variables back to PHIs to clean up loop structures to enable the
   // LLVM standard loop analysis.
   addPass(Passes, "mem2reg");

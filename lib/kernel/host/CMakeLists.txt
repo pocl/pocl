@@ -300,7 +300,7 @@ endif()
 
 
 if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_subgroup")
-  list(APPEND SOURCES_WITH_SLEEF subgroups.c subgroups.cl)
+  list(APPEND SOURCES_WITH_SLEEF subgroups.cl)
 endif()
 
 
