@@ -2398,9 +2398,8 @@ bool Level0Device::setupModuleProperties(bool &SupportsInt64Atomics,
   // but this workaround is needed for upstream CTS
   ClDev->max_parameter_size = ModuleProperties.maxArgumentsSize;
 #ifdef ENABLE_CONFORMANCE
-  if (ModuleProperties.maxArgumentsSize > 256) {
+  if (ModuleProperties.maxArgumentsSize > 256)
     ClDev->max_parameter_size = ModuleProperties.maxArgumentsSize - 64;
-  }
 #endif
   return true;
 }
