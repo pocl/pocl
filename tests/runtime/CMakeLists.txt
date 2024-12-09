@@ -30,6 +30,7 @@ if (UNIX AND HAVE_DLFCN_H)
     target_link_libraries("test_dlopen" ${SANITIZER_LIBS})
   endif()
   target_link_libraries("test_dlopen" ${DL_LIB})
+  add_symlink_to_built_opencl_dynlib(test_dlopen)
 endif ()
 
 include_directories(${CMAKE_SOURCE_DIR})
@@ -59,12 +60,14 @@ add_compile_options(${OPENCL_CFLAGS} -I${CMAKE_SOURCE_DIR}/include)
 foreach(PROG ${C_PROGRAMS_TO_BUILD})
   add_executable("${PROG}" "${PROG}.c")
   target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
+  add_symlink_to_built_opencl_dynlib("${PROG}")
 endforeach()
 
 foreach(PROG ${CXX_PROGRAMS_TO_BUILD})
   set_source_files_properties( "${PROG}.cpp" PROPERTIES LANGUAGE CXX )
   add_executable("${PROG}" "${PROG}.cpp")
   target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
+  add_symlink_to_built_opencl_dynlib("${PROG}")
 endforeach()
 
 #######################################################################

@@ -203,3 +203,5 @@ set_property(TEST
   "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier_loopvec"
   "workgroup/cond_barriers_in_for_loopvec"
   APPEND PROPERTY LABELS "level0")
+
+add_symlink_to_built_opencl_dynlib(run_kernel)

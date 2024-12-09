@@ -295,6 +295,10 @@ endif()
 
 # this is so that we don't compile twice when building both libpocl and libOpenCL
 add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
+if(BUILD_SHARED_LIBS AND MSVC)
+  # Inject __declspec(dllexport).
+  target_compile_definitions(libpocl_unlinked_objs PRIVATE EXPORT_POCL_LIB)
+endif()
 
 harden("libpocl_unlinked_objs")
 

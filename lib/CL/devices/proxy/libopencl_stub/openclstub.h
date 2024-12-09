@@ -24,8 +24,7 @@
 #ifndef LIBOPENCL_STUB_H
 #define LIBOPENCL_STUB_H
 
-#include <CL/cl.h>
-#include <CL/cl_gl.h>
+#include "pocl_cl.h"
 
 typedef void (*f_pfn_notify) (const char *, const void *, size_t, void *);
 

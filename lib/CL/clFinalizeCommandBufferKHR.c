@@ -21,8 +21,6 @@
    IN THE SOFTWARE.
 */
 
-#include <CL/cl_ext.h>
-
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL

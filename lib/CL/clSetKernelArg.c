@@ -23,7 +23,6 @@
    IN THE SOFTWARE.
 */
 
-#include "CL/cl.h"
 #include "config.h"
 #include "pocl_cl.h"
 #include "pocl_debug.h"
