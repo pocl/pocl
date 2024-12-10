@@ -227,9 +227,11 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
         switch (arg_index)
           {
           case 0:
+            return (buf->size >= attrs->num_boxes * sizeof (cl_uint) * 4)
+                   ? CL_SUCCESS
+                   : CL_INVALID_ARG_VALUE;
           case 1:
-            return ((attrs->num_boxes > 0)
-                    && buf->size >= attrs->num_boxes * sizeof (cl_uint) * 4)
+            return (buf->size >= attrs->num_boxes * sizeof (cl_float))
                      ? CL_SUCCESS
                      : CL_INVALID_ARG_VALUE;
           case 2:
