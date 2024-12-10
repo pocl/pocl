@@ -304,7 +304,7 @@ pocl_cpu_init_common (cl_device_id device)
                   "onnx_inference_exp;"
 #endif
 #ifdef HAVE_OPENCV
-                  "dnn_nms_exp;"
+                  "nms_box_exp;"
 #endif
         );
       device->num_builtin_kernels = 5
@@ -843,7 +843,7 @@ pocl_cpu_supports_dbk (cl_device_id device,
     case CL_DBK_IMG_COLOR_CONVERT_EXP:
       return CL_SUCCESS;
 #ifdef HAVE_OPENCV
-    case CL_DBK_DNN_NMS_EXP:
+    case CL_DBK_NMS_BOX_EXP:
       return pocl_validate_dbk_attributes (kernel_id, kernel_attributes, NULL);
 #endif
     default:
@@ -1211,8 +1211,8 @@ pocl_cpu_execute_dbk (cl_program program,
       return pocl_cpu_execute_dbk_exp_img_yuv2rgb (program, kernel, meta,
                                                    dev_i, arguments);
 #ifdef HAVE_OPENCV
-    case CL_DBK_DNN_NMS_EXP:
-      return pocl_cpu_execute_dbk_khr_dnn_nms (program, kernel, meta, dev_i,
+    case CL_DBK_NMS_BOX_EXP:
+      return pocl_cpu_execute_dbk_khr_nms_box (program, kernel, meta, dev_i,
                                                arguments);
 #endif
     default:

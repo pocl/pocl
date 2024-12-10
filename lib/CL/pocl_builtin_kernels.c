@@ -439,7 +439,7 @@ pocl_init_builtin_kernel_metadata ()
     BIKD_DBK (CL_DBK_IMG_COLOR_CONVERT_EXP, "img_color_convert_exp", 2,
               BI_ARG_READ_BUF ("uint8_t*", "input"),
               BI_ARG_WRITE_BUF ("uint8_t*", "output"), ),
-    BIKD_DBK (CL_DBK_DNN_NMS_EXP, "dnn_nms_exp", 4,
+    BIKD_DBK (CL_DBK_NMS_BOX_EXP, "nms_box_exp", 4,
               BI_ARG_READ_BUF ("int32_t*", "boxes"),
               BI_ARG_READ_BUF ("float*", "scores"),
               BI_ARG_WRITE_BUF ("int32_t*", "index_count"),
@@ -889,7 +889,7 @@ pocl_validate_dbk_attributes (cl_dbk_id_exp kernel_id,
     case CL_DBK_IMG_COLOR_CONVERT_EXP:
       return pocl_validate_img_attrs (kernel_id, kernel_attributes);
 #ifdef HAVE_OPENCV
-    case CL_DBK_DNN_NMS_EXP:
+    case CL_DBK_NMS_BOX_EXP:
       return pocl_validate_dnn_utils_attrs (kernel_id, kernel_attributes);
 #endif
     default:
@@ -960,7 +960,7 @@ pocl_copy_defined_builtin_attributes (cl_dbk_id_exp kernel_id,
     case CL_DBK_IMG_COLOR_CONVERT_EXP:
       return pocl_copy_img_attrs (kernel_id, kernel_attributes);
 #ifdef HAVE_OPENCV
-    case CL_DBK_DNN_NMS_EXP:
+    case CL_DBK_NMS_BOX_EXP:
       return pocl_copy_dnn_utils_attrs (kernel_id, kernel_attributes);
 #endif
     default:
@@ -1011,7 +1011,7 @@ pocl_release_defined_builtin_attributes (cl_dbk_id_exp kernel_id,
     case CL_DBK_IMG_COLOR_CONVERT_EXP:
       return pocl_release_img_attrs (kernel_id, kernel_attributes);
 #ifdef HAVE_OPENCV
-    case CL_DBK_DNN_NMS_EXP:
+    case CL_DBK_NMS_BOX_EXP:
       {
         pocl_release_dnn_utils_attrs (kernel_id, kernel_attributes);
         return CL_SUCCESS;
@@ -1194,11 +1194,11 @@ pocl_serialize_dbk_attribs (cl_dbk_id_exp id,
           }
         break;
       }
-    case CL_DBK_DNN_NMS_EXP:
+    case CL_DBK_NMS_BOX_EXP:
       {
-        const cl_dbk_attributes_exp_dnn_nms *attr = attributes;
+        const cl_dbk_attributes_nms_box_exp *attr = attributes;
         SERIALIZE (attr->score_threshold);
-        SERIALIZE (attr->nms_threshold);
+        SERIALIZE (attr->iou_threshold);
         SERIALIZE (attr->top_k);
         SERIALIZE (attr->num_boxes);
         break;
@@ -1440,12 +1440,12 @@ pocl_deserialize_dbk_attribs (cl_dbk_id_exp *id,
         *attributes = attr;
         break;
       }
-    case CL_DBK_DNN_NMS_EXP:
+    case CL_DBK_NMS_BOX_EXP:
       {
-        cl_dbk_attributes_exp_dnn_nms *attrs
-          = malloc (sizeof (cl_dbk_attributes_exp_dnn_nms));
+        cl_dbk_attributes_nms_box_exp *attrs
+          = malloc (sizeof (cl_dbk_attributes_nms_box_exp));
         DESERIALIZE (attrs->score_threshold);
-        DESERIALIZE (attrs->nms_threshold);
+        DESERIALIZE (attrs->iou_threshold);
         DESERIALIZE (attrs->top_k);
         DESERIALIZE (attrs->num_boxes);
         *attributes = attrs;

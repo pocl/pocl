@@ -29,40 +29,40 @@
 using namespace std;
 using namespace cv::dnn;
 
-int pocl_cpu_execute_dbk_khr_dnn_nms(cl_program program, cl_kernel kernel,
+int pocl_cpu_execute_dbk_khr_nms_box(cl_program program, cl_kernel kernel,
                                      pocl_kernel_metadata_t *meta,
                                      cl_uint dev_i,
                                      struct pocl_argument *arguments) {
 
-  cl_device_id dev = program->devices[dev_i];
-  cl_dbk_attributes_exp_dnn_nms *attributes =
-      (cl_dbk_attributes_exp_dnn_nms *)meta->builtin_kernel_attrs;
-  unsigned mem_id = dev->global_mem_id;
-  int32_t *boxes =
-      static_cast<int32_t *>(pocl_cpu_get_ptr(&arguments[0], mem_id));
-  float *scores = static_cast<float *>(pocl_cpu_get_ptr(&arguments[1], mem_id));
-  int32_t *index_count =
-      static_cast<int32_t *>(pocl_cpu_get_ptr(&arguments[2], mem_id));
-  int32_t *indices =
-      static_cast<int32_t *>(pocl_cpu_get_ptr(&arguments[3], mem_id));
+  cl_device_id Dev = program->devices[dev_i];
+  cl_dbk_attributes_nms_box_exp *attributes =
+      (cl_dbk_attributes_nms_box_exp *)meta->builtin_kernel_attrs;
+  unsigned MemId = Dev->global_mem_id;
+  int32_t *Boxes =
+      static_cast<int32_t *>(pocl_cpu_get_ptr(&arguments[0], MemId));
+  float *Scores = static_cast<float *>(pocl_cpu_get_ptr(&arguments[1], MemId));
+  int32_t *IndexCount =
+      static_cast<int32_t *>(pocl_cpu_get_ptr(&arguments[2], MemId));
+  int32_t *Indices =
+      static_cast<int32_t *>(pocl_cpu_get_ptr(&arguments[3], MemId));
 
-  vector<cv::Rect> boxVector;
-  boxVector.reserve(attributes->num_boxes);
+  vector<cv::Rect> BoxVector;
+  BoxVector.reserve(attributes->num_boxes);
   cv::Rect rect;
-  for (int i = 0; i < attributes->num_boxes * 4; i += 4) {
-    boxVector.emplace_back(boxes[i], boxes[i + 1], boxes[i + 2], boxes[i + 3]);
-  }
-  vector<float> scoreVector(scores, scores + attributes->num_boxes);
+  for (size_t i = 0; i < attributes->num_boxes * 4; i += 4)
+    BoxVector.emplace_back(Boxes[i], Boxes[i + 1], Boxes[i + 2], Boxes[i + 3]);
+
+  vector<float> scoreVector(Scores, Scores + attributes->num_boxes);
 
   vector<int32_t> indexVector;
-  NMSBoxes(boxVector, scoreVector, attributes->score_threshold,
-           attributes->nms_threshold, indexVector);
+  NMSBoxes(BoxVector, scoreVector, attributes->score_threshold,
+           attributes->iou_threshold, indexVector);
 
-  indexVector.resize(MIN(attributes->top_k, indexVector.size()));
+  indexVector.resize(std::min<size_t>(attributes->top_k, indexVector.size()));
 
-  // size of indices is already checked in setkernelarg to make sure it fits
-  memcpy(indices, indexVector.data(), indexVector.size() * sizeof(int32_t));
-  *index_count = indexVector.size();
+  // size of Indices is already checked in setkernelarg to make sure it fits
+  memcpy(Indices, indexVector.data(), indexVector.size() * sizeof(int32_t));
+  *IndexCount = indexVector.size();
 
   return CL_SUCCESS;
 }

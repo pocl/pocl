@@ -21,21 +21,18 @@
    IN THE SOFTWARE.
 */
 
-#ifndef _POCL_DBK_KHR_DNN_UTILS_SHARED_H_
-#define _POCL_DBK_KHR_DNN_UTILS_SHARED_H_
+#ifndef POCL_DBK_KHR_DNN_UTILS_SHARED_H
+#define POCL_DBK_KHR_DNN_UTILS_SHARED_H
 
 #include "pocl_builtin_kernels.h"
 
-int
-pocl_validate_dnn_utils_attrs (cl_dbk_id_exp kernel_id,
-                         const void *kernel_attributes);
+int pocl_validate_dnn_utils_attrs (cl_dbk_id_exp kernel_id,
+                                   const void *kernel_attributes);
 
-int
-pocl_release_dnn_utils_attrs (cl_dbk_id_exp kernel_id,
-                        void *kernel_attributes);
+int pocl_release_dnn_utils_attrs (cl_dbk_id_exp kernel_id,
+                                  void *kernel_attributes);
 
-void *
-pocl_copy_dnn_utils_attrs (cl_dbk_id_exp kernel_id,
-                     const void *kernel_attributes);
+void *pocl_copy_dnn_utils_attrs (cl_dbk_id_exp kernel_id,
+                                 const void *kernel_attributes);
 
-#endif //_POCL_DBK_KHR_DNN_UTILS_SHARED_H_
+#endif // POCL_DBK_KHR_DNN_UTILS_SHARED_H

@@ -99,6 +99,5 @@ pocl_copy_img_attrs (cl_dbk_id_exp kernel_id, const void *kernel_attributes)
     default:
       POCL_ABORT ("pocl_copy_img_attrs called with "
                   "wrong kernel_id\n");
-
     }
 }

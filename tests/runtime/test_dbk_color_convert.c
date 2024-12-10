@@ -135,9 +135,7 @@ main (int argc, char const *argv[])
   size_t all_events_size = sizeof (all_events) / sizeof (all_events[0]);
   clWaitForEvents (all_events_size, all_events);
   for (size_t i = 0; i < all_events_size; i++)
-    {
       clReleaseEvent (all_events[i]);
-    }
 
   void *reference_data = malloc (rgb_size);
   reference_data = poclu_read_binfile (argv[4], &bytes_read);
@@ -159,4 +157,5 @@ main (int argc, char const *argv[])
       clReleaseDevice (devices[i]);
       clReleaseCommandQueue (queues[i]);
     }
+  printf ("OK\n");
 }

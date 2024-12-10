@@ -220,16 +220,16 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
           }
         return CL_SUCCESS;
       }
-    case CL_DBK_DNN_NMS_EXP:
+    case CL_DBK_NMS_BOX_EXP:
       {
-        const cl_dbk_attributes_exp_dnn_nms *attrs
-          = (const cl_dbk_attributes_exp_dnn_nms *)meta->builtin_kernel_attrs;
+        const cl_dbk_attributes_nms_box_exp *attrs
+          = (const cl_dbk_attributes_nms_box_exp *)meta->builtin_kernel_attrs;
         switch (arg_index)
           {
           case 0:
           case 1:
             return ((attrs->num_boxes > 0)
-                    && buf->size >= (size_t)attrs->num_boxes)
+                    && buf->size >= attrs->num_boxes * sizeof (cl_uint) * 4)
                      ? CL_SUCCESS
                      : CL_INVALID_ARG_VALUE;
           case 2:
@@ -238,20 +238,19 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
             {
               int res;
               if (attrs->top_k > 0)
-                res = (buf->size >= (size_t)attrs->top_k)
+                res = (buf->size >= attrs->top_k * sizeof (cl_uint))
                         ? CL_SUCCESS
                         : CL_INVALID_ARG_VALUE;
               else
                 res = ((attrs->num_boxes > 0)
-                       && buf->size >= (size_t)attrs->num_boxes)
+                       && buf->size >= attrs->num_boxes * sizeof (cl_uint) * 4)
                         ? CL_SUCCESS
                         : CL_INVALID_ARG_VALUE;
               return res;
             }
           default:
-            POCL_RETURN_ERROR (CL_INVALID_ARG_INDEX,
-                               "invalid arg index to "
-                               "POCL_CDBI_DBK_EXP_DNN_NMS.\n");
+            POCL_RETURN_ERROR (CL_INVALID_ARG_INDEX, "invalid arg index to "
+                                                     "CL_DBK_NMS_BOX_EXP.\n");
           }
       }
   default:
