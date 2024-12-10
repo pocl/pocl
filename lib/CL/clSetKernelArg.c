@@ -162,6 +162,7 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
       }
     case CL_DBK_JPEG_ENCODE_EXP:
     case CL_DBK_JPEG_DECODE_EXP:
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
       return CL_SUCCESS;
     case CL_DBK_ONNX_INFERENCE_EXP:
       {
@@ -218,6 +219,41 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
               return CL_OUT_OF_RESOURCES;
           }
         return CL_SUCCESS;
+      }
+    case CL_DBK_NMS_BOX_EXP:
+      {
+        const cl_dbk_attributes_nms_box_exp *attrs
+          = (const cl_dbk_attributes_nms_box_exp *)meta->builtin_kernel_attrs;
+        switch (arg_index)
+          {
+          case 0:
+            return (buf->size >= attrs->num_boxes * sizeof (cl_uint) * 4)
+                   ? CL_SUCCESS
+                   : CL_INVALID_ARG_VALUE;
+          case 1:
+            return (buf->size >= attrs->num_boxes * sizeof (cl_float))
+                     ? CL_SUCCESS
+                     : CL_INVALID_ARG_VALUE;
+          case 2:
+            return CL_SUCCESS;
+          case 3:
+            {
+              int res;
+              if (attrs->top_k > 0)
+                res = (buf->size >= attrs->top_k * sizeof (cl_uint))
+                        ? CL_SUCCESS
+                        : CL_INVALID_ARG_VALUE;
+              else
+                res = ((attrs->num_boxes > 0)
+                       && buf->size >= attrs->num_boxes * sizeof (cl_uint) * 4)
+                        ? CL_SUCCESS
+                        : CL_INVALID_ARG_VALUE;
+              return res;
+            }
+          default:
+            POCL_RETURN_ERROR (CL_INVALID_ARG_INDEX, "invalid arg index to "
+                                                     "CL_DBK_NMS_BOX_EXP.\n");
+          }
       }
   default:
       {

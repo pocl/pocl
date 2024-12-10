@@ -25,6 +25,8 @@
 
 #include "pocl_tensor_util.h"
 
+#include "dbk/pocl_dbk_khr_dnn_utils_shared.h"
+#include "dbk/pocl_dbk_khr_img_shared.h"
 #include "dbk/pocl_dbk_khr_jpeg_shared.h"
 #include "dbk/pocl_dbk_khr_onnxrt_shared.h"
 
@@ -434,6 +436,14 @@ pocl_init_builtin_kernel_metadata ()
               BI_ARG_READ_BUF ("unsigned char*", "inputs"),
               BI_ARG_READ_BUF ("unsigned long*", "output_offsets"),
               BI_ARG_WRITE_BUF ("unsigned char*", "outputs"), ),
+    BIKD_DBK (CL_DBK_IMG_COLOR_CONVERT_EXP, "img_color_convert_exp", 2,
+              BI_ARG_READ_BUF ("uint8_t*", "input"),
+              BI_ARG_WRITE_BUF ("uint8_t*", "output"), ),
+    BIKD_DBK (CL_DBK_NMS_BOX_EXP, "nms_box_exp", 4,
+              BI_ARG_READ_BUF ("int32_t*", "boxes"),
+              BI_ARG_READ_BUF ("float*", "scores"),
+              BI_ARG_WRITE_BUF ("int32_t*", "index_count"),
+              BI_ARG_WRITE_BUF ("int32_t*", "indices"), ),
 
   };
   memcpy (pocl_BIDescriptors, temporary_BIDescriptors,
@@ -876,7 +886,13 @@ pocl_validate_dbk_attributes (cl_dbk_id_exp kernel_id,
         return CL_SUCCESS;
       }
 #endif
-  default:
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
+      return pocl_validate_img_attrs (kernel_id, kernel_attributes);
+#ifdef HAVE_OPENCV
+    case CL_DBK_NMS_BOX_EXP:
+      return pocl_validate_dnn_utils_attrs (kernel_id, kernel_attributes);
+#endif
+    default:
       break;
     }
   POCL_RETURN_ERROR (CL_DBK_INVALID_ID_EXP, "Unknown builtin kernel ID: %u.\n",
@@ -941,7 +957,13 @@ pocl_copy_defined_builtin_attributes (cl_dbk_id_exp kernel_id,
     case CL_DBK_ONNX_INFERENCE_EXP:
       return pocl_copy_onnx_inference_dbk_attributes (kernel_attributes);
 #endif
-  default:
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
+      return pocl_copy_img_attrs (kernel_id, kernel_attributes);
+#ifdef HAVE_OPENCV
+    case CL_DBK_NMS_BOX_EXP:
+      return pocl_copy_dnn_utils_attrs (kernel_id, kernel_attributes);
+#endif
+    default:
       break;
     }
   POCL_MSG_ERR ("Unknown builtin kernel ID: %u", kernel_id);
@@ -983,6 +1005,15 @@ pocl_release_defined_builtin_attributes (cl_dbk_id_exp kernel_id,
     case CL_DBK_ONNX_INFERENCE_EXP:
       {
         pocl_release_onnx_inference_dbk_attributes (kernel_attributes);
+        return CL_SUCCESS;
+      }
+#endif
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
+      return pocl_release_img_attrs (kernel_id, kernel_attributes);
+#ifdef HAVE_OPENCV
+    case CL_DBK_NMS_BOX_EXP:
+      {
+        pocl_release_dnn_utils_attrs (kernel_id, kernel_attributes);
         return CL_SUCCESS;
       }
 #endif
@@ -1060,6 +1091,19 @@ pocl_serialize_cl_tensor_desc (const cl_tensor_desc_exp *t, char **buf)
         }
     }
 
+  return total;
+}
+
+uint64_t
+pocl_serialize_image_attr (const pocl_image_attr_t *t, char **buf)
+{
+
+  uint64_t total = 0;
+  SERIALIZE (t->width);
+  SERIALIZE (t->height);
+  SERIALIZE (t->color_space);
+  SERIALIZE (t->channel_range);
+  SERIALIZE (t->format);
   return total;
 }
 
@@ -1150,8 +1194,24 @@ pocl_serialize_dbk_attribs (cl_dbk_id_exp id,
           }
         break;
       }
+    case CL_DBK_NMS_BOX_EXP:
+      {
+        const cl_dbk_attributes_nms_box_exp *attr = attributes;
+        SERIALIZE (attr->score_threshold);
+        SERIALIZE (attr->iou_threshold);
+        SERIALIZE (attr->top_k);
+        SERIALIZE (attr->num_boxes);
+        break;
+      }
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
+      {
+        const cl_dbk_attributes_img_color_convert_exp *attr = attributes;
+        total += pocl_serialize_image_attr (&(attr->input_image), buf);
+        total += pocl_serialize_image_attr (&(attr->output_image), buf);
+        break;
+      }
     default:
-      break;
+      POCL_ABORT ("Could not serialize DBK, Unknown id: %d.\n", id);
     }
 
   return total;
@@ -1227,6 +1287,18 @@ pocl_deserialize_cl_tensor_desc (cl_tensor_desc_exp *t, const char **buf)
   else
     t->layout = NULL;
 
+  return 1;
+}
+
+int
+pocl_deserialize_image_attr (pocl_image_attr_t *t, const char **buf)
+{
+
+  DESERIALIZE (t->width);
+  DESERIALIZE (t->height);
+  DESERIALIZE (t->color_space);
+  DESERIALIZE (t->channel_range);
+  DESERIALIZE (t->format);
   return 1;
 }
 
@@ -1368,8 +1440,31 @@ pocl_deserialize_dbk_attribs (cl_dbk_id_exp *id,
         *attributes = attr;
         break;
       }
+    case CL_DBK_NMS_BOX_EXP:
+      {
+        cl_dbk_attributes_nms_box_exp *attrs
+          = malloc (sizeof (cl_dbk_attributes_nms_box_exp));
+        DESERIALIZE (attrs->score_threshold);
+        DESERIALIZE (attrs->iou_threshold);
+        DESERIALIZE (attrs->top_k);
+        DESERIALIZE (attrs->num_boxes);
+        *attributes = attrs;
+        break;
+      }
+    case CL_DBK_IMG_COLOR_CONVERT_EXP:
+      {
+        cl_dbk_attributes_img_color_convert_exp *attrs
+          = malloc (sizeof (cl_dbk_attributes_img_color_convert_exp));
+        pocl_deserialize_image_attr (&(attrs->input_image), buf);
+        pocl_deserialize_image_attr (&(attrs->output_image), buf);
+        *attributes = attrs;
+        break;
+      }
     default:
-      break;
+      {
+        POCL_MSG_ERR ("Could not deserialize DBK, unknown id: %lu.\n", dbk_id);
+        break;
+      }
     }
 
   return 1;

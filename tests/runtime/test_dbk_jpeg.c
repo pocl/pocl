@@ -27,46 +27,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "image_test_utils.h"
 #include "poclu.h"
 
 /* enable this and provide an output file name to the program
    to save compression results */
 /* #define WRITE_COMPRESS_OUTPUT */
-
-/**
- * Calculate the Peak Signal to Noise Ration (PSNR) of two images.
- *
- * \param height [in] height of both images.
- * \param width [in] width of both images.
- * \param pixel_stride [in] number of bytes to compare, 3 for RGB and 1 for
- * grayscale.
- * \param image [in] source/ground truth image.
- * \param approx [in] image to be compared.
- * \return PSNR as a double.
- */
-double
-calculate_PSNR (int const height,
-                int const width,
-                int const pixel_stride,
-                uint8_t const *restrict image,
-                uint8_t const *restrict approx)
-{
-
-  uint64_t sum = 0;
-  int points = height * width * pixel_stride;
-  int max = 0;
-  for (int i = 0; i < points; i++)
-    {
-      uint8_t image_i = image[i];
-      int error = image_i - approx[i];
-      sum += error * error;
-      if (max < image_i)
-        max = image_i;
-    }
-  double mse = (double)sum / points;
-
-  return 20 * log10 (max) - 10 * log10 (mse);
-}
 
 /**
  * Program arguments order:
