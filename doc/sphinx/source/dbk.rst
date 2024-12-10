@@ -101,7 +101,7 @@ An experimental DBK that is similar in concept to OpenVX's color convert node.
 It is currently limited to nv12 to RGB, but lays down the groundwork for more
 image manipulation DBKs.
 
-exp_dnn_nms
+nms_box_exp
 ___________
 
 An experimental DBK that performs Non-Maximum Suppression (NMS) on a set of

@@ -22,8 +22,8 @@
    IN THE SOFTWARE.
 */
 
-#ifndef _DBK_IMG_SHARED_H_
-#define _DBK_IMG_SHARED_H_
+#ifndef DBK_IMG_SHARED_H
+#define DBK_IMG_SHARED_H
 
 #include "pocl_builtin_kernels.h"
 
@@ -37,4 +37,4 @@ int pocl_release_img_attrs (cl_dbk_id_exp kernel_id,
 void *pocl_copy_img_attrs (cl_dbk_id_exp kernel_id,
                            const void *kernel_attributes);
 
-#endif //_DBK_IMG_SHARED_H_
+#endif // DBK_IMG_SHARED_H

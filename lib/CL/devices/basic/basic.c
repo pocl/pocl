@@ -1043,7 +1043,7 @@ pocl_basic_create_kernel (cl_device_id device,
     case CL_DBK_IMG_COLOR_CONVERT_EXP:
       return CL_SUCCESS;
 #ifdef HAVE_OPENCV
-    case CL_DBK_DNN_NMS_EXP:
+    case CL_DBK_NMS_BOX_EXP:
       return CL_SUCCESS;
 #endif
     default:
@@ -1103,7 +1103,7 @@ pocl_basic_free_kernel (cl_device_id device,
     case CL_DBK_IMG_COLOR_CONVERT_EXP:
       return CL_SUCCESS;
 #ifdef HAVE_OPENCV
-    case CL_DBK_DNN_NMS_EXP:
+    case CL_DBK_NMS_BOX_EXP:
       return CL_SUCCESS;
 #endif
     default:

@@ -21,8 +21,8 @@
    IN THE SOFTWARE.
 */
 
-#ifndef _POCL_DBK_KHR_DNN_UTILS_H_
-#define _POCL_DBK_KHR_DNN_UTILS_H_
+#ifndef POCL_DBK_KHR_DNN_UTILS_H
+#define POCL_DBK_KHR_DNN_UTILS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,7 +31,7 @@ extern "C" {
 #include "pocl_cl.h"
 
 POCL_EXPORT int
-pocl_cpu_execute_dbk_khr_dnn_nms(cl_program program, cl_kernel kernel,
+pocl_cpu_execute_dbk_khr_nms_box(cl_program program, cl_kernel kernel,
                                  pocl_kernel_metadata_t *meta, cl_uint dev_i,
                                  struct pocl_argument *arguments);
 
@@ -39,4 +39,4 @@ pocl_cpu_execute_dbk_khr_dnn_nms(cl_program program, cl_kernel kernel,
 }
 #endif
 
-#endif //_POCL_DBK_KHR_DNN_UTILS_H_
+#endif // POCL_DBK_KHR_DNN_UTILS_H

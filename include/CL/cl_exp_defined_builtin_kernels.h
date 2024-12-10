@@ -123,7 +123,7 @@ typedef enum
   CL_DBK_JPEG_DECODE_EXP = 41,
   CL_DBK_ONNX_INFERENCE_EXP = 42,
   CL_DBK_IMG_COLOR_CONVERT_EXP = 43,
-  CL_DBK_DNN_NMS_EXP = 44,
+  CL_DBK_NMS_BOX_EXP = 44,
   POCL_CDBI_LAST,
   POCL_CDBI_JIT_COMPILER = 0xFFFF
 } cl_dbk_id_exp; /* NOTE: the spec (v0.3.1) has an error (_exp is missing). */
@@ -273,41 +273,46 @@ enum pocl_color_space_e
   POCL_COLOR_SPACE_BT709,
   POCL_COLOR_SPACE_DEFAULT = POCL_COLOR_SPACE_BT709,
 };
+typedef cl_int pocl_color_space;
 
 /**
- * Collection of different image formats that can be used
+ * Collection of different image data formats that can be used
  * to populate entries in pocl_image_attr_t.
  * @todo describe each type
  */
-enum pocl_format_e
+enum pocl_image_format_e
 {
   POCL_DF_IMAGE_RGB,
   POCL_DF_IMAGE_NV12,
   POCL_DF_IMAGE_NV21,
   POCL_DF_IMAGE_IYUV,
 };
+typedef cl_int pocl_image_format;
 
 /**
  * Collection of image channel ranges that can be used
- * to populate entries in pocl_image_attr_t.
+ * to populate entries in pocl_image_attr_t. See
+ * https://registry.khronos.org/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#group_vision_function_colorconvert
+ * for a deeper explanation.
  */
 enum pocl_channel_range_e
 {
   POCL_CHANNEL_RANGE_FULL,
   POCL_CHANNEL_RANGE_RESTRICTED,
 };
+typedef cl_int pocl_channel_range;
 
 /**
  * Attributes to describe image data. See \ref pocl_channel_range_e,
- * \ref pocl_format_e and \ref pocl_color_space_e for valid values.
+ * \ref pocl_image_format_e and \ref pocl_color_space_e for valid values.
  */
 typedef struct
 {
-  cl_int width;
-  cl_int height;
-  cl_int color_space;
-  cl_int channel_range;
-  cl_int format;
+  cl_uint width;
+  cl_uint height;
+  pocl_color_space color_space;
+  pocl_channel_range channel_range;
+  pocl_image_format format;
 } pocl_image_attr_t;
 
 /**
@@ -322,7 +327,7 @@ typedef struct
 } cl_dbk_attributes_img_color_convert_exp;
 
 /**
- * name: "exp_dnn_nms"
+ * name: "nms_box_exp"
  *
  * Attributes for performing Non-Maximum Suppression (NMS) on bounding boxes.
  */
@@ -330,12 +335,12 @@ typedef struct
 {
   /* The confidence threshold to consider bounding boxes. */
   cl_float score_threshold;
-  /* The overlapping threshold for suppression. */
-  cl_float nms_threshold;
+  /* The Intersection Over Union (IOU) threshold used to prune boxes. */
+  cl_float iou_threshold;
   /* Return at most K indices. */
-  cl_int top_k;
+  size_t top_k;
   /* The number of input bounding boxes. */
-  cl_int num_boxes;
-} cl_dbk_attributes_exp_dnn_nms;
+  size_t num_boxes;
+} cl_dbk_attributes_nms_box_exp;
 
 #endif /* OPENCL_EXP_DEFINED_BUILTIN_KERNELS */
