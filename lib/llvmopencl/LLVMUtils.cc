@@ -658,7 +658,7 @@ const char *WIFuncNameArray[] = {
     GID_BUILTIN_NAME,        GOFF_BUILTIN_NAME,    GS_BUILTIN_NAME,
     GROUP_ID_BUILTIN_NAME,   LID_BUILTIN_NAME,     LS_BUILTIN_NAME,
     ENQUEUE_LS_BUILTIN_NAME, NGROUPS_BUILTIN_NAME, GLID_BUILTIN_NAME,
-    LLID_BUILTIN_NAME,       WDIM_BUILTIN_NAME};
+    LLID_BUILTIN_NAME,       WDIM_BUILTIN_NAME,    "__pocl_work_group_alloca"};
 
 constexpr unsigned NumWIFuncNames =
     sizeof(WIFuncNameArray) / sizeof(const char *);

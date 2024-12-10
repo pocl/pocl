@@ -38,6 +38,9 @@
 #  include "vccompat.hpp"
 #endif
 
+#include <thread>
+#include <chrono>
+
 #define WORK_ITEMS 1
 
 static char
@@ -119,6 +122,8 @@ main(void)
         /* The call should return cleanly, the compiler should not crash. */
 
         std::cout << "OK" << std::endl;
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1200));
 
         // Force exit of the process regardless of the running kernel thread
         // by replacing the process with a dummy process.
