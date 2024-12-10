@@ -31,6 +31,7 @@
 #include "network_discovery.h"
 #include "pocl_cl.h"
 #include "pocl_debug.h"
+#include "pocl_remote.h"
 #include "pocl_runtime_config.h"
 #include "pocl_threads.h"
 #include "uthash.h"
@@ -653,6 +654,27 @@ init_dht_discovery ()
 
   return errcode;
 }
+#endif
+
+/*****************************************************************************/
+
+#if defined(ENABLE_REMOTE_DISCOVERY_ANDROID)
+
+/**
+ * Helper function used by android to add servers through the remote driver.
+ *
+ * The function declaration is in include/pocl_remote.h.
+ */
+void
+pocl_remote_discovery_add_server (const char *id,
+                                  const char *domain,
+                                  const char *server_key,
+                                  const char *type,
+                                  cl_uint device_count)
+{
+  handle_server_discovery (id, domain, server_key, type, device_count);
+}
+
 #endif
 
 /*****************************************************************************/

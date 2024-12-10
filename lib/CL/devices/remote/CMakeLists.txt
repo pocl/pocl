@@ -45,5 +45,9 @@ if(ENABLE_REMOTE_DISCOVERY_DHT)
   list(APPEND POCL_REMOTE_CLIENT_SOURCES network_discovery.c network_discovery.h)
 endif()
 
+if(ENABLE_REMOTE_DISCOVERY_ANDROID)
+  list(APPEND POCL_REMOTE_CLIENT_SOURCES network_discovery.c network_discovery.h)
+endif()
+
 add_pocl_device_library("pocl-devices-remote" ${POCL_REMOTE_CLIENT_SOURCES})
 target_link_libraries("pocl-devices-remote" PRIVATE ${LIBS})
