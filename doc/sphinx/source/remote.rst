@@ -423,6 +423,10 @@ Remote Client:
 
 * ``-DENABLE_REMOTE_DISCOVERY_DHT``: Enable DHT-based discovery.
 
+* ``-DENABLE_REMOTE_DISCOVERY_ANDROID``: Enables discovery for Android. The helper
+  function ``pocl_remote_discovery_add_server()`` in include/pocl_remote.h can be
+  used to dynamically add remote servers and its devices through the remote driver.
+
 Remote Server:
 
 * ``-DENABLE_REMOTE_ADVERTISEMENT_AVAHI``: Enable mDNS advertisement via Avahi.
