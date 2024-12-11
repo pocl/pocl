@@ -68,7 +68,7 @@ endif()
 
 # TODO:   opencl-book-samples
 set(ALL_TESTSUITES
-    AMD AMDSDK2.9 AMDSDK3.0
+    AMDSDK3.0
     ASL arrayfire clBLAS CLBlast clFFT chipStar
     conformance CloverLeaf Glow Halide IntelSVM
     intel-compute-samples oneapi-samples

@@ -349,6 +349,24 @@ pocl_cpu_init_common (cl_device_id device)
   device->wg_collective_func_support = CL_TRUE;
   device->device_side_printf = CL_TRUE;
 
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_ext_float_atomics") != NULL)
+    {
+      device->single_fp_atomic_caps = device->double_fp_atomic_caps
+        = CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT
+          | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT
+          | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT
+          | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT;
+      device->features
+        = HOST_DEVICE_FEATURES_30 " __opencl_c_ext_fp32_global_atomic_add "
+                                  "__opencl_c_ext_fp64_global_atomic_add"
+                                  " __opencl_c_ext_fp32_local_atomic_add "
+                                  "__opencl_c_ext_fp64_local_atomic_add"
+                                  " __opencl_c_ext_fp32_global_atomic_min_max "
+                                  "__opencl_c_ext_fp64_global_atomic_min_max"
+                                  " __opencl_c_ext_fp32_local_atomic_min_max "
+                                  "__opencl_c_ext_fp64_local_atomic_min_max";
+    }
+
   pocl_setup_opencl_c_with_version (device, CL_TRUE);
   pocl_setup_features_with_version (device);
 
@@ -385,18 +403,6 @@ pocl_cpu_init_common (cl_device_id device)
                      | CL_DEVICE_SVM_FINE_GRAIN_BUFFER
                      | CL_DEVICE_SVM_FINE_GRAIN_SYSTEM
                      | CL_DEVICE_SVM_ATOMICS;
-
-  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_ext_float_atomics") != NULL)
-    {
-      device->single_fp_atomic_caps = device->double_fp_atomic_caps
-          = CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT
-            | CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT
-            | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT
-            | CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT
-            | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT
-            | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT;
-    }
-
 #endif
 
   if (strstr (HOST_DEVICE_EXTENSIONS, "cl_intel_unified_shared_memory")
