@@ -1517,6 +1517,9 @@ struct _cl_context {
    * context. */
   cl_uint mem_base_addr_align;
 
+  /* True if all devices support cl_ext_buffer_device_address */
+  cl_bool all_devices_support_bda;
+
 #ifdef ENABLE_LLVM
   void *llvm_context_data;
 #endif

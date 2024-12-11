@@ -38,7 +38,6 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
   cl_mem mem = NULL;
   int errcode = CL_SUCCESS;
   unsigned i;
-  cl_mem_flags stdflags = flags;
 
   POCL_GOTO_ERROR_COND((size == 0), CL_INVALID_BUFFER_SIZE);
 
@@ -46,28 +45,26 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
 
   if (flags == 0)
     flags = CL_MEM_READ_WRITE;
+  const cl_mem_flags both_bda_ext_flags
+    = CL_MEM_DEVICE_SHARED_ADDRESS_EXT | CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT;
+  POCL_GOTO_ERROR_ON (((flags & both_bda_ext_flags) == both_bda_ext_flags),
+                      CL_INVALID_VALUE,
+                      "only one of CL_MEM_DEVICE_{SHARED,PRIVATE}_ADDRESS_EXT"
+                      "properties can be specified\n");
 
-  /* validate flags */
-  if (flags & CL_MEM_DEVICE_ADDRESS_EXT)
+  /* validate presence of extension on all devices */
+  if (flags & both_bda_ext_flags)
     {
-      for (i = 0; i < context->num_devices; ++i)
-        {
-          cl_device_id dev = context->devices[i];
-          POCL_GOTO_ERROR_ON (
-              strstr ("cl_ext_buffer_device_address", dev->extensions) != 0,
-              CL_INVALID_VALUE,
-              "Requested CL_MEM_DEVICE_ADDRESS allocation, but a device in "
-              "context doesn't support the 'cl_ext_buffer_device_address' "
-              "extension.");
-        }
-      stdflags = flags ^ CL_MEM_DEVICE_ADDRESS_EXT;
+      POCL_GOTO_ERROR_ON (
+        !context->all_devices_support_bda, CL_INVALID_DEVICE,
+        "Requested CL_MEM_DEVICE_ADDRESS allocation, but a device in "
+        "context doesn't support the 'cl_ext_buffer_device_address' "
+        "extension.");
     }
-
-  if (stdflags & CL_MEM_DEVICE_PRIVATE_EXT)
-    stdflags = stdflags ^ CL_MEM_DEVICE_PRIVATE_EXT;
-
-  POCL_GOTO_ERROR_ON ((stdflags > (1 << 10) - 1), CL_INVALID_VALUE,
-                      "There are only 10 non-SVM flags)\n");
+  cl_mem_flags other_flags = flags & ~both_bda_ext_flags;
+  POCL_GOTO_ERROR_ON (
+    (other_flags > (1 << 10) - 1), CL_INVALID_VALUE,
+    "Unknown flag - PoCL only recognizes 10 non-SVM flags\n");
 
   POCL_GOTO_ERROR_ON (
       ((flags & CL_MEM_READ_WRITE)
@@ -144,33 +141,16 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
   mem->mem_host_ptr_version = 0;
   mem->latest_version = 0;
 
-  if (flags & CL_MEM_DEVICE_ADDRESS_EXT)
+  if (flags & both_bda_ext_flags)
     {
       mem->has_device_address = 1;
     }
-  /* https://www.khronos.org/registry/OpenCL/sdk/2.0/docs/man/xhtml/dataTypes.html
-   *
-   * The user is responsible for ensuring that data passed into and out of
-   * OpenCL buffers are natively aligned relative to the start of the buffer as
-   * described above. This implies that OpenCL buffers created with
-   * CL_MEM_USE_HOST_PTR need to provide an appropriately aligned host memory
-   * pointer that is aligned to the data types used to access these buffers in
-   * a kernel(s).
-   */
+
   if (flags & CL_MEM_USE_HOST_PTR)
     {
       POCL_MSG_PRINT_MEMORY ("CL_MEM_USE_HOST_PTR %p \n", host_ptr);
       assert (host_ptr);
       mem->mem_host_ptr = host_ptr;
-      if (((uintptr_t)host_ptr % context->min_buffer_alignment) != 0)
-        {
-          POCL_MSG_WARN ("host_ptr (%p) given to "
-                         "clCreateBuffer(CL_MEM_USE_HOST_PTR, ..)\n"
-                         "isn't aligned for any device in context;\n"
-                         "The minimum required alignment is: %zu;\n"
-                         "This can cause various problems later.\n",
-                         host_ptr, context->min_buffer_alignment);
-        }
       mem->mem_host_ptr_version = 1;
       mem->mem_host_ptr_refcount = 1;
       mem->mem_host_ptr_is_svm = host_ptr_is_svm;
@@ -206,14 +186,14 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
       mem->latest_version = 0;
     }
 
-  /* With CL_MEM_DEVICE_ADDRESS_EXT we must proactively allocate the device
+  /* With cl_ext_buffer_device_address we must proactively allocate the device
      memory so it gets the fixed address range assigned, even if the buffer was
      never used. The address can be queried via clGetMemobjInfo() and used
      inside data structures. */
-  if (flags & CL_MEM_DEVICE_ADDRESS_EXT)
+  if (flags & both_bda_ext_flags)
     {
       POCL_MSG_PRINT_MEMORY (
-          "Trying driver allocation for CL_MEM_DEVICE_ADDRESS_EXT\n");
+        "Trying driver allocation for cl_ext_buffer_device_address\n");
       unsigned i;
       void *ptr = NULL;
       for (i = 0; i < context->num_devices; ++i)
@@ -222,7 +202,7 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
           assert (dev->ops->alloc_mem_obj != NULL);
           int err = 0;
 
-          if (ptr != NULL && !(flags & CL_MEM_DEVICE_PRIVATE_EXT))
+          if (ptr != NULL && (flags & CL_MEM_DEVICE_SHARED_ADDRESS_EXT))
             {
               /* In the default case, we have the same ptr for all devices.
                  TODO: check that the devices have access to each
@@ -249,13 +229,11 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
               DL_APPEND (context->raw_ptrs, item);
               POCL_UNLOCK_OBJ (context);
 
-              POCL_MSG_PRINT_MEMORY ("Registered a CL_MEM_DEVICE_ADDRESS_EXT "
-                                     "allocation with address '%p'.\n",
-                                     ptr);
-              if (!(flags & CL_MEM_DEVICE_PRIVATE_EXT))
-                mem->device_ptrs[dev->global_mem_id].device_addr = ptr;
-              else
-                mem->device_ptrs[dev->global_mem_id].device_addr = NULL;
+              POCL_MSG_PRINT_MEMORY (
+                "Registered a cl_ext_buffer_device_address"
+                " allocation with address '%p'.\n",
+                ptr);
+              mem->device_ptrs[dev->global_mem_id].device_addr = ptr;
             }
         }
     }
@@ -354,8 +332,10 @@ POsym (clCreateBuffer);
 
 static cl_int
 pocl_parse_cl_mem_properties (const cl_mem_properties *prop_ptr,
-                              const cl_tensor_desc_exp **tdesc)
+                              const cl_tensor_desc_exp **tdesc,
+                              cl_mem_properties *device_address_ext)
 {
+  *device_address_ext = 0;
 
   if (!prop_ptr)
     {
@@ -371,6 +351,28 @@ pocl_parse_cl_mem_properties (const cl_mem_properties *prop_ptr,
     {
       switch (*prop_ptr)
         {
+        case CL_MEM_DEVICE_SHARED_ADDRESS_EXT:
+          POCL_RETURN_ERROR_ON (
+            (*device_address_ext), CL_INVALID_VALUE,
+            "only one of DEVICE_{SHARED,PRIVATE}_ADDRESS_EXT"
+            "properties can be specified\n");
+          if (prop_ptr[1])
+            {
+              *device_address_ext = CL_MEM_DEVICE_SHARED_ADDRESS_EXT;
+            }
+          prop_ptr += 2;
+          break;
+        case CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT:
+          POCL_RETURN_ERROR_ON (
+            (*device_address_ext), CL_INVALID_VALUE,
+            "only one of DEVICE_{SHARED,PRIVATE}_ADDRESS_EXT"
+            "properties can be specified\n");
+          if (prop_ptr[1])
+            {
+              *device_address_ext = CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT;
+            }
+          prop_ptr += 2;
+          break;
         case CL_MEM_TENSOR_EXP:
           {
             *tdesc = (const cl_tensor_desc_exp *)prop_ptr[1];
@@ -379,14 +381,15 @@ pocl_parse_cl_mem_properties (const cl_mem_properties *prop_ptr,
             POCL_RETURN_ERROR_ON ((pocl_check_tensor_desc (*tdesc)),
                                   CL_INVALID_PROPERTY,
                                   "invalid tensor description.");
-            return CL_SUCCESS;
+            break;
           }
         default:
           POCL_RETURN_ERROR (CL_INVALID_PROPERTY,
                              "Unknown cl_mem property %zu", *prop_ptr);
         }
     }
-  return CL_OUT_OF_HOST_MEMORY;
+
+  return CL_SUCCESS;
 }
 
 CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBufferWithProperties)(
@@ -400,15 +403,15 @@ CL_API_SUFFIX__VERSION_3_0
 {
   int errcode;
   const cl_tensor_desc_exp *tdesc = NULL;
-
-  errcode = pocl_parse_cl_mem_properties (properties, &tdesc);
+  cl_mem_properties bda_props = 0;
+  errcode = pocl_parse_cl_mem_properties (properties, &tdesc, &bda_props);
   if (errcode != CL_SUCCESS)
     {
       goto ERROR;
     }
 
-  cl_mem mem
-    = POname (clCreateBuffer) (context, flags, size, host_ptr, errcode_ret);
+  cl_mem mem = POname (clCreateBuffer) (
+    context, flags | (cl_mem_flags)bda_props, size, host_ptr, errcode_ret);
   if (mem == NULL)
     return NULL;
 
