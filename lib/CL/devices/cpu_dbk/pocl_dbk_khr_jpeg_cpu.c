@@ -23,7 +23,7 @@
 */
 
 #include "pocl_dbk_khr_jpeg_cpu.h"
-#include "common_utils.h"
+#include "pocl_mem_management.h"
 
 #ifdef HAVE_LIBJPEG_TURBO
 

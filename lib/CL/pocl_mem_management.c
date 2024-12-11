@@ -1090,3 +1090,18 @@ pocl_find_raw_ptr_with_dev_ptr (cl_context context, const void *dev_ptr)
   POCL_UNLOCK_OBJ (context);
   return item;
 }
+
+void *
+pocl_cpu_get_ptr (struct pocl_argument *arg, unsigned global_mem_id)
+{
+  if (arg->value == NULL)
+    return NULL;
+
+  if (arg->is_raw_ptr)
+    return *(void **)arg->value;
+
+  cl_mem mem = *(cl_mem *)(arg->value);
+  char *ptr = (char *)(mem->device_ptrs[global_mem_id].mem_ptr);
+  ptr += arg->offset;
+  return (void *)ptr;
+}

@@ -128,8 +128,6 @@ POCL_EXPORT
 void pocl_free_kernel_arg_array_with_locals (void **arguments, void **arguments2,
                                         kernel_run_command *k);
 
-void *pocl_cpu_get_ptr (struct pocl_argument *arg, unsigned global_mem_id);
-
 POCL_EXPORT
 void pocl_cpu_save_rm_and_ftz (unsigned *rm, unsigned *ftz);
 

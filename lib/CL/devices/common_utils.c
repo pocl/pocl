@@ -891,27 +891,6 @@ pocl_cpu_build_defined_builtin (cl_program program, cl_uint device_i)
     "The CPU driver has not been compiled with support for DBKs\n");
 }
 
-/**
- * Get the device memory pointer of the supplied pocl argument.
- *
- * \param global_mem_id [in] This is needed to get the device specific pointer.
- * \return NULL if arg->value is NULL and otherwise the requested pointer.
- */
-void *
-pocl_cpu_get_ptr (struct pocl_argument *arg, unsigned global_mem_id)
-{
-  if (arg->value == NULL)
-    return NULL;
-
-  if (arg->is_raw_ptr)
-    return *(void **)arg->value;
-
-  cl_mem mem = *(cl_mem *)(arg->value);
-  char *ptr = (char *)(mem->device_ptrs[global_mem_id].mem_ptr);
-  ptr += arg->offset;
-  return (void *)ptr;
-}
-
 #ifdef HAVE_LIBXSMM
 
 static cl_bool
