@@ -363,14 +363,14 @@ pocl_cpu_init_common (cl_device_id device)
           | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT
           | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT;
       device->features
-        = HOST_DEVICE_FEATURES_30 " __opencl_c_ext_fp32_global_atomic_add "
-                                  "__opencl_c_ext_fp64_global_atomic_add"
-                                  " __opencl_c_ext_fp32_local_atomic_add "
-                                  "__opencl_c_ext_fp64_local_atomic_add"
-                                  " __opencl_c_ext_fp32_global_atomic_min_max "
-                                  "__opencl_c_ext_fp64_global_atomic_min_max"
-                                  " __opencl_c_ext_fp32_local_atomic_min_max "
-                                  "__opencl_c_ext_fp64_local_atomic_min_max";
+        = HOST_DEVICE_FEATURES_30 " __opencl_c_ext_fp32_global_atomic_add"
+                                  " __opencl_c_ext_fp64_global_atomic_add"
+                                  " __opencl_c_ext_fp32_local_atomic_add"
+                                  " __opencl_c_ext_fp64_local_atomic_add"
+                                  " __opencl_c_ext_fp32_global_atomic_min_max"
+                                  " __opencl_c_ext_fp64_global_atomic_min_max"
+                                  " __opencl_c_ext_fp32_local_atomic_min_max"
+                                  " __opencl_c_ext_fp64_local_atomic_min_max";
     }
 
   pocl_setup_opencl_c_with_version (device, CL_TRUE);
