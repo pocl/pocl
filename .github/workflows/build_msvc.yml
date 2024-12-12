@@ -31,7 +31,7 @@ defaults:
 
 jobs:
   msvc_test_matrix:
-    name: LLVM ${{ matrix.llvm_version }} - ${{ matrix.config }} - shared libs:${{ matrix.shared_libs }}
+    name: LLVM ${{ matrix.llvm_version }} - ${{ matrix.config }} - shared libs:${{ matrix.shared_libs }} - ICD ${{ matrix.enable_icd }}
     runs-on: [windows-2022]
     strategy:
       fail-fast: false
