@@ -847,14 +847,11 @@ pocl_broadcast (cl_event brc_event)
   POCL_LOCK_OBJ (brc_event);
   while ((target = brc_event->notify_list))
     {
-      cl_event target_event = target->event;
-      POCL_UNLOCK_OBJ (brc_event);
-      POname (clRetainEvent) (target_event);
-
-      pocl_lock_events_inorder (brc_event, target_event);
+      POCL_LOCK_OBJ (target->event);
       if (target != brc_event->notify_list)
         {
-          pocl_unlock_events_inorder (brc_event, target_event);
+          assert (0 && "should be unreachable");
+          pocl_unlock_events_inorder (brc_event, target->event);
           POCL_LOCK_OBJ (brc_event);
           continue;
         }
@@ -888,10 +885,11 @@ pocl_broadcast (cl_event brc_event)
                 }
           }
         LL_DELETE (brc_event->notify_list, target);
-        pocl_unlock_events_inorder (brc_event, target_event);
+        POCL_UNLOCK_OBJ (target->event);
+        /* Now that the event is deleted from the notify_list,
+         * undo the retain done during pocl_create_event_sync. */
         POname (clReleaseEvent) (target->event);
         pocl_mem_manager_free_event_node (target);
-        POCL_LOCK_OBJ (brc_event);
     }
   POCL_UNLOCK_OBJ (brc_event);
 }
