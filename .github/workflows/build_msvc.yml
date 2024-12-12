@@ -108,9 +108,19 @@ jobs:
         timeout-minutes: 120
         shell: pwsh
         run: |
+          if ("${{ matrix.enable_icd }}" -eq "on") {
+            # We download opencl.dll from KhronosGroup
+            # Delete the one in C:\Windows\System32 which takes precedence
+            rm C:\Windows\System32\opencl.dll
+          }
+
           if (Test-Path -path ${{ env.POCL_CACHE_DIR }}) {
             rm -r ${{ env.POCL_CACHE_DIR }}
           }
           mkdir ${{ env.POCL_CACHE_DIR }}
           cd ${{ github.workspace }}\build-pocl
           & ${{ github.workspace }}\tools\scripts\run_cpu_tests.ps1 --output-on-failure -j$Env:NUMBER_OF_PROCESSORS
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ failure() }}
