@@ -68,7 +68,7 @@ ssize_t Connection::writeFull(const void *Source, size_t Bytes) {
     Res = ::write(Fd, Ptr + Written, Remaining);
     if (Res < 0) {
       int e = errno;
-      if (e == EAGAIN || e == EWOULDBLOCK)
+      if (e == EAGAIN || e == EWOULDBLOCK || e == EINTR)
         continue;
       else
         return -1;
@@ -93,7 +93,7 @@ int Connection::readFull(void *Destination, size_t Bytes) {
     res = ::read(Fd, Ptr + readb, Remain);
     if (res < 0) {
       int e = errno;
-      if (e == EAGAIN || e == EWOULDBLOCK)
+      if (e == EAGAIN || e == EWOULDBLOCK || e == EINTR)
         continue;
       else
         return -1;

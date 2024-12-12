@@ -319,6 +319,13 @@ connection_read_full (remote_connection_t *connection,
       res = read (connection->fd, ptr + readb, remain);
       if (res < 0)
         { /* ERROR */
+
+          /* In the case of these errors, try again. */
+          int e = errno;
+          if (e == EAGAIN || e == EWOULDBLOCK || e == EINTR)
+            continue;
+          POCL_MSG_ERR ("error reading remote data: %d (%s).\n", errno,
+                        strerror (errno));
           return -1;
         }
       if (res == 0)
@@ -350,7 +357,7 @@ connection_write_full (remote_connection_t *connection,
       if (res < 0)
         {
           int e = errno;
-          if (e == EAGAIN || e == EWOULDBLOCK)
+          if (e == EAGAIN || e == EWOULDBLOCK || e == EINTR)
             continue;
           else
             return -1;
