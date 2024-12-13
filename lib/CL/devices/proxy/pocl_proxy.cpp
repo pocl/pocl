@@ -1402,7 +1402,9 @@ pocl_proxy_setup_metadata (cl_device_id device, cl_program program,
   proxy_device_data_t *d = (proxy_device_data_t *)device->data;
   cl_program proxy_prog = (cl_program)program->data[program_device_i];
 
-  if (!(d->backend->provides_metadata || d->backend->supports_il))
+  // Return if there is no metadata and we are not building using a binary.
+  if (!(d->backend->provides_metadata ||
+      (d->backend->supports_il && program->program_il_size > 0)))
     return 0;
 
   assert(program->kernel_meta == NULL);
