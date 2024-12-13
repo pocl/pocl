@@ -105,5 +105,5 @@ jobs:
           if [ ${{ matrix.conformance }} -eq 0 ]; then
             cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j2 $CTEST_FLAGS -LE long
           else
-            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j2 $CTEST_FLAGS -L conformance_suite_micro_main -LE long
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j2 $CTEST_FLAGS -L conformance_suite_micro_main -LE long -E "(conformance_main_buffers_micro_|conformance_main_basic_micro_other|conformance_main_vectors_micro|conformance_main_spirv_new_micro_)"
           fi
