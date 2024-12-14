@@ -84,22 +84,14 @@ typedef CL_API_ENTRY cl_int
  * CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT allocated buffers can be computed by
  * adding the sub-buffer origin to the device-specific start address.
  */
-#define CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT (1ul << 31)
-
-/*
- * When set to CL_TRUE, the buffer has otherwise the same properties as
- * when allocated using the CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT property,
- * but with an additional property that the buffer's address is the same
- * across all the devices in the context.
- */
-#define CL_MEM_DEVICE_SHARED_ADDRESS_EXT (1ul << 30)
+#define CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT 0x5000
 
 /* clGetMemObjectInfo(): A new cl_mem_info type CL_MEM_DEVICE_PTR_EXT:
  * Returns the device address for a buffer allocated with
  * CL_MEM_DEVICE_ADDRESS_EXT. If the buffer was not created with the flag,
  * returns CL_INVALID_MEM_OBJECT.
  */
-#define CL_MEM_DEVICE_ADDRESS_EXT 0xff01
+#define CL_MEM_DEVICE_ADDRESS_EXT 0x5001
 
 typedef cl_ulong cl_mem_device_address_EXT;
 
@@ -108,7 +100,7 @@ typedef cl_ulong cl_mem_device_address_EXT;
  * device pointers: If a device pointer accessed by a kernel is not passed as
  * an argument, it must be set by this property.
  */
-#define CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT 0x11B8
+#define CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT 0x5002
 
 /* A new function clSetKernelArgDevicePointerEXT() for setting raw device
  * pointers as kernel arguments. */

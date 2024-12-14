@@ -45,23 +45,17 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
 
   if (flags == 0)
     flags = CL_MEM_READ_WRITE;
-  const cl_mem_flags both_bda_ext_flags
-    = CL_MEM_DEVICE_SHARED_ADDRESS_EXT | CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT;
-  POCL_GOTO_ERROR_ON (((flags & both_bda_ext_flags) == both_bda_ext_flags),
-                      CL_INVALID_VALUE,
-                      "only one of CL_MEM_DEVICE_{SHARED,PRIVATE}_ADDRESS_EXT"
-                      "properties can be specified\n");
 
   /* validate presence of extension on all devices */
-  if (flags & both_bda_ext_flags)
+  if (flags & CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT)
     {
       POCL_GOTO_ERROR_ON (
         !context->all_devices_support_bda, CL_INVALID_DEVICE,
-        "Requested CL_MEM_DEVICE_ADDRESS allocation, but a device in "
+        "Requested buffer_device_address allocation, but a device in "
         "context doesn't support the 'cl_ext_buffer_device_address' "
         "extension.");
     }
-  cl_mem_flags other_flags = flags & ~both_bda_ext_flags;
+  cl_mem_flags other_flags = flags & ~CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT;
   POCL_GOTO_ERROR_ON (
     (other_flags > (1 << 10) - 1), CL_INVALID_VALUE,
     "Unknown flag - PoCL only recognizes 10 non-SVM flags\n");
@@ -141,7 +135,7 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
   mem->mem_host_ptr_version = 0;
   mem->latest_version = 0;
 
-  if (flags & both_bda_ext_flags)
+  if (flags & CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT)
     {
       mem->has_device_address = 1;
     }
@@ -190,7 +184,7 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
      memory so it gets the fixed address range assigned, even if the buffer was
      never used. The address can be queried via clGetMemobjInfo() and used
      inside data structures. */
-  if (flags & both_bda_ext_flags)
+  if (flags & CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT)
     {
       POCL_MSG_PRINT_MEMORY (
         "Trying driver allocation for cl_ext_buffer_device_address\n");
@@ -202,15 +196,7 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
           assert (dev->ops->alloc_mem_obj != NULL);
           int err = 0;
 
-          if (ptr != NULL && (flags & CL_MEM_DEVICE_SHARED_ADDRESS_EXT))
-            {
-              /* In the default case, we have the same ptr for all devices.
-                 TODO: check that the devices have access to each
-                 other's memories/address spaces. */
-              assert (mem->device_ptrs[dev->global_mem_id].mem_ptr == NULL);
-              mem->device_ptrs[dev->global_mem_id].mem_ptr = ptr;
-            }
-          else if (mem->device_ptrs[dev->global_mem_id].mem_ptr == NULL)
+          if (mem->device_ptrs[dev->global_mem_id].mem_ptr == NULL)
             {
               err = dev->ops->alloc_mem_obj (dev, mem, host_ptr);
               ptr = mem->device_ptrs[dev->global_mem_id].mem_ptr;
@@ -351,22 +337,7 @@ pocl_parse_cl_mem_properties (const cl_mem_properties *prop_ptr,
     {
       switch (*prop_ptr)
         {
-        case CL_MEM_DEVICE_SHARED_ADDRESS_EXT:
-          POCL_RETURN_ERROR_ON (
-            (*device_address_ext), CL_INVALID_VALUE,
-            "only one of DEVICE_{SHARED,PRIVATE}_ADDRESS_EXT"
-            "properties can be specified\n");
-          if (prop_ptr[1])
-            {
-              *device_address_ext = CL_MEM_DEVICE_SHARED_ADDRESS_EXT;
-            }
-          prop_ptr += 2;
-          break;
         case CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT:
-          POCL_RETURN_ERROR_ON (
-            (*device_address_ext), CL_INVALID_VALUE,
-            "only one of DEVICE_{SHARED,PRIVATE}_ADDRESS_EXT"
-            "properties can be specified\n");
           if (prop_ptr[1])
             {
               *device_address_ext = CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT;

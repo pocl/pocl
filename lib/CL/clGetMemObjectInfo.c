@@ -73,15 +73,11 @@ POname (clGetMemObjectInfo) (
                             " cl_ext_buffer_device_address extension\n");
 
       cl_context context = memobj->context;
-      unsigned num_ret_vals
-        = (memobj->flags & CL_MEM_DEVICE_SHARED_ADDRESS_EXT)
-            ? 1
-            : context->num_devices;
-      POCL_RETURN_GETINFO_SIZE_CHECK (num_ret_vals
+      POCL_RETURN_GETINFO_SIZE_CHECK (context->num_devices
                                       * sizeof (cl_mem_device_address_EXT));
       cl_mem_device_address_EXT *addresses
         = (cl_mem_device_address_EXT *)param_value;
-      for (size_t i = 0; i < num_ret_vals; ++i)
+      for (size_t i = 0; i < context->num_devices; ++i)
         {
           cl_device_id dev = context->devices[i];
           pocl_mem_identifier *p = &memobj->device_ptrs[dev->global_mem_id];

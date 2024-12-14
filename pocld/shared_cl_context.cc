@@ -2102,8 +2102,7 @@ int SharedCLContext::createBufferFromSVMRegion(BufferId_t BufferID, size_t Size,
 
   // The backing drivers might not recognize the pocl PoC extension and
   // they need not to as we implement the pinning with SVM allocations.
-  Flags ^=
-      (CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT | CL_MEM_DEVICE_SHARED_ADDRESS_EXT);
+  Flags ^= CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT;
   bool SVMWrapper = false;
   SVMRegion *TargetSVMRegion = nullptr;
   cl_buffer_region SubBufRegion;
