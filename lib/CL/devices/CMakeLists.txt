@@ -223,8 +223,7 @@ if(HAVE_ONNXRT)
   target_link_libraries("pocl-devices" PRIVATE onnxruntime::onnxruntime)
 endif ()
 if(HAVE_OPENCV)
-  add_dependencies("pocl-devices" pocl_dbk_khr_dnn_utils)
-  target_link_libraries("pocl-devices" PRIVATE $<TARGET_OBJECTS:pocl_dbk_khr_dnn_utils> opencv_dnn)
+  target_link_libraries("pocl-devices" PRIVATE opencv_dnn)
 endif ()
 
 set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"

@@ -22,7 +22,7 @@
 */
 
 #include "pocl_dbk_khr_dnn_utils.hh"
-#include "common_utils.h"
+#include "pocl_mem_management.h"
 #include <opencv2/dnn.hpp>
 #include <string>
 

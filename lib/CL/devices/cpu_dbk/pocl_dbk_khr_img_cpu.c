@@ -22,7 +22,7 @@
 */
 
 #include "pocl_dbk_khr_img_cpu.h"
-#include "common_utils.h"
+#include "pocl_mem_management.h"
 
 int
 pocl_cpu_execute_dbk_exp_img_yuv2rgb (cl_program program,

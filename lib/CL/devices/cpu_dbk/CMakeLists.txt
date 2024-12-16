@@ -16,12 +16,11 @@ list(APPEND POCL_DEVICES_SOURCES
 )
 
 if(HAVE_OPENCV)
-    add_library(pocl_dbk_khr_dnn_utils OBJECT
-            pocl_dbk_khr_dnn_utils.cpp
-            pocl_dbk_khr_dnn_utils.hh)
-    target_link_libraries(pocl_dbk_khr_dnn_utils PRIVATE opencv_dnn)
+    list(APPEND POCL_DEVICES_SOURCES
+            ${CMAKE_CURRENT_SOURCE_DIR}/pocl_dbk_khr_dnn_utils.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/pocl_dbk_khr_dnn_utils.hh)
 
-    list(APPEND POCL_DEVICES_LINK_LIST pocl_dbk_khr_dnn_utils)
+    list(APPEND POCL_DEVICES_LINK_LIST opencv_dnn)
 
 endif ()
 

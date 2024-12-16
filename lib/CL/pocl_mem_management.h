@@ -25,6 +25,11 @@
 #include "pocl_cl.h"
 #include "utlist.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
 #endif
@@ -111,6 +116,19 @@ pocl_convert_to_subbuffer_migrations (pocl_buffer_migration_info *buffer_usage,
 
 #endif
 
+/**
+ * Get the device memory pointer of the supplied pocl argument.
+ *
+ * \param global_mem_id [in] This is needed to get the device specific pointer.
+ * \return NULL if arg->value is NULL and otherwise the requested pointer.
+ */
+POCL_EXPORT void *
+pocl_cpu_get_ptr (struct pocl_argument *arg, unsigned global_mem_id);
+
 #ifdef __GNUC__
 #pragma GCC visibility pop
+#endif
+
+#ifdef __cplusplus
+}
 #endif
