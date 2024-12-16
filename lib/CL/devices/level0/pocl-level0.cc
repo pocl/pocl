@@ -499,7 +499,7 @@ static int linkWithSpirvLink(cl_program Program, cl_uint DeviceI,
   for (auto &Path : SpvBinaryPaths) {
     CompilationArgs.push_back(Path);
   }
-  CompilationArgs2.reserve(CompilationArgs.size() + 1);
+  CompilationArgs2.resize(CompilationArgs.size() + 1);
   for (unsigned i = 0; i < CompilationArgs.size(); ++i)
     CompilationArgs2[i] = (char *)CompilationArgs[i].data();
   CompilationArgs2[CompilationArgs.size()] = nullptr;
@@ -535,7 +535,7 @@ static int runLLVMOpt(cl_program Program, cl_uint DeviceI,
   CompilationArgs.push_back(ProgramBcPathTemp);
   CompilationArgs.push_back(ProgramBcOldPathTemp);
 
-  CompilationArgs2.reserve(CompilationArgs.size() + 1);
+  CompilationArgs2.resize(CompilationArgs.size() + 1);
   for (unsigned i = 0; i < CompilationArgs.size(); ++i)
     CompilationArgs2[i] = (char *)CompilationArgs[i].data();
   CompilationArgs2[CompilationArgs.size()] = nullptr;
@@ -567,7 +567,7 @@ static int linkWithLLVMLink(cl_program Program, cl_uint DeviceI,
   for (auto &Path : BcBinaryPaths) {
     CompilationArgs.push_back(Path);
   }
-  CompilationArgs2.reserve(CompilationArgs.size() + 1);
+  CompilationArgs2.resize(CompilationArgs.size() + 1);
   for (unsigned i = 0; i < CompilationArgs.size(); ++i)
     CompilationArgs2[i] = (char *)CompilationArgs[i].data();
   CompilationArgs2[CompilationArgs.size()] = nullptr;
