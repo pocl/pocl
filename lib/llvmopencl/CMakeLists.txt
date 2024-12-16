@@ -101,7 +101,7 @@ harden("llvmpasses")
 
 target_include_directories(llvmpasses PRIVATE "${CMAKE_SOURCE_DIR}/lib/CL")
 target_include_directories(llvmpasses PRIVATE "${CMAKE_SOURCE_DIR}/lib/CL/devices")
-target_include_directories(llvmpasses PRIVATE ${LLVM_INCLUDE_DIR})
+target_include_directories(llvmpasses PRIVATE ${LLVM_INCLUDE_DIRS})
 
 if(OCL_ICD_INCLUDE_DIRS)
   target_include_directories("llvmpasses" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})

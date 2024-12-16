@@ -24,10 +24,9 @@
 #ifndef POCL_ONNXRT_H
 #define POCL_ONNXRT_H
 
-#include <CL/cl_exp_defined_builtin_kernels.h>
-#include <CL/cl_platform.h>
 #include <stddef.h>
 
+#include "pocl_cl.h"
 #include "pocl_export.h"
 
 typedef struct onnxrt_instance onnxrt_instance_t;

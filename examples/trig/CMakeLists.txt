@@ -28,8 +28,8 @@ add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 add_compile_options(${OPENCL_CFLAGS})
 
 add_executable("trig" trig.c trig.cl trig_exec.c)
-
 target_link_libraries("trig" ${POCLU_LINK_OPTIONS})
+add_symlink_to_built_opencl_dynlib("trig")
 
 add_test(NAME "examples/trig" COMMAND "trig")
 

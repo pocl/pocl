@@ -51,15 +51,13 @@ If you have professional edition installed instead, replace ``Community`` with
 Configure and build PoCL::
 
   git clone https://github.com/pocl/pocl.git
-  cmake -S pocl -B build-pocl -DCMAKE_INSTALL_PREFIX=<pocl-install>\install-pocl -DENABLE_ICD=0 -DENABLE_LLVM=1 -DWITH_LLVM_CONFIG=<llvm-install-path>\bin\llvm-config.exe -DENABLE_LOADABLE_DRIVERS=0 -DSTATIC_LLVM=ON -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL -DBUILD_SHARED_LIBS=OFF -G "Ninja"
+  cmake -S pocl -B build-pocl -DCMAKE_INSTALL_PREFIX=<pocl-install>\install-pocl -DENABLE_ICD=0 -DENABLE_LLVM=1 -DWITH_LLVM_CONFIG=<llvm-install-path>\bin\llvm-config.exe -DENABLE_LOADABLE_DRIVERS=0 -DSTATIC_LLVM=ON -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL -G "Ninja"
   cmake --build build-pocl
   cmake --install build-pocl
 
 Where ``<llvm-install-path>`` is the directory where the LLVM is
-installed in the previous section. This builds PoCL as static library
-and building PoCL as dynamic library (``-DBUILD_SHARED_LIBS=ON``) is
-not supported yet. ``-G Ninja`` can be replaced with ``-G NMake
-Makefiles`` but the building will be very slow.
+installed in the previous section. ``-G Ninja`` can be replaced with
+``-G NMake Makefiles`` but the building will be very slow.
 
 
 Running tests from the build directory (MSVC)

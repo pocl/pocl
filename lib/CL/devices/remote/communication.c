@@ -41,7 +41,6 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-#include "CL/cl_platform.h"
 #include "common.h"
 #include "pocl_cl.h"
 #include "pocl_debug.h"
@@ -51,7 +50,6 @@
 #include "pocl_timing.h"
 #include "remote.h"
 #include "utlist.h"
-#include <CL/cl.h>
 
 #ifdef ENABLE_RDMA
 #include "pocl_rdma.h"

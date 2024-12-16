@@ -334,7 +334,9 @@ else()
   set(VISIBILITY_HIDDEN_DEFAULT ON)
 endif()
 option(VISIBILITY_HIDDEN "Build with -fvisibility=hidden -fvisibility-inlines-hidden" ${VISIBILITY_HIDDEN_DEFAULT})
-if(VISIBILITY_HIDDEN)
+
+if(VISIBILITY_HIDDEN AND NOT MSVC)
+  # MSVC ignores the following options and spams warnings about them.
   add_compile_options(-fvisibility=hidden)
   add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fvisibility-inlines-hidden>)
 endif()
@@ -384,10 +386,6 @@ option(RENAME_POCL "Rename PoCL's OpenCL functions to PO<ocl_function>. Allows a
 
 
 ##########################################################
-
-if(MSVC AND BUILD_SHARED_LIBS)
-  message(FATAL_ERROR "Building shared libraries are not supported on MSVC yet!")
-endif()
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   set(HOST_DEVICE_ADDRESS_BITS 64)
@@ -540,6 +538,14 @@ endif()
 ######################################################################################
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+include(pocl_utils)
+
+if(WIN32 AND NOT ENABLE_ICD AND BUILD_SHARED_LIBS)
+  # To have executables link to PoCL built OpenCL.dll instead of a system one
+  # we resort to symlinks which require elevated permissions or developer mode
+  # enabled.
+  pocl_assert_symlinks_works()
+endif()
 
 option(HARDENING_ENABLE "Enable hardening against various attacks. May worsen performance" OFF)
 if(HARDENING_ENABLE)
@@ -2491,7 +2497,6 @@ if (ENABLE_LLVM)
   MESSAGE(STATUS "LLVM_CPPFLAGS: ${LLVM_CPPFLAGS}")
   MESSAGE(STATUS "LLVM_LDFLAGS: ${LLVM_LDFLAGS}")
   MESSAGE(STATUS "LLVM_LIBDIR: ${LLVM_LIBDIR}")
-  MESSAGE(STATUS "LLVM_INCLUDEDIR: ${LLVM_INCLUDEDIR}")
   MESSAGE(STATUS "LLVM_SRC_ROOT: ${LLVM_SRC_ROOT}")
   MESSAGE(STATUS "LLVM_OBJ_ROOT: ${LLVM_OBJ_ROOT}")
   MESSAGE(STATUS "LLVM_INCLUDE_DIRS: ${LLVM_INCLUDE_DIRS}")

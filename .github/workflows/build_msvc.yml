@@ -26,12 +26,13 @@ concurrency:
 
 jobs:
   msvc_test_matrix:
-    name: LLVM ${{ matrix.llvm_version }} - ${{ matrix.config }}
+    name: LLVM ${{ matrix.llvm_version }} - ${{ matrix.config }} - shared libs:${{ matrix.shared_libs }}
     runs-on: [windows-2022]
     strategy:
       fail-fast: false
       matrix:
         llvm_version: [18, 19]
+        shared_libs: [ON, OFF]
         config: [cpu]
 
     steps:
@@ -106,10 +107,10 @@ jobs:
               -DENABLE_ICD=0
               -DENABLE_LLVM=1
               -DWITH_LLVM_CONFIG=${{ github.workspace }}\install-llvm\bin\llvm-config.exe
-              -DENABLE_LOADABLE_DRIVERS=0
+              -DENABLE_LOADABLE_DRIVERS=OFF
               -DSTATIC_LLVM=ON
               -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL
-              -DBUILD_SHARED_LIBS=OFF
+              -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }}
               -G "Ninja"
 
       - name: Build PoCL

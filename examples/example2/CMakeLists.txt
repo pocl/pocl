@@ -26,8 +26,8 @@
 add_compile_options(${OPENCL_CFLAGS})
 
 add_executable("example2" example2.c example2.cl)
-
 target_link_libraries("example2" ${POCLU_LINK_OPTIONS})
+add_symlink_to_built_opencl_dynlib("example2")
 
 add_test(NAME "examples/example2" COMMAND "example2")
 

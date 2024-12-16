@@ -394,3 +394,6 @@ set_property(TEST
   "kernel/test_ucharn_loopvec"
   "kernel/test_image_query_funcs_loopvec"
   APPEND PROPERTY LABELS "level0")
+
+add_symlink_to_built_opencl_dynlib(
+  kernel test_shuffle image_query_funcs sampler_address_clamp)

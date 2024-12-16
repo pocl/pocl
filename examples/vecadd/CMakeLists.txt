@@ -26,8 +26,8 @@
 add_compile_options(${OPENCL_CFLAGS})
 
 add_executable("vecadd" vecadd.c vecadd_exec.c vecadd.cl)
-
 target_link_libraries("vecadd" ${POCLU_LINK_OPTIONS})
+add_symlink_to_built_opencl_dynlib("vecadd")
 
 add_test(NAME "examples/vecadd" COMMAND "vecadd")
 
