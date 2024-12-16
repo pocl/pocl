@@ -39,7 +39,7 @@ jobs:
         llvm_version: [18, 19]
         shared_libs: [ON, OFF]
         config: [cpu]
-        enable_icd: [off, on]
+        enable_icd: [ON, OFF]
 
     steps:
       - name: Checkout PoCL
@@ -108,7 +108,7 @@ jobs:
         timeout-minutes: 120
         shell: pwsh
         run: |
-          if ("${{ matrix.enable_icd }}" -eq "on") {
+          if ("${{ matrix.enable_icd }}" -eq "ON") {
             # We download opencl.dll from KhronosGroup
             # Delete the one in C:\Windows\System32 which takes precedence
             rm C:\Windows\System32\opencl.dll
