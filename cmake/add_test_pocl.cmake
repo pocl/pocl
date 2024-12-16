@@ -106,9 +106,10 @@ function(add_test_pocl)
       ENVIRONMENT POCL_WORK_GROUP_METHOD=${VARIANT})
 
     if(ENABLE_LLVM_FILECHECKS AND POCL_TEST_LLVM_FILECHECK AND VARIANT STREQUAL "loopvec")
-      set(RUN_CMD "${CMAKE_SOURCE_DIR}/tools/scripts/run-and-check-llvm-ir####${LLVM_FILECHECK_BIN}####${CMAKE_CURRENT_SOURCE_DIR}/${POCL_TEST_LLVM_FILECHECK}####${RUN_CMD}")
+      set(RUN_CMD "${CMAKE_SOURCE_DIR}/tools/scripts/run-and-check-llvm-ir####${LLVM_FILECHECK_BIN}####${LLVM_DIS_BIN}####${CMAKE_CURRENT_SOURCE_DIR}/${POCL_TEST_LLVM_FILECHECK}####${RUN_CMD}")
 
-      set(POCL_TEST_ARGLIST "NAME" "${POCL_VARIANT_TEST_NAME}_llvm-ir-checks")
+      set(POCL_TEST_IR_CHECK_NAME "${POCL_VARIANT_TEST_NAME}_llvm-ir-checks")
+      set(POCL_TEST_ARGLIST "NAME" ${POCL_TEST_IR_CHECK_NAME})
       if(POCL_TEST_WORKING_DIRECTORY)
         list(APPEND POCL_TEST_ARGLIST "WORKING_DIRECTORY")
         list(APPEND POCL_TEST_ARGLIST "${POCL_TEST_WORKING_DIRECTORY}")
@@ -118,11 +119,12 @@ function(add_test_pocl)
 
       add_test(${POCL_TEST_ARGLIST})
 
-      set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
+      set_tests_properties(${POCL_TEST_IR_CHECK_NAME} PROPERTIES
                           PASS_REGULAR_EXPRESSION "OK"
-                          FAIL_REGULAR_EXPRESSION "FAIL")
-      set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
-        ENVIRONMENT POCL_WORK_GROUP_METHOD=${VARIANT})
+                          FAIL_REGULAR_EXPRESSION "FAIL"
+                          ENVIRONMENT POCL_WORK_GROUP_METHOD=${VARIANT}
+                          LABELS "internal;"
+                          DEPENDS "pocl_version_check")
 
     endif()
 

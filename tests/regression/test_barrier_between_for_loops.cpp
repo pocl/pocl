@@ -45,28 +45,32 @@
 // increasing the loop counter to 32 produces yet another crash
 
 static char
-kernelSourceCode[] = 
-"kernel \n"
-"void test_kernel(__global float *input, \n"
-"                 __global int *result) {\n"
-"  int gid = get_global_id(0);\n"
-"  float global_sum = 0.0f;\n"
-"  int i;\n"
-"\n"
-" result[gid] = global_sum;\n"
-" for (i=0; i < 32; ++i) {\n"
-"   float value = input[gid+i];\n"
-"   global_sum += value;\n"
-" }\n"
-" result[gid] = result[gid] + global_sum;\n"
-" barrier(CLK_GLOBAL_MEM_FENCE);\n"
-" \n"
-" for (i=0; i < 32; ++i) {\n"
-"   float value = input[gid+i];\n"
-"   global_sum += value;\n"
-" }\n"
-" result[gid] = result[gid] + global_sum;\n"
-"}\n";
+kernelSourceCode[] = R"CL(
+kernel
+void test_kernel(__global float *input,
+                 __global int *result) {
+  int gid = get_global_id(0);
+  float global_sum = 0.0f;
+  int i;
+
+  result[gid] = global_sum;
+  for (i=0; i < 32; ++i) {
+    float value = input[gid+i];
+    global_sum += value;
+  }
+  result[gid] = result[gid] + global_sum;
+//  printf("before barrier GID %d result[gid] == %f global_sum == %f\n", gid, result[gid],
+//         global_sum);
+  barrier(CLK_GLOBAL_MEM_FENCE);
+  for (i=0; i < 32; ++i) {
+    float value = input[gid+i];
+    global_sum += value;
+  }
+  result[gid] = result[gid] + global_sum;
+//  printf("after barrier GID %d result[gid] == %f global_sum == %f\n", gid, result[gid],
+//         global_sum);
+}
+)CL";
 
 int
 main(void)
@@ -111,16 +115,16 @@ main(void)
 
         // Create buffer for A and copy host contents
         cl::Buffer aBuffer = cl::Buffer(
-            context, 
-            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
-            BUFFER_SIZE * sizeof(float), 
+            context,
+            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            BUFFER_SIZE * sizeof(float),
             (void *) &A[0]);
 
         // Create buffer for that uses the host ptr C
         cl::Buffer cBuffer = cl::Buffer(
-            context, 
-            CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, 
-            WORK_ITEMS * sizeof(int), 
+            context,
+            CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR,
+            WORK_ITEMS * sizeof(int),
             (void *) &R[0]);
 
         // Create kernel object
@@ -132,20 +136,19 @@ main(void)
 
         // Create command queue
         cl::CommandQueue queue(context, devices[0], 0);
- 
+
         // Do the work
         queue.enqueueNDRangeKernel(
-            kernel, 
-            cl::NullRange, 
+            kernel,
+            cl::NullRange,
             cl::NDRange(WORK_ITEMS),
             cl::NullRange);
- 
 
-        // Map cBuffer to host pointer. This enforces a sync with 
+        // Map cBuffer to host pointer. This enforces a sync with
         // the host backing space, remember we choose GPU device.
         int * output = (int *) queue.enqueueMapBuffer(
             cBuffer,
-            CL_TRUE, // block 
+            CL_TRUE, // block
             CL_MAP_READ,
             0,
             WORK_ITEMS * sizeof(int));
@@ -170,8 +173,8 @@ main(void)
             result = result + global_sum;
 
             if ((int)result != poclu_bswap_cl_int (dev_id, R[i])) {
-                std::cout 
-                    << "F(" << i << ": " << (int)result << " != " << R[i] 
+                std::cout
+                    << "F(" << i << ": " << (int)result << " != " << R[i]
                     << ") ";
                 ok = false;
             }

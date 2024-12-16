@@ -23,7 +23,7 @@
 #
 # Usage:
 #
-# run-and-check-llvm-ir PATH/TO/llvm-FileCheck PATH/TO/FileCheck-file PATH/TO/opencl-app ARGS
+# run-and-check-llvm-ir PATH/TO/llvm-FileCheck PATH/TO/llvm-dis PATH/TO/FileCheck-file PATH/TO/opencl-app ARGS
 #
 # It then runs the given OpenCL application, letting it dump the final
 # vectorized work-group function in parallel.bc, which is then checked using
@@ -33,8 +33,9 @@
 # friendliness is done by the script.
 
 LLVM_FILECHECK=$1
-CHECK_FILE=$2
-shift 2
+LLVM_DIS=$2
+CHECK_FILE=$3
+shift 3
 APP_CMD=$@
 
 export POCL_CACHE_DIR=$(mktemp -d /tmp/pocl-lit-test-XXXXXXXX)
@@ -46,7 +47,7 @@ $APP_CMD
 BC_FILE=`find $POCL_CACHE_DIR -name parallel.bc`
 LL_FILE=$POCL_CACHE_DIR/parallel-to-check.ll
 
-llvm-dis $BC_FILE -o $LL_FILE
+$LLVM_DIS $BC_FILE -o $LL_FILE
 cat $LL_FILE | $LLVM_FILECHECK $CHECK_FILE
 RET=$?
 

@@ -77,6 +77,15 @@ void eraseFunctionAndCallers(llvm::Function *Function);
 
 bool isAutomaticLocal(llvm::Function *F, llvm::GlobalVariable &Var);
 
+/// Returns true if the function is a compiler-expandable work-item function
+/// all call of which in the Module are compiler-expandable.
+///
+/// We want to leave the calls intact to avoid cluttering the control flow with
+/// the 'dim switch cases'. The calls will be expanded by
+/// WorkitemHandler::handleWorkitemFunctions(). However, if there's even one caller
+/// that sets the dimidx dynamically, we have to retain and inline the call.
+bool isWorkitemFunctionWithOnlyCompilerExpandableCalls(const llvm::Function &F);
+
 /// Returns true if \param Call is a work-item function call that can be
 /// directly analyzed and expanded by the kernel compiler.
 bool isCompilerExpandableWIFunctionCall(const llvm::CallInst &Call);

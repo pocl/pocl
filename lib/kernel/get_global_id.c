@@ -1,6 +1,7 @@
 /* OpenCL built-in library: get_global_id()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to

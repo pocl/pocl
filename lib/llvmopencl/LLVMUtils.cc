@@ -724,9 +724,21 @@ llvm::Type *SizeT(llvm::Module *M) {
   return IntegerType::get(M->getContext(), AddressBits);
 }
 
+bool isWorkitemFunctionWithOnlyCompilerExpandableCalls(const llvm::Function &F) {
+    Instruction::const_use_iterator UI = F.use_begin(), UE = F.use_end();
+    for (; UI != UE; ++UI) {
+      llvm::CallInst *Call = dyn_cast<llvm::CallInst>(UI->getUser());
+      if (Call == nullptr)
+        continue;
+      if (!isCompilerExpandableWIFunctionCall(*Call))
+        return false;
+    }
+    return true;
+}
+
 bool isCompilerExpandableWIFunctionCall(const llvm::CallInst &Call) {
   auto Callee = Call.getCalledFunction();
-  if (Callee == nullptr /* Inline asm? */ || !Callee->isDeclaration())
+  if (Callee == nullptr /* Inline asm? */)
     return false;
   if (Callee->getName() != GID_BUILTIN_NAME &&
       Callee->getName() != GS_BUILTIN_NAME &&

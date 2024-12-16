@@ -111,7 +111,7 @@ private:
 
   bool processFunction(llvm::Function &F);
 
-  void fixMultiRegionVariables(ParallelRegion *region);
+  void fixMultiRegionVariables(ParallelRegion *Region);
   void addContextSaveRestore(llvm::Instruction *instruction);
   void releaseParallelRegions();
 
@@ -435,11 +435,18 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
 
   releaseParallelRegions();
 
-  K->getParallelRegions(LI, &OriginalParallelRegions);
+#ifdef DUMP_CFGS
+  std::cerr << "### Before WILoops' PRegion formation:\n";
+  F.dump();
+  dumpCFG(F, F.getName().str() + "_before_pregion_formation.dot", nullptr,
+          nullptr);
+#endif
 
+  K->getParallelRegions(LI, &OriginalParallelRegions);
   handleWorkitemFunctions();
 
 #ifdef DUMP_CFGS
+  std::cerr << "### Before WILoops:\n";
   F.dump();
   dumpCFG(F, F.getName().str() + "_before_wiloops.dot", nullptr,
           &OriginalParallelRegions);
@@ -447,11 +454,6 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
 
   IRBuilder<> builder(&*(F.getEntryBlock().getFirstInsertionPt()));
   LocalIdXFirstVar = builder.CreateAlloca(ST, 0, ".pocl.local_id_x_init");
-
-#if 0
-  std::cerr << "### Original" << std::endl;
-  F.viewCFGOnly();
-#endif
 
 #if 0
   for (ParallelRegion::ParallelRegionVector::iterator
@@ -662,11 +664,8 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
   return true;
 }
 
-// Add context save/restore code to variables that are defined in
-// the given region and are used outside the region.
-//
-// Each such variable gets a slot in the stack frame. The variable
-// is restored from the stack whenever it's used.
+/// Add context save/restore code to variables that are defined in
+/// the given region and are used outside the region.
 void WorkitemLoopsImpl::fixMultiRegionVariables(ParallelRegion *Region) {
 
   InstructionIndex InstructionsInRegion;

@@ -80,31 +80,31 @@ static bool canonicalizeBarriers(Function &F, WorkitemHandlerType Handler) {
 
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
 
-    BasicBlock *b = &*i;
-    auto t = b->getTerminator();
-
+    BasicBlock *BB = &*i;
+    auto t = BB->getTerminator();
     const bool isExitNode =
-      (t->getNumSuccessors() == 0) && (!Barrier::hasOnlyBarrier(b));
+      (t->getNumSuccessors() == 0) && (!Barrier::hasOnlyBarrier(BB));
 
     // The function exits should have barriers.
-    if (isExitNode && !Barrier::hasOnlyBarrier(b)) {
+    if (isExitNode && !Barrier::hasOnlyBarrier(BB)) {
       /* In case the bb is already terminated with a barrier,
          split before the barrier so we don't create an empty
          parallel region.
 
          This is because the assumptions of the other passes in the
-         compilation that are 
-         a) exit node is a barrier block 
-         b) there are no empty parallel regions (which would be formed 
+         compilation that are
+         a) exit node is a barrier block
+         b) there are no empty parallel regions (which would be formed
          between the explicit barrier and the added one). */
+      /// TO CLEAN: The splitting should not be needed any more.
 #ifdef DEBUG_CANON_BARRIERS
       std::cerr << "CanonBar: isExitNode & !hasOnlyBarrier\n";
 #endif
       BasicBlock *exit;
-      if (Barrier::endsWithBarrier(b))
-        exit = SplitBlock(b, t->getPrevNode());
+      if (Barrier::endsWithBarrier(BB))
+        exit = SplitBlock(BB, t->getPrevNode());
       else
-        exit = SplitBlock(b, t);
+        exit = SplitBlock(BB, t);
       exit->setName("exit.barrier");
       Barrier::create(t);
       changed |= true;
