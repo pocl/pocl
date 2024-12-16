@@ -30,17 +30,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(_WIN32) && !defined(__MINGW32__)
-#  define PRIu64 "I64u"
-#  define PRIX64 "I64x"
-#  define PRIXPTR "p"
+#if defined(_MSC_VER)
 #  define PRIuS "Iu"
-#else
-#  ifndef __STDC_FORMAT_MACROS
-#  define __STDC_FORMAT_MACROS
-#  endif
-#  include <inttypes.h>
 #endif
+
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
 
 #include "config.h"
 
