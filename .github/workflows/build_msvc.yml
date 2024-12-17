@@ -62,9 +62,10 @@ jobs:
             llvmdev=${{ matrix.llvm_version }}
             llvm-spirv=${{ matrix.llvm_version }}
             clangdev=${{ matrix.llvm_version }}
-            ninja
+            spirv-tools
             khronos-opencl-icd-loader
             libhwloc
+            ninja
             pkg-config
             zlib
 
