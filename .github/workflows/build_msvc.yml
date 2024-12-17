@@ -98,7 +98,7 @@ jobs:
               -DENABLE_LOADABLE_DRIVERS=${{ matrix.shared_libs }} ^
               -DSTATIC_LLVM=ON ^
               -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL ^
-              -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }}
+              -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }} ^
               -DCMAKE_BUILD_TYPE=Release ^
               -G "Ninja"
 
