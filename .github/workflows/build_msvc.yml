@@ -123,7 +123,3 @@ jobs:
           mkdir ${{ env.POCL_CACHE_DIR }}
           cd ${{ github.workspace }}\build-pocl
           & ${{ github.workspace }}\tools\scripts\run_cpu_tests.ps1 --output-on-failure -j$Env:NUMBER_OF_PROCESSORS
-
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ failure() }}
