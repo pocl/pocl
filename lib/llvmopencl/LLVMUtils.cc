@@ -725,15 +725,15 @@ llvm::Type *SizeT(llvm::Module *M) {
 }
 
 bool isWorkitemFunctionWithOnlyCompilerExpandableCalls(const llvm::Function &F) {
-    Instruction::const_use_iterator UI = F.use_begin(), UE = F.use_end();
-    for (; UI != UE; ++UI) {
-      llvm::CallInst *Call = dyn_cast<llvm::CallInst>(UI->getUser());
-      if (Call == nullptr)
-        continue;
-      if (!isCompilerExpandableWIFunctionCall(*Call))
-        return false;
-    }
-    return true;
+  Instruction::const_use_iterator UI = F.use_begin(), UE = F.use_end();
+  for (; UI != UE; ++UI) {
+    llvm::CallInst *Call = dyn_cast<llvm::CallInst>(UI->getUser());
+    if (Call == nullptr)
+      continue;
+    if (!isCompilerExpandableWIFunctionCall(*Call))
+      return false;
+  }
+  return true;
 }
 
 bool isCompilerExpandableWIFunctionCall(const llvm::CallInst &Call) {

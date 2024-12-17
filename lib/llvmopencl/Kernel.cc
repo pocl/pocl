@@ -170,7 +170,6 @@ void Kernel::getParallelRegions(
 
   // First find all the ParallelRegions in the Function.
   while (!exit_blocks.empty()) {
-    
     // We start on an exit block and process the parallel regions upwards
     // (finding an execution trace).
     BasicBlock *exit = exit_blocks.back();
@@ -181,7 +180,7 @@ void Kernel::getParallelRegions(
       continue;
 
     while (ParallelRegion *PR = createParallelRegionBefore(exit)) {
-      assert(PR != NULL && !PR->empty() && 
+      assert(PR != NULL && !PR->empty() &&
              "Empty parallel region in kernel (contiguous barriers)!");
 
       found_barriers.insert(exit);

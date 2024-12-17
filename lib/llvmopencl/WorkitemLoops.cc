@@ -63,8 +63,6 @@ POP_COMPILER_DIAGS
 #include <vector>
 
 #define DEBUG_TYPE "workitem-loops"
-//#define DUMP_CFGS
-//#define DEBUG_WORK_ITEM_LOOPS
 
 #define PASS_NAME "workitemloops"
 #define PASS_CLASS pocl::WorkitemLoops
@@ -164,6 +162,11 @@ bool WorkitemLoopsImpl::runOnFunction(Function &Func) {
   F = &Func;
   Initialize(cast<Kernel>(&Func));
 
+#ifdef DEBUG_WORK_ITEM_LOOPS
+  std::cerr << "### Before WILoops:\n";
+  Func.dump();
+#endif
+
   GlobalIdIterators = {
       cast<GlobalVariable>(M->getOrInsertGlobal(GID_G_NAME(0), ST)),
       cast<GlobalVariable>(M->getOrInsertGlobal(GID_G_NAME(1), ST)),
@@ -182,11 +185,6 @@ bool WorkitemLoopsImpl::runOnFunction(Function &Func) {
 
   Changed |= fixUndominatedVariableUses(DT, Func);
 
-#if 0
-  // Split large BBs so we can print the Dot without it crashing.
-  Changed |= chopBBs(Func, *this);
-  Func.viewCFG();
-#endif
   ContextArrays.clear();
   TempInstructionIds.clear();
 
@@ -435,20 +433,18 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
 
   releaseParallelRegions();
 
-#ifdef DUMP_CFGS
-  std::cerr << "### Before WILoops' PRegion formation:\n";
-  F.dump();
-  dumpCFG(F, F.getName().str() + "_before_pregion_formation.dot", nullptr,
-          nullptr);
+#ifdef POCL_KERNEL_COMPILER_DUMP_CFGS
+  // Append 'dyn' or 'static' to the dot files to differentiate between the
+  // dynamic WG one (produced for the binaries) and the specialized static one.
+  std::string DotSuffix = WGDynamicLocalSize ? "_dyn" : "_static";
+  dumpCFG(F, F.getName().str() + "_before_pregions" + DotSuffix + ".dot", nullptr, nullptr);
 #endif
 
   K->getParallelRegions(LI, &OriginalParallelRegions);
   handleWorkitemFunctions();
 
-#ifdef DUMP_CFGS
-  std::cerr << "### Before WILoops:\n";
-  F.dump();
-  dumpCFG(F, F.getName().str() + "_before_wiloops.dot", nullptr,
+#ifdef POCL_KERNEL_COMPILER_DUMP_CFGS
+  dumpCFG(F, F.getName().str() + "_before_wiloops" + DotSuffix + ".dot", nullptr,
           &OriginalParallelRegions);
 #endif
 
@@ -661,6 +657,12 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
     K->addLocalSizeInitCode(WGLocalSizeX, WGLocalSizeY, WGLocalSizeZ);
 
   ParallelRegion::insertLocalIdInit(&F.getEntryBlock(), 0, 0, 0);
+
+#ifdef POCL_KERNEL_COMPILER_DUMP_CFGS
+  dumpCFG(*K, K->getName().str() + "_after_wiloops" + DotSuffix + ".dot", nullptr,
+          &OriginalParallelRegions);
+#endif
+
   return true;
 }
 
@@ -1112,7 +1114,7 @@ bool WorkitemLoops::canHandleKernel(llvm::Function &K,
   // Tested by tricky_for.cl.
   LoopInfo &LI = AM.getResult<llvm::LoopAnalysis>(K);
   for (auto L : LI) {
-    if (!Barrier::IsLoopWithBarrier(*L))
+    if (!Barrier::isLoopWithBarrier(*L))
       continue;
     // More than one 'break' point. It would lead to a complex control flow
     // structure which likely ruins loopvec efficiency anyhow.
