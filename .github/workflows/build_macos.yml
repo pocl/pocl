@@ -38,8 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 16 is disabled because it fails with the new printf implementation
-        llvm: [16, 17]
+        llvm: [17, 18]
         # basic = simplest pthread build
         # devel = with devel options
         # cts_spirv = cts with SPIR-V

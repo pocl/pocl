@@ -50,7 +50,7 @@ can be used from the build directory (without installing it system-wide).
 ![Level Zero](https://github.com/pocl/pocl/actions/workflows/build_level0.yml/badge.svg?event=push&branch=main)
 ![OpenASIP+Vulkan](https://github.com/pocl/pocl/actions/workflows/build_openasip_vulkan.yml/badge.svg?event=push&branch=main)
 ![Remote](https://github.com/pocl/pocl/actions/workflows/build_remote.yml/badge.svg?event=push&branch=main)
-![Apple M1](https://github.com/pocl/pocl/actions/workflows/build_macos.yml/badge.svg?event=push&branch=main)
+![Apple Silicon](https://github.com/pocl/pocl/actions/workflows/build_macos.yml/badge.svg?event=push&branch=main)
 ![Windows](https://github.com/pocl/pocl/actions/workflows/build_msvc.yml/badge.svg?event=push&branch=main)
 
 ### Support Matrix legend:
@@ -90,9 +90,10 @@ can be used from the build directory (without installing it system-wide).
 
 ### Mac OS X
 
-| CPU device  |     LLVM 16    |     LLVM 17     |
+| CPU device  |     LLVM 17    |     LLVM 18     |
 |:------------|:--------------:|:---------------:|
-| [Apple M1](https://github.com/pocl/pocl/actions/workflows/build_macos.yml) | :green_circle: | :green_circle:  |
+| [Apple Silicon](https://github.com/pocl/pocl/actions/workflows/build_macos.yml) | :green_circle: | :green_circle:  |
+| [Intel CPU](https://github.com/pocl/pocl/actions/workflows/build_macos.yml) | :yellow_circle: | :yellow_circle:  |
 
 ### Windows
 
@@ -150,7 +151,7 @@ To install the CPU driver
 
     mamba install pocl
 
-Note that this installs an ICD loader from KhronoGroup and the builtin
+Note that this installs an ICD loader from KhronosGroup and the builtin
 OpenCL implementation will be invisible when your application is linked
 to this loader. To make both pocl and the builtin OpenCL implementaiton
 visible, do
