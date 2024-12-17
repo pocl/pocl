@@ -53,6 +53,7 @@
 #include "pocl_util.h"
 #include "pocl_version.h"
 
+#include "utlist.h"
 #include "utlist_addon.h"
 
 #ifdef ENABLE_RDMA
