@@ -60,9 +60,11 @@ jobs:
             powershell
           create-args: >-
             llvmdev=${{ matrix.llvm_version }}
+            llvm-spirv=${{ matrix.llvm_version }}
             clangdev=${{ matrix.llvm_version }}
             ninja
             khronos-opencl-icd-loader
+            libhwloc
             pkg-config
             zlib
 
