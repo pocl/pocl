@@ -300,6 +300,7 @@ add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
 if(BUILD_SHARED_LIBS AND MSVC)
   # Inject __declspec(dllexport).
   target_compile_definitions(libpocl_unlinked_objs PRIVATE EXPORT_POCL_LIB)
+  target_compile_definitions(libpocl_unlinked_objs INTERFACE IMPORT_POCL_LIB)
 endif()
 
 harden("libpocl_unlinked_objs")

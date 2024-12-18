@@ -228,6 +228,7 @@ endif ()
 if(BUILD_SHARED_LIBS AND MSVC)
   # Inject __declspec(dllexport).
   target_compile_definitions("pocl-devices" PRIVATE EXPORT_POCL_LIB)
+  target_compile_definitions("pocl-devices" INTERFACE IMPORT_POCL_LIB)
 endif()
 
 

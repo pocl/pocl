@@ -29,8 +29,10 @@
 #elif defined(_MSC_VER)
 #if defined(EXPORT_POCL_LIB)
 #define POCL_EXPORT __declspec (dllexport)
-#else
+#elif defined(IMPORT_POCL_LIB)
 #define POCL_EXPORT __declspec (dllimport)
+#else
+#define POCL_EXPORT
 #endif
 #else
 #define POCL_EXPORT
