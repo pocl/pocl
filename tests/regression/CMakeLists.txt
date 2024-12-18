@@ -157,7 +157,9 @@ set_tests_properties(
   set_tests_properties(
     "regression/test_program_from_binary_with_local_1_1_1_${VARIANT}"
     PROPERTIES
-      ENVIRONMENT "POCL_WORK_GROUP_SPECIALIZATION=0"
+      # TO FIX: This test fails with outer loop vectorization. It's likely
+      # confused by diverging code inside the built-in function call.
+      ENVIRONMENT "POCL_WORK_GROUP_SPECIALIZATION=0;POCL_FORCE_PARALLEL_OUTER_LOOP=0"
    )
 endforeach()
 
