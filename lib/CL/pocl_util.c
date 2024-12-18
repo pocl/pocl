@@ -2103,12 +2103,15 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
 }
 
 void
-pocl_update_event_failed (const char *func,
+pocl_update_event_failed (cl_int status,
+                          const char *func,
                           unsigned line,
                           cl_event event,
                           const char *msg)
 {
-  pocl_update_event_finished (CL_FAILED, func, line, event, msg);
+  /* Should only be used with error statuses. */
+  assert (status < 0);
+  pocl_update_event_finished (status, func, line, event, msg);
 }
 
 void
