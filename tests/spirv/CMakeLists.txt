@@ -25,7 +25,7 @@
 
 if(ENABLE_SPIRV)
 
-if(not MSVC)
+if(NOT MSVC)
   add_compile_options( -Wno-deprecated -Wno-deprecated-declarations)
 endif()
 
