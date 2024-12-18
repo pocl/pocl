@@ -520,6 +520,17 @@ typedef union
 typedef struct _pocl_buffer_migration_info
   pocl_buffer_migration_info;
 
+/**
+ * Enum that represents different possible states of a command node.
+ */
+typedef enum
+{
+  POCL_COMMAND_FAILED = -1,
+  /* Default unless set to ready. */
+  POCL_COMMAND_NOT_READY = 0,
+  POCL_COMMAND_READY = 1,
+} pocl_command_state;
+
 /* One item in a command queue or a command buffer. */
 typedef struct _cl_command_node _cl_command_node;
 struct _cl_command_node
@@ -552,7 +563,10 @@ struct _cl_command_node
   cl_device_id device;
   /* The index of the targeted device in the **program** device list. */
   unsigned program_device_i;
-  cl_int ready;
+
+  /* Used to indicate if a node is ready to be executed or failed. */
+  pocl_command_state state;
+
   /* true if the node belongs to a cl_command_buffer_khr */
   cl_int buffered;
 

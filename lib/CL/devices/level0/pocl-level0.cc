@@ -1373,7 +1373,7 @@ void pocl_level0_submit(_cl_command_node *Node, cl_command_queue Queue) {
   PoclL0QueueData *QD = (PoclL0QueueData *)Queue->data;
   cl_event Ev = Node->sync.event.event;
 
-  Node->ready = CL_TRUE;
+  Node->state = POCL_COMMAND_READY;
   assert(Ev->data);
   PoclL0EventData *EvData = (PoclL0EventData *)Ev->data;
 
@@ -1408,7 +1408,7 @@ void pocl_level0_notify(cl_device_id ClDev, cl_event Event, cl_event Finished) {
 
   // node is ready to execute
   POCL_MSG_PRINT_LEVEL0("notify on event %zu | READY %i\n", Event->id,
-                        Node->ready);
+                        Node->state);
 
   assert(Event->queue);
   if (pocl_level0_queue_supports_batching(Event->queue, Device)) {
@@ -1418,7 +1418,8 @@ void pocl_level0_notify(cl_device_id ClDev, cl_event Event, cl_event Finished) {
     if (!SubmitBatch.empty())
       Device->pushCommandBatch(std::move(SubmitBatch));
   } else {
-    if (Node->ready == CL_TRUE && pocl_command_is_ready(Event) != 0) {
+    if (Node->state == POCL_COMMAND_READY &&
+        pocl_command_is_ready(Event) != 0) {
       pocl_update_event_submitted(Event);
       Device->pushCommand(Node);
     }

@@ -528,14 +528,14 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
             {
               pocl_update_event_running_unlocked (node->sync.event.event);
               POCL_UNLOCK_OBJ (node->sync.event.event);
-              POCL_UPDATE_EVENT_FAILED (node->sync.event.event);
+              POCL_UPDATE_EVENT_FAILED (CL_FAILED, node->sync.event.event);
               return;
             }
           node->command.run.device_data = handle;
         }
     }
 
-  node->ready = 1;
+  node->state = POCL_COMMAND_READY;
   POCL_LOCK (d->cq_lock);
   pocl_command_push(node, &d->ready_list, &d->command_list);
 
@@ -579,8 +579,13 @@ pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
       return;
     }
 
-  if (!node->ready)
-    return;
+  if (node->state != POCL_COMMAND_READY)
+    {
+      POCL_MSG_PRINT_EVENTS (
+        "basic: command related to the notified event %lu not ready\n",
+        event->id);
+      return;
+    }
 
   if (pocl_command_is_ready (event))
     {

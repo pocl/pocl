@@ -215,7 +215,7 @@ pocl_pthread_run (void *data, _cl_command_node *cmd)
 void
 pocl_pthread_submit (_cl_command_node *node, cl_command_queue cq)
 {
-  node->ready = 1;
+  node->state = POCL_COMMAND_READY;
   if (pocl_command_is_ready (node->sync.event.event))
     {
       pocl_update_event_submitted (node->sync.event.event);
@@ -262,8 +262,13 @@ pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
       return;
     }
 
-  if (!node->ready)
-    return;
+  if (node->state != POCL_COMMAND_READY)
+    {
+      POCL_MSG_PRINT_EVENTS (
+        "pthread: command related to the notified event %lu not ready\n",
+        event->id);
+      return;
+    }
 
   if (pocl_command_is_ready (node->sync.event.event))
     {
