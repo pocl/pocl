@@ -823,7 +823,7 @@ pocl_exec_command (_cl_command_node *node)
     default:
       pocl_update_event_running (event);
       POCL_UPDATE_EVENT_FAILED_MSG (
-        event, "pocl_exec_command: Unknown command type\n");
+        CL_FAILED, event, "pocl_exec_command: Unknown command type\n");
       break;
     }
 }
