@@ -38,7 +38,7 @@
  * \param approx [in] image to be compared.
  * \return PSNR as a double.
  */
-POCL_EXPORT double calculate_PSNR (int const height,
+double calculate_PSNR (int const height,
                                    int const width,
                                    int const pixel_stride,
                                    uint8_t const *restrict image,
