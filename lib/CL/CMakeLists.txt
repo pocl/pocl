@@ -351,6 +351,11 @@ set(POCL_TRANSITIVE_LIBS ${POCL_PRIVATE_LINK_LIST} PARENT_SCOPE)
 #################################################################
 
 add_library("${POCL_LIBRARY_NAME}" ${LIBPOCL_OBJS})
+if(BUILD_SHARED_LIBS AND MSVC)
+  # Inject __declspec(dllexport).
+  target_compile_definitions("${POCL_LIBRARY_NAME}" PRIVATE EXPORT_POCL_LIB)
+  target_compile_definitions("${POCL_LIBRARY_NAME}" INTERFACE IMPORT_POCL_LIB)
+endif()
 
 harden("${POCL_LIBRARY_NAME}")
 
