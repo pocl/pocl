@@ -2401,6 +2401,11 @@ bool Level0Device::setupModuleProperties(bool &SupportsInt64Atomics,
   if (ModuleProperties.maxArgumentsSize > 256)
     ClDev->max_parameter_size = ModuleProperties.maxArgumentsSize - 64;
 #endif
+
+  uint32_t SpvVer = ModuleProperties.spirvVersionSupported;
+  SupportedSpvVersion =
+      pocl_version_t(ZE_MAJOR_VERSION(SpvVer), ZE_MINOR_VERSION(SpvVer));
+
   return true;
 }
 

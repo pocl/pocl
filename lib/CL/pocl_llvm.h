@@ -144,7 +144,8 @@ extern "C" {
   void *pocl_llvm_create_context_for_program (char *ProgramBcContent,
                                               size_t ProgramBcSize,
                                               char **LinkinSpirvContent,
-                                              uint64_t *LinkinSpirvSize);
+                                              uint64_t *LinkinSpirvSize,
+                                              pocl_version_t TargetVersion);
 
   /**
   * \brief extracts SPIR-V of a single Kernel (plus all functions it uses)
@@ -159,11 +160,12 @@ extern "C" {
   *
   */
   POCL_EXPORT
-  int pocl_llvm_extract_kernel_spirv(void* ProgCtx,
-                                     const char* KernelName,
-                                     void* BuildLogStr,
-                                     char **SpirvContent,
-                                     uint64_t *SpirvSize);
+  int pocl_llvm_extract_kernel_spirv (void *ProgCtx,
+                                      const char *KernelName,
+                                      void *BuildLogStr,
+                                      char **SpirvContent,
+                                      uint64_t *SpirvSize,
+                                      pocl_version_t TargetVersion);
 
   /**
   * \brief destroys the instance of hidden class used to extract kernel SPIR-V
@@ -214,6 +216,7 @@ extern "C" {
    * nullptr \param [out] SpirvContent pointer where to store the raw output.
    *              can be nullptr
    * \param [out] SpirvSize size of data stored at SpirvContent
+   * \param [in] TargetVersion The SPIR-V version to emit.
    * \returns 0 on success
    *
    */
@@ -225,7 +228,8 @@ extern "C" {
                                                  int UseIntelExts,
                                                  char *TempSpirvPathOut,
                                                  char **SpirvContent,
-                                                 uint64_t *SpirvSize);
+                                                 uint64_t *SpirvSize,
+                                                 pocl_version_t TargetVersion);
 
   /**
    * \brief converts LLVM IR with "spir64-unknown-unknown" triple to SPIR-V
@@ -233,14 +237,16 @@ extern "C" {
    * The same as pocl_convert_bitcode_to_spirv, but takes a std::string*
    * cast to void* as buildLog argument
    */
-  POCL_EXPORT int pocl_convert_bitcode_to_spirv2 (char *TempBitcodePath,
-                                                  const char *Bitcode,
-                                                  uint64_t BitcodeSize,
-                                                  void *BuildLog,
-                                                  int UseIntelExts,
-                                                  char *TempSpirvPathOut,
-                                                  char **SpirvContent,
-                                                  uint64_t *SpirvSize);
+  POCL_EXPORT int
+  pocl_convert_bitcode_to_spirv2 (char *TempBitcodePath,
+                                  const char *Bitcode,
+                                  uint64_t BitcodeSize,
+                                  void *BuildLog,
+                                  int UseIntelExts,
+                                  char *TempSpirvPathOut,
+                                  char **SpirvContent,
+                                  uint64_t *SpirvSize,
+                                  pocl_version_t TargetVersion);
 
   /**
    * \brief converts SPIR-V to LLVM IR with "spir64-unknown-unknown" triple

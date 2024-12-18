@@ -565,4 +565,18 @@ typedef enum
   POCL_AUTOLOCALS_TO_ARGS_ONLY_IF_DYNAMIC_LOCALS_PRESENT = 2,
 } pocl_autolocals_to_args_strategy;
 
+typedef struct pocl_version_t
+{
+  unsigned major;
+  unsigned minor;
+
+#ifdef __cplusplus
+  pocl_version_t () : major (0), minor (0) {}
+  pocl_version_t (unsigned the_major, unsigned the_minor)
+    : major (the_major), minor (the_minor)
+  {
+  }
+#endif
+} pocl_version_t;
+
 #endif /* POCL_H */
