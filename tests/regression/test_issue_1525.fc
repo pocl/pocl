@@ -1,0 +1,4 @@
+# The rematerialization feature should help removing all of the context data
+# arrays from this case.
+
+# CHECK-NOT: pocl_context

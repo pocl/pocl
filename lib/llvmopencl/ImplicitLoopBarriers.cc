@@ -187,7 +187,7 @@ ImplicitLoopBarriers::run(llvm::Loop &L, llvm::LoopAnalysisManager &AM,
     assert(0 && "missing cached result WIH for ImplicitLoopBarriers");
   }
 
-  if (!pocl_get_bool_option("POCL_FORCE_PARALLEL_OUTER_LOOP", 0) &&
+  if (!pocl_get_bool_option("POCL_FORCE_PARALLEL_OUTER_LOOP", 1) &&
       !hasWorkgroupBarriers(*K)) {
 #ifdef DEBUG_ILOOP_BARRIERS
     std::cerr
