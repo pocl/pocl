@@ -916,10 +916,15 @@ pocl_remote_reader_pthread (void *aa)
                       finish_running_cmd (cmd, NETCMD_FAILED);
                     }
                   POCL_UNLOCK (inflight->mutex);
+
+#if defined(ENABLE_REMOTE_DISCOVERY_AVAHI)                                    \
+  || defined(ENABLE_REMOTE_DISCOVERY_DHT)                                     \
+  || defined(ENABLE_REMOTE_DISCOVERY_ANDROID)
                   POCL_LOCK (connection->discovery_reconnect_guard.mutex);
                   POCL_WAIT_COND (connection->discovery_reconnect_guard.cond,
                                   connection->discovery_reconnect_guard.mutex);
                   POCL_UNLOCK (connection->discovery_reconnect_guard.mutex);
+#endif
                 }
               goto TRY_RECONNECT;
             }
