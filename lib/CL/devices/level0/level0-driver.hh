@@ -447,6 +447,12 @@ public:
   // the batch needs to be split at points where memcpy is required.
   bool prefersHostQueues() { return ClDev->type == CL_DEVICE_TYPE_CUSTOM; }
 
+  /// Return a SPIR-V version the device supports.
+  pocl_version_t getSupportedSpvVersion() const {
+    assert(SupportedSpvVersion.major && "SPIR-V is not supported?");
+    return SupportedSpvVersion;
+  }
+
 private:
   Level0AllocatorSPtr Alloc;
   std::deque<Level0EventPool> EventPools;
@@ -496,6 +502,7 @@ private:
   uint32_t MaxMemoryFillPatternSize = 0;
   uint32_t GlobalMemOrd = UINT32_MAX;
   std::vector<size_t> SupportedSubgroupSizes;
+  pocl_version_t SupportedSpvVersion = pocl_version_t();
 
   /// initializes kernels used internally by the driver
   /// to implement functionality missing in the Level Zero API,

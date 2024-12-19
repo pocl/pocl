@@ -74,6 +74,7 @@ POP_COMPILER_DIAGS
 #include "pocl.h"
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
+#include "pocl_llvm.h"
 #include "pocl_llvm_api.h"
 #include "pocl_spir.h"
 #include "pocl_util.h"
@@ -820,13 +821,11 @@ public:
 // shared code for calling llvm-spirv
 static int convertBCorSPV(char *InputPath,
                           const char *InputContent, // LLVM bitcode as string
-                          uint64_t InputSize,
-                          std::string *BuildLog,
+                          uint64_t InputSize, std::string *BuildLog,
                           int useIntelExts,
-                          int reverse, // add "-r"
-                          char *OutputPath,
-                          char **OutContent,
-                          uint64_t *OutSize) {
+                          int Reverse, // add "-r"
+                          char *OutputPath, char **OutContent,
+                          uint64_t *OutSize, pocl_version_t TargetVersion) {
   char HiddenOutputPath[POCL_MAX_PATHNAME_LENGTH];
   char HiddenInputPath[POCL_MAX_PATHNAME_LENGTH];
   char CapturedOutput[MAX_OUTPUT_BYTES];
@@ -838,6 +837,8 @@ static int convertBCorSPV(char *InputPath,
   char *Content = nullptr;
   uint64_t ContentSize = 0;
   llvm::LLVMContext LLVMCtx;
+
+  assert(Reverse || TargetVersion.major && "Invalid SPIR-V target version!");
 
 #ifdef HAVE_LLVM_SPIRV_LIB
   std::string Errors;
@@ -857,7 +858,36 @@ static int convertBCorSPV(char *InputPath,
 #if LLVM_MAJOR >= 18
   EnabledExts[SPIRV::ExtensionID::SPV_EXT_shader_atomic_float16_add] = true;
 #endif
-  SPIRV::TranslatorOpts Opts(SPIRV::VersionNumber::SPIRV_1_3, EnabledExts);
+
+  SPIRV::VersionNumber TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_3;
+  switch (TargetVersion.major * 100 + TargetVersion.minor) {
+  default:
+    assert(!"Unrecognized SPIR-V version!");
+    break;
+  case 100:
+    SPIRV::VersionNumber::SPIRV_1_0;
+    break;
+  case 110:
+    SPIRV::VersionNumber::SPIRV_1_1;
+    break;
+  case 120:
+    SPIRV::VersionNumber::SPIRV_1_2;
+    break;
+  case 130:
+    SPIRV::VersionNumber::SPIRV_1_3;
+    break;
+  case 140:
+    SPIRV::VersionNumber::SPIRV_1_4;
+    break;
+  case 150:
+    SPIRV::VersionNumber::SPIRV_1_5;
+    break;
+  case 160:
+    SPIRV::VersionNumber::SPIRV_1_6;
+    break;
+  }
+
+  SPIRV::TranslatorOpts Opts(TargetVersionEnum, EnabledExts);
   Opts.setDesiredBIsRepresentation(SPIRV::BIsRepresentation::OpenCL20);
 #endif
   int r = -1;
@@ -868,12 +898,12 @@ static int convertBCorSPV(char *InputPath,
     if (OutputPath[0]) {
       strncpy(HiddenOutputPath, OutputPath, POCL_MAX_PATHNAME_LENGTH);
     } else {
-      pocl_cache_tempname(HiddenOutputPath, (reverse ? ".bc" : ".spv"), NULL);
+      pocl_cache_tempname(HiddenOutputPath, (Reverse ? ".bc" : ".spv"), NULL);
       strncpy(OutputPath, HiddenOutputPath, POCL_MAX_PATHNAME_LENGTH);
     }
   } else {
     assert(OutContent);
-    pocl_cache_tempname(HiddenOutputPath, (reverse ? ".bc" : ".spv"), NULL);
+    pocl_cache_tempname(HiddenOutputPath, (Reverse ? ".bc" : ".spv"), NULL);
   }
 
   bool keepInputPath = false;
@@ -882,12 +912,12 @@ static int convertBCorSPV(char *InputPath,
     if (InputPath[0]) {
       strncpy(HiddenInputPath, InputPath, POCL_MAX_PATHNAME_LENGTH);
     } else {
-      pocl_cache_tempname(HiddenInputPath, (reverse ? ".spv" : ".bc"), NULL);
+      pocl_cache_tempname(HiddenInputPath, (Reverse ? ".spv" : ".bc"), NULL);
       strncpy(InputPath, HiddenInputPath, POCL_MAX_PATHNAME_LENGTH);
     }
   } else {
     assert(InputContent);
-    pocl_cache_tempname(HiddenInputPath, (reverse ? ".spv" : ".bc"), NULL);
+    pocl_cache_tempname(HiddenInputPath, (Reverse ? ".spv" : ".bc"), NULL);
   }
 
   if (InputContent && InputSize) {
@@ -899,7 +929,7 @@ static int convertBCorSPV(char *InputPath,
   }
 
 #ifdef HAVE_LLVM_SPIRV_LIB
-  if (reverse) {
+  if (Reverse) {
     // SPIRV to BC
     std::string InputS;
     if (InputContent && InputSize) {
@@ -994,9 +1024,15 @@ static int convertBCorSPV(char *InputPath,
     CompilationArgs.push_back(ALLOW_INTEL_EXTS);
   else
     CompilationArgs.push_back(ALLOW_EXTS);
-  // TODO ze_device_module_properties_t.spirvVersionSupported
-  CompilationArgs.push_back("--spirv-max-version=1.4");
-  if (reverse) {
+
+  if (!Reverse) {
+    const auto TargetVersionOpt = std::string("--spirv-max-version=") +
+                                  std::to_string(TargetVersion.major) + "." +
+                                  std::to_string(TargetVersion.minor);
+    CompilationArgs.push_back(TargetVersionOpt);
+  }
+
+  if (Reverse) {
     CompilationArgs.push_back("-r");
     CompilationArgs.push_back("--spirv-target-env=CL2.0");
   }
@@ -1022,7 +1058,7 @@ static int convertBCorSPV(char *InputPath,
     BuildLog->append("failed to read output file from llvm-spirv\n");
     goto FINISHED;
   }
-  if (!reverse) {
+  if (!Reverse) {
     SPIRVParser::applyAtomicCmpXchgWorkaround((const int32_t *)Content,
                                               ContentSize / 4, FinalSpirv);
     assert(FinalSpirv.size() <= ContentSize);
@@ -1066,13 +1102,14 @@ int pocl_convert_bitcode_to_spirv(char *TempBitcodePath, const char *Bitcode,
                                   uint64_t BitcodeSize, cl_program Program,
                                   cl_uint DeviceI, int UseIntelExts,
                                   char *TempSpirvPathOut, char **SpirvContent,
-                                  uint64_t *SpirvSize) {
+                                  uint64_t *SpirvSize,
+                                  pocl_version_t TargetVersion) {
 
   std::string BuildLog;
-  int R = convertBCorSPV(TempBitcodePath, Bitcode, BitcodeSize, &BuildLog,
-                         UseIntelExts,
-                         0, // reverse
-                         TempSpirvPathOut, SpirvContent, SpirvSize);
+  int R = convertBCorSPV(
+      TempBitcodePath, Bitcode, BitcodeSize, &BuildLog, UseIntelExts,
+      0, // = Reverse
+      TempSpirvPathOut, SpirvContent, SpirvSize, TargetVersion);
 
   if (!BuildLog.empty())
     pocl_append_to_buildlog(Program, DeviceI, strdup(BuildLog.c_str()),
@@ -1080,21 +1117,16 @@ int pocl_convert_bitcode_to_spirv(char *TempBitcodePath, const char *Bitcode,
   return R;
 }
 
-int pocl_convert_bitcode_to_spirv2(char *TempBitcodePath,
-                                   const char *Bitcode,
-                                   uint64_t BitcodeSize,
-                                   void *BuildLog,
-                                   int UseIntelExts,
-                                   char *TempSpirvPathOut,
-                                   char **SpirvContent,
-                                   uint64_t *SpirvSize) {
+int pocl_convert_bitcode_to_spirv2(char *TempBitcodePath, const char *Bitcode,
+                                   uint64_t BitcodeSize, void *BuildLog,
+                                   int UseIntelExts, char *TempSpirvPathOut,
+                                   char **SpirvContent, uint64_t *SpirvSize,
+                                   pocl_version_t TargetVersion) {
 
-  return convertBCorSPV(TempBitcodePath,
-                        Bitcode, BitcodeSize,
-                        (std::string *)BuildLog,
-                        UseIntelExts, 0, // reverse
-                        TempSpirvPathOut,
-                        SpirvContent, SpirvSize);
+  return convertBCorSPV(TempBitcodePath, Bitcode, BitcodeSize,
+                        (std::string *)BuildLog, UseIntelExts, 0, // = Reverse
+                        TempSpirvPathOut, SpirvContent, SpirvSize,
+                        TargetVersion);
 }
 
 int pocl_convert_spirv_to_bitcode(char *TempSpirvPath,
@@ -1107,22 +1139,21 @@ int pocl_convert_spirv_to_bitcode(char *TempSpirvPath,
                                   uint64_t *BitcodeSize) {
 
   std::string BuildLog;
-  int R = convertBCorSPV(TempSpirvPath,
-                         SpirvContent, SpirvSize,
-                         &BuildLog,
-                         UseIntelExts, 1, // reverse
-                         TempBitcodePathOut,
-                         BitcodeContent, BitcodeSize);
+  int R = convertBCorSPV(
+      TempSpirvPath, SpirvContent, SpirvSize, &BuildLog, UseIntelExts,
+      1, // = Reverse.
+      TempBitcodePathOut, BitcodeContent, BitcodeSize,
+      // Target version for SPIR-V emission. Ignored in reverse translation.
+      pocl_version_t());
   if (!BuildLog.empty())
     pocl_append_to_buildlog(Program, DeviceI, strdup(BuildLog.c_str()),
                             BuildLog.size());
   return R;
 }
 
-void *pocl_llvm_create_context_for_program(char *ProgramBcContent,
-                                           size_t ProgramBcSize,
-                                           char **LinkinSpirvContent,
-                                           uint64_t *LinkinSpirvSize) {
+extern "C" void *pocl_llvm_create_context_for_program(
+    char *ProgramBcContent, size_t ProgramBcSize, char **LinkinSpirvContent,
+    uint64_t *LinkinSpirvSize, pocl_version_t TargetVersion) {
   assert(ProgramBcContent);
   assert(ProgramBcSize > 0);
 
@@ -1140,7 +1171,7 @@ void *pocl_llvm_create_context_for_program(char *ProgramBcContent,
   if (pocl_convert_bitcode_to_spirv2(
           nullptr, ProgramBcContent, ProgramBcSize, &BuildLog,
           1, // useIntelExt
-          nullptr, LinkinSpirvContent, LinkinSpirvSize) != 0) {
+          nullptr, LinkinSpirvContent, LinkinSpirvSize, TargetVersion) != 0) {
     POCL_MSG_ERR("failed to create program for context, log:%s\n",
                  BuildLog.c_str());
     return nullptr;
@@ -1157,11 +1188,9 @@ void pocl_llvm_release_context_for_program(void *ProgCtx) {
 }
 
 // extract SPIRV of a single Kernel from a program
-int pocl_llvm_extract_kernel_spirv(void* ProgCtx,
-                                   const char* KernelName,
-                                   void* BuildLogStr,
-                                   char **SpirvContent,
-                                   uint64_t *SpirvSize) {
+extern "C" int pocl_llvm_extract_kernel_spirv(
+    void *ProgCtx, const char *KernelName, void *BuildLogStr,
+    char **SpirvContent, uint64_t *SpirvSize, pocl_version_t TargetVersion) {
 
   POCL_MEASURE_START(extractKernel);
 
@@ -1174,14 +1203,14 @@ int pocl_llvm_extract_kernel_spirv(void* ProgCtx,
     return -1;
   }
 
-  int r = pocl_convert_bitcode_to_spirv2(nullptr, OutputBitcode.data(),
-                                         OutputBitcode.size(), &BuildLog,
-                                         1,       // useIntelExts
-                                         nullptr, // SpirvOutputPath
-                                         SpirvContent, SpirvSize);
+  int R = pocl_convert_bitcode_to_spirv2(
+      nullptr, OutputBitcode.data(), OutputBitcode.size(), &BuildLog,
+      1,       // useIntelExts
+      nullptr, // SpirvOutputPath
+      SpirvContent, SpirvSize, TargetVersion);
 
   POCL_MEASURE_FINISH(extractKernel);
-  return r;
+  return R;
 }
 
 static int pocl_llvm_run_pocl_passes(llvm::Module *Bitcode,
