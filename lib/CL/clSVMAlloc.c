@@ -120,11 +120,11 @@ POname(clSVMAlloc)(cl_context context,
   /* For remote devices using CL_MEM_DEVICE_ADDRESS actually allocates storage
      from the remote as well. */
   cl_int errcode = CL_SUCCESS;
-  cl_mem clmem_shadow = POname (clCreateBuffer) (
-      context,
-      CL_MEM_DEVICE_ADDRESS_EXT | CL_MEM_DEVICE_PRIVATE_EXT
-          | CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE,
-      size, ptr, &errcode);
+  cl_mem clmem_shadow
+    = POname (clCreateBuffer) (context,
+                               CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT
+                                 | CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE,
+                               size, ptr, &errcode);
 
   if (errcode != CL_SUCCESS)
     {

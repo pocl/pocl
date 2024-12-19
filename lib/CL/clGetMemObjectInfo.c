@@ -66,49 +66,22 @@ POname (clGetMemObjectInfo) (
   case CL_MEM_PROPERTIES:
     POCL_RETURN_GETINFO_ARRAY (cl_mem_properties, memobj->num_properties,
                                memobj->properties);
-  case CL_MEM_DEVICE_PTRS_EXT:
+  case CL_MEM_DEVICE_ADDRESS_EXT:
     {
-      POCL_RETURN_ERROR_COND (!memobj->has_device_address,
-                              CL_INVALID_MEM_OBJECT);
-      POCL_RETURN_GETINFO_SIZE_CHECK (
-          memobj->context->num_devices
-          * sizeof (cl_mem_device_address_pair_EXT));
-      cl_mem_device_address_pair_EXT *addresses
-          = (cl_mem_device_address_pair_EXT *)param_value;
-      cl_context context = memobj->context;
-      for (size_t i = 0; i < context->num_devices; ++i)
-        {
-          cl_device_id dev = context->devices[i];
-          pocl_mem_identifier *p = &memobj->device_ptrs[dev->global_mem_id];
-          addresses[i].device = dev;
-          addresses[i].address = (cl_mem_device_address_EXT)p->device_addr;
-        }
-      return CL_SUCCESS;
-    }
-  case CL_MEM_DEVICE_PTR_EXT:
-    {
-      POCL_RETURN_ERROR_COND (!memobj->has_device_address,
-                              CL_INVALID_MEM_OBJECT);
+      POCL_RETURN_ERROR_ON (!memobj->has_device_address, CL_INVALID_MEM_OBJECT,
+                            "The cl_mem was not allocated using the "
+                            " cl_ext_buffer_device_address extension\n");
 
-      POCL_RETURN_GETINFO_SIZE_CHECK (memobj->context->num_devices
-                                      * sizeof (cl_mem_device_address_EXT));
-      cl_mem_device_address_EXT *addr
-          = (cl_mem_device_address_EXT *)param_value;
-      *addr = 0;
       cl_context context = memobj->context;
+      POCL_RETURN_GETINFO_SIZE_CHECK (context->num_devices
+                                      * sizeof (cl_mem_device_address_EXT));
+      cl_mem_device_address_EXT *addresses
+        = (cl_mem_device_address_EXT *)param_value;
       for (size_t i = 0; i < context->num_devices; ++i)
         {
           cl_device_id dev = context->devices[i];
           pocl_mem_identifier *p = &memobj->device_ptrs[dev->global_mem_id];
-          POCL_MSG_PRINT_MEMORY (
-              "Got dev ptr %p for device %zu (gmem id %d).\n", p->device_addr,
-              i, dev->global_mem_id);
-          cl_mem_device_address_EXT dev_addr
-            = (cl_mem_device_address_EXT)p->device_addr;
-          POCL_RETURN_ERROR_ON (
-            (*addr != 0 && dev_addr != *addr), CL_INVALID_MEM_OBJECT,
-            "All devices do not have the same cl_mem address!");
-          *addr = (cl_mem_device_address_EXT)p->device_addr;
+          addresses[i] = (cl_mem_device_address_EXT)p->device_addr;
         }
       return CL_SUCCESS;
     }

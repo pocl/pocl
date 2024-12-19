@@ -68,8 +68,8 @@ static char PtrArith[] = R"raw(
 )raw";
 
 void *getDeviceAddressFromHost(cl::Buffer &Buf) {
-  cl_mem_device_address_EXT Addr;
-  cl_int Err = Buf.getInfo(CL_MEM_DEVICE_PTR_EXT, &Addr);
+  cl_mem_device_address_EXT Addr = 0;
+  cl_int Err = Buf.getInfo(CL_MEM_DEVICE_ADDRESS_EXT, &Addr);
 
   if (Err != CL_SUCCESS) {
     std::cerr << "Got error " << Err
@@ -158,7 +158,7 @@ int main(void) {
 
     cl::Buffer PinnedCLBuffer = cl::Buffer(
         Context,
-        (cl_mem_flags)(CL_MEM_READ_WRITE | CL_MEM_DEVICE_ADDRESS_EXT |
+        (cl_mem_flags)(CL_MEM_READ_WRITE | CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT |
                        CL_MEM_COPY_HOST_PTR),
         (size_t)BUF_SIZE * sizeof(cl_int), (void *)&PinnedBufferHost[0]);
 
@@ -205,7 +205,7 @@ int main(void) {
 
     // Test a buffer which doesn't have any hostptr associated with it.
     cl::Buffer PinnedCLBufferNoHostCopy = cl::Buffer(
-        Context, CL_MEM_DEVICE_ADDRESS_EXT, BUF_SIZE * sizeof(cl_int));
+        Context, CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT, BUF_SIZE * sizeof(cl_int));
 
     GetAddrKernel.setArg(0, PinnedCLBufferNoHostCopy);
 
@@ -249,7 +249,7 @@ int main(void) {
     // A devaddr buffer with the payload data.
     cl::Buffer DevAddrCLBuffer = cl::Buffer(
         Context,
-        (cl_mem_flags)(CL_MEM_READ_WRITE | CL_MEM_DEVICE_ADDRESS_EXT |
+        (cl_mem_flags)(CL_MEM_READ_WRITE | CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT |
                        CL_MEM_COPY_HOST_PTR),
         sizeof(int), (void *)&DataIn);
 
