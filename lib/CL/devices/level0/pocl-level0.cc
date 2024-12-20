@@ -1364,7 +1364,16 @@ void pocl_level0_notify(cl_device_id ClDev, cl_event Event, cl_event Finished) {
     // remove the Event from unsubmitted list
     PoclL0QueueData *QD = (PoclL0QueueData *)Event->queue->data;
     QD->eraseEvent(Event);
-    pocl_update_event_failed_locked(Event);
+    /* Unlock the finished event in order to prevent a lock order violation
+     * with the command queue that will be locked during
+     * pocl_update_event_failed.
+     */
+    pocl_unlock_events_inorder(Event, Finished);
+    pocl_update_event_failed(CL_FAILED, nullptr, 0, Event, nullptr);
+    /* Lock events in this order to avoid a lock order violation between
+     * the finished/notifier and event/wait events.
+     */
+    pocl_lock_events_inorder(Finished, Event);
     return;
   }
 
