@@ -845,13 +845,6 @@ pocl_broadcast (cl_event brc_event)
   while ((target = brc_event->notify_list))
     {
       POCL_LOCK_OBJ (target->event);
-      if (target != brc_event->notify_list)
-        {
-          assert (0 && "should be unreachable");
-          pocl_unlock_events_inorder (brc_event, target->event);
-          POCL_LOCK_OBJ (brc_event);
-          continue;
-        }
 
       /* remove event from wait list */
       LL_FOREACH (target->event->wait_list, tmp)
@@ -864,29 +857,35 @@ pocl_broadcast (cl_event brc_event)
             }
         }
 
-        if ((target->event->status == CL_SUBMITTED)
-            || (target->event->status == CL_QUEUED))
-          {
-            target->event->command->device->ops->notify (
-                target->event->command->device, target->event, brc_event);
-          }
+      if ((target->event->status == CL_SUBMITTED)
+          || (target->event->status == CL_QUEUED))
+        {
+          target->event->command->device->ops->notify (
+            target->event->command->device, target->event, brc_event);
+        }
 
-        if (pocl_is_tracing_enabled() && target->event->meta_data)
-          {
-            pocl_event_md *md = target->event->meta_data;
-            for (size_t i = 0; i < md->num_deps; ++i)
-              if (md->dep_ids[i] == brc_event->id)
-                {
-                  md->dep_ts[i] = brc_event->time_end;
-                  break;
-                }
-          }
-        LL_DELETE (brc_event->notify_list, target);
-        POCL_UNLOCK_OBJ (target->event);
-        /* Now that the event is deleted from the notify_list,
-         * undo the retain done during pocl_create_event_sync. */
-        POname (clReleaseEvent) (target->event);
-        pocl_mem_manager_free_event_node (target);
+      if (pocl_is_tracing_enabled () && target->event->meta_data)
+        {
+          pocl_event_md *md = target->event->meta_data;
+          for (size_t i = 0; i < md->num_deps; ++i)
+            if (md->dep_ids[i] == brc_event->id)
+              {
+                md->dep_ts[i] = brc_event->time_end;
+                break;
+              }
+        }
+      LL_DELETE (brc_event->notify_list, target);
+      POCL_UNLOCK_OBJ (target->event);
+      /* Unlock and lock brc_event to prevent lock order violations with the
+       * command queue when calling clReleaseEvent as it can call
+       * clReleaseCommandQueue.
+       */
+      POCL_UNLOCK_OBJ (brc_event);
+      /* Now that the event is deleted from the notify_list,
+       * undo the retain done during pocl_create_event_sync. */
+      POname (clReleaseEvent) (target->event);
+      POCL_LOCK_OBJ (brc_event);
+      pocl_mem_manager_free_event_node (target);
     }
   POCL_UNLOCK_OBJ (brc_event);
 }
