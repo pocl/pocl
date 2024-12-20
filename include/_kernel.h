@@ -51,8 +51,6 @@
 
 #include "_enable_all_exts.h"
 
-#include "_builtin_renames.h"
-
 /* Define some feature test macros to help write generic code. These are used
  * mostly in _pocl_opencl.h header + some .cl files in kernel library */
 
