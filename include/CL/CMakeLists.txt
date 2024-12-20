@@ -33,6 +33,8 @@ if(INSTALL_OPENCL_HEADERS)
                 cl_dx9_media_sharing_intel.h
                 cl_ext.h
                 cl_egl.h
+                cl_exp_tensor.h
+                cl_exp_defined_builtin_kernels.h
                 cl_ext_intel.h
                 cl_ext_pocl.h
                 cl_gl.h
