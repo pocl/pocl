@@ -207,22 +207,34 @@ work_group_any (int predicate)
   /* The results for all of the WIs. */
   int *flags = __pocl_work_group_alloca (
       sizeof (int), ALIGN_ELEMENT_MULTIPLE * sizeof (int), 0);
-  /* The final result. */
-  flags[get_local_linear_id ()] = !!predicate;
-  int *result = __pocl_work_group_alloca (sizeof (int), sizeof (int), 0);
+  flags[get_local_linear_id ()] = predicate ? 1 : 0;
   work_group_barrier (CLK_LOCAL_MEM_FENCE);
   if (get_local_linear_id () == 0)
     {
-      *result = 0;
+      int result = 0;
       for (uint i = 0; i < get_total_local_size (); ++i)
-        *result |= flags[i];
+        result += flags[i];
+      flags[0] = result;
     }
   work_group_barrier (CLK_LOCAL_MEM_FENCE);
-  return *result;
+  return flags[0] > 0;
 }
 
 __attribute__ ((always_inline)) int _CL_OVERLOADABLE
 work_group_all (int predicate)
 {
-  return !work_group_any (!!predicate);
+    /* The results for all of the WIs. */
+    int *flags = __pocl_work_group_alloca (
+        sizeof (int), ALIGN_ELEMENT_MULTIPLE * sizeof (int), 0);
+    flags[get_local_linear_id ()] = predicate ? 1 : 0;
+    work_group_barrier (CLK_LOCAL_MEM_FENCE);
+    if (get_local_linear_id () == 0)
+    {
+        int result = 0;
+        for (uint i = 0; i < get_total_local_size (); ++i)
+            result += flags[i];
+        flags[0] = result;
+    }
+    work_group_barrier (CLK_LOCAL_MEM_FENCE);
+    return flags[0] == get_total_local_size ();
 }
