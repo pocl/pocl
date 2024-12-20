@@ -1256,7 +1256,7 @@ if(ENABLE_HOST_CPU_DEVICES AND NOT ENABLE_CONFORMANCE)
     message(STATUS "libjpeg-turbo v3.0.0+ not found, disabled")
   endif()
 
-  find_package(OpenCV COMPONENTS dnn)
+  find_package(OpenCV QUIET COMPONENTS dnn)
   set(HAVE_OPENCV ${OpenCV_FOUND})
   if(NOT ${HAVE_OPENCV})
     message(STATUS "OpenCV not found, disabled")
