@@ -103,7 +103,9 @@ endif()
 
 add_test_pocl(NAME "regression/test_llvm_segfault_issue_889" COMMAND "test_llvm_segfault_issue_889")
 
+if(ENABLE_SPIRV)
 add_test_pocl(NAME "regression/test_issue_1711" COMMAND "test_issue_1711")
+endif()
 
 add_test_pocl(NAME "regression/test_issue_893" COMMAND "test_issue_893")
 
