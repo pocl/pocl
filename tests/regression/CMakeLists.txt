@@ -27,7 +27,8 @@
 set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_program_from_binary_with_local_1_1_1
      test_assign_loop_variable_to_privvar_makes_it_local_2
-  test_llvm_segfault_issue_889
+     test_llvm_segfault_issue_889
+     test_issue_1711
 )
 foreach(PROG ${C_PROGRAMS_TO_BUILD})
   add_executable("${PROG}" "${PROG}.c")
@@ -101,6 +102,8 @@ if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LEVEL0)
 endif()
 
 add_test_pocl(NAME "regression/test_llvm_segfault_issue_889" COMMAND "test_llvm_segfault_issue_889")
+
+add_test_pocl(NAME "regression/test_issue_1711" COMMAND "test_issue_1711")
 
 add_test_pocl(NAME "regression/test_issue_893" COMMAND "test_issue_893")
 
@@ -419,3 +422,4 @@ if(LLVM_VERSION_MAJOR EQUAL 14)
     "regression/test_alignment_with_dynamic_wg_225_cbs"
     PROPERTIES DISABLED 1)
 endif()
+
