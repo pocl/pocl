@@ -167,6 +167,23 @@ Level0Program::~Level0Program() {
   }
 }
 
+static ze_result_t getTargetSpvVersion(ze_device_handle_t Dev,
+                                       pocl_version_t &VersionOut) {
+
+  ze_device_module_properties_t ModuleProperties{};
+  ModuleProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES;
+  ModuleProperties.pNext = nullptr;
+  ze_result_t Result = zeDeviceGetModuleProperties(Dev, &ModuleProperties);
+  if (Result != ZE_RESULT_SUCCESS)
+    return Result;
+
+  VersionOut =
+      pocl_version_t(ZE_MAJOR_VERSION(ModuleProperties.spirvVersionSupported),
+                     ZE_MINOR_VERSION(ModuleProperties.spirvVersionSupported));
+  assert(VersionOut.major && "Unexpected SPIR-V version!");
+  return Result;
+}
+
 Level0Program::Level0Program(ze_context_handle_t Ctx, ze_device_handle_t Dev,
                              bool EnableJIT, bool Optimize, uint32_t NumSpecs,
                              uint32_t *SpecIDs, const void **SpecValues,
@@ -191,12 +208,18 @@ bool Level0Program::init() {
   if (JITCompilation) {
     if (ProgramBC.size() <= 20)
       return false;
+
+    auto TargetVersion = pocl_version_t();
+    if (getTargetSpvVersion(DeviceH, TargetVersion) != ZE_RESULT_SUCCESS) {
+      POCL_MSG_ERR("Could not infer target SPIR-V version\n");
+      return false;
+    }
+
     char *LinkinSpirvContent = nullptr;
     uint64_t LinkinSpirvSize = 0;
-    ProgramLLVMCtx = pocl_llvm_create_context_for_program(ProgramBC.data(),
-                                                          ProgramBC.size(),
-                                                          &LinkinSpirvContent,
-                                                          &LinkinSpirvSize);
+    ProgramLLVMCtx = pocl_llvm_create_context_for_program(
+        ProgramBC.data(), ProgramBC.size(), &LinkinSpirvContent,
+        &LinkinSpirvSize, TargetVersion);
 
     if (ProgramLLVMCtx == nullptr) {
       POCL_MSG_ERR("Null ProgramLLVMCtx\n");
@@ -410,13 +433,23 @@ bool Level0Program::extractKernelSPIRV(std::string &KernelName,
     }
   }
 
+  ze_device_module_properties_t ModuleProperties{};
+  ModuleProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES;
+  ModuleProperties.pNext = nullptr;
+
+  auto TargetVersion = pocl_version_t();
+  if (getTargetSpvVersion(DeviceH, TargetVersion) != ZE_RESULT_SUCCESS) {
+    POCL_MSG_ERR("Could not infer target SPIR-V version\n");
+    return false;
+  }
+
   char *SpirvContent = nullptr;
   uint64_t SpirvSize = 0;
   // to avoid having to hold a lock on the Program, use separate BuildLog
   std::string ExtractBuildLog;
   int Res = pocl_llvm_extract_kernel_spirv(ProgramLLVMCtx, KernelName.c_str(),
                                            &ExtractBuildLog, &SpirvContent,
-                                           &SpirvSize);
+                                           &SpirvSize, TargetVersion);
 
   {
     std::lock_guard<std::mutex> LockGuard(Mutex);

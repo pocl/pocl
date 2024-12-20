@@ -265,6 +265,12 @@ foreach(VARIANT ${VARIANTS})
 
 endforeach()
 
+if(ENABLE_POCLCC)
+  add_test(NAME "kernel/test_ptr_compare_build"
+    COMMAND "${CMAKE_BINARY_DIR}/bin/poclcc" -o /dev/null
+      "${CMAKE_CURRENT_SOURCE_DIR}/test_ptr_compare.cl")
+endif()
+
 ######################################################################
 
 
