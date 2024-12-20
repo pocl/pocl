@@ -838,7 +838,7 @@ static int convertBCorSPV(char *InputPath,
   uint64_t ContentSize = 0;
   llvm::LLVMContext LLVMCtx;
 
-  assert(Reverse || TargetVersion.major && "Invalid SPIR-V target version!");
+  assert((Reverse || TargetVersion.major) && "Invalid SPIR-V target version!");
 
 #ifdef HAVE_LLVM_SPIRV_LIB
   std::string Errors;

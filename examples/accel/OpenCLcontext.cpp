@@ -21,8 +21,7 @@
    IN THE SOFTWARE.
 */
 
-
-#include <CL/cl2.hpp>
+#include <CL/opencl.hpp>
 
 #include <string>
 #include <vector>

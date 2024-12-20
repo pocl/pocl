@@ -2090,6 +2090,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
           }
         case POCL_ARG_TYPE_IMAGE:
         case POCL_ARG_TYPE_SAMPLER:
+        case POCL_ARG_TYPE_PIPE:
           POCL_ABORT ("Unhandled argument type for CUDA\n");
           break;
         }
@@ -2375,8 +2376,7 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
         }
       else
         {
-          int i;
-          for (i = 0; i < cmd->svm_free.num_svm_pointers; i++)
+          for (unsigned int i = 0; i < cmd->svm_free.num_svm_pointers; i++)
             {
               void *ptr = cmd->svm_free.svm_pointers[i];
               POCL_LOCK_OBJ (event->context);

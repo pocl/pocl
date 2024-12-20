@@ -24,7 +24,9 @@
 
 #pragma once
 
+#ifndef CL_USE_DEPRECATED_OPENCL_1_1_APIS
 #define CL_USE_DEPRECATED_OPENCL_1_1_APIS
+#endif
 #undef CL_HPP_ENABLE_EXCEPTIONS
 
 #include <memory>
