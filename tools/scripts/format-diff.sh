@@ -52,6 +52,6 @@ echo "Using: $CLANG_FORMAT_BIN"
 git diff "$@" -U0 --no-color >"$PATCHY"
 
 "$RELPATH"/clang-format-diff.py -v -binary "$CLANG_FORMAT_BIN" \
-	  -regex '(.*(\.hpp$|\.hh$|\.cc$|\.cpp$|lib/llvmopencl/.*$|/lib/CL/devices/tce/.*$))' \
+	  -regex '(.*(\.hpp$|\.hh$|\.cc$|\.cpp$|lib/llvmopencl/(?!CMakeLists).*$|/lib/CL/devices/tce/.*$))' \
 	  -i -p1 -style=file:"$RELPATH/style.CPP" <"$PATCHY"
 

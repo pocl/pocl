@@ -463,13 +463,6 @@ pocl_uninit_devices ()
     }
 
 FINISH:
-#ifdef ENABLE_SIGNAL_HANDLERS
-  if (pocl_get_bool_option ("POCL_SIGFPE_HANDLER", 1))
-    {
-      pocl_destroy_sigfpe_handler ();
-    }
-#endif
-
   devices_active = 0;
   POCL_UNLOCK (pocl_init_lock);
 
@@ -689,10 +682,6 @@ pocl_init_devices ()
 #endif
 
 #ifdef ENABLE_SIGNAL_HANDLERS
-  if (pocl_get_bool_option ("POCL_SIGFPE_HANDLER", 1))
-    {
-      pocl_install_sigfpe_handler ();
-    }
   if (pocl_get_bool_option ("POCL_SIGUSR2_HANDLER", 0))
     {
       pocl_install_sigusr2_handler ();

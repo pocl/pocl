@@ -154,11 +154,11 @@ pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
   /* Create a shadow cl_mem object for keeping track of the USM
      allocation and to implement automated migrations, cl_pocl_content_size,
      etc. for USM using the same code paths as with cl_mems. */
-  cl_mem clmem_shadow = POname (clCreateBuffer) (
-      context,
-      CL_MEM_DEVICE_ADDRESS_EXT | CL_MEM_DEVICE_PRIVATE_EXT
-      | CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE,
-      size, ptr, &errcode);
+  cl_mem clmem_shadow
+    = POname (clCreateBuffer) (context,
+                               CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT
+                                 | CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE,
+                               size, ptr, &errcode);
 
   if (errcode != CL_SUCCESS)
     {
