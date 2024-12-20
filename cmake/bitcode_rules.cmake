@@ -91,10 +91,12 @@ function(compile_cl_to_bc FILENAME SUBDIR BC_FILE_LIST EXTRA_CONFIG)
     endif()
 
     set(DEPENDLIST
+          "${CMAKE_SOURCE_DIR}/include/_builtin_renames.h"
           "${CMAKE_SOURCE_DIR}/include/_kernel.h"
           "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
           "${CMAKE_SOURCE_DIR}/include/pocl_types.h")
     set(INCLUDELIST
+        "-include" "${CMAKE_SOURCE_DIR}/include/_builtin_renames.h"
         "-include" "${CMAKE_SOURCE_DIR}/include/_kernel.h"
         "-include" "${CMAKE_SOURCE_DIR}/include/_enable_all_exts.h")
 

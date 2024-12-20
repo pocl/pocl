@@ -234,6 +234,7 @@ add_custom_command( OUTPUT "${CMAKE_BINARY_DIR}/kernellib_hash.h"
       -DOUTPUT='${CMAKE_BINARY_DIR}/kernellib_hash.h'
       -P "${CMAKE_SOURCE_DIR}/cmake/kernellib_hash.cmake"
   DEPENDS ${KERNEL_BC_LIST}
+      "${CMAKE_SOURCE_DIR}/include/_builtin_renames.h"
       "${CMAKE_SOURCE_DIR}/include/_kernel.h"
       "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
       "${CMAKE_SOURCE_DIR}/include/pocl_types.h"

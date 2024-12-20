@@ -213,9 +213,11 @@ int pocl_llvm_build_program(cl_program program,
                             int linking_program)
 
 {
-  char tempfile[POCL_MAX_PATHNAME_LENGTH];
+  char TempFile1[POCL_MAX_PATHNAME_LENGTH];
+  char TempFile2[POCL_MAX_PATHNAME_LENGTH];
   char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
-  tempfile[0] = 0;
+  TempFile1[0] = 0;
+  TempFile2[0] = 0;
   llvm::Module *mod = nullptr;
   char temp_include_dir[POCL_MAX_PATHNAME_LENGTH];
   std::string user_options(program->compiler_options ? program->compiler_options
@@ -595,10 +597,9 @@ int pocl_llvm_build_program(cl_program program,
   BuiltinRenamesH = IncludeRoot + "/include/_builtin_renames.h";
   PoclTypesH = IncludeRoot + "/include/pocl_types.h";
 
-  if (!device->use_only_clang_opencl_headers) {
+  if (!device->use_only_clang_opencl_headers)
     po.Includes.push_back(PoclTypesH);
-    po.Includes.push_back(BuiltinRenamesH);
-  }
+
   // Use Clang's opencl-c.h header.
   po.Includes.push_back(IncludeRoot + "/include/opencl-c-base.h");
   po.Includes.push_back(IncludeRoot + "/include/opencl-c.h");
@@ -654,26 +655,56 @@ int pocl_llvm_build_program(cl_program program,
   PreprocessorOutputOptions &poo = pocl_build.getPreprocessorOutputOpts();
   poo.ShowCPP = 1;
   poo.ShowComments = 0;
-  poo.ShowLineMarkers = 0;
+  // Line markers are needed for accurate error diagnostics in case we have
+  // two-pass preprocessing (see 'TwoPassPreprocess' variable in the below).
+  poo.ShowLineMarkers = 1;
   poo.ShowMacroComments = 0;
-  poo.ShowMacros = 1;
+  // Don't propagate user macros so the two pass preprocess works as intended.
+  poo.ShowMacros = 0;
   poo.RewriteIncludes = 0;
 
-  error = pocl_cache_tempname(tempfile, ".preproc.cl", NULL);
-  assert(error == 0);
-  fe.OutputFile.assign((const char *)tempfile);
+  // In '!use_only_clang_opencl_headers' case we include _builtin_renames.h that
+  // renames OpenCL built-ins using macros (e.g. '#define abs_diff
+  // _cl_abs_diff').  We do the inclusion in the second preprocessing step to
+  // avoid clashes with self-referential macros over OpenCL builtins
+  // (e.g. '#define abs_diff abs_diff') in user's source code.
+  bool TwoPassPreprocess = !device->use_only_clang_opencl_headers;
 
-  bool success = true;
-  clang::PrintPreprocessedAction Preprocess;
-  success = CI.ExecuteAction(Preprocess);
+  error = pocl_cache_tempname(TempFile2, ".preproc.cl", NULL);
+  assert(error == 0);
+
+  if (TwoPassPreprocess) {
+    error = pocl_cache_tempname(TempFile1, ".prepreproc.cl", NULL);
+    assert(error == 0);
+  }
+
+  // First preprocess step.
+  fe.OutputFile.assign(TwoPassPreprocess ? TempFile1 : TempFile2);
+  clang::PrintPreprocessedAction Preprocess1;
+  bool Success = CI.ExecuteAction(Preprocess1);
+
+  if (Success && TwoPassPreprocess) {
+    // Second preprocess step: apply _builtin_renames.h.
+    po.Includes.clear();
+    po.Includes.push_back(BuiltinRenamesH);
+    fe.Inputs[0] =
+        FrontendInputFile(TempFile1, clang::InputKind(clang::Language::OpenCL));
+    fe.OutputFile.assign(TempFile2);
+    // TODO: can Preprocess1 reused?
+    clang::PrintPreprocessedAction Preprocess2;
+    Success = CI.ExecuteAction(Preprocess2);
+  }
+
   char *PreprocessedOut = nullptr;
   uint64_t PreprocessedSize = 0;
 
-  if (success) {
-    pocl_read_file(tempfile, &PreprocessedOut, &PreprocessedSize);
-  }
-  /* always remove preprocessed output - the sources are in different files */
-  pocl_remove(tempfile);
+  if (Success)
+    pocl_read_file(TempFile2, &PreprocessedOut, &PreprocessedSize);
+
+  // always remove preprocessed output - the sources are in different files.
+  pocl_remove(TempFile1);
+  if (TwoPassPreprocess)
+    pocl_remove(TempFile2);
 
   if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0) {
     if (num_input_headers > 0)
@@ -734,11 +765,11 @@ int pocl_llvm_build_program(cl_program program,
   // the compilation flags used to compile it and the current translation
   // unit via the preprocessor options directly.
   clang::EmitLLVMOnlyAction EmitLLVM(llvm_ctx->Context);
-  success = CI.ExecuteAction(EmitLLVM);
+  Success = CI.ExecuteAction(EmitLLVM);
 
   get_build_log(program, device_i, ss_build_log, diagsBuffer, &CI.getSourceManager());
 
-  if (!success)
+  if (!Success)
     return CL_BUILD_PROGRAM_FAILURE;
 
   mod = (llvm::Module *)program->llvm_irs[device_i];
