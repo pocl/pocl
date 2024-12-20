@@ -94,8 +94,8 @@ void pocl_aligned_free (void *ptr);
 /* locks / unlocks two events in order of their event-id.
  * This avoids any potential deadlocks of threads should
  * they try to lock events in opposite order. */
-void pocl_lock_events_inorder (cl_event ev1, cl_event ev2);
-void pocl_unlock_events_inorder (cl_event ev1, cl_event ev2);
+POCL_EXPORT void pocl_lock_events_inorder (cl_event ev1, cl_event ev2);
+POCL_EXPORT void pocl_unlock_events_inorder (cl_event ev1, cl_event ev2);
 
 /* Function for creating events */
 cl_int pocl_create_event (cl_event *event,
