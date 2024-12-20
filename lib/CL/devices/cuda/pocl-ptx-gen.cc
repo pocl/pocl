@@ -470,6 +470,7 @@ void fixPrintF(llvm::Module *Module) {
 
 // TODO broken, replaces in whole module not just  1 function
 // Replace all load users of a scalar global variable with new value.
+#if 0
 static void replaceScalarGlobalVar(llvm::Module *Module, const char *Name,
                                    llvm::Value *NewValue) {
   auto GlobalVar = Module->getGlobalVariable(Name);
@@ -486,6 +487,7 @@ static void replaceScalarGlobalVar(llvm::Module *Module, const char *Name,
   }
   GlobalVar->eraseFromParent();
 }
+#endif
 
 // Add an extra kernel argument for the dimensionality.
 void handleGetWorkDim(llvm::Module *Module) {
