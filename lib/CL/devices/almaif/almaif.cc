@@ -723,7 +723,7 @@ bool only_custom_device_events_left(cl_event event) {
 
 void pocl_almaif_submit(_cl_command_node *Node, cl_command_queue /*CQ*/) {
 
-  Node->ready = 1;
+  Node->state = POCL_COMMAND_READY;
 
   struct AlmaifData *D = (AlmaifData *)Node->device->data;
   cl_event E = Node->sync.event.event;
@@ -798,8 +798,12 @@ void pocl_almaif_notify(cl_device_id Device, cl_event Event, cl_event Finished) 
     return;
   }
 
-  if (!Node->ready)
+  if (Node->state != POCL_COMMAND_READY) {
+    POCL_MSG_PRINT_EVENTS(
+        "almaif: command related to the notified event %lu not ready\n",
+        Event->id);
     return;
+  }
 
   if (Event->command->type != CL_COMMAND_NDRANGE_KERNEL) {
     if (pocl_command_is_ready(Event)) {
