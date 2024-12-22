@@ -227,7 +227,7 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
       _cl_command_node *node = NULL;
       cl_event final_ev;
       errcode = pocl_create_command (
-        &node, used_queues[0], CL_COMMAND_COMMAND_BUFFER_KHR, &final_ev,
+        &node, used_queues[0], CL_COMMAND_MARKER, &final_ev,
         command_buffer->num_syncpoints, syncpoints, NULL);
       if (errcode != CL_SUCCESS)
         {
