@@ -1767,7 +1767,12 @@ if(ENABLE_PROXY_DEVICE)
     set(RENAME_POCL OFF )
   endif()
 
-
+  find_library(TSLIB tree-sitter)
+  set(HAVE_TREE_SITTER OFF)
+  if(TSLIB)
+    set(HAVE_TREE_SITTER ON)
+    message("-- FOUND tree sitter library")
+  endif()
 
   set(BUILD_PROXY 1)
 
