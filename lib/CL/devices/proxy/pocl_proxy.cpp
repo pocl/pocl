@@ -55,6 +55,13 @@
 #error This driver cannot be built when pocl is to be linked against ICD
 #endif
 
+#ifndef HAVE_TREE_SITTER
+#define HAVE_TREE_SITTER 0
+#endif
+#if HAVE_TREE_SITTER
+#include "pocl_tree_sitter_utils.h"
+#endif
+
 /*****************************************************************************/
 
 typedef struct proxy_platform_data_s
@@ -980,6 +987,120 @@ static int get_kernel_metadata(pocl_kernel_metadata_t *meta,
     return CL_SUCCESS;
 }
 
+#if HAVE_TREE_SITTER
+///
+/// Use tree sitter to populate metadata from the kernel source string.
+///
+/// \param source [in]: String of kernel source.
+/// \param meta [out]: Populated with metadata of kernel.
+/// \param num_devices [in]: device count.
+/// \param device [in]: used to populate metadata.
+/// \param kernel [in]: kernel to get metadata about.
+/// \return CL_SUCCESS or a CL error.
+static int proxy_map_source_to_metadata(const char *source,
+                                        pocl_kernel_metadata_t *meta,
+                                        cl_uint num_devices,
+                                        cl_device_id device, cl_kernel kernel) {
+
+  char string_value[POCL_MAX_PATHNAME_LENGTH];
+  int err;
+  size_t size;
+
+  assert(meta->data == nullptr);
+  meta->data = (void **)calloc(num_devices, sizeof(void *));
+  meta->has_arg_metadata = (-1);
+
+  err = clGetKernelInfo(kernel, CL_KERNEL_FUNCTION_NAME, 0, nullptr, &size);
+  if (err != CL_SUCCESS || size == 0) {
+    POCL_MSG_PRINT_PROXY("Could not get kernel name.\n");
+    return err;
+  }
+  assert(size < POCL_MAX_PATHNAME_LENGTH);
+
+  err = clGetKernelInfo(kernel, CL_KERNEL_FUNCTION_NAME, size, string_value,
+                        nullptr);
+  if (err != CL_SUCCESS) {
+    POCL_MSG_PRINT_PROXY("Could not copy kernel name.\n");
+    return err;
+  }
+  meta->name = (char *)malloc(size);
+  memcpy(meta->name, string_value, size);
+
+  err = get_kernel_info(meta, device, kernel);
+  if (err != CL_SUCCESS) {
+    POCL_MSG_PRINT_PROXY("Could not get kernel info.\n");
+    return err;
+  }
+
+  cl_uint num_args;
+
+  err = clGetKernelInfo(kernel, CL_KERNEL_NUM_ARGS, sizeof(num_args), &num_args,
+                        nullptr);
+  if (err != CL_SUCCESS) {
+    POCL_MSG_PRINT_PROXY("Could not get number of kernel args.\n");
+    return err;
+  }
+
+  if (num_args == 0) {
+    meta->arg_info = nullptr;
+    meta->num_args = 0;
+    return CL_SUCCESS;
+  }
+
+  assert(num_args < 10000);
+
+  meta->num_args = num_args;
+  meta->arg_info =
+      (pocl_argument_info *)calloc(num_args, sizeof(pocl_argument_info));
+
+  char empty_buffer[MAX_TESTED_ARG_SIZE];
+
+  TSParser *parser = ts_parser_new();
+  ts_parser_set_language(parser, tree_sitter_opencl());
+  TSTree *tree =
+      ts_parser_parse_string(parser, nullptr, source, strlen(source));
+  TSNode root_node = ts_tree_root_node(tree);
+
+  int32_t status = 0;
+  TSNode kernel_node =
+      pocl_ts_find_kernel_params(source, root_node, meta->name, &status);
+  uint32_t child_count;
+  if (status != CL_SUCCESS) {
+    err = CL_KERNEL_ARG_INFO_NOT_AVAILABLE;
+    POCL_MSG_WARN("Could not find kernel name in source.\n");
+    goto TS_ERROR;
+  }
+  POCL_PRINT_TS_NODE(source, kernel_node);
+  child_count = ts_node_named_child_count(kernel_node);
+  assert(num_args == child_count);
+
+  TSNode child;
+  for (cl_uint i = 0; i < num_args; ++i) {
+    pocl_argument_info *pi = &meta->arg_info[i];
+    child = ts_node_named_child(kernel_node, i);
+    err = pocl_ts_map_node_to_arg_info(source, child, pi);
+    if (err != CL_SUCCESS) {
+      POCL_MSG_WARN("Failed to parse %s arg %d.\n", meta->name, i);
+      goto TS_ERROR;
+    }
+
+    POCL_MSG_PRINT_PROXY("KERNEL %s ARGUMENT %u NAME %s "
+                         "TYPENAME %s TYPE %u SIZE %u\n",
+                         meta->name, i, pi->name, pi->type_name, pi->type,
+                         pi->type_size);
+  }
+
+  ts_tree_delete(tree);
+  ts_parser_delete(parser);
+  return CL_SUCCESS;
+
+TS_ERROR:
+  ts_tree_delete(tree);
+  ts_parser_delete(parser);
+  return err;
+}
+#endif
+
 static void
 set_build_log (cl_device_id proxy_dev, cl_program program,
                cl_program proxy_prog, unsigned device_i)
@@ -1398,8 +1519,8 @@ pocl_proxy_setup_metadata (cl_device_id device, cl_program program,
   cl_program proxy_prog = (cl_program)program->data[program_device_i];
 
   // Return if there is no metadata and we are not building using a binary.
-  if (!(d->backend->provides_metadata ||
-      (d->backend->supports_il && program->program_il_size > 0)))
+  if (!(d->backend->provides_metadata || HAVE_TREE_SITTER ||
+        (d->backend->supports_il && program->program_il_size > 0)))
     return 0;
 
   assert(program->kernel_meta == NULL);
@@ -1468,8 +1589,9 @@ pocl_proxy_setup_metadata (cl_device_id device, cl_program program,
       index++;
     }
 
-  } else {
+  } else if (d->backend->provides_metadata) {
     for (cl_uint i = 0; i < num_kernels; ++i) {
+
       err = get_kernel_metadata(p + i, program->num_devices, proxy_prog,
                                 d->device_id, kernels[i]);
       if (err != CL_SUCCESS) {
@@ -1481,6 +1603,25 @@ pocl_proxy_setup_metadata (cl_device_id device, cl_program program,
       assert(err == CL_SUCCESS);
     }
   }
+#if HAVE_TREE_SITTER
+  else {
+    for (cl_uint i = 0; i < num_kernels; i++) {
+
+      err = proxy_map_source_to_metadata(program->source, p + i,
+                                         program->num_devices, d->device_id,
+                                         kernels[i]);
+      if (err != CL_SUCCESS) {
+        POCL_MSG_WARN("Failed to kernel metadata for index %d.\n", i);
+        return 0;
+      }
+
+      err = clReleaseKernel(kernels[i]);
+    }
+  }
+#else
+  else
+    return 0;
+#endif
 
   program->kernel_meta = p;
 

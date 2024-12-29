@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2021 Michal Babej / Tampere University
+#   Copyright (c) 2014-2024 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -22,19 +22,22 @@
 #   THE SOFTWARE.
 #
 #=============================================================================
+include(ExternalProject)
 
-add_pocl_device_library("pocl-devices-proxy" pocl_proxy.hpp pocl_proxy.cpp)
+find_program(TREE_SITTER_CLI tree-sitter DOC "Tree-sitter CLI" REQUIRED)
 
-if(HAVE_TREE_SITTER)
-    target_link_libraries("pocl-devices-proxy" PRIVATE pocl_tree_sitter_utils)
-endif()
+set(EXTERNAL_INSTALL_LOCATION ${CMAKE_BINARY_DIR}/external)
+ExternalProject_Add(tree_sitter
+        GIT_REPOSITORY https://github.com/lefp/tree-sitter-opencl.git
+        # Generate Cmake config
+        PATCH_COMMAND ${TREE_SITTER_CLI} init
+        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_LOCATION} -DBUILD_SHARED_LIBS=OFF
+)
 
-if(PROXY_USE_LIBOPENCL_STUB)
+add_library(pocl_tree_sitter_utils OBJECT pocl_tree_sitter_utils.c
+        pocl_tree_sitter_utils.h)
+target_include_directories(pocl_tree_sitter_utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${EXTERNAL_INSTALL_LOCATION}/include)
+target_link_directories(pocl_tree_sitter_utils PUBLIC ${EXTERNAL_INSTALL_LOCATION}/lib)
+add_dependencies(pocl_tree_sitter_utils tree_sitter)
 
-    set(STUB_SOURCES libopencl_stub/openclstub.c libopencl_stub/openclstub.h libopencl_stub/rename_stub.h)
-    if(MSVC)
-        set_source_files_properties( ${STUB_SOURCES} PROPERTIES LANGUAGE CXX )
-    endif ()
-    target_sources("pocl-devices-proxy" PRIVATE ${STUB_SOURCES})
-
-endif()
+target_link_libraries(pocl_tree_sitter_utils PUBLIC tree-sitter-opencl ${TSLIB})
