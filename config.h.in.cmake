@@ -112,6 +112,8 @@
 
 #cmakedefine HAVE_OPENCV
 
+#cmakedefine01 HAVE_TREE_SITTER
+
 #cmakedefine HAVE_OCL_ICD
 #cmakedefine HAVE_OCL_ICD_30_COMPATIBLE
 
