@@ -1442,7 +1442,7 @@ int pocl_level0_alloc_mem_obj(cl_device_id ClDevice, cl_mem Mem, void *HostPtr) 
     // handle all other cases here.
     // CL_MEM_USE_HOST_PTR without SVM
     //   handled by normal memory + memcpy at sync points
-    // CL_MEM_DEVICE_ADDRESS_EXT:
+    // CL_MEM_DEVICE_{PRIVATE,SHARED}_ADDRESS_EXT:
     //   Treat cl_ext_buffer_device_address identically as USM Device.
     //   If we passed an SVM/USM address, we can use it directly in the
     //   previous branch. That should be at least a USM Device allocation.
