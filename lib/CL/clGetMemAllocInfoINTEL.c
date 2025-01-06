@@ -40,35 +40,35 @@ POname (clGetMemAllocInfoINTEL) (
     {
     case CL_MEM_ALLOC_TYPE_INTEL:
       {
-        if (item == NULL)
+        if (item == NULL || item->kind != POCL_RAW_PTR_INTEL_USM)
           POCL_RETURN_GETINFO (cl_uint, CL_MEM_TYPE_UNKNOWN_INTEL);
         else
           POCL_RETURN_GETINFO (cl_uint, item->usm_properties.alloc_type);
       }
     case CL_MEM_ALLOC_BASE_PTR_INTEL:
       {
-        if (item == NULL)
+        if (item == NULL || item->kind != POCL_RAW_PTR_INTEL_USM)
           POCL_RETURN_GETINFO (void *, NULL);
         else
           POCL_RETURN_GETINFO (void *, item->vm_ptr);
       }
     case CL_MEM_ALLOC_SIZE_INTEL:
       {
-        if (item == NULL)
+        if (item == NULL || item->kind != POCL_RAW_PTR_INTEL_USM)
           POCL_RETURN_GETINFO (size_t, 0);
         else
           POCL_RETURN_GETINFO (size_t, item->size);
       }
     case CL_MEM_ALLOC_DEVICE_INTEL:
       {
-        if (item == NULL)
+        if (item == NULL || item->kind != POCL_RAW_PTR_INTEL_USM)
           POCL_RETURN_GETINFO (cl_device_id, NULL);
         else
           POCL_RETURN_GETINFO (cl_device_id, item->device);
       }
     case CL_MEM_ALLOC_FLAGS_INTEL:
       {
-        if (item == NULL)
+        if (item == NULL || item->kind != POCL_RAW_PTR_INTEL_USM)
           POCL_RETURN_GETINFO (cl_mem_alloc_flags_intel, 0);
         else
           POCL_RETURN_GETINFO (cl_mem_alloc_flags_intel,
