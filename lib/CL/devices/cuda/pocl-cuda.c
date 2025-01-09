@@ -2332,7 +2332,7 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
             pocl_cuda_submit_copy_p2p (
               stream, cmd->migrate.src_device,
               mem->device_ptrs[cmd->migrate.src_device->global_mem_id].mem_ptr,
-              0, cq->device, &mem->device_ptrs[dev->global_mem_id].mem_ptr, 0,
+              0, cq->device, mem->device_ptrs[dev->global_mem_id].mem_ptr, 0,
               mem->size);
             break;
           }

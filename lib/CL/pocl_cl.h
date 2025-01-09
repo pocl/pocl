@@ -32,6 +32,14 @@
 #include <errno.h>
 #include <stdio.h>
 
+#if defined(__FreeBSD__)
+#include <stdlib.h>
+#elif defined(_WIN32)
+#include <malloc.h>
+#else
+#include <alloca.h>
+#endif
+
 #ifdef ENABLE_VALGRIND
 #include <valgrind/helgrind.h>
 #endif
@@ -50,6 +58,7 @@
 #ifdef BUILD_ICD
 #  include "pocl_icd.h"
 #endif
+
 
 #include <CL/cl_egl.h>
 

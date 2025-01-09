@@ -35,7 +35,7 @@
 
 #include "config.h"
 
-#ifdef ENABLE_LLVM_PLATFORM_SUPPORT
+#if defined(ENABLE_LLVM_PLATFORM_SUPPORT) && !defined(BUILDING_POCLD)
 
 #include "pocl_threads_cpp.hh"
 

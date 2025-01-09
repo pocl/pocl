@@ -110,10 +110,22 @@ POname(clGetKernelWorkGroupInfo)
       }
     case CL_KERNEL_LOCAL_MEM_SIZE:
     {
+      cl_ulong total_local_size = 0;
+      /* add the static local_mem argument sizes */
       if (kernel->meta->local_mem_size)
-        POCL_RETURN_GETINFO (size_t, kernel->meta->local_mem_size[dev_i]);
-      else
-        POCL_RETURN_GETINFO (cl_ulong, 0);
+        total_local_size = kernel->meta->local_mem_size[dev_i];
+      /* add the dynamically set local_mem argument sizes */
+      for (unsigned i = 0; i < kernel->meta->num_args; ++i)
+        {
+          if (kernel->meta->arg_info[i].type != POCL_ARG_TYPE_POINTER)
+            continue;
+          if (kernel->meta->arg_info[i].address_qualifier
+              != CL_KERNEL_ARG_ADDRESS_LOCAL)
+            continue;
+          total_local_size += (kernel->dyn_arguments[i].size);
+        }
+
+      POCL_RETURN_GETINFO (cl_ulong, total_local_size);
     }
     case CL_KERNEL_PRIVATE_MEM_SIZE:
       {

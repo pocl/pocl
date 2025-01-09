@@ -34,7 +34,9 @@ struct PrintfCallFlags {
                                      // it as pointer instead of MD5
   bool AlwaysStoreFmtPtr = false; // if true, always store the FmtStr directly
                                   // in the buffer
-  bool ArgPromotionFloat = true;     // Clang promotes float to double
+  bool ArgPromotionFP64 = true;   // Device supports FP64 & we should promote
+                                  // float to double; note Clang does this for
+                                  // OpenCL C but SPIR-V might need fixing
   bool IsBigEndian = false;          // device is big-endian
   bool Pointers32Bit = false;        // device's pointer width is 32bits
 };

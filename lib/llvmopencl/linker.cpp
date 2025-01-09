@@ -593,7 +593,7 @@ static void handleDeviceSidePrintf(
 
   // C promotion of float -> double only if device supports double
   if (ClDev->double_fp_config == 0) {
-    PFlags.ArgPromotionFloat = false;
+    PFlags.ArgPromotionFP64 = false;
   }
   // big endian support is not implemented at all currently
   if (!ClDev->endian_little) {

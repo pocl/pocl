@@ -50,6 +50,7 @@ CL_API_ENTRY cl_int CL_API_ENTRY POname (clGetKernelSubGroupInfo) (
       device = kernel->context->devices[0];
     }
 
+  POCL_MSG_PRINT_INFO ("clGetKernelSubGroupInfo: %u \n", param_name);
   cl_device_id realdev = pocl_real_dev (device);
   /* Check device for subgroup support */
   POCL_RETURN_ERROR_ON (
@@ -86,7 +87,7 @@ CL_API_ENTRY cl_int CL_API_ENTRY POname (clGetKernelSubGroupInfo) (
       if (kernel->meta->max_subgroups)
         POCL_RETURN_GETINFO (size_t, kernel->meta->max_subgroups[dev_i]);
       else
-        POCL_RETURN_GETINFO (size_t, 0);
+        POCL_RETURN_GETINFO (size_t, realdev->max_num_sub_groups);
 
     case CL_KERNEL_COMPILE_NUM_SUB_GROUPS:
       if (kernel->meta->compile_subgroups)

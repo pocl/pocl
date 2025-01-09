@@ -480,6 +480,12 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
 
     pocl_kernel_metadata_t *meta = &program->kernel_meta[j];
     meta->data = (void**)calloc(program->num_devices, sizeof(void*));
+    meta->local_mem_size =
+        (cl_ulong *)calloc(program->num_devices, sizeof(cl_ulong));
+    meta->private_mem_size =
+        (cl_ulong *)calloc(program->num_devices, sizeof(cl_ulong));
+    meta->spill_mem_size =
+        (cl_ulong *)calloc(program->num_devices, sizeof(cl_ulong));
 
     llvm::Function *KernelFunction = kernels[j];
 
@@ -511,17 +517,19 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
 
     meta->num_locals = locals.size();
     meta->local_sizes = (size_t*)calloc(locals.size(), sizeof(size_t));
+    size_t total_local_size = 0;
 
     /* Fill up automatic local arguments. */
     for (unsigned i = 0; i < meta->num_locals; ++i) {
       unsigned auto_local_size =
           TD->getTypeAllocSize(locals[i]->getInitializer()->getType());
       meta->local_sizes[i] = auto_local_size;
-
+      total_local_size += auto_local_size;
 #ifdef DEBUG_POCL_LLVM_API
       printf("### automatic local %d size %u\n", i, auto_local_size);
 #endif
     }
+    meta->local_mem_size[device_i] = total_local_size;
 
     i = 0;
     for (llvm::Function::const_arg_iterator ii = KernelFunction->arg_begin(),

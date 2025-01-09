@@ -549,17 +549,21 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                       {
                       default:
                       case 2:
-                        {
-                          POCL_MSG_ERR ("printf error: printing halfs is not "
-                                        "yet implemented\n");
-                          return -1; /* half type not yet implemented */
-                        }
                       case 4:
-                        /* single float can be promoted to double */
+                        /* we assume if the device supports float promotion,
+                         * EmitPrintf ensures half & single floats are always
+                         * promoted to double */
                         if (!float_promotion || vector_length > 1)
                           {
-                            __pocl_print_floats_float (p, buffer,
-                                                       vector_length);
+                            /* printing half type (vectors) not yet implemented
+                             */
+                            if (element_size == 2)
+                              POCL_MSG_ERR (
+                                "printf error: printing halfs is not "
+                                "yet implemented\n");
+                            else
+                              __pocl_print_floats_float (p, buffer,
+                                                         vector_length);
                             break;
                           }
                         else

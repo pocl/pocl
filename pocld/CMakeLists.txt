@@ -61,7 +61,7 @@ set(SOURCES pocld.cc daemon.hh daemon.cc cmdline.h cmdline.c
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 unset(P_INCLUDE_DIRECTORIES)
-set(P_COMPILE_OPTIONS "-DPOCL_DEBUG_LOG_PREFIX=\"PoCL-D\"")
+set(P_COMPILE_OPTIONS "-DPOCL_DEBUG_LOG_PREFIX=\"PoCL-D\""  "-DBUILDING_POCLD")
 unset(P_LINK_LIST)
 
 ############################################
