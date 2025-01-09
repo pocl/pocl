@@ -28,6 +28,12 @@
 
 #include "pocl_export.h"
 
+#ifdef SPIRV_PARSER_LIB
+#define SPIRV_PARSER_EXPORT
+#else
+#define SPIRV_PARSER_EXPORT POCL_EXPORT
+#endif
+
 #include <map>
 #include <memory>
 #include <set>
@@ -92,11 +98,11 @@ struct OCLFuncInfo {
 typedef std::map<std::string, std::shared_ptr<OCLFuncInfo>>
     OpenCLFunctionInfoMap;
 
-POCL_EXPORT
+SPIRV_PARSER_EXPORT
 bool parseSPIRV(const int32_t *Stream, size_t NumWords,
                 OpenCLFunctionInfoMap &FuncInfoMap);
 
-POCL_EXPORT
+SPIRV_PARSER_EXPORT
 bool applyAtomicCmpXchgWorkaround(const int32_t *InStream, size_t NumWords,
                                   std::vector<uint8_t> &OutStream);
 

@@ -77,7 +77,7 @@ else()
   # executables (e.g. poclcc -> libOpenCL -> libLLVM)
   # and this must be specified on new systems,
   # otherwise linking fails.
-  set(OPENCL_LIBS "${PTHREAD_LIBRARY};${POCL_LIBRARY_NAME};${POCL_TRANSITIVE_LIBS}")
+  set(OPENCL_LIBS "${PTHREAD_LIBRARY};${POCL_LIBRARY_NAME};${POCL_TRANSITIVE_LIBS};${LLVM_LDFLAGS}")
 
   set(OPENCL_LIBDIR "$<TARGET_FILE_DIR:${POCL_LIBRARY_NAME}>")
   set(OPENCL_LIBNAME "$<TARGET_FILE_NAME:${POCL_LIBRARY_NAME}>")
