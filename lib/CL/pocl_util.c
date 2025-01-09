@@ -34,14 +34,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#if defined(__FreeBSD__)
-#include <stdlib.h>
-#elif defined(_WIN32)
-#include <malloc.h>
-#else
-#include <alloca.h>
-#endif
-
 #include <time.h>
 
 #ifndef _WIN32
