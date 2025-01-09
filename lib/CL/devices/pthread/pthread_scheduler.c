@@ -145,7 +145,7 @@ pthread_scheduler_init (cl_device_id device)
 
   if (scheduler.worker_out_of_memory)
     {
-      pthread_scheduler_uninit (device);
+      pthread_scheduler_uninit ();
       return CL_OUT_OF_HOST_MEMORY;
     }
 
