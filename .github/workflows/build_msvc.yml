@@ -69,6 +69,8 @@ jobs:
             ninja
             pkg-config
             zlib
+            spirv-tools
+            llvm-spirv=${{ matrix.llvm_version }}
 
       - name: Load Env vars
         id: load-env
