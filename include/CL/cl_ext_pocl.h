@@ -42,7 +42,8 @@ extern "C"
 /* cl_pocl_content_size should be defined in CL/cl_ext.h; however,
  * if we PoCL is built against the system headers, it's possible
  * that they have an outdated version of CL/cl_ext.h.
- * In that case, add the extension here. */
+ * In that case, add the extension here.
+ */
 
 #ifndef cl_pocl_content_size
 
@@ -60,84 +61,49 @@ typedef CL_API_ENTRY cl_int
 
 #endif
 
-/* cl_ext_buffer_device_address (experimental stage)
-
-   TODO:
-   * Perhaps a better name could be simply 'cl_ext_device_pointers'?
-*/
+/* cl_ext_buffer_device_address (experimental version)
+ */
 
 #ifndef cl_ext_buffer_device_address
 #define cl_ext_buffer_device_address 1
 
-/* We need both a platform and device extension due to the new buffer
-   creation flag. */
-
-/* clCreateBuffer(): A new cl_mem_flag CL_MEM_DEVICE_ADDRESS_EXT:
-
-   This flag specifies that the buffer must have a single fixed address
-   for its lifetime, which should be unique at least across the devices
-   of the context, but not necessarily with the host (virtual memory) as
-   with SVM or USM.
-
-   The flag might imply that the buffer will be "pinned" permanently to
-   a device's memory, but might not be necessarily so, as long as the address
-   range of the buffer remains constant.
-
-   The address is guaranteed to remain the same until the buffer is freed and
-   the address can be queried via clGetMemObjectInfo().
-
-   The device-specific buffer content updates must be still performed by
-   implicit or explicit buffer migrations performed by the runtime or the
-   client code. If any of the devices in the context does not support
-   such allocations, an error (CL_INVALID_VALUE) is returned.
-
-*/
-#define CL_MEM_DEVICE_ADDRESS_EXT (1ul << 31)
-
-/* Experimental multi-device allocation support flags. */
-
-/* If combined with CL_MEM_DEVICE_ADDRESS_EXT, each device can have their
-   own (fixed) device-side address and copy of the created buffer which are
-   synchronized implicitly. The main difference to a default cl_mem allocation
-   is then that the addresses are queriable with CL_MEM_DEVICE_PTRS_EXT and
-   the per-device address is guaranteed to be the same for the entire-lifetime
-   of the cl_mem.
-
-   Otherwise, each compatible device in the context can access a shared
-   allocation in one of the device's global memory using the same address. */
-#define CL_MEM_DEVICE_PRIVATE_EXT (1ul << 30)
+/* clCreateBuffer() flag: A new cl_mem_flag CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT:
+ * When set to CL_TRUE, specifies that the buffer must have a single fixed
+ * device-side address for its lifetime, and the address can be queried via
+ * clGetMemObjectInfo.
+ *
+ * Each device in the context can have their own (fixed) device-side address
+ * and a copy of the created buffer which are synchronized implicitly by the
+ * runtime.
+ *
+ * The flag might imply that the buffer will be "pinned" permanently to
+ * a device's memory, but might not be necessarily so, as long as the address
+ * range of the buffer remains constant.
+ *
+ * The device addresses of sub-buffers derived from
+ * CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT allocated buffers can be computed by
+ * adding the sub-buffer origin to the device-specific start address.
+ */
+#define CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT 0x5000
 
 /* clGetMemObjectInfo(): A new cl_mem_info type CL_MEM_DEVICE_PTR_EXT:
-
-   Returns the device address for a buffer allocated with
-   CL_MEM_DEVICE_ADDRESS_EXT. If the buffer was not created with the flag,
-   returns CL_INVALID_MEM_OBJECT.
-*/
-#define CL_MEM_DEVICE_PTR_EXT 0xff01
+ * Returns the device address for a buffer allocated with
+ * CL_MEM_DEVICE_ADDRESS_EXT. If the buffer was not created with the flag,
+ * returns CL_INVALID_MEM_OBJECT.
+ */
+#define CL_MEM_DEVICE_ADDRESS_EXT 0x5001
 
 typedef cl_ulong cl_mem_device_address_EXT;
 
-/* Returns the device-address pairs for a buffer allocated with
-   CL_MEM_DEVICE_ADDRESS_EXT | CL_MEM_DEVICE_PRIVATE_EXT.
-*/
-#define CL_MEM_DEVICE_PTRS_EXT 0xff02
-
-typedef struct _cl_mem_device_address_pair_EXT
-{
-  cl_device_id device;
-  cl_mem_device_address_EXT address;
-} cl_mem_device_address_pair_EXT;
-
 /* clSetKernelExecInfo(): CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT:
-
-   Similar to CL_KERNEL_EXEC_INFO_SVM_PTRS except for CL_MEM_DEVICE_ADDRESS_EXT
-   device pointers: If a device pointer accessed by a kernel is not passed as
-   an argument, it must be set by this property.
-*/
-#define CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT 0x11B8
+ * Similar to CL_KERNEL_EXEC_INFO_SVM_PTRS except for CL_MEM_DEVICE_ADDRESS_EXT
+ * device pointers: If a device pointer accessed by a kernel is not passed as
+ * an argument, it must be set by this property.
+ */
+#define CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT 0x5002
 
 /* A new function clSetKernelArgDevicePointerEXT() for setting raw device
-   pointers as kernel arguments. */
+ * pointers as kernel arguments. */
 
 typedef cl_int (CL_API_CALL *clSetKernelArgDevicePointerEXT_fn) (
     cl_kernel kernel, cl_uint arg_index, cl_mem_device_address_EXT dev_addr);

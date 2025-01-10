@@ -145,7 +145,7 @@ static const cl_name_version pocl_platform_extensions[] = {
   { CL_MAKE_VERSION (1, 0, 0), "cl_khr_throttle_hints" },
   { CL_MAKE_VERSION (1, 0, 0), "cl_khr_create_command_queue" },
   { CL_MAKE_VERSION (1, 0, 0), "cl_pocl_content_size" },
-  { CL_MAKE_VERSION (0, 1, 0), "cl_ext_buffer_device_address" },
+  { CL_MAKE_VERSION (0, 9, 1), "cl_ext_buffer_device_address" },
 };
 static const size_t pocl_platform_extensions_num
     = sizeof (pocl_platform_extensions) / sizeof (cl_name_version);

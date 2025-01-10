@@ -89,15 +89,19 @@ POname(clSetKernelExecInfo)(cl_kernel kernel,
        because of this. */
     case CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT:
       {
-        void **ptrs = (void **)param_value;
+        POCL_RETURN_ERROR_ON (!kernel->context->all_devices_support_bda,
+                              CL_INVALID_OPERATION,
+                              "Some device(s) in context don't support "
+                              "cl_ext_buffer_device_address\n");
 
+        void **ptrs = (void **)param_value;
         for (size_t i = 0; i < param_value_size / sizeof (void *); ++i)
           {
             void *dev_ptr = ptrs[i];
             pocl_raw_ptr *raw_ptr_info
                 = pocl_find_raw_ptr_with_dev_ptr (kernel->context, dev_ptr);
             POCL_RETURN_ERROR_ON ((raw_ptr_info == NULL), CL_INVALID_VALUE,
-                                  "the device pointer %p was not found\n",
+                                  "The device pointer %p was not found\n",
                                   dev_ptr);
           }
 

@@ -1406,6 +1406,7 @@ pocl_setup_context (cl_context context)
   memset (context->num_image_formats, 0,
           sizeof (cl_uint) * NUM_OPENCL_IMAGE_TYPES);
 
+  unsigned num_devices_support_bda_ext = 0;
   for(i=0; i<context->num_devices; i++)
     {
       cl_device_id dev = context->devices[i];
@@ -1457,8 +1458,13 @@ pocl_setup_context (cl_context context)
         (err != CL_SUCCESS), CL_INVALID_CONTEXT,
         "could not create default command queue for the context\n");
       assert (context->default_queues[i]);
+
+      if (strstr (dev->extensions, "cl_ext_buffer_device_address") != NULL)
+        ++num_devices_support_bda_ext;
     }
 
+  if (num_devices_support_bda_ext == context->num_devices)
+    context->all_devices_support_bda = CL_TRUE;
   assert (alignment > 0);
   context->min_buffer_alignment = alignment;
   return CL_SUCCESS;

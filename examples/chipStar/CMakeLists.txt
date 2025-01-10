@@ -98,7 +98,7 @@ endif()
 if(CUSTOM_CHIP_GIT_TAG)
   set(CHIP_GIT_TAG "${CUSTOM_CHIP_GIT_TAG}")
 else()
-  set(CHIP_GIT_TAG "chipstar_v1.2")
+  set(CHIP_GIT_TAG "chipstar_v1.2.bda_fix")
 endif()
 
 # set up env variables. Unfortunately this is necessary even just to build chipStar
