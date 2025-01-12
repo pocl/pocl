@@ -443,7 +443,7 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
       != 0)
     {
       pocl_update_event_running (cmd->sync.event.event);
-      POCL_UPDATE_EVENT_FAILED_MSG (cmd->sync.event.event,
+      POCL_UPDATE_EVENT_FAILED_MSG (CL_FAILED, cmd->sync.event.event,
                                     "CPU: failed to compile GVar init kernel");
       return NULL;
     }
@@ -456,7 +456,7 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
   if (ci == NULL)
     {
       pocl_update_event_running (cmd->sync.event.event);
-      POCL_UPDATE_EVENT_FAILED_MSG (cmd->sync.event.event,
+      POCL_UPDATE_EVENT_FAILED_MSG (CL_FAILED, cmd->sync.event.event,
                                     "CPU: failed to compile kernel");
       return NULL;
     }
