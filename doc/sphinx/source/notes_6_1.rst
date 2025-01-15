@@ -78,6 +78,66 @@ AlmaIF driver (FPGA interfacing)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ===================================
+Support for Julia
+===================================
+
+It is now possible to use PoCL with Julia through the OpenCL.jl package.
+The integration is still considered experimental, and the OpenCL.jl
+interface package itself is under active (re)development, but it is
+already possible to run many kernels using PoCL as the backend.
+For example:
+
+.. code-block:: julia
+
+    using OpenCL, pocl_jll, Test
+
+    const source = """
+       __kernel void vadd(__global const float *a,
+                          __global const float *b,
+                          __global float *c) {
+          int i = get_global_id(0);
+          c[i] = a[i] + b[i];
+        }"""
+
+    dims = (2,)
+    a = round.(rand(Float32, dims) * 100)
+    b = round.(rand(Float32, dims) * 100)
+    c = similar(a)
+
+    d_a = CLArray(a)
+    d_b = CLArray(b)
+    d_c = CLArray(c)
+
+    prog = cl.Program(; source) |> cl.build!
+    kern = cl.Kernel(prog, "vadd")
+
+    len = prod(dims)
+    clcall(kern, Tuple{Ptr{Float32}, Ptr{Float32}, Ptr{Float32}},
+           d_a, d_b, d_c; global_size=(len,))
+    c = Array(d_c)
+    @test a+b ≈ c
+
+OpenCL.jl also provides a high-level Julia to SPIR-V compiler,
+making it possible to significantly simplify the above example:
+
+.. code-block:: julia
+
+    # import packages, allocate data, etc
+
+    function vadd(a, b, c)
+        i = get_global_id()
+        @inbounds c[i] = a[i] + b[i]
+        return
+    end
+
+    @opencl global_size=len vadd(d_a, d_b, d_c)
+
+The aim of this work is to provide a CPU fallback for executing
+Julia's GPU kernels and applications by leveraging the CPU drivers
+in PoCL. For more information, refer to
+`the blog post on OpenCL.jl 0.10 <https://juliagpu.org/post/2025-01-13-opencl_0.10/>`_.
+
+===================================
 Notable fixes
 ===================================
 
