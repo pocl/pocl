@@ -129,6 +129,10 @@ add_test_pocl(NAME "workgroup/issue_548_convergent_propagation"
               EXPECTED_OUTPUT "issue_548_1_2_1_1.stdout"
               COMMAND "run_kernel" "issue_548.cl" "1" "2" "1" "1")
 
+add_test_pocl(NAME "workgroup/issue_1747_wg_divergent_barrier"
+              EXPECTED_OUTPUT "issue_1747.stdout"
+              COMMAND "run_kernel" "issue_1747.cl" "2" "2" "1" "1")
+
 add_test_pocl(NAME "workgroup/range_md_small_grid"
               EXPECTED_OUTPUT "range_md_small_grid.stdout"
               COMMAND "run_kernel" "range_md.cl" "1" "13" "1" "1")
