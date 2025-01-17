@@ -1466,7 +1466,7 @@ endif()
 # CONFORMANCE=ON disables FP16 b/c PoCL support is incomplete
 if((LLVM_VERSION_MAJOR GREATER_EQUAL 17)
    AND (NOT ENABLE_CONFORMANCE)
-   AND (NOT RISCV)
+   AND (NOT RISCV) AND (NOT I386)
    AND HOST_CPU_SUPPORTS_FLOAT16
    AND HAVE_FLOAT16_TYPE)
   message(STATUS "Host support for cl_khr_fp16 enabled")
