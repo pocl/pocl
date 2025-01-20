@@ -24,4 +24,17 @@
 
 #include "templates.h"
 
+#if __has_builtin(__builtin_exp10)
+
+#if !__has_builtin(__builtin_exp10f16)
+#undef __IF_FP16
+#define __IF_FP16(X)
+#endif
+
+DEFINE_BUILTIN_V_V(exp10)
+
+#else
+
 DEFINE_EXPR_V_V(exp10, exp(a*TYPED_CONST(stype, M_LN10_H, M_LN10_F, M_LN10)))
+
+#endif
