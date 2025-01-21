@@ -582,9 +582,9 @@ typedef struct pocl_version_t
   unsigned minor;
 
 #ifdef __cplusplus
-  pocl_version_t () : major (0), minor (0) {}
+  pocl_version_t () : major{0}, minor{0} {}
   pocl_version_t (unsigned the_major, unsigned the_minor)
-    : major (the_major), minor (the_minor)
+    : major{the_major}, minor{the_minor}
   {
   }
 #endif
