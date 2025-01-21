@@ -1324,10 +1324,16 @@ for dst_type in CONVERT_TYPES:
 						signext = ''
 					generate_function('convert_'+SIG_TO_TYPE_NAME_MAP[dst_t]+sat+rounding, SIG_TO_LLVM_TYPE_MAP[dst_t], signext, False, src_t)
 
+if FP16:
+	COLOR_TYPES = ['i', 'ui', 'f', 'h']
+else:
+	COLOR_TYPES = ['i', 'ui', 'f']
+
 IMG_COLOR_TYPE_MAP = {
 	'i' : 'Dv4_i',
 	'ui' : 'Dv4_j',
 	'f' : 'Dv4_f',
+	'h' : 'Dv4_Dh'
 }
 
 IMG_COORD_SIZE = {
@@ -1352,7 +1358,7 @@ for img_type in ['image1d', 'image2d', 'image3d', 'image1d_array', 'image2d_arra
 		img_type_llvm = 'ocl_' + img_type + "_" + access
 		img_type_llvm = str(len(img_type_llvm)) + img_type_llvm
 
-		for color_type in ['i', 'ui', 'f']:
+		for color_type in COLOR_TYPES:
 			# return value for read_image or input value for write_image
 			mang_color_type = IMG_COLOR_TYPE_MAP[color_type]
 

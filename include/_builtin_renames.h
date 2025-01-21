@@ -1072,9 +1072,11 @@
 #define read_imageui _cl_read_imageui
 #define read_imagei _cl_read_imagei
 #define read_imagef _cl_read_imagef
+#define read_imageh _cl_read_imageh
 #define write_imageui _cl_write_imageui
 #define write_imagei _cl_write_imagei
 #define write_imagef _cl_write_imagef
+#define write_imageh _cl_write_imageh
 
 #define get_sub_group_size _cl_get_sub_group_size
 #define get_max_sub_group_size _cl_get_max_sub_group_size

@@ -39,7 +39,6 @@
 #include <stdarg.h>
 
 #if 0
-
 int debugprintf(const char *fmt, ...)
 {
   int ret;
@@ -50,11 +49,8 @@ int debugprintf(const char *fmt, ...)
   return ret;
 }
 #define DEBUG_PRINTF(args) (debugprintf args)
-
 #else
-
 #define DEBUG_PRINTF(args) ((void)0)
-
 #endif
 
 /**************************************************************************/
@@ -122,24 +118,30 @@ DEFINE_PRINT_INTS (ulong, int64_t, uint64_t)
         memcpy (&val, vals, sizeof (FLOAT_TYPE));                             \
         vals = (char *)vals + sizeof (FLOAT_TYPE);                            \
         const char *other = NULL;                                             \
-        if (val != val)                                                       \
-          other = NANs[p->flags.uc ? 1 : 0];                                  \
-        if (val == (-INFINITY))                                               \
+        if (isnan (val))                                                      \
+          other = NANs[p->flags.uc];                                          \
+        if (isinf (val))                                                      \
           {                                                                   \
-            val = INFINITY;                                                   \
-            p->flags.sign = 1;                                                \
+            p->flags.sign = signbit (val) ? 1 : 0;                            \
+            other = INFs[p->flags.uc];                                        \
           }                                                                   \
-        if (val == (INFINITY))                                                \
-          other = INFs[p->flags.uc ? 1 : 0];                                  \
         if (other)                                                            \
-          __pocl_printf_nonfinite (p, other);                                 \
+          {                                                                   \
+            __pocl_printf_nonfinite (p, other);                               \
+            DEBUG_PRINTF (                                                    \
+              ("[printf:floats:sign=%u,other=%s]\n", p->flags.sign, other));  \
+          }                                                                   \
         else                                                                  \
-          __pocl_printf_float (p, (FLOAT_T)val);                              \
+          {                                                                   \
+            __pocl_printf_float (p, (FLOAT_T)val);                            \
+          }                                                                   \
       }                                                                       \
     DEBUG_PRINTF (("[printf:floats:done]\n"));                                \
   }
 
-DEFINE_PRINT_FLOATS (cl_half)
+#ifdef HAVE_FLOAT16_TYPE
+DEFINE_PRINT_FLOATS (_Float16)
+#endif
 DEFINE_PRINT_FLOATS (float)
 DEFINE_PRINT_FLOATS (double)
 
@@ -549,29 +551,49 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                       {
                       default:
                       case 2:
+                          /* we assume if the device supports float promotion,
+                         * EmitPrintf ensures half & single floats are always
+                         * promoted to double */
+                          if (float_promotion && vector_length == 1)
+                          {
+                              alloca_length = 8;
+                              __pocl_print_floats_double (p, buffer, vector_length);
+                              break;
+                          }
+                          else
+                          {
+#ifdef HAVE_FLOAT16_TYPE
+                            __pocl_print_floats__Float16 (p, buffer,
+                                                          vector_length);
+#else
+                            POCL_MSG_ERR ("printf error: host-side "
+                                          "support for FP16 missing\n");
+                            __pocl_print_ints_ushort (p, buffer,
+                                                      vector_length,
+                                                      0);
+#endif
+                            // half2 vectors <64 bits are stored in 64bits
+                            if (alloca_length < 8)
+                                alloca_length = 8;
+                            break;
+                          }
                       case 4:
                         /* we assume if the device supports float promotion,
                          * EmitPrintf ensures half & single floats are always
                          * promoted to double */
-                        if (!float_promotion || vector_length > 1)
-                          {
-                            /* printing half type (vectors) not yet implemented
-                             */
-                            if (element_size == 2)
-                              POCL_MSG_ERR (
-                                "printf error: printing halfs is not "
-                                "yet implemented\n");
-                            else
-                              __pocl_print_floats_float (p, buffer,
-                                                         vector_length);
-                            break;
-                          }
-                        else
-                          {
+                        if (float_promotion && vector_length == 1)
+                        {
                             /* .. else fallthrough to double */
                             alloca_length = 8;
-                            POCL_FALLTHROUGH;
-                          }
+                            __pocl_print_floats_double (p, buffer, vector_length);
+                            break;
+                        }
+                        else
+                        {
+                            __pocl_print_floats_float (p, buffer,
+                                                       vector_length);
+                            break;
+                        }
                       case 8:
                         __pocl_print_floats_double (p, buffer, vector_length);
                         break;

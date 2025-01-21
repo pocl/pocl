@@ -1264,11 +1264,11 @@ pocl_setup_device_for_system_memory (cl_device_id device)
       /* global_mem_size contains the entire memory size,
        * and we need to leave some available for OS & other programs
        * this sets it to 3/4 for systems with <=7gig mem,
-       * for >7 it sets to (total-2gigs)
+       * for >7 it sets to (total-4gigs)
        */
       cl_ulong alloc_limit = device->global_mem_size;
       if (alloc_limit > ((cl_ulong)7 << 30))
-        system_memory.total_alloc_limit = alloc_limit - ((cl_ulong)2 << 30);
+        system_memory.total_alloc_limit = alloc_limit - ((cl_ulong)4 << 30);
       else
         {
           cl_ulong temp = (alloc_limit >> 2);
@@ -1313,13 +1313,7 @@ pocl_setup_device_for_system_memory (cl_device_id device)
       POCL_MSG_ERR ("Not enough memory to run on this device.\n");
     }
 
-  /* Maximum allocation size: we don't have hardware limits, so we
-   * can potentially allocate the whole memory for a single buffer, unless
-   * of course there are limits set at the operating system level. Of course
-   * we still have to respect the OpenCL-commanded minimum */
-
-  cl_ulong alloc_limit = pocl_size_ceil2_64 (device->global_mem_size / 4);
-
+  cl_ulong alloc_limit = device->global_mem_size;
   if (alloc_limit < MIN_MAX_MEM_ALLOC_SIZE)
     alloc_limit = MIN_MAX_MEM_ALLOC_SIZE;
 

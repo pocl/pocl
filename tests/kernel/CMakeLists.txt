@@ -29,6 +29,7 @@ add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 ${OPENCL_CFLAGS_STR}")
 
 ######################################################################
+
 add_executable("kernel" "kernel.c")
 target_link_libraries("kernel" ${POCLU_LINK_OPTIONS})
 
@@ -229,6 +230,20 @@ add_test_pocl(NAME "kernel/test_printf_vectors_doublen"
               EXPECTED_OUTPUT "test_printf_vectors_doublen_expout.txt"
               COMMAND "kernel" "test_printf_vectors_doublen")
 
+if(HOST_CPU_ENABLE_CL_KHR_FP16)
+  add_test_pocl(NAME "kernel/test_printf_vectors_halfn"
+                EXPECTED_OUTPUT "test_printf_vectors_halfn_expout.txt"
+                COMMAND "kernel" "test_printf_vectors_halfn")
+  foreach(VARIANT ${VARIANTS})
+  set_tests_properties("kernel/test_printf_vectors_halfn_${VARIANT}"
+    PROPERTIES
+      PROCESSORS 1
+      COST 120
+      DEPENDS "pocl_version_check"
+      LABELS "internal;kernel")
+  endforeach()
+endif()
+
 add_test_pocl(NAME "kernel/test_printf_vectors_ulongn"
               EXPECTED_OUTPUT "test_printf_vectors_ulongn_expout.txt"
               COMMAND "kernel" "test_printf_vectors_ulongn")
@@ -314,8 +329,6 @@ set_property(TEST
   APPEND PROPERTY LABELS "cuda")
 endif()
 
-set(EXTRA_TEST_VARIANT ${EXTRA_TESTS})
-list(TRANSFORM EXTRA_TEST_VARIANT APPEND "_loopvec")
 
 set_property(TEST
   "kernel/test_local_struct_array_loopvec"
@@ -328,7 +341,6 @@ set_property(TEST
   "kernel/test_shuffle_float_loopvec"
   "kernel/test_shuffle_long_loopvec"
   "kernel/test_shuffle_ulong_loopvec"
-  ${EXTRA_TEST_VARIANT}
   "kernel/test_as_type_loopvec"
   "kernel/test_convert_type_1_loopvec"
   "kernel/test_convert_type_2_loopvec"

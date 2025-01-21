@@ -69,9 +69,7 @@ get_float4_pixel (void *data, size_t base_index, int type)
   if (type == CLK_FLOAT)
     return ((float4 *)data)[base_index];
   if (type == CLK_HALF_FLOAT)
-    {
-      return vloada_half4(base_index, data);
-    }
+    return vloada_half4 (base_index, data);
   const float4 one_127th = (float4) (1.0f / 127.0f);
   const float4 one_32767th = (float4) (1.0f / 32767.0f);
   const float4 one_255th = ((float4) (1.0f / (float)UCHAR_MAX));
@@ -110,9 +108,7 @@ get_float2_pixel (void *data, size_t base_index, int type)
   if (type == CLK_FLOAT)
     return ((float2 *)data)[base_index];
   if (type == CLK_HALF_FLOAT)
-    {
-      return vloada_half2(base_index, data);
-    }
+    return vloada_half2 (base_index, data);
   const float2 one_127th = (float2) (1.0f / 127.0f);
   const float2 one_32767th = (float2) (1.0f / 32767.0f);
   const float2 one_255th = ((float2) (1.0f / (float)UCHAR_MAX));
@@ -150,6 +146,8 @@ get_float_pixel (void *data, size_t base_index, int type)
 {
   if (type == CLK_FLOAT)
     return ((float *)data)[base_index];
+  if (type == CLK_HALF_FLOAT)
+    return vload_half (base_index, data);
   const float one_127th = (float)(1.0f / 127.0f);
   const float one_32767th = (float)(1.0f / 32767.0f);
   const float one_255th = ((float)(1.0f / (float)UCHAR_MAX));
@@ -1623,15 +1621,15 @@ pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
 
 #define IMPLEMENT_READ_INT4_IMAGE_INT_COORD(__IMGTYPE__, __RETVAL__,          \
                                             __POSTFIX__, __COORD__)           \
-  __RETVAL__ _CL_OVERLOADABLE _CL_READONLY read_image##__POSTFIX__ (                       \
-      __IMGTYPE__ image, sampler_t sampler, __COORD__ coord)                  \
+  __RETVAL__ _CL_OVERLOADABLE _CL_READONLY read_image##__POSTFIX__ (          \
+    __IMGTYPE__ image, sampler_t sampler, __COORD__ coord)                    \
   {                                                                           \
     int4 coord4;                                                              \
     INITCOORD##__COORD__ (coord4, coord);                                     \
     global dev_image_t *i_ptr                                                 \
-        = __builtin_astype (image, global dev_image_t *);                     \
+      = __builtin_astype (image, global dev_image_t *);                       \
     const dev_sampler_t s                                                     \
-        = (dev_sampler_t) (__builtin_astype (sampler, uintptr_t));            \
+      = (dev_sampler_t)(__builtin_astype (sampler, uintptr_t));               \
     uint4 color = pocl_read_pixel_intc (i_ptr, coord4, s);                    \
     return as_##__RETVAL__ (color);                                           \
   }
@@ -1650,6 +1648,20 @@ pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
     return as_float4 (color);                                                 \
   }
 
+#define IMPLEMENT_READ_HALF4_IMAGE_INT_COORD(__IMGTYPE__, __COORD__)          \
+  half4 _CL_OVERLOADABLE _CL_READONLY read_imageh (                           \
+    __IMGTYPE__ image, sampler_t sampler, __COORD__ coord)                    \
+  {                                                                           \
+    int4 coord4;                                                              \
+    INITCOORD##__COORD__ (coord4, coord);                                     \
+    global dev_image_t *i_ptr                                                 \
+      = __builtin_astype (image, global dev_image_t *);                       \
+    const dev_sampler_t s                                                     \
+      = (dev_sampler_t)(__builtin_astype (sampler, uintptr_t));               \
+    uint4 color = pocl_read_pixel_intc (i_ptr, coord4, s);                    \
+    return convert_half4 (as_float4 (color));                                 \
+  }
+
 #define IMPLEMENT_READ_FLOAT4_IMAGE_FLOAT_COORD(__IMGTYPE__, __COORD__)       \
   float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (__IMGTYPE__ image, sampler_t sampler,  \
                                        __COORD__ coord)                       \
@@ -1662,6 +1674,20 @@ pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
         = (dev_sampler_t) (__builtin_astype (sampler, uintptr_t));            \
     uint4 color = pocl_read_pixel_floatc (i_ptr, coord4, s);                  \
     return as_float4 (color);                                                 \
+  }
+
+#define IMPLEMENT_READ_HALF4_IMAGE_FLOAT_COORD(__IMGTYPE__, __COORD__)        \
+  half4 _CL_OVERLOADABLE _CL_READONLY read_imageh (                           \
+    __IMGTYPE__ image, sampler_t sampler, __COORD__ coord)                    \
+  {                                                                           \
+    float4 coord4;                                                            \
+    INITCOORD##__COORD__ (coord4, coord);                                     \
+    global dev_image_t *i_ptr                                                 \
+      = __builtin_astype (image, global dev_image_t *);                       \
+    const dev_sampler_t s                                                     \
+      = (dev_sampler_t)(__builtin_astype (sampler, uintptr_t));               \
+    uint4 color = pocl_read_pixel_floatc (i_ptr, coord4, s);                  \
+    return convert_half4 (as_float4 (color));                                 \
   }
 
 #define IMPLEMENT_READ_INT4_IMAGE_FLOAT_COORD(__IMGTYPE__, __RETVAL__,        \
@@ -1727,6 +1753,19 @@ pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
     return as_float4 (color);                                                 \
   }
 
+#define IMPLEMENT_READ_HALF4_IMAGE_INT_COORD_NOSAMPLER(__IMGTYPE__,           \
+                                                       __COORD__)             \
+  half4 _CL_OVERLOADABLE _CL_READONLY read_imageh (__IMGTYPE__ image,         \
+                                                   __COORD__ coord)           \
+  {                                                                           \
+    int4 coord4;                                                              \
+    INITCOORD##__COORD__ (coord4, coord);                                     \
+    global dev_image_t *i_ptr                                                 \
+      = __builtin_astype (image, global dev_image_t *);                       \
+    uint4 color = pocl_read_pixel_intc_samplerless (i_ptr, coord4);           \
+    return convert_half4 (as_float4 (color));                                 \
+  }
+
 /* NO sampler */
 
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image1d_t, int)
@@ -1739,7 +1778,17 @@ IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image2d_array_t,
                                                  int4)
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image3d_t, int4)
 
+#ifdef cl_khr_fp16
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image1d_t, int)
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image1d_buffer_t,
+                                                int)
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image1d_array_t, int2)
 
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image2d_t, int2)
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image2d_array_t,
+                                                int4)
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image3d_t, int4)
+#endif
 
 IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image1d_t, uint4, ui,
                                                int)
@@ -1776,6 +1825,15 @@ IMPLEMENT_READ_FLOAT4_IMAGE_FLOAT_COORD (IMG_RO_AQ image2d_t, float2)
 IMPLEMENT_READ_FLOAT4_IMAGE_FLOAT_COORD (IMG_RO_AQ image2d_array_t, float4)
 IMPLEMENT_READ_FLOAT4_IMAGE_FLOAT_COORD (IMG_RO_AQ image3d_t, float4)
 
+#ifdef cl_khr_fp16
+IMPLEMENT_READ_HALF4_IMAGE_FLOAT_COORD (IMG_RO_AQ image1d_t, float)
+IMPLEMENT_READ_HALF4_IMAGE_FLOAT_COORD (IMG_RO_AQ image1d_buffer_t, float)
+IMPLEMENT_READ_HALF4_IMAGE_FLOAT_COORD (IMG_RO_AQ image1d_array_t, float2)
+IMPLEMENT_READ_HALF4_IMAGE_FLOAT_COORD (IMG_RO_AQ image2d_t, float2)
+IMPLEMENT_READ_HALF4_IMAGE_FLOAT_COORD (IMG_RO_AQ image2d_array_t, float4)
+IMPLEMENT_READ_HALF4_IMAGE_FLOAT_COORD (IMG_RO_AQ image3d_t, float4)
+#endif
+
 /* float4 img + int coords + sampler */
 
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RO_AQ image1d_t, int)
@@ -1784,6 +1842,15 @@ IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RO_AQ image1d_array_t, int2)
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RO_AQ image2d_t, int2)
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RO_AQ image2d_array_t, int4)
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RO_AQ image3d_t, int4)
+
+#ifdef cl_khr_fp16
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD (IMG_RO_AQ image1d_t, int)
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD (IMG_RO_AQ image1d_buffer_t, int)
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD (IMG_RO_AQ image1d_array_t, int2)
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD (IMG_RO_AQ image2d_t, int2)
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD (IMG_RO_AQ image2d_array_t, int4)
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD (IMG_RO_AQ image3d_t, int4)
+#endif
 
 /* int4 img + float coords + sampler */
 
@@ -1843,6 +1910,17 @@ IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image2d_array_t,
                                                  int4)
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image3d_t, int4)
 
+#ifdef cl_khr_fp16
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image1d_t, int)
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image1d_buffer_t,
+                                                   int)
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image1d_array_t, int2)
+
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image2d_t, int2)
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image2d_array_t,
+                                                   int4)
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image3d_t, int4)
+#endif
 
 IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image1d_t, uint4, ui,
                                                int)
@@ -1879,6 +1957,15 @@ IMPLEMENT_READ_FLOAT4_IMAGE_FLOAT_COORD (IMG_RW_AQ image2d_t, float2)
 IMPLEMENT_READ_FLOAT4_IMAGE_FLOAT_COORD (IMG_RW_AQ image2d_array_t, float4)
 IMPLEMENT_READ_FLOAT4_IMAGE_FLOAT_COORD (IMG_RW_AQ image3d_t, float4)
 
+#ifdef cl_khr_fp16
+IMPLEMENT_READ_HALF4_IMAGE_FLOAT_COORD (IMG_RW_AQ image1d_t, float)
+IMPLEMENT_READ_HALF4_IMAGE_FLOAT_COORD (IMG_RW_AQ image1d_buffer_t, float)
+IMPLEMENT_READ_HALF4_IMAGE_FLOAT_COORD (IMG_RW_AQ image1d_array_t, float2)
+IMPLEMENT_READ_HALF4_IMAGE_FLOAT_COORD (IMG_RW_AQ image2d_t, float2)
+IMPLEMENT_READ_HALF4_IMAGE_FLOAT_COORD (IMG_RW_AQ image2d_array_t, float4)
+IMPLEMENT_READ_HALF4_IMAGE_FLOAT_COORD (IMG_RW_AQ image3d_t, float4)
+#endif
+
 /* float4 img + int coords + sampler */
 
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RW_AQ image1d_t, int)
@@ -1887,6 +1974,15 @@ IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RW_AQ image1d_array_t, int2)
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RW_AQ image2d_t, int2)
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RW_AQ image2d_array_t, int4)
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RW_AQ image3d_t, int4)
+
+#ifdef cl_khr_fp16
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD (IMG_RW_AQ image1d_t, int)
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD (IMG_RW_AQ image1d_buffer_t, int)
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD (IMG_RW_AQ image1d_array_t, int2)
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD (IMG_RW_AQ image2d_t, int2)
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD (IMG_RW_AQ image2d_array_t, int4)
+IMPLEMENT_READ_HALF4_IMAGE_INT_COORD (IMG_RW_AQ image3d_t, int4)
+#endif
 
 /* int4 img + float coords + sampler */
 

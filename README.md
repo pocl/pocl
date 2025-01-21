@@ -1,6 +1,6 @@
 # Portable Computing Language (PoCL)
 
-PoCL is being developed towards an efficient implementation of the OpenCL
+PoCL is a conformant implementation of the OpenCL 3.0
 standard which can be easily adapted for new targets.
 
 [Official web page](http://portablecl.org)

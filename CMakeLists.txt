@@ -837,6 +837,13 @@ if(UNIX OR MINGW)
                       "dlfcn.h"
                       HAVE_DLADDR)
 
+  check_c_source_compiles(
+  "_Float16 callfp16(_Float16 a) { return a * 1.8f16; };
+  int main(int argc, char** argv) {
+  _Float16 x = callfp16((_Float16)argc);
+  return ((x > 0.8f16) ? 20 : 10);
+  }" HAVE_FLOAT16_TYPE)
+
   find_file(
     HAVE_LINUX_VSOCK_H
     NAMES
@@ -1459,8 +1466,9 @@ endif()
 # CONFORMANCE=ON disables FP16 b/c PoCL support is incomplete
 if((LLVM_VERSION_MAJOR GREATER_EQUAL 17)
    AND (NOT ENABLE_CONFORMANCE)
-   AND (NOT RISCV)
-   AND HOST_CPU_SUPPORTS_FLOAT16)
+   AND (NOT RISCV) AND (NOT I386)
+   AND HOST_CPU_SUPPORTS_FLOAT16
+   AND HAVE_FLOAT16_TYPE)
   message(STATUS "Host support for cl_khr_fp16 enabled")
   set(HOST_CPU_ENABLE_CL_KHR_FP16 1)
 else()
