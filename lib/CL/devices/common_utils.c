@@ -345,7 +345,7 @@ pocl_cpu_init_common (cl_device_id device)
 #endif
 #endif
 
-  device->version_of_latest_passed_cts = HOST_DEVICE_LATEST_CTS_PASS;
+  device->version_of_latest_passed_cts = "v2024-08-08-00";
   device->extensions = HOST_DEVICE_EXTENSIONS;
 
   device->features = HOST_DEVICE_FEATURES_30;
