@@ -25,6 +25,8 @@
 
 #include <string.h>
 
+#include "config2.h"
+
 #include "common.h"
 #include "common_utils.h"
 #include "cpuinfo.h"
@@ -250,6 +252,8 @@ align_ptr (char *p)
 
 #define FALLBACK_MAX_THREAD_COUNT 8
 
+static const char *final_ld_flags[] = { HOST_LD_FLAGS_ARRAY, NULL };
+
 /** Initializes device info defaults for CPU (host) devices.
  *
  * pocl_init_default_device_infos() can be called instead
@@ -457,6 +461,7 @@ pocl_cpu_init_common (cl_device_id device)
 
   device->local_mem_size = pocl_get_int_option ("POCL_CPU_LOCAL_MEM_SIZE",
                                                 device->local_mem_size);
+  device->final_linkage_flags = final_ld_flags;
 
 #ifndef ENABLE_CONFORMANCE
   device->cmdbuf_capabilities
