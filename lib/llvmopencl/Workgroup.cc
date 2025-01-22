@@ -445,6 +445,8 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
     F.removeFnAttr(Attribute::StrictFP);
     F.removeFnAttr("denormal-fp-math");
     F.removeFnAttr("denormal-fp-math-f32");
+    // prevents vectorizing/inlining of functions with builtins (llvm.sin.f32 etc)
+    F.removeFnAttr("no-builtins");
     F.addFnAttr("no-trapping-math", "true");
     // required because the InlineCost -> areInlineCompatible also calls
     // TTI->areInlineCompatible; X86TTIImpl::areInlineCompatible checks CPU
@@ -464,7 +466,6 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
       F.removeFnAttr("frame-pointer");
 
     // these should be safe to enable
-    F.addFnAttr(Attribute::NoBuiltin);
     F.addFnAttr(Attribute::NoFree);
     // recursion forbidden by OpenCL
     F.addFnAttr(Attribute::NoRecurse);
