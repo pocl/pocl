@@ -31,6 +31,8 @@
 #define GID_G_NAME(DIM) (std::string("_global_id_") + (char)('x' + DIM))
 // Generates the name for the global magic variable for the group id.
 #define GROUP_ID_G_NAME(DIM) (std::string("_group_id_") + (char)('x' + DIM))
+// Generates the name for the global magic variable for the get_num_groups
+#define NGROUPS_G_NAME(DIM) (std::string("_num_groups_") + (char)('x' + DIM))
 // Generates the name for the global magic variable for the local size.
 #define LS_G_NAME(DIM) (std::string("_local_size_") + (char)('x' + DIM))
 

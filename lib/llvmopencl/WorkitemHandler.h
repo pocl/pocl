@@ -89,6 +89,7 @@ protected:
   std::array<llvm::Value *, 3> LocalSizeGlobals;
   std::array<llvm::Value *, 3> GlobalIdGlobals;
   std::array<llvm::Value *, 3> GroupIdGlobals;
+  std::array<llvm::Value *, 3> NumGroupsGlobals;
 
   // Points to the global size computation instructions in the entry
   // block of the currently handled kernel.

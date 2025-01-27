@@ -250,6 +250,7 @@ find_called_functions(llvm::Function *F,
     DB_PRINT("it's a declaration.\n");
     return;
   }
+
   llvm::Function::iterator FI;
   for (FI = F->begin(); FI != F->end(); FI++) {
     llvm::BasicBlock::iterator BI;
@@ -693,10 +694,6 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
 
   // Inspect the program, find undefined functions
   for (FI = Program->begin(), FE = Program->end(); FI != FE; FI++) {
-    // Do not link in work-item functions when we can expand all the
-    // calls by the compiler.
-    if (!ClDev->spmd && isWorkitemFunctionWithOnlyCompilerExpandableCalls(*FI))
-      continue;
     if (FI->isDeclaration()) {
       DB_PRINT("Pre-link: %s is not defined\n", fi->getName().data());
       DeclaredFunctions.insert(FI->getName());
@@ -761,9 +758,6 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
       llvm::StringRef FName = DeclIter.getKey();
       Function *F = Program->getFunction(FName);
 
-      if (!ClDev->spmd && isWorkitemFunctionWithOnlyCompilerExpandableCalls(*F))
-        continue;
-
       if ((F == NULL) ||
           (F->isDeclaration() &&
            // A target might want to expose the C99 printf in
@@ -771,6 +765,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
            F->getName() != "printf" && F->getName() != pocl_sampler_handler &&
            !F->getName().starts_with("llvm.") &&
            F->getName() != BARRIER_FUNCTION_NAME &&
+           F->getName() != "__pocl_local_mem_alloca" &&
            F->getName() != "__pocl_work_group_alloca")) {
         Log.append("Cannot find symbol ");
         Log.append(FName.str());
@@ -796,6 +791,18 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
     handleDeviceSidePrintf(Program, Lib, Log, vvm, ClDev);
 
   replaceIntrinsics(Program, Lib, vvm, ClDev);
+
+  // If we prefer to use compiler expansion of ID functions instead of the
+  // software-defined ones (with switch...cases for dim), replace the functions
+  // with declarations so they act as markers for the kernel compiler.
+  // This can be done only if the dim is static.
+  if (!ClDev->spmd) {
+    for (auto &F : *Program) {
+      if (!isWorkitemFunctionWithOnlyCompilerExpandableCalls(F))
+        continue;
+      F.deleteBody();
+    }
+  }
 
   std::vector<Function *> CallChain;
   ValueToSizeTMapTy FuncStackSizeMap;
