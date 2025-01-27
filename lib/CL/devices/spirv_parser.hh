@@ -34,6 +34,7 @@
 #define SPIRV_PARSER_EXPORT POCL_EXPORT
 #endif
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <set>
