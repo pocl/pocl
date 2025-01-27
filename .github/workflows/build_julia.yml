@@ -63,7 +63,6 @@ jobs:
             # unversioned
             Pkg.add([
               "SPIRV_Tools_jll",
-              "SPIRV_LLVM_Translator_jll",
               "OpenCL_jll",
               "OpenCL_Headers_jll",
               "Hwloc_jll",
@@ -73,6 +72,7 @@ jobs:
 
             # versioned
             Pkg.add(name="LLVM_full_jll", version="${{ matrix.llvm }}")'
+            Pkg.add(name="SPIRV_LLVM_Translator_jll", version="${{ matrix.llvm }}")'
 
       - name: Build PoCL
         run: |
