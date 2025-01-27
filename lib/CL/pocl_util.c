@@ -871,7 +871,7 @@ pocl_command_record (cl_command_buffer_khr command_buffer,
       POCL_UNLOCK (command_buffer->mutex);
       return CL_INVALID_OPERATION;
     }
-  LL_APPEND (command_buffer->cmds, cmd);
+  DL_APPEND (command_buffer->cmds, cmd);
   if (sync_point != NULL)
     *sync_point = command_buffer->num_syncpoints + 1;
   command_buffer->num_syncpoints++;

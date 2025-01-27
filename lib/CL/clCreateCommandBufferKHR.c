@@ -32,13 +32,17 @@ POname (clCreateCommandBufferKHR) (
 {
   int errcode = 0;
   cl_command_buffer_khr cmdbuf = NULL;
-  POCL_GOTO_ERROR_COND ((num_queues > 1
-                         && strstr (queues[0]->device->extensions,
-                                    "cl_khr_command_buffer_multi_device")
-                              == NULL),
-                        CL_INVALID_VALUE);
   POCL_GOTO_ERROR_COND ((num_queues == 0), CL_INVALID_VALUE);
   POCL_GOTO_ERROR_COND ((queues == NULL), CL_INVALID_VALUE);
+
+  if (num_queues > 1)
+    {
+      for (cl_uint i = 0; i < num_queues; ++i)
+        POCL_GOTO_ERROR_COND ((strstr (queues[i]->device->extensions,
+                                       "cl_khr_command_buffer_multi_device")
+                               == NULL),
+                              CL_INVALID_VALUE);
+    }
 
   /* All queues must have the same OpenCL context */
   cl_context ref_ctx = queues[0]->context;
@@ -143,6 +147,28 @@ POname (clCreateCommandBufferKHR) (
         }
     }
 
+  for (unsigned i = 0; i < num_queues; ++i)
+    {
+      if (queues[i]->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
+        POCL_GOTO_ERROR_ON (
+          ((queues[i]->device->cmdbuf_capabilities
+            & CL_COMMAND_BUFFER_CAPABILITY_OUT_OF_ORDER_KHR)
+           == 0),
+          CL_INCOMPATIBLE_COMMAND_QUEUE_KHR,
+          "queue is an out-of-order "
+          "command-queue but device does not support the CL_COMMAND_BUFFER"
+          "_CAPABILITY_OUT_OF_ORDER_KHR capability\n");
+      if (queues[i]->device->cmdbuf_required_properties)
+        POCL_GOTO_ERROR_ON (
+          ((queues[i]->device->cmdbuf_required_properties
+            & queues[i]->properties)
+           != queues[i]->device->cmdbuf_required_properties),
+          CL_INCOMPATIBLE_COMMAND_QUEUE_KHR,
+          "properties of command-queue"
+          " does not contain the minimum properties specified by CL_DEVI"
+          "CE_COMMAND_BUFFER_REQUIRED_QUEUE_PROPERTIES_KHR\n");
+    }
+
   cmdbuf = calloc (1, sizeof (struct _cl_command_buffer_khr));
   if (cmdbuf == NULL)
     {
@@ -160,6 +186,7 @@ POname (clCreateCommandBufferKHR) (
       = (cl_command_queue *)calloc (num_queues, sizeof (cl_command_queue));
   memcpy (cmdbuf->queues, queues, num_queues * sizeof (cl_command_queue));
   cmdbuf->num_properties = num_properties;
+  cmdbuf->data = (void **)calloc (ref_ctx->num_devices, sizeof (void *));
   POCL_INIT_LOCK (cmdbuf->mutex);
   if (num_properties > 0)
     {

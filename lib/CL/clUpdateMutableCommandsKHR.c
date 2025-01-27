@@ -1,6 +1,6 @@
-/* OpenCL runtime library: clCommandBarrierWithWaitListKHR()
+/* OpenCL runtime library: clUpdateMutableCommandsKHR()
 
-   Copyright (c) 2022 Jan Solanti / Tampere University
+   Copyright (c) 2024 Michal Babej / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to

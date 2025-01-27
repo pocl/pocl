@@ -55,6 +55,11 @@ constexpr unsigned BatchSizeLimit = 128;
 /// the number of events allocated for each Event Pool
 constexpr unsigned EventPoolSize = 2048;
 
+struct Level0CmdBufferData {
+  std::queue<ze_event_handle_t> Events;
+  ze_command_list_handle_t CmdListH;
+};
+
 class Level0WorkQueueInterface {
 
 public:
@@ -71,7 +76,7 @@ class Level0Queue {
 public:
   Level0Queue(Level0WorkQueueInterface *WH, ze_command_queue_handle_t Q,
               ze_command_list_handle_t L, Level0Device *D,
-              size_t MaxPatternSize);
+              size_t MaxPatternSize, unsigned QO, bool RunThread = true);
   ~Level0Queue();
 
   Level0Queue(Level0Queue const &) = delete;
@@ -80,6 +85,8 @@ public:
   Level0Queue& operator=(Level0Queue &&) = delete;
 
   void runThread();
+  void freeCommandBuffer(void *CmdBufData);
+  void *createCommandBuffer(cl_command_buffer_khr CmdBuf);
 
 private:
   std::queue<ze_event_handle_t> AvailableDeviceEvents;
@@ -107,6 +114,8 @@ private:
   uint64_t DeviceKernelTimerWrapTimeNs;
   uint32_t_3 DeviceMaxWGSizes;
   uint32_t MaxFillPatternSize;
+  // required for creating new command lists for cl_khr_command_buffer
+  unsigned QueueOrdinal;
 
   void read(void *__restrict__ HostPtr,
             pocl_mem_identifier *SrcMemId, cl_mem SrcBuf,
@@ -206,7 +215,8 @@ private:
   void runWithOffsets(struct pocl_context *PoclCtx, ze_kernel_handle_t KernelH);
   void run(_cl_command_node *Cmd);
 
-  void appendEventToList(_cl_command_node *Cmd, const char **Msg);
+  void appendEventToList(_cl_command_node *Cmd, const char **Msg,
+                         cl_context Context);
 
   void runBuiltinKernel(_cl_command_run *RunCmd, cl_device_id Dev,
                         cl_event Event, cl_program Program, cl_kernel Kernel,
@@ -217,8 +227,9 @@ private:
 
   void execCommand(_cl_command_node *Cmd);
   void execCommandBatch(BatchType &Batch);
+  void execCommandBuffer(_cl_command_node *Node);
   void reset();
-  void closeCmdList();
+  void closeCmdList(std::queue<ze_event_handle_t> *EvtList = nullptr);
   void makeMemResident();
   void syncMemHostPtrs();
   void allocNextFreeEvent();
@@ -251,6 +262,9 @@ public:
   bool getWorkOrWait(_cl_command_node **Node, BatchType &Batch) override;
   bool available() const { return Available; }
 
+  void freeCmdBuf(void *CmdBufData);
+  void *createCmdBuf(cl_command_buffer_khr CmdBuf);
+
 private:
   std::condition_variable Cond;
   std::mutex Mutex;
@@ -259,6 +273,8 @@ private:
   std::queue<BatchType> BatchWorkQueue;
 
   std::vector<std::unique_ptr<Level0Queue>> Queues;
+
+  std::unique_ptr<Level0Queue> CreateQueue;
 
   bool ThreadExitRequested = false;
   bool Available = false;
@@ -334,6 +350,8 @@ public:
                         void *pNext = nullptr);
   void freeUSMMem(void *Ptr);
   bool freeUSMMemBlocking(void *Ptr);
+  void freeCmdBuf(void *CmdBufData);
+  void *createCmdBuf(cl_command_buffer_khr CmdBuf);
 
   ze_image_handle_t allocImage(cl_channel_type ChType,
                                cl_channel_order ChOrder,
