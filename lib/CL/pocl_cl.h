@@ -1008,7 +1008,6 @@ struct pocl_device_ops {
   cl_int (*free_command_buffer) (cl_device_id device,
                                  cl_command_buffer_khr command_buffer);
 
-  cl_int (*run_command_buffer) (void *data, cl_command_buffer_khr cmd);
 };
 
 typedef struct pocl_global_mem_t {
@@ -1148,6 +1147,10 @@ struct _cl_device_id {
    * Clang's OpenCL header augmented with extra declarations in
    * _clang_opencl.h. For most drivers, this should default to CL_FALSE. */
   cl_bool use_only_clang_opencl_headers;
+  /* device supports command buffer execution natively, meaning pocl does
+   * not need to split the command buffer into individual commands in the
+   * clEnqueueCommandBuffer time. */
+  cl_bool native_command_buffers;
   cl_device_exec_capabilities execution_capabilities;
   cl_platform_id platform;
   cl_uint max_sub_devices;
@@ -1599,6 +1602,8 @@ struct _cl_command_buffer_khr
   _cl_command_node *cmds;
   cl_bool is_mutable;
   cl_bool assert_no_more_wgs;
+  /* device-specific data */
+  void **data;
 };
 
 #define POCL_ON_SUB_MISALIGN(mem, que, operation)                             \

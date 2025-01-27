@@ -128,6 +128,7 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
       POCL_DESTROY_OBJECT (command_buffer);
       POCL_MEM_FREE (command_buffer->queues);
       POCL_MEM_FREE (command_buffer->properties);
+      POCL_MEM_FREE (command_buffer->data);
       POCL_MEM_FREE (command_buffer);
     }
   else

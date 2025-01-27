@@ -201,6 +201,12 @@ static cl_int pocl_level0_post_init(struct pocl_device_ops *ops) {
   return CL_SUCCESS;
 }
 
+cl_int
+pocl_level0_create_finalized_command_buffer(cl_device_id Dev,
+                                            cl_command_buffer_khr CmdBuf);
+cl_int pocl_level0_free_command_buffer(cl_device_id Dev,
+                                       cl_command_buffer_khr CmdBuf);
+
 void pocl_level0_init_device_ops(struct pocl_device_ops *Ops) {
   Ops->device_name = "level0";
 
@@ -285,6 +291,10 @@ void pocl_level0_init_device_ops(struct pocl_device_ops *Ops) {
   Ops->get_subgroup_info_ext = pocl_level0_get_subgroup_info_ext;
   Ops->set_kernel_exec_info_ext = pocl_level0_set_kernel_exec_info_ext;
   Ops->get_synchronized_timestamps = pocl_driver_get_synchronized_timestamps;
+
+  Ops->create_finalized_command_buffer =
+      pocl_level0_create_finalized_command_buffer;
+  Ops->free_command_buffer = pocl_level0_free_command_buffer;
 }
 
 
@@ -1275,9 +1285,13 @@ void PoclL0QueueData::getSubmitBatchUnlocked(BatchType &SubmitBatch) {
   // if the first event has null waitlist, it's ready to launch
   SubmitBatch.push_back(FirstEv);
   UnsubmittedEventList.pop_front();
+  if (FirstEv->command_type == CL_COMMAND_COMMAND_BUFFER_KHR)
+    goto FINISH;
 
   while (!UnsubmittedEventList.empty()) {
     cl_event Ev = UnsubmittedEventList.front();
+    if (Ev->command_type == CL_COMMAND_COMMAND_BUFFER_KHR)
+      break;
     assert(Ev->data);
     PoclL0EventData *EvData = (PoclL0EventData *)Ev->data;
     if (EvData->CanBeBatched) {
@@ -1287,6 +1301,8 @@ void PoclL0QueueData::getSubmitBatchUnlocked(BatchType &SubmitBatch) {
       break;
     }
   }
+
+FINISH:
   POCL_MSG_PRINT_LEVEL0("Processing Batch: Submitted %zu || New batch: %zu\n",
                         UnsubmittedEventList.size(), SubmitBatch.size());
 }
@@ -1900,4 +1916,29 @@ cl_int pocl_level0_set_kernel_exec_info_ext(
   default:
     return CL_INVALID_VALUE;
   }
+}
+
+cl_int
+pocl_level0_create_finalized_command_buffer(cl_device_id Dev,
+                                            cl_command_buffer_khr CmdBuf) {
+  Level0Device *Device = (Level0Device *)Dev->data;
+  CmdBuf->data[Dev->dev_id] = nullptr;
+  void *CmdBufData = Device->createCmdBuf(CmdBuf);
+  POCL_RETURN_ERROR_ON(
+      (CmdBufData == nullptr), CL_INVALID_VALUE,
+      "Failed to create LevelZero CmdList for command buffer\n");
+  CmdBuf->data[Dev->dev_id] = CmdBufData;
+  return CL_SUCCESS;
+}
+
+cl_int pocl_level0_free_command_buffer(cl_device_id Dev,
+                                       cl_command_buffer_khr CmdBuf) {
+
+  Level0Device *Device = (Level0Device *)Dev->data;
+  void *CmdBufData = CmdBuf->data[Dev->dev_id];
+  if (CmdBufData == nullptr)
+    return CL_SUCCESS;
+  Device->freeCmdBuf(CmdBufData);
+  CmdBuf->data[Dev->dev_id] = nullptr;
+  return CL_SUCCESS;
 }

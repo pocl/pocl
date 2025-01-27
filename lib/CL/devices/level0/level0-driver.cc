@@ -119,7 +119,10 @@ void Level0Queue::runThread() {
           Command->type == CL_COMMAND_NDRANGE_KERNEL) {
         assert(pocl_command_is_ready(Command->sync.event.event));
         assert(Command->sync.event.event->status == CL_SUBMITTED);
-        execCommand(Command);
+        if (Command->type == CL_COMMAND_COMMAND_BUFFER_KHR)
+          execCommandBuffer(Command);
+        else
+          execCommand(Command);
         reset();
       } else if (Device->prefersHostQueues()) {
         pocl_exec_command(Command);
@@ -128,16 +131,27 @@ void Level0Queue::runThread() {
       }
     }
     if (!WorkBatch.empty()) {
-      execCommandBatch(WorkBatch);
+      if (WorkBatch.front()->command_type == CL_COMMAND_COMMAND_BUFFER_KHR) {
+        assert(WorkBatch.size() == 1);
+        cl_event E = WorkBatch.front();
+        POCL_LOCK_OBJ(E);
+        pocl_update_event_submitted(E);
+        POCL_UNLOCK_OBJ(E);
+        execCommandBuffer(E->command);
+      } else {
+        execCommandBatch(WorkBatch);
+      }
       reset();
     }
   } while (!ShouldExit);
 }
 
-void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg) {
-  cl_event event = Cmd->sync.event.event;
+void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg,
+                                    cl_context Context) {
   cl_device_id dev = Cmd->device;
+  assert(dev);
   _cl_command_t *cmd = &Cmd->command;
+  assert(cmd);
 
   cl_mem Mem = Cmd->migr_infos != nullptr ? Cmd->migr_infos->buffer : nullptr;
 
@@ -395,19 +409,19 @@ void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg) {
     } else {
       for (unsigned i = 0; i < cmd->svm_free.num_svm_pointers; i++) {
         void *ptr = cmd->svm_free.svm_pointers[i];
-        POCL_LOCK_OBJ(event->context);
+        POCL_LOCK_OBJ(Context);
         pocl_raw_ptr *tmp = nullptr;
         pocl_raw_ptr *item = nullptr;
-        DL_FOREACH_SAFE(event->context->raw_ptrs, item, tmp) {
+        DL_FOREACH_SAFE (Context->raw_ptrs, item, tmp) {
           if (item->vm_ptr == ptr) {
-            DL_DELETE(event->context->raw_ptrs, item);
+            DL_DELETE(Context->raw_ptrs, item);
             break;
           }
         }
-        POCL_UNLOCK_OBJ(event->context);
+        POCL_UNLOCK_OBJ(Context);
         assert(item);
         POCL_MEM_FREE(item);
-        POname(clReleaseContext)(event->context);
+        POname(clReleaseContext)(Context);
         dev->ops->svm_free(dev, ptr);
       }
     }
@@ -451,10 +465,6 @@ void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg) {
     *Msg = "Event SVM Mem_Advise        ";
     break;
 
-  case CL_COMMAND_COMMAND_BUFFER_KHR:
-    *Msg = "Command Buffer KHR          ";
-    break;
-
   default:
     POCL_ABORT_UNIMPLEMENTED("An unknown command type");
     break;
@@ -485,7 +495,7 @@ void Level0Queue::reset() {
   MemPtrsToMakeResident.clear();
 }
 
-void Level0Queue::closeCmdList() {
+void Level0Queue::closeCmdList(std::queue<ze_event_handle_t> *EvtList) {
   LEVEL0_CHECK_ABORT(zeCommandListAppendBarrier(CmdListH,
                                    nullptr, // signal event
                                    CurrentEventH ? 1 : 0,
@@ -495,7 +505,11 @@ void Level0Queue::closeCmdList() {
     ze_event_handle_t E = DeviceEventsToReset.front();
     DeviceEventsToReset.pop();
     LEVEL0_CHECK_ABORT(zeCommandListAppendEventReset(CmdListH, E));
-    AvailableDeviceEvents.push(E);
+    if (EvtList) {
+      EvtList->push(E);
+    } else {
+      AvailableDeviceEvents.push(E);
+    }
   }
 
   if (QueueH) {
@@ -534,7 +548,7 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
   cl_event event = Cmd->sync.event.event;
 
   const char *Msg = nullptr;
-  appendEventToList(Cmd, &Msg);
+  appendEventToList(Cmd, &Msg, event->context);
 
   makeMemResident();
   syncMemHostPtrs();
@@ -569,7 +583,7 @@ void Level0Queue::execCommandBatch(BatchType &Batch) {
   std::deque<const char *> Msgs;
   for (auto E : Batch) {
     _cl_command_node *Cmd = E->command;
-    appendEventToList(Cmd, &Msg);
+    appendEventToList(Cmd, &Msg, E->context);
     Msgs.push_back(Msg);
   }
 
@@ -607,6 +621,92 @@ void Level0Queue::execCommandBatch(BatchType &Batch) {
     POCL_UPDATE_EVENT_COMPLETE_MSG(E, Msg);
     Msgs.pop_front();
   }
+}
+
+void Level0Queue::execCommandBuffer(_cl_command_node *Node) {
+
+  ze_result_t res;
+
+  cl_event Event = Node->sync.event.event;
+  cl_command_buffer_khr CmdBuf = Event->command_buffer;
+  assert(CmdBuf);
+
+  int dev_id = Device->getClDev()->dev_id;
+  // if the CmdList for the CmdBuffer hasn't been created yet, do it now
+  if (CmdBuf->data[dev_id] == nullptr) {
+    CmdBuf->data[dev_id] = createCommandBuffer(CmdBuf);
+  }
+
+  assert(CmdBuf->data[dev_id]);
+  Level0CmdBufferData *CmdBufData = (Level0CmdBufferData *)CmdBuf->data[dev_id];
+  ze_command_list_handle_t CBCmdListH = CmdBufData->CmdListH;
+  POCL_MSG_PRINT_LEVEL0("Executing CmdList %p for CmbBuf %p\n",
+                        (void *)CBCmdListH, (void *)CmdBuf);
+
+  POCL_MEASURE_START(ZeListExec);
+  // TODO: does not work with immediate CMD queues
+  assert(QueueH);
+  LEVEL0_CHECK_ABORT(
+      zeCommandQueueExecuteCommandLists(QueueH, 1, &CBCmdListH, nullptr));
+  pocl_update_event_running(Event);
+  LEVEL0_CHECK_ABORT(
+      zeCommandQueueSynchronize(QueueH, std::numeric_limits<uint64_t>::max()));
+  POCL_MEASURE_FINISH(ZeListExec);
+
+  POCL_UPDATE_EVENT_COMPLETE_MSG(Event, "Event Command Buffer");
+}
+
+void *Level0Queue::createCommandBuffer(cl_command_buffer_khr CmdBuf) {
+
+  POCL_MSG_PRINT_LEVEL0("New CmdList for CmdBuf %p\n", (void *)CmdBuf);
+  assert(CmdBuf);
+
+  POCL_MEASURE_START(ZeListPrepare);
+
+  ze_command_list_handle_t SaveCmdListH = CmdListH;
+  CmdListH = nullptr;
+  ze_command_list_desc_t cmdListDesc = {
+      ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC, nullptr, QueueOrdinal,
+      ZE_COMMAND_LIST_FLAG_MAXIMIZE_THROUGHPUT};
+  LEVEL0_CHECK_RET(nullptr, zeCommandListCreate(Device->getContextHandle(),
+                                                Device->getDeviceHandle(),
+                                                &cmdListDesc, &CmdListH));
+  assert(CmdListH);
+
+  const char *Msg = nullptr;
+  std::deque<const char *> Msgs;
+  _cl_command_node *Cmd;
+  cl_context Ctx = CmdBuf->queues[0]->context;
+
+  LL_FOREACH (CmdBuf->cmds, Cmd) {
+    Cmd->device = Device->getClDev();
+    appendEventToList(Cmd, &Msg, Ctx);
+    Cmd->device = nullptr;
+  }
+
+  makeMemResident();
+  syncMemHostPtrs();
+  std::queue<ze_event_handle_t> CmdBufEvtList;
+  closeCmdList(&CmdBufEvtList);
+
+  POCL_MEASURE_FINISH(ZeListPrepare);
+  std::swap(CmdListH, SaveCmdListH);
+  Level0CmdBufferData *CmdBufData = new Level0CmdBufferData;
+  CmdBufData->CmdListH = SaveCmdListH;
+  CmdBufData->Events.swap(CmdBufEvtList);
+  return (void *)CmdBufData;
+}
+
+void Level0Queue::freeCommandBuffer(void *CmdBufPtr) {
+  assert(CmdBufPtr);
+  Level0CmdBufferData *CmdBufData = (Level0CmdBufferData *)CmdBufPtr;
+  while (!CmdBufData->Events.empty()) {
+    auto E = CmdBufData->Events.front();
+    CmdBufData->Events.pop();
+    AvailableDeviceEvents.push(E);
+  }
+  zeCommandListDestroy((ze_command_list_handle_t)CmdBufData->CmdListH);
+  delete CmdBufData;
 }
 
 void Level0Queue::syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
@@ -1263,7 +1363,7 @@ void Level0Queue::readImageRect(cl_mem SrcImage, pocl_mem_identifier *SrcMemId,
       "READ IMAGE RECT | SRC IMG %p | SRC IMG STA %p | DST PTR %p | "
       "DstRowPitch %zu | DstSlicePitch %zu | "
       "NativeRowPitch %zu | NativeSlicePitch %zu | "
-      "DstOffset %zu \n | NeedsStaging: %s",
+      "DstOffset %zu \n | NeedsStaging: %s \n",
       (void *)SrcImg, (void *)StagingPtr, (void *)DstPtr, DstRowPitch,
       DstSlicePitch, NativeRowPitch, NativeSlicePitch, DstOffset,
       (NeedsStaging ? "true" : "false"));
@@ -1748,12 +1848,14 @@ void Level0Queue::runNDRangeKernel(_cl_command_run *RunCmd, cl_device_id Dev,
 Level0Queue::Level0Queue(Level0WorkQueueInterface *WH,
                          ze_command_queue_handle_t Q,
                          ze_command_list_handle_t L, Level0Device *D,
-                         size_t MaxPatternSize) {
+                         size_t MaxPatternSize, unsigned int QO,
+                         bool RunThread) {
 
   WorkHandler = WH;
   QueueH = Q;
   CmdListH = L;
   Device = D;
+  QueueOrdinal = QO;
   PreviousEventH = CurrentEventH = nullptr;
   MaxFillPatternSize = MaxPatternSize;
 
@@ -1774,7 +1876,8 @@ Level0Queue::Level0Queue(Level0WorkQueueInterface *WH,
 
   Device->getMaxWGs(&DeviceMaxWGSizes);
 
-  Thread = std::thread(&Level0Queue::runThread, this);
+  if (RunThread)
+    Thread = std::thread(&Level0Queue::runThread, this);
 }
 
 Level0Queue::~Level0Queue() {
@@ -1782,7 +1885,7 @@ Level0Queue::~Level0Queue() {
     Thread.join();
   }
   assert(DeviceEventsToReset.empty());
-  // events are destroyed by the EventPool
+  // events are owned & destroyed by the EventPool
   if (CmdListH != nullptr) {
     zeCommandListDestroy(CmdListH);
   }
@@ -1853,8 +1956,19 @@ bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
 
   for (unsigned i = 0; i < Count; ++i) {
     Queues.emplace_back(new Level0Queue(this, QHandles[i], LHandles[i], Device,
-                                        MaxPatternSize));
+                                        MaxPatternSize, Ordinal));
   }
+
+  // create a special command queue only for converting command buffers to L0
+  // cmdlist
+  cmdQueueDesc.index = 0;
+  ZeRes = zeCommandQueueCreate(ContextH, DeviceH, &cmdQueueDesc, &Queue);
+  LEVEL0_CHECK_RET(false, ZeRes);
+  cmdListDesc.commandQueueGroupOrdinal = 0;
+  ZeRes = zeCommandListCreate(ContextH, DeviceH, &cmdListDesc, &CmdList);
+  LEVEL0_CHECK_RET(false, ZeRes);
+  CreateQueue.reset(new Level0Queue(this, Queue, CmdList, Device,
+                                    MaxPatternSize, Ordinal, false));
 
   Available = true;
   return true;
@@ -1920,6 +2034,14 @@ bool Level0QueueGroup::getWorkOrWait(_cl_command_node **Node,
 
   Lock.unlock();
   return ShouldExit;
+}
+
+void Level0QueueGroup::freeCmdBuf(void *CmdBufData) {
+  CreateQueue->freeCommandBuffer(CmdBufData);
+}
+
+void *Level0QueueGroup::createCmdBuf(cl_command_buffer_khr CmdBuf) {
+  return CreateQueue->createCommandBuffer(CmdBuf);
 }
 
 /// serialize SPIRV of the program since we might need
@@ -2810,6 +2932,16 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   if (ClDev->atomic_memory_capabilities & CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES)
     OpenCL30Features.append(" __opencl_c_atomic_scope_all_devices");
 
+  if (prefersZeQueues()) {
+    Extensions.append(" cl_khr_command_buffer");
+    ClDev->cmdbuf_capabilities =
+        CL_COMMAND_BUFFER_CAPABILITY_SIMULTANEOUS_USE_KHR |
+        CL_COMMAND_BUFFER_CAPABILITY_KERNEL_PRINTF_KHR;
+    // | CL_COMMAND_BUFFER_CAPABILITY_OUT_OF_ORDER_KHR
+    //| CL_COMMAND_BUFFER_CAPABILITY_MULTIPLE_QUEUE_KHR;
+    ClDev->cmdbuf_required_properties = 0;
+  }
+
   if (ClDev->image_support != CL_FALSE) {
     Extensions += " cl_khr_3d_image_writes"
                   " cl_khr_depth_images";
@@ -3230,6 +3362,14 @@ bool Level0Device::freeUSMMemBlocking(void *Ptr) {
   ze_result_t Res = zeMemFreeExt(ContextHandle, &FreeExtDesc, Ptr);
   LEVEL0_CHECK_ABORT_NO_EXIT(Res);
   return true;
+}
+
+void Level0Device::freeCmdBuf(void *CmdBufData) {
+  UniversalQueues.freeCmdBuf(CmdBufData);
+}
+
+void *Level0Device::createCmdBuf(cl_command_buffer_khr CmdBuf) {
+  return UniversalQueues.createCmdBuf(CmdBuf);
 }
 
 static void convertOpenclToZeImgFormat(cl_channel_type ChType,
