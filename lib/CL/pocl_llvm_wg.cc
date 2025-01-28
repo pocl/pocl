@@ -1534,16 +1534,16 @@ void pocl_llvm_free_llvm_irs(cl_program program, unsigned device_i) {
   }
 }
 
-static void initPassManagerForCodeGen(legacy::PassManager &PM,
-                                      cl_device_id Device) {
+static TargetLibraryInfoImpl *initPassManagerForCodeGen(legacy::PassManager &PM,
+                                                        cl_device_id Device) {
 
   llvm::Triple DevTriple(Device->llvm_target_triplet);
   llvm::TargetLibraryInfoWrapperPass *TLIPass = nullptr;
+  TargetLibraryInfoImpl *TLII = nullptr;
 
 #ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
-
   if (DevTriple.isX86()) {
-    TargetLibraryInfoImpl *TLII =
+    TLII =
         llvm::driver::createTLII(DevTriple,
 #ifdef ENABLE_HOST_CPU_VECTORIZE_LIBMVEC
                                  driver::VectorLibrary::LIBMVEC);
@@ -1562,6 +1562,7 @@ static void initPassManagerForCodeGen(legacy::PassManager &PM,
   }
 
   PM.add(TLIPass);
+  return TLII;
 }
 
 /* Run LLVM codegen on input file (parallel-optimized).
@@ -1577,9 +1578,10 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
   llvm::Module *Input = (llvm::Module *)Modp;
   assert(Input);
   *Output = nullptr;
+  std::unique_ptr<llvm::TargetLibraryInfoImpl> TLIIPtr;
 
   legacy::PassManager PMObj;
-  initPassManagerForCodeGen(PMObj, Device);
+  TLIIPtr.reset(initPassManagerForCodeGen(PMObj, Device));
 
   std::unique_ptr<llvm::TargetMachine> TM(GetTargetMachine(Device));
   llvm::TargetMachine *Target = TM.get();
@@ -1620,7 +1622,7 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
   }
 
   legacy::PassManager PMAsm;
-  initPassManagerForCodeGen(PMAsm, Device);
+  TLIIPtr.reset(initPassManagerForCodeGen(PMAsm, Device));
 
   POCL_MSG_PRINT_LLVM("Generating assembly text.\n");
 
