@@ -23,9 +23,22 @@
 
 #include "templates.h"
 
+#if __has_builtin(__builtin_modf)
+
+#if !__has_builtin(__builtin_modff16)
+#undef __IF_FP16
+#define __IF_FP16(X)
+#endif
+
+DEFINE_BUILTIN_V_VPV(modf)
+
+#else
+
 DEFINE_EXPR_V_VPV (modf, ({
-                     vtype tr = (vtype) trunc (a);
-                     *b = tr;
-                     vtype ret = a - tr;
-                     copysign((isinf(a) ? (vtype)0.0f : ret), a);
-                   }))
+                        vtype tr = (vtype) trunc (a);
+                        *b = tr;
+                         vtype ret = a - tr;
+                         copysign((isinf(a) ? (vtype)0.0f : ret), a);
+                         }))
+
+#endif

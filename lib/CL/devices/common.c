@@ -47,7 +47,6 @@
 
 #include "common_driver.h"
 #include "config.h"
-#include "config2.h"
 #include "devices.h"
 #include "pocl_cache.h"
 #include "pocl_debug.h"
@@ -1432,8 +1431,6 @@ pocl_print_system_memory_stats()
  * because of stack overflow. */
 #define DEFAULT_WG_SIZE 4096
 
-static const char *final_ld_flags[] = { HOST_LD_FLAGS_ARRAY, NULL };
-
 static cl_device_partition_property basic_partition_properties[1] = { 0 };
 
 #ifdef ENABLE_CONFORMANCE
@@ -1533,7 +1530,6 @@ pocl_init_default_device_infos (cl_device_id dev,
 
   dev->type = CL_DEVICE_TYPE_CPU;
   dev->max_work_item_dimensions = 3;
-  dev->final_linkage_flags = final_ld_flags;
   dev->extensions = device_extensions;
 
   /*

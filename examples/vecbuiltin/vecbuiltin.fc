@@ -1,0 +1,22 @@
+# test autovectorization of builtins
+
+# CHECK: llvm.sin.v
+# CHECK: llvm.cos.v
+# CHECK: llvm.log2.v
+# CHECK: llvm.pow.v
+# CHECK: llvm.exp.v
+# CHECK: llvm.exp2.v
+# CHECK: llvm.fabs.v
+# CHECK: llvm.fma.v
+# CHECK: llvm.maxnum.v
+# CHECK: llvm.minnum.v
+# CHECK: llvm.log10.v
+# CHECK: llvm.log.v
+# CHECK: llvm.rint.v
+# CHECK: llvm.round.v
+# CHECK: llvm.sqrt.v
+# CHECK: llvm.ceil.v
+# CHECK: llvm.tan.v
+# CHECK: llvm.powi.v
+# CHECK: llvm.floor.v
+# CHECK: llvm.trunc.v

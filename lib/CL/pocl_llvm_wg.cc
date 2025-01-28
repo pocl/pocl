@@ -66,6 +66,9 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Passes/StandardInstrumentations.h>
 #include <llvm/Transforms/Scalar/LoopPassManager.h>
+#if LLVM_MAJOR >= 18
+#include <llvm/Frontend/Driver/CodeGenOptions.h>
+#endif
 
 #include "LLVMUtils.h"
 POP_COMPILER_DIAGS
@@ -225,18 +228,9 @@ llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
   PassBuilder &PB = *PassB.get();
 
 #if 0
-  // TODO figure out why this doesn't work. Used to work with old PM,
-  // but with the new PM, it still tries to use printf libcall
-  // Register our TargetLibraryInfoImpl.
-  TLII.reset(new TargetLibraryInfoImpl(DevTriple));
-  // Disables automated generation of libcalls from code patterns.
-  // TCE doesn't have a runtime linker which could link the libs later on.
-  // Also the libcalls might be harmful for WG autovectorization where we
-  // want to try to vectorize the code it converts to e.g. a memset or
-  // a memcpy
-  TLII->disableAllFunctions();
-  // Analysis pass providing the \c TargetLibraryInfo:
-  // TargetLibraryAnalysis
+  // Add LibraryInfo.
+  TLII.reset(llvm::driver::createTLII(TargetTriple, CodeGenOpts.getVecLib()));
+  CodeGenPasses.add(new TargetLibraryInfoWrapperPass(*TLII));
 
   bool res;
   if (Machine) {
@@ -1540,14 +1534,35 @@ void pocl_llvm_free_llvm_irs(cl_program program, unsigned device_i) {
   }
 }
 
-static void initPassManagerForCodeGen(legacy::PassManager &PM,
-                                      cl_device_id Device) {
+static TargetLibraryInfoImpl *initPassManagerForCodeGen(legacy::PassManager &PM,
+                                                        cl_device_id Device) {
 
-  llvm::Triple Triple(Device->llvm_target_triplet);
+  llvm::Triple DevTriple(Device->llvm_target_triplet);
+  llvm::TargetLibraryInfoWrapperPass *TLIPass = nullptr;
+  TargetLibraryInfoImpl *TLII = nullptr;
 
-  llvm::TargetLibraryInfoWrapperPass *TLIPass =
-      new TargetLibraryInfoWrapperPass(Triple);
+#ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
+  if (DevTriple.isX86()) {
+    TLII =
+        llvm::driver::createTLII(DevTriple,
+#ifdef ENABLE_HOST_CPU_VECTORIZE_LIBMVEC
+                                 driver::VectorLibrary::LIBMVEC);
+#endif
+#ifdef ENABLE_HOST_CPU_VECTORIZE_SLEEF
+                                 driver::VectorLibrary::SLEEF);
+#endif
+#ifdef ENABLE_HOST_CPU_VECTORIZE_SVML
+                                 driver::VectorLibrary::SVML);
+#endif
+    TLIPass = new TargetLibraryInfoWrapperPass(*TLII);
+  } else
+#endif
+  {
+    TLIPass = new TargetLibraryInfoWrapperPass(DevTriple);
+  }
+
   PM.add(TLIPass);
+  return TLII;
 }
 
 /* Run LLVM codegen on input file (parallel-optimized).
@@ -1563,9 +1578,10 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
   llvm::Module *Input = (llvm::Module *)Modp;
   assert(Input);
   *Output = nullptr;
+  std::unique_ptr<llvm::TargetLibraryInfoImpl> TLIIPtr;
 
   legacy::PassManager PMObj;
-  initPassManagerForCodeGen(PMObj, Device);
+  TLIIPtr.reset(initPassManagerForCodeGen(PMObj, Device));
 
   std::unique_ptr<llvm::TargetMachine> TM(GetTargetMachine(Device));
   llvm::TargetMachine *Target = TM.get();
@@ -1606,7 +1622,7 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
   }
 
   legacy::PassManager PMAsm;
-  initPassManagerForCodeGen(PMAsm, Device);
+  TLIIPtr.reset(initPassManagerForCodeGen(PMAsm, Device));
 
   POCL_MSG_PRINT_LLVM("Generating assembly text.\n");
 
@@ -1683,6 +1699,12 @@ void populateModulePM(void *Passes, void *Module, unsigned OptL, unsigned SizeL,
   PTO.SLPVectorization = Vectorize;
   PTO.LoopVectorization = Vectorize;
 
+  // Create the analysis managers.
+  LoopAnalysisManager LAM;
+  FunctionAnalysisManager FAM;
+  CGSCCAnalysisManager CGAM;
+  ModuleAnalysisManager MAM;
+
 #ifdef DEBUG_NEW_PASS_MANAGER
   PrintPassOptions PrintPassOpts;
   PassInstrumentationCallbacks PIC;
@@ -1701,12 +1723,6 @@ void populateModulePM(void *Passes, void *Module, unsigned OptL, unsigned SizeL,
 #else
   PassBuilder PB(TM, PTO);
 #endif
-
-  // Create the analysis managers.
-  LoopAnalysisManager LAM;
-  FunctionAnalysisManager FAM;
-  CGSCCAnalysisManager CGAM;
-  ModuleAnalysisManager MAM;
 
   // Register all the basic analyses with the managers.
   PB.registerModuleAnalyses(MAM);
