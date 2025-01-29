@@ -1007,8 +1007,6 @@ struct pocl_device_ops {
 
   cl_int (*free_command_buffer) (cl_device_id device,
                                  cl_command_buffer_khr command_buffer);
-
-  cl_int (*run_command_buffer) (void *data, cl_command_buffer_khr cmd);
 };
 
 typedef struct pocl_global_mem_t {
@@ -1578,20 +1576,24 @@ struct _cl_command_buffer_khr
   POCL_OBJECT;
   pocl_lock_t mutex;
 
-  /* Queues that this command buffer was created for */
+  /** Queues that this command buffer was created for */
   cl_command_queue *queues;
   cl_uint num_queues;
 
-  /* List of flags that this command buffer was created with */
+  /** Helper flag indicating whether the queues of this command buffer belong
+   * to different devices */
+  cl_int is_multi_device;
+
+  /** List of flags that this command buffer was created with */
   cl_uint num_properties;
   cl_command_buffer_properties_khr *properties;
 
-  /* recording / ready / pending (executing) / invalid */
+  /** recording / ready / pending (executing) / invalid */
   cl_command_buffer_state_khr state;
-  /* Number of currently in-flight instances of this command buffer */
+  /** Number of currently in-flight instances of this command buffer */
   cl_uint pending;
 
-  /* Number of currently allocated sync points in this command buffer.
+  /** Number of currently allocated sync points in this command buffer.
    * Used for generating the next sync point id and for validating sync point
    * wait lists when recording commands. */
   cl_uint num_syncpoints;
@@ -1599,6 +1601,11 @@ struct _cl_command_buffer_khr
   _cl_command_node *cmds;
   cl_bool is_mutable;
   cl_bool assert_no_more_wgs;
+
+  /** List of mem objects that have to be migrated before the buffer can be
+   * safely run. Does not account for migrations that need to happen between
+   * commands in the same buffer. */
+  pocl_buffer_migration_info *migr_infos;
 };
 
 #define POCL_ON_SUB_MISALIGN(mem, que, operation)                             \

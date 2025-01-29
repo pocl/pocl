@@ -125,6 +125,13 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
           cmd = next;
         }
 
+      pocl_buffer_migration_info *mi, *tmp;
+      LL_FOREACH_SAFE (command_buffer->migr_infos, mi, tmp)
+        {
+          POname (clReleaseMemObject (mi->buffer));
+          POCL_MEM_FREE (mi);
+        }
+
       POCL_DESTROY_OBJECT (command_buffer);
       POCL_MEM_FREE (command_buffer->queues);
       POCL_MEM_FREE (command_buffer->properties);

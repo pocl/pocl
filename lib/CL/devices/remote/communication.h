@@ -33,6 +33,8 @@
 #include "pocl_threads.h"
 #include "pocl_util.h"
 
+#include "pocl_threads.h"
+#include "pocl_util.h"
 #include "utlist_addon.h"
 #include "utlist.h"
 
@@ -405,6 +407,18 @@ cl_int pocl_network_create_queue (remote_device_data_t *ddata,
 cl_int pocl_network_free_queue (remote_device_data_t *ddata,
                                 uint32_t queue_id);
 
+cl_int pocl_network_create_command_buffer (remote_device_data_t *ddata,
+                                           uint64_t cmdbuf_id,
+                                           uint64_t num_commands,
+                                           uint64_t commands_offset,
+                                           uint64_t commands_size,
+                                           uint64_t num_queues,
+                                           uint64_t queues_offset,
+                                           const char *payload);
+
+cl_int pocl_network_free_command_buffer (remote_device_data_t *ddata,
+                                         uint64_t cmdbuf_id);
+
 cl_int pocl_network_create_sampler (remote_device_data_t *ddata,
                                     cl_bool normalized_coords,
                                     cl_addressing_mode addressing_mode,
@@ -486,7 +500,12 @@ cl_int pocl_network_run_kernel (uint32_t cq_id, remote_device_data_t *ddata,
                                 network_command_callback cb, void *arg,
                                 _cl_command_node *node);
 
-/*****************************************************************************/
+cl_int pocl_network_run_command_buffer (remote_device_data_t *ddata,
+                                        network_command_callback cb,
+                                        void *arg,
+                                        _cl_command_node *node);
+
+/****************************************************************************/
 
 cl_int pocl_network_copy_image_rect (
     uint32_t cq_id, remote_device_data_t *ddata, uint32_t src_remote_id,

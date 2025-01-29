@@ -112,6 +112,11 @@
 #define TP_FREE_KERNEL(msg_id, dev_id, kernel_id)                             \
   tracepoint (pocld_trace, free_kernel, msg_id, dev_id, kernel_id);
 
+#define TP_CREATE_COMMAND_BUFFER(msg_id, dev_id, kernel_id)                   \
+  tracepoint (pocld_trace, create_msgbuf, msg_id, dev_id, kernel_id);
+#define TP_FREE_COMMAD_BUFFER(msg_id, dev_id, cmdbuf_id)                      \
+  tracepoint (pocld_trace, free_msgbuf, msg_id, dev_id, cmdbuf_id);
+
 #define TP_CREATE_IMAGE(msg_id, dev_id, image_id)                             \
   tracepoint (pocld_trace, create_image, msg_id, dev_id, image_id);
 #define TP_FREE_IMAGE(msg_id, dev_id, image_id)                               \
@@ -155,6 +160,9 @@
 
 #define TP_CREATE_KERNEL(msg_id, dev_id, kernel_id)
 #define TP_FREE_KERNEL(msg_id, dev_id, kernel_id)
+
+#define TP_CREATE_COMMAND_BUFFER(msg_id, dev_id, cmdbuf_id)
+#define TP_FREE_COMMAND_BUFFER(msg_id, dev_id, cmdbuf_id)
 
 #define TP_CREATE_IMAGE(msg_id, dev_id, image_id)
 #define TP_FREE_IMAGE(msg_id, dev_id, image_id)
