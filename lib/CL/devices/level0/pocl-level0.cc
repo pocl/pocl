@@ -469,6 +469,7 @@ static int runAndAppendOutputToBuildLog(cl_program Program, unsigned DeviceI,
     CaptureCapacity -= LaunchMsg.size();
   }
 
+#ifdef HAVE_FORK
   Errcode =
       pocl_run_command_capture_output(CapturedOutput, &CaptureCapacity, Args);
   if (CaptureCapacity > 0) {
@@ -477,7 +478,15 @@ static int runAndAppendOutputToBuildLog(cl_program Program, unsigned DeviceI,
 
   pocl_append_to_buildlog(Program, DeviceI, SavedCapturedOutput,
                           strlen(SavedCapturedOutput));
-
+#else
+  POCL_MSG_WARN("Running a command with output capture is requested which"
+                " is not implemented on this platform. Will run the command"
+                " without capture.");
+  Errcode = pocl_run_command(Args);
+  char Msg[] = "UNIMPLEMENTED: pocl_run_command_capture_output for this"
+               " platform.";
+  pocl_append_to_buildlog(Program, DeviceI, Msg, strlen(Msg));
+#endif
   return Errcode;
 }
 

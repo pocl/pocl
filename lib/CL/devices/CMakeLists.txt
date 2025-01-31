@@ -164,7 +164,7 @@ if(ENABLE_LEVEL0)
     "$<TARGET_OBJECTS:pocl-devices-level0>")
 
   if(NOT ENABLE_LOADABLE_DRIVERS)
-    list(APPEND POCL_DEVICES_LINK_LIST ${LEVEL0_LIBRARIES})
+    list(APPEND POCL_DEVICES_LINK_LIST PkgConfig::LEVEL0)
   endif()
 endif()
 

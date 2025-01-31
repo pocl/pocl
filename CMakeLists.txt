@@ -2041,7 +2041,7 @@ if (ENABLE_LEVEL0)
   if(NOT PKG_CONFIG_EXECUTABLE)
     message(FATAL_ERROR "building Level0 requires pkg-config")
   endif()
-  pkg_check_modules(LEVEL0 REQUIRED level-zero>=1.3)
+  pkg_check_modules(LEVEL0 REQUIRED IMPORTED_TARGET level-zero>=1.3)
 
   if(ENABLE_CONFORMANCE)
     set(DEFAULT_LEVEL0_EXTRA_F OFF)

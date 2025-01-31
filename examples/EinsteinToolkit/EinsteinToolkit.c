@@ -45,6 +45,7 @@ int const niters = 10;
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include "pocl_opencl.h"
@@ -528,6 +529,19 @@ void setup(const char* program_source1, const char* program_source2)
   assert(ndevice_ids >= 1);
   main_device_id = device_ids[0];
   free (device_ids);
+
+  size_t device_extensions_legth = 0;
+  clGetDeviceInfo (main_device_id, CL_DEVICE_EXTENSIONS, 0, NULL,
+                   &device_extensions_legth);
+  char *device_extensions = malloc (device_extensions_legth);
+  clGetDeviceInfo (main_device_id, CL_DEVICE_EXTENSIONS,
+                   device_extensions_legth, device_extensions, NULL);
+  if (!strstr (device_extensions, "cl_khr_fp64"))
+    {
+      printf ("SKIP: device lacks double support.\n");
+      exit (77);
+    }
+  free (device_extensions);
 
   if (use_subdev)
     {

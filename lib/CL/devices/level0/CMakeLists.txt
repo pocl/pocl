@@ -40,5 +40,6 @@ if(ENABLE_NPU)
 endif()
 
 if(ENABLE_LOADABLE_DRIVERS)
-  target_link_libraries(pocl-devices-level0 PRIVATE ${LEVEL0_LIBRARIES} ${PTHREAD_LIBRARY})
+  target_link_libraries(pocl-devices-level0
+    PRIVATE PkgConfig::LEVEL0 ${PTHREAD_LIBRARY})
 endif()

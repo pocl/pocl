@@ -22,7 +22,7 @@
 */
 
 #ifndef cl_khr_fp64
-#error cl_khr_fp64 not supported
+#error SKIP: cl_khr_fp64 not supported
 #endif
 
 kernel void test_printf_vectors_doublen()

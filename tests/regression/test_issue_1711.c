@@ -45,7 +45,22 @@ typedef struct {
         printf("OpenCL Error %d at %s:%d\n", err, __FILE__, __LINE__); \
         exit(1); \
     }
-    
+
+int
+device_supports_il (cl_device_id device, const char *il)
+{
+  size_t param_size = 0;
+  cl_int err
+    = clGetDeviceInfo (device, CL_DEVICE_IL_VERSION, 0, NULL, &param_size);
+  CHECK_ERROR (err);
+  char *ils = malloc (param_size);
+  err = clGetDeviceInfo (device, CL_DEVICE_IL_VERSION, param_size, ils, NULL);
+  CHECK_ERROR (err);
+  int has_il = strstr (ils, il) != NULL;
+  free (ils);
+  return has_il;
+}
+
 cl_platform_id get_platform(int index) {
     cl_uint num_platforms;
     cl_int err = clGetPlatformIDs(0, NULL, &num_platforms);
@@ -90,6 +105,12 @@ int main(int argc, char** argv) {
     char device_name[128];
     err = clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(device_name), device_name, NULL);
     CHECK_ERROR(err);
+
+    if (!device_supports_il (device, "SPIR-V_1.4"))
+      {
+        printf ("SKIP: The test requires support for SPIR-V 1.4\n");
+        exit (77);
+      }
 
     // Rest of the code remains the same...
     cl_context context = clCreateContext(NULL, 1, &device, NULL, NULL, &err);
