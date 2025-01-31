@@ -50,9 +50,9 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
   if (flags & CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT)
     {
       POCL_GOTO_ERROR_ON (
-        !context->all_devices_support_bda, CL_INVALID_DEVICE,
-        "Requested buffer_device_address allocation, but a device in "
-        "context doesn't support the 'cl_ext_buffer_device_address' "
+        context->no_devices_support_bda, CL_INVALID_DEVICE,
+        "Requested buffer_device_address allocation, but none of devices "
+        "in the context supports the 'cl_ext_buffer_device_address' "
         "extension.");
     }
   cl_mem_flags other_flags = flags & ~CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT;

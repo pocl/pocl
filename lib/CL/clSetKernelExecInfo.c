@@ -89,9 +89,9 @@ POname(clSetKernelExecInfo)(cl_kernel kernel,
        because of this. */
     case CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT:
       {
-        POCL_RETURN_ERROR_ON (!kernel->context->all_devices_support_bda,
+        POCL_RETURN_ERROR_ON (kernel->context->no_devices_support_bda,
                               CL_INVALID_OPERATION,
-                              "Some device(s) in context don't support "
+                              "None of devices in the context support "
                               "cl_ext_buffer_device_address\n");
 
         void **ptrs = (void **)param_value;

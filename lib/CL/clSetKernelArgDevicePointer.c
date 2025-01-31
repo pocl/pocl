@@ -38,9 +38,9 @@ POname (clSetKernelArgDevicePointerEXT) (cl_kernel kernel, cl_uint arg_index,
 {
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (kernel)), CL_INVALID_KERNEL);
 
-  POCL_RETURN_ERROR_ON (!kernel->context->all_devices_support_bda,
+  POCL_RETURN_ERROR_ON (kernel->context->no_devices_support_bda,
                         CL_INVALID_OPERATION,
-                        "Not all devices in the context support the "
+                        "None of the devices in the context support the "
                         "cl_ext_buffer_device_address extension\n");
 
   return pocl_set_kernel_arg_pointer (kernel, arg_index, (void *)dev_addr);
