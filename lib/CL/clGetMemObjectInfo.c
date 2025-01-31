@@ -68,7 +68,7 @@ POname (clGetMemObjectInfo) (
                                memobj->properties);
   case CL_MEM_DEVICE_ADDRESS_EXT:
     {
-      POCL_RETURN_ERROR_ON (!memobj->has_device_address, CL_INVALID_MEM_OBJECT,
+      POCL_RETURN_ERROR_ON (!memobj->has_device_address, CL_INVALID_OPERATION,
                             "The cl_mem was not allocated using the "
                             " cl_ext_buffer_device_address extension\n");
 
