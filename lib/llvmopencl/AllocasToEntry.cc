@@ -27,6 +27,7 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Constants.h>
+#include <llvm/IR/InstIterator.h>
 #include <llvm/IR/Instructions.h>
 
 #include "AllocasToEntry.h"
@@ -45,17 +46,22 @@ namespace pocl {
 using namespace llvm;
 
 static bool allocasToEntry(Function &F) {
+  if (F.empty())
+    return false;
   // This solves problem with dynamic stack objects that are
   // not supported by some targets (TCE).
-  Function::iterator I = F.begin();
-  Instruction *firstInsertionPt = &*(I++)->getFirstInsertionPt();
+#if LLVM_MAJOR < 20
+  auto FirstInsPt = F.front().getFirstNonPHI();
+#else
+  auto FirstInsPt = F.front().getFirstInsertionPt();
+#endif
 
   bool Changed = false;
-  for (Function::iterator E = F.end(); I != E; ++I) {
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
     for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE;) {
       AllocaInst *AllocaI = dyn_cast<AllocaInst>(BI++);
       if (AllocaI && isa<ConstantInt>(AllocaI->getArraySize())) {
-        AllocaI->moveBefore(firstInsertionPt);
+        AllocaI->moveBefore(FirstInsPt);
         Changed = true;
       }
     }

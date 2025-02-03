@@ -277,7 +277,11 @@ bool WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree &DT,
 void
 WorkitemHandler::movePhiNodes(llvm::BasicBlock* Src, llvm::BasicBlock* Dst) {
   while (PHINode *PN = dyn_cast<PHINode>(Src->begin()))
+#if LLVM_MAJOR < 20
     PN->moveBefore(Dst->getFirstNonPHI());
+#else
+    PN->moveBefore(Dst->getFirstNonPHIIt());
+#endif
 }
 
 /// Returns the instruction in the entry block which computes the global
@@ -291,7 +295,13 @@ llvm::Instruction *WorkitemHandler::getGlobalSize(int Dim) {
   GlobalVariable *GroupCount = cast<GlobalVariable>(M->getOrInsertGlobal(
       std::string("_num_groups_") + (char)('x' + Dim), ST));
 
+#if LLVM_MAJOR < 20
   IRBuilder<> Builder(K->getEntryBlock().getFirstNonPHI());
+#else
+  IRBuilder<> Builder{K->getContext()};
+  Builder.SetInsertPoint(K->front().getFirstInsertionPt());
+#endif
+
   GSize = cast<llvm::Instruction>(
       Builder.CreateBinOp(Instruction::Mul, Builder.CreateLoad(ST, LocalSize),
                           Builder.CreateLoad(ST, GroupCount),
@@ -318,7 +328,12 @@ llvm::Instruction *WorkitemHandler::getGlobalIdOrigin(int Dim) {
   assert(GlobalOffset != nullptr);
   assert(GroupId != nullptr);
 
+#if LLVM_MAJOR < 20
   IRBuilder<> Builder(K->getEntryBlock().getFirstNonPHI());
+#else
+  IRBuilder<> Builder{K->getContext()};
+  Builder.SetInsertPoint(K->front().getFirstInsertionPt());
+#endif
 
   Origin = cast<llvm::Instruction>(
       Builder.CreateBinOp(Instruction::Mul, Builder.CreateLoad(ST, LocalSize),
@@ -747,9 +762,14 @@ bool WorkitemHandler::handleLocalMemAllocas() {
       Size = Builder.CreateBinOp(Instruction::Mul, WGSize, Size);
       Size = Builder.CreateBinOp(Instruction::Add, Size, ExtraSize);
     }
-    AllocaInst *Alloca = new AllocaInst(
-        llvm::Type::getInt8Ty(Call->getContext()), 0, Size, Alignment,
-        "__pocl_wg_alloca", K->getEntryBlock().getTerminator());
+    AllocaInst *Alloca =
+        new AllocaInst(llvm::Type::getInt8Ty(Call->getContext()), 0, Size,
+                       Alignment, "__pocl_wg_alloca",
+#if LLVM_MAJOR < 20
+                       K->getEntryBlock().getTerminator());
+#else
+                        K->getEntryBlock().getTerminator()->getIterator());
+#endif
     Call->replaceAllUsesWith(Alloca);
     Call->eraseFromParent();
     Changed = true;

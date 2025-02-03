@@ -81,14 +81,23 @@ static bool processLoopWithBarriers(Loop &L, llvm::DominatorTree &DT,
         std::cerr << "### before instr" << std::endl;
         Preheader->getTerminator()->dump();
 #endif
+#if LLVM_MAJOR < 20
         Barrier::create(Preheader->getTerminator());
+#else
+        Barrier::create(Preheader->getTerminator()->getIterator());
+#endif
         Preheader->setName(Preheader->getName() + ".loopbarrier");
 
         // Add a barrier after the PHI nodes on the header (the replicated
         // headers will be merged afterwards).
         BasicBlock *Header = L.getHeader();
+#if LLVM_MAJOR < 20
         if (Header->getFirstNonPHI() != &Header->front()) {
           Barrier::create(Header->getFirstNonPHI());
+#else
+        if (Header->getFirstNonPHIIt() != Header->begin()) {
+          Barrier::create(Header->getFirstNonPHIIt());
+#endif
           Header->setName(Header->getName() + ".phibarrier");
           // Split the block to  create a replicable region of
           // the loop contents in case the phi node contains a
@@ -102,7 +111,11 @@ static bool processLoopWithBarriers(Loop &L, llvm::DominatorTree &DT,
         // after the exit decision.
         BasicBlock *BrExit = L.getExitingBlock();
         if (BrExit != NULL) {
+#if LLVM_MAJOR < 20
           Barrier::create(BrExit->getTerminator());
+#else
+          Barrier::create(BrExit->getTerminator()->getIterator());
+#endif
           BrExit->setName(BrExit->getName() + ".brexitbarrier");
         }
 
@@ -110,7 +123,11 @@ static bool processLoopWithBarriers(Loop &L, llvm::DominatorTree &DT,
         if (Latch != NULL && BrExit != Latch) {
           // This loop has only one latch. Do not check for dominance, we
           // are probably running before BTR.
+#if LLVM_MAJOR < 20
           Barrier::create(Latch->getTerminator());
+#else
+          Barrier::create(Latch->getTerminator()->getIterator());
+#endif
           Latch->setName(Latch->getName() + ".latchbarrier");
           return true;
         }
@@ -133,7 +150,11 @@ static bool processLoopWithBarriers(Loop &L, llvm::DominatorTree &DT,
             // (otherwise if might not even belong to this "tail", see
             // forifbarrier1 graph test).
             if (DT.dominates(j->getParent(), Latch2)) {
+#if LLVM_MAJOR < 20
               Barrier::create(Latch2->getTerminator());
+#else
+              Barrier::create(Latch2->getTerminator()->getIterator());
+#endif
               Latch2->setName(Latch2->getName() + ".latchbarrier");
             }
           }

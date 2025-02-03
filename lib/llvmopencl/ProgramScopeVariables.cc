@@ -331,7 +331,11 @@ static Value *loadGVarFromBuffer(Instruction *GVarBuffer,
 
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
       Instruction *VI = CE->getAsInstruction();
+#if LLVM_MAJOR < 20
       VI->insertBefore(&*Builder.GetInsertPoint());
+#else
+      VI->insertBefore(Builder.GetInsertPoint());
+#endif
       V = VI;
     }
 
