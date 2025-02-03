@@ -74,7 +74,11 @@ static bool canonicalizeBarriers(Function &F, WorkitemHandlerType Handler) {
 
     EffectiveEntry->takeName(Entry);
     Entry->setName("entry.barrier");
+#if LLVM_MAJOR < 20
     Barrier::create(Entry->getTerminator());
+#else
+    Barrier::create(Entry->getTerminator()->getIterator());
+#endif
     changed |= true;
   }
 
@@ -106,7 +110,11 @@ static bool canonicalizeBarriers(Function &F, WorkitemHandlerType Handler) {
       else
         exit = SplitBlock(BB, t);
       exit->setName("exit.barrier");
+#if LLVM_MAJOR < 20
       Barrier::create(t);
+#else
+      Barrier::create(t->getIterator());
+#endif
       changed |= true;
     }
   }

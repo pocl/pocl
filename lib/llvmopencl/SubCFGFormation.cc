@@ -111,7 +111,11 @@ bool anyOfUsers(llvm::Value *V, Func &&L) {
 // value to the alloca element at \a Idx.
 llvm::AllocaInst *arrayifyValue(llvm::Instruction *IPAllocas,
                                 llvm::Value *ToArrayify,
+#if LLVM_MAJOR < 20
                                 llvm::Instruction *InsertionPoint,
+#else
+                                BasicBlock::iterator InsertionPoint,
+#endif
                                 llvm::Value *Idx, llvm::Value *NumElements,
                                 llvm::MDTuple *MDAlloca = nullptr) {
   assert(Idx && "Valid WI-Index required");
@@ -129,7 +133,13 @@ llvm::AllocaInst *arrayifyValue(llvm::Instruction *IPAllocas,
     Alloca->setAlignment(llvm::Align{DefaultAlignment});
   Alloca->setMetadata(PoCLMDKind::Arrayified, MDAlloca);
 
+#if LLVM_MAJOR < 20
   llvm::IRBuilder<> WriteBuilder{InsertionPoint};
+#else
+  IRBuilder<> WriteBuilder{AllocaBuilder.getContext()};
+  WriteBuilder.SetInsertPoint(InsertionPoint);
+#endif
+
   llvm::Value *StoreTarget = Alloca;
   if (NumElements) {
     auto *GEP = llvm::cast<llvm::GetElementPtrInst>(
@@ -148,9 +158,15 @@ llvm::AllocaInst *arrayifyInstruction(llvm::Instruction *IPAllocas,
                                       llvm::Value *Idx,
                                       llvm::Value *NumElements,
                                       llvm::MDTuple *MDAlloca = nullptr) {
+#if LLVM_MAJOR < 20
   llvm::Instruction *InsertionPoint = &*(++ToArrayify->getIterator());
   if (llvm::isa<llvm::PHINode>(ToArrayify))
     InsertionPoint = ToArrayify->getParent()->getFirstNonPHI();
+#else
+  BasicBlock::iterator InsertionPoint = ++ToArrayify->getIterator();
+  if (llvm::isa<llvm::PHINode>(ToArrayify))
+    InsertionPoint = ToArrayify->getParent()->getFirstNonPHIIt();
+#endif
 
   return arrayifyValue(IPAllocas, ToArrayify, InsertionPoint, Idx, NumElements,
                        MDAlloca);
@@ -267,10 +283,17 @@ getLocalSizeValues(llvm::Function &F, llvm::ArrayRef<unsigned long> LocalSizes,
 
       if (I->getParent() != &F.getEntryBlock()) {
         // must be in entry block. move.
+// TODO for some reason, moveAfter(InsertionPoint) exists in the header, but
+// linking fails with undefined symbol
+//#if LLVM_MAJOR < 20
+          auto InsPt = F.getEntryBlock().getFirstNonPHI();
+//#else
+//          BasicBlock::iterator InsPt = F.getEntryBlock().getFirstInsertionPt();
+//#endif
         if (F.getEntryBlock().size() == 1)
-          I->moveBefore(F.getEntryBlock().getFirstNonPHI());
+          I->moveBefore(InsPt);
         else
-          I->moveAfter(F.getEntryBlock().getFirstNonPHI());
+          I->moveAfter(InsPt);
       }
     } else
       LocalSize[D] = llvm::ConstantInt::get(
@@ -821,7 +844,11 @@ void SubCFG::loadUniformAndRecalcContValues(
                  << " to " << LoadTerm->getParent()->getName() << "\n";
 #endif
     auto *IClone = I->clone();
+#if LLVM_MAJOR < 20
     IClone->insertBefore(LoadTerm);
+#else
+    IClone->insertBefore(LoadTerm->getIterator());
+#endif
     InstsToRemap.insert(IClone);
     UniVMap[I] = IClone;
     if (VMap.count(I) == 0)
@@ -1208,9 +1235,14 @@ void SubCFGFormation::arrayifyAllocas(
     Alloca->setMetadata(PoCLMDKind::Arrayified, MDAlloca);
 
     for (auto &SubCfg : SubCfgs) {
-      auto *Before = SubCfg.getLoadBB()->getFirstNonPHIOrDbgOrLifetime();
-
+      // Instruction *Before =
+      // SubCfg.getLoadBB()->getFirstNonPHIOrDbgOrLifetime();
+      auto Before = SubCfg.getLoadBB()->getFirstNonPHIOrDbgOrLifetime();
+#if LLVM_MAJOR < 20
       auto GEP = createContextArrayGEP(Alloca, Before, PaddingAdded);
+#else
+      auto GEP = createContextArrayGEP(Alloca, &*Before, PaddingAdded);
+#endif
       GEP->setMetadata(PoCLMDKind::Arrayified, MDAlloca);
 
       llvm::replaceDominatedUsesWith(I, GEP, DT, SubCfg.getLoadBB());
@@ -1244,7 +1276,13 @@ llvm::Instruction *SubCFGFormation::getLocalIdInRegion(llvm::Instruction *Instr,
         return &I;
     }
   }
+#if LLVM_MAJOR < 20
   llvm::IRBuilder<> Builder(LoadBB->getFirstNonPHI());
+#else
+  IRBuilder<> Builder{LoadBB->getContext()};
+  Builder.SetInsertPoint(LoadBB->getFirstInsertionPt());
+#endif
+
   return Builder.CreateLoad(ST, GV);
 }
 
@@ -1262,7 +1300,11 @@ void moveAllocasToEntry(llvm::Function &F,
       if (auto *AllocaInst = llvm::dyn_cast<llvm::AllocaInst>(&I))
         AllocaWL.push_back(AllocaInst);
   for (auto *I : AllocaWL)
+#if LLVM_MAJOR < 20
     I->moveBefore(F.getEntryBlock().getTerminator());
+#else
+    I->moveBefore(F.getEntryBlock().getTerminator()->getIterator());
+#endif
 }
 
 llvm::DenseMap<llvm::BasicBlock *, size_t>

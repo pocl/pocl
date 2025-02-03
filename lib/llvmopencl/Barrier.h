@@ -69,6 +69,7 @@ namespace pocl {
     /// Otherwise, creates a new one there.
     ///
     /// \returns The barrier.
+#if LLVM_MAJOR < 20
     static Barrier *create(llvm::Instruction *InsertBefore) {
       llvm::Module *M = InsertBefore->getParent()->getParent()->getParent();
 
@@ -84,6 +85,23 @@ namespace pocl {
       return llvm::cast<pocl::Barrier>
         (llvm::CallInst::Create(F, "", InsertBefore));
     }
+
+#else
+    static Barrier *create(InstListType::iterator InsertBefore) {
+      llvm::Module *M = InsertBefore->getParent()->getParent()->getParent();
+
+      if (InsertBefore != InsertBefore->getParent()->begin() &&
+          llvm::isa<Barrier>(InsertBefore->getPrevNode()))
+        return llvm::cast<Barrier>(InsertBefore->getPrevNode());
+
+      llvm::FunctionCallee FC = M->getOrInsertFunction(
+          BARRIER_FUNCTION_NAME, llvm::Type::getVoidTy(M->getContext()));
+      llvm::Function *F = llvm::cast<llvm::Function>(FC.getCallee());
+      F->addFnAttr(llvm::Attribute::Convergent);
+      return llvm::cast<pocl::Barrier>(
+          llvm::CallInst::Create(F, "", InsertBefore));
+    }
+#endif
 
     static bool classof(const Barrier *) { return true; }
     static bool classof(const llvm::CallInst *C) {
@@ -117,12 +135,14 @@ namespace pocl {
 
     // Returns true in case the given basic block starts with a barrier,
     // that is, contains a branch instruction after possible PHI nodes.
+#if 0
     static bool startsWithBarrier(const llvm::BasicBlock *BB) {
       const llvm::Instruction *Inst = BB->getFirstNonPHI();
       if (Inst == NULL)
         return false;
       return llvm::isa<Barrier>(Inst);
     }
+#endif
 
     // Returns true in case the given basic block ends with a barrier,
     // that is, contains only a branch instruction after a barrier call.

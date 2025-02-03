@@ -57,7 +57,11 @@ void Kernel::getExitBlocks(SmallVectorImpl<llvm::BasicBlock *> &B) {
       // All exits must be barrier blocks.
       llvm::BasicBlock *BB = cast<BasicBlock>(i);
       if (!Barrier::hasBarrier(BB))
+#if LLVM_MAJOR < 20
         Barrier::create(BB->getTerminator());
+#else
+        Barrier::create(BB->getTerminator()->getIterator());
+#endif
       B.push_back(BB);
     }
   }
@@ -276,7 +280,12 @@ Kernel::getParallelRegions(llvm::LoopInfo &LI) {
 void Kernel::addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY,
                                   size_t LocalSizeZ) {
 
+#if LLVM_MAJOR < 20
   IRBuilder<> Builder(getEntryBlock().getFirstNonPHI());
+#else
+  IRBuilder<> Builder{getEntryBlock().getContext()};
+  Builder.SetInsertPoint(getEntryBlock().getFirstInsertionPt());
+#endif
 
   GlobalVariable *GV;
 

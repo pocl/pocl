@@ -118,9 +118,14 @@ llvm::PreservedAnalyses SVMOffset::run(llvm::Module &M,
            Arg != E; ++Arg) {
         if (!Arg->getType()->isPointerTy())
           continue;
-        IRBuilder<> IRBuilder(F->getEntryBlock().getFirstNonPHI());
-        Value *NegOffsettedPtr = IRBuilder.CreateGEP(
-            IRBuilder.getInt8Ty(), Arg, IRBuilder.getInt64(-SVMOffsetValue));
+#if LLVM_MAJOR < 20
+        IRBuilder<> Builder(F->getEntryBlock().getFirstNonPHI());
+#else
+        IRBuilder<> Builder{F->getContext()};
+        Builder.SetInsertPoint(F->front().getFirstInsertionPt());
+#endif
+        Value *NegOffsettedPtr = Builder.CreateGEP(
+            Builder.getInt8Ty(), Arg, Builder.getInt64(-SVMOffsetValue));
 
         // Replace all uses of the old non-offsetted arg (except the offsetting
         // instr itself) with the offsetted one.

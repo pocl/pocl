@@ -777,7 +777,11 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
 
     // LLVM may modify the result type of the called function to void.
     if (CI->getType()->isVoidTy()) {
+#if LLVM_MAJOR < 20
       newCI->insertBefore(CI);
+#else
+      newCI->insertBefore(CI->getIterator());
+#endif
       CI->eraseFromParent();
     } else {
       CI->replaceAllUsesWith(newCI);
@@ -1031,7 +1035,12 @@ void WorkgroupImpl::privatizeContext(Function *F) {
   // Privatize _global_id_* to private allocas.
   // They are referred to by WorkItemLoops to fetch the global id directly.
 
+#if LLVM_MAJOR < 20
   IRBuilder<> Builder(F->getEntryBlock().getFirstNonPHI());
+#else
+  IRBuilder<> Builder{F->getContext()};
+  Builder.SetInsertPoint(F->front().getFirstInsertionPt());
+#endif
 
   // For replace the global_ids with local allocas for easier
   // data flow analysis.
@@ -1323,7 +1332,11 @@ void WorkgroupImpl::createDefaultWorkgroupLauncher(llvm::Function *F) {
           Arg = AI;
         }
       } else {
+#ifdef LLVM_OPAQUE_POINTERS
+        Arg = Pointer;
+#else
         Arg = Builder.CreatePointerCast(Pointer, ArgType->getPointerTo());
+#endif
         Arg = Builder.CreateLoad(ArgType, Arg);
       }
     }
