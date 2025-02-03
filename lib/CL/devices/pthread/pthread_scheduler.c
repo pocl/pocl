@@ -264,7 +264,7 @@ inline static void translate_wg_index_to_3d_index (kernel_run_command *k,
   index_3d[0] = (index % xy_slice) % row_size;
 }
 
-static int
+static void
 work_group_scheduler (kernel_run_command *k,
                       struct pool_thread_data *thread_data)
 {
@@ -281,7 +281,7 @@ work_group_scheduler (kernel_run_command *k,
 
   if (!get_wg_index_range (k, &start_index, &end_index, &last_wgs,
                            thread_data->num_threads))
-    return 0;
+    return;
 
   assert (end_index >= start_index);
 
@@ -302,7 +302,7 @@ work_group_scheduler (kernel_run_command *k,
 
   unsigned slice_size = k->pc.num_groups[0] * k->pc.num_groups[1];
   unsigned row_size = k->pc.num_groups[0];
-
+  unsigned execution_failed = 0;
   do
     {
       if (last_wgs)
@@ -324,6 +324,7 @@ work_group_scheduler (kernel_run_command *k,
 #endif
           k->workgroup ((uint8_t *)arguments, (uint8_t *)&pc,
                         gids[0], gids[1], gids[2]);
+          execution_failed += pc.execution_failed;
         }
     }
   while (get_wg_index_range (k, &start_index, &end_index, &last_wgs,
@@ -336,12 +337,12 @@ work_group_scheduler (kernel_run_command *k,
   pocl_free_kernel_arg_array_with_locals ((void **)arguments,
                                           (void **)arguments2, k);
 
-  return 1;
+  POCL_ATOMIC_ADD (k->execution_failed, execution_failed);
 }
 
 #else /* OPENMP enabled scheduler */
 
-static int
+static void
 work_group_scheduler (kernel_run_command *k,
                       struct pool_thread_data *thread_data)
 {
@@ -373,14 +374,18 @@ work_group_scheduler (kernel_run_command *k,
     pocl_cpu_setup_rm_and_ftz (k->device, k->kernel->program);
 
     size_t x, y, z;
+    unsigned execution_failed = 0;
     /* runtime = set scheduling according to environment variable OMP_SCHEDULE
      */
 #pragma omp for ordered collapse(3) schedule(runtime)
     for (z = 0; z < pc.num_groups[2]; ++z)
       for (y = 0; y < pc.num_groups[1]; ++y)
         for (x = 0; x < pc.num_groups[0]; ++x)
-          ((pocl_workgroup_func)k->workgroup) ((uint8_t *)arguments,
-                                               (uint8_t *)&pc, x, y, z);
+          {
+            ((pocl_workgroup_func)k->workgroup) ((uint8_t *)arguments,
+                                                 (uint8_t *)&pc, x, y, z);
+            execution_failed += pc.execution_failed;
+          }
 
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
     pocl_write_printf_buffer ((char *)pc.printf_buffer, position);
@@ -391,9 +396,9 @@ work_group_scheduler (kernel_run_command *k,
 
     free (local_mem);
     free (pc.printf_buffer);
+#pragma omp critical
+    k->execution_failed += execution_failed;
   } // #pragma omp parallel
-
-  return 0;
 }
 
 #endif
@@ -410,8 +415,12 @@ finalize_kernel_command (struct pool_thread_data *thread_data,
 
   pocl_release_dlhandle_cache (k->cmd->command.run.device_data);
 
-  POCL_UPDATE_EVENT_COMPLETE_MSG (k->cmd->sync.event.event,
+  if (k->execution_failed)
+    POCL_UPDATE_EVENT_FAILED_MSG (k->cmd->sync.event.event,
                                   "NDRange Kernel        ");
+  else
+    POCL_UPDATE_EVENT_COMPLETE_MSG (k->cmd->sync.event.event,
+                                    "NDRange Kernel        ");
 
   POCL_DESTROY_LOCK (k->lock);
   free_kernel_run_command (k);
@@ -477,6 +486,7 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
   run_cmd->kernel_args = cmd->command.run.arguments;
   run_cmd->next = NULL;
   run_cmd->ref_count = 0;
+  run_cmd->execution_failed = 0;
   POCL_INIT_LOCK (run_cmd->lock);
 
   pocl_setup_kernel_arg_array (run_cmd);

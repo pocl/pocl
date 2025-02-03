@@ -71,6 +71,20 @@ static bool flattenGlobals(Module &M) {
       Pending.push_back(WIFunc);
   }
 
+  for (auto &F : M.functions()) {
+    for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+      for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE;) {
+        if (isa<UnreachableInst>(BI++)) {
+#ifdef DEBUG_FLATTEN
+          std::cerr << "UNREACHABLE: should inline " << F.getName().str()
+                    << "\n";
+#endif
+          FunctionsToInline.insert(&F);
+        }
+      }
+    }
+  }
+
   while (!Pending.empty()) {
     Value *Current = Pending.back();
     Pending.pop_back();
@@ -100,6 +114,10 @@ static bool flattenGlobals(Module &M) {
   }
 
   for (auto F : FunctionsToInline) {
+#ifdef DEBUG_FLATTEN
+    std::cerr << "UNREACHABLE: inlining function " << F->getName().str()
+              << "\n";
+#endif
     markFunctionAlwaysInline(F);
   }
 

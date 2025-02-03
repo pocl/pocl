@@ -86,10 +86,13 @@ enum PoclContextStructFields {
   PC_PRINTF_BUFFER_POSITION,
   PC_PRINTF_BUFFER_CAPACITY,
   PC_GLOBAL_VAR_BUFFER,
-  PC_WORK_DIM
+  PC_WORK_DIM,
+  PC_EXECUTION_FAILED
 };
 
 using FunctionVec = std::vector<llvm::Function *>;
+
+using PtrAndType = std::pair<llvm::Value *, llvm::Type *>;
 
 class WorkgroupImpl {
 public:
@@ -114,15 +117,22 @@ private:
   void addPlaceHolder(llvm::IRBuilder<> &Builder, llvm::Value *Value,
                       const std::string TypeStr);
 
-  void privatizeGlobals(llvm::Function *F, llvm::IRBuilder<> &Builder,
-                        const std::vector<std::string> &&GlobalHandleNames,
-                        std::vector<llvm::Value *> PrivateValues);
+  void privatizeGlobalLoads(llvm::Function *F, llvm::IRBuilder<> &Builder,
+                            const std::vector<std::string> &&GlobalHandleNames,
+                            std::vector<llvm::Value *> PrivateValues);
+
+  void privatizeGlobalStores(llvm::Function *F, llvm::IRBuilder<> &Builder,
+                             const std::vector<std::string> &&GlobalHandleNames,
+                             std::vector<PtrAndType> PrivatePointers);
 
   void privatizeContext(llvm::Function *F);
 
   llvm::Value *createLoadFromContext(llvm::IRBuilder<> &Builder,
                                      int StructFieldIndex, int FieldIndex,
                                      std::string Name);
+
+  PtrAndType getPtrAndTypeForContextVar(IRBuilder<> &Builder,
+                                        int StructFieldIndex, int FieldIndex);
 
   void addGEPs(llvm::IRBuilder<> &Builder, int StructFieldIndex,
                const char *FormatStr);
@@ -234,7 +244,8 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
       PointerType::get(Int32T, DeviceGlobalASid), // PRINTF_BUFFER_POSITION
       Int32T,                                     // PRINTF_BUFFER_CAPACITY
       PointerType::get(Int8T, DeviceGlobalASid),  // GLOBAL_VAR_BUFFER
-      Int32T);                                    // WORK_DIM
+      Int32T,                                     // WORK_DIM
+      Int32T);                                    // EXECUTION_FAILED
 
   LauncherFuncT = FunctionType::get(
       Type::getVoidTy(*C),
@@ -582,36 +593,24 @@ void WorkgroupImpl::addRangeMetadataForPCField(llvm::Instruction *Instr,
   return;
 }
 
-// Creates a load from the hidden context structure argument for
-// the given element.
-llvm::Value *WorkgroupImpl::createLoadFromContext(IRBuilder<> &Builder,
-                                                  int StructFieldIndex,
-                                                  int FieldIndex = -1,
-                                                  std::string Name = "") {
-
+// Computes the Pointer and the Type of a PoclContext variable
+PtrAndType WorkgroupImpl::getPtrAndTypeForContextVar(IRBuilder<> &Builder,
+                                                     int StructFieldIndex,
+                                                     int FieldIndex = -1) {
   Value *GEP, *Ptr;
   GEP = Builder.CreateStructGEP(PoclContextT, ContextArg, StructFieldIndex);
   Type *GEPType = PoclContextT->getStructElementType(StructFieldIndex);
 
-  llvm::LoadInst *Load = nullptr;
   if (SizeTWidth == 64) {
     if (FieldIndex == -1)
-      Ptr = Builder.CreateConstGEP1_64(
-          GEPType,
-          GEP, 0);
+      Ptr = Builder.CreateConstGEP1_64(GEPType, GEP, 0);
     else
-      Ptr = Builder.CreateConstGEP2_64(
-          GEPType,
-          GEP, 0, FieldIndex);
+      Ptr = Builder.CreateConstGEP2_64(GEPType, GEP, 0, FieldIndex);
   } else {
     if (FieldIndex == -1)
-      Ptr = Builder.CreateConstGEP1_32(
-          GEPType,
-          GEP, 0);
+      Ptr = Builder.CreateConstGEP1_32(GEPType, GEP, 0);
     else
-      Ptr = Builder.CreateConstGEP2_32(
-          GEPType,
-          GEP, 0, FieldIndex);
+      Ptr = Builder.CreateConstGEP2_32(GEPType, GEP, 0, FieldIndex);
   }
 
   Type *FinalType = GEPType;
@@ -622,7 +621,20 @@ llvm::Value *WorkgroupImpl::createLoadFromContext(IRBuilder<> &Builder,
     FinalType = AT->getArrayElementType();
   }
 
-  Load = Builder.CreateLoad(FinalType, Ptr, Name.c_str());
+  return PtrAndType{Ptr, FinalType};
+}
+
+// Creates a load from the hidden context structure argument for
+// the given element.
+llvm::Value *WorkgroupImpl::createLoadFromContext(IRBuilder<> &Builder,
+                                                  int StructFieldIndex,
+                                                  int FieldIndex = -1,
+                                                  std::string Name = "") {
+
+  llvm::LoadInst *Load = nullptr;
+  PtrAndType PT =
+      getPtrAndTypeForContextVar(Builder, StructFieldIndex, FieldIndex);
+  Load = Builder.CreateLoad(PT.second, PT.first, Name.c_str());
   addRangeMetadataForPCField(Load, StructFieldIndex, FieldIndex);
   return Load;
 }
@@ -985,9 +997,9 @@ std::vector<llvm::Value *> WorkgroupImpl::globalHandlesToContextStructLoads(
   return StructLoads;
 }
 
-// Converts uses of the given pseudo variable handles (magic external global
-// variables) to use the given function-private values instead.
-void WorkgroupImpl::privatizeGlobals(
+// Converts Load uses of the given pseudo variable handles (magic external
+// global variables) to Load from the given function-private values instead.
+void WorkgroupImpl::privatizeGlobalLoads(
     llvm::Function *F, llvm::IRBuilder<> &Builder,
     const std::vector<std::string> &&GlobalHandleNames,
     std::vector<llvm::Value *> PrivateValues) {
@@ -1004,24 +1016,66 @@ void WorkgroupImpl::privatizeGlobals(
         if (!isa<llvm::LoadInst>(ii)) {
           continue;
         }
-        llvm::LoadInst *L = cast<llvm::LoadInst>(ii);
         llvm::GlobalValue *GlobalHandle =
-          M->getGlobalVariable(GlobalHandleNames.at(j));
-
+            M->getGlobalVariable(GlobalHandleNames.at(j));
         if (GlobalHandle == nullptr)
           continue;
 
+        llvm::LoadInst *L = cast<llvm::LoadInst>(ii);
         if (L->getPointerOperand()->stripPointerCasts() != GlobalHandle)
           continue;
-
-        llvm::Value *Cast =
-          Builder.CreateTruncOrBitCast(PrivateValues[j], L->getType());
+        llvm::Value *Cast = PrivateValues[j];
+        if (L->getType() != PrivateValues[j]->getType())
+          Cast = Builder.CreateTruncOrBitCast(PrivateValues[j], L->getType());
         ii->replaceAllUsesWith(Cast);
         ii->eraseFromParent();
         break;
       }
     }
   }
+}
+
+// Converts Store uses of the given pseudo variable handles (magic external
+// global variables) to Store into the given function-private pointers instead.
+void WorkgroupImpl::privatizeGlobalStores(
+    llvm::Function *F, llvm::IRBuilder<> &Builder,
+    const std::vector<std::string> &&GlobalHandleNames,
+    std::vector<PtrAndType> PrivatePointers) {
+
+  for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
+    for (BasicBlock::iterator ii = i->begin(), ee = i->end(), Next = ii;
+         ii != ee; ii = Next) {
+      Next = std::next(ii);
+      for (size_t j = 0; j < GlobalHandleNames.size(); ++j) {
+        if (PrivatePointers[j].first == nullptr) {
+          continue;
+        }
+        if (!isa<llvm::StoreInst>(ii)) {
+          continue;
+        }
+        llvm::GlobalValue *GlobalHandle =
+            M->getGlobalVariable(GlobalHandleNames.at(j));
+        if (GlobalHandle == nullptr)
+          continue;
+
+        llvm::StoreInst *S = cast<llvm::StoreInst>(ii);
+        if (S->getPointerOperand()->stripPointerCasts() != GlobalHandle)
+          continue;
+        llvm::Value *StoredVal = S->getValueOperand();
+        if (S->getValueOperand()->getType() != PrivatePointers[j].second)
+          StoredVal = Builder.CreateTruncOrBitCast(StoredVal,
+                                                   PrivatePointers[j].second);
+
+        Builder.SetInsertPoint(ii->getParent(), ii->getIterator());
+        Builder.CreateStore(StoredVal, PrivatePointers[j].first);
+        ii->eraseFromParent();
+
+        break;
+      }
+    }
+  }
+  // restore the insertion point for Loads
+  Builder.SetInsertPoint(&F->front(), F->front().getFirstInsertionPt());
 }
 
 /**
@@ -1145,17 +1199,17 @@ void WorkgroupImpl::privatizeContext(Function *F) {
         LocalSizeAllocas[2]);
   }
 
-  privatizeGlobals(
-    F, Builder, {"_group_id_x", "_group_id_y", "_group_id_z"}, GroupIdArgs);
+  privatizeGlobalLoads(
+      F, Builder, {"_group_id_x", "_group_id_y", "_group_id_z"}, GroupIdArgs);
 
   if (WGAssumeZeroGlobalOffset) {
-    privatizeGlobals(
+    privatizeGlobalLoads(
         F, Builder,
         {"_global_offset_x", "_global_offset_y", "_global_offset_z"},
         {ConstantInt::get(SizeT, 0), ConstantInt::get(SizeT, 0),
          ConstantInt::get(SizeT, 0)});
   } else {
-    privatizeGlobals(
+    privatizeGlobalLoads(
         F, Builder,
         {"_global_offset_x", "_global_offset_y", "_global_offset_z"},
         globalHandlesToContextStructLoads(
@@ -1164,19 +1218,24 @@ void WorkgroupImpl::privatizeContext(Function *F) {
             PC_GLOBAL_OFFSET));
   }
 
-  privatizeGlobals(
-    F, Builder, {"_work_dim"},
-    globalHandlesToContextStructLoads(Builder, {"_work_dim"}, PC_WORK_DIM));
+  privatizeGlobalLoads(
+      F, Builder, {"_work_dim"},
+      {createLoadFromContext(Builder, PC_WORK_DIM, -1, "_work_dim")});
 
-  privatizeGlobals(F, Builder, {PoclGVarBufferName},
-                   globalHandlesToContextStructLoads(
-                       Builder, {PoclGVarBufferName}, PC_GLOBAL_VAR_BUFFER));
+  privatizeGlobalStores(
+      F, Builder, {"__pocl_context_unreachable"},
+      {getPtrAndTypeForContextVar(Builder, PC_EXECUTION_FAILED)});
 
-  privatizeGlobals(
-    F, Builder, {"_num_groups_x", "_num_groups_y", "_num_groups_z"},
-    globalHandlesToContextStructLoads(
-      Builder, {"_num_groups_x", "_num_groups_y", "_num_groups_z"},
-      PC_NUM_GROUPS));
+  privatizeGlobalLoads(F, Builder, {PoclGVarBufferName},
+                       globalHandlesToContextStructLoads(Builder,
+                                                         {PoclGVarBufferName},
+                                                         PC_GLOBAL_VAR_BUFFER));
+
+  privatizeGlobalLoads(
+      F, Builder, {"_num_groups_x", "_num_groups_y", "_num_groups_z"},
+      globalHandlesToContextStructLoads(
+          Builder, {"_num_groups_x", "_num_groups_y", "_num_groups_z"},
+          PC_NUM_GROUPS));
 
   // Privatize the subgroup size (for CPUs), if referred.
   if (M->getGlobalVariable("_pocl_sub_group_size") != nullptr) {
@@ -1186,22 +1245,24 @@ void WorkgroupImpl::privatizeContext(Function *F) {
                                   LocalSizeAllocas[0]);
     }
     assert(SGSize != nullptr);
-    privatizeGlobals(F, Builder, {"_pocl_sub_group_size"}, {SGSize});
+    privatizeGlobalLoads(F, Builder, {"_pocl_sub_group_size"}, {SGSize});
   }
 
   if (DeviceSidePrintf) {
     // Privatize _printf_buffer
-    privatizeGlobals(F, Builder, {"_printf_buffer"},
-                     {createLoadFromContext(Builder, PC_PRINTF_BUFFER, -1,
-                                            "printf_buffer")});
+    privatizeGlobalLoads(F, Builder, {"_printf_buffer"},
+                         {createLoadFromContext(Builder, PC_PRINTF_BUFFER, -1,
+                                                "printf_buffer")});
 
-    privatizeGlobals(F, Builder, {"_printf_buffer_position"},
-                     {createLoadFromContext(Builder, PC_PRINTF_BUFFER_POSITION,
-                                            -1, "printf_buffer_pos")});
+    privatizeGlobalLoads(
+        F, Builder, {"_printf_buffer_position"},
+        {createLoadFromContext(Builder, PC_PRINTF_BUFFER_POSITION, -1,
+                               "printf_buffer_pos")});
 
-    privatizeGlobals(F, Builder, {"_printf_buffer_capacity"},
-                     {createLoadFromContext(Builder, PC_PRINTF_BUFFER_CAPACITY,
-                                            -1, "printf_buffer_capacity")});
+    privatizeGlobalLoads(
+        F, Builder, {"_printf_buffer_capacity"},
+        {createLoadFromContext(Builder, PC_PRINTF_BUFFER_CAPACITY, -1,
+                               "printf_buffer_capacity")});
   }
 }
 
@@ -1465,7 +1526,7 @@ LLVMValueRef WorkgroupImpl::createAllocaMemcpyForStruct(
     args[2] = Size;
 
     LLVMTypeRef FnTy = LLVMGetCalledFunctionType(MemCpy4);
-    LLVMValueRef Call4 = LLVMBuildCall2(Builder, FnTy, MemCpy4, args, 3, "");
+    LLVMBuildCall2(Builder, FnTy, MemCpy4, args, 3, "");
   } else {
     LLVMTypeRef i8PtrAS0 = LLVMPointerType(Int8Type, 0);
     LLVMTypeRef i8PtrAS1 = LLVMPointerType(Int8Type, DeviceArgsASid);
@@ -1480,7 +1541,7 @@ LLVMValueRef WorkgroupImpl::createAllocaMemcpyForStruct(
     args[2] = Size;
 
     LLVMTypeRef FnTy = LLVMGetCalledFunctionType(MemCpy1);
-    LLVMValueRef Call1 = LLVMBuildCall2(Builder, FnTy, MemCpy1, args, 3, "");
+    LLVMBuildCall2(Builder, FnTy, MemCpy1, args, 3, "");
   }
 
   return LocalArgAlloca;
@@ -1787,8 +1848,6 @@ void WorkgroupImpl::createGridLauncher(Function *KernFunc, Function *WGFunc,
 
   InlineFunctionInfo IFI;
   InlineFunction(*dyn_cast<CallInst>(llvm::unwrap(Call)), IFI);
-
-  LLVMTypeRef VoidPtrType = LLVMPointerType(VoidType, 0);
 
   // Add a fixed name global variable which points to the generated grid
   // launcher, if there is a declaration by that name. If there is, we

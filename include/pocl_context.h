@@ -43,6 +43,7 @@ struct pocl_context32 {
   uint printf_buffer_capacity;
   uint global_var_buffer;
   uint work_dim;
+  uint execution_failed;
 };
 
 struct pocl_context64 {
@@ -54,6 +55,7 @@ struct pocl_context64 {
   uint printf_buffer_capacity;
   uchar *global_var_buffer;
   uint work_dim;
+  uint execution_failed;
 };
 
 struct pocl_context {
@@ -65,6 +67,7 @@ struct pocl_context {
   uint printf_buffer_capacity;
   uchar *global_var_buffer;
   uint work_dim;
+  uint execution_failed;
 };
 
 

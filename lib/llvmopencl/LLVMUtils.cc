@@ -56,6 +56,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "RemoveBarrierCalls.h"
 #include "SanitizeUBofDivRem.h"
 #include "SubCFGFormation.h"
+#include "UnreachablesToReturns.h"
 #include "VariableUniformityAnalysis.h"
 #include "WorkItemAliasAnalysis.h"
 #include "Workgroup.h"
@@ -696,6 +697,7 @@ void registerPassBuilderPasses(llvm::PassBuilder &PB) {
   BarrierTailReplication::registerWithPB(PB);
   CanonicalizeBarriers::registerWithPB(PB);
   SanitizeUBofDivRem::registerWithPB(PB);
+  ConvertUnreachablesToReturns::registerWithPB(PB);
   FlattenAll::registerWithPB(PB);
   FlattenBarrierSubs::registerWithPB(PB);
   FlattenGlobals::registerWithPB(PB);
