@@ -605,7 +605,8 @@ ParallelRegion::getOrCreateIDLoad(std::string IDGlobalName,
   GlobalVariable *Ptr =
       cast<GlobalVariable>(M->getOrInsertGlobal(IDGlobalName, ST));
 
-  IRBuilder<> Builder(entryBB()->getFirstNonPHI());
+  llvm::BasicBlock &BB = *entryBB();
+  CreateBuilder(Builder, BB);
 
   Instruction *IDLoad = Builder.CreateLoad(ST, IDGlobal);
   IDLoadInstrs[IDGlobalName] = IDLoad;
@@ -667,7 +668,7 @@ ParallelRegion::InjectPrintF
   args.push_back(const_ptr_8);
   args.insert(args.end(), params.begin(), params.end());
 
-  CallInst::Create(printfFunc, args, "", before);
+  CallInst::Create(printfFunc, args, "", Inst2InsertPt(before));
 }
 
 void

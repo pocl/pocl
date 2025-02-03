@@ -528,7 +528,12 @@ static bool convertAddrSpaceOperator(llvm::Function *Func, std::string &Log) {
       } else {
         llvm::AddrSpaceCastInst *AsCast = new llvm::AddrSpaceCastInst(
             Call->getArgOperand(0), Call->getFunctionType()->getReturnType(),
-            Func->getName() + ".as_cast", Call);
+            Func->getName() + ".as_cast",
+#if LLVM_MAJOR < 20
+            Call);
+#else
+            Call->getIterator());
+#endif
         Call->replaceAllUsesWith(AsCast);
         Call->eraseFromParent();
       }

@@ -74,7 +74,7 @@ static bool canonicalizeBarriers(Function &F, WorkitemHandlerType Handler) {
 
     EffectiveEntry->takeName(Entry);
     Entry->setName("entry.barrier");
-    Barrier::create(Entry->getTerminator());
+    Barrier::createAtEnd(Entry);
     changed |= true;
   }
 
@@ -106,7 +106,7 @@ static bool canonicalizeBarriers(Function &F, WorkitemHandlerType Handler) {
       else
         exit = SplitBlock(BB, t);
       exit->setName("exit.barrier");
-      Barrier::create(t);
+      Barrier::create(Inst2InsertPt(t));
       changed |= true;
     }
   }

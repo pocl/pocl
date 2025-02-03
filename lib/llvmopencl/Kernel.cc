@@ -34,9 +34,10 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/InlineAsm.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 
-#include "Kernel.h"
 #include "Barrier.h"
 #include "DebugHelpers.h"
+#include "Kernel.h"
+#include "LLVMUtils.h"
 
 #include "pocl.h"
 #include "pocl_llvm_api.h"
@@ -57,7 +58,7 @@ void Kernel::getExitBlocks(SmallVectorImpl<llvm::BasicBlock *> &B) {
       // All exits must be barrier blocks.
       llvm::BasicBlock *BB = cast<BasicBlock>(i);
       if (!Barrier::hasBarrier(BB))
-        Barrier::create(BB->getTerminator());
+        Barrier::createAtEnd(BB);
       B.push_back(BB);
     }
   }
@@ -276,7 +277,7 @@ Kernel::getParallelRegions(llvm::LoopInfo &LI) {
 void Kernel::addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY,
                                   size_t LocalSizeZ) {
 
-  IRBuilder<> Builder(getEntryBlock().getFirstNonPHI());
+  CreateBuilder(Builder, getEntryBlock());
 
   GlobalVariable *GV;
 

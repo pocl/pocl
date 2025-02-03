@@ -185,7 +185,11 @@ void breakConstantExpressions(llvm::Value *Val, llvm::Function *Func) {
 
       // Convert this constant expression to an instruction.
       llvm::Instruction *I = CE->getAsInstruction();
+#if LLVM_MAJOR < 20
       I->insertBefore(&*Func->begin()->begin());
+#else
+      I->insertBefore(Func->begin()->begin());
+#endif
       CE->replaceAllUsesWith(I);
       CE->destroyConstant();
     }

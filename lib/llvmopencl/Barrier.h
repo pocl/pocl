@@ -69,13 +69,17 @@ namespace pocl {
     /// Otherwise, creates a new one there.
     ///
     /// \returns The barrier.
+#if LLVM_MAJOR < 20
     static Barrier *create(llvm::Instruction *InsertBefore) {
-      llvm::Module *M = InsertBefore->getParent()->getParent()->getParent();
-
       if (InsertBefore != &InsertBefore->getParent()->front() &&
+#else
+    static Barrier *create(InstListType::iterator InsertBefore) {
+      if (InsertBefore != InsertBefore->getParent()->begin() &&
+#endif
           llvm::isa<Barrier>(InsertBefore->getPrevNode()))
         return llvm::cast<Barrier>(InsertBefore->getPrevNode());
 
+      llvm::Module *M = InsertBefore->getModule();
       llvm::FunctionCallee FC =
         M->getOrInsertFunction(BARRIER_FUNCTION_NAME,
                                 llvm::Type::getVoidTy(M->getContext()));
@@ -84,6 +88,26 @@ namespace pocl {
       return llvm::cast<pocl::Barrier>
         (llvm::CallInst::Create(F, "", InsertBefore));
     }
+
+#if LLVM_MAJOR < 20
+    static Barrier *createAtEnd(llvm::BasicBlock *BB) {
+      return create(BB->getTerminator());
+    }
+#else
+    static Barrier *createAtEnd(llvm::BasicBlock *BB) {
+      return create(BB->getTerminator()->getIterator());
+    }
+#endif
+
+#if LLVM_MAJOR < 20
+    static Barrier *createAtStart(llvm::BasicBlock *BB) {
+      return create(BB->getFirstNonPHI());
+    }
+#else
+    static Barrier *createAtStart(llvm::BasicBlock *BB) {
+      return create(BB->getFirstInsertionPt());
+    }
+#endif
 
     static bool classof(const Barrier *) { return true; }
     static bool classof(const llvm::CallInst *C) {
@@ -115,14 +139,6 @@ namespace pocl {
       return false;
     }
 
-    // Returns true in case the given basic block starts with a barrier,
-    // that is, contains a branch instruction after possible PHI nodes.
-    static bool startsWithBarrier(const llvm::BasicBlock *BB) {
-      const llvm::Instruction *Inst = BB->getFirstNonPHI();
-      if (Inst == NULL)
-        return false;
-      return llvm::isa<Barrier>(Inst);
-    }
 
     // Returns true in case the given basic block ends with a barrier,
     // that is, contains only a branch instruction after a barrier call.
