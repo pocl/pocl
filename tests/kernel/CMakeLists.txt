@@ -58,25 +58,6 @@ add_test_pocl(NAME "kernel/test_hadd"
               WORKITEM_HANDLER "loops;loopvec;cbs"
               COMMAND "kernel" "test_hadd")
 
-
-# convert_type_{4,8,16} + hadd/as_type/bitselect produce very large kernels
-# that can cause LLVM to spend extremely long time on optimization,
-# and Level Zero can timeout executing kernels.
-# enable the tests but add "long" label so ctest can skip easily
-
-set(VARIANTS "loopvec;cbs")
-foreach(VARIANT ${VARIANTS})
-  set_tests_properties( "kernel/test_as_type_${VARIANT}" "kernel/test_bitselect_${VARIANT}"
-    "kernel/test_convert_type_1_${VARIANT}" "kernel/test_convert_type_2_${VARIANT}" "kernel/test_convert_type_4_${VARIANT}"
-    "kernel/test_convert_type_8_${VARIANT}" "kernel/test_convert_type_16_${VARIANT}"
-    "kernel/test_hadd_${VARIANT}"
-    PROPERTIES
-      COST 40.0
-      PROCESSORS 1
-      DEPENDS "pocl_version_check"
-      LABELS "internal;kernel;long")
-endforeach()
-
 add_test_pocl(NAME "kernel/test_min_max"
               COMMAND "kernel" "test_min_max")
 
@@ -118,6 +99,24 @@ add_test_pocl(NAME "kernel/test_frexp_modf"
 
 add_test_pocl(NAME "kernel/test_halfs"
               COMMAND "kernel" "test_halfs")
+
+# convert_type_{4,8,16} + hadd/as_type/bitselect produce very large kernels
+# that can cause LLVM to spend extremely long time on optimization,
+# and Level Zero can timeout executing kernels.
+# enable the tests but add "long" label so ctest can skip easily
+
+set(VARIANTS "loopvec;cbs")
+foreach(VARIANT ${VARIANTS})
+  set_tests_properties( "kernel/test_as_type_${VARIANT}" "kernel/test_bitselect_${VARIANT}"
+    "kernel/test_convert_type_1_${VARIANT}" "kernel/test_convert_type_2_${VARIANT}" "kernel/test_convert_type_4_${VARIANT}"
+    "kernel/test_convert_type_8_${VARIANT}" "kernel/test_convert_type_16_${VARIANT}"
+    "kernel/test_hadd_${VARIANT}" "kernel/test_rotate_${VARIANT}"
+    PROPERTIES
+      COST 40.0
+      PROCESSORS 1
+      DEPENDS "pocl_version_check"
+      LABELS "internal;kernel;long")
+endforeach()
 
 foreach(VARIANT ${VARIANTS})
   # TODO: works on LLVM 15 but fails with LLVM 16, most likely reason:
