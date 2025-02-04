@@ -163,6 +163,28 @@ static bool removeDuplicateDbgInfo(Module *Mod) {
 // fix mismatches between calling conv. This should not happen,
 // but sometimes can, esp with SPIR(-V) input
 static void fixCallingConv(llvm::Module *Mod, std::string &Log) {
+#if LLVM_MAJOR > 18
+  if (Mod->getTargetTriple().find("nvptx") != std::string::npos) {
+    for (llvm::Module::iterator MI = Mod->begin(); MI != Mod->end(); ++MI) {
+      llvm::Function *F = &*MI;
+      if (F->isDeclaration())
+        continue;
+
+      if (!F->hasName())
+        continue;
+      if (F->getName().starts_with("printf"))
+        continue;
+      if (F->getName().starts_with("llvm."))
+        continue;
+
+      if (isKernelToProcess(*F))
+        F->setCallingConv(llvm::CallingConv::PTX_Kernel);
+      else
+        F->setCallingConv(llvm::CallingConv::PTX_Device);
+    }
+  }
+#endif
+
   for (llvm::Module::iterator MI = Mod->begin(); MI != Mod->end(); ++MI) {
     llvm::Function *F = &*MI;
     if (F->isDeclaration())
