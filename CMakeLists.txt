@@ -835,12 +835,27 @@ if(UNIX OR MINGW)
                       "dlfcn.h"
                       HAVE_DLADDR)
 
+  unset(CMAKE_REQUIRED_DEFINITIONS)
+  unset(CMAKE_REQUIRED_LIBRARIES)
+
   check_c_source_compiles(
   "_Float16 callfp16(_Float16 a) { return a * 1.8f16; };
   int main(int argc, char** argv) {
   _Float16 x = callfp16((_Float16)argc);
   return ((x > 0.8f16) ? 20 : 10);
-  }" HAVE_FLOAT16_TYPE)
+  }" HOST_COMPILER_SUPPORTS_FLOAT16)
+  if(NOT HOST_COMPILER_SUPPORTS_FLOAT16)
+    set(HOST_COMPILER_SUPPORTS_FLOAT16 0 CACHE BOOL "host-side _Float16 support" FORCE)
+  endif()
+  message(STATUS "Host side compiler support for _Float16: ${HOST_COMPILER_SUPPORTS_FLOAT16}")
+  if(NOT HOST_COMPILER_SUPPORTS_FLOAT16)
+    if((CMAKE_C_COMPILER_ID STREQUAL "GNU") AND (CMAKE_C_COMPILER_VERSION VERSION_LESS 12.0))
+      message(WARNING "Note: GCC only supports _Float16 since version 12")
+    endif()
+    if((CMAKE_C_COMPILER_ID STREQUAL "Clang") AND (CMAKE_C_COMPILER_VERSION VERSION_LESS 15.0))
+      message(WARNING "Note: Clang only supports _Float16 since version 15 (17+ is recommended)")
+    endif()
+  endif()
 
   find_file(
     HAVE_LINUX_VSOCK_H
@@ -1521,12 +1536,12 @@ if((LLVM_VERSION_MAJOR GREATER_EQUAL 17)
    AND (NOT ENABLE_CONFORMANCE)
    AND (NOT RISCV) AND (NOT I386)
    AND (CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
-   AND HOST_CPU_SUPPORTS_FLOAT16
-   AND HAVE_FLOAT16_TYPE)
-  message(STATUS "Host support for cl_khr_fp16 enabled")
+   AND CLANG_SUPPORTS_FLOAT16_ON_CPU
+   AND HOST_COMPILER_SUPPORTS_FLOAT16)
+  message(STATUS "CPU device support for cl_khr_fp16 enabled")
   set(HOST_CPU_ENABLE_CL_KHR_FP16 1)
 else()
-  message(STATUS "Host support for cl_khr_fp16 disabled")
+  message(STATUS "CPU device support for cl_khr_fp16 disabled")
   set(HOST_CPU_ENABLE_CL_KHR_FP16 0)
 endif()
 
@@ -2567,7 +2582,8 @@ if (ENABLE_LLVM)
   MESSAGE(STATUS "LLC_HOST_CPU: ${LLC_HOST_CPU}")
   MESSAGE(STATUS "SELECTED_HOST_CPU: ${SELECTED_HOST_CPU}")
   MESSAGE(STATUS "HOST_CPU_FORCED: ${HOST_CPU_FORCED}")
-  MESSAGE(STATUS "HOST_CPU_SUPPORTS_FLOAT16: ${HOST_CPU_SUPPORTS_FLOAT16}")
+  MESSAGE(STATUS "HOST_COMPILER_SUPPORTS_FLOAT16: ${HOST_COMPILER_SUPPORTS_FLOAT16}")
+  MESSAGE(STATUS "CLANG_SUPPORTS_FLOAT16_ON_CPU: ${CLANG_SUPPORTS_FLOAT16_ON_CPU}")
   MESSAGE(STATUS "HOST_CPU_ENABLE_DENORMS: ${HOST_CPU_ENABLE_DENORMS}")
   MESSAGE(STATUS "HOST_CPU_ENABLE_STACK_SIZE_CHECK: ${HOST_CPU_ENABLE_STACK_SIZE_CHECK}")
   endif()

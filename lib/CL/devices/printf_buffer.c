@@ -139,7 +139,7 @@ DEFINE_PRINT_INTS (ulong, int64_t, uint64_t)
     DEBUG_PRINTF (("[printf:floats:done]\n"));                                \
   }
 
-#ifdef HAVE_FLOAT16_TYPE
+#ifdef HOST_COMPILER_SUPPORTS_FLOAT16
 DEFINE_PRINT_FLOATS (_Float16)
 #endif
 DEFINE_PRINT_FLOATS (float)
@@ -562,7 +562,7 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                           }
                           else
                           {
-#ifdef HAVE_FLOAT16_TYPE
+#ifdef HOST_COMPILER_SUPPORTS_FLOAT16
                             __pocl_print_floats__Float16 (p, buffer,
                                                           vector_length);
 #else
