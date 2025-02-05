@@ -384,7 +384,6 @@ option(ENABLE_RDMA "Enable usage of RDMA libraries for memory allocations. Requi
 
 option(RENAME_POCL "Rename PoCL's OpenCL functions to PO<ocl_function>. Allows an user to call both PoCL and another OpenCL implementation." OFF)
 
-
 ##########################################################
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -448,7 +447,6 @@ if(HOST_CPU_CORECOUNT LESS 1)
   set(HOST_CPU_CORECOUNT 1)
 endif()
 message(STATUS "Host CPU cores: ${HOST_CPU_CORECOUNT}")
-
 
 ######################################################################################
 
@@ -962,6 +960,38 @@ endif()
 
 ######################################################################################
 
+set(HAVE_LIBSVML 0)
+if(X86)
+  set(ORIG_CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
+  # use static libraries, so that the poclbinary is independent of system
+  set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+  find_library(LIBSVML NAMES svml PATHS "/opt/intel/oneapi/compiler/latest/lib")
+  find_library(LIBIRC NAMES irc PATHS "/opt/intel/oneapi/compiler/latest/lib")
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ${ORIG_CMAKE_FIND_LIBRARY_SUFFIXES})
+  if(LIBSVML AND LIBIRC)
+    message(STATUS "Found LibSVML and LibIRC")
+    set(HAVE_LIBSVML 1)
+  else()
+    message(STATUS "LibSVML and LibIRC not found, vectorize-svml not available")
+  endif()
+endif()
+
+set(HAVE_SLEEF 0)
+if(ARM)
+  find_library(LIBSLEEF NAMES sleef)
+  set_expr(HAVE_SLEEF LIBSLEEF)
+endif()
+
+# should be very widely available with GCC installations, but does not cover
+# quite as much function/vector-width variants as SVML/SLEEF
+set(HAVE_LIBMVEC 0)
+if((NOT HAVE_SLEEF) AND (NOT HAVE_LIBSVML))
+  find_library(LIBMVEC NAMES mvec)
+  set_expr(HAVE_LIBMVEC LIBMVEC)
+endif()
+
+######################################################################################
+
 option(ENABLE_SLEEF "Use SLEEF for kernel library" ON)
 
 option(ENABLE_CONFORMANCE "Enable conformance to OpenCL standard. \
@@ -976,6 +1006,20 @@ if(ENABLE_CONFORMANCE AND (NOT ENABLE_SLEEF))
   message(FATAL_ERROR "conformance needs enabled SLEEF")
 endif()
 
+set(ENABLE_HOST_CPU_VECTORIZE_BUILTINS OFF)
+if((LLVM_VERSION_MAJOR GREATER 17) AND (NOT ENABLE_CONFORMANCE))
+  # these are experimental options and may change in future
+  option(ENABLE_HOST_CPU_VECTORIZE_SLEEF "vectorize builtins with SLEEF (ARM only)" ${HAVE_SLEEF})
+  option(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC "vectorize builtins with LIBMVEC" ${HAVE_LIBMVEC})
+  option(ENABLE_HOST_CPU_VECTORIZE_SVML "vectorize builtins with SVML" ${HAVE_LIBSVML})
+
+  if(ENABLE_HOST_CPU_VECTORIZE_SLEEF
+     OR ENABLE_HOST_CPU_VECTORIZE_LIBMVEC
+     OR ENABLE_HOST_CPU_VECTORIZE_SVML)
+    set(ENABLE_HOST_CPU_VECTORIZE_BUILTINS ON)
+  endif()
+
+endif()
 ######################################################################################
 
 unset(OPAQUE_PTR_FLAGS)
@@ -1036,6 +1080,15 @@ if(UNIX)
     set(DEFAULT_HOST_LD_FLAGS "-L/system/lib/ -shared -ldl -lc /system/lib/crtbegin_so.o /system/lib/crtend_so.o")
   else()
     set(DEFAULT_HOST_LD_FLAGS "-shared -nostartfiles")
+    if(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
+      set(DEFAULT_HOST_LD_FLAGS "${DEFAULT_HOST_LD_FLAGS} -lmvec")
+    endif()
+    if(ENABLE_HOST_CPU_VECTORIZE_SLEEF)
+      set(DEFAULT_HOST_LD_FLAGS "${DEFAULT_HOST_LD_FLAGS} ${LIBSLEEF}")
+    endif()
+    if(ENABLE_HOST_CPU_VECTORIZE_SVML)
+      set(DEFAULT_HOST_LD_FLAGS "${DEFAULT_HOST_LD_FLAGS} ${LIBSVML} ${LIBIRC}")
+    endif()
   endif()
   set(LIBMATH "-lm")
 elseif(WIN32)

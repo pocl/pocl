@@ -1,7 +1,7 @@
 # Portable Computing Language (PoCL)
 
-PoCL is a conformant implementation of the OpenCL 3.0
-standard which can be easily adapted for new targets.
+PoCL is a [conformant](https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_450)
+implementation of the OpenCL 3.0 standard which can be easily adapted for new targets.
 
 [Official web page](http://portablecl.org)
 
@@ -55,6 +55,8 @@ can be used from the build directory (without installing it system-wide).
 
 ### Support Matrix legend:
 
+:large_blue_diamond: Tested in CI extensively, passed the official upstream OpenCL-CTS
+
 :large_orange_diamond: Tested in CI extensively, including OpenCL-CTS tests
 
 :green_circle: : Tested in CI
@@ -67,7 +69,7 @@ can be used from the build directory (without installing it system-wide).
 
 | CPU device  |     LLVM 14    |     LLVM 15    |     LLVM 16     |     LLVM 17    |     LLVM 18     |
 |:------------|:--------------:|:---------------:|:--------------:|:---------------:|:---------------:|
-| [x86-64](https://github.com/pocl/pocl/actions/workflows/build_linux_gh.yml) | :green_circle: | :green_circle:  | :green_circle: | :large_orange_diamond: | :large_orange_diamond: |
+| [x86-64](https://github.com/pocl/pocl/actions/workflows/build_linux_gh.yml) | :green_circle: | :green_circle:  | :green_circle: | :large_orange_diamond: | :large_blue_diamond: |
 | [ARM64](https://github.com/pocl/pocl/actions/workflows/build_arm64.yml) | :yellow_circle: | :yellow_circle: |:yellow_circle: | :yellow_circle: | :green_circle:  |
 | i686    | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
 | ARM32   | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |

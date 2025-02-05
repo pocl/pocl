@@ -254,48 +254,118 @@ if(HOST_CPU_ENABLE_CL_KHR_FP16)
     libclc-pocl/log2.cl
     libclc-pocl/pow.cl
     libclc-pocl/fmod.cl
-    sleef-pocl/scalars.cl
-    sleef-pocl/ceil.cl
-    sleef-pocl/copysign.cl
-    sleef-pocl/exp2.cl
+
     sleef-pocl/exp.cl
+    sleef-pocl/exp2.cl
     sleef-pocl/fabs.cl
-    sleef-pocl/floor.cl
     sleef-pocl/fma.cl
+
     sleef-pocl/fmax.cl
     sleef-pocl/fmin.cl
     sleef-pocl/log10.cl
+
     sleef-pocl/log.cl
     sleef-pocl/ldexp.cl
     sleef-pocl/rint.cl
     sleef-pocl/round.cl
     sleef-pocl/sqrt.cl
-    sleef-pocl/trunc.cl
+
+    sleef-pocl/scalars.cl
     )
 
   list(APPEND SOURCES_WITH_SLEEF
-    fabs.cl
-    fma.cl
-    fmod.cl
-    copysign.cl
-    pow.cl
-    ceil.cl
     cos.cl
+    sin.cl
+    log2.cl
+    pow.cl
+    fmod.cl
+
     exp.cl
     exp2.cl
-    floor.cl
+    fabs.cl
+    fma.cl
+
     fmax.cl
     fmin.cl
     log10.cl
-    log2.cl
+
     log.cl
     ldexp.cl
     rint.cl
     round.cl
-    sin.cl
     sqrt.cl
+  )
+
+  if(LLVM_VERSION VERSION_GREATER_EQUAL 19.0)
+    list(REMOVE_ITEM SOURCES_WITH_SLEEF
+      libclc-pocl/cosh.cl
+      libclc-pocl/sinh.cl
+      libclc-pocl/pown.cl
+      libclc-pocl/tan.cl
+      libclc-pocl/tanh.cl
+      libclc-pocl/isinf.cl
+      libclc-pocl/isnan.cl
+      libclc-pocl/isfinite.cl
+      libclc-pocl/isnormal.cl
+      libclc-pocl/frexp.cl
+
+      # only available on Apple OS X
+      # libclc-pocl/sinpi.cl
+      # libclc-pocl/cospi.cl
+      # libclc-pocl/tanpi.cl
+
+      # these are available as Clang builtins (__builtin_XYZ), but not as LLVM
+      # intrinsics (llvm.XYZ.f32), only library calls.
+      #libclc-pocl/acosh.cl
+      #libclc-pocl/asinh.cl
+      #libclc-pocl/atanh.cl
+      #libclc-pocl/logb.cl
+      #sleef-pocl/log1p.cl
+      #sleef-pocl/expm1.cl
+      #sleef-pocl/modf.cl
+      #sleef-pocl/ilogb.cl
+      #sleef-pocl/hypot.cl
+      #sleef-pocl/atan2.cl
+      #sleef-pocl/erf.cl
+      #sleef-pocl/erfc.cl
+      #sleef-pocl/fdim.cl
+      #sleef-pocl/nextafter.cl
+      #libclc-pocl/remainder.cl
+      #libclc-pocl/remquo.cl
+
+      sleef-pocl/trunc.cl
+      sleef-pocl/ceil.cl
+      sleef-pocl/exp10.cl
+      sleef-pocl/floor.cl
+      sleef-pocl/acos.cl
+      sleef-pocl/asin.cl
+      sleef-pocl/atan.cl
+    )
+  list(APPEND SOURCES_WITH_SLEEF
+    cosh.cl
+    sinh.cl
+    tanh.cl
+    ceil.cl
+
+    pown.cl
+    tan.cl
+    acos.cl
+    asin.cl
+    atan.cl
+
+    exp10.cl
+    floor.cl
+    frexp.cl
+
+    isfinite.cl
+    isinf.cl
+    isnan.cl
+    isnormal.cl
+
     trunc.cl
-    isinf_half.cl)
+    )
+  endif()
+
 endif()
 
 
