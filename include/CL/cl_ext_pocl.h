@@ -93,7 +93,7 @@ typedef CL_API_ENTRY cl_int
  */
 #define CL_MEM_DEVICE_ADDRESS_EXT 0x5001
 
-typedef cl_ulong cl_mem_device_address_EXT;
+typedef cl_ulong cl_mem_device_address_ext;
 
 /* clSetKernelExecInfo(): CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT:
  * Similar to CL_KERNEL_EXEC_INFO_SVM_PTRS except for CL_MEM_DEVICE_ADDRESS_EXT
@@ -106,7 +106,7 @@ typedef cl_ulong cl_mem_device_address_EXT;
  * pointers as kernel arguments. */
 
 typedef cl_int (CL_API_CALL *clSetKernelArgDevicePointerEXT_fn) (
-    cl_kernel kernel, cl_uint arg_index, cl_mem_device_address_EXT dev_addr);
+    cl_kernel kernel, cl_uint arg_index, cl_mem_device_address_ext dev_addr);
 
 /* cl_ext_buffer_device_address (experimental stage) */
 #endif
@@ -517,7 +517,7 @@ clEnqueueSVMMemFillRectPOCL (cl_command_queue  command_queue,
                              cl_event *        event);
 
 extern CL_API_ENTRY cl_int CL_API_CALL clSetKernelArgDevicePointerEXT (
-    cl_kernel kernel, cl_uint arg_index, cl_mem_device_address_EXT dev_addr);
+    cl_kernel kernel, cl_uint arg_index, cl_mem_device_address_ext dev_addr);
 
 #endif // CL_NO_PROTOTYPES
 

@@ -33,7 +33,7 @@
  */
 CL_API_ENTRY cl_int CL_API_CALL
 POname (clSetKernelArgDevicePointerEXT) (cl_kernel kernel, cl_uint arg_index,
-                                         cl_mem_device_address_EXT dev_addr)
+                                         cl_mem_device_address_ext dev_addr)
     CL_API_SUFFIX__VERSION_1_2
 {
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (kernel)), CL_INVALID_KERNEL);
