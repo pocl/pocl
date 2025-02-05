@@ -405,18 +405,6 @@ set_tests_properties(
 value is changed at global_id: 6, local_id 2, group_id 1, to: 3
 ")
 
-if(LLVM_VERSION_MAJOR EQUAL 18)
-  set_tests_properties(
-  "regression/barrier_between_two_for_loops_cbs"
-  "regression/test_alignment_with_dynamic_wg_225_cbs"
-  "regression/test_alignment_with_dynamic_wg_173_cbs"
-  "regression/test_alignment_with_dynamic_wg_183_cbs"
-  "regression/test_alignment_with_dynamic_wg_283_cbs"
-  "regression/test_alignment_with_dynamic_wg_332_cbs"
-  "regression/test_alignment_with_dynamic_wg_323_cbs"
-  PROPERTIES DISABLED 1)
-endif()
-
 # Produced wrong results with LLVM 14. Works with all newer versions.
 # No point putting time for debugging.
 if(LLVM_VERSION_MAJOR EQUAL 14)
