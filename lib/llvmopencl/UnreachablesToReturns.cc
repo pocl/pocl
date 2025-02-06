@@ -72,17 +72,15 @@ static bool convertUnreachablesToReturns(Function &F) {
 #endif
       // this can happen when inlining functions which have unreachable Inst
       // we end up with a BB with 0 predecessors and a single unreachable
-      if (BB.hasNPredecessors(0)) {
+      if (BB.hasNPredecessors(0))
         PendingDeletableBBs.push_back(&BB);
-      } else {
+      else
         PendingUnreachableInst.push_back(UI);
-      }
     }
   }
 
-  for (auto BB : PendingDeletableBBs) {
+  for (auto BB : PendingDeletableBBs)
     BB->eraseFromParent();
-  }
 
   if (PendingUnreachableInst.empty())
     return false;
@@ -116,9 +114,8 @@ static bool convertUnreachablesToReturns(Function &F) {
       Builder.CreateRetVoid();
   }
 
-  for (auto UI : PendingUnreachableInst) {
+  for (auto UI : PendingUnreachableInst)
     UI->eraseFromParent();
-  }
 
   return true;
 }
