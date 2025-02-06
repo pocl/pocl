@@ -118,6 +118,7 @@ public:
     // capacity and position already set up
     PC.printf_buffer = PrintfBuffer;
     uint32_t Position = 0;
+    uint32_t ExecutionFailed = 0;
     PC.printf_buffer_position = &Position;
     assert(PC.printf_buffer != NULL);
     assert(PC.printf_buffer_capacity > 0);
@@ -129,10 +130,11 @@ public:
       for (size_t Y = r.rows().begin(); Y != r.rows().end(); Y++) {
         for (size_t Z = r.cols().begin(); Z != r.cols().end(); Z++) {
           K->workgroup((uint8_t *)Arguments.data(), (uint8_t *)&PC, X, Y, Z);
-          POCL_ATOMIC_ADD(RunCmd->execution_failed, PC.execution_failed);
+          ExecutionFailed |= PC.execution_failed;
         }
       }
     }
+    POCL_ATOMIC_OR(RunCmd->execution_failed, ExecutionFailed);
 
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
     pocl_write_printf_buffer((char *)PC.printf_buffer, Position);

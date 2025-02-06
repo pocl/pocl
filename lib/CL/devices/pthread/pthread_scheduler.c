@@ -324,7 +324,7 @@ work_group_scheduler (kernel_run_command *k,
 #endif
           k->workgroup ((uint8_t *)arguments, (uint8_t *)&pc,
                         gids[0], gids[1], gids[2]);
-          execution_failed += pc.execution_failed;
+          execution_failed |= pc.execution_failed;
         }
     }
   while (get_wg_index_range (k, &start_index, &end_index, &last_wgs,
@@ -337,7 +337,7 @@ work_group_scheduler (kernel_run_command *k,
   pocl_free_kernel_arg_array_with_locals ((void **)arguments,
                                           (void **)arguments2, k);
 
-  POCL_ATOMIC_ADD (k->execution_failed, execution_failed);
+  POCL_ATOMIC_OR (k->execution_failed, execution_failed);
 }
 
 #else /* OPENMP enabled scheduler */
@@ -384,7 +384,7 @@ work_group_scheduler (kernel_run_command *k,
           {
             ((pocl_workgroup_func)k->workgroup) ((uint8_t *)arguments,
                                                  (uint8_t *)&pc, x, y, z);
-            execution_failed += pc.execution_failed;
+            execution_failed |= pc.execution_failed;
           }
 
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
@@ -397,7 +397,7 @@ work_group_scheduler (kernel_run_command *k,
     free (local_mem);
     free (pc.printf_buffer);
 #pragma omp critical
-    k->execution_failed += execution_failed;
+    k->execution_failed |= execution_failed;
   } // #pragma omp parallel
 }
 

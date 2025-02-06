@@ -34,7 +34,8 @@ typedef struct _pocl_thread_t *pocl_thread_t;
 
 #if defined(__GNUC__) || defined(__clang__)
 
-#define POCL_ATOMIC_ADD(x, val) __atomic_add_fetch(&x, val, __ATOMIC_SEQ_CST);
+#define POCL_ATOMIC_ADD(x, val) __atomic_add_fetch(&x, val, __ATOMIC_SEQ_CST)
+#define POCL_ATOMIC_OR(x, val) __atomic_or_fetch(&x, val, __ATOMIC_SEQ_CST)
 #define POCL_ATOMIC_INC(x) __atomic_add_fetch(&x, 1, __ATOMIC_SEQ_CST)
 #define POCL_ATOMIC_DEC(x) __atomic_sub_fetch(&x, 1, __ATOMIC_SEQ_CST)
 #define POCL_ATOMIC_LOAD(x) __atomic_load_n(&x, __ATOMIC_SEQ_CST)
@@ -43,7 +44,8 @@ typedef struct _pocl_thread_t *pocl_thread_t;
   __sync_val_compare_and_swap(ptr, oldval, newval)
 
 #elif defined(_WIN32)
-#define POCL_ATOMIC_ADD(x, val) InterlockedAdd64(&x, val);
+#define POCL_ATOMIC_ADD(x, val) InterlockedAdd64(&x, val)
+#define POCL_ATOMIC_OR(x, val) InterlockedOr64(&x, val)
 #define POCL_ATOMIC_INC(x) InterlockedIncrement64(&x)
 #define POCL_ATOMIC_DEC(x) InterlockedDecrement64(&x)
 #define POCL_ATOMIC_LOAD(x) InterlockedOr64(&x, 0)

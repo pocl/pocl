@@ -392,7 +392,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
         {
           ((pocl_workgroup_func)cmd->command.run.wg) ((uint8_t *)arguments,
                                                       (uint8_t *)pc, x, y, z);
-          execution_failed += pc->execution_failed;
+          execution_failed |= pc->execution_failed;
         }
 
   pocl_cpu_restore_rm_and_ftz (rm, ftz);

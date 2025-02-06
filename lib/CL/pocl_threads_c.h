@@ -54,7 +54,8 @@ typedef pthread_t pocl_thread_t;
 /* See:
  * https://gcc.gnu.org/onlinedocs/gcc-4.7.4/gcc/_005f_005fatomic-Builtins.html
  */
-#define POCL_ATOMIC_ADD(x, val) __atomic_add_fetch (&x, val, __ATOMIC_SEQ_CST);
+#define POCL_ATOMIC_ADD(x, val) __atomic_add_fetch (&x, val, __ATOMIC_SEQ_CST)
+#define POCL_ATOMIC_OR(x, val) __atomic_or_fetch (&x, val, __ATOMIC_SEQ_CST)
 #define POCL_ATOMIC_INC(x) __atomic_add_fetch (&x, 1, __ATOMIC_SEQ_CST)
 #define POCL_ATOMIC_DEC(x) __atomic_sub_fetch (&x, 1, __ATOMIC_SEQ_CST)
 #define POCL_ATOMIC_LOAD(x) __atomic_load_n (&x, __ATOMIC_SEQ_CST)
@@ -63,7 +64,8 @@ typedef pthread_t pocl_thread_t;
   __sync_val_compare_and_swap (ptr, oldval, newval)
 
 #elif defined(_WIN32)
-#define POCL_ATOMIC_ADD(x, val) InterlockedAdd64 ((volatile LONG64 *)&x, val);
+#define POCL_ATOMIC_ADD(x, val) InterlockedAdd64 ((volatile LONG64 *)&x, val)
+#define POCL_ATOMIC_OR(x, val) InterlockedOr64 ((volatile LONG64 *)&x, val)
 #define POCL_ATOMIC_INC(x) InterlockedIncrement64 ((volatile LONG64 *)&x)
 #define POCL_ATOMIC_DEC(x) InterlockedDecrement64 ((volatile LONG64 *)&x)
 #define POCL_ATOMIC_LOAD(x) InterlockedOr64 ((volatile LONG64 *)&x, 0)
