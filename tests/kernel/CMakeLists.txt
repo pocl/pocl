@@ -115,7 +115,7 @@ foreach(VARIANT ${VARIANTS})
       COST 40.0
       PROCESSORS 1
       DEPENDS "pocl_version_check"
-      LABELS "internal;kernel;long")
+      LABELS "cpu;kernel;long")
 endforeach()
 
 foreach(VARIANT ${VARIANTS})
@@ -140,7 +140,7 @@ foreach(VARIANT ${VARIANTS})
       COST 4.0
       PROCESSORS 1
       DEPENDS "pocl_version_check"
-      LABELS "internal;kernel")
+      LABELS "cpu;kernel")
 endforeach()
 
 ######################################################################
@@ -165,7 +165,7 @@ set_tests_properties( "kernel/test_sampler_address_clamp_${VARIANT}"
     SKIP_REGULAR_EXPRESSION "SKIP\n"
     PROCESSORS 1
     DEPENDS "pocl_version_check"
-    LABELS "internal;kernel")
+    LABELS "cpu;kernel")
 
 set_tests_properties( "kernel/test_image_query_funcs_${VARIANT}"
   PROPERTIES
@@ -174,7 +174,7 @@ set_tests_properties( "kernel/test_image_query_funcs_${VARIANT}"
     SKIP_REGULAR_EXPRESSION "SKIP\n"
     PROCESSORS 1
     DEPENDS "pocl_version_check"
-    LABELS "internal;kernel")
+    LABELS "cpu;kernel")
 endforeach()
 ######################################################################
 
@@ -239,7 +239,7 @@ if(HOST_CPU_ENABLE_CL_KHR_FP16)
       PROCESSORS 1
       COST 120
       DEPENDS "pocl_version_check"
-      LABELS "internal;kernel")
+      LABELS "cpu;kernel")
   endforeach()
 endif()
 
@@ -269,7 +269,7 @@ foreach(VARIANT ${VARIANTS})
       PROCESSORS 1
       COST 120
       DEPENDS "pocl_version_check"
-      LABELS "internal;kernel")
+      LABELS "cpu;kernel")
 
   set_property(TEST
     "kernel/test_printf_${VARIANT}"

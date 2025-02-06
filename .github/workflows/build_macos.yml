@@ -115,9 +115,9 @@ jobs:
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
           if [ "${{ matrix.config }}" == "basic" ]; then
-            runCTest -L internal
+            runCTest -L cpu
           elif [ "${{ matrix.config }}" == "devel" ]; then
-            runCTest -L internal
+            runCTest -L cpu
           elif [ "${{ matrix.config }}" == "cts_spirv" ]; then
             runCTest -L conformance_suite_micro_spirv
           elif [ "${{ matrix.config }}" == "tier1" ]; then

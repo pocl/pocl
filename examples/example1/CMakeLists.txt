@@ -52,7 +52,7 @@ set_tests_properties( "examples/example1_dot_product" ${SPIREX}
     ${PROPS}
     PROCESSORS 1
     # devices which support SPIR
-    LABELS "internal;cuda;level0"
+    LABELS "cpu;cuda;level0"
     DEPENDS "pocl_version_check")
 
 # devices which don't support SPIR
@@ -81,7 +81,7 @@ set_tests_properties( "examples/example1_poclbin"
     ${PROPS}
     PROCESSORS 1
     ENVIRONMENT "POCL_KERNEL_CACHE=0;POCL_WORK_GROUP_SPECIALIZATION=0"
-    LABELS "poclbin;internal;level0"
+    LABELS "poclbin;cpu;level0"
     DEPENDS "pocl_version_check")
 
 if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)

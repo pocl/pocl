@@ -41,7 +41,7 @@ add_test(NAME "EinsteinToolkit" COMMAND "EinsteinToolkit")
 set_tests_properties( "EinsteinToolkit"
     PROPERTIES
     COST 15.0
-    LABELS "internal;EinsteinToolkit"
+    LABELS "cpu;EinsteinToolkit"
     DEPENDS "pocl_version_check")
 
 add_test(NAME "EinsteinToolkit_SubDev" COMMAND "EinsteinToolkit" s)

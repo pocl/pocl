@@ -82,7 +82,7 @@ foreach(VARIANT ${VARIANTS})
       COST 2.0
       PROCESSORS 1
       DEPENDS "pocl_version_check"
-      LABELS "internal;workgroup")
+      LABELS "cpu;workgroup")
 endforeach()
 
 set_tests_properties(
@@ -92,7 +92,7 @@ set_tests_properties(
     COST 2.0
     PROCESSORS 1
     DEPENDS "pocl_version_check"
-    LABELS "internal;workgroup")
+    LABELS "cpu;workgroup")
 
 add_test_pocl(NAME "workgroup/unconditional_barriers"
               EXPECTED_OUTPUT "basic_barriers_2_2_2_2.stdout"
@@ -161,7 +161,7 @@ foreach(VARIANT ${VARIANTS})
       COST 2.0
       PROCESSORS 1
       DEPENDS "pocl_version_check"
-      LABELS "internal;workgroup")
+      LABELS "cpu;workgroup")
   set_property(TEST ${TEST_LIST}
     APPEND PROPERTY ENVIRONMENT "POCL_MAX_COMPUTE_UNITS=1")
   

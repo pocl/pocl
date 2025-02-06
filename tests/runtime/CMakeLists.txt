@@ -165,7 +165,7 @@ if(HAVE_LIBJPEG_TURBO)
     PROCESSORS 1
     SKIP_RETURN_CODE 77
     DEPENDS "pocl_version_check"
-    LABELS "internal;runtime")
+    LABELS "cpu;runtime")
 endif()
 
 set_property(TEST
@@ -182,7 +182,7 @@ if(HAVE_LIBXSMM)
     PROCESSORS 1
     SKIP_RETURN_CODE 77
     DEPENDS "pocl_version_check"
-    LABELS "internal;runtime")
+    LABELS "cpu;runtime")
 endif()
 
 if(HAVE_ONNXRT)
@@ -193,7 +193,7 @@ if(HAVE_ONNXRT)
     PROCESSORS 1
     SKIP_RETURN_CODE 77
     DEPENDS "pocl_version_check"
-    LABELS "internal;runtime")
+    LABELS "cpu;runtime")
 endif()
 
 set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
@@ -220,7 +220,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
     COST 2.0
     PROCESSORS 1
     DEPENDS "pocl_version_check"
-    LABELS "internal;runtime")
+    LABELS "cpu;runtime")
 
 set_tests_properties(
   "runtime/clCreateSubDevices"

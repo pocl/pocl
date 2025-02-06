@@ -194,7 +194,7 @@ PoCL installation
    -DCMAKE_BUILD_TYPE=RelWithDebInfo -DSTATIC_LLVM=ON ..
 
 3. ninja install
-4. OPTIONAL: Run the test suite: ``ctest -j 128 -L internal``.
+4. OPTIONAL: Run the test suite: ``ctest -j 128 -L cpu``.
 5. When using PoCL you should export some environment variables. I
    suggest you create a env-pocl.sh script that exports the variables
    for you:

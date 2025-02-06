@@ -123,7 +123,7 @@ function(add_test_pocl)
                           PASS_REGULAR_EXPRESSION "OK"
                           FAIL_REGULAR_EXPRESSION "FAIL"
                           ENVIRONMENT POCL_WORK_GROUP_METHOD=${VARIANT}
-                          LABELS "internal;"
+                          LABELS "cpu"
                           DEPENDS "pocl_version_check")
 
     endif()

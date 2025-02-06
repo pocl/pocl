@@ -89,14 +89,14 @@ add_test_pocl(NAME "regression/test_workitem_func_outside_kernel" COMMAND "test_
 add_test(NAME "regression/test_program_scope_vars" COMMAND "test_program_scope_vars")
 set_tests_properties("regression/test_program_scope_vars"
   PROPERTIES
-    LABELS "internal;regression;level0"
+    LABELS "cpu;regression;level0"
     SKIP_RETURN_CODE 77)
 
 # this test requires two USM devices
 if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LEVEL0)
   add_test(NAME "regression/test_issue_1548" COMMAND "test_issue_1548")
   set_tests_properties("regression/test_issue_1548" PROPERTIES
-    LABELS "internal;regression;level0"
+    LABELS "cpu;regression;level0"
     ENVIRONMENT "POCL_DEVICES=level0 cpu"
     SKIP_RETURN_CODE 77)
 endif()
@@ -161,7 +161,7 @@ set_tests_properties(
     COST 1.5
     PROCESSORS 1
     DEPENDS "pocl_version_check"
-    LABELS "internal;regression")
+    LABELS "cpu;regression")
   set_tests_properties(
     "regression/test_program_from_binary_with_local_1_1_1_${VARIANT}"
     PROPERTIES
@@ -208,7 +208,7 @@ set_tests_properties(
     COST 1.5
     PROCESSORS 1
     DEPENDS "pocl_version_check"
-    LABELS "internal;regression")
+    LABELS "cpu;regression")
 endforeach()
 
 # other
@@ -259,7 +259,7 @@ foreach(VARIANT ${VARIANTS})
       COST 1.5
       PROCESSORS 1
       DEPENDS "pocl_version_check"
-      LABELS "internal;regression")
+      LABELS "cpu;regression")
 endforeach()
 
 

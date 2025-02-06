@@ -179,7 +179,7 @@ jobs:
           mkdir ${{ env.POCL_CACHE_DIR }}
           # the pocl_test_dlopen tests try to dlopen libraries from the build dir; however, we removed them at install step
           if [ "${{ matrix.config }}" == "install" ]; then
-            runCTest -L internal -E pocl_test_dlopen_
+            runCTest -L cpu -E pocl_test_dlopen_
           else
-            runCTest -L internal
+            runCTest -L cpu
           fi

@@ -163,9 +163,9 @@ jobs:
           elif [ "${{ matrix.config }}" == "asan" ]; then
             runCTest -L "runtime|asan"
           elif [ "${{ matrix.config }}" == "tsan" ]; then
-            runCTest -L "internal|tsan" -E "clCreateSubDevices"
+            runCTest -L "cpu|tsan"
           elif [ "${{ matrix.config }}" == "ubsan" ]; then
-            runCTest -L "internal|ubsan"
+            runCTest -L "cpu|ubsan"
           else
             echo "Unknown configuration" && exit 1
           fi

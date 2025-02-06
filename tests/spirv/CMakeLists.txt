@@ -43,12 +43,12 @@ set_tests_properties( "spirv/printf"
     COST 4.0
     PROCESSORS 1
     PASS_REGULAR_EXPRESSION "OK"
-    LABELS "internal;spirv"
+    LABELS "spirv"
     DEPENDS "pocl_version_check")
 
 # crashing for unknown reason on Mac OS X
-if(APPLE AND ARM64)
-  set_tests_properties( "spirv/printf" PROPERTIES DISABLED 1)
+if(NOT (APPLE AND ARM64))
+  set_property(TEST "spirv/printf" APPEND PROPERTY LABELS "cpu")
 endif()
 
 endif()
