@@ -122,12 +122,13 @@ foreach(VARIANT ${VARIANTS})
   # TODO: works on LLVM 15 but fails with LLVM 16, most likely reason:
   # https://github.com/pocl/pocl/issues/1525
   # https://github.com/grpc/grpc/issues/14587
-  if(APPLE AND ARM64)
-    set_tests_properties( "kernel/test_as_type_${VARIANT}" PROPERTIES DISABLED 1)
+  unset(ENABLE_CPU_TESTS)
+  if(NOT (APPLE AND ARM64))
+    list(APPEND ENABLE_CPU_TESTS "kernel/test_as_type_${VARIANT}")
   endif()
 
-  if(ENABLE_HOST_CPU_DEVICES AND RISCV)
-    set_tests_properties( "kernel/test_ilogb_${VARIANT}" PROPERTIES DISABLED 1)
+  if(NOT (ENABLE_HOST_CPU_DEVICES AND RISCV))
+    list(APPEND ENABLE_CPU_TESTS "kernel/test_ilogb_${VARIANT}")
   endif()
 
   set_tests_properties("kernel/test_min_max_${VARIANT}" "kernel/test_length_distance_${VARIANT}"
@@ -135,7 +136,7 @@ foreach(VARIANT ${VARIANTS})
     "kernel/test_convert_sat_regression_${VARIANT}"   "kernel/test_fabs_${VARIANT}"
     "kernel/test_rotate_${VARIANT}" "kernel/test_copy_signbit_${VARIANT}" "kernel/test_ilogb_${VARIANT}"
     "kernel/test_ldexp_${VARIANT}" "kernel/test_isnan_${VARIANT}" "kernel/test_short16_${VARIANT}"
-    "kernel/test_frexp_modf_${VARIANT}"
+    "kernel/test_frexp_modf_${VARIANT}" ${ENABLE_CPU_TESTS}
     PROPERTIES
       COST 4.0
       PROCESSORS 1
