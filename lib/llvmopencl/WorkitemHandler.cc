@@ -120,6 +120,10 @@ void WorkitemHandler::Initialize(Kernel *K_) {
                     M->getOrInsertGlobal(GROUP_ID_G_NAME(1), ST),
                     M->getOrInsertGlobal(GROUP_ID_G_NAME(2), ST)};
 
+  NumGroupsGlobals = {M->getOrInsertGlobal(NGROUPS_G_NAME(0), ST),
+                      M->getOrInsertGlobal(NGROUPS_G_NAME(1), ST),
+                      M->getOrInsertGlobal(NGROUPS_G_NAME(2), ST)};
+
   GlobalIdOrigins = {0, 0, 0};
   GlobalSizes = {0, 0, 0};
 }
@@ -791,6 +795,8 @@ void WorkitemHandler::handleWorkitemFunctions() {
             Replacement = Builder.CreateLoad(ST, GlobalIdGlobals[Dim]);
           else if (Callee->getName() == GROUP_ID_BUILTIN_NAME)
             Replacement = Builder.CreateLoad(ST, GroupIdGlobals[Dim]);
+          else if (Callee->getName() == NGROUPS_BUILTIN_NAME)
+            Replacement = Builder.CreateLoad(ST, NumGroupsGlobals[Dim]);
           else if (Callee->getName() == LS_BUILTIN_NAME)
             Replacement = Builder.CreateLoad(ST, LocalSizeGlobals[Dim]);
           else if (Callee->getName() == LID_BUILTIN_NAME)

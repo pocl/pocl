@@ -726,10 +726,16 @@ llvm::Type *SizeT(llvm::Module *M) {
   return IntegerType::get(M->getContext(), AddressBits);
 }
 
-bool isWorkitemFunctionWithOnlyCompilerExpandableCalls(const llvm::Function &F) {
-  Instruction::const_use_iterator UI = F.use_begin(), UE = F.use_end();
-  for (; UI != UE; ++UI) {
-    llvm::CallInst *Call = dyn_cast<llvm::CallInst>(UI->getUser());
+bool isWorkitemFunctionWithOnlyCompilerExpandableCalls(
+    const llvm::Function &F) {
+
+  if (F.getName() != GID_BUILTIN_NAME && F.getName() != GS_BUILTIN_NAME &&
+      F.getName() != GROUP_ID_BUILTIN_NAME && F.getName() != LID_BUILTIN_NAME &&
+      F.getName() != LS_BUILTIN_NAME && F.getName() != NGROUPS_BUILTIN_NAME)
+    return false;
+
+  for (const auto &U : F.uses()) {
+    llvm::CallInst *Call = dyn_cast<llvm::CallInst>(U.getUser());
     if (Call == nullptr)
       continue;
     if (!isCompilerExpandableWIFunctionCall(*Call))
@@ -746,7 +752,8 @@ bool isCompilerExpandableWIFunctionCall(const llvm::CallInst &Call) {
       Callee->getName() != GS_BUILTIN_NAME &&
       Callee->getName() != GROUP_ID_BUILTIN_NAME &&
       Callee->getName() != LID_BUILTIN_NAME &&
-      Callee->getName() != LS_BUILTIN_NAME)
+      Callee->getName() != LS_BUILTIN_NAME &&
+      Callee->getName() != NGROUPS_BUILTIN_NAME)
     return false;
   return isa<llvm::ConstantInt>(Call.getArgOperand(0));
 }
