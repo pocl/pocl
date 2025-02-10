@@ -334,11 +334,6 @@ char *pocl_level0_build_hash(cl_device_id ClDevice) {
 }
 
 unsigned int pocl_level0_probe(struct pocl_device_ops *Ops) {
-  int EnvCount = pocl_device_get_env_count(Ops->device_name);
-
-  if (EnvCount <= 0) {
-    return 0;
-  }
 
   ze_result_t Res = zeInit(0);
   if (Res != ZE_RESULT_SUCCESS) {
@@ -352,6 +347,11 @@ unsigned int pocl_level0_probe(struct pocl_device_ops *Ops) {
   if (Res != ZE_RESULT_SUCCESS) {
     POCL_MSG_ERR("zeDriverGet FAILED\n");
     return 0;
+  }
+
+  int EnvCount = pocl_device_get_env_count(Ops->device_name);
+  if (EnvCount > 0 && EnvCount < DriverCount) {
+    DriverCount = EnvCount;
   }
 
   for (unsigned I = 0; I < DriverCount; ++I) {
