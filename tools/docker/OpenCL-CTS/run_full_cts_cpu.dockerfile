@@ -24,7 +24,7 @@
 
 
 # note that this won't work on Ubuntu 22.04 without some extra work (ocl-icd is too old)
-FROM amd64/ubuntu:24.04
+FROM amd64/ubuntu:24.04@sha256:1dacde97de49b533b8eaa9fd4747fbc605cb3fbd503f0803871a0bca84754d45
 
 # LLVM version to build PoCL with
 ARG LLVM_VERSION=18
