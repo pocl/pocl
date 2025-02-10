@@ -340,7 +340,9 @@ char *pocl_level0_build_hash(cl_device_id ClDevice) {
 unsigned int pocl_level0_probe(struct pocl_device_ops *Ops) {
   int EnvCount = pocl_device_get_env_count(Ops->device_name);
 
-  if (EnvCount <= 0) {
+  // POCL_DEVICES is set but doesn't contain level0 -> return 0
+  // POCL_DEVICES is unset -> continue
+  if (EnvCount == 0) {
     return 0;
   }
 
@@ -366,6 +368,11 @@ unsigned int pocl_level0_probe(struct pocl_device_ops *Ops) {
   }
   for (auto &Level0Driver : L0DriverInstances) {
     TotalL0Devices += Level0Driver->getNumDevices();
+  }
+  if (EnvCount > 0 && EnvCount < TotalL0Devices) {
+    TotalL0Devices = EnvCount;
+    POCL_MSG_PRINT_LEVEL0("LevelZero Probe: limiting devices to %u\n",
+                          TotalL0Devices);
   }
 
   POCL_MSG_PRINT_LEVEL0("LevelZero Probe devices: %u\n", TotalL0Devices);
