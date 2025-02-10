@@ -230,12 +230,16 @@ add_test_pocl(NAME "kernel/test_printf_vectors_doublen"
               EXPECTED_OUTPUT "test_printf_vectors_doublen_expout.txt"
               COMMAND "kernel" "test_printf_vectors_doublen")
 
-if(HOST_CPU_ENABLE_CL_KHR_FP16)
-  add_test_pocl(NAME "kernel/test_printf_vectors_halfn"
-                EXPECTED_OUTPUT "test_printf_vectors_halfn_expout.txt"
-                COMMAND "kernel" "test_printf_vectors_halfn")
+add_test_pocl(NAME "kernel/test_printf_vectors_halfn"
+              EXPECTED_OUTPUT "test_printf_vectors_halfn_expout.txt"
+              COMMAND "kernel" "test_printf_vectors_halfn")
+
+# HOST_CPU_ENABLE_CL_KHR_FP16 + ENABLE_HOST_CPU_VECTORIZE_BUILTINS
+# are necessary for opencl builtins (lib/kernel) to have fp16 support
+if(HOST_CPU_ENABLE_CL_KHR_FP16 AND ENABLE_HOST_CPU_VECTORIZE_BUILTINS)
   foreach(VARIANT ${VARIANTS})
   set_tests_properties("kernel/test_printf_vectors_halfn_${VARIANT}"
+    "kernel/test_halfs_${VARIANT}" "kernel/test_shuffle_half_${VARIANT}"
     PROPERTIES
       PROCESSORS 1
       COST 120
