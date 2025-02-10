@@ -70,6 +70,45 @@ To run PoCL's internal tests delve into the build directory and run::
 
 Where ``<N>`` is a number of tests to be run in parallel.
 
+Building PoCL with Level Zero support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For building PoCL with Level Zero support, following additional
+dependencies are needed:
+
+* ``pkg-config`` and ``llvm-spirv`` tools, which can be installed
+  through ``conda-forge`` tool (https://conda-forge.org/download/)
+  with ``conda install pkg-config llvm-spirv-19``, for example. The
+  llvm-spirv version must match to the LLVM library used by the PoCL.
+
+* Level Zero SDK. Windows binaries are available at
+  https://github.com/oneapi-src/level-zero/releases/. Download
+  ``level-zero-win-sdk-v#.##.#.zip`` and extract it somewhere.
+
+* Intel Graphics drivers
+  (https://www.intel.com/content/www/us/en/download/785597/intel-arc-iris-xe-graphics-windows.html)
+  for running OpenCL applications on integrated and discrete Intel GPUs.
+
+Once installed, PoCL needs to be configured with additional
+options. The following assumes that the ``conda-forge`` is installed
+at its default location and the Level Zero SDK is extracted under
+``C:\level-zero-sdk``::
+
+  -DCMAKE_PREFIX_PATH="C:\level-zero-sdk;C\Users\<username>\AppData\Local\miniforge3\Library"
+
+With ``<username>`` changed to your Windows login name.
+
+To make Level Zero to appear for OpenCL applications, set the
+following environment variable::
+
+  $env:POCL_DEVICES="level0"
+
+Or::
+
+  $env:POCL_DEVICES="level0 cpu"
+
+For having both the Level Zero devices and the host CPU available.
+
 
 Prerequisites for MinGW Route
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
