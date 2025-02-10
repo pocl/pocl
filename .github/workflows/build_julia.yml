@@ -67,7 +67,6 @@ jobs:
               "OpenCL_Headers_jll",
               "Hwloc_jll",
               "CMake_jll",
-              "OpenCL"
             ])
 
             # versioned
