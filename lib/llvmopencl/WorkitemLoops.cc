@@ -986,7 +986,7 @@ llvm::Value *tryToRematerialize(llvm::Instruction *Before, llvm::Value *Def,
 
   llvm::Instruction *Copy = CanDoIt == nullptr ? Inst->clone() : nullptr;
   if (Copy != nullptr)
-    Copy->insertBefore(Before);
+    Copy->insertBefore(Inst2InsertPt(Before));
   for (unsigned i = 0; i < Inst->getNumOperands(); ++i) {
     llvm::Value *ClonedArg =
         tryToRematerialize(Copy, Inst->getOperand(i), CanDoIt, Depth);

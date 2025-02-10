@@ -247,7 +247,10 @@ else()
   list(APPEND SOURCES_WITH_SLEEF barrier.ll)
 endif()
 
-if(HOST_CPU_ENABLE_CL_KHR_FP16)
+# if ENABLE_HOST_CPU_VECTORIZE_BUILTINS is enabled, use Clang/LLVM builtins
+# this makes vectorization of (some) OpenCL builtins possible,
+# while also making FP16 versions available (if FP16 is available)
+if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS)
   list(REMOVE_ITEM SOURCES_WITH_SLEEF
     libclc-pocl/cos.cl
     libclc-pocl/sin.cl

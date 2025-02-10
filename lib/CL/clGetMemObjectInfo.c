@@ -68,20 +68,20 @@ POname (clGetMemObjectInfo) (
                                memobj->properties);
   case CL_MEM_DEVICE_ADDRESS_EXT:
     {
-      POCL_RETURN_ERROR_ON (!memobj->has_device_address, CL_INVALID_MEM_OBJECT,
+      POCL_RETURN_ERROR_ON (!memobj->has_device_address, CL_INVALID_OPERATION,
                             "The cl_mem was not allocated using the "
                             " cl_ext_buffer_device_address extension\n");
 
       cl_context context = memobj->context;
       POCL_RETURN_GETINFO_SIZE_CHECK (context->num_devices
-                                      * sizeof (cl_mem_device_address_EXT));
-      cl_mem_device_address_EXT *addresses
-        = (cl_mem_device_address_EXT *)param_value;
+                                      * sizeof (cl_mem_device_address_ext));
+      cl_mem_device_address_ext *addresses
+        = (cl_mem_device_address_ext *)param_value;
       for (size_t i = 0; i < context->num_devices; ++i)
         {
           cl_device_id dev = context->devices[i];
           pocl_mem_identifier *p = &memobj->device_ptrs[dev->global_mem_id];
-          addresses[i] = (cl_mem_device_address_EXT)p->device_addr;
+          addresses[i] = (cl_mem_device_address_ext)p->device_addr;
         }
       return CL_SUCCESS;
     }

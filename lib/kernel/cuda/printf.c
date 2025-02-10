@@ -31,7 +31,7 @@ int
 printf(__attribute__((address_space(4))) char* restrict format, ...)
 {
   // TODO: Might need more than 2 words for (e.g.) vectors
-  char arg_data[8];
+  char arg_data[8] __attribute__ ((aligned (8)));
 
   va_list ap;
   va_start(ap, format);

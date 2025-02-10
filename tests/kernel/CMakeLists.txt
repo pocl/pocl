@@ -58,25 +58,6 @@ add_test_pocl(NAME "kernel/test_hadd"
               WORKITEM_HANDLER "loops;loopvec;cbs"
               COMMAND "kernel" "test_hadd")
 
-
-# convert_type_{4,8,16} + hadd/as_type/bitselect produce very large kernels
-# that can cause LLVM to spend extremely long time on optimization,
-# and Level Zero can timeout executing kernels.
-# enable the tests but add "long" label so ctest can skip easily
-
-set(VARIANTS "loopvec;cbs")
-foreach(VARIANT ${VARIANTS})
-  set_tests_properties( "kernel/test_as_type_${VARIANT}" "kernel/test_bitselect_${VARIANT}"
-    "kernel/test_convert_type_1_${VARIANT}" "kernel/test_convert_type_2_${VARIANT}" "kernel/test_convert_type_4_${VARIANT}"
-    "kernel/test_convert_type_8_${VARIANT}" "kernel/test_convert_type_16_${VARIANT}"
-    "kernel/test_hadd_${VARIANT}"
-    PROPERTIES
-      COST 40.0
-      PROCESSORS 1
-      DEPENDS "pocl_version_check"
-      LABELS "internal;kernel;long")
-endforeach()
-
 add_test_pocl(NAME "kernel/test_min_max"
               COMMAND "kernel" "test_min_max")
 
@@ -119,16 +100,35 @@ add_test_pocl(NAME "kernel/test_frexp_modf"
 add_test_pocl(NAME "kernel/test_halfs"
               COMMAND "kernel" "test_halfs")
 
+# convert_type_{4,8,16} + hadd/as_type/bitselect produce very large kernels
+# that can cause LLVM to spend extremely long time on optimization,
+# and Level Zero can timeout executing kernels.
+# enable the tests but add "long" label so ctest can skip easily
+
+set(VARIANTS "loopvec;cbs")
+foreach(VARIANT ${VARIANTS})
+  set_tests_properties( "kernel/test_as_type_${VARIANT}" "kernel/test_bitselect_${VARIANT}"
+    "kernel/test_convert_type_1_${VARIANT}" "kernel/test_convert_type_2_${VARIANT}" "kernel/test_convert_type_4_${VARIANT}"
+    "kernel/test_convert_type_8_${VARIANT}" "kernel/test_convert_type_16_${VARIANT}"
+    "kernel/test_hadd_${VARIANT}" "kernel/test_rotate_${VARIANT}"
+    PROPERTIES
+      COST 40.0
+      PROCESSORS 1
+      DEPENDS "pocl_version_check"
+      LABELS "cpu;kernel;long")
+endforeach()
+
 foreach(VARIANT ${VARIANTS})
   # TODO: works on LLVM 15 but fails with LLVM 16, most likely reason:
   # https://github.com/pocl/pocl/issues/1525
   # https://github.com/grpc/grpc/issues/14587
-  if(APPLE AND ARM64)
-    set_tests_properties( "kernel/test_as_type_${VARIANT}" PROPERTIES DISABLED 1)
+  unset(ENABLE_CPU_TESTS)
+  if(NOT (APPLE AND ARM64))
+    list(APPEND ENABLE_CPU_TESTS "kernel/test_as_type_${VARIANT}")
   endif()
 
-  if(ENABLE_HOST_CPU_DEVICES AND RISCV)
-    set_tests_properties( "kernel/test_ilogb_${VARIANT}" PROPERTIES DISABLED 1)
+  if(NOT (ENABLE_HOST_CPU_DEVICES AND RISCV))
+    list(APPEND ENABLE_CPU_TESTS "kernel/test_ilogb_${VARIANT}")
   endif()
 
   set_tests_properties("kernel/test_min_max_${VARIANT}" "kernel/test_length_distance_${VARIANT}"
@@ -136,12 +136,12 @@ foreach(VARIANT ${VARIANTS})
     "kernel/test_convert_sat_regression_${VARIANT}"   "kernel/test_fabs_${VARIANT}"
     "kernel/test_rotate_${VARIANT}" "kernel/test_copy_signbit_${VARIANT}" "kernel/test_ilogb_${VARIANT}"
     "kernel/test_ldexp_${VARIANT}" "kernel/test_isnan_${VARIANT}" "kernel/test_short16_${VARIANT}"
-    "kernel/test_frexp_modf_${VARIANT}"
+    "kernel/test_frexp_modf_${VARIANT}" ${ENABLE_CPU_TESTS}
     PROPERTIES
       COST 4.0
       PROCESSORS 1
       DEPENDS "pocl_version_check"
-      LABELS "internal;kernel")
+      LABELS "cpu;kernel")
 endforeach()
 
 ######################################################################
@@ -166,7 +166,7 @@ set_tests_properties( "kernel/test_sampler_address_clamp_${VARIANT}"
     SKIP_REGULAR_EXPRESSION "SKIP\n"
     PROCESSORS 1
     DEPENDS "pocl_version_check"
-    LABELS "internal;kernel")
+    LABELS "cpu;kernel")
 
 set_tests_properties( "kernel/test_image_query_funcs_${VARIANT}"
   PROPERTIES
@@ -175,7 +175,7 @@ set_tests_properties( "kernel/test_image_query_funcs_${VARIANT}"
     SKIP_REGULAR_EXPRESSION "SKIP\n"
     PROCESSORS 1
     DEPENDS "pocl_version_check"
-    LABELS "internal;kernel")
+    LABELS "cpu;kernel")
 endforeach()
 ######################################################################
 
@@ -240,7 +240,7 @@ if(HOST_CPU_ENABLE_CL_KHR_FP16)
       PROCESSORS 1
       COST 120
       DEPENDS "pocl_version_check"
-      LABELS "internal;kernel")
+      LABELS "cpu;kernel")
   endforeach()
 endif()
 
@@ -270,7 +270,7 @@ foreach(VARIANT ${VARIANTS})
       PROCESSORS 1
       COST 120
       DEPENDS "pocl_version_check"
-      LABELS "internal;kernel")
+      LABELS "cpu;kernel")
 
   set_property(TEST
     "kernel/test_printf_${VARIANT}"

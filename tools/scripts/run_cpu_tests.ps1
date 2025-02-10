@@ -37,12 +37,12 @@ $TEST_TYPE = $args[0]
 
 if ($TEST_TYPE -eq "cbs") {
     $Env:POCL_WORK_GROUP_METHOD=cbs
-    ctest -L internal @args
+    ctest -L cpu @args
 } elseif ($TEST_TYPE -eq "loopvec") {
     $Env:POCL_WORK_GROUP_METHOD=loopvec
-    ctest -L internal @args
+    ctest -L cpu @args
 } elseif ($TEST_TYPE -eq "mingw") {
-    ctest -L internal -LE mingw_fail @args
+    ctest -L cpu -LE mingw_fail @args
 } else {
-    ctest -L internal @args
+    ctest -L cpu @args
 }

@@ -24,11 +24,7 @@
 
 #include "templates.h"
 
-#if !__has_builtin(__builtin_isinff16)
-#undef __IF_FP16
-#define __IF_FP16(X)
-#endif
-
 #define __builtin_isinff __builtin_isinf
+#define __builtin_isinff16 __builtin_isinf
 
 DEFINE_BUILTIN_L_V(isinf)

@@ -499,8 +499,10 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
 
   addPass(Passes, "always-inline", PassType::Module);
 
-  // this must be done AFTER inlining, see note above
+  // both of these must be done AFTER inlining, see note above
   addPass(Passes, "automatic-locals", PassType::Module);
+  if (!Dev->spmd)
+    addPass(Passes, "unreachables-to-returns");
 
   // must come AFTER flatten-globals & always-inline
   addPass(Passes, "optimize-wi-gvars");

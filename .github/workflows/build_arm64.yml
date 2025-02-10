@@ -78,4 +78,4 @@ jobs:
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd $BUILD_DIR && ctest -j$(nproc) $CTEST_FLAGS -L internal -E 'test_shuffle_half_'
+          cd $BUILD_DIR && ctest -j$(nproc) $CTEST_FLAGS -L cpu -LE long -E 'test_shuffle_half_'

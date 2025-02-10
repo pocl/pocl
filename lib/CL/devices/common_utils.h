@@ -54,7 +54,12 @@ struct kernel_run_command
   struct pocl_argument *kernel_args;
   kernel_run_command *prev;
   kernel_run_command *next;
-  unsigned long ref_count;
+  /* each thread working on this kernel_run_command holds a reference */
+  unsigned ref_count;
+  /* if execution of the kernel fails (e.g. unreachable inst / "exception"),
+   * this flag should be set to non-zero and subsequently
+   * the Event status should be set to CL_FAILED */
+  unsigned execution_failed;
 
   /* actual kernel arguments. these are setup once at the kernel setup
    * phase, then each thread sets up the local arguments for itself. */

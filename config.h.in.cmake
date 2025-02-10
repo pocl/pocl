@@ -90,7 +90,7 @@
 
 #cmakedefine HAVE_CLOCK_GETTIME
 
-#cmakedefine HAVE_FLOAT16_TYPE
+#cmakedefine HOST_COMPILER_SUPPORTS_FLOAT16
 
 #cmakedefine HAVE_FDATASYNC
 

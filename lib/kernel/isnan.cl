@@ -24,11 +24,7 @@
 
 #include "templates.h"
 
-#if !__has_builtin(__builtin_isnanf16)
-#undef __IF_FP16
-#define __IF_FP16(X)
-#endif
-
 #define __builtin_isnanf __builtin_isnan
+#define __builtin_isnanf16 __builtin_isnan
 
 DEFINE_BUILTIN_L_V(isnan)

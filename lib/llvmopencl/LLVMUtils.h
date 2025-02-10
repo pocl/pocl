@@ -177,11 +177,6 @@ void CloneFunctionIntoAbs(llvm::Function *NewFunc,
                     Returns, NameSuffix, CodeInfo, TypeMapper, Materializer);
 }
 
-#if LLVM_MAJOR < 15
-// Globals
-#define getValueType getType()->getElementType
-#endif /* LLVM_OPAQUE_POINTERS */
-
 // macros for registering LLVM passes & analyses with old & new PM
 
 #define REGISTER_NEW_FPASS(PNAME, PCLASS, PDESC)                               \
@@ -252,9 +247,23 @@ void CloneFunctionIntoAbs(llvm::Function *NewFunc,
 #define REGISTER_OLD_FANALYSIS(PNAME, PCLASS, PDESC)                          \
   static llvm::RegisterPass<PCLASS> X (PNAME, PDESC)
 
+#if LLVM_MAJOR < 15
+// Globals
+#define getValueType getType()->getElementType
+#endif /* LLVM_OPAQUE_POINTERS */
+
 #if LLVM_MAJOR < 16
 // Avoid the deprecation warning with later LLVMs.
 #define starts_with startswith
+#endif
+
+#if LLVM_MAJOR < 20
+#define CreateBuilder(BUILDER, BB) IRBuilder<> BUILDER(BB.getFirstNonPHI())
+#define Inst2InsertPt(X) X
+#else
+#define CreateBuilder(BUILDER, BB)                                             \
+  IRBuilder<> BUILDER(&BB, BB.getFirstNonPHIIt());
+#define Inst2InsertPt(X) X->getIterator()
 #endif
 
 #endif

@@ -325,25 +325,24 @@ if(ENABLE_LLVM_FILECHECKS)
   endif()
 endif()
 
-if(NOT DEFINED LLVM_SPIRV)
-  find_program(LLVM_SPIRV NAMES "llvm-spirv${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "llvm-spirv-${LLVM_VERSION_MAJOR}${CMAKE_EXECUTABLE_SUFFIX}" "llvm-spirv${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}")
-  if(LLVM_SPIRV)
-    execute_process(
-        COMMAND "${LLVM_SPIRV}" "--version"
-        OUTPUT_VARIABLE LLVM_SPIRV_VERSION_VALUE
-        RESULT_VARIABLE LLVM_SPIRV_VERSION_RETVAL
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    if(${LLVM_SPIRV_VERSION_RETVAL} EQUAL 0)
-        string(REGEX MATCH "LLVM version ([0-9]*)" LLVM_SPIRV_VERSION_MATCH ${LLVM_SPIRV_VERSION_VALUE})
-        if(NOT ${CMAKE_MATCH_1} EQUAL ${LLVM_VERSION_MAJOR})
-          unset(LLVM_SPIRV CACHE)
-        endif()
-    else()
-      unset(LLVM_SPIRV CACHE)
-    endif()
+find_program(LLVM_SPIRV NAMES "llvm-spirv${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "llvm-spirv-${LLVM_VERSION_MAJOR}${CMAKE_EXECUTABLE_SUFFIX}" "llvm-spirv${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}")
+if(LLVM_SPIRV)
+  execute_process(
+      COMMAND "${LLVM_SPIRV}" "--version"
+      OUTPUT_VARIABLE LLVM_SPIRV_VERSION_VALUE
+      RESULT_VARIABLE LLVM_SPIRV_VERSION_RETVAL
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  if(${LLVM_SPIRV_VERSION_RETVAL} EQUAL 0)
+      string(REGEX MATCH "LLVM version ([0-9]*)" LLVM_SPIRV_VERSION_MATCH ${LLVM_SPIRV_VERSION_VALUE})
+      if(NOT ${CMAKE_MATCH_1} EQUAL ${LLVM_VERSION_MAJOR})
+        unset(LLVM_SPIRV CACHE)
+      endif()
+  else()
+    unset(LLVM_SPIRV CACHE)
   endif()
 endif()
+
 
 if(LLVM_SPIRV)
   message(STATUS "Using llvm-spirv: ${LLVM_SPIRV}")
@@ -755,13 +754,16 @@ endif()
 #        Early versions provided FP16 builtins in a different ABI. A workaround is
 #        to use a small code snippet to check the ABI if you cannot make sure of it.
 
-if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED HOST_CPU_SUPPORTS_FLOAT16)
-  set(HOST_CPU_SUPPORTS_FLOAT16 0)
-  message(STATUS "Checking host support for _Float16 type")
+if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED CLANG_SUPPORTS_FLOAT16_ON_CPU)
+  set(CLANG_SUPPORTS_FLOAT16_ON_CPU 0)
+  message(STATUS "Checking Device-side (Clang/LLVM) support for _Float16 type")
     custom_try_compile_clang_silent("_Float16 callfp16(_Float16 a) { return a * 1.8f16; };" "_Float16 x=callfp16((_Float16)argc);"
     RESV --target=${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${SELECTED_HOST_CPU})
   if(RESV EQUAL 0)
-    set(HOST_CPU_SUPPORTS_FLOAT16 1)
+    message(STATUS "Clang supports _Float16 type on CPU")
+    set(CLANG_SUPPORTS_FLOAT16_ON_CPU 1)
+  else()
+    message(STATUS "Clang doesn't support _Float16 type on CPU")
   endif()
 endif()
 

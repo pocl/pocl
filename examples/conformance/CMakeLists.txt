@@ -99,8 +99,8 @@ if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
     "-a" "${SPIRV_AS}"
     "-l" "${SPIRV_VAL}")
 else()
-  message(WARNING "spirv tools not found - disabling SPIRV tests in CTS")
-  set(CTS_INSTALL_COMMAND "")
+  message(WARNING "llvm-spirv or spirv-tools not found - disabling SPIRV tests in CTS")
+  set(CTS_INSTALL_COMMAND ${CMAKE_COMMAND} -E echo "install step disabled")
 endif()
 
 set(UPSTREAM_CMAKE_ARGS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")

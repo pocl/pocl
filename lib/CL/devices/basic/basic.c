@@ -376,6 +376,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
 
   pc->printf_buffer_capacity = cmd->device->printf_buffer_size;
   assert (pc->printf_buffer_capacity > 0);
+  uint32_t execution_failed = 0;
 
   pc->global_var_buffer = program->gvar_storage[dev_i];
 
@@ -388,8 +389,11 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
   for (z = 0; z < pc->num_groups[2]; ++z)
     for (y = 0; y < pc->num_groups[1]; ++y)
       for (x = 0; x < pc->num_groups[0]; ++x)
-        ((pocl_workgroup_func) cmd->command.run.wg)
-	  ((uint8_t *)arguments, (uint8_t *)pc, x, y, z);
+        {
+          ((pocl_workgroup_func)cmd->command.run.wg) ((uint8_t *)arguments,
+                                                      (uint8_t *)pc, x, y, z);
+          execution_failed |= pc->execution_failed;
+        }
 
   pocl_cpu_restore_rm_and_ftz (rm, ftz);
 

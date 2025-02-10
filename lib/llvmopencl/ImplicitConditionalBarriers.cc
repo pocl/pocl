@@ -171,7 +171,7 @@ ImplicitConditionalBarriers::run(llvm::Function &F,
     // TODO: investigate. It might related to the alloca-converted
     // PHIs. It has a loop that is autoconverted to a b-loop and the
     // conditional barrier is inserted after the loop short cut check.
-    Barrier::create(Pos->getFirstNonPHI());
+    Barrier::createAtStart(Pos);
 
     Changed = true;
 
@@ -180,7 +180,7 @@ ImplicitConditionalBarriers::run(llvm::Function &F,
     Pos->dump();
 #endif
     if (BasicBlock *Source = Pos->getSinglePredecessor()) {
-      Barrier::create(Source->getTerminator());
+      Barrier::createAtEnd(Source);
 #ifdef DEBUG_COND_BARRIERS
       std::cerr << "### added an implicit barrier to a source of the BB as well"
                 << std::endl;

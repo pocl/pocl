@@ -42,7 +42,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [18, 19]
+        llvm: [19, 20]
         # cts_spirv = cts with SPIR-V
         # tier1 = includes CTS without SPIR-V
         # chipstar 1.1 only supports LLVM up to 17
@@ -163,9 +163,9 @@ jobs:
           elif [ "${{ matrix.config }}" == "asan" ]; then
             runCTest -L "runtime|asan"
           elif [ "${{ matrix.config }}" == "tsan" ]; then
-            runCTest -L "internal|tsan" -E "clCreateSubDevices"
+            runCTest -L "cpu|tsan"
           elif [ "${{ matrix.config }}" == "ubsan" ]; then
-            runCTest -L "internal|ubsan"
+            runCTest -L "cpu|ubsan"
           else
             echo "Unknown configuration" && exit 1
           fi

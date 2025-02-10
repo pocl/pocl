@@ -165,7 +165,7 @@ if(HAVE_LIBJPEG_TURBO)
     PROCESSORS 1
     SKIP_RETURN_CODE 77
     DEPENDS "pocl_version_check"
-    LABELS "internal;runtime")
+    LABELS "cpu;runtime")
 endif()
 
 set_property(TEST
@@ -182,7 +182,7 @@ if(HAVE_LIBXSMM)
     PROCESSORS 1
     SKIP_RETURN_CODE 77
     DEPENDS "pocl_version_check"
-    LABELS "internal;runtime")
+    LABELS "cpu;runtime")
 endif()
 
 if(HAVE_ONNXRT)
@@ -193,34 +193,41 @@ if(HAVE_ONNXRT)
     PROCESSORS 1
     SKIP_RETURN_CODE 77
     DEPENDS "pocl_version_check"
-    LABELS "internal;runtime")
+    LABELS "cpu;runtime")
+endif()
+
+unset(ENABLED_CPU_TESTS)
+if(NOT ENABLE_ASAN)
+  list(APPEND ENABLED_CPU_TESTS "runtime/clCreateSubDevices")
+endif()
+
+if(HAVE_WORKING_IMAGES_WITH_SPIR)
+  list(APPEND ENABLED_CPU_TESTS "runtime/clGetKernelArgInfo")
 endif()
 
 set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clGetEventInfo" "runtime/clCreateProgramWithBinary"
   "runtime/clBuildProgram" "runtime/clFinish" "runtime/clSetEventCallback"
   "runtime/clGetSupportedImageFormats" "runtime/clCreateKernelsInProgram"
-  "runtime/clCreateKernel" "runtime/clGetKernelArgInfo"
   "runtime/test_kernel_cache_includes" "runtime/test_event_cycle"
   "runtime/test_read-copy-write-buffer" "runtime/test_buffer-image-copy"
-  "runtime/test_fill-buffer"
-  "runtime/test_event_free" "runtime/test_event_double_wait" "runtime/clCreateSubDevices"
+  "runtime/clCreateKernel" "runtime/test_fill-buffer"
+  "runtime/test_event_free" "runtime/test_event_double_wait"
   "runtime/test_enqueue_kernel_from_binary" "runtime/test_user_event"
-  "runtime/test_buffer_migration"
-  "runtime/test_buffer_ping_pong"
+  "runtime/test_buffer_migration" "runtime/test_buffer_ping_pong"
   "runtime/clSetMemObjectDestructorCallback" "runtime/test_link_error"
   "runtime/test_cl_pocl_content_size" "runtime/test_deviceside_enqueue"
   "runtime/test_command_buffer" "runtime/test_command_buffer_images"
   "runtime/test_command_buffer_multi_device"
   "runtime/test_device_address" "runtime/test_svm"
   "runtime/test_device_address" "runtime/test_svm"
-  "runtime/test_compile_n_link"
-  "runtime/test_subbuffers"
+  "runtime/test_compile_n_link" "runtime/test_subbuffers"
+  ${ENABLED_CPU_TESTS}
   PROPERTIES
     COST 2.0
     PROCESSORS 1
     DEPENDS "pocl_version_check"
-    LABELS "internal;runtime")
+    LABELS "cpu;runtime")
 
 set_tests_properties(
   "runtime/clCreateSubDevices"
@@ -420,16 +427,6 @@ if(NOT ENABLE_ANYSAN)
   set_tests_properties("runtime/test_kernel_cache_includes"
   PROPERTIES PASS_REGULAR_EXPRESSION
   "function 1.*first include.*function 2.*second include")
-endif()
-
-if(ENABLE_ASAN)
-  set_tests_properties("runtime/clCreateSubDevices"
-    PROPERTIES DISABLED 1)
-endif()
-
-if(NOT HAVE_WORKING_IMAGES_WITH_SPIR)
-  set_tests_properties("runtime/clGetKernelArgInfo"
-    PROPERTIES DISABLED 1)
 endif()
 
 # Label tests that work with CUDA backend

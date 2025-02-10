@@ -1463,8 +1463,8 @@ pocl_setup_context (cl_context context)
         ++num_devices_support_bda_ext;
     }
 
-  if (num_devices_support_bda_ext == context->num_devices)
-    context->all_devices_support_bda = CL_TRUE;
+  if (num_devices_support_bda_ext == 0)
+    context->no_devices_support_bda = CL_TRUE;
   assert (alignment > 0);
   context->min_buffer_alignment = alignment;
   return CL_SUCCESS;

@@ -118,6 +118,7 @@ public:
     // capacity and position already set up
     PC.printf_buffer = PrintfBuffer;
     uint32_t Position = 0;
+    uint32_t ExecutionFailed = 0;
     PC.printf_buffer_position = &Position;
     assert(PC.printf_buffer != NULL);
     assert(PC.printf_buffer_capacity > 0);
@@ -129,9 +130,11 @@ public:
       for (size_t Y = r.rows().begin(); Y != r.rows().end(); Y++) {
         for (size_t Z = r.cols().begin(); Z != r.cols().end(); Z++) {
           K->workgroup((uint8_t *)Arguments.data(), (uint8_t *)&PC, X, Y, Z);
+          ExecutionFailed |= PC.execution_failed;
         }
       }
     }
+    POCL_ATOMIC_OR(RunCmd->execution_failed, ExecutionFailed);
 
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
     pocl_write_printf_buffer((char *)PC.printf_buffer, Position);
@@ -149,8 +152,12 @@ static void finalizeKernelCommand(kernel_run_command *RunCmd) {
 
   pocl_release_dlhandle_cache(RunCmd->cmd->command.run.device_data);
 
-  POCL_UPDATE_EVENT_COMPLETE_MSG(RunCmd->cmd->sync.event.event,
+  if (RunCmd->execution_failed)
+    POCL_UPDATE_EVENT_FAILED_MSG(RunCmd->cmd->sync.event.event,
                                  "NDRange Kernel        ");
+  else
+    POCL_UPDATE_EVENT_COMPLETE_MSG(RunCmd->cmd->sync.event.event,
+                                   "NDRange Kernel        ");
   free_kernel_run_command(RunCmd);
 }
 
@@ -211,6 +218,8 @@ prepareKernelCommand(pocl_tbb_scheduler_data *SchedData,
       reinterpret_cast<pocl_workgroup_func>(Cmd->command.run.wg);
   RunCmd->kernel_args = Cmd->command.run.arguments;
   RunCmd->next = NULL;
+  RunCmd->ref_count = 0;
+  RunCmd->execution_failed = 0;
 
   pocl_setup_kernel_arg_array(RunCmd);
 

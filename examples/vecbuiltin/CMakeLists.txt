@@ -47,5 +47,5 @@ set_tests_properties(
     COST 3.0
     PASS_REGULAR_EXPRESSION "OK"
     PROCESSORS 1
-    LABELS "internal;vulkan;level0"
+    LABELS "cpu;vulkan;level0"
     DEPENDS "pocl_version_check")
