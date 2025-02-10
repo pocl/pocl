@@ -335,7 +335,28 @@ FINISH:
 }
 #endif
 
+void pocl_append_to_buildlog(cl_program program, cl_uint device_i,
+                             char *log,
+                             size_t log_size) {
+    size_t existing_log_size = 0;
+    if (log_size == 0) {
+        return;
+    }
 
+    if (program->build_log[device_i] != NULL) {
+        existing_log_size = strlen(program->build_log[device_i]);
+        size_t total_log_size = log_size + existing_log_size;
+        char *new_log = (char *)malloc(total_log_size);
+        assert(new_log);
+        memcpy(new_log, program->build_log[device_i], existing_log_size);
+        memcpy(new_log + existing_log_size, log, log_size);
+        free(log);
+        free(program->build_log[device_i]);
+        program->build_log[device_i] = new_log;
+    } else {
+        program->build_log[device_i] = log;
+    }
+}
 /**
  * Populates the device specific image data structure used by kernel
  * from given kernel image argument

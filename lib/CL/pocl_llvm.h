@@ -119,12 +119,6 @@ extern "C" {
   void pocl_llvm_create_context (cl_context ctx);
   void pocl_llvm_release_context (cl_context ctx);
 
-  /* note: Log is consumed or freed (it must be a strdup) */
-  POCL_EXPORT void pocl_append_to_buildlog (cl_program program,
-                                            cl_uint device_i,
-                                            char *Log,
-                                            size_t LogSize);
-
   /**
    * \brief Creates instance of a class that holds llvm::Module of input IR
    * (program.bc), plus its own LLVM contexts, so it can be safely used in

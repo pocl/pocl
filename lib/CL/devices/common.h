@@ -81,6 +81,13 @@ void pocl_broadcast (cl_event event);
 POCL_EXPORT
 void pocl_init_dlhandle_cache ();
 
+/* note: log is consumed or freed (it must be a strdup) */
+POCL_EXPORT
+void pocl_append_to_buildlog (cl_program program,
+                              cl_uint device_i,
+                              char *log,
+                              size_t log_size);
+
 POCL_EXPORT
 int pocl_check_kernel_disk_cache (char *module_fn,
                                   _cl_command_node *cmd,
