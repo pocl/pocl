@@ -70,7 +70,7 @@ jobs:
             ])
 
             # versioned
-            Pkg.add(name="LLVM_full_jll", version="${{ matrix.llvm }}")'
+            Pkg.add(name="LLVM_full_jll", version="${{ matrix.llvm }}")
             Pkg.add(name="SPIRV_LLVM_Translator_jll", version="${{ matrix.llvm }}")'
 
       - name: Build PoCL
