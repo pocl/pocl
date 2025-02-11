@@ -41,8 +41,8 @@ add_test(NAME "EinsteinToolkit" COMMAND "EinsteinToolkit")
 set_tests_properties( "EinsteinToolkit"
     PROPERTIES
     COST 15.0
-    LABELS "cpu;EinsteinToolkit"
-    DEPENDS "pocl_version_check"
+    RESOURCE_LOCK "einstein" # these tests use a lot of memory; allow only 1 instance at a time
+    LABELS "EinsteinToolkit"
     SKIP_RETURN_CODE 77)
 
 add_test(NAME "EinsteinToolkit_SubDev" COMMAND "EinsteinToolkit" s)
@@ -50,11 +50,13 @@ add_test(NAME "EinsteinToolkit_SubDev" COMMAND "EinsteinToolkit" s)
 set_tests_properties( "EinsteinToolkit_SubDev"
     PROPERTIES
     COST 15.0
+    RESOURCE_LOCK "einstein"
     LABELS "EinsteinToolkit"
     ENVIRONMENT "POCL_AFFINITY=1"
-    SKIP_RETURN_CODE 77
-    DEPENDS "pocl_version_check")
+    SKIP_RETURN_CODE 77)
 
-if(ENABLE_HOST_CPU_DEVICES AND RISCV)
-  set_tests_properties("EinsteinToolkit" PROPERTIES DISABLED 1)
+if(ENABLE_HOST_CPU_DEVICES AND NOT RISCV)
+  set_property(TEST
+    "EinsteinToolkit" "EinsteinToolkit_SubDev"
+    APPEND PROPERTY LABELS "cpu")
 endif()

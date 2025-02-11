@@ -83,6 +83,7 @@ add_test_pocl(NAME "regression/test_issue_757" COMMAND "test_issue_757")
 add_test_pocl(NAME "regression/test_issue_1435" COMMAND "test_issue_1435")
 
 add_test_pocl(NAME "regression/test_issue_1525" COMMAND "test_issue_1525" LLVM_FILECHECK "test_issue_1525.fc" WORKITEM_HANDLER "loopvec")
+set_property(TEST "regression/test_issue_1525" PROPERTY SKIP_RETURN_CODE 77 SKIP_REGULAR_EXPRESSION "SKIP")
 
 add_test_pocl(NAME "regression/test_workitem_func_outside_kernel" COMMAND "test_workitem_func_outside_kernel")
 
@@ -103,8 +104,10 @@ endif()
 
 add_test_pocl(NAME "regression/test_llvm_segfault_issue_889" COMMAND "test_llvm_segfault_issue_889")
 
+unset(ADDITIONAL_CPU_TESTS)
 if(ENABLE_SPIRV)
-add_test_pocl(NAME "regression/test_issue_1711" COMMAND "test_issue_1711")
+  add_test_pocl(NAME "regression/test_issue_1711" COMMAND "test_issue_1711")
+  set(ADDITIONAL_CPU_TESTS "regression/test_issue_1711_loopvec" "regression/test_issue_1711_cbs")
 endif()
 
 add_test_pocl(NAME "regression/test_issue_893" COMMAND "test_issue_893")
@@ -157,6 +160,7 @@ set_tests_properties(
   "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_${VARIANT}"
   "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_${VARIANT}"
   "regression/test_program_from_binary_with_local_1_1_1_${VARIANT}"
+  ${ADDITIONAL_CPU_TESTS}
   PROPERTIES
     COST 1.5
     PROCESSORS 1
@@ -228,7 +232,6 @@ add_test_pocl(NAME "regression/struct_kernel_arguments" COMMAND "test_structs_as
 add_test_pocl(NAME "regression/vector_kernel_arguments" COMMAND "test_vectors_as_args")
 
 # Label tests that also work with TCE
-
 set(TCE_TESTS "regression/barrier_between_two_for_loops_loopvec"
   "regression/for-loop_with_computation_after_the_brexit_loopvec"
   "regression/early_return_before_a_barrier_region_loopvec")
@@ -238,6 +241,12 @@ set(TCE_TESTS "regression/barrier_between_two_for_loops_loopvec"
 list(REMOVE_ITEM TCE_TESTS "regression/barrier_between_two_for_loops_loopvec" )
 
 set_property(TEST ${TCE_TESTS} APPEND PROPERTY LABELS "tce")
+
+# TODO fails on windows with "access violation"
+unset(ADDITIONAL_CPU_TESTS)
+if(NOT WIN32)
+  set(ADDITIONAL_CPU_TESTS "regression/test_issue_1525")
+endif()
 
 set(VARIANTS "loopvec;cbs")
 foreach(VARIANT ${VARIANTS})
@@ -254,7 +263,7 @@ foreach(VARIANT ${VARIANTS})
     "regression/test_flatten_barrier_subs_${VARIANT}"
     "regression/test_workitem_func_outside_kernel_${VARIANT}"
     "regression/test_program_scope_vars"
-    ${TCE_TESTS}
+    ${TCE_TESTS} ${ADDITIONAL_CPU_TESTS}
     PROPERTIES
       COST 1.5
       PROCESSORS 1

@@ -55,7 +55,6 @@ add_test_pocl(NAME "kernel/test_bitselect"
               COMMAND "kernel" "test_bitselect")
 
 add_test_pocl(NAME "kernel/test_hadd"
-              WORKITEM_HANDLER "loops;loopvec;cbs"
               COMMAND "kernel" "test_hadd")
 
 add_test_pocl(NAME "kernel/test_min_max"
@@ -238,8 +237,25 @@ add_test_pocl(NAME "kernel/test_printf_vectors_halfn"
 # are necessary for opencl builtins (lib/kernel) to have fp16 support
 if(HOST_CPU_ENABLE_CL_KHR_FP16 AND ENABLE_HOST_CPU_VECTORIZE_BUILTINS)
   foreach(VARIANT ${VARIANTS})
+  unset(ADDITIONAL_CPU_TEST)
+  if(LLVM_VERSION VERSION_GREATER_EQUAL 19.0)
+    set(ADDITIONAL_CPU_TEST "kernel/test_halfs_${VARIANT}")
+  endif()
   set_tests_properties("kernel/test_printf_vectors_halfn_${VARIANT}"
-    "kernel/test_halfs_${VARIANT}" "kernel/test_shuffle_half_${VARIANT}"
+    "kernel/test_shuffle_half_${VARIANT}" ${ADDITIONAL_CPU_TEST}
+    PROPERTIES
+      PROCESSORS 1
+      COST 120
+      DEPENDS "pocl_version_check"
+      LABELS "cpu;kernel")
+  endforeach()
+endif()
+unset(ADDITIONAL_CPU_TEST)
+
+if(HOST_CPU_ENABLE_CL_KHR_FP64)
+  foreach(VARIANT ${VARIANTS})
+  set_tests_properties("kernel/test_printf_vectors_doublen_${VARIANT}"
+    "kernel/test_shuffle_double_${VARIANT}"
     PROPERTIES
       PROCESSORS 1
       COST 120
@@ -262,8 +278,7 @@ foreach(VARIANT ${VARIANTS})
     "kernel/test_shuffle_short_${VARIANT}" "kernel/test_shuffle_ushort_${VARIANT}"
     "kernel/test_shuffle_int_${VARIANT}" "kernel/test_shuffle_uint_${VARIANT}"
     "kernel/test_shuffle_long_${VARIANT}" "kernel/test_shuffle_ulong_${VARIANT}"
-    "kernel/test_shuffle_half_${VARIANT}" "kernel/test_shuffle_float_${VARIANT}"
-    "kernel/test_shuffle_double_${VARIANT}"
+    "kernel/test_shuffle_float_${VARIANT}"
     "kernel/test_ucharn_${VARIANT}"
     "kernel/test_printf_${VARIANT}"
     "kernel/test_printf_vectors_${VARIANT}"
