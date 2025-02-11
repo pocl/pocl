@@ -1154,17 +1154,15 @@ endif()
 
 ######################################################################################
 
-set(SPIRV OFF)
-
 # drivers that consume SPIRV directly don't need LLVM or LLVM-SPIRV;
 # those that consume SPIRV indirectly need both, but it might be useful to disable LLVM-SPIRV translator
-if(ENABLE_LLVM AND LLVM_SPIRV AND (EXISTS "${LLVM_SPIRV}"))
+if(ENABLE_LLVM AND (HAVE_LLVM_SPIRV OR HAVE_LLVM_SPIRV_LIB OR POCL_LLVM_HAS_SPIRV_TARGET))
   option(ENABLE_SPIRV "Enable SPIR-V support (default ON when available)" ON)
 else()
   set(ENABLE_SPIRV OFF CACHE INTERNAL "SPIR-V enabled" FORCE)
 endif()
 
-if(ENABLE_SPIRV)
+if(ENABLE_HOST_CPU_DEVICES AND ENABLE_SPIRV)
   # required for the wrapper generator
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
 endif()
@@ -2049,29 +2047,9 @@ endif()
 ##########################################################
 
 if (ENABLE_LEVEL0)
-  if(NOT PKG_CONFIG_EXECUTABLE)
-    message(FATAL_ERROR "building Level0 requires pkg-config")
-  endif()
-  pkg_check_modules(LEVEL0 REQUIRED IMPORTED_TARGET level-zero>=1.3)
-
-  if(ENABLE_CONFORMANCE)
-    set(DEFAULT_LEVEL0_EXTRA_F OFF)
-  else()
-    set(DEFAULT_LEVEL0_EXTRA_F ON)
-  endif()
-  option(ENABLE_LEVEL0_EXTRA_FEATURES "enables extra opencl extensions & features in LevelZero device. these are not checked at runtime for presence " ${DEFAULT_LEVEL0_EXTRA_F})
-  if(ENABLE_LEVEL0_EXTRA_FEATURES AND ENABLE_CONFORMANCE)
-    message(FATAL_ERROR "ENABLE_LEVEL0_EXTRA_FEATURES is incompatible with ENABLE_CONFORMANCE")
-  endif()
-
-  if(NOT ENABLE_LLVM)
-    message(FATAL_ERROR "Level Zero requires LLVM/Clang")
-  endif()
-  if(NOT LLVM_SPIRV AND NOT HAVE_LLVM_SPIRV_LIB)
-    message(FATAL_ERROR "Level Zero requires llvm-spirv translator (either binary or libLLVMSPIRV library")
-  endif()
-  if(NOT STATIC_LLVM)
-    message(WARNING "Level Zero might run into symbol conflicts when using dynamic LLVM libraries, consider using -DSTATIC_LLVM=ON")
+  if(PKG_CONFIG_EXECUTABLE)
+    message(STATUS "trying to find LevelZero ICD using pkg-config")
+    pkg_check_modules(LEVEL0 REQUIRED IMPORTED_TARGET level-zero>=1.3)
   endif()
 
   if (NOT LEVEL0_FOUND)
@@ -2094,6 +2072,35 @@ if (ENABLE_LEVEL0)
 
   set(ENABLE_RELOCATION OFF CACHE BOOL "relocation")
   set(ENABLE_HEADER_BUNDLING ON CACHE BOOL "bundling of headers" FORCE)
+
+  if(ENABLE_CONFORMANCE)
+    set(DEFAULT_LEVEL0_EXTRA_F OFF)
+  else()
+    set(DEFAULT_LEVEL0_EXTRA_F ON)
+  endif()
+  option(ENABLE_LEVEL0_EXTRA_FEATURES "enables extra opencl extensions & features in LevelZero device. these are not checked at runtime for presence " ${DEFAULT_LEVEL0_EXTRA_F})
+  if(ENABLE_LEVEL0_EXTRA_FEATURES AND ENABLE_CONFORMANCE)
+    message(FATAL_ERROR "ENABLE_LEVEL0_EXTRA_FEATURES is incompatible with ENABLE_CONFORMANCE")
+  endif()
+
+  if(NOT ENABLE_LLVM)
+    message(FATAL_ERROR "Level Zero requires LLVM/Clang")
+  endif()
+  if(NOT STATIC_LLVM)
+    message(WARNING "Level Zero might run into symbol conflicts when using dynamic LLVM libraries, consider using -DSTATIC_LLVM=ON")
+  endif()
+
+  if(NOT LLVM_SPIRV AND NOT HAVE_LLVM_SPIRV_LIB)
+    if(NOT POCL_LLVM_HAS_SPIRV_TARGET)
+      message(FATAL_ERROR "Level Zero requires SPIRV backend or llvm-spirv translator (either an executable or libLLVMSPIRV library)")
+    else()
+      message(WARNING "Level Zero: SPIRV backend support is experimental")
+    endif()
+  endif()
+  if(LLVM_SPIRV OR HAVE_LLVM_SPIRV_LIB)
+    # prefer the translator for now, disable SPIRV backend.
+    set(POCL_LLVM_HAS_SPIRV_TARGET 0 CACHE BOOL "LLVM SPIRV target" FORCE)
+  endif()
 
 endif()
 

@@ -155,53 +155,18 @@ int pocl_ptx_gen(void *llvm_module, const char *PTXFilename, const char *Arch,
 
   std::string Triple =
       (sizeof(void *) == 8) ? "nvptx64-nvidia-cuda" : "nvptx-nvidia-cuda";
-
-  std::string Error;
-  // Get NVPTX target.
-  const llvm::Target *Target =
-      llvm::TargetRegistry::lookupTarget(Triple, Error);
-
-  if (!Target) {
-    POCL_MSG_ERR("[CUDA] ptx-gen: failed to get target\n");
-    POCL_MSG_ERR("%s\n", Error.c_str());
+  std::string Features = std::string("+ptx") + std::to_string(PtxVersion);
+  char *Content = nullptr;
+  size_t ContentSize = 0;
+  int Error = pocl_llvm_codegen_asm_or_obj(Triple.c_str(), Arch, Features.c_str(),
+                                           true, &Content, &ContentSize);
+  if (Error != CL_SUCCESS) {
+    POCL_MSG_ERR("[CUDA] ptx-gen: failed codegen PTX %s\n", PTXFilename);
     return CL_BUILD_PROGRAM_FAILURE;
   }
 
-  // TODO: Set options?
-  llvm::TargetOptions Options;
-
-  auto Features = std::string("+ptx") + std::to_string(PtxVersion);
-#ifdef LLVM_OLDER_THAN_16_0
-  std::unique_ptr<llvm::TargetMachine> Machine(
-      Target->createTargetMachine(Triple, Arch, Features, Options, llvm::None));
-#else
-  std::unique_ptr<llvm::TargetMachine> Machine(Target->createTargetMachine(
-      Triple, Arch, Features, Options, std::nullopt));
-#endif
-  llvm::legacy::PassManager Passes;
-
-  // Add pass to emit PTX.
-  llvm::SmallVector<char, 4096> Data;
-  llvm::raw_svector_ostream PTXStream(Data);
-  if (Machine->addPassesToEmitFile(Passes, PTXStream,
-                                   nullptr,
-#if LLVM_MAJOR < 18
-                                   llvm::CGFT_AssemblyFile))
-#else
-                                   llvm::CodeGenFileType::AssemblyFile))
-#endif
-  {
-
-    POCL_MSG_ERR("[CUDA] ptx-gen: failed to add passes\n");
-    return CL_BUILD_PROGRAM_FAILURE;
-  }
-
-  // Run passes.
-  Passes.run(*Module);
-
-  llvm::StringRef PTX = PTXStream.str();
-  const char *Content = PTX.data();
-  size_t ContentSize = PTX.size();
+  assert(Content);
+  assert(ContentSize);
 
   if (pocl_write_file(PTXFilename, Content, ContentSize, 0)) {
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to write final PTX into %s\n",

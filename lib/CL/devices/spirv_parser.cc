@@ -1071,4 +1071,15 @@ bool applyAtomicCmpXchgWorkaround(const int32_t *InStream, size_t NumWords,
   return true;
 }
 
+bool applyAtomicCmpXchgWorkaroundInPlace(int32_t *InStream, size_t *NumWords) {
+  SPIRVmodule Mod;
+  std::vector<int32_t> Out;
+  if (!Mod.applyCmpXchgWorkaround(InStream, *NumWords, Out))
+    return false;
+  assert(Out.size() < *NumWords);
+  std::memcpy(InStream, Out.data(), Out.size() * 4);
+  *NumWords = Out.size();
+  return true;
+}
+
 } // namespace SPIRVParser

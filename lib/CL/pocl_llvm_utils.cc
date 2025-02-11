@@ -655,8 +655,6 @@ void pocl_llvm_release_context(cl_context ctx) {
   }
 }
 
-
-
 #define POCL_METADATA_ROOT "pocl_meta"
 
 void setModuleIntMetadata(llvm::Module *mod, const char *key, unsigned long data) {

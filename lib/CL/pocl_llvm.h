@@ -182,6 +182,12 @@ extern "C" {
   int pocl_llvm_codegen (cl_device_id device, cl_program program, void *modp,
                          char **output, uint64_t *output_size);
 
+  int pocl_llvm_codegen_asm_or_obj (const char *Triple, const char *CPU,
+                                    const char *Features,
+                                    int EmitAsm,
+                                    char **Content,
+                                    size_t *ContentSize);
+
   int pocl_llvm_link_program (cl_program program, unsigned device_i,
                               cl_uint num_input_programs,
                               unsigned char **cur_device_binaries,
@@ -256,6 +262,8 @@ extern "C" {
                                                  char *TempBitcodePathOut,
                                                  char **BitcodeContent,
                                                  uint64_t *BitcodeSize);
+
+  POCL_EXPORT int pocl_level0_initialize_spirv_exts ();
 
 #ifdef __cplusplus
 }

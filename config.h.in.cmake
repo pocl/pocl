@@ -205,6 +205,7 @@
 
 #cmakedefine ENABLE_NPU
 
+#cmakedefine HAVE_LLVM_SPIRV
 #define LLVM_SPIRV "@LLVM_SPIRV@"
 
 #cmakedefine ENABLE_LEVEL0_EXTRA_FEATURES
@@ -212,6 +213,13 @@
 #cmakedefine HAVE_LLVM_SPIRV_LIB
 
 #cmakedefine ENABLE_HEADER_BUNDLING
+
+#cmakedefine HAVE_SPIRV_LINK
+#define SPIRV_LINK "@SPIRV_LINK@"
+
+#cmakedefine SPIRV_LINK_HAS_USE_HIGHEST_VERSION
+
+#cmakedefine POCL_LLVM_HAS_SPIRV_TARGET
 
 #endif
 
@@ -233,6 +241,7 @@
 
 #define LLVM_LLC "@LLVM_LLC@"
 
+#cmakedefine HAVE_LLVM_SPIRV
 #define LLVM_SPIRV "@LLVM_SPIRV@"
 
 #define LLVM_OPT "@LLVM_OPT@"

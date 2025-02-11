@@ -2292,8 +2292,19 @@ bool Level0Device::setupDeviceProperties(bool HasIPVersionExt) {
 
     ClDev->num_serialize_entries = 2;
     ClDev->serialize_entries = LEVEL0_SERIALIZE_ENTRIES;
+#ifdef POCL_LLVM_HAS_SPIRV_TARGET
+    ClDev->llvm_cpu = nullptr;
+#ifdef ENABLE_LEVEL0_EXTRA_FEATURES
+    ClDev->llvm_target_triplet = "spirv64v1.3-unknown-unknown";
+#else
+    ClDev->llvm_target_triplet = "spirv64v1.2-unknown-unknown";
+#endif
+
+#else
     ClDev->llvm_cpu = nullptr;
     ClDev->llvm_target_triplet = "spir64-unknown-unknown";
+#endif
+
 #ifdef ENABLE_GENERIC_AS
     ClDev->generic_as_support = CL_TRUE;
 #endif
