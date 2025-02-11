@@ -1549,7 +1549,7 @@ static TargetLibraryInfoImpl *initPassManagerForCodeGen(legacy::PassManager &PM,
   TargetLibraryInfoImpl *TLII = nullptr;
 
 #ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
-  if (DevTriple.isX86()) {
+  if (Device->type == CL_DEVICE_TYPE_CPU) {
     TLII =
         llvm::driver::createTLII(DevTriple,
 #ifdef ENABLE_HOST_CPU_VECTORIZE_LIBMVEC
