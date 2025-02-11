@@ -169,6 +169,7 @@ if(HAVE_LIBJPEG_TURBO)
 endif()
 
 add_test(NAME "runtime/test_queue_creation_with_hints" COMMAND "test_queue_creation_with_hints")
+set_property(TEST "runtime/test_queue_creation_with_hints" PROPERTY SKIP_RETURN_CODE 77)
 
 if(HAVE_LIBXSMM)
   add_test(NAME "runtime/test_dbk_matmul" COMMAND test_dbk_matmul)
@@ -218,6 +219,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/test_device_address" "runtime/test_svm"
   "runtime/test_device_address" "runtime/test_svm"
   "runtime/test_compile_n_link" "runtime/test_subbuffers"
+  "runtime/test_queue_creation_with_hints"
   ${ENABLED_CPU_TESTS}
   PROPERTIES
     COST 2.0

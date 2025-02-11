@@ -154,7 +154,9 @@ foreach(VARIANT ${VARIANTS})
   "workgroup/workgroup_sizes_work_items_get_wrong_ids_${VARIANT}"
   "workgroup/issue_548_convergent_propagation_${VARIANT}"
   "workgroup/range_md_small_grid_${VARIANT}"
-  "workgroup/range_md_large_grid_${VARIANT}")
+  "workgroup/range_md_large_grid_${VARIANT}"
+  "workgroup/issue_1747_wg_divergent_barrier_${VARIANT}"
+  )
   set_tests_properties(
     ${TEST_LIST}
     PROPERTIES
