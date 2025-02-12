@@ -393,6 +393,8 @@ bool VariableUniformityAnalysisResult::isUniform(llvm::Function *F,
         pointer == M->getGlobalVariable("_local_size_x") ||
         pointer == M->getGlobalVariable("_local_size_y") ||
         pointer == M->getGlobalVariable("_local_size_z") ||
+        // Since we support only uniform SG sizes for now:
+        pointer == M->getGlobalVariable("_pocl_sub_group_size") ||
         pointer == M->getGlobalVariable(PoclGVarBufferName)) {
 
       setUniform(F, V, true);

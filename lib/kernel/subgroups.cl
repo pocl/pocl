@@ -1,6 +1,6 @@
 /* OpenCL built-in library: subgroup basic functionality
 
-   Copyright (c) 2022-2024 Pekka Jääskeläinen / Intel Finland Oy
+   Copyright (c) 2022-2025 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -114,23 +114,31 @@ get_first_llid (void)
 uint4 _CL_OVERLOADABLE
 sub_group_ballot (int predicate)
 {
-  /* The results for the ballot for all of the WG's SGs. */
-  uint4 *flags = __pocl_work_group_alloca (sizeof (uint4), sizeof (uint4), 0);
-  /* Temporary storage for the predicate flags of all WIs in the WG. */
+  /* The results for the ballot for all of the WG's SGs. This allocates
+     more than needed (one uint4 for each WI while one for each SG would
+     suffice). */
+  uint4 *votes = __pocl_work_group_alloca (sizeof (uint4), sizeof (uint4), 0);
+
+  /* Temporary storage for the votes of all WIs in the WG. */
   char *res = __pocl_work_group_alloca (sizeof (char), 4, 0);
   res[get_local_linear_id ()] = !!predicate;
+
   sub_group_barrier (CLK_LOCAL_MEM_FENCE);
   if (get_sub_group_local_id () == 0)
     {
-      flags[get_sub_group_id ()] = 0;
-      uint *f = (uint *)(flags + get_sub_group_id ());
-      for (uint i = 0; i < get_sub_group_size () && i < 128; ++i)
+      votes[get_sub_group_id ()] = 0;
+
+      /* The subgroup's uint4 where to flip up the ballot results. */
+      uint *v = (uint *)&votes[get_sub_group_id ()];
+      for (uint i = 0; i < get_sub_group_size () && i < sizeof (uint4) * 8;
+           ++i)
         {
-          f[i / 32] |= res[get_first_llid () + i] << (i % 32);
+          v[i / (sizeof (uint) * 8)] |= res[get_first_llid () + i]
+                                        << (i % (sizeof (uint) * 8));
         }
     }
   sub_group_barrier (CLK_LOCAL_MEM_FENCE);
-  return flags[get_sub_group_id ()];
+  return votes[get_sub_group_id ()];
 }
 
 #define SUB_GROUP_SHUFFLE_PT(PREFIX, TYPE)                                    \
