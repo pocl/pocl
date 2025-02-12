@@ -826,8 +826,6 @@ static int convertBCorSPV(char *InputPath,
                           uint64_t *OutSize, pocl_version_t TargetVersion) {
   char HiddenOutputPath[POCL_MAX_PATHNAME_LENGTH];
   char HiddenInputPath[POCL_MAX_PATHNAME_LENGTH];
-  char CapturedOutput[MAX_OUTPUT_BYTES];
-  size_t CapturedBytes = MAX_OUTPUT_BYTES;
   std::vector<std::string> CompilationArgs;
   std::vector<const char *> CompilationArgs2;
   std::vector<uint8_t> FinalSpirv;
@@ -836,7 +834,10 @@ static int convertBCorSPV(char *InputPath,
   uint64_t ContentSize = 0;
   llvm::LLVMContext LLVMCtx;
 
-  assert((Reverse || TargetVersion.major) && "Invalid SPIR-V target version!");
+  if (!Reverse && TargetVersion.major==0) {
+    POCL_MSG_ERR("Invalid SPIR-V target version!");
+    return -1;
+  }
 
 #ifdef HAVE_LLVM_SPIRV_LIB
   std::string Errors;
@@ -868,25 +869,25 @@ static int convertBCorSPV(char *InputPath,
     }
     break;
   case 100:
-    SPIRV::VersionNumber::SPIRV_1_0;
+    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_0;
     break;
   case 101:
-    SPIRV::VersionNumber::SPIRV_1_1;
+    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_1;
     break;
   case 102:
-    SPIRV::VersionNumber::SPIRV_1_2;
+    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_2;
     break;
   case 103:
-    SPIRV::VersionNumber::SPIRV_1_3;
+    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_3;
     break;
   case 104:
-    SPIRV::VersionNumber::SPIRV_1_4;
+    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_4;
     break;
   case 105:
-    SPIRV::VersionNumber::SPIRV_1_5;
+    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_5;
     break;
   case 106:
-    SPIRV::VersionNumber::SPIRV_1_6;
+    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_6;
     break;
   }
 
