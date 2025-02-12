@@ -393,7 +393,7 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
       knl_name_list[meta->name] = 0;
 
   if(program_ids.find(uint64_t(kernel->program)) == program_ids.end()) {
-      printf("ERROR: program id not found\n");
+      POCL_MSG_ERR("ERROR: program id not found\n");
       exit(10);
   }
   uint id = program_ids[uint64_t(kernel->program)];
@@ -403,7 +403,7 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
 	  if (numVar) {
 	    return std::stoull(numVar);
 	  } else {
-	    POCL_MSG_ERR("environment variable NUM_THREAD is not found\n");
+	    POCL_MSG_PRINT_VENTUS("environment variable NUM_THREAD is not found\n");
 	    return 32ull;
 	  }
 	}();
@@ -475,7 +475,7 @@ step5 make a writefile for chisel
                 uint64_t aligned_size = (al->size / 4096 + 1)*4096;
                 new_lds_base -= aligned_size;
                 memcpy(&local_arg[i], &new_lds_base, sizeof(uint32_t));
-                printf("new_lds_base:%08lx\n", new_lds_base);
+                POCL_MSG_PRINT_VENTUS("new_lds_base:%08lx\n", new_lds_base);
                 err = vt_copy_to_dev(d->vt_device, new_lds_base, tmp_arg, aligned_size,0,0);
                 if (err != 0) {
                     abort();
@@ -492,7 +492,7 @@ step5 make a writefile for chisel
                   free(tmp_arg);
 
                 #endif
-              printf("not support local buffer arg yet.\n");
+              POCL_MSG_WARN("not support local buffer arg yet.\n");
               //arguments[i] = (void *)al->size;
             }
           else
@@ -574,7 +574,7 @@ step5 make a writefile for chisel
 
   if (cmd->device->device_alloca_locals)
     {
-      printf("notice that ventus hasn't support local buffer as argument yet.\n");
+      POCL_MSG_WARN("notice that ventus hasn't support local buffer as argument yet.\n");
       /* Local buffers are allocated in the device side work-group
          launcher. Let's pass only the sizes of the local args in
          the arg buffer. */
@@ -653,7 +653,7 @@ step5 make a writefile for chisel
   } else {
     err = vt_buf_alloc(d->vt_device, abuf_size, &arg_dev_mem_addr,0,0,0);
     if (err != 0) {
-      printf("ERROR: vt_buf_alloc failed\n");
+      POCL_MSG_ERR("ERROR: vt_buf_alloc failed\n");
       abort();
     }
   }
@@ -670,7 +670,7 @@ step5 make a writefile for chisel
   if (abuf_size > 0) {
     err = vt_copy_to_dev(d->vt_device,arg_dev_mem_addr,abuf_args_data, abuf_size, 0,0);
     if (err != 0) {
-      printf("ERROR: vt_copy_to_dev failed\n");
+      POCL_MSG_ERR("ERROR: vt_copy_to_dev failed\n");
       abort();
     }
   }
@@ -793,7 +793,7 @@ step5 make a writefile for chisel
   // Spike specified the pdssize to 0x10000000 for each workgroup now
   if (pds_src_size > 0x10000000) {
     pds_src_size = 0x10000000;
-    printf("pdssize setting to 0x%x\n", 0x10000000);
+    POCL_MSG_PRINT_VENTUS("pdssize setting to 0x%x\n", 0x10000000);
   }
 
   uint64_t pds_dev_mem_addr;
@@ -917,9 +917,9 @@ step5 make a writefile for chisel
         sprintf(newName, "%s_%d.log",meta->name,knl_name_list[meta->name]);
         //strcat(newName, ".log");
         if(rename(sp_logname, newName) == 0) {
-            printf("Log file %s renamed successfully to %s.\n", sp_logname, newName);
+            POCL_MSG_PRINT_VENTUS("Log file %s renamed successfully to %s.\n", sp_logname, newName);
         } else {
-            printf("Unable to rename the log file %s.\n", sp_logname);
+            POCL_MSG_PRINT_VENTUS("Unable to rename the log file %s.\n", sp_logname);
         }
     }
 
@@ -1083,7 +1083,7 @@ void
 pocl_ventus_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                            cl_device_id device, int specialize)
 {
-  printf("in pocl ventus compile kernel func\n");
+  POCL_MSG_PRINT_VENTUS("in pocl ventus compile kernel func\n");
   if (cmd != NULL && cmd->type == CL_COMMAND_NDRANGE_KERNEL)
     pocl_check_kernel_dlhandle_cache (cmd, 0, specialize);
 }
@@ -1517,7 +1517,7 @@ int pocl_ventus_post_build_program (cl_program program, cl_uint device_i) {
             #ifndef PRINT_CHISEL_TESTCODE
             #define PRINT_CHISEL_TESTCODE
             #endif
-            printf("generate chisel testcode\n");
+            POCL_MSG_PRINT_VENTUS("generate chisel testcode\n");
         }
     } */
 
