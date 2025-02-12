@@ -991,7 +991,7 @@ if(X86)
     message(STATUS "Found LibSVML and LibIRC")
     set(HAVE_LIBSVML 1)
   else()
-    message(STATUS "LibSVML and LibIRC not found, vectorize-svml not available")
+    message(STATUS "LibSVML and LibIRC not found")
   endif()
 endif()
 
@@ -1017,7 +1017,6 @@ if((NOT HAVE_SLEEF) AND (NOT HAVE_LIBSVML))
     endif()
   endif()
   if(LIBMVEC AND LIBMVEC_HAS_REQUIRED_SYMBOLS)
-    message(STATUS "enabling libmvec")
     set(HAVE_LIBMVEC 1)
   endif()
 endif()
@@ -1048,6 +1047,7 @@ if(ENABLE_LLVM AND ENABLE_HOST_CPU_DEVICES AND (LLVM_VERSION_MAJOR GREATER 17) A
   if(ENABLE_HOST_CPU_VECTORIZE_SLEEF
      OR ENABLE_HOST_CPU_VECTORIZE_LIBMVEC
      OR ENABLE_HOST_CPU_VECTORIZE_SVML)
+    message(STATUS "CPU device: enabled vectorization of OpenCL builtins")
     set(ENABLE_HOST_CPU_VECTORIZE_BUILTINS ON)
   endif()
 
