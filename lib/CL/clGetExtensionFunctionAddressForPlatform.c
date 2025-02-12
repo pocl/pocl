@@ -67,7 +67,6 @@ CL_API_SUFFIX__VERSION_1_2
   if (strcmp (func_name, "clCreateProgramWithILKHR") == 0)
     return (void *)&POname(clCreateProgramWithIL);
 
-#ifndef ENABLE_CONFORMANCE
   /* cl_khr_command_buffer */
   if (strcmp (func_name, "clCreateCommandBufferKHR") == 0)
     return (void *)&POname (clCreateCommandBufferKHR);
@@ -119,7 +118,6 @@ CL_API_SUFFIX__VERSION_1_2
   if (strcmp (func_name, "clRemapCommandBufferKHR") == 0)
     return (void *)&POname (clRemapCommandBufferKHR);
   /* end of cl_khr_command_buffer_multi_device */
-#endif
 
   /* cl_intel_unified_shared_memory */
   if (strcmp (func_name, "clHostMemAllocINTEL") == 0)
@@ -156,7 +154,6 @@ CL_API_SUFFIX__VERSION_1_2
     return (void *)&POname (clEnqueueMemAdviseINTEL);
   /* end of cl_intel_unified_shared_memory */
 
-#ifndef ENABLE_CONFORMANCE
   if (strcmp (func_name, "clCommandSVMMemFillKHR") == 0)
     return (void *)&POname (clCommandSVMMemFillKHR);
 
@@ -194,7 +191,6 @@ CL_API_SUFFIX__VERSION_1_2
 
   if (strcmp (func_name, "clCommandWriteImagePOCL") == 0)
     return (void *)&POname (clCommandWriteImagePOCL);
-#endif
 
   /* cl_pocl_svm_rect */
   if (strcmp (func_name, "clEnqueueSVMMemcpyRectPOCL") == 0)
