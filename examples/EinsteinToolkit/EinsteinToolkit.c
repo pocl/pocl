@@ -546,14 +546,14 @@ void setup(const char* program_source1, const char* program_source2)
   if (use_subdev)
     {
       {
-        cl_uint max_cus;
-        int err = clGetDeviceInfo (main_device_id, CL_DEVICE_MAX_COMPUTE_UNITS,
-                                   sizeof (max_cus), &max_cus, NULL);
+        cl_uint max_subdevs = 0;
+        int err = clGetDeviceInfo (main_device_id, CL_DEVICE_PARTITION_MAX_SUB_DEVICES,
+                                   sizeof (max_subdevs), &max_subdevs, NULL);
         assert (err == CL_SUCCESS);
-        if (max_cus < 2)
+        if (max_subdevs < 2)
           {
             fprintf (stderr,
-                     "Insufficient compute units for subdevice creation\n");
+                     "Insufficient # of subdevices for subdevice creation\n");
             exit (77);
           }
       }
@@ -563,7 +563,11 @@ void setup(const char* program_source1, const char* program_source2)
       cl_uint retval;
       int err
           = clCreateSubDevices (main_device_id, props, 128, subdevs, &retval);
-      assert (err == CL_SUCCESS);
+      if (err != CL_SUCCESS) {
+        fprintf (stderr, "clCreateSubDevices failed\n");
+        exit (1);
+      }
+
       device_id = subdevs[0];
     }
   else
