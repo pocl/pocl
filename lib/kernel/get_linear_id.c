@@ -58,8 +58,13 @@ get_local_size (unsigned int dimindx);
 size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE get_global_linear_id (void);
 size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE get_local_linear_id (void);
 
+#if _MSC_VER
+size_t _CL_READNONE _CL_OPTNONE
+__identifier ("?get_global_linear_id@@$$J0YAKXZ") ()
+#else
 size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
-get_global_linear_id (void)
+get_global_linear_id ()
+#endif
 {
   return ((_local_size_z * _group_id_z + get_local_id (2))
           * get_global_size (1) * get_global_size (0))
@@ -70,8 +75,13 @@ get_global_linear_id (void)
          + (_local_size_x * _group_id_x + get_local_id (0));
 }
 
+#if _MSC_VER
+size_t _CL_READNONE _CL_OPTNONE
+__identifier ("?get_local_linear_id@@$$J0YAKXZ") ()
+#else
 size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
 get_local_linear_id (void)
+#endif
 {
   return (get_local_id (2) * get_local_size (1) * get_local_size (0))
          + (get_local_id (1) * get_local_size (0)) + get_local_id (0);

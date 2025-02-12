@@ -2,7 +2,7 @@
 #   CMake build system files
 #
 #   Copyright (c) 2014-2024 pocl developers
-#                 2024 Pekka Jääskeläinen / Intel Finland Oy
+#                 2024-2025 Pekka Jääskeläinen / Intel Finland Oy
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -141,6 +141,10 @@ add_test_pocl(NAME "workgroup/range_md_large_grid"
               EXPECTED_OUTPUT ""
               COMMAND "run_kernel" "range_md.cl" "1000" "128" "1" "1")
 
+add_test_pocl(NAME "workgroup/ballot"
+              EXPECTED_OUTPUT "ballot_1_32_1_1.stdout"
+              COMMAND "run_kernel" "ballot.cl" "1" "32" "1" "1")
+
 # These tests are now always ran with the basic device with a predefined
 # work-group execution order. Their printout verification depends
 # on it.
@@ -156,6 +160,7 @@ foreach(VARIANT ${VARIANTS})
   "workgroup/range_md_small_grid_${VARIANT}"
   "workgroup/range_md_large_grid_${VARIANT}"
   "workgroup/issue_1747_wg_divergent_barrier_${VARIANT}"
+  "workgroup/ballot_${VARIANT}"
   )
   set_tests_properties(
     ${TEST_LIST}
