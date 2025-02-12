@@ -2932,6 +2932,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   if (ClDev->atomic_memory_capabilities & CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES)
     OpenCL30Features.append(" __opencl_c_atomic_scope_all_devices");
 
+#ifndef ENABLE_CONFORMANCE
   if (prefersZeQueues()) {
     Extensions.append(" cl_khr_command_buffer");
     ClDev->cmdbuf_capabilities =
@@ -2941,6 +2942,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     //| CL_COMMAND_BUFFER_CAPABILITY_MULTIPLE_QUEUE_KHR;
     ClDev->cmdbuf_required_properties = 0;
   }
+#endif
 
   if (ClDev->image_support != CL_FALSE) {
     Extensions += " cl_khr_3d_image_writes"

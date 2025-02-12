@@ -56,6 +56,9 @@ POname (clCreateCommandBufferKHR) (
       POCL_GOTO_ERROR_COND ((queues[i]->device == NULL),
                             CL_INVALID_COMMAND_QUEUE);
 
+      POCL_GOTO_ERROR_COND ((queues[i]->device->cmdbuf_capabilities == 0),
+                            CL_INVALID_DEVICE);
+
       POCL_GOTO_ERROR_COND ((queues[i]->context == NULL),
                             CL_INVALID_COMMAND_QUEUE);
 

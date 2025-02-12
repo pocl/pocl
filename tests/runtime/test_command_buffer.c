@@ -127,8 +127,16 @@ main (int _argc, char **_argv)
   cl_command_queue_properties props = 0;
   CHECK_CL_ERROR (clGetDeviceInfo (device, CL_DEVICE_QUEUE_ON_HOST_PROPERTIES,
                                    sizeof (props), &props, NULL));
-  if (props & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
+  cl_device_command_buffer_capabilities_khr caps = 0;
+  CHECK_CL_ERROR (clGetDeviceInfo (device,
+                                   CL_DEVICE_COMMAND_BUFFER_CAPABILITIES_KHR,
+                                   sizeof (caps), &caps, NULL));
+  if ((props & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
+      && (caps & CL_COMMAND_BUFFER_CAPABILITY_OUT_OF_ORDER_KHR))
     props = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+  else
+    props = 0;
+
   cl_command_queue command_queue
     = clCreateCommandQueue (context, device, props, &error);
   CHECK_CL_ERROR (error);
