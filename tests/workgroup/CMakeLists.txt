@@ -141,6 +141,10 @@ add_test_pocl(NAME "workgroup/range_md_large_grid"
               EXPECTED_OUTPUT ""
               COMMAND "run_kernel" "range_md.cl" "1000" "128" "1" "1")
 
+add_test_pocl(NAME "workgroup/ballot"
+              EXPECTED_OUTPUT "ballot_1_32_1_1.stdout"
+              COMMAND "run_kernel" "ballot.cl" "1" "32" "1" "1")
+
 # These tests are now always ran with the basic device with a predefined
 # work-group execution order. Their printout verification depends
 # on it.
