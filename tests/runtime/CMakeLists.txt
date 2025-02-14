@@ -168,10 +168,6 @@ if(HAVE_LIBJPEG_TURBO)
     LABELS "cpu;runtime")
 endif()
 
-set_property(TEST
-  "runtime/test_large_buf"
-  APPEND PROPERTY LABELS "mingw_fail")
-
 add_test(NAME "runtime/test_queue_creation_with_hints" COMMAND "test_queue_creation_with_hints")
 
 if(HAVE_LIBXSMM)

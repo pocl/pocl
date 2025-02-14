@@ -32,7 +32,8 @@ function(add_unit_test MAIN_SOURCE)
   target_compile_definitions(${BASENAME} PRIVATE ${UNIT_COMPILE_DEFINITIONS})
   add_symlink_to_built_opencl_dynlib(${BASENAME})
 
-  target_link_libraries(${BASENAME} PRIVATE ${POCL_LIBRARY_NAME} ${POCLU_LINK_OPTIONS})
+  target_link_libraries(${BASENAME}
+    PRIVATE ${POCL_LIBRARY_NAME} ${POCLU_LINK_OPTIONS})
   if(SANITIZER_OPTIONS)
     target_link_libraries(${BASENAME} PRIVATE ${SANITIZER_LIBS})
   endif()
@@ -47,7 +48,9 @@ function(add_unit_test MAIN_SOURCE)
 
   add_test(NAME "unit/${BASENAME}"
     COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${BASENAME})
+
+  set_property(TEST "unit/${BASENAME}" APPEND PROPERTY LABELS "cpu;unit")
 endfunction()
 
 add_unit_test(test_fs.cc)
-set_property(TEST "unit/test_fs" APPEND PROPERTY LABELS "cpu;unit")
+add_unit_test(test_runcmds.cc)

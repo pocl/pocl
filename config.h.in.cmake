@@ -319,4 +319,6 @@
 
 #cmakedefine KERNEL_TRIPLE_TARGETS_MSVC_TOOLCHAIN
 
+#cmakedefine CMAKE_COMMAND "@CMAKE_COMMAND@"
+
 #endif

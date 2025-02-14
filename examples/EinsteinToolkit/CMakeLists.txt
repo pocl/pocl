@@ -42,7 +42,8 @@ set_tests_properties( "EinsteinToolkit"
     PROPERTIES
     COST 15.0
     LABELS "cpu;EinsteinToolkit"
-    DEPENDS "pocl_version_check")
+    DEPENDS "pocl_version_check"
+    SKIP_RETURN_CODE 77)
 
 add_test(NAME "EinsteinToolkit_SubDev" COMMAND "EinsteinToolkit" s)
 

@@ -2518,7 +2518,8 @@ bool Level0Device::setupMemoryProperties(bool &HasUSMCapability) {
   }
 
   if (int MemLimit = pocl_get_int_option("POCL_MEMORY_LIMIT", 0)) {
-    uint64_t MemInGBytes = std::max((ClDev->global_mem_size >> 30), 1UL);
+    uint64_t MemInGBytes =
+        std::max<uint64_t>((ClDev->global_mem_size >> 30), 1UL);
     if (MemLimit > 0 && (uint64_t)MemLimit <= MemInGBytes) {
       ClDev->global_mem_size = (size_t)MemLimit << 30;
     }
@@ -2655,11 +2656,11 @@ bool Level0Device::setupImageProperties() {
 }
 
 bool Level0Device::setupPCIAddress() {
-  ze_pci_ext_properties_t PCIProps = {.stype =
-                                          ZE_STRUCTURE_TYPE_PCI_EXT_PROPERTIES,
-                                      .pNext = nullptr,
-                                      .address = {0},
-                                      .maxSpeed = {0}};
+  ze_pci_ext_properties_t PCIProps;
+  PCIProps.stype = ZE_STRUCTURE_TYPE_PCI_EXT_PROPERTIES;
+  PCIProps.pNext = nullptr;
+  PCIProps.address = {0};
+  PCIProps.maxSpeed = {0};
 
   ze_result_t Res = zeDevicePciGetPropertiesExt(DeviceHandle, &PCIProps);
   if (Res != ZE_RESULT_SUCCESS)

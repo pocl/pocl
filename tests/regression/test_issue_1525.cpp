@@ -79,8 +79,11 @@ int main(int argc, char *argv[]) {
     Kernel(cl::EnqueueArgs(Queue, cl::NDRange(2048), cl::NDRange(2048)), OutBuffer, InBuffer);
     Queue.finish();
   } catch (cl::Error &err) {
-    if (err.err() == CL_INVALID_WORK_GROUP_SIZE)
-      return 77; // Just skip if the WG size is not supported.
+    if (err.err() == CL_INVALID_WORK_GROUP_SIZE) {
+      // Just skip if the WG size is not supported.
+      std::cout << "SKIP" << std::endl;
+      return 77;
+    }
     std::cout << "FAIL with OpenCL error = " << err.err() << std::endl;
     return EXIT_FAILURE;
   }

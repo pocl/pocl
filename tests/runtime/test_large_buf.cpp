@@ -34,9 +34,7 @@
 
 #define WORKITEMS 1048576
 
-// (INPUT_BUFFER_SIZE / WORKITEMS)
-#define LOOPSIZE 5120
-#define BUILD_OPTS "-DLOOPSIZE=5120"
+#define LOOPSIZE (INPUT_BUFFER_SIZE / WORKITEMS)
 
 const char *SOURCE = R"RAW(
 __kernel void test_kernel2 (global const uchar    *in,
@@ -107,7 +105,8 @@ int main(void) {
     cl::Program Program(Context, Sources);
 
     // Build program
-    Program.build(UsedDevice, BUILD_OPTS);
+    auto BuildOpts = std::string("-DLOOPSIZE=") + std::to_string(LOOPSIZE);
+    Program.build(UsedDevice, BuildOpts.c_str());
 
     cl::Buffer InBuffer = cl::Buffer(Context,
                                      CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR |

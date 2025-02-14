@@ -860,27 +860,32 @@ static int convertBCorSPV(char *InputPath,
   SPIRV::VersionNumber TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_3;
   switch (TargetVersion.major * 100 + TargetVersion.minor) {
   default:
-    assert(!"Unrecognized SPIR-V version!");
+    if (!Reverse) {
+      POCL_MSG_ERR("Unrecognized SPIR-V version: %u.%u\n",
+                   static_cast<unsigned>(TargetVersion.major),
+                   static_cast<unsigned>(TargetVersion.minor));
+      return 1;
+    }
     break;
   case 100:
     SPIRV::VersionNumber::SPIRV_1_0;
     break;
-  case 110:
+  case 101:
     SPIRV::VersionNumber::SPIRV_1_1;
     break;
-  case 120:
+  case 102:
     SPIRV::VersionNumber::SPIRV_1_2;
     break;
-  case 130:
+  case 103:
     SPIRV::VersionNumber::SPIRV_1_3;
     break;
-  case 140:
+  case 104:
     SPIRV::VersionNumber::SPIRV_1_4;
     break;
-  case 150:
+  case 105:
     SPIRV::VersionNumber::SPIRV_1_5;
     break;
-  case 160:
+  case 106:
     SPIRV::VersionNumber::SPIRV_1_6;
     break;
   }

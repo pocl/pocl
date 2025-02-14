@@ -22,8 +22,7 @@ int call_test(const char *name)
   cl_context context = NULL;
   cl_command_queue queue = NULL;
   cl_program program = NULL;
-  cl_kernel kernel = NULL;
-  cl_int result;
+  cl_int result = CL_INVALID_OPERATION; /* Need just some error code. */
   int retval = -1;
 
   TEST_ASSERT (name != NULL);
@@ -42,19 +41,35 @@ int call_test(const char *name)
                             Options, &program);
   CHECK_OPENCL_ERROR_IN ("clCreateProgram call failed\n");
 
-  /* execute the kernel with give name */
-  kernel = clCreateKernel(program, name, NULL); 
-  if (!kernel) {
-    puts("clCreateKernel call failed\n");
-    goto error;
-  }
+  cl_uint num_kernels = 0;
+  err = clCreateKernelsInProgram (program, 0, NULL, &num_kernels);
+  CHECK_OPENCL_ERROR_IN ("clCreateKernelsInProgram call failed");
+  if (!num_kernels)
+    {
+      puts ("The program does not have kernels!\n");
+      goto error;
+    }
 
-  result = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, 
-      global_work_size, local_work_size, 0, NULL, NULL); 
-  if (result != CL_SUCCESS) {
-    puts("clEnqueueNDRangeKernel call failed\n");
-    goto error;
-  }
+  cl_kernel *kernels = calloc (num_kernels, sizeof (cl_kernel));
+  err = clCreateKernelsInProgram (program, num_kernels, kernels, NULL);
+  if (err != CL_SUCCESS)
+    {
+      free (kernels);
+      kernels = NULL;
+    }
+  CHECK_OPENCL_ERROR_IN ("clCreateKernelsInProgram call failed");
+
+  for (cl_uint i = 0; i < num_kernels; i++)
+    {
+      result
+        = clEnqueueNDRangeKernel (queue, kernels[i], 1, NULL, global_work_size,
+                                  local_work_size, 0, NULL, NULL);
+      if (result != CL_SUCCESS)
+        {
+          puts ("clEnqueueNDRangeKernel call failed\n");
+          goto error;
+        }
+    }
 
   result = clFinish(queue);
   if (result == CL_SUCCESS)
@@ -62,9 +77,12 @@ int call_test(const char *name)
 
 error:
 
-  if (kernel) {
-    CHECK_CL_ERROR (clReleaseKernel (kernel));
-  }
+  if (kernels)
+    {
+      for (cl_uint i = 0; i < num_kernels; i++)
+        CHECK_CL_ERROR (clReleaseKernel (kernels[i]));
+      free (kernels);
+    }
   if (program) {
     CHECK_CL_ERROR (clReleaseProgram (program));
   }
