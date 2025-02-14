@@ -21,7 +21,4 @@ DEFINE_BODY_G_HADD (test_hadd, ({
                         }
                     }))
 
-kernel void test_hadd()
-{
-  CALL_FUNC_G(test_hadd)
-}
+DEF_KERNELS_CALL_FUNC_G (test_hadd);

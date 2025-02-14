@@ -1300,9 +1300,58 @@ typedef constant char *string;
   NAME##_ulong8  ();                            \
   NAME##_ulong16 ();)
 
+#define DEF_KERNEL_CALL_FUNC_G(NAME)                                          \
+  kernel void NAME##_kernel () { NAME (); }
 
-
-
+#define DEF_KERNELS_CALL_FUNC_G(NAME)                                         \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_char);                                       \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_char2);                                      \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_char3);                                      \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_char4);                                      \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_char8);                                      \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_char16);                                     \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_uchar);                                      \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_uchar2);                                     \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_uchar3);                                     \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_uchar4);                                     \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_uchar8);                                     \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_uchar16);                                    \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_short);                                      \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_short2);                                     \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_short3);                                     \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_short4);                                     \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_short8);                                     \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_short16);                                    \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_ushort);                                     \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_ushort2);                                    \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_ushort3);                                    \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_ushort4);                                    \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_ushort8);                                    \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_ushort16);                                   \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_int);                                        \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_int2);                                       \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_int3);                                       \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_int4);                                       \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_int8);                                       \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_int16);                                      \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_uint);                                       \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_uint2);                                      \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_uint3);                                      \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_uint4);                                      \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_uint8);                                      \
+  DEF_KERNEL_CALL_FUNC_G (NAME##_uint16);                                     \
+  __IF_INT64 (DEF_KERNEL_CALL_FUNC_G (NAME##_long);                           \
+              DEF_KERNEL_CALL_FUNC_G (NAME##_long2);                          \
+              DEF_KERNEL_CALL_FUNC_G (NAME##_long3);                          \
+              DEF_KERNEL_CALL_FUNC_G (NAME##_long4);                          \
+              DEF_KERNEL_CALL_FUNC_G (NAME##_long8);                          \
+              DEF_KERNEL_CALL_FUNC_G (NAME##_long16);                         \
+              DEF_KERNEL_CALL_FUNC_G (NAME##_ulong);                          \
+              DEF_KERNEL_CALL_FUNC_G (NAME##_ulong2);                         \
+              DEF_KERNEL_CALL_FUNC_G (NAME##_ulong3);                         \
+              DEF_KERNEL_CALL_FUNC_G (NAME##_ulong4);                         \
+              DEF_KERNEL_CALL_FUNC_G (NAME##_ulong8);                         \
+              DEF_KERNEL_CALL_FUNC_G (NAME##_ulong16);)
 
 #define is_floating(T) 1
 #define is_signed(T) ((T)-1 < (T) + 1)

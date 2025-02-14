@@ -99,7 +99,4 @@ DEFINE_BODY_G
  })
  )
 
-kernel void test_rotate()
-{
-  CALL_FUNC_G(test_rotate)
-}
+DEF_KERNELS_CALL_FUNC_G (test_rotate);
