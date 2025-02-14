@@ -521,8 +521,7 @@ void Level0Queue::makeMemResident() {
   for (auto &I : MemPtrsToMakeResident) {
     void *Ptr = I.first;
     size_t Size = I.second;
-    POCL_MSG_PRINT_LEVEL0("Level0: Making %p (size %zu) device resident.\n",
-                          Ptr, Size);
+    assert(Ptr);
     ze_result_t Res = zeContextMakeMemoryResident(
         Device->getContextHandle(), Device->getDeviceHandle(), Ptr, Size);
     LEVEL0_CHECK_ABORT(Res);
@@ -535,6 +534,8 @@ void Level0Queue::syncMemHostPtrs() {
     char *MemHostPtr = I.first.first;
     char *DevPtr = I.first.second;
     size_t Size = I.second;
+    assert(MemHostPtr);
+    assert(DevPtr);
     allocNextFreeEvent();
     LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(
         CmdListH, MemHostPtr, DevPtr, Size, CurrentEventH,
@@ -546,6 +547,9 @@ void Level0Queue::syncMemHostPtrs() {
 void Level0Queue::execCommand(_cl_command_node *Cmd) {
 
   cl_event event = Cmd->sync.event.event;
+
+  assert(CurrentEventH == nullptr);
+  assert(PreviousEventH == nullptr);
 
   const char *Msg = nullptr;
   appendEventToList(Cmd, &Msg, event->context);
@@ -576,6 +580,9 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
 void Level0Queue::execCommandBatch(BatchType &Batch) {
 
   ze_result_t res;
+
+  assert(CurrentEventH == nullptr);
+  assert(PreviousEventH == nullptr);
 
   POCL_MEASURE_START(ZeListPrepare);
 
@@ -639,19 +646,27 @@ void Level0Queue::execCommandBuffer(_cl_command_node *Node) {
 
   assert(CmdBuf->data[dev_id]);
   Level0CmdBufferData *CmdBufData = (Level0CmdBufferData *)CmdBuf->data[dev_id];
-  ze_command_list_handle_t CBCmdListH = CmdBufData->CmdListH;
-  POCL_MSG_PRINT_LEVEL0("Executing CmdList %p for CmbBuf %p\n",
-                        (void *)CBCmdListH, (void *)CmdBuf);
+  {
+    std::lock_guard<std::mutex> Guard(CmdBufData->Lock);
+    ze_command_list_handle_t CBCmdListH = CmdBufData->CmdListH;
+    POCL_MSG_PRINT_LEVEL0("Executing CmdList %p for CmbBuf %p\n",
+                          (void *)CBCmdListH, (void *)CmdBuf);
+    // TODO swap
+    assert(MemPtrsToMakeResident.empty());
+    CmdBufData->MemPtrsToMakeResident.swap(MemPtrsToMakeResident);
+    makeMemResident();
+    CmdBufData->MemPtrsToMakeResident.swap(MemPtrsToMakeResident);
 
-  POCL_MEASURE_START(ZeListExec);
-  // TODO: does not work with immediate CMD queues
-  assert(QueueH);
-  LEVEL0_CHECK_ABORT(
-      zeCommandQueueExecuteCommandLists(QueueH, 1, &CBCmdListH, nullptr));
-  pocl_update_event_running(Event);
-  LEVEL0_CHECK_ABORT(
-      zeCommandQueueSynchronize(QueueH, std::numeric_limits<uint64_t>::max()));
-  POCL_MEASURE_FINISH(ZeListExec);
+    POCL_MEASURE_START(ZeListExec);
+    // TODO: does not work with immediate CMD queues
+    assert(QueueH);
+    LEVEL0_CHECK_ABORT(
+        zeCommandQueueExecuteCommandLists(QueueH, 1, &CBCmdListH, nullptr));
+    pocl_update_event_running(Event);
+    LEVEL0_CHECK_ABORT(zeCommandQueueSynchronize(
+        QueueH, std::numeric_limits<uint64_t>::max()));
+    POCL_MEASURE_FINISH(ZeListExec);
+  }
 
   POCL_UPDATE_EVENT_COMPLETE_MSG(Event, "Event Command Buffer");
 }
@@ -672,6 +687,8 @@ void *Level0Queue::createCommandBuffer(cl_command_buffer_khr CmdBuf) {
                                                 Device->getDeviceHandle(),
                                                 &cmdListDesc, &CmdListH));
   assert(CmdListH);
+  assert(CurrentEventH == nullptr);
+  assert(PreviousEventH == nullptr);
 
   const char *Msg = nullptr;
   std::deque<const char *> Msgs;
@@ -684,7 +701,6 @@ void *Level0Queue::createCommandBuffer(cl_command_buffer_khr CmdBuf) {
     Cmd->device = nullptr;
   }
 
-  makeMemResident();
   syncMemHostPtrs();
   std::queue<ze_event_handle_t> CmdBufEvtList;
   closeCmdList(&CmdBufEvtList);
@@ -692,20 +708,31 @@ void *Level0Queue::createCommandBuffer(cl_command_buffer_khr CmdBuf) {
   POCL_MEASURE_FINISH(ZeListPrepare);
   std::swap(CmdListH, SaveCmdListH);
   Level0CmdBufferData *CmdBufData = new Level0CmdBufferData;
+  assert(CmdBufData);
   CmdBufData->CmdListH = SaveCmdListH;
   CmdBufData->Events.swap(CmdBufEvtList);
+  CmdBufData->MemPtrsToMakeResident.swap(MemPtrsToMakeResident);
+  CurrentEventH = nullptr;
+  PreviousEventH = nullptr;
+  assert(CmdListH != nullptr);
+  assert(UseMemHostPtrsToSync.empty());
+  assert(MemPtrsToMakeResident.empty());
+  assert(DeviceEventsToReset.empty());
   return (void *)CmdBufData;
 }
 
 void Level0Queue::freeCommandBuffer(void *CmdBufPtr) {
   assert(CmdBufPtr);
   Level0CmdBufferData *CmdBufData = (Level0CmdBufferData *)CmdBufPtr;
-  while (!CmdBufData->Events.empty()) {
-    auto E = CmdBufData->Events.front();
-    CmdBufData->Events.pop();
-    AvailableDeviceEvents.push(E);
+  {
+    std::lock_guard<std::mutex> Guard(CmdBufData->Lock);
+    while (!CmdBufData->Events.empty()) {
+      auto E = CmdBufData->Events.front();
+      CmdBufData->Events.pop();
+      AvailableDeviceEvents.push(E);
+    }
+    zeCommandListDestroy((ze_command_list_handle_t)CmdBufData->CmdListH);
   }
-  zeCommandListDestroy((ze_command_list_handle_t)CmdBufData->CmdListH);
   delete CmdBufData;
 }
 
@@ -2941,6 +2968,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     // | CL_COMMAND_BUFFER_CAPABILITY_OUT_OF_ORDER_KHR
     //| CL_COMMAND_BUFFER_CAPABILITY_MULTIPLE_QUEUE_KHR;
     ClDev->cmdbuf_required_properties = 0;
+    ClDev->native_command_buffers = CL_TRUE;
   }
 #endif
 
