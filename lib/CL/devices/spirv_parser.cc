@@ -649,6 +649,7 @@ class SPIRVmodule {
   SPIRVConstMap ConstMap_;
 
   bool MemModelCL_;
+  unsigned MemModelPtrSize_;
   bool KernelCapab_;
   bool ExtIntOpenCL_;
   bool HeaderOK_;
@@ -736,7 +737,6 @@ public:
 private:
   bool parseInstructionStream(const int32_t *Stream, size_t NumWords) {
     const int32_t *StreamIntPtr = Stream;
-    size_t PointerSize = 0;
     int32_t CurrentKernelID = 0;
     int32_t CurrentKernelParam = 0;
     while (NumWords > 0) {
@@ -750,8 +750,8 @@ private:
 
       if (Inst.isMemModelOpenCL()) {
         MemModelCL_ = true;
-        PointerSize = Inst.getPointerSize();
-        assert(PointerSize > 0);
+        MemModelPtrSize_ = Inst.getPointerSize();
+        assert(MemModelPtrSize_ > 0);
       }
 
       if (Inst.isExecutionMode()) {
@@ -792,11 +792,11 @@ private:
           FunctionTypeMap_.emplace(std::make_pair(
               Inst.getTypeID(),
               Inst.decodeFunctionType(TypeMap_, ReqLocalMap_, LocalHintMap_,
-                                      VecTypeHintMap_, PointerSize)));
+                                      VecTypeHintMap_, MemModelPtrSize_)));
         else
           TypeMap_.emplace(std::make_pair(
               Inst.getTypeID(),
-              Inst.decodeType(TypeMap_, ConstMap_, PointerSize)));
+              Inst.decodeType(TypeMap_, ConstMap_, MemModelPtrSize_)));
       }
 
       if (Inst.isFunction() &&
@@ -979,7 +979,6 @@ private:
   bool transformInstructionStream(const int32_t *InStream, size_t NumWords,
                                   std::vector<int32_t> &OutStream) {
     size_t InstSize = 0;
-    size_t PointerSize = 0;
     int32_t ReplacementAtomicType = 0;
     int32_t ReplacementBitcastType = 0;
 
@@ -1000,8 +999,8 @@ private:
 
       if (Inst.isMemModelOpenCL()) {
         MemModelCL_ = true;
-        PointerSize = Inst.getPointerSize();
-        assert(PointerSize > 0);
+        MemModelPtrSize_ = Inst.getPointerSize();
+        assert(MemModelPtrSize_ > 0);
       }
 
       if (Inst.isType()) {
@@ -1009,11 +1008,11 @@ private:
           FunctionTypeMap_.emplace(std::make_pair(
               Inst.getTypeID(),
               Inst.decodeFunctionType(TypeMap_, ReqLocalMap_, LocalHintMap_,
-                                      VecTypeHintMap_, PointerSize)));
+                                      VecTypeHintMap_, MemModelPtrSize_)));
         else
           TypeMap_.emplace(std::make_pair(
               Inst.getTypeID(),
-              Inst.decodeType(TypeMap_, ConstMap_, PointerSize)));
+              Inst.decodeType(TypeMap_, ConstMap_, MemModelPtrSize_)));
       }
 
       if (Inst.isConstant()) {
