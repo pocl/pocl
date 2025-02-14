@@ -1316,7 +1316,8 @@ int
 pocl_remote_supports_binary (cl_device_id device, size_t length,
                              const char *binary)
 {
-  if (pocl_bitcode_is_spirv_execmodel_kernel (binary, length)
+  if (pocl_bitcode_is_spirv_execmodel_kernel (binary, length,
+                                              device->address_bits)
       && device->supported_spir_v_versions != NULL
       && strncmp (device->supported_spir_v_versions, "SPIR-V", 6) == 0)
     return 1;

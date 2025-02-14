@@ -375,7 +375,9 @@ int pocl_svm_check_get_pointer (cl_context context, const void *svm_ptr,
 /* returns !0 if binary is SPIR-V bitcode with OpCapability Kernel
  * OpenCL-style bitcode produced by e.g. llvm-spirv */
 POCL_EXPORT
-int pocl_bitcode_is_spirv_execmodel_kernel (const char *bitcode, size_t size);
+int pocl_bitcode_is_spirv_execmodel_kernel (const char *bitcode,
+                                            size_t size,
+                                            cl_uint addr_bits);
 
 /* returns !0 if binary is SPIR-V bitcode with OpCapability Shader
  * these are produced by e.g. GLSL and clspv compilation */

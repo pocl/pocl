@@ -702,7 +702,8 @@ int pocl_level0_supports_binary(cl_device_id Device, size_t Length,
 
   if (Device->compiler_available == CL_TRUE &&
       Device->linker_available == CL_TRUE && Device->num_ils_with_version > 0 &&
-      pocl_bitcode_is_spirv_execmodel_kernel(Binary, Length) != 0) {
+      pocl_bitcode_is_spirv_execmodel_kernel(Binary, Length,
+                                             Device->address_bits) != 0) {
     return 1;
   }
   // TODO : possibly support native ZE binaries
@@ -781,9 +782,6 @@ int pocl_level0_build_binary(cl_program Program, cl_uint DeviceI,
       assert(Program->binary_sizes[DeviceI] > 0);
 
       int Triple =
-          pocl_bitcode_is_triple((char *)Program->binaries[DeviceI],
-                            Program->binary_sizes[DeviceI], "spir-unknown");
-      Triple +=
           pocl_bitcode_is_triple((char *)Program->binaries[DeviceI],
                             Program->binary_sizes[DeviceI], "spir64-unknown");
       POCL_RETURN_ERROR_ON((Triple == 0), CL_BUILD_PROGRAM_FAILURE,
