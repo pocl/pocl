@@ -271,8 +271,9 @@ pocl_cpu_init_common (cl_device_id device)
     device->llvm_cpu = pocl_get_llvm_cpu_name ();
 
 #ifndef ENABLE_SIGFPE_HANDLER
-  if (strstr (OCL_KERNEL_TARGET, "x86") != NULL)
-    device->run_sanitize_divrem_pass = CL_TRUE;
+  // should be enforced by CMake
+  assert (strstr (OCL_KERNEL_TARGET, "x86") != NULL);
+  device->run_sanitize_divrem_pass = CL_TRUE;
 #endif
 
 #endif
