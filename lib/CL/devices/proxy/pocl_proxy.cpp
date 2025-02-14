@@ -1510,8 +1510,8 @@ int pocl_proxy_supports_binary(cl_device_id device, size_t length,
 
   free(extensions);
 
-  return extension_support &&
-         pocl_bitcode_is_spirv_execmodel_kernel(binary, length);
+  return extension_support && pocl_bitcode_is_spirv_execmodel_kernel(
+                                  binary, length, device->address_bits);
 }
 
 int

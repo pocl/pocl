@@ -142,7 +142,7 @@ CL_API_SUFFIX__VERSION_2_1
 
   int is_spirv = 0;
   int is_spirv_kernel
-      = pocl_bitcode_is_spirv_execmodel_kernel ((const char *)il, length);
+    = pocl_bitcode_is_spirv_execmodel_kernel ((const char *)il, length, 0);
   is_spirv += is_spirv_kernel;
 
   int is_spirv_shader

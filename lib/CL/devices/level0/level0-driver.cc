@@ -3666,8 +3666,9 @@ void Level0Device::freeSampler(ze_sampler_handle_t SamplerH) {
 
 int Level0Device::createSpirvProgram(cl_program Program, cl_uint DeviceI) {
 
-  int Res = pocl_bitcode_is_spirv_execmodel_kernel(Program->program_il,
-                                                   Program->program_il_size);
+  cl_device_id Dev = Program->devices[DeviceI];
+  int Res = pocl_bitcode_is_spirv_execmodel_kernel(
+      Program->program_il, Program->program_il_size, Dev->address_bits);
   POCL_RETURN_ERROR_ON((Res == 0), CL_BUILD_PROGRAM_FAILURE,
                        "Binary is not a SPIR-V module!\n");
 

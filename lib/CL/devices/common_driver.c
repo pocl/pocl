@@ -694,16 +694,23 @@ pocl_llvm_convert_and_link_ir (cl_program program, cl_uint device_i,
       int spir_binary
           = pocl_bitcode_is_triple ((char *)program->binaries[device_i],
                                program->binary_sizes[device_i], "spir");
+      int device_binary = pocl_bitcode_is_triple (
+        (char *)program->binaries[device_i], program->binary_sizes[device_i],
+        device->llvm_target_triplet);
       if (spir_binary)
         {
-          POCL_MSG_PRINT_LLVM ("LLVM-SPIR binary detected\n");
-          if (!spir_build)
-            POCL_MSG_WARN (
-                "SPIR binary provided, but no spir in build options\n");
+          POCL_MSG_PRINT_LLVM ("SPIR binary detected\n");
+        }
+      else if (device_binary)
+        {
+          POCL_MSG_PRINT_LLVM ("LLVM IR binary detected for device %d\n",
+                               device_i);
         }
       else
-        POCL_MSG_PRINT_LLVM ("building from a BC binary for device %d\n",
-                             device_i);
+        {
+          POCL_RETURN_ERROR_ON (errcode, CL_LINK_PROGRAM_FAILURE,
+                                "The binary was not recognized\n");
+        }
     }
 
   // SPIR-V requires special handling because of spec constants
@@ -959,9 +966,10 @@ pocl_driver_supports_binary (cl_device_id device, size_t length,
 {
 #ifdef ENABLE_LLVM
 
-  /* SPIR-V binaries are supported if we have llvm-spirv */
+  /* SPIR-V binaries are supported if we have SPIRV support in LLVM */
 #ifdef ENABLE_SPIRV
-  if (pocl_bitcode_is_spirv_execmodel_kernel (binary, length))
+  if (pocl_bitcode_is_spirv_execmodel_kernel (binary, length,
+                                              device->address_bits))
     return 1;
 #endif
 

@@ -2275,8 +2275,17 @@ pocl_update_event_complete (const char *func, unsigned line,
 /* execution model = Shader is used by Vulkan SPIR-V modules */
 #define ShaderExecModel 0x1
 
+#define OpMemoryModel 0x0003000e
+#define MemModelOpenCL 2
+#define Physical64 2
+
+/* exec_model is mandatory, addr_bits is optional & only used for
+ * KernelExecModel */
 static int
-bitcode_is_spirv_execmodel (const char *bitcode, size_t size, uint32_t type)
+bitcode_is_spirv_execmodel (const char *bitcode,
+                            size_t size,
+                            uint32_t exec_model,
+                            uint32_t addr_bits)
 {
   const uint32_t *bc32 = (const uint32_t *)bitcode;
   unsigned location = 0;
@@ -2285,33 +2294,62 @@ bitcode_is_spirv_execmodel (const char *bitcode, size_t size, uint32_t type)
   if ((size < 20) || (header_magic != SPIRV_MAGIC))
     return 0;
 
-  // skip version, generator, bound, schema
+  /* skip version, generator, bound, schema */
   location += 4;
-  int is_type = 0;
+  int matches_exec_model = 0, matches_addr_bits = 0;
   uint32_t value, instruction;
+  /* every opcapab is followed by one value */
   instruction = htole32 (bc32[location++]);
   value = htole32 (bc32[location++]);
   while (instruction == OpCapab && location < (size / 4))
     {
-      if (value == type)
-        return 1;
+      if (value == exec_model)
+        {
+          matches_exec_model = 1;
+        }
       instruction = htole32 (bc32[location++]);
       value = htole32 (bc32[location++]);
     }
+  if (!matches_exec_model)
+    return 0;
 
-  return 0;
+  if (addr_bits == 0 || exec_model != KernelExecModel)
+    return matches_exec_model;
+  else
+    {
+      /* for Kernel exec model, check also addressing bits */
+      location -= 2; /* undo last assignment from while loop */
+      while (location < (size / 4))
+        {
+          instruction = htole32 (bc32[location]);
+          unsigned word_count = instruction >> 16;
+          assert (instruction != OpCapab);
+          if (instruction == OpMemoryModel)
+            {
+              value = htole32 (bc32[location + 1]);
+              uint32_t spirv_addr_bits = (value == Physical64) ? 64 : 32;
+              matches_addr_bits = spirv_addr_bits == addr_bits;
+              break;
+            }
+          location += word_count;
+        }
+    }
+  return matches_exec_model && matches_addr_bits;
 }
 
 int
-pocl_bitcode_is_spirv_execmodel_kernel (const char *bitcode, size_t size)
+pocl_bitcode_is_spirv_execmodel_kernel (const char *bitcode,
+                                        size_t size,
+                                        cl_uint addr_bits)
 {
-  return bitcode_is_spirv_execmodel (bitcode, size, KernelExecModel);
+  return bitcode_is_spirv_execmodel (bitcode, size, KernelExecModel,
+                                     addr_bits);
 }
 
 int
 pocl_bitcode_is_spirv_execmodel_shader (const char *bitcode, size_t size)
 {
-  return bitcode_is_spirv_execmodel (bitcode, size, ShaderExecModel);
+  return bitcode_is_spirv_execmodel (bitcode, size, ShaderExecModel, 0);
 }
 
 int
