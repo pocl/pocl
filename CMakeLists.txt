@@ -662,6 +662,8 @@ if(ENABLE_HOST_CPU_DEVICES_OPENMP)
   if(NOT OpenMP_CXX_FOUND)
     message(FATAL_ERROR "ENABLE_HOST_CPU_DEVICES_OPENMP specified but OpenMP not found.")
   endif()
+  # The OpenMP device depends on the pthread device which depends on the basic device. ENABLE_HOST_CPU_DEVICES enables both.
+  set(ENABLE_HOST_CPU_DEVICES 1)
 endif()
 
 ######################################################################################
@@ -784,7 +786,14 @@ endif()
 # SIGFPE and SIGUSR2
 if(UNIX AND (CMAKE_SYSTEM_NAME MATCHES "Linux"))
   # this is now handled by a LLVM pass
-  option(ENABLE_SIGFPE_HANDLER "enable SIGFPE signal handler" OFF)
+  if(ENABLE_HOST_CPU_DEVICES AND X86 AND
+     (NOT ENABLE_HOST_CPU_DEVICES_OPENMP) AND
+     (NOT ENABLE_TBB_DEVICE))
+    set(DEFAULT_SIGFPE ON)
+  else()
+    set(DEFAULT_SIGFPE OFF)
+  endif()
+  option(ENABLE_SIGFPE_HANDLER "enable SIGFPE signal handler" ${DEFAULT_SIGFPE})
   option(ENABLE_SIGUSR2_HANDLER "enable SIGUSR2 signal handler" ON)
 else()
   set(ENABLE_SIGFPE_HANDLER OFF CACHE INTERNAL "enable SIGFPE signal handler" FORCE)
