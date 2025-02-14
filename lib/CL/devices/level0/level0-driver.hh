@@ -56,8 +56,10 @@ constexpr unsigned BatchSizeLimit = 128;
 constexpr unsigned EventPoolSize = 2048;
 
 struct Level0CmdBufferData {
+  std::mutex Lock;
   std::queue<ze_event_handle_t> Events;
-  ze_command_list_handle_t CmdListH;
+  std::map<void *, size_t> MemPtrsToMakeResident;
+  ze_command_list_handle_t CmdListH = nullptr;
 };
 
 class Level0WorkQueueInterface {
