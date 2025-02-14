@@ -56,13 +56,7 @@ namespace pocl {
 using namespace llvm;
 
 static void fixUnsignedDivRem(IRBuilder<> &Builder, BinaryOperator *BinI,
-                              Value *Dividend, Value *Divisor,
-                              ValueToValueMapTy &ZeroCheckedDivisorCache) {
-  auto It = ZeroCheckedDivisorCache.find(Divisor);
-  if (It != ZeroCheckedDivisorCache.end()) {
-    BinI->setOperand(1, It->second);
-    return;
-  }
+                              Value *Dividend, Value *Divisor) {
 
   // divisor == 0
   Value *Condition = Builder.CreateCmp(CmpInst::Predicate::ICMP_EQ, Divisor,
@@ -77,20 +71,11 @@ static void fixUnsignedDivRem(IRBuilder<> &Builder, BinaryOperator *BinI,
 #endif
 
   BinI->setOperand(1, FixedDivisor);
-  ZeroCheckedDivisorCache.insert(std::make_pair(Divisor, FixedDivisor));
 }
 
 static void fixSignedDivRem(IRBuilder<> &Builder, BinaryOperator *BinI,
-                            Value *Dividend, Value *Divisor,
-                            ValueToValueMapTy &ZeroCheckedCache,
-                            ValueToValueMapTy &IntMinCheckedCache) {
-  fixUnsignedDivRem(Builder, BinI, Dividend, Divisor, ZeroCheckedCache);
-
-  auto It = IntMinCheckedCache.find(Divisor);
-  if (It != IntMinCheckedCache.end()) {
-    BinI->setOperand(0, It->second);
-    return;
-  }
+                            Value *Dividend, Value *Divisor) {
+  fixUnsignedDivRem(Builder, BinI, Dividend, Divisor);
 
   Type *T = Divisor->getType();
   // for signed div/rem, we need to fix also the dividend (INT_MIN / -1)
@@ -110,7 +95,6 @@ static void fixSignedDivRem(IRBuilder<> &Builder, BinaryOperator *BinI,
 #endif
 
   BinI->setOperand(0, FixedDividend);
-  IntMinCheckedCache.insert(std::make_pair(Divisor, FixedDividend));
 }
 
 static bool sanitizeUBofDivRem(llvm::Function &F) {
@@ -120,10 +104,6 @@ static bool sanitizeUBofDivRem(llvm::Function &F) {
   std::cerr << "BEFORE:\n";
   F.dump();
 #endif
-
-  // save already fixed values
-  ValueToValueMapTy ZeroCheckedCache;
-  ValueToValueMapTy IntMinCheckedCache;
 
   bool Changed = false;
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
@@ -160,13 +140,12 @@ static bool sanitizeUBofDivRem(llvm::Function &F) {
         }
       }
 
-      Builder.SetInsertPoint(BinI);
+      Builder.SetInsertPoint(Inst2InsertPt(BinI));
       if (BinI->getOpcode() == Instruction::SDiv ||
           BinI->getOpcode() == Instruction::SRem) {
-        fixSignedDivRem(Builder, BinI, Dividend, Divisor, ZeroCheckedCache,
-                        IntMinCheckedCache);
+        fixSignedDivRem(Builder, BinI, Dividend, Divisor);
       } else {
-        fixUnsignedDivRem(Builder, BinI, Dividend, Divisor, ZeroCheckedCache);
+        fixUnsignedDivRem(Builder, BinI, Dividend, Divisor);
       }
 
       Changed = true;
