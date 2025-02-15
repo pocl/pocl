@@ -468,8 +468,9 @@ bool isKernelToProcess(const llvm::Function &F) {
 
 //#define DEBUG_UNREACHABLE_SWITCH_REMOVAL
 
-void removeUnreachableSwitchCases(llvm::Function &F) {
+bool removeUnreachableSwitchCases(llvm::Function &F) {
   std::vector<BasicBlock *> BBsToDel;
+  bool Changed = false;
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
     BasicBlock *BB = &*FI;
 
@@ -509,6 +510,7 @@ void removeUnreachableSwitchCases(llvm::Function &F) {
           BasicBlock *FinalBB = FinalCaseIt->getCaseSuccessor();
           SwI->removeCase(FinalCaseIt);
           SwI->setDefaultDest(FinalBB);
+          Changed = true;
 #ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
           std::cerr << "Final fixed switch:\n";
           SwI->dump();
@@ -525,7 +527,10 @@ void removeUnreachableSwitchCases(llvm::Function &F) {
 
   for (auto BB : BBsToDel) {
     BB->eraseFromParent();
+    Changed = true;
   }
+
+  return Changed;
 }
 
 // Returns true in case the given function is a kernel with work-group
