@@ -134,7 +134,7 @@ llvm::Metadata *createConstantIntMD(llvm::LLVMContext &C, int32_t Val);
 // TODO this is fragile, LLVM can introduce more optimizations that create
 // unreachable blocks. However I couldn't find any working way to make PDT
 // ignore blocks with an unreachable inst.
-void removeUnreachableSwitchCases(llvm::Function &F);
+bool removeUnreachableSwitchCases(llvm::Function &F);
 
 void markFunctionAlwaysInline(llvm::Function *F);
 

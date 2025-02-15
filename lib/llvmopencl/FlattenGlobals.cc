@@ -27,10 +27,11 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/Twine.h>
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/IR/Module.h"
-#include "llvm/Support/CommandLine.h"
+#include <llvm/ADT/SmallPtrSet.h>
+#include <llvm/IR/InstIterator.h>
+#include <llvm/IR/Module.h>
 #include <llvm/Pass.h>
+#include <llvm/Support/CommandLine.h>
 
 #include "FlattenGlobals.hh"
 #include "LLVMUtils.h"
@@ -42,6 +43,7 @@ POP_COMPILER_DIAGS
 #include <string>
 
 #include "KernelCompilerUtils.h"
+#include "WorkitemHandlerChooser.h"
 #include "pocl_llvm_api.h"
 
 //#define DEBUG_FLATTEN
@@ -71,16 +73,16 @@ static bool flattenGlobals(Module &M) {
       Pending.push_back(WIFunc);
   }
 
+  // force-inline all functions with unreachable instructions, for both
+  // the CBS and Loopvec WI handlers.
   for (auto &F : M.functions()) {
-    for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-      for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE;) {
-        if (isa<UnreachableInst>(BI++)) {
+    for (auto &I : instructions(F)) {
+      if (isa<UnreachableInst>(I)) {
 #ifdef DEBUG_FLATTEN
-          std::cerr << "UNREACHABLE: should inline " << F.getName().str()
-                    << "\n";
+        std::cerr << "UNREACHABLE: must inline because of UnreachableInst\n";
 #endif
-          FunctionsToInline.insert(&F);
-        }
+        FunctionsToInline.insert(&F);
+        break;
       }
     }
   }
