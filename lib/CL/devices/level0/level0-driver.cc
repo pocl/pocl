@@ -32,6 +32,7 @@
 #include "pocl_spir.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
+#include "spirv_queries.h"
 
 #include "imagefill.h"
 #include "memfill.h"
@@ -3171,6 +3172,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     pocl_setup_features_with_version(ClDev);
     pocl_setup_extensions_with_version(ClDev);
     pocl_setup_ils_with_version(ClDev);
+    pocl_setup_spirv_queries(ClDev);
   }
 
   if (ClDev->type == CL_DEVICE_TYPE_CUSTOM ||

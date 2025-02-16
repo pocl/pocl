@@ -40,6 +40,7 @@
 #include "pocl_runtime_config.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
+#include "spirv_queries.h"
 
 #include <string.h>
 #include <fcntl.h>
@@ -828,6 +829,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   pocl_setup_builtin_kernels_with_version (dev);
 
   pocl_setup_ils_with_version (dev);
+  pocl_setup_spirv_queries (dev);
 
 #ifdef ENABLE_CUDNN
   CUDNN_CALL (cudnnCreate (&cudnn));

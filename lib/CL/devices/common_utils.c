@@ -38,6 +38,7 @@
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
 #include "pocl_tensor_util.h"
+#include "spirv_queries.h"
 #include "topology/pocl_topology.h"
 #include "utlist.h"
 
@@ -436,6 +437,7 @@ pocl_cpu_init_common (cl_device_id device)
   pocl_setup_builtin_kernels_with_version (device);
 
   pocl_setup_ils_with_version (device);
+  pocl_setup_spirv_queries (device);
 
   device->on_host_queue_props
       = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;

@@ -1354,6 +1354,17 @@ struct _cl_device_id {
   size_t num_opencl_features_with_version;
   const cl_name_version *opencl_features_with_version;
 
+  /* cl_khr_spirv_queries */
+  size_t num_spirv_extended_instruction_sets;
+  const char **spirv_extended_instruction_sets;
+
+  size_t num_spirv_extensions;
+  const char **spirv_extensions;
+
+  size_t num_spirv_capabilities;
+  const cl_uint *spirv_capabilities;
+
+  /* cl_intel_unified_shared_memory */
   cl_device_unified_shared_memory_capabilities_intel host_usm_capabs;
   cl_device_unified_shared_memory_capabilities_intel device_usm_capabs;
   cl_device_unified_shared_memory_capabilities_intel single_shared_usm_capabs;
