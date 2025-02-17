@@ -656,7 +656,7 @@ else()
   set(VARIANT "${CPU_VARIANT}")
 endif()
 
-if(X86_64 OR I386)
+if(X86)
   x86_distro_variant_to_flags("${VARIANT}" LLC_CPUFLAGS CLANG_CPUFLAGS)
 else()
   set(CLANG_CPUFLAGS "${CLANG_MARCH_FLAG}${VARIANT}")
