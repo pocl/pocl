@@ -24,8 +24,10 @@
 #include <cassert>
 #include <cerrno>
 #include <chrono>
+#include <cstdio>
 #include <unistd.h>
 
+#include "common_cl.hh"
 #include "pocl_compiler_macros.h"
 #include "pocl_debug.h"
 #include "request.hh"
@@ -94,6 +96,8 @@ const char *request_to_str(RequestMessageType type) {
 
   case MessageType_MigrateD2D:
     return "MigrateD2D";
+  case MessageType_Barrier:
+    return "Barrier";
 
   case MessageType_ReadBuffer:
     return "ReadBuffer";
@@ -138,8 +142,41 @@ const char *request_to_str(RequestMessageType type) {
 
   case MessageType_Shutdown:
     return "Shutdown";
-  }
+
+  case MessageType_CreateCommandBuffer:
+    return "CreateCommandBuffer";
+  case MessageType_FreeCommandBuffer:
+    return "FreeCommandBuffer";
+  case MessageType_RunCommandBuffer:
+    return "RunCommandBuffer";
+
+  default:
     return "UNKNOWN";
+  }
+}
+
+int ByteReader::readReentrant(void *Destination, size_t Bytes,
+                              size_t *Tracker) {
+  if (*Tracker == Bytes)
+    return 0;
+  size_t Copied = readFull(Destination, Bytes);
+  *Tracker += Copied;
+  return 0;
+}
+
+int ByteReader::readFull(void *Destination, size_t Bytes) {
+  size_t CopyableBytes = std::min(Bytes, Length - Offset);
+  std::memcpy(Destination, StartPtr + Offset, CopyableBytes);
+  Offset += CopyableBytes;
+  return CopyableBytes;
+}
+
+std::string ByteReader::describe() {
+  const size_t MaxLength = 32;
+  std::string Tmp;
+  Tmp.reserve(MaxLength);
+  std::snprintf(Tmp.data(), MaxLength, "mem:%p", StartPtr);
+  return Tmp;
 }
 
 #define RETURN_UNLESS_DONE(call)                                               \
@@ -149,29 +186,29 @@ const char *request_to_str(RequestMessageType type) {
       if (ret == EAGAIN || ret == EWOULDBLOCK)                                 \
         return true;                                                           \
       POCL_MSG_ERR("Read error on " #call ", %s, reason: %s\n",                \
-                   Conn->describe().c_str(), strerror(ret));                   \
+                   Source->describe().c_str(), strerror(ret));                 \
       return false;                                                            \
     }                                                                          \
   } while (0);
 
-bool Request::read(Connection *Conn) {
+template <class T> bool RequestReadImpl(Request *Req, T *Source) {
   ssize_t readb;
 
-  RequestMsg_t *Body = &this->Body;
+  RequestMsg_t *Body = &Req->Body;
 
-  if (!this->ReadStartTimestampNS) {
+  if (!Req->ReadStartTimestampNS) {
     auto now1 = std::chrono::system_clock::now();
-    this->ReadStartTimestampNS =
+    Req->ReadStartTimestampNS =
         std::chrono::duration_cast<std::chrono::nanoseconds>(
             now1.time_since_epoch())
             .count();
   }
 
-  RETURN_UNLESS_DONE(Conn->readReentrant(
-      &this->BodySize, sizeof(this->BodySize), &this->BodySizeBytesRead));
+  RETURN_UNLESS_DONE(Source->readReentrant(
+      &Req->BodySize, sizeof(Req->BodySize), &Req->BodySizeBytesRead));
 
   RETURN_UNLESS_DONE(
-      Conn->readReentrant(Body, this->BodySize, &this->BodyBytesRead));
+      Source->readReentrant(Body, Req->BodySize, &Req->BodyBytesRead));
 
   TP_MSG_RECEIVED(Body->msg_id, Body->did, Body->cq_id, Body->message_type);
 
@@ -179,40 +216,40 @@ bool Request::read(Connection *Conn) {
   POCL_MSG_PRINT_GENERAL("---------------------------------------------------"
                          "----------------------------\n");
   POCL_MSG_PRINT_GENERAL("MESSAGE RECEIVED, ID: %" PRIu64
-                         " TYPE: %s SIZE: %" PRIu64 "/%" PRIu32 " \n",
-                         uint64_t(Body->msg_id), request_to_str(t),
-                         this->BodyBytesRead, this->BodySize);
+                         " TYPE: %s (%d) SIZE: %" PRIu64 "/%" PRIu32 " \n",
+                         uint64_t(Body->msg_id), request_to_str(t), t,
+                         Req->BodyBytesRead, Req->BodySize);
 
   switch (Body->message_type) {
   case MessageType_WriteBuffer:
-    this->ExtraDataSize = Body->m.write.size;
+    Req->ExtraDataSize = Body->m.write.size;
     break;
   case MessageType_WriteBufferRect:
-    this->ExtraDataSize = Body->m.write_rect.host_bytes;
+    Req->ExtraDataSize = Body->m.write_rect.host_bytes;
     break;
   case MessageType_WriteImageRect:
-    this->ExtraDataSize = Body->m.write_image_rect.host_bytes;
+    Req->ExtraDataSize = Body->m.write_image_rect.host_bytes;
     break;
   case MessageType_MigrateD2D:
     if (Body->m.migrate.is_external) {
-      this->ExtraDataSize = Body->m.migrate.size;
+      Req->ExtraDataSize = Body->m.migrate.size;
     }
     break;
   case MessageType_FillBuffer:
-    this->ExtraDataSize = Body->m.fill_buffer.pattern_size;
-    assert(this->ExtraDataSize <= (16 * sizeof(uint64_t)));
+    Req->ExtraDataSize = Body->m.fill_buffer.pattern_size;
+    assert(Req->ExtraDataSize <= (16 * sizeof(uint64_t)));
     break;
   case MessageType_FillImageRect:
-    this->ExtraDataSize = 16;
+    Req->ExtraDataSize = 16;
     break;
   case MessageType_RunKernel:
     if (Body->m.run_kernel.has_new_args) {
       /* The arguments itthis come in through extra data, as well as an array of
          flags which inform whether an argument (buffer) is an
          SVM pointer or not. */
-      this->ExtraDataSize = Body->m.run_kernel.args_num * sizeof(uint64_t) +
-                            Body->m.run_kernel.args_num * sizeof(unsigned char);
-      this->ExtraData2Size = Body->m.run_kernel.pod_arg_size;
+      Req->ExtraDataSize = Body->m.run_kernel.args_num * sizeof(uint64_t) +
+                           Body->m.run_kernel.args_num * sizeof(unsigned char);
+      Req->ExtraData2Size = Body->m.run_kernel.pod_arg_size;
     }
     break;
   /*****************************/
@@ -222,77 +259,89 @@ bool Request::read(Connection *Conn) {
   case MessageType_CompileProgramFromSPIRV:
   case MessageType_CompileProgramFromSource:
   case MessageType_LinkProgram:
-    this->ExtraData2Size = Body->m.build_program.options_len;
+    Req->ExtraData2Size = Body->m.build_program.options_len;
     /* intentional fall through to setting payload (i.e. binary) size */
     POCL_FALLTHROUGH;
   case MessageType_BuildProgramWithBuiltins:
   case MessageType_BuildProgramWithDefinedBuiltins:
-    this->ExtraDataSize = Body->m.build_program.payload_size;
+    Req->ExtraDataSize = Body->m.build_program.payload_size;
     break;
   /*****************************/
   case MessageType_CreateKernel:
-    this->ExtraDataSize = Body->m.create_kernel.name_len;
+    Req->ExtraDataSize = Body->m.create_kernel.name_len;
     break;
+  /*****************************/
+  case MessageType_CreateCommandBuffer:
+    Req->ExtraDataSize = Body->m.create_cmdbuf.num_queues * sizeof(uint32_t) +
+                         Body->m.create_cmdbuf.commands_size;
   default:
     break;
   }
 
   /*****************************/
   if (Body->waitlist_size > 0) {
-    this->Waitlist.resize(Body->waitlist_size);
+    Req->Waitlist.resize(Body->waitlist_size);
     POCL_MSG_PRINT_GENERAL("READING WAIT LIST FOR ID: %" PRIu64 " = %" PRIuS
                            "/%" PRIu32 "\n",
-                           uint64_t(Body->msg_id), this->WaitlistBytesRead,
-                           this->Body.waitlist_size);
-    RETURN_UNLESS_DONE(Conn->readReentrant(
-        this->Waitlist.data(), this->Body.waitlist_size * sizeof(uint64_t),
-        &this->WaitlistBytesRead));
+                           uint64_t(Body->msg_id), Req->WaitlistBytesRead,
+                           Req->Body.waitlist_size);
+    RETURN_UNLESS_DONE(Source->readReentrant(
+        Req->Waitlist.data(), Req->Body.waitlist_size * sizeof(uint64_t),
+        &Req->WaitlistBytesRead));
   }
   /*****************************/
 
   /*****************************/
-  if (this->ExtraDataSize > 0) {
-    this->ExtraData.resize(this->ExtraDataSize + 1);
+  if (Req->ExtraDataSize > 0) {
+    Req->ExtraData.resize(Req->ExtraDataSize + 1);
     POCL_MSG_PRINT_GENERAL(
         "READING EXTRA FOR ID: %" PRIu64 " = %" PRIuS "/%" PRIu64 "\n",
-        uint64_t(Body->msg_id), this->ExtraDataBytesRead, this->ExtraDataSize);
-    RETURN_UNLESS_DONE(Conn->readReentrant(this->ExtraData.data(),
-                                           this->ExtraDataSize,
-                                           &this->ExtraDataBytesRead));
+        uint64_t(Body->msg_id), Req->ExtraDataBytesRead, Req->ExtraDataSize);
+    RETURN_UNLESS_DONE(Source->readReentrant(
+        Req->ExtraData.data(), Req->ExtraDataSize, &Req->ExtraDataBytesRead));
     /* Always add a null byte at the end - it is needed for strings and it does
      * not harm other things */
-    this->ExtraData[this->ExtraDataSize] = 0;
+    Req->ExtraData[Req->ExtraDataSize] = 0;
   }
   /*****************************/
 
   /*****************************/
-  if (this->ExtraData2Size > 0) {
-    this->ExtraData2.resize(this->ExtraData2Size + 1);
-    POCL_MSG_PRINT_GENERAL("READING EXTRA2 FOR ID:%" PRIu64 " = %" PRIuS
-                           "/%" PRIu64 "\n",
-                           uint64_t(Body->msg_id), this->ExtraData2BytesRead,
-                           this->ExtraData2Size);
-    RETURN_UNLESS_DONE(Conn->readReentrant(this->ExtraData2.data(),
-                                           this->ExtraData2Size,
-                                           &this->ExtraData2BytesRead));
+  if (Req->ExtraData2Size > 0) {
+    Req->ExtraData2.resize(Req->ExtraData2Size + 1);
+    POCL_MSG_PRINT_GENERAL(
+        "READING EXTRA2 FOR ID:%" PRIu64 " = %" PRIuS "/%" PRIu64 "\n",
+        uint64_t(Body->msg_id), Req->ExtraData2BytesRead, Req->ExtraData2Size);
+    RETURN_UNLESS_DONE(Source->readReentrant(Req->ExtraData2.data(),
+                                             Req->ExtraData2Size,
+                                             &Req->ExtraData2BytesRead));
     /* Always add null byte here too, just in case extra2 is a string */
-    this->ExtraData2[this->ExtraData2Size] = 0;
+    Req->ExtraData2[Req->ExtraData2Size] = 0;
   }
   /*****************************/
 
-  if (!this->ReadEndTimestampNS) {
+  if (!Req->ReadEndTimestampNS) {
     auto now2 = std::chrono::system_clock::now();
-    this->ReadEndTimestampNS =
+    Req->ReadEndTimestampNS =
         std::chrono::duration_cast<std::chrono::nanoseconds>(
             now2.time_since_epoch())
             .count();
   }
 
   POCL_MSG_PRINT_GENERAL("ALL READS COMPLETE FOR ID: %" PRIu64 ", %s\n",
-                         uint64_t(Body->msg_id), Conn->describe().c_str());
+                         uint64_t(Body->msg_id), Source->describe().c_str());
 
-  IsFullyRead = true;
+  Req->IsFullyRead = true;
   return true;
+}
+
+bool Request::read(Connection *Conn) { return RequestReadImpl(this, Conn); }
+
+bool Request::readFull(ByteReader *Source) {
+  bool Error = false;
+  while (!this->IsFullyRead && !Error) {
+    bool Error = RequestReadImpl(this, Source);
+  }
+  return this->IsFullyRead;
 }
 
 #undef CHECK_READ_RETURN

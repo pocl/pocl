@@ -71,6 +71,11 @@ static const char *reply_to_str(ReplyMessageType type) {
   case MessageType_FreeProgramReply:
     return "FreeProgramReply";
 
+  case MessageType_CreateCommandBufferReply:
+    return "CreateCommandBufferReply";
+  case MessageType_FreeCommandBufferReply:
+    return "FreeCommandBufferReply";
+
   case MessageType_MigrateD2DReply:
     return "MigrateD2DReply";
 
@@ -98,6 +103,8 @@ static const char *reply_to_str(ReplyMessageType type) {
 
   case MessageType_RunKernelReply:
     return "RunKernelReply";
+  case MessageType_RunCommandBufferReply:
+    return "RunCommandBufferReply";
 
   case MessageType_Failure:
     return "Failure";

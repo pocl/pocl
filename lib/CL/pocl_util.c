@@ -24,6 +24,9 @@
    IN THE SOFTWARE.
 */
 
+#include "CL/cl_ext.h"
+#include "pocl.h"
+#include "pocl_cl.h"
 #define _BSD_SOURCE
 #define _DEFAULT_SOURCE
 #define _POSIX_C_SOURCE 200809L
@@ -870,6 +873,12 @@ pocl_command_record (cl_command_buffer_khr command_buffer,
     {
       POCL_UNLOCK (command_buffer->mutex);
       return CL_INVALID_OPERATION;
+    }
+  pocl_buffer_migration_info *mi;
+  LL_FOREACH (cmd->migr_infos, mi)
+    {
+      pocl_append_unique_migration_info (command_buffer->migr_infos,
+                                         mi->buffer, mi->read_only);
     }
   LL_APPEND (command_buffer->cmds, cmd);
   if (sync_point != NULL)
@@ -2066,6 +2075,9 @@ pocl_copy_command_node (_cl_command_node *dst_node, _cl_command_node *src_node)
               src_node->command.svm_fill.pattern,
               src_node->command.svm_fill.pattern_size);
       break;
+
+    case CL_COMMAND_COMMAND_BUFFER_KHR:
+      POname (clRetainCommandBufferKHR) (dst_node->command.replay.buffer);
 
     /* These cases are currently not handled in pocl_copy_event_node,
      * because there is no command buffer equivalent of these nodes. */

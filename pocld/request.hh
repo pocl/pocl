@@ -35,6 +35,24 @@
 #pragma GCC visibility push(hidden)
 #endif
 
+/// Helper class for reading a Request from memory instead of a Connection
+/// stream
+class ByteReader {
+public:
+  ByteReader() = delete;
+  ByteReader(uint8_t *Start, size_t Len)
+      : StartPtr(Start), Offset(0), Length(Len) {}
+  bool eof() { return Offset >= Length; }
+  int readFull(void *Destination, size_t Bytes);
+  int readReentrant(void *Destination, size_t Bytes, size_t *Tracker);
+  std::string describe();
+
+private:
+  uint8_t *StartPtr;
+  size_t Offset;
+  size_t Length;
+};
+
 class Request {
 public:
   /// Size, in bytes, of the main request body (up to sizeof RequestMsg_t)
@@ -85,6 +103,10 @@ public:
   /// success and false if an error occurs while reading. Call repeatedly until
   /// `fully_read` gets set to true.
   bool read(Connection *);
+
+  /// Attempts to copy a whole Request from a ByteReader. Returns true if
+  /// Request was fully read, false otherwise.
+  bool readFull(ByteReader *);
 };
 
 #ifdef __GNUC__
