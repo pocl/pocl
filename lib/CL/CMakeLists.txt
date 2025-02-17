@@ -279,6 +279,11 @@ if (ENABLE_LLVM)
     target_include_directories(lib_cl_llvm PRIVATE ${LLVM_SPIRV_INCLUDEDIR})
   endif()
 
+  if(ENABLE_HEADER_BUNDLING)
+    add_dependencies(lib_cl_llvm regenerate_bundled_headers)
+  endif()
+
+
   list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:llvmpasses>")
   list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:lib_cl_llvm>")
 

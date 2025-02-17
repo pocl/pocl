@@ -9,7 +9,9 @@
 #ifndef _OPENCL_H_
 #define _OPENCL_H_
 
+#ifndef SKIP_HEADER_INCLUDE
 #include "opencl-c-base.h"
+#endif
 
 #if defined(__opencl_c_images)
 #ifndef cl_khr_depth_images
