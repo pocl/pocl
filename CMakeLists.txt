@@ -2092,6 +2092,9 @@ if (ENABLE_LEVEL0)
     set(OCL_TARGETS "${OCL_TARGETS} level0")
   endif()
 
+  set(ENABLE_RELOCATION OFF CACHE BOOL "relocation")
+  set(ENABLE_HEADER_BUNDLING ON CACHE BOOL "bundling of headers" FORCE)
+
 endif()
 
 ##########################################################

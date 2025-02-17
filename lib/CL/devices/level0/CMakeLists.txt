@@ -30,10 +30,13 @@ set(SOURCES pocl-devices-level0
 if(ENABLE_NPU)
   list(APPEND SOURCES npu_dbk_gemm.cc npu_dbk_matmul.cc)
 endif()
-
 add_pocl_device_library(${SOURCES})
 
 set_property(TARGET pocl-devices-level0 PROPERTY CXX_STANDARD 17)
+if(ENABLE_HEADER_BUNDLING)
+  add_dependencies(pocl-devices-level0 regenerate_bundled_headers)
+endif()
+
 
 if(ENABLE_NPU)
   target_include_directories(pocl-devices-level0 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/npu/include")

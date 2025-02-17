@@ -211,6 +211,8 @@
 
 #cmakedefine HAVE_LLVM_SPIRV_LIB
 
+#cmakedefine ENABLE_HEADER_BUNDLING
+
 #endif
 
 

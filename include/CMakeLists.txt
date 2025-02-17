@@ -35,5 +35,30 @@ set(PRIVATE_HEADERS _enable_all_exts.h _builtin_renames.h
 
 cpack_add_component("dev")
 
-install(FILES ${PRIVATE_HEADERS}
-        DESTINATION ${POCL_INSTALL_PRIVATE_HEADER_DIR} COMPONENT "dev")
+if(ENABLE_HEADER_BUNDLING)
+  find_program(XXD_COMMAND xxd)
+  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/HeaderBundle")
+  function(create_bundled_header HEADER OUTPUT_VAR)
+    string(REPLACE "." "_" HEADER_NAME ${HEADER})
+    string(REPLACE "-" "_" HEADER_NAME ${HEADER_NAME})
+    add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/HeaderBundle/${HEADER}"
+          DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${HEADER}"
+          COMMAND "${XXD_COMMAND}" -i -n ${HEADER_NAME}
+                  "${CMAKE_CURRENT_SOURCE_DIR}/${HEADER}"
+                  "${CMAKE_BINARY_DIR}/HeaderBundle/${HEADER}"
+          COMMENT "Generating bundling form of header ${HEADER} with xxd"
+          VERBATIM)
+    set(${OUTPUT_VAR} "${CMAKE_BINARY_DIR}/HeaderBundle/${HEADER}" PARENT_SCOPE)
+  endfunction()
+
+  foreach(HDR_FILE IN ITEMS _clang_opencl.h  opencl-c-base.h  opencl-c.h)
+    create_bundled_header(${HDR_FILE} TEMP)
+    list(APPEND HEADER_BUNDLE_FILES "${TEMP}")
+  endforeach()
+
+  add_custom_target(regenerate_bundled_headers ALL DEPENDS ${HEADER_BUNDLE_FILES})
+
+else()
+  install(FILES ${PRIVATE_HEADERS}
+          DESTINATION ${POCL_INSTALL_PRIVATE_HEADER_DIR} COMPONENT "dev")
+endif()
