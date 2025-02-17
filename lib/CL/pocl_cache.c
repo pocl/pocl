@@ -332,6 +332,18 @@ pocl_cache_write_generic_objfile (char *objfile_path,
                               objfile_content, objfile_size);
 }
 
+int
+pocl_cache_write_header (char *header_path,
+                         const char *header_name,
+                         const char *header_content,
+                         uint64_t header_size)
+{
+  int bytes_written = snprintf (header_path, POCL_MAX_PATHNAME_LENGTH, "%s/%s",
+                                cache_topdir, header_name);
+  assert (bytes_written > 0 && bytes_written < POCL_MAX_PATHNAME_LENGTH);
+  return pocl_write_file (header_path, header_content, header_size, 0);
+}
+
 /******************************************************************************/
 
 int pocl_cache_update_program_last_access(cl_program program,

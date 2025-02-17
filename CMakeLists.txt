@@ -2136,6 +2136,8 @@ if (ENABLE_LEVEL0)
     set(OCL_TARGETS "${OCL_TARGETS} level0")
   endif()
 
+  option(ENABLE_HEADER_BUNDLING "bundling of LevelZero headers into driver binary" OFF)
+
 endif()
 
 ##########################################################

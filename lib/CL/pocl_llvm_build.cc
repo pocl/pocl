@@ -41,15 +41,14 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include <clang/Frontend/TextDiagnosticBuffer.h>
 #include <clang/Frontend/TextDiagnosticPrinter.h>
 
-#include "llvm/LinkAllPasses.h"
-#include "llvm/Linker/Linker.h"
-
-#include "llvm/Transforms/Utils/Cloning.h"
-
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
+#include <llvm/LinkAllPasses.h>
+#include <llvm/Linker/Linker.h>
+#include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/VirtualFileSystem.h>
+#include <llvm/Transforms/Utils/Cloning.h>
 
 #if LLVM_VERSION_MAJOR > 15
 #include "llvm/TargetParser/Host.h"
@@ -58,8 +57,9 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #endif
 
 #include <iostream>
-#include <sstream>
+#include <map>
 #include <regex>
+#include <sstream>
 
 // For some reason including pocl.h before including CodeGenAction.h
 // causes an error. Some kind of macro definition issue. To investigate.
@@ -72,6 +72,16 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include "pocl_cache.h"
 #include "LLVMUtils.h"
 #include "pocl_util.h"
+
+#ifdef ENABLE_HEADER_BUNDLING
+#include "HeaderBundle/_clang_opencl.h"
+#include "HeaderBundle/opencl-c-base.h"
+#include "HeaderBundle/opencl-c.h"
+//
+// TODO it should be possible to pass include files to Clang entirely in memory
+// (via llvm::MemoryBuffer), however this doesn't seem to not work
+// #define BUNDLED_HEADERS_IN_MEMORY
+#endif
 
 using namespace clang;
 using namespace llvm;
@@ -205,13 +215,84 @@ static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
   return false;
 }
 
+#ifdef ENABLE_HEADER_BUNDLING
+static std::map<const char *, std::string> UnbundledHeaders;
+static bool UnbundledHeadersInitialized = false;
+
+static void addHeader(const char *Source, unsigned SourceLen,
+                      const char *MapKey) {
+
+#ifdef BUNDLED_HEADERS_IN_MEMORY
+  std::string Temp;
+  Temp.assign(Source, SourceLen);
+  UnbundledHeaders.insert(std::make_pair(MapKey, Temp));
+#else
+  char HdrCachePath[POCL_MAX_PATHNAME_LENGTH];
+  pocl_cache_write_header(HdrCachePath, MapKey, (const char *)Source,
+                          SourceLen);
+  UnbundledHeaders.insert(std::make_pair(MapKey, std::string(HdrCachePath)));
+#endif
+}
+
+static void setupUnbundledHeaders() {
+  if (!UnbundledHeadersInitialized) {
+    addHeader(_clang_opencl_h, _clang_opencl_h_len, "_clang_opencl.h");
+    addHeader(opencl_c_base_h, opencl_c_base_h_len, "opencl-c-base.h");
+    addHeader(opencl_c_h, opencl_c_h_len, "opencl-c.h");
+    UnbundledHeadersInitialized = true;
+  }
+}
+#endif
+
+using MemBufUptr = std::unique_ptr<llvm::MemoryBuffer>;
+
+static void addHeaderInclude(PreprocessorOptions &po, FrontendOptions &fe,
+                             const char *Header, bool UseBundled) {
+#ifdef ENABLE_POCL_BUILDING
+  bool PoclBuilding = pocl_get_bool_option("POCL_BUILDING", 0);
+#else
+  bool PoclBuilding = false;
+#endif
+
+#ifdef ENABLE_HEADER_BUNDLING
+  if (UseBundled && PoclBuilding == false) {
+    auto It = UnbundledHeaders.find(Header);
+    assert(It != UnbundledHeaders.end());
+#ifdef BUNDLED_HEADERS_IN_MEMORY
+    // avoid writing anything to disk, instead use the RemappedFile feature.
+    const std::string &Content = It->second;
+    MemBufUptr MB(llvm::MemoryBuffer::getMemBufferCopy(Content, Header));
+    po.RetainRemappedFileBuffers = true;
+    po.Includes.push_back(Header);
+    // the remapping does not work
+    po.addRemappedFile(Header, MB.release());
+#else
+    const std::string &HdrCachePath = It->second;
+    po.Includes.push_back(HdrCachePath);
+#endif
+    return;
+  }
+#endif
+
+  std::string Result;
+  if (PoclBuilding) {
+    Result = SRCDIR "/include/";
+  } else {
+    char temp[POCL_MAX_PATHNAME_LENGTH];
+    pocl_get_private_datadir(temp);
+    Result = temp;
+    Result.append("/include/");
+  }
+  Result.append(Header);
+  po.Includes.push_back(Result);
+}
+
 int pocl_llvm_build_program(cl_program program,
                             unsigned device_i,
                             cl_uint num_input_headers,
                             const cl_program *input_headers,
                             const char **header_include_names,
                             int linking_program)
-
 {
   char tempfile[POCL_MAX_PATHNAME_LENGTH];
   char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
@@ -575,39 +656,33 @@ int pocl_llvm_build_program(cl_program program,
   la->PICLevel = PICLevel::BigPIC;
   la->PIE = 0;
 
-  std::string IncludeRoot;
-  std::string KernelH;
-  std::string BuiltinRenamesH;
-  std::string PoclTypesH;
-
-#ifdef ENABLE_POCL_BUILDING
-  if (pocl_get_bool_option("POCL_BUILDING", 0)) {
-    IncludeRoot = SRCDIR;
-#else
-  if (0) {
+#ifdef ENABLE_HEADER_BUNDLING
+  setupUnbundledHeaders();
 #endif
-  } else {
-    char temp[POCL_MAX_PATHNAME_LENGTH];
-    pocl_get_private_datadir(temp);
-    IncludeRoot = temp;
-  }
-  KernelH = IncludeRoot + "/include/_kernel.h";
-  BuiltinRenamesH = IncludeRoot + "/include/_builtin_renames.h";
-  PoclTypesH = IncludeRoot + "/include/pocl_types.h";
 
-  if (!device->use_only_clang_opencl_headers) {
-    po.Includes.push_back(PoclTypesH);
-    po.Includes.push_back(BuiltinRenamesH);
-  }
-  // Use Clang's opencl-c.h header.
-  po.Includes.push_back(IncludeRoot + "/include/opencl-c-base.h");
-  po.Includes.push_back(IncludeRoot + "/include/opencl-c.h");
+  FrontendOptions &fe = pocl_build.getFrontendOpts();
+  // The CreateFromArgs created an stdin input which we should remove first.
+  fe.Inputs.clear();
 
   if (device->use_only_clang_opencl_headers) {
-    po.Includes.push_back(IncludeRoot + "/include/_clang_opencl.h");
+#ifdef ENABLE_HEADER_BUNDLING
+    po.Macros.push_back(
+        std::make_pair(std::string("SKIP_HEADER_INCLUDE"), false));
+    bool UseBundledHeaders = true;
+#else
+    bool UseBundledHeaders = false;
+#endif
+    addHeaderInclude(po, fe, "opencl-c-base.h", UseBundledHeaders);
+    addHeaderInclude(po, fe, "opencl-c.h", UseBundledHeaders);
+    addHeaderInclude(po, fe, "_clang_opencl.h", UseBundledHeaders);
   } else {
-    po.Includes.push_back(KernelH);
+    addHeaderInclude(po, fe, "pocl_types.h", false);
+    addHeaderInclude(po, fe, "_builtin_renames.h", false);
+    addHeaderInclude(po, fe, "opencl-c-base.h", false);
+    addHeaderInclude(po, fe, "opencl-c.h", false);
+    addHeaderInclude(po, fe, "_kernel.h", false);
   }
+
   clang::TargetOptions &ta = pocl_build.getTargetOpts();
   ta.Triple = device->llvm_target_triplet;
   if (device->llvm_cpu != NULL)
@@ -621,9 +696,6 @@ int pocl_llvm_build_program(cl_program program,
 #else
   CI.createDiagnostics(*llvm::vfs::getRealFileSystem(), diagsBuffer, false);
 #endif
-  FrontendOptions &fe = pocl_build.getFrontendOpts();
-  // The CreateFromArgs created an stdin input which we should remove first.
-  fe.Inputs.clear();
 
   // Read input source to clang::FrontendOptions.
   // The source is contained in the program->source array,
