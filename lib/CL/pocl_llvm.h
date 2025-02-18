@@ -94,6 +94,10 @@ extern "C" {
       unsigned DeviceI, cl_device_id Device, cl_kernel Kernel,
       _cl_command_node *Command, void **output, int Specialize);
 
+  int pocl_llvm_link_multiple_modules(cl_program program, unsigned device_i,
+                                      const char *OutputBCPath,
+                                      void **LLVMIRBinaries, size_t NumBinaries);
+
   POCL_EXPORT
   int pocl_llvm_run_passes_on_program (cl_program Program, unsigned DeviceI);
 

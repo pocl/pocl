@@ -70,6 +70,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Frontend/Driver/CodeGenOptions.h>
 #endif
 #include <llvm/Support/CommandLine.h>
+#include <llvm/Linker/Linker.h>
 
 #include "LLVMUtils.h"
 POP_COMPILER_DIAGS
@@ -1569,6 +1570,7 @@ int pocl_llvm_run_passes_on_program(cl_program Program, unsigned DeviceI) {
                                    0); // Specialize
 }
 
+
 int pocl_llvm_generate_workgroup_function(unsigned DeviceI, cl_device_id Device,
                                           cl_kernel Kernel,
                                           _cl_command_node *Command,
@@ -1635,6 +1637,32 @@ int pocl_llvm_read_program_llvm_irs(cl_program program, unsigned device_i,
     parseModuleGVarSize(program, device_i, M);
   ++llvm_ctx->number_of_IRs;
   return CL_SUCCESS;
+}
+
+int pocl_llvm_link_multiple_modules(cl_program program, unsigned device_i,
+                                    const char *OutputBCPath,
+                                    void **LLVMIRBinaries, size_t NumBinaries) {
+  POCL_RETURN_ERROR_COND ((LLVMIRBinaries == nullptr), CL_LINK_PROGRAM_FAILURE);
+
+  pocl_llvm_free_llvm_irs(program, device_i);
+
+  cl_context ctx = program->context;
+  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
+  PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
+  llvm::Module *Dest = new llvm::Module("linked_mod", *llvm_ctx->Context);
+  bool Error = false;
+
+  for (cl_uint i = 0; i < NumBinaries; ++i) {
+    llvm::Module *Mod = (llvm::Module *)LLVMIRBinaries[i];
+    assert(Mod);
+    assert(&Mod->getContext() == llvm_ctx->Context);
+    if (llvm::Linker::linkModules(*Dest, llvm::CloneModule(*Mod))) {
+      delete Dest;
+      return CL_LINK_PROGRAM_FAILURE;
+    }
+  }
+  program->llvm_irs[device_i] = Dest;
+  return pocl_write_module(Dest, OutputBCPath);
 }
 
 int pocl_llvm_recalculate_gvar_sizes(cl_program Program, unsigned DeviceI) {
