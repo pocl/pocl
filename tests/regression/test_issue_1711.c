@@ -92,9 +92,9 @@ int main(int argc, char** argv) {
     err = clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(device_name), device_name, NULL);
     CHECK_ERROR(err);
 
-    if (!poclu_device_supports_il (device, "SPIR-V_1.4"))
+    if (!poclu_device_supports_il (device, "SPIR-V_1.0"))
       {
-        printf ("SKIP: The test requires support for SPIR-V 1.4\n");
+        printf ("SKIP: The test requires support for SPIR-V 1.0\n");
         exit (77);
       }
 

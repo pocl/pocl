@@ -135,9 +135,9 @@ main (int argc, char **argv)
   CHECK_ERROR (err);
   printf ("Device: %s\n", device_name);
 
-  if (!poclu_device_supports_il (device, "SPIR-V_1.4"))
+  if (!poclu_device_supports_il (device, "SPIR-V_1.0"))
     {
-      printf ("SKIP: The test requires support for SPIR-V 1.4\n");
+      printf ("SKIP: The test requires support for SPIR-V 1.0\n");
       exit (77);
     }
 
