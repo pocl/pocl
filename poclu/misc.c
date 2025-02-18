@@ -787,3 +787,18 @@ poclu_load_program (cl_platform_id platform,
                                       spirv, poclbin, explicit_binary,
                                       extra_build_opts, p);
 }
+
+int
+poclu_device_supports_il (cl_device_id device, const char *il)
+{
+  size_t param_size = 0;
+  cl_int err
+    = clGetDeviceInfo (device, CL_DEVICE_IL_VERSION, 0, NULL, &param_size);
+  CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo");
+  char *ils = malloc (param_size);
+  err = clGetDeviceInfo (device, CL_DEVICE_IL_VERSION, param_size, ils, NULL);
+  CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo");
+  int has_il = strstr (ils, il) != NULL;
+  free (ils);
+  return has_il;
+}
