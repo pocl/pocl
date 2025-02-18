@@ -370,6 +370,14 @@ int poclu_load_program_multidev (cl_platform_id platform,
 POCLU_API cl_int POCLU_CALL poclu_show_program_build_log (cl_program program);
 
 /**
+ * \brief check if a device supports a particular version of SPIR-V
+ * @param il [in] a string like "SPIR-V_1.2" of the requested version
+ * @return 1 if true, 0 if false or error
+ */
+POCLU_API int POCLU_CALL poclu_device_supports_il (cl_device_id device,
+                                                   const char *il);
+
+/**
  * \brief check a return value of CL function or print the error to stderr.
  * @param cl_err [in] value to be checked.
  * @param line  [in] line of function in question.
