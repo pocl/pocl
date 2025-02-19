@@ -77,7 +77,7 @@ then either:
 Configure & Build
 -----------------
 
-CMake version 3.12 or higher is required.
+CMake version 3.15 or higher is required.
 
 The build+install is the usual CMake way::
 
@@ -132,6 +132,13 @@ use ";" as separator (you'll have to escape it for bash).
 - ``-DSTATIC_LLVM`` pocl uses ``llvm-config --libs`` to get list of LLVM libraries
   it should link to. With this flag enabled, it additionally passes ``--link-static``
   to ``llvm-config``; otherwise it passes ``--link-shared``. Default is OFF (=shared).
+
+- ``-DLLVM_SPIRV`` Path to a llvm-spirv binary of SPIRV-LLVM-Translator. Note that
+  only the builds of open-source Khronos Translator are supported, and the binary
+  must be built for the same LLVM version as PoCL is being built against. If not
+  given, PoCL will try to autodetect a llvm-spirv binary with suitable version.
+  Note that PoCL will also try to detect LLVMSPIRVLib library, and if found, it
+  will take precedence over llvm-spirv binary.
 
 - ``-DENABLE_ICD`` By default pocl's buildsystem will try to find an ICD
   and build pocl as a dynamic library named "libpocl". This option is useful
