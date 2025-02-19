@@ -1,19 +1,9 @@
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
 
-global half a = INFINITY;
-global half b = 1.0h;
-global half8 va = (half8)(INFINITY);
-global half8 vb = (half8)(1.0h);
-
-/* This prevents compiler to optimize away test inputs without volatile keyword.
- */
-kernel void touch_testdata(half a_init, half b_init, half va_init,
-                           half vb_init) {
-  a = a_init;
-  b = b_init;
-  va = va_init;
-  vb = vb_init;
-}
+volatile global half a = INFINITY;
+volatile global half b = 1.0h;
+volatile global half8 va = (half8)(INFINITY);
+volatile global half8 vb = (half8)(1.0h);
 
 kernel
 void test_halfs() {
