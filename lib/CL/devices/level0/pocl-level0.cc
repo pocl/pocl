@@ -703,7 +703,7 @@ int pocl_level0_supports_binary(cl_device_id Device, size_t Length,
   if (Device->compiler_available == CL_TRUE &&
       Device->linker_available == CL_TRUE && Device->num_ils_with_version > 0 &&
       pocl_bitcode_is_spirv_execmodel_kernel(Binary, Length,
-                                             Device->address_bits) != 0) {
+                                             Device->address_bits)) {
     return 1;
   }
   // TODO : possibly support native ZE binaries
@@ -1923,7 +1923,7 @@ pocl_level0_create_finalized_command_buffer(cl_device_id Dev,
   CmdBuf->data[Dev->dev_id] = nullptr;
   void *CmdBufData = Device->createCmdBuf(CmdBuf);
   POCL_RETURN_ERROR_ON(
-      (CmdBufData == nullptr), CL_INVALID_VALUE,
+      (CmdBufData == nullptr), CL_OUT_OF_RESOURCES,
       "Failed to create LevelZero CmdList for command buffer\n");
   CmdBuf->data[Dev->dev_id] = CmdBufData;
   return CL_SUCCESS;

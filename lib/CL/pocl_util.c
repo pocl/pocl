@@ -2304,9 +2304,7 @@ bitcode_is_spirv_execmodel (const char *bitcode,
   while (instruction == OpCapab && location < (size / 4))
     {
       if (value == exec_model)
-        {
-          matches_exec_model = 1;
-        }
+        matches_exec_model = 1;
       instruction = htole32 (bc32[location++]);
       value = htole32 (bc32[location++]);
     }

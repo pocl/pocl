@@ -1,6 +1,6 @@
 /* OpenCL runtime library: clUpdateMutableCommandsKHR()
 
-   Copyright (c) 2024 Michal Babej / Intel Finland Oy
+   Copyright (c) 2024,2025 Michal Babej, Henry Linjamäki / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to

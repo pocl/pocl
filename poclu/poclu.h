@@ -371,8 +371,8 @@ POCLU_API cl_int POCLU_CALL poclu_show_program_build_log (cl_program program);
 
 /**
  * \brief check if a device supports a particular version of SPIR-V
- * @param il [in] a string like "SPIR-V_1.2" of the requested version
- * @return 1 if true, 0 if false or error
+ * \param il [in] a string like "SPIR-V_1.2" of the requested version
+ * \return 1 if true, 0 if false or error
  */
 POCLU_API int POCLU_CALL poclu_device_supports_il (cl_device_id device,
                                                    const char *il);
