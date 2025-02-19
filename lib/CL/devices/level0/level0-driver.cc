@@ -2960,6 +2960,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     OpenCL30Features.append(" __opencl_c_atomic_scope_all_devices");
 
 #ifndef ENABLE_CONFORMANCE
+  // command buffers only make sense if we're using LevelZero queues for all commands
   if (prefersZeQueues()) {
     Extensions.append(" cl_khr_command_buffer");
     ClDev->cmdbuf_capabilities =

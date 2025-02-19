@@ -128,8 +128,11 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
       cl_event final_ev;
       errcode = pocl_create_command (
         &node, used_queues[0], CL_COMMAND_COMMAND_BUFFER_KHR, &final_ev,
-        num_events_in_wait_list, event_wait_list, NULL);
-      // pocl_deep_copy_migration_info_list (cmd->migr_infos, 0));
+        num_events_in_wait_list, event_wait_list,
+        NULL);
+#if 0
+        pocl_deep_copy_migration_info_list (cmd->migr_infos, 0));
+#endif
       if (errcode != CL_SUCCESS)
         {
           pocl_mem_manager_free_command (node);
