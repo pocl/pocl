@@ -1887,7 +1887,7 @@ submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
   CUDNN_CALL(cudnnGetConvolutionForwardWorkspaceSize(
         cudnn, in_desc, filt_desc, conv_desc, out_desc, algo, &ws_size));
   float *ws_data;
-  CUDA_CALL(cudaMalloc(&ws_data, ws_size));
+  CUDA_CALL(cudaMalloc((void **)&ws_data, ws_size));
 
   CUDNN_CALL(cudnnConvolutionForward(
       cudnn,
