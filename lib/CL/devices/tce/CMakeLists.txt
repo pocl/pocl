@@ -29,7 +29,7 @@ add_compile_options(${TCE_CXXFLAGS})
 add_compile_options("-Wno-deprecated" "-Wno-unused-parameter")
 
 install(FILES "tta_device_main.c"
-        DESTINATION ${POCL_INSTALL_PRIVATE_HEADER_DIR} COMPONENT "dev")
+        DESTINATION ${POCL_INSTALL_PRIVATE_HEADER_DIR_REL} COMPONENT "dev")
 
 add_pocl_device_library(pocl-devices-ttasim tce_common.h tce_common.cc ttasim/ttasim.h ttasim/ttasim.cc)
 if(ENABLE_LOADABLE_DRIVERS)

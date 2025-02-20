@@ -492,49 +492,91 @@ set(COMMAND_USES_TERMINAL USES_TERMINAL)
 
 include(GNUInstallDirs)
 
+# PoCL installation paths. Only use relative paths in install()
+# commands (absolute paths are not supported by CPack generally).
+
 # for (lib)pocl.(so|dll|dylib)
 if(WIN32)
-  set(POCL_INSTALL_PUBLIC_LIBDIR "${CMAKE_INSTALL_FULL_BINDIR}" CACHE PATH "POCL public libdir")
+  set(POCL_INSTALL_PUBLIC_LIBDIR "${CMAKE_INSTALL_FULL_BINDIR}"
+    CACHE PATH "Absolute path to POCL public libdir")
+  set(POCL_INSTALL_PUBLIC_LIBDIR_REL "${CMAKE_INSTALL_BINDIR}"
+    CACHE PATH "Relative path to  POCL public libdir")
 else()
-  set(POCL_INSTALL_PUBLIC_LIBDIR "${CMAKE_INSTALL_FULL_LIBDIR}" CACHE PATH "POCL public libdir")
+  set(POCL_INSTALL_PUBLIC_LIBDIR "${CMAKE_INSTALL_FULL_LIBDIR}"
+    CACHE PATH "Absolute path to POCL public libdir")
+  set(POCL_INSTALL_PUBLIC_LIBDIR_REL "${CMAKE_INSTALL_LIBDIR}"
+    CACHE PATH "Relative path to  POCL public libdir")
 endif()
 
 # for (lib)pocl-devices-*.(so|dll|dylib)
-set(POCL_INSTALL_PRIVATE_LIBDIR "${POCL_INSTALL_PUBLIC_LIBDIR}/pocl" CACHE PATH "POCL private libdir")
+set(POCL_INSTALL_PRIVATE_LIBDIR "${POCL_INSTALL_PUBLIC_LIBDIR}/pocl"
+  CACHE PATH "Absolute path to  POCL private libdir")
+set(POCL_INSTALL_PRIVATE_LIBDIR_REL "${POCL_INSTALL_PUBLIC_LIBDIR_REL}/pocl"
+  CACHE PATH "Relative path to  POCL private libdir")
 
 # for libpocl.(a|dll.a)
 if(WIN32)
-  set(POCL_INSTALL_STATIC_LIBDIR "${CMAKE_INSTALL_FULL_LIBDIR}" CACHE PATH "POCL public libdir")
+  set(POCL_INSTALL_STATIC_LIBDIR "${CMAKE_INSTALL_FULL_LIBDIR}"
+    CACHE PATH "Absolute path to POCL public libdir")
+  set(POCL_INSTALL_STATIC_LIBDIR_REL "${CMAKE_INSTALL_LIBDIR}"
+    CACHE PATH "Relative path to POCL public libdir")
 else()
-  set(POCL_INSTALL_STATIC_LIBDIR "${POCL_INSTALL_PUBLIC_LIBDIR}/static" CACHE PATH "POCL public libdir")
+  set(POCL_INSTALL_STATIC_LIBDIR "${POCL_INSTALL_PUBLIC_LIBDIR}/static"
+    CACHE PATH "Absolute path to POCL public libdir")
+  set(POCL_INSTALL_STATIC_LIBDIR_REL "${POCL_INSTALL_PUBLIC_LIBDIR_REL}/static"
+    CACHE PATH "Relative path to POCL public libdir")
 endif()
 
 # for pocl.icd
 set(POCL_INSTALL_ICD_VENDORDIR "${CMAKE_INSTALL_FULL_SYSCONFDIR}/OpenCL/vendors" CACHE PATH "POCL ICD file destination")
 
 # for kernel-<target>.bc
-set(POCL_INSTALL_PRIVATE_DATADIR "${CMAKE_INSTALL_FULL_DATADIR}/pocl" CACHE PATH "POCL private datadir")
+set(POCL_INSTALL_PRIVATE_DATADIR "${CMAKE_INSTALL_FULL_DATADIR}/pocl"
+  CACHE PATH "Absolute path to POCL private datadir")
+set(POCL_INSTALL_PRIVATE_DATADIR_REL "${CMAKE_INSTALL_DATADIR}/pocl"
+  CACHE PATH "Relative path to POCL private datadir")
 
 # for poclu.h
-set(POCL_INSTALL_PUBLIC_HEADER_DIR "${CMAKE_INSTALL_FULL_INCLUDEDIR}" CACHE PATH "POCL public header dir")
+set(POCL_INSTALL_PUBLIC_HEADER_DIR "${CMAKE_INSTALL_FULL_INCLUDEDIR}"
+  CACHE PATH "Absolute path to POCL public header dir")
+set(POCL_INSTALL_PUBLIC_HEADER_DIR_REL "${CMAKE_INSTALL_INCLUDEDIR}"
+  CACHE PATH "Relative path to POCL public header dir")
 
 # for _kernel.h et al
-set(POCL_INSTALL_PRIVATE_HEADER_DIR "${POCL_INSTALL_PRIVATE_DATADIR}/include" CACHE PATH "POCL private header dir")
+set(POCL_INSTALL_PRIVATE_HEADER_DIR "${POCL_INSTALL_PRIVATE_DATADIR}/include"
+  CACHE PATH "Absolute path to POCL private header dir")
+set(POCL_INSTALL_PRIVATE_HEADER_DIR_REL
+  "${POCL_INSTALL_PRIVATE_DATADIR_REL}/include"
+  CACHE PATH "Relative path to POCL private header dir")
 
 # for pocl-standalone et al
-set(POCL_INSTALL_PUBLIC_BINDIR "${CMAKE_INSTALL_FULL_BINDIR}" CACHE PATH "POCL public bindir")
+set(POCL_INSTALL_PUBLIC_BINDIR "${CMAKE_INSTALL_FULL_BINDIR}"
+  CACHE PATH "Absolute path to POCL public bindir")
+set(POCL_INSTALL_PUBLIC_BINDIR_REL "${CMAKE_INSTALL_BINDIR}"
+  CACHE PATH "Relative path to POCL public bindir")
 
 # for PoclConfig.cmake & stuff
 set(POCL_INSTALL_CMAKE_CONFIG_DIR "${POCL_INSTALL_PRIVATE_LIBDIR}/cmake" CACHE PATH   "Installation directory for CMake files")
 
 # TODO maybe use output of pkg-config --variable=pc_path pkg-config ?
 set(POCL_INSTALL_PKGCONFIG_DIR "${POCL_INSTALL_PUBLIC_LIBDIR}/pkgconfig" CACHE PATH "Destination for pocl.pc")
+set(POCL_INSTALL_PKGCONFIG_DIR_REL "${POCL_INSTALL_PUBLIC_LIBDIR_REL}/pkgconfig" CACHE PATH "Destination for pocl.pc")
 
 if(APPLE)
   set(CMAKE_MACOSX_RPATH ON)
-  set(POCL_INSTALL_OPENCL_HEADER_DIR "${POCL_INSTALL_PUBLIC_HEADER_DIR}/OpenCL" CACHE PATH "POCL header dir for OpenCL headers")
+  set(POCL_INSTALL_OPENCL_HEADER_DIR
+    "${POCL_INSTALL_PUBLIC_HEADER_DIR}/OpenCL"
+    CACHE PATH "Absolute path to POCL header dir for OpenCL headers")
+  set(POCL_INSTALL_OPENCL_HEADER_DIR_REL
+    "${POCL_INSTALL_PUBLIC_HEADER_DIR_REL}/OpenCL"
+    CACHE PATH "Relative path to POCL header dir for OpenCL headers")
 else()
-  set(POCL_INSTALL_OPENCL_HEADER_DIR "${POCL_INSTALL_PUBLIC_HEADER_DIR}/CL" CACHE PATH "POCL header dir for OpenCL headers")
+  set(POCL_INSTALL_OPENCL_HEADER_DIR
+    "${POCL_INSTALL_PUBLIC_HEADER_DIR}/CL"
+    CACHE PATH "Absolute path to POCL header dir for OpenCL headers")
+  set(POCL_INSTALL_OPENCL_HEADER_DIR_REL
+    "${POCL_INSTALL_PUBLIC_HEADER_DIR_REL}/CL"
+    CACHE PATH "Relative path to POCL header dir for OpenCL headers")
 endif()
 
 ######################################################################################
@@ -932,11 +974,16 @@ else()
 endif()
 
 if(ENABLE_RELOCATION)
-  file(RELATIVE_PATH POCL_INSTALL_PRIVATE_DATADIR_REL ${POCL_INSTALL_PUBLIC_LIBDIR} ${POCL_INSTALL_PRIVATE_DATADIR})
+  # Relative path from the PoCL runtime library to private data directory.
+  file(RELATIVE_PATH POCL_INSTALL_FROM_LIB_TO_PRIVATE_DATADIR
+    ${POCL_INSTALL_PUBLIC_LIBDIR} ${POCL_INSTALL_PRIVATE_DATADIR})
   message(STATUS "Private Datadir Relative path: ${POCL_INSTALL_PRIVATE_DATADIR_REL}")
 endif()
 
-file(RELATIVE_PATH POCL_INSTALL_PRIVATE_LIBDIR_REL ${POCL_INSTALL_PUBLIC_LIBDIR} ${POCL_INSTALL_PRIVATE_LIBDIR})
+# Relative path from the PoCL runtime library to private runtime
+# library directory (a place where loadable drivers are placed, for example).
+file(RELATIVE_PATH POCL_INSTALL_FROM_LIB_TO_PRIVATE_LIBDIR
+  ${POCL_INSTALL_PUBLIC_LIBDIR} ${POCL_INSTALL_PRIVATE_LIBDIR})
 
 ######################################################################################
 
@@ -2350,7 +2397,7 @@ endif()
 if(UNIX OR MINGW)
   configure_file("${CMAKE_SOURCE_DIR}/pocl.pc.in.cmake" "${CMAKE_BINARY_DIR}/pocl.pc" @ONLY)
   install(FILES "${CMAKE_BINARY_DIR}/pocl.pc"
-          DESTINATION "${POCL_INSTALL_PKGCONFIG_DIR}" COMPONENT "dev")
+          DESTINATION "${POCL_INSTALL_PKGCONFIG_DIR_REL}" COMPONENT "dev")
 endif()
 
 # For now always use a mirror copy of ocml, but allow overriding

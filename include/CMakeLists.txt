@@ -36,4 +36,4 @@ set(PRIVATE_HEADERS _enable_all_exts.h _builtin_renames.h
 cpack_add_component("dev")
 
 install(FILES ${PRIVATE_HEADERS}
-        DESTINATION ${POCL_INSTALL_PRIVATE_HEADER_DIR} COMPONENT "dev")
+        DESTINATION ${POCL_INSTALL_PRIVATE_HEADER_DIR_REL} COMPONENT "dev")

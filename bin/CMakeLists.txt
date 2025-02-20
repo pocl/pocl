@@ -47,7 +47,7 @@ if(ENABLE_POCLCC)
   target_link_libraries(poclcc poclu ${OPENCL_LIBS})
 
   install(TARGETS "poclcc" RUNTIME
-          DESTINATION "${POCL_INSTALL_PUBLIC_BINDIR}" COMPONENT "poclcc")
+          DESTINATION "${POCL_INSTALL_PUBLIC_BINDIR_REL}" COMPONENT "poclcc")
 
   set("CPACK_DEBIAN_POCLCC_PACKAGE_NAME" "poclcc")
   list(APPEND CPACK_DEBIAN_POCLCC_PACKAGE_DEPENDS "opencl-icd")

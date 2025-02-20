@@ -288,7 +288,7 @@ get_pocl_device_lib_path (char *result, char *device_name, int absolute_path)
           else
 #endif
             {
-              strcat (result, POCL_INSTALL_PRIVATE_LIBDIR_REL);
+              strcat (result, POCL_INSTALL_FROM_LIB_TO_PRIVATE_LIBDIR);
             }
           strcat (result, POCL_PATH_SEPARATOR);
 #ifdef _WIN32
@@ -308,7 +308,7 @@ get_pocl_device_lib_path (char *result, char *device_name, int absolute_path)
     }
   else
     {
-      strcat (result, POCL_INSTALL_PRIVATE_LIBDIR_REL);
+      strcat (result, POCL_INSTALL_FROM_LIB_TO_PRIVATE_LIBDIR);
       strcat (result, POCL_PATH_SEPARATOR);
 #ifdef _WIN32
       strcat (result, "pocl-devices-");
