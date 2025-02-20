@@ -30,12 +30,12 @@
 #include <string.h>
 #include <time.h>
 
+#include "poclu.h"
 #include <CL/cl.h>
 #include <CL/cl_exp_defined_builtin_kernels.h>
 
 #include "CL/cl_exp_tensor.h"
 #include "config.h"
-#include "poclu.h"
 
 #define MALLOC_CHECKED(name, bytes)                                           \
   name = malloc (bytes);                                                      \
