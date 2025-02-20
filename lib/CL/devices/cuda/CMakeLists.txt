@@ -47,4 +47,4 @@ if(ENABLE_CUDNN)
 endif()
 
 install(FILES "builtins.cl" "builtins_sm50.ptx" "builtins_sm70.ptx"
-        DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}/cuda" COMPONENT "lib")
+        DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR_REL}/cuda" COMPONENT "lib")

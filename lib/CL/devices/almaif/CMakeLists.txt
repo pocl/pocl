@@ -89,4 +89,5 @@ if(ENABLE_TCE)
 endif()
 
 install(FILES "tce_builtins.cl"
-        DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}/almaif" COMPONENT "lib")
+        DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR_REL}/almaif"
+	COMPONENT "lib")

@@ -46,5 +46,5 @@ if(INSTALL_OPENCL_HEADERS)
                 cl_version.h
                 opencl.h
                 cl2.hpp opencl.hpp
-          DESTINATION "${POCL_INSTALL_OPENCL_HEADER_DIR}" COMPONENT "dev")
+          DESTINATION "${POCL_INSTALL_OPENCL_HEADER_DIR_REL}" COMPONENT "dev")
 endif()

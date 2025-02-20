@@ -36,9 +36,9 @@ if(ENABLE_LOADABLE_DRIVERS)
       set_target_properties(${name} PROPERTIES PREFIX "")
     endif()
     install(TARGETS ${name}
-            LIBRARY DESTINATION ${POCL_INSTALL_PRIVATE_LIBDIR}
+            LIBRARY DESTINATION ${POCL_INSTALL_PRIVATE_LIBDIR_REL}
             COMPONENT "lib"
-            RUNTIME DESTINATION ${POCL_INSTALL_PRIVATE_LIBDIR}
+            RUNTIME DESTINATION ${POCL_INSTALL_PRIVATE_LIBDIR_REL}
             COMPONENT "lib"
     )
   endfunction()

@@ -2451,7 +2451,7 @@ int pocl_get_private_datadir(char* private_datadir)
         {
           ++last_slash;
           *last_slash = 0;
-          strcat (private_datadir, POCL_INSTALL_PRIVATE_DATADIR_REL);
+          strcat (private_datadir, POCL_INSTALL_FROM_LIB_TO_PRIVATE_DATADIR);
           return 0;
         }
         else
