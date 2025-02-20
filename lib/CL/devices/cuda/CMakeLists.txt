@@ -44,6 +44,10 @@ endif()
 
 if(ENABLE_CUDNN)
     target_link_libraries(pocl-devices-cuda PRIVATE cudnn)
+    find_package(CUDAToolkit)
+    if(TARGET CUDA::cudart)
+        target_link_libraries(pocl-devices-cuda PRIVATE CUDA::cudart)
+    endif()
 endif()
 
 install(FILES "builtins.cl" "builtins_sm50.ptx" "builtins_sm70.ptx"
