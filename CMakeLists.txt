@@ -2378,8 +2378,12 @@ if(ENABLE_ICD)
     set(CONTENT "$<TARGET_FILE_NAME:pocl>")
   endif()
   file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/pocl.icd" CONTENT "${CONTENT}" CONDITION 1)
-  install(FILES "${CMAKE_BINARY_DIR}/pocl.icd"
-          DESTINATION "${POCL_INSTALL_ICD_VENDORDIR}" COMPONENT "icd")
+  # On Windows Khronos ICD loader looks for vendors in registry.
+  # https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/cl_khr_icd.html#_icd_loader_vendor_enumeration_on_windows
+  if (NOT WIN32)
+    install(FILES "${CMAKE_BINARY_DIR}/pocl.icd"
+            DESTINATION "${POCL_INSTALL_ICD_VENDORDIR}" COMPONENT "icd")
+  endif()
 
   # write icd file for pocl testing
   file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/ocl-vendors")
