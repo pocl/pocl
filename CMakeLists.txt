@@ -2526,8 +2526,19 @@ if(ENABLE_REMOTE_SERVER)
     add_subdirectory("pocld")
 endif()
 
+file(TO_CMAKE_PATH
+  "${CMAKE_SOURCE_DIR}/doc/www/img/pocl-80x60.png" POCL_ICON_PATH)
+
+if(WIN32)
+  # Work-around for "Invalid escape sequence \U" when using NSIS package
+  # generator. CPack/NSIS does not honor cmake paths nor it handles Windows
+  # native paths.
+  # [https://gitlab.kitware.com/cmake/cmake/-/issues/22441]
+  string(REPLACE "/" "\\\\" POCL_ICON_PATH "${POCL_ICON_PATH}")
+endif()
+
 set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/CPack.pocl.description.txt")
-set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/doc/www/img/pocl-80x60.png")
+set(CPACK_PACKAGE_ICON ${POCL_ICON_PATH})
 set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/pocl/pocl")
 set(CPACK_PACKAGE_CONTACT "https://github.com/pocl/pocl")
 set(CPACK_PACKAGE_CHECKSUM "SHA512")
