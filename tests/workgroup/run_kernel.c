@@ -1,6 +1,7 @@
 /* run_kernel - a generic launcher for a kernel without inputs and outputs
 
    Copyright (c) 2012,2019 Pekka Jääskeläinen
+                 2025 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -61,7 +62,7 @@ main (int argc, char **argv)
   cl_program program = NULL;
   cl_int err = CL_SUCCESS;
   cl_kernel kernel = NULL;
-  cl_mem outbuf = NULL;
+  cl_mem inbuf = NULL, outbuf = NULL;
   size_t global_work_size[3];
   size_t local_work_size[3];
   char kernel_path[2048];
@@ -110,30 +111,54 @@ main (int argc, char **argv)
 
   size_t grid_size
       = global_work_size[0] * global_work_size[1] * global_work_size[2];
-  if (num_args == 1)
+  if (num_args > 0)
     {
+      assert (num_args <= 2);
       cl_int err;
-      outbuf = clCreateBuffer (context, CL_MEM_READ_WRITE,
-                               grid_size * sizeof (cl_int), NULL, &err);
+      /* Input 4x the grid side of data to allow playing around with
+         strided memory access patterns. Note that we read back only
+         grid_size worth of data, so the output should be written to
+         the lower part of the array, if it's also used for output. */
+      cl_int *init_data = alloca (4 * grid_size * sizeof (cl_int));
+      for (int i = 0; i < 4 * grid_size; ++i)
+        {
+          init_data[i] = i;
+        }
+      inbuf
+        = clCreateBuffer (context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+                          4 * grid_size * sizeof (cl_int), init_data, &err);
       CHECK_CL_ERROR2 (err);
-      err = clSetKernelArg (kernel, 0, sizeof (outbuf), &outbuf);
+      err = clSetKernelArg (kernel, 0, sizeof (inbuf), &inbuf);
       CHECK_CL_ERROR2 (err);
+      if (num_args == 2)
+        {
+          /* A separate output buffer. */
+
+          outbuf = clCreateBuffer (
+            context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+            grid_size * sizeof (cl_int), init_data, &err);
+          CHECK_CL_ERROR2 (err);
+          err = clSetKernelArg (kernel, 1, sizeof (outbuf), &outbuf);
+          CHECK_CL_ERROR2 (err);
+        }
     }
-  else if (num_args != 0)
-    assert (num_args == 0 || num_args == 1);
 
   err = clEnqueueNDRangeKernel (cmd_queue, kernel, 3, NULL, global_work_size,
                                 local_work_size, 0, NULL, NULL);
   CHECK_CL_ERROR2 (err);
 
   cl_int *kern_output = NULL;
-  if (num_args == 1)
+  if (num_args > 0)
     {
       kern_output = malloc (grid_size * sizeof (cl_int));
-      err = clEnqueueReadBuffer (cmd_queue, outbuf, CL_TRUE, 0,
+
+      cl_mem result_buf = num_args == 1 ? inbuf : outbuf;
+
+      err = clEnqueueReadBuffer (cmd_queue, result_buf, CL_TRUE, 0,
                                  grid_size * sizeof (cl_int), kern_output, 0,
                                  NULL, NULL);
       CHECK_CL_ERROR2 (err);
+
       size_t i;
       for (i = 0; i < grid_size; ++i)
         printf ("%zu: %d\n", i, kern_output[i]);
