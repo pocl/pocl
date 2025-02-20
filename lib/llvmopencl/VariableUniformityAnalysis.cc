@@ -279,7 +279,13 @@ bool VariableUniformityAnalysisResult::isUniform(llvm::Function *F,
     return true;
   }
 
-  if (isa<llvm::ConstantInt>(V)) {
+  llvm::Module *M = F->getParent();
+  if (isa<llvm::Constant>(V) && !(V == M->getGlobalVariable(LID_G_NAME(0)) ||
+                                  V == M->getGlobalVariable(LID_G_NAME(1)) ||
+                                  V == M->getGlobalVariable(LID_G_NAME(2)) ||
+                                  V == M->getGlobalVariable(GID_G_NAME(0)) ||
+                                  V == M->getGlobalVariable(GID_G_NAME(1)) ||
+                                  V == M->getGlobalVariable(GID_G_NAME(2)))) {
     setUniform(F, V, true);
     return true;
   }
