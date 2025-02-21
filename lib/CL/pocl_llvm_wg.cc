@@ -118,14 +118,14 @@ POP_COMPILER_DIAGS
 using namespace llvm;
 
 // Returns the TargetMachine instance or zero if no triple is provided.
-static TargetMachine *GetTargetMachine(cl_device_id device) {
+static TargetMachine *GetTargetMachine(const char* TTriple,
+                                       const char* MCPU = "",
+                                       const char* Features = "") {
 
   std::string Error;
-  Triple DevTriple(device->llvm_target_triplet);
 
-  std::string MCPU = device->llvm_cpu ? device->llvm_cpu : "";
-
-  const Target *TheTarget = TargetRegistry::lookupTarget("", DevTriple, Error);
+  const Target *TheTarget = TargetRegistry::lookupTarget(TTriple,
+                                                         Error);
 
   // OpenASIP targets are not in the registry
   if (!TheTarget) {
@@ -133,7 +133,7 @@ static TargetMachine *GetTargetMachine(cl_device_id device) {
   }
 
   TargetMachine *TM = TheTarget->createTargetMachine(
-      DevTriple.getTriple(), MCPU, StringRef(""), TargetOptions(),
+      TTriple, MCPU, Features, TargetOptions(),
       Reloc::PIC_, CodeModel::Small,
 #if LLVM_MAJOR >= 18
       CodeGenOptLevel::Aggressive);
@@ -142,8 +142,6 @@ static TargetMachine *GetTargetMachine(cl_device_id device) {
 #endif
 
   assert(TM != NULL && "llvm target has no targetMachine constructor");
-  if (device->ops->init_target_machine)
-    device->ops->init_target_machine(device->data, TM);
 
   return TM;
 }
@@ -191,7 +189,7 @@ llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
                                          cl_device_id Dev) {
 
 #ifdef PER_STAGE_TARGET_MACHINE
-  Machine.reset(GetTargetMachine(Dev));
+  Machine.reset(GetTargetMachine(Dev->llvm_target_triplet, Dev->llvm_cpu));
   TargetMachine *TM = Machine.get();
 #endif
 
@@ -349,7 +347,7 @@ llvm::Error TwoStagePoCLModulePassManager::build(
   bool Vectorize = false;
 
 #ifndef PER_STAGE_TARGET_MACHINE
-  Machine.reset(GetTargetMachine(Dev));
+  Machine.reset(GetTargetMachine(Dev->llvm_target_triplet, Dev->llvm_cpu));
   TargetMachine *TMach = Machine.get();
 #endif
   llvm::Error E1 =
@@ -1543,14 +1541,15 @@ void pocl_llvm_free_llvm_irs(cl_program program, unsigned device_i) {
 }
 
 static TargetLibraryInfoImpl *initPassManagerForCodeGen(legacy::PassManager &PM,
-                                                        cl_device_id Device) {
-
-  llvm::Triple DevTriple(Device->llvm_target_triplet);
+                                                        const char* TTriple,
+                                                        cl_device_type DevType) {
+  assert(TTriple);
+  llvm::Triple DevTriple(TTriple);
   llvm::TargetLibraryInfoWrapperPass *TLIPass = nullptr;
   TargetLibraryInfoImpl *TLII = nullptr;
 
 #ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
-  if (Device->type == CL_DEVICE_TYPE_CPU) {
+  if (DevType == CL_DEVICE_TYPE_CPU) {
     TLII =
         llvm::driver::createTLII(DevTriple,
 #ifdef ENABLE_HOST_CPU_VECTORIZE_LIBMVEC
@@ -1576,22 +1575,19 @@ static TargetLibraryInfoImpl *initPassManagerForCodeGen(legacy::PassManager &PM,
 /* Run LLVM codegen on input file (parallel-optimized).
  * modp = llvm::Module* of parallel.bc
  * Output native object file (<kernel>.so.o). */
-int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
-                      char **Output, uint64_t *OutputSize) {
+int pocl_llvm_codegen2(const char* TTriple, const char* MCPU,
+                       const char *Features, cl_device_type DevType,
+                       pocl_lock_t *Lock, void *Modp, int EmitAsm,
+                       int EmitObj, char **Output, uint64_t *OutputSize) {
 
-  cl_context ctx = program->context;
-  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
-  PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
+  PoclCompilerMutexGuard LockHolder(Lock);
 
   llvm::Module *Input = (llvm::Module *)Modp;
   assert(Input);
   *Output = nullptr;
   std::unique_ptr<llvm::TargetLibraryInfoImpl> TLIIPtr;
 
-  legacy::PassManager PMObj;
-  TLIIPtr.reset(initPassManagerForCodeGen(PMObj, Device));
-
-  std::unique_ptr<llvm::TargetMachine> TM(GetTargetMachine(Device));
+  std::unique_ptr<llvm::TargetMachine> TM(GetTargetMachine(TTriple, MCPU, Features));
   llvm::TargetMachine *Target = TM.get();
 
   // First try direct object code generation from LLVM, if supported by the
@@ -1602,24 +1598,79 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
   llvm::raw_svector_ostream SOS(Data);
   bool cannotEmitFile;
 
-  cannotEmitFile = Target->addPassesToEmitFile(PMObj, SOS, nullptr,
-#if LLVM_MAJOR < 18
-                                               llvm::CGFT_ObjectFile);
-#else
-                                               llvm::CodeGenFileType::
-                                                   ObjectFile);
-#endif
-  LLVMGeneratesObjectFiles = !cannotEmitFile;
+  assert(EmitObj || EmitAsm);
 
-  if (LLVMGeneratesObjectFiles) {
-    POCL_MSG_PRINT_LLVM("Generating an object file directly.\n");
-#ifdef DUMP_LLVM_PASS_TIMINGS
+  if (EmitObj) {
+    legacy::PassManager PMObj;
+    TLIIPtr.reset(initPassManagerForCodeGen(PMObj, TTriple, DevType));
+
+    cannotEmitFile = Target->addPassesToEmitFile(PMObj, SOS, nullptr,
+  #if LLVM_MAJOR < 18
+                                                 llvm::CGFT_ObjectFile);
+  #else
+                                                 llvm::CodeGenFileType::
+                                                     ObjectFile);
+  #endif
+    LLVMGeneratesObjectFiles = !cannotEmitFile;
+
+    if (LLVMGeneratesObjectFiles) {
+      POCL_MSG_PRINT_LLVM("Generating an object file directly.\n");
+  #ifdef DUMP_LLVM_PASS_TIMINGS
+      llvm::TimePassesIsEnabled = true;
+  #endif
+      PMObj.run(*Input);
+  #ifdef DUMP_LLVM_PASS_TIMINGS
+      llvm::reportAndResetTimings();
+  #endif
+      auto O = SOS.str(); // flush
+      const char *Cstr = O.data();
+      size_t S = O.size();
+      *Output = (char *)malloc(S);
+      *OutputSize = S;
+      memcpy(*Output, Cstr, S);
+      return 0;
+    } else {
+      if (!EmitAsm) {
+        POCL_MSG_ERR("llvm_codegen: The target doesn't support "
+                     "obj emission & asm emission not permitted\n");
+        return -1;
+      }
+    }
+  }
+
+  if (EmitAsm) {
+    legacy::PassManager PMAsm;
+    TLIIPtr.reset(initPassManagerForCodeGen(PMAsm, TTriple, DevType));
+
+    POCL_MSG_PRINT_LLVM("Generating assembly text.\n");
+
+    // The LLVM target does not implement support for emitting object file directly.
+    // Have to emit the text first and then call the assembler from the command line
+    // to produce the binary.
+
+    if (Target->addPassesToEmitFile(PMAsm, SOS, nullptr,
+  #if LLVM_MAJOR < 18
+                                    llvm::CGFT_AssemblyFile)
+  #else
+                                    llvm::CodeGenFileType::AssemblyFile)
+  #endif
+    ) {
+      POCL_MSG_ERR(
+          "llvm_codegen: The target supports neither obj nor asm emission!");
+      return -1;
+    }
+  #ifdef DUMP_LLVM_PASS_TIMINGS
     llvm::TimePassesIsEnabled = true;
-#endif
-    PMObj.run(*Input);
-#ifdef DUMP_LLVM_PASS_TIMINGS
+  #endif
+    // This produces the assembly text:
+    PMAsm.run(*Input);
+  #ifdef DUMP_LLVM_PASS_TIMINGS
     llvm::reportAndResetTimings();
-#endif
+  #endif
+  }
+
+  if (!EmitObj) {
+    // return generated Asm to the caller
     auto O = SOS.str(); // flush
     const char *Cstr = O.data();
     size_t S = O.size();
@@ -1627,70 +1678,53 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
     *OutputSize = S;
     memcpy(*Output, Cstr, S);
     return 0;
-  }
+  } else {
+    // Next call the target's assembler via the Toolchain API indirectly through
+    // the Driver API.
+    char AsmFileName[POCL_MAX_PATHNAME_LENGTH];
+    char ObjFileName[POCL_MAX_PATHNAME_LENGTH];
 
-  legacy::PassManager PMAsm;
-  TLIIPtr.reset(initPassManagerForCodeGen(PMAsm, Device));
+    std::string AsmStr = SOS.str().str();
+    pocl_cache_write_kernel_asmfile(AsmFileName, AsmStr.c_str(), AsmStr.size());
+    pocl_cache_tempname(ObjFileName, OBJ_EXT, nullptr);
 
-  POCL_MSG_PRINT_LLVM("Generating assembly text.\n");
+    std::string CpuFlag = (MCPU != nullptr)
+                           ? (std::string(CLANG_MARCH_FLAG) + MCPU)
+                           : "";
 
-  // The LLVM target does not implement support for emitting object file directly.
-  // Have to emit the text first and then call the assembler from the command line
-  // to produce the binary.
-
-  if (Target->addPassesToEmitFile(PMAsm, SOS, nullptr,
-#if LLVM_MAJOR < 18
-                                  llvm::CGFT_AssemblyFile)
-#else
-                                  llvm::CodeGenFileType::AssemblyFile)
-#endif
-  ) {
-    POCL_MSG_ERR(
-        "llvm_codegen: The target supports neither obj nor asm emission!");
-    return -1;
-  }
-
-#ifdef DUMP_LLVM_PASS_TIMINGS
-  llvm::TimePassesIsEnabled = true;
-#endif
-  // This produces the assembly text:
-  PMAsm.run(*Input);
-#ifdef DUMP_LLVM_PASS_TIMINGS
-  llvm::reportAndResetTimings();
-#endif
-
-  // Next call the target's assembler via the Toolchain API indirectly through
-  // the Driver API.
-  char AsmFileName[POCL_MAX_PATHNAME_LENGTH];
-  char ObjFileName[POCL_MAX_PATHNAME_LENGTH];
-
-  std::string AsmStr = SOS.str().str();
-  pocl_cache_write_kernel_asmfile(AsmFileName, AsmStr.c_str(), AsmStr.size());
-  pocl_cache_tempname(ObjFileName, OBJ_EXT, nullptr);
-
-  std::string MCPU = Device->llvm_cpu != nullptr
-                         ? (std::string(CLANG_MARCH_FLAG) + Device->llvm_cpu)
-                         : "";
-
-  const char *Args[] = {pocl_get_path("CLANG", CLANGCC),
-                        AsmFileName,
-                        "-c",
-                        "-o",
-                        ObjFileName,
-                        Device->llvm_cpu != nullptr ? MCPU.c_str() : nullptr,
-                        nullptr};
-  int Res = pocl_invoke_clang(Device, Args);
-
-  if (Res == 0) {
-    if (pocl_read_file(ObjFileName, Output, OutputSize)) {
-      POCL_MSG_ERR("Could not read the object file.");
-      return -1;
+    const char *Args[] = {pocl_get_path("CLANG", CLANGCC),
+                          AsmFileName,
+                          "-c",
+                          "-o",
+                          ObjFileName,
+                          MCPU ? CpuFlag.c_str() : nullptr,
+                          nullptr};
+    int Res = pocl_invoke_clang(TTriple, Args);
+    if (Res == 0) {
+      if (pocl_read_file(ObjFileName, Output, OutputSize)) {
+        POCL_MSG_ERR("Could not read the object file.");
+        return -1;
+      }
     }
+    pocl_remove(AsmFileName);
+    pocl_remove(ObjFileName);
+    return Res;
   }
 
-  pocl_remove(AsmFileName);
-  pocl_remove(ObjFileName);
-  return Res;
+  return -1;
+}
+
+
+int pocl_llvm_codegen(cl_device_id Device, cl_program Program,
+                      const char *Features, void *Modp, int EmitAsm,
+                      int EmitObj, char **Output, uint64_t *OutputSize) {
+
+  cl_context Ctx = Program->context;
+  PoclLLVMContextData *LLVMCtx = (PoclLLVMContextData *)Ctx->llvm_context_data;
+
+  return pocl_llvm_codegen2 (Device->llvm_target_triplet, Device->llvm_cpu,
+                            Features, Device->type, &LLVMCtx->Lock,
+                            Modp, EmitAsm, EmitObj, Output, OutputSize);
 }
 
 void populateModulePM(void *Passes, void *Module, unsigned OptL, unsigned SizeL,
