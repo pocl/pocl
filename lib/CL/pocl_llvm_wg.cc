@@ -1871,7 +1871,7 @@ int pocl_llvm_codegen_asm_or_obj(const char *T, const char* Arch,
   // TODO: Set options?
   llvm::TargetOptions Options;
 
-#ifdef LLVM_OLDER_THAN_16_0
+#if LLVM_MAJOR < 16
   std::unique_ptr<llvm::TargetMachine> Machine(
       Target->createTargetMachine(Triple, Arch, Features, Options, llvm::None));
 #else
