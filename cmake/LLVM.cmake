@@ -143,6 +143,11 @@ run_llvm_config(LLVM_ALL_TARGETS --targets-built)
 if (NOT DEFINED LLVM_HOST_TARGET)
   run_llvm_config(LLVM_HOST_TARGET --host-target)
 endif()
+if(LLVM_ALL_TARGETS MATCHES "SPIRV")
+  set(LLVM_HAS_SPIRV_TARGET 1 CACHE BOOL "LLVM SPIRV target")
+else()
+  set(LLVM_HAS_SPIRV_TARGET 0 CACHE BOOL "LLVM SPIRV target")
+endif()
 run_llvm_config(LLVM_BUILD_MODE --build-mode)
 run_llvm_config(LLVM_ASSERTS_BUILD --assertion-mode)
 
@@ -371,6 +376,7 @@ endif()
 
 set_expr(HAVE_SPIRV_LINK SPIRV_LINK)
 set_expr(HAVE_LLVM_SPIRV LLVM_SPIRV)
+set_expr(HAVE_LLVM_OPT LLVM_OPT)
 
 if(HAVE_SPIRV_LINK AND (NOT DEFINED SPIRV_LINK_HAS_USE_HIGHEST_VERSION))
   execute_process(
