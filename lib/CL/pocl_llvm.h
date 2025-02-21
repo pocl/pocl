@@ -293,6 +293,11 @@ extern "C" {
 
   POCL_EXPORT int pocl_llvm_initialize_spirv_ext_option ();
 
+  int pocl_get_program_spec_constants (cl_program program,
+                                       char *spirv_path,
+                                       const void *spirv_content,
+                                       size_t spirv_len);
+
 #ifdef __cplusplus
 }
 #endif
