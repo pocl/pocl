@@ -161,6 +161,119 @@ static void handleInOutPathArgs(bool &keepPath, char *Path, char *HiddenPath,
   }
 }
 
+/* max number of lines in output of 'llvm-spirv --spec-const-info' */
+#define MAX_SPEC_CONSTANT_LINES 4096
+/* max bytes in output of 'llvm-spirv --spec-const-info' */
+#define MAX_OUTPUT_BYTES 65536
+
+#if defined(HAVE_LLVM_SPIRV_LIB)
+
+int pocl_get_program_spec_constants(cl_program program, char *spirv_path,
+                                    const void *spirv_content,
+                                    size_t spirv_len) {
+  std::string InputS((const char *)spirv_content, spirv_len);
+  std::stringstream InputSS(InputS);
+  std::vector<llvm::SpecConstInfoTy> SpecConstInfoVec;
+  if (!llvm::getSpecConstInfo(InputSS, SpecConstInfoVec))
+    return CL_INVALID_BINARY;
+
+  size_t NumConst = SpecConstInfoVec.size();
+  program->num_spec_consts = NumConst;
+  if (NumConst > 0) {
+    program->spec_const_ids = (cl_uint *)calloc(NumConst, sizeof(cl_uint));
+    program->spec_const_sizes = (cl_uint *)calloc(NumConst, sizeof(cl_uint));
+    program->spec_const_values =
+        (uint64_t *)calloc(NumConst, sizeof(uint64_t));
+    program->spec_const_is_set = (char *)calloc(NumConst, sizeof(char));
+    for (unsigned i = 0; i < program->num_spec_consts; ++i) {
+      program->spec_const_ids[i] = SpecConstInfoVec[i].ID;
+      program->spec_const_sizes[i] = SpecConstInfoVec[i].Size;
+      program->spec_const_values[i] = 0;
+      program->spec_const_is_set[i] = CL_FALSE;
+    }
+  }
+  return CL_SUCCESS;
+}
+
+#elif defined(HAVE_LLVM_SPIRV)
+
+int pocl_get_program_spec_constants(cl_program program, char *spirv_path,
+                                    const void *spirv_content,
+                                    size_t spirv_len) {
+  const char *args[] = {pocl_get_path("LLVM_SPIRV", LLVM_SPIRV),
+                        "--spec-const-info", spirv_path, NULL};
+  char captured_output[MAX_OUTPUT_BYTES];
+  size_t captured_bytes = MAX_OUTPUT_BYTES;
+  int errcode = CL_SUCCESS;
+  unsigned num_const = 0;
+
+  errcode =
+      pocl_run_command_capture_output(captured_output, &captured_bytes, args);
+  POCL_RETURN_ERROR_ON((errcode != 0), CL_INVALID_BINARY,
+                       "External command "
+                       "(llvm-spirv --spec-const-info) failed!\n");
+
+  captured_output[captured_bytes] = 0;
+  char *lines[MAX_SPEC_CONSTANT_LINES];
+  unsigned num_lines = 0;
+  char delim[2] = {0x0A, 0x0};
+  char *token = strtok(captured_output, delim);
+  while (num_lines < MAX_SPEC_CONSTANT_LINES && token != NULL) {
+    lines[num_lines++] = strdup(token);
+    token = strtok(NULL, delim);
+  }
+  POCL_GOTO_ERROR_ON((num_lines == 0 || num_lines >= MAX_SPEC_CONSTANT_LINES),
+                     CL_INVALID_BINARY, "Can't parse output from llvm-spirv\n");
+
+  errcode = sscanf(
+      lines[0], "Number of scalar specialization constants in the module = %u",
+      &num_const);
+  POCL_GOTO_ERROR_ON((errcode < 1 || num_const > num_lines), CL_INVALID_BINARY,
+                     "Can't parse first line of output");
+
+  program->num_spec_consts = num_const;
+  if (num_const > 0) {
+    program->spec_const_ids = (cl_uint *)calloc(num_const, sizeof(cl_uint));
+    program->spec_const_sizes = (cl_uint *)calloc(num_const, sizeof(cl_uint));
+    program->spec_const_values =
+        (uint64_t *)calloc(num_const, sizeof(uint64_t));
+    program->spec_const_is_set = (char *)calloc(num_const, sizeof(char));
+    for (unsigned i = 0; i < program->num_spec_consts; ++i) {
+      unsigned spec_id, spec_size;
+      int r = sscanf(lines[i + 1], "Spec const id = %u, size in bytes = %u",
+                     &spec_id, &spec_size);
+      POCL_GOTO_ERROR_ON((r < 2), CL_INVALID_BINARY,
+                         "Can't parse %u-th line of output:\n%s\n", i + 1,
+                         lines[i + 1]);
+      program->spec_const_ids[i] = spec_id;
+      program->spec_const_sizes[i] = spec_size;
+      program->spec_const_values[i] = 0;
+      program->spec_const_is_set[i] = CL_FALSE;
+    }
+  }
+  errcode = CL_SUCCESS;
+ERROR:
+  for (unsigned i = 0; i < num_lines; ++i)
+    free(lines[i]);
+  if (errcode != CL_SUCCESS) {
+    program->num_spec_consts = 0;
+  }
+  return errcode;
+}
+
+#else
+
+int pocl_get_program_spec_constants(cl_program program, char *spirv_path,
+                                    const void *spirv_content,
+                                    size_t spirv_len) {
+  POCL_MSG_ERR("No way to parse spec constants from SPIRV");
+  program->num_spec_consts = 0;
+  return CL_SUCCESS;
+}
+
+#endif
+
+
 #if defined(HAVE_LLVM_SPIRV) || defined(HAVE_LLVM_SPIRV_LIB)
 
 // implement IR <-> SPIRV conversion using llvm-spirv or LLVMSPIRVLib
