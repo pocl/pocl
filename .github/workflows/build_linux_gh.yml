@@ -80,8 +80,15 @@ jobs:
           sudo apt update -y &&
           sudo apt install -y wget gpg python3-dev libpython3-dev build-essential ocl-icd-libopencl1 cmake make git pkg-config ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g-dev libtbb-dev
 
-      - name: Install LLVM <= 18
-        if: ${{ matrix.llvm <= 18 }}
+      # for LLVM <= 16, test without spirv
+      - name: Install LLVM <= 16
+        if: ${{ matrix.llvm <= 16 }}
+        run: >
+          export LLVM_VERSION=${{ matrix.llvm }} &&
+          sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} libpolly-${LLVM_VERSION}-dev
+
+      - name: Install LLVM 17, 18
+        if: ${{ (matrix.llvm >= 17) &&  (matrix.llvm <= 18) }}
         run: >
           export LLVM_VERSION=${{ matrix.llvm }} &&
           sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} libllvmspirvlib-${LLVM_VERSION}-dev llvm-spirv-${LLVM_VERSION} libpolly-${LLVM_VERSION}-dev spirv-tools
