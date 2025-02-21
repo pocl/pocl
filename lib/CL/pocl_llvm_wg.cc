@@ -1061,11 +1061,10 @@ static int convertBCorSPV(char *InputPath,
     goto FINISHED;
   }
   if (!Reverse) {
-    SPIRVParser::applyAtomicCmpXchgWorkaround((const int32_t *)Content,
-                                              ContentSize / 4, FinalSpirv);
-    assert(FinalSpirv.size() <= ContentSize);
-    std::memcpy(Content, FinalSpirv.data(), FinalSpirv.size());
-    ContentSize = FinalSpirv.size();
+    size_t ContentWords = ContentSize / 4;
+    SPIRVParser::applyAtomicCmpXchgWorkaroundInPlace((int32_t *)Content,
+                                                     &ContentWords);
+    ContentSize = ContentWords * 4;
 
     if (keepOutputPath) {
       r = pocl_write_file(HiddenOutputPath, Content, ContentSize, 0);
