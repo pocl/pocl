@@ -350,13 +350,11 @@ else()
   message(STATUS "Did NOT find usable llvm-spirv!")
 endif()
 
-if(NOT DEFINED SPIRV_LINK)
-  find_program(SPIRV_LINK NAMES "spirv-link${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}")
-  if(SPIRV_LINK)
-    message(STATUS "Found spirv-link: ${SPIRV_LINK}")
-  else()
-    message(STATUS "Did NOT find spirv-link!")
-  endif()
+find_program(SPIRV_LINK NAMES "spirv-link${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}")
+if(SPIRV_LINK)
+  message(STATUS "Found spirv-link: ${SPIRV_LINK}")
+else()
+  message(STATUS "Did NOT find spirv-link!")
 endif()
 
 if(NOT DEFINED HAVE_LLVM_SPIRV_LIB)
@@ -364,9 +362,27 @@ if(NOT DEFINED HAVE_LLVM_SPIRV_LIB)
     PATHS "${LLVM_INCLUDE_DIRS}/LLVMSPIRVLib" NO_DEFAULT_PATH)
   find_library(LLVM_SPIRV_LIB "LLVMSPIRVLib" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
   if(LLVM_SPIRV_INCLUDEDIR AND LLVM_SPIRV_LIB)
+    message(STATUS "found LLVMSPIRV library")
     set(HAVE_LLVM_SPIRV_LIB 1 CACHE BOOL "have LLVMSPIRVLib")
   else()
     set(HAVE_LLVM_SPIRV_LIB 0 CACHE BOOL "have LLVMSPIRVLib")
+  endif()
+endif()
+
+set_expr(HAVE_SPIRV_LINK SPIRV_LINK)
+set_expr(HAVE_LLVM_SPIRV LLVM_SPIRV)
+
+if(HAVE_SPIRV_LINK AND (NOT DEFINED SPIRV_LINK_HAS_USE_HIGHEST_VERSION))
+  execute_process(
+      COMMAND "${SPIRV_LINK}" "--help"
+      OUTPUT_VARIABLE SPIRV_LINK_OUTPUT_VALUE
+      RESULT_VARIABLE SPIRV_LINK_RETVAL
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  if("${SPIRV_LINK_OUTPUT_VALUE}" MATCHES "use-highest-version")
+    set(SPIRV_LINK_HAS_USE_HIGHEST_VERSION 1 CACHE BOOL "spirv-link --use-highest-version")
+  else()
+    set(SPIRV_LINK_HAS_USE_HIGHEST_VERSION 0 CACHE BOOL "spirv-link --use-highest-version")
   endif()
 endif()
 
