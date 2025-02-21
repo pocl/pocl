@@ -241,7 +241,7 @@ void fixPrintF(llvm::Module *Module) {
   NewPrintF->takeName(OldPrintF);
 
   // Take function body from old function.
-#ifdef LLVM_OLDER_THAN_16_0
+#if LLVM_MAJOR < 16
   NewPrintF->getBasicBlockList().splice(NewPrintF->begin(),
                                         OldPrintF->getBasicBlockList());
 #else
@@ -977,7 +977,7 @@ static int getPtrArgAlignment(llvm::Module *Module, llvm::Function *Kernel,
       //      POCL_MSG_WARN("V1 ||||| Argument %u : ALIGN %zu \n", i,
       //      AlignmentVec[i]);
     } else {
-#ifdef LLVM_OLDER_THAN_16_0
+#if LLVM_MAJOR < 16
       AlignmentVec[i] = Arg.getParamAlignment();
 #else
       if (Arg.getType()->isPointerTy())
