@@ -621,6 +621,8 @@ void pocl_llvm_release_context(cl_context ctx) {
   if (data == NULL)
     return;
 
+  {
+  PoclCompilerMutexGuard lockHolder(&data->Lock);
   if (data->number_of_IRs > 0) {
     POCL_MSG_ERR("still have IR references - can't release LLVM context !\n");
     return;
@@ -645,8 +647,9 @@ void pocl_llvm_release_context(cl_context ctx) {
   }
   data->kernelLibraryMap->clear();
   delete data->kernelLibraryMap;
-  POCL_DESTROY_LOCK(data->Lock);
+  }
 
+  POCL_DESTROY_LOCK(data->Lock);
   delete data->Context;
   delete data;
   ctx->llvm_context_data = nullptr;
