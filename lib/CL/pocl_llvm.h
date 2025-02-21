@@ -284,6 +284,8 @@ extern "C" {
                                                  char **BitcodeContent,
                                                  uint64_t *BitcodeSize);
 
+  POCL_EXPORT int pocl_llvm_initialize_spirv_ext_option ();
+
 #ifdef __cplusplus
 }
 #endif

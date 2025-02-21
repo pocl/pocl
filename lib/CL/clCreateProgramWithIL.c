@@ -36,7 +36,7 @@
 
 #ifdef ENABLE_SPIRV
 
-#if defined(HAVE_FORK)
+#if defined(HAVE_FORK) && defined(HAVE_LLVM_SPIRV)
 static int
 get_program_spec_constants (cl_program program, char *program_bc_spirv)
 {

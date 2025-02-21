@@ -259,7 +259,7 @@ if (ENABLE_LLVM)
   unset(CMAKE_CXX_STANDARD)
   unset(CMAKE_CXX_STANDARD_REQUIRED)
 
-  set(LLVM_API_SOURCES "pocl_llvm_build.cc" "pocl_llvm_metadata.cc" "pocl_llvm_utils.cc" "pocl_llvm_wg.cc" ${EXTRA_LLVM_SOURCES})
+  set(LLVM_API_SOURCES "pocl_llvm_build.cc" "pocl_llvm_metadata.cc" "pocl_llvm_utils.cc" "pocl_llvm_wg.cc" "pocl_llvm_spirv.cc" ${EXTRA_LLVM_SOURCES})
   set_source_files_properties(${LLVM_API_SOURCES} PROPERTIES COMPILE_FLAGS "${LLVM_CXXFLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl\"")
 
   add_library("lib_cl_llvm" OBJECT ${LLVM_API_SOURCES})
