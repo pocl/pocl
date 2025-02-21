@@ -513,6 +513,10 @@ static int linkWithSpirvLink(cl_program Program, cl_uint DeviceI,
   if (CreateLibrary != 0) {
     CompilationArgs.push_back("--create-library");
   }
+  // allow linking of SPIR-V modules with different version
+#ifdef SPIRV_LINK_HAS_USE_HIGHEST_VERSION
+  CompilationArgs.push_back("--use-highest-version");
+#endif
   CompilationArgs.push_back("-o");
   CompilationArgs.push_back(ProgramSpvPathTemp);
   for (auto &Path : SpvBinaryPaths) {
@@ -674,7 +678,6 @@ int pocl_level0_build_source(cl_program Program, cl_uint DeviceI,
     Program->program_il = OutputBinary;
     Program->program_il_size = OutputBinarySize;
     pocl_rename(ProgramSpvPathTemp, ProgramSpvPath);
-    POCL_MSG_WARN("Final SPV written: %s\n", ProgramSpvPath);
   }
 
   assert(Program->program_il != nullptr);
