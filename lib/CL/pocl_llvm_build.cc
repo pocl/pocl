@@ -1108,7 +1108,7 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
  *             the Clang binary.
  * @return 0 on success, error code otherwise.
  */
-int pocl_invoke_clang(cl_device_id Device, const char** Args) {
+int pocl_invoke_clang(const char* TTriple, const char** Args) {
 
   // Borrowed from driver.cpp (clang driver). We do not really care about
   // diagnostics, but just want to get the compilation command invoked with
@@ -1123,7 +1123,7 @@ int pocl_invoke_clang(cl_device_id Device, const char** Args) {
   DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
 
   clang::driver::Driver TheDriver(pocl_get_path("CLANG", CLANGCC),
-                                  Device->llvm_target_triplet, Diags);
+                                  TTriple, Diags);
 
   const char **ArgsEnd = Args;
   while (*ArgsEnd != nullptr) { ArgsEnd++; }
