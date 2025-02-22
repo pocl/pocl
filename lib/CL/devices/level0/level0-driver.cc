@@ -74,6 +74,8 @@
 #define ENABLE_PROGVARS
 // fails a c11_atomics subtest with GPU hang (even with increased timeout)
 #define ENABLE_64BIT_ATOMICS
+// enables large (>32bit) allocations. Fails test_allocations from CTS
+#define ENABLE_LARGE_ALLOC
 #endif
 
 #define ENABLE_WG_COLLECTIVE
@@ -2222,7 +2224,6 @@ bool Level0Device::setupDeviceProperties(bool HasIPVersionExt) {
     return false;
   }
 
-  bool Integrated = false;
   // ze_device_property_flags_t
   if (DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED) {
     Integrated = true;
@@ -2252,9 +2253,12 @@ bool Level0Device::setupDeviceProperties(bool HasIPVersionExt) {
   ClDev->host_unified_memory = Integrated ? CL_TRUE : CL_FALSE;
   ClDev->max_clock_frequency = DeviceProperties.coreClockRate;
 
+  // L0 returns 4GB in this property, allocating such buffer works but a kernel
+  // working with it then fails (IIRC happens with CTS and constant mem test);
+  // therefore limit the max-mem-alloc-size to slighty less.
   ClDev->max_mem_alloc_size = ClDev->max_constant_buffer_size =
-      ClDev->global_var_pref_size = DeviceProperties.maxMemAllocSize * 3 / 4;
-  Supports64bitBuffers = (ClDev->max_mem_alloc_size > UINT32_MAX);
+    ClDev->global_var_pref_size = DeviceProperties.maxMemAllocSize * 15 / 16;
+  Supports64bitBuffers = (DeviceProperties.maxMemAllocSize > UINT32_MAX);
 
   if (DeviceProperties.type == ZE_DEVICE_TYPE_GPU ||
       DeviceProperties.type == ZE_DEVICE_TYPE_CPU) {
@@ -2649,16 +2653,16 @@ bool Level0Device::setupMemoryProperties(bool &HasUSMCapability) {
   MemAccessProperties.pNext = nullptr;
   Res2 = zeDeviceGetMemoryAccessProperties(DeviceHandle, &MemAccessProperties);
 
+  // ClDev->max_mem_alloc_size was setup in setupDeviceProperties()
+  // set a default value to the be maxMemAllocSize
   ClDev->global_mem_size = ClDev->max_mem_alloc_size;
   if (Res1 != ZE_RESULT_SUCCESS || Res2 != ZE_RESULT_SUCCESS) {
-    // ClDev->max_mem_alloc_size was setup in setupDeviceProperties()
     POCL_MSG_PRINT_LEVEL0("%s: zeDeviceGetMemoryProperties() failed\n",
                           ClDev->short_name);
     HasUSMCapability = false;
     return false;
   }
 
-  // memProps
   for (uint32_t i = 0; i < MemPropCount; ++i) {
     if (ClDev->global_mem_size < MemProps[i].totalSize) {
       ClDev->global_mem_size = MemProps[i].totalSize;
@@ -2671,6 +2675,10 @@ bool Level0Device::setupMemoryProperties(bool &HasUSMCapability) {
         std::max<uint64_t>((ClDev->global_mem_size >> 30), 1UL);
     if (MemLimit > 0 && (uint64_t)MemLimit <= MemInGBytes) {
       ClDev->global_mem_size = (size_t)MemLimit << 30;
+      // ensure MaxMemAllocSize <= ClDev->global_mem_size
+      ClDev->max_mem_alloc_size = ClDev->max_constant_buffer_size =
+        ClDev->global_var_pref_size =
+          std::min(ClDev->max_mem_alloc_size, ClDev->global_mem_size) * 15 / 16;
     }
   }
 
@@ -2832,15 +2840,6 @@ void Level0Device::setupGlobalMemSize(bool HasRelaxedAllocLimits) {
 //    ClDev->global_var_pref_size = ClDev->max_mem_alloc_size;
     Supports64bitBuffers = true;
     NeedsRelaxedLimits = true;
-  } else {
-    // ensure thad MaxMemAllocSize is not higher than ClDev->global_mem_size
-    // if the latter was set by POCL_MEMORY_LIMIT
-    ClDev->max_mem_alloc_size = ClDev->max_constant_buffer_size =
-        ClDev->global_var_pref_size =
-            std::min(ClDev->max_mem_alloc_size, ClDev->global_mem_size);
-    if (ClDev->global_mem_size > UINT32_MAX) {
-      Supports64bitBuffers = true;
-    }
   }
 #ifndef ENABLE_PROGVARS
   ClDev->global_var_pref_size = 0;
@@ -2912,8 +2911,12 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   bool HasUsmCapability = false;
   setupMemoryProperties(HasUsmCapability);
 
+#ifdef ENABLE_LARGE_ALLOC
   bool HasRelaxedAllocLimits =
       Driver->hasExtension("ZE_experimental_relaxed_allocation_limits");
+#else
+  bool HasRelaxedAllocLimits = false;
+#endif
   setupGlobalMemSize(HasRelaxedAllocLimits);
 
   setupCacheProperties();
