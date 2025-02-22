@@ -505,6 +505,7 @@ private:
 
   cl_bool Available = CL_FALSE;
   bool OndemandPaging = false;
+  bool Integrated = false;
   bool Supports64bitBuffers = false;
   bool SupportsDP4A = false;
   bool SupportsDPAS = false;
