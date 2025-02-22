@@ -2440,8 +2440,7 @@ pocl_escape_quoted_whitespace (char *temp_options, char *replace_me)
 /* returns private datadir, possibly using relative path to libpocl sharedlib */
 int pocl_get_private_datadir(char* private_datadir)
 {
-/* pocl_dynlib_pathname() is not implemented for LLVM dynlib */
-#ifndef ENABLE_LLVM_PLATFORM_SUPPORT
+#ifdef ENABLE_RELOCATION
   const char *Path = pocl_dynlib_pathname ((void *)pocl_get_private_datadir);
   if (Path)
     {
