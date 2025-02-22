@@ -1,5 +1,5 @@
 ---
-name: Linux / Level Zero GPU tests
+name: Linux / GPU Level Zero tests
 
 permissions:
   contents: read

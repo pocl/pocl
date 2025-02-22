@@ -344,12 +344,15 @@ static int convertBCorSPV(char *InputPath,
   case 104:
     TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_4;
     break;
+// these are not available in all version of LLVMSPIRVOpts.h header:
+#if 0
   case 105:
     TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_5;
     break;
   case 106:
     TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_6;
     break;
+#endif
   }
 
   SPIRV::TranslatorOpts Opts(TargetVersionEnum, EnabledExts);

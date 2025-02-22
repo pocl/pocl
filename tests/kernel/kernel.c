@@ -42,6 +42,7 @@ int call_test(const char *name)
   CHECK_OPENCL_ERROR_IN ("clCreateProgram call failed\n");
 
   cl_uint num_kernels = 0;
+  cl_kernel *kernels = NULL;
   err = clCreateKernelsInProgram (program, 0, NULL, &num_kernels);
   CHECK_OPENCL_ERROR_IN ("clCreateKernelsInProgram call failed");
   if (!num_kernels)
@@ -50,7 +51,7 @@ int call_test(const char *name)
       goto error;
     }
 
-  cl_kernel *kernels = calloc (num_kernels, sizeof (cl_kernel));
+  kernels = calloc (num_kernels, sizeof (cl_kernel));
   err = clCreateKernelsInProgram (program, num_kernels, kernels, NULL);
   if (err != CL_SUCCESS)
     {
