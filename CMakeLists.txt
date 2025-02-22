@@ -972,7 +972,8 @@ endif()
 
 ######################################################################################
 
-if(UNIX AND ENABLE_LLVM AND HAVE_DLADDR)
+# for relocation, we need working pocl_dynlib_pathname()
+if((UNIX AND HAVE_DLADDR) OR (WIN32 AND ENABLE_LLVM_PLATFORM_SUPPORT))
     option(ENABLE_RELOCATION "make libpocl relocatable" ON)
 else()
     message(STATUS "Relocation not available")
