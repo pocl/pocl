@@ -686,7 +686,7 @@ pocl_llvm_convert_and_link_ir (cl_program program, cl_uint device_i,
                                int link_builtin_lib, int spir_build)
 {
   cl_device_id device = program->devices[device_i];
-  int errcode;
+  int errcode = 0;
   char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
 
   if (program->binaries[device_i])
