@@ -119,8 +119,9 @@ pocl_cache_program_spv_path (char *program_bc_path, cl_program program,
  * string will be written (must have at least max_length + 1 of storage).
  */
 static void
-pocl_hash_clipped_name (const char *str, size_t max_length, char *new_str)
+pocl_hash_clipped_name (const char *str, char *new_str)
 {
+  size_t max_length = POCL_HASH_FILENAME_LENGTH;
   if (strlen (str) > max_length)
     {
       SHA1_CTX hash_ctx;
@@ -177,8 +178,7 @@ pocl_cache_kernel_cachedir_path (char *kernel_cachedir_path,
   size_t max_grid_width = pocl_cmd_max_grid_dim_width (run_cmd);
 
   char kernel_dir_name[POCL_MAX_DIRNAME_LENGTH + 1];
-  pocl_hash_clipped_name (kernel->name, POCL_MAX_DIRNAME_LENGTH,
-                          &kernel_dir_name[0]);
+  pocl_hash_clipped_name (kernel->name, &kernel_dir_name[0]);
 
   bytes_written = snprintf (
       tempstring, POCL_MAX_PATHNAME_LENGTH, "/%s/%zu-%zu-%zu%s%s%s",
@@ -209,7 +209,7 @@ pocl_cache_kernel_cachedir (char *kernel_cachedir_path, cl_program program,
   char tempstring[POCL_MAX_PATHNAME_LENGTH];
   char file_name[POCL_MAX_FILENAME_LENGTH + 1];
 
-  pocl_hash_clipped_name (kernel_name, POCL_MAX_FILENAME_LENGTH, &file_name[0]);
+  pocl_hash_clipped_name (kernel_name, &file_name[0]);
 
   bytes_written
       = snprintf (tempstring, POCL_MAX_PATHNAME_LENGTH, "/%s", file_name);
@@ -255,10 +255,7 @@ pocl_cache_final_binary_path (char *final_binary_path, cl_program program,
   else
     {
       char file_name[POCL_MAX_FILENAME_LENGTH + 1];
-      /* -5: Leave space for .so and for additional .o if temp file debugging
-         is enabled. */
-      pocl_hash_clipped_name (kernel->name, POCL_MAX_FILENAME_LENGTH - 5,
-                              &file_name[0]);
+      pocl_hash_clipped_name (kernel->name, &file_name[0]);
       bytes_written = snprintf (final_binary_name, POCL_MAX_PATHNAME_LENGTH,
                                 "/%s.so", file_name);
     }
