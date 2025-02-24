@@ -248,8 +248,8 @@ if(HAVE_GIT)
 endif()
 
 set(BUILD_SHARED_LIBS_DEFAULT ON)
-if(MSVC)
-  # Building PoCL as shared library does not work yet.
+if(MINGW)
+  # Building PoCL as shared library does not work yet with MinGW.
   set(BUILD_SHARED_LIBS_DEFAULT OFF)
 endif()
 
