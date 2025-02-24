@@ -570,12 +570,10 @@ pocl_driver_svm_copy (cl_device_id dev,
 
 #ifdef ENABLE_LLVM
 
-#define MAX_SPEC_CONST_CMDLINE_LEN 8192
-#define MAX_SPEC_CONST_OPT_LEN 256
-
 /* load LLVM IR binary from disk, deletes existing in-memory IR */
-static int
-pocl_reload_program_bc (char *program_bc_path, cl_program program,
+int
+pocl_reload_program_bc (char *program_bc_path,
+                        cl_program program,
                         cl_uint device_i)
 {
   char *temp_binary = NULL;
@@ -585,100 +583,10 @@ pocl_reload_program_bc (char *program_bc_path, cl_program program,
     return -1;
   if (program->binaries[device_i])
     POCL_MEM_FREE (program->binaries[device_i]);
-  program->binaries[device_i] = (unsigned char*)temp_binary;
+  program->binaries[device_i] = (unsigned char *)temp_binary;
   program->binary_sizes[device_i] = temp_size;
   return 0;
 }
-
-#ifdef ENABLE_SPIRV
-/* if some SPIR-V spec constants were changed, use llvm-spirv --spec-const=...
- * to generate new LLVM bitcode from SPIR-V */
-static int
-pocl_regen_spirv_binary (cl_program program, cl_uint device_i)
-{
-  int errcode = CL_SUCCESS;
-  cl_device_id device = program->devices[device_i];
-  int spec_constants_changed = 0;
-  char concated_spec_const_option[MAX_SPEC_CONST_CMDLINE_LEN];
-  concated_spec_const_option[0] = 0;
-  char program_bc_spirv[POCL_MAX_PATHNAME_LENGTH];
-  char unlinked_program_bc_temp[POCL_MAX_PATHNAME_LENGTH];
-  program_bc_spirv[0] = 0;
-  unlinked_program_bc_temp[0] = 0;
-
-  /* using --spirv-target-env=CL2.0 here enables llvm-spirv to produce proper
-   * OpenCL 2.0 atomics, unfortunately it also enables generic ptrs, which not
-   * all PoCL devices support, hence check the device */
-  char* spirv_target_env = (device->generic_as_support != CL_FALSE) ?
-                        "--spirv-target-env=CL2.0" :  "--spirv-target-env=CL1.2";
-  const char *args[8] = { pocl_get_path ("LLVM_SPIRV", LLVM_SPIRV),
-                          concated_spec_const_option,
-                          spirv_target_env,
-                          "-r",
-                          "-o",
-                          unlinked_program_bc_temp,
-                          program_bc_spirv,
-                          NULL };
-  const char **final_args = args;
-
-  errcode = pocl_cache_tempname(unlinked_program_bc_temp, ".bc", NULL);
-  POCL_RETURN_ERROR_ON ((errcode != 0), CL_BUILD_PROGRAM_FAILURE,
-                        "failed to create tmpfile in pocl cache\n");
-
-  errcode = pocl_cache_write_spirv (program_bc_spirv,
-                                    (const char *)program->program_il,
-                                    (uint64_t)program->program_il_size);
-  POCL_RETURN_ERROR_ON ((errcode != 0), CL_BUILD_PROGRAM_FAILURE,
-                        "failed to write into pocl cache\n");
-
-  for (unsigned i = 0; i < program->num_spec_consts; ++i)
-    spec_constants_changed += program->spec_const_is_set[i];
-
-  if (spec_constants_changed)
-    {
-      strcpy (concated_spec_const_option, "--spec-const=");
-      for (unsigned i = 0; i < program->num_spec_consts; ++i)
-        {
-          if (program->spec_const_is_set[i])
-            {
-              char opt[MAX_SPEC_CONST_OPT_LEN];
-              snprintf (opt, MAX_SPEC_CONST_OPT_LEN, "%u:i%u:%zu ",
-                        program->spec_const_ids[i],
-                        program->spec_const_sizes[i] * 8,
-                        program->spec_const_values[i]);
-              strcat (concated_spec_const_option, opt);
-            }
-        }
-    }
-  else
-    {
-      /* skip concated_spec_const_option */
-      args[0] = NULL;
-      args[1] = pocl_get_path ("LLVM_SPIRV", LLVM_SPIRV);
-      final_args = args + 1;
-    }
-
-  errcode = pocl_run_command (final_args);
-  POCL_GOTO_ERROR_ON ((errcode != 0), CL_INVALID_VALUE,
-                      "External command (llvm-spirv translator) failed!\n");
-
-  POCL_GOTO_ERROR_ON (
-      (pocl_reload_program_bc (unlinked_program_bc_temp, program, device_i)),
-      CL_INVALID_VALUE, "Can't read llvm-spirv converted bitcode file\n");
-
-  errcode = CL_SUCCESS;
-
-ERROR:
-  if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0)
-    {
-      if (unlinked_program_bc_temp[0])
-        pocl_remove (unlinked_program_bc_temp);
-      if (program_bc_spirv[0])
-        pocl_remove (program_bc_spirv);
-    }
-  return errcode;
-}
-#endif
 
 /* Converts SPIR-V / SPIR to LLVM IR, and links it to pocl's kernel library */
 static int
@@ -813,7 +721,6 @@ pocl_llvm_convert_and_link_ir (cl_program program, cl_uint device_i,
                         "Failed to link program.bc\n");
   return CL_SUCCESS;
 }
-
 
 #endif
 

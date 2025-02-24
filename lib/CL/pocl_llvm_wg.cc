@@ -748,9 +748,11 @@ public:
 };
 } // namespace pocl
 
-void *pocl_llvm_create_context_for_program(
-    char *ProgramBcContent, size_t ProgramBcSize, char **LinkinSpirvContent,
-    uint64_t *LinkinSpirvSize, pocl_version_t TargetVersion) {
+void *pocl_llvm_create_context_for_program(char *ProgramBcContent,
+                                           size_t ProgramBcSize,
+                                           char **LinkinSpirvContent,
+                                           uint64_t *LinkinSpirvSize,
+                                           pocl_version_t TargetVersion) {
   assert(ProgramBcContent);
   assert(ProgramBcSize > 0);
 
@@ -1114,7 +1116,6 @@ int pocl_llvm_link_multiple_modules(cl_program program, unsigned device_i,
   PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
   PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
   llvm::Module *Dest = new llvm::Module("linked_mod", *llvm_ctx->Context);
-  bool Error = false;
 
   for (cl_uint i = 0; i < NumBinaries; ++i) {
     llvm::Module *Mod = (llvm::Module *)LLVMIRBinaries[i];

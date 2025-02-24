@@ -46,6 +46,7 @@ POP_COMPILER_DIAGS
 #include "common.h"
 #include "pocl.h"
 #include "pocl_cache.h"
+#include "pocl_compiler_macros.h"
 #include "pocl_file_util.h"
 #include "pocl_llvm.h"
 #include "pocl_llvm_api.h"
@@ -161,12 +162,139 @@ static void handleInOutPathArgs(bool &keepPath, char *Path, char *HiddenPath,
   }
 }
 
+extern "C" int pocl_reload_program_bc(char *program_bc_path, cl_program program,
+                                      cl_uint device_i);
+
+#ifdef HAVE_LLVM_SPIRV_LIB
+SPIRV::TranslatorOpts setupTranslOpts(bool useIntelExts,
+                                      bool &UnrecognizedVersion,
+                                      pocl_version_t TargetVersion) {
+  SPIRV::TranslatorOpts::ExtensionsStatusMap EnabledExts;
+  if (useIntelExts) {
+    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_subgroups] =
+    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_usm_storage_classes] =
+    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_arbitrary_precision_integers] =
+    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_arbitrary_precision_fixed_point] =
+    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_arbitrary_precision_floating_point] =
+    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_kernel_attributes] = true;
+  }
+  EnabledExts[SPIRV::ExtensionID::SPV_KHR_integer_dot_product] = true;
+  EnabledExts[SPIRV::ExtensionID::SPV_KHR_no_integer_wrap_decoration] = true;
+  EnabledExts[SPIRV::ExtensionID::SPV_EXT_shader_atomic_float_add] = true;
+  EnabledExts[SPIRV::ExtensionID::SPV_EXT_shader_atomic_float_min_max] = true;
+#if LLVM_MAJOR >= 18
+  EnabledExts[SPIRV::ExtensionID::SPV_EXT_shader_atomic_float16_add] = true;
+#endif
+
+  SPIRV::VersionNumber TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_3;
+  switch (TargetVersion.major * 100 + TargetVersion.minor) {
+  case 100:
+    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_0;
+    break;
+  case 101:
+    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_1;
+    break;
+  default:
+    UnrecognizedVersion = true;
+    POCL_FALLTHROUGH;
+  case 102:
+    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_2;
+    break;
+  case 103:
+    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_3;
+    break;
+  case 104:
+    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_4;
+    break;
+// these are not available in all version of LLVMSPIRVOpts.h header:
+#if 0
+  case 105:
+    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_5;
+    break;
+  case 106:
+    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_6;
+    break;
+#endif
+  }
+
+  SPIRV::TranslatorOpts Opts(TargetVersionEnum, EnabledExts);
+  return Opts;
+}
+#endif
+
 /* max number of lines in output of 'llvm-spirv --spec-const-info' */
 #define MAX_SPEC_CONSTANT_LINES 4096
 /* max bytes in output of 'llvm-spirv --spec-const-info' */
 #define MAX_OUTPUT_BYTES 65536
+#define MAX_SPEC_CONST_CMDLINE_LEN 8192
+#define MAX_SPEC_CONST_OPT_LEN 256
+
 
 #if defined(HAVE_LLVM_SPIRV_LIB)
+
+/* if some SPIR-V spec constants were changed, use LLVMSPIRVLib
+ * to generate new LLVM bitcode from SPIR-V with updated SpecConstants */
+int pocl_regen_spirv_binary(cl_program Program, cl_uint DeviceI) {
+  cl_device_id Device = Program->devices[DeviceI];
+
+  bool UnrecognizedVersion = false;
+  pocl_version_t TargetVersion{1, 2};
+  if (Device->supported_spir_v_versions) {
+    std::string SpirvVersions{Device->supported_spir_v_versions};
+    if (SpirvVersions.find("SPIR-V_1.3") != std::string::npos)
+      TargetVersion.minor = 3;
+  }
+  SPIRV::TranslatorOpts Opts =
+      setupTranslOpts(0, // useIntelExts
+                      UnrecognizedVersion, TargetVersion);
+  POCL_RETURN_ERROR_ON(UnrecognizedVersion, CL_INVALID_BINARY,
+                       "Translator does not recognize the SPIR-V version\n");
+
+  /* using --spirv-target-env=CL2.0 here enables llvm-spirv to produce proper
+   * OpenCL 2.0 atomics, unfortunately it also enables generic ptrs, which not
+   * all PoCL devices support, hence check the device */
+  if (Device->generic_as_support)
+    Opts.setDesiredBIsRepresentation(SPIRV::BIsRepresentation::OpenCL20);
+  else
+    Opts.setDesiredBIsRepresentation(SPIRV::BIsRepresentation::OpenCL12);
+
+  for (unsigned I = 0; I < Program->num_spec_consts; ++I) {
+    if (Program->spec_const_is_set[I]) {
+      Opts.setSpecConst(Program->spec_const_ids[I],
+                        Program->spec_const_values[I]);
+    }
+  }
+
+  llvm::LLVMContext LLVMCtx;
+  std::string Errors;
+  std::string InputS((char *)Program->program_il, Program->program_il_size);
+  std::stringstream InputSS(InputS);
+  llvm::Module *Mod = nullptr;
+  char *Content = nullptr;
+  uint64_t ContentSize = 0;
+
+  if (!readSpirv(LLVMCtx, Opts, InputSS, Mod, Errors)) {
+    POCL_MSG_ERR("LLVMSPIRVLib failed to read SPIR-V with errors:\n%s\n",
+                 Errors.c_str());
+    return CL_INVALID_BINARY;
+  }
+  std::string OutputBC;
+  writeModuleIRtoString(Mod, OutputBC);
+  POCL_RETURN_ERROR_ON((OutputBC.size() < 20), CL_INVALID_BINARY,
+                       "The result is not a valid SPIR-V\n");
+  Content = (char *)malloc(OutputBC.size());
+  POCL_RETURN_ERROR_COND((Content == nullptr), CL_OUT_OF_HOST_MEMORY);
+  memcpy(Content, OutputBC.data(), OutputBC.size());
+  ContentSize = OutputBC.size();
+  delete Mod;
+
+  if (Program->binaries[DeviceI])
+    POCL_MEM_FREE(Program->binaries[DeviceI]);
+  Program->binaries[DeviceI] = (unsigned char *)Content;
+  Program->binary_sizes[DeviceI] = ContentSize;
+
+  return CL_SUCCESS;
+}
 
 int pocl_get_program_spec_constants(cl_program program, char *spirv_path,
                                     const void *spirv_content,
@@ -196,6 +324,86 @@ int pocl_get_program_spec_constants(cl_program program, char *spirv_path,
 }
 
 #elif defined(HAVE_LLVM_SPIRV)
+
+/* if some SPIR-V spec constants were changed, use llvm-spirv --spec-const=...
+ * to generate new LLVM bitcode from SPIR-V */
+int pocl_regen_spirv_binary(cl_program program, cl_uint device_i) {
+  int errcode = CL_SUCCESS;
+  cl_device_id device = program->devices[device_i];
+  int spec_constants_changed = 0;
+  char concated_spec_const_option[MAX_SPEC_CONST_CMDLINE_LEN];
+  concated_spec_const_option[0] = 0;
+  char program_bc_spirv[POCL_MAX_PATHNAME_LENGTH];
+  char unlinked_program_bc_temp[POCL_MAX_PATHNAME_LENGTH];
+  program_bc_spirv[0] = 0;
+  unlinked_program_bc_temp[0] = 0;
+
+  /* using --spirv-target-env=CL2.0 here enables llvm-spirv to produce proper
+   * OpenCL 2.0 atomics, unfortunately it also enables generic ptrs, which not
+   * all PoCL devices support, hence check the device */
+  const char *spirv_target_env = (device->generic_as_support != CL_FALSE)
+                                     ? "--spirv-target-env=CL2.0"
+                                     : "--spirv-target-env=CL1.2";
+  const char *args[8] = {pocl_get_path("LLVM_SPIRV", LLVM_SPIRV),
+                         concated_spec_const_option,
+                         spirv_target_env,
+                         "-r",
+                         "-o",
+                         unlinked_program_bc_temp,
+                         program_bc_spirv,
+                         NULL};
+  const char **final_args = args;
+
+  errcode = pocl_cache_tempname(unlinked_program_bc_temp, ".bc", NULL);
+  POCL_RETURN_ERROR_ON((errcode != 0), CL_BUILD_PROGRAM_FAILURE,
+                       "failed to create tmpfile in pocl cache\n");
+
+  errcode = pocl_cache_write_spirv(program_bc_spirv,
+                                   (const char *)program->program_il,
+                                   (uint64_t)program->program_il_size);
+  POCL_RETURN_ERROR_ON((errcode != 0), CL_BUILD_PROGRAM_FAILURE,
+                       "failed to write into pocl cache\n");
+
+  for (unsigned i = 0; i < program->num_spec_consts; ++i)
+    spec_constants_changed += program->spec_const_is_set[i];
+
+  if (spec_constants_changed) {
+    strcpy(concated_spec_const_option, "--spec-const=");
+    for (unsigned i = 0; i < program->num_spec_consts; ++i) {
+      if (program->spec_const_is_set[i]) {
+        char opt[MAX_SPEC_CONST_OPT_LEN];
+        snprintf(opt, MAX_SPEC_CONST_OPT_LEN, "%u:i%u:%zu ",
+                 program->spec_const_ids[i], program->spec_const_sizes[i] * 8,
+                 program->spec_const_values[i]);
+        strcat(concated_spec_const_option, opt);
+      }
+    }
+  } else {
+    /* skip concated_spec_const_option */
+    args[0] = NULL;
+    args[1] = pocl_get_path("LLVM_SPIRV", LLVM_SPIRV);
+    final_args = args + 1;
+  }
+
+  errcode = pocl_run_command(final_args);
+  POCL_GOTO_ERROR_ON((errcode != 0), CL_INVALID_VALUE,
+                     "External command (llvm-spirv translator) failed!\n");
+
+  POCL_GOTO_ERROR_ON(
+      (pocl_reload_program_bc(unlinked_program_bc_temp, program, device_i)),
+      CL_INVALID_VALUE, "Can't read llvm-spirv converted bitcode file\n");
+
+  errcode = CL_SUCCESS;
+
+ERROR:
+  if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0) {
+    if (unlinked_program_bc_temp[0])
+      pocl_remove(unlinked_program_bc_temp);
+    if (program_bc_spirv[0])
+      pocl_remove(program_bc_spirv);
+  }
+  return errcode;
+}
 
 int pocl_get_program_spec_constants(cl_program program, char *spirv_path,
                                     const void *spirv_content,
@@ -266,9 +474,14 @@ ERROR:
 int pocl_get_program_spec_constants(cl_program program, char *spirv_path,
                                     const void *spirv_content,
                                     size_t spirv_len) {
-  POCL_MSG_ERR("No way to parse spec constants from SPIRV");
+  POCL_MSG_ERR("No way to parse spec constants from SPIRV\n");
   program->num_spec_consts = 0;
-  return CL_SUCCESS;
+  return CL_INVALID_OPERATION;
+}
+
+int pocl_regen_spirv_binary(cl_program program, cl_uint device_i) {
+  POCL_MSG_ERR("No way to regenerate SPIRV with new SpecConstants\n");
+  return CL_INVALID_OPERATION;
 }
 
 #endif
@@ -294,6 +507,7 @@ static int convertBCorSPV(char *InputPath,
   char *Content = nullptr;
   uint64_t ContentSize = 0;
   llvm::LLVMContext LLVMCtx;
+  std::string Errors;
 
   if (!Reverse && TargetVersion.major==0) {
     POCL_MSG_ERR("Invalid SPIR-V target version!");
@@ -301,62 +515,17 @@ static int convertBCorSPV(char *InputPath,
   }
 
 #ifdef HAVE_LLVM_SPIRV_LIB
-  std::string Errors;
-  SPIRV::TranslatorOpts::ExtensionsStatusMap EnabledExts;
-  if (useIntelExts) {
-    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_subgroups] =
-    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_usm_storage_classes] =
-    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_arbitrary_precision_integers] =
-    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_arbitrary_precision_fixed_point] =
-    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_arbitrary_precision_floating_point] =
-    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_kernel_attributes] = true;
-  }
-  EnabledExts[SPIRV::ExtensionID::SPV_KHR_integer_dot_product] = true;
-  EnabledExts[SPIRV::ExtensionID::SPV_KHR_no_integer_wrap_decoration] = true;
-  EnabledExts[SPIRV::ExtensionID::SPV_EXT_shader_atomic_float_add] = true;
-  EnabledExts[SPIRV::ExtensionID::SPV_EXT_shader_atomic_float_min_max] = true;
-#if LLVM_MAJOR >= 18
-  EnabledExts[SPIRV::ExtensionID::SPV_EXT_shader_atomic_float16_add] = true;
-#endif
-
-  SPIRV::VersionNumber TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_3;
-  switch (TargetVersion.major * 100 + TargetVersion.minor) {
-  default:
-    if (!Reverse) {
-      POCL_MSG_ERR("Unrecognized SPIR-V version: %u.%u\n",
-                   static_cast<unsigned>(TargetVersion.major),
-                   static_cast<unsigned>(TargetVersion.minor));
-      return 1;
-    }
-    break;
-  case 100:
-    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_0;
-    break;
-  case 101:
-    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_1;
-    break;
-  case 102:
-    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_2;
-    break;
-  case 103:
-    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_3;
-    break;
-  case 104:
-    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_4;
-    break;
-// these are not available in all version of LLVMSPIRVOpts.h header:
-#if 0
-  case 105:
-    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_5;
-    break;
-  case 106:
-    TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_6;
-    break;
-#endif
-  }
-
-  SPIRV::TranslatorOpts Opts(TargetVersionEnum, EnabledExts);
+  bool UnrecognizedVersion = false;
+  SPIRV::TranslatorOpts Opts =
+      setupTranslOpts(useIntelExts, UnrecognizedVersion, TargetVersion);
   Opts.setDesiredBIsRepresentation(SPIRV::BIsRepresentation::OpenCL20);
+
+  if (UnrecognizedVersion && !Reverse) {
+    POCL_MSG_ERR("Unrecognized SPIR-V version: %u.%u\n",
+                 static_cast<unsigned>(TargetVersion.major),
+                 static_cast<unsigned>(TargetVersion.minor));
+    return -1;
+  }
 #endif
   int r = -1;
 
@@ -409,6 +578,7 @@ static int convertBCorSPV(char *InputPath,
     assert(Content);
     memcpy(Content, OutputBC.data(), OutputBC.size());
     ContentSize = OutputBC.size();
+    delete Mod;
 
   } else {
     // BC to SPIRV
@@ -442,6 +612,8 @@ static int convertBCorSPV(char *InputPath,
     assert(Content);
     memcpy(Content, FinalSpirv.data(), FinalSpirv.size());
     ContentSize = IntermediateSpirv.size();
+
+    delete Mod;
   }
 
 #else
