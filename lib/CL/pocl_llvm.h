@@ -291,12 +291,35 @@ extern "C" {
                                                  char **BitcodeContent,
                                                  uint64_t *BitcodeSize);
 
+  /**
+   * \brief Initializes the LLVM option "--spirv-ext=...".
+   *
+   * This is necessary when using LLVM's SPIRV backend
+   */
   POCL_EXPORT int pocl_llvm_initialize_spirv_ext_option ();
 
+  /**
+   * \brief sets up the SPIR-V SpecConstants in the program struct
+   *
+   * The same input is provided twice, once as a path to file, then as memory
+   * buffer (void* + size). The implementation (llvm-spirv, LLVMSPIRVLib) then
+   * uses the more suitable version to extract the SpecConstants
+   *
+   * \param program [in,out] the program which we're setting up
+   * \param spirv_path [in] path to tempfile which contains the SPIR-V
+   * \param spirv_content [in] memory buffer with SPIR-V content
+   * \param spirv_len [in] # of bytes in spirv_content
+   * \returns 0 on success
+   *
+   */
   int pocl_get_program_spec_constants (cl_program program,
                                        char *spirv_path,
                                        const void *spirv_content,
                                        size_t spirv_len);
+
+  /* if some SPIR-V spec constants were changed, use LLVMSPIRVLib
+   * to generate new LLVM bitcode from SPIR-V with updated SpecConstants */
+  int pocl_regen_spirv_binary (cl_program program, cl_uint device_i);
 
 #ifdef __cplusplus
 }
