@@ -92,13 +92,16 @@ void pocl_cache_program_path(char*        path,
   program_device_dir (path, program, device_i, "");
 }
 
-void pocl_cache_program_bc_path(char*        program_bc_path,
-                                cl_program   program,
-                                unsigned     device_i) {
+POCL_EXPORT
+void
+pocl_cache_program_bc_path(char* program_bc_path,
+                           cl_program   program,
+                           unsigned     device_i) {
   program_device_dir (program_bc_path, program,
                       device_i, POCL_PROGRAM_BC_FILENAME);
 }
 
+POCL_EXPORT
 void
 pocl_cache_program_spv_path (char *program_bc_path, cl_program program,
                              unsigned device_i)
@@ -279,6 +282,7 @@ pocl_cache_create_tempdir (char *path)
   return pocl_mk_tempdir (path, tempdir_pattern);
 }
 
+POCL_EXPORT
 int
 pocl_cache_tempname (char *path, const char *suffix, int *fd)
 {
@@ -641,7 +645,7 @@ pocl_cache_init_topdir ()
  * that cache-related functions (which include log retrieval) still
  * work correctly even if preprocessing fails
  */
-
+POCL_EXPORT
 int
 pocl_cache_create_program_cachedir (cl_program program, unsigned device_i,
                                     const char *hash_source,

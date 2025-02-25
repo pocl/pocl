@@ -246,6 +246,11 @@ else()
 endif()
 
 add_library("pocl_cache" OBJECT "pocl_cache.c")
+if(BUILD_SHARED_LIBS AND MSVC)
+  # Inject __declspec(dllexport).
+  target_compile_definitions("pocl_cache" PRIVATE EXPORT_POCL_LIB)
+  target_compile_definitions("pocl_cache" INTERFACE IMPORT_POCL_LIB)
+endif()
 harden("pocl_cache")
 
 if(OCL_ICD_INCLUDE_DIRS)
