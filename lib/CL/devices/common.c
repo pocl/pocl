@@ -1780,7 +1780,9 @@ pocl_init_default_device_infos (cl_device_id dev,
     dev->llvm_target_triplet = "";
 #endif
 
-#ifdef ENABLE_SPIRV
+#if defined(ENABLE_SPIRV) && LLVM_MAJOR >= 19
+  dev->supported_spir_v_versions = "SPIR-V_1.6 SPIR-V_1.5 SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
+#elif defined(ENABLE_SPIRV)
   dev->supported_spir_v_versions = "SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
 #else
   dev->supported_spir_v_versions = "";
@@ -1974,7 +1976,8 @@ static const cl_name_version OPENCL_SPIRV_VERSIONS[]
         { CL_MAKE_VERSION (1, 2, 0), "SPIR-V" },
         { CL_MAKE_VERSION (1, 3, 0), "SPIR-V" },
         { CL_MAKE_VERSION (1, 4, 0), "SPIR-V" },
-        { CL_MAKE_VERSION (1, 5, 0), "SPIR-V" } };
+        { CL_MAKE_VERSION (1, 5, 0), "SPIR-V" },
+        { CL_MAKE_VERSION (1, 6, 0), "SPIR-V" } };
 
 const size_t OPENCL_SPIRV_VERSIONS_NUM
     = sizeof (OPENCL_SPIRV_VERSIONS) / sizeof (OPENCL_SPIRV_VERSIONS[0]);
