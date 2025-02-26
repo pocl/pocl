@@ -80,6 +80,7 @@ POP_COMPILER_DIAGS
   ",+SPV_EXT_shader_atomic_float_add"                                          \
   ",+SPV_EXT_shader_atomic_float_min_max"                                      \
   ",+SPV_INTEL_function_pointers"                                              \
+  ",+SPV_INTEL_inline_assembly"                                                \
   ",+SPV_KHR_integer_dot_product"
 
 #if LLVM_MAJOR >= 18
@@ -94,7 +95,6 @@ POP_COMPILER_DIAGS
     "+SPV_INTEL_blocking_pipes,"
     "+SPV_INTEL_function_pointers,"
     "+SPV_INTEL_io_pipes,"
-    "+SPV_INTEL_inline_assembly,"
     "+SPV_INTEL_optimization_hints,"
     "+SPV_INTEL_float_controls2,"
     "+SPV_INTEL_vector_compute,"
@@ -172,6 +172,7 @@ SPIRV::TranslatorOpts setupTranslOpts(bool useIntelExts,
   SPIRV::TranslatorOpts::ExtensionsStatusMap EnabledExts;
   if (useIntelExts) {
     EnabledExts[SPIRV::ExtensionID::SPV_INTEL_subgroups] =
+    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_inline_assembly] =
     EnabledExts[SPIRV::ExtensionID::SPV_INTEL_usm_storage_classes] =
     EnabledExts[SPIRV::ExtensionID::SPV_INTEL_arbitrary_precision_integers] =
     EnabledExts[SPIRV::ExtensionID::SPV_INTEL_arbitrary_precision_fixed_point] =
