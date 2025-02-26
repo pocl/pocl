@@ -2555,6 +2555,38 @@ set(CPACK_DEBIAN_DEV_PACKAGE_REPLACES "libpocl1-common (<< 0.13-9)")
 set(CPACK_RPM_COMPONENT_INSTALL ON)
 set(CPACK_DEB_COMPONENT_INSTALL ON)
 
+# Notify users about the previous PoCL installed on the system and let
+# (NSIS) installer offer to unistall it. Default
+# CPACK_PACKAGE_INSTALL_REGISTRY_KEY is overriden here so the user
+# gets the notification if the PoCL is installed on other location or
+# it is different version.
+set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "PoCL")
+set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+
+if(WIN32 AND ENABLE_ICD)
+  # Make NSIS installer to register PoCL to ICD loader.
+  #
+  # $INSTDIR is NSIS variable for the installation path (possibly
+  # chosen by user).
+  file(TO_CMAKE_PATH "$INSTDIR/${POCL_INSTALL_PUBLIC_LIBDIR_REL}/pocl.dll"
+    WINREG_ICD_POCL_ENTRY)
+  string(REPLACE "/" "\\\\" WINREG_ICD_POCL_ENTRY "${WINREG_ICD_POCL_ENTRY}")
+
+  set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
+SetRegView 64
+WriteRegDWORD HKLM 'SOFTWARE\\\\Khronos\\\\OpenCL\\\\Vendors' '${WINREG_ICD_POCL_ENTRY}' 0
+setRegView default
+")
+
+  # "SetRegView 64" puts the register key into 64-bit windows registry.
+  set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
+SetRegView 64
+DeleteRegValue HKLM 'SOFTWARE\\\\Khronos\\\\OpenCL\\\\Vendors' '${WINREG_ICD_POCL_ENTRY}'
+setRegView default
+")
+  message(STATUS "XXX CPACK_NSIS_EXTRA_INSTALL_COMMANDS=${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}")
+endif()
+
 include(CPack)
 
 ##########################################################
