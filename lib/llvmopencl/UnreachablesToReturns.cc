@@ -223,8 +223,8 @@ static bool deleteBlocksWithUnreachable(Function &F) {
 #ifdef DEBUG_CONVERT_UNREACHABLE
       LLVM_DEBUG(dbgs() << "deleting BB: \n");
       BB->dump();
-      BB->eraseFromParent();
 #endif
+      BB->eraseFromParent();
     }
   }
 
@@ -233,8 +233,8 @@ static bool deleteBlocksWithUnreachable(Function &F) {
 #ifdef DEBUG_CONVERT_UNREACHABLE
       LLVM_DEBUG(dbgs() << "deleting BB: \n";
       BB->dump();
-      BB->eraseFromParent();
 #endif
+      BB->eraseFromParent();
     }
   }
 
