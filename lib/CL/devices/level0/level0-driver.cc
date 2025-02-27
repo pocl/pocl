@@ -2262,8 +2262,6 @@ bool Level0Device::setupDeviceProperties(bool HasIPVersionExt) {
 
   if (DeviceProperties.type == ZE_DEVICE_TYPE_GPU ||
       DeviceProperties.type == ZE_DEVICE_TYPE_CPU) {
-    ClDev->compiler_available = CL_TRUE;
-    ClDev->linker_available = CL_TRUE;
     ClDev->has_own_timer = CL_FALSE;
     ClDev->use_only_clang_opencl_headers = CL_TRUE;
 
@@ -2296,31 +2294,14 @@ bool Level0Device::setupDeviceProperties(bool HasIPVersionExt) {
 
     ClDev->num_serialize_entries = 2;
     ClDev->serialize_entries = LEVEL0_SERIALIZE_ENTRIES;
-    ClDev->llvm_cpu = nullptr;
-#ifdef USE_LLVM_SPIRV_TARGET
-#ifdef ENABLE_LEVEL0_EXTRA_FEATURES
-    ClDev->llvm_target_triplet = "spirv64v1.3-unknown-unknown";
-#else
-    ClDev->llvm_target_triplet = "spirv64v1.2-unknown-unknown";
-#endif
-#else
-    ClDev->llvm_target_triplet = "spir64-unknown-unknown";
-#endif
 
-#ifdef ENABLE_GENERIC_AS
-    ClDev->generic_as_support = CL_TRUE;
-#endif
 #ifdef ENABLE_WG_COLLECTIVE
     ClDev->wg_collective_func_support = CL_TRUE;
 #endif
-#ifdef ENABLE_LEVEL0_EXTRA_FEATURES
-    ClDev->supported_spir_v_versions = "SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
-#else
-    ClDev->supported_spir_v_versions = "SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
-#endif
+
     ClDev->on_host_queue_props
         = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;
-    ClDev->version_of_latest_passed_cts = "v2000-12-31-01";
+    ClDev->version_of_latest_passed_cts = "v2025-02-25-01";
   } else {
     // FPGA / VPU custom devices
     ClDev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
@@ -2567,6 +2548,34 @@ bool Level0Device::setupModuleProperties(bool &SupportsInt64Atomics,
   uint32_t SpvVer = ModuleProperties.spirvVersionSupported;
   SupportedSpvVersion =
       pocl_version_t(ZE_MAJOR_VERSION(SpvVer), ZE_MINOR_VERSION(SpvVer));
+
+  if (SpvVer == 0)
+    return true;
+
+  ClDev->compiler_available = CL_TRUE;
+  ClDev->linker_available = CL_TRUE;
+#ifdef ENABLE_GENERIC_AS
+  ClDev->generic_as_support = CL_TRUE;
+#endif
+
+#ifdef USE_LLVM_SPIRV_TARGET
+  LLVMTargetTriple = "spirv64v";
+  LLVMTargetTriple.push_back('0'+SupportedSpvVersion.major);
+  LLVMTargetTriple.push_back('.');
+  LLVMTargetTriple.push_back('0'+SupportedSpvVersion.minor);
+  LLVMTargetTriple.append("-unknown-unknown");
+#else
+  LLVMTargetTriple = "spir64-unknown-unknown";
+#endif
+  ClDev->llvm_target_triplet = LLVMTargetTriple.c_str();
+
+  for (int minor = SupportedSpvVersion.major; minor >= 0; --minor) {
+      if (!SupportedILVersions.empty())
+          SupportedILVersions.push_back(' ');
+      SupportedILVersions.append("SPIR-V_1.");
+      SupportedILVersions.push_back('0' + minor);
+  }
+  ClDev->supported_spir_v_versions = SupportedILVersions.c_str();
 
   return true;
 }
