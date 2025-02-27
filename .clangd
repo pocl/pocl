@@ -1,0 +1,4 @@
+Diagnostics:
+    # Causes lots of false positives, see
+    # https://github.com/llvm/llvm-project/issues/51164
+    Suppress: pragma_pop_visibility_mismatch
