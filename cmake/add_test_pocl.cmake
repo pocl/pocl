@@ -39,7 +39,7 @@ include(CMakeParseArguments)
 function(add_test_pocl)
 
   set(options SORT_OUTPUT)
-  set(oneValueArgs EXPECTED_OUTPUT NAME WORKING_DIRECTORY LLVM_FILECHECK)
+  set(oneValueArgs EXPECTED_OUTPUT NAME WORKING_DIRECTORY LLVM_FILECHECK ONLY_FILECHECK)
   set(multiValueArgs COMMAND WORKITEM_HANDLER)
   cmake_parse_arguments(POCL_TEST "${options}" "${oneValueArgs}"
                         "${multiValueArgs}" ${ARGN})
@@ -57,9 +57,15 @@ function(add_test_pocl)
       set(POCL_VARIANT_TEST_NAME ${POCL_TEST_NAME})
     endif()
     unset(RUN_CMD)
+
     foreach(LOOPVAR ${POCL_TEST_COMMAND})
       if(NOT RUN_CMD)
-        set(RUN_CMD "${CMAKE_CURRENT_BINARY_DIR}/${LOOPVAR}")
+        # Special command name expansion.
+        if(${LOOPVAR} STREQUAL "poclcc")
+          set(RUN_CMD "${CMAKE_BINARY_DIR}/bin/${LOOPVAR}")
+        else()
+          set(RUN_CMD "${CMAKE_CURRENT_BINARY_DIR}/${LOOPVAR}")
+        endif()
       else()
         set(RUN_CMD "${RUN_CMD}####${LOOPVAR}")
       endif()
@@ -88,24 +94,26 @@ function(add_test_pocl)
       endif()
     list(APPEND POCL_TEST_ARGLIST "-P" "${CMAKE_SOURCE_DIR}/cmake/run_test.cmake")
 
-    add_test(${POCL_TEST_ARGLIST})
+    if(NOT POCL_TEST_ONLY_FILECHECK)
+      add_test(${POCL_TEST_ARGLIST})
 
-    if(NOT ENABLE_ANYSAN)
+      if(NOT ENABLE_ANYSAN)
+        set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
+          PASS_REGULAR_EXPRESSION "OK"
+          FAIL_REGULAR_EXPRESSION "FAIL")
+      endif()
       set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
-                          PASS_REGULAR_EXPRESSION "OK"
-                          FAIL_REGULAR_EXPRESSION "FAIL")
-    endif()
-    set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
-      SKIP_RETURN_CODE 77)
-    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
+        SKIP_RETURN_CODE 77)
+      if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
+        set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
+          SKIP_REGULAR_EXPRESSION "SKIP")
+      endif()
+
       set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
-        SKIP_REGULAR_EXPRESSION "SKIP")
+        ENVIRONMENT POCL_WORK_GROUP_METHOD=${VARIANT})
     endif()
 
-    set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
-      ENVIRONMENT POCL_WORK_GROUP_METHOD=${VARIANT})
-
-    if(ENABLE_LLVM_FILECHECKS AND POCL_TEST_LLVM_FILECHECK AND VARIANT STREQUAL "loopvec")
+    if(ENABLE_LLVM_FILECHECKS AND POCL_TEST_LLVM_FILECHECK)
       set(RUN_CMD "${CMAKE_SOURCE_DIR}/tools/scripts/run-and-check-llvm-ir####${LLVM_FILECHECK_BIN}####${LLVM_DIS_BIN}####${CMAKE_CURRENT_SOURCE_DIR}/${POCL_TEST_LLVM_FILECHECK}####${RUN_CMD}")
 
       set(POCL_TEST_IR_CHECK_NAME "${POCL_VARIANT_TEST_NAME}_llvm-ir-checks")

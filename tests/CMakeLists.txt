@@ -108,6 +108,7 @@ endif()
 endif()
 #######################################################################
 
+add_subdirectory("compiler_unit")
 add_subdirectory("kernel")
 add_subdirectory("regression")
 add_subdirectory("runtime")
