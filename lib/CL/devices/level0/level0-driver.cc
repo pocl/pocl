@@ -2969,7 +2969,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     ClDev->cmdbuf_capabilities =
         CL_COMMAND_BUFFER_CAPABILITY_SIMULTANEOUS_USE_KHR |
         CL_COMMAND_BUFFER_CAPABILITY_KERNEL_PRINTF_KHR;
-    // | CL_COMMAND_BUFFER_CAPABILITY_OUT_OF_ORDER_KHR
     //| CL_COMMAND_BUFFER_CAPABILITY_MULTIPLE_QUEUE_KHR;
     ClDev->cmdbuf_required_properties = 0;
     ClDev->native_command_buffers = CL_TRUE;

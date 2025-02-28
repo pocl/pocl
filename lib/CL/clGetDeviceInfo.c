@@ -415,6 +415,10 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_GETINFO (cl_command_queue_properties,
                          device->cmdbuf_required_properties);
 
+  case CL_DEVICE_COMMAND_BUFFER_SUPPORTED_QUEUE_PROPERTIES_KHR:
+    POCL_RETURN_GETINFO (cl_command_queue_properties,
+                         device->cmdbuf_supported_properties);
+
   case CL_DEVICE_MUTABLE_DISPATCH_CAPABILITIES_KHR:
     POCL_RETURN_GETINFO (cl_mutable_dispatch_fields_khr,
                          device->cmdbuf_mutable_dispatch_capabilities);
