@@ -1,0 +1,14 @@
+
+# At least the HIP/CUDA frontend since LLVM 19 seems to produce AS casts
+# through ptrtoint - inttoptr conversion chains. It confuses the alias
+# analyzer and leads to lack of utilization of "restrict" pointer information.
+# It should be fixed upstream, but before that happens, we just peephole
+# optimize this case.
+#
+# The SPV input is the adam-hip case of HeCbench compiled via chipStar 1.2.1
+# with LLVM 19.
+
+CHECK: @_pocl_kernel__Z4adamIffEvPT_S1_S1_PKT0_fffffim10adamMode_tf_workgroup
+CHECK-NOT: ptrtoint ptr addrspace(1)
+CHECK: addrspacecast
+

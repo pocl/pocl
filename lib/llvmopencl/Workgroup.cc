@@ -3,7 +3,7 @@
 //
 // Copyright (c) 2011 Universidad Rey Juan Carlos
 //               2012-2022 Pekka Jääskeläinen / Parform Oy
-//               2023 Pekka Jääskeläinen / Intel Finland Oy
+//               2023-2025 Pekka Jääskeläinen / Intel Finland Oy
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -195,6 +195,53 @@ private:
   unsigned long DeviceMaxWItemSizes[3];
 };
 
+/// Convert address space casts through integer casts to proper address space
+/// cast instructions.
+///
+/// At least the HIP/CUDA frontend since LLVM 19 seems to produce AS casts
+/// between generic and global ASs through ptrtoint - inttoptr conversion chains
+/// when targeting SPIR-V. It confuses the alias analyzer and leads to lack of
+/// utilization of "restrict" pointer information. It should be fixed upstream,
+/// but while that happens, let's just peephole convert it.
+static bool cleanupAddressSpaceCasts(Function &F) {
+
+  bool Changed = false;
+  llvm::IRBuilder<> Builder(F.getContext());
+  for (auto &BB : F) {
+    for (BasicBlock::iterator BI = BB.begin(), BE = BB.end(); BI != BE;) {
+
+      // The casts look like this:
+      // %55 = ptrtoint ptr addrspace(1) %7 to i64
+      // %56 = inttoptr i64 %55 to ptr addrspace(4)
+
+      PtrToIntInst *PtrToInt = dyn_cast<PtrToIntInst>(&*BI);
+      if (PtrToInt != nullptr &&
+          (PtrToInt->getPointerAddressSpace() == SPIR_ADDRESS_SPACE_GLOBAL ||
+           PtrToInt->getPointerAddressSpace() == SPIR_ADDRESS_SPACE_GENERIC) &&
+          PtrToInt->hasOneUse()) {
+        IntToPtrInst *User =
+            dyn_cast<IntToPtrInst>(*PtrToInt->users().begin());
+        if (User == nullptr ||
+            (User->getAddressSpace() != SPIR_ADDRESS_SPACE_GLOBAL &&
+             User->getAddressSpace() != SPIR_ADDRESS_SPACE_GENERIC))
+          break;
+        Builder.SetInsertPoint(PtrToInt);
+        AddrSpaceCastInst *AddrSpaceCast =
+            cast<AddrSpaceCastInst>(Builder.CreatePointerBitCastOrAddrSpaceCast(
+                PtrToInt->getPointerOperand(), User->getType()));
+        User->replaceAllUsesWith(AddrSpaceCast);
+        User->eraseFromParent();
+        PtrToInt->eraseFromParent();
+        BI = AddrSpaceCast->getIterator();
+        BE = BB.end();
+        Changed = true;
+      }
+      ++BI;
+    }
+  }
+  return Changed;
+}
+
 bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
 
   this->M = &M;
@@ -267,6 +314,12 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
     if (!i->isDeclaration() && !i->getName().starts_with("__wrap_") &&
         i->getName() != "main")
       i->setLinkage(Function::InternalLinkage);
+  }
+
+  for (Function &F : M.functions()) {
+    if (F.isDeclaration())
+      continue;
+    cleanupAddressSpaceCasts(F);
   }
 
   // Store the new and old kernel pairs in order to regenerate

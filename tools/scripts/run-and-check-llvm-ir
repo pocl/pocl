@@ -38,16 +38,21 @@ CHECK_FILE=$3
 shift 3
 APP_CMD=$@
 
+export POCL_KERNEL_CACHE=1
 export POCL_CACHE_DIR=$(mktemp -d /tmp/pocl-lit-test-XXXXXXXX)
-
 export POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES=1
 
-$APP_CMD
+$APP_CMD || exit 1
 
-BC_FILE=`find $POCL_CACHE_DIR -name parallel.bc`
-LL_FILE=$POCL_CACHE_DIR/parallel-to-check.ll
+BC_FILES=$(find $POCL_CACHE_DIR -name parallel.bc)
+LL_FILE=$POCL_CACHE_DIR/parallel-bcs-to-filecheck.ll
 
-$LLVM_DIS $BC_FILE -o $LL_FILE
+for BC_FILE in $BC_FILES
+do
+   echo "; $BC_FILE" >> $LL_FILE
+   $LLVM_DIS $BC_FILE -o - >> $LL_FILE
+done
+
 cat $LL_FILE | $LLVM_FILECHECK $CHECK_FILE
 RET=$?
 
