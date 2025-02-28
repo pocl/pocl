@@ -61,56 +61,6 @@ typedef CL_API_ENTRY cl_int
 
 #endif
 
-/* cl_ext_buffer_device_address (experimental version)
- */
-
-#ifndef cl_ext_buffer_device_address
-#define cl_ext_buffer_device_address 1
-
-/* clCreateBuffer() flag: A new cl_mem_flag CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT:
- * When set to CL_TRUE, specifies that the buffer must have a single fixed
- * device-side address for its lifetime, and the address can be queried via
- * clGetMemObjectInfo.
- *
- * Each device in the context can have their own (fixed) device-side address
- * and a copy of the created buffer which are synchronized implicitly by the
- * runtime.
- *
- * The flag might imply that the buffer will be "pinned" permanently to
- * a device's memory, but might not be necessarily so, as long as the address
- * range of the buffer remains constant.
- *
- * The device addresses of sub-buffers derived from
- * CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT allocated buffers can be computed by
- * adding the sub-buffer origin to the device-specific start address.
- */
-#define CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT 0x5000
-
-/* clGetMemObjectInfo(): A new cl_mem_info type CL_MEM_DEVICE_PTR_EXT:
- * Returns the device address for a buffer allocated with
- * CL_MEM_DEVICE_ADDRESS_EXT. If the buffer was not created with the flag,
- * returns CL_INVALID_MEM_OBJECT.
- */
-#define CL_MEM_DEVICE_ADDRESS_EXT 0x5001
-
-typedef cl_ulong cl_mem_device_address_ext;
-
-/* clSetKernelExecInfo(): CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT:
- * Similar to CL_KERNEL_EXEC_INFO_SVM_PTRS except for CL_MEM_DEVICE_ADDRESS_EXT
- * device pointers: If a device pointer accessed by a kernel is not passed as
- * an argument, it must be set by this property.
- */
-#define CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT 0x5002
-
-/* A new function clSetKernelArgDevicePointerEXT() for setting raw device
- * pointers as kernel arguments. */
-
-typedef cl_int (CL_API_CALL *clSetKernelArgDevicePointerEXT_fn) (
-    cl_kernel kernel, cl_uint arg_index, cl_mem_device_address_ext dev_addr);
-
-/* cl_ext_buffer_device_address (experimental stage) */
-#endif
-
 #define CL_DEVICE_REMOTE_TRAFFIC_STATS_POCL 0x4501
 
 #define CL_DEVICE_REMOTE_SERVER_IP_POCL 0x4503
