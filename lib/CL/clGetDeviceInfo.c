@@ -240,7 +240,10 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_DOUBLE_FP_CONFIG                  :
     POCL_RETURN_GETINFO (cl_ulong, device->double_fp_config);
   case CL_DEVICE_HALF_FP_CONFIG                    :
-    POCL_RETURN_GETINFO (cl_ulong, device->half_fp_config);
+    if (strstr (device->extensions, "cl_khr_fp16"))
+      POCL_RETURN_GETINFO (cl_ulong, device->half_fp_config);
+    else
+      return CL_INVALID_VALUE;
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF       :
     POCL_RETURN_DEVICE_INFO_WITH_EXT_CHECK(cl_uint, device->preferred_vector_width_half, cl_khr_fp16);
   case CL_DEVICE_HOST_UNIFIED_MEMORY:
