@@ -82,7 +82,6 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
     BuiltInScan
     ConcurrentKernel
     DCT
-    DeviceFission
     DeviceFission11Ext
     DwtHaar1D
     FastWalshTransform
@@ -142,6 +141,8 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
     #     RegionGrowingSegmentation SimpleSPIR
     # disabled - requires pipe: PipeProducerConsumerKernels SimplePipe
     # requires OpenCL 2.0: BufferImageInterop
+    # requires subdevices:
+    # DeviceFission
 
     set(HSA_LABELED_TESTS
         AMD_30_BinomialOption AMD_30_DCT AMD_30_BlackScholes

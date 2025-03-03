@@ -123,14 +123,11 @@ main (int _argc, char **_argv)
   CHECK_CL_ERROR (error);
 
   cl_command_queue_properties props = 0;
-  CHECK_CL_ERROR (clGetDeviceInfo (device, CL_DEVICE_QUEUE_ON_HOST_PROPERTIES,
-                                   sizeof (props), &props, NULL));
-  cl_device_command_buffer_capabilities_khr caps = 0;
-  CHECK_CL_ERROR (clGetDeviceInfo (device,
-                                   CL_DEVICE_COMMAND_BUFFER_CAPABILITIES_KHR,
-                                   sizeof (caps), &caps, NULL));
-  if ((props & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
-      && (caps & CL_COMMAND_BUFFER_CAPABILITY_OUT_OF_ORDER_KHR))
+  cl_command_queue_properties supported = 0;
+  CHECK_CL_ERROR (clGetDeviceInfo (
+    device, CL_DEVICE_COMMAND_BUFFER_SUPPORTED_QUEUE_PROPERTIES_KHR,
+    sizeof (supported), &supported, NULL));
+  if (supported & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
     props = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
   else
     props = 0;

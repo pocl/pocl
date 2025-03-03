@@ -1362,6 +1362,7 @@ struct _cl_device_id {
 
   /* command buffer related properties */
   cl_mutable_dispatch_fields_khr cmdbuf_mutable_dispatch_capabilities;
+  cl_command_queue_properties cmdbuf_supported_properties;
   cl_command_queue_properties cmdbuf_required_properties;
   cl_device_command_buffer_capabilities_khr cmdbuf_capabilities;
 

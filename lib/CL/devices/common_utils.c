@@ -467,9 +467,9 @@ pocl_cpu_init_common (cl_device_id device)
   device->cmdbuf_capabilities
     = CL_COMMAND_BUFFER_CAPABILITY_SIMULTANEOUS_USE_KHR
       | CL_COMMAND_BUFFER_CAPABILITY_KERNEL_PRINTF_KHR
-      | CL_COMMAND_BUFFER_CAPABILITY_OUT_OF_ORDER_KHR
       | CL_COMMAND_BUFFER_CAPABILITY_MULTIPLE_QUEUE_KHR;
   device->cmdbuf_required_properties = 0;
+  device->cmdbuf_supported_properties = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
   /* TBD: arguments, in particular buffers, require more work
    * because of migration commands */
   device->cmdbuf_mutable_dispatch_capabilities

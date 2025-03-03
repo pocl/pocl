@@ -85,22 +85,16 @@ if(CUSTOM_CTS_GIT_TAG)
   set(CTS_GIT_TAG "${CUSTOM_CTS_GIT_TAG}")
 else()
   # Use PoCL's fork which has pending fixes.
-  set(CTS_GIT_TAG "v2024.12.03")
+  set(CTS_GIT_TAG "v2025.02.28")
 endif()
 
 set(TS_BUILDDIR "${TS_BUILDDIR}/test_conformance")
 set(TS_SRCDIR "${TS_SRCDIR}/test_conformance")
 
 if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
-  # build SPIR-V binary files required by the SPIR-V subtests
-  set(CTS_INSTALL_COMMAND "${TS_SRCDIR}/spirv_new/assemble_spirv.py"
-    "-s" "${TS_SRCDIR}/spirv_new/spirv_asm"
-    "-o" "${TS_BUILDDIR}/spirv_new/spirv_bin"
-    "-a" "${SPIRV_AS}"
-    "-l" "${SPIRV_VAL}")
+  message(STATUS "OpenCL-CTS: SPIR-V tests enabled")
 else()
   message(WARNING "llvm-spirv or spirv-tools not found - disabling SPIRV tests in CTS")
-  set(CTS_INSTALL_COMMAND ${CMAKE_COMMAND} -E echo "install step disabled")
 endif()
 
 set(UPSTREAM_CMAKE_ARGS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
@@ -128,7 +122,7 @@ ExternalProject_Add(
     -DENABLE_ASAN=${ENABLE_ASAN}
     -DENABLE_TSAN=${ENABLE_TSAN}
     "${TS_BASEDIR}/src/${TS_NAME}"
-  INSTALL_COMMAND ${CTS_INSTALL_COMMAND}
+  INSTALL_COMMAND ""
 )
 
 

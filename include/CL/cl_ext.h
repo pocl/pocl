@@ -52,7 +52,7 @@ extern "C" {
     "cl_khr_command_buffer"
 
 
-#define CL_KHR_COMMAND_BUFFER_EXTENSION_VERSION CL_MAKE_VERSION(0, 9, 5)
+#define CL_KHR_COMMAND_BUFFER_EXTENSION_VERSION CL_MAKE_VERSION(0, 9, 7)
 
 typedef cl_bitfield         cl_device_command_buffer_capabilities_khr;
 typedef struct _cl_command_buffer_khr* cl_command_buffer_khr;
@@ -67,13 +67,13 @@ typedef struct _cl_command_node *cl_mutable_command_khr;
 
 /* cl_device_info */
 #define CL_DEVICE_COMMAND_BUFFER_CAPABILITIES_KHR           0x12A9
+#define CL_DEVICE_COMMAND_BUFFER_SUPPORTED_QUEUE_PROPERTIES_KHR 0x129A
 #define CL_DEVICE_COMMAND_BUFFER_REQUIRED_QUEUE_PROPERTIES_KHR 0x12AA
 
 /* cl_device_command_buffer_capabilities_khr - bitfield */
 #define CL_COMMAND_BUFFER_CAPABILITY_KERNEL_PRINTF_KHR      (1 << 0)
 #define CL_COMMAND_BUFFER_CAPABILITY_DEVICE_SIDE_ENQUEUE_KHR (1 << 1)
 #define CL_COMMAND_BUFFER_CAPABILITY_SIMULTANEOUS_USE_KHR   (1 << 2)
-#define CL_COMMAND_BUFFER_CAPABILITY_OUT_OF_ORDER_KHR       (1 << 3)
 
 /* cl_command_buffer_properties_khr */
 #define CL_COMMAND_BUFFER_FLAGS_KHR                         0x1293
@@ -564,7 +564,7 @@ clCommandSVMMemFillKHR(
     "cl_khr_command_buffer_multi_device"
 
 
-#define CL_KHR_COMMAND_BUFFER_MULTI_DEVICE_EXTENSION_VERSION CL_MAKE_VERSION(0, 9, 1)
+#define CL_KHR_COMMAND_BUFFER_MULTI_DEVICE_EXTENSION_VERSION CL_MAKE_VERSION(0, 9, 2)
 
 typedef cl_bitfield         cl_platform_command_buffer_capabilities_khr;
 
@@ -4182,6 +4182,47 @@ typedef cl_bitfield         cl_device_kernel_clock_capabilities_khr;
 
 
 #define CL_KHR_WORK_GROUP_UNIFORM_ARITHMETIC_EXTENSION_VERSION CL_MAKE_VERSION(1, 0, 0)
+
+/***************************************************************
+* cl_ext_buffer_device_address
+***************************************************************/
+#define cl_ext_buffer_device_address 1
+#define CL_EXT_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME \
+    "cl_ext_buffer_device_address"
+
+
+#define CL_EXT_BUFFER_DEVICE_ADDRESS_EXTENSION_VERSION CL_MAKE_VERSION(1, 0, 2)
+
+typedef cl_ulong            cl_mem_device_address_ext;
+
+
+typedef cl_int CL_API_CALL
+clSetKernelArgDevicePointerEXT_t(
+    cl_kernel kernel,
+    cl_uint arg_index,
+    cl_mem_device_address_ext arg_value);
+
+typedef clSetKernelArgDevicePointerEXT_t *
+clSetKernelArgDevicePointerEXT_fn CL_API_SUFFIX__VERSION_3_0;
+
+#if !defined(CL_NO_NON_ICD_DISPATCH_EXTENSION_PROTOTYPES)
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clSetKernelArgDevicePointerEXT(
+    cl_kernel kernel,
+    cl_uint arg_index,
+    cl_mem_device_address_ext arg_value) CL_API_SUFFIX__VERSION_3_0;
+
+#endif /* !defined(CL_NO_NON_ICD_DISPATCH_EXTENSION_PROTOTYPES) */
+
+/* cl_mem_properties */
+#define CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT                   0x5000
+
+/* cl_mem_info */
+#define CL_MEM_DEVICE_ADDRESS_EXT                           0x5001
+
+/* cl_kernel_exec_info */
+#define CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT                 0x5002
 
 /***************************************************************
 * cl_ext_image_unorm_int_2_101010

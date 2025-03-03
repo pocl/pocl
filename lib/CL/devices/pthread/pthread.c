@@ -137,7 +137,7 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 
   /* pthread has elementary partitioning support,
    * but only if OpenMP is disabled */
-#ifdef ENABLE_HOST_CPU_DEVICES_OPENMP
+#if  defined(ENABLE_HOST_CPU_DEVICES_OPENMP) || defined(ENABLE_CONFORMANCE)
   device->max_sub_devices = 0;
   device->num_partition_properties = 0;
   device->num_partition_types = 0;

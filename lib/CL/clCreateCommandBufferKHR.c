@@ -152,15 +152,16 @@ POname (clCreateCommandBufferKHR) (
 
   for (unsigned i = 0; i < num_queues; ++i)
     {
-      if (queues[i]->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
+      if (queues[i]->device->cmdbuf_supported_properties)
         POCL_GOTO_ERROR_ON (
-          ((queues[i]->device->cmdbuf_capabilities
-            & CL_COMMAND_BUFFER_CAPABILITY_OUT_OF_ORDER_KHR)
-           == 0),
+          ((queues[i]->device->cmdbuf_supported_properties
+            & queues[i]->properties)
+           != queues[i]->properties),
           CL_INCOMPATIBLE_COMMAND_QUEUE_KHR,
-          "queue is an out-of-order "
-          "command-queue but device does not support the CL_COMMAND_BUFFER"
-          "_CAPABILITY_OUT_OF_ORDER_KHR capability\n");
+          "properties of command-queue"
+          " does contain queue properties not supported by CL_DEVI"
+          "CE_COMMAND_BUFFER_SUPPORTED_QUEUE_PROPERTIES_KHR\n");
+
       if (queues[i]->device->cmdbuf_required_properties)
         POCL_GOTO_ERROR_ON (
           ((queues[i]->device->cmdbuf_required_properties
@@ -168,7 +169,7 @@ POname (clCreateCommandBufferKHR) (
            != queues[i]->device->cmdbuf_required_properties),
           CL_INCOMPATIBLE_COMMAND_QUEUE_KHR,
           "properties of command-queue"
-          " does not contain the minimum properties specified by CL_DEVI"
+          " does not contain properties required by CL_DEVI"
           "CE_COMMAND_BUFFER_REQUIRED_QUEUE_PROPERTIES_KHR\n");
     }
 
