@@ -1,0 +1,126 @@
+name: Julia / OpenCL.jl Tests
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'release*'
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - 'CHANGES'
+      - 'COPYING'
+      - 'CREDITS'
+      - 'LICENSE'
+      - 'README.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  test_julia:
+    name: Julia ${{ matrix.julia-version }} - LLVM ${{ matrix.llvm }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - julia-version: '1.10'
+            llvm: 15
+          - julia-version: '1.11'
+            llvm: 16
+
+    steps:
+      - name: Checkout PoCL
+        uses: actions/checkout@v4
+        with:
+          path: pocl
+
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.julia-version }}
+          arch: x64
+
+      - name: Setup Julia cache
+        uses: julia-actions/cache@v2
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build pkg-config
+
+      - name: Install Julia dependencies
+        run: |
+          touch pocl/Project.toml
+          julia --project=pocl --color=yes -e '
+            using Pkg
+
+            # unversioned
+            Pkg.add([
+              "SPIRV_Tools_jll",
+              "OpenCL_jll",
+              "OpenCL_Headers_jll",
+              "Hwloc_jll",
+              "CMake_jll",
+            ])
+
+            # versioned
+            Pkg.add(name="LLVM_full_jll", version="${{ matrix.llvm }}")
+            Pkg.add(name="SPIRV_LLVM_Translator_jll", version="${{ matrix.llvm }}")'
+
+      - name: Build PoCL
+        run: |
+          julia --project=pocl --color=yes -e '
+            using LLVM_full_jll,
+                  SPIRV_Tools_jll, SPIRV_LLVM_Translator_jll,
+                  OpenCL_jll, OpenCL_Headers_jll,
+                  Hwloc_jll, CMake_jll
+
+            sourcedir = joinpath(@__DIR__, "pocl")
+            builddir = joinpath(@__DIR__, "build")
+            destdir = joinpath(@__DIR__, "target")
+
+            prefix = []
+            for jll in [SPIRV_Tools_jll, SPIRV_LLVM_Translator_jll, OpenCL_jll,
+                        OpenCL_Headers_jll, Hwloc_jll]
+                push!(prefix, jll.artifact_dir)
+            end
+
+            withenv("LD_LIBRARY_PATH" => joinpath(Sys.BINDIR, Base.PRIVATE_LIBDIR)) do
+                mkpath(builddir)
+                run(```cmake -B $builddir -S $sourcedir
+                       -GNinja
+                       -DCMAKE_CXX_FLAGS="-fdiagnostics-color=always"
+                       -DCMAKE_C_FLAGS="-fdiagnostics-color=always"
+                       -DCMAKE_BUILD_TYPE=Debug
+                       -DENABLE_TESTS:Bool=OFF
+                       -DPOCL_DEBUG_MESSAGES:Bool=ON
+                       -DCMAKE_INSTALL_PREFIX=$destdir
+                       -DWITH_LLVM_CONFIG=$(LLVM_full_jll.artifact_dir)/tools/llvm-config
+                       -DCMAKE_PREFIX_PATH="$(join(prefix, ";"))"
+                       -DKERNELLIB_HOST_CPU_VARIANTS=distro```)
+
+                run(```$(cmake()) --build $builddir --parallel $(Sys.CPU_THREADS) --target install```)
+            end'
+
+      - name: Checkout OpenCL.jl
+        uses: actions/checkout@v4
+        with:
+          repository: JuliaGPU/OpenCL.jl
+          path: OpenCL.jl
+
+      - name: Setup OpenCL.jl
+        run: |
+          echo '[pocl_jll]' > OpenCL.jl/test/LocalPreferences.toml
+          echo 'libpocl_path="${{ github.workspace }}/target/lib/libpocl.so"' >> OpenCL.jl/test/LocalPreferences.toml
+
+      - name: Test OpenCL.jl
+        uses: julia-actions/julia-runtest@v1
+        with:
+          project: OpenCL.jl
+          test_args: '--platform=pocl'
