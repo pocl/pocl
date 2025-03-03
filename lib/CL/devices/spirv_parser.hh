@@ -107,6 +107,9 @@ SPIRV_PARSER_EXPORT
 bool applyAtomicCmpXchgWorkaround(const int32_t *InStream, size_t NumWords,
                                   std::vector<uint8_t> &OutStream);
 
+SPIRV_PARSER_EXPORT
+bool applyAtomicCmpXchgWorkaroundInPlace(int32_t *InStream, size_t *NumWords);
+
 } // namespace SPIRVParser
 
 #endif

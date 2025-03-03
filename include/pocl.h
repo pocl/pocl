@@ -70,6 +70,9 @@ typedef uint64_t pocl_obj_id_t;
    limiter. */
 #define POCL_MAX_DIRNAME_LENGTH 64
 #define POCL_MAX_FILENAME_LENGTH (POCL_MAX_DIRNAME_LENGTH)
+/* -5: Leave space for .so and for additional .o if temp file debugging
+   is enabled. */
+#define POCL_HASH_FILENAME_LENGTH (POCL_MAX_DIRNAME_LENGTH - 5)
 #define POCL_MAX_PATHNAME_LENGTH 4096
 
 /* official Khronos ID */

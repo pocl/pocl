@@ -264,7 +264,7 @@ if (ENABLE_LLVM)
   unset(CMAKE_CXX_STANDARD)
   unset(CMAKE_CXX_STANDARD_REQUIRED)
 
-  set(LLVM_API_SOURCES "pocl_llvm_build.cc" "pocl_llvm_metadata.cc" "pocl_llvm_utils.cc" "pocl_llvm_wg.cc" ${EXTRA_LLVM_SOURCES})
+  set(LLVM_API_SOURCES "pocl_llvm_build.cc" "pocl_llvm_metadata.cc" "pocl_llvm_utils.cc" "pocl_llvm_wg.cc" "pocl_llvm_spirv.cc" ${EXTRA_LLVM_SOURCES})
   set_source_files_properties(${LLVM_API_SOURCES} PROPERTIES COMPILE_FLAGS "${LLVM_CXXFLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl\"")
 
   add_library("lib_cl_llvm" OBJECT ${LLVM_API_SOURCES})
@@ -283,6 +283,11 @@ if (ENABLE_LLVM)
   if (HAVE_LLVM_SPIRV_LIB)
     target_include_directories(lib_cl_llvm PRIVATE ${LLVM_SPIRV_INCLUDEDIR})
   endif()
+
+  if(ENABLE_HEADER_BUNDLING)
+    add_dependencies(lib_cl_llvm regenerate_bundled_headers)
+  endif()
+
 
   list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:llvmpasses>")
   list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:lib_cl_llvm>")

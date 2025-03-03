@@ -35,5 +35,33 @@ set(PRIVATE_HEADERS _enable_all_exts.h _builtin_renames.h
 
 cpack_add_component("dev")
 
+
+if(ENABLE_HEADER_BUNDLING)
+  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/HeaderBundle")
+
+  function(create_bundled_header HEADER OUTPUT_VAR)
+    string(REPLACE "." "_" HEADER_NAME ${HEADER})
+    string(REPLACE "-" "_" HEADER_NAME ${HEADER_NAME})
+    add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/HeaderBundle/${HEADER}"
+        DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${HEADER}"
+        COMMAND "${CMAKE_COMMAND}"
+        "-Dname=${HEADER_NAME}"
+        "-Dinput=${CMAKE_CURRENT_SOURCE_DIR}/${HEADER}"
+        "-Doutput=${CMAKE_BINARY_DIR}/HeaderBundle/${HEADER}"
+        -P "${CMAKE_SOURCE_DIR}/cmake/generate_c_header_file.cmake"
+        COMMENT "Generating bundling form of header ${HEADER}"
+        VERBATIM)
+    set(${OUTPUT_VAR} "${CMAKE_BINARY_DIR}/HeaderBundle/${HEADER}" PARENT_SCOPE)
+  endfunction()
+
+  foreach(HDR_FILE IN ITEMS _clang_opencl.h  opencl-c-base.h  opencl-c.h)
+    create_bundled_header(${HDR_FILE} TEMP)
+    list(APPEND HEADER_BUNDLE_FILES "${TEMP}")
+  endforeach()
+
+  add_custom_target(regenerate_bundled_headers ALL DEPENDS ${HEADER_BUNDLE_FILES})
+endif()
+
+# this can still be required by some drivers, even if bundling is enabled
 install(FILES ${PRIVATE_HEADERS}
         DESTINATION ${POCL_INSTALL_PRIVATE_HEADER_DIR_REL} COMPONENT "dev")

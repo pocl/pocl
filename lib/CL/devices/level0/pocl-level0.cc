@@ -154,6 +154,10 @@ static int pocl_level0_verify_ndrange_sizes(const size_t *GlobalOffsets,
 
 static cl_int pocl_level0_post_init(struct pocl_device_ops *ops) {
 
+#ifdef USE_LLVM_SPIRV_TARGET
+  pocl_llvm_initialize_spirv_ext_option();
+#endif
+
   // TODO currently only works with two drivers
   if (L0DriverInstances.size() != 2)
     return CL_SUCCESS;
@@ -334,11 +338,6 @@ char *pocl_level0_build_hash(cl_device_id ClDevice) {
 }
 
 unsigned int pocl_level0_probe(struct pocl_device_ops *Ops) {
-  int EnvCount = pocl_device_get_env_count(Ops->device_name);
-
-  if (EnvCount <= 0) {
-    return 0;
-  }
 
   ze_result_t Res = zeInit(0);
   if (Res != ZE_RESULT_SUCCESS) {
@@ -352,6 +351,11 @@ unsigned int pocl_level0_probe(struct pocl_device_ops *Ops) {
   if (Res != ZE_RESULT_SUCCESS) {
     POCL_MSG_ERR("zeDriverGet FAILED\n");
     return 0;
+  }
+
+  int EnvCount = pocl_device_get_env_count(Ops->device_name);
+  if (EnvCount > 0 && EnvCount < DriverCount) {
+    DriverCount = EnvCount;
   }
 
   for (unsigned I = 0; I < DriverCount; ++I) {
@@ -500,8 +504,7 @@ static int runAndAppendOutputToBuildLog(cl_program Program, unsigned DeviceI,
   return Errcode;
 }
 
-// disabled for now, need to solve the problem of linking different version
-#if 0
+#ifdef HAVE_SPIRV_LINK
 static int linkWithSpirvLink(cl_program Program, cl_uint DeviceI,
                              char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH],
                              std::vector<std::string> &SpvBinaryPaths,
@@ -513,6 +516,10 @@ static int linkWithSpirvLink(cl_program Program, cl_uint DeviceI,
   if (CreateLibrary != 0) {
     CompilationArgs.push_back("--create-library");
   }
+  // allow linking of SPIR-V modules with different version
+#ifdef SPIRV_LINK_HAS_USE_HIGHEST_VERSION
+  CompilationArgs.push_back("--use-highest-version");
+#endif
   CompilationArgs.push_back("-o");
   CompilationArgs.push_back(ProgramSpvPathTemp);
   for (auto &Path : SpvBinaryPaths) {
@@ -528,14 +535,15 @@ static int linkWithSpirvLink(cl_program Program, cl_uint DeviceI,
   POCL_RETURN_ERROR_ON((Err != 0), CL_BUILD_PROGRAM_FAILURE,
                        "spirv-link exited with nonzero code\n");
   POCL_RETURN_ERROR_ON(!pocl_exists(ProgramSpvPathTemp),
-                       CL_LINK_PROGRAM_FAILURE, "spirv-link failed\n");
+                       CL_LINK_PROGRAM_FAILURE,
+                       "spirv-link failed (output file does not exist)\n");
   return CL_SUCCESS;
 }
 #endif
 
 static int runLLVMOpt(cl_program Program, cl_uint DeviceI,
                       char ProgramBcPathTemp[POCL_MAX_PATHNAME_LENGTH]) {
-
+#ifdef HAVE_LLVM_OPT
   const char *L0passes =
       pocl_get_string_option("POCL_LEVEL0_LINK_OPT", nullptr);
   if (L0passes == nullptr)
@@ -566,52 +574,42 @@ static int runLLVMOpt(cl_program Program, cl_uint DeviceI,
   POCL_RETURN_ERROR_ON(!pocl_exists(ProgramBcPathTemp),
                        CL_BUILD_PROGRAM_FAILURE,
                        "llvm-opt failed to produce output file\n");
+#endif
   return CL_SUCCESS;
 }
 
 static int linkWithLLVMLink(cl_program Program, cl_uint DeviceI,
                             char ProgramBcPathTemp[POCL_MAX_PATHNAME_LENGTH],
                             char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH],
-                            std::vector<std::string> &BcBinaryPaths,
+                            std::vector<void *> &LLVMIRBinaries,
                             int CreateLibrary) {
-  std::vector<std::string> CompilationArgs;
-  std::vector<const char *> CompilationArgs2;
 
-  CompilationArgs.push_back(pocl_get_path("LLVM_LINK", LLVM_LINK));
-//  if (CreateLibrary != 0) {
-//    CompilationArgs.push_back("--create-library");
-//  }
-  CompilationArgs.push_back("-o");
-  CompilationArgs.push_back(ProgramBcPathTemp);
-  for (auto &Path : BcBinaryPaths) {
-    CompilationArgs.push_back(Path);
-  }
-  CompilationArgs2.resize(CompilationArgs.size() + 1);
-  for (unsigned i = 0; i < CompilationArgs.size(); ++i)
-    CompilationArgs2[i] = (char *)CompilationArgs[i].data();
-  CompilationArgs2[CompilationArgs.size()] = nullptr;
+  cl_device_id Dev = Program->devices[DeviceI];
+  Level0Device *Device = static_cast<Level0Device *>(Dev->data);
 
-  int Err =
-      runAndAppendOutputToBuildLog(Program, DeviceI, CompilationArgs2.data());
-  POCL_RETURN_ERROR_ON((Err != 0), CL_BUILD_PROGRAM_FAILURE,
-                       "llvm-link exited with nonzero code\n");
-  POCL_RETURN_ERROR_ON(!pocl_exists(ProgramBcPathTemp),
-                       CL_LINK_PROGRAM_FAILURE, "llvm-link failed to "
-                                                "produce output file\n");
+  void *DestLLVMIR = nullptr;
+  int Err = pocl_llvm_link_multiple_modules(Program, DeviceI, ProgramBcPathTemp,
+                                            LLVMIRBinaries.data(),
+                                            LLVMIRBinaries.size());
+
+  POCL_RETURN_ERROR_ON((Err != CL_SUCCESS), CL_LINK_PROGRAM_FAILURE,
+                       "llvm::link failed to link all modules\n");
+  POCL_RETURN_ERROR_ON(!pocl_exists(ProgramBcPathTemp), CL_LINK_PROGRAM_FAILURE,
+                       "llvm::link failed to "
+                       "produce output file\n");
 
   Err = runLLVMOpt(Program, DeviceI, ProgramBcPathTemp);
   if (Err != CL_SUCCESS)
     return Err;
 
-  cl_device_id Dev = Program->devices[DeviceI];
-  Level0Device *Device = static_cast<Level0Device *>(Dev->data);
   Err = pocl_convert_bitcode_to_spirv(
       ProgramBcPathTemp, nullptr, 0, Program, DeviceI,
       1, // useIntelExt
       ProgramSpvPathTemp, nullptr, nullptr, Device->getSupportedSpvVersion());
 
-  POCL_RETURN_ERROR_ON((Err != 0), CL_BUILD_PROGRAM_FAILURE,
-                       "llvm-spirv exited with nonzero code\n");
+  POCL_RETURN_ERROR_ON((Err != 0), CL_LINK_PROGRAM_FAILURE,
+                       "llvm IR -> SPIRV conversion failed\n");
+
   return CL_SUCCESS;
 }
 
@@ -661,7 +659,6 @@ int pocl_level0_build_source(cl_program Program, cl_uint DeviceI,
     Err = runLLVMOpt(Program, DeviceI, ProgramBcPath);
     if (Err != CL_SUCCESS)
       return Err;
-
     Err = pocl_convert_bitcode_to_spirv(
         nullptr, (char *)Program->binaries[DeviceI],
         Program->binary_sizes[DeviceI], Program, DeviceI,
@@ -674,7 +671,6 @@ int pocl_level0_build_source(cl_program Program, cl_uint DeviceI,
     Program->program_il = OutputBinary;
     Program->program_il_size = OutputBinarySize;
     pocl_rename(ProgramSpvPathTemp, ProgramSpvPath);
-    POCL_MSG_WARN("Final SPV written: %s\n", ProgramSpvPath);
   }
 
   assert(Program->program_il != nullptr);
@@ -765,6 +761,11 @@ int pocl_level0_build_binary(cl_program Program, cl_uint DeviceI,
       /* we have only program_il, which is SPIR-V*/
       assert(Program->program_il != nullptr);
       assert(Program->program_il_size > 0);
+
+#ifdef USE_LLVM_SPIRV_TARGET
+      POCL_MSG_WARN("Level0: not converting SPIRV -> LLVM IR "
+                    "with SPIRV backend\n");
+#else
       Err = pocl_convert_spirv_to_bitcode(ProgramSpvPathTemp,
                                           Program->program_il,
                                           Program->program_il_size,
@@ -776,6 +777,10 @@ int pocl_level0_build_binary(cl_program Program, cl_uint DeviceI,
                            "failed to compile SPV -> BC\n");
       Program->binaries[DeviceI] = (unsigned char *)OutputBinary;
       Program->binary_sizes[DeviceI] = OutputBinarySize;
+
+      assert(Program->binaries[DeviceI] != nullptr);
+      assert(Program->binary_sizes[DeviceI] != 0);
+#endif
     } else {
       /* we have program->binaries[] which should be LLVM IR SPIR */
       assert(Program->binaries[DeviceI] != nullptr);
@@ -807,13 +812,12 @@ int pocl_level0_build_binary(cl_program Program, cl_uint DeviceI,
     convertProgramBcPathToSpv(ProgramBcPath, ProgramSpvPath);
     pocl_rename(ProgramSpvPathTemp, ProgramSpvPath);
     pocl_rename(ProgramBcPathTemp, ProgramBcPath);
-  }
 
-  assert(Program->program_il != nullptr);
-  assert(Program->program_il_size > 0);
-  // TODO is this really LLVM IR
-  assert(Program->binaries[DeviceI] != nullptr);
-  assert(Program->binary_sizes[DeviceI] != 0);
+    assert(Program->program_il != nullptr);
+    assert(Program->program_il_size > 0);
+    assert(Program->binaries[DeviceI] != nullptr);
+    assert(Program->binary_sizes[DeviceI] != 0);
+  }
 
   if (LinkProgram != 0) {
     // for Metadata, read the Bitcode into LLVM::Module
@@ -848,11 +852,11 @@ int pocl_level0_link_program(cl_program Program, cl_uint DeviceI,
   assert(Program->binary_sizes[DeviceI] == 0);
 
   std::vector<std::string> SpvBinaryPaths;
-  std::vector<std::string> BcBinaryPaths;
+  std::vector<void *> LLVMIRBinaries;
   std::vector<char> SpvConcatBinary;
 
   cl_uint I;
-  cl_uint ProgsHaveProgramBC = 0;
+  cl_uint ProgsHaveProgramLLVMIR = 0;
   for (I = 0; I < NumInputPrograms; I++) {
     assert(Dev == InputPrograms[I]->devices[DeviceI]);
     POCL_LOCK_OBJ(InputPrograms[I]);
@@ -870,16 +874,24 @@ int pocl_level0_link_program(cl_program Program, cl_uint DeviceI,
     size_t Size = InputPrograms[I]->program_il_size;
     assert(Size);
     SpvConcatBinary.insert(SpvConcatBinary.end(), Spv, Spv + Size);
+
     if (InputPrograms[I]->binary_sizes[DeviceI] > 0) {
-      ++ProgsHaveProgramBC;
       pocl_cache_program_bc_path(ProgramBcPath, InputPrograms[I], DeviceI);
       assert(pocl_exists(ProgramBcPath));
-      BcBinaryPaths.push_back(ProgramBcPath);
+      if (InputPrograms[I]->llvm_irs[DeviceI] == nullptr) {
+        pocl_llvm_read_program_llvm_irs(InputPrograms[I], DeviceI, nullptr);
+      }
+    }
+
+    if (InputPrograms[I]->llvm_irs[DeviceI] != nullptr) {
+      ++ProgsHaveProgramLLVMIR;
+      LLVMIRBinaries.push_back(InputPrograms[I]->llvm_irs[DeviceI]);
     }
 
     POCL_UNLOCK_OBJ(InputPrograms[I]);
   }
-  if (ProgsHaveProgramBC != NumInputPrograms) {
+
+  if (ProgsHaveProgramLLVMIR != NumInputPrograms) {
     POCL_MSG_ERR("LevelZero: not all programs have program.bc\n");
     return CL_LINK_PROGRAM_FAILURE;
   }
@@ -897,19 +909,21 @@ int pocl_level0_link_program(cl_program Program, cl_uint DeviceI,
     char ProgramBcPathTemp[POCL_MAX_PATHNAME_LENGTH];
     pocl_cache_tempname(ProgramBcPathTemp, ".bc", NULL);
 
-//  if (linkWithSpirvLink(Program, DeviceI, ProgramSpvPathTemp,
-//              SpvBinaryPaths, CreateLibrary) != CL_SUCCESS) {
-
-//    POCL_MSG_WARN("LevelZero : failed to link using spirv-link, trying"
-//                  "with llvm-link\n");
+#if 0
+    // this can be re-enabled when we get rid of dependency on LLVM IR
+    // in the compilation chain
+    if (linkWithSpirvLink(Program, DeviceI, ProgramSpvPathTemp, SpvBinaryPaths,
+                          CreateLibrary) != CL_SUCCESS) {
+      POCL_MSG_WARN("LevelZero : failed to link using spirv-link,"
+                    "retrying with llvm-link\n");
+    }
+#endif
     if (linkWithLLVMLink(Program, DeviceI, ProgramBcPathTemp,
-                         ProgramSpvPathTemp, BcBinaryPaths, 0) != CL_SUCCESS) {
+                         ProgramSpvPathTemp, LLVMIRBinaries, 0) != CL_SUCCESS) {
       POCL_MSG_ERR("LevelZero: failed to link "
                    "with both spirv-link and llvm-link\n");
       return CL_LINK_PROGRAM_FAILURE;
     }
-//  }
-
     pocl_rename(ProgramSpvPathTemp, ProgramSpvPath);
     pocl_rename(ProgramBcPathTemp, ProgramBcPath);
   }

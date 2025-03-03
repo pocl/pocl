@@ -70,8 +70,6 @@
 
 #include "_kernel_constants.h"
 
-#define WORKGROUP_STRING_LENGTH 1024
-
 /* Object ids are generated from this global. Note: 1 will be the first
    valid object id, thus 0 can be used to mark a non-object/null. */
 pocl_obj_id_t last_object_id = 0;
@@ -179,8 +177,8 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   if (pocl_exists (final_binary_path))
     goto FINISH;
 
-  error = pocl_llvm_codegen (device, program, llvm_module, &objfile,
-                             &objfile_size);
+  error = pocl_llvm_codegen (device, program, "", llvm_module,
+                             CL_TRUE, CL_TRUE, &objfile, &objfile_size);
   if (error)
     {
       POCL_MSG_PRINT_LLVM ("pocl_llvm_codegen() failed for kernel %s\n",
@@ -278,7 +276,7 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
         {
         }
 
-      error = pocl_invoke_clang (device, cmd_line);
+      error = pocl_invoke_clang (device->llvm_target_triplet, cmd_line);
     }
   if (error)
     {
@@ -1174,7 +1172,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
                                   int retain,
                                   int specialize)
 {
-  char workgroup_string[WORKGROUP_STRING_LENGTH];
+  char *workgroup_string = NULL;
   pocl_dlhandle_cache_item *ci = NULL;
   _cl_command_run *run_cmd = &command->command.run;
 
@@ -1217,16 +1215,18 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 
   ci->dlhandle = pocl_dynlib_open (module_fn, 0, 1);
 
-  snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-            "_pocl_kernel_%s_workgroup", run_cmd->kernel->name);
+  size_t workgroup_len = strlen (run_cmd->kernel->name) + 30;
+  workgroup_string = (char *)malloc (workgroup_len);
+  snprintf (workgroup_string, workgroup_len, "_pocl_kernel_%s_workgroup",
+            run_cmd->kernel->name);
 
   ci->wg = pocl_dynlib_symbol_address (ci->dlhandle, workgroup_string);
 
   if (ci->wg == NULL)
     {
       // Older OSX dyld APIs need the name without the underscore.
-      snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-                "pocl_kernel_%s_workgroup", run_cmd->kernel->name);
+      snprintf (workgroup_string, workgroup_len, "pocl_kernel_%s_workgroup",
+                run_cmd->kernel->name);
       ci->wg = pocl_dynlib_symbol_address (ci->dlhandle, workgroup_string);
 
       if (ci->wg == NULL)
@@ -1236,6 +1236,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
                         " reported as 'file not found' errors.\n",
                         module_fn, workgroup_string);
           POCL_UNLOCK (pocl_dlhandle_lock);
+          free (workgroup_string);
           return NULL;
         }
     }
@@ -1244,7 +1245,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   DL_PREPEND (pocl_dlhandle_cache, ci);
 
   POCL_UNLOCK (pocl_dlhandle_lock);
-
+  free (workgroup_string);
   return ci;
 }
 
