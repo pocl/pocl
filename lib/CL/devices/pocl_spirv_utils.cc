@@ -148,6 +148,6 @@ void mapToPoCLMetadata(OCLFuncInfo *funcInfo, const std::string& kernelName,
 
 void mapToPoCLMetadata(
     std::pair<const std::string, std::shared_ptr<OCLFuncInfo>> &pair,
-size_t numDevices, pocl_kernel_metadata_t *kernelMetadata) {
-mapToPoCLMetadata(pair.second.get(), pair.first, numDevices, kernelMetadata);
+    size_t numDevices, pocl_kernel_metadata_t *kernelMetadata) {
+  mapToPoCLMetadata(pair.second.get(), pair.first, numDevices, kernelMetadata);
 }

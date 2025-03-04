@@ -63,7 +63,7 @@ main (int argc, char **argv)
     goto FINISH;
 
   int l;
-  int wg_size = N / 8;
+  int wg_size = 256;
 
   srcA = (cl_float *)malloc (N * sizeof (cl_float));
   srcB = (cl_float *)malloc (N * sizeof (cl_float));

@@ -302,7 +302,6 @@ pocl_dump_dot_task_graph (cl_context context, const char *file_name)
   if (!f)
     {
       fprintf (stderr, "Unable to write to '%s'\n", file_name);
-      fclose (f);
       return;
     }
 

@@ -358,11 +358,6 @@ pocl.
   * **POCL_REMOTE_DHT_KEY** -- To specify the common key for server and client
                             nodes to use when publishing or listening.
 
-- **POCL_SIGFPE_HANDLER**
-
- Defaults to 1. If set to 0, pocl will not install the SIGFPE handler.
- See :ref:`known-issues`
-
 - **POCL_SIGUSR2_HANDLER**
 
  When set to 1 (default 0), pocl installs a SIGUSR2 handler that will print

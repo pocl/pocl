@@ -95,6 +95,13 @@ extern "C" {
       _cl_command_node *Command, void **output, int Specialize);
 
   POCL_EXPORT
+  int pocl_llvm_link_multiple_modules (cl_program program,
+                                       unsigned device_i,
+                                       const char *OutputBCPath,
+                                       void **LLVMIRBinaries,
+                                       size_t NumBinaries);
+
+  POCL_EXPORT
   int pocl_llvm_run_passes_on_program (cl_program Program, unsigned DeviceI);
 
   /* Parse program file and populate program's llvm_irs */
@@ -182,11 +189,32 @@ extern "C" {
    */
   unsigned pocl_llvm_get_kernel_count (cl_program program, unsigned device_i);
 
-  /** Compile the kernel in infile from LLVM bitcode to native object file for
-   * device, into outfile.
-   */
-  int pocl_llvm_codegen (cl_device_id device, cl_program program, void *modp,
-                         char **output, uint64_t *output_size);
+  /**
+  * \brief Compile the kernel in infile from LLVM bitcode to native object file for
+  * device, into outfile.
+  *
+  * \param [in] Device the device for which to compile
+  * \param [in] Program the cl_program
+  * \param [in] Features passed as features string to the TargetMachine
+  * \param [in] Modp the input LLVM IR (llvm::Module *)
+  * \param [in] EmitAsm - request emitting Asm (if EmitObj==true, also
+  *                       permits fallback from Obj to Clang via Asm)
+  * \param [in] EmitObj - request emitting Obj
+  * \returns 0 on success
+  *
+  */
+  POCL_EXPORT
+  int pocl_llvm_codegen (cl_device_id Device, cl_program Program,
+                         const char *Features, void *Modp, int EmitAsm,
+                         int EmitObj, char **Output, uint64_t *OutputSize);
+  POCL_EXPORT
+  int pocl_llvm_codegen2(const char* TTriple,
+                         const char* MCPU,
+                         const char *Features,
+                         cl_device_type DevType,
+                         pocl_lock_t *Lock,
+                         void *Modp, int EmitAsm,
+                         int EmitObj, char **Output, uint64_t *OutputSize);
 
   int pocl_llvm_link_program (cl_program program, unsigned device_i,
                               cl_uint num_input_programs,
@@ -196,7 +224,7 @@ extern "C" {
                               int link_device_builtin_library,
                               int linking_into_new_cl_program);
 
-  int pocl_invoke_clang (cl_device_id Device, const char **Args);
+  int pocl_invoke_clang (const char *TTriple, const char **Args);
 
   /**
    * \brief converts LLVM IR with "spir64-unknown-unknown" triple to SPIR-V
@@ -262,6 +290,36 @@ extern "C" {
                                                  char *TempBitcodePathOut,
                                                  char **BitcodeContent,
                                                  uint64_t *BitcodeSize);
+
+  /**
+   * \brief Initializes the LLVM option "--spirv-ext=...".
+   *
+   * This is necessary when using LLVM's SPIRV backend
+   */
+  POCL_EXPORT int pocl_llvm_initialize_spirv_ext_option ();
+
+  /**
+   * \brief sets up the SPIR-V SpecConstants in the program struct
+   *
+   * The same input is provided twice, once as a path to file, then as memory
+   * buffer (void* + size). The implementation (llvm-spirv, LLVMSPIRVLib) then
+   * uses the more suitable version to extract the SpecConstants
+   *
+   * \param program [in,out] the program which we're setting up
+   * \param spirv_path [in] path to tempfile which contains the SPIR-V
+   * \param spirv_content [in] memory buffer with SPIR-V content
+   * \param spirv_len [in] # of bytes in spirv_content
+   * \returns 0 on success
+   *
+   */
+  int pocl_get_program_spec_constants (cl_program program,
+                                       char *spirv_path,
+                                       const void *spirv_content,
+                                       size_t spirv_len);
+
+  /* if some SPIR-V spec constants were changed, use LLVMSPIRVLib
+   * to generate new LLVM bitcode from SPIR-V with updated SpecConstants */
+  int pocl_regen_spirv_binary (cl_program program, cl_uint device_i);
 
 #ifdef __cplusplus
 }

@@ -87,6 +87,11 @@ int pocl_cache_write_generic_objfile (char *objfile_path,
                                       const char *objfile_content,
                                       uint64_t objfile_size);
 
+int pocl_cache_write_header (char *header_path,
+                             const char *header_name,
+                             const char *header_content,
+                             uint64_t header_size);
+
 int pocl_cache_update_program_last_access(cl_program program,
                                           unsigned device_i);
 

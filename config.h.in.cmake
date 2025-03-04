@@ -201,15 +201,11 @@
 
 #ifdef BUILD_LEVEL0
 
-#define CLANGCC "@CLANG@"
-
 #cmakedefine ENABLE_NPU
-
-#define LLVM_SPIRV "@LLVM_SPIRV@"
 
 #cmakedefine ENABLE_LEVEL0_EXTRA_FEATURES
 
-#cmakedefine HAVE_LLVM_SPIRV_LIB
+#cmakedefine ENABLE_HEADER_BUNDLING
 
 #endif
 
@@ -231,11 +227,20 @@
 
 #define LLVM_LLC "@LLVM_LLC@"
 
+#cmakedefine HAVE_LLVM_SPIRV
 #define LLVM_SPIRV "@LLVM_SPIRV@"
 
+#cmakedefine HAVE_LLVM_OPT
 #define LLVM_OPT "@LLVM_OPT@"
 
+#cmakedefine HAVE_LLVM_SPIRV_LIB
+
 #define LLVM_LINK "@LLVM_LINK@"
+
+#cmakedefine HAVE_SPIRV_LINK
+#define SPIRV_LINK "@SPIRV_LINK@"
+
+#cmakedefine SPIRV_LINK_HAS_USE_HIGHEST_VERSION
 
 #define LLVM_MAJOR @LLVM_VERSION_MAJOR@
 
@@ -244,6 +249,8 @@
 #ifndef LLVM_VERSION
 #define LLVM_VERSION "@LLVM_VERSION_FULL@"
 #endif
+
+#cmakedefine USE_LLVM_SPIRV_TARGET
 
 #define LLVM_VERIFY_MODULE_DEFAULT @LLVM_VERIFY_MODULE_DEFAULT@
 

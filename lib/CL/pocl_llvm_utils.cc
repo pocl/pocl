@@ -621,32 +621,35 @@ void pocl_llvm_release_context(cl_context ctx) {
   if (data == NULL)
     return;
 
-  if (data->number_of_IRs > 0) {
-    POCL_MSG_ERR("still have IR references - can't release LLVM context !\n");
-    return;
-  }
-
-  if (LLVMUseGlobalContext) {
-    --GlobalLLVMContextRefcount;
-    if (GlobalLLVMContextRefcount > 0)
+  {
+    PoclCompilerMutexGuard LockGuard(&data->Lock);
+    if (data->number_of_IRs > 0) {
+      POCL_MSG_ERR("still have IR references - can't release LLVM context !\n");
       return;
+    }
+
+    if (LLVMUseGlobalContext) {
+      --GlobalLLVMContextRefcount;
+      if (GlobalLLVMContextRefcount > 0)
+        return;
+    }
+
+    delete data->poclDiagPrinter;
+    delete data->poclDiagStream;
+    delete data->poclDiagString;
+
+    assert(data->kernelLibraryMap);
+    // void cleanKernelLibrary(cl_context ctx) {
+    for (auto i = data->kernelLibraryMap->begin(),
+              e = data->kernelLibraryMap->end();
+         i != e; ++i) {
+      delete (llvm::Module *)i->second;
+    }
+    data->kernelLibraryMap->clear();
+    delete data->kernelLibraryMap;
   }
 
-  delete data->poclDiagPrinter;
-  delete data->poclDiagStream;
-  delete data->poclDiagString;
-
-  assert(data->kernelLibraryMap);
-  // void cleanKernelLibrary(cl_context ctx) {
-  for (auto i = data->kernelLibraryMap->begin(),
-            e = data->kernelLibraryMap->end();
-       i != e; ++i) {
-    delete (llvm::Module *)i->second;
-  }
-  data->kernelLibraryMap->clear();
-  delete data->kernelLibraryMap;
   POCL_DESTROY_LOCK(data->Lock);
-
   delete data->Context;
   delete data;
   ctx->llvm_context_data = nullptr;

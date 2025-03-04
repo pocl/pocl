@@ -524,6 +524,10 @@ private:
   uint32_t GlobalMemOrd = UINT32_MAX;
   std::vector<size_t> SupportedSubgroupSizes;
   pocl_version_t SupportedSpvVersion = pocl_version_t();
+  // backing string for ClDev->supported_spir_v_versions
+  std::string SupportedILVersions;
+  // backing string for ClDev->llvm_target_triplet
+  std::string LLVMTargetTriple;
 
   /// initializes kernels used internally by the driver
   /// to implement functionality missing in the Level Zero API,

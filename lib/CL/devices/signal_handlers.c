@@ -88,7 +88,7 @@ pocl_install_sigusr2_handler ()
   assert (res == 0);
 }
 
-/* This ugly hack is required because:
+/* This ugly hack is an (optional, partial) solution to the problem
  *
  * OpenCL 1.2 specification, 6.3 Operators :
  *
@@ -100,9 +100,10 @@ pocl_install_sigusr2_handler ()
  * FPU exceptions are masked by default on x86 linux, but integer divide
  * is not and there doesn't seem any sane way to mask it.
  *
- * This *might* be possible to fix with a LLVM pass (either check divisor
- * for 0, or perhaps some vector extension has a suitable instruction), but
- * it's likely to ruin the performance.
+ * This solution only works on Linux (possibly BSD) with SIGFPE handler.
+ *
+ * More platform-independent solution exists in LLVM pass
+ * lib/llvmopencl/SanitizeUBofDivRem.cc
  */
 
 #ifdef __x86_64__
@@ -257,6 +258,9 @@ pocl_install_sigfpe_handler ()
   sigfpe_action.sa_sigaction = sigfpe_signal_handler;
   int res = sigaction (SIGFPE, &sigfpe_action, &old_sigfpe_action);
   assert (res == 0);
+#else
+  // this should be handled by CMake
+  assert (0 && "this code path should not be possible");
 #endif
 }
 

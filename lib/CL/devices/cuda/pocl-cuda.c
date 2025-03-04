@@ -1536,11 +1536,12 @@ pocl_cuda_build_builtin (cl_program program, cl_uint device_i)
 }
 
 static int
-pocl_cuda_build_ptx (void *llvm_ir, char *out_ptx, CUmodule *out_module,
+pocl_cuda_build_ptx (void *llvm_ir, cl_program prog, char *out_ptx, CUmodule *out_module,
                      cl_device_id device, pocl_cuda_device_data_t *ddata,
                      int use_offsets, CUdeviceptr *constant_mem_base,
                      size_t *constant_mem_size, void **alignments)
 {
+  assert (prog);
   assert (llvm_ir);
   assert (out_ptx);
   assert (out_module);
@@ -1549,7 +1550,7 @@ pocl_cuda_build_ptx (void *llvm_ir, char *out_ptx, CUmodule *out_module,
   /* Generate PTX from LLVM bitcode */
   if (!pocl_exists (out_ptx))
     {
-      int r = pocl_ptx_gen (llvm_ir, out_ptx, device->llvm_cpu, ddata->ptx,
+      int r = pocl_ptx_gen (device, prog, llvm_ir, out_ptx, device->llvm_cpu, ddata->ptx,
                             ddata->libdevice, use_offsets, alignments);
       POCL_RETURN_ERROR_ON ((r != 0), CL_BUILD_PROGRAM_FAILURE,
                             "pocl-cuda: failed to generate PTX file %s\n",
@@ -1648,7 +1649,7 @@ pocl_cuda_post_build_program (cl_program program, cl_uint device_i)
   */
 
   result = pocl_cuda_build_ptx (
-      program->llvm_irs[device_i], ofs_ptx_filename, &ofs_module, device,
+      program->llvm_irs[device_i], program, ofs_ptx_filename, &ofs_module, device,
       ddata, 1, &constant_mem_base, &constant_mem_size, &align_map);
   if (result == CL_SUCCESS)
     {

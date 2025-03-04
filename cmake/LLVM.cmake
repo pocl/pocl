@@ -143,6 +143,11 @@ run_llvm_config(LLVM_ALL_TARGETS --targets-built)
 if (NOT DEFINED LLVM_HOST_TARGET)
   run_llvm_config(LLVM_HOST_TARGET --host-target)
 endif()
+if(LLVM_ALL_TARGETS MATCHES "SPIRV")
+  set(LLVM_HAS_SPIRV_TARGET 1 CACHE BOOL "LLVM SPIRV target")
+else()
+  set(LLVM_HAS_SPIRV_TARGET 0 CACHE BOOL "LLVM SPIRV target")
+endif()
 run_llvm_config(LLVM_BUILD_MODE --build-mode)
 run_llvm_config(LLVM_ASSERTS_BUILD --assertion-mode)
 
@@ -325,8 +330,32 @@ if(ENABLE_LLVM_FILECHECKS)
   endif()
 endif()
 
-find_program(LLVM_SPIRV NAMES "llvm-spirv${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "llvm-spirv-${LLVM_VERSION_MAJOR}${CMAKE_EXECUTABLE_SUFFIX}" "llvm-spirv${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}")
-if(LLVM_SPIRV)
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.25.0)
+  function(llvm_spirv_validator RESULT_VAR ITEM)
+    execute_process(
+        COMMAND "${ITEM}" "--version"
+        OUTPUT_VARIABLE LLVM_SPIRV_VERSION_VALUE
+        RESULT_VARIABLE LLVM_SPIRV_VERSION_RETVAL
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if(${LLVM_SPIRV_VERSION_RETVAL} EQUAL 0)
+      string(REGEX MATCH "LLVM version ([0-9]*)" LLVM_SPIRV_VERSION_MATCH "${LLVM_SPIRV_VERSION_VALUE}")
+      if(NOT ${CMAKE_MATCH_1} EQUAL ${LLVM_VERSION_MAJOR})
+        set(${RESULT_VAR} FALSE PARENT_SCOPE)
+      endif()
+    else()
+      set(${RESULT_VAR} FALSE PARENT_SCOPE)
+    endif()
+  endfunction()
+
+  set(LLVM_SPIRV_VAL_OPT VALIDATOR llvm_spirv_validator)
+else()
+  set(LLVM_SPIRV_VAL_OPT)
+endif()
+
+find_program(LLVM_SPIRV NAMES "llvm-spirv${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "llvm-spirv-${LLVM_VERSION_MAJOR}${CMAKE_EXECUTABLE_SUFFIX}" "llvm-spirv${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}" ${LLVM_SPIRV_VAL_OPT})
+
+if(LLVM_SPIRV AND (NOT LLVM_SPIRV_VAL_OPT))
   execute_process(
       COMMAND "${LLVM_SPIRV}" "--version"
       OUTPUT_VARIABLE LLVM_SPIRV_VERSION_VALUE
@@ -350,23 +379,46 @@ else()
   message(STATUS "Did NOT find usable llvm-spirv!")
 endif()
 
-if(NOT DEFINED SPIRV_LINK)
-  find_program(SPIRV_LINK NAMES "spirv-link${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}")
-  if(SPIRV_LINK)
-    message(STATUS "Found spirv-link: ${SPIRV_LINK}")
-  else()
-    message(STATUS "Did NOT find spirv-link!")
-  endif()
+find_program(SPIRV_LINK NAMES "spirv-link${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}")
+if(SPIRV_LINK)
+  message(STATUS "Found spirv-link: ${SPIRV_LINK}")
+else()
+  message(STATUS "Did NOT find spirv-link!")
 endif()
 
-if(NOT DEFINED HAVE_LLVM_SPIRV_LIB)
-  find_path(LLVM_SPIRV_INCLUDEDIR "LLVMSPIRVLib.h"
-    PATHS "${LLVM_INCLUDE_DIRS}/LLVMSPIRVLib" NO_DEFAULT_PATH)
-  find_library(LLVM_SPIRV_LIB "LLVMSPIRVLib" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
-  if(LLVM_SPIRV_INCLUDEDIR AND LLVM_SPIRV_LIB)
-    set(HAVE_LLVM_SPIRV_LIB 1 CACHE BOOL "have LLVMSPIRVLib")
+# first try to find it in the LLVM's include directories.
+find_path(LLVM_SPIRV_INCLUDEDIR "LLVMSPIRVLib.h"
+  PATHS "${LLVM_INCLUDE_DIRS}/LLVMSPIRVLib" NO_DEFAULT_PATH)
+find_library(LLVM_SPIRV_LIB "LLVMSPIRVLib" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
+
+# Ubuntu's libllvmspirv-XY-dev packages unfortunately use unversioned
+# /usr/include and /usr/lib/<arch>/libLLVMSPIRVLib.so
+find_path(LLVM_SPIRV_INCLUDEDIR "LLVMSPIRVLib.h" PATH_SUFFIXES "LLVMSPIRVLib")
+find_library(LLVM_SPIRV_LIB "LLVMSPIRVLib" PATHS "${LLVM_LIBDIR}")
+
+if(LLVM_SPIRV_INCLUDEDIR AND LLVM_SPIRV_LIB)
+  message(STATUS "found LLVMSPIRV library: ${LLVM_SPIRV_INCLUDEDIR} | ${LLVM_SPIRV_LIB}")
+  set(HAVE_LLVM_SPIRV_LIB 1)
+else()
+  message(STATUS "LLVMSPIRV library not found: ${LLVM_SPIRV_INCLUDEDIR} | ${LLVM_SPIRV_LIB}")
+  set(HAVE_LLVM_SPIRV_LIB 0)
+endif()
+
+set_expr(HAVE_SPIRV_LINK SPIRV_LINK)
+set_expr(HAVE_LLVM_SPIRV LLVM_SPIRV)
+set_expr(HAVE_LLVM_OPT LLVM_OPT)
+
+if(HAVE_SPIRV_LINK AND (NOT DEFINED SPIRV_LINK_HAS_USE_HIGHEST_VERSION))
+  execute_process(
+      COMMAND "${SPIRV_LINK}" "--help"
+      OUTPUT_VARIABLE SPIRV_LINK_OUTPUT_VALUE
+      RESULT_VARIABLE SPIRV_LINK_RETVAL
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  if("${SPIRV_LINK_OUTPUT_VALUE}" MATCHES "use-highest-version")
+    set(SPIRV_LINK_HAS_USE_HIGHEST_VERSION 1 CACHE BOOL "spirv-link --use-highest-version")
   else()
-    set(HAVE_LLVM_SPIRV_LIB 0 CACHE BOOL "have LLVMSPIRVLib")
+    set(SPIRV_LINK_HAS_USE_HIGHEST_VERSION 0 CACHE BOOL "spirv-link --use-highest-version")
   endif()
 endif()
 
