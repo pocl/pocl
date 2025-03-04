@@ -38,10 +38,10 @@ TEST_TYPE=$1
 
 if [ "$TEST_TYPE" = "cbs" ]; then
   export POCL_WORK_GROUP_METHOD=cbs
-  ctest -L cpu $@
+  ctest -L cpu -E _loopvec $@
 elif [ "$TEST_TYPE" = "loopvec" ]; then
   export POCL_WORK_GROUP_METHOD=loopvec
-  ctest -L cpu $@
+  ctest -L cpu -E _cbs $@
 elif [ "$TEST_TYPE" = "mingw" ]; then
   ctest -L cpu -LE mingw_fail $@
 else

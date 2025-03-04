@@ -2502,13 +2502,15 @@ include(add_test_pocl)
 if(ENABLE_TESTS)
     add_subdirectory("tests")
 
-    # make check & make check_tier1
-    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -j ${HOST_CPU_CORECOUNT} ${COMMAND_USES_TERMINAL})
-    add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -L "'internal|piglit|PyOpenCL|conformance_suite_micro|shoc|chipStar'" -j ${HOST_CPU_CORECOUNT} ${COMMAND_USES_TERMINAL})
+    # add make check targets
+    set(COMMON_CTEST_ARGS "--output-on-failure" -j ${HOST_CPU_CORECOUNT} ${COMMAND_USES_TERMINAL})
+    if(ENABLE_HOST_CPU_DEVICES)
+      add_custom_target(check COMMAND "${CMAKE_SOURCE_DIR}/tools/scripts/run_cpu_tests" ${COMMON_CTEST_ARGS})
+    endif()
+    if(ENABLE_CUDA)
+      add_custom_target(check-cuda COMMAND "${CMAKE_SOURCE_DIR}/tools/scripts/run_cuda_tests" ${COMMON_CTEST_ARGS})
+    endif()
 
-    add_custom_target(check-cuda COMMAND
-      "${CMAKE_SOURCE_DIR}/tools/scripts/run_cuda_tests"
-      "--output-on-failure" -j ${HOST_CPU_CORECOUNT} ${COMMAND_USES_TERMINAL})
 endif()
 
 if(ENABLE_EXAMPLES)
