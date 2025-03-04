@@ -494,6 +494,43 @@ INTEL_SG_SHUFFLE_UP_VEC (uint)
     p[sglid + 7 * sgsize] = data.s7;                                          \
   }
 
+#define INTEL_SG_BLOCK_READ_WRITE_T_16(TYPE, SUFFIX)                          \
+  TYPE##16 _CL_OVERLOADABLE intel_sub_group_block_read##SUFFIX##16(           \
+    const global TYPE *p)                                                     \
+  {                                                                           \
+    uint sglid = get_sub_group_local_id ();                                   \
+    uint sgsize = get_max_sub_group_size ();                                  \
+    return (TYPE##16) (                                                       \
+      p[sglid], p[sglid + sgsize], p[sglid + 2 * sgsize],                     \
+      p[sglid + 3 * sgsize], p[sglid + 4 * sgsize], p[sglid + 5 * sgsize],    \
+      p[sglid + 6 * sgsize], p[sglid + 7 * sgsize], p[sglid + 8 * sgsize],    \
+      p[sglid + 9 * sgsize], p[sglid + 10 * sgsize], p[sglid + 11 * sgsize],  \
+      p[sglid + 12 * sgsize], p[sglid + 13 * sgsize], p[sglid + 14 * sgsize], \
+      p[sglid + 15 * sgsize]);                                                \
+  }                                                                           \
+  void _CL_OVERLOADABLE intel_sub_group_block_write##SUFFIX##16(              \
+    global TYPE * p, TYPE##16 data)                                           \
+  {                                                                           \
+    uint sglid = get_sub_group_local_id ();                                   \
+    uint sgsize = get_max_sub_group_size ();                                  \
+    p[sglid] = data.s0;                                                       \
+    p[sglid + sgsize] = data.s1;                                              \
+    p[sglid + 2 * sgsize] = data.s2;                                          \
+    p[sglid + 3 * sgsize] = data.s3;                                          \
+    p[sglid + 4 * sgsize] = data.s4;                                          \
+    p[sglid + 5 * sgsize] = data.s5;                                          \
+    p[sglid + 6 * sgsize] = data.s6;                                          \
+    p[sglid + 7 * sgsize] = data.s7;                                          \
+    p[sglid + 8 * sgsize] = data.s8;                                          \
+    p[sglid + 9 * sgsize] = data.s9;                                          \
+    p[sglid + 10 * sgsize] = data.sA;                                         \
+    p[sglid + 11 * sgsize] = data.sB;                                         \
+    p[sglid + 12 * sgsize] = data.sC;                                         \
+    p[sglid + 13 * sgsize] = data.sD;                                         \
+    p[sglid + 14 * sgsize] = data.sE;                                         \
+    p[sglid + 15 * sgsize] = data.sF;                                         \
+  }
+
 INTEL_SG_BLOCK_READ_WRITE_T (uint, )
 
 #ifdef cl_intel_subgroups_short
@@ -510,6 +547,7 @@ INTEL_SG_BLOCK_READ_WRITE_T (ushort, _us)
  */
 
 INTEL_SG_BLOCK_READ_WRITE_T (uchar, _uc)
+INTEL_SG_BLOCK_READ_WRITE_T_16 (uchar, _uc)
 #endif
 
 #if defined(cl_intel_subgroups_short) || defined(cl_intel_subgroups_char)
