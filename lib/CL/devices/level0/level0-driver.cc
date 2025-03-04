@@ -2560,16 +2560,16 @@ bool Level0Device::setupModuleProperties(bool &SupportsInt64Atomics,
 
 #ifdef USE_LLVM_SPIRV_TARGET
   LLVMTargetTriple = "spirv64v";
-  LLVMTargetTriple.push_back('0'+SupportedSpvVersion.major);
+  LLVMTargetTriple.push_back('0' + SupportedSpvVersion.major);
   LLVMTargetTriple.push_back('.');
-  LLVMTargetTriple.push_back('0'+SupportedSpvVersion.minor);
+  LLVMTargetTriple.push_back('0' + SupportedSpvVersion.minor);
   LLVMTargetTriple.append("-unknown-unknown");
 #else
   LLVMTargetTriple = "spir64-unknown-unknown";
 #endif
   ClDev->llvm_target_triplet = LLVMTargetTriple.c_str();
 
-  for (int minor = SupportedSpvVersion.major; minor >= 0; --minor) {
+  for (int minor = SupportedSpvVersion.minor; minor >= 0; --minor) {
       if (!SupportedILVersions.empty())
           SupportedILVersions.push_back(' ');
       SupportedILVersions.append("SPIR-V_1.");
