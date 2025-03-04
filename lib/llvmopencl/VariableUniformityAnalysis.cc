@@ -279,7 +279,9 @@ bool VariableUniformityAnalysisResult::isUniform(llvm::Function *F,
     return true;
   }
 
-  if (isa<llvm::ConstantInt>(V)) {
+  // We cannot check for Constant here as the magic id variables are external
+  // constants.
+  if (isa<llvm::ConstantData>(V)) {
     setUniform(F, V, true);
     return true;
   }
