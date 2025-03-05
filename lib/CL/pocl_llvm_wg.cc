@@ -769,7 +769,7 @@ void *pocl_llvm_create_context_for_program(char *ProgramBcContent,
   std::string BuildLog;
   if (pocl_convert_bitcode_to_spirv2(
           nullptr, ProgramBcContent, ProgramBcSize, &BuildLog,
-          1, // useIntelExt
+          "all", // TODO SPIRV exts
           nullptr, LinkinSpirvContent, LinkinSpirvSize, TargetVersion) != 0) {
     POCL_MSG_ERR("failed to create program for context, log:%s\n",
                  BuildLog.c_str());
@@ -804,7 +804,7 @@ int pocl_llvm_extract_kernel_spirv(
 
   int R = pocl_convert_bitcode_to_spirv2(
       nullptr, OutputBitcode.data(), OutputBitcode.size(), &BuildLog,
-      1,       // useIntelExts
+      "all",   // TODO SPIRV Exts
       nullptr, // SpirvOutputPath
       SpirvContent, SpirvSize, TargetVersion);
 

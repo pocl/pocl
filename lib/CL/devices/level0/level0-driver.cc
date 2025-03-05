@@ -2958,6 +2958,54 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                            " cl_khr_icd"
 #endif
   );
+  SPVExtensions = std::string("+SPV_KHR_no_integer_wrap_decoration"
+                              ",+SPV_KHR_non_semantic_info"
+                              ",+SPV_KHR_expect_assume"
+
+                              ",+SPV_INTEL_arbitrary_precision_integers"
+                              ",+SPV_INTEL_arithmetic_fence"
+                              ",+SPV_INTEL_bfloat16_conversion"
+                              ",+SPV_INTEL_cache_controls"
+                              ",+SPV_INTEL_fp_fast_math_mode"
+                              ",+SPV_INTEL_function_pointers"
+                              ",+SPV_INTEL_hw_thread_queries"
+                              ",+SPV_INTEL_inline_assembly"
+                              ",+SPV_INTEL_kernel_attributes"
+#if LLVM_MAJOR < 20
+                              ",+SPV_INTEL_long_constant_composite"
+#else
+                              ",+SPV_INTEL_long_composites"
+#endif
+                              ",+SPV_INTEL_masked_gather_scatter"
+                              ",+SPV_INTEL_optimization_hints"
+
+                              ",+SPV_INTEL_runtime_aligned"
+
+
+                              ",+SPV_INTEL_split_barrier"
+                              ",+SPV_INTEL_tensor_float32_rounding"
+                              ",+SPV_INTEL_unstructured_loop_controls"
+                              ",+SPV_INTEL_variable_length_array"
+
+                              // ",+SPV_KHR_cooperative_matrix"
+                              // ",+SPV_KHR_subgroup_rotate"
+                              // ",+SPV_KHR_uniform_group_instructions"
+                              // ",+SPV_KHR_bit_instructions"
+                              //
+                              // "SPV_INTEL_arbitrary_precision_fixed_point"
+                              // "SPV_INTEL_arbitrary_precision_floating_point"
+                              // "SPV_INTEL_memory_access_aliasing"
+                              // "SPV_INTEL_tensor_float32_conversion"
+                              // "SPV_EXT_relaxed_printf_string_address_space"
+                              // "SPV_INTEL_bindless_images"
+
+                              // SPV_INTEL_float_controls2
+                              // SPV_INTEL_vector_compute
+
+                              // TODO:
+                              // this breaks scalarwave test:
+                              // ",+SPV_INTEL_optnone"
+  );
 
   if (ClDev->generic_as_support)
     OpenCL30Features.append(" __opencl_c_generic_address_space");
@@ -3003,6 +3051,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 
   if (Drv->hasExtension("ZE_extension_linkonce_odr")) {
     Extensions.append(" cl_khr_spirv_linkonce_odr");
+    SPVExtensions.append(",+SPV_KHR_linkonce_odr");
   }
 
   if (Drv->hasExtension("ZE_extension_pci_properties") && setupPCIAddress()) {
@@ -3054,6 +3103,10 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 #endif
                       );
     OpenCL30Features.append(" __opencl_c_subgroups");
+    SPVExtensions.append(",+SPV_INTEL_subgroups");
+#if LLVM_MAJOR > 18
+    SPVExtensions.append(",+SPV_INTEL_subgroup_requirements");
+#endif
   }
 
   if (ClDev->has_64bit_long != 0) {
@@ -3062,6 +3115,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 
   if (HasUsmCapability) {
     Extensions.append(" cl_intel_unified_shared_memory");
+    SPVExtensions.append(",+SPV_INTEL_usm_storage_classes");
   }
 
   if (supportsDeviceUSM()) {
@@ -3071,6 +3125,10 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   if (Drv->hasExtension("ZE_extension_float_atomics")) {
     Extensions.append(" cl_ext_float_atomics");
     OpenCL30Features.append(FPAtomicFeatures);
+    SPVExtensions.append(",+SPV_EXT_shader_atomic_float_add");
+    SPVExtensions.append(",+SPV_EXT_shader_atomic_float_min_max");
+    if (ClDev->half_fp_atomic_caps)
+      SPVExtensions.append(",+SPV_EXT_shader_atomic_float16_add");
   }
 
 #ifdef ENABLE_LEVEL0_EXTRA_FEATURES
@@ -3079,6 +3137,9 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     OpenCL30Features.append(" __opencl_c_integer_dot_product_input_4x8bit");
     OpenCL30Features.append(
         " __opencl_c_integer_dot_product_input_4x8bit_packed");
+    SPVExtensions.append(",+SPV_KHR_integer_dot_product");
+    if (SupportsDPAS)
+      SPVExtensions.append(",+SPV_INTEL_joint_matrix");
   }
 #endif
 
@@ -3086,6 +3147,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
       || ClDev->type == CL_DEVICE_TYPE_GPU) {
     ClDev->extensions = Extensions.c_str();
     ClDev->features = OpenCL30Features.c_str();
+    ClDev->supported_spirv_extensions = SPVExtensions.c_str();
 
     pocl_setup_opencl_c_with_version(ClDev, CL_TRUE);
     pocl_setup_features_with_version(ClDev);
