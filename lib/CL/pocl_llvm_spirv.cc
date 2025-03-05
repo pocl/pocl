@@ -63,7 +63,7 @@ POP_COMPILER_DIAGS
 #include <vector>
 
 #ifdef HAVE_LLVM_SPIRV_LIB
-#include <LLVMSPIRVLib/LLVMSPIRVLib.h>
+#include <LLVMSPIRVLib.h>
 #endif
 
 #include "spirv_parser.hh"
