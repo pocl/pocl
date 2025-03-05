@@ -388,7 +388,7 @@ endif()
 
 # first try to find it in the LLVM's include directories.
 find_path(LLVM_SPIRV_INCLUDEDIR "LLVMSPIRVLib.h"
-  PATHS "${LLVM_INCLUDE_DIRS}/LLVMSPIRVLib" NO_DEFAULT_PATH)
+  PATHS "${LLVM_INCLUDE_DIRS}" NO_DEFAULT_PATH PATH_SUFFIXES "LLVMSPIRVLib")
 find_library(LLVM_SPIRV_LIB "LLVMSPIRVLib" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
 
 # Ubuntu's libllvmspirv-XY-dev packages unfortunately use unversioned
