@@ -814,6 +814,11 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_1"
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_2"
          COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS} function_none  function_inline  function_noinline op_lifetime_simple  op_loop_merge_branch_none op_neg_float  op_neg_double op_not_int4  op_type_opaque_simple  op_phi_2_blocks op_selection_merge_if_none  op_selection_merge_if_flatten op_spec_constant_uchar_simple  op_spec_constant_ushort_simple ${SPIRV_OCL_30_EXTRA_TEST}  op_spec_constant_true_simple op_undef_true_simple op_undef_uint_simple  op_undef_char_simple op_undef_float_simple  op_undef_double_simple op_vector_int4_extract  op_vector_float4_extract op_vector_double2_extract  op_vector_char16_extract  op_vector_int4_insert op_vector_times_scalar_double
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
+
+add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_3"
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS} basic_versions ext_cl_khr_spirv_no_integer_wrap_decoration_fadd_uint ext_cl_khr_spirv_no_integer_wrap_decoration_fmul_uint extinst_printf_operands_scalar_fp64 op_assume op_expect op_loop_merge_branch_conditional_unroll spirv14_copylogical spirv14_copymemory_memory_operands spirv14_image_operand_signextend spirv14_loop_control_maxiterations spirv14_loop_control_peelcount spirv14_no_integer_wrap_decoration_fadd_int spirv14_nonwriteable_decoration spirv14_ptrops spirv14_select_composite spirv14_usersemantic_decoratestring spirv15_non_uniform_broadcast spirv15_ptr_bitcast
+         WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
+
 endif()
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_images_micro_kernel_image_methods_1D"
