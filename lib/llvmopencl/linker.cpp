@@ -722,7 +722,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
   // Inspect the program, find undefined functions
   for (FI = Program->begin(), FE = Program->end(); FI != FE; FI++) {
     if (FI->isDeclaration()) {
-      DB_PRINT("Pre-link: %s is not defined\n", fi->getName().data());
+      DB_PRINT("Pre-link: %s is not defined\n", FI->getName().data());
       DeclaredFunctions.insert(FI->getName());
       continue;
     }
@@ -732,7 +732,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
     if (!FI->hasName()) {
       FI->setName("__anonymous_function");
     }
-    DB_PRINT("Function '%s' is defined\n", fi->getName().data());
+    DB_PRINT("Function '%s' is defined\n", FI->getName().data());
     // Find all functions the program source calls
     // TODO: is there no direct way?
     find_called_functions(&*FI, DeclaredFunctions);
@@ -842,7 +842,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
     if (isKernelToProcess(F)) {
       size_t EstStackSize =
           estimateFunctionStackSize(&F, Program, CallChain, FuncStackSizeMap);
-      DB_PRINT("Kernel %s Estimated stack size: %zu \n", fi->getName().data(),
+      DB_PRINT("Kernel %s Estimated stack size: %zu \n", F.getName().data(),
                EstStackSize);
       if (EstStackSize > 0) {
         std::string MetadataKey = F.getName().str();
