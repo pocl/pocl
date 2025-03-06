@@ -1309,6 +1309,9 @@ struct _cl_device_id {
 
   /* cl_khr_il_program / CL_DEVICE_IL_VERSION, this only includes SPIR-V */
   const char *supported_spir_v_versions;
+  /* list of supported SPIRV extensions in the form:
+   * +SPV_KHR_linkonce_odr,+SPV_KHR_shader_clock,... */
+  const char *supported_spirv_extensions;
 
   /* OpenCL 3.0 properties */
 

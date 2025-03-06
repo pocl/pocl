@@ -68,68 +68,6 @@ POP_COMPILER_DIAGS
 
 #include "spirv_parser.hh"
 
-// Specify list of allowed/disallowed extensions
-#define LLVM17_INTEL_EXTS                                                      \
-  "+SPV_INTEL_subgroups"                                                       \
-  ",+SPV_INTEL_usm_storage_classes"                                            \
-  ",+SPV_INTEL_arbitrary_precision_integers"                                   \
-  ",+SPV_INTEL_arbitrary_precision_fixed_point"                                \
-  ",+SPV_INTEL_arbitrary_precision_floating_point"                             \
-  ",+SPV_INTEL_kernel_attributes"                                              \
-  ",+SPV_KHR_no_integer_wrap_decoration"                                       \
-  ",+SPV_EXT_shader_atomic_float_add"                                          \
-  ",+SPV_EXT_shader_atomic_float_min_max"                                      \
-  ",+SPV_INTEL_function_pointers"                                              \
-  ",+SPV_INTEL_inline_assembly"                                                \
-  ",+SPV_KHR_integer_dot_product"
-
-#if LLVM_MAJOR >= 18
-#define ALLOW_INTEL_EXTS LLVM17_INTEL_EXTS ",+SPV_EXT_shader_atomic_float16_add"
-#else
-#define ALLOW_INTEL_EXTS LLVM17_INTEL_EXTS
-#endif
-
-  /*
-  possibly useful:
-    "+SPV_INTEL_unstructured_loop_controls,"
-    "+SPV_INTEL_blocking_pipes,"
-    "+SPV_INTEL_function_pointers,"
-    "+SPV_INTEL_io_pipes,"
-    "+SPV_INTEL_optimization_hints,"
-    "+SPV_INTEL_float_controls2,"
-    "+SPV_INTEL_vector_compute,"
-    "+SPV_INTEL_fast_composite,"
-    "+SPV_INTEL_variable_length_array,"
-    "+SPV_INTEL_fp_fast_math_mode,"
-    "+SPV_INTEL_long_constant_composite,"
-    "+SPV_INTEL_memory_access_aliasing,"
-    "+SPV_INTEL_runtime_aligned,"
-    "+SPV_INTEL_arithmetic_fence,"
-    "+SPV_INTEL_bfloat16_conversion,"
-    "+SPV_INTEL_global_variable_decorations,"
-    "+SPV_INTEL_non_constant_addrspace_printf,"
-    "+SPV_INTEL_hw_thread_queries,"
-    "+SPV_INTEL_complex_float_mul_div,"
-    "+SPV_INTEL_split_barrier,"
-    "+SPV_INTEL_masked_gather_scatter"
-
-  probably not useful:
-    "+SPV_INTEL_media_block_io,+SPV_INTEL_device_side_avc_motion_estimation,"
-    "+SPV_INTEL_fpga_loop_controls,+SPV_INTEL_fpga_memory_attributes,"
-    "+SPV_INTEL_fpga_memory_accesses,"
-    "+SPV_INTEL_fpga_reg,+SPV_INTEL_fpga_buffer_location,"
-    "+SPV_INTEL_fpga_cluster_attributes,"
-    "+SPV_INTEL_loop_fuse,"
-    "+SPV_INTEL_optnone," // this one causes crash
-    "+SPV_INTEL_fpga_dsp_control,"
-    "+SPV_INTEL_fpga_invocation_pipelining_attributes,"
-    "+SPV_INTEL_token_type,"
-    "+SPV_INTEL_debug_module,"
-    "+SPV_INTEL_joint_matrix,"
-  */
-
-#define ALLOW_EXTS "+SPV_KHR_no_integer_wrap_decoration"
-
 #ifdef USE_LLVM_SPIRV_TARGET
 int pocl_llvm_initialize_spirv_ext_option() {
   llvm::cl::Option *O = nullptr;
@@ -140,7 +78,7 @@ int pocl_llvm_initialize_spirv_ext_option() {
     return false;
   }
   return O->addOccurrence(1, llvm::StringRef("spirv-ext"),
-                          llvm::StringRef(ALLOW_INTEL_EXTS));
+                          llvm::StringRef("all"));
 }
 #endif
 
@@ -166,26 +104,32 @@ extern "C" int pocl_reload_program_bc(char *program_bc_path, cl_program program,
                                       cl_uint device_i);
 
 #ifdef HAVE_LLVM_SPIRV_LIB
-SPIRV::TranslatorOpts setupTranslOpts(bool useIntelExts,
+
+static std::map<std::string, SPIRV::ExtensionID> SPVExtMap = {
+#define EXT(X) {#X, SPIRV::ExtensionID::X},
+#include <LLVMSPIRVExtensions.inc>
+#undef EXT
+};
+
+SPIRV::TranslatorOpts setupTranslOpts(const std::string &SupportedSPVExts,
                                       bool &UnrecognizedVersion,
                                       pocl_version_t TargetVersion) {
   SPIRV::TranslatorOpts::ExtensionsStatusMap EnabledExts;
-  if (useIntelExts) {
-    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_subgroups] =
-    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_inline_assembly] =
-    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_usm_storage_classes] =
-    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_arbitrary_precision_integers] =
-    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_arbitrary_precision_fixed_point] =
-    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_arbitrary_precision_floating_point] =
-    EnabledExts[SPIRV::ExtensionID::SPV_INTEL_kernel_attributes] = true;
+  std::istringstream ISS(SupportedSPVExts);
+  assert(SPVExtMap.size() > 15);
+  while (ISS) {
+    std::string Token;
+    std::getline(ISS, Token, ',');
+    if (Token.empty())
+      break;
+    if (Token.front() == '+')
+      Token.erase(0, 1);
+    auto It = SPVExtMap.find(Token);
+    if (It != SPVExtMap.end())
+      EnabledExts[It->second] = true;
+    else
+      POCL_MSG_ERR("Unknown SPV extension: %s \n", Token.c_str());
   }
-  EnabledExts[SPIRV::ExtensionID::SPV_KHR_integer_dot_product] = true;
-  EnabledExts[SPIRV::ExtensionID::SPV_KHR_no_integer_wrap_decoration] = true;
-  EnabledExts[SPIRV::ExtensionID::SPV_EXT_shader_atomic_float_add] = true;
-  EnabledExts[SPIRV::ExtensionID::SPV_EXT_shader_atomic_float_min_max] = true;
-#if LLVM_MAJOR >= 18
-  EnabledExts[SPIRV::ExtensionID::SPV_EXT_shader_atomic_float16_add] = true;
-#endif
 
   SPIRV::VersionNumber TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_3;
   switch (TargetVersion.major * 100 + TargetVersion.minor) {
@@ -245,9 +189,8 @@ int pocl_regen_spirv_binary(cl_program Program, cl_uint DeviceI) {
     if (SpirvVersions.find("SPIR-V_1.3") != std::string::npos)
       TargetVersion.minor = 3;
   }
-  SPIRV::TranslatorOpts Opts =
-      setupTranslOpts(0, // useIntelExts
-                      UnrecognizedVersion, TargetVersion);
+  SPIRV::TranslatorOpts Opts = setupTranslOpts(
+      Device->supported_spirv_extensions, UnrecognizedVersion, TargetVersion);
   POCL_RETURN_ERROR_ON(UnrecognizedVersion, CL_INVALID_BINARY,
                        "Translator does not recognize the SPIR-V version\n");
 
@@ -330,10 +273,11 @@ int pocl_get_program_spec_constants(cl_program program, char *spirv_path,
  * to generate new LLVM bitcode from SPIR-V */
 int pocl_regen_spirv_binary(cl_program program, cl_uint device_i) {
   int errcode = CL_SUCCESS;
-  cl_device_id device = program->devices[device_i];
+  cl_device_id Device = program->devices[device_i];
   int spec_constants_changed = 0;
   char concated_spec_const_option[MAX_SPEC_CONST_CMDLINE_LEN];
   concated_spec_const_option[0] = 0;
+  char spirv_exts[MAX_SPEC_CONST_CMDLINE_LEN];
   char program_bc_spirv[POCL_MAX_PATHNAME_LENGTH];
   char unlinked_program_bc_temp[POCL_MAX_PATHNAME_LENGTH];
   program_bc_spirv[0] = 0;
@@ -342,17 +286,21 @@ int pocl_regen_spirv_binary(cl_program program, cl_uint device_i) {
   /* using --spirv-target-env=CL2.0 here enables llvm-spirv to produce proper
    * OpenCL 2.0 atomics, unfortunately it also enables generic ptrs, which not
    * all PoCL devices support, hence check the device */
-  const char *spirv_target_env = (device->generic_as_support != CL_FALSE)
+  const char *spirv_target_env = (Device->generic_as_support != CL_FALSE)
                                      ? "--spirv-target-env=CL2.0"
                                      : "--spirv-target-env=CL1.2";
-  const char *args[8] = {pocl_get_path("LLVM_SPIRV", LLVM_SPIRV),
-                         concated_spec_const_option,
-                         spirv_target_env,
-                         "-r",
-                         "-o",
-                         unlinked_program_bc_temp,
-                         program_bc_spirv,
-                         NULL};
+  strcpy(spirv_exts, "--spirv-ext=");
+  strncat(spirv_exts, Device->supported_spirv_extensions,
+          (MAX_SPEC_CONST_CMDLINE_LEN - strlen("--spirv-ext=") - 1));
+  const char *args[] = {pocl_get_path("LLVM_SPIRV", LLVM_SPIRV),
+                        concated_spec_const_option,
+                        spirv_target_env,
+                        spirv_exts,
+                        "-r",
+                        "-o",
+                        unlinked_program_bc_temp,
+                        program_bc_spirv,
+                        NULL};
   const char **final_args = args;
 
   errcode = pocl_cache_tempname(unlinked_program_bc_temp, ".bc", NULL);
@@ -494,7 +442,7 @@ int pocl_regen_spirv_binary(cl_program program, cl_uint device_i) {
 static int convertBCorSPV(char *InputPath,
                           const char *InputContent, // LLVM bitcode as string
                           uint64_t InputSize, std::string *BuildLog,
-                          int useIntelExts,
+                          const char *SPVExtensions,
                           int Reverse, // add "-r"
                           char *OutputPath, char **OutContent,
                           uint64_t *OutSize, pocl_version_t TargetVersion) {
@@ -509,6 +457,7 @@ static int convertBCorSPV(char *InputPath,
   uint64_t ContentSize = 0;
   llvm::LLVMContext LLVMCtx;
   std::string Errors;
+  std::string SpirvExts("--spirv-ext=");
 
   if (!Reverse && TargetVersion.major==0) {
     POCL_MSG_ERR("Invalid SPIR-V target version!");
@@ -518,7 +467,7 @@ static int convertBCorSPV(char *InputPath,
 #ifdef HAVE_LLVM_SPIRV_LIB
   bool UnrecognizedVersion = false;
   SPIRV::TranslatorOpts Opts =
-      setupTranslOpts(useIntelExts, UnrecognizedVersion, TargetVersion);
+      setupTranslOpts(SPVExtensions, UnrecognizedVersion, TargetVersion);
   Opts.setDesiredBIsRepresentation(SPIRV::BIsRepresentation::OpenCL20);
 
   if (UnrecognizedVersion && !Reverse) {
@@ -626,10 +575,8 @@ static int convertBCorSPV(char *InputPath,
   CompilationArgs.push_back("--opaque-pointers");
 #endif
 #endif
-  if (useIntelExts)
-    CompilationArgs.push_back("--spirv-ext=" ALLOW_INTEL_EXTS);
-  else
-    CompilationArgs.push_back("--spirv-ext=" ALLOW_EXTS);
+  SpirvExts.append(SPVExtensions);
+  CompilationArgs.push_back(SpirvExts);
 
   if (!Reverse) {
     const auto TargetVersionOpt = std::string("--spirv-max-version=") +
@@ -705,7 +652,6 @@ FINISHED:
   return r;
 }
 
-
 #elif defined(USE_LLVM_SPIRV_TARGET)
 
 // SPIRV backend did not exist until LLVM 15
@@ -715,7 +661,7 @@ static_assert(LLVM_MAJOR > 14);
 static int convertBCorSPV(char *InputPath,
                           const char *InputContent, // LLVM bitcode as string
                           uint64_t InputSize, std::string *BuildLog,
-                          int useIntelExts,
+                          const char *SPVExtensions,
                           int Reverse, // add "-r"
                           char *OutputPath, char **OutContent,
                           uint64_t *OutSize, pocl_version_t TargetVersion) {
@@ -766,6 +712,8 @@ static int convertBCorSPV(char *InputPath,
     ContentSize = 0;
   }
 
+  // TODO: we should set --spirv-ext to the Device supported extensions,
+  // however it's a global option...
   switch (TargetVersion.major * 100 + TargetVersion.minor) {
   case 100:
     Triple = "spirv64v1.0-unknown-unknown";
@@ -852,7 +800,7 @@ FINISHED:
 static int convertBCorSPV(char *InputPath,
                           const char *InputContent, // LLVM bitcode as string
                           uint64_t InputSize, std::string *BuildLog,
-                          int useIntelExts,
+                          const char *SPVExtensions,
                           int Reverse, // add "-r"
                           char *OutputPath, char **OutContent,
                           uint64_t *OutSize, pocl_version_t TargetVersion) {
@@ -867,14 +815,14 @@ static int convertBCorSPV(char *InputPath,
  * The LLVM SPIRV backend can only convert in IR -> SPIRV direction. */
 int pocl_convert_spirv_to_bitcode(char *TempSpirvPath, const char *SpirvContent,
                                   uint64_t SpirvSize, cl_program Program,
-                                  cl_uint DeviceI, int UseIntelExts,
+                                  cl_uint DeviceI, const char *SPVExtensions,
                                   char *TempBitcodePathOut,
                                   char **BitcodeContent,
                                   uint64_t *BitcodeSize) {
 
   std::string BuildLog;
   int R = convertBCorSPV(
-      TempSpirvPath, SpirvContent, SpirvSize, &BuildLog, UseIntelExts,
+      TempSpirvPath, SpirvContent, SpirvSize, &BuildLog, SPVExtensions,
       1, // = Reverse.
       TempBitcodePathOut, BitcodeContent, BitcodeSize,
       // Target version for SPIR-V emission. Ignored in reverse translation.
@@ -889,7 +837,7 @@ int pocl_convert_spirv_to_bitcode(char *TempSpirvPath, const char *SpirvContent,
 
 int pocl_convert_spirv_to_bitcode(char *TempSpirvPath, const char *SpirvContent,
                                   uint64_t SpirvSize, cl_program Program,
-                                  cl_uint DeviceI, int UseIntelExts,
+                                  cl_uint DeviceI, const char *SPVExtensions,
                                   char *TempBitcodePathOut,
                                   char **BitcodeContent,
                                   uint64_t *BitcodeSize) {
@@ -900,14 +848,14 @@ int pocl_convert_spirv_to_bitcode(char *TempSpirvPath, const char *SpirvContent,
 
 int pocl_convert_bitcode_to_spirv(char *TempBitcodePath, const char *Bitcode,
                                   uint64_t BitcodeSize, cl_program Program,
-                                  cl_uint DeviceI, int UseIntelExts,
+                                  cl_uint DeviceI, const char *SPVExtensions,
                                   char *TempSpirvPathOut, char **SpirvContent,
                                   uint64_t *SpirvSize,
                                   pocl_version_t TargetVersion) {
 
   std::string BuildLog;
   int R = convertBCorSPV(
-      TempBitcodePath, Bitcode, BitcodeSize, &BuildLog, UseIntelExts,
+      TempBitcodePath, Bitcode, BitcodeSize, &BuildLog, SPVExtensions,
       0, // = Reverse
       TempSpirvPathOut, SpirvContent, SpirvSize, TargetVersion);
 
@@ -919,12 +867,13 @@ int pocl_convert_bitcode_to_spirv(char *TempBitcodePath, const char *Bitcode,
 
 int pocl_convert_bitcode_to_spirv2(char *TempBitcodePath, const char *Bitcode,
                                    uint64_t BitcodeSize, void *BuildLog,
-                                   int UseIntelExts, char *TempSpirvPathOut,
-                                   char **SpirvContent, uint64_t *SpirvSize,
+                                   const char *SPVExtensions,
+                                   char *TempSpirvPathOut, char **SpirvContent,
+                                   uint64_t *SpirvSize,
                                    pocl_version_t TargetVersion) {
 
   return convertBCorSPV(TempBitcodePath, Bitcode, BitcodeSize,
-                        (std::string *)BuildLog, UseIntelExts, 0, // = Reverse
+                        (std::string *)BuildLog, SPVExtensions, 0, // = Reverse
                         TempSpirvPathOut, SpirvContent, SpirvSize,
                         TargetVersion);
 }

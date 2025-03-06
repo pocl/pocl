@@ -488,7 +488,10 @@ private:
   cl_device_id ClDev;
   ze_device_handle_t DeviceHandle;
   ze_context_handle_t ContextHandle;
+  // OpenCL extensions
   std::string Extensions;
+  // SPV extensions
+  std::string SPVExtensions;
   std::string OpenCL30Features;
   std::string BuiltinKernels;
   unsigned NumBuiltinKernels = 0;

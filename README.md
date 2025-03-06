@@ -26,7 +26,7 @@ tools:
   * development files for LLVM & Clang + their transitive dependencies
     (e.g. `libclang-dev`, `libclang-cpp-dev`, `libllvm-dev`, `zlib1g-dev`,
     `libtinfo-dev`...)
-  * CMake 3.9 or newer
+  * CMake 3.15 or newer
   * GNU make or ninja
   * Optional: pkg-config
   * Optional: hwloc v1.0 or newer (e.g. `libhwloc-dev`)
@@ -55,7 +55,7 @@ can be used from the build directory (without installing it system-wide).
 
 ### Support Matrix legend:
 
-:large_blue_diamond: Tested in CI extensively, passed the official upstream OpenCL-CTS
+:large_blue_diamond: Achieved status of OpenCL conformant implementation
 
 :large_orange_diamond: Tested in CI extensively, including OpenCL-CTS tests
 
@@ -67,42 +67,42 @@ can be used from the build directory (without installing it system-wide).
 
 ### Linux
 
-| CPU device  |     LLVM 14    |     LLVM 15    |     LLVM 16     |     LLVM 17    |     LLVM 18     |
-|:------------|:--------------:|:---------------:|:--------------:|:---------------:|:---------------:|
-| [x86-64](https://github.com/pocl/pocl/actions/workflows/build_linux_gh.yml) | :green_circle: | :green_circle:  | :green_circle: | :large_orange_diamond: | :large_blue_diamond: |
-| [ARM64](https://github.com/pocl/pocl/actions/workflows/build_arm64.yml) | :yellow_circle: | :yellow_circle: |:yellow_circle: | :yellow_circle: | :green_circle:  |
+| CPU device  |     LLVM 14    |     LLVM 15    |     LLVM 16     |     LLVM 17    |     LLVM 18     |      LLVM 19     |     LLVM 20     |
+|:------------|:--------------:|:--------------:|:---------------:|:--------------:|:---------------:|:----------------:|:---------------:|
+| [x86-64](https://github.com/pocl/pocl/actions/workflows/build_linux_gh.yml) | :green_circle: | :green_circle: | :green_circle: | :green_circle: | :green_circle: :large_blue_diamond: | :large_orange_diamond: | :large_orange_diamond: |
+| [ARM64](https://github.com/pocl/pocl/actions/workflows/build_arm64.yml) | :yellow_circle: | :yellow_circle: |:yellow_circle: | :yellow_circle: | :yellow_circle: | :green_circle: | :yellow_circle: |
 | i686    | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
 | ARM32   | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
 | RISC-V  | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
 | PowerPC | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
 
-| GPU device  |     LLVM 17    |     LLVM 18     |
-|:------------|:--------------:|:---------------:|
-| [CUDA SM5.0](https://github.com/pocl/pocl/actions/workflows/build_cuda.yml) | :green_circle: | :green_circle: |
-| CUDA SM other than 5.0  | :yellow_circle: | :yellow_circle: |
-| [Level Zero](https://github.com/pocl/pocl/actions/workflows/build_level0.yml) | :green_circle: | :green_circle: |
-| [Vulkan](https://github.com/pocl/pocl/actions/workflows/build_openasip_vulkan.yml) | :green_circle: | :x: |
+| GPU device  |     LLVM 17    |     LLVM 18     |      LLVM 19     |     LLVM 20     |
+|:------------|:--------------:|:---------------:|:----------------:|:---------------:|
+| [CUDA SM5.0](https://github.com/pocl/pocl/actions/workflows/build_cuda.yml) | :yellow_circle: | :green_circle: | :green_circle: | :yellow_circle: |
+| CUDA SM other than 5.0  | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
+| [Level Zero](https://github.com/pocl/pocl/actions/workflows/build_level0.yml) | :yellow_circle: | :green_circle: | :green_circle: | :large_orange_diamond: |
+| [Vulkan](https://github.com/pocl/pocl/actions/workflows/build_openasip_vulkan.yml) | :green_circle: | :x: | :x: | :x: |
 
-| Special device |    LLVM 17    |     LLVM 18     |
-|:---------------|:-------------:|:---------------:|
-| [OpenASIP](https://github.com/pocl/pocl/actions/workflows/build_openasip_vulkan.yml) | :green_circle: | :x:            |
-| [Remote](https://github.com/pocl/pocl/actions/workflows/build_remote.yml) | :yellow_circle: | :green_circle:  |
-| Remote + RDMA  | :yellow_circle: | :green_circle:  |
+| Special device |    LLVM 17    |     LLVM 18     |      LLVM 19     |     LLVM 20     |
+|:---------------|:-------------:|:---------------:|:----------------:|:---------------:|
+| [OpenASIP](https://github.com/pocl/pocl/actions/workflows/build_openasip_vulkan.yml) | :green_circle: | :x: | :x: | :x: |
+| [Remote](https://github.com/pocl/pocl/actions/workflows/build_remote.yml) | :yellow_circle: | :green_circle:  | :yellow_circle: | :yellow_circle: |
+| Remote + RDMA  | :yellow_circle: | :green_circle:  |  :yellow_circle: | :yellow_circle: |
 
 
 ### Mac OS X
 
-| CPU device  |     LLVM 17    |     LLVM 18     |
-|:------------|:--------------:|:---------------:|
-| [Apple Silicon](https://github.com/pocl/pocl/actions/workflows/build_macos.yml) | :green_circle: | :green_circle:  |
-| [Intel CPU](https://github.com/pocl/pocl/actions/workflows/build_macos.yml) | :yellow_circle: | :yellow_circle:  |
+| CPU device  |     LLVM 17    |     LLVM 18     |      LLVM 19     |     LLVM 20     |
+|:------------|:--------------:|:---------------:|:----------------:|:---------------:|
+| [Apple Silicon](https://github.com/pocl/pocl/actions/workflows/build_macos.yml) | :green_circle: | :green_circle:  | :x: | :x: |
+| [Intel CPU](https://github.com/pocl/pocl/actions/workflows/build_macos.yml) | :yellow_circle: | :yellow_circle:  | :x: | :x: |
 
 ### Windows
 
-| CPU device  |     LLVM 18    |  LLVM 19        |
-|:------------|:--------------:|:---------------:|
-| MinGW / x86-64   | :yellow_circle: | :yellow_circle:  |
-| MSVC / x86-64   | :green_circle: | :green_circle:  |
+| CPU device  |     LLVM 18    |  LLVM 19        |     LLVM 20     |
+|:------------|:--------------:|:---------------:|:---------------:|
+| [MinGW](https://github.com/pocl/pocl/actions/workflows/build_mingw.yml) / x86-64   | :green_circle: | :green_circle:  | :yellow_circle: |
+| [MSVC](https://github.com/pocl/pocl/actions/workflows/build_msvc.yml) / x86-64   | :green_circle: | :green_circle:  | :yellow_circle: |
 
 
 ## Binary packages
