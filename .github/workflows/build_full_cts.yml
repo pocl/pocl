@@ -68,6 +68,8 @@ jobs:
             cd ${{ github.workspace }}/build &&  ctest -j$(nproc) $CTEST_FLAGS "$@"
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
+          # hardcoded path in test_compiler / execute_after_included_header_link
+          rm -rf /tmp/foo
           mkdir ${{ env.POCL_CACHE_DIR }}
           if [ "${{ matrix.config }}" == "cts_full" ]; then
             runCTest -L conformance_suite_full_main
@@ -134,6 +136,8 @@ jobs:
             cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j4 $CTEST_FLAGS "$@"
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
+          # hardcoded path in test_compiler / execute_after_included_header_link
+          rm -rf /tmp/foo
           mkdir ${{ env.POCL_CACHE_DIR }}
           if [ "${{ matrix.config }}" == "cts_full" ]; then
             runCTest -L conformance_suite_full_main
