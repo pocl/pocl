@@ -21,7 +21,6 @@
    IN THE SOFTWARE.
 */
 
-#include <CL/cl_ext.h>
 
 #include "pocl.h"
 #include "pocl_cl.h"
@@ -29,8 +28,10 @@
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
+#include <CL/cl_ext.h>
 
-CL_API_ENTRY cl_int
+CL_API_ENTRY
+cl_int CL_API_CALL
 POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
                                     cl_command_queue *queues,
                                     cl_command_buffer_khr command_buffer,

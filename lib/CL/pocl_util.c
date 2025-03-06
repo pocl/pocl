@@ -24,7 +24,6 @@
    IN THE SOFTWARE.
 */
 
-#include "CL/cl_ext.h"
 #include "pocl.h"
 #include "pocl_cl.h"
 #define _BSD_SOURCE
@@ -56,6 +55,8 @@
 #ifdef __MINGW32__
 #include <process.h>
 #endif
+
+#include <CL/cl_ext.h>
 
 #include "common.h"
 #include "devices.h"
@@ -877,8 +878,13 @@ pocl_command_record (cl_command_buffer_khr command_buffer,
   pocl_buffer_migration_info *mi;
   LL_FOREACH (cmd->migr_infos, mi)
     {
-      pocl_append_unique_migration_info (command_buffer->migr_infos,
-                                         mi->buffer, mi->read_only);
+      /* Note: mem object refcounts are NOT bumped here as deduplicating them
+       * to match the migration info list would introduce unnecessary
+       * complexity. The recorded commands themselves already hold counted
+       * references to their buffers and they are expected to live until the
+       * entire command buffer is destroyed. */
+      command_buffer->migr_infos = pocl_append_unique_migration_info (
+        command_buffer->migr_infos, mi->buffer, mi->read_only);
     }
   LL_APPEND (command_buffer->cmds, cmd);
 
@@ -1822,6 +1828,7 @@ pocl_run_command_capture_output (char *capture_string,
         return EXIT_FAILURE;
     }
   assert (!"UNREACHABLE!");
+  return EXIT_FAILURE;
 #elif _WIN32 // ^ HAVE_FORK ^
   char *cmd = build_cmd_from_arglist (args);
   if (!cmd)

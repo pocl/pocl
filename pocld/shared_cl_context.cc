@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include <variant>
 
+#include "CL/cl.h"
 #include "CL/cl_ext.h"
 #include "CL/cl_platform.h"
 #include "CL/opencl.hpp"
@@ -43,6 +44,7 @@
 #include "common_cl.hh"
 #include "config.h"
 #include "pocl_builtin_kernels.h"
+#include "pocl_debug.h"
 #include "pocl_runtime_config.h"
 #include "shared_cl_context.hh"
 #include "spirv_parser.hh"
@@ -994,6 +996,11 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
   PUSH_STRING(i.opencl_c_version, clientDevice.getInfo<CL_DEVICE_OPENCL_C_VERSION>());
   temp = clientDevice.getInfo<CL_DEVICE_VERSION>();
   PUSH_STRING(i.device_version, temp);
+  if (temp[0] == '1')
+    i.on_host_queue_props = clientDevice.getInfo<CL_DEVICE_QUEUE_PROPERTIES>();
+  else
+    i.on_host_queue_props =
+        clientDevice.getInfo<CL_DEVICE_QUEUE_ON_HOST_PROPERTIES>();
 
   temp = clientDevice.getInfo<CL_DRIVER_VERSION>();
   PUSH_STRING(i.driver_version, temp);
@@ -1047,6 +1054,20 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
 
     if (extName == "cl_khr_il_program") {
       PUSH_STRING(i.supported_spir_v_versions, clientDevice.getInfo<CL_DEVICE_IL_VERSION>());
+    }
+    if (extName == "cl_khr_command_buffer") {
+      i.cmdbuf_capabilities =
+          clientDevice.getInfo<CL_DEVICE_COMMAND_BUFFER_CAPABILITIES_KHR>();
+      i.cmdbuf_required_properties = clientDevice.getInfo<
+          CL_DEVICE_COMMAND_BUFFER_REQUIRED_QUEUE_PROPERTIES_KHR>();
+#if CL_KHR_COMMAND_BUFFER_VERSION > CL_MAKE_VERSION(0, 9, 5)
+      i.cmdbuf_supported_properties = clientDevice.getInfo<
+          CL_DEVICE_COMMAND_BUFFER_SUPPORTED_QUEUE_PROPERTIES_KHR>();
+#else
+      i.cmdbuf_supported_properties = i.on_host_queue_props;
+#endif
+    } else {
+      i.cmdbuf_supported_properties = i.on_host_queue_props;
     }
     if (exts != "")
       exts += " ";

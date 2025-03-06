@@ -260,6 +260,10 @@ extern "C"
     uint64_t extensions;
     uint64_t builtin_kernels;
     uint64_t supported_spir_v_versions;
+    uint64_t on_host_queue_props;
+    uint64_t cmdbuf_capabilities;
+    uint64_t cmdbuf_required_properties;
+    uint64_t cmdbuf_supported_properties;
 
     uint32_t vendor_id;
     //  uint32_t device_id;

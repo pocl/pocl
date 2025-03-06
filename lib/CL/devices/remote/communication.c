@@ -2222,9 +2222,14 @@ pocl_network_fetch_devinfo (cl_device_id device,
 
   device->profile
       = (devinfo->full_profile ? "FULL_PROFILE" : "EMBEDDED_PROFILE");
-  device->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
+  D (on_host_queue_props);
   device->compiler_available = 1;
   device->linker_available = 1;
+  /* may actually be emulated by the remote pocld */
+  device->native_command_buffers = 1;
+  D (cmdbuf_capabilities);
+  D (cmdbuf_supported_properties);
+  D (cmdbuf_required_properties);
 
   D (local_mem_size);
   D (local_mem_type);

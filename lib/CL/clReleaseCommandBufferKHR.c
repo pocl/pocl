@@ -74,6 +74,14 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
           POname (clReleaseCommandQueue) (q);
         }
 
+      pocl_buffer_migration_info *mi, *tmp;
+      LL_FOREACH_SAFE (command_buffer->migr_infos, mi, tmp)
+        {
+          /* Don't free the mem objects themselves here -- only the recorded
+           * commands hold counted references to them. */
+          POCL_MEM_FREE (mi);
+        }
+
       _cl_command_node *cmd = command_buffer->cmds;
       while (cmd != NULL)
         {
@@ -123,13 +131,6 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
 
           pocl_mem_manager_free_command (cmd);
           cmd = next;
-        }
-
-      pocl_buffer_migration_info *mi, *tmp;
-      LL_FOREACH_SAFE (command_buffer->migr_infos, mi, tmp)
-        {
-          POname (clReleaseMemObject (mi->buffer));
-          POCL_MEM_FREE (mi);
         }
 
       POCL_DESTROY_OBJECT (command_buffer);

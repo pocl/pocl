@@ -22,7 +22,10 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_debug.h"
 #include "pocl_util.h"
+
+#include <CL/cl_ext.h>
 
 CL_API_ENTRY cl_command_buffer_khr CL_API_CALL
 POname (clCreateCommandBufferKHR) (
@@ -56,14 +59,23 @@ POname (clCreateCommandBufferKHR) (
       POCL_GOTO_ERROR_COND ((queues[i]->device == NULL),
                             CL_INVALID_COMMAND_QUEUE);
 
-      POCL_GOTO_ERROR_COND ((queues[i]->device->cmdbuf_capabilities == 0),
-                            CL_INVALID_DEVICE);
-
       POCL_GOTO_ERROR_COND ((queues[i]->context == NULL),
                             CL_INVALID_COMMAND_QUEUE);
 
       POCL_GOTO_ERROR_COND ((queues[i]->context != ref_ctx),
                             CL_INVALID_COMMAND_QUEUE);
+
+      unsigned num_queues_on_dev = 0;
+      for (unsigned j = 0; j < num_queues; ++j)
+        {
+          if (j != i && queues[i]->device == queues[j]->device)
+            num_queues_on_dev += 1;
+        }
+      POCL_GOTO_ERROR_COND (
+        (num_queues_on_dev > 1
+         && !(queues[i]->device->cmdbuf_capabilities
+              & CL_COMMAND_BUFFER_CAPABILITY_MULTIPLE_QUEUE_KHR)),
+        CL_INCOMPATIBLE_COMMAND_QUEUE_KHR);
     }
 
   cl_uint num_properties = 0;
@@ -205,7 +217,7 @@ POname (clCreateCommandBufferKHR) (
   for (unsigned i = 0; i < num_queues; ++i)
     {
       POname (clRetainCommandQueue) (queues[i]);
-      if (queues[i] != queues[0])
+      if (queues[i]->device != queues[0]->device)
         cmdbuf->is_multi_device = 1;
     }
 
