@@ -75,7 +75,7 @@ set(ALL_TESTSUITES
     intel-compute-samples oneapi-samples
     simple-sycl-samples dpcpp-book-samples
     opencl-book-samples OpenCV
-    Parboil piglit PyOpenCL
+    Parboil piglit PyOpenCL SYCL_CTS
     Rodinia shoc VexCL ViennaCL
     UnitCL)
 

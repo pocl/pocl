@@ -2522,7 +2522,7 @@ endif()
 # before all paths in LD_LIBRARY_PATH. Otherwise libOpenCL.so will be found in /opt/intel/oneapi
 # which is not ocl-icd).
 if(SYCL_LIBDIR)
-  set(SYCL_EXTRA "set(ENV{LD_LIBRARY_PATH} \"${OPENCL_LIBDIR}:${SYCL_LIBDIR}:$ENV{LD_LIBRARY_PATH}\")")
+  set(SYCL_EXTRA "set(ENV{LD_LIBRARY_PATH} \"${OPENCL_LIBDIR}:\$ENV{LD_LIBRARY_PATH}\")")
 endif()
 
 # pointing OCL_ICD_VENDORS to pocl doesn't make sense with the proxy driver;
