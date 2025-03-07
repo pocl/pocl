@@ -2244,13 +2244,14 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
   if (ops->notify_event_finished)
     ops->notify_event_finished (event);
   POCL_UNLOCK_OBJ (event);
-  POname (clReleaseEvent) (event);
 
   if (notify_cmdq) {
     POCL_LOCK_OBJ (cq);
     ops->notify_cmdq_finished (cq);
     POCL_UNLOCK_OBJ (cq);
   }
+
+  POname (clReleaseEvent) (event);
 }
 
 void
