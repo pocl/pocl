@@ -1781,16 +1781,21 @@ pocl_init_default_device_infos (cl_device_id dev,
     dev->llvm_target_triplet = "";
 #endif
 
-#if defined(ENABLE_SPIRV) && LLVM_MAJOR >= 20
-  dev->supported_spir_v_versions = "SPIR-V_1.5 SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
+#if defined(ENABLE_SPIRV)
   dev->supported_spirv_extensions = "+SPV_KHR_no_integer_wrap_decoration"
                                     ",+SPV_INTEL_fp_fast_math_mode"
+                                    ",+SPV_EXT_shader_atomic_float_add"
                                     ",+SPV_INTEL_inline_assembly";
-#elif defined(ENABLE_SPIRV)
+#if LLVM_MAJOR >= 20
+  dev->supported_spir_v_versions
+    = "SPIR-V_1.5 SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
+#elif LLVM_MAJOR >= 19
+  dev->supported_spir_v_versions
+    = "SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
+#else
   dev->supported_spir_v_versions = "SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
-  dev->supported_spirv_extensions = "+SPV_KHR_no_integer_wrap_decoration"
-                                    ",+SPV_INTEL_fp_fast_math_mode"
-                                    ",+SPV_INTEL_inline_assembly";
+#endif
+
 #else
   dev->supported_spir_v_versions = "";
   dev->supported_spirv_extensions = "";
