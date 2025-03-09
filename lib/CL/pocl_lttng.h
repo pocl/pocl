@@ -474,7 +474,34 @@ TRACEPOINT_EVENT(
   )
 )
 
+/**
+ *  Create / Free command buffer tracepoint
+ */
+TRACEPOINT_EVENT(
+  pocl_trace,
+  create_command_buffer,
+  TP_ARGS(
+    size_t, context_id,
+    size_t, cmdbuf_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(size_t, context_id, context_id)
+      ctf_integer_hex(size_t, cmdbuf_id, cmdbuf_id)
+  )
+)
 
+TRACEPOINT_EVENT(
+  pocl_trace,
+  free_command_buffer,
+  TP_ARGS(
+    size_t, context_id,
+    size_t, cmdbuf_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(size_t, context_id, context_id)
+      ctf_integer_hex(size_t, cmdbuf_id, cmdbuf_id)
+  )
+)
 
 /**
  *  Create / Free buffer tracepoint

@@ -41,7 +41,10 @@
 #include <sys/un.h>
 #include <unistd.h>
 
+#include "CL/cl_ext.h"
+#include "CL/cl_platform.h"
 #include "common.h"
+#include "pocl.h"
 #include "pocl_cl.h"
 #include "pocl_debug.h"
 #include "pocl_image_util.h"
@@ -50,6 +53,7 @@
 #include "pocl_timing.h"
 #include "remote.h"
 #include "utlist.h"
+#include "utlist_addon.h"
 
 #ifdef ENABLE_RDMA
 #include "pocl_rdma.h"
@@ -109,6 +113,7 @@
 #define TP_FILL_IMAGE(msg_id, dev_id, queue_id, evt_id)
 
 #define TP_NDRANGE_KERNEL(msg_id, dev_id, queue_id, evt_id, kernel_id, name)
+#define TP_COMMAND_BUFFER(msg_id, evt_id, cmdbuf_id, name)
 
 static uint64_t last_message_id = 1992;
 static uint64_t last_peer_id = 42;
@@ -2217,9 +2222,14 @@ pocl_network_fetch_devinfo (cl_device_id device,
 
   device->profile
       = (devinfo->full_profile ? "FULL_PROFILE" : "EMBEDDED_PROFILE");
-  device->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
+  D (on_host_queue_props);
   device->compiler_available = 1;
   device->linker_available = 1;
+  /* may actually be emulated by the remote pocld */
+  device->native_command_buffers = 1;
+  D (cmdbuf_capabilities);
+  D (cmdbuf_supported_properties);
+  D (cmdbuf_required_properties);
 
   D (local_mem_size);
   D (local_mem_type);
@@ -2882,6 +2892,65 @@ pocl_network_free_queue (remote_device_data_t *ddata, uint32_t queue_id)
 }
 
 cl_int
+pocl_network_create_command_buffer (remote_device_data_t *ddata,
+                                    uint64_t cmdbuf_id,
+                                    uint64_t num_commands,
+                                    uint64_t commands_offset,
+                                    uint64_t commands_size,
+                                    uint64_t num_queues,
+                                    uint64_t queues_offset,
+                                    const char *payload)
+{
+  REMOTE_SERV_DATA2;
+
+  CREATE_SYNC_NETCMD;
+
+  POCL_MEASURE_START (REMOTE_CREATE_COMMAND_BUFFER);
+
+  ID_REQUEST (CreateCommandBuffer, cmdbuf_id);
+
+  uint64_t queues_size = sizeof (uint32_t) * num_queues;
+  req->m.create_cmdbuf.num_commands = num_commands;
+  req->m.create_cmdbuf.commands_size = commands_size;
+  req->m.create_cmdbuf.commands_offset = commands_offset;
+  req->m.create_cmdbuf.num_queues = num_queues;
+  req->m.create_cmdbuf.queues_offset = queues_offset;
+  netcmd->req_extra_data = payload;
+  netcmd->req_extra_size = commands_size + queues_size;
+
+  SEND_REQ_SLOW;
+
+  wait_on_netcmd (netcmd);
+
+  POCL_MEASURE_FINISH (REMOTE_CREATE_COMMAND_BUFFER);
+
+  CHECK_REPLY (CreateCommandBuffer);
+  return 0;
+}
+
+cl_int
+pocl_network_free_command_buffer (remote_device_data_t *ddata,
+                                  uint64_t cmdbuf_id)
+{
+  REMOTE_SERV_DATA2;
+
+  CREATE_SYNC_NETCMD;
+
+  POCL_MEASURE_START (REMOTE_FREE_COMMAND_BUFFER);
+
+  ID_REQUEST (FreeCommandBuffer, cmdbuf_id);
+
+  SEND_REQ_FAST;
+
+  wait_on_netcmd (netcmd);
+
+  POCL_MEASURE_FINISH (REMOTE_FREE_COMMAND_BUFFER);
+
+  CHECK_REPLY (FreeCommandBuffer);
+  return 0;
+}
+
+cl_int
 pocl_network_create_sampler (remote_device_data_t *ddata,
                              cl_bool normalized_coords,
                              cl_addressing_mode addressing_mode,
@@ -3381,6 +3450,27 @@ pocl_network_run_kernel (uint32_t cq_id, remote_device_data_t *ddata,
 
   TP_NDRANGE_KERNEL (req->msg_id, ddata->local_did, cq_id,
                      node->sync.event.event->id, kernel_id, kernel->name);
+
+  SEND_REQ_FAST;
+
+  return 0;
+}
+
+cl_int
+pocl_network_run_command_buffer (remote_device_data_t *ddata,
+                                 network_command_callback cb,
+                                 void *arg,
+                                 _cl_command_node *node)
+{
+  REMOTE_SERV_DATA2;
+
+  CREATE_ASYNC_NETCMD;
+
+  ID_REQUEST (RunCommandBuffer, node->command.replay.buffer->id);
+  req->cq_id = node->sync.event.event->queue->id;
+
+  TP_COMMAND_BUFFER (req->msg_id, node->sync.event.event->id,
+                     node->command.run_cmdbuf.id, node->sync.event.event->id);
 
   SEND_REQ_FAST;
 

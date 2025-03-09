@@ -973,6 +973,8 @@ void PoclDaemon::readAllClientSocketsThread() {
                   case MessageType_FreeSampler:
                   case MessageType_CreateImage:
                   case MessageType_FreeImage:
+                  case MessageType_CreateCommandBuffer:
+                  case MessageType_FreeCommandBuffer:
                   case MessageType_CreateKernel:
                   case MessageType_FreeKernel:
                   case MessageType_BuildProgramFromSource:
@@ -1003,6 +1005,7 @@ void PoclDaemon::readAllClientSocketsThread() {
                   case MessageType_ReadImageRect:
                   case MessageType_WriteImageRect:
                   case MessageType_FillImageRect:
+                  case MessageType_RunCommandBuffer:
                   case MessageType_RunKernel: {
                     Ctx->queuedPush(R);
                     break;

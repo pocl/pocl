@@ -24,6 +24,8 @@
    IN THE SOFTWARE.
 */
 
+#include "pocl.h"
+#include "pocl_cl.h"
 #define _BSD_SOURCE
 #define _DEFAULT_SOURCE
 #define _POSIX_C_SOURCE 200809L
@@ -53,6 +55,8 @@
 #ifdef __MINGW32__
 #include <process.h>
 #endif
+
+#include <CL/cl_ext.h>
 
 #include "common.h"
 #include "devices.h"
@@ -871,7 +875,19 @@ pocl_command_record (cl_command_buffer_khr command_buffer,
       POCL_UNLOCK (command_buffer->mutex);
       return CL_INVALID_OPERATION;
     }
-  DL_APPEND (command_buffer->cmds, cmd);
+  pocl_buffer_migration_info *mi;
+  LL_FOREACH (cmd->migr_infos, mi)
+    {
+      /* Note: mem object refcounts are NOT bumped here as deduplicating them
+       * to match the migration info list would introduce unnecessary
+       * complexity. The recorded commands themselves already hold counted
+       * references to their buffers and they are expected to live until the
+       * entire command buffer is destroyed. */
+      command_buffer->migr_infos = pocl_append_unique_migration_info (
+        command_buffer->migr_infos, mi->buffer, mi->read_only);
+    }
+  LL_APPEND (command_buffer->cmds, cmd);
+
   if (sync_point != NULL)
     *sync_point = command_buffer->num_syncpoints + 1;
   command_buffer->num_syncpoints++;
@@ -1812,6 +1828,7 @@ pocl_run_command_capture_output (char *capture_string,
         return EXIT_FAILURE;
     }
   assert (!"UNREACHABLE!");
+  return EXIT_FAILURE;
 #elif _WIN32 // ^ HAVE_FORK ^
   char *cmd = build_cmd_from_arglist (args);
   if (!cmd)
@@ -2067,6 +2084,9 @@ pocl_copy_command_node (_cl_command_node *dst_node, _cl_command_node *src_node)
               src_node->command.svm_fill.pattern_size);
       break;
 
+    case CL_COMMAND_COMMAND_BUFFER_KHR:
+      POname (clRetainCommandBufferKHR) (dst_node->command.replay.buffer);
+
     /* These cases are currently not handled in pocl_copy_event_node,
      * because there is no command buffer equivalent of these nodes. */
     case CL_COMMAND_NATIVE_KERNEL:
@@ -2224,13 +2244,14 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
   if (ops->notify_event_finished)
     ops->notify_event_finished (event);
   POCL_UNLOCK_OBJ (event);
-  POname (clReleaseEvent) (event);
 
   if (notify_cmdq) {
     POCL_LOCK_OBJ (cq);
     ops->notify_cmdq_finished (cq);
     POCL_UNLOCK_OBJ (cq);
   }
+
+  POname (clReleaseEvent) (event);
 }
 
 void

@@ -25,6 +25,7 @@
 
 #include <string.h>
 
+#include "CL/cl.h"
 #include "config2.h"
 
 #include "common.h"
@@ -393,18 +394,14 @@ pocl_cpu_init_common (cl_device_id device)
      || (defined(ENABLE_CONFORMANCE) && (HOST_DEVICE_CL_VERSION_MAJOR >= 3)))
   /* full memory consistency model for atomic memory and fence operations
   https://www.khronos.org/registry/OpenCL/specs/3.0-unified/html/OpenCL_API.html#opencl-3.0-backwards-compatibility*/
-  device->atomic_memory_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
-                                       | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
-                                       | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
-                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
-                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE
-                                       | CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES;
-  device->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
-                                       | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
-                                       | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
-                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM 
-                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
-                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+  device->atomic_memory_capabilities
+    = CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
+      | CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP
+      | CL_DEVICE_ATOMIC_SCOPE_DEVICE | CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES;
+  device->atomic_fence_capabilities
+    = CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
+      | CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM
+      | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
 
   device->svm_allocation_priority = 1;
 
@@ -469,7 +466,7 @@ pocl_cpu_init_common (cl_device_id device)
       | CL_COMMAND_BUFFER_CAPABILITY_KERNEL_PRINTF_KHR
       | CL_COMMAND_BUFFER_CAPABILITY_MULTIPLE_QUEUE_KHR;
   device->cmdbuf_required_properties = 0;
-  device->cmdbuf_supported_properties = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+  device->cmdbuf_supported_properties = device->on_host_queue_props;
   /* TBD: arguments, in particular buffers, require more work
    * because of migration commands */
   device->cmdbuf_mutable_dispatch_capabilities

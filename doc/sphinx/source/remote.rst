@@ -157,7 +157,7 @@ installing some extra packages before building pocl.
 To build the remote *client*::
 
     mkdir build; cd build;
-    cmake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LLVM=0 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_ICD=1 -DENABLE_REMOTE_CLIENT=1 ..
+    cmake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LLVM=0 -DENABLE_ICD=1 -DENABLE_REMOTE_CLIENT=1 ..
     make -j$(nproc)
 
 This should produce **lib/CL/libpocl.so** (the client library that implements
@@ -390,7 +390,7 @@ Dynamic Device Management and Network Discovery
 The Dynamic Device Management and Network Discovery adds the ability to find and
 manage remote servers in both Local Area Networks (LAN) and Wide Area Networks
 (WAN). Through discovery remote servers can be discovered and their OpenCL
-devices can be dynamically added to the platform. 
+devices can be dynamically added to the platform.
 
 **Network Discovery Mechanisms**
 
@@ -471,7 +471,7 @@ specified in :ref:`remote-how-to-build`.
 Discovery in client using mDNS::
 
     mkdir build; cd build;
-    cmake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LLVM=0 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_ICD=1 -DENABLE_REMOTE_CLIENT=1 -DENABLE_REMOTE_DISCOVERY_AVAHI=1 ..
+    cmake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LLVM=0 -DENABLE_ICD=1 -DENABLE_REMOTE_CLIENT=1 -DENABLE_REMOTE_DISCOVERY_AVAHI=1 ..
     make -j$(nproc)
 
 Environment variables::
@@ -490,9 +490,9 @@ Discovery in client using unicast-DNS-SD, build is same as mDNS::
     export POCL_REMOTE0_PARAMETERS='<IP ADDRESS>:<PORT>/<DEVICE ID>#<PEER ADDRESS>'
 
 Discovery in client using DHT::
-  
+
     mkdir build; cd build;
-    cmake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LLVM=0 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_ICD=1 -DENABLE_REMOTE_CLIENT=1 -DENABLE_REMOTE_DISCOVERY_DHT=1 ..
+    cmake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LLVM=0 -DENABLE_ICD=1 -DENABLE_REMOTE_CLIENT=1 -DENABLE_REMOTE_DISCOVERY_DHT=1 ..
     make -j$(nproc)
 
 Environment variables::
@@ -518,7 +518,7 @@ Add PTR records:
 
 * ``b._dns-sd._udp.example.com`` points to ``example.com`` - Sets browse domain
   to "example.com".
-  
+
 * ``_services._dns-sd._udp.example.com`` points to ``pocl._tcp.example.com`` -
   Adds the service type "pocl" in the seacrh domain.
 
@@ -548,7 +548,7 @@ Environment variables::
     export POCL_REMOTE_DHT_PORT=<DHT PORT>
     export POCL_REMOTE_DHT_BOOTSTRAP=<BOOTSTRAP IP>
     export POCL_REMOTE_DHT_KEY=<COMMON KEY>
-    
+
 
 Implementation Notes
 --------------------
@@ -561,9 +561,6 @@ limited testing outside the original lab since it has not been publicly availabl
   in parallel, but each enqueued command has an implicit clFinish() and
   there is network communication before the next command is launched.
   This is a key bottleneck that will be resolved in a future version.
-
-* For the time being the client side part of PoCL-Remote must be built with the
-  ``ENABLE_LOADABLE_DRIVERS`` build option set to ``OFF``. See `issue 1297 <https://github.com/pocl/pocl/issues/1297>`_.
 
 * The old SPIR 1.2/2.0 are not supported and the respective extension is masked out from
   remote devices' extension lists by pocld.
