@@ -279,7 +279,13 @@ bool VariableUniformityAnalysisResult::isUniform(llvm::Function *F,
     return true;
   }
 
-  if (isa<llvm::ConstantInt>(V)) {
+  llvm::Module *M = F->getParent();
+  if (isa<llvm::Constant>(V) && !(V == M->getGlobalVariable(LID_G_NAME(0)) ||
+                                  V == M->getGlobalVariable(LID_G_NAME(1)) ||
+                                  V == M->getGlobalVariable(LID_G_NAME(2)) ||
+                                  V == M->getGlobalVariable(GID_G_NAME(0)) ||
+                                  V == M->getGlobalVariable(GID_G_NAME(1)) ||
+                                  V == M->getGlobalVariable(GID_G_NAME(2)))) {
     setUniform(F, V, true);
     return true;
   }
@@ -373,32 +379,7 @@ bool VariableUniformityAnalysisResult::isUniform(llvm::Function *F,
     return isUniformAlloca;
   }
 
-  /* TODO: global memory loads are uniform in case they are accessing
-     the higher scope ids (group_id_?). */
-  if (isa<llvm::LoadInst>(V)) {
-    llvm::LoadInst *load = dyn_cast<llvm::LoadInst>(V);
-    llvm::Value *pointer = load->getPointerOperand();
-    llvm::Module *M = load->getParent()->getParent()->getParent();
-
-    if (pointer == M->getGlobalVariable("_group_id_x") ||
-        pointer == M->getGlobalVariable("_group_id_y") ||
-        pointer == M->getGlobalVariable("_group_id_z") ||
-        pointer == M->getGlobalVariable("_work_dim") ||
-        pointer == M->getGlobalVariable("_num_groups_x") ||
-        pointer == M->getGlobalVariable("_num_groups_y") ||
-        pointer == M->getGlobalVariable("_num_groups_z") ||
-        pointer == M->getGlobalVariable("_global_offset_x") ||
-        pointer == M->getGlobalVariable("_global_offset_y") ||
-        pointer == M->getGlobalVariable("_global_offset_z") ||
-        pointer == M->getGlobalVariable("_local_size_x") ||
-        pointer == M->getGlobalVariable("_local_size_y") ||
-        pointer == M->getGlobalVariable("_local_size_z") ||
-        pointer == M->getGlobalVariable(PoclGVarBufferName)) {
-
-      setUniform(F, V, true);
-      return true;
-    }
-  } else if (llvm::CallInst *Call = dyn_cast<llvm::CallInst>(V)) {
+  if (llvm::CallInst *Call = dyn_cast<llvm::CallInst>(V)) {
     auto Callee = Call->getCalledFunction();
     if (Callee == nullptr) {
       // Likely inline asm. Cannot analyze uniformity.
