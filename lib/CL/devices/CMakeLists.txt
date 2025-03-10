@@ -125,6 +125,12 @@ if(ENABLE_TCE)
 endif()
 
 if(ENABLE_PROXY_DEVICE)
+  if(HAVE_TREE_SITTER)
+    add_subdirectory("tree_sitter")
+    list(APPEND POCL_DEVICES_LINK_LIST pocl_tree_sitter_utils tree-sitter)
+    set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
+            "$<TARGET_OBJECTS:pocl_tree_sitter_utils>")
+  endif ()
   add_subdirectory("proxy")
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
     "$<TARGET_OBJECTS:pocl-devices-proxy>")
@@ -231,6 +237,10 @@ if(BUILD_SHARED_LIBS AND MSVC)
   target_compile_definitions("pocl-devices" INTERFACE IMPORT_POCL_LIB)
 endif()
 
+
+if(HAVE_TREE_SITTER)
+  target_link_libraries("pocl-devices" PRIVATE tree-sitter)
+endif()
 
 set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
     "$<TARGET_OBJECTS:pocl-devices>")

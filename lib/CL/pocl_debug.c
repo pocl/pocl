@@ -120,7 +120,7 @@ void pocl_debug_messages_setup(const char *debug) {
     else if (strncmp(ptr, "err", 3) == 0)
       pocl_debug_messages_filter |= POCL_DEBUG_FLAG_ERROR;
     else
-      POCL_MSG_WARN("Unknown token in POCL_DEBUG env var: %s", ptr);
+      POCL_MSG_WARN ("Unknown token in POCL_DEBUG env var: %s\n", ptr);
 
     ptr = strtok(NULL, ",");
   }

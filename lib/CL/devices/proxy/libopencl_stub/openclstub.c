@@ -82,7 +82,6 @@ static int
 open_libopencl_so ()
 {
   char *path = NULL, *str = NULL;
-  int i;
 
   if ((str = getenv ("LIBOPENCL_SO_PATH")) && access_file (str))
     {
@@ -103,7 +102,8 @@ open_libopencl_so ()
 
   if (!path)
     {
-      for (i = 0; i < (sizeof (default_so_paths) / sizeof (char *)); i++)
+      for (size_t i = 0; i < (sizeof (default_so_paths) / sizeof (char *));
+           i++)
         {
           if (access_file (default_so_paths[i]))
             {
