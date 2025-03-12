@@ -258,8 +258,13 @@ int pocl_get_program_spec_constants(cl_program program, char *spirv_path,
         (uint64_t *)calloc(NumConst, sizeof(uint64_t));
     program->spec_const_is_set = (char *)calloc(NumConst, sizeof(char));
     for (unsigned i = 0; i < program->num_spec_consts; ++i) {
+#if LLVM_MAJOR >= 16
       program->spec_const_ids[i] = SpecConstInfoVec[i].ID;
       program->spec_const_sizes[i] = SpecConstInfoVec[i].Size;
+#else
+      program->spec_const_ids[i] = SpecConstInfoVec[i].first;
+      program->spec_const_sizes[i] = SpecConstInfoVec[i].second;
+#endif
       program->spec_const_values[i] = 0;
       program->spec_const_is_set[i] = CL_FALSE;
     }
