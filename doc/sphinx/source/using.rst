@@ -464,3 +464,5 @@ pocl.
   The kernel command parameters PoCL currently specializes with include
   the local size, global offset zero or non-zero and maximum grid size.
   The specialization can be disabled by setting this environment variable to 0.
+
+.. include:: sycl_dpcpp.rst
