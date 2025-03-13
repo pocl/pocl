@@ -63,18 +63,6 @@ the pkg-config::
 In this link mode, your program will always require the pocl OpenCL library. It
 wont be able to run with another OpenCL implementation without recompilation.
 
-Using pocl on MacOSX
---------------------
-
-On MacOSX, you can either link your program directly with pocl or link through the
-ICD loader by KhronosGroup.
-
-Even if you use an ICD loader, the Apple OpenCL implementation will still be invisible,
-unless you use a wrapper library to expose the Apple OpenCL implementation as an ICD.
-
-When ENABLE_ICD is turned off and an application links directly with PoCL, the only
-platform that is visible to the application will be PoCL.
-
 .. _pocl-env-variables:
 
 Tuning pocl behavior with ENV variables
@@ -464,3 +452,5 @@ pocl.
   The kernel command parameters PoCL currently specializes with include
   the local size, global offset zero or non-zero and maximum grid size.
   The specialization can be disabled by setting this environment variable to 0.
+
+.. include:: macos.rst
