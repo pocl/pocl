@@ -1,49 +1,54 @@
-==========================================
+.. _sycl_dpcpp:
+
 Using PoCL as the OpenCL backend for DPC++
-==========================================
+------------------------------------------
 
-SYCL is programming model that enables single-source C++ development for
-heterogenous computing. Compared to OpenCL, SYCL operates at a higher level
-of abstraction, relying on lower-level implementations like OpenCL for device
-offloading.
+SYCL is a programming model that enables single-source C++ development for
+heterogeneous computing. Compared to OpenCL, SYCL operates at a higher level
+of abstraction, and implementations can use varying backends
+for device offloading (e.g., OpenCL, Level Zero, and CUDA). It is worth noting
+that a SYCL implementation is not required to support OpenCL as a backend.
 
-If the OpenCL backend is used, the SYCL runtime translates the SYCL API calls
-into corresponding OpenCL API calls and forwards them to the OpenCL runtime.
+DPC++ is Intel's implementation of SYCL that supports OpenCL. When the OpenCL backend
+is utilized, the DPC++ runtime translates SYCL API calls into corresponding OpenCL
+API calls and forwards them to the OpenCL runtime.
 
-DPC++ is Intel's implementation of SYCL, and the toolchain flow is as follows:
+The toolchain flow, when PoCL is used as the OpenCL backend for DPC++, is as follows:
 
 - The DPC++ Clang++ frontend compiles the SYCL kernel into LLVM IR.
 - ``llvm-spirv`` is used to translate LLVM IR to SPIR-V.
 - SPIR-V is ingested by PoCL, where it is translated back into LLVM IR.
 - PoCL applies additional transformations to the LLVM IR.
-- If using CPU driver, PoCL leverages ``llc`` (LLVM backend) to lower the kernel to machine code.
+- If using a CPU driver, PoCL leverages ``llc`` (LLVM backend) to lower the kernel to machine code.
+
+It should be pointed out that there are two versions of DPC++:
+
+- the **Intel(R) oneAPI DPC++/C++ Compiler**
+- the **oneAPI DPC++/C++ Compiler**.
+
+The former is proprietary and thus distributed in binary form, whereas the latter is
+open-source.
 
 This page covers the following steps:
 
-- How to obtain, install, and set up DPC++ (Proprietary or open-source version)
+- How to obtain, install, and set up DPC++ (the proprietary or the open-source version)
 - How to build PoCL to support DPC++.
 - Verification with an example program.
 
 
-Propietary oneAPI DPC++ installation
-------------------------------------
+Intel(R) oneAPI DPC++/C++ Compiler installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-DPC++ is available with various bundles, but the oneAPI Base Toolkit is a safe bet:
+DPC++ is available in various bundles, but the oneAPI Base Toolkit is a safe bet.
+
+Choose a suitable installer from:
 
 https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html
 
-There are multiple ways to obtain the installer. For the offline GUI installer (check the website above for the latest version)::
+Run the installer. The page above provides corresponding instructions for the selected installer.
+Pay attention to the default installation path and choose a suitable one if necessary.
 
-    wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/dfc4a434-838c-4450-a6fe-2fa903b75aa7/intel-oneapi-base-toolkit-2025.0.1.46_offline.sh
-
-
-The installer can be run with different options, either via the GUI or command line.
-
-To install with GUI::
-
-    sh ./intel-oneapi-base-toolkit-2025.0.1.46_offline.sh
-
-The oneAPI Base Toolkit includes various components, some of which have dependencies.
+The oneAPI Base Toolkit includes various components, some of which are not needed.
 
 For a minimal setup, pick:
 
@@ -70,8 +75,8 @@ The initialization script also adds the compiler to the ``PATH``::
     Intel(R) oneAPI DPC++/C++ Compiler 2025.0.4 (2025.0.4.20241205)
 
 
-Open-source DPC++ installation
-------------------------------
+oneAPI DPC++/C++ Compiler installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The sources for the open-source DPC++ compiler can be obtained from `DPC++ repository <https://github.com/intel/llvm>`__.
 
 Official detailed instructions can be found `here <https://intel.github.io/llvm-docs/GetStartedGuide.html#build-dpc-toolchain>`__.
@@ -80,7 +85,7 @@ The ``configure.py`` is essentially a wrapper for **CMake**, so checking its con
 
 For a basic setup, run::
 
-    git clone git@github.com:intel/llvm.
+    git clone git@github.com:intel/llvm
     cd llvm
     python3 ./buildbot/configure.py -o <path-to-dpcpp-installation>
     python3 ./buildbot/compile.py -o <path-to-dpcpp-installation> -j <number-of-threads>
@@ -99,13 +104,13 @@ After building, export the compiler and SYCL runtime library paths::
 
 
 Building PoCL for DPC++
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 PoCL doesn't normally require ``llvm-spirv``, but in this case, it is a strict
-dependency because PoCL needs to convert SPIR-V back to LLVM IR.
+dependency because PoCL needs to convert the SPIR-V produced by DPC++ back to LLVM IR.
 
 Pay attention to LLVM and ``llvm-spirv`` versions:
 
-- DPC++ includes its own ``llvm-spirv`` which is typically the latest version (Do not use it with PoCL - it is meant for internal use by DPC++).
+- DPC++ includes its own ``llvm-spirv`` which is typically the latest version. However, it cannot be used with PoCL, as it is meant for internal use by DPC++.
 - You need a separate build of ``llvm-spirv`` checked out from the branch that corresponds to the LLVM version PoCL uses as its kernel compiler.
 - These two versions of ``llvm-spirv`` should be reasonably close to each other, but they do not have to be an exact match.
 
@@ -126,9 +131,9 @@ The final step is to make PoCL visible to ICD loader::
 
 
 Compiling with DPC++ using PoCL as the backend
-----------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If using proprietary DPC++, there are a few additional steps. Proprietary DPC++
-expects the Intel OpenCL runtime so we have to make PoCL appear as one::
+expects the Intel OpenCL runtime, so we need to make PoCL pretend to be one::
 
     unset OCL_ICD_FILENAMES
     export POCL_DRIVER_VERSION_OVERRIDE=2023.16.7.0.21_160000
@@ -181,7 +186,7 @@ Below is a simple SYCL program to test the setup. It selects the device automati
         return 0;
     }
 
-Compile and run (use ``icpx`` for propietary version, and ``clang++`` for open-source version)::
+Compile and run (use ``icpx`` for proprietary version, and ``clang++`` for open-source version)::
 
     clang++ hello_nd_range.cpp -fsycl -o hello
     ./hello

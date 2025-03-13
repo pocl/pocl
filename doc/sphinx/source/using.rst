@@ -454,3 +454,4 @@ pocl.
   The specialization can be disabled by setting this environment variable to 0.
 
 .. include:: macos.rst
+.. include:: sycl_dpcpp.rst
