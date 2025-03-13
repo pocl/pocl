@@ -164,7 +164,7 @@ pocl.
 
  Overrides the vendor id reported by PoCL for the CPU drivers.
  For example, setting the vendor id to be 32902 (0x8086) and setting the driver
- version using **POCL_DRIVER_VER_OVERRIDE** to "2023.16.7.0.21_160000" (or such) can
+ version using **POCL_DRIVER_VERSION_OVERRIDE** to "2023.16.7.0.21_160000" (or such) can
  be used to convince binary-distributed DPC++ compilers to compile and run SYCL
  programs on the PoCL-CPU driver.
 
@@ -464,3 +464,5 @@ pocl.
   The kernel command parameters PoCL currently specializes with include
   the local size, global offset zero or non-zero and maximum grid size.
   The specialization can be disabled by setting this environment variable to 0.
+
+.. include:: sycl_dpcpp.rst
