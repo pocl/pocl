@@ -2532,7 +2532,7 @@ pocl_cuda_finalize_command (cl_device_id device, cl_event event)
 
   pocl_update_event_running (event);
   if (event->status < 0)
-    POCL_UPDATE_EVENT_FAILED_MSG (event, "CUDA event failed");
+    POCL_UPDATE_EVENT_FAILED_MSG (CL_FAILED, event, "CUDA event failed");
   else
     POCL_UPDATE_EVENT_COMPLETE_MSG (event, "CUDA event");
 }
