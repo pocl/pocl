@@ -1940,24 +1940,6 @@ bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
   ze_command_queue_handle_t Queue = nullptr;
   ze_command_list_handle_t CmdList = nullptr;
 
-#ifdef LEVEL0_IMMEDIATE_CMDLIST
-  ze_command_queue_desc_t cmdQueueDesc = {
-      ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
-      nullptr,
-      Ordinal,
-      0, // index
-      0, // flags   // ZE_COMMAND_QUEUE_FLAG_EXPLICIT_ONLY
-      ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,
-      ZE_COMMAND_QUEUE_PRIORITY_NORMAL};
-  for (unsigned i = 0; i < Count; ++i) {
-    cmdQueueDesc.index = i;
-    ZeRes = zeCommandListCreateImmediate(ContextH, DeviceH, &cmdQueueDesc,
-                                         &CmdList);
-    LEVEL0_CHECK_RET(false, ZeRes);
-    QHandles[i] = nullptr;
-    LHandles[i] = CmdList;
-  }
-#else
   ze_command_queue_desc_t cmdQueueDesc = {
       ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
       nullptr,
@@ -1972,6 +1954,16 @@ bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
       ZE_COMMAND_LIST_FLAG_RELAXED_ORDERING |
           ZE_COMMAND_LIST_FLAG_MAXIMIZE_THROUGHPUT};
 
+#ifdef LEVEL0_IMMEDIATE_CMDLIST
+  for (unsigned i = 0; i < Count; ++i) {
+    cmdQueueDesc.index = i;
+    ZeRes = zeCommandListCreateImmediate(ContextH, DeviceH, &cmdQueueDesc,
+                                         &CmdList);
+    LEVEL0_CHECK_RET(false, ZeRes);
+    QHandles[i] = nullptr;
+    LHandles[i] = CmdList;
+  }
+#else
   for (unsigned i = 0; i < Count; ++i) {
     cmdQueueDesc.index = i;
     ZeRes = zeCommandQueueCreate(ContextH, DeviceH, &cmdQueueDesc, &Queue);
@@ -3028,7 +3020,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   if (ClDev->atomic_memory_capabilities & CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES)
     OpenCL30Features.append(" __opencl_c_atomic_scope_all_devices");
 
-#ifndef ENABLE_CONFORMANCE
+#if !defined(ENABLE_CONFORMANCE) && !defined(LEVEL0_IMMEDIATE_CMDLIST)
   // command buffers only make sense if we're using LevelZero queues for all commands
   if (prefersZeQueues()) {
     Extensions.append(" cl_khr_command_buffer");

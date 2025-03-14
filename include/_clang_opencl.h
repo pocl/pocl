@@ -314,26 +314,48 @@ intel_sub_group_block_read_uc16 (read_write image2d_t, int2);
 #endif // defined(__opencl_c_images)
 
 uchar _CL_OVERLOADABLE _CL_CONV
-intel_sub_group_block_read_uc (const __global uchar *p);
+intel_sub_group_block_read_uc (const global uchar *p);
 uchar2 _CL_OVERLOADABLE _CL_CONV
-intel_sub_group_block_read_uc2 (const __global uchar *p);
+intel_sub_group_block_read_uc2 (const global uchar *p);
 uchar4 _CL_OVERLOADABLE _CL_CONV
-intel_sub_group_block_read_uc4 (const __global uchar *p);
+intel_sub_group_block_read_uc4 (const global uchar *p);
 uchar8 _CL_OVERLOADABLE _CL_CONV
-intel_sub_group_block_read_uc8 (const __global uchar *p);
+intel_sub_group_block_read_uc8 (const global uchar *p);
 uchar16 _CL_OVERLOADABLE _CL_CONV
-intel_sub_group_block_read_uc16 (const __global uchar *p);
+intel_sub_group_block_read_uc16 (const global uchar *p);
 
-void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_uc (__global uchar *p,
+uchar _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_uc (const local uchar *p);
+uchar2 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_uc2 (const local uchar *p);
+uchar4 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_uc4 (const local uchar *p);
+uchar8 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_uc8 (const local uchar *p);
+uchar16 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_uc16 (const local uchar *p);
+
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_uc (global uchar *p,
                                                       uchar data);
-void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_uc2 (__global uchar *p,
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_uc2 (global uchar *p,
                                                        uchar2 data);
-void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_uc4 (__global uchar *p,
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_uc4 (global uchar *p,
                                                        uchar4 data);
-void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_uc8 (__global uchar *p,
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_uc8 (global uchar *p,
                                                        uchar8 data);
-void _CL_OVERLOADABLE _CL_CONV
-intel_sub_group_block_write_uc16 (__global uchar *p, uchar16 data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_uc16 (global uchar *p,
+                                                       uchar16 data);
+
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_uc (local uchar *p,
+                                                      uchar data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_uc2 (local uchar *p,
+                                                       uchar2 data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_uc4 (local uchar *p,
+                                                       uchar4 data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_uc8 (local uchar *p,
+                                                       uchar8 data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_uc16 (local uchar *p,
+                                                       uchar16 data);
 
 #if defined(__opencl_c_images)
 void _CL_OVERLOADABLE _CL_CONV
