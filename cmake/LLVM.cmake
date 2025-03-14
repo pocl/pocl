@@ -392,16 +392,20 @@ find_path(LLVM_SPIRV_INCLUDEDIR "LLVMSPIRVLib.h"
 find_library(LLVM_SPIRV_LIB "LLVMSPIRVLib" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
 
 # Ubuntu's libllvmspirv-XY-dev packages unfortunately use unversioned
-# /usr/include and /usr/lib/<arch>/libLLVMSPIRVLib.so
-find_path(LLVM_SPIRV_INCLUDEDIR "LLVMSPIRVLib.h" PATH_SUFFIXES "LLVMSPIRVLib")
-find_library(LLVM_SPIRV_LIB "LLVMSPIRVLib" PATHS "${LLVM_LIBDIR}")
+# /usr/include and /usr/lib/<arch>/libLLVMSPIRVLib.so. Because of this
+# we prefer llvm-spirv if the user explicitly requested it by setting
+# the LLVM_SPIRV variable.
+set(HAVE_LLVM_SPIRV_LIB 0)
+if (NOT DEFINED LLVM_SPIRV)
+  find_path(LLVM_SPIRV_INCLUDEDIR "LLVMSPIRVLib.h" PATH_SUFFIXES "LLVMSPIRVLib")
+  find_library(LLVM_SPIRV_LIB "LLVMSPIRVLib" PATHS "${LLVM_LIBDIR}")
 
-if(LLVM_SPIRV_INCLUDEDIR AND LLVM_SPIRV_LIB)
-  message(STATUS "found LLVMSPIRV library: ${LLVM_SPIRV_INCLUDEDIR} | ${LLVM_SPIRV_LIB}")
-  set(HAVE_LLVM_SPIRV_LIB 1)
-else()
-  message(STATUS "LLVMSPIRV library not found: ${LLVM_SPIRV_INCLUDEDIR} | ${LLVM_SPIRV_LIB}")
-  set(HAVE_LLVM_SPIRV_LIB 0)
+  if(LLVM_SPIRV_INCLUDEDIR AND LLVM_SPIRV_LIB)
+    message(STATUS "found LLVMSPIRV library: ${LLVM_SPIRV_INCLUDEDIR} | ${LLVM_SPIRV_LIB}")
+    set(HAVE_LLVM_SPIRV_LIB 1)
+  else()
+    message(STATUS "LLVMSPIRV library not found: ${LLVM_SPIRV_INCLUDEDIR} | ${LLVM_SPIRV_LIB}")
+  endif()
 endif()
 
 set_expr(HAVE_SPIRV_LINK SPIRV_LINK)
