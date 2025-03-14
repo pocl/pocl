@@ -114,19 +114,26 @@ get_first_llid (void)
 uint4 _CL_OVERLOADABLE
 sub_group_ballot (int predicate)
 {
-  /* The results for the ballot for all of the WG's SGs. */
+  /* The results for the ballot for all of the WG's SGs. This allocates
+     more than needed (one uint4 for each WI while one for each SG would
+     suffice). */
   uint4 *flags = __pocl_work_group_alloca (sizeof (uint4), sizeof (uint4), 0);
+
   /* Temporary storage for the predicate flags of all WIs in the WG. */
   char *res = __pocl_work_group_alloca (sizeof (char), 4, 0);
   res[get_local_linear_id ()] = !!predicate;
+
   sub_group_barrier (CLK_LOCAL_MEM_FENCE);
   if (get_sub_group_local_id () == 0)
     {
       flags[get_sub_group_id ()] = 0;
-      uint *f = (uint *)(flags + get_sub_group_id ());
-      for (uint i = 0; i < get_sub_group_size () && i < 128; ++i)
+
+      /* The subgroup's uint4 where to flip up the ballot results. */
+      uint *f = (uint *)&flags[get_sub_group_id ()];
+      for (uint i = 0; i < get_sub_group_size () && i < sizeof (uint4) * 8;
+           ++i)
         {
-          f[i / 32] |= res[get_first_llid () + i] << (i % 32);
+          f[i / (sizeof (uint) * 8)] |= res[get_first_llid () + i] << (i % 32);
         }
     }
   sub_group_barrier (CLK_LOCAL_MEM_FENCE);

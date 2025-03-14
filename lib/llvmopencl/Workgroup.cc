@@ -1164,11 +1164,12 @@ void WorkgroupImpl::privatizeContext(Function *F) {
     }
   }
 
+  StoreInst *LocalSizeXStore = nullptr;
   if (WGDynamicLocalSize) {
     if (LocalSizeAllocas[0] != nullptr)
-      Builder.CreateStore(
-        createLoadFromContext(Builder, PC_LOCAL_SIZE, 0),
-        LocalSizeAllocas[0]);
+      LocalSizeXStore =
+          Builder.CreateStore(createLoadFromContext(Builder, PC_LOCAL_SIZE, 0),
+                              LocalSizeAllocas[0]);
 
     if (LocalSizeAllocas[1] != nullptr)
       Builder.CreateStore(
@@ -1181,10 +1182,10 @@ void WorkgroupImpl::privatizeContext(Function *F) {
       LocalSizeAllocas[2]);
   } else {
     if (LocalSizeAllocas[0] != nullptr)
-      Builder.CreateStore(
-        ConstantInt::get(
-          LocalSizeAllocas[0]->getAllocatedType(), WGLocalSizeX, 0),
-        LocalSizeAllocas[0]);
+      LocalSizeXStore = Builder.CreateStore(
+          ConstantInt::get(LocalSizeAllocas[0]->getAllocatedType(),
+                           WGLocalSizeX, 0),
+          LocalSizeAllocas[0]);
 
     if (LocalSizeAllocas[1] != nullptr)
       Builder.CreateStore(
@@ -1237,10 +1238,11 @@ void WorkgroupImpl::privatizeContext(Function *F) {
           Builder, {"_num_groups_x", "_num_groups_y", "_num_groups_z"},
           PC_NUM_GROUPS));
 
-  // Privatize the subgroup size (for CPUs), if referred.
+  // Initialize the SG size global and privatize it.
   if (M->getGlobalVariable("_pocl_sub_group_size") != nullptr) {
     Value *SGSize = getRequiredSubgroupSize(*F);
     if (SGSize == nullptr) {
+      Builder.SetInsertPoint(LocalSizeXStore->getNextNode());
       SGSize = Builder.CreateLoad(LocalSizeAllocas[0]->getAllocatedType(),
                                   LocalSizeAllocas[0]);
     }
