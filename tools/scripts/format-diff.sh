@@ -19,7 +19,7 @@ RELPATH=$(dirname "$SCRIPTPATH")
 # cd to root directory of the git repo
 cd "${GITROOT}" || exit 1
 
-if [ $# -ne 1 ]; then
+if [ $# -ne 0 ]; then
     if git status --porcelain=1 -uno | grep '^.[MTDRC] '; then
 	>&2 echo "There are unstaged changes - aborting."
 	exit 1
