@@ -549,22 +549,27 @@ setup_kernel_metadata (cl_program program)
   /* calculate argument storage size */
   for (i = 0; i < program->num_kernels; ++i)
     {
-      program->kernel_meta[i].total_argument_storage_size = 0;
-      if (program->kernel_meta[i].num_args > 0)
+      pocl_kernel_metadata_t *kmeta = &program->kernel_meta[i];
+      kmeta->total_argument_storage_size = 0;
+      if (kmeta->num_args > 0)
         {
           size_t total = 0;
-          for (j = 0; j < program->kernel_meta[i].num_args; ++j)
+          for (j = 0; j < kmeta->num_args; ++j)
             {
               /* if one of the arguments have size 0,
                  the driver couldn't figure it out. In that case,
                  leave total_argument_storage_size == zero, and use
                  the old way of setting arguments. */
-              if (program->kernel_meta[i].arg_info[j].type_size == 0)
+              if (kmeta->arg_info[j].type_size == 0)
                 break;
-              total += program->kernel_meta[i].arg_info[j].type_size;
+              unsigned type_size = kmeta->arg_info[j].type_size;
+              size_t alignment = pocl_size_ceil2 (type_size);
+              if (total & (alignment - 1))
+                total = (total | (alignment - 1)) + 1;
+              total += kmeta->arg_info[j].type_size;
             }
-          if (j >= program->kernel_meta[i].num_args)
-            program->kernel_meta[i].total_argument_storage_size = total;
+          if (j >= kmeta->num_args)
+            kmeta->total_argument_storage_size = total;
         }
     }
 
