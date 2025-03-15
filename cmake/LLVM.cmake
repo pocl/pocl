@@ -391,10 +391,13 @@ find_path(LLVM_SPIRV_INCLUDEDIR "LLVMSPIRVLib.h"
   PATHS "${LLVM_INCLUDE_DIRS}" NO_DEFAULT_PATH PATH_SUFFIXES "LLVMSPIRVLib")
 find_library(LLVM_SPIRV_LIB "LLVMSPIRVLib" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
 
-# Ubuntu's libllvmspirv-XY-dev packages unfortunately use unversioned
-# /usr/include and /usr/lib/<arch>/libLLVMSPIRVLib.so
-find_path(LLVM_SPIRV_INCLUDEDIR "LLVMSPIRVLib.h" PATH_SUFFIXES "LLVMSPIRVLib")
-find_library(LLVM_SPIRV_LIB "LLVMSPIRVLib" PATHS "${LLVM_LIBDIR}")
+# fallback to searching for unversioned translator library & headers;
+# however if we found a version-matching llvm-spirv executable, prefer that
+# at least on Ubuntu it's possible to have mismatching libLLVMSPIRV
+if(NOT LLVM_SPIRV)
+  find_path(LLVM_SPIRV_INCLUDEDIR "LLVMSPIRVLib.h" PATH_SUFFIXES "LLVMSPIRVLib")
+  find_library(LLVM_SPIRV_LIB "LLVMSPIRVLib" PATHS "${LLVM_LIBDIR}")
+endif()
 
 if(LLVM_SPIRV_INCLUDEDIR AND LLVM_SPIRV_LIB)
   message(STATUS "found LLVMSPIRV library: ${LLVM_SPIRV_INCLUDEDIR} | ${LLVM_SPIRV_LIB}")
