@@ -189,9 +189,13 @@ function(compile_ll_to_bc FILENAME SUBDIR BCLIST)
       endif()
     endif()
 
+    if(RISCV64)
+      set(EXTRA_OPT2 "--data-layout=e-m:e-p:64:64-i64:64-i128:128-n32:64-S128")
+    endif()
+
     add_custom_command( OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
-        COMMAND "${LLVM_AS}" ${EXTRA_OPT} "-o" "${BC_FILE}" "${FULL_F_PATH}"
+        COMMAND "${LLVM_AS}" ${EXTRA_OPT} ${EXTRA_OPT2} "-o" "${BC_FILE}" "${FULL_F_PATH}"
         COMMENT "Building LL to LLVM bitcode ${BC_FILE}" 
         VERBATIM)
 endfunction()
