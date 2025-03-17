@@ -105,6 +105,10 @@ if(CMAKE_CXX_COMPILER_LAUNCHER)
   list(APPEND UPSTREAM_CMAKE_ARGS "-DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}")
 endif()
 
+if(CMAKE_TOOLCHAIN_FILE)
+    list(APPEND UPSTREAM_CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}")
+endif()
+
 
 ExternalProject_Add(
   ${TS_NAME}
@@ -1096,7 +1100,9 @@ endforeach()
 # version of the test works as expected.
 # See https://github.com/pocl/pocl/issues/1582
 # and https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/2468
+if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
 if(LLVM_VERSION VERSION_GREATER_EQUAL 19.0)
   set_property(TEST conformance_spirv_basic_micro_progvar
     PROPERTY DISABLED 1)
+endif()
 endif()
