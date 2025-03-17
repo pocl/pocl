@@ -65,6 +65,10 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/TargetParser/Host.h>
 #endif
 
+#if defined(__riscv)
+#include <llvm/TargetParser/RISCVISAInfo.h>
+#endif
+
 #include "config.h"
 #include "pocl_debug.h"
 #include "pocl_file_util.h"
@@ -173,6 +177,118 @@ const char *pocl_get_llvm_cpu_abi() {
 #endif // HOST_CPU_TARGET_ABI
   return nullptr;
 }
+
+#if defined(__riscv)
+
+static char *__model_name = nullptr;
+static char *__isa = nullptr;
+
+static void query_cpu()    {
+  const char *devicetree = "/sys/firmware/devicetree/base/cpus/cpu@0/riscv,isa";
+  const char *cpuinfo = "/proc/cpuinfo";
+  char *cpuinfo_content = nullptr;
+  char *token = nullptr;
+  char *saveptr = nullptr;
+  char *model_name = nullptr;
+  char *isa = nullptr;
+  uint64_t fsize;
+  int i = 0, j = 0;
+
+  if((isa != nullptr) && (model_name != nullptr))    return;
+
+#if defined(__riscv) && 0
+  if (pocl_exists(devicetree))    {
+    if (0 != pocl_read_file(devicetree, &__isa, &fsize))
+      POCL_MSG_PRINT_INFO("%s: Error reading %s\n", __func__, devicetree);
+  }
+#endif
+
+  if (0 != pocl_read_file(cpuinfo, &cpuinfo_content, &fsize))    {
+    POCL_MSG_PRINT_INFO("%s: Error reading %s\n", __func__, cpuinfo);
+    return;
+  }
+
+  token = strtok_r(cpuinfo_content, ":\n", &saveptr);
+  while(token != NULL)    {
+    if(strncmp (token, "isa", 3) == 0)    {
+      isa = strtok_r(NULL, ":\n", &saveptr);
+    }
+
+    if(strncmp (token, "model name", 10) == 0)    {
+      model_name = strtok_r(NULL, ":\n", &saveptr);
+    }
+
+    token = strtok_r (NULL, ":\n", &saveptr);
+
+    if((isa != nullptr) && (model_name != nullptr))    break;
+  }
+
+  j = 0;
+  if((__isa == nullptr) && (isa != NULL))    {
+      __isa = (char *)calloc(strlen(isa) + 1, 1);
+      for(i = 0; i < strlen(isa); i++)    {
+          if(isspace((int)(isa[i])))    continue;
+          __isa[j++] = isa[i];
+      }
+  }
+
+  j = 0;
+  if(model_name != NULL)    {
+      __model_name = (char *)calloc(strlen(model_name) + 1, 1);
+      for(i = 0; i < strlen(model_name); i++)    {
+          if(isspace((int)(model_name[i])))    continue;
+          __model_name[j++] = model_name[i];
+      }
+  }
+
+  free(cpuinfo_content);
+}
+
+const char *pocl_get_llvm_cpu_isa()    {
+  query_cpu();
+  return __isa;
+}
+
+const char *pocl_get_llvm_cpu_model()    {
+  query_cpu();
+  return __model_name;
+}
+
+void pocl_get_llvm_cpu_feature(const char *march, char *features, int length)    {
+  std::string targetFeatures = "";
+
+  if(nullptr == march)    {
+    features[0] = '\0';
+    return;
+  }
+
+#if defined(__riscv)
+#if (HOST_DEVICE_ADDRESS_BITS == 64)
+  targetFeatures = "+64bit";
+#else
+  targetFeatures = "+32bit";
+#endif
+
+  if(NULL != march)    {
+    auto ISAInfo = llvm::RISCVISAInfo::parseArchString(march,
+                                                       true, /* EnableExperimentalExtensions */
+                                                       true  /* ExperimentalExtensionVersionCheck */);
+    if((*ISAInfo) != nullptr)    {
+      for (const std::string &feature : (*ISAInfo)->toFeatures(true, /* AddAllExtension */
+                                                               true  /* IgnoreUnknown */))    {
+        targetFeatures += "," + feature;
+      }
+    }
+  }
+#endif
+
+  if(targetFeatures.length() != 0)    {
+    if(targetFeatures.length() < length)    length = targetFeatures.length();
+    strncpy(features, targetFeatures.c_str(), length);
+  }
+}
+
+#endif
 
 char *pocl_get_llvm_cpu_name() {
   const char *custom = pocl_get_string_option("POCL_LLVM_CPU_NAME", NULL);
