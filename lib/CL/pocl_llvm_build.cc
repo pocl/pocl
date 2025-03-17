@@ -50,6 +50,10 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include <llvm/Support/VirtualFileSystem.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 
+#if defined(__riscv)
+#include <llvm/TargetParser/RISCVISAInfo.h>
+#endif
+
 #if LLVM_VERSION_MAJOR > 15
 #include "llvm/TargetParser/Host.h"
 #elif LLVM_VERSION_MAJOR > 10
@@ -91,7 +95,7 @@ POP_COMPILER_DIAGS
 #include "ProgramScopeVariables.h"
 #include "linker.h"
 
-//#define DEBUG_POCL_LLVM_API
+#define DEBUG_POCL_LLVM_API
 
 #if defined(DEBUG_POCL_LLVM_API) && defined(NDEBUG)
 #undef NDEBUG
@@ -520,6 +524,14 @@ int pocl_llvm_build_program(cl_program program,
   if (device->llvm_abi != NULL)
     ss << "-target-abi " << device->llvm_abi << " ";
 
+#if defined(__riscv)
+  if (device->llvm_arch != NULL)    {
+    char features[4096] = { '\0' };
+    pocl_get_llvm_cpu_feature(device->llvm_arch, features, 4096);
+    ss << "-target-feature " << features << " ";
+  }
+#endif
+
   std::string AllBuildOpts = ss.str();
 
   POCL_MSG_PRINT_LLVM("all build options: %s\n", AllBuildOpts.c_str());
@@ -688,9 +700,42 @@ int pocl_llvm_build_program(cl_program program,
   if (device->llvm_cpu != NULL)
     ta.CPU = device->llvm_cpu;
 
-#ifdef DEBUG_POCL_LLVM_API
-  std::cout << "### Triple: " << ta.Triple.c_str() <<  ", CPU: " << ta.CPU.c_str();
+  if (device->llvm_abi != NULL)
+    ta.ABI = device->llvm_abi;
+
+#if defined(__riscv)
+  { // Fill ta's feature map according to device->llvm_arch
+    char *saveptr = nullptr;
+    char *token = nullptr;
+    char features[4096] = { '\0' };
+    pocl_get_llvm_cpu_feature(device->llvm_arch, features, 4096);
+    token = strtok_r(features, ",", &saveptr);
+    while(token != NULL)    {
+      ta.Features.push_back(&(token[1]));
+      if(*token == '+')
+        ta.FeatureMap[&(token[1])] = true;
+      else
+        ta.FeatureMap[&(token[1])] = false;
+
+      token = strtok_r(NULL, ",", &saveptr);
+    }
+
+    ta.Features.push_back("experimental");
+    ta.FeatureMap["experimental"] = true;
+  }
 #endif
+
+#if defined(DEBUG_POCL_LLVM_API) && 0
+  {
+    std::stringstream ssss;
+    for(std::string &feature : ta.Features)
+        ssss << feature << ", ";
+    POCL_MSG_PRINT_LLVM("### Triple: %s, CPU: %s\n    TuneCPU: %s, ABI: %s, features: %s\n",
+                        ta.Triple.c_str(), ta.CPU.c_str(), ta.TuneCPU.c_str(), ta.ABI.c_str(),
+                        ssss.str().c_str());
+  }
+#endif
+
 #if LLVM_MAJOR < 20
   CI.createDiagnostics(diagsBuffer, false);
 #else
