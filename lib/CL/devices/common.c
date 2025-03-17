@@ -1769,7 +1769,11 @@ pocl_init_default_device_infos (cl_device_id dev,
   dev->kernellib_name = strdup(kernellib);
   if (dev->kernellib_subdir == NULL)
     dev->kernellib_subdir = "host";
-  dev->llvm_abi = pocl_get_llvm_cpu_abi ();
+  dev->llvm_abi = pocl_get_llvm_cpu_abi();
+
+#if defined(__riscv)  
+  dev->llvm_arch = pocl_get_llvm_cpu_isa();
+#endif
 
 #else /* No compiler, no CPU info */
   dev->kernellib_name = NULL;
