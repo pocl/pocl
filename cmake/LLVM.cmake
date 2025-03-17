@@ -809,8 +809,13 @@ endif()
 if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED CLANG_SUPPORTS_FLOAT16_ON_CPU)
   set(CLANG_SUPPORTS_FLOAT16_ON_CPU 0)
   message(STATUS "Checking Device-side (Clang/LLVM) support for _Float16 type")
-    custom_try_compile_clang_silent("_Float16 callfp16(_Float16 a) { return a * 1.8f16; };" "_Float16 x=callfp16((_Float16)argc);"
-    RESV --target=${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${SELECTED_HOST_CPU})
+    if(RISCV)
+      custom_try_compile_clang_silent("_Float16 callfp16(_Float16 a) { return a * 1.8f16; };" "_Float16 x=callfp16((_Float16)argc);"
+                                      RESV --target=${LLC_TRIPLE} -mcpu=${SELECTED_HOST_CPU} -march=${CLANG_MARCH_FLAG})
+    else()
+      custom_try_compile_clang_silent("_Float16 callfp16(_Float16 a) { return a * 1.8f16; };" "_Float16 x=callfp16((_Float16)argc);"
+                                      RESV --target=${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${SELECTED_HOST_CPU})
+    endif()
   if(RESV EQUAL 0)
     message(STATUS "Clang supports _Float16 type on CPU")
     set(CLANG_SUPPORTS_FLOAT16_ON_CPU 1)
