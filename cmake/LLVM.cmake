@@ -353,7 +353,20 @@ else()
   set(LLVM_SPIRV_VAL_OPT)
 endif()
 
-find_program(LLVM_SPIRV NAMES "llvm-spirv${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "llvm-spirv-${LLVM_VERSION_MAJOR}${CMAKE_EXECUTABLE_SUFFIX}" "llvm-spirv${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}" ${LLVM_SPIRV_VAL_OPT})
+set(USER_REQUESTED_LLVM_SPIRV 0)
+
+if(LLVM_SPIRV)
+  # This assumes the LLVM_SPIRV variable is only set via cmake command
+  # before this line.
+  set(USER_REQUESTED_LLVM_SPIRV 1)
+else()
+  find_program(
+    LLVM_SPIRV NAMES "llvm-spirv${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}"
+    "llvm-spirv-${LLVM_VERSION_MAJOR}${CMAKE_EXECUTABLE_SUFFIX}"
+    "llvm-spirv${CMAKE_EXECUTABLE_SUFFIX}"
+    HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}"
+    "${LLVM_PREFIX_BIN}" ${LLVM_SPIRV_VAL_OPT})
+endif()
 
 if(LLVM_SPIRV AND (NOT LLVM_SPIRV_VAL_OPT))
   execute_process(
@@ -392,16 +405,20 @@ find_path(LLVM_SPIRV_INCLUDEDIR "LLVMSPIRVLib.h"
 find_library(LLVM_SPIRV_LIB "LLVMSPIRVLib" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
 
 # Ubuntu's libllvmspirv-XY-dev packages unfortunately use unversioned
-# /usr/include and /usr/lib/<arch>/libLLVMSPIRVLib.so
-find_path(LLVM_SPIRV_INCLUDEDIR "LLVMSPIRVLib.h" PATH_SUFFIXES "LLVMSPIRVLib")
-find_library(LLVM_SPIRV_LIB "LLVMSPIRVLib" PATHS "${LLVM_LIBDIR}")
+# /usr/include and /usr/lib/<arch>/libLLVMSPIRVLib.so. Because of this
+# we prefer llvm-spirv if the user explicitly requested it by setting
+# the LLVM_SPIRV variable.
+set(HAVE_LLVM_SPIRV_LIB 0)
+if (NOT USER_REQUESTED_LLVM_SPIRV)
+  find_path(LLVM_SPIRV_INCLUDEDIR "LLVMSPIRVLib.h" PATH_SUFFIXES "LLVMSPIRVLib")
+  find_library(LLVM_SPIRV_LIB "LLVMSPIRVLib" PATHS "${LLVM_LIBDIR}")
 
-if(LLVM_SPIRV_INCLUDEDIR AND LLVM_SPIRV_LIB)
-  message(STATUS "found LLVMSPIRV library: ${LLVM_SPIRV_INCLUDEDIR} | ${LLVM_SPIRV_LIB}")
-  set(HAVE_LLVM_SPIRV_LIB 1)
-else()
-  message(STATUS "LLVMSPIRV library not found: ${LLVM_SPIRV_INCLUDEDIR} | ${LLVM_SPIRV_LIB}")
-  set(HAVE_LLVM_SPIRV_LIB 0)
+  if(LLVM_SPIRV_INCLUDEDIR AND LLVM_SPIRV_LIB)
+    message(STATUS "found LLVMSPIRV library: ${LLVM_SPIRV_INCLUDEDIR} | ${LLVM_SPIRV_LIB}")
+    set(HAVE_LLVM_SPIRV_LIB 1)
+  else()
+    message(STATUS "LLVMSPIRV library not found: ${LLVM_SPIRV_INCLUDEDIR} | ${LLVM_SPIRV_LIB}")
+  endif()
 endif()
 
 set_expr(HAVE_SPIRV_LINK SPIRV_LINK)
