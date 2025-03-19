@@ -416,7 +416,7 @@ finalize_kernel_command (struct pool_thread_data *thread_data,
   pocl_release_dlhandle_cache (k->cmd->command.run.device_data);
 
   if (k->execution_failed)
-    POCL_UPDATE_EVENT_FAILED_MSG (k->cmd->sync.event.event,
+    POCL_UPDATE_EVENT_FAILED_MSG (CL_FAILED, k->cmd->sync.event.event,
                                   "NDRange Kernel        ");
   else
     POCL_UPDATE_EVENT_COMPLETE_MSG (k->cmd->sync.event.event,

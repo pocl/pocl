@@ -153,7 +153,7 @@ static void finalizeKernelCommand(kernel_run_command *RunCmd) {
   pocl_release_dlhandle_cache(RunCmd->cmd->command.run.device_data);
 
   if (RunCmd->execution_failed)
-    POCL_UPDATE_EVENT_FAILED_MSG(RunCmd->cmd->sync.event.event,
+    POCL_UPDATE_EVENT_FAILED_MSG(CL_FAILED, RunCmd->cmd->sync.event.event,
                                  "NDRange Kernel        ");
   else
     POCL_UPDATE_EVENT_COMPLETE_MSG(RunCmd->cmd->sync.event.event,
