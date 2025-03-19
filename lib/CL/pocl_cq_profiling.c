@@ -59,9 +59,8 @@ pocl_atexit (void)
   unsigned long total_commands = 0;
   unsigned long different_kernels = 0;
 
-  struct kernel_stats *kernel_statistics
-      = alloca (cq_events_collected * sizeof (struct kernel_stats));
-  bzero_s (&kernel_statistics, sizeof (kernel_statistics));
+  struct kernel_stats *kernel_statistics = (struct kernel_stats *)calloc (
+    cq_events_collected, sizeof (struct kernel_stats));
 
   /* First statistics computation round. */
   for (unsigned i = 0; i < cq_events_collected; ++i)
@@ -88,27 +87,30 @@ pocl_atexit (void)
     }
 
   printf ("\n");
-  printf ("     %-30s %10s %15s %3s  %10s\n", "kernel", "launches", "total us",
+  printf ("     %-60s %10s %15s %3s  %10s\n", "kernel", "launches", "total us",
           "", "avg us");
   qsort (kernel_statistics, different_kernels, sizeof (struct kernel_stats),
          order_by_time);
 
   for (unsigned long i = 0; i < different_kernels; ++i)
     {
-      printf ("%3lu) %-30s %10lu %15lu %3lu%% %10lu\n", i + 1,
+      printf ("%3lu) %-60s %10lu %15lu %3lu%% %10lu\n", i + 1,
               kernel_statistics[i].kernel->name, kernel_statistics[i].launches,
               kernel_statistics[i].time,
-              kernel_statistics[i].time * 100 / total_time,
+              /* Avoid a crash with sub microsecond kernel commands. */
+              (total_time > 0) ? kernel_statistics[i].time * 100 / total_time
+                               : 100,
               kernel_statistics[i].time / kernel_statistics[i].launches);
     }
-  printf ("     %-30s %10s %15s %3s %10s\n", "",
+  printf ("     %-60s %10s %15s %3s %10s\n", "",
           "==========", "==========", "====", "==========");
 
   /* Add !total_commands to avoid a division by 0 if total_commands is 0 */
-  printf ("     %-30s %10lu %15lu %4s %10lu\n", "", total_commands, total_time,
-          "100%", total_time / (total_commands + !total_commands) );
+  printf ("     %-60s %10lu %15lu %4s %10lu\n", "", total_commands, total_time,
+          "100%", total_time / (total_commands + !total_commands));
 
   /* TODO: Critical path information of the task graph. */
+  free (kernel_statistics);
 }
 
 /* Initialize the profiling data structures, if not yet done. */
