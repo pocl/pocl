@@ -794,7 +794,16 @@ void pocl_almaif_notify(cl_device_id Device, cl_event Event, cl_event Finished) 
   _cl_command_node *volatile Node = Event->command;
 
   if (Finished->status < CL_COMPLETE) {
-    pocl_update_event_failed_locked(Event);
+    /* Unlock the finished event in order to prevent a lock order violation
+     * with the command queue that will be locked during
+     * pocl_update_event_failed.
+     */
+    pocl_unlock_events_inorder(Event, Finished);
+    pocl_update_event_failed(CL_FAILED, NULL, 0, Event, NULL);
+    /* Lock events in this order to avoid a lock order violation between
+     * the finished/notifier and event/wait events.
+     */
+    pocl_lock_events_inorder(Finished, Event);
     return;
   }
 
