@@ -2459,6 +2459,7 @@ pocl_escape_quoted_whitespace (char *temp_options, char *replace_me)
 }
 
 /* returns private datadir, possibly using relative path to libpocl sharedlib */
+POCL_EXPORT
 int pocl_get_private_datadir(char* private_datadir)
 {
 #ifdef ENABLE_RELOCATION
