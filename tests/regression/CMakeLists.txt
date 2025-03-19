@@ -107,7 +107,8 @@ endif()
 
 add_test_pocl(NAME "regression/test_llvm_segfault_issue_889" COMMAND "test_llvm_segfault_issue_889")
 
-add_test_pocl(NAME "regression/test_issue_1711" COMMAND "test_issue_1711")
+# Also smoke test cq-tracing with this case.
+add_test_pocl(NAME "regression/test_issue_1711" COMMAND "test_issue_1711" ENVIRONMENT "POCL_TRACING=cq")
 
 add_test_pocl(NAME "regression/test_issue_1794a" COMMAND "test_issue_1794" "0" "${CMAKE_CURRENT_SOURCE_DIR}/test_issue_1794a.spv")
 
