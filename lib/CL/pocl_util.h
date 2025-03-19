@@ -308,16 +308,6 @@ pocl_update_event_failed (cl_int status,
                           cl_event event,
                           const char *msg);
 
-/**
- * Same as pocl_update_event_failed, except assumes the event is locked.
- * TODO this should be reimplemented
- */
-POCL_EXPORT
-void pocl_update_event_failed_locked (cl_event event);
-
-POCL_EXPORT
-void pocl_update_event_device_lost (cl_event event);
-
 #define POCL_UPDATE_EVENT_COMPLETE_MSG(__event, msg)                          \
   pocl_update_event_complete (__func__, __LINE__, (__event), msg)
 

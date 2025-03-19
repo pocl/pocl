@@ -2244,21 +2244,6 @@ pocl_update_event_failed (cl_int status,
   pocl_update_event_finished (status, func, line, event, msg);
 }
 
-void
-pocl_update_event_failed_locked (cl_event event)
-{
-  POCL_UNLOCK_OBJ (event);
-  pocl_update_event_finished (CL_FAILED, NULL, 0, event, NULL);
-  POCL_LOCK_OBJ (event);
-}
-
-void
-pocl_update_event_device_lost (cl_event event)
-{
-  POCL_UNLOCK_OBJ (event);
-  pocl_update_event_finished (CL_DEVICE_NOT_AVAILABLE, NULL, 0, event, NULL);
-  POCL_LOCK_OBJ (event);
-}
 
 void
 pocl_update_event_complete (const char *func, unsigned line,
