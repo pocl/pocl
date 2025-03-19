@@ -2467,7 +2467,7 @@ int pocl_get_private_datadir(char* private_datadir)
   if (Path)
     {
       strncpy (private_datadir, Path, POCL_MAX_PATHNAME_LENGTH);
-      char *last_slash = strrchr (private_datadir, '/');
+      char *last_slash = strrchr (private_datadir, POCL_PATH_SEPARATOR[0]);
       if (last_slash)
         {
           ++last_slash;
