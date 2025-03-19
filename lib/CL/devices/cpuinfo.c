@@ -137,7 +137,7 @@ pocl_cpuinfo_detect_max_clock_frequency()
       if ((p = strstr (p, FREQSTRING)) != NULL &&
           (p = strstr (p, ": ")) != NULL)
         {
-          if (sscanf (p, ": %f", &freq) == 0)
+          if (sscanf (p, ": %f", &freq) != 1)
             {
 #ifdef DEBUG_POCL_CPUINFO
               printf ("could not parse the cpu MHz field %f\n", freq);

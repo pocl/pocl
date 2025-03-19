@@ -45,9 +45,9 @@ exec_matadd_kernel (cl_context context, cl_device_id device,
 int
 main (int argc, char **argv)
 {
-  cl_float *srcA, *srcB;
-  cl_float *dst;
-  int i, j, err;
+  cl_float *srcA = NULL, *srcB = NULL;
+  cl_float *dst = NULL;
+  int i, j, err = 0;
 
   cl_context context = NULL;
   cl_device_id device = NULL;

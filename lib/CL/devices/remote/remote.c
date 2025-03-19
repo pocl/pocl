@@ -115,7 +115,7 @@ pocl_remote_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
   if ((mem->flags & CL_MEM_ALLOC_HOST_PTR) && (mem->mem_host_ptr == NULL))
     goto ERROR;
 
-  int r;
+  int r = 0;
   if (host_ptr == NULL
       && (device->svm_caps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER))
     {

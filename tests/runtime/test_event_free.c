@@ -29,7 +29,7 @@
 
 int main(int argc, char **argv)
 {
-  cl_int err;
+  cl_int err = 0;
   cl_bool has_img = CL_FALSE;
 
   cl_platform_id pid = NULL;
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 
   const size_t buf_size = sizeof(cl_int);
 
-  cl_mem buf, img;
+  cl_mem buf = NULL, img = NULL;
 
   poclu_get_any_device2 (&ctx, &did, &queue, &pid);
   TEST_ASSERT(ctx);

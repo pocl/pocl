@@ -47,7 +47,7 @@ typedef struct {
         exit(1); \
     }
 
-cl_platform_id get_platform(int index) {
+cl_platform_id get_platform(cl_uint index) {
     cl_uint num_platforms;
     cl_int err = clGetPlatformIDs(0, NULL, &num_platforms);
     CHECK_ERROR(err);
@@ -69,7 +69,7 @@ cl_platform_id get_platform(int index) {
 
 int main(int argc, char** argv) {
     // Use first platform by default or take from command line
-    int platform_index = 0;
+    cl_uint platform_index = 0;
     if (argc > 1) {
         platform_index = atoi(argv[1]);
     }

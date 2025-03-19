@@ -682,7 +682,7 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
 
   TP_CREATE_BUFFER(req->Body.msg_id, req->Body.client_did, id);
 
-  uint64_t devaddr;
+  uint64_t devaddr = 0;
   FOR_EACH_CONTEXT_DO(createBuffer(id, m.size, m.flags, (void *)m.host_ptr,
                                    m.parent_id, m.origin, (void **)&devaddr));
   // Do not pass pointer to device_addr directly above since
