@@ -6608,7 +6608,7 @@ public:
                 0,
                 nullptr,
 #if !defined(CL_HPP_CL_1_2_DEFAULT_BUILD)
-                "-cl-std=CL2.0",
+                "-cl-std=CL3.0",
 #else
                 "",
 #endif // #if !defined(CL_HPP_CL_1_2_DEFAULT_BUILD)
@@ -6645,7 +6645,7 @@ public:
                 0,
                 nullptr,
 #if !defined(CL_HPP_CL_1_2_DEFAULT_BUILD)
-                "-cl-std=CL2.0",
+                "-cl-std=CL3.0",
 #else
                 "",
 #endif // #if !defined(CL_HPP_CL_1_2_DEFAULT_BUILD)
@@ -6770,7 +6770,7 @@ public:
                 0,
                 nullptr,
 #if !defined(CL_HPP_CL_1_2_DEFAULT_BUILD)
-                "-cl-std=CL2.0",
+                "-cl-std=CL3.0",
 #else
                 "",
 #endif // #if !defined(CL_HPP_CL_1_2_DEFAULT_BUILD)
@@ -6823,7 +6823,7 @@ public:
                 0,
                 nullptr,
 #if !defined(CL_HPP_CL_1_2_DEFAULT_BUILD)
-                "-cl-std=CL2.0",
+                "-cl-std=CL3.0",
 #else
                 "",
 #endif // #if !defined(CL_HPP_CL_1_2_DEFAULT_BUILD)
