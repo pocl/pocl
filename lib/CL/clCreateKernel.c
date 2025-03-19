@@ -95,10 +95,15 @@ POname(clCreateKernel)(cl_program program,
       size_t offset = 0;
       for (i = 0; i < kernel->meta->num_args; ++i)
         {
-          kernel->dyn_argument_offsets[i]
-              = kernel->dyn_argument_storage + offset;
           unsigned type_size = kernel->meta->arg_info[i].type_size;
           assert (type_size > 0);
+          size_t alignment = pocl_size_ceil2 (type_size);
+          if (offset & (alignment - 1))
+            offset = (offset | (alignment - 1)) + 1;
+
+          kernel->dyn_argument_offsets[i]
+            = kernel->dyn_argument_storage + offset;
+
           offset += type_size;
         }
       assert (offset == kernel->meta->total_argument_storage_size);

@@ -1618,10 +1618,9 @@ pocl_proxy_setup_metadata (cl_device_id device, cl_program program,
       err = clReleaseKernel(kernels[i]);
     }
   }
-#else
+#endif
   else
     return 0;
-#endif
 
   program->kernel_meta = p;
 

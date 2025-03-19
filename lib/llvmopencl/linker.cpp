@@ -40,11 +40,13 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugLoc.h"
+#include <llvm/ADT/SmallSet.h>
 #include <llvm/ADT/StringExtras.h>
 #include <llvm/ADT/StringSet.h>
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/GlobalValue.h>
+#include <llvm/IR/InstIterator.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/IR/Module.h>
@@ -67,7 +69,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 using namespace llvm;
 
 // #include <cstdio>
-// #define DB_PRINT(...) printf("linker:" __VA_ARGS__)
+// #define DB_PRINT(...) fprintf(stderr, "linker:" __VA_ARGS__)
 #define DB_PRINT(...)
 
 namespace pocl {
@@ -262,46 +264,65 @@ static void fixCallingConv(llvm::Module *Mod, std::string &Log) {
   }
 }
 
-// Find all functions in the calltree of F, append their
-// name to function name set.
-static inline void
+using SmallFunctionSet = llvm::SmallSet<llvm::Function *, 8>;
+
+// Find all functions in the calltree of F, including declarations.
+// Returns the list of Functions called in CalledFuncList,
+// in depth-first order (to make cloning simpler);
+// returns -1 on error (recursion), 0 on success
+static int
 find_called_functions(llvm::Function *F,
-                      llvm::StringSet<> &FNameSet)
-{
+                      llvm::SmallVector<llvm::Function *> &CalledFuncList,
+                      SmallFunctionSet &CallStack) {
   if (F->isDeclaration()) {
-    DB_PRINT("it's a declaration.\n");
-    return;
+    DB_PRINT("it's a declaration, return\n");
+    return 0;
   }
 
-  llvm::Function::iterator FI;
-  for (FI = F->begin(); FI != F->end(); FI++) {
-    llvm::BasicBlock::iterator BI;
-    for (BI = FI->begin(); BI != FI->end(); BI++) {
-      CallInst *CI = dyn_cast<CallInst>(BI);
-      if (CI == NULL)
-        continue;
-      llvm::Function *Callee = CI->getCalledFunction();
-      // this happens with e.g. inline asm calls
-      if (Callee == NULL) {
-        DB_PRINT("search: %s callee NULL\n", F->getName().str().c_str());
-        continue;
-      }
-      if (!Callee->hasName()) {
-        Callee->setName("__anonymous_function");
-      }
-      const char* Name = Callee->getName().data();
-      DB_PRINT("search: %s calls %s\n",
-               F->getName().data(), Name);
-      if (FNameSet.count(Callee->getName()) > 0)
-        continue;
-      else {
-        DB_PRINT("inserting %s\n", Name);
-        FNameSet.insert(Callee->getName());
-        DB_PRINT("search: recursing into %s\n", Name);
-        find_called_functions(Callee, FNameSet);
-      }
+  CallStack.insert(F);
+
+  assert(F->hasName());
+  std::string FName = F->getName().str();
+
+  for (auto &I : instructions(F)) {
+
+    CallInst *CI = dyn_cast<CallInst>(&I);
+    if (CI == nullptr)
+      continue;
+
+    llvm::Function *Callee = CI->getCalledFunction();
+    // this happens with e.g. inline asm calls
+    if (Callee == nullptr) {
+      DB_PRINT("search: %s callee NULL\n", FName.c_str());
+      continue;
+    }
+
+    assert(Callee->hasName());
+    std::string CName = Callee->getName().str();
+
+    if (CallStack.contains(Callee)) {
+      DB_PRINT("Recursion detected: %s\n", CName.c_str());
+      return -1;
+    }
+    DB_PRINT("Function %s calls %s\n", FName.c_str(), CName.c_str());
+
+    auto It = std::find(CalledFuncList.begin(), CalledFuncList.end(), Callee);
+    if (It != CalledFuncList.end()) {
+      DB_PRINT("already contained in CalledList: %s\n", CName.c_str());
+      continue;
+    } else {
+      DB_PRINT("function %s not seen before, recursing into it\n",
+               CName.c_str());
+      if (find_called_functions(Callee, CalledFuncList, CallStack))
+        return -1;
+      DB_PRINT("inserting %s into CalledList\n", CName.c_str());
+      CalledFuncList.push_back(Callee);
     }
   }
+
+  CallStack.erase(F);
+
+  return 0;
 }
 
 // Copies one function from one module to another
@@ -358,37 +379,32 @@ static int CopyFuncCallgraph(const llvm::StringRef FuncName,
                              const llvm::Module *From, llvm::Module *To,
                              ValueToValueMapTy &VVMap,
                              PoclTypeRemapper *TypeMapper) {
-  llvm::StringSet<> Callees;
   llvm::Function *RootFunc = From->getFunction(FuncName);
-  if (RootFunc == NULL)
+  if (RootFunc == NULL) {
     return -1;
+  }
+
+  SmallFunctionSet CallStack;
+  llvm::SmallVector<llvm::Function *> Callees;
+  // error if recursion occurs
+  if (find_called_functions(RootFunc, Callees, CallStack))
+    return -2;
+
   DB_PRINT("copying function %s with callgraph\n", RootFunc->getName().data());
 
-  find_called_functions(RootFunc, Callees);
-
   // First copy the callees of func, then the function itself.
-  // Recurse into callees to handle the case where kernel library
-  // functions call other kernel library functions.
-  llvm::StringSet<>::iterator CalleI, CalleEnd;
-  for (CalleI = Callees.begin(), CalleEnd = Callees.end();
-       CalleI != CalleEnd; CalleI++) {
-    llvm::StringRef Name = CalleI->getKey();
-    llvm::Function *SrcFunc = From->getFunction(Name);
-    if (!SrcFunc->isDeclaration()) {
-      CopyFuncCallgraph(Name, From, To, VVMap, TypeMapper);
-    } else {
-      DB_PRINT("%s is declaration, not recursing into it!\n",
-               SrcFunc->getName().str().c_str());
-    }
-    CopyFunc(Name, From, To, VVMap, TypeMapper);
+  for (auto F : Callees) {
+    CopyFunc(F->getName(), From, To, VVMap, TypeMapper);
   }
   CopyFunc(FuncName, From, To, VVMap, TypeMapper);
+  assert(To->getFunction(FuncName) != nullptr);
+
   return 0;
 }
 
 static int CopyFuncCallgraph(const llvm::StringRef FuncName,
-                               const llvm::Module *From, llvm::Module *To,
-                               ValueToValueMapTy &VVMap) {
+                             const llvm::Module *From, llvm::Module *To,
+                             ValueToValueMapTy &VVMap) {
 #ifndef LLVM_OPAQUE_POINTERS
   PoclTypeRemapper TypeMapper;
   return CopyFuncCallgraph(FuncName, From, To, VVMap, &TypeMapper);
@@ -719,23 +735,39 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
 
   llvm::Module::iterator FI, FE;
 
-  // Inspect the program, find undefined functions
+  // assign names to all functions
   for (FI = Program->begin(), FE = Program->end(); FI != FE; FI++) {
-    if (FI->isDeclaration()) {
-      DB_PRINT("Pre-link: %s is not defined\n", FI->getName().data());
-      DeclaredFunctions.insert(FI->getName());
-      continue;
-    }
     // anonymous functions have no name, which breaks the algorithm later
     // when it searches for undefined functions in the kernel library.
     // assign a name here, this should be made unique by setName()
     if (!FI->hasName()) {
       FI->setName("__anonymous_function");
     }
-    DB_PRINT("Function '%s' is defined\n", FI->getName().data());
-    // Find all functions the program source calls
-    // TODO: is there no direct way?
-    find_called_functions(&*FI, DeclaredFunctions);
+  }
+
+  // Inspect the program, find undefined functions
+  for (FI = Program->begin(), FE = Program->end(); FI != FE; FI++) {
+    std::string FName = FI->getName().str();
+    if (FI->isDeclaration()) {
+      DB_PRINT("Pre-link: %s is not defined\n", FName.c_str());
+      DeclaredFunctions.insert(FI->getName());
+      continue;
+    }
+    DB_PRINT("Function '%s' is defined, checking which funcs it calls\n",
+             FName.c_str());
+
+    SmallFunctionSet CallStack;
+    llvm::SmallVector<llvm::Function *> Callees;
+    if (find_called_functions(&*FI, Callees, CallStack)) {
+      Log.append("Recursion detected in function: '");
+      Log.append(FName.c_str());
+      Log.append("'\n");
+      return -1;
+    }
+    for (auto F : Callees) {
+      DB_PRINT("Adding function '%s' to list of called funcs\n", FName.c_str());
+      DeclaredFunctions.insert(F->getName());
+    }
   }
 
   // Copy all the globals from lib to program.
@@ -758,7 +790,13 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
   // if found in lib
   for (auto &DeclIter : DeclaredFunctions) {
     llvm::StringRef FName = DeclIter.getKey();
-    CopyFuncCallgraph(FName, Lib, Program, vvm);
+    int Res = CopyFuncCallgraph(FName, Lib, Program, vvm);
+    if (Res == -2) {
+      Log.append("Recursion detected while copying function: '");
+      Log.append(FName.str());
+      Log.append("'\n");
+      return -1;
+    }
   }
 
   convertAddrSpaceOperator(Program->getFunction("__to_local"), Log);
@@ -803,7 +841,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
   }
 
   if (!FoundAllUndefined)
-    return 1;
+    return -1;
 
   shared_copy(Program, Lib, Log, vvm);
 
@@ -875,14 +913,17 @@ int copyKernelFromBitcode(const char* Name, llvm::Module *ParallelBC,
     vvm[&*gi]=GV;
   }
 
-  const StringRef KernelName(Name);
-  CopyFuncCallgraph(KernelName, Program, ParallelBC, vvm);
-
   if (DevAuxFuncs) {
     const char **Func = DevAuxFuncs;
     while (*Func != nullptr) {
       CopyFuncCallgraph(*Func++, Program, ParallelBC, vvm);
     }
+  }
+
+  const StringRef KernelName(Name);
+  if (CopyFuncCallgraph(KernelName, Program, ParallelBC, vvm)) {
+    POCL_MSG_ERR("Failed to copy kernel %s from bitcode\n", Name);
+    return -1;
   }
 
   std::string Log;
@@ -996,7 +1037,8 @@ bool moveProgramScopeVarsOutOfProgramBc(llvm::LLVMContext *Context,
           // POCL_MSG_WARN("NOT copying kernel function %s\n", FName.c_str());
       } else {
           if (F->getCallingConv() == llvm::CallingConv::SPIR_FUNC)
-          POCL_MSG_WARN("Copying non-kernel function %s\n", FName.c_str());
+            POCL_MSG_PRINT_LLVM("Copying non-kernel function %s\n",
+                                FName.c_str());
           CopyFuncCallgraph(F->getName(), ProgramBC, OutputBC, VVM);
           Function *DestF = OutputBC->getFunction(FName);
           assert(DestF);
