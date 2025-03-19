@@ -93,6 +93,12 @@ typedef uint64_t pocl_obj_id_t;
 #  error "Don't know alignas() counterpart for this compiler!"
 #endif
 
+#ifndef _WIN32
+#define POCL_PATH_SEPARATOR "/"
+#else
+#define POCL_PATH_SEPARATOR "\\"
+#endif
+
 /* Always align buffer allocations, context data, and kernel arguments to
    sizeof(double16) to enforce easier vectorization for targets with naturally
    aligned loads/stores. */

@@ -252,12 +252,6 @@ extern pocl_lock_t pocl_init_lock;
 
 static void *pocl_device_handles[POCL_NUM_DEVICE_TYPES];
 
-#ifndef _WIN32
-#define POCL_PATH_SEPARATOR "/"
-#else
-#define POCL_PATH_SEPARATOR "\\"
-#endif
-
 static void
 get_pocl_device_lib_path (char *result, char *device_name, int absolute_path)
 {
