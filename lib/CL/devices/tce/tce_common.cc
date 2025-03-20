@@ -1129,7 +1129,7 @@ void pocl_tce_submit(_cl_command_node *node, cl_command_queue cq) {
   POCL_INIT_COND(e_d->event_cond);
   e->data = (void *)e_d;
 
-  node->ready = 1;
+  node->state = POCL_COMMAND_READY;
   if (pocl_command_is_ready(node->sync.event.event)) {
     pocl_update_event_submitted(node->sync.event.event);
     tce_push_command(node);
@@ -1171,12 +1171,25 @@ pocl_tce_notify (cl_device_id device, cl_event event, cl_event finished)
   _cl_command_node *node = event->command;
 
   if (finished->status < CL_COMPLETE) {
-    pocl_update_event_failed_locked(event);
+    /* Unlock the finished event in order to prevent a lock order violation
+     * with the command queue that will be locked during
+     * pocl_update_event_failed.
+     */
+    pocl_unlock_events_inorder(event, finished);
+    pocl_update_event_failed(CL_FAILED, NULL, 0, event, NULL);
+    /* Lock events in this order to avoid a lock order violation between
+     * the finished/notifier and event/wait events.
+     */
+    pocl_lock_events_inorder(finished, event);
     return;
   }
 
-  if (!node->ready)
+  if (node->state != POCL_COMMAND_READY) {
+    POCL_MSG_PRINT_EVENTS(
+        "tce: command related to the notified event %lu not ready\n",
+        event->id);
     return;
+  }
 
   if (pocl_command_is_ready(node->sync.event.event)) {
     assert(event->status == CL_QUEUED);

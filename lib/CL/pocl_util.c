@@ -25,6 +25,7 @@
 */
 
 #include "pocl.h"
+#include "pocl_compiler_macros.h"
 #include "pocl_cl.h"
 #define _BSD_SOURCE
 #define _DEFAULT_SOURCE
@@ -360,8 +361,20 @@ pocl_create_event_sync (cl_event notifier_event, cl_event waiting_event)
         }
     }
 
-  if (notifier_event->status == CL_COMPLETE)
-    goto FINISH;
+  /* If the notifier event is already complete (or failed),
+     don't create an event sync. This is fine since if the wait
+     event has no notifier events and gets submitted, it can start
+     right away.
+   */
+  if (notifier_event->status < 0 || notifier_event->status == CL_COMPLETE)
+    {
+      POCL_MSG_PRINT_EVENTS (
+        "notifier event %" PRIu64
+        " already complete, not creating sync with event %" PRIu64 "\n",
+        notifier_event->id, waiting_event->id);
+      goto FINISH;
+    }
+
   notify_target = pocl_mem_manager_new_event_node();
   wait_list_item = pocl_mem_manager_new_event_node();
   if (!notify_target || !wait_list_item)
@@ -373,6 +386,11 @@ pocl_create_event_sync (cl_event notifier_event, cl_event waiting_event)
 
   notify_target->event = waiting_event;
   wait_list_item->event = notifier_event;
+  /* Retain the waiting_event since we hold a reference to it in the notify
+     list. This is not needed for the wait_list since the only purpose is to
+     keep a count of the number of events it's waiting on.
+   */
+  POCL_RETAIN_OBJECT_UNLOCKED (waiting_event);
   LL_PREPEND (notifier_event->notify_list, notify_target);
   LL_PREPEND (waiting_event->wait_list, wait_list_item);
 
@@ -2086,7 +2104,7 @@ pocl_copy_command_node (_cl_command_node *dst_node, _cl_command_node *src_node)
 
     case CL_COMMAND_COMMAND_BUFFER_KHR:
       POname (clRetainCommandBufferKHR) (dst_node->command.replay.buffer);
-
+      POCL_FALLTHROUGH;
     /* These cases are currently not handled in pocl_copy_event_node,
      * because there is no command buffer equivalent of these nodes. */
     case CL_COMMAND_NATIVE_KERNEL:
@@ -2109,7 +2127,6 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
 {
   assert (event != NULL);
   assert (event->queue != NULL);
-  assert (event->status > CL_COMPLETE);
   int notify_cmdq = CL_FALSE;
   cl_command_buffer_khr command_buffer = NULL;
   _cl_command_node *node = NULL;
@@ -2117,6 +2134,7 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
   cl_command_queue cq = event->queue;
   POCL_LOCK_OBJ (cq);
   POCL_LOCK_OBJ (event);
+  assert (event->status > CL_COMPLETE);
   if ((cq->properties & CL_QUEUE_PROFILING_ENABLE)
       && (cq->device->has_own_timer == 0))
     event->time_end = pocl_gettimemono_ns ();
@@ -2193,45 +2211,6 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
 
   ops->broadcast (event);
 
-#ifdef ENABLE_REMOTE_CLIENT
-  /* With remote being asynchronous it is possible that an event completion
-   * signal is received before some of its dependencies. Therefore this event
-   * has to be removed from the notify lists of any remaining events in the
-   * wait list.
-   *
-   * Mind the acrobatics of trying to avoid races with pocl_broadcast and
-   * pocl_create_event_sync. */
-  event_node *tmp;
-  POCL_LOCK_OBJ (event);
-  while ((tmp = event->wait_list))
-    {
-      cl_event notifier = tmp->event;
-      POCL_UNLOCK_OBJ (event);
-      pocl_lock_events_inorder (notifier, event);
-      if (tmp != event->wait_list)
-        {
-          pocl_unlock_events_inorder (notifier, event);
-          POCL_LOCK_OBJ (event);
-          continue;
-        }
-      event_node *tmp2;
-      LL_FOREACH (notifier->notify_list, tmp2)
-      {
-        if (tmp2->event == event)
-          {
-            LL_DELETE (notifier->notify_list, tmp2);
-            pocl_mem_manager_free_event_node (tmp2);
-            break;
-          }
-      }
-      LL_DELETE (event->wait_list, tmp);
-      pocl_unlock_events_inorder (notifier, event);
-      pocl_mem_manager_free_event_node (tmp);
-      POCL_LOCK_OBJ (event);
-    }
-  POCL_UNLOCK_OBJ (event);
-#endif
-
 #ifdef POCL_DEBUG_MESSAGES
   if (msg != NULL)
     {
@@ -2255,29 +2234,17 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
 }
 
 void
-pocl_update_event_failed (const char *func,
+pocl_update_event_failed (cl_int status,
+                          const char *func,
                           unsigned line,
                           cl_event event,
                           const char *msg)
 {
-  pocl_update_event_finished (CL_FAILED, func, line, event, msg);
+  /* Should only be used with error statuses. */
+  assert (status < 0);
+  pocl_update_event_finished (status, func, line, event, msg);
 }
 
-void
-pocl_update_event_failed_locked (cl_event event)
-{
-  POCL_UNLOCK_OBJ (event);
-  pocl_update_event_finished (CL_FAILED, NULL, 0, event, NULL);
-  POCL_LOCK_OBJ (event);
-}
-
-void
-pocl_update_event_device_lost (cl_event event)
-{
-  POCL_UNLOCK_OBJ (event);
-  pocl_update_event_finished (CL_DEVICE_NOT_AVAILABLE, NULL, 0, event, NULL);
-  POCL_LOCK_OBJ (event);
-}
 
 void
 pocl_update_event_complete (const char *func, unsigned line,

@@ -2847,7 +2847,7 @@ vulkan_push_command (cl_device_id dev, _cl_command_node *cmd)
 void
 pocl_vulkan_submit (_cl_command_node *node, cl_command_queue cq)
 {
-  node->ready = 1;
+  node->state = POCL_COMMAND_READY;
   if (pocl_command_is_ready (node->sync.event.event))
     {
       pocl_update_event_submitted (node->sync.event.event);
@@ -2935,12 +2935,26 @@ pocl_vulkan_notify (cl_device_id device, cl_event event, cl_event finished)
 
   if (finished->status < CL_COMPLETE)
     {
-      pocl_update_event_failed_locked (event);
+      /* Unlock the finished event in order to prevent a lock order violation
+       * with the command queue that will be locked during
+       * pocl_update_event_failed.
+       */
+      pocl_unlock_events_inorder (event, finished);
+      pocl_update_event_failed (CL_FAILED, NULL, 0, event, NULL);
+      /* Lock events in this order to avoid a lock order violation between
+       * the finished/notifier and event/wait events.
+       */
+      pocl_lock_events_inorder (finished, event);
       return;
     }
 
-  if (!node->ready)
-    return;
+  if (node->state != POCL_COMMAND_READY)
+    {
+      POCL_MSG_PRINT_EVENTS (
+        "vulkan: command related to the notified event %lu not ready\n",
+        event->id);
+      return;
+    }
 
   POCL_MSG_PRINT_VULKAN ("notify on event %zu \n", event->id);
 
@@ -3368,7 +3382,7 @@ void pocl_vulkan_memfill(void *data,
   cmd.sync.event.event = NULL;
   cmd.next = NULL;
   cmd.prev = NULL;
-  cmd.ready = 1;
+  cmd.state = POCL_COMMAND_READY;
 
   co->wg = NULL;
   co->hash = NULL;

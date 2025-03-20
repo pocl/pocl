@@ -820,7 +820,7 @@ pocl_exec_command (_cl_command_node *node)
     default:
       pocl_update_event_running (event);
       POCL_UPDATE_EVENT_FAILED_MSG (
-        event, "pocl_exec_command: Unknown command type\n");
+        CL_FAILED, event, "pocl_exec_command: Unknown command type\n");
       break;
     }
 }
@@ -844,17 +844,7 @@ pocl_broadcast (cl_event brc_event)
   POCL_LOCK_OBJ (brc_event);
   while ((target = brc_event->notify_list))
     {
-      cl_event target_event = target->event;
-      POCL_UNLOCK_OBJ (brc_event);
-      POname (clRetainEvent) (target_event);
-
-      pocl_lock_events_inorder (brc_event, target_event);
-      if (target != brc_event->notify_list)
-        {
-          pocl_unlock_events_inorder (brc_event, target_event);
-          POCL_LOCK_OBJ (brc_event);
-          continue;
-        }
+      POCL_LOCK_OBJ (target->event);
 
       /* remove event from wait list */
       LL_FOREACH (target->event->wait_list, tmp)
@@ -867,28 +857,35 @@ pocl_broadcast (cl_event brc_event)
             }
         }
 
-        if ((target->event->status == CL_SUBMITTED)
-            || (target->event->status == CL_QUEUED))
-          {
-            target->event->command->device->ops->notify (
-                target->event->command->device, target->event, brc_event);
-          }
+      if ((target->event->status == CL_SUBMITTED)
+          || (target->event->status == CL_QUEUED))
+        {
+          target->event->command->device->ops->notify (
+            target->event->command->device, target->event, brc_event);
+        }
 
-        if (pocl_is_tracing_enabled() && target->event->meta_data)
-          {
-            pocl_event_md *md = target->event->meta_data;
-            for (size_t i = 0; i < md->num_deps; ++i)
-              if (md->dep_ids[i] == brc_event->id)
-                {
-                  md->dep_ts[i] = brc_event->time_end;
-                  break;
-                }
-          }
-        LL_DELETE (brc_event->notify_list, target);
-        pocl_unlock_events_inorder (brc_event, target_event);
-        POname (clReleaseEvent) (target->event);
-        pocl_mem_manager_free_event_node (target);
-        POCL_LOCK_OBJ (brc_event);
+      if (pocl_is_tracing_enabled () && target->event->meta_data)
+        {
+          pocl_event_md *md = target->event->meta_data;
+          for (size_t i = 0; i < md->num_deps; ++i)
+            if (md->dep_ids[i] == brc_event->id)
+              {
+                md->dep_ts[i] = brc_event->time_end;
+                break;
+              }
+        }
+      LL_DELETE (brc_event->notify_list, target);
+      POCL_UNLOCK_OBJ (target->event);
+      /* Unlock and lock brc_event to prevent lock order violations with the
+       * command queue when calling clReleaseEvent as it can call
+       * clReleaseCommandQueue.
+       */
+      POCL_UNLOCK_OBJ (brc_event);
+      /* Now that the event is deleted from the notify_list,
+       * undo the retain done during pocl_create_event_sync. */
+      POname (clReleaseEvent) (target->event);
+      POCL_LOCK_OBJ (brc_event);
+      pocl_mem_manager_free_event_node (target);
     }
   POCL_UNLOCK_OBJ (brc_event);
 }
@@ -1734,72 +1731,8 @@ pocl_init_default_device_infos (cl_device_id dev,
   dev->non_uniform_work_group_support = CL_FALSE;
   dev->max_num_sub_groups = 0;
 
-#ifdef ENABLE_LLVM
-
-  dev->kernellib_fallback_name = NULL;
-
-  char kernellib[POCL_MAX_PATHNAME_LENGTH] = "kernel-";
-  char kernellib_fallback[POCL_MAX_PATHNAME_LENGTH];
-
-  strcat(kernellib, dev->llvm_target_triplet);
-
-  strcat(kernellib, "-");
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  strcpy(kernellib_fallback, kernellib);
-  strcat(kernellib_fallback, "generic");
-  dev->kernellib_fallback_name = strdup(kernellib_fallback);
-
-  const char* kernellib_variant = pocl_get_distro_kernellib_variant ();
-  if (dev->llvm_cpu == NULL)
-    dev->llvm_cpu = pocl_get_distro_cpu_name (kernellib_variant);
-  strcat(kernellib, kernellib_variant);
-  if (!kernellib_variant)
-    dev->available = CL_FALSE;
-#elif defined(HOST_CPU_FORCED)
-  strcat(kernellib, OCL_KERNEL_TARGET_CPU);
-#else
-  strncpy (kernellib_fallback, kernellib, POCL_MAX_PATHNAME_LENGTH);
-  strncat (kernellib_fallback, OCL_KERNEL_TARGET_CPU,
-           POCL_MAX_PATHNAME_LENGTH - strlen (kernellib));
-  strncat (kernellib, dev->llvm_cpu,
-           POCL_MAX_PATHNAME_LENGTH - strlen (kernellib)
-             - strlen (OCL_KERNEL_TARGET_CPU));
-  dev->kernellib_fallback_name = strdup(kernellib_fallback);
-#endif
-  dev->kernellib_name = strdup(kernellib);
-  if (dev->kernellib_subdir == NULL)
-    dev->kernellib_subdir = "host";
-  dev->llvm_abi = pocl_get_llvm_cpu_abi ();
-
-#else /* No compiler, no CPU info */
-  dev->kernellib_name = NULL;
-  dev->kernellib_fallback_name = NULL;
-  if (dev->kernellib_subdir == NULL)
-    dev->kernellib_subdir = "host";
-  dev->llvm_abi = NULL;
-  if (dev->llvm_target_triplet == NULL)
-    dev->llvm_target_triplet = "";
-#endif
-
-#if defined(ENABLE_SPIRV)
-  dev->supported_spirv_extensions = "+SPV_KHR_no_integer_wrap_decoration"
-                                    ",+SPV_INTEL_fp_fast_math_mode"
-                                    ",+SPV_EXT_shader_atomic_float_add"
-                                    ",+SPV_INTEL_inline_assembly";
-#if LLVM_MAJOR >= 20
-  dev->supported_spir_v_versions
-    = "SPIR-V_1.5 SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
-#elif LLVM_MAJOR >= 19
-  dev->supported_spir_v_versions
-    = "SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
-#else
-  dev->supported_spir_v_versions = "SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
-#endif
-
-#else
   dev->supported_spir_v_versions = "";
   dev->supported_spirv_extensions = "";
-#endif
 
   /* OpenCL 3.0 properties */
   /* Minimum mandated capability */

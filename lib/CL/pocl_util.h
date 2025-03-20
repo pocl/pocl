@@ -94,8 +94,8 @@ void pocl_aligned_free (void *ptr);
 /* locks / unlocks two events in order of their event-id.
  * This avoids any potential deadlocks of threads should
  * they try to lock events in opposite order. */
-void pocl_lock_events_inorder (cl_event ev1, cl_event ev2);
-void pocl_unlock_events_inorder (cl_event ev1, cl_event ev2);
+POCL_EXPORT void pocl_lock_events_inorder (cl_event ev1, cl_event ev2);
+POCL_EXPORT void pocl_unlock_events_inorder (cl_event ev1, cl_event ev2);
 
 /* Function for creating events */
 cl_int pocl_create_event (cl_event *event,
@@ -288,26 +288,25 @@ void pocl_update_event_complete (const char *func, unsigned line,
                                  cl_event event, const char *msg);
 
 /**
- * Should be called by a driver when the event execution fails for some reason
+ * Mark the event as failed with the status and do all the required
+ * cleanup work (releasing memory, notifying others waiting on the event, etc).
  *
- * Sets the event status to failure (CL_FAILED) and does all the required
- * cleanup work (releasing memory, notifying others waiting on the event, etc)
+ * \warning Call with event unlocked.
+ * \warning Eventually clReleaseEvent is called, so this function can end up
+ * freeing the event.
+ * \param status [in] Status to be set for the event. Should be an error status
+ * like CL_FAILED or CL_DEVICE_NOT_AVAILABLE.
+ * \param func [in] Can be NULL, the function name calling this function.
+ * \param line [in] Can be 0, the line number which failed.
+ * \param event [in/out] Event to be marked as failed.
+ * \param msg [in] Can be NULL, informative error message.
  */
-POCL_EXPORT
-void pocl_update_event_failed (const char *func,
-                               unsigned line,
-                               cl_event event,
-                               const char *msg);
-
-/**
- * Same as pocl_update_event_failed, except assumes the event is locked.
- * TODO this should be reimplemented
- */
-POCL_EXPORT
-void pocl_update_event_failed_locked (cl_event event);
-
-POCL_EXPORT
-void pocl_update_event_device_lost (cl_event event);
+POCL_EXPORT void
+pocl_update_event_failed (cl_int status,
+                          const char *func,
+                          unsigned line,
+                          cl_event event,
+                          const char *msg);
 
 #define POCL_UPDATE_EVENT_COMPLETE_MSG(__event, msg)                          \
   pocl_update_event_complete (__func__, __LINE__, (__event), msg)
@@ -315,11 +314,11 @@ void pocl_update_event_device_lost (cl_event event);
 #define POCL_UPDATE_EVENT_COMPLETE(__event)                                   \
   pocl_update_event_complete (__func__, __LINE__, (__event), NULL)
 
-#define POCL_UPDATE_EVENT_FAILED(__event)                                     \
-pocl_update_event_failed (__func__, __LINE__, (__event), NULL)
+#define POCL_UPDATE_EVENT_FAILED(status, __event)                             \
+pocl_update_event_failed ((status), __func__, __LINE__, (__event), NULL)
 
-#define POCL_UPDATE_EVENT_FAILED_MSG(__event, msg)                            \
-pocl_update_event_failed (__func__, __LINE__, (__event), msg)
+#define POCL_UPDATE_EVENT_FAILED_MSG(status, __event, msg)                    \
+pocl_update_event_failed ((status), __func__, __LINE__, (__event), msg)
 
 POCL_EXPORT
 int pocl_copy_command_node (_cl_command_node *dst_node,

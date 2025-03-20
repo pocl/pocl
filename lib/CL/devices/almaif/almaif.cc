@@ -723,7 +723,7 @@ bool only_custom_device_events_left(cl_event event) {
 
 void pocl_almaif_submit(_cl_command_node *Node, cl_command_queue /*CQ*/) {
 
-  Node->ready = 1;
+  Node->state = POCL_COMMAND_READY;
 
   struct AlmaifData *D = (AlmaifData *)Node->device->data;
   cl_event E = Node->sync.event.event;
@@ -794,12 +794,25 @@ void pocl_almaif_notify(cl_device_id Device, cl_event Event, cl_event Finished) 
   _cl_command_node *volatile Node = Event->command;
 
   if (Finished->status < CL_COMPLETE) {
-    pocl_update_event_failed_locked(Event);
+    /* Unlock the finished event in order to prevent a lock order violation
+     * with the command queue that will be locked during
+     * pocl_update_event_failed.
+     */
+    pocl_unlock_events_inorder(Event, Finished);
+    pocl_update_event_failed(CL_FAILED, NULL, 0, Event, NULL);
+    /* Lock events in this order to avoid a lock order violation between
+     * the finished/notifier and event/wait events.
+     */
+    pocl_lock_events_inorder(Finished, Event);
     return;
   }
 
-  if (!Node->ready)
+  if (Node->state != POCL_COMMAND_READY) {
+    POCL_MSG_PRINT_EVENTS(
+        "almaif: command related to the notified event %lu not ready\n",
+        Event->id);
     return;
+  }
 
   if (Event->command->type != CL_COMMAND_NDRANGE_KERNEL) {
     if (pocl_command_is_ready(Event)) {

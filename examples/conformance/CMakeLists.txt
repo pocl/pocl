@@ -952,7 +952,8 @@ if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
   list(APPEND OCL_30_TESTS_MICRO
     "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_0"
     "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_1"
-    "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_2")
+    "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_2"
+    "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_3")
 endif()
 
 

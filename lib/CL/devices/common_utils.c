@@ -267,9 +267,40 @@ pocl_cpu_init_common (cl_device_id device)
 
 #ifdef ENABLE_LLVM
   device->llvm_target_triplet = OCL_KERNEL_TARGET;
+
+#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
+  const char* kernellib_variant = pocl_get_distro_kernellib_variant ();
+  device->llvm_cpu = pocl_get_distro_cpu_name (kernellib_variant);
+#else
   device->llvm_cpu = OCL_KERNEL_TARGET_CPU;
   if (device->llvm_cpu == NULL)
     device->llvm_cpu = pocl_get_llvm_cpu_name ();
+#endif
+
+  char kernellib[POCL_MAX_PATHNAME_LENGTH] = "kernel-";
+  char kernellib_fallback[POCL_MAX_PATHNAME_LENGTH];
+  strcat(kernellib, device->llvm_target_triplet);
+  strcat(kernellib, "-");
+
+#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
+  strcpy(kernellib_fallback, kernellib);
+  strcat(kernellib_fallback, "generic");
+  strcat(kernellib, kernellib_variant);
+#elif defined(HOST_CPU_FORCED)
+  strcat(kernellib, OCL_KERNEL_TARGET_CPU);
+#else
+  strncpy (kernellib_fallback, kernellib, POCL_MAX_PATHNAME_LENGTH);
+  strncat (kernellib_fallback, OCL_KERNEL_TARGET_CPU,
+           POCL_MAX_PATHNAME_LENGTH - strlen (kernellib));
+  strncat (kernellib, device->llvm_cpu,
+           POCL_MAX_PATHNAME_LENGTH - strlen (kernellib)
+             - strlen (OCL_KERNEL_TARGET_CPU));
+#endif
+  device->kernellib_fallback_name = strdup(kernellib_fallback);
+  device->kernellib_name = strdup(kernellib);
+  if (device->kernellib_subdir == NULL)
+    device->kernellib_subdir = "host";
+  device->llvm_abi = pocl_get_llvm_cpu_abi ();
 
 #ifndef ENABLE_SIGFPE_HANDLER
   if (strstr (OCL_KERNEL_TARGET, "x86") != NULL)
@@ -279,6 +310,22 @@ pocl_cpu_init_common (cl_device_id device)
 #endif
 
   pocl_init_default_device_infos (device, HOST_DEVICE_EXTENSIONS);
+
+#if defined(ENABLE_SPIRV)
+  device->supported_spirv_extensions = "+SPV_KHR_no_integer_wrap_decoration"
+                                    ",+SPV_INTEL_fp_fast_math_mode"
+                                    ",+SPV_EXT_shader_atomic_float_add"
+                                    ",+SPV_INTEL_inline_assembly";
+#if LLVM_MAJOR >= 20
+  device->supported_spir_v_versions
+    = "SPIR-V_1.5 SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
+#elif LLVM_MAJOR >= 19
+  device->supported_spir_v_versions
+    = "SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
+#else
+  device->supported_spir_v_versions = "SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
+#endif
+#endif
 
   if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_subgroup") != NULL)
     {
