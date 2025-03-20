@@ -21,21 +21,23 @@
    IN THE SOFTWARE.
 */
 
-extern const size_t _local_size_x;
-extern const size_t _local_size_y;
-extern const size_t _local_size_z;
+#define _CL_OPTNONE __attribute__ ((optnone))
 
-extern const size_t _group_id_x;
-extern const size_t _group_id_y;
-extern const size_t _group_id_z;
+constant extern const size_t _local_size_x;
+constant extern const size_t _local_size_y;
+constant extern const size_t _local_size_z;
 
-extern const size_t _local_id_x;
-extern const size_t _local_id_y;
-extern const size_t _local_id_z;
+constant extern const size_t _group_id_x;
+constant extern const size_t _group_id_y;
+constant extern const size_t _group_id_z;
 
-extern const size_t _global_offset_x;
-extern const size_t _global_offset_y;
-extern const size_t _global_offset_z;
+constant extern const size_t _local_id_x;
+constant extern const size_t _local_id_y;
+constant extern const size_t _local_id_z;
+
+constant extern const size_t _global_offset_x;
+constant extern const size_t _global_offset_y;
+constant extern const size_t _global_offset_z;
 
 size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
 get_local_id (unsigned int dimindx);
