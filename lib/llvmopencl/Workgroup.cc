@@ -1423,8 +1423,13 @@ void WorkgroupImpl::createDefaultWorkgroupLauncher(llvm::Function *F) {
 
   Builder.CreateRetVoid();
 
+  Function *Callee = CI->getCalledFunction();
+
   InlineFunctionInfo IFI;
   InlineFunction(*CI, IFI);
+
+  if (Callee->getNumUses() == 0)
+    Callee->eraseFromParent();
 }
 
 static inline uint64_t
