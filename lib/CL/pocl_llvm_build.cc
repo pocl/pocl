@@ -216,7 +216,7 @@ static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
 }
 
 #ifdef ENABLE_HEADER_BUNDLING
-static std::map<const char *, std::string> UnbundledHeaders;
+static std::map<std::string_view, std::string> UnbundledHeaders;
 static bool UnbundledHeadersInitialized = false;
 
 static void addHeader(const char *Source, unsigned SourceLen,
