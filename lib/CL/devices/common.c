@@ -177,8 +177,18 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   if (pocl_exists (final_binary_path))
     goto FINISH;
 
-  error = pocl_llvm_codegen (device, program, "", llvm_module,
-                             CL_TRUE, CL_TRUE, &objfile, &objfile_size);
+#if defined(__riscv)
+    char features[4096] = { '\0' };
+    if (device->llvm_arch != NULL)
+      pocl_get_llvm_cpu_feature(device->llvm_arch, features, 4096);
+
+    error = pocl_llvm_codegen (device, program, features, llvm_module,
+                               CL_TRUE, CL_TRUE, &objfile, &objfile_size);
+#else
+    error = pocl_llvm_codegen (device, program, "", llvm_module,
+                               CL_TRUE, CL_TRUE, &objfile, &objfile_size);
+#endif
+
   if (error)
     {
       POCL_MSG_PRINT_LLVM ("pocl_llvm_codegen() failed for kernel %s\n",
@@ -1769,7 +1779,11 @@ pocl_init_default_device_infos (cl_device_id dev,
   dev->kernellib_name = strdup(kernellib);
   if (dev->kernellib_subdir == NULL)
     dev->kernellib_subdir = "host";
-  dev->llvm_abi = pocl_get_llvm_cpu_abi ();
+  dev->llvm_abi = pocl_get_llvm_cpu_abi();
+
+#if defined(__riscv)  
+  dev->llvm_arch = pocl_get_llvm_cpu_isa();
+#endif
 
 #else /* No compiler, no CPU info */
   dev->kernellib_name = NULL;

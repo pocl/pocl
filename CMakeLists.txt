@@ -424,7 +424,7 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(arm|aarch64)")
   else()
     set(ARM64 1)
   endif()
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "riscv")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(riscv|riscv64)")
   set(RISCV 1)
   if(HOST_DEVICE_ADDRESS_BITS MATCHES "32")
     set(RISCV32 1)
@@ -1421,6 +1421,8 @@ endif()
 
 if(NOT DEFINED DEFAULT_ENABLE_ICD)
 
+  # For cross-compiling,
+  # PKG_CONFIG_DIR, PKG_CONFIG_LIBDIR, PKG_CONFIG_SYSROOT_DIR need to be set properly
   # pkg-config doesn't work with cross-compiling
   if(PKG_CONFIG_EXECUTABLE)
     pkg_check_modules(OCL_ICD ocl-icd>=1.3)

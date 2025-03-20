@@ -42,6 +42,17 @@ extern "C" {
   POCL_EXPORT
   const char *pocl_get_llvm_cpu_abi ();
 
+#if defined(__riscv)
+  POCL_EXPORT
+  const char *pocl_get_llvm_cpu_isa ();
+
+  POCL_EXPORT
+  const char *pocl_get_llvm_cpu_model ();
+
+  POCL_EXPORT
+  void pocl_get_llvm_cpu_feature (const char *march, char *features, int length);
+#endif
+
   /* For distro builds, return the kernellib variant based on the host CPU */
   POCL_EXPORT
   const char *pocl_get_distro_kernellib_variant ();
