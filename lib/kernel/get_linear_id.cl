@@ -21,21 +21,23 @@
    IN THE SOFTWARE.
 */
 
-extern const size_t _local_size_x;
-extern const size_t _local_size_y;
-extern const size_t _local_size_z;
+#define _CL_OPTNONE __attribute__ ((optnone))
 
-extern const size_t _group_id_x;
-extern const size_t _group_id_y;
-extern const size_t _group_id_z;
+constant extern const size_t _local_size_x;
+constant extern const size_t _local_size_y;
+constant extern const size_t _local_size_z;
 
-extern const size_t _local_id_x;
-extern const size_t _local_id_y;
-extern const size_t _local_id_z;
+constant extern const size_t _group_id_x;
+constant extern const size_t _group_id_y;
+constant extern const size_t _group_id_z;
 
-extern const size_t _global_offset_x;
-extern const size_t _global_offset_y;
-extern const size_t _global_offset_z;
+constant extern const size_t _local_id_x;
+constant extern const size_t _local_id_y;
+constant extern const size_t _local_id_z;
+
+constant extern const size_t _global_offset_x;
+constant extern const size_t _global_offset_y;
+constant extern const size_t _global_offset_z;
 
 size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
 get_local_id (unsigned int dimindx);
@@ -58,8 +60,13 @@ get_local_size (unsigned int dimindx);
 size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE get_global_linear_id (void);
 size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE get_local_linear_id (void);
 
+#if _MSC_VER
+size_t _CL_READNONE _CL_OPTNONE
+__identifier ("?get_global_linear_id@@$$J0YAKXZ") ()
+#else
 size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
-get_global_linear_id (void)
+get_global_linear_id ()
+#endif
 {
   return ((_local_size_z * _group_id_z + get_local_id (2))
           * get_global_size (1) * get_global_size (0))
@@ -70,8 +77,13 @@ get_global_linear_id (void)
          + (_local_size_x * _group_id_x + get_local_id (0));
 }
 
+#if _MSC_VER
+size_t _CL_READNONE _CL_OPTNONE
+__identifier ("?get_local_linear_id@@$$J0YAKXZ") ()
+#else
 size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
 get_local_linear_id (void)
+#endif
 {
   return (get_local_id (2) * get_local_size (1) * get_local_size (0))
          + (get_local_id (1) * get_local_size (0)) + get_local_id (0);
