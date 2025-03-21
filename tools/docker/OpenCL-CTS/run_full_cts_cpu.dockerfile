@@ -44,15 +44,8 @@ RUN if [ ! -e /usr/bin/python ]; then ln -s /usr/bin/python3 /usr/bin/python ; f
 ARG POCL_REMOTE=pocl
 # git branch/commit of PoCL to build
 ARG POCL_CHECKOUT=main
-# git branch/commit of OpenCL-CTS to build
-ARG CTS_CHECKOUT=899cbf5cd2bfc63c01fab9d71f7a6ec529091845
 # C/C++ build flags
 ARG POCL_BUILD_FLAGS="-O2 -march=native"
-# note that using any flag that enables 256bit or larger AVX registers can cause segfaults.
-# this is because in C++11 a std::vector uses plain (unaligned) new/delete,
-# these usually align to 16 bytes, which is not enough for 256bit vectors.
-# Then std::vector<256bit type> will randomly segfault b/c of misalignment.
-ARG CTS_BUILD_FLAGS="-O2 -march=x86-64-v2"
 
 RUN cd /opt && git clone https://github.com/$POCL_REMOTE/pocl.git && cd /opt/pocl && git checkout $POCL_CHECKOUT
 
@@ -63,10 +56,20 @@ RUN cd /opt/pocl/build && \
     -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_ICD=1 -DPOCL_ICD_ABSOLUTE_PATH=OFF -DENABLE_POCL_BUILDING=OFF -DENABLE_CONFORMANCE=ON ..
 RUN cd /opt/pocl/build && make -j$(nproc) && make install
 
+# GH username / org name where OpenCL-CTS is cloned
+ARG CTS_REMOTE=KhronosGroup
+# git branch/commit of OpenCL-CTS to build
+ARG CTS_CHECKOUT=899cbf5cd2bfc63c01fab9d71f7a6ec529091845
+# note that using any flag that enables 256bit or larger AVX registers can cause segfaults.
+# this is because in C++11 a std::vector uses plain (unaligned) new/delete,
+# these usually align to 16 bytes, which is not enough for 256bit vectors.
+# Then std::vector<256bit type> will randomly segfault b/c of misalignment.
+ARG CTS_BUILD_FLAGS="-O2 -march=x86-64-v2"
+
 # required for OpenCL-CTS to find 'cl_offline_compiler' in $PATH
 RUN ln -s /opt/pocl/build/cl_offline_compiler.sh /usr/local/bin/cl_offline_compiler
 
-RUN cd /opt && git clone https://github.com/KhronosGroup/OpenCL-CTS.git && cd /opt/OpenCL-CTS && git checkout $CTS_CHECKOUT
+RUN cd /opt && git clone https://github.com/$CTS_REMOTE/OpenCL-CTS.git && cd /opt/OpenCL-CTS && git checkout $CTS_CHECKOUT
 RUN rm -rf /usr/include/CL
 RUN mkdir /opt/OpenCL-CTS/build
 RUN cd /opt/OpenCL-CTS/build && \
@@ -76,10 +79,11 @@ RUN cd /opt/OpenCL-CTS/build && \
     -DOPENCL_LIBRARIES=OpenCL -DCL_INCLUDE_DIR=/opt/pocl/include -DCL_LIB_DIR=/usr/lib/x86_64-linux-gnu ..
 RUN cd /opt/OpenCL-CTS/build && make -j$(nproc)
 
-RUN /opt/OpenCL-CTS/test_conformance/spirv_new/assemble_spirv.py \
-    -s /opt/OpenCL-CTS/test_conformance/spirv_new/spirv_asm \
-    -o /opt/OpenCL-CTS/build/test_conformance/spirv_new/spirv_bin \
-    -a /usr/bin/spirv-as -l /usr/bin/spirv-val
+# this is now part of CTS build process
+#RUN /opt/OpenCL-CTS/test_conformance/spirv_new/assemble_spirv.py \
+#    -s /opt/OpenCL-CTS/test_conformance/spirv_new/spirv_asm \
+#    -o /opt/OpenCL-CTS/build/test_conformance/spirv_new/spirv_bin \
+#    -a /usr/bin/spirv-as -l /usr/bin/spirv-val
 
 ENV POCL_AFFINITY=1
 ENV POCL_CACHE_DIR=/tmp/POCL_CACHE
