@@ -85,7 +85,7 @@ if(CUSTOM_CTS_GIT_TAG)
   set(CTS_GIT_TAG "${CUSTOM_CTS_GIT_TAG}")
 else()
   # Use PoCL's fork which has pending fixes.
-  set(CTS_GIT_TAG "v2025.02.28")
+  set(CTS_GIT_TAG "v2025.03.21.1")
 endif()
 
 set(TS_BUILDDIR "${TS_BUILDDIR}/test_conformance")
@@ -178,6 +178,10 @@ set(CTS_LEVEL0_BLACKLIST
   conformance_spirv_math_full_fract
 )
 
+set(CTS_CPU_ASAN_BLACKLIST
+  conformance_main_integer_ops_micro_3
+  conformance_main_spirv_new_micro_3
+)
 
 #################################################################################
 #################################################################################
@@ -478,7 +482,7 @@ set(CTS_FULL_LIST
 foreach(CTSTEST IN LISTS CTS_FULL_LIST)
   set_property(TEST ${CTSTEST}
     APPEND PROPERTY
-    LABELS ${CTS_LABEL})
+    LABELS "${CTS_LABEL};cpu")
   set_property(TEST ${CTSTEST}
     PROPERTY
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
@@ -1042,7 +1046,7 @@ set(CTS_MICRO_LIST
 foreach(CTSTEST IN LISTS CTS_MICRO_LIST)
   set_property(TEST ${CTSTEST}
     APPEND PROPERTY
-    LABELS ${CTS_LABEL})
+    LABELS "${CTS_LABEL};cpu")
   set_property(TEST ${CTSTEST}
     PROPERTY
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
@@ -1054,6 +1058,15 @@ foreach(CTSTEST IN LISTS CTS_MICRO_LIST)
         APPEND PROPERTY LABELS "level0")
     endif()
   endif()
+  if(ENABLE_ASAN AND ENABLE_HOST_CPU_DEVICES)
+    if(CTSTEST IN_LIST CTS_CPU_ASAN_BLACKLIST)
+      message(STATUS "disabling test ${CTSTEST} for CPU/ASan")
+    else()
+      set_property(TEST ${CTSTEST}
+        APPEND PROPERTY LABELS "asan")
+    endif()
+  endif()
+
 endforeach()
 
 # note that the environment variables must be set for this test
