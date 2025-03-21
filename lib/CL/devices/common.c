@@ -701,6 +701,7 @@ pocl_exec_command (_cl_command_node *node)
             void *ptr = cmd->svm_free.svm_pointers[i];
             POCL_LOCK_OBJ (event->context);
             pocl_raw_ptr *tmp = NULL, *item = NULL;
+            cl_mem shadow_mem = NULL;
             DL_FOREACH_SAFE (event->context->raw_ptrs, item, tmp)
             {
               if (item->vm_ptr == ptr)
@@ -709,10 +710,13 @@ pocl_exec_command (_cl_command_node *node)
                   break;
                 }
             }
+            shadow_mem = item->shadow_cl_mem;
             POCL_UNLOCK_OBJ (event->context);
             assert (item);
             POCL_MEM_FREE (item);
             POname (clReleaseContext) (event->context);
+            if (shadow_mem)
+              POname (clReleaseMemObject) (shadow_mem);
             dev->ops->svm_free (dev, ptr);
           }
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Free              ");
