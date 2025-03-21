@@ -204,6 +204,7 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
         mem->is_image = CL_TRUE;
         mem->type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
         mem->device_supports_this_image = device_image_support;
+        device_image_support = NULL;
         mem->buffer = b;
 
         mem->size = size;
@@ -243,10 +244,9 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
               }
           }
 
-        mem = pocl_create_memobject (context, flags, size,
-                                     image_desc->image_type,
-                                     device_image_support,
-                                     host_ptr, host_ptr_is_svm, &errcode);
+        mem = pocl_create_memobject (
+          context, flags, size, image_desc->image_type, &device_image_support,
+          host_ptr, host_ptr_is_svm, &errcode);
         if (mem == NULL)
           goto ERROR;
       }
@@ -300,8 +300,7 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
     POCL_ATOMIC_INC (image_c);
 
  ERROR:
-   if (errcode != CL_SUCCESS)
-     POCL_MEM_FREE (device_image_support);
+   POCL_MEM_FREE (device_image_support);
 
    if (errcode_ret)
      {

@@ -95,8 +95,13 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
         {
           /* Free the backing buffer for the Image1D object. */
           cl_mem b = memobj->buffer;
+          cl_context c = b->context;
           assert (b);
+          /* there is a retain on both the parent and the context */
           err = POname (clReleaseMemObject) (b);
+          assert (err == CL_SUCCESS);
+          POCL_MEM_FREE (memobj->device_supports_this_image);
+          err = POname (clReleaseContext) (c);
           POCL_MEM_FREE (memobj);
           return err;
         }
