@@ -1,0 +1,123 @@
+---
+name: Linux / CPU x86-64 / CTS+Sanitizers
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  schedule:
+# at 7:11 UTC every wednesday
+    - cron: '11 7 * * 3'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  CCACHE_BASEDIR: "${{ github.workspace }}"
+  CCACHE_DIR: "${{ github.workspace }}/../../../../ccache_storage"
+  EXAMPLES_DIR: "${{ github.workspace }}/../../../../examples"
+
+jobs:
+  cts_san_matrix:
+    name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
+    runs-on: [self-hosted, linux, x64, "${{ matrix.config }}" ]
+    # CPU runners have action runner directly in the home directory
+    env:
+      CCACHE_BASEDIR: "${{ github.workspace }}"
+      CCACHE_DIR: "${{ github.workspace }}/../../../ccache_storage"
+      EXAMPLES_DIR: "${{ github.workspace }}/../../../examples"
+      TSAN_OPTIONS: "second_deadlock_stack=1"
+    strategy:
+      fail-fast: false
+      matrix:
+        # cts_asan = CTS build with AddressSanitizer
+        # cts_tsan = CTS build with ThreadSanitizer
+        include:
+          - llvm: 19
+            config: cts_tsan
+          - llvm: 20
+            config: cts_asan
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Load Env vars
+        id: load-env
+        run: |
+          cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
+
+      - name: CMake
+        id: cmake
+        run: |
+          runCMake() {
+            BUILD_FLAGS="-O1 -ggdb -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo "-DCMAKE_C_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
+            "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
+            -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/usr/bin/llvm-spirv-${{ matrix.llvm }} \
+            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+          }
+
+          rm -rf ${{ github.workspace }}/build
+          mkdir ${{ github.workspace }}/build
+          if [ "${{ matrix.config }}" == "cts_asan" ]; then
+            mkdir -p ${EXAMPLES_DIR}/build_cts_asan
+            mkdir -p ${EXAMPLES_DIR}/source
+            runCMake -DENABLE_ICD=0 -DENABLE_ASAN=1 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_cts_asan
+          elif [ "${{ matrix.config }}" == "cts_tsan" ]; then
+            mkdir -p ${EXAMPLES_DIR}/build_cts_tsan
+            mkdir -p ${EXAMPLES_DIR}/source
+            runCMake -DENABLE_ICD=0 -DENABLE_TSAN=1 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_cts_tsan
+          else
+            echo "Unknown configuration" && exit 1
+          fi
+
+      - name: Build PoCL
+        id: build_pocl
+        timeout-minutes: 30
+        run: |
+          cd ${{ github.workspace }}/build && make -j$(nproc)
+
+      - name: Build CTS Examples
+        id: build_cts_examples
+        # occasionally git timeouts on git clone of the examples
+        timeout-minutes: 60
+        run: |
+          cd ${{ github.workspace }}/build/examples/conformance && make -j$(nproc) conformance
+
+      - name: Get CMake version
+        id: cmake_version
+        run: echo "version=$(cmake --version | head -n 1)" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Cache CTest timings
+        id: cache_ctest
+        uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf
+        with:
+          path: ${{ github.workspace }}/build/Testing/Temporary/CTestCostData.txt
+          key: ctest-cache-${{ steps.cmake_version.outputs.version }}-${{ runner.name }}-${{ matrix.config }}
+
+      - name: Run Tests
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+        id: ctest
+        timeout-minutes: 120
+        run: |
+          runCTest() {
+            # limit jobs to 8; ctest seems to have some memleak or something, it eats up 10+ GBytes of memory
+            cd ${{ github.workspace }}/build && ctest -j8 $CTEST_FLAGS "$@"
+          }
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          # hardcoded path in test_compiler / execute_after_included_header_link
+          rm -rf /tmp/foo
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          if [ "${{ matrix.config }}" == "cts_asan" ]; then
+            runCTest -L conformance_suite_micro_main -L asan
+          elif [ "${{ matrix.config }}" == "cts_tsan" ]; then
+            runCTest -L conformance_suite_micro_main -L tsan
+          else
+            echo "Unknown configuration" && exit 1
+          fi
