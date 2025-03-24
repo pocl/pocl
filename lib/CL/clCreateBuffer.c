@@ -31,9 +31,14 @@
 #include "pocl_util.h"
 
 cl_mem
-pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
-                       cl_mem_object_type type, int* device_image_support,
-                       void *host_ptr, int host_ptr_is_svm, cl_int *errcode_ret)
+pocl_create_memobject (cl_context context,
+                       cl_mem_flags flags,
+                       size_t size,
+                       cl_mem_object_type type,
+                       int **device_image_support,
+                       void *host_ptr,
+                       int host_ptr_is_svm,
+                       cl_int *errcode_ret)
 {
   cl_mem mem = NULL;
   int errcode = CL_SUCCESS;
@@ -122,7 +127,11 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
   POCL_INIT_OBJECT (mem);
   mem->type = type;
   mem->flags = flags;
-  mem->device_supports_this_image = device_image_support;
+  if (device_image_support)
+    {
+      mem->device_supports_this_image = *device_image_support;
+      *device_image_support = NULL;
+    }
 
   mem->device_ptrs = (pocl_mem_identifier *)calloc (
       POCL_ATOMIC_LOAD (pocl_num_devices), sizeof (pocl_mem_identifier));
