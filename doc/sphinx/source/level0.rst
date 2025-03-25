@@ -6,14 +6,15 @@ Level Zero driver
 
 This driver uses libze and LLVM/Clang to run OpenCL code on GPU devices via Level Zero API.
 
-The implementation is almost complete, there are a few remaining issues.
+The implementation is now (as of Mar 2025) able to pass OpenCL-CTS tests, however improvements
+to performance and functions are still ongoing.
 
 Installation
 -------------
 
 Required:
 
- * Clang+LLVM: 17, 18 and 19 should work, older may work but are untested.
+ * Clang+LLVM: 18, 19 and 20 should work, older may work but are untested.
    It's highly recommended to use a LLVM built with static component libraries (this is the default)
  * Level Zero ICD + development files (level-zero and level-zero-devel)
  * Level Zero drivers (on Ubuntu, intel-level-zero-gpu)
@@ -42,7 +43,8 @@ After build, it can be tested without installation (in the build directory)::
 
     OCL_ICD_VENDORS=$PWD/ocl-vendors/pocl-tests.icd POCL_BUILDING=1 POCL_DEVICES=level0 ./examples/example1/example1
 
-or::
+or using the test runner script::
+
     ./tools/scripts/run_level0_tests
 
 This assumes that `libOpenCL.so` is the opensource ocl-icd loader; for other ICD loaders
@@ -59,6 +61,7 @@ These features are currently disabled when PoCL is built with ENABLE_CONFORMANCE
  * Subgroups: require device queries which aren't yet available through L0 API
  * Program-scope variables: fails a particular use case from OpenCL-cts
  * FP64: this is emulated on most consumer hardware, and fails math tests
+ * FP16: this is available on consumer hardware, but fails some CTS math tests
  * 64bit atomics: can cause a GPU hang
 
 The last two features may work on some hardware but fail on other; the other features
