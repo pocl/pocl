@@ -127,6 +127,8 @@ double _CL_OVERLOADABLE _CL_READNONE dot (double16 p0, double16 p1);
 
 #endif
 
+/**************************************************************************/
+
 #if defined(cl_intel_subgroups_char)
 /* The char version is missing from opencl-c.h */
 char _CL_OVERLOADABLE _CL_CONV
@@ -381,8 +383,357 @@ intel_sub_group_block_write_uc8 (read_write image2d_t, int2, uchar8);
 void _CL_OVERLOADABLE _CL_CONV
 intel_sub_group_block_write_uc16 (read_write image2d_t, int2, uchar16);
 #endif // defined(__opencl_c_read_write_images)
-
 #endif // defined(__opencl_c_images)
+
+#endif // cl_intel_subgroups_char
+
+/**************************************************************************/
+
+#if defined(cl_intel_subgroups_short)
+/* The short version is missing from opencl-c.h */
+short _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_broadcast (short, uint sub_group_local_id);
+short2 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_broadcast (short2, uint sub_group_local_id);
+short3 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_broadcast (short3, uint sub_group_local_id);
+short4 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_broadcast (short4, uint sub_group_local_id);
+short8 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_broadcast (short8, uint sub_group_local_id);
+
+ushort _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_broadcast (ushort, uint sub_group_local_id);
+ushort2 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_broadcast (ushort2, uint sub_group_local_id);
+ushort3 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_broadcast (ushort3, uint sub_group_local_id);
+ushort4 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_broadcast (ushort4, uint sub_group_local_id);
+ushort8 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_broadcast (ushort8, uint sub_group_local_id);
+
+short _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle (short, uint);
+short2 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle (short2, uint);
+short3 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle (short3, uint);
+short4 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle (short4, uint);
+short8 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle (short8, uint);
+short16 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle (short16, uint);
+
+ushort _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle (ushort, uint);
+ushort2 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle (ushort2, uint);
+ushort3 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle (ushort3, uint);
+ushort4 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle (ushort4, uint);
+ushort8 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle (ushort8, uint);
+ushort16 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle (ushort16, uint);
+
+short _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_down (short cur,
+                                                                 short next,
+                                                                 uint);
+short2 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_down (short2 cur,
+                                                                  short2 next,
+                                                                  uint);
+short3 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_down (short3 cur,
+                                                                  short3 next,
+                                                                  uint);
+short4 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_down (short4 cur,
+                                                                  short4 next,
+                                                                  uint);
+short8 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_down (short8 cur,
+                                                                  short8 next,
+                                                                  uint);
+short16 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_down (short16 cur,
+                                                                   short16 next,
+                                                                   uint);
+
+ushort _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_down (ushort cur,
+                                                                  ushort next,
+                                                                  uint);
+ushort2 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_down (ushort2 cur,
+                                                                   ushort2 next,
+                                                                   uint);
+ushort3 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_down (ushort3 cur,
+                                                                   ushort3 next,
+                                                                   uint);
+ushort4 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_down (ushort4 cur,
+                                                                   ushort4 next,
+                                                                   uint);
+ushort8 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_down (ushort8 cur,
+                                                                   ushort8 next,
+                                                                   uint);
+ushort16 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_shuffle_down (ushort16 cur, ushort16 next, uint);
+
+short _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_up (short cur,
+                                                               short next,
+                                                               uint);
+short2 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_up (short2 cur,
+                                                                short2 next,
+                                                                uint);
+short3 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_up (short3 cur,
+                                                                short3 next,
+                                                                uint);
+short4 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_up (short4 cur,
+                                                                short4 next,
+                                                                uint);
+short8 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_up (short8 cur,
+                                                                short8 next,
+                                                                uint);
+short16 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_up (short16 cur,
+                                                                 short16 next,
+                                                                 uint);
+
+ushort _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_up (ushort cur,
+                                                                ushort next,
+                                                                uint);
+ushort2 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_up (ushort2 cur,
+                                                                 ushort2 next,
+                                                                 uint);
+ushort3 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_up (ushort3 cur,
+                                                                 ushort3 next,
+                                                                 uint);
+ushort4 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_up (ushort4 cur,
+                                                                 ushort4 next,
+                                                                 uint);
+ushort8 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_up (ushort8 cur,
+                                                                 ushort8 next,
+                                                                 uint);
+ushort16 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_up (ushort16 cur,
+                                                                  ushort16 next,
+                                                                  uint);
+
+short _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_xor (short, uint);
+short2 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_xor (short2, uint);
+short3 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_xor (short3, uint);
+short4 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_xor (short4, uint);
+short8 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_xor (short8, uint);
+short16 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_xor (short16,
+                                                                  uint);
+
+ushort _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_xor (ushort, uint);
+ushort2 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_xor (ushort2,
+                                                                  uint);
+ushort3 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_xor (ushort3,
+                                                                  uint);
+ushort4 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_xor (ushort4,
+                                                                  uint);
+ushort8 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_xor (ushort8,
+                                                                  uint);
+ushort16 _CL_OVERLOADABLE _CL_CONV intel_sub_group_shuffle_xor (ushort16,
+                                                                   uint);
+
+short _CL_OVERLOADABLE _CL_CONV intel_sub_group_reduce_add (short x);
+ushort _CL_OVERLOADABLE _CL_CONV intel_sub_group_reduce_add (ushort x);
+short _CL_OVERLOADABLE _CL_CONV intel_sub_group_reduce_min (short x);
+ushort _CL_OVERLOADABLE _CL_CONV intel_sub_group_reduce_min (ushort x);
+short _CL_OVERLOADABLE _CL_CONV intel_sub_group_reduce_max (short x);
+ushort _CL_OVERLOADABLE _CL_CONV intel_sub_group_reduce_max (ushort x);
+
+short _CL_OVERLOADABLE _CL_CONV intel_sub_group_scan_exclusive_add (short x);
+ushort _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_scan_exclusive_add (ushort x);
+short _CL_OVERLOADABLE _CL_CONV intel_sub_group_scan_exclusive_min (short x);
+ushort _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_scan_exclusive_min (ushort x);
+short _CL_OVERLOADABLE _CL_CONV intel_sub_group_scan_exclusive_max (short x);
+ushort _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_scan_exclusive_max (ushort x);
+
+short _CL_OVERLOADABLE _CL_CONV intel_sub_group_scan_inclusive_add (short x);
+ushort _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_scan_inclusive_add (ushort x);
+short _CL_OVERLOADABLE _CL_CONV intel_sub_group_scan_inclusive_min (short x);
+ushort _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_scan_inclusive_min (ushort x);
+short _CL_OVERLOADABLE _CL_CONV intel_sub_group_scan_inclusive_max (short x);
+ushort _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_scan_inclusive_max (ushort x);
+
+#if defined(__opencl_c_images)
+ushort _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us (read_only image2d_t, int2);
+ushort2 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us2 (read_only image2d_t, int2);
+ushort4 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us4 (read_only image2d_t, int2);
+ushort8 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us8 (read_only image2d_t, int2);
+ushort16 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us16 (read_only image2d_t, int2);
+
+#if defined(__opencl_c_read_write_images)
+ushort _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us (read_write image2d_t, int2);
+ushort2 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us2 (read_write image2d_t, int2);
+ushort4 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us4 (read_write image2d_t, int2);
+ushort8 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us8 (read_write image2d_t, int2);
+ushort16 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us16 (read_write image2d_t, int2);
+#endif // defined(__opencl_c_read_write_images)
+#endif // defined(__opencl_c_images)
+
+ushort _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us (const global ushort *p);
+ushort2 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us2 (const global ushort *p);
+ushort4 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us4 (const global ushort *p);
+ushort8 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us8 (const global ushort *p);
+ushort16 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us16 (const global ushort *p);
+
+ushort _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us (const local ushort *p);
+ushort2 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us2 (const local ushort *p);
+ushort4 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us4 (const local ushort *p);
+ushort8 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us8 (const local ushort *p);
+ushort16 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_us16 (const local ushort *p);
+
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_us (global ushort *p,
+                                                      ushort data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_us2 (global ushort *p,
+                                                       ushort2 data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_us4 (global ushort *p,
+                                                       ushort4 data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_us8 (global ushort *p,
+                                                       ushort8 data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_us16 (global ushort *p,
+                                                       ushort16 data);
+
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_us (local ushort *p,
+                                                      ushort data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_us2 (local ushort *p,
+                                                       ushort2 data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_us4 (local ushort *p,
+                                                       ushort4 data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_us8 (local ushort *p,
+                                                       ushort8 data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_us16 (local ushort *p,
+                                                       ushort16 data);
+
+#if defined(__opencl_c_images)
+void _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_write_us (write_only image2d_t, int2, ushort);
+void _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_write_us2 (write_only image2d_t, int2, ushort2);
+void _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_write_us4 (write_only image2d_t, int2, ushort4);
+void _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_write_us8 (write_only image2d_t, int2, ushort8);
+void _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_write_us16 (write_only image2d_t, int2, ushort16);
+
+#if defined(__opencl_c_read_write_images)
+void _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_write_us (read_write image2d_t, int2, ushort);
+void _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_write_us2 (read_write image2d_t, int2, ushort2);
+void _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_write_us4 (read_write image2d_t, int2, ushort4);
+void _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_write_us8 (read_write image2d_t, int2, ushort8);
+void _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_write_us16 (read_write image2d_t, int2, ushort16);
+#endif // defined(__opencl_c_read_write_images)
+#endif // defined(__opencl_c_images)
+
+#endif // cl_intel_subgroups_short
+
+/**************************************************************************/
+
+#if defined(cl_intel_subgroups_long)
+
+#if defined(__opencl_c_images)
+ulong _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_ul (read_only image2d_t, int2);
+ulong2 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_ul2 (read_only image2d_t, int2);
+ulong4 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_ul4 (read_only image2d_t, int2);
+ulong8 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_ul8 (read_only image2d_t, int2);
+
+#if defined(__opencl_c_read_write_images)
+ulong _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_ul (read_write image2d_t, int2);
+ulong2 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_ul2 (read_write image2d_t, int2);
+ulong4 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_ul4 (read_write image2d_t, int2);
+ulong8 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_ul8 (read_write image2d_t, int2);
+#endif // defined(__opencl_c_read_write_images)
+#endif // defined(__opencl_c_images)
+
+ulong _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_ul (const global ulong *p);
+ulong2 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_ul2 (const global ulong *p);
+ulong4 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_ul4 (const global ulong *p);
+ulong8 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_ul8 (const global ulong *p);
+
+ulong _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_ul (const local ulong *p);
+ulong2 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_ul2 (const local ulong *p);
+ulong4 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_ul4 (const local ulong *p);
+ulong8 _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_read_ul8 (const local ulong *p);
+
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_ul (global ulong *p,
+                                                      ulong data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_ul2 (global ulong *p,
+                                                       ulong2 data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_ul4 (global ulong *p,
+                                                       ulong4 data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_ul8 (global ulong *p,
+                                                       ulong8 data);
+
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_ul (local ulong *p,
+                                                      ulong data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_ul2 (local ulong *p,
+                                                       ulong2 data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_ul4 (local ulong *p,
+                                                       ulong4 data);
+void _CL_OVERLOADABLE _CL_CONV intel_sub_group_block_write_ul8 (local ulong *p,
+                                                       ulong8 data);
+
+#if defined(__opencl_c_images)
+void _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_write_ul (write_only image2d_t, int2, ulong);
+void _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_write_ul2 (write_only image2d_t, int2, ulong2);
+void _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_write_ul4 (write_only image2d_t, int2, ulong4);
+void _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_write_ul8 (write_only image2d_t, int2, ulong8);
+
+#if defined(__opencl_c_read_write_images)
+void _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_write_ul (read_write image2d_t, int2, ulong);
+void _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_write_ul2 (read_write image2d_t, int2, ulong2);
+void _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_write_ul4 (read_write image2d_t, int2, ulong4);
+void _CL_OVERLOADABLE _CL_CONV
+intel_sub_group_block_write_ul8 (read_write image2d_t, int2, ulong8);
+#endif // defined(__opencl_c_read_write_images)
+#endif // defined(__opencl_c_images)
+
+#endif // cl_intel_subgroups_long
+
+/**************************************************************************/
 
 #ifdef cl_intel_split_work_group_barrier
 void _CL_OVERLOADABLE
@@ -396,7 +747,5 @@ void _CL_OVERLOADABLE intel_work_group_barrier_wait (cl_mem_fence_flags flags,
                                                      memory_scope scope);
 #endif
 #endif // cl_intel_split_work_group_barrier
-
-#endif
 
 #endif
