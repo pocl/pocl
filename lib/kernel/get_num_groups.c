@@ -38,7 +38,8 @@ get_num_groups (unsigned int dimindx)
     case 0: return _num_groups_x;
     case 1: return _num_groups_y;
     case 2: return _num_groups_z;
-    default: return 0;
+    default:
+      return 1;
     }
 }
 

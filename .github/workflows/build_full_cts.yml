@@ -13,7 +13,7 @@ on:
 jobs:
   cpu_cts:
     name: LLVM ${{ matrix.llvm }} - CPU ${{ matrix.config }}
-    runs-on: [self-hosted, linux, x64, full_cts_cpu, full_cts_spirv_cpu]
+    runs-on: [self-hosted, linux, x64, "${{ matrix.config }}"]
     timeout-minutes: 1600
     # CPU runners have action runner directly in the home directory
     env:
@@ -25,8 +25,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [19]
-        config: [cts_full, cts_full_spirv]
+        llvm: [20]
+        config: [full_cts_cpu, full_cts_cpu_spirv]
 
     steps:
       - name: Checkout
@@ -71,9 +71,9 @@ jobs:
           # hardcoded path in test_compiler / execute_after_included_header_link
           rm -rf /tmp/foo
           mkdir ${{ env.POCL_CACHE_DIR }}
-          if [ "${{ matrix.config }}" == "cts_full" ]; then
+          if [ "${{ matrix.config }}" == "full_cts_cpu" ]; then
             runCTest -L conformance_suite_full_main
-          elif [ "${{ matrix.config }}" == "cts_full_spirv" ]; then
+          elif [ "${{ matrix.config }}" == "full_cts_cpu_spirv" ]; then
             runCTest -L conformance_suite_full_spirv
           else
             echo "Unknown configuration" && exit 1
@@ -81,7 +81,7 @@ jobs:
 
   level_zero_cts:
     name: LLVM ${{ matrix.llvm }} - LevelZero ${{ matrix.config }}
-    runs-on: [self-hosted, linux, x64, full_cts_l0, full_cts_spirv_l0]
+    runs-on: [self-hosted, linux, x64, "${{ matrix.config }}"]
     timeout-minutes: 1600
     env:
       CCACHE_BASEDIR: "${{ github.workspace }}"
@@ -92,8 +92,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [19]
-        config: [cts_full, cts_full_spirv]
+        llvm: [20]
+        config: [full_cts_lz, full_cts_lz_spirv]
 
     steps:
       - name: Checkout
@@ -139,9 +139,9 @@ jobs:
           # hardcoded path in test_compiler / execute_after_included_header_link
           rm -rf /tmp/foo
           mkdir ${{ env.POCL_CACHE_DIR }}
-          if [ "${{ matrix.config }}" == "cts_full" ]; then
+          if [ "${{ matrix.config }}" == "full_cts_lz" ]; then
             runCTest -L conformance_suite_full_main
-          elif [ "${{ matrix.config }}" == "cts_full_spirv" ]; then
+          elif [ "${{ matrix.config }}" == "full_cts_lz_spirv" ]; then
             runCTest -L conformance_suite_full_spirv
           else
             echo "Unknown configuration" && exit 1

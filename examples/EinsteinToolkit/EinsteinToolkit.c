@@ -558,11 +558,11 @@ void setup(const char* program_source1, const char* program_source2)
           }
       }
       const cl_device_partition_property props[]
-          = { CL_DEVICE_PARTITION_EQUALLY, 2, 0 };
-      cl_device_id subdevs[128];
+          = { CL_DEVICE_PARTITION_BY_COUNTS, 1, 1, 0 };
+      cl_device_id subdevs[2];
       cl_uint retval;
       int err
-          = clCreateSubDevices (main_device_id, props, 128, subdevs, &retval);
+          = clCreateSubDevices (main_device_id, props, 2, subdevs, &retval);
       if (err != CL_SUCCESS) {
         fprintf (stderr, "clCreateSubDevices failed\n");
         exit (1);
