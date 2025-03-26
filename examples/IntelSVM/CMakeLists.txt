@@ -37,17 +37,19 @@ if (EXISTS "${INTEL_ZIP}")
   ExternalProject_Add(
     ${TS_NAME}
     PREFIX "${TS_BASEDIR}"
-    DOWNLOAD_COMMAND /bin/true
-    PATCH_COMMAND pwd && unzip "${INTEL_ZIP}" &&
-      cp "${CMAKE_CURRENT_SOURCE_DIR}/intelsvm_CMakeLists.txt" ./CMakeLists.txt &&
-      patch -p0 -d SVMBasicCoarseGrained -i ${CMAKE_CURRENT_SOURCE_DIR}/intelsvm.patch &&
-      patch -p0 -d SVMBasicFineGrained -i ${CMAKE_CURRENT_SOURCE_DIR}/intelsvm.patch
+    URL "${INTEL_ZIP}"
+    URL_HASH MD5=11ee89a908734e90ba3688853a0351c1
+    PATCH_COMMAND ${BASH} -c "if [ ! -e ${TS_BASEDIR}/src/${TS_NAME}/CMakeLists.txt ] $<SEMICOLON> then \
+      cp ${CMAKE_CURRENT_SOURCE_DIR}/intelsvm_CMakeLists.txt ${TS_BASEDIR}/src/${TS_NAME}/CMakeLists.txt && \
+      patch -p0 -d SVMBasicCoarseGrained -i ${CMAKE_CURRENT_SOURCE_DIR}/intelsvm.patch && \
+      patch -p0 -d SVMBasicFineGrained -i ${CMAKE_CURRENT_SOURCE_DIR}/intelsvm.patch \
+      $<SEMICOLON> fi"
     CMAKE_ARGS
       -DCMAKE_BUILD_TYPE=RelWithDebInfo
       "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=-O2 -g -DCL_USE_DEPRECATED_OPENCL_1_2_APIS"
       -DOPENCL_LIBRARIES:STRING=OpenCL
       "-DPOCL_OPENCL_HEADERS=${CMAKE_SOURCE_DIR}/include"
-    INSTALL_COMMAND "/bin/true"
+    INSTALL_COMMAND ""
   )
 
   set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
