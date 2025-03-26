@@ -42,7 +42,8 @@ get_global_size (unsigned int dimindx)
     case 0: return _local_size_x * _num_groups_x;
     case 1: return _local_size_y * _num_groups_y;
     case 2: return _local_size_z * _num_groups_z;
-    default: return 0;
+    default:
+      return 1;
     }
 }
 
