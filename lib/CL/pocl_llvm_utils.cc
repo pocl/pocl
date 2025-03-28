@@ -533,6 +533,15 @@ void InitializeLLVM() {
         O->addOccurrence(1, StringRef("pass-remarks"),
                          StringRef("loop-vectorize"), false);
       }
+
+      // Force the loop vectorizer to use the same width for all loops.
+      if (int VecWidth = pocl_get_int_option("POCL_FORCE_VECTOR_WIDTH", 0)) {
+        O = opts["force-vector-width"];
+        assert(O && "could not find LLVM option 'force-vector-width'");
+        O->addOccurrence(1, StringRef("force-vector-width"),
+                         StringRef(std::to_string(VecWidth)), false);
+      }
+
     }
     if (pocl_get_bool_option("POCL_DEBUG_LLVM_PASSES", 0) == 1) {
       O = opts["debug"];
