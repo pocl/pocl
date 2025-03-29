@@ -44,6 +44,7 @@
 #include "common_cl.hh"
 #include "config.h"
 #include "pocl_builtin_kernels.h"
+#include "pocl_run_command.h"
 #include "pocl_debug.h"
 #include "pocl_runtime_config.h"
 #include "shared_cl_context.hh"

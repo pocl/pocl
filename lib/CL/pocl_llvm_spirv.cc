@@ -50,6 +50,7 @@ POP_COMPILER_DIAGS
 #include "pocl_file_util.h"
 #include "pocl_llvm.h"
 #include "pocl_llvm_api.h"
+#include "pocl_run_command.h"
 #include "pocl_spir.h"
 #include "pocl_util.h"
 
