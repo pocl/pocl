@@ -39,6 +39,7 @@
 #include "pocl_local_size.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
+#include "pocl_run_command.h"
 
 #include <ze_api.h>
 

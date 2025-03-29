@@ -36,6 +36,7 @@ set(SOURCES pocld.cc daemon.hh daemon.cc cmdline.h cmdline.c
             ../lib/CL/pocl_debug.c ../lib/CL/pocl_debug.h
             ../lib/CL/pocl_threads.c ../lib/CL/pocl_threads.h
             ../lib/CL/pocl_timing.c ../lib/CL/pocl_timing.h
+            ../lib/CL/pocl_run_command.c ../lib/CL/pocl_run_command.h
             ../lib/CL/devices/spirv_parser.hh ../lib/CL/devices/spirv_parser.cc
             ../lib/CL/devices/pocl_spirv_utils.hh ../lib/CL/devices/pocl_spirv_utils.cc
             ../lib/CL/devices/bufalloc.h ../lib/CL/devices/bufalloc.c

@@ -21,7 +21,7 @@
 // THE SOFTWARE.
 
 #include "config.h"
-#include "pocl_util.h"
+#include "pocl_run_command.h"
 
 #include <cstdint>
 #include <iostream>

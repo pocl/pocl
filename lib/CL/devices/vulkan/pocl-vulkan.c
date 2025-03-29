@@ -106,6 +106,7 @@
 #include "pocl_timing.h"
 #include "pocl_util.h"
 #include "pocl_version.h"
+#include "pocl_run_command.h"
 
 #include "pocl-vulkan.h"
 

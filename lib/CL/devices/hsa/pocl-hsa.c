@@ -86,6 +86,7 @@
 #include "pocl_spir.h"
 #include "pocl_local_size.h"
 #include "pocl_util.h"
+#include "pocl_run_command.h"
 
 #include <assert.h>
 #include <limits.h>
