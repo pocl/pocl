@@ -1358,13 +1358,21 @@ bool createSPIRVWithSVMOffset(const std::vector<unsigned char> *InputSPV,
 
     // https://www.khronos.org/blog/offline-compilation-of-opencl-kernels-into-
     // spir-v-using-open-source-tooling
-    std::stringstream OpenCLCCmd;
-    OpenCLCCmd << pocl_get_path("CLANG", CLANGCC)
-               << " -c -target spir64 -cl-kernel-arg-info -cl-std=CL3.0 "
-               << SrcFileName.c_str() << " " << BuildOptions
-               << " -emit-llvm -o " << OrigBcFileName.c_str();
-
-    if (system(OpenCLCCmd.str().c_str()) != EXIT_SUCCESS)
+    const char *ClangArgs[] = {
+        pocl_get_path("CLANG", CLANGCC),
+        "-c",
+        "-target",
+        "spir64",
+        "-cl-kernel-arg-info",
+        "-cl-std=CL3.0",
+        BuildOptions,
+        SrcFileName.c_str(),
+        "-emit-llvm",
+        "-o",
+        OrigBcFileName.c_str(),
+        nullptr
+    };
+    if (pocl_run_command(ClangArgs) != EXIT_SUCCESS)
       return false;
 
   } else if (InputSPV != nullptr) {
@@ -1374,23 +1382,26 @@ bool createSPIRVWithSVMOffset(const std::vector<unsigned char> *InputSPV,
     OrigSpvFile.write((const char *)InputSPV->data(), InputSPV->size());
     OrigSpvFile.close();
 
-    std::stringstream SpvCmd;
+    const char *SpirvArgs[] = {
+        pocl_get_path("LLVM_SPIRV", LLVM_SPIRV),
+        "-r",
+        OrigSpvFileName.c_str(),
+        "-o",
+        OrigBcFileName.c_str(),
+        nullptr
+    };
 
-    SpvCmd << pocl_get_path("LLVM_SPIRV", LLVM_SPIRV) << " -r "
-           << OrigSpvFileName.c_str() << " -o " << OrigBcFileName.c_str();
-
-    if (system(SpvCmd.str().c_str()) != EXIT_SUCCESS)
+    if (pocl_run_command(SpirvArgs) != EXIT_SUCCESS)
       return false;
 
   } else {
-    assert(false && "Unimplemented.");
+    POCL_MSG_ERR("This code path is not implemented.");
+    return false;
   }
 
   const std::string OffsettedBcFileName = TempDir / "offsetted.bc";
 
   std::filesystem::path LibPoCLPath;
-  std::stringstream OptCmd;
-
   if (!pocl_get_bool_option("POCL_BUILDING", 0))
     LibPoCLPath /= std::filesystem::path(POCL_INSTALL_LIBDIR) / "libpocl.so";
   else
@@ -1400,32 +1411,45 @@ bool createSPIRVWithSVMOffset(const std::vector<unsigned char> *InputSPV,
   // Without -strip-debug there might be crashes due to llvm-spirv
   // not detecting its own produced debug output sometimes (to
   // report).
-  OptCmd << pocl_get_path("LLVM_OPT", LLVM_OPT)
-         << " -load-pass-plugin=" << LibPoCLPath
-         << " -strip-debug -passes=svm-offset -svm-offset-value=" << SVMOffset
-         << " " << OrigBcFileName << " -o " << OffsettedBcFileName;
+  std::string LibPoclPlugin("-load-pass-plugin=");
+  LibPoclPlugin.append(LibPoCLPath);
+  std::string SvmOffsetValue = "-svm-offset-value=" + std::to_string(SVMOffset);
+  const char *OptArgs[] = {
+      pocl_get_path("LLVM_OPT", LLVM_OPT),
+      LibPoclPlugin.c_str(),
+      "-strip-debug",
+      "-passes=svm-offset",
+      SvmOffsetValue.c_str(),
+      OrigBcFileName.c_str(),
+      "-o",
+      OffsettedBcFileName.c_str(),
+      nullptr
+  };
 
-  if (system(OptCmd.str().c_str()) != EXIT_SUCCESS)
+  if (pocl_run_command(OptArgs) != EXIT_SUCCESS)
     return false;
 
   const std::string OutSpvFileName = TempDir / "offsetted.spv";
+  const char *SpirvArgs[] = {
+      pocl_get_path("LLVM_SPIRV", LLVM_SPIRV),
+      OffsettedBcFileName.c_str(),
+      "-o",
+      OutSpvFileName.c_str(),
+      nullptr
+  };
 
-  std::stringstream SpvCmd;
-
-  SpvCmd << pocl_get_path("LLVM_SPIRV", LLVM_SPIRV) << " "
-         << OffsettedBcFileName.c_str() << " -o " << OutSpvFileName.c_str();
-
-  if (system(SpvCmd.str().c_str()) != EXIT_SUCCESS)
+  if (pocl_run_command(SpirvArgs) != EXIT_SUCCESS)
     return false;
 
-  std::ifstream OutFile(OutSpvFileName);
-  char C;
+  auto Length = std::filesystem::file_size(OutSpvFileName);
   NewSPV.clear();
-  while (OutFile.read((char *)&C, 1)) {
-    NewSPV.push_back(C);
-  }
+  NewSPV.resize(Length);
+  std::ifstream OutFile(OutSpvFileName);
+  OutFile.read(reinterpret_cast<char*>(NewSPV.data()), Length);
 
-  // std::filesystem::remove_all(TempDir);
+  if (!pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
+    std::filesystem::remove_all(TempDir);
+
   return true;
 }
 #endif
