@@ -1,7 +1,8 @@
 # Portable Computing Language (PoCL)
 
-PoCL is a [conformant](https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_450)
-implementation of the OpenCL 3.0 standard which can be easily adapted for new targets.
+PoCL is a conformant implementation (for [CPU](https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_450)
+and [Level Zero GPU](https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_453) targets)
+of the OpenCL 3.0 standard which can be easily adapted for new targets.
 
 [Official web page](http://portablecl.org)
 
