@@ -774,6 +774,7 @@ bool WorkitemHandler::handleLocalMemAllocas() {
 /// analysis.
 void WorkitemHandler::handleWorkitemFunctions() {
   std::set<llvm::Instruction *> InstrsToDelete;
+
   for (Function::iterator BBI = K->begin(), BBE = K->end(); BBI != BBE; ++BBI) {
     llvm::BasicBlock &BB = *BBI;
     for (llvm::BasicBlock::iterator II = BB.begin(); II != BB.end(); ++II) {
@@ -795,8 +796,18 @@ void WorkitemHandler::handleWorkitemFunctions() {
           if (isa<PHINode>(InsertBefore))
             InsertBefore = Call;
           IRBuilder<> Builder(InsertBefore);
-          llvm::Instruction *Replacement = nullptr;
-          if (Callee->getName() == GID_BUILTIN_NAME)
+          llvm::Value *Replacement = nullptr;
+          if (Dim >= 3) {
+            if (Callee->getName() == GID_BUILTIN_NAME ||
+                Callee->getName() == GROUP_ID_BUILTIN_NAME ||
+                Callee->getName() == LID_BUILTIN_NAME ||
+                Callee->getName() == GOFF_BUILTIN_NAME ||
+                Callee->getName() == GLID_BUILTIN_NAME ||
+                Callee->getName() == LLID_BUILTIN_NAME)
+              Replacement = ConstantInt::get(Call->getType(), 0);
+            else
+              Replacement = ConstantInt::get(Call->getType(), 1);
+          } else if (Callee->getName() == GID_BUILTIN_NAME)
             Replacement = Builder.CreateLoad(ST, GlobalIdGlobals[Dim]);
           else if (Callee->getName() == GROUP_ID_BUILTIN_NAME)
             Replacement = Builder.CreateLoad(ST, GroupIdGlobals[Dim]);

@@ -29,17 +29,18 @@ Note: For Ubuntu/Debian, PoCL supports the binary packages
 from https://apt.llvm.org/ - these usually support more
 (and newer) LLVM versions than Ubuntu/Debian.
 
-Install requirements for Ubuntu/Debian::
+.. highlight:: bash
 
-```bash
-export LLVM_VERSION=<major LLVM version>
-apt install -y python3-dev libpython3-dev build-essential ocl-icd-libopencl1 \
+Install requirements (e.g with LLVM 19) for Ubuntu/Debian::
+
+    export LLVM_VERSION=19
+    apt install -y python3-dev libpython3-dev build-essential ocl-icd-libopencl1 \
     cmake git pkg-config libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} \
     llvm-${LLVM_VERSION} make ninja-build ocl-icd-libopencl1 ocl-icd-dev \
     ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils \
     libxml2-dev libclang-cpp${LLVM_VERSION}-dev libclang-cpp${LLVM_VERSION} \
     llvm-${LLVM_VERSION}-dev
-```
+
 
 If LLVM is linked to PoCL statically (-DSTATIC_LLVM=ON cmake option, default OFF),
 then the `libpolly-${LLVM_VERSION}-dev libzstd-dev` packages might be also needed

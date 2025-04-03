@@ -157,12 +157,9 @@ int TestCGSVM(cl::Platform Platform) {
     // Initialize the first inputs via an SVM memcpy command.
 
     // Without the destination being host-mapped...
-    CHECK_CL_ERROR(::clEnqueueSVMMemcpy(Queue.get(), CL_TRUE, &CGSVMBuf[0],
-                                        &HostBuf[0], 2 * sizeof(int), 0,
-                                        nullptr, nullptr));
+    Queue.enqueueMemcpySVM(&CGSVMBuf[0], &HostBuf[0], CL_TRUE, 2 * sizeof(int));
 
-    Queue.enqueueMapSVM(&CGSVMBuf[0], true, CL_MAP_READ, 2 * sizeof(int));
-
+    Queue.enqueueMapSVM(CGSVMBuf, CL_TRUE, CL_MAP_READ, 2 * sizeof(int));
     for (int i = 0; i < 2; ++i) {
       if (CGSVMBuf[i] != i) {
         AllOK = false;
@@ -177,22 +174,20 @@ int TestCGSVM(cl::Platform Platform) {
       }
     }
 
+    // ...and while it has been host-mapped.
+    Queue.enqueueMemcpySVM(&CGSVMBuf[2], &HostBuf[2], CL_TRUE, 2 * sizeof(int));
     Queue.enqueueUnmapSVM(CGSVMBuf);
 
-    // ...and while it has been host-mapped.
-    ::clEnqueueSVMMemcpy(Queue.get(), CL_TRUE, &CGSVMBuf[2], &HostBuf[2],
-                         2 * sizeof(int), 0, nullptr, nullptr);
-
-    Queue.enqueueMapSVM(CGSVMBuf, true, CL_MAP_WRITE, BufSize);
+    // remap with Write flag
+    Queue.enqueueMapSVM(CGSVMBuf, CL_TRUE, CL_MAP_WRITE, BufSize);
     // Write the rest of the inputs directly.
     for (int i = 4; i < N_ELEMENTS; ++i) {
       CGSVMBuf[i] = i;
     }
-
     Queue.enqueueUnmapSVM(CGSVMBuf);
+
     Queue.enqueueNDRangeKernel(GetAddrKernel, cl::NullRange, cl::NDRange(1),
                                cl::NullRange);
-    Queue.enqueueMapSVM(CGSVMBuf, true, CL_MAP_READ, BufSize);
 
     Queue.enqueueReadBuffer(AddrCLBuffer,
                             CL_TRUE, // block
@@ -205,24 +200,31 @@ int TestCGSVM(cl::Platform Platform) {
       AllOK = false;
     }
 
-    // Read some of the data with SVMMemcpy().
-    ::clEnqueueSVMMemcpy(Queue.get(), CL_TRUE, &HostBuf[0], &CGSVMBuf[0],
-                         4 * sizeof(int), 0, nullptr, nullptr);
-
+    // Verify some of the data with SVMMemcpy
+    Queue.enqueueMemcpySVM(&HostBuf[0], &CGSVMBuf[0], CL_TRUE, 4 * sizeof(int));
     std::cerr << std::dec;
+    for (int i = 0; i < 4; ++i) {
+      if (HostBuf[i] != i + 1) {
+        AllOK = false;
+        std::cerr << "Wrong data in the memcopied buf at " << i << " expected "
+                  << i + 1 << " got " << HostBuf[i] << std::endl;
+      }
+    }
+
+    // Verify all data with SVMMap
+    Queue.enqueueMapSVM(CGSVMBuf, true, CL_MAP_READ, BufSize);
     for (int i = 0; i < N_ELEMENTS; ++i) {
       if (CGSVMBuf[i] != i + 1) {
         AllOK = false;
         std::cerr << "CGSVMBuf[" << i << "] expected to be " << i + 1
                   << " but got " << (int)CGSVMBuf[i] << std::endl;
       }
-      if (i < 4 && i + 1 != HostBuf[i]) {
-        AllOK = false;
-        std::cerr << "Wrong data in the memcopied buf at " << i << " expected "
-                  << i + 1 << " got " << HostBuf[i] << std::endl;
-      }
     }
+    Queue.enqueueUnmapSVM(CGSVMBuf);
+    Queue.finish();
+
     clSVMFree(Context.get(), CGSVMBuf);
+
   } catch (cl::Error &err) {
     std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
               << std::endl;
@@ -376,6 +378,8 @@ int TestMultiDevice_CGSVM(cl::Platform Platform) {
         AllOK = false;
       }
     }
+    LastQ.enqueueUnmapSVM(CGSVMBuf);
+    LastQ.finish();
 
     for (cl::Device &Device : SuitableDevices) {
       delete Queues[&Device];

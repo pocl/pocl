@@ -181,6 +181,14 @@ set(CTS_LEVEL0_BLACKLIST
 set(CTS_CPU_ASAN_BLACKLIST
   conformance_main_integer_ops_micro_3
   conformance_main_spirv_new_micro_3
+  conformance_main_basic_micro_other
+)
+set(CTS_CPU_TSAN_BLACKLIST
+  conformance_main_api
+  conformance_main_api_micro_ocl_30
+  conformance_main_math_micro_rint
+  conformance_main_math_micro_sinpi
+  conformance_main_events_micro_other
 )
 
 #################################################################################
@@ -1064,6 +1072,14 @@ foreach(CTSTEST IN LISTS CTS_MICRO_LIST)
     else()
       set_property(TEST ${CTSTEST}
         APPEND PROPERTY LABELS "asan")
+    endif()
+  endif()
+  if(ENABLE_TSAN AND ENABLE_HOST_CPU_DEVICES)
+    if(CTSTEST IN_LIST CTS_CPU_TSAN_BLACKLIST)
+      message(STATUS "disabling test ${CTSTEST} for CPU/TSan")
+    else()
+      set_property(TEST ${CTSTEST}
+        APPEND PROPERTY LABELS "tsan")
     endif()
   endif()
 
