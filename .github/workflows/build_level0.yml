@@ -84,14 +84,14 @@ jobs:
       - name: Run Build
         id: build
         run: |
-          cd ${{ github.workspace }}/build && make -j4
+          cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh)
 
       - name: Build OpenCL-CTS
         id: build_examples
         if: ${{ matrix.conformance == 1 }}
         timeout-minutes: 120
         run: |
-          cd ${{ github.workspace }}/build/examples/conformance && make -j4 conformance
+          cd ${{ github.workspace }}/build/examples/conformance && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) conformance
 
       - name: Run Tests
         env:

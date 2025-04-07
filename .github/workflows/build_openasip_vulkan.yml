@@ -70,7 +70,7 @@ jobs:
       - name: Run Build
         id: build
         run: |
-          cd ${{ github.workspace }}/build && make -j$(nproc)
+          cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh)
 
       - name: Run Tests
         env:
@@ -113,7 +113,7 @@ jobs:
       - name: Run Build
         id: build
         run: |
-          cd ${{ github.workspace }}/build && make -j4
+          cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh)
 
       - name: Run Tests
         env:

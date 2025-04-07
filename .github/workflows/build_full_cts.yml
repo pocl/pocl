@@ -57,7 +57,7 @@ jobs:
         id: build
         timeout-minutes: 60
         run: |
-          cd ${{ github.workspace }}/build && make -j$(nproc) && make -j$(nproc) prepare_examples
+          cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) prepare_examples
 
       - name: Run Tests
         id: ctest
@@ -65,7 +65,7 @@ jobs:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         run: |
           runCTest() {
-            cd ${{ github.workspace }}/build &&  ctest -j$(nproc) $CTEST_FLAGS "$@"
+            cd ${{ github.workspace }}/build &&  ctest -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) $CTEST_FLAGS "$@"
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           # hardcoded path in test_compiler / execute_after_included_header_link
@@ -125,7 +125,7 @@ jobs:
         id: build
         timeout-minutes: 60
         run: |
-          cd ${{ github.workspace }}/build && make -j4 && make -j4 prepare_examples
+          cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) prepare_examples
 
       - name: Run Tests
         env:
@@ -133,7 +133,7 @@ jobs:
         id: ctest
         run: |
           runCTest() {
-            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j4 $CTEST_FLAGS "$@"
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) $CTEST_FLAGS "$@"
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           # hardcoded path in test_compiler / execute_after_included_header_link

@@ -67,7 +67,7 @@ jobs:
         id: build_pocl
         timeout-minutes: 20
         run: |
-          cd ${{ github.workspace }}/build && make -j4
+          cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh)
 
       - name: Run Tests
         env:
@@ -116,7 +116,7 @@ jobs:
         id: build_pocl
         timeout-minutes: 20
         run: |
-          cd ${{ github.workspace }}/build && make -j4
+          cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh)
 
       - name: Run Tests
         env:
@@ -166,7 +166,7 @@ jobs:
         id: build_pocl
         timeout-minutes: 20
         run: |
-          cd ${{ github.workspace }}/build && make -j4
+          cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh)
 
       - name: Run Tests
         env:
@@ -216,7 +216,7 @@ jobs:
         id: build_pocl
         timeout-minutes: 20
         run: |
-          cd ${{ github.workspace }}/build && make -j4
+          cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh)
 
       - name: Run Tests
         env:
