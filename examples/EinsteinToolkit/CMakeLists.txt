@@ -52,7 +52,6 @@ set_tests_properties( "EinsteinToolkit_SubDev"
     COST 15.0
     RESOURCE_LOCK "einstein"
     LABELS "EinsteinToolkit"
-    ENVIRONMENT "POCL_AFFINITY=1"
     SKIP_RETURN_CODE 77)
 
 if(ENABLE_HOST_CPU_DEVICES AND NOT RISCV)
