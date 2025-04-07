@@ -101,7 +101,7 @@ jobs:
         id: build_pocl
         timeout-minutes: 30
         run: |
-          cd ${{ github.workspace }}/build && make -j$(nproc)
+          cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh)
 
       - name: Build CTS Examples
         id: build_cts_examples
@@ -109,7 +109,7 @@ jobs:
         timeout-minutes: 60
         if: ${{ matrix.config == 'cts_spirv' || matrix.config == 'tier1' }}
         run: |
-          cd ${{ github.workspace }}/build/examples/conformance && make -j$(nproc) conformance
+          cd ${{ github.workspace }}/build/examples/conformance && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) conformance
 
       - name: Build Tier1 Examples
         id: build_tier1_examples
@@ -117,11 +117,11 @@ jobs:
         timeout-minutes: 90
         if: ${{ matrix.config == 'tier1' }}
         run: |
-          cd ${{ github.workspace }}/build/examples/AMDSDK3.0 && make -j$(nproc) AMDSDK3.0
-          cd ${{ github.workspace }}/build/examples/piglit && make -j$(nproc) piglit
+          cd ${{ github.workspace }}/build/examples/AMDSDK3.0 && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) AMDSDK3.0
+          cd ${{ github.workspace }}/build/examples/piglit && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) piglit
           # currently broken
-          #cd ${{ github.workspace }}/build/examples/PyOpenCL && make -j$(nproc) PyOpenCL
-          cd ${{ github.workspace }}/build/examples/IntelSVM && make -j$(nproc) IntelSVM
+          #cd ${{ github.workspace }}/build/examples/PyOpenCL && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) PyOpenCL
+          cd ${{ github.workspace }}/build/examples/IntelSVM && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) IntelSVM
 
       - name: Build chipStar Examples
         id: build_chipstar_examples
@@ -129,7 +129,7 @@ jobs:
         timeout-minutes: 90
         if: ${{ matrix.config == 'chipstar' }}
         run: |
-          cd ${{ github.workspace }}/build/examples/chipStar && make -j$(nproc) chipStar
+          cd ${{ github.workspace }}/build/examples/chipStar && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) chipStar
 
       - name: Get CMake version
         id: cmake_version
@@ -150,7 +150,7 @@ jobs:
         timeout-minutes: 120
         run: |
           runCTest() {
-            cd ${{ github.workspace }}/build &&  ctest -j$(nproc) $CTEST_FLAGS "$@"
+            cd ${{ github.workspace }}/build &&  ctest -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) $CTEST_FLAGS "$@"
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           # hardcoded path in test_compiler / execute_after_included_header_link

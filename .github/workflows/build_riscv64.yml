@@ -68,7 +68,7 @@ jobs:
       - name: Run Build
         id: build
         run: |
-          cd $BUILD_DIR && make -j$(nproc)
+          cd $BUILD_DIR && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh)
 
       - name: Run Tests
         env:
@@ -78,4 +78,4 @@ jobs:
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd $BUILD_DIR && ctest -j$(nproc) $CTEST_FLAGS -L cpu -LE 'long'
+          cd $BUILD_DIR && ctest -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) $CTEST_FLAGS -L cpu -LE 'long'

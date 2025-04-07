@@ -86,4 +86,4 @@ jobs:
         id: build_pocl
         timeout-minutes: 30
         run: |
-          cd ${{ github.workspace }}/build && make -j$(nproc)
+          cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh)

@@ -69,17 +69,17 @@ jobs:
         id: build_pocl
         timeout-minutes: 20
         run: |
-          cd ${{ github.workspace }}/build && make -j4
+          cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh)
 
       - name: Build Examples
         id: build_examples
         # occasionally git timeouts on git clone of the examples
         timeout-minutes: 120
         run: |
-          cd ${{ github.workspace }}/build/examples/dpcpp-book-samples && make -j4 dpcpp-book-samples
-          cd ${{ github.workspace }}/build/examples/oneapi-samples && make -j4 oneapi-samples
-          cd ${{ github.workspace }}/build/examples/simple-sycl-samples && make -j4 simple-sycl-samples
-          cd ${{ github.workspace }}/build/examples/intel-compute-samples && make -j4 intel-compute-samples
+          cd ${{ github.workspace }}/build/examples/dpcpp-book-samples && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) dpcpp-book-samples
+          cd ${{ github.workspace }}/build/examples/oneapi-samples && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) oneapi-samples
+          cd ${{ github.workspace }}/build/examples/simple-sycl-samples && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) simple-sycl-samples
+          cd ${{ github.workspace }}/build/examples/intel-compute-samples && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) intel-compute-samples
 
       - name: Run CPU Tests
         env:
@@ -89,7 +89,7 @@ jobs:
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_cpu -j4 $CTEST_FLAGS
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_cpu -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) $CTEST_FLAGS
 
       - name: Run GPU Tests
         env:
