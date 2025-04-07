@@ -1105,3 +1105,41 @@ pocl_cpu_get_ptr (struct pocl_argument *arg, unsigned global_mem_id)
   ptr += arg->offset;
   return (void *)ptr;
 }
+
+void
+pocl_reset_indirect_ptrs (cl_kernel kernel, void **ptrs, size_t n)
+{
+  if (kernel->indirect_raw_ptrs != NULL)
+    {
+      struct _pocl_ptr_list_node *n, *tmp;
+      DL_FOREACH_SAFE (kernel->indirect_raw_ptrs, n, tmp)
+        {
+          free (n);
+        }
+      kernel->indirect_raw_ptrs = NULL;
+    }
+
+  for (size_t i = 0; i < n; ++i)
+    {
+      void *ptr = ptrs[i];
+      if (ptr == NULL)
+        continue;
+
+      /* Filter out non-sensical pointers silently. The spec doesn't
+         tell to return an error in this case, perhaps for future
+         compatibility with system allocated (but not migrated)
+         buffers? */
+      pocl_raw_ptr *svm_ptr
+        = pocl_find_raw_ptr_with_vm_ptr (kernel->context, ptr);
+
+      if (svm_ptr == NULL)
+        continue;
+
+      struct _pocl_ptr_list_node *node
+        = malloc (sizeof (struct _pocl_ptr_list_node));
+      node->ptr = ptr;
+
+      DL_APPEND (kernel->indirect_raw_ptrs, node);
+      POCL_MSG_PRINT_MEMORY ("Set an indirect SVM/USM ptr %p\n", node->ptr);
+    }
+}

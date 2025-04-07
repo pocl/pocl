@@ -106,6 +106,14 @@ pocl_buffer_migration_info *
 pocl_convert_to_subbuffer_migrations (pocl_buffer_migration_info *buffer_usage,
                                       cl_int *err);
 
+/* Sets the indirect_raw_ptrs of the kernel to the given list array
+ * of pointers.
+ *
+ * Clears up the possible previously set pointers.
+ */
+void
+pocl_reset_indirect_ptrs (cl_kernel kernel, void **ptrs, size_t n);
+
 /* Increments a buffer's reference counter. */
 #define POCL_RETAIN_BUFFER_UNLOCKED(__OBJ__)                                  \
   do                                                                          \

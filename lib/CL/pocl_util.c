@@ -28,7 +28,9 @@
 #include "pocl_compiler_macros.h"
 #include "pocl_cl.h"
 #define _BSD_SOURCE
+#ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
+#endif
 #define _POSIX_C_SOURCE 200809L
 
 #include <errno.h>
@@ -2248,7 +2250,6 @@ pocl_str_append (const char **dst, const char *src)
   *dst = new_dst;
   return old_dst;
 }
-
 
 int
 pocl_fill_aligned_buf_with_pattern (void *__restrict__ ptr, size_t offset,
