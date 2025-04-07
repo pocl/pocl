@@ -3108,17 +3108,7 @@ pocl_remote_set_kernel_exec_info_ext (cl_device_id dev,
     {
     case CL_KERNEL_EXEC_INFO_SVM_PTRS:
     case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL:
-      {
-        for (size_t i = 0; i < param_value_size / sizeof (void *); ++i)
-          {
-            struct _pocl_ptr_list_node *n
-                = malloc (sizeof (struct _pocl_ptr_list_node));
-            n->ptr = ((void **)param_value)[i];
-            DL_APPEND (kernel->indirect_raw_ptrs, n);
-            POCL_MSG_PRINT_MEMORY ("Set a indirect SVM/USM ptr %p\n", n->ptr);
-          }
-        return CL_SUCCESS;
-      }
+      return CL_SUCCESS;
     case CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL:
     case CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL:
     case CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL:

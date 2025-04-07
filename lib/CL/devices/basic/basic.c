@@ -970,21 +970,24 @@ pocl_basic_get_subgroup_info_ext (cl_device_id device,
 cl_int
 pocl_basic_set_kernel_exec_info_ext (cl_device_id dev,
                                      unsigned program_device_i,
-                                     cl_kernel Kernel, cl_uint param_name,
+                                     cl_kernel kernel, cl_uint param_name,
                                      size_t param_value_size,
                                      const void *param_value)
 {
 
   switch (param_name)
     {
-    case CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM:
     case CL_KERNEL_EXEC_INFO_SVM_PTRS:
     case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL:
+      {
+        return CL_SUCCESS;
+      }
+    case CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM:
     case CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT:
     case CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL:
     case CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL:
     case CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL:
-    return CL_SUCCESS;
+      return CL_SUCCESS;
     default:
       return CL_INVALID_VALUE;
     }
