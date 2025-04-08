@@ -281,11 +281,11 @@ int pocl_regen_spirv_binary(cl_program program, cl_uint device_i) {
   int errcode = CL_SUCCESS;
   cl_device_id Device = program->devices[device_i];
   int spec_constants_changed = 0;
-  char concated_spec_const_option[MAX_SPEC_CONST_CMDLINE_LEN];
+  char concated_spec_const_option[MAX_SPEC_CONST_CMDLINE_LEN] = {};
   concated_spec_const_option[0] = 0;
-  char spirv_exts[MAX_SPEC_CONST_CMDLINE_LEN];
-  char program_bc_spirv[POCL_MAX_PATHNAME_LENGTH];
-  char unlinked_program_bc_temp[POCL_MAX_PATHNAME_LENGTH];
+  char spirv_exts[MAX_SPEC_CONST_CMDLINE_LEN] = {};
+  char program_bc_spirv[POCL_MAX_PATHNAME_LENGTH] = {};
+  char unlinked_program_bc_temp[POCL_MAX_PATHNAME_LENGTH] = {};
   program_bc_spirv[0] = 0;
   unlinked_program_bc_temp[0] = 0;
 
@@ -296,8 +296,14 @@ int pocl_regen_spirv_binary(cl_program program, cl_uint device_i) {
                                      ? "--spirv-target-env=CL2.0"
                                      : "--spirv-target-env=CL1.2";
   strcpy(spirv_exts, "--spirv-ext=");
-  strncat(spirv_exts, Device->supported_spirv_extensions,
-          (MAX_SPEC_CONST_CMDLINE_LEN - strlen("--spirv-ext=") - 1));
+  if (Device->supported_spirv_extensions &&
+      Device->supported_spirv_extensions[0]) {
+    strncat(spirv_exts, Device->supported_spirv_extensions,
+            (MAX_SPEC_CONST_CMDLINE_LEN - strlen("--spirv-ext=") - 1));
+  } else {
+    strncat(spirv_exts, "-all",
+            (MAX_SPEC_CONST_CMDLINE_LEN - strlen("-all") - 1));
+  }
   const char *args[] = {pocl_get_path("LLVM_SPIRV", LLVM_SPIRV),
                         concated_spec_const_option,
                         spirv_target_env,
