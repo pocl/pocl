@@ -542,6 +542,13 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->constant_as_id = 1;
   dev->device_aux_functions = cuda_native_device_aux_funcs;
 
+#if defined(ENABLE_SPIRV)
+  dev->supported_spir_v_versions = "SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
+  dev->supported_spirv_extensions = "+SPV_KHR_no_integer_wrap_decoration"
+                                    ",+SPV_INTEL_fp_fast_math_mode"
+                                    ",+SPV_EXT_shader_atomic_float_add";
+#endif
+
   /* TODO: Get images working */
   dev->image_support = CL_FALSE;
 
