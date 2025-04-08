@@ -3,12 +3,19 @@ Release Notes for PoCL 7.0
 **************************
 
 ===========================
-New features
+Release highlights
 ===========================
 
 * Support building with Khronos ICD, if the ICD supports OpenCL 3.0.
 
 * Support for LLVM versions 19 and 20.
+
+* PoCL has achieved OpenCL conformant status with CPU and LevelZero drivers.
+  Conformance testing via OpenCL-CTS passed with both OpenCL C and SPIR-V
+  compilation modes, for both CPU and LevelZero drivers.
+
+* Support for Windows platform, for CPU and LevelZero drivers.
+  The CPU driver supports both MinGW and MSVC toolchains, LevelZero only MSVC.
 
 =============================
 Notable user facing changes
