@@ -2166,6 +2166,11 @@ endif()
 
 if(ENABLE_CUDA)
 
+  if(CMAKE_VERSION VERSION_LESS 3.17.0)
+    message(FATAL_ERROR "CUDA build requires CMake 3.17!")
+  endif()
+  find_package(CUDAToolkit REQUIRED COMPONENTS cudart)
+
   if(NOT "${LLVM_ALL_TARGETS}" MATCHES "NVPTX")
     message(FATAL_ERROR "CUDA build requested but LLVM does not support NVPTX target!")
   endif()
@@ -2230,10 +2235,11 @@ if(ENABLE_CUDA)
   set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_fp64")
   set(CUDA_DEVICE_FEATURES_30 "${CUDA_DEVICE_FEATURES_30} __opencl_c_fp64")
 
+  set(CUDA_POCL_TARGETS CUDA::cuda_driver CUDA::cudart)
   if(ENABLE_CUDNN)
     add_definitions(-DENABLE_CUDNN=1)
+    list(APPEND CUDA_POCL_TARGETS cudnn)
   endif()
-
 
 endif()
 

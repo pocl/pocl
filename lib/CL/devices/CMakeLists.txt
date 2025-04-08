@@ -180,7 +180,7 @@ if(ENABLE_CUDA)
     "$<TARGET_OBJECTS:pocl-devices-cuda>")
 
   if(NOT ENABLE_LOADABLE_DRIVERS)
-    list(APPEND POCL_DEVICES_LINK_LIST cuda)
+    list(APPEND POCL_DEVICES_LINK_LIST ${CUDA_POCL_TARGETS})
   endif()
 endif()
 
