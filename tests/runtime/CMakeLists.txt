@@ -194,7 +194,7 @@ if(HAVE_ONNXRT)
 endif()
 
 unset(ENABLED_CPU_TESTS)
-if(NOT ENABLE_ASAN)
+if(NOT ENABLE_ANYSAN)
   list(APPEND ENABLED_CPU_TESTS "runtime/clCreateSubDevices")
 endif()
 
