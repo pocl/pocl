@@ -168,7 +168,7 @@ void ReplyQueueThread::writeThread() {
         // wait explicitly (should be instant since the event is already
         // signaled as complete)
 
-        EventTiming_t Timing;
+        EventTiming_t Timing{0, 0, 0, 0};
 
         if (reply->event()) {
           Timing.queued = 0;

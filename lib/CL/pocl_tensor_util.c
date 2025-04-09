@@ -374,7 +374,10 @@ pocl_tensor_type_size (cl_tensor_datatype_exp dtype)
 size_t
 pocl_tensor_data_size (const cl_tensor_desc_exp *t)
 {
-  size_t data_len = pocl_tensor_type_size (t->dtype);
+  int res = pocl_tensor_type_size (t->dtype);
+  if (res < 0)
+    return 0;
+  size_t data_len = (size_t)res;
   for (size_t dim = 0; dim < t->rank; ++dim)
     {
       data_len *= t->shape[dim];

@@ -46,7 +46,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   cl_uint i = 0;
   _cl_command_node *command_node = NULL;
   void *args_copy = NULL;
-  cl_int errcode;
+  cl_int errcode = CL_SUCCESS;
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
@@ -85,9 +85,6 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
       POCL_RETURN_ERROR_ON ((!IS_CL_OBJECT_VALID (ml[i])),
                             CL_INVALID_MEM_OBJECT,
                             "The %i-th mem object is invalid\n", i);
-
-      migr_infos = pocl_append_unique_migration_info (
-        migr_infos, ml[i], !!(ml[i]->flags & CL_MEM_READ_ONLY));
     }
 
   /* Specification specifies that args passed to user_func is a copy of the
@@ -95,12 +92,18 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   if (cb_args)
     {
       args_copy = malloc (cb_args);
-      POCL_RETURN_ERROR_COND ((args_copy == NULL), CL_OUT_OF_HOST_MEMORY);
+      POCL_GOTO_ERROR_COND ((args_copy == NULL), CL_OUT_OF_HOST_MEMORY);
       memcpy (args_copy, args, cb_args);
     }
 
   void **arg_locs = (void **)calloc (num_mem_objects, sizeof (void *));
-  POCL_RETURN_ERROR_COND ((arg_locs == NULL), CL_OUT_OF_HOST_MEMORY);
+  POCL_GOTO_ERROR_COND ((arg_locs == NULL), CL_OUT_OF_HOST_MEMORY);
+
+  for (i = 0; i < num_mem_objects; i++)
+    {
+      migr_infos = pocl_append_unique_migration_info (
+        migr_infos, ml[i], !!(ml[i]->flags & CL_MEM_READ_ONLY));
+    }
 
   for (i = 0; i < num_mem_objects; i++)
     {
@@ -121,7 +124,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
     num_events_in_wait_list, event_wait_list, migr_infos);
 
   if (errcode != CL_SUCCESS)
-    return errcode;
+    goto ERROR;
 
   command_node->command.native.user_func = user_func;
   command_node->command.native.arg_locs = arg_locs;
@@ -131,5 +134,9 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   pocl_command_enqueue (command_queue, command_node);
 
   return CL_SUCCESS;
+ERROR:
+  POCL_MEM_FREE (arg_locs);
+  POCL_MEM_FREE (args_copy);
+  return errcode;
 }
 POsym(clEnqueueNativeKernel)

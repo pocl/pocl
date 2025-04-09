@@ -52,12 +52,13 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
       SOURCE_DIR "${TS_ROOT}"
       SOURCE_SUBDIR "AMD-APP-SDK-3.0/samples"
 
-      DOWNLOAD_COMMAND /bin/true
-      UPDATE_COMMAND /bin/true
+      DOWNLOAD_COMMAND ""
 
-      PATCH_COMMAND /bin/sh "${AMD_APP_SDK_TGZ}" --noexec --keep --target AMD-APP-SDK-3.0 &&
-             patch -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/amdsdk3_0.patch &&
-             /bin/sh -c "rm ${TS_ROOT}/AMD-APP-SDK-3.0/lib/x86_64/libOpenCL*"
+      PATCH_COMMAND  ${BASH} -c "if [ ! -e ${TS_ROOT}/AMD-APP-SDK-3.0/install.sh ] $<SEMICOLON> then \
+             ${AMD_APP_SDK_TGZ} --noexec --keep --target AMD-APP-SDK-3.0 && \
+             patch -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/amdsdk3_0.patch && \
+             rm ${TS_ROOT}/AMD-APP-SDK-3.0/lib/x86_64/libOpenCL* \
+             $<SEMICOLON> fi"
 
       CMAKE_ARGS ${UPSTREAM_CMAKE_ARGS}
         "-DCMAKE_CXX_FLAGS_DEBUG=-O0 -ggdb -Wno-deprecated-declarations -Wno-narrowing"

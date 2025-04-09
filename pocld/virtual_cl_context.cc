@@ -546,6 +546,7 @@ int VirtualCLContext::run() {
 
       case MessageType_Shutdown:
         ExitSignal.requestExit("Shutdown notification from client", 0);
+        delete reply;
         return 0;
 
       case MessageType_RdmaBufferRegistration:
