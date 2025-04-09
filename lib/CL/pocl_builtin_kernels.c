@@ -1185,6 +1185,7 @@ pocl_serialize_dbk_attribs (cl_dbk_id_exp id,
             uint64_t name_len = strlen (attr->initializer_names[i]);
             uint64_t data_len
               = pocl_tensor_data_size (&(attr->initializer_tensor_descs[i]));
+            assert (data_len > 0);
             SERIALIZE (name_len);
             COPY (attr->initializer_names[i], name_len);
             total += pocl_serialize_cl_tensor_desc (

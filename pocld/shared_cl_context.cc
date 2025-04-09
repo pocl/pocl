@@ -463,6 +463,7 @@ void SharedCLContext::updateKernelArgMDFromSPIRV(
   Addr = CL_KERNEL_ARG_ADDRESS_PRIVATE;
   Access = CL_KERNEL_ARG_ACCESS_NONE;
   strncpy(MD.name, AInfo.Name.c_str(), MAX_PACKED_STRING_LEN);
+  MD.name[MAX_PACKED_STRING_LEN - 1] = 0;
   MD.type_name[0] = 0;
 
   switch (AInfo.Type) {
@@ -1870,6 +1871,7 @@ int SharedCLContext::buildOrLinkProgram(
     // Assume we get the name always.
     assert(ArgErr == CL_SUCCESS);
     std::strncpy(temp_kernel.name, kernel_name.c_str(), MAX_PACKED_STRING_LEN);
+    temp_kernel.name[MAX_PACKED_STRING_LEN - 1] = 0;
 
     std::string a = kernels[i].getInfo<CL_KERNEL_ATTRIBUTES>(&ArgErr);
     if (ArgErr == CL_SUCCESS) {

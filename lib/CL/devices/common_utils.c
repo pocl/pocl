@@ -576,7 +576,7 @@ pocl_setup_kernel_arg_array (kernel_run_command *k)
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
-          dev_image_t di;
+          dev_image_t di = { NULL };
           pocl_fill_dev_image_t (&di, al, k->device);
           void *devptr = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
                                               sizeof (dev_image_t));

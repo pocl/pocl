@@ -105,6 +105,7 @@ pocl_rm_rf(const char* path)
             }
           else
             {
+              closedir (d);
               POCL_MSG_ERR ("out of memory");
               return -1;
             }
@@ -466,16 +467,20 @@ pocl_dir_iterator (const char *path, pocl_dir_iter *iter)
   /* dirent_handle variants: iter->handle == NULL
    * || ((dirent_handle *)iter->handle)->dir != NULL. */
 
+  dirent_handle *handle_impl = calloc (1, sizeof (dirent_handle));
+  if (handle_impl == NULL)
+    {
+      return -1;
+    }
+
   DIR *d = opendir (path);
   if (d == NULL)
     {
+      free (handle_impl);
       iter->handle = NULL;
       return -1;
     }
 
-  dirent_handle *handle_impl = calloc (1, sizeof (dirent_handle));
-  if (handle_impl == NULL)
-    return -1;
 
   handle_impl->dir = d;
   handle_impl->basedir = path;

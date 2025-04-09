@@ -116,6 +116,7 @@ PeerHandler::connectPeer(uint64_t msg_id, const char *const address,
         set_socket_options(PeerFd, "PH_outgoing");
         break;
       } else
+        close(PeerFd);
         PeerFd = -1;
     }
   }
