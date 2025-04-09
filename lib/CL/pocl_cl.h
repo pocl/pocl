@@ -1307,7 +1307,8 @@ struct _cl_device_id {
   /* Device operations, shared among devices of the same type */
   struct pocl_device_ops *ops;
 
-  /* cl_khr_il_program / CL_DEVICE_IL_VERSION, this only includes SPIR-V */
+  /* cl_khr_il_program / CL_DEVICE_IL_VERSION, this only includes SPIR-V
+   * NOTE: this must be kept ordered from highest to lowest version */
   const char *supported_spir_v_versions;
   /* list of supported SPIRV extensions in the form:
    * +SPV_KHR_linkonce_odr,+SPV_KHR_shader_clock,... */
