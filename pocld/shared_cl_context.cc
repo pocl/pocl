@@ -1385,6 +1385,8 @@ bool createSPIRVWithSVMOffset(const std::vector<unsigned char> *InputSPV,
 
     const char *SpirvArgs[] = {
         pocl_get_path("LLVM_SPIRV", LLVM_SPIRV),
+        "--spirv-max-version=1.4",
+        "--spirv-target-env=CL2.0",
         "-r",
         OrigSpvFileName.c_str(),
         "-o",
@@ -1434,6 +1436,7 @@ bool createSPIRVWithSVMOffset(const std::vector<unsigned char> *InputSPV,
   const char *SpirvArgs[] = {
       pocl_get_path("LLVM_SPIRV", LLVM_SPIRV),
       OffsettedBcFileName.c_str(),
+      "--spirv-max-version=1.4",
       "-o",
       OutSpvFileName.c_str(),
       nullptr
