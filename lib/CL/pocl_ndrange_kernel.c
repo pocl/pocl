@@ -229,6 +229,30 @@ SKIP_WG_SIZE_CALCULATION:
   return CL_SUCCESS;
 }
 
+static void *
+find_raw_ptr (void *value, cl_context context)
+{
+  /* Find the shadow cl_mem wrapper which is used for tracking
+               migrations. */
+  void *ptr = *(void **)(value);
+  pocl_raw_ptr *raw_ptr = pocl_find_raw_ptr_with_vm_ptr (context, ptr);
+
+  /* TODO: The case where some of the args are SVM-allocated VM
+               pointers, some device pointers. These address spaces are
+               allowed to overlap and we could have the SVM and dev buffer
+               having the same addr in theory. */
+  if (raw_ptr == NULL)
+    raw_ptr = pocl_find_raw_ptr_with_dev_ptr (context, ptr);
+  if (raw_ptr == NULL)
+    {
+      POCL_MSG_PRINT_MEMORY ("Couldn't find the shadow cl_mem for an SVM ptr, "
+                             "assuming system SVM.\n");
+      return NULL;
+    }
+  else
+    return raw_ptr->shadow_cl_mem;
+}
+
 /**
  * Collect the kernel's buffer usage for implicit migration.
  */
@@ -241,11 +265,17 @@ pocl_kernel_collect_mem_objs (
   pocl_buffer_migration_info **dst_migr_infos)
 {
   pocl_buffer_migration_info *migr_infos = NULL;
+  cl_mem *bufs = NULL;
+  cl_mem buf = NULL;
+  if (kernel->meta->num_args)
+    bufs = (cl_mem *)alloca (kernel->meta->num_args * sizeof (cl_mem));
 
+  /* check argument correctness */
   for (unsigned i = 0; i < kernel->meta->num_args; ++i)
     {
       struct pocl_argument_info *a = &kernel->meta->arg_info[i];
       struct pocl_argument *al = &(src_arguments[i]);
+      bufs[i] = NULL;
 
       POCL_RETURN_ERROR_ON ((!al->is_set), CL_INVALID_KERNEL_ARGS,
                             "The %i-th kernel argument is not set!\n", i);
@@ -254,40 +284,17 @@ pocl_kernel_collect_mem_objs (
           || (!ARGP_IS_LOCAL (a) && a->type == POCL_ARG_TYPE_POINTER
               && al->value != NULL))
         {
-          cl_mem buf = *(cl_mem *)(al->value);
           if (al->is_raw_ptr)
-            {
-              /* Find the shadow cl_mem wrapper which is used for tracking
-                 migrations. */
-              void *ptr = *(void **)(al->value);
-              pocl_raw_ptr *raw_ptr = pocl_find_raw_ptr_with_vm_ptr (
-                  context, ptr);
+            bufs[i] = buf = find_raw_ptr (al->value, context);
+          else
+            bufs[i] = buf = *(cl_mem *)(al->value);
 
-              /* TODO: The case where some of the args are SVM-allocated VM
-                 pointers, some device pointers. These address spaces are
-                 allowed to overlap and we could have the SVM and dev buffer
-                 having the same addr in theory. */
-              if (raw_ptr == NULL)
-                raw_ptr = pocl_find_raw_ptr_with_dev_ptr (
-                    context, ptr);
-              if (raw_ptr == NULL)
-                {
-                  POCL_MSG_PRINT_MEMORY (
-                      "Couldn't find the shadow cl_mem for an SVM ptr, "
-                      "assuming system SVM.\n");
-                  continue;
-                }
-              else
-                buf = raw_ptr->shadow_cl_mem;
-            }
-
-          if (buf == NULL) /* Likely USM. */
-            continue;
           if (a->type == POCL_ARG_TYPE_IMAGE)
             {
               POCL_RETURN_ON_UNSUPPORTED_IMAGE (buf, realdev);
             }
-          else
+
+          if (buf)
             {
               if (buf->origin > 0)
                 POCL_RETURN_ERROR_ON (
@@ -302,13 +309,24 @@ pocl_kernel_collect_mem_objs (
                                     "device's MAX_MEM_ALLOC_SIZE (%lu).\n",
                                     i, buf->size, realdev->max_mem_alloc_size);
             }
+        }
+    }
+
+  /* create migr infos */
+  for (unsigned i = 0; i < kernel->meta->num_args; ++i)
+    {
+      struct pocl_argument *al = &(src_arguments[i]);
+
+      if (bufs[i])
+        {
+          buf = bufs[i];
 
           char read_only = 0;
           if (al->is_readonly || (buf->flags & CL_MEM_READ_ONLY))
             {
               if (al->is_readonly == 0)
-                POCL_MSG_WARN ("readonly buffer used as kernel arg, but arg "
-                               "type is not const\n");
+                POCL_MSG_PRINT_INFO ("readonly buffer used as kernel arg, "
+                                     "but arg type is not const\n");
               read_only = 1;
             }
           migr_infos
@@ -490,7 +508,6 @@ pocl_record_ndrange_kernel (cl_command_buffer_khr command_buffer,
     {
       struct pocl_argument_info *ai
         = &cmd->command.run.kernel->meta->arg_info[i];
-      struct pocl_argument *a = &cmd->command.run.kernel->dyn_arguments[i];
       if (ai->type == POCL_ARG_TYPE_SAMPLER)
         POname (clRetainSampler) (cmd->command.run.arguments[i].value);
     }

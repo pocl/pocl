@@ -182,6 +182,8 @@ poclu_get_multiple_devices (cl_platform_id *platform,
 
   devs = (cl_device_id *)calloc (*num_devices, sizeof (cl_device_id));
   ques = (cl_command_queue *)calloc (*num_devices, sizeof (cl_command_queue));
+  if (!devs || !ques)
+    return CL_OUT_OF_HOST_MEMORY;
 
   if (num_dev_all != 0)
     {
@@ -714,7 +716,6 @@ poclu_load_program_multidev (cl_platform_id platform,
 #else
           printf ("Program was not compiled for OpenCL 2.1 or higher, "
                   "checking for cl_khr_il_program extension.\n");
-          return -1;
 #endif
         }
     IL_ERR:

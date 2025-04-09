@@ -449,11 +449,13 @@ cl_int pocl_level0_reinit(unsigned J, cl_device_id ClDevice, const char *paramet
 static void convertProgramBcPathToSpv(char *ProgramBcPath,
                                       char *ProgramSpvPath) {
   strncpy(ProgramSpvPath, ProgramBcPath, POCL_MAX_PATHNAME_LENGTH);
+  ProgramSpvPath[POCL_MAX_PATHNAME_LENGTH - 1] = 0;
   size_t Len = strlen(ProgramBcPath);
   assert(Len > 3);
   Len -= 2;
   ProgramSpvPath[Len] = 0;
   strncat(ProgramSpvPath, "spv", POCL_MAX_PATHNAME_LENGTH);
+  ProgramSpvPath[POCL_MAX_PATHNAME_LENGTH - 1] = 0;
 }
 
 static constexpr unsigned DefaultCaptureSize = 128 * 1024;
@@ -564,8 +566,11 @@ static int runLLVMOpt(cl_program Program, cl_uint DeviceI,
 
   CompilationArgs.push_back(pocl_get_path("LLVM_OPT", LLVM_OPT));
   CompilationArgs.push_back(L0passes);
+  size_t Len = strlen(ProgramBcPathTemp);
   strcpy(ProgramBcOldPathTemp, ProgramBcPathTemp);
-  strncat(ProgramBcPathTemp, ".opt.bc", POCL_MAX_PATHNAME_LENGTH);
+  ProgramBcOldPathTemp[POCL_MAX_PATHNAME_LENGTH - 1] = 0;
+  strncat(ProgramBcPathTemp, ".opt.bc", (POCL_MAX_PATHNAME_LENGTH - Len - 1));
+  ProgramBcPathTemp[POCL_MAX_PATHNAME_LENGTH - 1] = 0;
   CompilationArgs.push_back("-o");
   CompilationArgs.push_back(ProgramBcPathTemp);
   CompilationArgs.push_back(ProgramBcOldPathTemp);
@@ -735,7 +740,9 @@ int pocl_level0_build_binary(cl_program Program, cl_uint DeviceI,
   }
 
   char ProgramBcPath[POCL_MAX_PATHNAME_LENGTH];
+  ProgramBcPath[0] = 0;
   char ProgramSpvPath[POCL_MAX_PATHNAME_LENGTH];
+  ProgramSpvPath[0] = 0;
   char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH];
   ProgramSpvPathTemp[0] = 0;
   char ProgramBcPathTemp[POCL_MAX_PATHNAME_LENGTH];
@@ -746,6 +753,7 @@ int pocl_level0_build_binary(cl_program Program, cl_uint DeviceI,
     /* we have pocl_binaries with BOTH SPIRV and IR Bitcode */
 
     pocl_cache_program_spv_path(ProgramSpvPath, Program, DeviceI);
+    pocl_cache_program_bc_path(ProgramBcPath, Program, DeviceI);
 
     POCL_RETURN_ERROR_ON(
         (readProgramSpv(Program, DeviceI, ProgramSpvPath) != CL_SUCCESS),
@@ -1365,7 +1373,6 @@ void pocl_level0_flush(cl_device_id ClDev, cl_command_queue Queue) {
   } else {
     POCL_MSG_PRINT_LEVEL0("FLUSH: SubmitBatch SIZE %zu\n", SubmitBatch.size());
     Device->pushCommandBatch(std::move(SubmitBatch));
-    assert(SubmitBatch.empty());
   }
 }
 

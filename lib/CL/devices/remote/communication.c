@@ -457,6 +457,7 @@ connection_connect (remote_server_data_t *data,
   remote_connection_t new_connection = *connection;
 
   struct sockaddr_storage server;
+  memset (&server, 0, sizeof (server));
   struct addrinfo *ai = NULL;
 
   assert (connection->fd == -1);
@@ -652,6 +653,7 @@ pocl_remote_reconnect_rediscover (const char *address_with_port)
 
   if (d == NULL)
     {
+      free (addr);
       POCL_MSG_ERR ("Could not attempt reconnect. Server corresponding to "
                     "given paramenters not found.\n");
       return -1;
@@ -910,12 +912,12 @@ pocl_remote_reader_pthread (void *aa)
               if (connection->reconnect_attempts
                   >= POCL_REMOTE_RECONNECT_MAX_ATTEMPTS)
                 {
-                  network_command *cmd = NULL;
+                  network_command *cmd = NULL, *tmp = NULL;
                   POCL_LOCK (inflight->mutex);
                   /* Each command in the inflight queue of the failed server
                    * has to be handled and marked as failed to prevent
                    * deadlock. */
-                  DL_FOREACH (inflight->queue, cmd)
+                  DL_FOREACH_SAFE (inflight->queue, cmd, tmp)
                     {
                       DL_DELETE (inflight->queue, cmd);
                       finish_running_cmd (cmd, NETCMD_FAILED);
@@ -1487,9 +1489,8 @@ traffic_monitor_pthread (void *arg)
   POCL_LOCK (q->mutex);
   while (1)
     {
-      if (!q->exit_requested)
+      if (q->exit_requested)
         break;
-
       POCL_UNLOCK (q->mutex);
 
       /*TODO*/
@@ -1504,7 +1505,8 @@ traffic_monitor_pthread (void *arg)
       fflush (f);
 
       POCL_LOCK (q->mutex);
-      POCL_TIMEDWAIT_COND (q->cond, q->mutex, 10000); /* 10ms */
+      if (!q->exit_requested)
+        POCL_TIMEDWAIT_COND (q->cond, q->mutex, 10000); /* 10ms */
     }
   POCL_UNLOCK (q->mutex);
 
@@ -1726,6 +1728,7 @@ find_or_create_server (const char *address_with_port, unsigned port,
   POCL_MEM_FREE (tmp2);
 
   strncpy (d->address_with_port, address_with_port, MAX_ADDRESS_PORT_SIZE);
+  d->address_with_port[MAX_ADDRESS_PORT_SIZE - 1] = 0;
   POCL_MSG_PRINT_REMOTE ("using host %s with port %u\n", d->address, port);
 
   d->fast_port = port;
@@ -2150,6 +2153,7 @@ pocl_network_fetch_devinfo (cl_device_id device,
           "Illegal version string '%s' from a remote device,"
           "skipping the device.",
           remote_dev_version);
+      free (remote_dev_version);
       return -1;
     }
   SETUP_DEVICE_CL_VERSION (device, dev_ver_major, dev_ver_minor);

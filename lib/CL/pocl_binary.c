@@ -855,7 +855,7 @@ pocl_binary_get_kernels_metadata (cl_program program, unsigned device_i)
   unsigned char *binary = program->pocl_binaries[device_i];
   cl_device_id device = program->devices[device_i];
   size_t max_len = program->pocl_binary_sizes[device_i];
-
+  int errcode = CL_SUCCESS;
   pocl_binary b;
   memset(&b, 0, sizeof (pocl_binary));
   pocl_binary_kernel k;
@@ -886,10 +886,16 @@ pocl_binary_get_kernels_metadata (cl_program program, unsigned device_i)
     {
       pocl_kernel_metadata_t *km = &program->kernel_meta[j];
 
-      POCL_RETURN_ERROR_ON (pocl_binary_deserialize_kernel_from_buffer (
-                                 &b, &buffer, &k, km, NULL),
-                            CL_INVALID_PROGRAM,
-                            "Can't deserialize kernel %u \n", j);
+      memset (&k, 0, sizeof (pocl_binary_kernel));
+      if (pocl_binary_deserialize_kernel_from_buffer (&b, &buffer, &k, km,
+                                                      NULL))
+        {
+          POCL_MSG_ERR ("Can't deserialize kernel %u \n", j);
+          POCL_MEM_FREE (k.local_sizes);
+          POCL_MEM_FREE (k.attributes);
+          POCL_MEM_FREE (k.kernel_name);
+          return CL_INVALID_PROGRAM;
+        }
 
       km->num_args = k.num_args;
       km->num_locals = k.num_locals;

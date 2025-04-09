@@ -1210,6 +1210,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   int err = pocl_check_kernel_disk_cache (module_fn, command, specialize);
   if (err)
     {
+      free (ci);
       POCL_UNLOCK (pocl_dlhandle_lock);
       return NULL;
     }
@@ -1237,6 +1238,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
                         " reported as 'file not found' errors.\n",
                         module_fn, workgroup_string);
           POCL_UNLOCK (pocl_dlhandle_lock);
+          free (ci);
           free (workgroup_string);
           return NULL;
         }

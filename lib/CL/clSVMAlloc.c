@@ -81,9 +81,6 @@ POname(clSVMAlloc)(cl_context context,
                            "One of the devices in the context doesn't support "
                            "SVM atomics buffers, and it's in flags\n");
 
-  pocl_raw_ptr *item = calloc (1, sizeof (pocl_raw_ptr));
-  POCL_RETURN_ERROR_ON ((item == NULL), NULL, "out of host memory\n");
-
   if (alignment == 0)
     alignment = context->svm_allocdev->min_data_type_align_size;
 
@@ -96,6 +93,9 @@ POname(clSVMAlloc)(cl_context context,
     POCL_RETURN_ERROR_ON((context->devices[i]->min_data_type_align_size < alignment),
                          NULL, "All devices must support the requested memory "
                          "aligment (%u) \n", alignment);
+
+  pocl_raw_ptr *item = calloc (1, sizeof (pocl_raw_ptr));
+  POCL_RETURN_ERROR_ON ((item == NULL), NULL, "out of host memory\n");
 
   void *ptr = context->svm_allocdev->ops->svm_alloc (context->svm_allocdev,
                                                      flags, size);
@@ -128,6 +128,11 @@ POname(clSVMAlloc)(cl_context context,
 
   if (errcode != CL_SUCCESS)
     {
+      POCL_LOCK_OBJ (context);
+      DL_DELETE (context->raw_ptrs, item);
+      POCL_UNLOCK_OBJ (context);
+      POCL_MEM_FREE (item);
+      context->svm_allocdev->ops->svm_free (context->svm_allocdev, ptr);
       POCL_MSG_ERR ("Failed to allocate memory a shadow cl_mem object.\n");
       return NULL;
     }
