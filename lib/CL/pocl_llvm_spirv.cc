@@ -104,6 +104,20 @@ static void handleInOutPathArgs(bool &keepPath, char *Path, char *HiddenPath,
 extern "C" int pocl_reload_program_bc(char *program_bc_path, cl_program program,
                                       cl_uint device_i);
 
+static bool getMaxSpirvVersion(pocl_version_t &MaxVersion,
+                               const char *DevVersions) {
+  MaxVersion.major = 1;
+  MaxVersion.minor = 0;
+  if (DevVersions) {
+    std::string SpirvVersions{DevVersions};
+    if (SpirvVersions.find("SPIR-V_1.") == 0) {
+      MaxVersion.minor = SpirvVersions[9] - '0';
+      return true;
+    }
+  }
+  return false;
+}
+
 #ifdef HAVE_LLVM_SPIRV_LIB
 
 static std::map<std::string, SPIRV::ExtensionID> SPVExtMap = {
@@ -184,14 +198,11 @@ int pocl_regen_spirv_binary(cl_program Program, cl_uint DeviceI) {
   cl_device_id Device = Program->devices[DeviceI];
 
   bool UnrecognizedVersion = false;
-  pocl_version_t TargetVersion{1, 2};
-  if (Device->supported_spir_v_versions) {
-    std::string SpirvVersions{Device->supported_spir_v_versions};
-    if (SpirvVersions.find("SPIR-V_1.3") != std::string::npos)
-      TargetVersion.minor = 3;
-  }
-  SPIRV::TranslatorOpts Opts = setupTranslOpts(
-      Device->supported_spirv_extensions, UnrecognizedVersion, TargetVersion);
+  pocl_version_t MaxSupportedVersion;
+  getMaxSpirvVersion(MaxSupportedVersion, Device->supported_spir_v_versions);
+  SPIRV::TranslatorOpts Opts =
+      setupTranslOpts(Device->supported_spirv_extensions, UnrecognizedVersion,
+                      MaxSupportedVersion);
   POCL_RETURN_ERROR_ON(UnrecognizedVersion, CL_INVALID_BINARY,
                        "Translator does not recognize the SPIR-V version\n");
 
@@ -283,11 +294,17 @@ int pocl_regen_spirv_binary(cl_program program, cl_uint device_i) {
   int spec_constants_changed = 0;
   char concated_spec_const_option[MAX_SPEC_CONST_CMDLINE_LEN] = {};
   concated_spec_const_option[0] = 0;
-  char spirv_exts[MAX_SPEC_CONST_CMDLINE_LEN] = {};
+  std::string SpirvExts;
+  std::string SpirvMaxVersion;
   char program_bc_spirv[POCL_MAX_PATHNAME_LENGTH] = {};
   char unlinked_program_bc_temp[POCL_MAX_PATHNAME_LENGTH] = {};
   program_bc_spirv[0] = 0;
   unlinked_program_bc_temp[0] = 0;
+
+  pocl_version_t MaxV;
+  getMaxSpirvVersion(MaxV, Device->supported_spir_v_versions);
+  SpirvMaxVersion = "--spirv-max-version=" + std::to_string(MaxV.major) +
+                    "." + std::to_string(MaxV.minor);
 
   /* using --spirv-target-env=CL2.0 here enables llvm-spirv to produce proper
    * OpenCL 2.0 atomics, unfortunately it also enables generic ptrs, which not
@@ -295,19 +312,18 @@ int pocl_regen_spirv_binary(cl_program program, cl_uint device_i) {
   const char *spirv_target_env = (Device->generic_as_support != CL_FALSE)
                                      ? "--spirv-target-env=CL2.0"
                                      : "--spirv-target-env=CL1.2";
-  strcpy(spirv_exts, "--spirv-ext=");
+  SpirvExts = "--spirv-ext=";
   if (Device->supported_spirv_extensions &&
       Device->supported_spirv_extensions[0]) {
-    strncat(spirv_exts, Device->supported_spirv_extensions,
-            (MAX_SPEC_CONST_CMDLINE_LEN - strlen("--spirv-ext=") - 1));
+    SpirvExts += Device->supported_spirv_extensions;
   } else {
-    strncat(spirv_exts, "-all",
-            (MAX_SPEC_CONST_CMDLINE_LEN - strlen("-all") - 1));
+    SpirvExts += "-all";
   }
   const char *args[] = {pocl_get_path("LLVM_SPIRV", LLVM_SPIRV),
                         concated_spec_const_option,
                         spirv_target_env,
-                        spirv_exts,
+                        SpirvExts.c_str(),
+                        SpirvMaxVersion.c_str(),
                         "-r",
                         "-o",
                         unlinked_program_bc_temp,
