@@ -42,9 +42,9 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
                          cl_int *binary_status, cl_int *errcode_ret,
                          int allow_empty_binaries)
 {
-  cl_program program;
+  cl_program program = NULL;
   unsigned i,j;
-  int errcode;
+  int errcode = CL_SUCCESS;
   cl_device_id *unique_devlist = NULL;
 
   POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
@@ -137,7 +137,7 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
           == NULL))
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
-      goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
+      goto ERROR;
     }
 
   program->context = context;
@@ -205,7 +205,7 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
               if (binary_status != NULL)
                 binary_status[i] = CL_INVALID_BINARY;
               errcode = CL_INVALID_BINARY;
-              goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
+              goto ERROR;
             }
         }
     }
@@ -219,26 +219,27 @@ SUCCESS:
     *errcode_ret = CL_SUCCESS;
   return program;
 
-ERROR_CLEAN_PROGRAM_AND_BINARIES:
-  if (program->binaries)
-    for (i = 0; i < num_devices; ++i)
-      POCL_MEM_FREE(program->binaries[i]);
-  POCL_MEM_FREE(program->binaries);
-  POCL_MEM_FREE(program->binary_sizes);
-  if (program->pocl_binaries)
-    for (i = 0; i < num_devices; ++i)
-      POCL_MEM_FREE(program->pocl_binaries[i]);
-  POCL_MEM_FREE (program->pocl_binaries);
-  POCL_MEM_FREE (program->pocl_binary_sizes);
-  POCL_MEM_FREE (program->data);
-  POCL_MEM_FREE (program->global_var_total_size);
-  POCL_MEM_FREE (program->llvm_irs);
-  POCL_MEM_FREE (program->gvar_storage);
-
-  POCL_MEM_FREE (program->build_log);
-  POCL_MEM_FREE (program->build_hash);
-  POCL_MEM_FREE (program);
 ERROR:
+  if (program)
+    {
+      if (program->binaries)
+        for (i = 0; i < num_devices; ++i)
+          POCL_MEM_FREE (program->binaries[i]);
+      POCL_MEM_FREE (program->binaries);
+      POCL_MEM_FREE (program->binary_sizes);
+      if (program->pocl_binaries)
+        for (i = 0; i < num_devices; ++i)
+          POCL_MEM_FREE (program->pocl_binaries[i]);
+      POCL_MEM_FREE (program->pocl_binaries);
+      POCL_MEM_FREE (program->pocl_binary_sizes);
+      POCL_MEM_FREE (program->data);
+      POCL_MEM_FREE (program->global_var_total_size);
+      POCL_MEM_FREE (program->llvm_irs);
+      POCL_MEM_FREE (program->gvar_storage);
+      POCL_MEM_FREE (program->build_log);
+      POCL_MEM_FREE (program->build_hash);
+      POCL_MEM_FREE (program);
+    }
   POCL_MEM_FREE(unique_devlist);
   if (errcode_ret != NULL)
     *errcode_ret = errcode;

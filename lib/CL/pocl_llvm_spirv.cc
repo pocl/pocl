@@ -650,6 +650,7 @@ static int convertBCorSPV(char *InputPath,
   if (keepOutputPath) {
     r = pocl_write_file(HiddenOutputPath, Content, ContentSize, 0);
     if (r != 0) {
+      free(Content);
       BuildLog->append("failed to write output file\n");
       goto FINISHED;
     }

@@ -70,6 +70,15 @@
     }                                                                          \
   } while (0)
 
+#define PERROR_CHECK2(cond, str, exit_code)                                    \
+  do {                                                                         \
+    if (cond) {                                                                \
+      POCL_MSG_ERR("%s: %s\n", str, strerror(errno));                          \
+      exit_code;                                                               \
+      return 1;                                                                \
+    }                                                                          \
+  } while (0)
+
 int listen_peers(void *data) {
   peer_listener_data_t *d = (peer_listener_data_t *)data;
 
@@ -88,10 +97,10 @@ int listen_peers(void *data) {
     POCL_MSG_ERR("peer listener: failed to set REUSEADDR on socket\n");
 #endif
   unsigned len = sizeof(listen_addr);
-  PERROR_CHECK((bind(listen_sock, (struct sockaddr *)&listen_addr, len) < 0),
-               "peer listener bind");
-  PERROR_CHECK((listen(listen_sock, MAX_REMOTE_DEVICES) < 0),
-               "peer listener listen");
+  PERROR_CHECK2((bind(listen_sock, (struct sockaddr *)&listen_addr, len) < 0),
+                "peer listener bind", close(listen_sock));
+  PERROR_CHECK2((listen(listen_sock, MAX_REMOTE_DEVICES) < 0),
+                "peer listener listen", close(listen_sock));
 
 #ifdef ENABLE_RDMA
   d->rdma_listener->listen(d->peer_rdma_port);
@@ -518,7 +527,9 @@ static std::string find_default_ip_address() {
     POCL_MSG_ERR("getifaddrs() failed or returned no data.\n");
 #endif
 
-  return std::string(listen_addr ? listen_addr : "127.0.0.1");
+  std::string Ret(listen_addr ? listen_addr : "127.0.0.1");
+  free(listen_addr);
+  return Ret;
 }
 
 int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports,
@@ -670,9 +681,9 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports,
     continue;
 #undef PERROR_SKIP
   SOCKET_ERROR:
-    if (FdCommand > 0)
+    if (FdCommand >= 0)
       close(FdCommand);
-    if (FdStream > 0)
+    if (FdStream >= 0)
       close(FdStream);
   }
 #ifdef HAVE_LINUX_VSOCK_H
@@ -859,7 +870,7 @@ void PoclDaemon::readAllClientSocketsThread() {
            * given as the addr argument */
           int NewFd = accept(pfd.fd, (struct sockaddr *)&client_address,
                              &client_address_length);
-          if (NewFd > 0) {
+          if (NewFd >= 0) {
             OpenClientConnections.push_back(std::shared_ptr<Connection>(
                 new Connection(Transport->domain(), NewFd, nullptr)));
             SocketContexts.push_back(nullptr);

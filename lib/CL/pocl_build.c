@@ -718,7 +718,9 @@ compile_and_link_program(int compile_program,
           compile_program, link_program, &create_library, &flush_denorms,
           &requires_cr_sqrt_div, &spir_build, &cl_c_version, size);
       if (errcode != CL_SUCCESS)
-        goto ERROR_CLEAN_OPTIONS;
+        {
+          goto ERROR;
+        }
     }
 
   /* The build option -x spir is only needed for the old SPIR format.
@@ -975,14 +977,11 @@ compile_and_link_program(int compile_program,
 
 ERROR:
   clean_program_on_rebuild (program, 1);
-
-ERROR_CLEAN_OPTIONS:
-  if (temp_options != options)
-    free (temp_options);
-
   program->build_status = CL_BUILD_ERROR;
 
 FINISH:
+  if (temp_options != options)
+    free (temp_options);
   POCL_UNLOCK_OBJ (program);
 
 PFN_NOTIFY:

@@ -56,48 +56,48 @@ private:
 class Request {
 public:
   /// Size, in bytes, of the main request body (up to sizeof RequestMsg_t)
-  uint32_t BodySize;
+  uint32_t BodySize = 0;
   /// Tracker for how many bytes of req_size have been read from the network
   /// socket
-  size_t BodySizeBytesRead;
+  size_t BodySizeBytesRead = 0;
   /// Main body of the reuqest
-  RequestMsg_t Body;
+  RequestMsg_t Body{};
   /// Tracker for how many bytes of the main request body have been read from
   /// the network socket
-  size_t BodyBytesRead;
+  size_t BodyBytesRead = 0;
 
   /// List of event ids that must complete before this Request can be processed
   std::vector<uint64_t> Waitlist;
   /// Tracker for how many bytes of the waitlist have been read
-  size_t WaitlistBytesRead;
+  size_t WaitlistBytesRead = 0;
 
   /// Auxiliary data required for the Request (buffer contents, program binaries
   /// etc)
   std::vector<uint8_t> ExtraData;
   /// Size of the auxiliary data buffer
-  uint64_t ExtraDataSize;
+  uint64_t ExtraDataSize = 0;
   /// Tracker for how many bytes of the auxiliary data buffer have been read
   /// from the network socket
-  size_t ExtraDataBytesRead;
+  size_t ExtraDataBytesRead = 0;
 
   /// Second auxiliary data required for the Request
   std::vector<uint8_t> ExtraData2;
   /// Size of the auxiliary data buffer
-  uint64_t ExtraData2Size;
+  uint64_t ExtraData2Size = 0;
   /// Tracker for how many bytes of the second auxiliary data buffer have been
   /// read from the network socket
-  size_t ExtraData2BytesRead;
+  size_t ExtraData2BytesRead = 0;
 
   /// Server side timestamp for when reading the request from the network socket
   /// started
-  uint64_t ReadStartTimestampNS;
+  uint64_t ReadStartTimestampNS = 0;
   /// Server side timestamp for when the last bit of data for the request has
   /// been successfully read from the network socket.
-  uint64_t ReadEndTimestampNS;
+  uint64_t ReadEndTimestampNS = 0;
 
   /// Flag indicating that the request has been fully read from the network
   /// socket. Set at the very end of the read() function.
-  bool IsFullyRead;
+  bool IsFullyRead = false;
 
   /// Incrementally reads the request from given Connection. Returns true on
   /// success and false if an error occurs while reading. Call repeatedly until
