@@ -850,12 +850,18 @@ int pocl_convert_spirv_to_bitcode(char *TempSpirvPath, const char *SpirvContent,
                                   uint64_t *BitcodeSize) {
 
   std::string BuildLog;
+  cl_device_id Device = Program->devices[DeviceI];
+  pocl_version_t MaxSupportedVersion;
+  getMaxSpirvVersion(MaxSupportedVersion, Device->supported_spir_v_versions);
+
   int R = convertBCorSPV(
       TempSpirvPath, SpirvContent, SpirvSize, &BuildLog, SPVExtensions,
       1, // = Reverse.
       TempBitcodePathOut, BitcodeContent, BitcodeSize,
-      // Target version for SPIR-V emission. Ignored in reverse translation.
-      pocl_version_t{});
+      // Target version for SPIR-V emission. This is necessary to pass,
+      // otherwise LLVM-SPIRV might return an error like:
+      // Invalid SPIR-V module: incorrect SPIR-V version number 1.4 (66560) - it conflicts with maximum allowed version which is set to 1.2 (66304)
+      MaxSupportedVersion);
   if (!BuildLog.empty())
     pocl_append_to_buildlog(Program, DeviceI, strdup(BuildLog.c_str()),
                             BuildLog.size());
