@@ -663,7 +663,7 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
         CommandQueueUPtr(new CommandQueue(this, (DEFAULT_QUE_ID + i), i, s, f));
   }
 
-#if !defined(CLANGCC) || !defined(ENABLE_SPIRV)
+#if !defined(CLANGCC) || !defined(ENABLE_SPIRV) || !defined(HAVE_LLVM_SPIRV)
   // We require CLANGCC and LLVM_SPIRV for manipulating the SPIRVs to adjust
   // mismatching client/host SVM pool offsets.
   SVMRegionsStartAddress = nullptr;
@@ -1308,7 +1308,7 @@ int SharedCLContext::freeQueue(uint32_t queue_id) {
   buf += len;                                                                  \
   assert((size_t)(buf - buffer) <= buffer_size);
 
-#if defined(CLANGCC) && defined(ENABLE_SPIRV)
+#if defined(CLANGCC) && defined(ENABLE_SPIRV) && defined(HAVE_LLVM_SPIRV)
 /**
  * Creates a SPIRV with all global memory addresses adjusted by adding
  * the SVMOffset.
@@ -1538,7 +1538,7 @@ int SharedCLContext::buildOrLinkProgram(
     std::vector<char> SVMOffsettedSPIRV;
 
 
-#if defined(CLANGCC) && defined(ENABLE_SPIRV)
+#if defined(CLANGCC) && defined(ENABLE_SPIRV) && defined(HAVE_LLVM_SPIRV)
     // Adjust the SVM region offset to the kernel code.
     bool SuccessfulOffsetting = createSPIRVWithSVMOffset(
         is_spirv ? &(*InputBinaries.begin()).second : nullptr, src, src_size,
