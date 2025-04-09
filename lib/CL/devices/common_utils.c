@@ -311,7 +311,7 @@ pocl_cpu_init_common (cl_device_id device)
 
   pocl_init_default_device_infos (device, HOST_DEVICE_EXTENSIONS);
 
-#if defined(ENABLE_SPIRV)
+#ifdef HOST_CPU_ENABLE_SPIRV
   device->supported_spirv_extensions = "+SPV_KHR_no_integer_wrap_decoration"
                                        ",+SPV_INTEL_fp_fast_math_mode"
                                        ",+SPV_EXT_shader_atomic_float_add"
