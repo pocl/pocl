@@ -313,9 +313,11 @@ pocl_cpu_init_common (cl_device_id device)
 
 #if defined(ENABLE_SPIRV)
   device->supported_spirv_extensions = "+SPV_KHR_no_integer_wrap_decoration"
-                                    ",+SPV_INTEL_fp_fast_math_mode"
-                                    ",+SPV_EXT_shader_atomic_float_add"
-                                    ",+SPV_INTEL_inline_assembly";
+                                       ",+SPV_INTEL_fp_fast_math_mode"
+                                       ",+SPV_EXT_shader_atomic_float_add"
+                                       ",+SPV_INTEL_memory_access_aliasing"
+                                       ",+SPV_INTEL_inline_assembly";
+
 #if LLVM_MAJOR >= 20
   device->supported_spir_v_versions
     = "SPIR-V_1.5 SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
