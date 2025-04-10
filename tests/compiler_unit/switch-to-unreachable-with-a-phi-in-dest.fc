@@ -1,0 +1,7 @@
+# A case where UnreachableToReturns didn't fix the target PHI node
+# properly when there was a switch...case that got its cases pruned
+# when it branched to an unreachable.  The switch...case gets removed
+# in optimization as all of its branches will be to the exiting
+# block after the successful transformation.
+CHECK-NOT: switch
+
