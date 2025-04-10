@@ -1,0 +1,3 @@
+# Case where UnreachableToReturns didn't remove all blocks
+# with unreachables as expected when compiling with loopvec.
+CHECK-NOT: unreachable
