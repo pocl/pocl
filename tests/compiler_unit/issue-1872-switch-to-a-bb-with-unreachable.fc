@@ -1,0 +1,3 @@
+# Case where UnreachableToReturns didn't handle switch...cases having
+# BBs with unreachables inside.
+CHECK-NOT: unreachable

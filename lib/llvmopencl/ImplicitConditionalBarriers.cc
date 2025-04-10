@@ -104,14 +104,6 @@ ImplicitConditionalBarriers::run(llvm::Function &F,
 
   bool Changed = false;
 
-  // Required workaround hack. See the documentation of
-  // removeUnreachableSwitchCases().
-  DT.reset();
-  PDT.reset();
-  removeUnreachableSwitchCases(F);
-  DT.recalculate(F);
-  PDT.recalculate(F);
-
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
     BasicBlock *BB = &*FI;
     if (!Barrier::hasBarrier(BB)) continue;

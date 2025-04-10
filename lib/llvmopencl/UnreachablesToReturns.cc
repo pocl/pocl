@@ -164,6 +164,9 @@ static void detachBBFromPredecessor(BasicBlock &BB,
   // store replacement instructions and replace after the loop
   SmallMapVector<Instruction *, Instruction *, 8> Replacements;
 
+  // If the BB is in a switch case, this is the switch instruction to fix.
+  SwitchInst *PredSwitch = nullptr;
+
   for (BasicBlock *Pred : predecessors(&BB)) {
     assert(Pred != nullptr);
     Instruction *I = Pred->getTerminator();
@@ -189,10 +192,10 @@ static void detachBBFromPredecessor(BasicBlock &BB,
         BranchInst *NewBI = BranchInst::Create(Other);
         Replacements.insert(std::make_pair(BI, NewBI));
       }
+    } else if (PredSwitch = dyn_cast<SwitchInst>(I)) {
+      // The BB can be only in one switch...case, but "thanks" to gotos
+      // there could be also other predecessors.
     } else {
-      // TODO which basicblock terminators should we handle here?
-      // Switch...cases are already handled earlier by
-      // removeUnreachableSwitchCases().
       LLVM_DEBUG(dbgs() << "Unhandled BB Terminator: \n");
       LLVM_DEBUG(I->dump());
       assert(0 && "Error: unexpected BB terminator\n");
@@ -202,13 +205,28 @@ static void detachBBFromPredecessor(BasicBlock &BB,
   for (auto [OldI, NewI] : Replacements) {
     ReplaceInstWithInst(OldI, NewI);
   }
+
+  if (PredSwitch != nullptr) {
+    // New default BB in case the unreachable block is a default BB.
+    BasicBlock *NewDefaultBB = nullptr;
+    for (SwitchInst::CaseIt C = PredSwitch->cases().begin();
+         C != PredSwitch->cases().end();) {
+      if (C->getCaseSuccessor() == &BB) {
+        PredSwitch->removeCase(C++);
+        continue;
+      }
+      NewDefaultBB = C->getCaseSuccessor();
+      C++;
+    }
+    SwitchInst::CaseIt Default = PredSwitch->case_default();
+    if (Default->getCaseSuccessor() == &BB)
+      PredSwitch->setDefaultDest(NewDefaultBB);
+  }
 }
 
 static bool deleteBlocksWithUnreachable(Function &F) {
 
   SmallBBSet UnreachableBBs;
-
-  bool Changed = removeUnreachableSwitchCases(F);
 
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
     BasicBlock &BB = *I;
@@ -221,7 +239,7 @@ static bool deleteBlocksWithUnreachable(Function &F) {
   }
 
   if (UnreachableBBs.empty())
-    return Changed;
+    return false;
 
   // Check BB predecessors recursively, and disconnect them
   // from blocks which contain an unreachable.
@@ -247,11 +265,14 @@ static bool deleteBlocksWithUnreachable(Function &F) {
     LLVM_DEBUG(dbgs() << "Deleting BB: \n");
     LLVM_DEBUG(BB->dump());
 
-    if (BasicBlock *Pred = BB->getSinglePredecessor()) {
-      ReplaceInstWithInst(Pred->getTerminator(),
-                          new UnreachableInst(BB->getContext()));
-    } else {
-      assert(BB->hasNPredecessors(0));
+    // The deleted BB can have multiple predecessors.
+    SmallMapVector<Instruction *, Instruction *, 8> Replacements;
+    for (BasicBlock *Pred : predecessors(BB))
+      Replacements.insert(std::make_pair(
+          Pred->getTerminator(), new UnreachableInst(Pred->getContext())));
+
+    for (auto [OldI, NewI] : Replacements) {
+      ReplaceInstWithInst(OldI, NewI);
     }
 
     BB->eraseFromParent();

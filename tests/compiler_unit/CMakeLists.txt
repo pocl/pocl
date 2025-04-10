@@ -55,4 +55,9 @@ function(add_llvm_check)
 endfunction()
 
 add_llvm_check(SPIRV_NAME dirty-as-casts)
+
+if(LLVM_VERSION_MAJOR GREATER 18)
+# These require SPIR-V 1.4 which is enabled only for LLVM 19.
 add_llvm_check(SPIRV_NAME issue-1871-unreachables-remaining)
+add_llvm_check(SPIRV_NAME issue-1872-switch-to-a-bb-with-unreachable)
+endif()
