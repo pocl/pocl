@@ -87,7 +87,7 @@ CPU drivers
 * SPIR-V support has been improved to support additional subgroup-related
   functions.
 
-* SPIR-V up to version 1.5 is now supported with LLVM 20, and up to 1.3
+* SPIR-V up to version 1.5 is now supported with LLVM 20, and up to 1.4
   with LLVM 19.
 
 * The max_mem_alloc_size of the CPU device is now equal to global_mem_size
