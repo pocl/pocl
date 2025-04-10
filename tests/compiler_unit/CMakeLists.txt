@@ -55,3 +55,4 @@ function(add_llvm_check)
 endfunction()
 
 add_llvm_check(SPIRV_NAME dirty-as-casts)
+add_llvm_check(SPIRV_NAME issue-1871-unreachables-remaining)
