@@ -125,17 +125,6 @@ bool isKernelToProcess(const llvm::Function &F);
 
 llvm::Metadata *createConstantIntMD(llvm::LLVMContext &C, int32_t Val);
 
-// Fixes switch statements that have a default case that is a simple
-// unreachable instruction. LLVM does this as "optimization", however it breaks
-// the (post) dominator-tree analysis, because the unreachable instruction
-// creates an additional function exit path. PoCL's ImplicitConditionalBarriers
-// pass then erroneously adds barriers because it thinks some basic blocks are
-// inside conditional blocks, when they're not.
-// TODO this is fragile, LLVM can introduce more optimizations that create
-// unreachable blocks. However I couldn't find any working way to make PDT
-// ignore blocks with an unreachable inst.
-bool removeUnreachableSwitchCases(llvm::Function &F);
-
 void markFunctionAlwaysInline(llvm::Function *F);
 
 /**
