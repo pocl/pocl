@@ -56,3 +56,5 @@ endfunction()
 
 add_llvm_check(SPIRV_NAME dirty-as-casts)
 add_llvm_check(SPIRV_NAME issue-1871-unreachables-remaining)
+add_llvm_check(SPIRV_NAME issue-1872-switch-to-a-bb-with-unreachable)
+add_llvm_check(SPIRV_NAME switch-to-unreachable-with-a-phi-in-dest)

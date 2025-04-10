@@ -20,6 +20,7 @@
 // that have an unreachable inst, must be inlined before this Pass is run.
 //
 // Copyright (c) 2025 Michal Babej / Intel Finland Oy
+//                    Pekka Jääskeläinen / Intel Finland Oy
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -49,6 +50,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Instructions.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 
 #include "LLVMUtils.h"
@@ -67,12 +69,17 @@ POP_COMPILER_DIAGS
 #define DEBUG_TYPE PASS_NAME
 //#define DEBUG_CONVERT_UNREACHABLE
 
-#ifdef DEBUG_CONVERT_UNREACHABLE
+// Use the LLVM_DEBUG macros to gradually convert to LLVM-upstreamable
+// code.
 #ifdef LLVM_DEBUG
 #undef LLVM_DEBUG
 #endif
+
+#ifdef DEBUG_CONVERT_UNREACHABLE
 #define LLVM_DEBUG(X) X
 #define dbgs() std::cerr << PASS_NAME << ": "
+#else
+#define LLVM_DEBUG(X)
 #endif
 
 namespace pocl {
@@ -88,9 +95,8 @@ static bool convertUnreachablesToReturns(Function &F) {
 
   SmallVector<Instruction *, 8> PendingUnreachableInst;
   SmallVector<BasicBlock *, 8> PendingDeletableBBs;
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-    BasicBlock &BB = *I;
-    assert(BB.getTerminator());
+  for (BasicBlock &BB : F) {
+    assert(BB.getTerminator() != nullptr);
     if (auto UI = dyn_cast<UnreachableInst>(BB.getTerminator())) {
       LLVM_DEBUG(dbgs() << "UNREACHABLE found: replacing Inst in "
                         << F.getName().str() << "\n");
@@ -164,14 +170,17 @@ static void detachBBFromPredecessor(BasicBlock &BB,
   // store replacement instructions and replace after the loop
   SmallMapVector<Instruction *, Instruction *, 8> Replacements;
 
+  // If the BB is in a switch case, these are the switch instructions to fix.
+  std::vector<SwitchInst *> PredSwitches;
+
   for (BasicBlock *Pred : predecessors(&BB)) {
     assert(Pred != nullptr);
     Instruction *I = Pred->getTerminator();
     assert(I != nullptr);
     if (BranchInst *BI = dyn_cast<BranchInst>(I)) {
       if (BI->isUnconditional()) {
-        LLVM_DEBUG(
-            dbgs() << "The predecessor is unconditionally branching to it\n");
+        LLVM_DEBUG(dbgs() << "The predecessor " << Pred->getName().str()
+                          << " is unconditionally branching to it\n");
         LLVM_DEBUG(Pred->dump());
         // The predecessor has an unconditional branch to the unreachable BB,
         // remove that in a next call.
@@ -189,10 +198,11 @@ static void detachBBFromPredecessor(BasicBlock &BB,
         BranchInst *NewBI = BranchInst::Create(Other);
         Replacements.insert(std::make_pair(BI, NewBI));
       }
+    } else if (SwitchInst *PredSwitch = dyn_cast<SwitchInst>(I)) {
+      LLVM_DEBUG(dbgs() << "The predecessor is a switch case in "
+                        << Pred->getName().str() << "\n");
+      PredSwitches.push_back(PredSwitch);
     } else {
-      // TODO which basicblock terminators should we handle here?
-      // Switch...cases are already handled earlier by
-      // removeUnreachableSwitchCases().
       LLVM_DEBUG(dbgs() << "Unhandled BB Terminator: \n");
       LLVM_DEBUG(I->dump());
       assert(0 && "Error: unexpected BB terminator\n");
@@ -202,13 +212,51 @@ static void detachBBFromPredecessor(BasicBlock &BB,
   for (auto [OldI, NewI] : Replacements) {
     ReplaceInstWithInst(OldI, NewI);
   }
+
+  for (SwitchInst *PredSwitch : PredSwitches) {
+    // New default BB in case the unreachable block is a default BB.
+    BasicBlock *NewDefaultBB = nullptr;
+
+    // The case value we could convert to a new default if that's the case.
+    ConstantInt *RobbedCaseValue = nullptr;
+    for (SwitchInst::CaseIt C = PredSwitch->cases().begin();
+         C != PredSwitch->cases().end();) {
+      if (C->getCaseSuccessor() == &BB) {
+        PredSwitch->removeCase(C++);
+        // RemoveCase invalidates all iterators and might reorder the cases,
+        // let's just restart.
+        C = PredSwitch->cases().begin();
+        continue;
+      }
+      NewDefaultBB = C->getCaseSuccessor();
+      RobbedCaseValue = C->getCaseValue();
+      C++;
+    }
+    SwitchInst::CaseIt Default = PredSwitch->case_default();
+    if (Default->getCaseSuccessor() == &BB) {
+      if (NewDefaultBB != nullptr) {
+        PredSwitch->setDefaultDest(NewDefaultBB);
+        // Now we can remove the original case which also branched to this one
+        // since it will be covered by the default. This will by coincidence
+        // fix the Phi in a block where the switch...case has multiple branches
+        // to. If we didn't do this, there would be one too few phi conditions.
+        PredSwitch->removeCase(PredSwitch->findCaseValue(RobbedCaseValue));
+      }
+      if (NewDefaultBB == nullptr || PredSwitch->getNumCases() == 0) {
+        LLVM_DEBUG(
+            dbgs()
+            << "A switch case with only a default which goes to unreachable\n");
+        NewUnreachableBBs.insert(PredSwitch->getParent());
+      }
+    }
+    LLVM_DEBUG(dbgs() << "switch case modified:\n");
+    LLVM_DEBUG(PredSwitch->getParent()->dump());
+  }
 }
 
 static bool deleteBlocksWithUnreachable(Function &F) {
 
   SmallBBSet UnreachableBBs;
-
-  bool Changed = removeUnreachableSwitchCases(F);
 
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
     BasicBlock &BB = *I;
@@ -221,7 +269,7 @@ static bool deleteBlocksWithUnreachable(Function &F) {
   }
 
   if (UnreachableBBs.empty())
-    return Changed;
+    return false;
 
   // Check BB predecessors recursively, and disconnect them
   // from blocks which contain an unreachable.
@@ -247,11 +295,14 @@ static bool deleteBlocksWithUnreachable(Function &F) {
     LLVM_DEBUG(dbgs() << "Deleting BB: \n");
     LLVM_DEBUG(BB->dump());
 
-    if (BasicBlock *Pred = BB->getSinglePredecessor()) {
-      ReplaceInstWithInst(Pred->getTerminator(),
-                          new UnreachableInst(BB->getContext()));
-    } else {
-      assert(BB->hasNPredecessors(0));
+    // The deleted BB can have multiple predecessors.
+    SmallMapVector<Instruction *, Instruction *, 8> Replacements;
+    for (BasicBlock *Pred : predecessors(BB))
+      Replacements.insert(std::make_pair(
+          Pred->getTerminator(), new UnreachableInst(Pred->getContext())));
+
+    for (auto [OldI, NewI] : Replacements) {
+      ReplaceInstWithInst(OldI, NewI);
     }
 
     BB->eraseFromParent();
@@ -269,13 +320,24 @@ ConvertUnreachablesToReturns::run(llvm::Function &F,
   if (!isKernelToProcess(F))
     return PreservedAnalyses::all();
 
-  // for LOOPS, remove the blocks with unreachable inst.
-  // for CBS, replace unreachable with ret void
+  // LOOPS: remove the blocks with unreachable inst.
+  // CBS: replace unreachable with ret void
   WorkitemHandlerType WIH = AM.getResult<WorkitemHandlerChooser>(F).WIH;
   bool Changed = (WIH == WorkitemHandlerType::LOOPS)
                      ? deleteBlocksWithUnreachable(F)
                      : convertUnreachablesToReturns(F);
 
+#ifdef DEBUG_CONVERT_UNREACHABLE
+  for (BasicBlock &BB : F) {
+    if (auto UI = dyn_cast<UnreachableInst>(BB.getTerminator())) {
+      LLVM_DEBUG(dbgs() << "UnreachableInsts still found!\n");
+      LLVM_DEBUG(BB.dump());
+      LLVM_DEBUG(dbgs() << "\n");
+      LLVM_DEBUG(F.dump());
+      assert(false);
+    }
+  }
+#endif
   return Changed ? PAChanged : PreservedAnalyses::all();
 }
 
