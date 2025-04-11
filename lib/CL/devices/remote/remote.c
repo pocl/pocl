@@ -649,12 +649,13 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
   || defined(ENABLE_REMOTE_DISCOVERY_ANDROID)
 cl_int
 pocl_remote_init_device_discovery (
-  cl_int (*add_discovered_device) (const char *, unsigned),
-  unsigned pocl_dev_type_idx)
+  cl_int (*add_discovered_device) (const char *, unsigned, cl_platform_id),
+  unsigned pocl_dev_type_idx,
+  cl_platform_id pocl_dev_platform)
 {
   return init_network_discovery (add_discovered_device,
                                  pocl_remote_reconnect_rediscover,
-                                 pocl_dev_type_idx);
+                                 pocl_dev_type_idx, pocl_dev_platform);
 }
 #endif
 
