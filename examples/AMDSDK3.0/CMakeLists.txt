@@ -28,8 +28,14 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
   set(TS_NAME AMDSDK3.0)
   set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
   set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
-  set(AMD_APP_SDK_TGZ "${TS_SRCDIR}/AMD-APP-SDK-v3.0.130.135-GA-linux64.sh")
   set(TS_ROOT "${TS_BASEDIR}/src/${TS_NAME}")
+
+  # https://archive.org/download/AMDAPPSDK has this version available:
+  set(AMD_APP_SDK_TGZ "${TS_SRCDIR}/AMD-APP-SDK-v3.0.130.136-GA-linux64.sh")
+  if(NOT EXISTS "${AMD_APP_SDK_TGZ}")
+    # The previous version hangs around in the webz too.
+    set(AMD_APP_SDK_TGZ "${TS_SRCDIR}/AMD-APP-SDK-v3.0.130.135-GA-linux64.sh")
+  endif()
 
   if(EXISTS "${AMD_APP_SDK_TGZ}")
 
