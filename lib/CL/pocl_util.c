@@ -376,7 +376,11 @@ pocl_create_event_sync (cl_event notifier_event, cl_event waiting_event)
   notify_target = pocl_mem_manager_new_event_node();
   wait_list_item = pocl_mem_manager_new_event_node();
   if (!notify_target || !wait_list_item)
-    return CL_OUT_OF_HOST_MEMORY;
+    {
+      free (notify_target);
+      free (wait_list_item);
+      return CL_OUT_OF_HOST_MEMORY;
+    }
 
 #ifdef DEBUG_EVENT_DEPS
   check_for_circular_dep (waiting_event, notifier_event);

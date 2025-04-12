@@ -528,7 +528,14 @@ pocl_convert_to_subbuffer_migrations (pocl_buffer_migration_info *buffer_usage,
           patch_migrations = append_unaligned_patch_subbuffer_migration (
             patch_migrations, sub_buf->mem, align, mi->read_only, &retv);
           if (retv != CL_SUCCESS)
-            return NULL;
+            {
+              pocl_buffer_migration_info *mi2, *tmp2 = NULL;
+              DL_FOREACH_SAFE (extra_migrations, mi2, tmp2)
+                {
+                  free (mi2);
+                }
+              return NULL;
+            }
         }
 
       LL_DELETE (buffer_usage, mi);

@@ -256,6 +256,7 @@ void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg,
       break;
     }
     case ENQUEUE_MIGRATE_TYPE_H2D: {
+      assert(Mem);
       if (Mem->is_image != 0u) {
         size_t region[3] = {Mem->image_width, Mem->image_height,
                             Mem->image_depth};
@@ -278,6 +279,7 @@ void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg,
     case ENQUEUE_MIGRATE_TYPE_D2D: {
       assert(dev->ops->can_migrate_d2d);
       assert(dev->ops->migrate_d2d);
+      assert(Mem);
       dev->ops->migrate_d2d(
           cmd->migrate.src_device, dev, Mem,
           &Mem->device_ptrs[cmd->migrate.src_device->global_mem_id],

@@ -2080,6 +2080,9 @@ pocl_setup_builtin_kernels_with_version (cl_device_id dev)
         }
       strncpy (dev->builtin_kernels_with_version[i].name, token,
                CL_NAME_VERSION_MAX_NAME_SIZE);
+      dev->builtin_kernels_with_version[i]
+        .name[CL_NAME_VERSION_MAX_NAME_SIZE - 1]
+        = 0;
 
       /* proper versioning could use pocl_BIDescriptors.
        * For now, hardcode the version to 1.2 */
