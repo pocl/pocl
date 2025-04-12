@@ -725,6 +725,7 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
     if (vectypehint.size() > 0) {
       strncpy(meta->vectypehint, vectypehint.c_str(),
               sizeof(meta->vectypehint));
+      meta->vectypehint[sizeof(meta->vectypehint) - 1] = 0;
       if (attrstr.tellp() > 0)
         attrstr << " ";
       attrstr << "__attribute__ ((vec_type_hint (" << vectypehint << ")))";

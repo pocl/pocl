@@ -762,6 +762,8 @@ void *pocl_llvm_create_context_for_program(char *ProgramBcContent,
   // parse the program's bytes into a llvm::Module
   if (P == nullptr ||
       !P->init(ProgramBcContent, ProgramBcSize, TempBitcodePath)) {
+    if (P)
+      delete P;
     POCL_MSG_ERR("failed to create program for context");
     return nullptr;
   }
@@ -771,6 +773,7 @@ void *pocl_llvm_create_context_for_program(char *ProgramBcContent,
           nullptr, ProgramBcContent, ProgramBcSize, &BuildLog,
           "all", // TODO SPIRV exts
           nullptr, LinkinSpirvContent, LinkinSpirvSize, TargetVersion) != 0) {
+    delete P;
     POCL_MSG_ERR("failed to create program for context, log:%s\n",
                  BuildLog.c_str());
     return nullptr;
@@ -1330,9 +1333,11 @@ int pocl_llvm_codegen2(const char* TTriple, const char* MCPU,
         return -1;
       }
     }
-    pocl_remove(AsmFileName);
-    pocl_remove(ObjFileName);
-    return Res;
+    if (pocl_remove(AsmFileName))
+      POCL_MSG_ERR("failed to remove %s\n", AsmFileName);
+    if (pocl_remove(ObjFileName))
+      POCL_MSG_ERR("failed to remove %s\n", ObjFileName);
+    return 0;
   }
 
   return -1;

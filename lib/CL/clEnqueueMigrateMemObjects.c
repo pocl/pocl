@@ -58,22 +58,25 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  pocl_buffer_migration_info *migr_infos = NULL;
-
   for (i = 0; i < num_mem_objects; ++i)
     {
-      POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (mem_objects[i])),
-                            CL_INVALID_MEM_OBJECT);
+      POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (mem_objects[i])),
+                              CL_INVALID_MEM_OBJECT);
 
-      POCL_GOTO_ERROR_COND (
-          (mem_objects[i]->context != command_queue->context),
-          CL_INVALID_CONTEXT);
+      POCL_RETURN_ERROR_COND (
+        (mem_objects[i]->context != command_queue->context),
+        CL_INVALID_CONTEXT);
 
-      POCL_GOTO_ERROR_ON ((mem_objects[i]->is_gl_texture),
-                          CL_INVALID_MEM_OBJECT, "mem_obj is a GL texture\n");
+      POCL_RETURN_ERROR_ON ((mem_objects[i]->is_gl_texture),
+                            CL_INVALID_MEM_OBJECT,
+                            "mem_obj is a GL texture\n");
+    }
+
+  pocl_buffer_migration_info *migr_infos = NULL, *mig = NULL, *tmp = NULL;
+  for (i = 0; i < num_mem_objects; ++i)
+    {
       cl_mem buf = mem_objects[i];
       IMAGE1D_TO_BUFFER (buf);
-
       migr_infos = pocl_append_unique_migration_info (migr_infos, buf, 1);
     }
 
@@ -94,6 +97,10 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
   return CL_SUCCESS;
 
 ERROR:
+  DL_FOREACH_SAFE (migr_infos, mig, tmp)
+    {
+      free (mig);
+    }
   return errcode;
 }
 POsym(clEnqueueMigrateMemObjects)

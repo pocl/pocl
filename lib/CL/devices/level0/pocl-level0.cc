@@ -454,7 +454,7 @@ static void convertProgramBcPathToSpv(char *ProgramBcPath,
   assert(Len > 3);
   Len -= 2;
   ProgramSpvPath[Len] = 0;
-  strncat(ProgramSpvPath, "spv", POCL_MAX_PATHNAME_LENGTH);
+  strncat(ProgramSpvPath, "spv", (POCL_MAX_PATHNAME_LENGTH - Len - 1));
   ProgramSpvPath[POCL_MAX_PATHNAME_LENGTH - 1] = 0;
 }
 

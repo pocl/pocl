@@ -278,7 +278,11 @@ pocl_rect_copy (cl_command_buffer_khr command_buffer,
       errcode = pocl_check_event_wait_list (
           command_queue, num_items_in_wait_list, event_wait_list);
       if (errcode != CL_SUCCESS)
-        return errcode;
+        {
+          POCL_MEM_FREE (migr_infos->prev);
+          POCL_MEM_FREE (migr_infos);
+          return errcode;
+        }
 
       errcode = pocl_create_command (cmd, command_queue, command_type, event,
                                      num_items_in_wait_list, event_wait_list,

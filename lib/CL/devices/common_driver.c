@@ -580,7 +580,10 @@ pocl_reload_program_bc (char *program_bc_path,
   uint64_t temp_size = 0;
   int errcode = pocl_read_file (program_bc_path, &temp_binary, &temp_size);
   if (errcode != 0 || temp_size == 0)
-    return -1;
+    {
+      assert (temp_binary == NULL);
+      return -1;
+    }
   if (program->binaries[device_i])
     POCL_MEM_FREE (program->binaries[device_i]);
   program->binaries[device_i] = (unsigned char *)temp_binary;

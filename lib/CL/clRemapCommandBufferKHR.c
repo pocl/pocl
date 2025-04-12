@@ -55,6 +55,7 @@ POname (clRemapCommandBufferKHR) (cl_command_buffer_khr command_buffer,
     num_queues, queues, command_buffer->properties, &errcode);
   if (errcode != CL_SUCCESS)
     {
+      assert (new_cmdbuf == NULL);
       *errcode_ret = errcode;
       return NULL;
     }
@@ -296,7 +297,8 @@ POname (clRemapCommandBufferKHR) (cl_command_buffer_khr command_buffer,
   return new_cmdbuf;
 
 ERROR:
-  POname (clReleaseCommandBufferKHR) (new_cmdbuf);
+  if (new_cmdbuf)
+    POname (clReleaseCommandBufferKHR) (new_cmdbuf);
   if (errcode_ret != NULL)
     *errcode_ret = errcode;
   return NULL;

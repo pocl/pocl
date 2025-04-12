@@ -2024,7 +2024,7 @@ Level0Kernel *Level0CompilationJobScheduler::createKernel(Level0Program *Prog,
                                               false, // 64bit ofs
                                               false);  // small WG size
       if (!Res) {
-        const std::string &BL = Program->getBuildLog();
+        std::string BL = Program->getBuildLog();
         POCL_MSG_ERR("Building JIT kernel failed with build log:\n%s",
                      BL.c_str());
         Program->releaseKernel(K);

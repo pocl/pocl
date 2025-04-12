@@ -51,6 +51,8 @@ pocl_kernel_calc_wg_size (cl_device_id dev, cl_kernel kernel,
    * since we are going to access them repeatedly */
   size_t max_group_size;
 
+  assert (kernel->meta);
+
   POCL_RETURN_ERROR_COND ((work_dim < 1), CL_INVALID_WORK_DIMENSION);
   POCL_RETURN_ERROR_ON (
       (work_dim > dev->max_work_item_dimensions),
@@ -105,7 +107,7 @@ pocl_kernel_calc_wg_size (cl_device_id dev, cl_kernel kernel,
   max_local_z
       = work_dim > 2 ? dev->max_work_item_sizes[2] : 1;
   max_group_size = dev->max_work_group_size;
-  if (kernel->meta && kernel->meta->max_workgroup_size
+  if (kernel->meta->max_workgroup_size
       && kernel->meta->max_workgroup_size[device_i])
     {
       max_group_size = kernel->meta->max_workgroup_size[device_i];
