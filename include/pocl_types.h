@@ -36,8 +36,10 @@
 
 #ifdef __OPENCL_VERSION__
 
-/* required for LLVM 13+ */
+#if (__clang_major__ < 18)
+/* Required for LLVM 13 at least. */
 typedef unsigned reserve_id_t;
+#endif
 
 #ifdef __USE_CLANG_OPENCL_C_H
 
