@@ -105,17 +105,21 @@ extern "C" int pocl_reload_program_bc(char *program_bc_path, cl_program program,
                                       cl_uint device_i);
 
 static bool getMaxSpirvVersion(pocl_version_t &MaxVersion,
-                               const char *DevVersions) {
-  MaxVersion.major = 1;
-  MaxVersion.minor = 0;
-  if (DevVersions) {
-    std::string SpirvVersions{DevVersions};
-    if (SpirvVersions.find("SPIR-V_1.") == 0) {
-      MaxVersion.minor = SpirvVersions[9] - '0';
-      return true;
-    }
+                               size_t num_ils_with_version,
+                               const cl_name_version *ils_with_version) {
+  if (num_ils_with_version == 0) {
+    MaxVersion.major = 1;
+    MaxVersion.minor = 0;
+    return false;
   }
-  return false;
+  cl_version Max = CL_MAKE_VERSION(1, 0, 0);
+  for (size_t i = 0; i < num_ils_with_version; ++i) {
+    if (ils_with_version[i].version > Max)
+      Max = ils_with_version[i].version;
+  }
+  MaxVersion.major = CL_VERSION_MAJOR(Max);
+  MaxVersion.minor = CL_VERSION_MINOR(Max);
+  return true;
 }
 
 #ifdef HAVE_LLVM_SPIRV_LIB
@@ -199,7 +203,8 @@ int pocl_regen_spirv_binary(cl_program Program, cl_uint DeviceI) {
 
   bool UnrecognizedVersion = false;
   pocl_version_t MaxSupportedVersion;
-  getMaxSpirvVersion(MaxSupportedVersion, Device->supported_spir_v_versions);
+  getMaxSpirvVersion(MaxSupportedVersion, Device->num_ils_with_version,
+                     Device->ils_with_version);
   SPIRV::TranslatorOpts Opts =
       setupTranslOpts(Device->supported_spirv_extensions, UnrecognizedVersion,
                       MaxSupportedVersion);
@@ -302,7 +307,8 @@ int pocl_regen_spirv_binary(cl_program program, cl_uint device_i) {
   unlinked_program_bc_temp[0] = 0;
 
   pocl_version_t MaxV;
-  getMaxSpirvVersion(MaxV, Device->supported_spir_v_versions);
+  getMaxSpirvVersion(MaxV, Device->num_ils_with_version,
+                     Device->ils_with_version);
   SpirvMaxVersion = "--spirv-max-version=" + std::to_string(MaxV.major) +
                     "." + std::to_string(MaxV.minor);
 
@@ -852,7 +858,8 @@ int pocl_convert_spirv_to_bitcode(char *TempSpirvPath, const char *SpirvContent,
   std::string BuildLog;
   cl_device_id Device = Program->devices[DeviceI];
   pocl_version_t MaxSupportedVersion;
-  getMaxSpirvVersion(MaxSupportedVersion, Device->supported_spir_v_versions);
+  getMaxSpirvVersion(MaxSupportedVersion, Device->num_ils_with_version,
+                     Device->ils_with_version);
 
   int R = convertBCorSPV(
       TempSpirvPath, SpirvContent, SpirvSize, &BuildLog, SPVExtensions,

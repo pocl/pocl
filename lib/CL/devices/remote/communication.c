@@ -2173,8 +2173,10 @@ pocl_network_fetch_devinfo (cl_device_id device,
   device->driver_version = GET_STRING (devinfo->driver_version);
   device->vendor = GET_STRING (devinfo->vendor);
   device->extensions = GET_STRING (devinfo->extensions);
+  pocl_setup_extensions_with_version (device);
   device->supported_spir_v_versions
       = GET_STRING (devinfo->supported_spir_v_versions);
+  pocl_setup_ils_with_version (device);
 
   if (devinfo->builtin_kernels)
     device->builtin_kernel_list = GET_STRING (devinfo->builtin_kernels);
