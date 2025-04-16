@@ -1951,10 +1951,18 @@ bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
       ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,
       ZE_COMMAND_QUEUE_PRIORITY_NORMAL};
 
-  ze_command_list_desc_t cmdListDesc = {
-      ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC, nullptr, Ordinal,
-      ZE_COMMAND_LIST_FLAG_RELAXED_ORDERING |
-          ZE_COMMAND_LIST_FLAG_MAXIMIZE_THROUGHPUT};
+  ze_command_list_desc_t cmdListDesc{};
+
+  if (Device->isIntelNPU()) {
+    // Works around ZE_RESULT_ERROR_INVALID_ENUMERATION failure for
+    // Intel NPU on level-zero 1.20.6 on Meteor Lake by mimicing what
+    // OpenVINO/NPU does.
+    cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC, nullptr, Ordinal, 0};
+  } else {
+    cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC, nullptr, Ordinal,
+                   ZE_COMMAND_LIST_FLAG_RELAXED_ORDERING |
+                       ZE_COMMAND_LIST_FLAG_MAXIMIZE_THROUGHPUT};
+  }
 
 #ifdef LEVEL0_IMMEDIATE_CMDLIST
   for (unsigned i = 0; i < Count; ++i) {
@@ -2134,11 +2142,19 @@ convertZeAllocCaps(ze_memory_access_cap_flags_t Flags) {
 
 Level0EventPool::Level0EventPool(Level0Device *D, unsigned EvtPoolSize)
     : EvtPoolH(nullptr), Dev(D), LastIdx(0) {
+  assert(EvtPoolSize);
   ze_result_t Res = ZE_RESULT_SUCCESS;
 
+  ze_event_pool_flags_t EvtPoolFlags = 0;
+  if (D->isIntelNPU()) {
+    // Works around ZE_RESULT_ERROR_INVALID_ENUMERATION failure for
+    // Intel NPU on level-zero 1.20.6 on Meteor Lake by mimicing what
+    // OpenVINO/NPU does.
+    EvtPoolFlags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+  }
+
   ze_event_pool_desc_t EvtPoolDesc = {
-      ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr,
-      0,            // flags
+      ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, EvtPoolFlags,
       EvtPoolSize // num events
   };
 
@@ -2146,17 +2162,25 @@ Level0EventPool::Level0EventPool(Level0Device *D, unsigned EvtPoolSize)
   LEVEL0_CHECK_ABORT_NO_EXIT(zeEventPoolCreate(
       Dev->getContextHandle(), &EvtPoolDesc, 1, &DevH, &EvtPoolH));
 
+  ze_event_scope_flags_t EvtWaitFlags =
+      ZE_EVENT_SCOPE_FLAG_SUBDEVICE | ZE_EVENT_SCOPE_FLAG_DEVICE;
+  if (D->isIntelNPU()) {
+    // Works around ZE_RESULT_ERROR_INVALID_ENUMERATION failure for
+    // Intel NPU on level-zero 1.20.6 on Meteor Lake by mimicing what
+    // OpenVINO/NPU does.
+    EvtWaitFlags = 0;
+  }
+
   unsigned Idx = 0;
   AvailableEvents.resize(EvtPoolSize);
   for (Idx = 0; Idx < EvtPoolSize; ++Idx) {
 
     ze_event_desc_t eventDesc = {
         ZE_STRUCTURE_TYPE_EVENT_DESC,
-        nullptr, // pNext
-        Idx,     // index
-        0,       // flags on signal
-        ZE_EVENT_SCOPE_FLAG_SUBDEVICE |
-            ZE_EVENT_SCOPE_FLAG_DEVICE // flags on wait
+        nullptr,     // pNext
+        Idx,         // index
+        0,           // flags on signal
+        EvtWaitFlags // flags on wait
     };
 
     ze_event_handle_t EvH = nullptr;
@@ -4165,6 +4189,12 @@ uint32_t Level0Device::getMaxWGSizeForKernel(Level0Kernel *Kernel) {
 #endif
 }
 
+bool Level0Device::isIntelNPU() const {
+  // Used OpenVINO as reference - it just check if the driver is an
+  // Intel NPU driver.
+  return Driver->isIntelNPU();
+}
+
 Level0Driver::Level0Driver(ze_driver_handle_t DrvHandle) : DriverH(DrvHandle) {
   ze_driver_properties_t DriverProperties = {};
   DriverProperties.stype = ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES;
@@ -4238,7 +4268,7 @@ Level0Driver::Level0Driver(ze_driver_handle_t DrvHandle) : DriverH(DrvHandle) {
   for (uint32_t i = 0; i < DeviceCount; ++i) {
     DeviceHandles[i] = DeviceArray[i];
   }
-  ze_device_properties_t DeviceProperties;
+  ze_device_properties_t DeviceProperties{};
   Res = zeDeviceGetProperties(DeviceHandles[0], &DeviceProperties);
   if (Res != ZE_RESULT_SUCCESS) {
     POCL_MSG_ERR("zeDeviceGetProperties FAILED\n");
@@ -4336,6 +4366,16 @@ bool Level0Driver::getImportDevices(std::vector<Level0Device *> &ImportDevices,
       ++UnsupportingDevices;
   }
   return UnsupportingDevices == 0;
+}
+
+/// Return true if the driver is known to be an Intel NPU driver.
+bool Level0Driver::isIntelNPU() const {
+#ifdef ENABLE_NPU
+  constexpr ze_driver_uuid_t IntelNPUUUID = ze_intel_npu_driver_uuid;
+  return std::memcmp(&UUID, &IntelNPUUUID, sizeof(UUID)) == 0;
+#else
+  return false; // Actually don't know.
+#endif
 }
 
 void *Level0DefaultAllocator::allocBuffer(uintptr_t Key, Level0Device *,
