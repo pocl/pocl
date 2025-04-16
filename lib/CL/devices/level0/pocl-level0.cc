@@ -41,6 +41,7 @@
 #include "pocl_util.h"
 #include "pocl_run_command.h"
 
+#include <loader/ze_loader.h>
 #include <ze_api.h>
 
 #include <algorithm>
@@ -338,6 +339,27 @@ char *pocl_level0_build_hash(cl_device_id ClDevice) {
   return Res;
 }
 
+/// Return level zero loader version. On an error, return object with
+/// all members set to zero.
+static zel_version_t get_level0_loader_version() {
+  size_t NumComponents = 0;
+  auto Result = zelLoaderGetVersions(&NumComponents, nullptr);
+  if (Result != ZE_RESULT_SUCCESS)
+    return {};
+
+  std::vector<zel_component_version_t> Versions(NumComponents, {});
+
+  Result = zelLoaderGetVersions(&NumComponents, Versions.data());
+  if (Result != ZE_RESULT_SUCCESS)
+    return {};
+
+  for (auto &Version : Versions)
+    if (std::string_view(Version.component_name) == "loader")
+      return Version.component_lib_version;
+
+  return {};
+}
+
 unsigned int pocl_level0_probe(struct pocl_device_ops *Ops) {
   int EnvCount = pocl_device_get_env_count(Ops->device_name);
 
@@ -353,12 +375,30 @@ unsigned int pocl_level0_probe(struct pocl_device_ops *Ops) {
     return 0;
   }
 
+  zel_version_t LoaderVersion = get_level0_loader_version();
+  POCL_MSG_PRINT_LEVEL0("ze_loader version: %d.%d.%d\n", LoaderVersion.major,
+                        LoaderVersion.minor, LoaderVersion.patch);
+
   uint32_t DriverCount = 64;
   ze_driver_handle_t DrvHandles[64];
-  Res = zeDriverGet(&DriverCount, DrvHandles);
-  if (Res != ZE_RESULT_SUCCESS) {
-    POCL_MSG_ERR("zeDriverGet FAILED\n");
-    return 0;
+
+  if (LoaderVersion.major = 1 && LoaderVersion.minor > 18) {
+
+    ze_init_driver_type_desc_t DriverDesc{};
+    DriverDesc.flags =
+        ZE_INIT_DRIVER_TYPE_FLAG_GPU | ZE_INIT_DRIVER_TYPE_FLAG_NPU;
+    Res = zeInitDrivers(&DriverCount, DrvHandles, &DriverDesc);
+    if (Res != ZE_RESULT_SUCCESS) {
+      // TODO: retry with deprecated zeDriverGet()?
+      POCL_MSG_ERR("zeInitDrivers FAILED\n");
+      return 0;
+    }
+  } else {
+    Res = zeDriverGet(&DriverCount, DrvHandles);
+    if (Res != ZE_RESULT_SUCCESS) {
+      POCL_MSG_ERR("zeDriverGet FAILED\n");
+      return 0;
+    }
   }
 
   for (unsigned I = 0; I < DriverCount; ++I) {
