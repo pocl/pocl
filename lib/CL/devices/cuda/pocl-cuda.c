@@ -902,6 +902,9 @@ pocl_cuda_free_queue (cl_device_id device, cl_command_queue queue)
       PTHREAD_CHECK (pthread_join (queue_data->submit_thread, NULL));
       PTHREAD_CHECK (pthread_join (queue_data->finalize_thread, NULL));
     }
+
+  POCL_MEM_FREE(queue->data);
+
   return CL_SUCCESS;
 }
 
