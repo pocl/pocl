@@ -82,7 +82,9 @@ typedef struct server_info_t
 /* Function pointer for the callback defined in pocl runtime to dynamically
  * add and initialize devices in the discovered remote server.
  */
-static cl_int (*add_discovered_device) (const char *, unsigned);
+static cl_int (*add_discovered_device) (const char *,
+                                        unsigned,
+                                        cl_platform_id);
 
 /* Function pointer for the callback defined in pocl-r driver to reconnect
  * to a know server with same session.
@@ -90,6 +92,7 @@ static cl_int (*add_discovered_device) (const char *, unsigned);
 static cl_int (*reconnect) (const char *);
 
 unsigned dev_type_idx;
+cl_platform_id dev_platform;
 
 static server_info *server_table = NULL;
 static pocl_lock_t server_info_lock = POCL_LOCK_INITIALIZER;
@@ -165,7 +168,8 @@ register_server (const char *id,
       snprintf (dev_param, sizeof (dev_param), "%s/%d", new_server->ip_port,
                 i);
 
-      cl_int err = add_discovered_device (dev_param, dev_type_idx);
+      cl_int err
+        = add_discovered_device (dev_param, dev_type_idx, dev_platform);
 
       if (err)
         {
@@ -685,15 +689,18 @@ pocl_remote_discovery_add_server (const char *id,
  */
 cl_int
 init_network_discovery (cl_int (*add_discovered_device_c) (const char *,
-                                                           unsigned),
+                                                           unsigned,
+                                                           cl_platform_id),
                         cl_int (*reconnect_callback) (const char *),
-                        unsigned pocl_dev_type_idx)
+                        unsigned pocl_dev_type_idx,
+                        cl_platform_id pocl_dev_platform)
 {
   cl_int avahi_err = CL_SUCCESS;
   cl_int dht_err = CL_SUCCESS;
   add_discovered_device = add_discovered_device_c;
   reconnect = reconnect_callback;
   dev_type_idx = pocl_dev_type_idx;
+  dev_platform = pocl_dev_platform;
 
 #if defined(ENABLE_REMOTE_DISCOVERY_AVAHI)
   avahi_err = init_avahi_discovery ();
