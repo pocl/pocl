@@ -492,6 +492,11 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
 
   // both of these must be done AFTER inlining, see note above
   addPass(Passes, "automatic-locals", PassType::Module);
+
+  // Handle UnreachableInsts by converting them to returns or just deleting
+  // them. Julia expects graceful handling of UIs with printouts before them. We
+  // should convert the UIs in the input here otherwise optimizers will remove
+  // them.
   if (!Dev->spmd)
     addPass(Passes, "unreachables-to-returns");
 
@@ -517,6 +522,11 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
   if (!Dev->spmd) {
     addPass(Passes, "simplifycfg");
     addPass(Passes, "loop-simplify");
+
+    // ...we have to call UTR again here because some optimizations in LLVM
+    // might generate UIs.
+    if (!Dev->spmd)
+      addPass(Passes, "unreachables-to-returns");
 
     // required for OLD PM
     addAnalysis(Passes, "workitem-handler-chooser");
