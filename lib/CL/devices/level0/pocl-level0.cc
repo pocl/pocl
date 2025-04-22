@@ -401,22 +401,26 @@ unsigned int pocl_level0_probe(struct pocl_device_ops *Ops) {
     }
   }
 
+  const unsigned NumRequestedDevices = EnvCount < 0
+                                           ? std::numeric_limits<int>::max()
+                                           : std::max<int>(EnvCount, 1);
   for (unsigned I = 0; I < DriverCount; ++I) {
     // workaround for what appears to be a bug
     if (DrvHandles[I] == nullptr)
       continue;
     L0DriverInstances.emplace_back(new Level0Driver(DrvHandles[I]));
-  }
-  for (auto &Level0Driver : L0DriverInstances) {
-    TotalL0Devices += Level0Driver->getNumDevices();
-  }
-  if (EnvCount > 0 && EnvCount < TotalL0Devices) {
-    TotalL0Devices = EnvCount;
-    POCL_MSG_PRINT_LEVEL0("LevelZero Probe: limiting devices to %u\n",
-                          TotalL0Devices);
+    TotalL0Devices += L0DriverInstances.back()->getNumDevices();
+    if (TotalL0Devices >= NumRequestedDevices) {
+      TotalL0Devices = NumRequestedDevices;
+      POCL_MSG_PRINT_LEVEL0("LevelZero Probe: limiting devices to %u\n",
+                            TotalL0Devices);
+      break;
+    }
   }
 
-  POCL_MSG_PRINT_LEVEL0("LevelZero Probe devices: %u\n", TotalL0Devices);
+  POCL_MSG_PRINT_LEVEL0("LevelZero Probe: %u devices across %u drivers\n",
+                        TotalL0Devices,
+                        static_cast<unsigned>(L0DriverInstances.size()));
   return TotalL0Devices;
 }
 
