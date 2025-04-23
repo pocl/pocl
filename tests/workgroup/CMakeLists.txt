@@ -102,10 +102,16 @@ add_test_pocl(NAME "workgroup/conditional_barrier_loopvec"
               EXPECTED_OUTPUT "cond_barriers_1_2_1_1_loopvec.stdout"
               COMMAND "run_kernel" "conditional_barriers.cl" 1 2 1 1
               WORKITEM_HANDLER "loopvec")
+
 add_test_pocl(NAME "workgroup/conditional_barrier_cbs"
               EXPECTED_OUTPUT "cond_barriers_1_2_1_1_cbs.stdout"
               COMMAND "run_kernel" "conditional_barriers.cl" 1 2 1 1
               WORKITEM_HANDLER "cbs")
+
+add_test_pocl(NAME "workgroup/conditional_barrier_dynamic"
+              EXPECTED_OUTPUT "cond_barriers_dynamic_1_16_1_1_loopvec.stdout"
+              COMMAND "run_kernel" "conditional_barrier_dynamic.cl" 1 16 1 1
+              WORKITEM_HANDLER "loopvec")
 
 add_test_pocl(NAME "workgroup/forcing_horizontal_parallelization_to_some_outer_loopvec"
               EXPECTED_OUTPUT "outerlooppar_2_2_1_1.stdout"
