@@ -347,7 +347,8 @@ static zel_version_t get_level0_loader_version() {
   if (Result != ZE_RESULT_SUCCESS)
     return {};
 
-  std::vector<zel_component_version_t> Versions(NumComponents, {});
+  std::vector<zel_component_version_t> Versions(NumComponents,
+                                                zel_component_version_t());
 
   Result = zelLoaderGetVersions(&NumComponents, Versions.data());
   if (Result != ZE_RESULT_SUCCESS)
@@ -382,7 +383,8 @@ unsigned int pocl_level0_probe(struct pocl_device_ops *Ops) {
   uint32_t DriverCount = 64;
   ze_driver_handle_t DrvHandles[64];
 
-  if (LoaderVersion.major = 1 && LoaderVersion.minor > 18) {
+#if ZE_API_VERSION_CURRENT_M >= ZE_MAKE_VERSION(1, 10)
+  if (LoaderVersion.major == 1 && LoaderVersion.minor > 18) {
 
     ze_init_driver_type_desc_t DriverDesc{};
     DriverDesc.flags =
@@ -394,6 +396,9 @@ unsigned int pocl_level0_probe(struct pocl_device_ops *Ops) {
       return 0;
     }
   } else {
+#else
+  {
+#endif
     Res = zeDriverGet(&DriverCount, DrvHandles);
     if (Res != ZE_RESULT_SUCCESS) {
       POCL_MSG_ERR("zeDriverGet FAILED\n");
