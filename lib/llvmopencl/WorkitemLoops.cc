@@ -61,11 +61,27 @@ POP_COMPILER_DIAGS
 #include <sstream>
 #include <vector>
 
-#define DEBUG_TYPE "workitem-loops"
+#define DEBUG_TYPE "WIL"
 
 #define PASS_NAME "workitemloops"
 #define PASS_CLASS pocl::WorkitemLoops
 #define PASS_DESC "Workitem loop generation pass"
+
+//#define DEBUG_WORK_ITEM_LOOPS
+//#define POCL_KERNEL_COMPILER_DUMP_CFGS
+
+// Use the LLVM_DEBUG-style macros to gradually convert to LLVM-upstreamable
+// code.
+#ifdef LLVM_DEBUG
+#undef LLVM_DEBUG
+#endif
+
+#ifdef DEBUG_WORK_ITEM_LOOPS
+#define LLVM_DEBUG(X) X
+#define dbgs() std::cerr << DEBUG_TYPE << ": "
+#else
+#define LLVM_DEBUG(X)
+#endif
 
 namespace pocl {
 
@@ -170,10 +186,8 @@ bool WorkitemLoopsImpl::runOnFunction(Function &Func) {
   F = &Func;
   Initialize(cast<Kernel>(&Func));
 
-#ifdef DEBUG_WORK_ITEM_LOOPS
-  std::cerr << "### Before WILoops:\n";
-  Func.dump();
-#endif
+  LLVM_DEBUG(dbgs() << "Before WILoops:\n");
+  LLVM_DEBUG(Func.dump());
 
   GlobalIdIterators = {
       cast<GlobalVariable>(M->getOrInsertGlobal(GID_G_NAME(0), ST)),
@@ -197,10 +211,8 @@ bool WorkitemLoopsImpl::runOnFunction(Function &Func) {
   TempInstructionIds.clear();
 
   releaseParallelRegions();
-#ifdef DEBUG_WORK_ITEM_LOOPS
-  std::cerr << "### After WILoops:\n";
-  Func.dump();
-#endif
+  LLVM_DEBUG(dbgs() << "After WILoops:\n");
+  LLVM_DEBUG(Func.dump());
   return Changed;
 }
 
@@ -486,10 +498,8 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
            PRE = OriginalParallelRegions.end();
        PRI != PRE; ++PRI) {
     ParallelRegion *Region = (*PRI);
-#ifdef DEBUG_WORK_ITEM_LOOPS
-    std::cerr << "\n### Adding context save/restore for PR: ";
-    Region->dumpNames();
-#endif
+    LLVM_DEBUG(dbgs() << "#### Adding context save/restore for PR:\n");
+    LLVM_DEBUG(Region->dumpNames());
     fixMultiRegionVariables(Region);
   }
 
@@ -506,11 +516,9 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
     llvm::ValueToValueMapTy reference_map;
     ParallelRegion *PRegion = (*PRI);
 
-#ifdef DEBUG_WORK_ITEM_LOOPS
-    std::cerr << "### handling region:" << std::endl;
-    PRegion->dumpNames();
+    LLVM_DEBUG(dbgs() << "Handling region:\n");
+    LLVM_DEBUG(PRegion->dumpNames());
     //F.viewCFGOnly();
-#endif
 
     /* In case of conditional barriers, the first iteration
        has to be peeled so we know which branch to execute
@@ -532,13 +540,11 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
 
     bool Unrolled = false;
     if (PeelFirst) {
-#ifdef DEBUG_WORK_ITEM_LOOPS
-        std::cerr << "### conditional region, peeling the first iteration" << std::endl;
-#endif
         ParallelRegion *replica =
             PRegion->replicate(reference_map, ".peeled_wi");
         replica->chainAfter(PRegion);
         replica->purge();
+      LLVM_DEBUG(dbgs() << "Conditional region, peeling the first iteration\n");
 
         l = std::make_pair(replica->entryBB(), replica->exitBB());
     } else {
@@ -734,10 +740,8 @@ void WorkitemLoopsImpl::fixMultiRegionVariables(ParallelRegion *Region) {
   // Finally generate the context save/restore (or rematerialization) code for
   // the instructions requiring it.
   for (auto &I : ValuesToContextSave) {
-#ifdef DEBUG_WORK_ITEM_LOOPS
-    std::cerr << "\n### adding context/save restore for" << std::endl;
-    I->dump();
-#endif
+    LLVM_DEBUG(dbgs() << "\nAdding context/save restore for\n");
+    LLVM_DEBUG(I->dump());
     addContextSaveRestore(I);
   }
 }
@@ -925,10 +929,8 @@ llvm::Value *WorkitemLoopsImpl::tryToRematerialize(
     bool *CanDoIt, int *Depth) {
 
   auto DbgRemat = [=](const std::string &Reason) {
-#ifdef DEBUG_WORK_ITEM_LOOPS
-    std::cerr << "##### " << Reason << "\n";
-    Def->dump();
-#endif
+    LLVM_DEBUG(dbgs() << "##### " << Reason << "\n");
+    LLVM_DEBUG(Def->dump());
   };
 
 #define UNABLE_TO_REMAT(REASON)                                                \
@@ -1087,28 +1089,22 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
     // work item. Most likely an iteration variable of a for loop with a
     // barrier.
     if (PRegion == nullptr) {
-#ifdef DEBUG_WORK_ITEM_LOOPS
-      std::cerr << "#### user in a pure uniform block?\n";
-      User->dump();
-#endif
+      LLVM_DEBUG(dbgs() << "User in a pure uniform block?\n");
+      LLVM_DEBUG(User->dump());
       continue;
     }
 
     if (isa<CallInst>(User)) {
       if (!User->isLifetimeStartOrEnd()) {
         RematCandidate = false;
-#ifdef DEBUG_WORK_ITEM_LOOPS
-        std::cerr << "#### using in an unknown call\n";
-        User->dump();
-#endif
+        LLVM_DEBUG(dbgs() << "Using in an unknown call\n");
+        LLVM_DEBUG(User->dump());
       }
     } else if (llvm::AllocaInst *Alloca = dyn_cast_or_null<AllocaInst>(Def)) {
       if (!isa<StoreInst>(User) && !isa<LoadInst>(User)) {
         RematCandidate = false;
-#ifdef DEBUG_WORK_ITEM_LOOPS
-        std::cerr << "#### taking address of the alloca?\n";
-        User->dump();
-#endif
+        LLVM_DEBUG(dbgs() << "Taking address of the alloca?\n");
+        LLVM_DEBUG(User->dump());
       } else {
         // If we perform reinterpret casts, let's not rematerialize as it might
         // require to store the value temporarily to stack.
@@ -1116,11 +1112,9 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
              User->getType() != Alloca->getAllocatedType()) ||
             (isa<StoreInst>(User) &&
              User->getOperand(0)->getType() != Alloca->getAllocatedType())) {
-#ifdef DEBUG_WORK_ITEM_LOOPS
-          std::cerr << "#### Found a user with a different pointee type\n";
-          User->dump();
-          Def->dump();
-#endif
+          LLVM_DEBUG(dbgs() << "Found a user with a different pointee type\n");
+          LLVM_DEBUG(User->dump());
+          LLVM_DEBUG(Def->dump());
           RematCandidate = false;
         }
       }
@@ -1155,12 +1149,11 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
       assert ("Cannot add context restore for a PHI node at the region entry!"
                && regionOfBlock(
                 Phi->getParent())->entryBB() != Phi->getParent());
-#ifdef DEBUG_WORK_ITEM_LOOPS
-      std::cerr << "#### adding context restore code before PHI" << std::endl;
-      UserI->dump();
-      std::cerr << "#### in BB:" << std::endl;
-      UserI->getParent()->dump();
-#endif
+      LLVM_DEBUG(dbgs() << "Adding context restore code before PHI\n");
+      LLVM_DEBUG(UserI->dump());
+      LLVM_DEBUG(dbgs() << "In BB:\n");
+      LLVM_DEBUG(UserI->getParent()->dump());
+
       BasicBlock *IncomingBB = NULL;
       for (unsigned Incoming = 0; Incoming < Phi->getNumIncomingValues();
            ++Incoming) {
@@ -1185,10 +1178,9 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
     }
 
     if (RematerializedValue != nullptr) {
-#ifdef DEBUG_WORK_ITEM_LOOPS
-      std::cerr << "#### successful rematerialization:\n";
-      RematerializedValue->dump();
-#endif
+      LLVM_DEBUG(dbgs() << "Successful rematerialization:\n");
+      LLVM_DEBUG(RematerializedValue->dump());
+
       if (isa<AllocaInst>(Def)) {
         if (StoreInst *Store = dyn_cast<StoreInst>(UserI)) {
           // The original store could be left intact, but then we'd need to
@@ -1198,12 +1190,12 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
           // We can get rid of the alloca load altogether and use the
           // rematerialized value directly.
           UserI->replaceAllUsesWith(RematerializedValue);
-#ifdef DEBUG_WORK_ITEM_LOOPS
-          std::cerr << "#### alloca load was converted to a remat value:"
-                    << std::endl;
-          UserI->dump();
-          RematerializedValue->dump();
-#endif
+          /// Kuten ongelmatapauksessa, allocan loadin tulosta käytetään
+          /// toisessa parallel regionissa. Tässä oletetaan, että loadin
+          /// tulokset myös samassa PR:ssä.
+          LLVM_DEBUG(dbgs() << "Alloca load was converted to a remat value:\n");
+          LLVM_DEBUG(UserI->dump());
+          LLVM_DEBUG(RematerializedValue->dump());
         } else if (UserI->isLifetimeStartOrEnd()) {
           // We can leave the original lifetime marker for the alloca as is.
         } else {
@@ -1211,11 +1203,8 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
         }
       } else {
         UserI->replaceUsesOfWith(Def, RematerializedValue);
-#ifdef DEBUG_WORK_ITEM_LOOPS
-        std::cerr << "#### the user was converted to a remat value:"
-                  << std::endl;
-        UserI->dump();
-#endif
+        LLVM_DEBUG(dbgs() << "The user was converted to a remat value:\n");
+        LLVM_DEBUG(UserI->dump());
       }
     } else {
       // Unable to rematerialize the value.
@@ -1231,11 +1220,8 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
 
       UserI->replaceUsesOfWith(Def, ContextArrayLoad);
 
-#ifdef DEBUG_WORK_ITEM_LOOPS
-      std::cerr << "#### the user was converted to a context load:"
-                << std::endl;
-      UserI->dump();
-#endif
+      LLVM_DEBUG(dbgs() << "the user was converted to a context load:\n");
+      LLVM_DEBUG(UserI->dump());
     }
   }
 }
@@ -1278,10 +1264,8 @@ bool WorkitemLoopsImpl::shouldNotBeContextSaved(llvm::Instruction *Instr) {
   // and hope the latter optimizations reduce them back to a single induction
   // variable outside the parallel loop.
   if (!VUA.shouldBePrivatized(Instr->getParent()->getParent(), Instr)) {
-#ifdef DEBUG_WORK_ITEM_LOOPS
-    std::cerr << "### based on VUA, not context saving:";
-    Instr->dump();
-#endif
+    LLVM_DEBUG(dbgs() << "Based on VUA, not context saving:\n");
+    LLVM_DEBUG(Instr->dump());
     return true;
   }
 
@@ -1369,9 +1353,8 @@ bool WorkitemLoops::canHandleKernel(llvm::Function &K,
     // More than one 'break' point. It would lead to a complex control flow
     // structure which likely ruins loopvec efficiency anyhow.
     if (L->getExitingBlock() == nullptr) {
-#ifdef DEBUG_WORK_ITEM_LOOPS
-      std::cerr << "### multiple breaks inside a barrier loop, won't handle.\n";
-#endif
+      LLVM_DEBUG(
+          dbgs() << "Multiple breaks inside a barrier loop, won't handle.\n");
       return false;
     }
   }
