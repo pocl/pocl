@@ -29,6 +29,7 @@ set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_assign_loop_variable_to_privvar_makes_it_local_2
      test_llvm_segfault_issue_889
      test_issue_1711 test_issue_1794 test_issue_1747
+     test_rematerialized_alloca_load_with_outside_pr_users
 )
 foreach(PROG ${C_PROGRAMS_TO_BUILD})
   add_executable("${PROG}" "${PROG}.c")
@@ -152,6 +153,11 @@ add_test_pocl(NAME "regression/assigning_a_loop_iterator_variable_to_a_private_m
 
 add_test_pocl(NAME "regression/test_program_from_binary_with_local_1_1_1" WORKITEM_HANDLER "loopvec;cbs;"
   COMMAND "test_program_from_binary_with_local_1_1_1")
+
+add_test_pocl(NAME "regression/test_rematerialized_alloca_load_with_outside_pr_users"
+  WORKITEM_HANDLER "loopvec"
+  COMMAND "test_rematerialized_alloca_load_with_outside_pr_users"
+  EXPECTED_OUTPUT "test_rematerialized_alloca_load_with_outside_pr_users.output")
 
 set(VARIANTS "loopvec;cbs;")
 foreach(VARIANT ${VARIANTS})
