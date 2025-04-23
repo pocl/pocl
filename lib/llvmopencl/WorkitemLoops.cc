@@ -52,6 +52,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
 #include "WorkitemLoops.h"
+#include "pocl_runtime_config.h"
 
 POP_COMPILER_DIAGS
 
@@ -1028,7 +1029,7 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
   // Restore the produced variable before each use to ensure the correct
   // context copy is used.
 
-  bool RematCandidate = true;
+  bool RematCandidate = pocl_get_bool_option("POCL_PREGION_VALUE_REMAT", true);
 
   // In case of a rematerialized alloca with only a single store, this will have
   // the store that initializes it.

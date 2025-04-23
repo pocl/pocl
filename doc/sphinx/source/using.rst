@@ -333,6 +333,12 @@ pocl.
  "PoCL (Intel OpenCL compat)" will allow running OneDNN applications, which will
  fail to create a device if 'Intel' and 'OpenCL' are not in the platform string.
 
+- **POCL_PREGION_VALUE_REMAT**
+
+ Controls the CPU kernel compiler's value rematerialization, an optimization
+ where the value is recompute in the using parallel region instead of storing
+ it to the work-item context. Enabled by default.
+
 - **POCL_REMOTE_XXX**
 
  These variables are used to configure different aspects of the remote driver
