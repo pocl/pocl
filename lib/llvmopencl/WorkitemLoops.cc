@@ -1069,12 +1069,12 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
       // a diverging BB. The first intuition in that case would be to not
       // allow rematerialization since we generally don't know at compile
       // time if the branch is taken or not. However, when it comes to
-      // undefined behavior, reading from an uninitialized alloca is undefined,
-      // meaning that it should be fine to recompute the value unconditionally
-      // at its use location, as long as the rematerialized instructions are
-      // safe to execute speculatively: The value in the conditional is just
-      // one possible value in the set of possible values case the branch was
-      // not taken.
+      // undefined behavior, reads from uninitialized allocas produce undefined,
+      // values, meaning that it should be fine to recompute the value
+      // unconditionally at its use location, as long as the rematerialized
+      // instructions are safe to execute speculatively: The value in the
+      // conditional is just one possible value in the set of possible values
+      // case the branch was not taken.
       if (Stores == 1) {
         InitializerStore = ST;
       } else {
@@ -1143,20 +1143,17 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
     InstructionVec AllocaContentUses;
 
     for (Instruction *User : Uses) {
-      LoadInst *Load = dyn_cast<LoadInst>(User);
-      if (Load == nullptr) {
+      auto *Load = dyn_cast<LoadInst>(User);
+      if (Load == nullptr)
         continue;
-      }
-      for (Instruction::use_iterator LUI = Load->use_begin(),
-             LUE = Load->use_end();
-           LUI != LUE; ++LUI) {
 
-        llvm::Instruction *LoadResUser = cast<Instruction>(LUI->getUser());
+      for (Use &LU : Load->uses()) {
+
+        llvm::Instruction *LoadResUser = cast<Instruction>(LU.getUser());
         if (LoadResUser == NULL)
           continue;
 
-        LLVM_DEBUG(
-          dbgs() << "Remat at the load result usage.\n");
+        LLVM_DEBUG(dbgs() << "Remat at the load result usage.\n");
         LLVM_DEBUG(LoadResUser->dump());
         AllocaContentUses.push_back(LoadResUser);
         OrigAllocaLoads[LoadResUser] = Load;
@@ -1239,11 +1236,9 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
           // We can leave the original lifetime marker for the alloca as is.
         } else {
           // We can get rid of the alloca load altogether and use the
-          // rematerialized value directly.
+          // rematerialized value directly. Replace the uses of the original
+          // load value with the particular rematerialized one.
           UserI->replaceUsesOfWith(OrigAllocaLoads[UserI], RematerializedValue);
-          /// Kuten ongelmatapauksessa, allocan loadin tulosta käytetään
-          /// toisessa parallel regionissa. Tässä oletetaan, että loadin
-          /// tulokset myös samassa PR:ssä.
           LLVM_DEBUG(dbgs()
                      << "Alloca load's use was converted to a remat value:\n");
           LLVM_DEBUG(UserI->dump());
@@ -1291,7 +1286,7 @@ bool WorkitemLoopsImpl::shouldNotBeContextSaved(llvm::Instruction *Instr) {
   // conditional branch case where the header node of the region is shared
   // across the peeled branches and thus the header node's ID loads might get
   // context saved which leads to egg-chicken problems.
-  llvm::LoadInst *Load = dyn_cast<llvm::LoadInst>(Instr);
+  auto *Load = dyn_cast<llvm::LoadInst>(Instr);
   if (Load != NULL && (Load->getPointerOperand() == LocalIdGlobals[0] ||
                        Load->getPointerOperand() == LocalIdGlobals[1] ||
                        Load->getPointerOperand() == LocalIdGlobals[2] ||
