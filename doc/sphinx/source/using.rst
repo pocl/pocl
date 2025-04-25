@@ -422,6 +422,20 @@ pocl.
  If the requested vector width is higher than the machine's native vector
  width, the vectorizer will also unroll the loop.
 
+- **POCL_PREFER_VECTOR_WIDTH**
+
+ Override the preferred vector width **in bits** for x86 targets.
+ When set, the LLVM loop vectorizer will generate code using vector
+ instructions with the specified number of bits.
+ When not set, the LLVM loop vectorizer may limit itself to using 256-bit
+ vector instructions on some targets to avoid frequency penalties.
+
+.. note::
+   POCL_FORCE_VECTOR_WIDTH and POCL_PREFER_VECTOR_WIDTH can be used together.
+   For example, setting POCL_FORCE_VECTOR_WIDTH=16 POCL_PREFER_VECTOR_WIDTH=512
+   will force the LLVM loop vectorizer to use a vector width of 16 and
+   generate 512-bit vector instructions.
+
 - **POCL_VULKAN_VALIDATE**
 
  When set to 1, and the Vulkan implementation has the validation layers,
