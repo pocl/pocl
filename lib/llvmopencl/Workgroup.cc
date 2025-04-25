@@ -63,6 +63,7 @@ POP_COMPILER_DIAGS
 #include <iostream>
 #include <map>
 #include <sstream>
+#include <string>
 
 #if _WIN32
 #  include "vccompat.hpp"
@@ -541,6 +542,12 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
     // This breaks infinite for loops when enabled.
     F.addFnAttr(Attribute::WillReturn);
 #endif
+
+    // Override the preferred vector width on x86 targets.
+    // By default, clang uses 256-bit even if a processor supports 512-bit SIMD.
+    if (int VecWidth = pocl_get_int_option("POCL_PREFER_VECTOR_WIDTH", 0)) {
+      F.addFnAttr("prefer-vector-width", std::to_string(VecWidth));
+    }
   }
 
   return true;
