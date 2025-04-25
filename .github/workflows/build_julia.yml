@@ -30,15 +30,21 @@ jobs:
       matrix:
         include:
           - julia-version: '1.10'
-            llvm: 15
+            llvm: 20
           - julia-version: '1.11'
-            llvm: 16
+            llvm: 20
 
     steps:
       - name: Checkout PoCL
         uses: actions/checkout@v4
         with:
           path: pocl
+
+      - name: Checkout OpenCL.jl
+        uses: actions/checkout@v4
+        with:
+          repository: JuliaGPU/OpenCL.jl
+          path: OpenCL.jl
 
       - name: Setup Julia
         uses: julia-actions/setup-julia@v2
@@ -95,11 +101,9 @@ jobs:
                 mkpath(builddir)
                 run(```cmake -B $builddir -S $sourcedir
                        -GNinja
-                       -DCMAKE_CXX_FLAGS="-fdiagnostics-color=always"
-                       -DCMAKE_C_FLAGS="-fdiagnostics-color=always"
                        -DCMAKE_BUILD_TYPE=Debug
                        -DENABLE_TESTS:Bool=OFF
-                       -DPOCL_DEBUG_MESSAGES:Bool=ON
+                       -DSTATIC_LLVM:Bool=On
                        -DCMAKE_INSTALL_PREFIX=$destdir
                        -DWITH_LLVM_CONFIG=$(LLVM_full_jll.artifact_dir)/tools/llvm-config
                        -DCMAKE_PREFIX_PATH="$(join(prefix, ";"))"
@@ -108,16 +112,19 @@ jobs:
                 run(```$(cmake()) --build $builddir --parallel $(Sys.CPU_THREADS) --target install```)
             end'
 
-      - name: Checkout OpenCL.jl
-        uses: actions/checkout@v4
-        with:
-          repository: JuliaGPU/OpenCL.jl
-          path: OpenCL.jl
+            echo '[pocl_jll]' > OpenCL.jl/test/LocalPreferences.toml
+            echo 'libpocl_path="${{ github.workspace }}/target/lib/libpocl.so"' >> OpenCL.jl/test/LocalPreferences.toml
 
       - name: Setup OpenCL.jl
         run: |
-          echo '[pocl_jll]' > OpenCL.jl/test/LocalPreferences.toml
-          echo 'libpocl_path="${{ github.workspace }}/target/lib/libpocl.so"' >> OpenCL.jl/test/LocalPreferences.toml
+          julia --project=OpenCL.jl -e '
+            using Pkg
+
+            try
+              Pkg.instantiate()
+            catch
+              Pkg.develop(path="lib/intrinsics")
+            end'
 
       - name: Test OpenCL.jl
         uses: julia-actions/julia-runtest@v1
