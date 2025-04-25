@@ -415,8 +415,9 @@ pocl.
 
 - **POCL_FORCE_VECTOR_WIDTH**
 
- Forces the LLVM loop vectorizer to use the specified vector width, overriding
- the default vector width determined by the vectorizer's cost model.
+ Forces the LLVM loop vectorizer to use the specified vector width (expressed
+ as a number of **loop iterations**), overriding the default value determined
+ by the vectorizer's cost model.
  The same vector width will be used by all loops in all kernels.
  Setting the vector width to 1 disables vectorization.
  If the requested vector width is higher than the machine's native vector
@@ -424,7 +425,8 @@ pocl.
 
 - **POCL_PREFER_VECTOR_WIDTH**
 
- Override the preferred vector width **in bits** for x86 targets.
+ Override the preferred vector width (expressed as a number of **bits**) for
+ x86 targets.
  When set, the LLVM loop vectorizer will generate code using vector
  instructions with the specified number of bits.
  When not set, the LLVM loop vectorizer may limit itself to using 256-bit
