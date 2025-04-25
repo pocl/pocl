@@ -413,6 +413,15 @@ pocl.
  When set to 1, prints out remarks produced by the loop vectorizer of LLVM
  during kernel compilation.
 
+- **POCL_FORCE_VECTOR_WIDTH**
+
+ Forces the LLVM loop vectorizer to use the specified vector width, overriding
+ the default vector width determined by the vectorizer's cost model.
+ The same vector width will be used by all loops in all kernels.
+ Setting the vector width to 1 disables vectorization.
+ If the requested vector width is higher than the machine's native vector
+ width, the vectorizer will also unroll the loop.
+
 - **POCL_VULKAN_VALIDATE**
 
  When set to 1, and the Vulkan implementation has the validation layers,
