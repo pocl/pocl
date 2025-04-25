@@ -41,6 +41,10 @@ Miscellaneous
 Remote driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+* Command buffers that refer to only a single remote device are
+  now handled entirely on the server side as described in
+  `this publication <https://doi.org/10.1145/3731125.3731129>`
+  for some massive reductions in communication overhead.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Level Zero driver
