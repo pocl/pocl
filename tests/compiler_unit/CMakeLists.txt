@@ -51,6 +51,15 @@ function(add_llvm_check)
         ONLY_FILECHECK 1)
     endif()
   endif()
+  if (POCL_UTEST_OPENCLC_NAME)
+    add_test_pocl(NAME "kernel_compiler_unit_tests/${POCL_UTEST_OPENCLC_NAME}"
+      COMMAND "poclcc" -o ${POCL_UTEST_OPENCLC_NAME}.out
+      "${CMAKE_CURRENT_SOURCE_DIR}/${POCL_UTEST_OPENCLC_NAME}.cl"
+      WORKITEM_HANDLER "${WORKITEM_HANDLER}"
+      LLVM_FILECHECK "${POCL_UTEST_OPENCLC_NAME}.fc"
+      ONLY_FILECHECK 1
+      ENVIRONMENT "${POCL_UTEST_ENVIRONMENT}")
+  endif()
 
 endfunction()
 
