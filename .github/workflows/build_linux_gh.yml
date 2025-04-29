@@ -42,8 +42,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # basic = simplest pthread build
-        # devel = with devel options
+        # basic = simplest pthread build with ENABLE_CONFORMANCE
+        # devel = with devel options without ENABLE_CONFORMANCE
         # install = install PoCL system-wide and run tests
         # static = statically linked LLVM component libraries
         # TBB, OpenMP = CPU drivers with TBB/OpenMP support
@@ -138,7 +138,7 @@ jobs:
           elif [ "${{ matrix.config }}" == "TBB" ]; then
             runCMake -DENABLE_ICD=1 -DENABLE_TBB_DEVICE=1
           elif [ "${{ matrix.config }}" == "basic" ]; then
-            runCMake -DENABLE_ICD=1 -DENABLE_LLVM_FILECHECKS=1
+            runCMake -DENABLE_ICD=1 -DENABLE_LLVM_FILECHECKS=1 -DENABLE_CONFORMANCE=ON
           elif [ "${{ matrix.config }}" == "static" ]; then
             runCMake -DENABLE_ICD=1 -DSTATIC_LLVM=1 -DDEVELOPER_MODE=ON
           elif [ "${{ matrix.config }}" == "devel" ]; then
