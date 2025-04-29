@@ -1608,12 +1608,13 @@ endif()
 
 # FP16 support requires _Float16 type
 # LLVM <15 doesn't support _Float16;
-# LLVM 15 crashes on some code; LLVM 16 seems to work but fails with ldexp
+# LLVM 15 crashes on some code; LLVM 16 seems to work but fails with ldexp; LLVM 18 fails with isinf
 # CONFORMANCE=ON disables FP16 b/c PoCL support is incomplete
-if((LLVM_VERSION_MAJOR GREATER_EQUAL 17)
+if((LLVM_VERSION_MAJOR GREATER_EQUAL 19)
    AND (NOT ENABLE_CONFORMANCE)
    AND (NOT RISCV) AND (NOT I386)
    AND (CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+   AND ENABLE_HOST_CPU_VECTORIZE_BUILTINS
    AND CLANG_SUPPORTS_FLOAT16_ON_CPU
    AND HOST_COMPILER_SUPPORTS_FLOAT16)
   message(STATUS "CPU device support for cl_khr_fp16 enabled")
