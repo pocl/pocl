@@ -147,9 +147,30 @@ add_test_pocl(NAME "workgroup/range_md_large_grid"
               EXPECTED_OUTPUT ""
               COMMAND "run_kernel" "range_md.cl" "1000" "128" "1" "1")
 
+if(NOT ENABLE_CONFORMANCE)
+
+# Requires sub_group features which are not yet conformance tested.
 add_test_pocl(NAME "workgroup/ballot"
               EXPECTED_OUTPUT "ballot_1_32_1_1.stdout"
               COMMAND "run_kernel" "ballot.cl" "1" "32" "1" "1")
+
+set(VARIANTS "loopvec;cbs")
+foreach(VARIANT ${VARIANTS})
+  set(TEST_LIST
+  "workgroup/ballot_${VARIANT}"
+  )
+  set_tests_properties(
+    ${TEST_LIST}
+    PROPERTIES
+      COST 2.0
+      PROCESSORS 1
+      DEPENDS "pocl_version_check"
+      LABELS "cpu;workgroup")
+  set_property(TEST ${TEST_LIST}
+    APPEND PROPERTY ENVIRONMENT "POCL_MAX_COMPUTE_UNITS=1")
+endforeach()
+
+endif()
 
 # These tests are now always ran with the basic device with a predefined
 # work-group execution order. Their printout verification depends
@@ -166,7 +187,6 @@ foreach(VARIANT ${VARIANTS})
   "workgroup/range_md_small_grid_${VARIANT}"
   "workgroup/range_md_large_grid_${VARIANT}"
   "workgroup/issue_1747_wg_divergent_barrier_${VARIANT}"
-  "workgroup/ballot_${VARIANT}"
   )
   set_tests_properties(
     ${TEST_LIST}
@@ -177,7 +197,6 @@ foreach(VARIANT ${VARIANTS})
       LABELS "cpu;workgroup")
   set_property(TEST ${TEST_LIST}
     APPEND PROPERTY ENVIRONMENT "POCL_MAX_COMPUTE_UNITS=1")
-  
 endforeach()
 
 set_property(TEST

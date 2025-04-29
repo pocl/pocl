@@ -89,8 +89,27 @@ add_test_pocl(NAME "regression/test_issue_1608" COMMAND "test_issue_1608")
 
 add_test_pocl(NAME "regression/test_issue_1826" COMMAND "test_issue_1826")
 
+if(NOT ENABLE_CONFORMANCE)
+
+# Requires sub_group features which are not yet conformance tested.
+
 add_test_pocl(NAME "regression/test_builtin_regression"
   COMMAND "test_builtin_regression")
+
+set(VARIANTS "loopvec;cbs;")
+foreach(VARIANT ${VARIANTS})
+set_tests_properties(
+  "regression/test_builtin_regression_${VARIANT}"
+  PROPERTIES
+    COST 1.5
+    PROCESSORS 1
+    DEPENDS "pocl_version_check"
+    SKIP_RETURN_CODE 77
+    SKIP_REGULAR_EXPRESSION "SKIP"
+    LABELS "cpu;regression")
+endforeach()
+
+endif()
 
 add_test_pocl(NAME "regression/test_workitem_func_outside_kernel" COMMAND "test_workitem_func_outside_kernel")
 
@@ -180,7 +199,6 @@ set_tests_properties(
   "regression/test_issue_1794a_${VARIANT}"
   "regression/test_issue_1794b_${VARIANT}"
   "regression/test_issue_1826_${VARIANT}"
-  "regression/test_builtin_regression_${VARIANT}"
   PROPERTIES
     COST 1.5
     PROCESSORS 1
