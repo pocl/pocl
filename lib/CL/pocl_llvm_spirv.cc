@@ -135,7 +135,6 @@ SPIRV::TranslatorOpts setupTranslOpts(const std::string &SupportedSPVExts,
                                       pocl_version_t TargetVersion) {
   SPIRV::TranslatorOpts::ExtensionsStatusMap EnabledExts;
   std::istringstream ISS(SupportedSPVExts);
-  assert(SPVExtMap.size() > 15);
   while (ISS) {
     std::string Token;
     std::getline(ISS, Token, ',');
@@ -150,7 +149,8 @@ SPIRV::TranslatorOpts setupTranslOpts(const std::string &SupportedSPVExts,
       POCL_MSG_ERR("Unknown SPV extension: %s \n", Token.c_str());
   }
 
-  SPIRV::VersionNumber TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_3;
+  // default to 1.2
+  SPIRV::VersionNumber TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_2;
   switch (TargetVersion.major * 100 + TargetVersion.minor) {
   case 100:
     TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_0;
@@ -164,17 +164,22 @@ SPIRV::TranslatorOpts setupTranslOpts(const std::string &SupportedSPVExts,
   case 102:
     TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_2;
     break;
+#if LLVM_SPIRV_LIB_MAXVER >= 0x00010300
   case 103:
     TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_3;
     break;
+#endif
+#if LLVM_SPIRV_LIB_MAXVER >= 0x00010400
   case 104:
     TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_4;
     break;
-// these are not available in all version of LLVMSPIRVOpts.h header:
-#if 0
+#endif
+#if LLVM_SPIRV_LIB_MAXVER >= 0x00010500
   case 105:
     TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_5;
     break;
+#endif
+#if LLVM_SPIRV_LIB_MAXVER >= 0x00010600
   case 106:
     TargetVersionEnum = SPIRV::VersionNumber::SPIRV_1_6;
     break;
@@ -208,7 +213,7 @@ int pocl_regen_spirv_binary(cl_program Program, cl_uint DeviceI) {
   SPIRV::TranslatorOpts Opts =
       setupTranslOpts(Device->supported_spirv_extensions, UnrecognizedVersion,
                       MaxSupportedVersion);
-  POCL_RETURN_ERROR_ON(UnrecognizedVersion, CL_INVALID_BINARY,
+  POCL_RETURN_ERROR_ON(UnrecognizedVersion, CL_INVALID_BINARY, "LLVM-SPIRV "
                        "Translator does not recognize the SPIR-V version\n");
 
   /* using --spirv-target-env=CL2.0 here enables llvm-spirv to produce proper
