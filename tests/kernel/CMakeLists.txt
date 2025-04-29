@@ -233,16 +233,10 @@ add_test_pocl(NAME "kernel/test_printf_vectors_halfn"
               EXPECTED_OUTPUT "test_printf_vectors_halfn_expout.txt"
               COMMAND "kernel" "test_printf_vectors_halfn")
 
-# HOST_CPU_ENABLE_CL_KHR_FP16 + ENABLE_HOST_CPU_VECTORIZE_BUILTINS
-# are necessary for opencl builtins (lib/kernel) to have fp16 support
-if(HOST_CPU_ENABLE_CL_KHR_FP16 AND ENABLE_HOST_CPU_VECTORIZE_BUILTINS)
+if(HOST_CPU_ENABLE_CL_KHR_FP16)
   foreach(VARIANT ${VARIANTS})
-  unset(ADDITIONAL_CPU_TEST)
-  if(LLVM_VERSION VERSION_GREATER_EQUAL 19.0)
-    set(ADDITIONAL_CPU_TEST "kernel/test_halfs_${VARIANT}")
-  endif()
   set_tests_properties("kernel/test_printf_vectors_halfn_${VARIANT}"
-    "kernel/test_shuffle_half_${VARIANT}" ${ADDITIONAL_CPU_TEST}
+    "kernel/test_shuffle_half_${VARIANT}" "kernel/test_halfs_${VARIANT}"
     PROPERTIES
       PROCESSORS 1
       COST 120
