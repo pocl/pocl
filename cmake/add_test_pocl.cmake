@@ -39,7 +39,7 @@ include(CMakeParseArguments)
 function(add_test_pocl)
 
   set(options SORT_OUTPUT)
-  set(oneValueArgs EXPECTED_OUTPUT NAME WORKING_DIRECTORY LLVM_FILECHECK ONLY_FILECHECK)
+  set(oneValueArgs EXPECTED_OUTPUT NAME WORKING_DIRECTORY LLVM_FILECHECK ONLY_FILECHECK ENVIRONMENT)
   set(multiValueArgs COMMAND WORKITEM_HANDLER)
   cmake_parse_arguments(POCL_TEST "${options}" "${oneValueArgs}"
                         "${multiValueArgs}" ${ARGN})
@@ -130,7 +130,7 @@ function(add_test_pocl)
       set_tests_properties(${POCL_TEST_IR_CHECK_NAME} PROPERTIES
                           PASS_REGULAR_EXPRESSION "OK"
                           FAIL_REGULAR_EXPRESSION "FAIL"
-                          ENVIRONMENT POCL_WORK_GROUP_METHOD=${VARIANT}
+                          ENVIRONMENT "POCL_WORK_GROUP_METHOD=${VARIANT};${POCL_TEST_ENVIRONMENT}"
                           LABELS "cpu"
                           DEPENDS "pocl_version_check")
 

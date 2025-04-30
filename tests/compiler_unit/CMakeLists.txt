@@ -31,7 +31,7 @@
 
 function(add_llvm_check)
   set(options SORT_OUTPUT)
-  set(oneValueArgs SPIRV_NAME OPENCLC_NAME)
+  set(oneValueArgs SPIRV_NAME OPENCLC_NAME ENVIRONMENT)
   set(multiValueArgs COMMAND WORKITEM_HANDLER)
   cmake_parse_arguments(POCL_UTEST "${options}" "${oneValueArgs}"
     "${multiValueArgs}" ${ARGN})
