@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm_version: [18, 19]
+        llvm_version: [19]
         config: [cpu]
 
     steps:
