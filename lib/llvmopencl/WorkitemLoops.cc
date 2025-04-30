@@ -917,7 +917,7 @@ llvm::AllocaInst *WorkitemLoopsImpl::getContextArray(llvm::Instruction *Inst,
 /// from the context.
 ///
 /// \param Before the instruction before which the cloned instructions should
-/// be added.
+/// be added. Can be nullptr if only testing for rematerialization-ability.
 /// \param Def is the produced value to attempt to clone recursively.
 /// \param NamePrefix a prefix string to add to the name of the cloned
 /// instructions.
@@ -1135,6 +1135,19 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
     Uses.push_back(User);
   }
 
+  if (RematCandidate && isa<AllocaInst>(Def)) {
+    bool CanRemat = true;
+    int Depth = 0;
+    tryToRematerialize(nullptr, InitializerStore->getValueOperand(), "",
+                       &CanRemat, &Depth);
+
+    if (!CanRemat) {
+      LLVM_DEBUG(dbgs() << "Cannot remat the initializer.\n");
+      LLVM_DEBUG(InitializerStore->getValueOperand());
+      RematCandidate = false;
+    }
+  }
+
   // Used for tracking the alloca load the instruction refers to.
   std::map<Instruction *, Instruction *> OrigAllocaLoads;
   if (RematCandidate && isa<AllocaInst>(Def)) {
@@ -1169,42 +1182,8 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
   for (Instruction *UserI : Uses) {
     Instruction *ContextRestoreLocation = UserI;
 
-    PHINode* Phi = dyn_cast<PHINode>(UserI);
-    if (Phi != NULL) {
-      // TODO: This is now obsolete. For source input we work on unoptimized
-      // clang output and for SPIR-V we break down the PHIs.
-
-      // In case of PHI nodes, we cannot just insert the context restore code
-      // before it in the same basic block because it is assumed there are no
-      // non-phi Instructions before PHIs which the context restore code
-      // constitutes to. Add the context restore to the incomingBB instead.
-
-      // There can be values in the PHINode that are incoming from another
-      // region even though the decision BB is within the region. For those
-      // values we need to add the context restore code in the incoming BB
-      // (which is known to be inside the region due to the assumption of not
-      // having to touch PHI nodes in PRentry BBs).
-
-      // PHINodes at region entries are broken down earlier.
-      assert ("Cannot add context restore for a PHI node at the region entry!"
-               && regionOfBlock(
-                Phi->getParent())->entryBB() != Phi->getParent());
-      LLVM_DEBUG(dbgs() << "Adding context restore code before PHI\n");
-      LLVM_DEBUG(UserI->dump());
-      LLVM_DEBUG(dbgs() << "In BB:\n");
-      LLVM_DEBUG(UserI->getParent()->dump());
-
-      BasicBlock *IncomingBB = NULL;
-      for (unsigned Incoming = 0; Incoming < Phi->getNumIncomingValues();
-           ++Incoming) {
-        Value *Val = Phi->getIncomingValue(Incoming);
-        BasicBlock *BB = Phi->getIncomingBlock(Incoming);
-        if (Val == Def)
-          IncomingBB = BB;
-      }
-      assert(IncomingBB != NULL);
-      ContextRestoreLocation = IncomingBB->getTerminator();
-    }
+    // We break down the PHIs, shouldn't see them here.
+    assert(!isa<PHINode>(UserI));
 
     llvm::Value *RematerializedValue = nullptr;
     if (RematCandidate) {
@@ -1217,6 +1196,7 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
         RematerializedValue = tryToRematerialize(
             ContextRestoreLocation, InitializerStore->getValueOperand(),
             Def->getName().str());
+        assert(RematerializedValue != nullptr);
       } else {
         RematerializedValue = tryToRematerialize(ContextRestoreLocation, Def,
                                                  Def->getName().str());
@@ -1225,6 +1205,7 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
 
     if (RematerializedValue != nullptr) {
       LLVM_DEBUG(dbgs() << "Successful rematerialization:\n");
+      LLVM_DEBUG(Def->dump());
       LLVM_DEBUG(RematerializedValue->dump());
 
       if (isa<AllocaInst>(Def)) {
