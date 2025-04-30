@@ -157,7 +157,10 @@ Remote driver
 * Support for passing more (vendor-specific) device infos
   from the pocld server to libpocl's remote driver.
 
-* Implemented support for server-side cl_khr_command_buffer.
+* Command buffers that refer to only a single remote device are
+  now handled entirely on the server side as described in
+  `this publication <https://doi.org/10.1145/3731125.3731129>`
+  for massive reductions in communication overhead.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Level Zero driver
