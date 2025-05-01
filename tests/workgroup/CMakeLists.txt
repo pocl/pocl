@@ -166,8 +166,10 @@ foreach(VARIANT ${VARIANTS})
   "workgroup/range_md_small_grid_${VARIANT}"
   "workgroup/range_md_large_grid_${VARIANT}"
   "workgroup/issue_1747_wg_divergent_barrier_${VARIANT}"
-  "workgroup/ballot_${VARIANT}"
   )
+  if(NOT ENABLE_CONFORMANCE)
+    list(APPEND TEST_LIST "workgroup/ballot_${VARIANT}")
+  endif()
   set_tests_properties(
     ${TEST_LIST}
     PROPERTIES
