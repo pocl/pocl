@@ -21,11 +21,14 @@
    THE SOFTWARE.
 */
 
+#include "pocl_opencl.h"
+
 #define CL_HPP_TARGET_OPENCL_VERSION 300
 #define CL_HPP_ENABLE_EXCEPTIONS
-#include "CL/opencl.hpp"
+#include <CL/opencl.hpp>
 
 #include <iostream>
+
 
 static char SourceStr[] = R"clc(
 kernel void test() {
@@ -50,6 +53,11 @@ int main() try {
   std::vector<cl::Device> Devices = Context.getInfo<CL_CONTEXT_DEVICES>();
   auto DeviceName = Devices.at(0).getInfo<CL_DEVICE_NAME>();
   std::cout << "Device: " << DeviceName << std::endl;
+
+  if (poclu_supports_extension(Devices.at(0).get(), "cl_khr_subgroups") == 0) {
+      std::cout << "this test requires cl_khr_subgroups, test SKIPPED\n";
+      return 77;
+  }
 
   cl::Program::Sources Source({SourceStr});
   cl::Program program(Context, Source);
