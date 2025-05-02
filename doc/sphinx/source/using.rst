@@ -413,7 +413,7 @@ pocl.
  When set to 1, prints out remarks produced by the loop vectorizer of LLVM
  during kernel compilation.
 
-- **POCL_FORCE_VECTOR_WIDTH**
+- **POCL_VECTORIZER_FORCE_VECTOR_WIDTH**
 
  Forces the LLVM loop vectorizer to use the specified vector width (expressed
  as a number of **loop iterations**), overriding the default value determined
@@ -423,7 +423,7 @@ pocl.
  If the requested vector width is higher than the machine's native vector
  width, the vectorizer will also unroll the loop.
 
-- **POCL_PREFER_VECTOR_WIDTH**
+- **POCL_VECTORIZER_PREFER_VECTOR_WIDTH**
 
  Override the preferred vector width (expressed as a number of **bits**) for
  x86 targets.
@@ -433,8 +433,10 @@ pocl.
  vector instructions on some targets to avoid frequency penalties.
 
 .. note::
-   POCL_FORCE_VECTOR_WIDTH and POCL_PREFER_VECTOR_WIDTH can be used together.
-   For example, setting POCL_FORCE_VECTOR_WIDTH=16 POCL_PREFER_VECTOR_WIDTH=512
+   POCL_VECTORIZER_FORCE_VECTOR_WIDTH and POCL_VECTORIZER_PREFER_VECTOR_WIDTH
+   can be used together. For example, setting
+   POCL_VECTORIZER_FORCE_VECTOR_WIDTH=16
+   POCL_VECTORIZER_PREFER_VECTOR_WIDTH=512
    will force the LLVM loop vectorizer to use a vector width of 16 and
    generate 512-bit vector instructions.
 

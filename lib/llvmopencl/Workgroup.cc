@@ -545,7 +545,8 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
 
     // Override the preferred vector width on x86 targets.
     // By default, clang uses 256-bit even if a processor supports 512-bit SIMD.
-    if (int VecWidth = pocl_get_int_option("POCL_PREFER_VECTOR_WIDTH", 0)) {
+    if (int VecWidth =
+            pocl_get_int_option("POCL_VECTORIZER_PREFER_VECTOR_WIDTH", 0)) {
       F.addFnAttr("prefer-vector-width", std::to_string(VecWidth));
     }
   }
