@@ -128,9 +128,9 @@ CPU kernel compiler improvements
   after accidentally disabling it when upgrading to the latest LLVM
   version.
 
-* New env variables POCL_FORCE_VECTOR_WIDTH and POCL_PREFER_VECTOR_WIDTH
-  enable more control over the vector width chosen by LLVM when using
-  'loopvec' WG vectorization.
+* New env variables POCL_VECTORIZER_FORCE_VECTOR_WIDTH and
+  POCL_VECTORIZER_PREFER_VECTOR_WIDTH enable more control over the vector width
+  chosen by LLVM when using 'loopvec' WG vectorization.
 
 * Inlining of builtin functions has been improved to inline more
   aggressively. This should result in much better performance
