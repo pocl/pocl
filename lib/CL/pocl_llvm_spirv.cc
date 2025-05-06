@@ -104,6 +104,17 @@ static void handleInOutPathArgs(bool &keepPath, char *Path, char *HiddenPath,
 extern "C" int pocl_reload_program_bc(char *program_bc_path, cl_program program,
                                       cl_uint device_i);
 
+int pocl_preprocess_spirv_input(cl_program program) {
+  int32_t *In = reinterpret_cast<int32_t *>(program->program_il);
+  size_t NumW = program->program_il_size / sizeof(int32_t);
+  if (SPIRVParser::applyAtomicCmpXchgWorkaroundInPlace(In, &NumW)) {
+    program->program_il_size = NumW * sizeof(int32_t);
+    return CL_SUCCESS;
+  } else {
+    return CL_INVALID_PROGRAM_EXECUTABLE;
+  }
+}
+
 static bool getMaxSpirvVersion(pocl_version_t &MaxVersion,
                                size_t num_ils_with_version,
                                const cl_name_version *ils_with_version) {
