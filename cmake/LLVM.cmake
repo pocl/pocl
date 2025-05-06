@@ -409,6 +409,7 @@ if(LLVM_SPIRV_INCLUDEDIR AND LLVM_SPIRV_LIB)
   set(LLVMSPIRVLIB_MAXVER_FILE "${CMAKE_SOURCE_DIR}/cmake/MaxSPIRVversion.cc")
   try_run(RUN_RESULT COMPILE_RESULT
           "${CMAKE_BINARY_DIR}" "${LLVMSPIRVLIB_MAXVER_FILE}"
+          COMPILE_DEFINITIONS ${LLVM_CXXFLAGS}
           CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_SPIRV_INCLUDEDIR};${LLVM_INCLUDE_DIRS}"
           LINK_LIBRARIES "${LLVM_SPIRV_LIB}" "${LLVM_LDFLAGS}" "${LLVM_LIBS}" "${LLVM_SYSLIBS}"
           ${LINK_OPTS}
@@ -604,8 +605,10 @@ if(NOT DEFINED CLANG_NEEDS_RTLIB)
   set(RT64 OFF)
   set(NEEDS_RTLIB_FLAG OFF)
 
+  if(WIN32)
+    set(CLANG_NEEDS_RTLIB OFF CACHE INTERNAL "rtlib flags for Clang disabled on Windows")
   # on 32bit systems, we need 64bit emulation
-  if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+  elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
     set(INC "#include <stdint.h>\n#include <stddef.h>")
     set(SRC "int64_t a = argc; int64_t b = argc-1; int64_t c = a / b; return (int)c; ")
     custom_try_link_clang("${INC}" "${SRC}" RES)

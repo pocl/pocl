@@ -1179,6 +1179,11 @@ if(UNIX)
   set(LIBMATH "-lm")
 elseif(WIN32)
   set(DEFAULT_HOST_LD_FLAGS "--shared")
+  # disable a warning that generates a lot of noise
+  # enable unwind semantics
+  if(MSVC)
+    add_compile_options("/wd4624" "/EHsc")
+  endif()
   set(LIBMATH)
 endif()
 
@@ -2114,6 +2119,18 @@ if (ENABLE_LEVEL0)
     find_path(LEVEL0_INCLUDE_DIRS NAMES ze_api.h PATH_SUFFIXES level_zero)
     if (LEVEL0_LIBRARIES AND LEVEL0_INCLUDE_DIRS)
       set(LEVEL0_FOUND ON CACHE INTERNAL "Level0 found")
+      add_library(PkgConfig::LEVEL0 SHARED IMPORTED)
+      if(WIN32)
+        set_property(TARGET PkgConfig::LEVEL0 PROPERTY
+            IMPORTED_IMPLIB "${LEVEL0_LIBRARIES}")
+      else()
+        set_property(TARGET PkgConfig::LEVEL0 PROPERTY
+            IMPORTED_LOCATION "${LEVEL0_LIBRARIES}")
+      endif()
+      set_target_properties(PkgConfig::LEVEL0
+            PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
+            "${LEVEL0_INCLUDE_DIRS}"
+      )
     endif()
   endif()
 
