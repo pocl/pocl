@@ -193,16 +193,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
       if (memobj->has_device_address)
         {
           POCL_LOCK_OBJ (context);
-          pocl_raw_ptr *tmp = NULL, *item = NULL;
-          DL_FOREACH_SAFE (context->raw_ptrs, item, tmp)
-          {
-            if (item->shadow_cl_mem == memobj)
-              {
-                DL_DELETE (context->raw_ptrs, item);
-                free (item);
-                break;
-              }
-          }
+          pocl_raw_ptr_set_erase_all_by_shadow_mem (context->raw_ptrs, memobj);
           POCL_UNLOCK_OBJ (context);
         }
 
