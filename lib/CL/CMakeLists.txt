@@ -396,6 +396,7 @@ install(TARGETS "${POCL_LIBRARY_NAME}"
         COMPONENT "lib"
 )
 
+
 if(ENABLE_IPO)
   if (ENABLE_LLVM)
     set_property(TARGET "lib_cl_llvm" PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
