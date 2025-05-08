@@ -1066,34 +1066,20 @@ pocl_raw_ptr *
 pocl_find_raw_ptr_with_vm_ptr (cl_context context, const void *host_ptr)
 {
   POCL_LOCK_OBJ (context);
-  pocl_raw_ptr *item = NULL;
-  DL_FOREACH (context->raw_ptrs, item)
-    {
-      if (item->vm_ptr == NULL)
-        continue;
-      if (item->vm_ptr <= host_ptr
-          && (char *)item->vm_ptr + item->size > (const char *)host_ptr)
-        {
-          break;
-        }
-    }
+  pocl_raw_ptr *item
+    = pocl_raw_ptr_set_lookup_with_vm_ptr (context->raw_ptrs, host_ptr);
   POCL_UNLOCK_OBJ (context);
   return item;
 }
 
 pocl_raw_ptr *
-pocl_find_raw_ptr_with_dev_ptr (cl_context context, const void *dev_ptr)
+pocl_find_raw_ptr_with_dev_ptr (cl_context context,
+                                cl_device_id dev,
+                                const void *dev_ptr)
 {
   POCL_LOCK_OBJ (context);
-  pocl_raw_ptr *item = NULL;
-  DL_FOREACH (context->raw_ptrs, item)
-    {
-      if (item->dev_ptr == NULL)
-        continue;
-      if (item->dev_ptr <= dev_ptr
-          && (char *)item->dev_ptr + item->size > (const char *)dev_ptr)
-        break;
-    }
+  pocl_raw_ptr *item
+    = pocl_raw_ptr_set_lookup_with_dev_ptr (context->raw_ptrs, dev, dev_ptr);
   POCL_UNLOCK_OBJ (context);
   return item;
 }

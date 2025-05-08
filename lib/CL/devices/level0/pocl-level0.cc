@@ -1976,7 +1976,7 @@ cl_int pocl_level0_set_kernel_exec_info_ext(
 
       if (param_name == CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT) {
         pocl_raw_ptr *DevPtr =
-            pocl_find_raw_ptr_with_dev_ptr(Kernel->context, Elems[i]);
+            pocl_find_raw_ptr_with_dev_ptr(Kernel->context, Dev, Elems[i]);
         POCL_RETURN_ERROR_ON((DevPtr == nullptr), CL_INVALID_VALUE,
                              "Invalid pointer given to the call\n");
         AllocationSize = DevPtr->size;
