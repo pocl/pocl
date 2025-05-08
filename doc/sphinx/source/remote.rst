@@ -91,9 +91,8 @@ Current Status
 The current version has been tested with various programs, such as:
 
   * the builtin tests of pocl
-  * AMD's Baikal ray-tracing application
-  * Luxmark
-  * FluidX3D
+  * `FluidX3D <https://github.com/ProjectPhysX/FluidX3D/>`
+  * `Assorted research demos <https://www.youtube.com/playlist?list=PLS9btrvnAmoKR7D_O6S6zetc7np0wYDAK>`
 
 The image support in particular is quite new and very lightly tested.
 The same applies for multi-device setup.
@@ -181,7 +180,8 @@ run the server command::
 Run ``pocld --help`` to list all options.
 Note that pocld will listen on three ports, ``PORT``, ``PORT+1`` and ``PORT+2``.
 You can tune the amount of messages produced with the environment variable
-"POCLD_LOGLEVEL" before running pocld. The default log level is "err".
+"POCLD_LOGLEVEL" before running pocld or the ``--log_filter`` command line option.
+The default log level is "err".
 Accepted values are: debug, info, warn, err, critical, off.
 
 On the client, export these environment variables (the first one must be done
@@ -218,6 +218,11 @@ Then you can run the simple dot product in example1::
   (2.000000, 2.000000, 2.000000, 2.000000) . (2.000000, 2.000000, 2.000000, 2.000000) = 16.000000
   (3.000000, 3.000000, 3.000000, 3.000000) . (3.000000, 3.000000, 3.000000, 3.000000) = 36.000000
   OK
+
+By default pocld will destroy client contexts when the client connection is lost to avoid
+accumulating stale resources, as there is currently no way for clients to signal a controlled
+shutdown. Setting ``POCLD_ALLOW_CLIENT_RECONNECT=1`` in pocld's environment disables this behavior
+and allows clients to reconnect to their existing session.
 
 Android Build (Client Only)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
