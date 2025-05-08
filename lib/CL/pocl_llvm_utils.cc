@@ -205,7 +205,7 @@ const struct kernellib_features {
 } kernellib_feature_map[] = {
 // order the entries s.t. if a cpu matches multiple entries, the "best" match
 // comes last
-#if defined(__i386__)
+#if defined(__i386__) || defined(_M_IX86)
     "i386",
     "i386",
     {NULL},
@@ -220,7 +220,8 @@ const struct kernellib_features {
     "pentium3",
     {"sse", NULL},
 #endif
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(_M_IX86) || \
+    defined(__x86_64__) || defined(_M_X64)
     "sse2",
     "x86-64",
     {"sse2", NULL},
@@ -255,7 +256,8 @@ const struct kernellib_features {
 const char *pocl_get_distro_kernellib_variant() {
   StringMap<bool> Features;
 
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(_M_IX86) || \
+    defined(__x86_64__) || defined(_M_X64)
 
 #if LLVM_MAJOR < 19
   if (!llvm::sys::getHostCPUFeatures(Features)) {
@@ -299,7 +301,9 @@ const char *pocl_get_distro_kernellib_variant() {
 const char *pocl_get_distro_cpu_name(const char *kernellib_variant) {
   StringMap<bool> Features;
 
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(_M_IX86) || \
+    defined(__x86_64__) || defined(_M_X64)
+
 #if LLVM_MAJOR < 19
   if (!llvm::sys::getHostCPUFeatures(Features)) {
     POCL_MSG_WARN("LLVM can't get host CPU flags!\n");
