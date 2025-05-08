@@ -1090,8 +1090,8 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
       BuiltinLibModule =
           parseModuleIR(BuiltinLibraryFallback.c_str(), llvmContext);
     } else
-      POCL_MSG_ERR("Kernel library file %s doesn't exist.\n",
-                   BuiltinLibrary.c_str());
+      POCL_MSG_ERR("Can't find either kernel library file %s or fallback %s.\n",
+                   BuiltinLibrary.c_str(), BuiltinLibraryFallback.c_str());
   }
   if (BuiltinLibModule)
     kernelLibraryMap->insert(std::make_pair(device, BuiltinLibModule));

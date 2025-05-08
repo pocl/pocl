@@ -372,7 +372,6 @@ if(LLVM_SPIRV AND (NOT LLVM_SPIRV_VAL_OPT))
   endif()
 endif()
 
-
 if(LLVM_SPIRV)
   message(STATUS "Using llvm-spirv: ${LLVM_SPIRV}")
 else()
