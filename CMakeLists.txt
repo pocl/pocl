@@ -2468,11 +2468,10 @@ if(ENABLE_ICD)
   if (NOT WIN32)
     install(FILES "${CMAKE_BINARY_DIR}/pocl.icd"
             DESTINATION "${POCL_INSTALL_ICD_VENDORDIR}" COMPONENT "icd")
+    # write icd file for pocl testing
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/ocl-vendors")
+    file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd" CONTENT "$<TARGET_FILE:pocl>" CONDITION 1)
   endif()
-
-  # write icd file for pocl testing
-  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/ocl-vendors")
-  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd" CONTENT "$<TARGET_FILE:pocl>" CONDITION 1)
 
   cpack_add_component("icd")
   set("CPACK_DEBIAN_ICD_PACKAGE_NAME" "pocl-opencl-icd")
