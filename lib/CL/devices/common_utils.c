@@ -41,15 +41,16 @@
 #include "topology/pocl_topology.h"
 #include "utlist.h"
 
-/* required for setting SSE/AVX flush denorms to zero flag */
-#if defined(__x86_64__) && defined(__GNUC__)
-#include <x86intrin.h>
+#if defined(__i386__) || defined(_M_IX86) || \
+    defined(__x86_64__) || defined(_M_X64)
+#define POCL_ON_X86
+#include <immintrin.h>
 #endif
 
 void
 pocl_restore_ftz (unsigned ftz)
 {
-#if defined(__x86_64__) && defined(__GNUC__)
+#if defined(POCL_ON_X86)
 
 #ifdef _MM_FLUSH_ZERO_ON
   if (ftz & _MM_FLUSH_ZERO_ON)
@@ -70,7 +71,7 @@ pocl_restore_ftz (unsigned ftz)
 unsigned
 pocl_save_ftz ()
 {
-#if defined(__x86_64__) && defined(__GNUC__)
+#if defined(POCL_ON_X86)
 
   unsigned s = 0;
 #ifdef _MM_FLUSH_ZERO_ON
@@ -95,7 +96,7 @@ pocl_save_ftz ()
 void
 pocl_set_ftz (unsigned ftz)
 {
-#if defined(__x86_64__) && defined(__GNUC__)
+#if defined(POCL_ON_X86)
   if (ftz)
     {
 #ifdef _MM_FLUSH_ZERO_ON
@@ -122,7 +123,7 @@ pocl_set_ftz (unsigned ftz)
 void
 pocl_set_default_rm ()
 {
-#if defined(__x86_64__) && defined(__GNUC__) && defined(_MM_ROUND_NEAREST)
+#if defined(POCL_ON_X86) && defined(_MM_ROUND_NEAREST)
   unsigned rm = _MM_GET_ROUNDING_MODE ();
   if (rm != _MM_ROUND_NEAREST)
     _MM_SET_ROUNDING_MODE (_MM_ROUND_NEAREST);
@@ -132,7 +133,7 @@ pocl_set_default_rm ()
 unsigned
 pocl_save_rm ()
 {
-#if defined(__x86_64__) && defined(__GNUC__) && defined(_MM_ROUND_NEAREST)
+#if defined(POCL_ON_X86) && defined(_MM_ROUND_NEAREST)
   return _MM_GET_ROUNDING_MODE ();
 #else
   return 0;
@@ -142,7 +143,7 @@ pocl_save_rm ()
 void
 pocl_restore_rm (unsigned rm)
 {
-#if defined(__x86_64__) && defined(__GNUC__) && defined(_MM_ROUND_NEAREST)
+#if defined(POCL_ON_X86) && defined(_MM_ROUND_NEAREST)
   _MM_SET_ROUNDING_MODE (rm);
 #endif
 }
