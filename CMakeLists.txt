@@ -1237,14 +1237,16 @@ else()
   set(ENABLE_SPIRV OFF CACHE INTERNAL "SPIR-V enabled" FORCE)
 endif()
 
-if(ENABLE_HOST_CPU_DEVICES AND ENABLE_SPIRV)
-  if(HOST_DEVICE_ADDRESS_BITS MATCHES "32")
-    set(HOST_CPU_ENABLE_SPIRV OFF)
-  else()
-    set(HOST_CPU_ENABLE_SPIRV ON)
-  endif()
+if(ENABLE_SPIRV)
   # required for the wrapper generator
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
+endif()
+
+# we don't have a useful SPIRV wrapper for 32bit SPIRV
+# SPIR-V on windows is broken ATM because of mangling
+set(HOST_CPU_ENABLE_SPIRV OFF)
+if(ENABLE_HOST_CPU_DEVICES AND ENABLE_SPIRV AND (NOT WIN32) AND (HOST_DEVICE_ADDRESS_BITS MATCHES "64"))
+  set(HOST_CPU_ENABLE_SPIRV ON)
 endif()
 
 ######################################################################################
