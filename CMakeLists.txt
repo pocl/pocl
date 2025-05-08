@@ -598,20 +598,45 @@ endif()
 
 find_package(PkgConfig MODULE)
 
+function(findImpLibAndDLL PACKAGE IMP_NAME DLL_NAME INCLUDE_FILE)
+  find_library(TGT_LIB_IMPLIB "${IMP_NAME}")
+  get_filename_component(TGT_LIB_LIBDIR ".." REALPATH BASE_DIR "${TGT_LIB_IMPLIB}")
+  get_filename_component(TGT_LIB_BINDIR "../../bin" REALPATH BASE_DIR "${TGT_LIB_IMPLIB}")
+  # find_library refuses to find .dll files
+  find_path(TGT_LIB_DLL_PATH
+    NAMES "${DLL_NAME}"
+    HINTS
+        "${TGT_LIB_LIBDIR}"
+        "${TGT_LIB_BINDIR}"
+    PATHS
+      ENV PATH
+    )
+  if(TGT_LIB_DLL_PATH)
+    set(TGT_LIB_DLL "${TGT_LIB_DLL_PATH}/${DLL_NAME}")
+  endif()
+  find_path(TGT_INCLUDE_DIRS "${INCLUDE_FILE}")
+  if (TGT_LIB_IMPLIB AND TGT_LIB_DLL AND TGT_INCLUDE_DIRS)
+    message(STATUS "${PACKAGE} found: Imp ${TGT_LIB_IMPLIB} DLL ${TGT_LIB_DLL} INCLUDE ${TGT_INCLUDE_DIRS}")
+	add_library(PkgConfig::${PACKAGE} SHARED IMPORTED)
+    set_target_properties(PkgConfig::${PACKAGE}
+                PROPERTIES
+                IMPORTED_IMPLIB "${TGT_LIB_IMPLIB}"
+				IMPORTED_LOCATION "${TGT_LIB_DLL}"
+                INTERFACE_INCLUDE_DIRECTORIES "${TGT_INCLUDE_DIRS}")
+  else()
+    message(STATUS "Library ${PACKAGE} not found")
+  endif()
+endfunction()
+
 if(PKG_CONFIG_FOUND)
   pkg_check_modules(HWLOC IMPORTED_TARGET hwloc>=1.0)
 endif()
 
 if(WIN32 AND NOT HWLOC_FOUND)
-  find_library(HWLOC_DLL "hwloc")
-  find_library(HWLOC_LIB "libhwloc.lib")
-  find_path(HWLOC_INCLUDE_DIRS "hwloc.h")
-  if (HWLOC_LIB AND HWLOC_DLL AND HWLOC_INCLUDE_DIRS)
-    set(HWLOC_FOUND 1)
-  endif()
+  findImpLibAndDLL(HWLOC "hwloc" "libhwloc-15.dll" "hwloc.h")
 endif()
 
-if(HWLOC_FOUND)
+if(TARGET PkgConfig::HWLOC)
   set(DEFAULT_ENABLE_HWLOC ON CACHE INTERNAL "default hwloc")
 else()
   set(DEFAULT_ENABLE_HWLOC OFF CACHE INTERNAL "default hwloc")
@@ -2644,6 +2669,17 @@ DeleteRegValue HKLM 'SOFTWARE\\\\Khronos\\\\OpenCL\\\\Vendors' '${WINREG_ICD_POC
 setRegView default
 ")
   message(STATUS "XXX CPACK_NSIS_EXTRA_INSTALL_COMMANDS=${CPACK_NSIS_EXTRA_INSTALL_COMMANDS}")
+endif()
+
+# install() library dependencies (libhwloc) as part of installation.
+# this not only installs them to POCL_INSTALL_PUBLIC_LIBDIR_REL but also
+# packages them with CPack
+# TODO : doesn't work with pkg-config because it doesn't set
+# IMPORTED_LOCATION property on the created targets
+if(WIN32 AND TARGET PkgConfig::HWLOC AND NOT PKG_CONFIG_FOUND)
+  install(IMPORTED_RUNTIME_ARTIFACTS PkgConfig::HWLOC
+        RUNTIME DESTINATION ${POCL_INSTALL_PUBLIC_LIBDIR_REL}
+        COMPONENT "lib")
 endif()
 
 include(CPack)
