@@ -2395,18 +2395,11 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
             {
               void *ptr = cmd->svm_free.svm_pointers[i];
               POCL_LOCK_OBJ (event->context);
-              pocl_raw_ptr *tmp = NULL, *item = NULL;
-              DL_FOREACH_SAFE (event->context->raw_ptrs, item, tmp)
-              {
-                if (item->vm_ptr == ptr)
-                  {
-                    DL_DELETE (event->context->raw_ptrs, item);
-                    break;
-                  }
-              }
-              POCL_UNLOCK_OBJ (event->context);
+              pocl_raw_ptr *item = pocl_raw_ptr_set_lookup_with_vm_ptr (
+                event->context->raw_ptrs, ptr);
               assert (item);
-              POCL_MEM_FREE (item);
+              pocl_raw_ptr_set_erase (event->context->raw_ptrs, item);
+              POCL_UNLOCK_OBJ (event->context);
               // Leads to 'undefined symbol: POclReleaseContext'
               // POname (clReleaseContext) (event->context);
 
