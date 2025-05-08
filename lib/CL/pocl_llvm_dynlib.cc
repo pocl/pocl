@@ -70,7 +70,7 @@ const char *pocl_dynlib_pathname(void *Address) {
                              GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
                          (LPCWSTR)&Address, &Hm) == 0) {
     int Ret = GetLastError();
-    POCL_MSG_ERR("GetModuleHandleEx failed, error = %d\n", Ret);
+    POCL_MSG_WARN("GetModuleHandleEx failed, error = %d ; trying fallback\n", Ret);
 
     // undocumented hack from https://stackoverflow.com/a/2396380
     MEMORY_BASIC_INFORMATION mbi;
@@ -91,6 +91,7 @@ const char *pocl_dynlib_pathname(void *Address) {
 
   static char path[MAX_PATH];
   WideCharToMultiByte(CP_UTF8, 0, wpath, -1, path, ARRAYSIZE(path), NULL, NULL);
+  POCL_MSG_PRINT_INFO("pocl_dynlib_symbol_adress: using DLL path: %s \n", path);
   return path;
 #else
   POCL_MSG_ERR("pocl_dynlib_pathname does not have C++/LLVM implementation\n");
