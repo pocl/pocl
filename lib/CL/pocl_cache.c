@@ -563,12 +563,12 @@ pocl_cache_init_topdir ()
       return CL_FAILED;
 
 #elif defined(_WIN32)
-      tmp_path = getenv ("TEMP");
+      tmp_path = pocl_get_string_option ("LOCALAPPDATA", NULL);
       if (!tmp_path) {
-	tmp_path = getenv("LOCALAPPDATA");
+          tmp_path = pocl_get_string_option ("TEMP", NULL);
       }
       if (tmp_path == NULL)
-	return CL_FAILED;
+        return CL_FAILED;
       needed = snprintf (cache_topdir, POCL_MAX_PATHNAME_LENGTH, "%s\\pocl",
                          tmp_path);
 #else
