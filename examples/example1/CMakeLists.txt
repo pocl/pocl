@@ -51,13 +51,17 @@ set_tests_properties( "examples/example1_dot_product" ${SPIREX}
     COST 3.0
     ${PROPS}
     PROCESSORS 1
-    # devices which support SPIR
-    LABELS "cpu;cuda;level0"
+    # devices which always support SPIR
+    LABELS "cuda;level0"
     DEPENDS "pocl_version_check")
 
 # devices which don't support SPIR
 set_property(TEST "examples/example1_dot_product"
-  APPEND PROPERTY LABELS "hsa;hsa-native;vulkan")
+  APPEND PROPERTY LABELS "cpu;hsa;hsa-native;vulkan")
+
+if(SPIREX AND HOST_CPU_ENABLE_SPIRV)
+  set_property(TEST ${SPIREX} APPEND PROPERTY LABELS "cpu")
+endif()
 
 if (ENABLE_TCE)
   set_property(TEST "examples/example1_dot_product"
