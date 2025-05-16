@@ -2628,17 +2628,17 @@ bool Level0Device::setupQueueGroupProperties() {
                        ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) != 0);
     bool IsCopy = ((QGroupProps[i].flags &
                     ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY) != 0);
-    if (IsCompute && IsCopy) {
+    if (IsCompute && IsCopy && UniversalQueueOrd == UINT32_MAX) {
       UniversalQueueOrd = i;
       NumUniversalQueues = QGroupProps[i].numQueues;
     }
 
-    if (IsCompute && !IsCopy) {
+    if (IsCompute && !IsCopy && ComputeQueueOrd == UINT32_MAX) {
       ComputeQueueOrd = i;
       NumComputeQueues = QGroupProps[i].numQueues;
     }
 
-    if (!IsCompute && IsCopy) {
+    if (!IsCompute && IsCopy && CopyQueueOrd == UINT32_MAX) {
       CopyQueueOrd = i;
       NumCopyQueues = QGroupProps[i].numQueues;
     }
