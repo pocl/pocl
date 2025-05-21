@@ -413,7 +413,7 @@ int pocl_llvm_build_program(cl_program program,
   size_t fastmath_flag = user_options.find("-cl-fast-relaxed-math");
 
   if (fastmath_flag != std::string::npos) {
-#ifdef ENABLE_CONFORMANCE
+#if defined(ENABLE_CONFORMANCE) && LLVM_VERSION_MAJOR < 18
     user_options.replace(fastmath_flag, 21,
                          "-cl-finite-math-only -cl-unsafe-math-optimizations");
 #endif
@@ -424,8 +424,9 @@ int pocl_llvm_build_program(cl_program program,
   size_t unsafemath_flag = user_options.find("-cl-unsafe-math-optimizations");
 
   if (unsafemath_flag != std::string::npos) {
-#ifdef ENABLE_CONFORMANCE
-    // this should be almost the same but disables -freciprocal-math.
+#if defined(ENABLE_CONFORMANCE) && LLVM_VERSION_MAJOR < 18
+    // This should be almost the same but disables -freciprocal-math, that
+    // was not accurate enough in before LLVM v18. Disabling it is
     // required for conformance_math_divide test to pass with OpenCL 3.0
     user_options.replace(unsafemath_flag, 29,
                          "-cl-no-signed-zeros -cl-mad-enable -ffp-contract=fast");
