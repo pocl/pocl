@@ -96,6 +96,8 @@ jobs:
       - name: Run Tests
         env:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+          CL_PLATFORM_NAME: "Portable"
+          CL_DEVICE_TYPE: "gpu"
         id: ctest
         timeout-minutes: 120
         run: |
