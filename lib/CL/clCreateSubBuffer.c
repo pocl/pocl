@@ -110,7 +110,7 @@ POname (clCreateSubBuffer) (cl_mem parent,
   mem = (cl_mem) calloc (1, sizeof (struct _cl_mem));
   POCL_GOTO_ERROR_COND ((mem == NULL), CL_OUT_OF_HOST_MEMORY);
 
-  POCL_INIT_OBJECT (mem);
+  POCL_INIT_OBJECT (mem, parent);
 
   mem->device_ptrs = (pocl_mem_identifier *)calloc (
     POCL_ATOMIC_LOAD (pocl_num_devices), sizeof (pocl_mem_identifier));
