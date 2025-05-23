@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef __WIN32__
+#ifdef _WIN32
 
 #include <windows.h>
 
@@ -40,29 +40,31 @@ static const char *
 getenv_helper (const char *key)
 {
   // Convert key to wide char
-  size_t len = strlen (key) + 1;
-  wchar_t *wkey = (wchar_t *)malloc (len * sizeof (wchar_t));
-  if (!wkey)
-    {
-      return NULL;
-    }
-  mbstowcs (wkey, key, len);
+  int wkey_len = MultiByteToWideChar (CP_ACP, 0, key, -1, NULL, 0);
+  if (wkey_len <= 0)
+    return NULL;
 
-  unsigned long size = GetEnvironmentVariableW (wkey, NULL, 0);
-  if (size == 0)
+  wchar_t *wkey = (wchar_t *)malloc (wkey_len * sizeof (wchar_t));
+  if (!wkey)
+    return NULL;
+
+  MultiByteToWideChar (CP_ACP, 0, key, -1, wkey, wkey_len);
+
+  DWORD wval_len = GetEnvironmentVariableW (wkey, NULL, 0);
+  if (wval_len == 0)
     {
       free (wkey);
       return NULL;
     }
 
-  wchar_t *wval = (wchar_t *)malloc (size * sizeof (wchar_t));
+  wchar_t *wval = (wchar_t *)malloc (wval_len * sizeof (wchar_t));
   if (!wval)
     {
       free (wkey);
       return NULL;
     }
 
-  if (GetEnvironmentVariableW (wkey, wval, size) == 0)
+  if (GetEnvironmentVariableW (wkey, wval, wval_len) == 0)
     {
       free (wkey);
       free (wval);
@@ -71,15 +73,22 @@ getenv_helper (const char *key)
 
   free (wkey);
 
-  size_t needed = wcstombs (NULL, wval, 0) + 1;
-  char *result = (char *)malloc (needed);
+  int utf8_len
+    = WideCharToMultiByte (CP_UTF8, 0, wval, -1, NULL, 0, NULL, NULL);
+  if (utf8_len <= 0)
+    {
+      free (wval);
+      return NULL;
+    }
+
+  char *result = (char *)malloc (utf8_len);
   if (!result)
     {
       free (wval);
       return NULL;
     }
 
-  wcstombs (result, wval, needed);
+  WideCharToMultiByte (CP_UTF8, 0, wval, -1, result, utf8_len, NULL, NULL);
   free (wval);
   return result; // Still leaks to match getenv behavior
 }
