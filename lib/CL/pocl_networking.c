@@ -164,13 +164,14 @@ pocl_freeaddrinfo (struct addrinfo *ai)
 {
   if (ai)
     {
+#ifdef HAVE_LINUX_VSOCK_H
       if (ai->ai_family == AF_VSOCK)
         {
           free (ai->ai_canonname);
           free (ai);
           return;
         }
-
+#endif
       freeaddrinfo (ai);
     }
 }

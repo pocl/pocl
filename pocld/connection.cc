@@ -47,9 +47,11 @@ void Connection::configure(bool LowLatency) {
     // function only actually checks whether ai_family is AF_VSOCK
     pocl_remote_client_set_socket_options(Fd, BufSize, LowLatency, AF_UNSPEC);
     break;
+#ifdef HAVE_LINUX_VSOCK_H
   case TransportDomain_Vsock:
     pocl_remote_client_set_socket_options(Fd, BufSize, LowLatency, AF_VSOCK);
     break;
+#endif
   default:
     break;
   }
