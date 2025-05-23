@@ -699,7 +699,7 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
     if (MaxMemAllocSize < MaxSVMAllocSize)
       MaxSVMAllocSize = MaxMemAllocSize;
 
-    MaxTotalAllocatableSVM = std::min(MaxTotalAllocatableSVM,
+    MaxTotalAllocatableSVM = std::min(MaxTotalAllocatableSVM, (size_t)
                                       Dev.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>());
   }
 

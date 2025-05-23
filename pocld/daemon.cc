@@ -575,18 +575,25 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports,
   addrinfo *ai = ResolvedAddress;
   NumListenFds = 0;
   for (addrinfo *ai = ResolvedAddress; ai; ai = ai->ai_next) {
+#ifdef HAVE_LINUX_VSOCK_H
     if (ai->ai_family != AF_INET && ai->ai_family != AF_INET6 &&
         ai->ai_family != AF_VSOCK)
       continue;
+#else
+    if (ai->ai_family != AF_INET && ai->ai_family != AF_INET6)
+      continue;
+#endif
     struct sockaddr *base_addr = ai->ai_addr;
     int base_addrlen = ai->ai_addrlen;
     std::string addr_string = describe_sockaddr(base_addr, base_addrlen);
+#ifdef HAVE_LINUX_VSOCK_H
     if (UseVsock && ai->ai_family != AF_VSOCK) {
       POCL_MSG_ERR("Using vsock requires using the correct address "
                    "vsock:<cid>, instead of %s\n",
                    addr_string.c_str());
       break;
     }
+#endif
     int FdCommand = -1;
     int FdStream = -1;
     transport_domain_t Domain =
