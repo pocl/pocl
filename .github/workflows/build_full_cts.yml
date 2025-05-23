@@ -53,6 +53,16 @@ jobs:
           -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_${{ matrix.llvm }}_${{ matrix.config }} -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON \
           -B ${{ github.workspace }}/build ${{ github.workspace }}
 
+      - name: Copy SPIRV
+        id: copy_spirv
+        if: ${{ matrix.config == 'full_cts_cpu_spirv' }}
+        timeout-minutes: 6
+          if [ -e "${{ github.workspace }}/../../../CTS_FULL_CACHE_LLVM_${{ matrix.llvm }}" ]; then \
+            rmdir ${{ github.workspace }}/build/CTS_FULL_CACHE ; \
+            cp -r --reflink=always "${{ github.workspace }}/../../../CTS_FULL_CACHE_LLVM_${{ matrix.llvm }}" ${{ github.workspace }}/build ; \
+            mv "${{ github.workspace }}/build/CTS_FULL_CACHE_LLVM_${{ matrix.llvm }}" ${{ github.workspace }}/build/CTS_FULL_CACHE ; \
+          fi
+
       - name: Run Build
         id: build
         timeout-minutes: 60
