@@ -279,8 +279,14 @@ extern pocl_obj_id_t last_object_id;
 
 #  define POname(name) PO##name
 
+#if defined(RENAME_POCL) && !defined(BUILD_ICD)
+#define POdeclsym(name) POCL_EXPORT __typeof__ (name) PO##name;
+#define POdeclsymExport(name) POdeclsym(name)
+#else
 #define POdeclsym(name) __typeof__ (name) PO##name;
 #define POdeclsymExport(name) POCL_EXPORT POdeclsym(name)
+#endif
+
 #  define POCL_ALIAS_OPENCL_SYMBOL(name)                                \
   __typeof__(name) name __attribute__((alias ("PO" #name), visibility("default")));
 
