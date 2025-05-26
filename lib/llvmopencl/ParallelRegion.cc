@@ -207,15 +207,8 @@ ParallelRegion::chainAfter(ParallelRegion *region)
   BasicBlock *successor = t->getSuccessor(0);
   Function *F = successor->getParent();
 
-#if LLVM_MAJOR < 16
-  Function::BasicBlockListType &bb_list =
-    F->getBasicBlockList();
-  for (iterator i = begin(), e = end(); i != e; ++i)
-    bb_list.insertAfter(tail->getIterator(), *i);
-#else
   for (iterator i = begin(), e = end(); i != e; ++i)
     F->insert(tail->getIterator(), *i);
-#endif
 
   t->setSuccessor(0, entryBB());
 

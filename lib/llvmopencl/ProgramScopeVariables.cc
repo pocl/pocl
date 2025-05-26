@@ -146,12 +146,6 @@ static Value *expandConstant(Constant *C, IRBuilder<> &Builder,
             GVarPtrWithOffset,
             PointerType::get(GVarBufferTy, GVar->getAddressSpace()));
       }
-      // bitcast to final pointer type if needed
-#ifndef LLVM_OPAQUE_POINTERS
-      GVarPtrWithOffset =
-          Builder.CreateBitCast(GVarPtrWithOffset, GVar->getType());
-#endif
-
       Instruction *I = cast<Instruction>(GVarPtrWithOffset);
       InsnCache[GVar] = I;
       return I;
@@ -226,10 +220,6 @@ static void addGlobalVarInitInstr(GlobalVariable *OriginalGVarDef,
     GVarPtrWithOffset = Builder.CreateAddrSpaceCast(
         GVarPtrWithOffset,
         PointerType::get(GVarBufferTy, OrigGVarPTy->getAddressSpace()));
-// bitcast to final pointer type if needed
-#ifndef LLVM_OPAQUE_POINTERS
-  GVarPtrWithOffset = Builder.CreateBitCast(GVarPtrWithOffset, OrigGVarPTy);
-#endif
 
   // Initializers are constant expressions. If they have references to a global
   // variables we are going to replace with load instructions we need to rewrite
@@ -321,9 +311,6 @@ static Value *loadGVarFromBuffer(Instruction *GVarBuffer,
     if (GVarPTy->getAddressSpace() != DeviceGlobalAS)
       V = Builder.CreateAddrSpaceCast(
           V, PointerType::get(GVar->getType(), GVarPTy->getAddressSpace()));
-#ifndef LLVM_OPAQUE_POINTERS
-    V = Builder.CreateBitCast(V, GVar->getType());
-#endif
   } else {
     SmallVector<Value *, 2> Indices{ConstantInt::get(I64Ty, 0),
                                     ConstantInt::get(I64Ty, Offset)};
@@ -343,9 +330,6 @@ static Value *loadGVarFromBuffer(Instruction *GVarBuffer,
     if (GVarPTy->getAddressSpace() != DeviceGlobalAS)
       V = Builder.CreateAddrSpaceCast(
           V, PointerType::get(GVar->getType(), GVarPTy->getAddressSpace()));
-#ifndef LLVM_OPAQUE_POINTERS
-    V = Builder.CreateBitCast(V, GVar->getType());
-#endif
   }
 
 #ifdef POCL_DEBUG_PROGVARS
@@ -370,27 +354,12 @@ static void getInstUsers(ConstantExpr *CE,
 }
 
 static void breakConstantExprs(const GVarSetT &GVars) {
-#if LLVM_MAJOR < 17
-  for (GlobalVariable *GV : GVars) {
-    for (Value *U : GV->users()) {
-      ConstantExpr *CE = dyn_cast<ConstantExpr>(U);
-      if (!CE)
-        continue;
-      SmallVector<Instruction *, 4> IUsers;
-      getInstUsers(CE, IUsers);
-      for (Instruction *I : IUsers) {
-        convertConstantExprsToInstructions(I, CE);
-      }
-    }
-  }
-#else
   SmallVector<Constant *, 8> Cnst;
   for (GlobalVariable *GV : GVars) {
     Constant *CE = cast<Constant>(GV);
     Cnst.push_back(CE);
   }
   convertUsersOfConstantsToInstructions(Cnst);
-#endif
 }
 
 // replaces program scope variables with [GVarBuffer+Offset] combos.

@@ -340,11 +340,7 @@ callBufferedPrintfStart(IRBuilder<> &Builder, SmallVector<llvm::Value *> &Args,
         // byval arguments are passed as pointers/allocas.
         // get the actual size from the alloca
         // TBD: is this handling of allocas enough
-#if LLVM_MAJOR > 15
         auto SSize = AI->getAllocationSize(DL)->getFixedValue();
-#else
-        auto SSize = AI->getAllocationSizeInBits(DL)->getFixedValue() / 8;
-#endif
         AllocSize = TypeSize::get(SSize, false);
       }
 
@@ -372,11 +368,7 @@ callBufferedPrintfStart(IRBuilder<> &Builder, SmallVector<llvm::Value *> &Args,
 
   Type *Tys_alloc[1] = {Builder.getInt32Ty()};
   Type *PtrTy =
-#ifdef LLVM_OPAQUE_POINTERS
       Builder.getPtrTy(PrintfBufferAS);
-#else
-      Builder.getInt8PtrTy(PrintfBufferAS);
-#endif
   FunctionType *FTy_alloc = FunctionType::get(PtrTy, Tys_alloc, false);
 
   auto PrintfAllocFn =
@@ -467,11 +459,6 @@ static Value *processNonStringArg(Value *Arg, IRBuilder<> &Builder,
 
 static StoreInst *createAlignedStore(IRBuilder<> &Builder, Value *Val,
                                      Value *Ptr, bool DontAlign) {
-#ifndef LLVM_OPAQUE_POINTERS
-  PointerType *PtrTy = cast<PointerType>(Ptr->getType());
-  Ptr = Builder.CreateBitCast(
-      Ptr, PointerType::get(Val->getType(), PtrTy->getAddressSpace()));
-#endif
   if (DontAlign)
     return Builder.CreateAlignedStore(Val, Ptr, Align(1));
   else
@@ -529,11 +516,7 @@ callBufferedPrintfArgPush(IRBuilder<> &Builder,
         // byval arguments are passed as pointers/allocas. Creating a simple
         // store stores the pointer instead of the actual value; therefore we
         // need to use a memcpy. TBD: is this handling of allocas enough
-#if LLVM_MAJOR > 15
         auto SSize = AI->getAllocationSize(DL)->getFixedValue();
-#else
-        auto SSize = AI->getAllocationSizeInBits(DL)->getFixedValue() / 8;
-#endif
         AllocSize = TypeSize::get(SSize, false);
         Value *MemcpyLen = ConstantInt::get(Builder.getInt32Ty(), SSize);
         Builder.CreateMemCpy(PtrToStore, Align(1), AI, Align(1), MemcpyLen);
@@ -690,11 +673,7 @@ Value *pocl::emitPrintfCall(IRBuilder<> &Builder,
                              Attribute::NoUnwind);
 
       Type *PtrTy =
-#ifdef LLVM_OPAQUE_POINTERS
           Builder.getPtrTy(Flags.PrintfBufferAS);
-#else
-          Builder.getInt8PtrTy(Flags.PrintfBufferAS);
-#endif
 
       Type *Tys_alloc[2] = {PtrTy, Builder.getInt32Ty()};
       FunctionType *FTy_alloc =
