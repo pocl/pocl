@@ -69,6 +69,18 @@ jobs:
         run: |
           cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) prepare_examples
 
+      - name: Get CMake version
+        id: cmake_version
+        run: echo "version=$(cmake --version | head -n 1)" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Cache CTest timings
+        id: cache_ctest
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+        with:
+          path: ${{ github.workspace }}/build/Testing/Temporary/CTestCostData.txt
+          key: ctest-cache-${{ steps.cmake_version.outputs.version }}-${{ runner.name }}-${{ matrix.config }}
+
       - name: Run Tests
         id: ctest
         env:
@@ -138,6 +150,18 @@ jobs:
         timeout-minutes: 60
         run: |
           cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) prepare_examples
+
+      - name: Get CMake version
+        id: cmake_version
+        run: echo "version=$(cmake --version | head -n 1)" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Cache CTest timings
+        id: cache_ctest
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+        with:
+          path: ${{ github.workspace }}/build/Testing/Temporary/CTestCostData.txt
+          key: ctest-cache-${{ steps.cmake_version.outputs.version }}-${{ runner.name }}-${{ matrix.config }}
 
       - name: Run Tests
         env:
