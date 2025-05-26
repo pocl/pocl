@@ -27,18 +27,9 @@ include("bitcode_rules")
 
 set(KERNEL_SOURCES ${SOURCES_GENERIC})
 
-if(LLVM_VERSION VERSION_LESS 17.0)
-  set(EXTRA_ADD_LL_FILES
-    atomic_add.ll      atomic_and.ll      atomic_cmpxchg.ll      atomic_min.ll      atomic_max.ll      atomic_or.ll      atomic_sub.ll      atomic_xchg.ll       atomic_xor.ll
-    atomic_add_20.ll   atomic_and_20.ll   atomic_cmpxchg_20.ll   atomic_min_20.ll   atomic_max_20.ll   atomic_or_20.ll   atomic_sub_20.ll   atomic_xchg_20.ll    atomic_xor_20.ll
-    atomic_dec.ll      atomic_inc.ll)
-  set(EXTRA_REMOVE_CL_FILES atomics.cl)
-  set(EXTRA_ADD_CL_FILES svm_atomics.cl)
-else()
-  set(EXTRA_ADD_LL_FILES)
-  set(EXTRA_ADD_CL_FILES svm_atomics.cl svm_atomics_host.cl)
-  set(EXTRA_REMOVE_CL_FILES)
-endif()
+set(EXTRA_ADD_LL_FILES)
+set(EXTRA_ADD_CL_FILES svm_atomics.cl svm_atomics_host.cl)
+set(EXTRA_REMOVE_CL_FILES)
 
 foreach(FILE printf_base.c ${EXTRA_REMOVE_CL_FILES})
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
@@ -64,17 +55,12 @@ foreach(FILE
   list(APPEND KERNEL_SOURCES "cuda/${FILE}")
 endforeach()
 
-
 foreach(FILE ${EXTRA_ADD_LL_FILES} barrier.ll nvvm_functions.ll subgroup.ll)
 
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
 
-  if(LLVM_OPAQUE_POINTERS)
-    generate_opaque_ptr_ll("cuda/${FILE}" "cuda/opaque" OPAQ_PTR_FILE)
-    list(APPEND KERNEL_SOURCES "${OPAQ_PTR_FILE}")
-  else()
-    list(APPEND KERNEL_SOURCES "cuda/${FILE}")
-  endif()
+  generate_opaque_ptr_ll("cuda/${FILE}" "cuda/opaque" OPAQ_PTR_FILE)
+  list(APPEND KERNEL_SOURCES "${OPAQ_PTR_FILE}")
 
 endforeach()
 

@@ -43,9 +43,6 @@ else()
       "llvm-config-mp-19.0" "llvm-config-mp-19" "llvm-config-19" "llvm-config190"
       "llvm-config-mp-18.0" "llvm-config-mp-18" "llvm-config-18" "llvm-config180"
       "llvm-config-mp-17.0" "llvm-config-mp-17" "llvm-config-17" "llvm-config170"
-      "llvm-config-mp-16.0" "llvm-config-mp-16" "llvm-config-16" "llvm-config160"
-      "llvm-config-mp-15.0" "llvm-config-mp-15" "llvm-config-15" "llvm-config150"
-      "llvm-config-mp-14.0" "llvm-config-mp-14" "llvm-config-14" "llvm-config140"
       "llvm-config"
     DOC "llvm-config executable")
 endif()
@@ -103,8 +100,8 @@ string(REGEX REPLACE "([0-9]+)\\.([0-9]+).*" "\\1.\\2" LLVM_VERSION "${LLVM_VERS
 message(STATUS "LLVM_VERSION: ${LLVM_VERSION}")
 
 # required for sources..
-if((LLVM_VERSION_MAJOR LESS 14) OR (LLVM_VERSION_MAJOR GREATER 20))
-  message(FATAL_ERROR "LLVM version between 14.0 and 20.0 required, found: ${LLVM_VERSION_MAJOR}")
+if((LLVM_VERSION_MAJOR LESS 17) OR (LLVM_VERSION_MAJOR GREATER 20))
+  message(FATAL_ERROR "LLVM version between 17.0 and 20.0 required, found: ${LLVM_VERSION_MAJOR}")
 endif()
 
 string(REPLACE "." ";" LLVM_VERSION_PARSED "${LLVM_VERSION}")
@@ -133,12 +130,6 @@ replace_llvm_prefix_cmake(LLVM_INCLUDE_DIRS)
 run_llvm_config(LLVM_CMAKEDIR --cmakedir)
 replace_llvm_prefix_cmake(LLVM_CMAKEDIR)
 
-if(LLVM_VERSION_MAJOR LESS 16)
-  run_llvm_config(LLVM_SRC_ROOT --src-root)
-  run_llvm_config(LLVM_OBJ_ROOT --obj-root)
-endif()
-
-replace_llvm_prefix_cmake(LLVM_OBJ_ROOT)
 run_llvm_config(LLVM_ALL_TARGETS --targets-built)
 if (NOT DEFINED LLVM_HOST_TARGET)
   run_llvm_config(LLVM_HOST_TARGET --host-target)
@@ -259,10 +250,7 @@ if(STATIC_LLVM)
   set(CLANG_LIBNAMES clangCodeGen clangFrontendTool clangFrontend clangDriver clangSerialization
       clangParse clangSema clangRewrite clangRewriteFrontend
       clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
-      clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangASTMatchers clangLex clangBasic)
-  if(LLVM_VERSION_MAJOR GREATER 14)
-     list(APPEND CLANG_LIBNAMES clangSupport)
-  endif()
+      clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangASTMatchers clangLex clangSupport clangBasic)
   # must come after clangFrontend
   if(LLVM_VERSION_MAJOR GREATER 17)
      list(INSERT CLANG_LIBNAMES 4 clangAPINotes)

@@ -226,11 +226,7 @@ bool BarrierTailReplicationImpl::ReplicateJoinedSubgraphs(BasicBlock *Dominator,
     if (changed) {
       // We have modified the function. Possibly created new loops.
       // Update analysis passes.
-#if LLVM_VERSION_MAJOR < 11
-      DT.releaseMemory();
-#else
       DT.reset();
-#endif
       DT.recalculate(*f);
       LI.releaseMemory();
       LI.analyze(DT);
@@ -357,11 +353,7 @@ void BarrierTailReplicationImpl::ReplicateBasicBlocks(BasicBlockVector &NewGraph
          I2 != E2; ++I2) {
       Instruction *Inst = I2->clone();
       ReferenceMap.insert(std::make_pair(&*I2, Inst));
-#if LLVM_MAJOR < 16
-      NewBB->getInstList().push_back(Inst);
-#else
       Inst->insertInto(NewBB, NewBB->end());
-#endif
     }
 
     // Add predicates to PHINodes of basic blocks the replicated

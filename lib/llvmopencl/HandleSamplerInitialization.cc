@@ -70,16 +70,9 @@ static bool handleSamplerInitialization(Function &F) {
 
     // get the type of the return value of __translate_sampler
     // this may not always be opencl.sampler_t, it could be a remapped type.
-#if LLVM_MAJOR < 15
-    Type *type = C->getCalledOperand()->getType();
-    PointerType *pt = dyn_cast<PointerType>(type);
-    FunctionType *ft = dyn_cast<FunctionType>(pt->getPointerElementType());
-    Type *rettype = ft->getReturnType();
-#else
     Function *SF = C->getCalledFunction();
     assert(SF);
     Type *rettype = SF->getReturnType();
-#endif
 
     ConstantInt *SamplerValue = dyn_cast<ConstantInt>(C->arg_begin()->get());
 

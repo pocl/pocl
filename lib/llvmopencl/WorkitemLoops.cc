@@ -848,12 +848,7 @@ WorkitemLoopsImpl::addContextSave(llvm::Instruction *Def,
 
   return builder.CreateStore(
       Def,
-#if LLVM_MAJOR < 15
-      builder.CreateGEP(AllocaI->getType()->getPointerElementType(), AllocaI,
-                        gepArgs));
-#else
       builder.CreateGEP(AllocaI->getAllocatedType(), AllocaI, gepArgs));
-#endif
 }
 
 llvm::Instruction *WorkitemLoopsImpl::addContextRestore(

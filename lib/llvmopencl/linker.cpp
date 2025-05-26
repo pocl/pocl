@@ -74,55 +74,6 @@ using namespace llvm;
 
 namespace pocl {
 
-// this whole class is only necessary for LLVM 14 and LLVM 15 with
-// non-opaque-pointers; with opaque pointers it simply returns the same type
-//
-// The purpose is to remap "opencl.XYZ" opaque types when they're linked in from
-// the builtin library. Without the remapping, the CloneFunctionInto will create
-// a duplicate of the opaque type with the name "opencl.XYZ.number" but will not
-// correct all of the instructions, resulting in broken bitcode.
-// Note that this is mainly a problem with LLVM 14 and disabled optimization of
-// the bitcode library; optimization at build time can almost completely remove
-// the use of offending types, therefore the problem won't manifest.
-// Newer LLVM versions don't use opaque types for OpenCL images/events etc.
-class PoclTypeRemapper : public ValueMapTypeRemapper {
-public:
-  PoclTypeRemapper() {}
-  virtual ~PoclTypeRemapper() {}
-
-  virtual Type *remapType(Type *SrcTy) {
-#ifndef LLVM_OPAQUE_POINTERS
-    PointerType *PT = dyn_cast<PointerType>(SrcTy);
-    if (PT) {
-      auto PointedType = PT->getNonOpaquePointerElementType();
-      Type *RemappedPT = remapType(PointedType);
-      return PointerType::get(RemappedPT, PT->getAddressSpace());
-    }
-    if (!SrcTy->isStructTy())
-      return SrcTy;
-    StructType *ST = dyn_cast<StructType>(SrcTy);
-    if (!ST->isOpaque())
-      return SrcTy;
-    if (!ST->hasName())
-      return SrcTy;
-    StringRef Name = ST->getName();
-    // In theory, there could be >10 aliased names, but meh
-    bool EndsWithDotNum = Name.size() > 2 && Name[Name.size() - 2] == '.' &&
-                          isdigit(Name[Name.size() - 1]);
-    if (Name.starts_with("opencl.") && EndsWithDotNum) {
-      auto NameWithoutSuffix = Name.substr(0, Name.size() - 2);
-      StructType *RetVal =
-          StructType::getTypeByName(SrcTy->getContext(), NameWithoutSuffix);
-      assert(RetVal);
-      StringRef NewName = RetVal->getName();
-      DB_PRINT("REMAPPING TYPE:   %s  TO:   %s\n", Name.data(), NewName.data());
-      return RetVal;
-    }
-#endif
-    return SrcTy;
-  }
-};
-
 using ValueToSizeTMapTy = ValueMap<const Value *, size_t>;
 
 // A workaround for issue #889. In some cases, functions seem
@@ -328,8 +279,7 @@ find_called_functions(llvm::Function *F,
 // Copies one function from one module to another
 // does not inspect it for callgraphs
 static void CopyFunc(const llvm::StringRef Name, const llvm::Module *From,
-                     llvm::Module *To, ValueToValueMapTy &VVMap,
-                     PoclTypeRemapper *TypeMap) {
+                     llvm::Module *To, ValueToValueMapTy &VVMap) {
 
   llvm::Function *SrcFunc = From->getFunction(Name);
   // TODO: is this the linker error "not found", and not an assert?
@@ -364,7 +314,7 @@ static void CopyFunc(const llvm::StringRef Name, const llvm::Module *From,
                          false,     // same module
                          "",        // suffix
                          &CodeInfo, // codeInfo
-                         TypeMap,   // type remapper
+                         nullptr,   // type remapper
                          nullptr);  // materializer
   } else {
     DB_PRINT("  found %s, but its a declaration, do nothing\n", Name.data());
@@ -377,8 +327,7 @@ static void CopyFunc(const llvm::StringRef Name, const llvm::Module *From,
  */
 static int CopyFuncCallgraph(const llvm::StringRef FuncName,
                              const llvm::Module *From, llvm::Module *To,
-                             ValueToValueMapTy &VVMap,
-                             PoclTypeRemapper *TypeMapper) {
+                             ValueToValueMapTy &VVMap) {
   llvm::Function *RootFunc = From->getFunction(FuncName);
   if (RootFunc == NULL) {
     return -1;
@@ -394,23 +343,12 @@ static int CopyFuncCallgraph(const llvm::StringRef FuncName,
 
   // First copy the callees of func, then the function itself.
   for (auto F : Callees) {
-    CopyFunc(F->getName(), From, To, VVMap, TypeMapper);
+    CopyFunc(F->getName(), From, To, VVMap);
   }
-  CopyFunc(FuncName, From, To, VVMap, TypeMapper);
+  CopyFunc(FuncName, From, To, VVMap);
   assert(To->getFunction(FuncName) != nullptr);
 
   return 0;
-}
-
-static int CopyFuncCallgraph(const llvm::StringRef FuncName,
-                             const llvm::Module *From, llvm::Module *To,
-                             ValueToValueMapTy &VVMap) {
-#ifndef LLVM_OPAQUE_POINTERS
-  PoclTypeRemapper TypeMapper;
-  return CopyFuncCallgraph(FuncName, From, To, VVMap, &TypeMapper);
-#else
-  return CopyFuncCallgraph(FuncName, From, To, VVMap, nullptr);
-#endif
 }
 
 /* Estimates the size of stack frame used by a function and all functions
@@ -437,13 +375,8 @@ static size_t estimateFunctionStackSize(llvm::Function *Func,
       if (AI) {
         auto AllocatedType = AI->getAllocatedType();
         const llvm::DataLayout &DL = Mod->getDataLayout();
-#if LLVM_MAJOR > 15
         if (auto AllocaSize = AI->getAllocationSize(DL))
           TotalSelfSize += AllocaSize->getKnownMinValue();
-#else
-        if (auto AllocaSize = AI->getAllocationSizeInBits(DL))
-          TotalSelfSize += AllocaSize->getKnownMinSize();
-#endif
         continue;
       }
 

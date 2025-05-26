@@ -30,11 +30,7 @@
 IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/StringRef.h>
 #include <llvm/ADT/Twine.h>
-#if LLVM_MAJOR < 16
-#include <llvm/ADT/Triple.h>
-#else
 #include <llvm/TargetParser/Triple.h>
-#endif
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Support/Casting.h>
@@ -190,9 +186,7 @@ llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
   // TODO: Does this affect the loop unroller of the vectorizer as well? We
   // might want to enable it in the default case.
   PTO.LoopUnrolling = false;
-#if LLVM_MAJOR > 16
   PTO.UnifiedLTO = false;
-#endif
   PTO.SLPVectorization = PTO.LoopVectorization = Vectorize = EnableVectorizers;
   OptimizeLevel = OLevel;
   SizeLevel = SLevel;
@@ -1373,9 +1367,7 @@ void populateModulePM(void *Passes, void *Module, unsigned OptL, unsigned SizeL,
 
   // Let the loopvec decide when to unroll.
   PTO.LoopUnrolling = false;
-#if LLVM_MAJOR > 16
   PTO.UnifiedLTO = false;
-#endif
   PTO.LoopInterleaving = Vectorize;
   PTO.SLPVectorization = Vectorize;
   PTO.LoopVectorization = Vectorize;

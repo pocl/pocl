@@ -236,16 +236,6 @@ void CloneFunctionIntoAbs(llvm::Function *NewFunc,
 #define REGISTER_OLD_FANALYSIS(PNAME, PCLASS, PDESC)                          \
   static llvm::RegisterPass<PCLASS> X (PNAME, PDESC)
 
-#if LLVM_MAJOR < 15
-// Globals
-#define getValueType getType()->getElementType
-#endif /* LLVM_OPAQUE_POINTERS */
-
-#if LLVM_MAJOR < 16
-// Avoid the deprecation warning with later LLVMs.
-#define starts_with startswith
-#endif
-
 #if LLVM_MAJOR < 20
 #define CreateBuilder(BUILDER, BB) IRBuilder<> BUILDER(BB.getFirstNonPHI())
 #define Inst2InsertPt(X) X
