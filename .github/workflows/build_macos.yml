@@ -38,7 +38,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [17, 18]
+        # TODO 19, 20
+        llvm: [18]
         # basic = simplest pthread build
         # devel = with devel options
         # cts_spirv = cts with SPIR-V

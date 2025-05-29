@@ -40,6 +40,7 @@ jobs:
       fail-fast: false
       matrix:
         # 15 to 17 should work, however 17 currently fails two tests (fp16)
+        # TODO: update to something newer when OpenASIP is updated
         llvm: [17]
         config: [openasip]
 
