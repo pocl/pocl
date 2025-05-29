@@ -2,6 +2,7 @@
 #   CMake build system files
 #
 #   Copyright (c) 2014 pocl developers
+#                 2025 Pekka Jääskeläinen / Intel Finland Oy
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -233,7 +234,7 @@ add_test_pocl(NAME "kernel/test_printf_vectors_halfn"
               EXPECTED_OUTPUT "test_printf_vectors_halfn_expout.txt"
               COMMAND "kernel" "test_printf_vectors_halfn")
 
-if(HOST_CPU_ENABLE_CL_KHR_FP16)
+if(NOT HOST_CPU_ENABLE_CL_KHR_FP16)
   foreach(VARIANT ${VARIANTS})
   set_tests_properties("kernel/test_printf_vectors_halfn_${VARIANT}"
     "kernel/test_shuffle_half_${VARIANT}" "kernel/test_halfs_${VARIANT}"
@@ -241,7 +242,8 @@ if(HOST_CPU_ENABLE_CL_KHR_FP16)
       PROCESSORS 1
       COST 120
       DEPENDS "pocl_version_check"
-      LABELS "cpu;kernel")
+      # Remove the 'cpu' label.
+      LABELS "")
   endforeach()
 endif()
 unset(ADDITIONAL_CPU_TEST)
