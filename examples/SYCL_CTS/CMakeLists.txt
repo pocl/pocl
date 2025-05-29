@@ -68,10 +68,11 @@ test_get_kernel_ids_single_kernel                test_invoke                    
 test_group                                       test_is_device_copyable                                                   test_vector_operators
 test_group_functions                             test_item                                                                 test_vector_swizzle_assignment
 test_handler                                     test_kernel                                                               test_vector_swizzles
-test_has_kernel_bundle_core_all_states_ctx_only  test_kernel_args
-test_has_kernel_bundle_core_all_states_dev       test_kernel_bundle
-test_accessor_basic    test_accessor_generic    test_accessor_legacy    test_accessor_placeholder
-test_marray_arithmetic_assignment   test_marray_arithmetic_binary   test_marray_basic   test_marray_bitwise   test_marray_pre_post   test_marray_relational
+test_has_kernel_bundle_core_all_states_ctx_only  test_kernel_args                                                          test_has_kernel_bundle_core_all_states_dev
+test_kernel_bundle                               test_accessor_basic                                                       test_accessor_generic
+test_accessor_legacy                             test_accessor_placeholder                                                 test_marray_arithmetic_assignment
+test_marray_arithmetic_binary                    test_marray_basic                                                         test_marray_bitwise
+test_marray_pre_post                             test_marray_relational
 )
 
 # TODO it seems upstream deleted branch "SYCL-2020"
@@ -89,6 +90,8 @@ unset(BUILD_OPTS)
 if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.28)
   set(BUILD_OPTS BUILD_JOB_SERVER_AWARE ON)
 endif()
+
+# -DDPCPP_TARGET_TRIPLES=spirv64
 
 if(SYCL_CTS_BINARIES_URL)
   if(NOT CMAKE_VERSION VERSION_GREATER_EQUAL 3.18)
@@ -109,7 +112,7 @@ else()
   ${GIT_OPTIONS}
   CMAKE_ARGS
     -DCMAKE_CXX_COMPILER=${SYCL_CXX_COMPILER} -DCMAKE_BUILD_TYPE=Release -DSYCL_IMPLEMENTATION=DPCPP
-    -DDPCPP_INSTALL_DIR=/opt/intel/oneapi/compiler/latest -DDPCPP_TARGET_TRIPLES=spirv64
+    -DDPCPP_INSTALL_DIR=/opt/intel/oneapi/compiler/latest
     -DSYCL_CTS_ENABLE_HALF_TESTS=OFF -DSYCL_CTS_ENABLE_OPENCL_INTEROP_TESTS=OFF
     "-DCMAKE_CXX_FLAGS_RELEASE=-O1 -march=native -DNDEBUG"
     "${TS_BASEDIR}/src/${TS_NAME}"
@@ -121,7 +124,6 @@ else()
   set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
   add_dependencies(prepare_examples ${TS_NAME})
   set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build/bin")
-
 endif()
 
 foreach(TEST IN LISTS SYCL_CTS_TEST_LIST)
