@@ -48,7 +48,7 @@ jobs:
         # static = statically linked LLVM component libraries
         # TBB, OpenMP = CPU drivers with TBB/OpenMP support
         # DBK = ONNX / libjpeg-turbo DBKs enabled
-        llvm: [18, 19, 20]
+        llvm: [20]
         config: [basic, devel]
         include:
           - llvm: 17
@@ -59,6 +59,10 @@ jobs:
             config: install
           - llvm: 18
             config: DBKs
+          - llvm: 19
+            config: TBB
+          - llvm: 20
+            config: OpenMP
 
     steps:
       - name: Checkout
@@ -80,7 +84,7 @@ jobs:
           export LLVM_VERSION=${{ matrix.llvm }} &&
           sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} llvm-spirv-${LLVM_VERSION} libpolly-${LLVM_VERSION}-dev spirv-tools
 
-      - name: Install LLVM 19, 20 (+ libllvmspirvlib, + SPIRV backend)
+      - name: Install LLVM 19, 20 (+ libllvmspirvlib, + SPIRV backend with 20)
         if: ${{ matrix.llvm >= 19 }}
         run: >
           export LLVM_VERSION=${{ matrix.llvm }} &&
