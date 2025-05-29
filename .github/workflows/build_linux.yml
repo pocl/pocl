@@ -82,7 +82,7 @@ jobs:
             runCMake -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_cts_spirv
           elif [ "${{ matrix.config }}" == "tier1" ]; then
             mkdir -p ${EXAMPLES_DIR}/build_tier1
-            runCMake "-DENABLE_TESTSUITES=AMDSDK3.0;piglit;conformance;PyOpenCL;IntelSVM" -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_tier1
+            runCMake "-DENABLE_TESTSUITES=AMDSDK3.0;piglit;conformance;PyOpenCL;IntelSVM;UnitCL" -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_tier1
           elif [ "${{ matrix.config }}" == "chipstar" ]; then
             mkdir -p ${EXAMPLES_DIR}/build_chipstar_${{ matrix.llvm }}
             mkdir -p ${EXAMPLES_DIR}/source
@@ -122,6 +122,7 @@ jobs:
           # currently broken
           #cd ${{ github.workspace }}/build/examples/PyOpenCL && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) PyOpenCL
           cd ${{ github.workspace }}/build/examples/IntelSVM && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) IntelSVM
+          cd ${{ github.workspace }}/build/examples/UnitCL && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) UnitCL
 
       - name: Build chipStar Examples
         id: build_chipstar_examples
@@ -162,7 +163,7 @@ jobs:
           if [ "${{ matrix.config }}" == "cts_spirv" ]; then
             runCTest -L conformance_suite_micro_spirv
           elif [ "${{ matrix.config }}" == "tier1" ]; then
-            runCTest -L "amdsdk_30|piglit|PyOpenCL|conformance_suite_micro_main|IntelSVM"
+            runCTest -L "amdsdk_30|piglit|PyOpenCL|conformance_suite_micro_main|IntelSVM|UnitCL"
           elif [ "${{ matrix.config }}" == "chipstar" ]; then
             runCTest -L chipStar
           elif [ "${{ matrix.config }}" == "asan" ]; then
