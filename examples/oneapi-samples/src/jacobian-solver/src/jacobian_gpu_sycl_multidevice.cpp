@@ -10,7 +10,7 @@
 #include <barrier>
 #include <execution>
 #include <iostream>
-#include <sycl.hpp>
+#include <sycl/sycl.hpp>
 #include <vector>
 
 //const int Nx = 16384; /* Grid size */
@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
               host_sync_point.arrive_and_wait();
 
               if (my_subarray.device_i == 0) {
-                final_norm = sqrt(norm);
+                final_norm = sycl::sqrt(norm);
                 norm = 0.0;
               }
             }
@@ -233,9 +233,9 @@ int main(int argc, char *argv[])
         });
 
     // For Nx 1024 the norm at 100 should be 2.282558.
-    if (fabs(final_norm - 2.282558) < 0.001)
+    if (sycl::fabs(final_norm - 2.282558) < 0.001)
       printf("OK\n");
     else
-      printf("FAIL! Delta == %f\n", fabs(final_norm - 2.282558));
+      printf("FAIL! Delta == %f\n", sycl::fabs(final_norm - 2.282558));
     return 0;
 }

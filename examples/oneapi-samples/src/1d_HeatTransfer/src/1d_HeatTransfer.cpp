@@ -33,7 +33,7 @@
 //   1d_HeatTransfer.cpp
 //
 //******************************************************************************
-#include <CL/sycl.hpp>
+#include <sycl/sycl.hpp>
 #include <algorithm>
 #include <fstream>
 #include <iomanip>
@@ -93,7 +93,7 @@ void CompareResults(string prefix, float *device_results, float *host_results,
     err_file << " RESULT: " << i << "\t" << std::setw(12) << std::left
              << device_results[i] << "\t" << host_results[i] << "\n";
 
-    difference = fabsf(host_results[i] - device_results[i]);
+    difference = sycl::fabs(host_results[i] - device_results[i]);
     norm2 += difference * difference;
 
     if (difference > delta) {
