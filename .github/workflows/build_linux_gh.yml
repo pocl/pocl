@@ -48,7 +48,7 @@ jobs:
         # static = statically linked LLVM component libraries
         # TBB, OpenMP = CPU drivers with TBB/OpenMP support
         # DBK = ONNX / libjpeg-turbo DBKs enabled
-        llvm: [18, 19, 20]
+        llvm: [20]
         config: [basic, devel]
         include:
           - llvm: 17
@@ -59,6 +59,10 @@ jobs:
             config: install
           - llvm: 18
             config: DBKs
+          - llvm: 19
+            config: TBB
+          - llvm: 20
+            config: OpenMP
 
     steps:
       - name: Checkout
@@ -74,21 +78,33 @@ jobs:
           sudo apt update -y &&
           sudo apt install -y wget gpg python3-dev libpython3-dev build-essential ocl-icd-libopencl1 cmake make git pkg-config ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g-dev libtbb-dev
 
-      - name: Install LLVM 17, 18 (+ llvm-spirv)
-        if: ${{ (matrix.llvm <= 18) }}
+      - name: Install LLVM 17 (+ llvm-spirv)
+        if: ${{ matrix.llvm == 17 }}
         run: >
           export LLVM_VERSION=${{ matrix.llvm }} &&
           sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} llvm-spirv-${LLVM_VERSION} libpolly-${LLVM_VERSION}-dev spirv-tools
 
-      - name: Install LLVM 19, 20 (+ libllvmspirvlib, + SPIRV backend)
-        if: ${{ matrix.llvm >= 19 }}
+      - name: Install LLVM 18 (+ llvm-spirv + libllvmspirv)
+        if: ${{ matrix.llvm == 18 }}
+        run: >
+          export LLVM_VERSION=${{ matrix.llvm }} &&
+          sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} libllvmspirvlib-${LLVM_VERSION}-dev llvm-spirv-${LLVM_VERSION} libpolly-${LLVM_VERSION}-dev spirv-tools
+
+      - name: Install LLVM 19 (+ libllvmspirv)
+        if: ${{ matrix.llvm == 19 }}
+        run: >
+          export LLVM_VERSION=${{ matrix.llvm }} &&
+          sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} libllvmspirvlib-${LLVM_VERSION}-dev libpolly-${LLVM_VERSION}-dev spirv-tools
+
+      - name: Install LLVM >= 20 (from apt.llvm.org)
+        if: ${{ matrix.llvm >= 20 }}
         run: >
           export LLVM_VERSION=${{ matrix.llvm }} &&
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/llvm-snapshot.gpg &&
           echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble-${LLVM_VERSION} main" >/tmp/llvm.list &&
           sudo mv /tmp/llvm.list /etc/apt/sources.list.d/ &&
           sudo apt update -y &&
-          sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} mlir-${LLVM_VERSION}-tools libllvmlibc-${LLVM_VERSION}-dev libpolly-${LLVM_VERSION}-dev libllvmspirvlib-${LLVM_VERSION}-dev spirv-tools
+          sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} mlir-${LLVM_VERSION}-tools libllvmlibc-${LLVM_VERSION}-dev libpolly-${LLVM_VERSION}-dev spirv-tools
 
       - name: Install XSMM & ONNX & libjpeg-turbo
         if: ${{ matrix.config == 'DBKs' }}
