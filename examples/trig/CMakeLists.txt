@@ -45,7 +45,7 @@ set_tests_properties(
     COST 3.0
     ${PROPS}
     PROCESSORS 1
-    LABELS "cpu;cuda;hsa-native;vulkan;level0"
+    LABELS "cuda;hsa-native;vulkan;level0"
     DEPENDS "pocl_version_check")
 
 if(ENABLE_HOST_CPU_DEVICES AND RISCV)

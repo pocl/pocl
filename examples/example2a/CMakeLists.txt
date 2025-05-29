@@ -42,7 +42,7 @@ set_tests_properties( "examples/example2a"
     COST 3.0
     ${PROPS}
     PROCESSORS 1
-    LABELS "cpu;level0;tce;hsa;hsa-native;vulkan"
+    LABELS "level0;tce;hsa;hsa-native;vulkan"
     DEPENDS "pocl_version_check")
 
 add_test(NAME "examples/example2a_poclbin"
@@ -58,5 +58,5 @@ set_tests_properties( "examples/example2a_poclbin"
     ${PROPS}
     PROCESSORS 1
     ENVIRONMENT "POCL_KERNEL_CACHE=0"
-    LABELS "poclbin;cpu;level0"
+    LABELS "poclbin;level0"
     DEPENDS "pocl_version_check")

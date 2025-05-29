@@ -257,13 +257,12 @@ set_tests_properties( "examples/accel/add.i32"
   "examples/accel/mul.i32"  "examples/accel/abs.f32"
   PROPERTIES
     PASS_REGULAR_EXPRESSION "OK"
-    LABELS "cpu;custom_device;cuda"
+    LABELS "cuda"
     DEPENDS "pocl_version_check")
 
 set_tests_properties( "examples/accel/countred"
   PROPERTIES
     PASS_REGULAR_EXPRESSION "OK"
-    LABELS "cpu;custom_device"
     DEPENDS "pocl_version_check")
 
 add_subdirectory(hls)

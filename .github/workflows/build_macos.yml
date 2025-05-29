@@ -110,14 +110,14 @@ jobs:
         id: ctest
         run: |
           runCTest() {
-            cd ${{ github.workspace }}/build &&  ctest -j$(sysctl -n hw.logicalcpu) $CTEST_FLAGS "$@"
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cpu_tests -j$(sysctl -n hw.logicalcpu) $CTEST_FLAGS "$@"
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
           if [ "${{ matrix.config }}" == "basic" ]; then
-            runCTest -L cpu
+            runCTest
           elif [ "${{ matrix.config }}" == "devel" ]; then
-            runCTest -L cpu
+            runCTest
           elif [ "${{ matrix.config }}" == "cts_spirv" ]; then
             runCTest -L conformance_suite_micro_spirv
           elif [ "${{ matrix.config }}" == "tier1" ]; then
