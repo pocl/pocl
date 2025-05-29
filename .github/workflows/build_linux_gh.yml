@@ -51,12 +51,6 @@ jobs:
         llvm: [18, 19, 20]
         config: [basic, devel]
         include:
-          - llvm: 14
-            config: static
-          - llvm: 15
-            config: TBB
-          - llvm: 16
-            config: OpenMP
           - llvm: 17
             config: TBB
           - llvm: 18
@@ -80,27 +74,21 @@ jobs:
           sudo apt update -y &&
           sudo apt install -y wget gpg python3-dev libpython3-dev build-essential ocl-icd-libopencl1 cmake make git pkg-config ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g-dev libtbb-dev
 
-      - name: Install LLVM <= 16 (+ llvm-spirv)
-        if: ${{ matrix.llvm <= 16 }}
+      - name: Install LLVM 17, 18 (+ llvm-spirv)
+        if: ${{ (matrix.llvm <= 18) }}
         run: >
           export LLVM_VERSION=${{ matrix.llvm }} &&
-          sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} llvm-spirv-${LLVM_VERSION} libpolly-${LLVM_VERSION}-dev
+          sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} llvm-spirv-${LLVM_VERSION} libpolly-${LLVM_VERSION}-dev spirv-tools
 
-      - name: Install LLVM 17, 18, 19 (+ libllvmspirvlib)
-        if: ${{ (matrix.llvm >= 17) &&  (matrix.llvm <= 19) }}
-        run: >
-          export LLVM_VERSION=${{ matrix.llvm }} &&
-          sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} libllvmspirvlib-${LLVM_VERSION}-dev libpolly-${LLVM_VERSION}-dev spirv-tools
-
-      - name: Install LLVM >= 20 (+ SPIRV backend)
-        if: ${{ matrix.llvm >= 20 }}
+      - name: Install LLVM 19, 20 (+ libllvmspirvlib, + SPIRV backend)
+        if: ${{ matrix.llvm >= 19 }}
         run: >
           export LLVM_VERSION=${{ matrix.llvm }} &&
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/llvm-snapshot.gpg &&
           echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble-${LLVM_VERSION} main" >/tmp/llvm.list &&
           sudo mv /tmp/llvm.list /etc/apt/sources.list.d/ &&
           sudo apt update -y &&
-          sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} mlir-${LLVM_VERSION}-tools libllvmlibc-${LLVM_VERSION}-dev libpolly-${LLVM_VERSION}-dev spirv-tools
+          sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} mlir-${LLVM_VERSION}-tools libllvmlibc-${LLVM_VERSION}-dev libpolly-${LLVM_VERSION}-dev libllvmspirvlib-${LLVM_VERSION}-dev spirv-tools
 
       - name: Install XSMM & ONNX & libjpeg-turbo
         if: ${{ matrix.config == 'DBKs' }}
