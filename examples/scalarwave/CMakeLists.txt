@@ -39,6 +39,6 @@ set_tests_properties( "examples/scalarwave_${VARIANT}"
   PROPERTIES
     COST 3.0
     PROCESSORS 1
-    LABELS "cpu;cuda;hsa-native;level0"
+    LABELS "cuda;hsa-native;level0"
     DEPENDS "pocl_version_check")
 endforeach()

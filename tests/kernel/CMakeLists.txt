@@ -2,6 +2,7 @@
 #   CMake build system files
 #
 #   Copyright (c) 2014 pocl developers
+#                 2025 Pekka Jääskeläinen / Intel Finland Oy
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -113,8 +114,7 @@ foreach(VARIANT ${VARIANTS})
     PROPERTIES
       COST 40.0
       PROCESSORS 1
-      DEPENDS "pocl_version_check"
-      LABELS "cpu;kernel;long")
+      DEPENDS "pocl_version_check")
 endforeach()
 
 foreach(VARIANT ${VARIANTS})
@@ -139,8 +139,7 @@ foreach(VARIANT ${VARIANTS})
     PROPERTIES
       COST 4.0
       PROCESSORS 1
-      DEPENDS "pocl_version_check"
-      LABELS "cpu;kernel")
+      DEPENDS "pocl_version_check")
 endforeach()
 
 ######################################################################
@@ -164,8 +163,7 @@ set_tests_properties( "kernel/test_sampler_address_clamp_${VARIANT}"
     PASS_REGULAR_EXPRESSION "\nOK\n"
     SKIP_REGULAR_EXPRESSION "SKIP\n"
     PROCESSORS 1
-    DEPENDS "pocl_version_check"
-    LABELS "cpu;kernel")
+    DEPENDS "pocl_version_check")
 
 set_tests_properties( "kernel/test_image_query_funcs_${VARIANT}"
   PROPERTIES
@@ -173,8 +171,7 @@ set_tests_properties( "kernel/test_image_query_funcs_${VARIANT}"
     PASS_REGULAR_EXPRESSION "read imag1: 2,9,11,7\nread imag2: 2,9,11,7\n.*OK\n"
     SKIP_REGULAR_EXPRESSION "SKIP\n"
     PROCESSORS 1
-    DEPENDS "pocl_version_check"
-    LABELS "cpu;kernel")
+    DEPENDS "pocl_version_check")
 endforeach()
 ######################################################################
 
@@ -233,7 +230,7 @@ add_test_pocl(NAME "kernel/test_printf_vectors_halfn"
               EXPECTED_OUTPUT "test_printf_vectors_halfn_expout.txt"
               COMMAND "kernel" "test_printf_vectors_halfn")
 
-if(HOST_CPU_ENABLE_CL_KHR_FP16)
+if(NOT HOST_CPU_ENABLE_CL_KHR_FP16)
   foreach(VARIANT ${VARIANTS})
   set_tests_properties("kernel/test_printf_vectors_halfn_${VARIANT}"
     "kernel/test_shuffle_half_${VARIANT}" "kernel/test_halfs_${VARIANT}"
@@ -241,12 +238,12 @@ if(HOST_CPU_ENABLE_CL_KHR_FP16)
       PROCESSORS 1
       COST 120
       DEPENDS "pocl_version_check"
-      LABELS "cpu;kernel")
+      LABELS "cpu_fail")
   endforeach()
 endif()
 unset(ADDITIONAL_CPU_TEST)
 
-if(HOST_CPU_ENABLE_CL_KHR_FP64)
+if(NOT HOST_CPU_ENABLE_CL_KHR_FP64)
   foreach(VARIANT ${VARIANTS})
   set_tests_properties("kernel/test_printf_vectors_doublen_${VARIANT}"
     "kernel/test_shuffle_double_${VARIANT}"
@@ -254,7 +251,7 @@ if(HOST_CPU_ENABLE_CL_KHR_FP64)
       PROCESSORS 1
       COST 120
       DEPENDS "pocl_version_check"
-      LABELS "cpu;kernel")
+      LABELS "cpu_fail")
   endforeach()
 endif()
 
@@ -282,8 +279,7 @@ foreach(VARIANT ${VARIANTS})
     PROPERTIES
       PROCESSORS 1
       COST 120
-      DEPENDS "pocl_version_check"
-      LABELS "cpu;kernel")
+      DEPENDS "pocl_version_check")
 
   set_property(TEST
     "kernel/test_printf_${VARIANT}"

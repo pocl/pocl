@@ -65,7 +65,7 @@ jobs:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         run: |
           runCTest() {
-            cd ${{ github.workspace }}/build &&  ctest -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) $CTEST_FLAGS "$@"
+            cd ${{ github.workspace }}/build && ${{ env.WORKSPACE }}/tools/scripts/run_cpu_tests -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) $CTEST_FLAGS "$@"
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           # hardcoded path in test_compiler / execute_after_included_header_link

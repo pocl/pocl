@@ -164,8 +164,7 @@ if(HAVE_LIBJPEG_TURBO)
     COST 2.0
     PROCESSORS 1
     SKIP_RETURN_CODE 77
-    DEPENDS "pocl_version_check"
-    LABELS "cpu;runtime")
+    DEPENDS "pocl_version_check")
 endif()
 
 add_test(NAME "runtime/test_queue_creation_with_hints" COMMAND "test_queue_creation_with_hints")
@@ -178,8 +177,7 @@ if(HAVE_LIBXSMM)
     COST 2.0
     PROCESSORS 1
     SKIP_RETURN_CODE 77
-    DEPENDS "pocl_version_check"
-    LABELS "cpu;runtime")
+    DEPENDS "pocl_version_check")
 endif()
 
 if(HAVE_ONNXRT)
@@ -189,8 +187,7 @@ if(HAVE_ONNXRT)
     COST 2.0
     PROCESSORS 1
     SKIP_RETURN_CODE 77
-    DEPENDS "pocl_version_check"
-    LABELS "cpu;runtime")
+    DEPENDS "pocl_version_check")
 endif()
 
 unset(ENABLED_CPU_TESTS)
@@ -224,8 +221,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
-    DEPENDS "pocl_version_check"
-    LABELS "cpu;runtime")
+    DEPENDS "pocl_version_check")
 
 set_tests_properties(
   "runtime/clCreateSubDevices"
