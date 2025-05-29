@@ -63,7 +63,9 @@ jobs:
           mkdir ${{ github.workspace }}/build
           mkdir -p ${EXAMPLES_DIR}/build_oneapi
           mkdir -p ${EXAMPLES_DIR}/source
-          runCMake "-DENABLE_TESTSUITES=dpcpp-book-samples;oneapi-samples;simple-sycl-samples;intel-compute-samples" -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_oneapi -DSYCL_CXX_COMPILER=/opt/intel/oneapi/compiler/latest/bin/icpx -DSYCL_LIBDIR=/opt/intel/oneapi/compiler/latest/lib
+          runCMake "-DENABLE_TESTSUITES=dpcpp-book-samples;oneapi-samples;simple-sycl-samples;intel-compute-samples;SYCL_CTS" \
+            -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_oneapi \
+            -DSYCL_CXX_COMPILER=/opt/intel/oneapi/compiler/latest/bin/icpx -DSYCL_LIBDIR=/opt/intel/oneapi/compiler/latest/lib
 
       - name: Build PoCL
         id: build_pocl
@@ -80,6 +82,7 @@ jobs:
           cd ${{ github.workspace }}/build/examples/oneapi-samples && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) oneapi-samples
           cd ${{ github.workspace }}/build/examples/simple-sycl-samples && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) simple-sycl-samples
           cd ${{ github.workspace }}/build/examples/intel-compute-samples && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) intel-compute-samples
+          cd ${{ github.workspace }}/build/examples/SYCL_CTS && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) SYCL_CTS
 
       - name: Run CPU Tests
         env:
