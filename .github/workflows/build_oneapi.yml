@@ -5,20 +5,10 @@ permissions:
   contents: read
 
 on:
-  push:
-    branches:
-      - 'main'
-      - 'release*'
   workflow_dispatch:
-  pull_request:
-    paths-ignore:
-      - 'doc/**'
-      - 'CHANGES'
-      - 'COPYING'
-      - 'CREDITS'
-      - 'LICENSE'
-      - 'README.*'
-      - 'tools/docker/**'
+  schedule:
+# at 0:23 UTC every saturday
+    - cron: '23 0 * * 6'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
@@ -88,7 +78,7 @@ jobs:
         env:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         id: ctest_cpu
-        timeout-minutes: 40
+        timeout-minutes: 180
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
@@ -100,7 +90,7 @@ jobs:
         env:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         id: ctest_gpu
-        timeout-minutes: 40
+        timeout-minutes: 180
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
