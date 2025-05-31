@@ -78,6 +78,7 @@ ExternalProject_Add(
   PREFIX "${TS_BASEDIR}"
   GIT_REPOSITORY "https://github.com/uxlfoundation/oneapi-construction-kit.git"
   GIT_TAG "main"
+  BINARY_DIR "${TS_BUILDDIR}"
   ${GIT_OPTIONS}
   CMAKE_ARGS
     ${UPSTREAM_CMAKE_ARGS}
@@ -85,7 +86,7 @@ ExternalProject_Add(
     -DCA_ENABLE_API=cl          # disable Vulkan
     -DCA_LLVM_INSTALL_DIR=${LLVM_PREFIX}  # required for online compiler
     -DCA_CL_ENABLE_OFFLINE_KERNEL_TESTS=0 # disable offline tests (needs CLC or runtime compiler)
-    "${TS_BASEDIR}/src/${TS_NAME}"
+    "${TS_SRCDIR}"
   BUILD_COMMAND ${CMAKE_COMMAND} --build ${TS_BUILDDIR}/source/cl/test/UnitCL
   ${BUILD_OPTS}
   INSTALL_COMMAND ""
