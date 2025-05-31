@@ -60,7 +60,7 @@ jobs:
         shell: bash -el {0}
         run: |
           mamba install 'clangdev=${{ matrix.llvm }}.*' 'llvmdev=${{ matrix.llvm }}.*' \
-             llvm-spirv libhwloc ld64 compilers pkg-config cmake make
+             'llvm-spirv=${{ matrix.llvm }}.*' libhwloc ld64 pkg-config cmake make
           conda activate pocl-deps
           if [ "${{ matrix.config }}" == "basic" ]; then
             mamba install khronos-opencl-icd-loader clhpp
