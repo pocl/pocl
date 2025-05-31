@@ -9,6 +9,15 @@ on:
   schedule:
 # at 0:23 UTC every saturday
     - cron: '23 0 * * 6'
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - 'CHANGES'
+      - 'COPYING'
+      - 'CREDITS'
+      - 'LICENSE'
+      - 'README.*'
+      - 'tools/docker/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
@@ -74,23 +83,49 @@ jobs:
           #cd ${{ github.workspace }}/build/examples/intel-compute-samples && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) intel-compute-samples
           cd ${{ github.workspace }}/build/examples/SYCL_CTS && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) SYCL_CTS
 
-      - name: Run CPU Tests
+      - name: Run CPU Tests (short)
         env:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
-        id: ctest_cpu
-        timeout-minutes: 180
+        id: ctest_cpu_short
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
+        timeout-minutes: 40
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
           source /opt/intel/oneapi/setvars.sh
-          #cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_cpu -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) $CTEST_FLAGS
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_cpu -j4 $CTEST_FLAGS
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_cpu -j4 $CTEST_FLAGS -E 'sycl_cts_test_math_builtin_api|sycl_cts_test_multi_ptr|sycl_cts_test_kernel|sycl_cts_test_kernel_bundle|sycl_cts_test_group_functions'
 
-      - name: Run GPU Tests
+      - name: Run GPU Tests (short)
         env:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
-        id: ctest_gpu
-        timeout-minutes: 180
+        id: ctest_gpu_short
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
+        timeout-minutes: 40
+        run: |
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          source /opt/intel/oneapi/setvars.sh
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_gpu -j4 $CTEST_FLAGS -E 'sycl_cts_test_math_builtin_api|sycl_cts_test_multi_ptr|sycl_cts_test_kernel|sycl_cts_test_kernel_bundle|sycl_cts_test_group_functions'
+
+
+      - name: Run CPU Tests (long)
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+        id: ctest_cpu_long
+        if: ${{ github.event_name == 'schedule' }}
+        timeout-minutes: 240
+        run: |
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          source /opt/intel/oneapi/setvars.sh
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_cpu -j4 $CTEST_FLAGS
+
+      - name: Run GPU Tests (long)
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+        id: ctest_gpu_long
+        if: ${{ github.event_name == 'schedule' }}
+        timeout-minutes: 240
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
