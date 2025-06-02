@@ -245,10 +245,6 @@ set(CPACK_PACKAGE_VERSION_MINOR "${MINOR_VERSION}")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
 
 set(BUILD_SHARED_LIBS_DEFAULT ON)
-if(MINGW)
-  # Building PoCL as shared library does not work yet with MinGW.
-  set(BUILD_SHARED_LIBS_DEFAULT OFF)
-endif()
 
 ##################################################################################
 
