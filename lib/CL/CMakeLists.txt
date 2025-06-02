@@ -375,7 +375,7 @@ endif()
 
 harden("${POCL_LIBRARY_NAME}")
 
-if(UNIX AND (NOT APPLE))
+if((UNIX OR MINGW) AND (NOT APPLE))
   target_link_options("${POCL_LIBRARY_NAME}" PRIVATE "LINKER:--exclude-libs,ALL")
 endif()
 if(WIN32)
