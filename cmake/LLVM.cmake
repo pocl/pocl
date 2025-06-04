@@ -225,19 +225,29 @@ foreach(LIBFLAG ${LLVM_LIBS})
   list(APPEND LLVM_LIBNAMES "${LIB_NAME}")
 endforeach()
 
+set(LLVM_LINK_FILES)
+set(LLVM_LINK_DIRS)
 foreach(LIBNAME ${LLVM_LIBNAMES})
   if(EXISTS ${LIBNAME})
-    list(APPEND LLVM_LIBFILES "${LIBNAME}")
+    set(L_LIBFILE_${LIBNAME} ${LIBNAME})
   else()
     find_library(L_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
     if(NOT L_LIBFILE_${LIBNAME})
       message(FATAL_ERROR "Could not find LLVM library ${LIBNAME}, perhaps wrong setting of STATIC_LLVM ?")
     endif()
-    list(APPEND LLVM_LIBFILES "${L_LIBFILE_${LIBNAME}}")
+  endif()
+
+  if(APPLE AND STATIC_LLVM AND VISIBILITY_HIDDEN)
+    # -hidden-l doesn't accept paths, so split into name + directory
+    get_filename_component(LIB_NAME ${L_LIBFILE_${LIBNAME}} NAME_WE)
+    string(REPLACE "lib" "" LIB_BASE ${LIB_NAME})
+    list(APPEND LLVM_LINK_LIBRARIES "-Wl,-hidden-l${LIB_BASE}")
+    get_filename_component(LIB_DIR ${L_LIBFILE_${LIBNAME}} DIRECTORY)
+    list(APPEND LLVM_LINK_DIRECTORIES ${LIB_DIR})
+  else()
+    list(APPEND LLVM_LINK_LIBRARIES ${L_LIBFILE_${LIBNAME}})
   endif()
 endforeach()
-
-set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
 
 ####################################################################
 
@@ -277,12 +287,24 @@ else()
   endif()
 endif()
 
+set(CLANG_LINK_LIBRARIES)
+set(CLANG_LINK_DIRECTORIES)
 foreach(LIBNAME ${CLANG_LIBNAMES})
   find_library(C_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
   if(NOT C_LIBFILE_${LIBNAME})
     message(FATAL_ERROR "Could not find Clang library ${LIBNAME}, perhaps wrong setting of STATIC_LLVM ?")
   endif()
-  list(APPEND CLANG_LIBFILES "${C_LIBFILE_${LIBNAME}}")
+
+  if(APPLE AND STATIC_LLVM AND VISIBILITY_HIDDEN)
+    # -hidden-l doesn't accept paths, so split into name + directory
+    get_filename_component(LIB_NAME ${C_LIBFILE_${LIBNAME}} NAME_WE)
+    string(REPLACE "lib" "" LIB_BASE ${LIB_NAME})
+    list(APPEND CLANG_LINK_LIBRARIES "-Wl,-hidden-l${LIB_BASE}")
+    get_filename_component(LIB_DIR ${C_LIBFILE_${LIBNAME}} DIRECTORY)
+    list(APPEND CLANG_LINK_DIRECTORIES ${LIB_DIR})
+  else()
+    list(APPEND CLANG_LINK_LIBRARIES ${C_LIBFILE_${LIBNAME}})
+  endif()
 endforeach()
 
 ####################################################################
@@ -802,8 +824,8 @@ if(NOT CLANG_LINK_TEST)
 
   try_compile(CLANG_LINK_TEST ${CMAKE_BINARY_DIR} "${CLANG_LINK_TEST_FILENAME}"
               CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
-              CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
-              LINK_LIBRARIES ${LLVM_LDFLAGS} ${CLANG_LIBFILES} ${LLVM_LIBS}
+              CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${CLANG_LINK_DIRECTORIES};${LLVM_LIBDIR}"
+              LINK_LIBRARIES ${LLVM_LDFLAGS} ${CLANG_LINK_LIBRARIES} ${LLVM_LIBS}
               ${LLVM_SYSLIBS}
               COMPILE_DEFINITIONS ${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}
 	      ${CXX_COMPAT_FLAGS} -DLLVM_MAJOR=${LLVM_VERSION_MAJOR}
