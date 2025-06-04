@@ -1192,10 +1192,13 @@ if(ENABLE_SPIRV)
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
 endif()
 
-# we don't have a useful SPIRV wrapper for 32bit SPIRV
-# SPIR-V on windows is broken ATM because of mangling
+# Determine whether we can use SPIRV on the host CPU device
+# - we don't have a useful SPIRV wrapper for 32bit SPIRV
+# - on Windows/MSVC there's a mangling mismatch between
+#   Clang (compiling the kernellib with MSVC function names)
+#   and the SPIRV wrapper (only supporting Itanium mangling)
 set(HOST_CPU_ENABLE_SPIRV OFF)
-if(ENABLE_HOST_CPU_DEVICES AND ENABLE_SPIRV AND (NOT WIN32) AND (HOST_DEVICE_ADDRESS_BITS MATCHES "64"))
+if(ENABLE_HOST_CPU_DEVICES AND ENABLE_SPIRV AND (NOT MSVC) AND (HOST_DEVICE_ADDRESS_BITS MATCHES "64"))
   set(HOST_CPU_ENABLE_SPIRV ON)
 endif()
 
