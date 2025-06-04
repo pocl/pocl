@@ -51,11 +51,6 @@ parser.add_argument('output',
 	type=argparse.FileType('w', encoding='utf-8'),
 	help='output file')
 
-parser.add_argument('-q', '--opaque-pointers',
-	dest='opaque_ptrs',
-	action='store_true',
-	help="enable LLVM's opaque pointers")
-
 parser.add_argument('-g', '--generic-as',
 	dest='generic_as',
 	action='store_true',
@@ -89,7 +84,7 @@ SPIR_CALLING_ABI = (args.target == 'cuda')
 # will be passed with byval/sret
 CPU_ABI_REG_SIZE = args.reg_size
 
-OPAQUE_POINTERS = args.opaque_ptrs
+OPAQUE_POINTERS = True
 
 GENERIC_AS = args.generic_as
 

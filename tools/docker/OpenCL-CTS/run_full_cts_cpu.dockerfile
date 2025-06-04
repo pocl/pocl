@@ -87,6 +87,7 @@ RUN cd /opt/OpenCL-CTS/build && make -j$(nproc)
 
 ENV POCL_AFFINITY=1
 ENV POCL_CACHE_DIR=/tmp/POCL_CACHE
+ENV CL_DEVICE_TYPE=cpu
 
 # runs both normal mode & spirv mode CTS tests
 CMD cd /opt/OpenCL-CTS/build/test_conformance && \

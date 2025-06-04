@@ -7,8 +7,8 @@ permissions:
 on:
   workflow_dispatch:
   schedule:
-# at 12:17 UTC every friday
-    - cron: '17 12 * * 5'
+# at 0:17 UTC every saturday
+    - cron: '17 0 * * 6'
 
 jobs:
   cpu_cts:
@@ -53,16 +53,41 @@ jobs:
           -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_${{ matrix.llvm }}_${{ matrix.config }} -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON \
           -B ${{ github.workspace }}/build ${{ github.workspace }}
 
+      - name: Copy SPIRV
+        id: copy_spirv
+        if: ${{ matrix.config == 'full_cts_cpu_spirv' }}
+        timeout-minutes: 6
+          if [ -e "${{ github.workspace }}/../../../CTS_FULL_CACHE_LLVM_${{ matrix.llvm }}" ]; then \
+            rmdir ${{ github.workspace }}/build/CTS_FULL_CACHE ; \
+            cp -r --reflink=always "${{ github.workspace }}/../../../CTS_FULL_CACHE_LLVM_${{ matrix.llvm }}" ${{ github.workspace }}/build ; \
+            mv "${{ github.workspace }}/build/CTS_FULL_CACHE_LLVM_${{ matrix.llvm }}" ${{ github.workspace }}/build/CTS_FULL_CACHE ; \
+          fi
+
       - name: Run Build
         id: build
         timeout-minutes: 60
         run: |
           cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) prepare_examples
 
+      - name: Get CMake version
+        id: cmake_version
+        run: echo "version=$(cmake --version | head -n 1)" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Cache CTest timings
+        id: cache_ctest
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+        with:
+          path: ${{ github.workspace }}/build/Testing/Temporary/CTestCostData.txt
+          key: ctest-cache-${{ steps.cmake_version.outputs.version }}-${{ runner.name }}-${{ matrix.config }}-${{ github.run_id }}
+          restore-keys: ctest-cache-${{ steps.cmake_version.outputs.version }}-${{ runner.name }}-${{ matrix.config }}
+
       - name: Run Tests
         id: ctest
         env:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+          CL_PLATFORM_NAME: "Portable"
+          CL_DEVICE_TYPE: "cpu"
         run: |
           runCTest() {
             cd ${{ github.workspace }}/build &&  ctest -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) $CTEST_FLAGS "$@"
@@ -127,9 +152,24 @@ jobs:
         run: |
           cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) prepare_examples
 
+      - name: Get CMake version
+        id: cmake_version
+        run: echo "version=$(cmake --version | head -n 1)" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Cache CTest timings
+        id: cache_ctest
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+        with:
+          path: ${{ github.workspace }}/build/Testing/Temporary/CTestCostData.txt
+          key: ctest-cache-${{ steps.cmake_version.outputs.version }}-${{ runner.name }}-${{ matrix.config }}-${{ github.run_id }}
+          restore-keys: ctest-cache-${{ steps.cmake_version.outputs.version }}-${{ runner.name }}-${{ matrix.config }}
+
       - name: Run Tests
         env:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+          CL_PLATFORM_NAME: "Portable"
+          CL_DEVICE_TYPE: "gpu"
         id: ctest
         run: |
           runCTest() {

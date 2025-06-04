@@ -48,36 +48,10 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 using namespace llvm;
 
-#ifndef LLVM_OPAQUE_POINTERS
-static inline bool is_image_type(const llvm::Type &t) {
-  if (t.isPointerTy() && t.getPointerElementType()->isStructTy()) {
-    llvm::StringRef name = t.getPointerElementType()->getStructName();
-    if (name.starts_with("opencl.image2d_") ||
-        name.starts_with("opencl.image3d_") ||
-        name.starts_with("opencl.image1d_") ||
-        name.starts_with("struct._pocl_image"))
-      return true;
-  }
-  return false;
-}
-
-static inline bool is_sampler_type(const llvm::Type &t) {
-  if (t.isPointerTy() && t.getPointerElementType()->isStructTy()) {
-    llvm::StringRef name = t.getPointerElementType()->getStructName();
-    if (name.starts_with("opencl.sampler_t"))
-      return true;
-  }
-  return false;
-}
-#else
 static inline bool is_image_type(llvm::Type *ArgType,
                                  struct pocl_argument_info &ArgInfo,
                                  cl_bitfield has_arg_meta) {
-#if LLVM_MAJOR > 15
   if (ArgType->isPointerTy() || ArgType->isTargetExtTy()) {
-#else
-  if (ArgType->isPointerTy() || ArgType->isOpaquePointerTy()) {
-#endif
     assert(has_arg_meta & POCL_HAS_KERNEL_ARG_TYPE_NAME);
     llvm::StringRef name(ArgInfo.type_name);
     if ((has_arg_meta & POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER) &&
@@ -96,7 +70,6 @@ static inline bool is_sampler_type(struct pocl_argument_info &ArgInfo,
   llvm::StringRef name(ArgInfo.type_name);
   return name == "sampler_t";
 }
-#endif
 
 // The old way of getting kernel metadata from "opencl.kernels" module meta.
 // LLVM < 3.9 and SPIR
@@ -550,16 +523,6 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
       ArgInfo.type_size = 0;
       const llvm::PointerType *ARGp = dyn_cast<llvm::PointerType>(ARGt);
 
-#ifndef LLVM_OPAQUE_POINTERS
-      if (is_image_type(*ARGt)) {
-        ArgInfo.type = POCL_ARG_TYPE_IMAGE;
-        ArgInfo.type_size = sizeof(cl_mem);
-      } else
-      if (is_sampler_type(*ARGt)) {
-        ArgInfo.type = POCL_ARG_TYPE_SAMPLER;
-        ArgInfo.type_size = sizeof(cl_sampler);
-      } else
-#else
       if (is_image_type(ARGt, ArgInfo, meta->has_arg_metadata)) {
         ArgInfo.type = POCL_ARG_TYPE_IMAGE;
         ArgInfo.type_size = sizeof(cl_mem);
@@ -568,7 +531,7 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
         ArgInfo.type = POCL_ARG_TYPE_SAMPLER;
         ArgInfo.type_size = sizeof(cl_sampler);
       } else
-#endif
+
       if (ARGp) {
         ArgInfo.type = POCL_ARG_TYPE_POINTER;
         ArgInfo.type_size = sizeof(cl_mem);

@@ -25,7 +25,7 @@
 
 set(TS_NAME "UnitCL")
 set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
-set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
+set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build-llvm-${LLVM_VERSION_MAJOR}")
 set(TS_SRCDIR "${TS_BASEDIR}/src/${TS_NAME}")
 
 if(NOT HAVE_GIT)
@@ -60,7 +60,6 @@ message(STATUS "Enabling testsuite ${TS_NAME}")
 list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
 set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
-
 set(UPSTREAM_CMAKE_ARGS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 if(CMAKE_C_COMPILER_LAUNCHER)
   list(APPEND UPSTREAM_CMAKE_ARGS "-DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}")
@@ -71,7 +70,7 @@ endif()
 
 unset(BUILD_OPTS)
 if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.28)
-  set(BUILD_OPTS BUILD_JOB_SERVER_AWARE)
+  set(BUILD_OPTS BUILD_JOB_SERVER_AWARE ON)
 endif()
 
 ExternalProject_Add(
@@ -79,15 +78,17 @@ ExternalProject_Add(
   PREFIX "${TS_BASEDIR}"
   GIT_REPOSITORY "https://github.com/uxlfoundation/oneapi-construction-kit.git"
   GIT_TAG "main"
+  BINARY_DIR "${TS_BUILDDIR}"
   ${GIT_OPTIONS}
-  CONFIGURE_COMMAND ${CMAKE_COMMAND}
+  CMAKE_ARGS
     ${UPSTREAM_CMAKE_ARGS}
     -DCA_ENABLE_DOCUMENTATION=0 # disable docs
     -DCA_ENABLE_API=cl          # disable Vulkan
-    -DCA_LLVM_INSTALL_DIR=${LLVM_PREFIX} # required for online compiler
+    -DCA_LLVM_INSTALL_DIR=${LLVM_PREFIX}  # required for online compiler
     -DCA_CL_ENABLE_OFFLINE_KERNEL_TESTS=0 # disable offline tests (needs CLC or runtime compiler)
-    "${TS_BASEDIR}/src/${TS_NAME}"
-  ${BUILD_OPTS} BUILD_COMMAND ${CMAKE_COMMAND} --build ${TS_BUILDDIR}/source/cl/test/UnitCL
+    "${TS_SRCDIR}"
+  BUILD_COMMAND ${CMAKE_COMMAND} --build ${TS_BUILDDIR}/source/cl/test/UnitCL
+  ${BUILD_OPTS}
   INSTALL_COMMAND ""
 )
 

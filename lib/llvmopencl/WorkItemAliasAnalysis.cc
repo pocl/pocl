@@ -60,19 +60,13 @@ using namespace llvm;
 typedef llvm::MemoryLocation Location;
 typedef llvm::AliasResult AliasResult;
 
-#if LLVM_MAJOR < 16
-#define AAResultB AAResultBase<WorkItemAAResult>
-#else
-#define AAResultB AAResultBase
-#endif
-
 /// WorkItemAliasAnalysis - This is a simple alias analysis
 /// implementation that uses pocl metadata to make sure memory accesses from
 /// different work items are not aliasing.
 ///
 
-class WorkItemAAResult : public AAResultB {
-    friend AAResultB;
+class WorkItemAAResult : public AAResultBase {
+    friend AAResultBase;
 
 public:
     static char ID;

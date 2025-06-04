@@ -760,46 +760,6 @@ if(ENABLE_LLVM)
   endif()
   endif()
 
-  #
-  # LLVM_OPAQUE_POINTERS
-  #
-  # llvm has changed from typed pointers to opaque pointers, their guidance is
-  #
-  # From https://llvm.org/docs/OpaquePointers.html, version support
-  # LLVM 14: Supports all necessary APIs for migrating to opaque pointers and deprecates/removes
-  #          incompatible APIs. However, using opaque pointers in the optimization pipeline is not fully
-  #          supported. This release can be used to make out-of-tree code compatible with opaque
-  #          pointers, but opaque pointers should not be enabled in production.
-  #
-  # LLVM 15: Opaque pointers are enabled by default. Typed pointers are still available, but only
-  #          supported on a best-effort basis and may be untested.
-  #
-  # LLVM 16: Only opaque pointers will be supported. Typed pointers will not be supported.
-  #
-  # Up to llvm 14 including, ENABLE_LLVM_OPAQUE_POINTERS is force-set to OFF
-  # For llvm 15 ENABLE_LLVM_OPAQUE_POINTERS is a CMake option, defaulting to OFF,
-  # Post llvm 15, ENABLE_LLVM_OPAQUE_POINTERS is force-set to ON.
-  #    Clang 16 accepts -Xclang -no-opaque-pointers but silently produces bitcode with opaque pointers.
-  # reason is that 1) it's unfinished 2) for properly handling images, we need opaque types,
-  # which will only be available in LLVM 16+
-  # TODO: This should be temporary. After the opaque pointer conversion in PoCL is finished,
-  # we should remove this macro and use LLVM_OLDER_THAN_X macros only, like in the rest
-  # of the code, since this macro adds another layer of complexity.
-  if(LLVM_VERSION VERSION_LESS_EQUAL 14.0)
-    set(ENABLE_LLVM_OPAQUE_POINTERS OFF CACHE INTERNAL "llvm opaque pointers" FORCE)
-  elseif(LLVM_VERSION VERSION_EQUAL 15.0)
-    if(ENABLE_LEVEL0)
-      set(ENABLE_LLVM_OPAQUE_POINTERS OFF CACHE INTERNAL "llvm opaque pointers" FORCE)
-    else()
-      option(ENABLE_LLVM_OPAQUE_POINTERS "Handle the change to llvm opaque pointers." ON)
-    endif()
-  else()
-    set(ENABLE_LLVM_OPAQUE_POINTERS ON CACHE INTERNAL "llvm opaque pointers" FORCE)
-  endif()
-  if (ENABLE_LLVM_OPAQUE_POINTERS)
-    set(LLVM_OPAQUE_POINTERS 1)
-  endif()
-
 else()
 
   if(ENABLE_HOST_CPU_DEVICES AND (NOT DEFINED HOST_DEVICE_BUILD_HASH))
@@ -1132,16 +1092,6 @@ if(ENABLE_LLVM AND ENABLE_HOST_CPU_DEVICES AND (LLVM_VERSION_MAJOR GREATER 17) A
 
 endif()
 ######################################################################################
-
-unset(OPAQUE_PTR_FLAGS)
-if(LLVM_VERSION VERSION_EQUAL 15.0)
-  if(LLVM_OPAQUE_POINTERS)
-    set(OPAQUE_PTR_FLAGS "-Xclang -opaque-pointers")
-  else()
-    set(OPAQUE_PTR_FLAGS "-Xclang -no-opaque-pointers")
-  endif()
-endif()
-
 ######################################################################################
 
 # for kernel code, disable PIC & stack protector
@@ -1159,14 +1109,14 @@ endif()
 #       LLC_TRIPLE. Now assuming MSVC implies target triple that
 #       invokes MSVC toolchain in Clang.
 if (MSVC)
-  set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector ${OPAQUE_PTR_FLAGS}")
-  set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector ${OPAQUE_PTR_FLAGS}")
-  set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector ${OPAQUE_PTR_FLAGS}")
+  set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector ")
+  set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector ")
+  set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector ")
   set(KERNEL_TRIPLE_TARGETS_MSVC_TOOLCHAIN 1)
 else()
-  set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector -fPIC -fno-jump-tables ${OPAQUE_PTR_FLAGS}")
-  set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fPIC -fno-jump-tables ${OPAQUE_PTR_FLAGS}")
-  set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fPIC -fno-jump-tables ${OPAQUE_PTR_FLAGS}")
+  set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector -fPIC -fno-jump-tables ")
+  set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fPIC -fno-jump-tables ")
+  set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fPIC -fno-jump-tables ")
 endif()
 
 set(EXTRA_KERNEL_FLAGS "" CACHE STRING "Extra arguments to all kernel compilation commands (defaults to empty)")
@@ -2252,14 +2202,12 @@ if(ENABLE_CUDA)
     __opencl_c_atomic_scope_device __opencl_c_program_scope_global_variables \
     __opencl_c_generic_address_space")
 
-  if(LLVM_VERSION VERSION_GREATER_EQUAL 17.0)
-    set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_ext_float_atomics")
-    set(CUDA_DEVICE_FEATURES_30 "${CUDA_DEVICE_FEATURES_30} \
+  set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_ext_float_atomics")
+  set(CUDA_DEVICE_FEATURES_30 "${CUDA_DEVICE_FEATURES_30} \
      __opencl_c_ext_fp32_global_atomic_add __opencl_c_ext_fp32_local_atomic_add \
      __opencl_c_ext_fp32_global_atomic_min_max __opencl_c_ext_fp32_local_atomic_min_max \
      __opencl_c_ext_fp64_global_atomic_add __opencl_c_ext_fp64_local_atomic_add \
      __opencl_c_ext_fp64_global_atomic_min_max __opencl_c_ext_fp64_local_atomic_min_max")
-  endif()
 
   if(ENABLE_SPIRV)
     set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_il_program")
@@ -2512,8 +2460,7 @@ message(STATUS "OPENCL_LIBNAME: ${OPENCL_LIBNAME}")
 ## generate CTestCustom.cmake
 
 if(ENABLE_ASAN OR ENABLE_LSAN)
-  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/lsan.supp" CONTENT "leak:${LLVM_SRC_ROOT}/lib/Support/Unix/Signals.inc")
-  set(SAN_EXTRA "set(ENV{LSAN_OPTIONS} \"suppressions=${CMAKE_BINARY_DIR}/lsan.supp\")")
+  set(SAN_EXTRA "set(ENV{LSAN_OPTIONS} \"suppressions=${CMAKE_SOURCE_DIR}/lsan.supp\")")
 endif()
 
 # We need to use the oneAPI environment's LD_LIBRARY_PATH (need to source
@@ -2522,7 +2469,7 @@ endif()
 # before all paths in LD_LIBRARY_PATH. Otherwise libOpenCL.so will be found in /opt/intel/oneapi
 # which is not ocl-icd).
 if(SYCL_LIBDIR)
-  set(SYCL_EXTRA "set(ENV{LD_LIBRARY_PATH} \"${OPENCL_LIBDIR}:${SYCL_LIBDIR}:$ENV{LD_LIBRARY_PATH}\")")
+  set(SYCL_EXTRA "set(ENV{LD_LIBRARY_PATH} \"${OPENCL_LIBDIR}:\$ENV{LD_LIBRARY_PATH}\")")
 endif()
 
 # pointing OCL_ICD_VENDORS to pocl doesn't make sense with the proxy driver;
@@ -2783,8 +2730,6 @@ if (ENABLE_LLVM)
   MESSAGE(STATUS "LLVM_CPPFLAGS: ${LLVM_CPPFLAGS}")
   MESSAGE(STATUS "LLVM_LDFLAGS: ${LLVM_LDFLAGS}")
   MESSAGE(STATUS "LLVM_LIBDIR: ${LLVM_LIBDIR}")
-  MESSAGE(STATUS "LLVM_SRC_ROOT: ${LLVM_SRC_ROOT}")
-  MESSAGE(STATUS "LLVM_OBJ_ROOT: ${LLVM_OBJ_ROOT}")
   MESSAGE(STATUS "LLVM_INCLUDE_DIRS: ${LLVM_INCLUDE_DIRS}")
   MESSAGE(STATUS "LLVM_ALL_TARGETS: ${LLVM_ALL_TARGETS}")
   MESSAGE(STATUS "LLVM_HOST_TARGET: ${LLVM_HOST_TARGET}")

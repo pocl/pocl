@@ -541,12 +541,8 @@ calculateGVarOffsetsSizes(const DataLayout &DL,
     assert(GVar->hasInitializer());
 
     // if the current offset into the buffer is not aligned enough, fix it
-#if LLVM_MAJOR < 15
-    uint64_t GVarAlign = GVar->getAlignment();
-#else
     Align GVarA = GVar->getAlign().valueOrOne();
     uint64_t GVarAlign = GVarA.value();
-#endif
 
     if (GVarAlign > 0 && CurrentOffset % GVarAlign) {
       CurrentOffset |= (GVarAlign - 1);

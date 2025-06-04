@@ -1,15 +1,14 @@
 ---
-name: Linux OneAPI tests
+name: Linux SYCL-CTS tests
 
 permissions:
   contents: read
 
 on:
-  push:
-    branches:
-      - 'main'
-      - 'release*'
   workflow_dispatch:
+  schedule:
+# at 0:23 UTC every saturday
+    - cron: '23 0 * * 6'
   pull_request:
     paths-ignore:
       - 'doc/**'
@@ -26,17 +25,18 @@ concurrency:
 
 env:
   CCACHE_BASEDIR: "${{ github.workspace }}"
-  CCACHE_DIR: "${{ github.workspace }}/../../../../ccache_storage"
-  EXAMPLES_DIR: "${{ github.workspace }}/../../../../examples"
+  CCACHE_DIR: "${{ github.workspace }}/../../../ccache_storage"
+  EXAMPLES_DIR: "${{ github.workspace }}/../../../examples"
 
 jobs:
-  oneapi_matrix:
-    name: LLVM ${{ matrix.llvm }} - oneAPI
-    runs-on: [self-hosted, linux, x64, oneapi]
+  sycl_cts_cpu_matrix:
+    name: "LLVM ${{ matrix.llvm }} - SYCL CTS on ${{ matrix.device }}"
+    runs-on: [self-hosted, linux, x64, "sycl_cts_${{matrix.device}}"]
     strategy:
       fail-fast: false
       matrix:
-        llvm: [18]
+        llvm: [20]
+        device: [cpu, gpu]
 
     steps:
       - name: Checkout
@@ -52,9 +52,10 @@ jobs:
         run: |
           runCMake() {
             BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
-            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
-            -DENABLE_HOST_CPU_DEVICES=1 -DENABLE_LEVEL0=1 -DSTATIC_LLVM=ON \
+            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
+            -DENABLE_TESTSUITES=SYCL_CTS -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_oneapi \
+            -DSYCL_CXX_COMPILER=/opt/intel/oneapi/compiler/latest/bin/icpx -DSYCL_LIBDIR=/opt/intel/oneapi/compiler/latest/lib \
             -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/usr/bin/llvm-spirv-${{ matrix.llvm }} \
             "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
           }
@@ -63,7 +64,14 @@ jobs:
           mkdir ${{ github.workspace }}/build
           mkdir -p ${EXAMPLES_DIR}/build_oneapi
           mkdir -p ${EXAMPLES_DIR}/source
-          runCMake "-DENABLE_TESTSUITES=dpcpp-book-samples;oneapi-samples;simple-sycl-samples;intel-compute-samples" -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_oneapi -DSYCL_CXX_COMPILER=/opt/intel/oneapi/compiler/latest/bin/icpx -DSYCL_LIBDIR=/opt/intel/oneapi/compiler/latest/lib
+
+          if [ "${{ matrix.device }}" == "cpu" ]; then
+            runCMake -DENABLE_HOST_CPU_DEVICES=1 -DENABLE_CONFORMANCE=ON
+          elif [ "${{ matrix.device }}" == "gpu" ]; then
+            runCMake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LEVEL0=1 -DSTATIC_LLVM=ON -DENABLE_CONFORMANCE=OFF
+          else
+            echo "Unknown configuration" && exit 1
+          fi
 
       - name: Build PoCL
         id: build_pocl
@@ -73,32 +81,53 @@ jobs:
 
       - name: Build Examples
         id: build_examples
-        # occasionally git timeouts on git clone of the examples
-        timeout-minutes: 120
+        # SYCL_CTS takes long time to build
+        timeout-minutes: 180
         run: |
-          cd ${{ github.workspace }}/build/examples/dpcpp-book-samples && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) dpcpp-book-samples
-          cd ${{ github.workspace }}/build/examples/oneapi-samples && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) oneapi-samples
-          cd ${{ github.workspace }}/build/examples/simple-sycl-samples && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) simple-sycl-samples
-          cd ${{ github.workspace }}/build/examples/intel-compute-samples && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) intel-compute-samples
+          cd ${{ github.workspace }}/build/examples/SYCL_CTS && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) SYCL_CTS
 
-      - name: Run CPU Tests
+      - name: Cache CTest timings
+        id: cache_ctest
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+        with:
+          path: ${{ github.workspace }}/build/Testing/Temporary/CTestCostData.txt
+          key: ctest-cache-${{ runner.name }}-sycl-cts-${{ matrix.device }}-${{ github.run_id }}
+          restore-keys: ctest-cache-${{ runner.name }}-sycl-cts-${{ matrix.device }}
+
+      # avoids running tests that are broken and/or take long time
+      - name: Run Short Tests
         env:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
-        id: ctest_cpu
+        id: ctest_short
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
         timeout-minutes: 40
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_cpu -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) $CTEST_FLAGS
+          source /opt/intel/oneapi/setvars.sh
+          if [ "${{ matrix.device }}" == "cpu" ]; then
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_cpu -j4 $CTEST_FLAGS -E 'sycl_cts_test_math_builtin_api|sycl_cts_test_multi_ptr|sycl_cts_test_kernel|sycl_cts_test_kernel_bundle|sycl_cts_test_group_functions|sycl_cts_test_sub_group'
+          elif [ "${{ matrix.device }}" == "gpu" ]; then
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_gpu -j4 $CTEST_FLAGS -E 'sycl_cts_test_math_builtin_api|sycl_cts_test_multi_ptr|sycl_cts_test_kernel|sycl_cts_test_kernel_bundle|sycl_cts_test_group_functions|sycl_cts_test_nd_item|sycl_cts_test_reduction|sycl_cts_test_vector_api|sycl_cts_test_group|sycl_cts_test_spec_constants'
+          else
+            echo "Unknown configuration" && exit 1
+          fi
 
-      - name: Run GPU Tests
+      # runs every test
+      - name: Run Full Tests
         env:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
-        id: ctest_gpu
-        timeout-minutes: 40
+        id: ctest_full
+        if: ${{ github.event_name == 'schedule' }}
+        timeout-minutes: 240
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_gpu -j1 $CTEST_FLAGS
-
-
+          source /opt/intel/oneapi/setvars.sh
+          if [ "${{ matrix.device }}" == "cpu" ]; then
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_cpu -j4 $CTEST_FLAGS
+          elif [ "${{ matrix.device }}" == "gpu" ]; then
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_gpu -j4 $CTEST_FLAGS
+          else
+            echo "Unknown configuration" && exit 1
+          fi

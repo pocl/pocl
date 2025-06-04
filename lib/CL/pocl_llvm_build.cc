@@ -49,12 +49,7 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/VirtualFileSystem.h>
 #include <llvm/Transforms/Utils/Cloning.h>
-
-#if LLVM_VERSION_MAJOR > 15
-#include "llvm/TargetParser/Host.h"
-#elif LLVM_VERSION_MAJOR > 10
-#include "llvm/Support/Host.h"
-#endif
+#include <llvm/TargetParser/Host.h>
 
 #include <iostream>
 #include <map>
@@ -395,14 +390,6 @@ int pocl_llvm_build_program(cl_program program,
   // required for clGetKernelArgInfo()
   ss << "-cl-kernel-arg-info ";
 
-#if (LLVM_MAJOR == 15) || (LLVM_MAJOR == 16)
-#ifdef LLVM_OPAQUE_POINTERS
-  ss << "-opaque-pointers ";
-#else
-  ss << "-no-opaque-pointers ";
-#endif
-#endif
-
   std::string fp_contract;
   if (device->llvm_fp_contract_mode != NULL) {
     fp_contract = std::string(device->llvm_fp_contract_mode);
@@ -413,7 +400,7 @@ int pocl_llvm_build_program(cl_program program,
   size_t fastmath_flag = user_options.find("-cl-fast-relaxed-math");
 
   if (fastmath_flag != std::string::npos) {
-#if defined(ENABLE_CONFORMANCE) && LLVM_VERSION_MAJOR < 18
+#if defined(ENABLE_CONFORMANCE) && LLVM_MAJOR < 18
     user_options.replace(fastmath_flag, 21,
                          "-cl-finite-math-only -cl-unsafe-math-optimizations");
 #endif
@@ -424,7 +411,7 @@ int pocl_llvm_build_program(cl_program program,
   size_t unsafemath_flag = user_options.find("-cl-unsafe-math-optimizations");
 
   if (unsafemath_flag != std::string::npos) {
-#if defined(ENABLE_CONFORMANCE) && LLVM_VERSION_MAJOR < 18
+#if defined(ENABLE_CONFORMANCE) && LLVM_MAJOR < 18
     // This should be almost the same but disables -freciprocal-math, that
     // was not accurate enough in before LLVM v18. Disabling it is
     // required for conformance_math_divide test to pass with OpenCL 3.0
@@ -618,16 +605,8 @@ int pocl_llvm_build_program(cl_program program,
   PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
   llvm::Triple triple (device->llvm_target_triplet);
 
-#if LLVM_MAJOR >= 15
   LangOptions::setLangDefaults(*la, clang::Language::OpenCL, triple,
                                po.Includes, clang::LangStandard::lang_opencl12);
-#else
-  pocl_build.setLangDefaults(*la,
-                             clang::InputKind(clang::Language::OpenCL),
-                             triple,
-                             po.Includes,
-                             clang::LangStandard::lang_opencl12);
-#endif
 
   // LLVM 3.3 and older do not set that char is signed which is
   // defined by the OpenCL C specs (but not by C specs).
