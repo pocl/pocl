@@ -544,7 +544,15 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->device_aux_functions = cuda_native_device_aux_funcs;
 
 #if defined(ENABLE_SPIRV)
+#if LLVM_MAJOR >= 20
+  dev->supported_spir_v_versions
+    = "SPIR-V_1.5 SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
+#elif LLVM_MAJOR >= 18
+  dev->supported_spir_v_versions
+    = "SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
+#else
   dev->supported_spir_v_versions = "SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
+#endif
   dev->supported_spirv_extensions = "+SPV_KHR_no_integer_wrap_decoration"
                                     ",+SPV_INTEL_fp_fast_math_mode"
                                     ",+SPV_EXT_shader_atomic_float_add";
@@ -685,12 +693,6 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 
 
   dev->local_mem_type = CL_LOCAL;
-
-#ifdef ENABLE_SPIRV
-  dev->supported_spir_v_versions = "SPIR-V_1.2";
-#else
-  dev->supported_spir_v_versions = "";
-#endif
 
   int warp_size = 32;
   cuDeviceGetAttribute (&warp_size, CU_DEVICE_ATTRIBUTE_WARP_SIZE,
