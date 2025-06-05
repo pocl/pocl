@@ -1,6 +1,6 @@
 /* spirv_queries.h - sets up SPIR-V queries for the device
  *
- * Copyright (c) 2025 pocl developers
+ * Copyright (c) 2025 Ben Ashbaugh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
