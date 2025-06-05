@@ -2969,6 +2969,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                            " cl_khr_local_int32_extended_atomics"
                            " cl_khr_device_uuid"
                            " cl_khr_il_program"
+                           " cl_khr_spirv_queries"
                            " cl_khr_spirv_no_integer_wrap_decoration"
 #ifdef ENABLE_LEVEL0_EXTRA_FEATURES
                            " cl_intel_split_work_group_barrier"
