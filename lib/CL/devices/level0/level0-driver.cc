@@ -32,7 +32,6 @@
 #include "pocl_spir.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
-#include "spirv_queries.h"
 
 #include "imagefill.h"
 #include "memfill.h"

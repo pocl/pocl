@@ -38,7 +38,6 @@
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
 #include "pocl_tensor_util.h"
-#include "spirv_queries.h"
 #include "topology/pocl_topology.h"
 #include "utlist.h"
 

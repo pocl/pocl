@@ -1,4 +1,4 @@
-/* spirv_queries.h - sets up SPIR-V queries for the device
+/* spirv_queries.cc - sets up SPIR-V queries for the device
  *
  * Copyright (c) 2025 Ben Ashbaugh
  *
@@ -24,8 +24,8 @@
 #include <algorithm>
 #include <vector>
 
+#include "devices.h"
 #include "spirv.hh"
-#include "spirv_queries.h"
 
 #ifdef __cplusplus
 extern "C" {
