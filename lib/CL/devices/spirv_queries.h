@@ -24,15 +24,16 @@
 #ifndef SPIRV_QUERIES_H
 #define SPIRV_QUERIES_H
 
-#include "pocl_export.h"
 #include "devices.h"
+#include "pocl_export.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-POCL_EXPORT
-void pocl_setup_spirv_queries (cl_device_id dev);
+  POCL_EXPORT
+  void pocl_setup_spirv_queries (cl_device_id dev);
 
 #ifdef __cplusplus
 }
