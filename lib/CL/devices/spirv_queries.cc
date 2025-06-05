@@ -51,7 +51,10 @@ pocl_setup_spirv_queries (cl_device_id dev)
   spirvCapabilities.push_back(static_cast<cl_uint>(spv::Capability::Linkage));
   spirvCapabilities.push_back(static_cast<cl_uint>(spv::Capability::Vector16));
 
-  spirvCapabilities.push_back(static_cast<cl_uint>(spv::Capability::Int64));
+  if (dev->has_64bit_long)
+    {
+      spirvCapabilities.push_back(static_cast<cl_uint>(spv::Capability::Int64));
+    }
 
   if (dev->image_support)
     {
@@ -70,17 +73,17 @@ pocl_setup_spirv_queries (cl_device_id dev)
       spirvCapabilities.push_back(static_cast<cl_uint>(spv::Capability::ImageReadWrite));
     }
 
-  if (dev->generic_as_support == CL_TRUE)
+  if (dev->generic_as_support)
     {
       spirvCapabilities.push_back(static_cast<cl_uint>(spv::Capability::GenericPointer));
     }
 
-  if (dev->max_num_sub_groups != 0 || dev->wg_collective_func_support == CL_TRUE)
+  if (dev->max_num_sub_groups != 0 || dev->wg_collective_func_support)
     {
       spirvCapabilities.push_back(static_cast<cl_uint>(spv::Capability::Groups));
     }
 
-  if (dev->pipe_support == CL_TRUE)
+  if (dev->pipe_support)
     {
       spirvCapabilities.push_back(static_cast<cl_uint>(spv::Capability::Pipes));
     }
