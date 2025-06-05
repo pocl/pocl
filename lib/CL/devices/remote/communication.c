@@ -52,6 +52,7 @@
 #include "pocl_threads.h"
 #include "pocl_timing.h"
 #include "remote.h"
+#include "spirv_queries.h"
 #include "utlist.h"
 #include "utlist_addon.h"
 
