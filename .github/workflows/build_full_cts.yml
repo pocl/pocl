@@ -57,6 +57,7 @@ jobs:
         id: copy_spirv
         if: ${{ matrix.config == 'full_cts_cpu_spirv' }}
         timeout-minutes: 6
+        run: |
           if [ -e "${{ github.workspace }}/../../../CTS_FULL_CACHE_LLVM_${{ matrix.llvm }}" ]; then \
             rmdir ${{ github.workspace }}/build/CTS_FULL_CACHE ; \
             cp -r --reflink=always "${{ github.workspace }}/../../../CTS_FULL_CACHE_LLVM_${{ matrix.llvm }}" ${{ github.workspace }}/build ; \
