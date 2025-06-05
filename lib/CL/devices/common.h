@@ -122,9 +122,6 @@ POCL_EXPORT
 void pocl_setup_ils_with_version (cl_device_id dev);
 
 POCL_EXPORT
-void pocl_setup_spirv_queries (cl_device_id dev);
-
-POCL_EXPORT
 void pocl_setup_features_with_version (cl_device_id dev);
 
 POCL_EXPORT
