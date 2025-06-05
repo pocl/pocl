@@ -1,4 +1,4 @@
-/* spirv_queries.h - sets up SPIR-V queries for the device
+/* spirv_queries.cc - sets up SPIR-V queries for the device
  *
  * Copyright (c) 2025 Ben Ashbaugh
  *
