@@ -463,14 +463,14 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_PCI_BUS_INFO_KHR:
     POCL_RETURN_GETINFO (cl_device_pci_bus_info_khr, device->pci_bus_info);
 
-  /** cl_khr_spirv_queries **/
-
+  /* cl_khr_spirv_queries **/
   case CL_DEVICE_SPIRV_EXTENDED_INSTRUCTION_SETS_KHR:
-    POCL_RETURN_GETINFO_ARRAY (const char*, device->num_spirv_extended_instruction_sets,
+    POCL_RETURN_GETINFO_ARRAY (const char *,
+                               device->num_spirv_extended_instruction_sets,
                                device->spirv_extended_instruction_sets);
 
   case CL_DEVICE_SPIRV_EXTENSIONS_KHR:
-    POCL_RETURN_GETINFO_ARRAY (const char*, device->num_spirv_extensions,
+    POCL_RETURN_GETINFO_ARRAY (const char *, device->num_spirv_extensions,
                                device->spirv_extensions);
 
   case CL_DEVICE_SPIRV_CAPABILITIES_KHR:
