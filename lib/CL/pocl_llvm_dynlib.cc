@@ -26,6 +26,7 @@
 
 #include <llvm/Support/DynamicLibrary.h>
 #include <unordered_map>
+#include <vector>
 
 using namespace llvm::sys;
 
@@ -65,34 +66,87 @@ void *pocl_dynlib_symbol_address(void *, const char *SymbolName) {
 
 const char *pocl_dynlib_pathname(void *Address) {
 #ifdef _WIN32
+  // Look up the module handle from the address
   HMODULE Hm;
   if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
                              GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                         (LPCWSTR)&Address, &Hm) == 0) {
+                         (LPCWSTR)Address, &Hm) == 0) {
     int Ret = GetLastError();
-    POCL_MSG_WARN("GetModuleHandleEx failed, error = %d ; trying fallback\n", Ret);
+    POCL_MSG_WARN("GetModuleHandleEx failed, error = %d; trying fallback\n",
+                  Ret);
 
-    // undocumented hack from https://stackoverflow.com/a/2396380
+    // Undocumented hack from https://stackoverflow.com/a/2396380
     MEMORY_BASIC_INFORMATION mbi;
-    size_t Len = VirtualQuery(Address, &mbi, sizeof(mbi));
-    if (Len != sizeof(mbi)) {
-      POCL_MSG_ERR("VirtualQuery failed", Ret);
+    if (VirtualQuery(Address, &mbi, sizeof(mbi)) == 0) {
+      Ret = GetLastError();
+      POCL_MSG_ERR("VirtualQuery fallback failed, error = %d\n", Ret);
       return nullptr;
     }
     Hm = (HMODULE)mbi.AllocationBase;
   }
 
-  WCHAR wpath[MAX_PATH]{};
+  // Get the path of the module
+  WCHAR wpath[MAX_PATH];
   if (GetModuleFileNameW(Hm, wpath, ARRAYSIZE(wpath)) == 0) {
     int Ret = GetLastError();
     POCL_MSG_ERR("GetModuleFileName failed, error = %d\n", Ret);
     return nullptr;
   }
 
-  static char path[MAX_PATH];
-  WideCharToMultiByte(CP_UTF8, 0, wpath, -1, path, ARRAYSIZE(path), NULL, NULL);
-  POCL_MSG_PRINT_INFO("pocl_dynlib_symbol_adress: using DLL path: %s \n", path);
-  return path;
+  // Open a the file to get a handle
+  HANDLE hFile =
+      CreateFileW(wpath, GENERIC_READ,
+                  FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
+                  OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+  if (hFile == INVALID_HANDLE_VALUE) {
+    int Ret = GetLastError();
+    POCL_MSG_ERR("CreateFile failed, error = %d\n", Ret);
+    return nullptr;
+  }
+
+  // Get the final path, resolving any symlinks
+  std::vector<WCHAR> wfinal_buf(MAX_PATH);
+  DWORD path_len = GetFinalPathNameByHandleW(
+      hFile, wfinal_buf.data(), wfinal_buf.size(), VOLUME_NAME_DOS);
+  if (path_len > wfinal_buf.size()) {
+    wfinal_buf.resize(path_len);
+    path_len = GetFinalPathNameByHandleW(hFile, wfinal_buf.data(),
+                                         wfinal_buf.size(), VOLUME_NAME_DOS);
+  }
+  CloseHandle(hFile);
+  if (path_len == 0) {
+    int Ret = GetLastError();
+    POCL_MSG_ERR("GetFinalPathNameByHandle failed, error = %d\n", Ret);
+    return nullptr;
+  }
+
+  // Get rid of the long path prefix
+  std::wstring wfinal(wfinal_buf.data(), path_len);
+  if (wfinal.rfind(L"\\\\?\\", 0) == 0) {
+    wfinal = wfinal.substr(4);
+  }
+
+  // Convert the wide string to a UTF-8 multi-byte string
+  thread_local std::string final;
+  int required_size = WideCharToMultiByte(CP_UTF8, 0, wfinal.c_str(), -1,
+                                          NULL, 0, NULL, NULL);
+  if (required_size == 0) {
+    int Ret = GetLastError();
+    POCL_MSG_ERR("WideCharToMultiByte (size check) failed, error = %d\n", Ret);
+    return nullptr;
+  }
+  final.resize(required_size);
+  if (WideCharToMultiByte(CP_UTF8, 0, wfinal.c_str(), -1,
+                          &final[0], required_size, NULL, NULL) == 0) {
+    int Ret = GetLastError();
+    POCL_MSG_ERR("WideCharToMultiByte (conversion) failed, error = %d\n", Ret);
+    return nullptr;
+  }
+  final.resize(strlen(final.c_str()));
+
+  POCL_MSG_PRINT_INFO("pocl_dynlib_pathname: using DLL path: %s \n",
+                      final.c_str());
+  return final.c_str();
 #else
   POCL_MSG_ERR("pocl_dynlib_pathname does not have C++/LLVM implementation\n");
   return nullptr;
