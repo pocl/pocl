@@ -4084,6 +4084,21 @@ typedef cl_bitfield         cl_device_kernel_clock_capabilities_khr;
 #define CL_KHR_SPIRV_NO_INTEGER_WRAP_DECORATION_EXTENSION_VERSION CL_MAKE_VERSION(1, 0, 0)
 
 /***************************************************************
+* cl_khr_spirv_queries
+***************************************************************/
+#define cl_khr_spirv_queries 1
+#define CL_KHR_SPIRV_QUERIES_EXTENSION_NAME \
+    "cl_khr_spirv_queries"
+
+
+#define CL_KHR_SPIRV_QUERIES_EXTENSION_VERSION CL_MAKE_VERSION(1, 0, 0)
+
+/* cl_device_info */
+#define CL_DEVICE_SPIRV_EXTENDED_INSTRUCTION_SETS_KHR       0x12B9
+#define CL_DEVICE_SPIRV_EXTENSIONS_KHR                      0x12BA
+#define CL_DEVICE_SPIRV_CAPABILITIES_KHR                    0x12BB
+
+/***************************************************************
 * cl_khr_srgb_image_writes
 ***************************************************************/
 #define cl_khr_srgb_image_writes 1

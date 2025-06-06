@@ -32,6 +32,7 @@
 #include "pocl_spir.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
+#include "spirv_queries.h"
 
 #include "imagefill.h"
 #include "memfill.h"
@@ -2968,6 +2969,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                            " cl_khr_local_int32_extended_atomics"
                            " cl_khr_device_uuid"
                            " cl_khr_il_program"
+                           " cl_khr_spirv_queries"
                            " cl_khr_spirv_no_integer_wrap_decoration"
 #ifdef ENABLE_LEVEL0_EXTRA_FEATURES
                            " cl_intel_split_work_group_barrier"
@@ -3171,6 +3173,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     pocl_setup_features_with_version(ClDev);
     pocl_setup_extensions_with_version(ClDev);
     pocl_setup_ils_with_version(ClDev);
+    pocl_setup_spirv_queries(ClDev);
   }
 
   if (ClDev->type == CL_DEVICE_TYPE_CUSTOM ||

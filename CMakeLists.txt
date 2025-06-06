@@ -1706,7 +1706,7 @@ if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_subgroup")
 endif()
 
 if(HOST_CPU_ENABLE_SPIRV)
-  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_il_program")
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_il_program cl_khr_spirv_queries")
 endif()
 
 if(HOST_CPU_ENABLE_CL_KHR_FP16)
@@ -2209,7 +2209,7 @@ if(ENABLE_CUDA)
      __opencl_c_ext_fp64_global_atomic_min_max __opencl_c_ext_fp64_local_atomic_min_max")
 
   if(ENABLE_SPIRV)
-    set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_il_program")
+    set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_il_program cl_khr_spirv_queries")
   endif()
 
   option(ENABLE_CUDA_EXPERIMENTAL_EXTENSIONS "experimental (and/or unfinished) device extensions" OFF)

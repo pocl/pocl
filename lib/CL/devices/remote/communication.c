@@ -52,6 +52,7 @@
 #include "pocl_threads.h"
 #include "pocl_timing.h"
 #include "remote.h"
+#include "spirv_queries.h"
 #include "utlist.h"
 #include "utlist_addon.h"
 
@@ -2177,6 +2178,7 @@ pocl_network_fetch_devinfo (cl_device_id device,
   device->supported_spir_v_versions
       = GET_STRING (devinfo->supported_spir_v_versions);
   pocl_setup_ils_with_version (device);
+  pocl_setup_spirv_queries (device);
 
   if (devinfo->builtin_kernels)
     device->builtin_kernel_list = GET_STRING (devinfo->builtin_kernels);
