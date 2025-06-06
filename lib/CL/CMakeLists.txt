@@ -205,10 +205,15 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    # platform dep
                    "pocl_timing.h" "pocl_threads.h" "pocl_file_util.h"
                    # dbks
-                   "dbk/pocl_dbk_khr_jpeg_shared.c" "dbk/pocl_dbk_khr_jpeg_shared.h"
-                   "dbk/pocl_dbk_khr_onnxrt_shared.c" "dbk/pocl_dbk_khr_onnxrt_shared.h"
-                   "dbk/pocl_dbk_khr_img_shared.c" "dbk/pocl_dbk_khr_img_shared.h"
-                   "dbk/pocl_dbk_khr_dnn_utils_shared.c" "dbk/pocl_dbk_khr_dnn_utils_shared.h"
+                   "dbk/pocl_dbk_khr_jpeg_shared.c"
+                   "dbk/pocl_dbk_khr_jpeg_shared.h"
+                   "dbk/pocl_dbk_khr_onnxrt_shared.c"
+                   "dbk/pocl_dbk_khr_onnxrt_shared.h"
+                   "dbk/pocl_dbk_khr_img_shared.c"
+                   "dbk/pocl_dbk_khr_img_shared.h"
+                   "dbk/pocl_dbk_khr_dnn_utils_shared.c"
+                   "dbk/pocl_dbk_khr_dnn_utils_shared.h"
+                   "pocl_raw_ptr_set.c"
 )
 
 unset(EXTRA_LLVM_SOURCES)
@@ -313,6 +318,10 @@ endif()
 
 # this is so that we don't compile twice when building both libpocl and libOpenCL
 add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
+
+target_include_directories(libpocl_unlinked_objs
+  PRIVATE ${CMAKE_SOURCE_DIR}/thirdparty/STC/include)
+
 if(BUILD_SHARED_LIBS AND MSVC)
   # Inject __declspec(dllexport).
   target_compile_definitions(libpocl_unlinked_objs PRIVATE EXPORT_POCL_LIB)

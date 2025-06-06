@@ -48,15 +48,9 @@ POname(clSVMFree)(cl_context context,
     }
 
   POCL_LOCK_OBJ (context);
-  pocl_raw_ptr *tmp = NULL, *item = NULL;
-  DL_FOREACH_SAFE (context->raw_ptrs, item, tmp)
-  {
-    if (item->vm_ptr == svm_pointer)
-      {
-        DL_DELETE (context->raw_ptrs, item);
-        break;
-      }
-  }
+  pocl_raw_ptr *item
+    = pocl_raw_ptr_set_lookup_with_vm_ptr (context->raw_ptrs, svm_pointer);
+  pocl_raw_ptr_set_remove (context->raw_ptrs, item);
   POCL_UNLOCK_OBJ (context);
 
   if (item == NULL)
