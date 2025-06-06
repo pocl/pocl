@@ -37,7 +37,6 @@ jobs:
     env:
       CCACHE_BASEDIR: "${{ github.workspace }}"
       CCACHE_DIR: "${{ github.workspace }}/../../../ccache_storage"
-      CTEST_NO_TESTS_ACTION: "error"
       EXAMPLES_DIR: "${{ github.workspace }}/../../../examples"
       TSAN_OPTIONS: "second_deadlock_stack=1"
     strategy:
@@ -171,9 +170,9 @@ jobs:
           # test_large_buf consumes too much memory for the smaller bots
             runCTest -R runtime -E test_large_buf
           elif [ "${{ matrix.config }}" == "tsan" ]; then
-            runCTest -R runtime -E test_large_buf
+            runCTest -E test_large_buf
           elif [ "${{ matrix.config }}" == "ubsan" ]; then
-            runCTest -R runtime -E test_large_buf
+            runCTest -E test_large_buf
           else
             echo "Unknown configuration" && exit 1
           fi
