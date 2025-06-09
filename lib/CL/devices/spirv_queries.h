@@ -32,8 +32,8 @@ extern "C"
 {
 #endif
 
-  POCL_EXPORT
-  void pocl_setup_spirv_queries (cl_device_id dev);
+POCL_EXPORT
+void pocl_setup_spirv_queries (cl_device_id dev);
 
 #ifdef __cplusplus
 }
