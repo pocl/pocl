@@ -25,7 +25,8 @@
 #include "pocl_debug.h"
 #include "utlist.h"
 
-CL_API_ENTRY void CL_API_CALL
+/* POCL_EXPORT is for loadable drivers. */
+POCL_EXPORT CL_API_ENTRY void CL_API_CALL
 POname(clSVMFree)(cl_context context,
                   void *svm_pointer) CL_API_SUFFIX__VERSION_2_0
 {

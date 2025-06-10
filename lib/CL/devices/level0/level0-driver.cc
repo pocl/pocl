@@ -412,17 +412,12 @@ void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg,
           cmd->svm_free.queue, cmd->svm_free.num_svm_pointers,
           cmd->svm_free.svm_pointers, cmd->svm_free.data);
     } else {
-      for (unsigned i = 0; i < cmd->svm_free.num_svm_pointers; i++) {
-        void *ptr = cmd->svm_free.svm_pointers[i];
-        POCL_LOCK_OBJ(Context);
-        pocl_raw_ptr *item =
-            pocl_raw_ptr_set_lookup_with_vm_ptr(Context->raw_ptrs, ptr);
-        assert(item);
-        pocl_raw_ptr_set_erase(Context->raw_ptrs, item);
-        POCL_UNLOCK_OBJ(Context);
-        POname(clReleaseContext)(Context);
-        dev->ops->svm_free(dev, ptr);
-      }
+       for (unsigned i = 0; i < cmd->svm_free.num_svm_pointers; i++) {
+	 void *Ptr = cmd->svm_free.svm_pointers[i];
+	 /* This updates bookkeeping associated with the 'ptr'
+	    done by the PoCL core. */
+	 POname (clSVMFree) (Context, Ptr);
+       }
     }
     *Msg = "Event SVM Free              ";
     break;
