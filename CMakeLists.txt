@@ -617,7 +617,7 @@ function(findImpLibAndDLL PACKAGE IMP_NAME DLL_NAME INCLUDE_FILE)
     set_target_properties(PkgConfig::${PACKAGE}
                 PROPERTIES
                 IMPORTED_IMPLIB "${TGT_LIB_IMPLIB}"
-				IMPORTED_LOCATION "${TGT_LIB_DLL}"
+                IMPORTED_LOCATION "${TGT_LIB_DLL}"
                 INTERFACE_INCLUDE_DIRECTORIES "${TGT_INCLUDE_DIRS}")
   else()
     message(STATUS "Library ${PACKAGE} not found")

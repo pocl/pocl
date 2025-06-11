@@ -40,8 +40,8 @@ if(ENABLE_ICD AND (NOT OPENCL_LIBRARIES))
 endif()
 
 # for SPIR-V tests
-find_program(SPIRV_AS "spirv-as")
-find_program(SPIRV_VAL "spirv-val")
+find_program(SPIRV_AS "spirv-as" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}")
+find_program(SPIRV_VAL "spirv-val" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}")
 if(SPIRV_AS AND SPIRV_VAL)
   set(HAVE_SPIRV_TOOLS 1)
 endif()
@@ -97,7 +97,7 @@ else()
   message(WARNING "llvm-spirv or spirv-tools not found - disabling SPIRV tests in CTS")
 endif()
 
-set(UPSTREAM_CMAKE_ARGS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+set(UPSTREAM_CMAKE_ARGS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"   "-DCMAKE_CONFIGURATION_TYPES=${CMAKE_CONFIGURATION_TYPES}")
 if(CMAKE_C_COMPILER_LAUNCHER)
   list(APPEND UPSTREAM_CMAKE_ARGS "-DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}")
 endif()
@@ -1132,7 +1132,76 @@ endforeach()
 # version of the test works as expected.
 # See https://github.com/pocl/pocl/issues/1582
 # and https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/2468
-if(LLVM_VERSION VERSION_GREATER_EQUAL 19.0)
+if((LLVM_VERSION VERSION_GREATER_EQUAL 19.0) AND (ENABLE_SPIRV AND HAVE_SPIRV_TOOLS))
   set_property(TEST conformance_spirv_basic_micro_progvar
     PROPERTY DISABLED 1)
 endif()
+
+set(OPENCL_CTS_DIR_LIST
+${TS_BUILDDIR}/allocations
+${TS_BUILDDIR}/api
+${TS_BUILDDIR}/atomics
+${TS_BUILDDIR}/basic
+${TS_BUILDDIR}/buffers
+${TS_BUILDDIR}/c11_atomics
+${TS_BUILDDIR}/common
+${TS_BUILDDIR}/commonfns
+${TS_BUILDDIR}/compiler
+${TS_BUILDDIR}/computeinfo
+${TS_BUILDDIR}/contractions
+${TS_BUILDDIR}/conversions
+${TS_BUILDDIR}/d3d10
+${TS_BUILDDIR}/d3d11
+${TS_BUILDDIR}/device_execution
+${TS_BUILDDIR}/device_partition
+${TS_BUILDDIR}/device_timer
+${TS_BUILDDIR}/events
+${TS_BUILDDIR}/extensions
+${TS_BUILDDIR}/generic_address_space
+${TS_BUILDDIR}/geometrics
+${TS_BUILDDIR}/gl
+${TS_BUILDDIR}/gles
+${TS_BUILDDIR}/half
+${TS_BUILDDIR}/images
+${TS_BUILDDIR}/integer_ops
+${TS_BUILDDIR}/math_brute_force
+${TS_BUILDDIR}/mem_host_flags
+${TS_BUILDDIR}/multiple_device_context
+${TS_BUILDDIR}/non_uniform_work_group
+${TS_BUILDDIR}/pipes
+${TS_BUILDDIR}/printf
+${TS_BUILDDIR}/profiling
+${TS_BUILDDIR}/relationals
+${TS_BUILDDIR}/select
+${TS_BUILDDIR}/spir
+${TS_BUILDDIR}/spirv_new
+${TS_BUILDDIR}/subgroups
+${TS_BUILDDIR}/SVM
+${TS_BUILDDIR}/thread_dimensions
+${TS_BUILDDIR}/vectors
+${TS_BUILDDIR}/vulkan
+${TS_BUILDDIR}/workgroups
+${TS_BUILDDIR}/extensions/cl_ext_cxx_for_opencl
+${TS_BUILDDIR}/extensions/cl_khr_command_buffer
+${TS_BUILDDIR}/extensions/cl_khr_command_buffer/cl_khr_command_buffer_mutable_dispatch
+${TS_BUILDDIR}/extensions/cl_khr_dx9_media_sharing
+${TS_BUILDDIR}/extensions/cl_khr_external_memory_dma_buf
+${TS_BUILDDIR}/extensions/cl_khr_external_semaphore
+${TS_BUILDDIR}/extensions/cl_khr_kernel_clock
+${TS_BUILDDIR}/extensions/cl_khr_semaphore
+${TS_BUILDDIR}/gl/GLEW
+${TS_BUILDDIR}/gl/GLEW/GL
+${TS_BUILDDIR}/images/clCopyImage
+${TS_BUILDDIR}/images/clFillImage
+${TS_BUILDDIR}/images/clGetInfo
+${TS_BUILDDIR}/images/clReadWriteImage
+${TS_BUILDDIR}/images/kernel_image_methods
+${TS_BUILDDIR}/images/kernel_read_write
+${TS_BUILDDIR}/images/samplerlessReads)
+
+add_custom_target(create_cts_links ALL DEPENDS ${TS_NAME})
+
+foreach(CTS_DIR IN LISTS OPENCL_CTS_DIR_LIST)
+  #message(STATUS "Adding symlink in DIR: ${CTS_DIR}")
+  add_symlink_to_built_opencl_dynlib_in_dir(${CTS_DIR} create_cts_links)
+endforeach()
