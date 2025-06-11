@@ -657,6 +657,7 @@ static int convertBCorSPV(char *InputPath,
 
   Content = nullptr;
   ContentSize = 0;
+  assert(HiddenOutputPath[0]);
   r = pocl_read_file(HiddenOutputPath, &Content, &ContentSize);
   if (r != 0) {
     BuildLog->append("failed to read output file from llvm-spirv\n");
@@ -671,6 +672,7 @@ static int convertBCorSPV(char *InputPath,
 #endif
 
   if (keepOutputPath) {
+    assert(HiddenOutputPath[0]);
     r = pocl_write_file(HiddenOutputPath, Content, ContentSize, 0);
     if (r != 0) {
       free(Content);
