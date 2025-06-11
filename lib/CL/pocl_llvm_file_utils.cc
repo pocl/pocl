@@ -177,20 +177,26 @@ int pocl_mk_tempname(char *output, const char *prefix, const char *suffix,
   llvm::Twine suf(suffix);
 
   llvm::SmallString<512> TmpPath;
-  std::error_code ec;
+  std::error_code ErrCode;
 
   if (ret_fd) {
     int fd = -1;
-    ec = fs::createUniqueFile(p + random_pattern + suf, fd, TmpPath,
+    ErrCode = fs::createUniqueFile(p + random_pattern + suf, fd, TmpPath,
                               fs::OpenFlags::OF_None,
                               fs::perms::owner_read | fs::perms::owner_write);
     *ret_fd = fd;
   } else {
-    ec = fs::createUniqueFile(p + random_pattern + suf, TmpPath,
+    ErrCode = fs::createUniqueFile(p + random_pattern + suf, TmpPath,
                               fs::perms::owner_read | fs::perms::owner_write);
   }
-  if (ec)
+
+  if (ErrCode) {
+    std::string ErrMsg = ErrCode.message();
+    POCL_MSG_ERR("failed to mktempname, with ErrCode: %i | %s\n", ErrCode.value(),
+                 ErrMsg.c_str());
     return -1;
+  }
+
   strncpy(output, TmpPath.c_str(), POCL_MAX_PATHNAME_LENGTH);
   return 0;
 }
@@ -275,31 +281,33 @@ static int pocl_write_file2(
     bool dont_rename, // don't rename to final path (output to TmpPath)
     llvm::SmallVector<char, 512> &TmpPath, llvm::Twine TmpSuffix) {
   fs::file_t fh;
-  int fd;
-  std::error_code ec;
+  int FileDesc = 0;
+  std::error_code ErrCode;
 
   assert(content != nullptr || Mod != nullptr);
   assert(path);
   llvm::Twine FinalPath(path);
 
   if (append) {
-    ec = fs::openFileForWrite(FinalPath, fd, fs::CD_OpenAlways, fs::OF_Append);
-    if (ec) {
-      POCL_MSG_ERR("failed to open file WR 1 %s\n", path);
+    ErrCode = fs::openFileForWrite(FinalPath, FileDesc, fs::CD_OpenAlways, fs::OF_Append);
+    if (ErrCode) {
+      POCL_MSG_ERR("failed to open file: %s\n", path);
       return -1;
     }
   } else {
-    ec = fs::createUniqueFile(FinalPath + random_pattern + TmpSuffix, fd,
+    ErrCode = fs::createUniqueFile(FinalPath + random_pattern + TmpSuffix, FileDesc,
                               TmpPath, fs::OpenFlags::OF_None,
                               fs::perms::owner_read | fs::perms::owner_write);
-    if (ec) {
-      POCL_MSG_ERR("failed to open file WR 2 %s\n", path);
+    if (ErrCode) {
+      std::string ErrMsg = ErrCode.message();
+      POCL_MSG_ERR("failed to open file: %s , with ErrCode: %i | %s\n", path,
+                   ErrCode.value(), ErrMsg.c_str());
       return -1;
     }
   }
-  fh = fs::convertFDToNativeFile(fd);
+  fh = fs::convertFDToNativeFile(FileDesc);
 
-  llvm::raw_fd_ostream FDO{fd, false};
+  llvm::raw_fd_ostream FDO{FileDesc, false};
   if (Mod) {
     WriteBitcodeToFile(*Mod, FDO);
   } else {
@@ -312,7 +320,7 @@ static int pocl_write_file2(
   }
 
 #if defined(HAVE_FDATASYNC)
-  if (fdatasync(fd)) {
+  if (fdatasync(FileDesc)) {
     POCL_MSG_ERR("fdatasync() failed\n");
     return -1;
   }
@@ -334,7 +342,11 @@ static int pocl_write_file2(
     return 0;
   else {
     llvm::Twine TmpP(TmpPath);
-    return pocl_rename2(TmpP, FinalPath);
+    int Res = pocl_rename2(TmpP, FinalPath);
+    if (Res) {
+      POCL_MSG_ERR("Rename %s -> %s failed! \n", TmpPath.data(), path);
+    }
+    return Res;
   }
 }
 
@@ -351,10 +363,12 @@ int pocl_write_tempfile(char *output_path, const char *prefix,
                         const char *suffix, const char *content,
                         uint64_t count) {
   llvm::SmallVector<char, 512> TmpPath;
-  int err = pocl_write_file2(prefix, content, count, nullptr, false, true,
+  int Err = pocl_write_file2(prefix, content, count, nullptr, false, true,
                              TmpPath, suffix);
-  if (err)
-    return err;
+  if (Err) {
+    POCL_MSG_ERR("FAILED: pocl_write_file2, error: %i\n", Err);
+    return Err;
+  }
   if (TmpPath.size() >= POCL_MAX_PATHNAME_LENGTH) {
     POCL_MSG_ERR("Path name too long \n");
     return -1;

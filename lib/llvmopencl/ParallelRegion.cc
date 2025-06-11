@@ -702,7 +702,8 @@ ParallelRegion::InjectRegionPrintF()
     }
 #endif
 
-  ConstantInt* pRID = ConstantInt::get(M->getContext(), APInt(32, pRegionId, 10));
+  ConstantInt *pRID =
+      ConstantInt::get(M->getContext(), APInt(32, (uint64_t)pRegionId));
   std::vector<Value*> params;
   params.push_back(pRID);
   params.push_back(getOrCreateIDLoad(LID_G_NAME(0)));

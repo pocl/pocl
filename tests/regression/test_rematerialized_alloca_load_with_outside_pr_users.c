@@ -123,6 +123,12 @@ main (int argc, char **argv)
   err = clGetDeviceIDs (platform, CL_DEVICE_TYPE_ALL, 1, &device, NULL);
   CHECK_ERROR (err);
 
+  if (!poclu_device_supports_il (device, "SPIR-V_1.0"))
+    {
+      printf ("SKIP: The test requires support for SPIR-V 1.0\n");
+      exit (77);
+    }
+
   // Get device name
   char device_name[128];
   err = clGetDeviceInfo (device, CL_DEVICE_NAME, sizeof (device_name),
@@ -217,7 +223,7 @@ main (int argc, char **argv)
 
   for (size_t i = 0; i < A.len; i++)
     {
-      printf ("%ld: %ld\n", i, A.ptr[i]);
+      printf ("%zu: %zu\n", i, (size_t)A.ptr[i]);
     }
 
   // Cleanup

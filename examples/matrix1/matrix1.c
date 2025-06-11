@@ -129,7 +129,7 @@ exec_matrix_kernel (cl_context context, cl_device_id device,
 
   cl_event ev;
 
-  printf ("gws: %lu %lu lws: %lu %lu\n", global_work_size[0],
+  printf ("gws: %zu %zu lws: %zu %zu\n", global_work_size[0],
           global_work_size[1], local_work_size[0], local_work_size[1]);
   err = clEnqueueNDRangeKernel (cmd_queue, kernel, 2, NULL, global_work_size,
                                 local_work_size, 0, NULL, &ev);
@@ -299,7 +299,7 @@ main (int argc, char **argv)
     }
   else
     {
-      printf ("Autodetected local_wg: %u max wg size: %lu\n", local_wg,
+      printf ("Autodetected local_wg: %u max wg size: %zu\n", local_wg,
               max_wg_size);
     }
 

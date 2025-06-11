@@ -628,7 +628,8 @@ if(PKG_CONFIG_FOUND)
   pkg_check_modules(HWLOC IMPORTED_TARGET hwloc>=1.0)
 endif()
 
-if(WIN32 AND NOT HWLOC_FOUND)
+if(WIN32 AND (NOT TARGET PkgConfig::HWLOC))
+  message(STATUS "Could not find libhwloc via pkg-config, trying to find it directly")
   findImpLibAndDLL(HWLOC "hwloc" "libhwloc-15.dll" "hwloc.h")
 endif()
 
@@ -2094,7 +2095,7 @@ if (ENABLE_LEVEL0)
     pkg_check_modules(LEVEL0 REQUIRED IMPORTED_TARGET level-zero>=1.3)
   endif()
 
-  if (NOT LEVEL0_FOUND)
+  if (NOT TARGET PkgConfig::LEVEL0)
     message(STATUS "Could not find level-zero via pkg-config, trying to find it directly")
     find_library(LEVEL0_LIBRARIES NAMES ze_loader REQUIRED)
     find_path(LEVEL0_INCLUDE_DIRS NAMES ze_api.h PATH_SUFFIXES level_zero)

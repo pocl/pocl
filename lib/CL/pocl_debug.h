@@ -30,10 +30,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(_MSC_VER)
-#  define PRIuS "Iu"
-#endif
-
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
 #endif
@@ -47,8 +43,13 @@
 
 // size_t print spec
 #ifndef PRIuS
+#ifdef _MSC_VER
+#define PRIuS "Iu"
+#else
 # define PRIuS "zu"
 #endif
+#endif
+
 #ifndef PRId64
 # define PRId64 PRIu64
 #endif
