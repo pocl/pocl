@@ -63,8 +63,8 @@ WORK_GROUP_SHUFFLE_T (short)
 WORK_GROUP_SHUFFLE_T (ushort)
 WORK_GROUP_SHUFFLE_T (int)
 WORK_GROUP_SHUFFLE_T (uint)
-WORK_GROUP_SHUFFLE_T (long)
-WORK_GROUP_SHUFFLE_T (ulong)
+WORK_GROUP_SHUFFLE_T (int64_t)
+WORK_GROUP_SHUFFLE_T (uint64_t)
 WORK_GROUP_SHUFFLE_T (float)
 WORK_GROUP_SHUFFLE_T (double)
 
@@ -89,8 +89,8 @@ WORK_GROUP_SHUFFLE_T (double)
 
 WORK_GROUP_BROADCAST_T (int)
 WORK_GROUP_BROADCAST_T (uint)
-WORK_GROUP_BROADCAST_T (long)
-WORK_GROUP_BROADCAST_T (ulong)
+WORK_GROUP_BROADCAST_T (int64_t)
+WORK_GROUP_BROADCAST_T (uint64_t)
 WORK_GROUP_BROADCAST_T (float)
 WORK_GROUP_BROADCAST_T (double)
 
@@ -117,8 +117,8 @@ WORK_GROUP_BROADCAST_T (double)
 #define WORK_GROUP_REDUCE_T(OPNAME, OPERATION)                                \
   WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, int)                               \
   WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, uint)                              \
-  WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, long)                              \
-  WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, ulong)                             \
+  WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, int64_t)                           \
+  WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, uint64_t)                          \
   WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, float)                             \
   WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, double)
 
@@ -149,8 +149,8 @@ WORK_GROUP_REDUCE_T (max, a > b ? a : b)
 #define WORK_GROUP_SCAN_INCLUSIVE_T(OPNAME, OPERATION)                        \
   WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, int)                       \
   WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, uint)                      \
-  WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, long)                      \
-  WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, ulong)                     \
+  WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, int64_t)                   \
+  WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, uint64_t)                  \
   WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, float)                     \
   WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, double)
 
@@ -182,22 +182,22 @@ WORK_GROUP_SCAN_INCLUSIVE_T (max, a > b ? a : b)
 
 WORK_GROUP_SCAN_EXCLUSIVE_OT (add, a + b, int, 0)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (add, a + b, uint, 0)
-WORK_GROUP_SCAN_EXCLUSIVE_OT (add, a + b, long, 0)
-WORK_GROUP_SCAN_EXCLUSIVE_OT (add, a + b, ulong, 0)
+WORK_GROUP_SCAN_EXCLUSIVE_OT (add, a + b, int64_t, 0)
+WORK_GROUP_SCAN_EXCLUSIVE_OT (add, a + b, uint64_t, 0)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (add, a + b, float, 0.0f)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (add, a + b, double, 0.0)
 
 WORK_GROUP_SCAN_EXCLUSIVE_OT (min, a > b ? b : a, int, INT_MAX)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (min, a > b ? b : a, uint, UINT_MAX)
-WORK_GROUP_SCAN_EXCLUSIVE_OT (min, a > b ? b : a, long, LONG_MAX)
-WORK_GROUP_SCAN_EXCLUSIVE_OT (min, a > b ? b : a, ulong, ULONG_MAX)
+WORK_GROUP_SCAN_EXCLUSIVE_OT (min, a > b ? b : a, int64_t, LONG_MAX)
+WORK_GROUP_SCAN_EXCLUSIVE_OT (min, a > b ? b : a, uint64_t, ULONG_MAX)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (min, a > b ? b : a, float, +INFINITY)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (min, a > b ? b : a, double, +INFINITY)
 
 WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, int, INT_MIN)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, uint, 0)
-WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, long, LONG_MIN)
-WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, ulong, 0)
+WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, int64_t, LONG_MIN)
+WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, uint64_t, 0)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, float, -INFINITY)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, double, -INFINITY)
 

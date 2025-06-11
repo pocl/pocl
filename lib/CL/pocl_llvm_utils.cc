@@ -83,7 +83,8 @@ void parseModuleGVarSize(cl_program program, unsigned device_i,
       assert(program->global_var_total_size[device_i] == TotalGVarBytes);
     else
       program->global_var_total_size[device_i] = TotalGVarBytes;
-    POCL_MSG_PRINT_LLVM("Total Global Variable Bytes: %zu\n", TotalGVarBytes);
+    POCL_MSG_PRINT_LLVM("Total Global Variable Bytes: %zu\n",
+                        (size_t)TotalGVarBytes);
   }
 }
 

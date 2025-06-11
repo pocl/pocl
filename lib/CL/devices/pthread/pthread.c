@@ -274,7 +274,8 @@ pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
   if (node->state != POCL_COMMAND_READY)
     {
       POCL_MSG_PRINT_EVENTS (
-        "pthread: command related to the notified event %lu not ready\n",
+        "pthread: command related to the notified event %" PRIu64
+        " not ready\n",
         event->id);
       return;
     }

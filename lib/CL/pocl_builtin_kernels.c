@@ -842,7 +842,7 @@ pocl_validate_dbk_attributes (cl_dbk_id_exp kernel_id,
                               pocl_validate_khr_gemm_callback_t GemmCB)
 {
   if (GemmCB == NULL)
-    GemmCB = pocl_validate_khr_gemm;
+    GemmCB = &pocl_validate_khr_gemm;
   switch (kernel_id)
     {
     case CL_DBK_GEMM_EXP:
@@ -1463,7 +1463,8 @@ pocl_deserialize_dbk_attribs (cl_dbk_id_exp *id,
       }
     default:
       {
-        POCL_MSG_ERR ("Could not deserialize DBK, unknown id: %lu.\n", dbk_id);
+        POCL_MSG_ERR ("Could not deserialize DBK, unknown id: %" PRIu64 ".\n",
+                      dbk_id);
         break;
       }
     }

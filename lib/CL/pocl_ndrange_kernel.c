@@ -305,11 +305,11 @@ pocl_kernel_collect_mem_objs (
                   CL_MISALIGNED_SUB_BUFFER_OFFSET,
                   "SubBuffer is not properly aligned for this device");
 
-              POCL_RETURN_ERROR_ON ((buf->size > realdev->max_mem_alloc_size),
-                                    CL_OUT_OF_RESOURCES,
-                                    "ARG %u: buffer is larger (%lu) than "
-                                    "device's MAX_MEM_ALLOC_SIZE (%lu).\n",
-                                    i, buf->size, realdev->max_mem_alloc_size);
+              POCL_RETURN_ERROR_ON (
+                (buf->size > realdev->max_mem_alloc_size), CL_OUT_OF_RESOURCES,
+                "ARG %u: buffer is larger (%" PRIuS ") than "
+                "device's MAX_MEM_ALLOC_SIZE (%" PRIuS ").\n",
+                i, buf->size, realdev->max_mem_alloc_size);
             }
         }
     }

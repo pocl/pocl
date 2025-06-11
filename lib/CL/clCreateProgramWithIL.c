@@ -36,12 +36,6 @@ POname(clCreateProgramWithIL)(cl_context context,
                               cl_int *errcode_ret)
 CL_API_SUFFIX__VERSION_2_1
 {
-  /* if SPIR-V is disabled, return error early */
-#if defined(ENABLE_CONFORMANCE) && !defined(ENABLE_SPIRV)
-  if (errcode_ret)
-    *errcode_ret = CL_INVALID_OPERATION;
-  return NULL;
-#endif
   cl_program program = NULL;
   int errcode = CL_SUCCESS;
   char program_bc_spirv[POCL_MAX_PATHNAME_LENGTH];
@@ -85,8 +79,7 @@ CL_API_SUFFIX__VERSION_2_1
         continue;
       if (dev->ops->supports_binary (dev, length, il))
         {
-          devices_with_spir[num_devices_with_spir] = dev;
-          ++num_devices_with_spir;
+          devices_with_spir[num_devices_with_spir++] = dev;
         }
     }
 
