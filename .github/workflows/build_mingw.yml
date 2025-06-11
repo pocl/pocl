@@ -26,7 +26,7 @@ concurrency:
 
 jobs:
   mingw_test_matrix:
-    name: LLVM ${{ matrix.llvm_version }} - MinGW ${{ matrix.config }}
+    name: LLVM ${{ matrix.llvm_version }} - ${{ matrix.config }} - shared libs:${{ matrix.shared_libs }}
     runs-on: windows-latest
     defaults:
       run:
@@ -35,6 +35,7 @@ jobs:
       fail-fast: false
       matrix:
         llvm_version: [19]
+        shared_libs: [ON, OFF]
         config: [cpu]
 
     steps:
@@ -111,16 +112,12 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX=${{ env.WORKSPACE }}/install-pocl \
             -DWITH_LLVM_CONFIG=${{ env.WORKSPACE }}/install-llvm/bin/llvm-config.exe \
-            -DBUILD_SHARED_LIBS=OFF \
+            -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }} \
             -DENABLE_ICD=OFF \
-            -DENABLE_LOADABLE_DRIVERS=OFF \
+            -DENABLE_LOADABLE_DRIVERS=${{ matrix.shared_libs }} \
             -G "Ninja"
         # XXX: ENABLE_ICD=OFF because ocl-icd doesn't support Windows,
-        #      and PoCL doesn't support Khronos' ICD loader
-        # XXX: BUILD_SHARED_LIBS=OFF because the CI workers have OpenCL.dll
-        #      in System32 which takes preference over our version.
-        # XXX: ENABLE_LOADABLE_DRIVERS=OFF because PoCL doesn't know how to
-        #      find drivers when built with BUILD_SHARED_LIBS=OFF
+        #      and PoCL's tests do not support Khronos' ICD loader
 
       - name: Build PoCL
         run: |

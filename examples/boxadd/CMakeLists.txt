@@ -42,5 +42,5 @@ set_tests_properties( "examples/boxadd"
     COST 3.0
     ${PROPS}
     PROCESSORS 1
-    LABELS "cpu;vulkan;level0"
+    LABELS "vulkan;level0"
     DEPENDS "pocl_version_check")

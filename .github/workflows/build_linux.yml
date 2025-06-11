@@ -37,6 +37,7 @@ jobs:
     env:
       CCACHE_BASEDIR: "${{ github.workspace }}"
       CCACHE_DIR: "${{ github.workspace }}/../../../ccache_storage"
+      CTEST_NO_TESTS_ACTION: "error"
       EXAMPLES_DIR: "${{ github.workspace }}/../../../examples"
       TSAN_OPTIONS: "second_deadlock_stack=1"
     strategy:
@@ -154,7 +155,7 @@ jobs:
         timeout-minutes: 120
         run: |
           runCTest() {
-            cd ${{ github.workspace }}/build &&  ctest -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) $CTEST_FLAGS "$@"
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cpu_tests -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) $CTEST_FLAGS "$@"
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           # hardcoded path in test_compiler / execute_after_included_header_link
@@ -167,11 +168,12 @@ jobs:
           elif [ "${{ matrix.config }}" == "chipstar" ]; then
             runCTest -L chipStar
           elif [ "${{ matrix.config }}" == "asan" ]; then
-            runCTest -L "runtime|asan"
+          # test_large_buf consumes too much memory for the smaller bots
+            runCTest -R runtime -E test_large_buf
           elif [ "${{ matrix.config }}" == "tsan" ]; then
-            runCTest -L "cpu|tsan"
+            runCTest -R runtime -E test_large_buf
           elif [ "${{ matrix.config }}" == "ubsan" ]; then
-            runCTest -L "cpu|ubsan"
+            runCTest -R runtime -E test_large_buf
           else
             echo "Unknown configuration" && exit 1
           fi

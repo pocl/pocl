@@ -121,12 +121,13 @@ harden("llvmopencl")
 # not sure where other platforms get their library linkage list, probably there is
 # way to make this more consistent on different platforms
 if(MSVC)
-  target_link_libraries("llvmopencl" ${POCL_LLVM_LIBS})
+  target_link_libraries("llvmopencl" ${CLANG_LINK_LIBRARIES} ${LLVM_LINK_LIBRARIES})
+  target_link_directories("llvmopencl" ${CLANG_LINK_DIRECTORIES} ${LLVM_LINK_DIRECTORIES})
 endif(MSVC)
 
 #target_link_libraries("llvmopencl" "${LLVM_SYSLIBS}")
 endif(ENABLE_LIBLLVMOPENCL)
- 
+
 # TODO cmake should handle this, i might me missing something …
 if(APPLE)
   set(ADD_LD_FLAGS "-Wl,-undefined -Wl,dynamic_lookup ")

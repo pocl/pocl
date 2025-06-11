@@ -184,14 +184,15 @@ jobs:
         id: ctest
         timeout-minutes: 120
         run: |
-          runCTest() {
-            cd ${{ github.workspace }}/build && ctest -j$(nproc) $CTEST_FLAGS "$@"
-          }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          # the pocl_test_dlopen tests try to dlopen libraries from the build dir; however, we removed them at install step
           if [ "${{ matrix.config }}" == "install" ]; then
-            runCTest -L cpu -E pocl_test_dlopen_
+            # Do not use the run_cpu_tests script as we want to test the installation, not
+            # the build dir.
+            # the pocl_test_dlopen tests try to dlopen libraries from the build dir;
+            # however, we removed it at the install step to ensure we test the installed
+            # so
+            cd ${{ github.workspace }}/build && ctest -j$(nproc) -E pocl_test_dlopen_ -LE cpu_fail $CTEST_FLAGS "$@"
           else
-            runCTest -L cpu
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cpu_tests -j$(nproc) $CTEST_FLAGS "$@"
           fi

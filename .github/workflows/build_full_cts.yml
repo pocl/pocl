@@ -57,6 +57,7 @@ jobs:
         id: copy_spirv
         if: ${{ matrix.config == 'full_cts_cpu_spirv' }}
         timeout-minutes: 6
+        run: |
           if [ -e "${{ github.workspace }}/../../../CTS_FULL_CACHE_LLVM_${{ matrix.llvm }}" ]; then \
             rmdir ${{ github.workspace }}/build/CTS_FULL_CACHE ; \
             cp -r --reflink=always "${{ github.workspace }}/../../../CTS_FULL_CACHE_LLVM_${{ matrix.llvm }}" ${{ github.workspace }}/build ; \
@@ -90,7 +91,7 @@ jobs:
           CL_DEVICE_TYPE: "cpu"
         run: |
           runCTest() {
-            cd ${{ github.workspace }}/build &&  ctest -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) $CTEST_FLAGS "$@"
+            cd ${{ github.workspace }}/build && ${{ env.WORKSPACE }}/tools/scripts/run_cpu_tests -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) $CTEST_FLAGS "$@"
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           # hardcoded path in test_compiler / execute_after_included_header_link

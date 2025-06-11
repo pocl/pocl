@@ -245,10 +245,6 @@ set(CPACK_PACKAGE_VERSION_MINOR "${MINOR_VERSION}")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
 
 set(BUILD_SHARED_LIBS_DEFAULT ON)
-if(MINGW)
-  # Building PoCL as shared library does not work yet with MinGW.
-  set(BUILD_SHARED_LIBS_DEFAULT OFF)
-endif()
 
 ##################################################################################
 
@@ -2777,11 +2773,11 @@ MESSAGE(STATUS "")
 
 if (ENABLE_LLVM)
 MESSAGE(STATUS "----------- -------------------------------- --------")
-MESSAGE(STATUS "llvm libs libpocl will be linked to (POCL_LLVM_LIBS):")
-MESSAGE(STATUS "${POCL_LLVM_LIBS}")
+MESSAGE(STATUS "llvm libs libpocl will be linked to (LLVM_LINK_LIBRARIES):")
+MESSAGE(STATUS "${LLVM_LINK_LIBRARIES}")
 MESSAGE(STATUS "----------- -------------------------------- --------")
-MESSAGE(STATUS "clang libs libpocl will be linked to (CLANG_LIBFILES):")
-MESSAGE(STATUS "${CLANG_LIBFILES}")
+MESSAGE(STATUS "clang libs libpocl will be linked to (CLANG_LINK_LIBRARIES):")
+MESSAGE(STATUS "${CLANG_LINK_LIBRARIES}")
 MESSAGE(STATUS "----------- -------------------------------- --------")
 MESSAGE(STATUS "system libs libpocl will be linked to (LLVM_SYSLIBS):")
 MESSAGE(STATUS "${LLVM_SYSLIBS}")
