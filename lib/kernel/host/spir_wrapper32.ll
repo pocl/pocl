@@ -590,8 +590,8 @@ define spir_func float @_Z4stepff(float %x, float %y) local_unnamed_addr #0 {
 
 declare float @_Z9_cl_fractfPU8CLglobalf(float, float *) local_unnamed_addr #0
 
-define spir_func float @_Z5fractfPU3AS1f(float %x, float addrspace(1)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(1)* %y to float *
+define spir_func float @_Z5fractfPU3AS1f(float %x, ptr addrspace(1) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(1) %y to float *
   %call = tail call float @_Z9_cl_fractfPU8CLglobalf(float %x, float * %1)
   ret float %call
 }
@@ -599,8 +599,8 @@ define spir_func float @_Z5fractfPU3AS1f(float %x, float addrspace(1)* %y) local
 
 declare float @_Z9_cl_fractfPU7CLlocalf(float, float *) local_unnamed_addr #0
 
-define spir_func float @_Z5fractfPU3AS3f(float %x, float addrspace(3)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(3)* %y to float *
+define spir_func float @_Z5fractfPU3AS3f(float %x, ptr addrspace(3) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(3) %y to float *
   %call = tail call float @_Z9_cl_fractfPU7CLlocalf(float %x, float * %1)
   ret float %call
 }
@@ -616,8 +616,8 @@ define spir_func float @_Z5fractfPf(float %x, float * %y) local_unnamed_addr #0 
 
 declare float @_Z10_cl_sincosfPU8CLglobalf(float, float *) local_unnamed_addr #0
 
-define spir_func float @_Z6sincosfPU3AS1f(float %x, float addrspace(1)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(1)* %y to float *
+define spir_func float @_Z6sincosfPU3AS1f(float %x, ptr addrspace(1) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(1) %y to float *
   %call = tail call float @_Z10_cl_sincosfPU8CLglobalf(float %x, float * %1)
   ret float %call
 }
@@ -625,8 +625,8 @@ define spir_func float @_Z6sincosfPU3AS1f(float %x, float addrspace(1)* %y) loca
 
 declare float @_Z10_cl_sincosfPU7CLlocalf(float, float *) local_unnamed_addr #0
 
-define spir_func float @_Z6sincosfPU3AS3f(float %x, float addrspace(3)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(3)* %y to float *
+define spir_func float @_Z6sincosfPU3AS3f(float %x, ptr addrspace(3) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(3) %y to float *
   %call = tail call float @_Z10_cl_sincosfPU7CLlocalf(float %x, float * %1)
   ret float %call
 }
@@ -642,8 +642,8 @@ define spir_func float @_Z6sincosfPf(float %x, float * %y) local_unnamed_addr #0
 
 declare float @_Z8_cl_modffPU8CLglobalf(float, float *) local_unnamed_addr #0
 
-define spir_func float @_Z4modffPU3AS1f(float %x, float addrspace(1)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(1)* %y to float *
+define spir_func float @_Z4modffPU3AS1f(float %x, ptr addrspace(1) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(1) %y to float *
   %call = tail call float @_Z8_cl_modffPU8CLglobalf(float %x, float * %1)
   ret float %call
 }
@@ -651,8 +651,8 @@ define spir_func float @_Z4modffPU3AS1f(float %x, float addrspace(1)* %y) local_
 
 declare float @_Z8_cl_modffPU7CLlocalf(float, float *) local_unnamed_addr #0
 
-define spir_func float @_Z4modffPU3AS3f(float %x, float addrspace(3)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(3)* %y to float *
+define spir_func float @_Z4modffPU3AS3f(float %x, ptr addrspace(3) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(3) %y to float *
   %call = tail call float @_Z8_cl_modffPU7CLlocalf(float %x, float * %1)
   ret float %call
 }
@@ -740,8 +740,8 @@ define spir_func float @_Z5rootnfi(float %x, i32 %y) local_unnamed_addr #0 {
 
 declare float @_Z10_cl_remquoffPU8CLglobali(float, float, i32 *) local_unnamed_addr #0
 
-define spir_func float @_Z6remquoffPU3AS1i(float %x, float %y, i32 addrspace(1)* %z) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %z to i32 *
+define spir_func float @_Z6remquoffPU3AS1i(float %x, float %y, ptr addrspace(1) %z) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(1) %z to i32 *
   %call = tail call float @_Z10_cl_remquoffPU8CLglobali(float %x, float %y, i32 * %1)
   ret float %call
 }
@@ -749,8 +749,8 @@ define spir_func float @_Z6remquoffPU3AS1i(float %x, float %y, i32 addrspace(1)*
 
 declare float @_Z10_cl_remquoffPU7CLlocali(float, float, i32 *) local_unnamed_addr #0
 
-define spir_func float @_Z6remquoffPU3AS3i(float %x, float %y, i32 addrspace(3)* %z) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %z to i32 *
+define spir_func float @_Z6remquoffPU3AS3i(float %x, float %y, ptr addrspace(3) %z) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(3) %z to i32 *
   %call = tail call float @_Z10_cl_remquoffPU7CLlocali(float %x, float %y, i32 * %1)
   ret float %call
 }
@@ -774,8 +774,8 @@ define spir_func float @_Z3nanj(i32 %x) local_unnamed_addr #0 {
 
 declare float @_Z12_cl_lgamma_rfPU8CLglobali(float, i32 *) local_unnamed_addr #0
 
-define spir_func float @_Z8lgamma_rfPU3AS1i(float %x, i32 addrspace(1)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %y to i32 *
+define spir_func float @_Z8lgamma_rfPU3AS1i(float %x, ptr addrspace(1) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(1) %y to i32 *
   %call = tail call float @_Z12_cl_lgamma_rfPU8CLglobali(float %x, i32 * %1)
   ret float %call
 }
@@ -783,8 +783,8 @@ define spir_func float @_Z8lgamma_rfPU3AS1i(float %x, i32 addrspace(1)* %y) loca
 
 declare float @_Z12_cl_lgamma_rfPU7CLlocali(float, i32 *) local_unnamed_addr #0
 
-define spir_func float @_Z8lgamma_rfPU3AS3i(float %x, i32 addrspace(3)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %y to i32 *
+define spir_func float @_Z8lgamma_rfPU3AS3i(float %x, ptr addrspace(3) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(3) %y to i32 *
   %call = tail call float @_Z12_cl_lgamma_rfPU7CLlocali(float %x, i32 * %1)
   ret float %call
 }
@@ -800,8 +800,8 @@ define spir_func float @_Z8lgamma_rfPi(float %x, i32 * %y) local_unnamed_addr #0
 
 declare float @_Z9_cl_frexpfPU8CLglobali(float, i32 *) local_unnamed_addr #0
 
-define spir_func float @_Z5frexpfPU3AS1i(float %x, i32 addrspace(1)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %y to i32 *
+define spir_func float @_Z5frexpfPU3AS1i(float %x, ptr addrspace(1) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(1) %y to i32 *
   %call = tail call float @_Z9_cl_frexpfPU8CLglobali(float %x, i32 * %1)
   ret float %call
 }
@@ -809,8 +809,8 @@ define spir_func float @_Z5frexpfPU3AS1i(float %x, i32 addrspace(1)* %y) local_u
 
 declare float @_Z9_cl_frexpfPU7CLlocali(float, i32 *) local_unnamed_addr #0
 
-define spir_func float @_Z5frexpfPU3AS3i(float %x, i32 addrspace(3)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %y to i32 *
+define spir_func float @_Z5frexpfPU3AS3i(float %x, ptr addrspace(3) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(3) %y to i32 *
   %call = tail call float @_Z9_cl_frexpfPU7CLlocali(float %x, i32 * %1)
   ret float %call
 }
@@ -1410,8 +1410,8 @@ define spir_func double @_Z4stepdd(double %x, double %y) local_unnamed_addr #0 {
 
 declare double @_Z9_cl_fractdPU8CLglobald(double, double *) local_unnamed_addr #0
 
-define spir_func double @_Z5fractdPU3AS1d(double %x, double addrspace(1)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(1)* %y to double *
+define spir_func double @_Z5fractdPU3AS1d(double %x, ptr addrspace(1) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(1) %y to double *
   %call = tail call double @_Z9_cl_fractdPU8CLglobald(double %x, double * %1)
   ret double %call
 }
@@ -1419,8 +1419,8 @@ define spir_func double @_Z5fractdPU3AS1d(double %x, double addrspace(1)* %y) lo
 
 declare double @_Z9_cl_fractdPU7CLlocald(double, double *) local_unnamed_addr #0
 
-define spir_func double @_Z5fractdPU3AS3d(double %x, double addrspace(3)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(3)* %y to double *
+define spir_func double @_Z5fractdPU3AS3d(double %x, ptr addrspace(3) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(3) %y to double *
   %call = tail call double @_Z9_cl_fractdPU7CLlocald(double %x, double * %1)
   ret double %call
 }
@@ -1436,8 +1436,8 @@ define spir_func double @_Z5fractdPd(double %x, double * %y) local_unnamed_addr 
 
 declare double @_Z10_cl_sincosdPU8CLglobald(double, double *) local_unnamed_addr #0
 
-define spir_func double @_Z6sincosdPU3AS1d(double %x, double addrspace(1)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(1)* %y to double *
+define spir_func double @_Z6sincosdPU3AS1d(double %x, ptr addrspace(1) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(1) %y to double *
   %call = tail call double @_Z10_cl_sincosdPU8CLglobald(double %x, double * %1)
   ret double %call
 }
@@ -1445,8 +1445,8 @@ define spir_func double @_Z6sincosdPU3AS1d(double %x, double addrspace(1)* %y) l
 
 declare double @_Z10_cl_sincosdPU7CLlocald(double, double *) local_unnamed_addr #0
 
-define spir_func double @_Z6sincosdPU3AS3d(double %x, double addrspace(3)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(3)* %y to double *
+define spir_func double @_Z6sincosdPU3AS3d(double %x, ptr addrspace(3) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(3) %y to double *
   %call = tail call double @_Z10_cl_sincosdPU7CLlocald(double %x, double * %1)
   ret double %call
 }
@@ -1462,8 +1462,8 @@ define spir_func double @_Z6sincosdPd(double %x, double * %y) local_unnamed_addr
 
 declare double @_Z8_cl_modfdPU8CLglobald(double, double *) local_unnamed_addr #0
 
-define spir_func double @_Z4modfdPU3AS1d(double %x, double addrspace(1)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(1)* %y to double *
+define spir_func double @_Z4modfdPU3AS1d(double %x, ptr addrspace(1) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(1) %y to double *
   %call = tail call double @_Z8_cl_modfdPU8CLglobald(double %x, double * %1)
   ret double %call
 }
@@ -1471,8 +1471,8 @@ define spir_func double @_Z4modfdPU3AS1d(double %x, double addrspace(1)* %y) loc
 
 declare double @_Z8_cl_modfdPU7CLlocald(double, double *) local_unnamed_addr #0
 
-define spir_func double @_Z4modfdPU3AS3d(double %x, double addrspace(3)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(3)* %y to double *
+define spir_func double @_Z4modfdPU3AS3d(double %x, ptr addrspace(3) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(3) %y to double *
   %call = tail call double @_Z8_cl_modfdPU7CLlocald(double %x, double * %1)
   ret double %call
 }
@@ -1560,8 +1560,8 @@ define spir_func double @_Z5rootndi(double %x, i32 %y) local_unnamed_addr #0 {
 
 declare double @_Z10_cl_remquoddPU8CLglobali(double, double, i32 *) local_unnamed_addr #0
 
-define spir_func double @_Z6remquoddPU3AS1i(double %x, double %y, i32 addrspace(1)* %z) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %z to i32 *
+define spir_func double @_Z6remquoddPU3AS1i(double %x, double %y, ptr addrspace(1) %z) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(1) %z to i32 *
   %call = tail call double @_Z10_cl_remquoddPU8CLglobali(double %x, double %y, i32 * %1)
   ret double %call
 }
@@ -1569,8 +1569,8 @@ define spir_func double @_Z6remquoddPU3AS1i(double %x, double %y, i32 addrspace(
 
 declare double @_Z10_cl_remquoddPU7CLlocali(double, double, i32 *) local_unnamed_addr #0
 
-define spir_func double @_Z6remquoddPU3AS3i(double %x, double %y, i32 addrspace(3)* %z) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %z to i32 *
+define spir_func double @_Z6remquoddPU3AS3i(double %x, double %y, ptr addrspace(3) %z) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(3) %z to i32 *
   %call = tail call double @_Z10_cl_remquoddPU7CLlocali(double %x, double %y, i32 * %1)
   ret double %call
 }
@@ -1594,8 +1594,8 @@ define spir_func double @_Z3nanm(i64 %x) local_unnamed_addr #0 {
 
 declare double @_Z12_cl_lgamma_rdPU8CLglobali(double, i32 *) local_unnamed_addr #0
 
-define spir_func double @_Z8lgamma_rdPU3AS1i(double %x, i32 addrspace(1)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %y to i32 *
+define spir_func double @_Z8lgamma_rdPU3AS1i(double %x, ptr addrspace(1) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(1) %y to i32 *
   %call = tail call double @_Z12_cl_lgamma_rdPU8CLglobali(double %x, i32 * %1)
   ret double %call
 }
@@ -1603,8 +1603,8 @@ define spir_func double @_Z8lgamma_rdPU3AS1i(double %x, i32 addrspace(1)* %y) lo
 
 declare double @_Z12_cl_lgamma_rdPU7CLlocali(double, i32 *) local_unnamed_addr #0
 
-define spir_func double @_Z8lgamma_rdPU3AS3i(double %x, i32 addrspace(3)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %y to i32 *
+define spir_func double @_Z8lgamma_rdPU3AS3i(double %x, ptr addrspace(3) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(3) %y to i32 *
   %call = tail call double @_Z12_cl_lgamma_rdPU7CLlocali(double %x, i32 * %1)
   ret double %call
 }
@@ -1620,8 +1620,8 @@ define spir_func double @_Z8lgamma_rdPi(double %x, i32 * %y) local_unnamed_addr 
 
 declare double @_Z9_cl_frexpdPU8CLglobali(double, i32 *) local_unnamed_addr #0
 
-define spir_func double @_Z5frexpdPU3AS1i(double %x, i32 addrspace(1)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %y to i32 *
+define spir_func double @_Z5frexpdPU3AS1i(double %x, ptr addrspace(1) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(1) %y to i32 *
   %call = tail call double @_Z9_cl_frexpdPU8CLglobali(double %x, i32 * %1)
   ret double %call
 }
@@ -1629,8 +1629,8 @@ define spir_func double @_Z5frexpdPU3AS1i(double %x, i32 addrspace(1)* %y) local
 
 declare double @_Z9_cl_frexpdPU7CLlocali(double, i32 *) local_unnamed_addr #0
 
-define spir_func double @_Z5frexpdPU3AS3i(double %x, i32 addrspace(3)* %y) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %y to i32 *
+define spir_func double @_Z5frexpdPU3AS3i(double %x, ptr addrspace(3) %y) local_unnamed_addr #0 {
+  %1 = addrspacecast ptr addrspace(3) %y to i32 *
   %call = tail call double @_Z9_cl_frexpdPU7CLlocali(double %x, i32 * %1)
   ret double %call
 }

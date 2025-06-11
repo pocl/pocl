@@ -1,34 +1,34 @@
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
-define spir_func i32 @_Z9get_fencePU3AS4v(i8* %address) local_unnamed_addr #0 {
+define spir_func i32 @_Z9get_fencePU3AS4v(ptr  %address) local_unnamed_addr #0 {
   ret i32 3
 }
 
-define spir_func i32 @_Z9get_fencePv(i8* %address) local_unnamed_addr #0 {
+define spir_func i32 @_Z9get_fencePv(ptr  %address) local_unnamed_addr #0 {
   ret i32 3
 }
 
-define spir_func i32 @_Z9get_fencePU3AS1v(i8* %address) local_unnamed_addr #0 {
+define spir_func i32 @_Z9get_fencePU3AS1v(ptr  %address) local_unnamed_addr #0 {
   ret i32 3
 }
 
-define spir_func i32 @_Z9get_fencePU3AS3v(i8* %address) local_unnamed_addr #0 {
+define spir_func i32 @_Z9get_fencePU3AS3v(ptr  %address) local_unnamed_addr #0 {
   ret i32 3
 }
 
-define spir_func i32 @_Z9get_fencePU3AS4Kv(i8* %address) local_unnamed_addr #0 {
+define spir_func i32 @_Z9get_fencePU3AS4Kv(ptr  %address) local_unnamed_addr #0 {
   ret i32 3
 }
 
-define spir_func i32 @_Z9get_fencePKv(i8* %address) local_unnamed_addr #0 {
+define spir_func i32 @_Z9get_fencePKv(ptr  %address) local_unnamed_addr #0 {
   ret i32 3
 }
 
-define spir_func i32 @_Z9get_fencePU3AS1Kv(i8* %address) local_unnamed_addr #0 {
+define spir_func i32 @_Z9get_fencePU3AS1Kv(ptr  %address) local_unnamed_addr #0 {
   ret i32 3
 }
 
-define spir_func i32 @_Z9get_fencePU3AS3Kv(i8* %address) local_unnamed_addr #0 {
+define spir_func i32 @_Z9get_fencePU3AS3Kv(ptr  %address) local_unnamed_addr #0 {
   ret i32 3
 }
 

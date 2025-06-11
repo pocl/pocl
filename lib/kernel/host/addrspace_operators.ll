@@ -1,34 +1,34 @@
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
-define dso_local i32 @_Z9get_fencePU9CLgenericv(i8* %address) local_unnamed_addr #0 {
+define dso_local i32 @_Z9get_fencePU9CLgenericv(ptr  %address) local_unnamed_addr #0 {
   ret i32 3
 }
 
-define dso_local i32 @_Z9get_fencePU9CLprivatev(i8* %address) local_unnamed_addr #0 {
+define dso_local i32 @_Z9get_fencePU9CLprivatev(ptr  %address) local_unnamed_addr #0 {
   ret i32 3
 }
 
-define dso_local i32 @_Z9get_fencePU8CLglobalv(i8* %address) local_unnamed_addr #0 {
+define dso_local i32 @_Z9get_fencePU8CLglobalv(ptr  %address) local_unnamed_addr #0 {
   ret i32 3
 }
 
-define dso_local i32 @_Z9get_fencePU7CLlocalv(i8* %address) local_unnamed_addr #0 {
+define dso_local i32 @_Z9get_fencePU7CLlocalv(ptr  %address) local_unnamed_addr #0 {
   ret i32 3
 }
 
-define dso_local i32 @_Z9get_fencePU9CLgenericKv(i8* %address) local_unnamed_addr #0 {
+define dso_local i32 @_Z9get_fencePU9CLgenericKv(ptr  %address) local_unnamed_addr #0 {
   ret i32 3
 }
 
-define dso_local i32 @_Z9get_fencePU9CLprivateKv(i8* %address) local_unnamed_addr #0 {
+define dso_local i32 @_Z9get_fencePU9CLprivateKv(ptr  %address) local_unnamed_addr #0 {
   ret i32 3
 }
 
-define dso_local i32 @_Z9get_fencePU8CLglobalKv(i8* %address) local_unnamed_addr #0 {
+define dso_local i32 @_Z9get_fencePU8CLglobalKv(ptr  %address) local_unnamed_addr #0 {
   ret i32 3
 }
 
-define dso_local i32 @_Z9get_fencePU7CLlocalKv(i8* %address) local_unnamed_addr #0 {
+define dso_local i32 @_Z9get_fencePU7CLlocalKv(ptr  %address) local_unnamed_addr #0 {
   ret i32 3
 }
 

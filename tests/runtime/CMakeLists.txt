@@ -190,14 +190,11 @@ if(HAVE_ONNXRT)
     DEPENDS "pocl_version_check")
 endif()
 
-unset(ENABLED_CPU_TESTS)
-if(NOT ENABLE_ANYSAN)
-  list(APPEND ENABLED_CPU_TESTS "runtime/clCreateSubDevices")
+if(ENABLE_ANYSAN)
+  set_property(TEST "runtime/clCreateSubDevices"
+               APPEND PROPERTY LABELS "cpu_fail")
 endif()
 
-if(HAVE_WORKING_IMAGES_WITH_SPIR)
-  list(APPEND ENABLED_CPU_TESTS "runtime/clGetKernelArgInfo")
-endif()
 
 set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clGetEventInfo" "runtime/clCreateProgramWithBinary"
@@ -217,7 +214,8 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/test_device_address" "runtime/test_svm"
   "runtime/test_compile_n_link" "runtime/test_subbuffers"
   "runtime/test_queue_creation_with_hints"
-  ${ENABLED_CPU_TESTS}
+  "runtime/clGetKernelArgInfo"
+  "runtime/clCreateSubDevices"
   PROPERTIES
     COST 2.0
     PROCESSORS 1

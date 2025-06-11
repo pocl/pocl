@@ -247,6 +247,8 @@ else()
   list(APPEND SOURCES_WITH_SLEEF barrier.ll)
 endif()
 
+list(APPEND SOURCES_WITH_SLEEF "host/addrspace_operators.ll" "host/addrspace_operators_spir.ll")
+
 # if ENABLE_HOST_CPU_VECTORIZE_BUILTINS is enabled, use Clang/LLVM builtins
 # this makes vectorization of (some) OpenCL builtins possible,
 # while also making FP16 versions available (if FP16 is available)
@@ -378,11 +380,6 @@ endif()
 
 
 include("bitcode_rules")
-
-foreach(FILE "host/addrspace_operators.ll" "host/addrspace_operators_spir.ll")
-  generate_opaque_ptr_ll("${FILE}" "opaque" OPAQ_PTR_FILE)
-  list(APPEND SOURCES_WITH_SLEEF "${OPAQ_PTR_FILE}")
-endforeach()
 
 set(SLEEF_CL_KERNEL_DEPEND_HEADERS "")
 foreach(HEADER helperadvsimd.h   helperavx2.h     helperavx.h     helperpurec.h  helpersse2.h    misc.h helperavx2_128.h  helperavx512f.h  helperneon32.h  helpers.h      helpervecext.h)

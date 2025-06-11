@@ -42,8 +42,12 @@ ctest --output-on-failure -R pocl_version_check
 
 ctest -L "dpcpp-book-samples|oneapi-samples|simple-sycl-samples|intel-compute-samples|SYCL_CTS" $@
 
-# run multi-device tests (currently just jacobian solver)
-export POCL_DEVICES="cpu cpu cpu cpu"
-export POCL_CPU_MAX_CU_COUNT=1
+if ctest --print-labels | grep -q oneapi-samples; then
 
-ctest -L oneapi-multidev-local-samples $@
+  # run multi-device tests (currently just jacobian solver)
+  export POCL_DEVICES="cpu cpu cpu cpu"
+  export POCL_CPU_MAX_CU_COUNT=1
+
+  ctest -L oneapi-multidev-local-samples $@
+
+fi
