@@ -173,6 +173,9 @@ POname(clCreateContext)(const cl_context_properties * properties,
   POCL_GOTO_ERROR_COND ((context == NULL), CL_OUT_OF_HOST_MEMORY);
 
   POCL_INIT_OBJECT(context);
+  context->raw_ptrs = pocl_raw_ptr_set_create ();
+  if (!context->raw_ptrs)
+    goto ERROR;
 
   errcode = context_set_properties (context, properties);
   if (errcode)
@@ -253,6 +256,7 @@ ERROR:
       POCL_MEM_FREE (context->devices);
       POCL_MEM_FREE (context->create_devices);
       POCL_MEM_FREE (context->properties);
+      pocl_raw_ptr_set_destroy (context->raw_ptrs);
     }
   POCL_MEM_FREE(context);
   if(errcode_ret != NULL)
