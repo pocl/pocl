@@ -394,7 +394,7 @@ INTEL_SG_SHUFFLE_DOWN_VEC (uint)
   TYPE _CL_OVERLOADABLE intel_sub_group_shuffle_up (TYPE previous,            \
                                                     TYPE current, uint delta) \
   {                                                                           \
-    uint idx = get_sub_group_local_id () - delta;                             \
+    int idx = get_sub_group_local_id () - delta;                              \
     uint cur_idx = (idx < 0) ? 0 : idx;                                       \
     TYPE cur_val = intel_sub_group_shuffle (current, cur_idx);                \
     uint prev_idx = (idx < 0) ? idx + get_max_sub_group_size () : 0;          \
