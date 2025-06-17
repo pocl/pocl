@@ -315,6 +315,7 @@ pocl_cpu_init_common (cl_device_id device)
 
 #ifdef HOST_CPU_ENABLE_SPIRV
   device->supported_spirv_extensions = "+SPV_KHR_no_integer_wrap_decoration"
+                                       ",+SPV_KHR_expect_assume"
                                        ",+SPV_INTEL_fp_fast_math_mode"
                                        ",+SPV_EXT_shader_atomic_float_add"
                                        ",+SPV_INTEL_memory_access_aliasing"

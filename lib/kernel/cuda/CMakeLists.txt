@@ -27,15 +27,8 @@ include("bitcode_rules")
 
 set(KERNEL_SOURCES ${SOURCES_GENERIC})
 
-set(EXTRA_ADD_LL_FILES)
-set(EXTRA_ADD_CL_FILES svm_atomics.cl svm_atomics_host.cl)
-set(EXTRA_REMOVE_CL_FILES)
-
-foreach(FILE printf_base.c ${EXTRA_REMOVE_CL_FILES})
-  list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
-endforeach()
-
-list(APPEND KERNEL_SOURCES ${EXTRA_ADD_CL_FILES})
+list(REMOVE_ITEM KERNEL_SOURCES printf_base.c)
+list(APPEND KERNEL_SOURCES svm_atomics.cl svm_atomics_host.cl)
 
 foreach(FILE
   async_work_group_copy.cl async_work_group_strided_copy.cl
@@ -50,19 +43,12 @@ foreach(FILE
   rsqrt.cl
   printf.c
   wait_group_events.cl
+  barrier.ll nvvm_functions.ll subgroup.ll
   )
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
   list(APPEND KERNEL_SOURCES "cuda/${FILE}")
 endforeach()
 
-foreach(FILE ${EXTRA_ADD_LL_FILES} barrier.ll nvvm_functions.ll subgroup.ll)
-
-  list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
-
-  generate_opaque_ptr_ll("cuda/${FILE}" "cuda/opaque" OPAQ_PTR_FILE)
-  list(APPEND KERNEL_SOURCES "${OPAQ_PTR_FILE}")
-
-endforeach()
 
 if(ENABLE_SPIRV)
   generate_cuda_spir_wrapper(SPIR_WRAPPER_FILE)

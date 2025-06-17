@@ -220,27 +220,6 @@ function(generate_cpu_spir_wrapper ARCH SUBDIR SIZE OUTPUT)
       VERBATIM)
 endfunction()
 
-function(generate_opaque_ptr_ll FILENAME SUBDIR OUTPUT)
-  get_filename_component(FNAME "${FILENAME}" NAME)
-  set(LL_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}")
-  set(${OUTPUT} "${LL_FILE}" PARENT_SCOPE)
-  if(IS_ABSOLUTE "${FILENAME}")
-    set(FULL_F_PATH "${FILENAME}")
-  else()
-    set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
-  endif()
-
-  add_custom_command( OUTPUT "${LL_FILE}"
-      DEPENDS "${FULL_F_PATH}"
-      COMMAND "${CMAKE_COMMAND}"
-      "-DINPUT_FILE=${FULL_F_PATH}" "-DOUTPUT_FILE=${LL_FILE}"
-      -P "${CMAKE_SOURCE_DIR}/cmake/make_opaque_ptr.cmake"
-      COMMENT "Generating opaque-pointer version of ${FNAME}"
-      VERBATIM)
-
-endfunction()
-
-
 function(make_kernel_bc OUTPUT_VAR NAME SUBDIR USE_SLEEF EXTRA_BC EXTRA_CONFIG)
   set(KERNEL_BC "${CMAKE_CURRENT_BINARY_DIR}/kernel-${NAME}.bc")
   set(${OUTPUT_VAR} "${KERNEL_BC}" PARENT_SCOPE)
