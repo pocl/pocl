@@ -1,0 +1,103 @@
+---
+name: Linux SYCL-bench benchmarks
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  schedule:
+# at 10:23 UTC every saturday
+    - cron: '23 10 * * 6'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  CCACHE_BASEDIR: "${{ github.workspace }}"
+  CCACHE_DIR: "${{ github.workspace }}/../../../ccache_storage"
+  EXAMPLES_DIR: "${{ github.workspace }}/../../../examples"
+
+jobs:
+  sycl_bench_matrix:
+    name: "LLVM ${{ matrix.llvm }} - SYCL-bench benchmark on ${{ matrix.device }}"
+    runs-on: [self-hosted, linux, x64, "sycl_bench_${{matrix.device}}" ]
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm: [20]
+        device: [cpu, gpu]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Load Env vars
+        id: load_env
+        run: |
+          cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
+
+      - name: CMake
+        id: cmake
+        run: |
+          runCMake() {
+            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
+            -DENABLE_TESTSUITES=sycl-bench -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_oneapi \
+            -DSYCL_CXX_COMPILER=/opt/intel/oneapi/compiler/latest/bin/icpx -DSYCL_LIBDIR=/opt/intel/oneapi/compiler/latest/lib \
+            -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/usr/bin/llvm-spirv-${{ matrix.llvm }} \
+            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+          }
+
+          rm -rf ${{ github.workspace }}/build
+          mkdir ${{ github.workspace }}/build
+          mkdir -p ${EXAMPLES_DIR}/build_oneapi
+          mkdir -p ${EXAMPLES_DIR}/source
+
+          if [ "${{ matrix.device }}" == "cpu" ]; then
+            runCMake -DENABLE_HOST_CPU_DEVICES=1 -DENABLE_CONFORMANCE=ON
+          elif [ "${{ matrix.device }}" == "gpu" ]; then
+            runCMake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LEVEL0=1 -DSTATIC_LLVM=ON -DENABLE_CONFORMANCE=OFF
+          else
+            echo "Unknown configuration" && exit 1
+          fi
+
+      - name: Build PoCL
+        id: build_pocl
+        timeout-minutes: 20
+        run: |
+          cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh)
+
+      - name: Build Examples
+        id: build_examples
+        timeout-minutes: 180
+        run: |
+          cd ${{ github.workspace }}/build/examples/sycl-bench && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) sycl-bench
+
+      - name: Cache sycl-bench timings
+        id: cache_sycl_bench
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+        with:
+          path: ${{ github.workspace }}/build/sycl_bench_baseline.csv
+          key: ctest-cache-${{ runner.name }}-sycl-bench-${{ matrix.device }}
+          restore-keys: ctest-cache-${{ runner.name }}-sycl-bench-${{ matrix.device }}
+
+      - name: Run sycl-bench
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+        id: sycl_bench_full
+        timeout-minutes: 480
+        run: |
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          source /opt/intel/oneapi/setvars.sh
+
+          if [ "${{ matrix.device }}" == "cpu" ]; then
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_sycl_bench_cpu
+          elif [ "${{ matrix.device }}" == "gpu" ]; then
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_sycl_bench_gpu
+          else
+            echo "Unknown Benchmark configuration" && exit 1
+          fi
