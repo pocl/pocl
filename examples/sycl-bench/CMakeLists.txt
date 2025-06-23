@@ -77,15 +77,17 @@ foreach(BENCH IN LISTS BENCHMARKS)
            WORKING_DIRECTORY "${TS_BUILDDIR}")
 
   # verification is single-threaded & extremely slow with larger problem size
+  # RUN_SERIAL to avoid running anything else at the same time
   add_test(NAME "${TS_NAME}_${BENCH}_long"
            COMMAND "${TS_BUILDDIR}/${BENCH}" --size=256000 --local=256 --warmup-run --num-runs=40 --no-verification
-           WORKING_DIRECTORY "${TS_BUILDDIR}")
+           WORKING_DIRECTORY "${TS_BUILDDIR}"
+           RUN_SERIAL)
+  set_property(TEST "${TS_NAME}_${BENCH}_long" PROPERTY TEST_LAUNCHER  ${CMAKE_COMMAND} -P "${CMAKE_SOURCE_DIR}/cmake/run_sycl_bench.cmake" "--" )
 
   set_property(TEST "${TS_NAME}_${BENCH}_short"
          PROPERTY LABELS ${TS_NAME})
   set_property(TEST "${TS_NAME}_${BENCH}_short"
          PROPERTY ENVIRONMENT "POCL_MEMORY_LIMIT=4")
-
   set_property(TEST "${TS_NAME}_${BENCH}_long"
          PROPERTY LABELS "${TS_NAME};long" )
 
