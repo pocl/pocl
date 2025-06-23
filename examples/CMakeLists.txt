@@ -76,7 +76,7 @@ set(ALL_TESTSUITES
     simple-sycl-samples dpcpp-book-samples
     opencl-book-samples OpenCV OpenVX_CTS
     Parboil piglit PyOpenCL SYCL_CTS
-    Rodinia shoc VexCL ViennaCL
+    Rodinia shoc sycl-bench VexCL ViennaCL
     UnitCL)
 
 if("${ENABLE_TESTSUITES}" STREQUAL "all")
