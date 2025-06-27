@@ -91,11 +91,6 @@ typedef struct scheduler_data_
 
 static scheduler_data scheduler;
 
-typedef struct pthread_timing_data {
-  uint32_t count;
-  float avg_time_per_wi;
-} pthread_timing_data;
-
 cl_int
 pthread_scheduler_init (cl_device_id device)
 {
@@ -269,7 +264,7 @@ work_group_scheduler (kernel_run_command *k, int is_in_queue,
 
   if (is_in_queue) {
     // multiple CPU threads
-    if (meta->data[0] == 0) {
+    if (k->timing.avg_time_per_wi == 0) {
       // unknown time / WG, with multiple CPU threads competing
       if (max_wgs <= 128 * thread_data->num_threads) {
         // if there are few WGs, divide evenly, since the worst case is that each WG takes a very long time to execute.
@@ -283,16 +278,12 @@ work_group_scheduler (kernel_run_command *k, int is_in_queue,
       // known time / WG, with multiple CPU threads competing
       // calculate the WG count (scaled_wgs) so that each thread takes
       // approx POCL_PTHREAD_TIME_CHUNK nanoseconds to execute
-      pthread_timing_data TD;
-      memcpy(&TD, &meta->data[0], sizeof(pthread_timing_data));
-      if (TD.avg_time_per_wi > 0) {
-        float mult = (wg_size > 1) ? log2f(wg_size) : 1;
-        // TODO this is inexact, we should store per-WG-size timing numbers instead
-        uint64_t time_per_WG = (uint64_t)(TD.avg_time_per_wi * (float)wg_size * mult );
-        scaled_wgs = max(POCL_PTHREAD_TIME_CHUNK / time_per_WG, 1);
+      float mult = (wg_size > 1) ? log2f(wg_size) : 1.0f;
+      // TODO this is inexact, we should store per-WG-size timing numbers instead
+      uint64_t time_per_WG = (uint64_t)(k->timing.avg_time_per_wi * (float)wg_size * mult );
+      scaled_wgs = max(POCL_PTHREAD_TIME_CHUNK / time_per_WG, 1);
 //        if (scaled_wgs * num_threads * 32 < max_wgs)
 //          scaled_wgs *= 8;
-      }
     }
 
   } else {
@@ -349,19 +340,23 @@ work_group_scheduler (kernel_run_command *k, int is_in_queue,
           execution_failed |= pc.execution_failed;
         }
       uint64_t stop_time = pocl_gettimemono_ns();
-      assert (stop_time > start_time);
       uint64_t time_spent_ns = stop_time - start_time;
-      total_time += time_spent_ns;
-      total_wgs += end_index - start_index;
-      if (time_spent_ns > 0 && time_spent_ns < POCL_PTHREAD_TIME_CHUNK) {
-        scaled_wgs = scaled_wgs * POCL_PTHREAD_TIME_CHUNK / time_spent_ns;
+      /* filter out potentially invalid values from clock function */
+      if (stop_time > start_time && time_spent_ns < (600UL<<30)) {
+        total_time += time_spent_ns;
+        total_wgs += end_index - start_index;
+        if (time_spent_ns < POCL_PTHREAD_TIME_CHUNK) {
+          scaled_wgs = scaled_wgs * POCL_PTHREAD_TIME_CHUNK / time_spent_ns;
+        }
       }
     }
   while (get_wg_index_range (k, &start_index, &end_index, &last_wgs,
                              scaled_wgs));
 
-  POCL_ATOMIC_ADD(k->time_per_wg_count, total_wgs);
-  POCL_ATOMIC_ADD(k->time_per_wg_total, total_time);
+  if (total_time > 0) {
+    POCL_ATOMIC_ADD(k->time_per_wg_count, total_wgs);
+    POCL_ATOMIC_ADD(k->time_per_wg_total, total_time);
+  }
 
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
   pocl_write_printf_buffer ((char *)pc.printf_buffer, position);
@@ -447,6 +442,7 @@ finalize_kernel_command (struct pool_thread_data *thread_data,
 
   pocl_release_dlhandle_cache (k->cmd->command.run.device_data);
 
+  POCL_LOCK_OBJ (k->kernel);
   pocl_kernel_metadata_t *meta = k->kernel->meta;
   if (k->time_per_wg_count) {
     size_t wg_size = k->pc.local_size[0] * k->pc.local_size[1] * k->pc.local_size[2];
@@ -464,6 +460,7 @@ finalize_kernel_command (struct pool_thread_data *thread_data,
     }
     memcpy(&meta->data[0], &TD, sizeof(pthread_timing_data));
   }
+  POCL_UNLOCK_OBJ (k->kernel);
 
   if (k->execution_failed)
     POCL_UPDATE_EVENT_FAILED_MSG (CL_FAILED, k->cmd->sync.event.event,
@@ -480,7 +477,7 @@ static kernel_run_command *
 pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd,
                              struct pool_thread_data *td)
 {
-  kernel_run_command *run_cmd;
+  kernel_run_command *run_cmd = NULL;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
   cl_program program = kernel->program;
@@ -541,6 +538,7 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd,
   run_cmd->execution_failed = 0;
   run_cmd->time_per_wg_total = 0;
   run_cmd->time_per_wg_count = 0;
+  memcpy(&run_cmd->timing, &kernel->meta->data[0], sizeof(pthread_timing_data));
   POCL_INIT_LOCK (run_cmd->lock);
 
   pocl_setup_kernel_arg_array (run_cmd);
@@ -551,10 +549,8 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd,
   work_group_scheduler (run_cmd, td);
   finalize_kernel_command (td, run_cmd);
 #else
-  if (kernel->meta->data[0]) {
-    pthread_timing_data TD;
-    memcpy(&TD, &kernel->meta->data[0], sizeof(pthread_timing_data));
-    uint64_t time_per_wg = (uint64_t)(TD.avg_time_per_wi * (float)wg_size);
+  if (run_cmd->timing.count) {
+    uint64_t time_per_wg = (uint64_t)(run_cmd->timing.avg_time_per_wi * (float)wg_size);
     uint64_t estimated_time = num_groups * time_per_wg;
     /* if the command time estimated is < single POCL_PTHREAD_TIME_CHUNK,
        handle the entire kernel launch in this thread */
@@ -583,11 +579,13 @@ check_cmd_queue_for_device (thread_data *td)
   return NULL;
 }
 
+#ifndef ENABLE_HOST_CPU_DEVICES_OPENMP
 static kernel_run_command *
 check_kernel_queue_for_device (thread_data *td)
 {
   return scheduler.kernel_queue;
 }
+#endif
 
 static int
 pthread_scheduler_get_work (thread_data *td)
