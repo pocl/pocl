@@ -68,7 +68,6 @@ struct kernel_run_command
   void **arguments2;
 
   size_t wgs_total;
-  //size_t remaining_wgs;
   size_t wgs_dealt;
 
   size_t time_per_wg_total;

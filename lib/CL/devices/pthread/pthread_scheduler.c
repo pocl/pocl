@@ -61,9 +61,7 @@ struct pool_thread_data
   void *local_mem;
   unsigned num_threads;
   /* index of this particular thread
-   * [0, num_threads-1]
-   * used for deciding whether a particular thread should run
-   * commands scheduled on a subdevice. */
+   * [0, num_threads-1] */
   unsigned index;
   /* printf buffer*/
   void *printf_buffer;
@@ -189,8 +187,6 @@ pthread_scheduler_uninit ()
   POCL_DESTROY_BARRIER (scheduler.init_barrier);
 }
 
-/* push_command and push_kernel MUST use broadcast and wake up all threads,
-   because commands can be for subdevices (= not all threads) */
 void pthread_scheduler_push_command (_cl_command_node *cmd)
 {
   POCL_LOCK (scheduler.wq_lock_fast);
@@ -200,6 +196,8 @@ void pthread_scheduler_push_command (_cl_command_node *cmd)
 }
 
 #ifndef ENABLE_HOST_CPU_DEVICES_OPENMP
+/* use broadcast and wake up all threads; this should only be used
+   when kernel is "large" enough to reasonable load all CPU threads. */
 static void
 pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
 {
@@ -209,9 +207,6 @@ pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
   POCL_UNLOCK (scheduler.wq_lock_fast);
 }
 
-/* Maximum and minimum chunk sizes for get_wg_index_range().
- * Each pthread driver's thread fetches work from a kernel's WG pool in
- * chunks, this determines the limits (scaled up by # of threads). */
 #define POCL_PTHREAD_WGS 32
 
 // in nanoseconds
@@ -225,13 +220,8 @@ get_wg_index_range (kernel_run_command *k, unsigned *start_index,
   assert (scaled_wgs);
   size_t max_wgs = POCL_ATOMIC_LOAD(k->wgs_total);
 
-  POCL_MSG_ERR("MaxWGS: %zu |  Scaled WGS: %zu\n", max_wgs, scaled_wgs);
   size_t last_wg_idx = POCL_ATOMIC_ADD(k->wgs_dealt, scaled_wgs);
-  if (last_wg_idx == 0) {
-    POCL_MSG_ERR ("Last WG IDX: %zu, SCALED WGS: %zu DEALT: %zu TOTAL: %zu \n",
-                  last_wg_idx, scaled_wgs, k->wgs_dealt, k->wgs_total);
-    assert (0 && "last wg idx == 0");
-  }
+  assert ((last_wg_idx != 0) && "last wg idx == 0");
   *start_index = last_wg_idx - scaled_wgs;
   *end_index = last_wg_idx;
 
@@ -301,8 +291,6 @@ work_group_scheduler (kernel_run_command *k, int is_in_queue,
     scaled_wgs = max_wgs;
   }
 
-  POCL_MSG_ERR ("%s: INITIAL Scaled WGS: %zu \n", k->kernel->name, scaled_wgs);
-
   if (!get_wg_index_range (k, &start_index, &end_index, &last_wgs, scaled_wgs))
     return;
   assert (end_index > start_index);
@@ -362,8 +350,6 @@ work_group_scheduler (kernel_run_command *k, int is_in_queue,
     }
   while (get_wg_index_range (k, &start_index, &end_index, &last_wgs,
                              scaled_wgs));
-
-  //POCL_MSG_ERR ("FINAL Scaled WGS: %zu | TIMEpWG: %zu | TIMEpWI: %f\n", scaled_wgs, time_per_WG, time_per_WI);
 
   POCL_ATOMIC_ADD(k->time_per_wg_count, total_wgs);
   POCL_ATOMIC_ADD(k->time_per_wg_total, total_time);
@@ -563,16 +549,12 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd,
     uint64_t estimated_time = num_groups * time_per_wg;
     /* if the command time estimated is < single POCL_PTHREAD_TIME_CHUNK, handle the entire kernel in this thread */
     if (estimated_time < POCL_PTHREAD_TIME_CHUNK) {
-      POCL_MSG_ERR ("%s: TpWG: %zu, Groups: %zu, Estimated time : %zu, processing in-thread\n",
-                    kernel->name, time_per_wg, num_groups, estimated_time);
       work_group_scheduler (run_cmd, 0, td);
       finalize_kernel_command (td, run_cmd);
     } else {
-      POCL_MSG_ERR ("%s: estimated time too long, pushing to queue \n", kernel->name);
       pthread_scheduler_push_kernel (run_cmd);
     }
   } else {
-    POCL_MSG_ERR ("%s: new kernel, pushing to queue \n", kernel->name);
     pthread_scheduler_push_kernel (run_cmd);
   }
 #endif
