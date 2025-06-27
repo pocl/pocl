@@ -67,8 +67,12 @@ struct kernel_run_command
   /* this is required b/c there's an additional level of indirection */
   void **arguments2;
 
-  size_t remaining_wgs;
+  size_t wgs_total;
+  //size_t remaining_wgs;
   size_t wgs_dealt;
+
+  size_t time_per_wg_total;
+  size_t time_per_wg_count;
 };
 
 #ifdef __cplusplus
