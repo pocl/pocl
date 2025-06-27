@@ -207,8 +207,6 @@ pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
   POCL_UNLOCK (scheduler.wq_lock_fast);
 }
 
-#define POCL_PTHREAD_WGS 32
-
 // in nanoseconds
 #define POCL_PTHREAD_TIME_CHUNK 200000UL
 
@@ -247,6 +245,9 @@ inline static void translate_wg_index_to_3d_index (kernel_run_command *k,
   index_3d[0] = (index % xy_slice) % row_size;
 }
 
+/* is_in_queue = bool
+  true: is in scheduler.kernel_queue, meaning all CPU threads are participating in execution
+  false: not in scheduler.kernel_queue, the calling thread executes all work */
 static void
 work_group_scheduler (kernel_run_command *k, int is_in_queue,
                       struct pool_thread_data *thread_data)
@@ -269,21 +270,29 @@ work_group_scheduler (kernel_run_command *k, int is_in_queue,
   if (is_in_queue) {
     // multiple CPU threads
     if (meta->data[0] == 0) {
-      // unknown time / WG, multiple CPU threads competing
+      // unknown time / WG, with multiple CPU threads competing
       if (max_wgs <= 128 * thread_data->num_threads) {
+        // if there are few WGs, divide evenly, since the worst case is that each WG takes a very long time to execute.
         scaled_wgs = max(max_wgs / thread_data->num_threads, 1);
       } else {
-        // max_wgs > 128 * num_threads ; there will be 128/POCL_PTHREAD_WGS chunks per thread
-        scaled_wgs = POCL_PTHREAD_WGS;
+        // if there are relatively many WGs, start by a small amount and scale up
+        // with 32 there will be 128/32 = 4 chunks for each CPU thread
+        scaled_wgs = 32;
       }
     } else {
-      // known time / WG, multiple CPU threads competing
+      // known time / WG, with multiple CPU threads competing
+      // calculate the WG count (scaled_wgs) so that each thread takes
+      // approx POCL_PTHREAD_TIME_CHUNK nanoseconds to execute
       pthread_timing_data TD;
       memcpy(&TD, &meta->data[0], sizeof(pthread_timing_data));
-      uint64_t time_per_WG = (uint64_t)(TD.avg_time_per_wi * (float)wg_size * log2f(wg_size) );
-      // uint64_t total_time = time_per_WG * k->wgs_total;
-      // target 2ms execution per chunk
-      scaled_wgs = max(POCL_PTHREAD_TIME_CHUNK / time_per_WG, 1);
+      if (TD.avg_time_per_wi > 0) {
+        float mult = (wg_size > 1) ? log2f(wg_size) : 1;
+        // TODO this is inexact, we should store per-WG-size timing numbers instead
+        uint64_t time_per_WG = (uint64_t)(TD.avg_time_per_wi * (float)wg_size * mult );
+        scaled_wgs = max(POCL_PTHREAD_TIME_CHUNK / time_per_WG, 1);
+//        if (scaled_wgs * num_threads * 32 < max_wgs)
+//          scaled_wgs *= 8;
+      }
     }
 
   } else {
@@ -547,7 +556,8 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd,
     memcpy(&TD, &kernel->meta->data[0], sizeof(pthread_timing_data));
     uint64_t time_per_wg = (uint64_t)(TD.avg_time_per_wi * (float)wg_size);
     uint64_t estimated_time = num_groups * time_per_wg;
-    /* if the command time estimated is < single POCL_PTHREAD_TIME_CHUNK, handle the entire kernel in this thread */
+    /* if the command time estimated is < single POCL_PTHREAD_TIME_CHUNK,
+       handle the entire kernel launch in this thread */
     if (estimated_time < POCL_PTHREAD_TIME_CHUNK) {
       work_group_scheduler (run_cmd, 0, td);
       finalize_kernel_command (td, run_cmd);
