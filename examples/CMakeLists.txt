@@ -74,7 +74,7 @@ set(ALL_TESTSUITES
     conformance CloverLeaf Glow Halide IntelSVM
     intel-compute-samples oneapi-samples
     simple-sycl-samples dpcpp-book-samples
-    opencl-book-samples OpenCV
+    opencl-book-samples OpenCV OpenVX_CTS
     Parboil piglit PyOpenCL SYCL_CTS
     Rodinia shoc VexCL ViennaCL
     UnitCL)
