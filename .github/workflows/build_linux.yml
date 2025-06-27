@@ -24,11 +24,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
   cancel-in-progress: true
 
-env:
-  CCACHE_BASEDIR: "${{ github.workspace }}"
-  CCACHE_DIR: "${{ github.workspace }}/../../../../ccache_storage"
-  EXAMPLES_DIR: "${{ github.workspace }}/../../../../examples"
-
 jobs:
   main_test_matrix:
     name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
@@ -48,10 +43,13 @@ jobs:
         # chipstar 1.1 only supports LLVM up to 17
         # chipstar 1.2 only supports LLVM up to 19
         # asan, tsan, ubsan = sanitizers
+        # openvx = OpenVX-CTS
         config: [cts_spirv, tier1, asan, tsan, ubsan]
         include:
           - llvm: 19
             config: chipstar
+          - llvm: 19
+            config: openvx
 
     steps:
       - name: Checkout
@@ -87,6 +85,10 @@ jobs:
             mkdir -p ${EXAMPLES_DIR}/build_chipstar_${{ matrix.llvm }}
             mkdir -p ${EXAMPLES_DIR}/source
             runCMake -DENABLE_TESTSUITES=chipStar -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_chipstar_${{ matrix.llvm }}
+          elif [ "${{ matrix.config }}" == "openvx" ]; then
+            mkdir -p ${EXAMPLES_DIR}/build_openvx
+            mkdir -p ${EXAMPLES_DIR}/source
+            runCMake -DENABLE_TESTSUITES=OpenVX_CTS -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_openvx
           elif [ "${{ matrix.config }}" == "asan" ]; then
             export BUILD_FLAGS="-O1 -ggdb -fno-omit-frame-pointer -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
             runCMake -DENABLE_ASAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DDEVELOPER_MODE=ON
@@ -116,7 +118,6 @@ jobs:
 
       - name: Build Tier1 Examples
         id: build_tier1_examples
-        # occasionally git timeouts on git clone of the examples
         timeout-minutes: 90
         if: ${{ matrix.config == 'tier1' }}
         run: |
@@ -127,13 +128,19 @@ jobs:
           cd ${{ github.workspace }}/build/examples/IntelSVM && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) IntelSVM
           cd ${{ github.workspace }}/build/examples/UnitCL && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) UnitCL
 
-      - name: Build chipStar Examples
-        id: build_chipstar_examples
-        # occasionally git timeouts on git clone of the examples
+      - name: Build chipStar
+        id: build_chipstar
         timeout-minutes: 90
         if: ${{ matrix.config == 'chipstar' }}
         run: |
           cd ${{ github.workspace }}/build/examples/chipStar && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) chipStar
+
+      - name: Build OpenVX-CTS
+        id: build_openvx_cts
+        timeout-minutes: 90
+        if: ${{ matrix.config == 'openvx' }}
+        run: |
+          cd ${{ github.workspace }}/build/examples/OpenVX_CTS && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) OpenVX_CTS
 
       - name: Get CMake version
         id: cmake_version
@@ -169,6 +176,8 @@ jobs:
             runCTest -L "amdsdk_30|piglit|PyOpenCL|conformance_suite_micro_main|IntelSVM|UnitCL"
           elif [ "${{ matrix.config }}" == "chipstar" ]; then
             runCTest -L chipStar
+          elif [ "${{ matrix.config }}" == "openvx" ]; then
+            runCTest -L openvx
           elif [ "${{ matrix.config }}" == "asan" ]; then
           # test_large_buf consumes too much memory for the smaller bots
             runCTest -R runtime -E test_large_buf
