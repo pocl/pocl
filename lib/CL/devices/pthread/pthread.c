@@ -88,6 +88,9 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
 
   ops->init_queue = pocl_pthread_init_queue;
   ops->free_queue = pocl_pthread_free_queue;
+
+  ops->create_kernel = pocl_pthread_create_kernel;
+  ops->free_kernel = pocl_pthread_free_kernel;
 }
 
 unsigned int
@@ -369,4 +372,37 @@ pocl_pthread_free_queue (cl_device_id device, cl_command_queue queue)
   POCL_DESTROY_COND (qdata->cq_cond);
   pocl_aligned_free (queue->data);
   return CL_SUCCESS;
+}
+
+int
+pocl_pthread_create_kernel (cl_device_id device,
+                            cl_program program,
+                            cl_kernel kernel,
+                            unsigned program_device_i)
+{
+  if (program->num_builtin_kernels > 0)
+    return pocl_basic_create_kernel (device, program, kernel,
+                                     program_device_i);
+  else
+    {
+      assert (kernel->data[program_device_i] == NULL);
+      kernel->data[program_device_i]
+        = calloc (1, sizeof (pthread_timing_data));
+      return CL_SUCCESS;
+    }
+}
+
+int
+pocl_pthread_free_kernel (cl_device_id device,
+                          cl_program program,
+                          cl_kernel kernel,
+                          unsigned program_device_i)
+{
+  if (program->num_builtin_kernels > 0)
+    return pocl_basic_free_kernel (device, program, kernel, program_device_i);
+  else
+    {
+      POCL_MEM_FREE (kernel->data[program_device_i]);
+      return CL_SUCCESS;
+    }
 }

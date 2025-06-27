@@ -363,7 +363,7 @@ endif()
 
 option(ENABLE_EXTRA_VALIDITY_CHECKS "Enable extra checks on cl_* object validity" OFF)
 
-option(DEVELOPER_MODE "This will SIGNIFICANTLY reduce PoCL's performance, but speeds up its compilation for faster development-test cycles. Only turn on if you know what you're doing." OFF)
+option(DEVELOPER_MODE "Currently 1) disables IPO and 2) enables a few extra runtime warnings; these can misleadingly warn about a problem when there isn't one, hence defaults to off." OFF)
 
 option(USE_POCL_MEMMANAGER "Enables custom memory manager. Except for special circumstances, this should be disabled." OFF)
 
