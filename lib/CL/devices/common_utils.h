@@ -39,6 +39,11 @@
 #include "cpu_dbk/pocl_dbk_khr_dnn_utils.hh"
 #include "cpu_dbk/pocl_dbk_khr_img_cpu.h"
 
+typedef struct pthread_timing_data {
+    uint32_t count;
+    float avg_time_per_wi;
+} pthread_timing_data;
+
 /* Generic struct for CPU device drivers.
  * Not all fields of this struct are used by all drivers. */
 typedef struct kernel_run_command kernel_run_command;
@@ -67,8 +72,12 @@ struct kernel_run_command
   /* this is required b/c there's an additional level of indirection */
   void **arguments2;
 
-  size_t remaining_wgs;
+  size_t wgs_total;
   size_t wgs_dealt;
+
+  size_t time_per_wg_total;
+  size_t time_per_wg_count;
+  pthread_timing_data timing;
 };
 
 #ifdef __cplusplus
