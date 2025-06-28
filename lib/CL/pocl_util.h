@@ -201,6 +201,7 @@ pocl_raw_ptr *pocl_find_raw_ptr_with_vm_ptr (cl_context context,
  */
 POCL_EXPORT
 pocl_raw_ptr *pocl_find_raw_ptr_with_dev_ptr (cl_context context,
+                                              cl_device_id dev,
                                               const void *dev_ptr);
 
 int

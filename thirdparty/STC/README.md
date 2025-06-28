@@ -1,0 +1,1 @@
+A fork from https://github.com/stclib/STC that only contains headers

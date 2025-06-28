@@ -216,12 +216,38 @@ pocl_create_memobject (cl_context context,
               POCL_RETURN_ERROR_ON ((item == NULL), NULL,
                                     "out of host memory\n");
 
+	      size_t mem_size = size;
+	      if (strcmp(dev->ops->device_name, "remote") == 0)
+		{
+		  /* A work-around for test_svm case for remote
+		   * devices which currently doesn't implement BDA
+		   * extension properly. It uses mem->id as .mem_ptr
+		   * address which does not work out for BDA extension
+		   * well. Buffers created back-to-back will likely
+		   * have their addresses overlapping (which is caught
+		   * by pocl_raw_ptr_set_insert() ahead) which means
+		   * when we can't tell which buffer a BDA pointer is
+		   * derived from in clSetKernelArgDevicePointerEXT().
+		   *
+		   * The following work-around gets past the
+		   * pocl_raw_ptr_set_insert() call
+		   * clSetKernelArgDevicePointerEXT() should work on
+		   * BDA pointers pointing to the beginning of the
+		   * buffers but offseted ones not.
+		   */
+		  mem_size = 1;
+		}
+
               POCL_LOCK_OBJ (context);
               item->vm_ptr = NULL;
               item->dev_ptr = ptr;
-              item->size = size;
+              item->device = dev;
+              item->size = mem_size;
               item->shadow_cl_mem = mem;
-              DL_APPEND (context->raw_ptrs, item);
+              int inserted = pocl_raw_ptr_set_insert (context->raw_ptrs, item);
+              assert (inserted);
+              (void)inserted;
+
               POCL_UNLOCK_OBJ (context);
 
               POCL_MSG_PRINT_MEMORY (
