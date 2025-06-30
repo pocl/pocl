@@ -189,7 +189,10 @@ jobs:
           # test_large_buf consumes too much memory for the smaller bots
             runCTest -R runtime -E test_large_buf
           elif [ "${{ matrix.config }}" == "tsan" ]; then
-            runCTest -E test_large_buf
+          # thread sanitizer does not support C11 <threads.h>
+          # implementation of threading, only pthreads.
+          # issue: https://github.com/google/sanitizers/issues/1603
+            runCTest -E 'test_large_buf|clSetEventCallback'
           elif [ "${{ matrix.config }}" == "ubsan" ]; then
             runCTest -E test_large_buf
           else
