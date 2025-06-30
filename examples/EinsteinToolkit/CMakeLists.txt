@@ -23,17 +23,14 @@
 #
 #=============================================================================
 
-#AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
 # EinsteinToolkit_CFLAGS = @OPENCL_CFLAGS@
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 ${OPENCL_CFLAGS}")
-add_compile_options(${OPENCL_CFLAGS} -std=c99)
+add_compile_options(${OPENCL_CFLAGS})
 
 add_executable("EinsteinToolkit" EinsteinToolkit.c ML_BSSN_CL_RHS1.cl ML_BSSN_CL_RHS2.cl)
 add_symlink_to_built_opencl_dynlib("EinsteinToolkit")
 
-# EinsteinToolkit_LDADD = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
 target_link_libraries("EinsteinToolkit" ${POCLU_LINK_OPTIONS})
 
 add_test(NAME "EinsteinToolkit" COMMAND "EinsteinToolkit")
