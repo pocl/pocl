@@ -691,7 +691,7 @@ pocl_create_command_full (_cl_command_node **cmd,
         /* The last events of the parent buffers can be now released as the
            sub-buffer references to the events should hold them alive. */
         if (mi->buffer->parent == NULL && mi->buffer->sub_buffers != NULL
-            && mi->buffer->parent->last_updater != NULL)
+            && mi->buffer->last_updater != NULL)
           {
             POname (clReleaseEvent) (mi->buffer->last_updater);
             mi->buffer->last_updater = NULL;
