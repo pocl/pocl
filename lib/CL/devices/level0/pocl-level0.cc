@@ -1637,7 +1637,6 @@ void pocl_level0_free(cl_device_id ClDevice, cl_mem Mem) {
     P->version = 0;
   } else {
     Device->freeBuffer((uintptr_t)Mem, P->mem_ptr);
-    assert(Mem->mem_host_ptr != nullptr);
   }
 
   if (Mem->mem_host_ptr != nullptr && Mem->mem_host_ptr == P->mem_ptr) {
