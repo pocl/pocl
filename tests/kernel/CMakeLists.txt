@@ -27,7 +27,7 @@
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
 #cannot use add_compile_options, because we need this only for C files
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 ${OPENCL_CFLAGS_STR}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OPENCL_CFLAGS_STR}")
 
 ######################################################################
 
