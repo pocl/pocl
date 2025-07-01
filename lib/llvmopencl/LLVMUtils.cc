@@ -26,6 +26,7 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/Twine.h>
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
+#include <llvm/Demangle/Demangle.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/Instructions.h>
@@ -72,6 +73,7 @@ POP_COMPILER_DIAGS
 #include "pocl_spir.h"
 
 #include <iostream>
+#include <regex>
 #include <set>
 
 using namespace llvm;
@@ -110,7 +112,35 @@ static std::vector<Use *> findInstructionUses(GlobalVariable *GVar) {
 }
 
 
+// Remove address space qualifiers like U3AS4, U3AS1, etc. from mangled symbol
+static std::string stripAddressSpaces(const std::string &MangledName) {
+
+    // Pattern: U followed by digits, then AS, then a digit
+    std::regex Pattern(R"(U\d+AS\d)");
+    std::string Result = std::regex_replace(MangledName, Pattern, "");
+
+    return Result;
+}
+
+
 namespace pocl {
+
+std::string tryDemangleWithoutAddressSpaces(const std::string& MangledName) {
+
+    std::string Demangled = llvm::demangle(MangledName);
+    if (Demangled != MangledName) {
+        return Demangled;
+    }
+
+    std::string Stripped = stripAddressSpaces(MangledName);
+
+    Demangled = llvm::demangle(Stripped);
+    if (Demangled != Stripped) {
+        return Demangled;
+    }
+
+    return MangledName; // Failed
+}
 
 /**
  * Regenerates the metadata that points to the original kernel
@@ -124,32 +154,32 @@ void
 regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels)
 {
   // reproduce the opencl.kernel_wg_size_info metadata
-  NamedMDNode *wg_sizes = M.getNamedMetadata("opencl.kernel_wg_size_info");
-  if (wg_sizes != NULL && wg_sizes->getNumOperands() > 0) 
+  NamedMDNode *WGSizes = M.getNamedMetadata("opencl.kernel_wg_size_info");
+  if (WGSizes != NULL && WGSizes->getNumOperands() > 0)
     {
-      for (std::size_t mni = 0; mni < wg_sizes->getNumOperands(); ++mni)
+      for (std::size_t mni = 0; mni < WGSizes->getNumOperands(); ++mni)
         {
-          MDNode *wgsizeMD = dyn_cast<MDNode>(wg_sizes->getOperand(mni));
+          MDNode *wgsizeMD = dyn_cast<MDNode>(WGSizes->getOperand(mni));
           for (FunctionMapping::const_iterator i = kernels.begin(),
-                 e = kernels.end(); i != e; ++i) 
+                 e = kernels.end(); i != e; ++i)
             {
-              Function *old_kernel = (*i).first;
-              Function *new_kernel = (*i).second;
-              Function *func_from_md;
-              func_from_md = dyn_cast<Function>(
+              Function *OldKernel = (*i).first;
+              Function *NewKernel = (*i).second;
+              Function *FuncFromMD;
+              FuncFromMD = dyn_cast<Function>(
                 dyn_cast<ValueAsMetadata>(wgsizeMD->getOperand(0))->getValue());
-              if (old_kernel == new_kernel || wgsizeMD->getNumOperands() == 0 ||
-                  func_from_md != old_kernel) 
+              if (OldKernel == NewKernel || wgsizeMD->getNumOperands() == 0 ||
+                  FuncFromMD != OldKernel)
                 continue;
               // found a wg size metadata that points to the old kernel, copy its
               // operands except the first one to a new MDNode
               SmallVector<Metadata*, 8> operands;
-              operands.push_back(llvm::ValueAsMetadata::get(new_kernel));
+              operands.push_back(llvm::ValueAsMetadata::get(NewKernel));
               for (unsigned opr = 1; opr < wgsizeMD->getNumOperands(); ++opr) {
                   operands.push_back(wgsizeMD->getOperand(opr));
               }
               MDNode *new_wg_md = MDNode::get(M.getContext(), operands);
-              wg_sizes->addOperand(new_wg_md);
+              WGSizes->addOperand(new_wg_md);
             }
         }
     }
