@@ -26,6 +26,18 @@
 #include "pocl_mem_management.h"
 #include "pocl_util.h"
 
+static int
+ptr_aliases_any_bda (cl_context context, const void *dev_ptr)
+{
+  for (unsigned i = 0; i < context->num_devices; i++)
+    {
+      cl_device_id dev = context->devices[i];
+      if (pocl_find_raw_ptr_with_dev_ptr (context, dev, dev_ptr))
+        return 1;
+    }
+  return 0;
+}
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clSetKernelExecInfo)(cl_kernel kernel,
                             cl_kernel_exec_info param_name,
@@ -111,9 +123,11 @@ POname(clSetKernelExecInfo)(cl_kernel kernel,
         for (size_t i = 0; i < param_value_size / sizeof (void *); ++i)
           {
             void *dev_ptr = ptrs[i];
-            pocl_raw_ptr *raw_ptr_info
-                = pocl_find_raw_ptr_with_dev_ptr (kernel->context, dev_ptr);
-            POCL_RETURN_ERROR_ON ((raw_ptr_info == NULL), CL_INVALID_VALUE,
+            /* TODO: cl_ext_buffer_device_address 1.0.1 allows invalid
+               pointers in clSetKernelArgDevicePointerEXT - does it
+               apply on CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT too? */
+            int aliases = ptr_aliases_any_bda (kernel->context, dev_ptr);
+            POCL_RETURN_ERROR_ON (!aliases, CL_INVALID_VALUE,
                                   "The device pointer %p was not found\n",
                                   dev_ptr);
           }

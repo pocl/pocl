@@ -87,15 +87,9 @@ pocl_mem_free_intel (cl_context context, void *usm_pointer, cl_bool blocking)
     }
 
   POCL_LOCK_OBJ (context);
-  pocl_raw_ptr *tmp = NULL, *item = NULL;
-  DL_FOREACH_SAFE (context->raw_ptrs, item, tmp)
-  {
-    if (item->vm_ptr == usm_pointer)
-      {
-        DL_DELETE (context->raw_ptrs, item);
-        break;
-      }
-  }
+  pocl_raw_ptr *item
+    = pocl_raw_ptr_set_lookup_with_vm_ptr (context->raw_ptrs, usm_pointer);
+  pocl_raw_ptr_set_remove (context->raw_ptrs, item);
   POCL_UNLOCK_OBJ (context);
   POCL_RETURN_ERROR_ON (
       (item == NULL), CL_INVALID_VALUE,
@@ -137,6 +131,7 @@ pocl_mem_free_intel (cl_context context, void *usm_pointer, cl_bool blocking)
         }
     }
 
+  POname (clReleaseMemObject) (item->shadow_cl_mem);
   POCL_MEM_FREE (item);
   POname (clReleaseContext) (context);
 

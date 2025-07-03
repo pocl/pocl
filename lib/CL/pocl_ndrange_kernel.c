@@ -232,7 +232,7 @@ SKIP_WG_SIZE_CALCULATION:
 }
 
 static void *
-find_raw_ptr (void *value, cl_context context)
+find_raw_ptr (void *value, cl_context context, cl_device_id dev)
 {
   /* Find the shadow cl_mem wrapper which is used for tracking
                migrations. */
@@ -244,7 +244,7 @@ find_raw_ptr (void *value, cl_context context)
                allowed to overlap and we could have the SVM and dev buffer
                having the same addr in theory. */
   if (raw_ptr == NULL)
-    raw_ptr = pocl_find_raw_ptr_with_dev_ptr (context, ptr);
+    raw_ptr = pocl_find_raw_ptr_with_dev_ptr (context, dev, ptr);
   if (raw_ptr == NULL)
     {
       POCL_MSG_PRINT_MEMORY ("Couldn't find the shadow cl_mem for an SVM ptr, "
@@ -287,7 +287,7 @@ pocl_kernel_collect_mem_objs (
               && al->value != NULL))
         {
           if (al->is_raw_ptr)
-            bufs[i] = buf = find_raw_ptr (al->value, context);
+            bufs[i] = buf = find_raw_ptr (al->value, context, realdev);
           else
             bufs[i] = buf = *(cl_mem *)(al->value);
 
@@ -341,12 +341,12 @@ pocl_kernel_collect_mem_objs (
      their data gets synchronized to the device. */
   if (kernel->can_access_all_raw_buffers_indirectly)
     {
-      struct _pocl_raw_ptr *ptr;
-      DL_FOREACH (kernel->context->raw_ptrs, ptr)
-      {
-        migr_infos = pocl_append_unique_migration_info (migr_infos,
-                                                        ptr->shadow_cl_mem, 0);
-      }
+      pocl_raw_ptr *ptr = pocl_raw_ptr_set_begin (kernel->context->raw_ptrs);
+      DL_FOREACH (ptr, ptr)
+        {
+          migr_infos = pocl_append_unique_migration_info (
+            migr_infos, ptr->shadow_cl_mem, 0);
+        }
     }
   else
     {
