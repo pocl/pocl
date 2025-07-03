@@ -76,6 +76,8 @@ namespace pocl {
 
 using ValueToSizeTMapTy = ValueMap<const Value *, size_t>;
 
+
+
 // A workaround for issue #889. In some cases, functions seem
 // to get multiple DISubprogram nodes attached. This causes
 // the llvm::verifyModule to complain, and
@@ -220,14 +222,14 @@ using SmallFunctionSet = llvm::SmallSet<llvm::Function *, 8>;
 // Find all functions in the calltree of F, including declarations.
 // Returns the list of Functions called in CalledFuncList,
 // in depth-first order (to make cloning simpler);
-// returns -1 on error (recursion), 0 on success
-static int
+// returns pointer to recursive function on error, nullptr on success
+static llvm::Function *
 find_called_functions(llvm::Function *F,
                       llvm::SmallVector<llvm::Function *> &CalledFuncList,
                       SmallFunctionSet &CallStack) {
   if (F->isDeclaration()) {
     DB_PRINT("it's a declaration, return\n");
-    return 0;
+    return nullptr;
   }
 
   CallStack.insert(F);
@@ -253,7 +255,7 @@ find_called_functions(llvm::Function *F,
 
     if (CallStack.contains(Callee)) {
       DB_PRINT("Recursion detected: %s\n", CName.c_str());
-      return -1;
+      return Callee;
     }
     DB_PRINT("Function %s calls %s\n", FName.c_str(), CName.c_str());
 
@@ -264,8 +266,8 @@ find_called_functions(llvm::Function *F,
     } else {
       DB_PRINT("function %s not seen before, recursing into it\n",
                CName.c_str());
-      if (find_called_functions(Callee, CalledFuncList, CallStack))
-        return -1;
+      if (auto *R = find_called_functions(Callee, CalledFuncList, CallStack))
+        return R;
       DB_PRINT("inserting %s into CalledList\n", CName.c_str());
       CalledFuncList.push_back(Callee);
     }
@@ -273,7 +275,7 @@ find_called_functions(llvm::Function *F,
 
   CallStack.erase(F);
 
-  return 0;
+  return nullptr;
 }
 
 // Copies one function from one module to another
@@ -691,9 +693,14 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
 
     SmallFunctionSet CallStack;
     llvm::SmallVector<llvm::Function *> Callees;
-    if (find_called_functions(&*FI, Callees, CallStack)) {
+    if (auto *R = find_called_functions(&*FI, Callees, CallStack)) {
       Log.append("Recursion detected in function: '");
-      Log.append(FName.c_str());
+      std::string PrettyName = tryDemangleWithoutAddressSpaces(FName);
+      Log.append(PrettyName.c_str());
+      Log.append("'\n");
+      Log.append("-> Infringing function: '");
+      PrettyName = tryDemangleWithoutAddressSpaces(R->getName().str());
+      Log.append(PrettyName.c_str());
       Log.append("'\n");
       return -1;
     }
@@ -998,5 +1005,5 @@ bool moveProgramScopeVarsOutOfProgramBc(llvm::LLVMContext *Context,
   return true;
 }
 
-/* vim: set expandtab ts=4 : */
+/* vim: set expandtab ts=2 : */
 
