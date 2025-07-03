@@ -15,6 +15,10 @@ Notable user facing changes
   OpenVINO running resnet50 inference, the call time reduced to few
   microseconds from previous ~20us.
 
+* Improved error message when a recursive function is encountered:
+  Print the infringing function in addition to the function where the recursion
+  was encountered and demangle C++ function names.
+
 ===========================
 Driver-specific features
 ===========================
