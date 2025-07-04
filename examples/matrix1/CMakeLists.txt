@@ -23,7 +23,7 @@
 #
 #=============================================================================
 
-add_compile_options(${OPENCL_CFLAGS} -std=c99)
+add_compile_options(${OPENCL_CFLAGS})
 
 add_executable("matrix1" matrix1.c matrix1.cl)
 target_link_libraries("matrix1" ${POCLU_LINK_OPTIONS})

@@ -126,11 +126,15 @@ else()
   set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build/bin")
 endif()
 
-foreach(TEST IN LISTS SYCL_CTS_TEST_LIST)
-  add_test(NAME sycl_cts_${TEST}
-         COMMAND "${TS_BUILDDIR}/${TEST}"
+foreach(SYCL_TEST IN LISTS SYCL_CTS_TEST_LIST)
+  add_test(NAME "sycl_cts_${SYCL_TEST}"
+         COMMAND "${TS_BUILDDIR}/${SYCL_TEST}"
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
-  set_tests_properties(sycl_cts_${TEST} PROPERTIES LABELS "${TS_NAME};cpu")
+  set_tests_properties(sycl_cts_${SYCL_TEST} PROPERTIES LABELS "${TS_NAME};sycl")
+  # the test_event is flaky (ends with SIGFPE when run in parallel)
+  if(SYCL_TEST STREQUAL "test_event")
+    set_tests_properties(sycl_cts_${SYCL_TEST} PROPERTIES RUN_SERIAL ON)
+  endif()
 
 endforeach()

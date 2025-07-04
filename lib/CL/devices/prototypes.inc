@@ -99,8 +99,10 @@
                                      cl_context context);                     \
   int pocl_##__DRV__##_free_context (cl_device_id device,                     \
                                      cl_context context);                     \
+  POCL_EXPORT                                                                 \
   int pocl_##__DRV__##_create_kernel (cl_device_id device, cl_program p,      \
                                       cl_kernel k, unsigned device_i);        \
+  POCL_EXPORT                                                                 \
   int pocl_##__DRV__##_free_kernel (cl_device_id device, cl_program p,        \
                                     cl_kernel k, unsigned device_i);          \
   int pocl_##__DRV__##_build_source (                                         \

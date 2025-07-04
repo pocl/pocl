@@ -455,6 +455,7 @@ set(CTS_FULL_LIST
     "${TS_NAME}${TS_SUFFIX}_device_partition"
     "${TS_NAME}${TS_SUFFIX}_events"
     "${TS_NAME}${TS_SUFFIX}_geometrics"
+    "${TS_NAME}${TS_SUFFIX}_half"
     "${TS_NAME}${TS_SUFFIX}_images_cl_copy_images"
     "${TS_NAME}${TS_SUFFIX}_images_cl_copy_images_max"
     "${TS_NAME}${TS_SUFFIX}_images_cl_copy_images_min"
@@ -541,6 +542,7 @@ set_property(TEST conformance_main_device_timer  PROPERTY COST 0.14 )
 set_property(TEST conformance_main_events  PROPERTY COST 112.32 )
 set_property(TEST conformance_main_generic_AS  PROPERTY COST 488.13 )
 set_property(TEST conformance_main_geometrics  PROPERTY COST 66.39 )
+set_property(TEST conformance_main_half  PROPERTY COST 3624.03 )
 set_property(TEST conformance_main_images_cl_copy_images_max  PROPERTY COST 76.51 )
 set_property(TEST conformance_main_images_cl_copy_images_min  PROPERTY COST 500.02 )
 set_property(TEST conformance_main_images_cl_copy_images  PROPERTY COST 69.64 )
@@ -951,6 +953,7 @@ set(OCL_30_TESTS_MICRO
     "${TS_NAME}${TS_SUFFIX}_c11_atomics_micro_2"
     "${TS_NAME}${TS_SUFFIX}_c11_atomics_micro_3"
     "${TS_NAME}${TS_SUFFIX}_c11_atomics_micro_4"
+    "${TS_NAME}${TS_SUFFIX}_c11_atomics_micro_5"
     "${TS_NAME}${TS_SUFFIX}_device_execution"
     "${TS_NAME}${TS_SUFFIX}_device_timer"
     "${TS_NAME}${TS_SUFFIX}_integer_ops_micro_ocl_30"
