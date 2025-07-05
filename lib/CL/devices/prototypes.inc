@@ -232,5 +232,5 @@
                                     cl_mem_alloc_flags_intel flags,           \
                                     size_t size, cl_int *errcode);            \
   cl_int pocl_##__DRV__##_init_device_discovery (                             \
-      cl_int (* add_discovered_device)(const char*, unsigned),                \
-      unsigned pocl_dev_type_idx);
+      cl_int (* add_discovered_device)(const char*, unsigned, cl_platform_id),\
+      unsigned pocl_dev_type_idx, cl_platform_id pocl_dev_platform);

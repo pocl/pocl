@@ -280,7 +280,7 @@ pocl_create_event (cl_event *event,
     return CL_INVALID_CONTEXT;
 
   assert (event != NULL);
-  *event = pocl_mem_manager_new_event ();
+  *event = pocl_mem_manager_new_event (context);
   if (*event == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 

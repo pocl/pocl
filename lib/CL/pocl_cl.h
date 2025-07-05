@@ -225,14 +225,15 @@ extern pocl_obj_id_t last_object_id;
 
 #ifdef BUILD_ICD
 /* Most (all?) object must also initialize the ICD field */
-#  define POCL_INIT_OBJECT(__OBJ__)                \
-    do {                                           \
-      POCL_INIT_OBJECT_NO_ICD(__OBJ__);            \
-      POCL_INIT_ICD_OBJECT(__OBJ__);               \
-    } while (0)
+#define POCL_INIT_OBJECT(__OBJ__, __PARENT__)                                 \
+  do                                                                          \
+    {                                                                         \
+      POCL_INIT_OBJECT_NO_ICD (__OBJ__);                                      \
+      POCL_INIT_ICD_OBJECT (__OBJ__, __PARENT__);                             \
+    }                                                                         \
+  while (0)
 #else
-#  define POCL_INIT_OBJECT(__OBJ__)                \
-      POCL_INIT_OBJECT_NO_ICD(__OBJ__)
+#define POCL_INIT_OBJECT(__OBJ__, __PARENT__) POCL_INIT_OBJECT_NO_ICD (__OBJ__)
 #endif
 
 #define POCL_DESTROY_OBJECT(__OBJ__)                                          \
@@ -307,8 +308,39 @@ extern pocl_obj_id_t last_object_id;
 
 /* The ICD compatibility part. This must be first in the objects where
  * it is used (as the ICD loader assumes that)*/
+
+/* This block allows building using outdated headers that do not contain
+ * ICD 2 definitions. */
+#ifndef CL_ICD2_TAG_KHR
+/* Defines a unique tag that signals an implementation is ICD 2 compatible
+ * when set in the clGetPlatformIDs and clUnloadCompiler of the dispatch
+ * table. */
+#if INTPTR_MAX == INT32_MAX
+#define CL_ICD2_TAG_KHR ((intptr_t)0x434C3331)
+#else
+#define CL_ICD2_TAG_KHR ((intptr_t)0x4F50454E434C3331)
+#endif
+
+typedef void *CL_API_CALL clIcdGetFunctionAddressForPlatformKHR_t (
+  cl_platform_id platform, const char *function_name);
+
+typedef clIcdGetFunctionAddressForPlatformKHR_t
+  *clIcdGetFunctionAddressForPlatformKHR_fn;
+
+extern CL_API_ENTRY void *CL_API_CALL clIcdGetFunctionAddressForPlatformKHR (
+  cl_platform_id platform, const char *func_name);
+
+typedef cl_int CL_API_CALL
+clIcdSetPlatformDispatchDataKHR_t (cl_platform_id platform, void *disp_data);
+
+typedef clIcdSetPlatformDispatchDataKHR_t *clIcdSetPlatformDispatchDataKHR_fn;
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clIcdSetPlatformDispatchDataKHR (cl_platform_id platform, void *dispatch_data);
+#endif /* !defined(CL_ICD2_TAG_KHR) */
+
 #ifdef BUILD_ICD
-#  define POCL_ICD_OBJECT struct _cl_icd_dispatch *dispatch;
+#  define POCL_ICD_OBJECT struct _cl_icd_dispatch *dispatch; void *disp_data;
 #  define POCL_ICD_OBJECT_PLATFORM_ID POCL_ICD_OBJECT
 #  define POsymICD(name) POsym(name)
 #  define POdeclsymICD(name) POdeclsym(name)
@@ -533,8 +565,10 @@ struct pocl_device_ops {
    *                          handle.
    */
   cl_int (*init_discovery) (cl_int (*add_discovered_device) (const char *,
-                                                             unsigned),
-                            unsigned pocl_dev_type_idx);
+                                                             unsigned,
+                                                             cl_platform_id),
+                            unsigned pocl_dev_type_idx,
+                            cl_platform_id pocl_dev_platform);
 
   /****** Memory management APIs. */
 
