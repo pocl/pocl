@@ -49,7 +49,6 @@ function(add_unit_test MAIN_SOURCE)
   add_test(NAME "unit/${BASENAME}"
     COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${BASENAME})
 
-  set_property(TEST "unit/${BASENAME}" APPEND PROPERTY LABELS "cpu;unit")
 endfunction()
 
 add_unit_test(test_fs.cc)

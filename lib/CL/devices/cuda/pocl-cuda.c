@@ -40,6 +40,7 @@
 #include "pocl_runtime_config.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
+#include "spirv_queries.h"
 
 #include <string.h>
 #include <fcntl.h>
@@ -543,7 +544,15 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->device_aux_functions = cuda_native_device_aux_funcs;
 
 #if defined(ENABLE_SPIRV)
+#if LLVM_MAJOR >= 20
+  dev->supported_spir_v_versions
+    = "SPIR-V_1.5 SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
+#elif LLVM_MAJOR >= 18
+  dev->supported_spir_v_versions
+    = "SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
+#else
   dev->supported_spir_v_versions = "SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
+#endif
   dev->supported_spirv_extensions = "+SPV_KHR_no_integer_wrap_decoration"
                                     ",+SPV_INTEL_fp_fast_math_mode"
                                     ",+SPV_EXT_shader_atomic_float_add";
@@ -685,12 +694,6 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 
   dev->local_mem_type = CL_LOCAL;
 
-#ifdef ENABLE_SPIRV
-  dev->supported_spir_v_versions = "SPIR-V_1.2";
-#else
-  dev->supported_spir_v_versions = "";
-#endif
-
   int warp_size = 32;
   cuDeviceGetAttribute (&warp_size, CU_DEVICE_ATTRIBUTE_WARP_SIZE,
                         data->device);
@@ -828,6 +831,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   pocl_setup_builtin_kernels_with_version (dev);
 
   pocl_setup_ils_with_version (dev);
+  pocl_setup_spirv_queries (dev);
 
 #ifdef ENABLE_CUDNN
   CUDNN_CALL (cudnnCreate (&cudnn));
@@ -902,6 +906,9 @@ pocl_cuda_free_queue (cl_device_id device, cl_command_queue queue)
       PTHREAD_CHECK (pthread_join (queue_data->submit_thread, NULL));
       PTHREAD_CHECK (pthread_join (queue_data->finalize_thread, NULL));
     }
+
+  POCL_MEM_FREE(queue->data);
+
   return CL_SUCCESS;
 }
 
@@ -2386,25 +2393,11 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
         {
           for (unsigned int i = 0; i < cmd->svm_free.num_svm_pointers; i++)
             {
-              void *ptr = cmd->svm_free.svm_pointers[i];
-              POCL_LOCK_OBJ (event->context);
-              pocl_raw_ptr *tmp = NULL, *item = NULL;
-              DL_FOREACH_SAFE (event->context->raw_ptrs, item, tmp)
-              {
-                if (item->vm_ptr == ptr)
-                  {
-                    DL_DELETE (event->context->raw_ptrs, item);
-                    break;
-                  }
-              }
-              POCL_UNLOCK_OBJ (event->context);
-              assert (item);
-              POCL_MEM_FREE (item);
-              // Leads to 'undefined symbol: POclReleaseContext'
-              // POname (clReleaseContext) (event->context);
-
-              dev->ops->svm_free (dev, ptr);
-            }
+	      void *ptr = cmd->svm_free.svm_pointers[i];
+	      /* This updates bookkeeping associated with the 'ptr'
+		 done by the PoCL core. */
+	      POname (clSVMFree) (event->context, ptr);
+	    }
         }
       break;
     case CL_COMMAND_READ_IMAGE:

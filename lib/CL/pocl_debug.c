@@ -377,11 +377,14 @@ pocl_dump_dot_task_graph (cl_context context, const char *file_name)
   fclose (f);
 }
 
+static int pocl_dump_dot_task_graph_var = 0;
+
 void
 pocl_dump_dot_task_graph_wait ()
 {
   POCL_LOCK (pocl_tg_dump_lock);
-  POCL_WAIT_COND (pocl_tg_dump_cond, pocl_tg_dump_lock);
+  while (!pocl_dump_dot_task_graph_var)
+    POCL_WAIT_COND (pocl_tg_dump_cond, pocl_tg_dump_lock);
   POCL_UNLOCK (pocl_tg_dump_lock);
 }
 
@@ -393,6 +396,7 @@ pocl_dump_dot_task_graph_signal ()
    wait is per clFinish(). The drivers should take care of waiting for it
    in the correct spot. */
   POCL_LOCK (pocl_tg_dump_lock);
+  pocl_dump_dot_task_graph_var = 1;
   POCL_BROADCAST_COND (pocl_tg_dump_cond);
   POCL_UNLOCK (pocl_tg_dump_lock);
 }

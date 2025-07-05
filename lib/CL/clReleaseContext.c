@@ -104,6 +104,8 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
       pocl_llvm_release_context (context);
 #endif
 
+      pocl_raw_ptr_set_destroy (context->raw_ptrs);
+
       POCL_DESTROY_OBJECT (context);
       POCL_MEM_FREE(context);
 

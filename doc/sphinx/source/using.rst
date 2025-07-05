@@ -333,6 +333,12 @@ pocl.
  "PoCL (Intel OpenCL compat)" will allow running OneDNN applications, which will
  fail to create a device if 'Intel' and 'OpenCL' are not in the platform string.
 
+- **POCL_PREGION_VALUE_REMAT**
+
+ Controls the CPU kernel compiler's value rematerialization, an optimization
+ where the value is recompute in the using parallel region instead of storing
+ it to the work-item context. Enabled by default.
+
 - **POCL_REMOTE_XXX**
 
  These variables are used to configure different aspects of the remote driver
@@ -406,6 +412,33 @@ pocl.
 
  When set to 1, prints out remarks produced by the loop vectorizer of LLVM
  during kernel compilation.
+
+- **POCL_VECTORIZER_FORCE_VECTOR_WIDTH**
+
+ Forces the LLVM loop vectorizer to use the specified vector width (expressed
+ as a number of **loop iterations**), overriding the default value determined
+ by the vectorizer's cost model.
+ The same vector width will be used by all loops in all kernels.
+ Setting the vector width to 1 disables vectorization.
+ If the requested vector width is higher than the machine's native vector
+ width, the vectorizer will also unroll the loop.
+
+- **POCL_VECTORIZER_PREFER_VECTOR_WIDTH**
+
+ Override the preferred vector width (expressed as a number of **bits**) for
+ x86 targets.
+ When set, the LLVM loop vectorizer will generate code using vector
+ instructions with the specified number of bits.
+ When not set, the LLVM loop vectorizer may limit itself to using 256-bit
+ vector instructions on some targets to avoid frequency penalties.
+
+.. note::
+   POCL_VECTORIZER_FORCE_VECTOR_WIDTH and POCL_VECTORIZER_PREFER_VECTOR_WIDTH
+   can be used together. For example, setting
+   POCL_VECTORIZER_FORCE_VECTOR_WIDTH=16
+   POCL_VECTORIZER_PREFER_VECTOR_WIDTH=512
+   will force the LLVM loop vectorizer to use a vector width of 16 and
+   generate 512-bit vector instructions.
 
 - **POCL_VULKAN_VALIDATE**
 

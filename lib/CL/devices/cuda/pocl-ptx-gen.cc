@@ -50,10 +50,7 @@
 
 #include <llvm/Analysis/TargetLibraryInfo.h>
 #include <llvm/Analysis/TargetTransformInfo.h>
-
-#if LLVM_MAJOR >= 17
 #include <llvm/Transforms/IPO/Internalize.h>
-#endif
 
 #include "LLVMUtils.h"
 
@@ -241,12 +238,7 @@ void fixPrintF(llvm::Module *Module) {
   NewPrintF->takeName(OldPrintF);
 
   // Take function body from old function.
-#if LLVM_MAJOR < 16
-  NewPrintF->getBasicBlockList().splice(NewPrintF->begin(),
-                                        OldPrintF->getBasicBlockList());
-#else
   NewPrintF->splice(NewPrintF->begin(), OldPrintF);
-#endif
 
   // Create i32 to hold current argument index.
   llvm::AllocaInst *ArgIndexPtr =
@@ -332,13 +324,8 @@ void fixPrintF(llvm::Module *Module) {
 
       // Cast pointers to the generic address space.
       if (ArgType->isPointerTy() && ArgType->getPointerAddressSpace() != 0) {
-#ifdef LLVM_OPAQUE_POINTERS
         llvm::CastInst *AddrSpaceCast = llvm::CastInst::CreatePointerCast(
             Arg, llvm::PointerType::get(Context, 0));
-#else
-        llvm::CastInst *AddrSpaceCast =llvm::CastInst::CreatePointerCast(
-          Arg, ArgType->getPointerElementType()->getPointerTo());
-#endif
         AddrSpaceCast->insertBefore(Call);
         Arg = AddrSpaceCast;
         ArgType = Arg->getType();
@@ -351,15 +338,6 @@ void fixPrintF(llvm::Module *Module) {
           llvm::GetElementPtrInst::Create(I64, Args, {ArgIndex});
       ArgPtr->insertBefore(Call);
 
-#ifndef LLVM_OPAQUE_POINTERS
-      // Cast pointer to correct type if necessary.
-      if (ArgPtr->getType()->getPointerElementType() != ArgType) {
-        llvm::BitCastInst *ArgPtrBC =
-            new llvm::BitCastInst(ArgPtr, ArgType->getPointerTo(0));
-        ArgPtrBC->insertAfter(ArgPtr);
-        ArgPtr = ArgPtrBC;
-      }
-#endif
       // Store argument to i64 array.
       llvm::StoreInst *Store = new llvm::StoreInst(Arg, ArgPtr, false, llvm::Align(8));
       Store->insertBefore(Call);
@@ -415,12 +393,7 @@ void fixPrintF(llvm::Module *Module) {
     llvm::Type *FormatType = Format->getType();
     if (FormatType->getPointerAddressSpace() != 0) {
       // Cast address space to generic.
-#ifdef LLVM_OPAQUE_POINTERS
       llvm::Type *NewFormatType = llvm::PointerType::get(Context, 0);
-#else
-      llvm::Type *NewFormatType =
-          FormatType->getPointerElementType()->getPointerTo(0);
-#endif
       llvm::AddrSpaceCastInst *FormatASC =
           new llvm::AddrSpaceCastInst(Format, NewFormatType);
       FormatASC->insertBefore(Call);
@@ -642,14 +615,7 @@ int linkLibDevice(llvm::Module *Module, const char *LibDevicePath) {
     return (F != nullptr && pocl::isKernelToProcess(*F));
   };
 
-#if LLVM_MAJOR < 17
-  llvm::legacy::PassManager Passes;
-  Passes.add(llvm::createInternalizePass(PreserveKernel));
-  // run the InternalizePass
-  Passes.run(*Module);
-#else
   internalizeModule(*Module, PreserveKernel);
-#endif
 
   // Run optimization passes to clean up unused functions etc.
   populateModulePM(nullptr, Module, 3, 0);
@@ -690,13 +656,8 @@ bool convertPtrArgsToOffsets(llvm::Module *Module, llvm::Function *Function,
 
       // Insert GEP to add offset.
       llvm::Value *Zero = llvm::ConstantInt::getSigned(I32ty, 0);
-#ifdef LLVM_OPAQUE_POINTERS
       llvm::GetElementPtrInst *GEP = llvm::GetElementPtrInst::Create(
           Base->getValueType(), Base, {Zero, Offset});
-#else
-      llvm::GetElementPtrInst *GEP =
-          llvm::GetElementPtrInst::Create(Base->getType()->getPointerElementType(), Base, {Zero, Offset});
-#endif
       // Cast pointer to correct type.
       llvm::BitCastInst *Cast = new llvm::BitCastInst(GEP, ArgType);
 
@@ -977,14 +938,10 @@ static int getPtrArgAlignment(llvm::Module *Module, llvm::Function *Kernel,
       //      POCL_MSG_WARN("V1 ||||| Argument %u : ALIGN %zu \n", i,
       //      AlignmentVec[i]);
     } else {
-#if LLVM_MAJOR < 16
-      AlignmentVec[i] = Arg.getParamAlignment();
-#else
       if (Arg.getType()->isPointerTy())
         AlignmentVec[i] = Arg.getParamAlign().valueOrOne().value();
       else
         AlignmentVec[i] = DL.getTypeAllocSize(Arg.getType());
-#endif
       //      POCL_MSG_WARN("V2 ||||| Argument %u : ALIGN %zu \n", i,
       //      AlignmentVec[i]);
     }

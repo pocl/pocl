@@ -47,8 +47,8 @@ set_tests_properties( "spirv/printf"
     DEPENDS "pocl_version_check")
 
 # crashing for unknown reason on Mac OS X
-if(NOT (APPLE AND ARM64))
-  set_property(TEST "spirv/printf" APPEND PROPERTY LABELS "cpu")
+if((APPLE OR ARM64) AND HOST_CPU_ENABLE_SPIRV)
+  set_property(TEST "spirv/printf" APPEND PROPERTY LABELS "cpu_fail")
 endif()
 
 endif()

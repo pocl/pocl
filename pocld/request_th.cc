@@ -100,10 +100,15 @@ void RequestQueueThread::readThread() {
     if (!(pfd.revents & POLLIN))
       continue;
 
-    Request *IncomingRequest = new Request();
+    Request *IncomingRequest = new(std::nothrow) Request();
+    if (IncomingRequest == nullptr) {
+      eh->requestExit("Out of host memory in in RequestQueueThread", ENOMEM);
+      return;
+    }
     while (!IncomingRequest->IsFullyRead) {
       if (!IncomingRequest->read(InboundConnection.get())) {
         delete IncomingRequest;
+        IncomingRequest = nullptr;
         InboundConnection.reset();
         continue;
       }

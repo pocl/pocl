@@ -38,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [17, 18]
+        llvm: [18, 19]
         # basic = simplest pthread build
         # devel = with devel options
         # cts_spirv = cts with SPIR-V
@@ -50,7 +50,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-      - uses: conda-incubator/setup-miniconda@505e6394dae86d6a5c7fbb6e3fb8938e3e863830
+      - uses: conda-incubator/setup-miniconda@835234971496cad1653abb28a638a281cf32541f
         with:
           miniforge-version: latest
           mamba-version: "*"
@@ -60,7 +60,7 @@ jobs:
         shell: bash -el {0}
         run: |
           mamba install 'clangdev=${{ matrix.llvm }}.*' 'llvmdev=${{ matrix.llvm }}.*' \
-             llvm-spirv libhwloc ld64 compilers pkg-config cmake make
+             'llvm-spirv=${{ matrix.llvm }}.*' libhwloc ld64 pkg-config cmake make
           conda activate pocl-deps
           if [ "${{ matrix.config }}" == "basic" ]; then
             mamba install khronos-opencl-icd-loader clhpp
@@ -110,14 +110,14 @@ jobs:
         id: ctest
         run: |
           runCTest() {
-            cd ${{ github.workspace }}/build &&  ctest -j$(sysctl -n hw.logicalcpu) $CTEST_FLAGS "$@"
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cpu_tests -j$(sysctl -n hw.logicalcpu) $CTEST_FLAGS "$@"
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
           if [ "${{ matrix.config }}" == "basic" ]; then
-            runCTest -L cpu
+            runCTest
           elif [ "${{ matrix.config }}" == "devel" ]; then
-            runCTest -L cpu
+            runCTest
           elif [ "${{ matrix.config }}" == "cts_spirv" ]; then
             runCTest -L conformance_suite_micro_spirv
           elif [ "${{ matrix.config }}" == "tier1" ]; then

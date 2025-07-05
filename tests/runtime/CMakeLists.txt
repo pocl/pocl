@@ -164,8 +164,7 @@ if(HAVE_LIBJPEG_TURBO)
     COST 2.0
     PROCESSORS 1
     SKIP_RETURN_CODE 77
-    DEPENDS "pocl_version_check"
-    LABELS "cpu;runtime")
+    DEPENDS "pocl_version_check")
 endif()
 
 add_test(NAME "runtime/test_queue_creation_with_hints" COMMAND "test_queue_creation_with_hints")
@@ -178,8 +177,7 @@ if(HAVE_LIBXSMM)
     COST 2.0
     PROCESSORS 1
     SKIP_RETURN_CODE 77
-    DEPENDS "pocl_version_check"
-    LABELS "cpu;runtime")
+    DEPENDS "pocl_version_check")
 endif()
 
 if(HAVE_ONNXRT)
@@ -189,18 +187,14 @@ if(HAVE_ONNXRT)
     COST 2.0
     PROCESSORS 1
     SKIP_RETURN_CODE 77
-    DEPENDS "pocl_version_check"
-    LABELS "cpu;runtime")
+    DEPENDS "pocl_version_check")
 endif()
 
-unset(ENABLED_CPU_TESTS)
-if(NOT ENABLE_ASAN)
-  list(APPEND ENABLED_CPU_TESTS "runtime/clCreateSubDevices")
+if(ENABLE_ANYSAN)
+  set_property(TEST "runtime/clCreateSubDevices"
+               APPEND PROPERTY LABELS "cpu_fail")
 endif()
 
-if(HAVE_WORKING_IMAGES_WITH_SPIR)
-  list(APPEND ENABLED_CPU_TESTS "runtime/clGetKernelArgInfo")
-endif()
 
 set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clGetEventInfo" "runtime/clCreateProgramWithBinary"
@@ -220,12 +214,12 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/test_device_address" "runtime/test_svm"
   "runtime/test_compile_n_link" "runtime/test_subbuffers"
   "runtime/test_queue_creation_with_hints"
-  ${ENABLED_CPU_TESTS}
+  "runtime/clGetKernelArgInfo"
+  "runtime/clCreateSubDevices"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
-    DEPENDS "pocl_version_check"
-    LABELS "cpu;runtime")
+    DEPENDS "pocl_version_check")
 
 set_tests_properties(
   "runtime/clCreateSubDevices"

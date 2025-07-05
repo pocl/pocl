@@ -63,6 +63,7 @@ POP_COMPILER_DIAGS
 #include <iostream>
 #include <map>
 #include <sstream>
+#include <string>
 
 #if _WIN32
 #  include "vccompat.hpp"
@@ -541,6 +542,13 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
     // This breaks infinite for loops when enabled.
     F.addFnAttr(Attribute::WillReturn);
 #endif
+
+    // Override the preferred vector width on x86 targets.
+    // By default, clang uses 256-bit even if a processor supports 512-bit SIMD.
+    if (int VecWidth =
+            pocl_get_int_option("POCL_VECTORIZER_PREFER_VECTOR_WIDTH", 0)) {
+      F.addFnAttr("prefer-vector-width", std::to_string(VecWidth));
+    }
   }
 
   return true;
@@ -1379,16 +1387,10 @@ void WorkgroupImpl::createDefaultWorkgroupLauncher(llvm::Function *F) {
     Type *ArgType = ii->getType();
     Type* I32Ty = Type::getInt32Ty(M->getContext());
 
-#ifndef LLVM_OPAQUE_POINTERS
-    Value *GEP = Builder.CreateGEP(AI->getType()->getPointerElementType(),
-        AI, ConstantInt::get(I32Ty, i));
-    Value *Pointer = Builder.CreateLoad(GEP->getType()->getPointerElementType(), GEP);
-#else
     Type *I8Ty = Type::getInt8Ty(M->getContext());
     Type *I8PtrTy = I8Ty->getPointerTo(0);
     Value *GEP = Builder.CreateGEP(I8PtrTy, AI, ConstantInt::get(I32Ty, i));
     Value *Pointer = Builder.CreateLoad(I8PtrTy, GEP);
-#endif
 
     Value *Arg;
     if (DeviceAllocaLocals && isLocalMemFunctionArg(F, i)) {
@@ -1401,15 +1403,8 @@ void WorkgroupImpl::createDefaultWorkgroupLauncher(llvm::Function *F) {
       Type *SizeIntType = IntegerType::get(C, ParamByteSize * 8);
       Value *LocalArgByteSize = Builder.CreatePointerCast(Pointer, SizeIntType);
 
-#ifdef LLVM_OPAQUE_POINTERS
       Type *ArgElementType = I8Ty;
       Value *ElementCount = LocalArgByteSize;
-#else
-      Type *ArgElementType = ArgType->getPointerElementType();
-      uint64_t ElementSize = DL.getTypeStoreSize(ArgElementType);
-      Value *ElementCount = Builder.CreateUDiv(
-          LocalArgByteSize, ConstantInt::get(SizeIntType, ElementSize));
-#endif
 
       Arg = new llvm::AllocaInst(ArgElementType, ParamType->getAddressSpace(),
                                  ElementCount,
@@ -1444,12 +1439,7 @@ void WorkgroupImpl::createDefaultWorkgroupLauncher(llvm::Function *F) {
           Arg = AI;
         }
       } else {
-#ifdef LLVM_OPAQUE_POINTERS
-        Arg = Pointer;
-#else
-        Arg = Builder.CreatePointerCast(Pointer, ArgType->getPointerTo());
-#endif
-        Arg = Builder.CreateAlignedLoad(ArgType, Arg,
+        Arg = Builder.CreateAlignedLoad(ArgType, Pointer,
                                         DL.getPrefTypeAlign(ArgType));
       }
     }
@@ -1499,11 +1489,7 @@ static size_t getArgumentSize(llvm::Argument &Arg) {
   llvm::Type *TypeInBuf = nullptr;
   if (Arg.getType()->isPointerTy()) {
     if (Arg.hasByValAttr()) {
-#if LLVM_MAJOR < 15
-      TypeInBuf = Arg.getType()->getPointerElementType();
-#else
       TypeInBuf = Arg.getParamByValType();
-#endif
     } else {
       TypeInBuf = Arg.getType();
     }
@@ -1553,18 +1539,10 @@ LLVMValueRef WorkgroupImpl::createAllocaMemcpyForStruct(
   LLVMTypeRef Int8Type = LLVMInt8TypeInContext(LLVMContext);
   LLVMTypeRef Int32Type = LLVMInt32TypeInContext(LLVMContext);
 
-#if LLVM_MAJOR < 15
-  llvm::Type *TypeInArg = Arg.getType()->getPointerElementType();
-#else
   assert(isByValPtrArgument(Arg));
   llvm::Type *TypeInArg = Arg.getParamByValType();
-#endif
   const DataLayout &DL = Arg.getParent()->getParent()->getDataLayout();
-#if LLVM_MAJOR < 17
-  unsigned alignment = DL.getABITypeAlignment(TypeInArg);
-#else
   Align alignment = DL.getABITypeAlign(TypeInArg);
-#endif
   uint64_t StoreSize = DL.getTypeStoreSize(TypeInArg);
   LLVMValueRef Size =
       LLVMConstInt(LLVMInt32TypeInContext(LLVMContext), StoreSize, 0);
@@ -1632,15 +1610,8 @@ LLVMValueRef WorkgroupImpl::createArgBufferLoad(
       LLVMConstInt(LLVMInt32TypeInContext(LLVMContext), ArgPos, 0);
   LLVMTypeRef Int8Type = LLVMInt8TypeInContext(Ctx);
 
-#ifndef LLVM_OPAQUE_POINTERS
-  LLVMValueRef ArgByteOffset =
-      LLVMBuildGEP2(Builder, LLVMGetElementType(LLVMTypeOf(ArgBufferPtr)),
-                    ArgBufferPtr, &Offs, 1, "arg_byte_offset");
-#else
-
   LLVMValueRef ArgByteOffset =
       LLVMBuildGEP2(Builder, Int8Type, ArgBufferPtr, &Offs, 1, "arg_byte_offset");
-#endif
 
   llvm::Argument &Arg = cast<Argument>(*unwrap(Param));
 
@@ -1748,37 +1719,18 @@ WorkgroupImpl::createArgBufferWorkgroupLauncher(Function *Func,
       uint64_t ArgPos = ArgBufferOffsets[i];
       LLVMValueRef Offs = LLVMConstInt(Int32Type, ArgPos, 0);
 
-#ifndef LLVM_OPAQUE_POINTERS
-      LLVMValueRef SizeByteOffset =
-          LLVMBuildGEP2(Builder, LLVMGetElementType(LLVMTypeOf(ArgBuffer)),
-                        ArgBuffer, &Offs, 1, "size_byte_offset");
-#else
       LLVMValueRef SizeByteOffset = LLVMBuildGEP2(Builder, Int8Type, ArgBuffer,
                                                   &Offs, 1, "size_byte_offset");
-#endif
       LLVMTypeRef DestTy = LLVMPointerType(SizeIntType, 0);
       LLVMValueRef SizeOffsetBitcast =
           LLVMBuildPointerCast(Builder, SizeByteOffset, DestTy, "size_ptr");
 
-#ifndef LLVM_OPAQUE_POINTERS
-      LLVMTypeRef AllocaType = LLVMGetElementType(ParamType);
-      // The buffer size passed from the runtime is a byte size, we
-      // need to convert it to an element count for the alloca.
-      LLVMTypeRef LoadTy = SizeIntType;
-      LLVMValueRef LocalArgByteSize =
-          LLVMBuildLoad2(Builder, LoadTy, SizeOffsetBitcast, "byte_size");
-      uint64_t ElementSize = LLVMStoreSizeOfType(DataLayout, AllocaType);
-      LLVMValueRef ElementCount =
-          LLVMBuildUDiv(Builder, LocalArgByteSize,
-                        LLVMConstInt(SizeIntType, ElementSize, 0), "");
-#else
       LLVMTypeRef AllocaType = Int8Type;
 
       LLVMTypeRef LoadTy = SizeIntType;
       LLVMValueRef LocalArgByteSize =
           LLVMBuildLoad2(Builder, LoadTy, SizeOffsetBitcast, "byte_size");
       LLVMValueRef ElementCount = LocalArgByteSize;
-#endif
 
       LLVMValueRef LocalArgAlloca = wrap(new llvm::AllocaInst(
           unwrap(AllocaType), LLVMGetPointerAddressSpace(ParamType),

@@ -207,10 +207,15 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    # platform dep
                    "pocl_timing.h" "pocl_threads.h" "pocl_file_util.h"
                    # dbks
-                   "dbk/pocl_dbk_khr_jpeg_shared.c" "dbk/pocl_dbk_khr_jpeg_shared.h"
-                   "dbk/pocl_dbk_khr_onnxrt_shared.c" "dbk/pocl_dbk_khr_onnxrt_shared.h"
-                   "dbk/pocl_dbk_khr_img_shared.c" "dbk/pocl_dbk_khr_img_shared.h"
-                   "dbk/pocl_dbk_khr_dnn_utils_shared.c" "dbk/pocl_dbk_khr_dnn_utils_shared.h"
+                   "dbk/pocl_dbk_khr_jpeg_shared.c"
+                   "dbk/pocl_dbk_khr_jpeg_shared.h"
+                   "dbk/pocl_dbk_khr_onnxrt_shared.c"
+                   "dbk/pocl_dbk_khr_onnxrt_shared.h"
+                   "dbk/pocl_dbk_khr_img_shared.c"
+                   "dbk/pocl_dbk_khr_img_shared.h"
+                   "dbk/pocl_dbk_khr_dnn_utils_shared.c"
+                   "dbk/pocl_dbk_khr_dnn_utils_shared.h"
+                   "pocl_raw_ptr_set.c"
 )
 
 unset(EXTRA_LLVM_SOURCES)
@@ -315,6 +320,10 @@ endif()
 
 # this is so that we don't compile twice when building both libpocl and libOpenCL
 add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
+
+target_include_directories(libpocl_unlinked_objs
+  PRIVATE ${CMAKE_SOURCE_DIR}/thirdparty/STC/include)
+
 if(BUILD_SHARED_LIBS AND MSVC)
   # Inject __declspec(dllexport).
   target_compile_definitions(libpocl_unlinked_objs PRIVATE EXPORT_POCL_LIB)
@@ -325,46 +334,51 @@ harden("libpocl_unlinked_objs")
 
 #################################################################
 
-set(POCL_PRIVATE_LINK_LIST)
+set(POCL_PRIVATE_LINK_LIBRARIES)
+set(POCL_PRIVATE_LINK_DIRECTORIES)
 
 # this must come 1st
 if(SANITIZER_OPTIONS)
-  set(POCL_PRIVATE_LINK_LIST ${SANITIZER_LIBS})
+  set(POCL_PRIVATE_LINK_LIBRARIES ${SANITIZER_LIBS})
 endif()
 
 if(POCL_DEVICES_LINK_LIST)
-  list(APPEND POCL_PRIVATE_LINK_LIST ${POCL_DEVICES_LINK_LIST})
+  list(APPEND POCL_PRIVATE_LINK_LIBRARIES ${POCL_DEVICES_LINK_LIST})
 endif()
 
 if(ENABLE_LLVM)
-   list(APPEND POCL_PRIVATE_LINK_LIST ${CLANG_LIBFILES} ${POCL_LLVM_LIBS} ${LLVM_SYSLIBS})
-   if (HAVE_LLVM_SPIRV_LIB)
-     list(PREPEND POCL_PRIVATE_LINK_LIST ${LLVM_SPIRV_LIB})
-   endif()
+  list(APPEND POCL_PRIVATE_LINK_LIBRARIES ${CLANG_LINK_LIBRARIES} ${LLVM_LINK_LIBRARIES})
+  list(APPEND POCL_PRIVATE_LINK_DIRECTORIES ${CLANG_LINK_DIRECTORIES} ${LLVM_LINK_DIRECTORIES})
+
+  list(APPEND POCL_PRIVATE_LINK_LIBRARIES ${LLVM_SYSLIBS})
+
+  if (HAVE_LLVM_SPIRV_LIB)
+    list(PREPEND POCL_PRIVATE_LINK_LIBRARIES ${LLVM_SPIRV_LIB})
+  endif()
 endif()
 
 if(HAVE_LTTNG_UST)
-  list(APPEND POCL_PRIVATE_LINK_LIST ${LTTNG_UST_LDFLAGS})
+  list(APPEND POCL_PRIVATE_LINK_LIBRARIES ${LTTNG_UST_LDFLAGS})
 endif()
 
 # -lrt is required for glibc < 2.17
 if(HAVE_CLOCK_GETTIME AND CMAKE_SYSTEM_NAME MATCHES "Linux")
-  list(APPEND POCL_PRIVATE_LINK_LIST "rt")
+  list(APPEND POCL_PRIVATE_LINK_LIBRARIES "rt")
 endif()
 
 if(HAVE_64BIT_ATOMICS_WITH_LIB)
-  list(APPEND POCL_PRIVATE_LINK_LIST "atomic")
+  list(APPEND POCL_PRIVATE_LINK_LIBRARIES "atomic")
 endif()
 
 if(ANDROID)
   find_library(ANDROID_LOG_LIB log)
-  list(APPEND POCL_PRIVATE_LINK_LIST ${ANDROID_LOG_LIB})
+  list(APPEND POCL_PRIVATE_LINK_LIBRARIES ${ANDROID_LOG_LIB})
 endif()
 
-list(APPEND POCL_PRIVATE_LINK_LIST ${LIBMATH} ${CMAKE_DL_LIBS} ${PTHREAD_LIBRARY})
+list(APPEND POCL_PRIVATE_LINK_LIBRARIES ${LIBMATH} ${CMAKE_DL_LIBS} ${PTHREAD_LIBRARY})
 
 # see lib/CMakeLists.txt
-set(POCL_TRANSITIVE_LIBS ${POCL_PRIVATE_LINK_LIST} PARENT_SCOPE)
+set(POCL_TRANSITIVE_LIBS ${POCL_PRIVATE_LINK_LIBRARIES} PARENT_SCOPE)
 
 #################################################################
 
@@ -377,7 +391,7 @@ endif()
 
 harden("${POCL_LIBRARY_NAME}")
 
-if(UNIX AND (NOT APPLE))
+if((UNIX OR MINGW) AND (NOT APPLE))
   target_link_options("${POCL_LIBRARY_NAME}" PRIVATE "LINKER:--exclude-libs,ALL")
 endif()
 if(WIN32)
@@ -388,7 +402,8 @@ set_target_properties("${POCL_LIBRARY_NAME}" PROPERTIES SOVERSION "${LIB_API_VER
   VERSION "${LIB_BUILD_VERSION}"
   LINK_FLAGS "${LLVM_LDFLAGS}  ${ICD_LD_FLAGS}")
 
-target_link_libraries("${POCL_LIBRARY_NAME}" PRIVATE ${POCL_PRIVATE_LINK_LIST})
+target_link_libraries("${POCL_LIBRARY_NAME}" PRIVATE ${POCL_PRIVATE_LINK_LIBRARIES})
+target_link_directories("${POCL_LIBRARY_NAME}" PRIVATE ${POCL_PRIVATE_LINK_DIRECTORIES})
 install(TARGETS "${POCL_LIBRARY_NAME}"
         ARCHIVE DESTINATION ${POCL_INSTALL_STATIC_LIBDIR_REL}
         COMPONENT "dev"
@@ -397,6 +412,7 @@ install(TARGETS "${POCL_LIBRARY_NAME}"
         RUNTIME DESTINATION ${POCL_INSTALL_PUBLIC_LIBDIR_REL}
         COMPONENT "lib"
 )
+
 
 if(ENABLE_IPO)
   if (ENABLE_LLVM)

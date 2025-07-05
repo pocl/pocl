@@ -44,10 +44,11 @@
 #include "common_cl.hh"
 #include "config.h"
 #include "pocl_builtin_kernels.h"
-#include "pocl_run_command.h"
 #include "pocl_debug.h"
+#include "pocl_run_command.h"
 #include "pocl_runtime_config.h"
 #include "shared_cl_context.hh"
+#include "spirv.hh"
 #include "spirv_parser.hh"
 #include "virtual_cl_context.hh"
 
@@ -463,6 +464,7 @@ void SharedCLContext::updateKernelArgMDFromSPIRV(
   Addr = CL_KERNEL_ARG_ADDRESS_PRIVATE;
   Access = CL_KERNEL_ARG_ACCESS_NONE;
   strncpy(MD.name, AInfo.Name.c_str(), MAX_PACKED_STRING_LEN);
+  MD.name[MAX_PACKED_STRING_LEN - 1] = 0;
   MD.type_name[0] = 0;
 
   switch (AInfo.Type) {
@@ -662,7 +664,7 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
         CommandQueueUPtr(new CommandQueue(this, (DEFAULT_QUE_ID + i), i, s, f));
   }
 
-#if !defined(CLANGCC) || !defined(ENABLE_SPIRV)
+#if !defined(CLANGCC) || !defined(ENABLE_SPIRV) || !defined(HAVE_LLVM_SPIRV)
   // We require CLANGCC and LLVM_SPIRV for manipulating the SPIRVs to adjust
   // mismatching client/host SVM pool offsets.
   SVMRegionsStartAddress = nullptr;
@@ -1307,7 +1309,7 @@ int SharedCLContext::freeQueue(uint32_t queue_id) {
   buf += len;                                                                  \
   assert((size_t)(buf - buffer) <= buffer_size);
 
-#if defined(CLANGCC) && defined(ENABLE_SPIRV)
+#if defined(CLANGCC) && defined(ENABLE_SPIRV) && defined(HAVE_LLVM_SPIRV)
 /**
  * Creates a SPIRV with all global memory addresses adjusted by adding
  * the SVMOffset.
@@ -1328,6 +1330,9 @@ bool createSPIRVWithSVMOffset(const std::vector<unsigned char> *InputSPV,
                               char *Src, size_t SrcSize, size_t SVMOffset,
                               std::vector<char> &NewSPV,
                               const char *BuildOptions) {
+
+  uint32_t SpvHeader[2];
+  std::string SpvMaxVersion("--spirv-max-version=1.");
 
   // Just invoke command line tools for now.
   constexpr int CmdOutputMaxSize = 10000;
@@ -1374,22 +1379,34 @@ bool createSPIRVWithSVMOffset(const std::vector<unsigned char> *InputSPV,
     };
     if (pocl_run_command(ClangArgs) != EXIT_SUCCESS)
       return false;
-
+    SpvMaxVersion.append("3");
   } else if (InputSPV != nullptr) {
     const std::string OrigSpvFileName = TempDir / "original.spv";
+
+    std::memcpy(SpvHeader, InputSPV->data(), 8);
+    if (SpvHeader[0] != spv::MagicNumber) {
+      POCL_MSG_ERR("Input is not SPIR-V\n");
+      return false;
+    }
+    if (SpvHeader[1] < spv::Version10 || SpvHeader[1] > spv::Version15) {
+      POCL_MSG_ERR("Unsupported SPIR-V version.\n");
+      return false;
+    }
+    unsigned SpvMinorVersion = (SpvHeader[1] - spv::Version10) >> 8;
+    SpvMaxVersion.append(std::to_string(SpvMinorVersion));
 
     std::ofstream OrigSpvFile(OrigSpvFileName);
     OrigSpvFile.write((const char *)InputSPV->data(), InputSPV->size());
     OrigSpvFile.close();
 
-    const char *SpirvArgs[] = {
-        pocl_get_path("LLVM_SPIRV", LLVM_SPIRV),
-        "-r",
-        OrigSpvFileName.c_str(),
-        "-o",
-        OrigBcFileName.c_str(),
-        nullptr
-    };
+    const char *SpirvArgs[] = {pocl_get_path("LLVM_SPIRV", LLVM_SPIRV),
+                               SpvMaxVersion.c_str(),
+                               "--spirv-target-env=CL2.0",
+                               "-r",
+                               OrigSpvFileName.c_str(),
+                               "-o",
+                               OrigBcFileName.c_str(),
+                               nullptr};
 
     if (pocl_run_command(SpirvArgs) != EXIT_SUCCESS)
       return false;
@@ -1430,13 +1447,12 @@ bool createSPIRVWithSVMOffset(const std::vector<unsigned char> *InputSPV,
     return false;
 
   const std::string OutSpvFileName = TempDir / "offsetted.spv";
-  const char *SpirvArgs[] = {
-      pocl_get_path("LLVM_SPIRV", LLVM_SPIRV),
-      OffsettedBcFileName.c_str(),
-      "-o",
-      OutSpvFileName.c_str(),
-      nullptr
-  };
+  const char *SpirvArgs[] = {pocl_get_path("LLVM_SPIRV", LLVM_SPIRV),
+                             SpvMaxVersion.c_str(),
+                             OffsettedBcFileName.c_str(),
+                             "-o",
+                             OutSpvFileName.c_str(),
+                             nullptr};
 
   if (pocl_run_command(SpirvArgs) != EXIT_SUCCESS)
     return false;
@@ -1537,7 +1553,7 @@ int SharedCLContext::buildOrLinkProgram(
     std::vector<char> SVMOffsettedSPIRV;
 
 
-#if defined(CLANGCC) && defined(ENABLE_SPIRV)
+#if defined(CLANGCC) && defined(ENABLE_SPIRV) && defined(HAVE_LLVM_SPIRV)
     // Adjust the SVM region offset to the kernel code.
     bool SuccessfulOffsetting = createSPIRVWithSVMOffset(
         is_spirv ? &(*InputBinaries.begin()).second : nullptr, src, src_size,
@@ -1870,6 +1886,7 @@ int SharedCLContext::buildOrLinkProgram(
     // Assume we get the name always.
     assert(ArgErr == CL_SUCCESS);
     std::strncpy(temp_kernel.name, kernel_name.c_str(), MAX_PACKED_STRING_LEN);
+    temp_kernel.name[MAX_PACKED_STRING_LEN - 1] = 0;
 
     std::string a = kernels[i].getInfo<CL_KERNEL_ATTRIBUTES>(&ArgErr);
     if (ArgErr == CL_SUCCESS) {

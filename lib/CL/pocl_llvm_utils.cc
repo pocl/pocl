@@ -27,11 +27,7 @@
 IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/StringRef.h>
 #include <llvm/ADT/StringMap.h>
-#if LLVM_VERSION_MAJOR < 16
-#include <llvm/ADT/Triple.h>
-#else
 #include <llvm/TargetParser/Triple.h>
-#endif
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
@@ -53,17 +49,10 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Support/CommandLine.h>
 #include <llvm-c/Core.h>
 
-#if LLVM_VERSION_MAJOR < 16
-#include <llvm/IR/LegacyPassManager.h>
-#include <llvm/PassInfo.h>
-#include <llvm/PassRegistry.h>
-#include <llvm/Support/Host.h>
-#else
 #include <llvm/Analysis/CGSCCPassManager.h>
 #include <llvm/Analysis/LoopAnalysisManager.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/TargetParser/Host.h>
-#endif
 
 #include "config.h"
 #include "pocl_debug.h"
@@ -205,7 +194,7 @@ const struct kernellib_features {
 } kernellib_feature_map[] = {
 // order the entries s.t. if a cpu matches multiple entries, the "best" match
 // comes last
-#if defined(__i386__)
+#if defined(__i386__) || defined(_M_IX86)
     "i386",
     "i386",
     {NULL},
@@ -220,7 +209,8 @@ const struct kernellib_features {
     "pentium3",
     {"sse", NULL},
 #endif
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(_M_IX86) || \
+    defined(__x86_64__) || defined(_M_X64)
     "sse2",
     "x86-64",
     {"sse2", NULL},
@@ -255,7 +245,8 @@ const struct kernellib_features {
 const char *pocl_get_distro_kernellib_variant() {
   StringMap<bool> Features;
 
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(_M_IX86) || \
+    defined(__x86_64__) || defined(_M_X64)
 
 #if LLVM_MAJOR < 19
   if (!llvm::sys::getHostCPUFeatures(Features)) {
@@ -299,7 +290,9 @@ const char *pocl_get_distro_kernellib_variant() {
 const char *pocl_get_distro_cpu_name(const char *kernellib_variant) {
   StringMap<bool> Features;
 
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(_M_IX86) || \
+    defined(__x86_64__) || defined(_M_X64)
+
 #if LLVM_MAJOR < 19
   if (!llvm::sys::getHostCPUFeatures(Features)) {
     POCL_MSG_WARN("LLVM can't get host CPU flags!\n");
@@ -533,6 +526,15 @@ void InitializeLLVM() {
         O->addOccurrence(1, StringRef("pass-remarks"),
                          StringRef("loop-vectorize"), false);
       }
+
+      // Force the loop vectorizer to use the same width for all loops.
+      if (int VecWidth =
+              pocl_get_int_option("POCL_VECTORIZER_FORCE_VECTOR_WIDTH", 0)) {
+        O = opts["force-vector-width"];
+        assert(O && "could not find LLVM option 'force-vector-width'");
+        O->addOccurrence(1, StringRef("force-vector-width"),
+                         StringRef(std::to_string(VecWidth)), false);
+      }
     }
     if (pocl_get_bool_option("POCL_DEBUG_LLVM_PASSES", 0) == 1) {
       O = opts["debug"];
@@ -582,13 +584,6 @@ void pocl_llvm_create_context(cl_context ctx) {
 
   data->Context = new llvm::LLVMContext();
   assert(data->Context);
-#if (LLVM_MAJOR == 15) || (LLVM_MAJOR == 16)
-#ifdef LLVM_OPAQUE_POINTERS
-  data->Context->setOpaquePointers(true);
-#else
-  data->Context->setOpaquePointers(false);
-#endif
-#endif
   data->number_of_IRs = 0;
   data->poclDiagString = new std::string;
   data->poclDiagStream = new llvm::raw_string_ostream(*data->poclDiagString);

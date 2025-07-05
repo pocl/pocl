@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [18]
+        llvm: [17]
 
     steps:
       - name: Checkout
@@ -126,15 +126,15 @@ jobs:
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ctest $CTEST_FLAGS -L remote_rdma
-  
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cpu_tests $CTEST_FLAGS -L remote_rdma
+
   remote_discovery_avahi_matrix:
     name: LLVM ${{ matrix.llvm }} - discovery_avahi
     runs-on: [self-hosted, linux, x64, remote]
     strategy:
       fail-fast: false
       matrix:
-        llvm: [18]
+        llvm: [19]
 
     steps:
       - name: Checkout
@@ -184,7 +184,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [18]
+        llvm: [20]
 
     steps:
       - name: Checkout

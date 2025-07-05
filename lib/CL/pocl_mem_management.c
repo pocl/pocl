@@ -530,7 +530,14 @@ pocl_convert_to_subbuffer_migrations (pocl_buffer_migration_info *buffer_usage,
           patch_migrations = append_unaligned_patch_subbuffer_migration (
             patch_migrations, sub_buf->mem, align, mi->read_only, &retv);
           if (retv != CL_SUCCESS)
-            return NULL;
+            {
+              pocl_buffer_migration_info *mi2, *tmp2 = NULL;
+              DL_FOREACH_SAFE (extra_migrations, mi2, tmp2)
+                {
+                  free (mi2);
+                }
+              return NULL;
+            }
         }
 
       LL_DELETE (buffer_usage, mi);
@@ -1061,34 +1068,20 @@ pocl_raw_ptr *
 pocl_find_raw_ptr_with_vm_ptr (cl_context context, const void *host_ptr)
 {
   POCL_LOCK_OBJ (context);
-  pocl_raw_ptr *item = NULL;
-  DL_FOREACH (context->raw_ptrs, item)
-    {
-      if (item->vm_ptr == NULL)
-        continue;
-      if (item->vm_ptr <= host_ptr
-          && (char *)item->vm_ptr + item->size > (const char *)host_ptr)
-        {
-          break;
-        }
-    }
+  pocl_raw_ptr *item
+    = pocl_raw_ptr_set_lookup_with_vm_ptr (context->raw_ptrs, host_ptr);
   POCL_UNLOCK_OBJ (context);
   return item;
 }
 
 pocl_raw_ptr *
-pocl_find_raw_ptr_with_dev_ptr (cl_context context, const void *dev_ptr)
+pocl_find_raw_ptr_with_dev_ptr (cl_context context,
+                                cl_device_id dev,
+                                const void *dev_ptr)
 {
   POCL_LOCK_OBJ (context);
-  pocl_raw_ptr *item = NULL;
-  DL_FOREACH (context->raw_ptrs, item)
-    {
-      if (item->dev_ptr == NULL)
-        continue;
-      if (item->dev_ptr <= dev_ptr
-          && (char *)item->dev_ptr + item->size > (const char *)dev_ptr)
-        break;
-    }
+  pocl_raw_ptr *item
+    = pocl_raw_ptr_set_lookup_with_dev_ptr (context->raw_ptrs, dev, dev_ptr);
   POCL_UNLOCK_OBJ (context);
   return item;
 }
@@ -1106,4 +1099,42 @@ pocl_cpu_get_ptr (struct pocl_argument *arg, unsigned global_mem_id)
   char *ptr = (char *)(mem->device_ptrs[global_mem_id].mem_ptr);
   ptr += arg->offset;
   return (void *)ptr;
+}
+
+void
+pocl_reset_indirect_ptrs (cl_kernel kernel, void **ptrs, size_t n)
+{
+  if (kernel->indirect_raw_ptrs != NULL)
+    {
+      struct _pocl_ptr_list_node *n, *tmp;
+      DL_FOREACH_SAFE (kernel->indirect_raw_ptrs, n, tmp)
+        {
+          free (n);
+        }
+      kernel->indirect_raw_ptrs = NULL;
+    }
+
+  for (size_t i = 0; i < n; ++i)
+    {
+      void *ptr = ptrs[i];
+      if (ptr == NULL)
+        continue;
+
+      /* Filter out non-sensical pointers silently. The spec doesn't
+         tell to return an error in this case, perhaps for future
+         compatibility with system allocated (but not migrated)
+         buffers? */
+      pocl_raw_ptr *svm_ptr
+        = pocl_find_raw_ptr_with_vm_ptr (kernel->context, ptr);
+
+      if (svm_ptr == NULL)
+        continue;
+
+      struct _pocl_ptr_list_node *node
+        = malloc (sizeof (struct _pocl_ptr_list_node));
+      node->ptr = ptr;
+
+      DL_APPEND (kernel->indirect_raw_ptrs, node);
+      POCL_MSG_PRINT_MEMORY ("Set an indirect SVM/USM ptr %p\n", node->ptr);
+    }
 }

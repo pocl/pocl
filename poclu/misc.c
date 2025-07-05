@@ -182,6 +182,12 @@ poclu_get_multiple_devices (cl_platform_id *platform,
 
   devs = (cl_device_id *)calloc (*num_devices, sizeof (cl_device_id));
   ques = (cl_command_queue *)calloc (*num_devices, sizeof (cl_command_queue));
+  if (!devs || !ques)
+    {
+      free (devs);
+      free (ques);
+      return CL_OUT_OF_HOST_MEMORY;
+    }
 
   if (num_dev_all != 0)
     {
@@ -207,9 +213,11 @@ poclu_get_multiple_devices (cl_platform_id *platform,
   for (i = 0; i < *num_devices; ++i)
     {
       cl_command_queue_properties dev_props = 0;
-      CHECK_CL_ERROR (clGetDeviceInfo (devs[i],
-                                       CL_DEVICE_QUEUE_ON_HOST_PROPERTIES,
-                                       sizeof (dev_props), &dev_props, NULL));
+      cl_int err
+        = clGetDeviceInfo (devs[i], CL_DEVICE_QUEUE_ON_HOST_PROPERTIES,
+                           sizeof (dev_props), &dev_props, NULL);
+      if (err != CL_SUCCESS)
+        goto ERROR;
       cl_command_queue_properties props = dev_props & optional_props;
       ques[i] = clCreateCommandQueue (*context, devs[i], props, &err);
       if (err != CL_SUCCESS)
@@ -224,7 +232,7 @@ ERROR:
   free (devs);
   for (i = 0; i < *num_devices; ++i)
     {
-      if (ques[i])
+      if (ques && ques[i])
         clReleaseCommandQueue (ques[i]);
     }
   free (ques);
@@ -714,7 +722,6 @@ poclu_load_program_multidev (cl_platform_id platform,
 #else
           printf ("Program was not compiled for OpenCL 2.1 or higher, "
                   "checking for cl_khr_il_program extension.\n");
-          return -1;
 #endif
         }
     IL_ERR:

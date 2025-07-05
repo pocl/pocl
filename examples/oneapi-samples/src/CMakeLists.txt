@@ -18,7 +18,8 @@ set(SYCL_LIBRARIES ${OCL_LIB})
 
 set(CMAKE_CXX_STANDARD 20)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsycl -fsycl-targets=spir64")
+add_compile_options(-fsycl -fsycl-targets=spir64)
+add_link_options(-fsycl)
 
 include_directories(util)
 

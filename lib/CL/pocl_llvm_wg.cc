@@ -30,11 +30,7 @@
 IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/StringRef.h>
 #include <llvm/ADT/Twine.h>
-#if LLVM_MAJOR < 16
-#include <llvm/ADT/Triple.h>
-#else
 #include <llvm/TargetParser/Triple.h>
-#endif
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Support/Casting.h>
@@ -190,9 +186,7 @@ llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
   // TODO: Does this affect the loop unroller of the vectorizer as well? We
   // might want to enable it in the default case.
   PTO.LoopUnrolling = false;
-#if LLVM_MAJOR > 16
   PTO.UnifiedLTO = false;
-#endif
   PTO.SLPVectorization = PTO.LoopVectorization = Vectorize = EnableVectorizers;
   OptimizeLevel = OLevel;
   SizeLevel = SLevel;
@@ -492,6 +486,11 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
 
   // both of these must be done AFTER inlining, see note above
   addPass(Passes, "automatic-locals", PassType::Module);
+
+  // Handle UnreachableInsts by converting them to returns or just deleting
+  // them. Julia expects graceful handling of UIs with printouts before them. We
+  // should convert the UIs in the input here otherwise optimizers will remove
+  // them.
   if (!Dev->spmd)
     addPass(Passes, "unreachables-to-returns");
 
@@ -517,6 +516,11 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
   if (!Dev->spmd) {
     addPass(Passes, "simplifycfg");
     addPass(Passes, "loop-simplify");
+
+    // ...we have to call UTR again here because some optimizations in LLVM
+    // might generate UIs.
+    if (!Dev->spmd)
+      addPass(Passes, "unreachables-to-returns");
 
     // required for OLD PM
     addAnalysis(Passes, "workitem-handler-chooser");
@@ -762,6 +766,8 @@ void *pocl_llvm_create_context_for_program(char *ProgramBcContent,
   // parse the program's bytes into a llvm::Module
   if (P == nullptr ||
       !P->init(ProgramBcContent, ProgramBcSize, TempBitcodePath)) {
+    if (P)
+      delete P;
     POCL_MSG_ERR("failed to create program for context");
     return nullptr;
   }
@@ -771,6 +777,7 @@ void *pocl_llvm_create_context_for_program(char *ProgramBcContent,
           nullptr, ProgramBcContent, ProgramBcSize, &BuildLog,
           "all", // TODO SPIRV exts
           nullptr, LinkinSpirvContent, LinkinSpirvSize, TargetVersion) != 0) {
+    delete P;
     POCL_MSG_ERR("failed to create program for context, log:%s\n",
                  BuildLog.c_str());
     return nullptr;
@@ -1330,9 +1337,11 @@ int pocl_llvm_codegen2(const char* TTriple, const char* MCPU,
         return -1;
       }
     }
-    pocl_remove(AsmFileName);
-    pocl_remove(ObjFileName);
-    return Res;
+    if (pocl_remove(AsmFileName))
+      POCL_MSG_ERR("failed to remove %s\n", AsmFileName);
+    if (pocl_remove(ObjFileName))
+      POCL_MSG_ERR("failed to remove %s\n", ObjFileName);
+    return 0;
   }
 
   return -1;
@@ -1358,9 +1367,7 @@ void populateModulePM(void *Passes, void *Module, unsigned OptL, unsigned SizeL,
 
   // Let the loopvec decide when to unroll.
   PTO.LoopUnrolling = false;
-#if LLVM_MAJOR > 16
   PTO.UnifiedLTO = false;
-#endif
   PTO.LoopInterleaving = Vectorize;
   PTO.SLPVectorization = Vectorize;
   PTO.LoopVectorization = Vectorize;

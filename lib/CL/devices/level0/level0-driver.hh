@@ -26,6 +26,9 @@
 
 #include <pocl_cl.h>
 #include <ze_api.h>
+#ifdef ENABLE_NPU
+#include <ze_intel_npu_uuid.h>
+#endif
 
 #include "level0-compilation.hh"
 
@@ -473,6 +476,8 @@ public:
     return SupportedSpvVersion;
   }
 
+  bool isIntelNPU() const;
+
 private:
   Level0AllocatorSPtr Alloc;
   std::deque<Level0EventPool> EventPools;
@@ -582,6 +587,8 @@ public:
   cl_device_id getClDevForHandle(ze_device_handle_t H) {
     return HandleToIDMap[H];
   }
+
+  bool isIntelNPU() const;
 
 private:
   ze_driver_handle_t DriverH = nullptr;

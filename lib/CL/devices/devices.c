@@ -237,11 +237,11 @@ POCL_EXPORT int pocl_offline_compile = 0;
 /* first setup */
 static unsigned first_init_done = 0;
 static unsigned init_in_progress = 0;
-static unsigned device_count[POCL_NUM_DEVICE_TYPES];
+static uint64_t device_count[POCL_NUM_DEVICE_TYPES];
 /* Indexes each device added to the platform by setting the device id. First
  * used and modified during init, to index devices present since launch. May
  * also used and modified when devices are dynamically added. */
-static unsigned dev_index;
+static uint64_t dev_index;
 
 /* after calling drivers uninit, we may have to re-init the devices. */
 static unsigned devices_active = 0;
@@ -586,7 +586,7 @@ pocl_init_device_discovery (cl_platform_id platform)
 {
   assert (first_init_done);
   /* Discovery initialization should happen once and only by one thread. */
-  static unsigned first_disco_init_done = 0;
+  static uint64_t first_disco_init_done = 0;
   if (POCL_ATOMIC_CAS (&first_disco_init_done, 0, 1))
     return CL_SUCCESS;
 

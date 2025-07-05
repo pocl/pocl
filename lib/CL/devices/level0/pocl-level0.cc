@@ -41,6 +41,7 @@
 #include "pocl_util.h"
 #include "pocl_run_command.h"
 
+#include <loader/ze_loader.h>
 #include <ze_api.h>
 
 #include <algorithm>
@@ -338,6 +339,28 @@ char *pocl_level0_build_hash(cl_device_id ClDevice) {
   return Res;
 }
 
+/// Return level zero loader version. On an error, return object with
+/// all members set to zero.
+static zel_version_t get_level0_loader_version() {
+  size_t NumComponents = 0;
+  auto Result = zelLoaderGetVersions(&NumComponents, nullptr);
+  if (Result != ZE_RESULT_SUCCESS)
+    return {};
+
+  std::vector<zel_component_version_t> Versions(NumComponents,
+                                                zel_component_version_t());
+
+  Result = zelLoaderGetVersions(&NumComponents, Versions.data());
+  if (Result != ZE_RESULT_SUCCESS)
+    return {};
+
+  for (auto &Version : Versions)
+    if (std::string_view(Version.component_name) == "loader")
+      return Version.component_lib_version;
+
+  return {};
+}
+
 unsigned int pocl_level0_probe(struct pocl_device_ops *Ops) {
   int EnvCount = pocl_device_get_env_count(Ops->device_name);
 
@@ -353,30 +376,56 @@ unsigned int pocl_level0_probe(struct pocl_device_ops *Ops) {
     return 0;
   }
 
+  zel_version_t LoaderVersion = get_level0_loader_version();
+  POCL_MSG_PRINT_LEVEL0("ze_loader version: %d.%d.%d\n", LoaderVersion.major,
+                        LoaderVersion.minor, LoaderVersion.patch);
+
   uint32_t DriverCount = 64;
   ze_driver_handle_t DrvHandles[64];
-  Res = zeDriverGet(&DriverCount, DrvHandles);
-  if (Res != ZE_RESULT_SUCCESS) {
-    POCL_MSG_ERR("zeDriverGet FAILED\n");
-    return 0;
+
+#if ZE_API_VERSION_CURRENT_M >= ZE_MAKE_VERSION(1, 10)
+  if (LoaderVersion.major == 1 && LoaderVersion.minor > 18) {
+
+    ze_init_driver_type_desc_t DriverDesc{};
+    DriverDesc.flags =
+        ZE_INIT_DRIVER_TYPE_FLAG_GPU | ZE_INIT_DRIVER_TYPE_FLAG_NPU;
+    Res = zeInitDrivers(&DriverCount, DrvHandles, &DriverDesc);
+    if (Res != ZE_RESULT_SUCCESS) {
+      // TODO: retry with deprecated zeDriverGet()?
+      POCL_MSG_ERR("zeInitDrivers FAILED\n");
+      return 0;
+    }
+  } else {
+#else
+  {
+#endif
+    Res = zeDriverGet(&DriverCount, DrvHandles);
+    if (Res != ZE_RESULT_SUCCESS) {
+      POCL_MSG_ERR("zeDriverGet FAILED\n");
+      return 0;
+    }
   }
 
+  const unsigned NumRequestedDevices = EnvCount < 0
+                                           ? std::numeric_limits<int>::max()
+                                           : std::max<int>(EnvCount, 1);
   for (unsigned I = 0; I < DriverCount; ++I) {
     // workaround for what appears to be a bug
     if (DrvHandles[I] == nullptr)
       continue;
     L0DriverInstances.emplace_back(new Level0Driver(DrvHandles[I]));
-  }
-  for (auto &Level0Driver : L0DriverInstances) {
-    TotalL0Devices += Level0Driver->getNumDevices();
-  }
-  if (EnvCount > 0 && EnvCount < TotalL0Devices) {
-    TotalL0Devices = EnvCount;
-    POCL_MSG_PRINT_LEVEL0("LevelZero Probe: limiting devices to %u\n",
-                          TotalL0Devices);
+    TotalL0Devices += L0DriverInstances.back()->getNumDevices();
+    if (TotalL0Devices >= NumRequestedDevices) {
+      TotalL0Devices = NumRequestedDevices;
+      POCL_MSG_PRINT_LEVEL0("LevelZero Probe: limiting devices to %u\n",
+                            TotalL0Devices);
+      break;
+    }
   }
 
-  POCL_MSG_PRINT_LEVEL0("LevelZero Probe devices: %u\n", TotalL0Devices);
+  POCL_MSG_PRINT_LEVEL0("LevelZero Probe: %u devices across %u drivers\n",
+                        TotalL0Devices,
+                        static_cast<unsigned>(L0DriverInstances.size()));
   return TotalL0Devices;
 }
 
@@ -449,11 +498,13 @@ cl_int pocl_level0_reinit(unsigned J, cl_device_id ClDevice, const char *paramet
 static void convertProgramBcPathToSpv(char *ProgramBcPath,
                                       char *ProgramSpvPath) {
   strncpy(ProgramSpvPath, ProgramBcPath, POCL_MAX_PATHNAME_LENGTH);
+  ProgramSpvPath[POCL_MAX_PATHNAME_LENGTH - 1] = 0;
   size_t Len = strlen(ProgramBcPath);
   assert(Len > 3);
   Len -= 2;
   ProgramSpvPath[Len] = 0;
-  strncat(ProgramSpvPath, "spv", POCL_MAX_PATHNAME_LENGTH);
+  strncat(ProgramSpvPath, "spv", (POCL_MAX_PATHNAME_LENGTH - Len - 1));
+  ProgramSpvPath[POCL_MAX_PATHNAME_LENGTH - 1] = 0;
 }
 
 static constexpr unsigned DefaultCaptureSize = 128 * 1024;
@@ -564,8 +615,11 @@ static int runLLVMOpt(cl_program Program, cl_uint DeviceI,
 
   CompilationArgs.push_back(pocl_get_path("LLVM_OPT", LLVM_OPT));
   CompilationArgs.push_back(L0passes);
+  size_t Len = strlen(ProgramBcPathTemp);
   strcpy(ProgramBcOldPathTemp, ProgramBcPathTemp);
-  strncat(ProgramBcPathTemp, ".opt.bc", POCL_MAX_PATHNAME_LENGTH);
+  ProgramBcOldPathTemp[POCL_MAX_PATHNAME_LENGTH - 1] = 0;
+  strncat(ProgramBcPathTemp, ".opt.bc", (POCL_MAX_PATHNAME_LENGTH - Len - 1));
+  ProgramBcPathTemp[POCL_MAX_PATHNAME_LENGTH - 1] = 0;
   CompilationArgs.push_back("-o");
   CompilationArgs.push_back(ProgramBcPathTemp);
   CompilationArgs.push_back(ProgramBcOldPathTemp);
@@ -735,7 +789,9 @@ int pocl_level0_build_binary(cl_program Program, cl_uint DeviceI,
   }
 
   char ProgramBcPath[POCL_MAX_PATHNAME_LENGTH];
+  ProgramBcPath[0] = 0;
   char ProgramSpvPath[POCL_MAX_PATHNAME_LENGTH];
+  ProgramSpvPath[0] = 0;
   char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH];
   ProgramSpvPathTemp[0] = 0;
   char ProgramBcPathTemp[POCL_MAX_PATHNAME_LENGTH];
@@ -746,6 +802,7 @@ int pocl_level0_build_binary(cl_program Program, cl_uint DeviceI,
     /* we have pocl_binaries with BOTH SPIRV and IR Bitcode */
 
     pocl_cache_program_spv_path(ProgramSpvPath, Program, DeviceI);
+    pocl_cache_program_bc_path(ProgramBcPath, Program, DeviceI);
 
     POCL_RETURN_ERROR_ON(
         (readProgramSpv(Program, DeviceI, ProgramSpvPath) != CL_SUCCESS),
@@ -1365,7 +1422,6 @@ void pocl_level0_flush(cl_device_id ClDev, cl_command_queue Queue) {
   } else {
     POCL_MSG_PRINT_LEVEL0("FLUSH: SubmitBatch SIZE %zu\n", SubmitBatch.size());
     Device->pushCommandBatch(std::move(SubmitBatch));
-    assert(SubmitBatch.empty());
   }
 }
 
@@ -1581,7 +1637,6 @@ void pocl_level0_free(cl_device_id ClDevice, cl_mem Mem) {
     P->version = 0;
   } else {
     Device->freeBuffer((uintptr_t)Mem, P->mem_ptr);
-    assert(Mem->mem_host_ptr != nullptr);
   }
 
   if (Mem->mem_host_ptr != nullptr && Mem->mem_host_ptr == P->mem_ptr) {
@@ -1920,7 +1975,7 @@ cl_int pocl_level0_set_kernel_exec_info_ext(
 
       if (param_name == CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT) {
         pocl_raw_ptr *DevPtr =
-            pocl_find_raw_ptr_with_dev_ptr(Kernel->context, Elems[i]);
+            pocl_find_raw_ptr_with_dev_ptr(Kernel->context, Dev, Elems[i]);
         POCL_RETURN_ERROR_ON((DevPtr == nullptr), CL_INVALID_VALUE,
                              "Invalid pointer given to the call\n");
         AllocationSize = DevPtr->size;

@@ -59,6 +59,7 @@
 #  include "pocl_icd.h"
 #endif
 
+#include "pocl_raw_ptr_set.h"
 
 #include <CL/cl_egl.h>
 
@@ -280,8 +281,14 @@ extern pocl_obj_id_t last_object_id;
 
 #  define POname(name) PO##name
 
+#if defined(RENAME_POCL) && !defined(BUILD_ICD)
+#define POdeclsym(name) POCL_EXPORT __typeof__ (name) PO##name;
+#define POdeclsymExport(name) POdeclsym(name)
+#else
 #define POdeclsym(name) __typeof__ (name) PO##name;
 #define POdeclsymExport(name) POCL_EXPORT POdeclsym(name)
+#endif
+
 #  define POCL_ALIAS_OPENCL_SYMBOL(name)                                \
   __typeof__(name) name __attribute__((alias ("PO" #name), visibility("default")));
 
@@ -1341,7 +1348,8 @@ struct _cl_device_id {
   /* Device operations, shared among devices of the same type */
   struct pocl_device_ops *ops;
 
-  /* cl_khr_il_program / CL_DEVICE_IL_VERSION, this only includes SPIR-V */
+  /* cl_khr_il_program / CL_DEVICE_IL_VERSION, this only includes SPIR-V
+   * NOTE: this must be kept ordered from highest to lowest version */
   const char *supported_spir_v_versions;
   /* list of supported SPIRV extensions in the form:
    * +SPV_KHR_linkonce_odr,+SPV_KHR_shader_clock,... */
@@ -1381,6 +1389,17 @@ struct _cl_device_id {
   size_t num_opencl_features_with_version;
   const cl_name_version *opencl_features_with_version;
 
+  /* cl_khr_spirv_queries */
+  size_t num_spirv_extended_instruction_sets;
+  const char **spirv_extended_instruction_sets;
+
+  size_t num_spirv_extensions;
+  const char **spirv_extensions;
+
+  size_t num_spirv_capabilities;
+  const cl_uint *spirv_capabilities;
+
+  /* cl_intel_unified_shared_memory */
   cl_device_unified_shared_memory_capabilities_intel host_usm_capabs;
   cl_device_unified_shared_memory_capabilities_intel device_usm_capabs;
   cl_device_unified_shared_memory_capabilities_intel single_shared_usm_capabs;
@@ -1449,46 +1468,6 @@ struct _context_destructor_callback
   context_destructor_callback_t *next;
 };
 
-/**
- * Enumeration for raw buffer/pointer types managed by PoCL.
- */
-typedef enum
-{
-  /* SVM from OpenCL 2.0. */
-  POCL_RAW_PTR_SVM = 0,
-  /* Intel USM extension. */
-  POCL_RAW_PTR_INTEL_USM,
-  /* cl_ext_buffer_device_address. */
-  POCL_RAW_PTR_DEVICE_BUFFER
-} pocl_raw_pointer_kind;
-
-typedef struct _pocl_raw_ptr pocl_raw_ptr;
-struct _pocl_raw_ptr
-{
-  /* The virtual address, if any.  NULL if there's none. */
-  void *vm_ptr;
-  /* The device address, if known. NULL if not. */
-  void *dev_ptr;
-  /* The owner device of the allocation, if any. Should be set to non-null for
-     USM Device. */
-  cl_device_id device;
-
-  size_t size;
-  /* A cl_mem for internal bookkeeping and implicit buffer migration. */
-  cl_mem shadow_cl_mem;
-
-  /* The raw pointer/buffer API used for the allocation. */
-  pocl_raw_pointer_kind kind;
-
-  struct
-  {
-    cl_mem_alloc_flags_intel flags;
-    unsigned alloc_type;
-  } usm_properties;
-
-  struct _pocl_raw_ptr *prev, *next;
-};
-
 struct _cl_context {
   POCL_ICD_OBJECT
   POCL_OBJECT;
@@ -1547,8 +1526,8 @@ struct _cl_context {
   context_destructor_callback_t *destructor_callbacks;
 
   /* List of allocations with raw host-side accessible pointers associated
-     with them (SVM, USM, DEV). */
-  pocl_raw_ptr *raw_ptrs;
+   * with them (SVM, USM, DEV). */
+  pocl_raw_ptr_set *raw_ptrs;
 
   /* list of command queues created for the context.
    * required for clMemBlockingFreeINTEL */

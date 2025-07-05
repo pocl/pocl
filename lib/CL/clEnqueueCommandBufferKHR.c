@@ -160,13 +160,14 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
   /* Submit individual commands manually */
   else
     {
-      _cl_command_node *cmd;
-
-      cl_event *syncpoints
-          = alloca (command_buffer->num_syncpoints * sizeof (cl_event));
+      _cl_command_node *cmd = NULL;
+      cl_uint num_syncpoints = command_buffer->num_syncpoints;
+      cl_event *syncpoints = alloca (num_syncpoints * sizeof (cl_event));
+      memset (syncpoints, 0, num_syncpoints * sizeof (cl_event));
       cl_event *deps = (cl_event *)alloca (
-          sizeof (cl_event)
-          * (command_buffer->num_syncpoints + num_events_in_wait_list));
+        sizeof (cl_event) * (num_syncpoints + num_events_in_wait_list));
+      memset (deps, 0,
+              sizeof (cl_event) * (num_syncpoints + num_events_in_wait_list));
 
       unsigned sync_id = 0;
       LL_FOREACH (command_buffer->cmds, cmd)

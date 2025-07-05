@@ -28,7 +28,9 @@
 #include "pocl_compiler_macros.h"
 #include "pocl_cl.h"
 #define _BSD_SOURCE
+#ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
+#endif
 #define _POSIX_C_SOURCE 200809L
 
 #include <errno.h>
@@ -374,7 +376,11 @@ pocl_create_event_sync (cl_event notifier_event, cl_event waiting_event)
   notify_target = pocl_mem_manager_new_event_node();
   wait_list_item = pocl_mem_manager_new_event_node();
   if (!notify_target || !wait_list_item)
-    return CL_OUT_OF_HOST_MEMORY;
+    {
+      free (notify_target);
+      free (wait_list_item);
+      return CL_OUT_OF_HOST_MEMORY;
+    }
 
 #ifdef DEBUG_EVENT_DEPS
   check_for_circular_dep (waiting_event, notifier_event);
@@ -2249,7 +2255,6 @@ pocl_str_append (const char **dst, const char *src)
   return old_dst;
 }
 
-
 int
 pocl_fill_aligned_buf_with_pattern (void *__restrict__ ptr, size_t offset,
                                     size_t size,
@@ -2370,26 +2375,9 @@ pocl_svm_check_get_pointer (cl_context context, const void *svm_ptr, size_t size
                             size_t *buffer_size, void** actual_ptr)
 {
 
-  /* TODO we need a better data structure than linked list,
-   * right now it does a linear scan of all SVM allocations. */
   POCL_LOCK_OBJ (context);
-  pocl_raw_ptr *found = NULL, *item = NULL;
-  char *svm_alloc_end = NULL;
-  char *svm_alloc_start = NULL;
-  DL_FOREACH (context->raw_ptrs, item)
-  {
-    if (item->vm_ptr == NULL)
-      continue;
-
-    svm_alloc_start = (char *)item->vm_ptr;
-    svm_alloc_end = svm_alloc_start + item->size;
-    if (((char *)svm_ptr >= svm_alloc_start)
-        && ((char *)svm_ptr < svm_alloc_end))
-      {
-        found = item;
-        break;
-      }
-  }
+  pocl_raw_ptr *found
+    = pocl_raw_ptr_set_lookup_with_vm_ptr (context->raw_ptrs, svm_ptr);
   POCL_UNLOCK_OBJ (context);
 
   /* if the device does not support system allocation,
@@ -2406,6 +2394,7 @@ pocl_svm_check_get_pointer (cl_context context, const void *svm_ptr, size_t size
     }
   } else {
     assert (found != NULL);
+    char *svm_alloc_end = (char *)found->vm_ptr + found->size;
     if (((char *)svm_ptr + size) > svm_alloc_end)
     {
       POCL_MSG_ERR ("The pointer+size exceeds the size of the allocation\n");

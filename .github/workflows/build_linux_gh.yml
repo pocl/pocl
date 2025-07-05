@@ -42,21 +42,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # basic = simplest pthread build
-        # devel = with devel options
+        # basic = simplest pthread build with ENABLE_CONFORMANCE
+        # devel = with devel options without ENABLE_CONFORMANCE
         # install = install PoCL system-wide and run tests
         # static = statically linked LLVM component libraries
         # TBB, OpenMP = CPU drivers with TBB/OpenMP support
         # DBK = ONNX / libjpeg-turbo DBKs enabled
-        llvm: [18, 19, 20]
+        llvm: [20]
         config: [basic, devel]
         include:
-          - llvm: 14
-            config: static
-          - llvm: 15
-            config: TBB
-          - llvm: 16
-            config: OpenMP
           - llvm: 17
             config: TBB
           - llvm: 18
@@ -65,6 +59,10 @@ jobs:
             config: install
           - llvm: 18
             config: DBKs
+          - llvm: 19
+            config: TBB
+          - llvm: 20
+            config: OpenMP
 
     steps:
       - name: Checkout
@@ -80,19 +78,25 @@ jobs:
           sudo apt update -y &&
           sudo apt install -y wget gpg python3-dev libpython3-dev build-essential ocl-icd-libopencl1 cmake make git pkg-config ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g-dev libtbb-dev
 
-      - name: Install LLVM <= 16 (+ llvm-spirv)
-        if: ${{ matrix.llvm <= 16 }}
+      - name: Install LLVM 17 (+ llvm-spirv)
+        if: ${{ matrix.llvm == 17 }}
         run: >
           export LLVM_VERSION=${{ matrix.llvm }} &&
-          sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} llvm-spirv-${LLVM_VERSION} libpolly-${LLVM_VERSION}-dev
+          sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} llvm-spirv-${LLVM_VERSION} libpolly-${LLVM_VERSION}-dev spirv-tools
 
-      - name: Install LLVM 17, 18, 19 (+ libllvmspirvlib)
-        if: ${{ (matrix.llvm >= 17) &&  (matrix.llvm <= 19) }}
+      - name: Install LLVM 18 (+ llvm-spirv + libllvmspirv)
+        if: ${{ matrix.llvm == 18 }}
+        run: >
+          export LLVM_VERSION=${{ matrix.llvm }} &&
+          sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} libllvmspirvlib-${LLVM_VERSION}-dev llvm-spirv-${LLVM_VERSION} libpolly-${LLVM_VERSION}-dev spirv-tools
+
+      - name: Install LLVM 19 (+ libllvmspirv)
+        if: ${{ matrix.llvm == 19 }}
         run: >
           export LLVM_VERSION=${{ matrix.llvm }} &&
           sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} libllvmspirvlib-${LLVM_VERSION}-dev libpolly-${LLVM_VERSION}-dev spirv-tools
 
-      - name: Install LLVM >= 20 (+ SPIRV backend)
+      - name: Install LLVM >= 20 (from apt.llvm.org)
         if: ${{ matrix.llvm >= 20 }}
         run: >
           export LLVM_VERSION=${{ matrix.llvm }} &&
@@ -138,7 +142,7 @@ jobs:
           elif [ "${{ matrix.config }}" == "TBB" ]; then
             runCMake -DENABLE_ICD=1 -DENABLE_TBB_DEVICE=1
           elif [ "${{ matrix.config }}" == "basic" ]; then
-            runCMake -DENABLE_ICD=1 -DENABLE_LLVM_FILECHECKS=1
+            runCMake -DENABLE_ICD=1 -DENABLE_LLVM_FILECHECKS=1 -DENABLE_CONFORMANCE=ON
           elif [ "${{ matrix.config }}" == "static" ]; then
             runCMake -DENABLE_ICD=1 -DSTATIC_LLVM=1 -DDEVELOPER_MODE=ON
           elif [ "${{ matrix.config }}" == "devel" ]; then
@@ -175,17 +179,20 @@ jobs:
       - name: Run Tests
         env:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+          CL_PLATFORM_NAME: "Portable"
+          CL_DEVICE_TYPE: "cpu"
         id: ctest
         timeout-minutes: 120
         run: |
-          runCTest() {
-            cd ${{ github.workspace }}/build && ctest -j$(nproc) $CTEST_FLAGS "$@"
-          }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          # the pocl_test_dlopen tests try to dlopen libraries from the build dir; however, we removed them at install step
           if [ "${{ matrix.config }}" == "install" ]; then
-            runCTest -L cpu -E pocl_test_dlopen_
+            # Do not use the run_cpu_tests script as we want to test the installation, not
+            # the build dir.
+            # the pocl_test_dlopen tests try to dlopen libraries from the build dir;
+            # however, we removed it at the install step to ensure we test the installed
+            # so
+            cd ${{ github.workspace }}/build && ctest -j$(nproc) -E pocl_test_dlopen_ -LE cpu_fail $CTEST_FLAGS "$@"
           else
-            runCTest -L cpu
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cpu_tests -j$(nproc) $CTEST_FLAGS "$@"
           fi

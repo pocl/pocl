@@ -30,7 +30,7 @@ pocl_copy_onnx_inference_dbk_attributes (
 {
   int err;
   cl_dbk_attributes_onnx_inference_exp *attrs
-    = malloc (sizeof (cl_dbk_attributes_onnx_inference_exp));
+    = calloc (1, sizeof (cl_dbk_attributes_onnx_inference_exp));
   if (attrs == NULL)
     return NULL;
   attrs->model_size = src->model_size;
@@ -87,7 +87,7 @@ pocl_copy_onnx_inference_dbk_attributes (
     }
 
   /******** Copy initializer tensor data ********/
-  if (attrs->num_initializers != 0)
+  if (attrs->num_initializers > 0)
     {
       attrs->initializer_names
           = calloc (attrs->num_initializers, sizeof (char *));
@@ -115,14 +115,18 @@ pocl_copy_onnx_inference_dbk_attributes (
           if (err != CL_SUCCESS)
             goto ERROR;
 
-          size_t data_len
-              = pocl_tensor_type_size (attrs->initializer_tensor_descs[i].dtype);
-          for (size_t dim = 0; dim < attrs->initializer_tensor_descs[i].rank;
+          int data_len
+            = pocl_tensor_type_size (attrs->initializer_tensor_descs[i].dtype);
+          if (data_len <= 0)
+            goto ERROR;
+          for (int dim = 0; dim < attrs->initializer_tensor_descs[i].rank;
                ++dim)
             {
               data_len *= attrs->initializer_tensor_descs[i].shape[dim];
             }
           attrs->initializer_data[i] = malloc (data_len);
+          if (attrs->initializer_data[i] == NULL)
+            goto ERROR;
           memcpy ((char *)attrs->initializer_data[i], src->initializer_data[i],
                   data_len);
         }

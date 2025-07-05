@@ -466,73 +466,6 @@ bool isKernelToProcess(const llvm::Function &F) {
   return false;
 }
 
-//#define DEBUG_UNREACHABLE_SWITCH_REMOVAL
-
-bool removeUnreachableSwitchCases(llvm::Function &F) {
-  std::vector<BasicBlock *> BBsToDel;
-  bool Changed = false;
-  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
-    BasicBlock *BB = &*FI;
-
-    if (BB->hasName() && BB->getName().starts_with("default.unreachable")) {
-#ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
-      std::cerr << "##################################################\n";
-      std::cerr << "### converting unreachable block: " << (void *)BB << "\n";
-#endif
-      BBsToDel.push_back(BB);
-
-      std::set<SwitchInst *> SwUsers;
-      for (auto U : BB->users()) {
-        if (SwitchInst *SwI = dyn_cast<SwitchInst>(U)) {
-          SwUsers.insert(SwI);
-        } else {
-#ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
-          // we can ignore BBlocks with a single "br label default.unreachable"
-          if (!isa<BranchInst>(U)) {
-            std::cerr << "Unhandled unreachable user:\n";
-            U->dump();
-          }
-#endif
-        }
-      }
-
-      for (SwitchInst *SwI : SwUsers) {
-#ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
-        std::cerr << "Found a switch user, replacing the unr label:\n";
-        SwI->dump();
-#endif
-        if (SwI->getDefaultDest() == BB) {
-#ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
-          std::cerr << "... default switch user is the unr BB\n";
-#endif
-          // remove the last case, and make its BB as the default
-          auto FinalCaseIt = std::prev(SwI->case_end());
-          BasicBlock *FinalBB = FinalCaseIt->getCaseSuccessor();
-          SwI->removeCase(FinalCaseIt);
-          SwI->setDefaultDest(FinalBB);
-          Changed = true;
-#ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
-          std::cerr << "Final fixed switch:\n";
-          SwI->dump();
-#endif
-        } else {
-#ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
-          std::cerr << "Unhandled switch, the default branch is not unr:\n";
-          SwI->dump();
-#endif
-        }
-      }
-    }
-  }
-
-  for (auto BB : BBsToDel) {
-    BB->eraseFromParent();
-    Changed = true;
-  }
-
-  return Changed;
-}
-
 // Returns true in case the given function is a kernel with work-group
 // barriers inside it.
 bool hasWorkgroupBarriers(const llvm::Function &F) {
@@ -608,12 +541,8 @@ calculateGVarOffsetsSizes(const DataLayout &DL,
     assert(GVar->hasInitializer());
 
     // if the current offset into the buffer is not aligned enough, fix it
-#if LLVM_MAJOR < 15
-    uint64_t GVarAlign = GVar->getAlignment();
-#else
     Align GVarA = GVar->getAlign().valueOrOne();
     uint64_t GVarAlign = GVarA.value();
-#endif
 
     if (GVarAlign > 0 && CurrentOffset % GVarAlign) {
       CurrentOffset |= (GVarAlign - 1);

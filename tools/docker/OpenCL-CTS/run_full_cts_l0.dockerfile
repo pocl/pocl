@@ -129,6 +129,7 @@ RUN /opt/OpenCL-CTS/test_conformance/spirv_new/assemble_spirv.py \
 
 ENV POCL_CACHE_DIR=/tmp/POCL_CACHE
 ENV POCL_DEVICES=level0
+ENV CL_DEVICE_TYPE=gpu
 
 # runs both normal mode & spirv mode CTS tests
 CMD cd /opt/OpenCL-CTS/build/test_conformance && clinfo && \

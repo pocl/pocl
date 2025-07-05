@@ -129,18 +129,17 @@ pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
   POCL_GOTO_ERROR_ON ((p > 1), CL_INVALID_VALUE,
                       "aligment argument must be a power of 2\n");
 
-  pocl_raw_ptr *item = calloc (1, sizeof (pocl_raw_ptr));
-  POCL_GOTO_ERROR_ON ((item == NULL), CL_OUT_OF_HOST_MEMORY,
-                      "out of host memory\n");
-
   ptr = device->ops->usm_alloc (device, alloc_type, flags, size, &errcode);
   if (errcode != CL_SUCCESS)
     goto ERROR;
   POCL_GOTO_ERROR_ON ((ptr == NULL), CL_OUT_OF_RESOURCES,
                       "Device failed to allocate USM memory");
 
-  POCL_LOCK_OBJ (context);
+  pocl_raw_ptr *item = calloc (1, sizeof (pocl_raw_ptr));
+  POCL_GOTO_ERROR_ON ((item == NULL), CL_OUT_OF_HOST_MEMORY,
+                      "out of host memory\n");
 
+  POCL_LOCK_OBJ (context);
   /* Register the pointer as an raw pointer so clCreateBuffer() detects it. */
   item->vm_ptr = ptr;
   item->size = size;
@@ -148,7 +147,9 @@ pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
   item->device = device;
   item->usm_properties.alloc_type = alloc_type;
   item->usm_properties.flags = flags;
-  DL_APPEND (context->raw_ptrs, item);
+  int inserted = pocl_raw_ptr_set_insert (context->raw_ptrs, item);
+  assert (inserted);
+  (void)inserted;
   POCL_UNLOCK_OBJ (context);
 
   /* Create a shadow cl_mem object for keeping track of the USM
@@ -162,6 +163,10 @@ pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
 
   if (errcode != CL_SUCCESS)
     {
+      POCL_LOCK_OBJ (context);
+      pocl_raw_ptr_set_erase (context->raw_ptrs, item);
+      POCL_UNLOCK_OBJ (context);
+      device->ops->usm_free (device, ptr);
       POCL_MSG_ERR ("Failed to allocate memory a shadow cl_mem object.\n");
       return NULL;
     }

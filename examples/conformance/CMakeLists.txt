@@ -85,7 +85,7 @@ if(CUSTOM_CTS_GIT_TAG)
   set(CTS_GIT_TAG "${CUSTOM_CTS_GIT_TAG}")
 else()
   # Use PoCL's fork which has pending fixes.
-  set(CTS_GIT_TAG "v2025.03.21.1")
+  set(CTS_GIT_TAG "v2025.05.22.1")
 endif()
 
 set(TS_BUILDDIR "${TS_BUILDDIR}/test_conformance")
@@ -200,6 +200,7 @@ set(CTS_CPU_TSAN_BLACKLIST
 
 function(add_cts_full_tests CTS_LABEL TS_SUFFIX)
 set(EXTRA_ARGS ${ARGN})
+
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_allocations"
          COMMAND "${TS_BUILDDIR}/allocations/test_allocations" ${EXTRA_ARGS})
 
@@ -490,10 +491,10 @@ set(CTS_FULL_LIST
 foreach(CTSTEST IN LISTS CTS_FULL_LIST)
   set_property(TEST ${CTSTEST}
     APPEND PROPERTY
-    LABELS "${CTS_LABEL};cpu")
+    LABELS "${CTS_LABEL}")
   set_property(TEST ${CTSTEST}
     PROPERTY
-    ENVIRONMENT "POCL_MEMORY_LIMIT=1")
+    ENVIRONMENT "POCL_MEMORY_LIMIT=1;CL_PLATFORM_NAME=Portable")
   if(ENABLE_LEVEL0)
     if(CTSTEST IN_LIST CTS_LEVEL0_BLACKLIST)
       message(STATUS "disabling test ${CTSTEST} for Level0")
@@ -1054,10 +1055,10 @@ set(CTS_MICRO_LIST
 foreach(CTSTEST IN LISTS CTS_MICRO_LIST)
   set_property(TEST ${CTSTEST}
     APPEND PROPERTY
-    LABELS "${CTS_LABEL};cpu")
+    LABELS "${CTS_LABEL}")
   set_property(TEST ${CTSTEST}
     PROPERTY
-    ENVIRONMENT "POCL_MEMORY_LIMIT=1")
+    ENVIRONMENT "POCL_MEMORY_LIMIT=1;CL_PLATFORM_NAME=Portable")
   if(ENABLE_LEVEL0)
     if(CTSTEST IN_LIST CTS_LEVEL0_BLACKLIST)
       message(STATUS "disabling test ${CTSTEST} for Level0")
@@ -1088,13 +1089,13 @@ endforeach()
 # note that the environment variables must be set for this test
 # this is to workaround a bug: https://github.com/KhronosGroup/OpenCL-CTS/issues/1142
 set_property(TEST "${TS_NAME}${TS_SUFFIX}_non_uniform_work_group"
-             PROPERTY ENVIRONMENT "POCL_MEMORY_LIMIT=4;POCL_MAX_WORK_GROUP_SIZE=1024")
+             PROPERTY ENVIRONMENT "POCL_MEMORY_LIMIT=4;POCL_MAX_WORK_GROUP_SIZE=1024;CL_PLATFORM_NAME=Portable")
 
 # this is required b/c there is a problem with one test in mutable extension:
 # it does not take into account that changing global size (without local size)
 # can result in change of local size (because the runtime calculates optimal size)
 set_property(TEST "${TS_NAME}${TS_SUFFIX}_cl_khr_command_buffer_mutable"
-             PROPERTY ENVIRONMENT "POCL_MEMORY_LIMIT=4;POCL_MAX_WORK_GROUP_SIZE=1024")
+             PROPERTY ENVIRONMENT "POCL_MEMORY_LIMIT=4;POCL_MAX_WORK_GROUP_SIZE=1024;CL_PLATFORM_NAME=Portable")
 
 endfunction()
 

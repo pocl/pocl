@@ -318,8 +318,13 @@ extern "C" {
                                        size_t spirv_len);
 
   /* if some SPIR-V spec constants were changed, use LLVMSPIRVLib
-   * to generate new LLVM bitcode from SPIR-V with updated SpecConstants */
+   * to generate new LLVM bitcode from SPIR-V with updated SpecConstants.
+   * might change program->program_il & program_il_size */
   int pocl_regen_spirv_binary (cl_program program, cl_uint device_i);
+
+  /* applies fixes to SPIR-V input
+   * (currently only applyAtomicCmpXchgWorkaroundInPlace) */
+  int pocl_preprocess_spirv_input (cl_program program);
 
 #ifdef __cplusplus
 }

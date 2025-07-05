@@ -49,7 +49,7 @@ set_tests_properties( "examples/example0" ${SPIREX}
     ${PROPS}
     PROCESSORS 1
     # devices which support SPIR
-    LABELS "cpu;cuda;level0"
+    LABELS "cuda;level0"
     DEPENDS "pocl_version_check")
 
 # devices which don't support SPIR

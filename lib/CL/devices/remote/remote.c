@@ -108,6 +108,7 @@ pocl_remote_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
   remote_device_data_t *d = (remote_device_data_t *)device->data;
   pocl_mem_identifier *p = &mem->device_ptrs[device->global_mem_id];
   assert (p->mem_ptr == NULL);
+  int r = 0;
 
   POCL_LOCK (d->mem_lock);
 
@@ -115,7 +116,6 @@ pocl_remote_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
   if ((mem->flags & CL_MEM_ALLOC_HOST_PTR) && (mem->mem_host_ptr == NULL))
     goto ERROR;
 
-  int r = 0;
   if (host_ptr == NULL
       && (device->svm_caps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER))
     {
@@ -630,11 +630,14 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
                                      " cl_intel_unified_shared_memory";
       unsigned exts_str_size
           = strlen (device->extensions) + 1 + strlen (bonus_extensions);
-      char *exts_w_pinned = calloc (exts_str_size + 1, 1);
+      char *exts_w_pinned = malloc (exts_str_size + 1);
+      if (exts_w_pinned == NULL)
+        return CL_OUT_OF_HOST_MEMORY;
       strncpy (exts_w_pinned, device->extensions, strlen (device->extensions));
       exts_w_pinned[strlen (device->extensions)] = ' ';
       strncpy (exts_w_pinned + strlen (device->extensions) + 1,
                bonus_extensions, strlen (bonus_extensions));
+      exts_w_pinned[exts_str_size] = 0;
       /* The const char * to void * cast is fine here since this value is
          set in pocl_network_setup_devinfo with a strdup. */
       free ((void *)device->extensions);
@@ -1304,14 +1307,13 @@ int pocl_remote_link_program (cl_program program, cl_uint device_i,
         POCL_MSG_PRINT_REMOTE ("BINARY SIZE [%u]: %zu \n", real_i,
                                program->binary_sizes[real_i]);
 
-        if (pocl_exists (program_bc_path) == 0)
-          {
-            err = pocl_cache_write_generic_objfile (
-                temp_path, (char *)program->binaries[real_i],
-                program->binary_sizes[real_i]);
-            assert (err == 0);
-            pocl_rename (temp_path, program_bc_path);
-          }
+        pocl_cache_program_bc_path (program_bc_path, program, real_i);
+        err = pocl_cache_write_generic_objfile (
+          temp_path, (char *)program->binaries[real_i],
+          program->binary_sizes[real_i]);
+        if (err)
+          return err;
+        pocl_rename (temp_path, program_bc_path);
       }
   }
 
@@ -3109,17 +3111,7 @@ pocl_remote_set_kernel_exec_info_ext (cl_device_id dev,
     {
     case CL_KERNEL_EXEC_INFO_SVM_PTRS:
     case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL:
-      {
-        for (size_t i = 0; i < param_value_size / sizeof (void *); ++i)
-          {
-            struct _pocl_ptr_list_node *n
-                = malloc (sizeof (struct _pocl_ptr_list_node));
-            n->ptr = ((void **)param_value)[i];
-            DL_APPEND (kernel->indirect_raw_ptrs, n);
-            POCL_MSG_PRINT_MEMORY ("Set a indirect SVM/USM ptr %p\n", n->ptr);
-          }
-        return CL_SUCCESS;
-      }
+      return CL_SUCCESS;
     case CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL:
     case CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL:
     case CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL:

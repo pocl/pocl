@@ -134,7 +134,21 @@ uint64_t transfer_size(const RequestMsg_t &msg);
     }                                                                          \
   } while (0)
 
-#define CHECK_ID_EXISTS(set, err) CHECK_ID_EXISTS2(set, err, id)
+#define CHECK_ID_EXISTS(set, err)                                              \
+  do {                                                                         \
+    if (set.find(id) == set.end()) {                                           \
+      POCL_MSG_ERR("Can't find object with ID %zu; reply FAIL with: %d\n", id, \
+                   err);                                                       \
+      rep->rep.data_size = 0;                                                  \
+      rep->rep.fail_details = err;                                             \
+      rep->rep.failed = 1;                                                     \
+      rep->rep.obj_id = 0;                                                     \
+      rep->rep.message_type = MessageType_Failure;                             \
+      rep->extra_data.clear();                                                 \
+      rep->extra_size = 0;                                                     \
+      return;                                                                  \
+    }                                                                          \
+  } while (0)
 
 #define CHECK_ID_NOT_EXISTS(set, err)                                          \
   do {                                                                         \

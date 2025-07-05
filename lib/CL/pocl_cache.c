@@ -563,13 +563,14 @@ pocl_cache_init_topdir ()
       return CL_FAILED;
 
 #elif defined(_WIN32)
-        tmp_path = getenv("LOCALAPPDATA");
-        if (!tmp_path)
-          tmp_path = getenv ("TEMP");
-        if (tmp_path == NULL)
-          return CL_FAILED;
-        needed = snprintf (cache_topdir, POCL_MAX_PATHNAME_LENGTH, "%s\\pocl",
-                           tmp_path);
+      tmp_path = pocl_get_string_option ("LOCALAPPDATA", NULL);
+      if (!tmp_path) {
+          tmp_path = pocl_get_string_option ("TEMP", NULL);
+      }
+      if (tmp_path == NULL)
+        return CL_FAILED;
+      needed = snprintf (cache_topdir, POCL_MAX_PATHNAME_LENGTH, "%s\\pocl",
+                         tmp_path);
 #else
         // "If $XDG_CACHE_HOME is either not set or empty, a default equal to
         // $HOME/.cache should be used."

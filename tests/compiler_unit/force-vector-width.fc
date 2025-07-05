@@ -1,0 +1,6 @@
+CHECK: @_pocl_kernel_test_vector_width_workgroup
+CHECK: vector.body:
+CHECK: load <4 x float>
+CHECK: load <4 x float>
+CHECK: add <4 x float>
+CHECK: store <4 x float>

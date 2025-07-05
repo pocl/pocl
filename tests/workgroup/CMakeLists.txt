@@ -81,8 +81,7 @@ foreach(VARIANT ${VARIANTS})
     PROPERTIES
       COST 2.0
       PROCESSORS 1
-      DEPENDS "pocl_version_check"
-      LABELS "cpu;workgroup")
+      DEPENDS "pocl_version_check")
 endforeach()
 
 set_tests_properties(
@@ -91,8 +90,7 @@ set_tests_properties(
   PROPERTIES
     COST 2.0
     PROCESSORS 1
-    DEPENDS "pocl_version_check"
-    LABELS "cpu;workgroup")
+    DEPENDS "pocl_version_check")
 
 add_test_pocl(NAME "workgroup/unconditional_barriers"
               EXPECTED_OUTPUT "basic_barriers_2_2_2_2.stdout"
@@ -102,10 +100,17 @@ add_test_pocl(NAME "workgroup/conditional_barrier_loopvec"
               EXPECTED_OUTPUT "cond_barriers_1_2_1_1_loopvec.stdout"
               COMMAND "run_kernel" "conditional_barriers.cl" 1 2 1 1
               WORKITEM_HANDLER "loopvec")
+
 add_test_pocl(NAME "workgroup/conditional_barrier_cbs"
               EXPECTED_OUTPUT "cond_barriers_1_2_1_1_cbs.stdout"
               COMMAND "run_kernel" "conditional_barriers.cl" 1 2 1 1
               WORKITEM_HANDLER "cbs")
+
+add_test_pocl(NAME "workgroup/conditional_barrier_dynamic"
+              EXPECTED_OUTPUT "cond_barriers_dynamic_1_16_1_1_loopvec.stdout"
+              COMMAND "run_kernel" "conditional_barrier_dynamic.cl" 1 16 1 1
+              WORKITEM_HANDLER "loopvec"
+              LABELS "cpu_fail")
 
 add_test_pocl(NAME "workgroup/forcing_horizontal_parallelization_to_some_outer_loopvec"
               EXPECTED_OUTPUT "outerlooppar_2_2_1_1.stdout"
@@ -141,9 +146,16 @@ add_test_pocl(NAME "workgroup/range_md_large_grid"
               EXPECTED_OUTPUT ""
               COMMAND "run_kernel" "range_md.cl" "1000" "128" "1" "1")
 
+if(ENABLE_CONFORMANCE)
+  set(BALLOT_LABELS "cpu_fail")
+else()
+  set(BALLOT_LABELS "")
+endif()
+
 add_test_pocl(NAME "workgroup/ballot"
               EXPECTED_OUTPUT "ballot_1_32_1_1.stdout"
-              COMMAND "run_kernel" "ballot.cl" "1" "32" "1" "1")
+              COMMAND "run_kernel" "ballot.cl" "1" "32" "1" "1"
+              LABELS ${BALLOT_LABELS})
 
 # These tests are now always ran with the basic device with a predefined
 # work-group execution order. Their printout verification depends
@@ -160,18 +172,15 @@ foreach(VARIANT ${VARIANTS})
   "workgroup/range_md_small_grid_${VARIANT}"
   "workgroup/range_md_large_grid_${VARIANT}"
   "workgroup/issue_1747_wg_divergent_barrier_${VARIANT}"
-  "workgroup/ballot_${VARIANT}"
   )
   set_tests_properties(
     ${TEST_LIST}
     PROPERTIES
       COST 2.0
       PROCESSORS 1
-      DEPENDS "pocl_version_check"
-      LABELS "cpu;workgroup")
+      DEPENDS "pocl_version_check")
   set_property(TEST ${TEST_LIST}
     APPEND PROPERTY ENVIRONMENT "POCL_MAX_COMPUTE_UNITS=1")
-  
 endforeach()
 
 set_property(TEST

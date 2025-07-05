@@ -580,7 +580,10 @@ pocl_reload_program_bc (char *program_bc_path,
   uint64_t temp_size = 0;
   int errcode = pocl_read_file (program_bc_path, &temp_binary, &temp_size);
   if (errcode != 0 || temp_size == 0)
-    return -1;
+    {
+      assert (temp_binary == NULL);
+      return -1;
+    }
   if (program->binaries[device_i])
     POCL_MEM_FREE (program->binaries[device_i]);
   program->binaries[device_i] = (unsigned char *)temp_binary;
@@ -875,7 +878,8 @@ pocl_driver_supports_binary (cl_device_id device, size_t length,
 
   /* SPIR-V binaries are supported if we have SPIRV support in LLVM */
 #ifdef ENABLE_SPIRV
-  if (pocl_bitcode_is_spirv_execmodel_kernel (binary, length,
+  if ((strstr (device->extensions, "cl_khr_il_program") != NULL) &&
+      pocl_bitcode_is_spirv_execmodel_kernel (binary, length,
                                               device->address_bits))
     return 1;
 #endif
@@ -888,8 +892,8 @@ pocl_driver_supports_binary (cl_device_id device, size_t length,
   return 0;
 #else
   POCL_MSG_ERR (
-      "This driver was not build with LLVM support, so "
-      "don't support loading SPIR or LLVM IR binaries, only poclbinaries.\n");
+      "This PoCL driver was not build with LLVM support, so it "
+      "doesn't support loading SPIR or LLVM IR binaries, only poclbinaries.\n");
   return 0;
 #endif
 }

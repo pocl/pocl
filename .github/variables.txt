@@ -2,3 +2,4 @@ CTEST_FLAGS=--output-on-failure --test-output-size-failed 192000 --test-output-s
 CCACHE_COMPRESS=true
 CCACHE_COMPRESSLEVEL=1
 CCACHE_MAXSIZE=25000M
+CTEST_NO_TESTS_ACTION=error

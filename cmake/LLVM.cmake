@@ -43,9 +43,6 @@ else()
       "llvm-config-mp-19.0" "llvm-config-mp-19" "llvm-config-19" "llvm-config190"
       "llvm-config-mp-18.0" "llvm-config-mp-18" "llvm-config-18" "llvm-config180"
       "llvm-config-mp-17.0" "llvm-config-mp-17" "llvm-config-17" "llvm-config170"
-      "llvm-config-mp-16.0" "llvm-config-mp-16" "llvm-config-16" "llvm-config160"
-      "llvm-config-mp-15.0" "llvm-config-mp-15" "llvm-config-15" "llvm-config150"
-      "llvm-config-mp-14.0" "llvm-config-mp-14" "llvm-config-14" "llvm-config140"
       "llvm-config"
     DOC "llvm-config executable")
 endif()
@@ -103,8 +100,8 @@ string(REGEX REPLACE "([0-9]+)\\.([0-9]+).*" "\\1.\\2" LLVM_VERSION "${LLVM_VERS
 message(STATUS "LLVM_VERSION: ${LLVM_VERSION}")
 
 # required for sources..
-if((LLVM_VERSION_MAJOR LESS 14) OR (LLVM_VERSION_MAJOR GREATER 20))
-  message(FATAL_ERROR "LLVM version between 14.0 and 20.0 required, found: ${LLVM_VERSION_MAJOR}")
+if((LLVM_VERSION_MAJOR LESS 17) OR (LLVM_VERSION_MAJOR GREATER 20))
+  message(FATAL_ERROR "LLVM version between 17.0 and 20.0 required, found: ${LLVM_VERSION_MAJOR}")
 endif()
 
 string(REPLACE "." ";" LLVM_VERSION_PARSED "${LLVM_VERSION}")
@@ -133,12 +130,6 @@ replace_llvm_prefix_cmake(LLVM_INCLUDE_DIRS)
 run_llvm_config(LLVM_CMAKEDIR --cmakedir)
 replace_llvm_prefix_cmake(LLVM_CMAKEDIR)
 
-if(LLVM_VERSION_MAJOR LESS 16)
-  run_llvm_config(LLVM_SRC_ROOT --src-root)
-  run_llvm_config(LLVM_OBJ_ROOT --obj-root)
-endif()
-
-replace_llvm_prefix_cmake(LLVM_OBJ_ROOT)
 run_llvm_config(LLVM_ALL_TARGETS --targets-built)
 if (NOT DEFINED LLVM_HOST_TARGET)
   run_llvm_config(LLVM_HOST_TARGET --host-target)
@@ -225,19 +216,29 @@ foreach(LIBFLAG ${LLVM_LIBS})
   list(APPEND LLVM_LIBNAMES "${LIB_NAME}")
 endforeach()
 
+set(LLVM_LINK_FILES)
+set(LLVM_LINK_DIRS)
 foreach(LIBNAME ${LLVM_LIBNAMES})
   if(EXISTS ${LIBNAME})
-    list(APPEND LLVM_LIBFILES "${LIBNAME}")
+    set(L_LIBFILE_${LIBNAME} ${LIBNAME})
   else()
     find_library(L_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
     if(NOT L_LIBFILE_${LIBNAME})
       message(FATAL_ERROR "Could not find LLVM library ${LIBNAME}, perhaps wrong setting of STATIC_LLVM ?")
     endif()
-    list(APPEND LLVM_LIBFILES "${L_LIBFILE_${LIBNAME}}")
+  endif()
+
+  if(APPLE AND STATIC_LLVM AND VISIBILITY_HIDDEN)
+    # -hidden-l doesn't accept paths, so split into name + directory
+    get_filename_component(LIB_NAME ${L_LIBFILE_${LIBNAME}} NAME_WE)
+    string(REPLACE "lib" "" LIB_BASE ${LIB_NAME})
+    list(APPEND LLVM_LINK_LIBRARIES "-Wl,-hidden-l${LIB_BASE}")
+    get_filename_component(LIB_DIR ${L_LIBFILE_${LIBNAME}} DIRECTORY)
+    list(APPEND LLVM_LINK_DIRECTORIES ${LIB_DIR})
+  else()
+    list(APPEND LLVM_LINK_LIBRARIES ${L_LIBFILE_${LIBNAME}})
   endif()
 endforeach()
-
-set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
 
 ####################################################################
 
@@ -259,10 +260,7 @@ if(STATIC_LLVM)
   set(CLANG_LIBNAMES clangCodeGen clangFrontendTool clangFrontend clangDriver clangSerialization
       clangParse clangSema clangRewrite clangRewriteFrontend
       clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
-      clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangASTMatchers clangLex clangBasic)
-  if(LLVM_VERSION_MAJOR GREATER 14)
-     list(APPEND CLANG_LIBNAMES clangSupport)
-  endif()
+      clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangASTMatchers clangLex clangSupport clangBasic)
   # must come after clangFrontend
   if(LLVM_VERSION_MAJOR GREATER 17)
      list(INSERT CLANG_LIBNAMES 4 clangAPINotes)
@@ -277,12 +275,24 @@ else()
   endif()
 endif()
 
+set(CLANG_LINK_LIBRARIES)
+set(CLANG_LINK_DIRECTORIES)
 foreach(LIBNAME ${CLANG_LIBNAMES})
   find_library(C_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
   if(NOT C_LIBFILE_${LIBNAME})
     message(FATAL_ERROR "Could not find Clang library ${LIBNAME}, perhaps wrong setting of STATIC_LLVM ?")
   endif()
-  list(APPEND CLANG_LIBFILES "${C_LIBFILE_${LIBNAME}}")
+
+  if(APPLE AND STATIC_LLVM AND VISIBILITY_HIDDEN)
+    # -hidden-l doesn't accept paths, so split into name + directory
+    get_filename_component(LIB_NAME ${C_LIBFILE_${LIBNAME}} NAME_WE)
+    string(REPLACE "lib" "" LIB_BASE ${LIB_NAME})
+    list(APPEND CLANG_LINK_LIBRARIES "-Wl,-hidden-l${LIB_BASE}")
+    get_filename_component(LIB_DIR ${C_LIBFILE_${LIBNAME}} DIRECTORY)
+    list(APPEND CLANG_LINK_DIRECTORIES ${LIB_DIR})
+  else()
+    list(APPEND CLANG_LINK_LIBRARIES ${C_LIBFILE_${LIBNAME}})
+  endif()
 endforeach()
 
 ####################################################################
@@ -372,7 +382,6 @@ if(LLVM_SPIRV AND (NOT LLVM_SPIRV_VAL_OPT))
   endif()
 endif()
 
-
 if(LLVM_SPIRV)
   message(STATUS "Using llvm-spirv: ${LLVM_SPIRV}")
 else()
@@ -400,11 +409,36 @@ if(NOT LLVM_SPIRV)
 endif()
 
 if(LLVM_SPIRV_INCLUDEDIR AND LLVM_SPIRV_LIB)
+  if(UNIX)
+    set(LINK_OPTS LINK_OPTIONS "-Wl,-rpath,${LLVM_LIBDIR}")
+  else()
+    unset(LINK_OPTS)
+  endif()
   message(STATUS "found LLVMSPIRV library: ${LLVM_SPIRV_INCLUDEDIR} | ${LLVM_SPIRV_LIB}")
-  set(HAVE_LLVM_SPIRV_LIB 1)
+  set(LLVMSPIRVLIB_MAXVER_FILE "${CMAKE_SOURCE_DIR}/cmake/MaxSPIRVversion.cc")
+  try_run(LIBLLVMSPIRV_MAXVER_RUN_RESULT LIBLLVMSPIRV_MAXVER_COMPILE_RESULT
+          "${CMAKE_BINARY_DIR}" "${LLVMSPIRVLIB_MAXVER_FILE}"
+          COMPILE_DEFINITIONS ${LLVM_CXXFLAGS}
+          CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_SPIRV_INCLUDEDIR};${LLVM_INCLUDE_DIRS}"
+          LINK_LIBRARIES "${LLVM_SPIRV_LIB}" "${LLVM_LDFLAGS}" "${LLVM_LIBS}" "${LLVM_SYSLIBS}"
+          ${LINK_OPTS}
+          RUN_OUTPUT_VARIABLE LIBLLVMSPIRV_MAXVER_RUN_OUTPUT
+          COMPILE_OUTPUT_VARIABLE LIBLLVMSPIRV_MAXVER_COMP_OUTPUT)
+  if(LIBLLVMSPIRV_MAXVER_COMPILE_RESULT AND (LIBLLVMSPIRV_MAXVER_RUN_RESULT EQUAL 0))
+    message(STATUS "ran libLLVMSPIRV test, result: ${LIBLLVMSPIRV_MAXVER_RUN_OUTPUT}")
+    set(HAVE_LLVM_SPIRV_LIB 1)
+    set(LLVM_SPIRV_LIB_MAXVER ${LIBLLVMSPIRV_MAXVER_RUN_OUTPUT})
+  else()
+    message(STATUS "failed to compile ${LIBLLVMSPIRV_MAXVER_COMPILE_RESULT} / run ${LIBLLVMSPIRV_MAXVER_RUN_RESULT} libLLVMSPIRV test")
+    message(STATUS "compile output: ${LIBLLVMSPIRV_MAXVER_COMP_OUTPUT}")
+    message(STATUS "run output: ${LIBLLVMSPIRV_MAXVER_RUN_OUTPUT}")
+    set(HAVE_LLVM_SPIRV_LIB 0)
+    set(LLVM_SPIRV_LIB_MAXVER 66048) # SPIR-V 1.2
+  endif()
 else()
   message(STATUS "LLVMSPIRV library not found: ${LLVM_SPIRV_INCLUDEDIR} | ${LLVM_SPIRV_LIB}")
   set(HAVE_LLVM_SPIRV_LIB 0)
+  set(LLVM_SPIRV_LIB_MAXVER 66048) # SPIR-V 1.2
 endif()
 
 set_expr(HAVE_SPIRV_LINK SPIRV_LINK)
@@ -580,8 +614,10 @@ if(NOT DEFINED CLANG_NEEDS_RTLIB)
   set(RT64 OFF)
   set(NEEDS_RTLIB_FLAG OFF)
 
+  if(WIN32)
+    set(CLANG_NEEDS_RTLIB OFF CACHE INTERNAL "rtlib flags for Clang disabled on Windows")
   # on 32bit systems, we need 64bit emulation
-  if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+  elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
     set(INC "#include <stdint.h>\n#include <stddef.h>")
     set(SRC "int64_t a = argc; int64_t b = argc-1; int64_t c = a / b; return (int)c; ")
     custom_try_link_clang("${INC}" "${SRC}" RES)
@@ -776,8 +812,8 @@ if(NOT CLANG_LINK_TEST)
 
   try_compile(CLANG_LINK_TEST ${CMAKE_BINARY_DIR} "${CLANG_LINK_TEST_FILENAME}"
               CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
-              CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
-              LINK_LIBRARIES ${LLVM_LDFLAGS} ${CLANG_LIBFILES} ${LLVM_LIBS}
+              CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${CLANG_LINK_DIRECTORIES};${LLVM_LIBDIR}"
+              LINK_LIBRARIES ${LLVM_LDFLAGS} ${CLANG_LINK_LIBRARIES} ${LLVM_LIBS}
               ${LLVM_SYSLIBS}
               COMPILE_DEFINITIONS ${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}
 	      ${CXX_COMPAT_FLAGS} -DLLVM_MAJOR=${LLVM_VERSION_MAJOR}

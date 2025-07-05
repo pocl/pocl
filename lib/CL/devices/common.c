@@ -700,20 +700,12 @@ pocl_exec_command (_cl_command_node *node)
           {
             void *ptr = cmd->svm_free.svm_pointers[i];
             POCL_LOCK_OBJ (event->context);
-            pocl_raw_ptr *tmp = NULL, *item = NULL;
-            cl_mem shadow_mem = NULL;
-            DL_FOREACH_SAFE (event->context->raw_ptrs, item, tmp)
-            {
-              if (item->vm_ptr == ptr)
-                {
-                  DL_DELETE (event->context->raw_ptrs, item);
-                  break;
-                }
-            }
-            shadow_mem = item->shadow_cl_mem;
-            POCL_UNLOCK_OBJ (event->context);
+            pocl_raw_ptr *item = pocl_raw_ptr_set_lookup_with_vm_ptr (
+              event->context->raw_ptrs, ptr);
+            cl_mem shadow_mem = item->shadow_cl_mem;
             assert (item);
-            POCL_MEM_FREE (item);
+            pocl_raw_ptr_set_erase (event->context->raw_ptrs, item);
+            POCL_UNLOCK_OBJ (event->context);
             POname (clReleaseContext) (event->context);
             if (shadow_mem)
               POname (clReleaseMemObject) (shadow_mem);
@@ -1210,6 +1202,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   int err = pocl_check_kernel_disk_cache (module_fn, command, specialize);
   if (err)
     {
+      free (ci);
       POCL_UNLOCK (pocl_dlhandle_lock);
       return NULL;
     }
@@ -1237,6 +1230,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
                         " reported as 'file not found' errors.\n",
                         module_fn, workgroup_string);
           POCL_UNLOCK (pocl_dlhandle_lock);
+          free (ci);
           free (workgroup_string);
           return NULL;
         }
@@ -1623,7 +1617,7 @@ pocl_init_default_device_infos (cl_device_id dev,
   dev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT;
   dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
   dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
-#ifdef __x86_64__
+#if defined(__x86_64__) || defined(_M_X64)
   dev->single_fp_config |= (CL_FP_DENORM | CL_FP_ROUND_TO_INF
                             | CL_FP_ROUND_TO_ZERO
                             | CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
@@ -1866,6 +1860,7 @@ static const cl_name_version OPENCL_EXTENSIONS[]
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_subgroup_local_block_io" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_spirv_subgroups" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_spirv_no_integer_wrap_decoration" },
+      { CL_MAKE_VERSION (1, 0, 0), "cl_khr_spirv_queries" },
 
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_byte_addressable_store" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_global_int32_base_atomics" },
@@ -2078,6 +2073,9 @@ pocl_setup_builtin_kernels_with_version (cl_device_id dev)
         }
       strncpy (dev->builtin_kernels_with_version[i].name, token,
                CL_NAME_VERSION_MAX_NAME_SIZE);
+      dev->builtin_kernels_with_version[i]
+        .name[CL_NAME_VERSION_MAX_NAME_SIZE - 1]
+        = 0;
 
       /* proper versioning could use pocl_BIDescriptors.
        * For now, hardcode the version to 1.2 */

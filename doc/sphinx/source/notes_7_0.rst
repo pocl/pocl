@@ -3,12 +3,27 @@ Release Notes for PoCL 7.0
 **************************
 
 ===========================
-New features
+Release highlights
 ===========================
+
+* PoCL received the official OpenCL 3.0 conformance stamp with the
+  `CPU <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_450>`_ (x86-64) and
+  `Level Zero <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_453>`_
+  drivers. Conformance testing via OpenCL-CTS passed with both OpenCL C
+  and SPIR-V compilation modes, for both of the drivers.
+
+* Proper support for Windows platform added, tested with CPU and Level Zero drivers.
+  The CPU driver supports both MinGW and MSVC toolchains, Level Zero only MSVC for
+  now.
+
+* Support for LLVM versions 19 and 20.
 
 * Support building with Khronos ICD, if the ICD supports OpenCL 3.0.
 
-* Support for LLVM versions 19 and 20.
+* Support for dynamic device addition and network discovery in
+  PoCL-Remote.
+
+* Initial support for Julia input through the OpenCL.jl package.
 
 =============================
 Notable user facing changes
@@ -25,11 +40,17 @@ Notable user facing changes
 * The callbacks for context destruction, memory destruction and event
   callbacks were moved to a separate thread (that runs asynchronously).
   This might have unexpected effect on the behavior of program using
-  libpocl, since the callbacks can be executed with some delay.
+  libpocl, since callbacks might be executed with some delay.
 
-* The handling of POCL_DEVICES env variable changed: if it's unset
-  and LZ devices are detected, they are automatically made available.
-  This matches the behavior of CPU drivers.
+* Level Zero devices, if found, are shown in the platform by default
+  in addition to the CPU drivers.
+
+* Works with the upstream llama.cpp's OpenCL backend without
+  modifications on PoCL-LZ.
+
+* Various fixes and improvements to SYCL input via the Intel DPC++.
+
+* Various improvements to support running OpenVINO out-of-the-box.
 
 ===========================
 Driver-specific features
@@ -39,32 +60,20 @@ Driver-specific features
 CPU drivers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* New experimental support for Defined Built-in Kernels (DBK) has
-  been added to the CPU drivers. These DBKs allow for a
-  standardized set of built-in kernels with well-defined
-  semantics that can be configured during creation of the OpenCL
-  program. Currently the following DBKs are implemented: GEMM,
-  matrix multiplication, JPEG en-/de-code, and ONNX runtime
-  inference. The Extension documentation draft can be found on
-  `github <https://github.com/KhronosGroup/OpenCL-Docs/pull/1007>`_.
-  Please note that these DBKs are still a proof-of-concept and
-  are subject to change without notice.
-
 * When built with -DENABLE_CONFORMANCE=ON, PoCL's CPU driver
   is now able to pass the full OpenCL-CTS conformance testsuite.
-  We have submitted & achieved `conformant status for CPU`_ on 2025/01/01.
 
-* Implemented Windows platform support, using both MinGW and MSVC
-  toolchains.
+* Proper and now CI-tested Windows platform support, using both
+  MinGW and MSVC toolchains.
 
-* Support for generating NSIS package on Windows.
+* Support for generating NSIS packages on Windows.
 
-* The cl_khr_command_buffer implementation has been updated to 0.9.6;
-  note that this version is not backwards compatible with previous versions.
+* The cl_khr_command_buffer implementation has been updated to v0.9.6.
+  Note that this version is not backwards compatible with previous versions.
 
-* Implemented version 1.0.2 of extension cl_ext_buffer_device_address.
+* Implemented version 1.0.2 of the cl_ext_buffer_device_address extension.
 
-* Implemented version 0.9.3 extension cl_khr_command_buffer_mutable_dispatch.
+* Implemented version 0.9.3 of the cl_khr_command_buffer_mutable_dispatch.
 
 * Implemented cl_intel_subgroups_{char/short/long} extensions.
 
@@ -76,8 +85,10 @@ CPU drivers
 * Implemented read_imageh() function.
 
 * SPIR-V support has been improved to support additional subgroup-related
-  functions; additionally, SPIR-V up to version 1.5 is now supported
-  with LLVM 20, and up to 1.3 with LLVM 19.
+  functions.
+
+* SPIR-V up to version 1.5 is now supported with LLVM 20, and up to 1.4
+  with LLVM 19.
 
 * The max_mem_alloc_size of the CPU device is now equal to global_mem_size
   (previously was limited to 1/4 of global_mem_size).
@@ -88,47 +99,53 @@ CPU drivers
   an error flag, which the CPU driver then uses to set the NDRange
   event's state to failed.
 
-* Support for using LLVMSPIRVLib for SPIR-V input translation,
-  instead of llvm-spirv binary.
-
 * With "distro" builds, the kernel-lib variants now include
-  "generic" CPU variant as a fallback.
+  the "generic" CPU variant as a fallback.
 
 * OpenCL C printf() now correctly supports all OpenCL vector types.
 
-* Added option to disable support of subnormal floats.
+* Added option to disable the support of subnormal floats.
 
-* Added option to avoid division-by-zero exceptions using a LLVM pass
+* Added option to avoid division-by-zero exceptions using an LLVM pass
   instead of SIGFPE handler (CMake option ENABLE_SIGFPE_HANDLER).
   This has the advantage of being a platform-independent and
-  scheduler-independent (TBB,OpenMP) solution.
+  scheduler-independent solution that works also with the
+  oneTBB and OpenMP runtimes.
+
+* Support for using LLVMSPIRVLib for SPIR-V input translation,
+  as an alternative to calling llvm-spirv binary.
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Kernel compiler improvements
+CPU kernel compiler improvements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Improve work-group vectorization of kernels which use the global
+* Improved the work-group vectorization of kernels which use the global
   id as the iteration variable. Now the loop vectorizer should
   generate wide loads/stores more often than falling back to
-  scatter/gather.
+  scatter/gather when global ids are used.
 
-* The WG vectorization with the 'loopvec' method is enabled again,
-  there was an issue when upgrading to the latest LLVM version.
-  Now there's a regression test in place for avoiding accidents
-  like this in the futre.
+* The implicit WG vectorization with the 'loopvec' method is reenabled,
+  after accidentally disabling it when upgrading to the latest LLVM
+  version.
+
+* New env variables POCL_VECTORIZER_FORCE_VECTOR_WIDTH and
+  POCL_VECTORIZER_PREFER_VECTOR_WIDTH enable more control over the vector width
+  chosen by LLVM when using 'loopvec' WG vectorization.
 
 * Inlining of builtin functions has been improved to inline more
   aggressively. This should result in much better performance
   of kernels using many builtins.
 
 * PoCL can now use libraries of vectorized math functions (SLEEF
-  on ARM, libmvec or Intel SVML on x86) to implement OpenCLs' math
+  on ARM, libmvec or Intel SVML on x86) to implement OpenCL's math
   builtins with vector arguments. This is currently enabled only when
   building with ENABLE_CONFORMANCE=OFF and LLVM >= 18.0
 
-* Rematerialization of private variables. Certain values are recomputed,
-  instead of being stored in workgroup context arrays. This reduces the
-  stack size requirements significantly, and improves vectorization.
+* Rematerialization of work-item private variables across parallel
+  regions. Certain values are recomputed instead of storing the
+  value in workgroup context arrays. This usually reduces the
+  required stack size significantly and improves loop
+  vectorization opportunities.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Remote driver
@@ -144,33 +161,30 @@ Remote driver
 * Support for passing more (vendor-specific) device infos
   from the pocld server to libpocl's remote driver.
 
-* Implemented support for server-side cl_khr_command_buffer
+* Command buffers that refer to only a single remote device are
+  now handled entirely on the server side as described in
+  `this publication <https://doi.org/10.1145/3731125.3731129>`
+  for massive reductions in communication overhead.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Level Zero driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* Added support for Intel NPU (or "AI Boost" in the CPU specification)
-  as a custom device. Source compilation is not supported yet but GEMM
-  and matrix multiplications can be offloaded to the NPU device using
-  DBKs. Note that the feature is in very experimental stage and the
-  provided DBKs maybe subject to changes.
-
 * When built with -DENABLE_CONFORMANCE=ON, PoCL's Level Zero driver
   is now able to pass the full OpenCL-CTS conformance testsuite.
-  We have submitted & achieved `conformant status for LZ GPU`_ on 2025/03/28.
 
-* Added support for many OpenCL extensions and language features:
+* Added support for many OpenCL extensions and language features, such as
   __opencl_c_ext_fpXX_XYZ_atomic_load_store, cl_intel_subgroups_XYZ,
   cl_khr_subgroups_XYZ, cl_intel_device_attribute_query,
   cl_intel_split_work_group_barrier, cl_khr_integer_dot_product,
   cl_khr_device_uuid, cl_khr_create_command_queue, cl_khr_pci_bus_info,
-  SPV_INTEL_inline_assembly ...
+  and SPV_INTEL_inline_assembly.
 
 * Support for cl_khr_command_buffer.
 
-* Support for bundling of all required files in the built libpocl library.
-  Note this only works with LZ driver, CPU driver is not self-contained.
+* Support for bundling all required files in the built libpocl library.
+  This currently only works with the Level Zero driver, CPU driver cannot
+  be yet made self-contained.
 
 * Initial support for LLVM's SPIRV backend.
 
@@ -186,10 +200,6 @@ CUDA driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * Support for LLVM 19 and 20.
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-AlmaIF driver (FPGA interfacing)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Proxy driver
@@ -255,10 +265,31 @@ making it possible to significantly simplify the above example:
 
     @opencl global_size=len vadd(d_a, d_b, d_c)
 
-The aim of this work is to provide a CPU fallback for executing
+The initial goal of this work is to provide a CPU fallback for executing
 Julia's GPU kernels and applications by leveraging the CPU drivers
 in PoCL. For more information, refer to
 `the blog post on OpenCL.jl 0.10 <https://juliagpu.org/post/2025-01-13-opencl_0.10/>`_.
+
+===================================
+Experimental and work-in-progress
+===================================
+
+* New experimental support for Defined Built-in Kernels (DBK) has
+  been added to the CPU drivers. These DBKs allow for a
+  standardized set of built-in kernels with well-defined
+  semantics that can be configured during creation of the OpenCL
+  program. Currently the following prototype DBKs are implemented:
+  GEMM, matrix multiplication, JPEG en-/de-code, and ONNX runtime
+  inference. The Extension documentation draft can be found on
+  `github <https://github.com/KhronosGroup/OpenCL-Docs/pull/1007>`_.
+  Please note that these DBKs are still under experimentation and
+  are subject to change without notice.
+
+* Added support for Intel NPU (or "AI Boost" in the CPU specification)
+  as a custom device. Source compilation is not supported yet but GEMM
+  and matrix multiplications can be offloaded to the NPU device using
+  DBKs. Note that the feature is in very experimental stage and the
+  supported DBKs subject to changes.
 
 ===================================
 Deprecation/feature removal notices
@@ -273,5 +304,3 @@ Deprecation/feature removal notices
   the tests & examples are always built with PoCL's own CL 3.0 headers,
   and building ICD-enabled PoCL requires ICD that supports OpenCL 3.0.
 
-.. _conformant status for CPU: https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_450
-.. _conformant status for LZ GPU: https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_453

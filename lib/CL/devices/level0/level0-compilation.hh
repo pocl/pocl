@@ -223,7 +223,10 @@ public:
   virtual bool init() = 0;
   virtual bool addFinishedBuild(Level0BuildBaseUPtr Build) = 0;
   ze_device_handle_t getDevice() const { return DeviceH; }
-  const std::string &getBuildLog() const { return BuildLog; }
+  std::string getBuildLog() {
+    std::lock_guard<std::mutex> LockG(Mutex);
+    return BuildLog;
+  }
   const std::string &getCacheDir() const { return CacheDir; }
   const std::string &getCacheUUID() const { return CacheUUID; }
 

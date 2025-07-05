@@ -54,8 +54,8 @@ set_tests_properties( "EinsteinToolkit_SubDev"
     LABELS "EinsteinToolkit"
     SKIP_RETURN_CODE 77)
 
-if(ENABLE_HOST_CPU_DEVICES AND NOT RISCV)
+if(RISCV)
   set_property(TEST
     "EinsteinToolkit" "EinsteinToolkit_SubDev"
-    APPEND PROPERTY LABELS "cpu")
+    APPEND PROPERTY LABELS "cpu_fail")
 endif()

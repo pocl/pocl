@@ -928,21 +928,21 @@ bool Level0BuiltinProgramBuild::loadBinary(
 
   ze_activation_kernel_desc_t ActKernelDesc = {};
   if (!Out.ShaveNativeBinary.empty()) {
-    ActKernelDesc = {.stype = ZE_STRUCTURE_TYPE_GRAPH_ACTIVATION_KERNEL,
-                     .pNext = nullptr,
-                     .kernelDataSize = Out.ShaveNativeBinary.size(),
-                     .pKernelData = Out.ShaveNativeBinary.data()};
+    ActKernelDesc.stype = ZE_STRUCTURE_TYPE_GRAPH_ACTIVATION_KERNEL,
+    ActKernelDesc.pNext = nullptr,
+    ActKernelDesc.kernelDataSize = Out.ShaveNativeBinary.size(),
+    ActKernelDesc.pKernelData = Out.ShaveNativeBinary.data();
   }
 
   assert(!Out.VpuNativeBinary.empty());
   assert(BuildSuccessful);
-  ze_graph_desc_t GraphDesc = {
-      .stype = ZE_STRUCTURE_TYPE_GRAPH_DESC_PROPERTIES,
-      .pNext = !Out.ShaveNativeBinary.empty() ? &ActKernelDesc : nullptr,
-      .format = ZE_GRAPH_FORMAT_NATIVE,
-      .inputSize = Out.VpuNativeBinary.size(),
-      .pInput = Out.VpuNativeBinary.data(),
-      .pBuildFlags = nullptr};
+  ze_graph_desc_t GraphDesc{};
+  GraphDesc.stype = ZE_STRUCTURE_TYPE_GRAPH_DESC_PROPERTIES;
+  GraphDesc.pNext = !Out.ShaveNativeBinary.empty() ? &ActKernelDesc : nullptr;
+  GraphDesc.format = ZE_GRAPH_FORMAT_NATIVE;
+  GraphDesc.inputSize = Out.VpuNativeBinary.size();
+  GraphDesc.pInput = Out.VpuNativeBinary.data();
+  GraphDesc.pBuildFlags = nullptr;
 
   ze_graph_handle_t TempH = nullptr;
   ze_result_t Res =
@@ -990,9 +990,9 @@ bool Level0BuiltinProgramBuild::compileFromXmlBin(
   ze_device_graph_properties_t pDeviceGraphProperties;
   GraphDDITable->pfnDeviceGetGraphProperties(DeviceH, &pDeviceGraphProperties);
 
-  ze_graph_compiler_version_info_t version = {
-      .major = pDeviceGraphProperties.compilerVersion.major,
-      .minor = pDeviceGraphProperties.compilerVersion.minor};
+  ze_graph_compiler_version_info_t version{};
+  version.major = pDeviceGraphProperties.compilerVersion.major,
+    version.minor = pDeviceGraphProperties.compilerVersion.minor;
 
   uint64_t XmlLen = ModelXml.size();
   if (XmlLen <= 22) { // strlen(<?xml version="1.0"?>)
@@ -1031,12 +1031,12 @@ bool Level0BuiltinProgramBuild::compileFromXmlBin(
 
   assert(offset == ModelSize);
 
-  ze_graph_desc_t GraphDesc = {.stype = ZE_STRUCTURE_TYPE_GRAPH_DESC_PROPERTIES,
-                               .pNext = nullptr,
-                               .format = ZE_GRAPH_FORMAT_NGRAPH_LITE,
-                               .inputSize = Model.size(),
-                               .pInput = Model.data(),
-                               .pBuildFlags = BuildFlags.c_str()};
+  ze_graph_desc_t GraphDesc = {/* .stype = */ ZE_STRUCTURE_TYPE_GRAPH_DESC_PROPERTIES,
+                               /* .pNext = */ nullptr,
+                               /* .format = */ ZE_GRAPH_FORMAT_NGRAPH_LITE,
+                               /* .inputSize = */ Model.size(),
+                               /* .pInput = */ Model.data(),
+                               /* .pBuildFlags = */ BuildFlags.c_str()};
 
   auto Deleter = [this](ze_graph_handle_t ptr) {
     if (ptr)
@@ -1189,28 +1189,34 @@ static void getArgTypeAndSize(ze_graph_argument_properties_t &graphArgProps,
 constexpr unsigned NumLevel0GraphModels = 3;
 static const Level0Model Level0GraphModels[NumLevel0GraphModels] = {
     Level0Model{
-        .Name = "pocl.googlenet.v1.fp32",
-        .DBK_ID = 0,
-        .Format = ZE_GRAPH_FORMAT_NGRAPH_LITE,
-        .NGraphXml = "googlenet-v1.xml",
-        .NGraphBin = "googlenet-v1.bin",
-        .BuildFlags =
-            R"RAW(--inputs_precisions="data:U8" --inputs_layouts="data:NCHW"  --outputs_precisions="dot:FP16" --outputs_layouts="dot:NC" --config NPU_PLATFORM="3720" LOG_LEVEL="LOG_DEBUG")RAW",
+        /* .Name = */ "pocl.googlenet.v1.fp32",
+        /* .DBK_ID = */ 0,
+        /* .Format = */ ZE_GRAPH_FORMAT_NGRAPH_LITE,
+        /* .NativeBin = */ "",
+        /* .NativeShaveBin = */ "",
+        /* .NGraphXml = */ "googlenet-v1.xml",
+        /* .NGraphBin = */ "googlenet-v1.bin",
+        /* .BuildFlags = */ R"RAW(--inputs_precisions="data:U8" --inputs_layouts="data:NCHW"  --outputs_precisions="dot:FP16" --outputs_layouts="dot:NC" --config NPU_PLATFORM="3720" LOG_LEVEL="LOG_DEBUG")RAW",
+        /* .intantiateModel = */ nullptr
     },
-    Level0Model{.Name = "gemm_exp",
-                .DBK_ID = CL_DBK_GEMM_EXP,
-                .Format = ZE_GRAPH_FORMAT_NGRAPH_LITE,
-                .NGraphXml = "",
-                .NGraphBin = "",
-                .BuildFlags = "",
-                .instantiateModel = instantiateTemplateGEMM},
-    Level0Model{.Name = "matmul_exp",
-                .DBK_ID = CL_DBK_MATMUL_EXP,
-                .Format = ZE_GRAPH_FORMAT_NGRAPH_LITE,
-                .NGraphXml = "",
-                .NGraphBin = "",
-                .BuildFlags = "",
-                .instantiateModel = instantiateTemplateMATMUL},
+    Level0Model{/* .Name = */ "gemm_exp",
+                /* .DBK_ID = */ CL_DBK_GEMM_EXP,
+                /* .Format = */ ZE_GRAPH_FORMAT_NGRAPH_LITE,
+                /* .NativeBin = */ "",
+                /* .NativeShaveBin = */ "",
+                /* .NGraphXml = */ "",
+                /* .NGraphBin = */ "",
+                /* .BuildFlags = */ "",
+                /* .instantiateModel = */ instantiateTemplateGEMM},
+    Level0Model{/* .Name = */ "matmul_exp",
+                /* .DBK_ID = */ CL_DBK_MATMUL_EXP,
+                /* .Format = */ ZE_GRAPH_FORMAT_NGRAPH_LITE,
+                /* .NativeBin = */ "",
+                /* .NativeShaveBin = */ "",
+                /* .NGraphXml = */ "",
+                /* .NGraphBin = */ "",
+                /* .BuildFlags = */ "",
+                /* .instantiateModel = */ instantiateTemplateMATMUL},
 };
 
 // returns semicolon separated list of recognized models (TODO: excluding DBKs
@@ -2024,7 +2030,7 @@ Level0Kernel *Level0CompilationJobScheduler::createKernel(Level0Program *Prog,
                                               false, // 64bit ofs
                                               false);  // small WG size
       if (!Res) {
-        const std::string &BL = Program->getBuildLog();
+        std::string BL = Program->getBuildLog();
         POCL_MSG_ERR("Building JIT kernel failed with build log:\n%s",
                      BL.c_str());
         Program->releaseKernel(K);

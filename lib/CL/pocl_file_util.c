@@ -93,6 +93,7 @@ pocl_rm_rf(const char* path)
               if (lstat (buf, &statbuf) < 0)
                 {
                   POCL_MSG_ERR ("Can't get lstat() on %s\n", buf);
+                  closedir (d);
                   free (buf);
                   return -1;
                 }
@@ -105,6 +106,7 @@ pocl_rm_rf(const char* path)
             }
           else
             {
+              closedir (d);
               POCL_MSG_ERR ("out of memory");
               return -1;
             }
@@ -214,7 +216,10 @@ pocl_read_file(const char* path, char** content, uint64_t *filesize)
     {
       char *reallocated = (char *)realloc (ptr, (total_size + CHUNK_SIZE + 1));
       if (reallocated == NULL)
-        goto ERROR;
+        {
+          fclose (f);
+          goto ERROR;
+        }
       ptr = reallocated;
 
       actually_read = fread (ptr + total_size, 1, CHUNK_SIZE, f);
@@ -223,7 +228,10 @@ pocl_read_file(const char* path, char** content, uint64_t *filesize)
   while (actually_read == CHUNK_SIZE);
 
   if (ferror (f))
+  {
+    fclose (f);
     goto ERROR;
+  }
 
   if (fclose (f))
     goto ERROR;
@@ -269,6 +277,7 @@ pocl_write_file (const char *path, const char *content, uint64_t count,
   if (res < 0 || (size_t)res < (size_t)count)
     {
       POCL_MSG_ERR ("write(%s) failed\n", path);
+      close (fd);
       return -1;
     }
 
@@ -276,12 +285,14 @@ pocl_write_file (const char *path, const char *content, uint64_t count,
   if (fdatasync (fd))
     {
       POCL_MSG_ERR ("fdatasync() failed\n");
+      close (fd);
       return errno;
     }
 #elif defined(HAVE_FSYNC)
   if (fsync (fd))
     {
       POCL_MSG_ERR ("fsync() failed\n");
+      close (fd);
       return errno;
     }
 #endif
@@ -466,16 +477,20 @@ pocl_dir_iterator (const char *path, pocl_dir_iter *iter)
   /* dirent_handle variants: iter->handle == NULL
    * || ((dirent_handle *)iter->handle)->dir != NULL. */
 
+  dirent_handle *handle_impl = calloc (1, sizeof (dirent_handle));
+  if (handle_impl == NULL)
+    {
+      return -1;
+    }
+
   DIR *d = opendir (path);
   if (d == NULL)
     {
+      free (handle_impl);
       iter->handle = NULL;
       return -1;
     }
 
-  dirent_handle *handle_impl = calloc (1, sizeof (dirent_handle));
-  if (handle_impl == NULL)
-    return -1;
 
   handle_impl->dir = d;
   handle_impl->basedir = path;

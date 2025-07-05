@@ -100,14 +100,26 @@ CL_API_SUFFIX__VERSION_2_1
     goto ERROR;
 
   /* save the IL into cl_program, and find out spec constants */
+
   program->program_il = (char *)malloc (length);
   memcpy (program->program_il, il, length);
   program->program_il_size = length;
-  errcode = pocl_cache_write_spirv (program_bc_spirv, (const char *)il,
-                                    (uint64_t)length);
 #ifdef ENABLE_SPIRV
-  pocl_get_program_spec_constants (program, program_bc_spirv, il, length);
+  /* this might change the size */
+  pocl_preprocess_spirv_input (program);
 #endif
+
+  errcode = pocl_cache_write_spirv (program_bc_spirv,
+                                    program->program_il,
+                                    program->program_il_size);
+
+#ifdef ENABLE_SPIRV
+  pocl_get_program_spec_constants (program, program_bc_spirv,
+                                   program->program_il,
+                                   program->program_il_size);
+
+#endif
+
 
 ERROR:
   if (errcode_ret)
