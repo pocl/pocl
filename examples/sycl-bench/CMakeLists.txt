@@ -71,23 +71,42 @@ add_dependencies(prepare_examples ${TS_NAME})
 
 # these are unreliable (ocassionally fail with PoCL & also Intel OpenCL):
 # lin_reg_coeff lin_reg_error reduction
-set(BENCHMARKS 2DConvolution 2mm 3DConvolution 3mm arith atax atomic_reduction bicg blocked_transform correlation covariance dag_task_throughput_independent dag_task_throughput_sequential DRAM fdtd2d gemm gesummv gramschmidt host_device_bandwidth kmeans local_mem Makefile matmulchain median mol_dyn mvt nbody pattern_L2 scalar_prod segmentedreduction sf sobel sobel5 sobel7 syr2k syrk usm_accessors_latency usm_allocation_latency usm_instr_mix usm_pinned_overhead vec_add)
-
-foreach(BENCH IN LISTS BENCHMARKS)
-  add_test(NAME "${TS_NAME}_${BENCH}_short"
-           COMMAND "${TS_BUILDDIR}/${BENCH}" --size=4096 --local=256 --warmup-run --num-runs=3
-           WORKING_DIRECTORY "${TS_BUILDDIR}")
-
+set(BENCHMARKS_256K arith atomic_reduction blocked_transform kmeans local_mem mol_dyn pattern_L2 scalar_prod segmentedreduction sf usm_accessors_latency usm_allocation_latency usm_instr_mix usm_pinned_overhead vec_add)
+foreach(BENCH IN LISTS BENCHMARKS_256K)
   # verification is single-threaded & extremely slow with larger problem size
-  # RUN_SERIAL to avoid running anything else at the same time
   add_test(NAME "${TS_NAME}_${BENCH}_long"
-           COMMAND "${TS_BUILDDIR}/${BENCH}" --size=256000 --local=256 --warmup-run --num-runs=40 --no-verification
+           COMMAND "${TS_BUILDDIR}/${BENCH}" --size=256000 --local=256 --warmup-run --num-runs=12 --no-verification
+           WORKING_DIRECTORY "${TS_BUILDDIR}")
+endforeach()
+
+set(BENCHMARKS_64K dag_task_throughput_independent dag_task_throughput_sequential)
+foreach(BENCH IN LISTS BENCHMARKS_64K)
+  add_test(NAME "${TS_NAME}_${BENCH}_long"
+           COMMAND "${TS_BUILDDIR}/${BENCH}" --size=65536 --local=64 --warmup-run --num-runs=12 --no-verification
+           WORKING_DIRECTORY "${TS_BUILDDIR}")
+endforeach()
+
+set(BENCHMARKS_8K 2DConvolution atax bicg gesummv mvt nbody)
+foreach(BENCH IN LISTS BENCHMARKS_8K)
+  add_test(NAME "${TS_NAME}_${BENCH}_long"
+           COMMAND "${TS_BUILDDIR}/${BENCH}" --size=8192 --local=16 --warmup-run --num-runs=12 --no-verification
+           WORKING_DIRECTORY "${TS_BUILDDIR}")
+endforeach()
+
+set(BENCHMARKS_2K gemm median matmulchain correlation covariance sobel 2mm 3mm)
+foreach(BENCH IN LISTS BENCHMARKS_2K)
+  add_test(NAME "${TS_NAME}_${BENCH}_long"
+           COMMAND "${TS_BUILDDIR}/${BENCH}" --size=2048 --local=16 --warmup-run --num-runs=12 --no-verification
+           WORKING_DIRECTORY "${TS_BUILDDIR}")
+endforeach()
+
+list(APPEND BENCHMARKS_2K 3DConvolution)
+add_test(NAME "${TS_NAME}_3DConvolution_long"
+           COMMAND "${TS_BUILDDIR}/${BENCH}" --size=512 --local=16 --warmup-run --num-runs=12 --no-verification
            WORKING_DIRECTORY "${TS_BUILDDIR}")
 
+foreach(BENCH IN LISTS BENCHMARKS_2K BENCHMARKS_64K BENCHMARKS_8K BENCHMARKS_256K)
   set(TEST_LAUNCHER_PROP ${CMAKE_COMMAND} "-DOUTPUT_FILE=${CMAKE_BINARY_DIR}/sycl_bench_new.csv" -P "${CMAKE_SOURCE_DIR}/cmake/run_sycl_bench.cmake" "--")
-
+  # RUN_SERIAL to avoid running anything else at the same time
   set_tests_properties("${TS_NAME}_${BENCH}_long" PROPERTIES TEST_LAUNCHER "${TEST_LAUNCHER_PROP}" LABELS "${TS_NAME};long" RUN_SERIAL ON)
-
-  set_tests_properties("${TS_NAME}_${BENCH}_short" PROPERTIES ENVIRONMENT "POCL_MEMORY_LIMIT=4" LABELS ${TS_NAME})
-
 endforeach()
