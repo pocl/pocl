@@ -203,7 +203,7 @@ pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
 }
 
 // in nanoseconds
-#define POCL_CPU_THREAD_TIME_CHUNK 200000UL
+#define POCL_CPU_THREAD_TIME_CHUNK 120000UL
 
 /* return 1: work to do, 0: nothing to do */
 static int
@@ -296,10 +296,13 @@ work_group_scheduler (kernel_run_command *k,
           // approx POCL_PTHREAD_TIME_CHUNK nanoseconds to execute
           // TODO this is inexact, we should store per-WG-size timing numbers
           // instead
-          uint64_t time_per_WG = (uint64_t)k->timing.t.cumulative_time_per_wi
+          size_t max_wgs_per_thread = (max_wgs / thread_data->num_threads);
+          if (!max_wgs_per_thread) max_wgs_per_thread = 1;
+          size_t time_per_WG = (size_t)k->timing.t.cumulative_time_per_wi
                                  * wg_size / k->timing.t.count;
           time_per_WG = max (time_per_WG, 1);
           scaled_wgs = max (POCL_CPU_THREAD_TIME_CHUNK / time_per_WG, 1);
+          scaled_wgs = min (scaled_wgs, max_wgs_per_thread);
         }
     }
   else
