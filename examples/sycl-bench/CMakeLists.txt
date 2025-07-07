@@ -77,7 +77,7 @@ ExternalProject_Add(
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 add_dependencies(prepare_examples ${TS_NAME})
 
-set(TEST_LAUNCHER_SCRIPT ${PYTHON_INTERP} "${CMAKE_CURRENT_SOURCE_DIR}/sycl_bench_runner_json.py" "--output=${CMAKE_BINARY_DIR}/sycl_bench_result.json" "--")
+set(TEST_LAUNCHER_SCRIPT ${PYTHON_INTERP} "${CMAKE_CURRENT_SOURCE_DIR}/sycl_bench_runner_json.py" "--output=${CMAKE_BINARY_DIR}/sycl_bench_partial.json" "--")
 
 # benchmark verification is single-threaded & extremely slow with larger problem size
 

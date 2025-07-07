@@ -113,6 +113,9 @@ jobs:
             echo "Unknown Benchmark configuration" && exit 1
           fi
 
+          if [ -e "${{ github.workspace }}/build/sycl_bench_partial.json" ]; then
+            python3 "${{ github.workspace }}/tools/scripts/gen_google_benchmark_header.py" -i "${{ github.workspace }}/build/sycl_bench_partial.json" -o "${{ github.workspace }}/build/sycl_bench_result.json"
+          fi
       # Run `github-action-benchmark` action
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1

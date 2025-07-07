@@ -45,9 +45,10 @@ if __name__ == "__main__":
     content = ""
     with open(args.input) as my_file:
         content = my_file.read()
+
     input = content.strip()
     if input[-1] == ',':
-        input[:-1]
+        input = input[0:-1]
 
     ncpus = multiprocessing.cpu_count()
     now = datetime.datetime.now()
@@ -68,5 +69,5 @@ if __name__ == "__main__":
   ]
 }"""
     f.write(header.format(str(now), ncpus))
-    f.write(content)
+    f.write(input)
     f.write(footer)

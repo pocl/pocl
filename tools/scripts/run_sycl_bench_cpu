@@ -37,9 +37,7 @@ unset OCL_ICD_FILENAMES
 # set in CTestCustom.cmake
 unset OCL_ICD_VENDORS
 
-sycl-ls
-
 # check that OCL-ICD still loads PoCL
-ctest --output-on-failure -R pocl_version_check
+ctest -V -R pocl_version_check
 
 ctest -j1 -L sycl-bench
