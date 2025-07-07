@@ -38,6 +38,15 @@ if(NOT HAVE_GIT)
   return()
 endif()
 
+find_package(Python3 3.8 COMPONENTS Interpreter)
+if(NOT Python3_FOUND)
+  message(STATUS "Disabling testsuite ${TS_NAME}, can't find suitable python3")
+  return()
+else()
+  message(STATUS "Using Python3: ${Python3_EXECUTABLE}")
+  set(PYTHON_INTERP "${Python3_EXECUTABLE}")
+endif()
+
 if(EXAMPLES_USE_GIT_MASTER)
   set(REPO_TAG master)
 else()
@@ -61,52 +70,58 @@ ExternalProject_Add(
     -DCMAKE_C_COMPILER=${SYCL_C_COMPILER}
     -DSYCL_IMPL=dpcpp
     -DSYCL_BENCH_HAS_FP64_SUPPORT=OFF
-    "${TS_BASEDIR}/src/${TS_NAME}"
-
-  INSTALL_COMMAND ""
+    "${TS_SRCDIR}"
+  INSTALL_COMMAND "" # ${CMAKE_COMMAND} -E copy_directory "${TS_SRCDIR}/share" "${TS_BUILDDIR}"
 )
 
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 add_dependencies(prepare_examples ${TS_NAME})
 
+set(TEST_LAUNCHER_SCRIPT ${PYTHON_INTERP} "${CMAKE_CURRENT_SOURCE_DIR}/sycl_bench_runner_json.py" "--output=${CMAKE_BINARY_DIR}/sycl_bench_result.json" "--")
+
+# benchmark verification is single-threaded & extremely slow with larger problem size
+
 # these are unreliable (ocassionally fail with PoCL & also Intel OpenCL):
 # lin_reg_coeff lin_reg_error reduction
 set(BENCHMARKS_256K arith atomic_reduction blocked_transform kmeans local_mem mol_dyn pattern_L2 scalar_prod segmentedreduction sf usm_accessors_latency usm_allocation_latency usm_instr_mix usm_pinned_overhead vec_add)
 foreach(BENCH IN LISTS BENCHMARKS_256K)
-  # verification is single-threaded & extremely slow with larger problem size
-  add_test(NAME "${TS_NAME}_${BENCH}_long"
-           COMMAND "${TS_BUILDDIR}/${BENCH}" --size=256000 --local=256 --warmup-run --num-runs=12 --no-verification
+  if(BENCH STREQUAL usm_accessors_latency)
+    set(RUNS 10)
+  else()
+    set(RUNS 50)
+  endif()
+  add_test(NAME "${TS_NAME}_${BENCH}"
+           COMMAND ${TEST_LAUNCHER_SCRIPT} "${TS_BUILDDIR}/${BENCH}" --size=256000 --local=256 --warmup-run --num-runs=${RUNS} --no-verification
            WORKING_DIRECTORY "${TS_BUILDDIR}")
 endforeach()
 
 set(BENCHMARKS_64K dag_task_throughput_independent dag_task_throughput_sequential)
 foreach(BENCH IN LISTS BENCHMARKS_64K)
-  add_test(NAME "${TS_NAME}_${BENCH}_long"
-           COMMAND "${TS_BUILDDIR}/${BENCH}" --size=65536 --local=64 --warmup-run --num-runs=12 --no-verification
+  add_test(NAME "${TS_NAME}_${BENCH}"
+           COMMAND ${TEST_LAUNCHER_SCRIPT} "${TS_BUILDDIR}/${BENCH}" --size=65536 --local=64 --warmup-run --num-runs=10 --no-verification
            WORKING_DIRECTORY "${TS_BUILDDIR}")
 endforeach()
 
 set(BENCHMARKS_8K 2DConvolution atax bicg gesummv mvt nbody)
 foreach(BENCH IN LISTS BENCHMARKS_8K)
-  add_test(NAME "${TS_NAME}_${BENCH}_long"
-           COMMAND "${TS_BUILDDIR}/${BENCH}" --size=8192 --local=16 --warmup-run --num-runs=12 --no-verification
+  add_test(NAME "${TS_NAME}_${BENCH}"
+           COMMAND ${TEST_LAUNCHER_SCRIPT} "${TS_BUILDDIR}/${BENCH}" --size=8192 --local=16 --warmup-run --num-runs=20 --no-verification
            WORKING_DIRECTORY "${TS_BUILDDIR}")
 endforeach()
 
-set(BENCHMARKS_2K gemm median matmulchain correlation covariance sobel 2mm 3mm)
+set(BENCHMARKS_2K gemm matmulchain correlation covariance 2mm 3mm) # sobel median
 foreach(BENCH IN LISTS BENCHMARKS_2K)
-  add_test(NAME "${TS_NAME}_${BENCH}_long"
-           COMMAND "${TS_BUILDDIR}/${BENCH}" --size=2048 --local=16 --warmup-run --num-runs=12 --no-verification
+  add_test(NAME "${TS_NAME}_${BENCH}"
+           COMMAND ${TEST_LAUNCHER_SCRIPT} "${TS_BUILDDIR}/${BENCH}" --size=1024 --local=16 --warmup-run --num-runs=20 --no-verification
            WORKING_DIRECTORY "${TS_BUILDDIR}")
 endforeach()
 
-list(APPEND BENCHMARKS_2K 3DConvolution)
-add_test(NAME "${TS_NAME}_3DConvolution_long"
-           COMMAND "${TS_BUILDDIR}/${BENCH}" --size=512 --local=16 --warmup-run --num-runs=12 --no-verification
-           WORKING_DIRECTORY "${TS_BUILDDIR}")
+#list(APPEND BENCHMARKS_2K 3DConvolution)
+#add_test(NAME "${TS_NAME}_3DConvolution"
+#           COMMAND ${TEST_LAUNCHER_SCRIPT} "${TS_BUILDDIR}/${BENCH}" --size=512 --local=16 --warmup-run --num-runs=10 --no-verification
+#           WORKING_DIRECTORY "${TS_BUILDDIR}")
 
 foreach(BENCH IN LISTS BENCHMARKS_2K BENCHMARKS_64K BENCHMARKS_8K BENCHMARKS_256K)
-  set(TEST_LAUNCHER_PROP ${CMAKE_COMMAND} "-DOUTPUT_FILE=${CMAKE_BINARY_DIR}/sycl_bench_new.csv" -P "${CMAKE_SOURCE_DIR}/cmake/run_sycl_bench.cmake" "--")
   # RUN_SERIAL to avoid running anything else at the same time
-  set_tests_properties("${TS_NAME}_${BENCH}_long" PROPERTIES TEST_LAUNCHER "${TEST_LAUNCHER_PROP}" LABELS "${TS_NAME};long" RUN_SERIAL ON)
+  set_tests_properties("${TS_NAME}_${BENCH}" PROPERTIES LABELS "${TS_NAME}" RUN_SERIAL ON)
 endforeach()

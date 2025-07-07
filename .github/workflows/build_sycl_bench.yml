@@ -7,8 +7,17 @@ permissions:
 on:
   workflow_dispatch:
   schedule:
-# at 10:23 UTC every saturday
-    - cron: '23 10 * * 6'
+# at 0:23 UTC every sunday
+    - cron: '23 0 * * 0'
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - 'CHANGES'
+      - 'COPYING'
+      - 'CREDITS'
+      - 'LICENSE'
+      - 'README.*'
+      - 'tools/docker/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
@@ -76,13 +85,15 @@ jobs:
         run: |
           cd ${{ github.workspace }}/build/examples/sycl-bench && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) sycl-bench
 
-      - name: Cache sycl-bench timings
-        id: cache_sycl_bench
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+      # Download previous benchmark result from cache (if exists)
+      - name: Download previous benchmark data
+        uses: actions/cache@v4
         with:
-          path: ${{ github.workspace }}/build/sycl_bench_baseline.csv
-          key: ctest-cache-${{ runner.name }}-sycl-bench-${{ matrix.device }}
-          restore-keys: ctest-cache-${{ runner.name }}-sycl-bench-${{ matrix.device }}
+          path: benchmark-cache
+          key: sycl-bench-${{ runner.name }}-llvm-${{ matrix.llvm }}-${{ matrix.device }}
+
+#          key: sycl-bench-${{ runner.name }}-llvm-${{ matrix.llvm }}-${{ matrix.device }}-${{ github.run_id }}
+#          restore-keys: sycl-bench-${{ runner.name }}-llvm-${{ matrix.llvm }}-${{ matrix.device }}
 
       - name: Run sycl-bench
         env:
@@ -101,3 +112,26 @@ jobs:
           else
             echo "Unknown Benchmark configuration" && exit 1
           fi
+
+      # Run `github-action-benchmark` action
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          # What benchmark tool the output.txt came from
+          tool: 'googlecpp'
+          # Where the output from the benchmark tool is stored
+          output-file-path: build/sycl_bench_result.json
+          # Where the previous data file is stored
+          external-data-json-path: benchmark_cache/sycl_bench_result.json
+          # Enable Job Summary for PRs
+          summary-always: true
+          # Workflow will fail when an alert happens
+          fail-on-alert: true
+          # GitHub API token to make a commit comment
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Enable alert commit comment
+          comment-on-alert: true
+          # Mention users in the commit comment
+          alert-comment-cc-users: '@franz'
+
+      # Upload the updated cache file for the next job by actions/cache

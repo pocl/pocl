@@ -21,8 +21,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SRCDIR=$(dirname "$(realpath "$0")")
-
 set -e
 
 export POCL_BUILDING=1
@@ -39,15 +37,9 @@ unset OCL_ICD_FILENAMES
 # set in CTestCustom.cmake
 unset OCL_ICD_VENDORS
 
+sycl-ls
+
 # check that OCL-ICD still loads PoCL
 ctest --output-on-failure -R pocl_version_check
 
-rm -f "$PWD/sycl_bench_new.csv"
-
-ctest -j1 -L sycl_bench -L long
-
-if [ -e "$PWD/sycl_bench_baseline.csv" ]; then
-  $SRCDIR/bench-compare.py "$PWD/sycl_bench_baseline.csv" "$PWD/sycl_bench_new.csv"
-else
-  mv "$PWD/sycl_bench_new.csv" "$PWD/sycl_bench_baseline.csv"
-fi
+ctest -j1 -L sycl-bench
