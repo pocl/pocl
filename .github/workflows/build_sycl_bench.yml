@@ -89,7 +89,7 @@ jobs:
       - name: Download previous benchmark data
         uses: actions/cache@v4
         with:
-          path: benchmark-cache
+          path: benchmark_cache
           key: sycl-bench-${{ runner.name }}-llvm-${{ matrix.llvm }}-${{ matrix.device }}
 
 #          key: sycl-bench-${{ runner.name }}-llvm-${{ matrix.llvm }}-${{ matrix.device }}-${{ github.run_id }}
@@ -113,15 +113,17 @@ jobs:
             echo "Unknown Benchmark configuration" && exit 1
           fi
 
-          if [ -e "${{ github.workspace }}/build/sycl_bench_partial.json" ]; then
-            python3 "${{ github.workspace }}/tools/scripts/gen_google_benchmark_header.py" -i "${{ github.workspace }}/build/sycl_bench_partial.json" -o "${{ github.workspace }}/build/sycl_bench_result.json"
+          # append a closing empty hash (because of comma) and ']' to close the JSON array
+          if [ -e "${{ github.workspace }}/build/sycl_bench_result.json" ]; then
+            echo '{} ]' >> "${{ github.workspace }}/build/sycl_bench_result.json"
           fi
+
       # Run `github-action-benchmark` action
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
           # What benchmark tool the output.txt came from
-          tool: 'googlecpp'
+          tool: 'customSmallerIsBetter'
           # Where the output from the benchmark tool is stored
           output-file-path: build/sycl_bench_result.json
           # Where the previous data file is stored

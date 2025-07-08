@@ -4,7 +4,7 @@ import os
 import sys
 import subprocess
 import argparse
-
+#import traceback
 
 # remove characters
 REMOVEMAP = { ord('*'): None }
@@ -13,10 +13,24 @@ if len(sys.argv) < 2:
     print("USage: SCRIPT logfile")
     exit(1)
 
+def print_line(f, benchmark, run_time_mean, run_time_stddev, niters, run_time_min):
+    f.write('{ "name": "' + benchmark + '", "unit": "Seconds", "value": ' + str(run_time_mean) + ', "range": ' + str(run_time_stddev) + ', "extra": "niters = ' + str(niters) + ', min = ' + str(run_time_min) + '" },\n')
+
 def filter_content(content, append_path, niters):
-    f = open(append_path, 'a')
+    f = None
+    fd = 0
+    # if the output JSON file does not exist, write the opening "[" for the JSON array
+    try:
+        fd = os.open(append_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_APPEND)
+        f = os.fdopen(fd, 'a')
+        f.write('[\n')
+    except OSError:
+        #traceback.print_exc()
+        fd = None
+        f = open(append_path, 'a')
+
     content = content.decode('UTF-8')
-    print("Content : \n", content)
+    #print("Content : \n", content)
     benchmark = "NONE"
     run_time_min = 0
     run_time_avg = 0
@@ -27,14 +41,13 @@ def filter_content(content, append_path, niters):
 
         offset = line.find("******** Results for ");
         if offset > 0:
-            if run_time_min > 0 and run_time_mean > 0:
+            if run_time_min > 0 and run_time_mean > 0 and benchmark:
                 #coefvar = run_time_stddev / run_time_mean
-                total_time = str(run_time_mean * int(niters))
-                print("Writing Results for: ", benchmark)
-                f.write('{ "name": "' + benchmark + '", "iterations": ' + niters + ', "real_time": ' + total_time + ', "cpu_time": ' + total_time + " },\n")
+                print_line(f, benchmark, run_time_mean, run_time_stddev, niters, run_time_min)
                 benchmark = None
                 run_time_min = 0
                 run_time_mean  = 0
+                run_time_stddev = 0
 
             offset += 21
             benchmark = line[offset:-1]
@@ -61,8 +74,7 @@ def filter_content(content, append_path, niters):
 
     # write the remaining after the processing
     if run_time_min > 0 and run_time_mean > 0 and benchmark:
-        total_time = str(run_time_mean * int(niters))
-        f.write('{ "name": "' + benchmark + '", "iterations": ' + niters + ', "real_time": ' + total_time + ', "cpu_time": ' + total_time + " },\n")
+        print_line(f, benchmark, run_time_mean, run_time_stddev, niters, run_time_min)
 
     f.close()
 
