@@ -1,0 +1,130 @@
+---
+name: Linux AMDSDK benchmarks
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - 'CHANGES'
+      - 'COPYING'
+      - 'CREDITS'
+      - 'LICENSE'
+      - 'README.*'
+      - 'tools/docker/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  CCACHE_BASEDIR: "${{ github.workspace }}"
+  CCACHE_DIR: "${{ github.workspace }}/../../../ccache_storage"
+  EXAMPLES_DIR: "${{ github.workspace }}/../../../examples"
+
+jobs:
+  amdsdk_bench_matrix:
+    name: "LLVM ${{ matrix.llvm }} - AMDSDK benchmarks on ${{ matrix.device }}"
+    runs-on: [self-hosted, linux, x64, "amdsdk_bench_${{matrix.device}}" ]
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm: [20]
+        # cpu, gpu
+        device: [cpu]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Load Env vars
+        id: load_env
+        run: |
+          cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
+
+      - name: CMake
+        id: cmake
+        run: |
+          runCMake() {
+            BUILD_FLAGS="-O2 -march=native"
+            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
+            -DENABLE_TESTSUITES=AMDSDK3.0 -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_amdsdk_bench \
+            -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/usr/bin/llvm-spirv-${{ matrix.llvm }} \
+            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+          }
+
+          rm -rf ${{ github.workspace }}/build
+          mkdir ${{ github.workspace }}/build
+          mkdir -p ${EXAMPLES_DIR}/build_amdsdk_bench
+          mkdir -p ${EXAMPLES_DIR}/source
+
+          if [ "${{ matrix.device }}" == "cpu" ]; then
+            runCMake -DENABLE_HOST_CPU_DEVICES=1 -DENABLE_CONFORMANCE=OFF
+          elif [ "${{ matrix.device }}" == "gpu" ]; then
+            runCMake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LEVEL0=1 -DSTATIC_LLVM=ON -DENABLE_CONFORMANCE=OFF
+          else
+            echo "Unknown configuration" && exit 1
+          fi
+
+      - name: Build PoCL
+        id: build_pocl
+        timeout-minutes: 20
+        run: |
+          cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh)
+
+      - name: Build Examples
+        id: build_examples
+        timeout-minutes: 180
+        run: |
+          cd ${{ github.workspace }}/build/examples/AMDSDK3.0 && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) AMDSDK3.0
+
+      # Download previous benchmark result from cache (if exists)
+      - name: Download previous benchmark data
+        uses: actions/cache@v4
+        with:
+          path: benchmark_cache
+          key: amdsdk-bench-${{ runner.name }}-llvm-${{ matrix.llvm }}-${{ matrix.device }}-${{ github.run_id }}
+          restore-keys: amdsdk-bench-${{ runner.name }}-llvm-${{ matrix.llvm }}-${{ matrix.device }}
+
+      - name: Run AMDSDK benchmarks
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+        id: amdsdk_bench_full
+        timeout-minutes: 60
+        run: |
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
+
+          if [ "${{ matrix.device }}" == "cpu" ]; then
+            export POCL_DEVICES=cpu
+            cd ${{ github.workspace }}/build && ctest -j1 -L amdsdk_bench
+          elif [ "${{ matrix.device }}" == "gpu" ]; then
+            export POCL_DEVICES=level0
+            cd ${{ github.workspace }}/build && ctest -j1 -L amdsdk_bench
+          else
+            echo "Unknown Benchmark configuration" && exit 1
+          fi
+
+          # append a closing empty hash (because of comma) and ']' to close the JSON array
+          if [ -e "${{ github.workspace }}/build/amdsdk_bench_result.json" ]; then
+            echo '{} ]' >> "${{ github.workspace }}/build/amdsdk_bench_result.json"
+          fi
+
+      # Run `github-action-benchmark` action
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          # What benchmark tool the output.txt came from
+          tool: 'customSmallerIsBetter'
+          # Where the output from the benchmark tool is stored
+          output-file-path: build/amdsdk_bench_result.json
+          # Where the previous data file is stored
+          external-data-json-path: benchmark_cache/amdsdk_bench_result.json
+          # Enable Job Summary for PRs
+          summary-always: true
+
+      # Upload the updated cache file for the next job by actions/cache
