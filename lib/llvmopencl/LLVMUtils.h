@@ -67,6 +67,13 @@ constexpr unsigned NumDIFuncNames = 13;
 extern const char *DIFuncNameArray[];
 extern const std::vector<std::string> DIFuncNameVec;
 
+// Attempt to demangle OpenCL C++ symbol names.
+// Strips address space qualifiers from the mangled name first.
+// This is necessary because
+// (a) as of LLVM 20, the llvm demangler still can't handle these qualifiers
+// (b) we don't want to show them to the user anyway
+std::string tryDemangleWithoutAddressSpaces(const std::string& MangledName);
+
 void regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels);
 
 void breakConstantExpressions(llvm::Value *Val, llvm::Function *Func);
