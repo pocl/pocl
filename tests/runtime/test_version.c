@@ -45,7 +45,10 @@ int main(void)
             printf ("Should be: %s\n", expected);
             return 2;
           }
-
+        else
+          {
+            printf ("Platform is: %s\n", result);
+          }
 
 	/* Pocl devices have the form 'type'-'details', if details are
 	 * available. If not, they are of the form 'type'.
