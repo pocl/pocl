@@ -17,6 +17,8 @@
 #ifndef OPENCL_CL_EXT_H_
 #define OPENCL_CL_EXT_H_
 
+#define CL_ENABLE_BETA_EXTENSIONS
+
 /*
 ** This header is generated from the Khronos OpenCL XML API Registry.
 */
