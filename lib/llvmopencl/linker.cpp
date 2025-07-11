@@ -876,6 +876,23 @@ int copyKernelFromBitcode(const char* Name, llvm::Module *ParallelBC,
     return -1;
   }
 
+#ifdef CPU_USE_LLD_LINK_WIN32
+  // create a global constant "int32 _fltused"
+  // this is necessary if we're not linking against C runtime on Windows
+  auto TT = ParallelBC->getTargetTriple();
+  if ((TT.rfind("x86", 0) == 0) && (TT.find("windows") != std::string::npos)) {
+    IntegerType *Int32Ty = IntegerType::getInt32Ty(ParallelBC->getContext());
+    ConstantInt *Initializer = ConstantInt::get(Int32Ty, 0);
+    GlobalVariable *FltUsed = new GlobalVariable(
+        /*Module=*/*ParallelBC,
+        /*Type=*/Int32Ty,
+        /*isConstant=*/true,
+        /*Linkage=*/GlobalValue::CommonLinkage, // GlobalValue::ExternalLinkage
+        /*Initializer=*/Initializer,
+        /*Name=*/"_fltused");
+  }
+#endif
+
   std::string Log;
   shared_copy(ParallelBC, Program, Log, vvm);
 
@@ -895,6 +912,7 @@ int copyKernelFromBitcode(const char* Name, llvm::Module *ParallelBC,
     Passes.add(createAlwaysInlinerLegacyPass());
     Passes.run(*ParallelBC);
   }
+
   return 0;
 }
 

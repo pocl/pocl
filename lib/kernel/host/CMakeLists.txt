@@ -722,3 +722,20 @@ install(FILES "${KERNEL_BC}"
         DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR_REL}" COMPONENT "lib")
 
 endforeach()
+
+
+if(CPU_USE_LLD_LINK_WIN32)
+  set(LIBCHKSTK_OBJ "${CMAKE_CURRENT_BINARY_DIR}/libchkstk.obj")
+  set(LIBCHKSTK_SRC "${CMAKE_CURRENT_SOURCE_DIR}/libchkstk.S")
+  add_custom_command( OUTPUT "${LIBCHKSTK_OBJ}"
+      DEPENDS ${LIBCHKSTK_SRC}
+      COMMAND ${CLANG} -DCHKSTK -o ${LIBCHKSTK_OBJ} -c ${LIBCHKSTK_SRC}
+      COMMENT "Linking libCHKSTK library" VERBATIM)
+  add_custom_target("kernel_host_libchkstk" DEPENDS ${LIBCHKSTK_OBJ})
+
+  list(APPEND KERNEL_TARGET_LIST "kernel_host_libchkstk")
+  set(KERNEL_TARGET_LIST "${KERNEL_TARGET_LIST}" PARENT_SCOPE)
+
+  install(FILES "${LIBCHKSTK_OBJ}"
+        DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR_REL}" COMPONENT "lib")
+endif()

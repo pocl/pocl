@@ -826,7 +826,9 @@ struct pocl_device_ops {
    * \param wg_func_obj The binary for the generated work-group function.
    * \return Non-zero on error.
    */
-  int (*finalize_binary) (const char *final_binary, const char *wg_func_obj);
+  int (*finalize_binary) (cl_device_id device,
+                          const char *final_binary,
+                          const char *wg_func_obj);
 
   /** Optional: The driver should free the content of "program->data" here,
    * if it fills it. */
