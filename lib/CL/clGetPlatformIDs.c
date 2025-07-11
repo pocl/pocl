@@ -249,14 +249,18 @@ POname(clGetPlatformIDs)(cl_uint           num_entries,
                          cl_platform_id *  platforms,
                          cl_uint *         num_platforms) CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_RETURN_ERROR_COND ((platforms == NULL && num_entries > 0),
-                          CL_INVALID_VALUE);
-
+  /* CL_INVALID_VALUE if
+   *   num_entries is equal to zero and platforms is not NULL
+   *   if both num_platforms and platforms are NULL.
+   */
   POCL_RETURN_ERROR_COND ((platforms != NULL && num_entries == 0),
                           CL_INVALID_VALUE);
 
+  POCL_RETURN_ERROR_COND ((num_platforms == NULL && platforms == 0),
+                          CL_INVALID_VALUE);
+
   POCL_RETURN_ERROR_COND ((num_platforms == NULL && num_entries == 0),
-                          CL_SUCCESS);
+                              CL_SUCCESS);
 
   if (platforms != NULL) {
       platforms[0] = &_platforms[0];
