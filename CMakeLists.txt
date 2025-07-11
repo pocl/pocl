@@ -189,6 +189,20 @@ else()
   set(LLVM_VERIFY_MODULE_DEFAULT 0)
 endif()
 
+# Set default build type for cmake's try_compile module.
+# CMake 3.17 or newer sets CMAKE_DEFAULT_BUILD_TYPE to one of the
+# items from CMAKE_CONFIGURATION_TYPES. Logic below can be further
+# simplified once minimum CMake version is updated to 3.17.
+if(CMAKE_DEFAULT_BUILD_TYPE)
+  set(CMAKE_TRY_COMPILE_CONFIGURATION ${CMAKE_DEFAULT_BUILD_TYPE})
+else()
+  if(CMAKE_CONFIGURATION_TYPES)
+    list(GET CMAKE_CONFIGURATION_TYPES 0 CMAKE_TRY_COMPILE_CONFIGURATION)
+  elseif(CMAKE_BUILD_TYPE)
+    set(CMAKE_TRY_COMPILE_CONFIGURATION ${CMAKE_BUILD_TYPE})
+  endif()
+endif()
+
 ##################################################################################
 
 macro(set_expr VAR)
@@ -2738,6 +2752,7 @@ if (ENABLE_LLVM)
   MESSAGE(STATUS "USE_LLVM_SPIRV_TARGET: ${USE_LLVM_SPIRV_TARGET}")
   if(ENABLE_HOST_CPU_DEVICES)
   MESSAGE(STATUS "CLANG_MARCH_FLAG: ${CLANG_MARCH_FLAG}")
+  MESSAGE(STATUS "CPU_USE_LLD_LINK_WIN32: ${CPU_USE_LLD_LINK_WIN32}")
   MESSAGE(STATUS "LLC_TRIPLE: ${LLC_TRIPLE}")
   MESSAGE(STATUS "LLC_HOST_CPU_AUTO: ${LLC_HOST_CPU_AUTO}")
   MESSAGE(STATUS "LLC_HOST_CPU: ${LLC_HOST_CPU}")

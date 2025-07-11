@@ -122,6 +122,9 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->build_builtin = pocl_driver_build_opencl_builtins;
   ops->build_defined_builtin = pocl_cpu_build_defined_builtin;
   ops->supports_dbk = pocl_cpu_supports_dbk;
+#ifdef CPU_USE_LLD_LINK_WIN32
+  ops->finalize_binary = pocl_cpu_finalize_binary;
+#endif
 
   ops->join = pocl_basic_join;
   ops->submit = pocl_basic_submit;

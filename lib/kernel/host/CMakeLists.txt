@@ -722,3 +722,28 @@ install(FILES "${KERNEL_BC}"
         DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR_REL}" COMPONENT "lib")
 
 endforeach()
+
+
+if(CPU_USE_LLD_LINK_WIN32)
+  set(LIBCHKSTK_OBJ "${CMAKE_CURRENT_BINARY_DIR}/libchkstk.obj")
+  set(LIBCHKSTK_SRC "${CMAKE_CURRENT_SOURCE_DIR}/libchkstk.S")
+  add_custom_command( OUTPUT "${LIBCHKSTK_OBJ}"
+      DEPENDS ${LIBCHKSTK_SRC}
+      COMMAND ${CLANG} -DCHKSTK -o ${LIBCHKSTK_OBJ} -c ${LIBCHKSTK_SRC}
+      COMMENT "Compiling CHKSTK" VERBATIM)
+
+  set(LIBMEMORY_OBJ "${CMAKE_CURRENT_BINARY_DIR}/libmemory.obj")
+  set(LIBMEMORY_SRC "${CMAKE_CURRENT_SOURCE_DIR}/libmemory.c")
+  add_custom_command( OUTPUT "${LIBMEMORY_OBJ}"
+      DEPENDS ${LIBMEMORY_SRC}
+      COMMAND ${CLANG} -DMEMSET -DMEMCPY -DMEMMOVE -DMEMCMP -DSTRLEN -Os -fno-builtin --target=${LLVM_HOST_TARGET} -o ${LIBMEMORY_OBJ} -c ${LIBMEMORY_SRC}
+      COMMENT "Linking STRING library" VERBATIM)
+
+  add_custom_target("kernel_host_freestanding" DEPENDS ${LIBCHKSTK_OBJ} ${LIBMEMORY_OBJ})
+
+  list(APPEND KERNEL_TARGET_LIST "kernel_host_freestanding")
+  set(KERNEL_TARGET_LIST "${KERNEL_TARGET_LIST}" PARENT_SCOPE)
+
+  install(FILES "${LIBCHKSTK_OBJ}" "${LIBMEMORY_OBJ}"
+        DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR_REL}" COMPONENT "lib")
+endif()

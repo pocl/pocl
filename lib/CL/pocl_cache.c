@@ -260,7 +260,12 @@ pocl_cache_final_binary_path (char *final_binary_path, cl_program program,
       char file_name[POCL_MAX_FILENAME_LENGTH + 1];
       pocl_hash_clipped_name (kernel->name, &file_name[0]);
       bytes_written = snprintf (final_binary_name, POCL_MAX_PATHNAME_LENGTH,
-                                "/%s.so", file_name);
+#ifdef _WIN32
+                                "/%s.dll",
+#else
+                                "/%s.so",
+#endif
+                                file_name);
     }
 
   assert (bytes_written > 0 && bytes_written < POCL_MAX_PATHNAME_LENGTH);
