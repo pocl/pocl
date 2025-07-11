@@ -317,8 +317,17 @@ pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
                   int *ret_fd)
 {
 #if defined(_WIN32)
-  char buf[256];
-  int ok = GetTempFileName(getenv("TEMP"), prefix, 0, buf);
+  char buf[MAX_PATH];
+  const char *tmp_path = pocl_get_string_option ("LOCALAPPDATA", NULL);
+  if (!tmp_path)
+    {
+      tmp_path = pocl_get_string_option ("TEMP", NULL);
+    }
+  if (!tmp_path)
+    {
+      tmp_path = "C:\Temp";
+    }
+  int ok = GetTempFileName (tmp_path, "pocl", 0, buf);
   return ok ? 0 : 1;
 #elif defined(HAVE_MKOSTEMPS) || defined(HAVE_MKSTEMPS) || defined(__ANDROID__)
   /* using mkstemp() instead of tmpnam() has no real benefit
