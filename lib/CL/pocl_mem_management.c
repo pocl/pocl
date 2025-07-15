@@ -451,6 +451,21 @@ append_unaligned_patch_subbuffer_migration (
   return pocl_append_unique_migration_info (patches, sb, read_only);
 }
 
+static int
+have_user_sub_buffers (cl_mem buffer)
+{
+  assert (buffer);
+  assert (buffer->parent == NULL);
+
+  cl_mem_list_item_t *sub_buf;
+  LL_FOREACH (buffer->sub_buffers, sub_buf)
+    {
+      if (!sub_buf->mem->implicit_sub_buffer)
+        return 1;
+    }
+  return 0;
+}
+
 /* Splits migrations of parent buffers to sub-buffer migrations, if the buffer
  * has sub-buffers, otherwise does nothing.
  *
@@ -488,7 +503,7 @@ pocl_convert_to_subbuffer_migrations (pocl_buffer_migration_info *buffer_usage,
             return NULL;
           continue;
         }
-      else if (mi->buffer->sub_buffers == NULL)
+      else if (!have_user_sub_buffers (mi->buffer))
         continue;
 
       /* Generate implicit sub-buffers for migrating the parent buffer from
