@@ -1427,8 +1427,6 @@ pocl_print_system_memory_stats()
  * because of stack overflow. */
 #define DEFAULT_WG_SIZE 4096
 
-static cl_device_partition_property basic_partition_properties[1] = { 0 };
-
 #ifdef ENABLE_CONFORMANCE
 static const cl_image_format supported_image_formats[] = {
   { CL_RGBA, CL_SNORM_INT8 },
@@ -1683,10 +1681,11 @@ pocl_init_default_device_infos (cl_device_id dev,
    * but is good enough for now. */
   dev->core_start = 0;
   dev->core_count = 0;
+
   /* basic does not support partitioning */
-  dev->max_sub_devices = 1;
-  dev->num_partition_properties = 1;
-  dev->partition_properties = basic_partition_properties;
+  dev->max_sub_devices = 0;
+  dev->num_partition_properties = 0;
+  dev->partition_properties = NULL;
   dev->num_partition_types = 0;
   dev->partition_type = NULL;
 
