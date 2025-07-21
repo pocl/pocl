@@ -1378,6 +1378,22 @@ bool WorkitemLoops::canHandleKernel(llvm::Function &K,
     }
   }
 
+  // For WIL, UnreachablesToReturns can only delete BBs with 'unreachable'
+  // instructions in them to produce clean control flow graphs for the
+  // loop-based methods. However, deletion of the whole basic
+  // block (and redirecting the control to another one) is not correct when
+  // relying on 'unreachable' to equal to 'abort', like Julia does. Therefore,
+  // disable this behavior by default, making PoCL to fall back to CBS when
+  // encountering unreachable instructions. Keep this environment variable
+  // undocumented until there's time to look for a more robust and optimizable
+  // solution. See, for example the Github Issue 1971 and bunch of others.
+  if (!pocl_get_bool_option("POCL_WILOOPS_DELETE_BLOCKS_WITH_UNREACHABLES",
+                            0)) {
+    for (BasicBlock &BB : K)
+      if (isa<UnreachableInst>(BB.getTerminator()))
+        return false;
+  }
+
   return true;
 }
 
