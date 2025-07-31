@@ -363,7 +363,7 @@ endif()
 
 option(ENABLE_EXTRA_VALIDITY_CHECKS "Enable extra checks on cl_* object validity" OFF)
 
-option(DEVELOPER_MODE "This will SIGNIFICANTLY reduce PoCL's performance, but speeds up its compilation for faster development-test cycles. Only turn on if you know what you're doing." OFF)
+option(DEVELOPER_MODE "Currently 1) disables IPO and 2) enables a few extra runtime warnings; these can misleadingly warn about a problem when there isn't one, hence defaults to off." OFF)
 
 option(USE_POCL_MEMMANAGER "Enables custom memory manager. Except for special circumstances, this should be disabled." OFF)
 
@@ -652,6 +652,7 @@ if(ENABLE_TBB_DEVICE)
   # related documentation: https://github.com/oneapi-src/oneTBB/tree/tbb_2020/cmake#binary-package-integration
   find_package(TBB REQUIRED)
   if(TARGET TBB::tbb)
+    message(STATUS "Found TBB::tbb target")
     set(TBB_IMPORTED_TARGETS TBB::tbb)
   elseif(NOT TBB_FOUND AND PKG_CONFIG_FOUND)
     message(STATUS "searching for TBB with pkg-config")
@@ -667,8 +668,11 @@ if(ENABLE_TBB_DEVICE)
   if(NOT TBB_LIBRARIES)
     get_target_property(TBB_LIBRARIES TBB::tbb IMPORTED_LOCATION_RELEASE)
   endif()
+  if(NOT TBB_LIBRARIES)
+    get_target_property(TBB_LIBRARIES TBB::tbb IMPORTED_LOCATION_NONE)
+  endif()
 
-  if(NOT TBB_FOUND)
+  if((NOT TBB_LIBRARIES) OR (NOT TBB_INCLUDE_DIRS))
     message(FATAL_ERROR "Can't find TBB libraries")
   endif()
 

@@ -27,6 +27,7 @@
 #include <sched.h>
 #endif
 
+#include <math.h>
 #include <string.h>
 #include <time.h>
 
@@ -37,6 +38,7 @@
 #include "pocl_builtin_kernels.h"
 #include "pocl_cl.h"
 #include "pocl_mem_management.h"
+#include "pocl_timing.h"
 #include "pocl_util.h"
 #include "utlist.h"
 
@@ -59,9 +61,7 @@ struct pool_thread_data
   void *local_mem;
   unsigned num_threads;
   /* index of this particular thread
-   * [0, num_threads-1]
-   * used for deciding whether a particular thread should run
-   * commands scheduled on a subdevice. */
+   * [0, num_threads-1] */
   unsigned index;
   /* printf buffer*/
   void *printf_buffer;
@@ -182,17 +182,17 @@ pthread_scheduler_uninit ()
   POCL_DESTROY_BARRIER (scheduler.init_barrier);
 }
 
-/* push_command and push_kernel MUST use broadcast and wake up all threads,
-   because commands can be for subdevices (= not all threads) */
 void pthread_scheduler_push_command (_cl_command_node *cmd)
 {
   POCL_LOCK (scheduler.wq_lock_fast);
   DL_APPEND (scheduler.work_queue, cmd);
-  POCL_BROADCAST_COND (scheduler.wake_pool);
+  POCL_SIGNAL_COND (scheduler.wake_pool);
   POCL_UNLOCK (scheduler.wq_lock_fast);
 }
 
 #ifndef ENABLE_HOST_CPU_DEVICES_OPENMP
+/* use broadcast and wake up all threads; this should only be used
+   when kernel is "large" enough to reasonable load all CPU threads. */
 static void
 pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
 {
@@ -202,53 +202,33 @@ pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
   POCL_UNLOCK (scheduler.wq_lock_fast);
 }
 
-/* Maximum and minimum chunk sizes for get_wg_index_range().
- * Each pthread driver's thread fetches work from a kernel's WG pool in
- * chunks, this determines the limits (scaled up by # of threads). */
-#define POCL_PTHREAD_MAX_WGS 256
-#define POCL_PTHREAD_MIN_WGS 32
+// in nanoseconds
+#define POCL_CPU_THREAD_TIME_CHUNK 120000UL
 
+/* return 1: work to do, 0: nothing to do */
 static int
-get_wg_index_range (kernel_run_command *k, unsigned *start_index,
-                    unsigned *end_index, int *last_wgs, unsigned num_threads)
+get_wg_index_range (kernel_run_command *k,
+                    unsigned *start_index,
+                    unsigned *end_index,
+                    int *last_wgs,
+                    size_t scaled_wgs)
 {
-  const unsigned scaled_max_wgs = POCL_PTHREAD_MAX_WGS * num_threads;
-  const unsigned scaled_min_wgs = POCL_PTHREAD_MIN_WGS * num_threads;
+  assert (scaled_wgs);
+  size_t max_wgs = POCL_ATOMIC_LOAD (k->wgs_total);
 
-  unsigned limit;
-  unsigned max_wgs;
-  POCL_LOCK (k->lock);
-  if (k->remaining_wgs == 0)
+  size_t last_wg_idx = POCL_ATOMIC_ADD (k->wgs_dealt, scaled_wgs);
+  assert ((last_wg_idx != 0) && "last wg idx == 0");
+  *start_index = last_wg_idx - scaled_wgs;
+  *end_index = last_wg_idx;
+
+  if (*start_index >= max_wgs)
+    return 0;
+
+  if (*end_index >= max_wgs)
     {
-      POCL_UNLOCK (k->lock);
-      return 0;
+      *end_index = max_wgs;
+      *last_wgs = 1;
     }
-
-  /* If the work is comprised of huge number of WGs of small WIs,
-   * then get_wg_index_range() becomes a problem on manycore CPUs
-   * because lock contention on k->lock.
-   *
-   * If we have enough workgroups, scale up the requests linearly by
-   * num_threads, otherwise fallback to smaller workgroups.
-   */
-  if (k->remaining_wgs <= (scaled_max_wgs * num_threads))
-    limit = scaled_min_wgs;
-  else
-    limit = scaled_max_wgs;
-
-  // divide two integers rounding up, i.e. ceil(k->remaining_wgs/num_threads)
-  const unsigned wgs_per_thread = (1 + (k->remaining_wgs - 1) / num_threads);
-  max_wgs = min (limit, wgs_per_thread);
-  max_wgs = min (max_wgs, k->remaining_wgs);
-  assert (max_wgs > 0);
-
-  *start_index = k->wgs_dealt;
-  *end_index = k->wgs_dealt + max_wgs-1;
-  k->remaining_wgs -= max_wgs;
-  k->wgs_dealt += max_wgs;
-  if (k->remaining_wgs == 0)
-    *last_wgs = 1;
-  POCL_UNLOCK (k->lock);
 
   return 1;
 }
@@ -264,8 +244,13 @@ inline static void translate_wg_index_to_3d_index (kernel_run_command *k,
   index_3d[0] = (index % xy_slice) % row_size;
 }
 
+/* is_in_queue = bool
+  true: is in scheduler.kernel_queue, meaning all CPU threads are participating
+  in execution false: not in scheduler.kernel_queue, the calling thread
+  executes all work */
 static void
 work_group_scheduler (kernel_run_command *k,
+                      int is_in_queue,
                       struct pool_thread_data *thread_data)
 {
   pocl_kernel_metadata_t *meta = k->kernel->meta;
@@ -278,12 +263,58 @@ work_group_scheduler (kernel_run_command *k,
   unsigned start_index;
   unsigned end_index;
   int last_wgs = 0;
+  size_t scaled_wgs = 1;
+  size_t max_wgs = POCL_ATOMIC_LOAD (k->wgs_total);
+  size_t wg_size
+    = k->pc.local_size[0] * k->pc.local_size[1] * k->pc.local_size[2];
+  assert (wg_size);
 
-  if (!get_wg_index_range (k, &start_index, &end_index, &last_wgs,
-                           thread_data->num_threads))
+  if (is_in_queue)
+    {
+      // multiple CPU threads
+      if (k->timing.t.count == 0)
+        {
+          // unknown time / WG, with multiple CPU threads competing
+          if (max_wgs <= 128 * thread_data->num_threads)
+            {
+              // if there are few WGs, divide evenly, since the worst case is
+              // that each WG takes a very long time to execute.
+              scaled_wgs = max (max_wgs / thread_data->num_threads, 1);
+            }
+          else
+            {
+              // if there are relatively many WGs, start by a small amount and
+              // scale up with 32 there will be 128/32 = 4 chunks for each CPU
+              // thread
+              scaled_wgs = 32;
+            }
+        }
+      else
+        {
+          // known time / WG, with multiple CPU threads competing
+          // calculate the WG count (scaled_wgs) so that each thread takes
+          // approx POCL_PTHREAD_TIME_CHUNK nanoseconds to execute
+          // TODO this is inexact, we should store per-WG-size timing numbers
+          // instead
+          size_t max_wgs_per_thread = (max_wgs / thread_data->num_threads);
+          if (!max_wgs_per_thread)
+            max_wgs_per_thread = 1;
+          size_t time_per_WG = (size_t)k->timing.t.cumulative_time_per_wi
+                               * wg_size / k->timing.t.count;
+          time_per_WG = max (time_per_WG, 1);
+          scaled_wgs = max (POCL_CPU_THREAD_TIME_CHUNK / time_per_WG, 1);
+          scaled_wgs = min (scaled_wgs, max_wgs_per_thread);
+        }
+    }
+  else
+    {
+      // not in queue = single CPU thread executes whole range
+      scaled_wgs = max_wgs;
+    }
+
+  if (!get_wg_index_range (k, &start_index, &end_index, &last_wgs, scaled_wgs))
     return;
-
-  assert (end_index >= start_index);
+  assert (end_index > start_index);
 
   pocl_setup_kernel_arg_array_with_locals (
       (void **)arguments, (void **)arguments2, k, thread_data->local_mem,
@@ -303,16 +334,19 @@ work_group_scheduler (kernel_run_command *k,
   unsigned slice_size = k->pc.num_groups[0] * k->pc.num_groups[1];
   unsigned row_size = k->pc.num_groups[0];
   unsigned execution_failed = 0;
+  uint64_t total_time = 0;
+  uint64_t total_wgs = 0;
   do
     {
-      if (last_wgs)
+      if (is_in_queue && last_wgs)
         {
           POCL_LOCK (scheduler.wq_lock_fast);
           DL_DELETE (scheduler.kernel_queue, k);
           POCL_UNLOCK (scheduler.wq_lock_fast);
         }
 
-      for (i = start_index; i <= end_index; ++i)
+      uint64_t start_time = pocl_gettimemono_ns ();
+      for (i = start_index; i < end_index; ++i)
         {
           size_t gids[3];
           translate_wg_index_to_3d_index (k, i, gids,
@@ -326,9 +360,28 @@ work_group_scheduler (kernel_run_command *k,
                         gids[0], gids[1], gids[2]);
           execution_failed |= pc.execution_failed;
         }
+      uint64_t stop_time = pocl_gettimemono_ns ();
+      uint64_t time_spent_ns = stop_time - start_time;
+      /* filter out potentially invalid values from clock function */
+      if (stop_time > start_time && time_spent_ns < (600UL << 30))
+        {
+          total_time += time_spent_ns;
+          total_wgs += end_index - start_index;
+          if (time_spent_ns < POCL_CPU_THREAD_TIME_CHUNK)
+            {
+              scaled_wgs
+                = scaled_wgs * POCL_CPU_THREAD_TIME_CHUNK / time_spent_ns;
+            }
+        }
     }
-  while (get_wg_index_range (k, &start_index, &end_index, &last_wgs,
-                             thread_data->num_threads));
+  while (
+    get_wg_index_range (k, &start_index, &end_index, &last_wgs, scaled_wgs));
+
+  if (total_time > 0)
+    {
+      POCL_ATOMIC_ADD (k->time_per_wg_count, total_wgs);
+      POCL_ATOMIC_ADD (k->time_per_wg_total, total_time);
+    }
 
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
   pocl_write_printf_buffer ((char *)pc.printf_buffer, position);
@@ -386,7 +439,6 @@ work_group_scheduler (kernel_run_command *k,
                                                  (uint8_t *)&pc, x, y, z);
             execution_failed |= pc.execution_failed;
           }
-
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
     pocl_write_printf_buffer ((char *)pc.printf_buffer, position);
 #endif
@@ -415,27 +467,62 @@ finalize_kernel_command (struct pool_thread_data *thread_data,
 
   pocl_release_dlhandle_cache (k->cmd->command.run.device_data);
 
+  pthread_timing_data *store_td
+    = (pthread_timing_data *)k->kernel->data[k->device_i];
+  assert (store_td);
+
   if (k->execution_failed)
     POCL_UPDATE_EVENT_FAILED_MSG (CL_FAILED, k->cmd->sync.event.event,
                                   "NDRange Kernel        ");
   else
-    POCL_UPDATE_EVENT_COMPLETE_MSG (k->cmd->sync.event.event,
-                                    "NDRange Kernel        ");
+    {
+      if (k->time_per_wg_count)
+        {
+          size_t wg_size
+            = k->pc.local_size[0] * k->pc.local_size[1] * k->pc.local_size[2];
+          uint64_t time_per_WG = k->time_per_wg_total / k->time_per_wg_count;
+          uint32_t time_per_WI = time_per_WG / wg_size;
+          pthread_timing_data new_td, old_td, ret_td;
+
+          do
+            {
+              ret_td.all = old_td.all = new_td.all
+                = POCL_ATOMIC_LOAD (store_td->all);
+              if (old_td.t.count < 1024
+                  && old_td.t.cumulative_time_per_wi
+                       < (UINT32_MAX - time_per_WI))
+                {
+                  new_td.t.count = old_td.t.count + 1;
+                  new_td.t.cumulative_time_per_wi
+                    = old_td.t.cumulative_time_per_wi + time_per_WI;
+
+                  ret_td.all
+                    = POCL_ATOMIC_CAS (&store_td->all, old_td.all, new_td.all);
+                }
+            }
+          while (ret_td.all != old_td.all);
+        }
+      POCL_UPDATE_EVENT_COMPLETE_MSG (k->cmd->sync.event.event,
+                                      "NDRange Kernel        ");
+    }
 
   POCL_DESTROY_LOCK (k->lock);
   free_kernel_run_command (k);
 }
 
 static kernel_run_command *
-pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
+pocl_pthread_prepare_kernel (void *data,
+                             _cl_command_node *cmd,
+                             struct pool_thread_data *td)
 {
-  kernel_run_command *run_cmd;
+  kernel_run_command *run_cmd = NULL;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
   cl_program program = kernel->program;
   cl_uint dev_i = cmd->program_device_i;
 
   size_t num_groups = pc->num_groups[0] * pc->num_groups[1] * pc->num_groups[2];
+  size_t wg_size = pc->local_size[0] * pc->local_size[1] * pc->local_size[2];
 
   if (num_groups == 0)
     {
@@ -480,49 +567,58 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
   run_cmd->pc.printf_buffer_capacity = scheduler.printf_buf_size;
   run_cmd->pc.printf_buffer_position = NULL;
   run_cmd->pc.global_var_buffer = program->gvar_storage[dev_i];
-  run_cmd->remaining_wgs = num_groups;
+  run_cmd->wgs_total = num_groups;
   run_cmd->wgs_dealt = 0;
   run_cmd->workgroup = cmd->command.run.wg;
   run_cmd->kernel_args = cmd->command.run.arguments;
   run_cmd->next = NULL;
   run_cmd->ref_count = 0;
   run_cmd->execution_failed = 0;
+  run_cmd->time_per_wg_total = 0;
+  run_cmd->time_per_wg_count = 0;
+  run_cmd->device_i = cmd->program_device_i;
+  pthread_timing_data *timing
+    = (pthread_timing_data *)kernel->data[run_cmd->device_i];
+  assert (timing);
+  run_cmd->timing.all = POCL_ATOMIC_LOAD (timing->all);
+
   POCL_INIT_LOCK (run_cmd->lock);
 
   pocl_setup_kernel_arg_array (run_cmd);
 
   pocl_update_event_running (cmd->sync.event.event);
 
-#ifndef ENABLE_HOST_CPU_DEVICES_OPENMP
-  pthread_scheduler_push_kernel (run_cmd);
+#ifdef ENABLE_HOST_CPU_DEVICES_OPENMP
+  work_group_scheduler (run_cmd, td);
+  finalize_kernel_command (td, run_cmd);
+#else
+  if (run_cmd->timing.t.count)
+    {
+      uint64_t time_per_wg
+        = ((uint64_t)run_cmd->timing.t.cumulative_time_per_wi * wg_size
+           / run_cmd->timing.t.count);
+      uint64_t estimated_time = num_groups * time_per_wg;
+      /* if the command time estimated is < single POCL_PTHREAD_TIME_CHUNK,
+         don't wake up the other threads & handle the whole launch in this
+         thread */
+      if (estimated_time < POCL_CPU_THREAD_TIME_CHUNK)
+        {
+          work_group_scheduler (run_cmd, 0, td);
+          finalize_kernel_command (td, run_cmd);
+        }
+      else
+        {
+          pthread_scheduler_push_kernel (run_cmd);
+        }
+    }
+  else
+    {
+      pthread_scheduler_push_kernel (run_cmd);
+    }
 #endif
   return run_cmd;
 }
 
-/*
-  These two check the entire kernel/cmd queue. This is necessary
-  because of commands for subdevices. The old code only checked
-  the head of each queue; this can lead to a deadlock:
-
-  two driver threads, each assigned two subdevices A, B, one
-  driver queue C
-
-  cmd A1 for A arrives in C, A starts processing
-  cmd B1 for B arrives in C, B starts processing
-  cmds A2, A3, B2 are pushed to C
-  B finishes processing B1, checks queue head, A2 isn't for it, goes to sleep
-  A finishes processing A1, processes A2 + A3 but ignores B2, it's not for it
-  application calls clFinish to wait for queue
-
-  ...now B is sleeping and not possible to wake up
-  (since no new commands can arrive) and there's a B2 command
-  which will never be processed.
-
-  it's possible to workaround but it's cleaner to just check the whole queue.
- */
-
-#ifdef ENABLE_HOST_CPU_DEVICES_OPENMP
-/* with OpenMP we don't support subdevices -> run every command */
 static _cl_command_node *
 check_cmd_queue_for_device (thread_data *td)
 {
@@ -535,64 +631,11 @@ check_cmd_queue_for_device (thread_data *td)
   return NULL;
 }
 
-#else
-/* if subd is not a subdevice, returns 1
- * if subd is subdevice, takes a look at the subdevice CUs
- * and if they match the current driver thread, returns 1
- * otherwise returns 0 */
-static int
-shall_we_run_this (thread_data *td, cl_device_id subd)
-{
-
-  if (subd && subd->parent_device)
-    {
-      if (!((td->index >= subd->core_start)
-            && (td->index < (subd->core_start + subd->core_count))))
-        {
-          return 0;
-        }
-    }
-  return 1;
-}
-
-static _cl_command_node *
-check_cmd_queue_for_device (thread_data *td)
-{
-  _cl_command_node *cmd = NULL, *last_cmd = NULL;
-  int i = 0;
-#ifdef CPU_RANDOMIZE_QUEUE
-  int limit = (rand() % 3) + 1;
-#else
-  const int limit = 1;
-#endif
-  DL_FOREACH (scheduler.work_queue, cmd)
-  {
-    cl_device_id subd = cmd->device;
-    if (shall_we_run_this (td, subd))
-      {
-        last_cmd = cmd; ++i;
-        if (i >= limit) break;
-      }
-  }
-
-  if (last_cmd) {
-    DL_DELETE (scheduler.work_queue, last_cmd);
-  }
-  return last_cmd;
-}
-
+#ifndef ENABLE_HOST_CPU_DEVICES_OPENMP
 static kernel_run_command *
 check_kernel_queue_for_device (thread_data *td)
 {
-  kernel_run_command *cmd = NULL;
-  DL_FOREACH (scheduler.kernel_queue, cmd)
-  {
-    cl_device_id subd = cmd->device;
-    if (shall_we_run_this (td, subd))
-      return cmd;
-  }
-
-  return NULL;
+  return scheduler.kernel_queue;
 }
 #endif
 
@@ -617,7 +660,7 @@ RETRY:
       ++run_cmd->ref_count;
       POCL_UNLOCK (scheduler.wq_lock_fast);
 
-      work_group_scheduler (run_cmd, td);
+      work_group_scheduler (run_cmd, 1, td);
 
       POCL_LOCK (scheduler.wq_lock_fast);
       if ((--run_cmd->ref_count) == 0)
@@ -654,17 +697,7 @@ RETRY:
             }
           else
             {
-#ifdef ENABLE_HOST_CPU_DEVICES_OPENMP
-              run_cmd = pocl_pthread_prepare_kernel (cmd->device->data, cmd);
-              if (run_cmd)
-                {
-                  work_group_scheduler (run_cmd, td);
-                  finalize_kernel_command (td, run_cmd);
-                  run_cmd = NULL;
-                }
-#else
-              pocl_pthread_prepare_kernel (cmd->device->data, cmd);
-#endif
+              pocl_pthread_prepare_kernel (cmd->device->data, cmd, td);
             }
         }
       else

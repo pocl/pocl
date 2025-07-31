@@ -1,7 +1,7 @@
 #!/bin/bash
-# run_sycl_tests_cpu - Runs OneAPI/SYCL tests with GPU device
+# run_sycl_bench_cpu - runs SYCL benchmarks with CPU device
 #
-# Copyright (c) 2024 Michal Babej / Intel Finland Oy
+# Copyright (c) 2025 Michal Babej / Intel Finland Oy
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,11 +24,12 @@
 set -e
 
 export POCL_BUILDING=1
-export POCL_DEVICES=level0
-# let PoCL pretend to be NEO (Intel Compute Runtime)
-export POCL_DRIVER_VERSION_OVERRIDE=23.35.27191.9
+export POCL_DEVICES=cpu
+# let PoCL pretend to be Intel OpenCL CPU runtime
+export POCL_DRIVER_VERSION_OVERRIDE=2023.16.7.0.21_160000
+export POCL_CPU_VENDOR_ID_OVERRIDE=32902
 
-export ONEAPI_DEVICE_SELECTOR=opencl:gpu
+export ONEAPI_DEVICE_SELECTOR=opencl:cpu
 
 # set by oneAPI setvars
 unset OCL_ICD_FILENAMES
@@ -36,12 +37,7 @@ unset OCL_ICD_FILENAMES
 # set in CTestCustom.cmake
 unset OCL_ICD_VENDORS
 
-# enable FP64 support. Without this, LevelZero (and PoCL) will not
-# expose FP64 in device properties
-export OverrideDefaultFP64Settings=1
-export IGC_EnableDPEmulation=1
-
 # check that OCL-ICD still loads PoCL
-ctest --output-on-failure -R pocl_version_check
+ctest -V -R pocl_version_check
 
-ctest -L "dpcpp-book-samples|oneapi-samples|simple-sycl-samples|intel-compute-samples|SYCL_CTS" $@
+ctest -j1 -L sycl-bench $@

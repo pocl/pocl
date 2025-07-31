@@ -1,0 +1,130 @@
+---
+name: Linux SYCL-bench benchmarks
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - 'CHANGES'
+      - 'COPYING'
+      - 'CREDITS'
+      - 'LICENSE'
+      - 'README.*'
+      - 'tools/docker/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  CCACHE_BASEDIR: "${{ github.workspace }}"
+  CCACHE_DIR: "${{ github.workspace }}/../../../ccache_storage"
+  EXAMPLES_DIR: "${{ github.workspace }}/../../../examples"
+
+jobs:
+  sycl_bench_matrix:
+    name: "LLVM ${{ matrix.llvm }} - SYCL-bench benchmark on ${{ matrix.device }}"
+    runs-on: [self-hosted, linux, x64, "sycl_bench_${{matrix.device}}" ]
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm: [20]
+        device: [cpu, gpu]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Load Env vars
+        id: load_env
+        run: |
+          cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
+
+      - name: CMake
+        id: cmake
+        run: |
+          runCMake() {
+            BUILD_FLAGS="-O2 -march=native"
+            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
+            -DENABLE_TESTSUITES=sycl-bench -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_oneapi \
+            -DSYCL_CXX_COMPILER=/opt/intel/oneapi/compiler/latest/bin/icpx -DSYCL_LIBDIR=/opt/intel/oneapi/compiler/latest/lib \
+            -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/usr/bin/llvm-spirv-${{ matrix.llvm }} \
+            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+          }
+
+          rm -rf ${{ github.workspace }}/build
+          mkdir ${{ github.workspace }}/build
+          mkdir -p ${EXAMPLES_DIR}/build_oneapi
+          mkdir -p ${EXAMPLES_DIR}/source
+
+          if [ "${{ matrix.device }}" == "cpu" ]; then
+            runCMake -DENABLE_HOST_CPU_DEVICES=1 -DENABLE_CONFORMANCE=ON
+          elif [ "${{ matrix.device }}" == "gpu" ]; then
+            runCMake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LEVEL0=1 -DSTATIC_LLVM=ON -DENABLE_CONFORMANCE=OFF
+          else
+            echo "Unknown configuration" && exit 1
+          fi
+
+      - name: Build PoCL
+        id: build_pocl
+        timeout-minutes: 20
+        run: |
+          cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh)
+
+      - name: Build Examples
+        id: build_examples
+        timeout-minutes: 180
+        run: |
+          cd ${{ github.workspace }}/build/examples/sycl-bench && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) sycl-bench
+
+      # Download previous benchmark result from cache (if exists)
+      - name: Download previous benchmark data
+        uses: actions/cache@v4
+        with:
+          path: benchmark_cache
+          key: sycl-bench-${{ runner.name }}-llvm-${{ matrix.llvm }}-${{ matrix.device }}-${{ github.run_id }}
+          restore-keys: sycl-bench-${{ runner.name }}-llvm-${{ matrix.llvm }}-${{ matrix.device }}
+
+      - name: Run sycl-bench
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+        id: sycl_bench_full
+        timeout-minutes: 480
+        run: |
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          source /opt/intel/oneapi/setvars.sh
+
+          # some of the benchmarks are disabled, because the github-action-benchmark only allows threshold setting in %, and e.g. increase from 0.00002 to 0.00003 is 150%
+          if [ "${{ matrix.device }}" == "cpu" ]; then
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_sycl_bench_cpu -E "MicroBench_L2_int32_1|MicroBench_L2_fp32_1|USM_Allocation_latency|USM_Pinned_Overhead"
+          elif [ "${{ matrix.device }}" == "gpu" ]; then
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_sycl_bench_gpu -E "MicroBench_L2_int32_1|MicroBench_L2_fp32_1|USM_Allocation_latency|USM_Pinned_Overhead|dag_task_throughput_independent"
+          else
+            echo "Unknown Benchmark configuration" && exit 1
+          fi
+
+          # append a closing empty hash (because of comma) and ']' to close the JSON array
+          if [ -e "${{ github.workspace }}/build/sycl_bench_result.json" ]; then
+            echo '{} ]' >> "${{ github.workspace }}/build/sycl_bench_result.json"
+          fi
+
+      # Run `github-action-benchmark` action
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          # What benchmark tool the output.txt came from
+          tool: 'customSmallerIsBetter'
+          # Where the output from the benchmark tool is stored
+          output-file-path: build/sycl_bench_result.json
+          # Where the previous data file is stored
+          external-data-json-path: benchmark_cache/sycl_bench_result.json
+          # Enable Job Summary for PRs
+          summary-always: true
+
+      # Upload the updated cache file for the next job by actions/cache
