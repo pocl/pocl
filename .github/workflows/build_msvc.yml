@@ -65,9 +65,7 @@ jobs:
             llvmdev=${{ matrix.llvm_version }}
             clangdev=${{ matrix.llvm_version }}
             khronos-opencl-icd-loader
-            libhwloc
             ninja
-            pkg-config
             zlib
 
       - name: Load Env vars
