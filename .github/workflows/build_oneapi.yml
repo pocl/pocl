@@ -106,7 +106,7 @@ jobs:
           mkdir ${{ env.POCL_CACHE_DIR }}
           source /opt/intel/oneapi/setvars.sh
           if [ "${{ matrix.device }}" == "cpu" ]; then
-            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_cpu -j4 $CTEST_FLAGS -E 'sycl_cts_test_math_builtin_api|sycl_cts_test_multi_ptr|sycl_cts_test_kernel|sycl_cts_test_kernel_bundle|sycl_cts_test_group_functions|sycl_cts_test_sub_group'
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_cpu -j4 $CTEST_FLAGS -E 'sycl_cts_test_math_builtin_api|sycl_cts_test_multi_ptr|sycl_cts_test_kernel|sycl_cts_test_kernel_bundle|sycl_cts_test_group_functions|sycl_cts_test_sub_group|sycl_cts_test_device_selector'
           elif [ "${{ matrix.device }}" == "gpu" ]; then
             cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_gpu -j4 $CTEST_FLAGS -E 'sycl_cts_test_math_builtin_api|sycl_cts_test_multi_ptr|sycl_cts_test_kernel|sycl_cts_test_kernel_bundle|sycl_cts_test_group_functions|sycl_cts_test_nd_item|sycl_cts_test_reduction|sycl_cts_test_vector_api|sycl_cts_test_group|sycl_cts_test_spec_constants'
           else
