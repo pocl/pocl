@@ -64,6 +64,7 @@ jobs:
           create-args: >-
             llvmdev=${{ matrix.llvm_version }}
             clangdev=${{ matrix.llvm_version }}
+            lld=${{ matrix.llvm_version }}
             khronos-opencl-icd-loader
             ninja
             zlib
