@@ -334,12 +334,17 @@ int pocl_llvm_build_program(cl_program program,
   // command line parsing.
   llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagID =
     new clang::DiagnosticIDs();
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagOpts =
-    new clang::DiagnosticOptions();
   clang::TextDiagnosticBuffer *diagsBuffer =
     new clang::TextDiagnosticBuffer();
 
+#if LLVM_MAJOR < 21
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagOpts =
+      new clang::DiagnosticOptions();
   clang::DiagnosticsEngine diags(diagID, &*diagOpts, diagsBuffer);
+#else
+  clang::DiagnosticOptions diagOpts{};
+  clang::DiagnosticsEngine diags(diagID, diagOpts, diagsBuffer);
+#endif
 
   CompilerInstance CI;
   CompilerInvocation &pocl_build = CI.getInvocation();
@@ -809,6 +814,7 @@ int pocl_llvm_build_program(cl_program program,
   if (mod->getModuleFlag("PIC Level") == nullptr)
     mod->setPICLevel(PICLevel::BigPIC);
 
+  pocl::removeMetadataFromClangStubs(mod);
   // link w kernel lib, but not if we're called from clCompileProgram()
   // Later this should be replaced with indexed linking of source code
   // and/or bitcode for each kernel.
@@ -856,12 +862,22 @@ int pocl_llvm_build_program(cl_program program,
 static int pocl_convert_spir_bitcode_to_target(llvm::Module *p,
                                                llvm::Module *libmodule,
                                                cl_device_id device) {
+
+#if LLVM_MAJOR < 21
   const std::string &ModTriple = p->getTargetTriple();
-  if (ModTriple.find("spir") == 0) {
+  bool isSpir = ModTriple.find("spir") == 0;
+  size_t SpirAddrBits = Triple(ModTriple).isArch64Bit() ? 64 : 32;
+#else
+  llvm::Triple::ArchType AT = p->getTargetTriple().getArch();
+  bool isSpir = (AT == llvm::Triple::ArchType::spir ||
+                 AT == llvm::Triple::ArchType::spir64);
+  size_t SpirAddrBits = p->getTargetTriple().isArch64Bit() ? 64 : 32;
+  const std::string &ModTriple = p->getTargetTriple().str();
+#endif
+  if (isSpir) {
     POCL_RETURN_ERROR_ON((device->endian_little == CL_FALSE),
                          CL_LINK_PROGRAM_FAILURE,
                          "SPIR is only supported on little-endian devices\n");
-    size_t SpirAddrBits = Triple(ModTriple).isArch64Bit() ? 64 : 32;
 
     if (device->address_bits != SpirAddrBits) {
       delete p;
@@ -1093,15 +1109,23 @@ int pocl_invoke_clang(const char* TTriple, const char** Args) {
   // Borrowed from driver.cpp (clang driver). We do not really care about
   // diagnostics, but just want to get the compilation command invoked with
   // the target's toolchain as defined in Clang.
-  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions;
-
+#if LLVM_MAJOR < 21
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts =
+      new clang::DiagnosticOptions();
   TextDiagnosticPrinter *DiagClient =
     new TextDiagnosticPrinter(llvm::errs(), &*DiagOpts);
-
+#else
+  clang::DiagnosticOptions DiagOpts{};
+  TextDiagnosticPrinter *DiagClient =
+      new TextDiagnosticPrinter(llvm::errs(), DiagOpts);
+#endif
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
 
+#if LLVM_MAJOR < 21
   DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
-
+#else
+  DiagnosticsEngine Diags(DiagID, DiagOpts, DiagClient);
+#endif
   clang::driver::Driver TheDriver(pocl_get_path("CLANG", CLANGCC),
                                   TTriple, Diags);
 

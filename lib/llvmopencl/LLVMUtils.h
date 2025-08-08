@@ -78,6 +78,21 @@ void regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels);
 
 void breakConstantExpressions(llvm::Value *Val, llvm::Function *Func);
 
+/**
+ * @brief Inlines (when possible) and then removes
+ * Clang-generated stub functions (__clang_ocl_kern_imp_<name>)
+ */
+bool removeClangGeneratedKernelStubs(llvm::Module *Program);
+
+/**
+ * @brief Removes kernel argument metadata (kernel_arg_addr_space etc)
+ * from Clang-generated stub functions (__clang_ocl_kern_imp_<name>)
+ * This is necessary to do for both CPU and other (LevelZero) drivers,
+ * otherwise these functions will show up as extra kernels, and this trips
+ * up certain tests that expect an exact amount of kernels in a program.
+ */
+bool removeMetadataFromClangStubs(llvm::Module *Program);
+
 // Remove a function from a module, along with all callsites.
 POCL_EXPORT
 void eraseFunctionAndCallers(llvm::Function *Function);

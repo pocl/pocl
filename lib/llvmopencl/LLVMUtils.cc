@@ -728,4 +728,104 @@ bool isCompilerExpandableWIFunctionCall(const llvm::CallInst &Call) {
   return isa<llvm::ConstantInt>(Call.getArgOperand(0));
 }
 
+bool removeClangGeneratedKernelStubs(llvm::Module *Program) {
+#if LLVM_MAJOR > 20
+#ifdef DEBUG_LLVM_UTILS
+  std::cerr << "removeClangGeneratedKernelStubs: Dump of Program BEFORE:\n";
+  Program->dump();
+#endif
+  // For now, inline & remove all Clang-generated kernel wrappers
+  llvm::SmallSet<llvm::Function *, 8> RemoveFunctionList;
+  llvm::Module::iterator FI, FE;
+
+  for (FI = Program->begin(), FE = Program->end(); FI != FE; FI++) {
+    if (FI->hasName() && FI->getName().starts_with("__clang_ocl_kern_imp")) {
+      RemoveFunctionList.insert(&*FI);
+    }
+  }
+  bool retval = true;
+  for (auto F : RemoveFunctionList) {
+#ifdef DEBUG_LLVM_UTILS
+    std::cerr << "Erasing function : " << F->getName().str() << "  "
+              << " Num uses: " << (unsigned)F->getNumUses() << "\n";
+#endif
+    llvm::SmallSet<Value *, 8> FUsers;
+    for (auto U : F->users()) {
+      FUsers.insert(U);
+    }
+    for (auto U : FUsers) {
+      CallInst *CInstr = dyn_cast<CallInst>(U);
+      if (CInstr) {
+#ifdef DEBUG_LLVM_UTILS
+        CInstr->dump();
+        std::cerr << "Use is CallInstr, inlining\n";
+#endif
+        InlineFunctionInfo IFI;
+        InlineResult IR = llvm::InlineFunction(*CInstr, IFI);
+        if (!IR.isSuccess()) {
+#ifdef DEBUG_LLVM_UTILS
+          std::cerr << "Inlining failed with reason: %s \n"
+                    << IR.getFailureReason()) << "\n";
+#endif
+          retval = false;
+        }
+      } else {
+#ifdef DEBUG_LLVM_UTILS
+        std::cerr << "UNKNOWN Use: \n";
+        U->dump();
+#endif
+      }
+    }
+    if (F->getNumUses() == 0) {
+#ifdef DEBUG_LLVM_UTILS
+      std::cerr << "Zero Uses remain, erasing \n";
+#endif
+      F->eraseFromParent();
+    } else {
+#ifdef DEBUG_LLVM_UTILS
+      std::cerr << "NOT DELETING: Uses remain: " << (unsigned)F->getNumUses()
+                << "\n";
+#endif
+      retval = false;
+    }
+  }
+
+#ifdef DEBUG_LLVM_UTILS
+  std::cerr << "removeClangGeneratedKernelStubs: Dump of Program AFTER:\n";
+  Program->dump();
+#endif
+
+  return retval;
+#else
+  return true;
+#endif
+}
+
+bool removeMetadataFromClangStubs(llvm::Module *Program) {
+#if LLVM_MAJOR > 20
+  // For now, remove all Clang-generated kernel wrappers
+  // these have incorrect metadata, which causes an assertion later (in metadata
+  // extraction)
+  llvm::Module::iterator FI, FE;
+
+  for (FI = Program->begin(), FE = Program->end(); FI != FE; FI++) {
+    if (FI->hasName() && FI->getName().starts_with("__clang_ocl_kern_imp")) {
+      // remove the OpenCL kernel argument metadata from the stub function.
+      // the function will not be recognized as a kernel by other code
+      FI->setMetadata("kernel_arg_addr_space", nullptr);
+      FI->setMetadata("kernel_arg_access_qual", nullptr);
+      FI->setMetadata("kernel_arg_type", nullptr);
+      FI->setMetadata("kernel_arg_base_type", nullptr);
+      FI->setMetadata("kernel_arg_type_qual", nullptr);
+      FI->setMetadata("kernel_arg_name", nullptr);
+    }
+  }
+#ifdef DEBUG_LLVM_UTILS
+  std::cerr << "removeMetadataFromClangStubs: Dump of Program AFTER:\n";
+  Program->dump();
+#endif
+#endif
+  return true;
+}
+
 } // namespace pocl
