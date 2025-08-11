@@ -99,7 +99,6 @@ jobs:
       - name: Build Examples
         shell: bash -el {0}
         id: build_examples
-        # occasionally git timeouts on git clone of the examples
         timeout-minutes: 120
         if: ${{ matrix.config == 'cts_spirv' || matrix.config == 'tier1' || matrix.config == 'chipStar' }}
         run: |

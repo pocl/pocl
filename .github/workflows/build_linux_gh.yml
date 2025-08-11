@@ -63,6 +63,8 @@ jobs:
             config: TBB
           - llvm: 20
             config: OpenMP
+          - llvm: 21
+            config: install
 
     steps:
       - name: Checkout

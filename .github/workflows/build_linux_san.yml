@@ -35,9 +35,9 @@ jobs:
         # cts_asan = CTS build with AddressSanitizer
         # cts_tsan = CTS build with ThreadSanitizer
         include:
-          - llvm: 19
-            config: cts_tsan
           - llvm: 20
+            config: cts_tsan
+          - llvm: 21
             config: cts_asan
 
     steps:
