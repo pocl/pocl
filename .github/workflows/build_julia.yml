@@ -36,12 +36,12 @@ jobs:
 
     steps:
       - name: Checkout PoCL
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: pocl
 
       - name: Checkout OpenCL.jl
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: JuliaGPU/OpenCL.jl
           path: OpenCL.jl
