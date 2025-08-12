@@ -65,6 +65,25 @@ POP_COMPILER_DIAGS
 
 #ifdef HAVE_LLVM_SPIRV_LIB
 #include <LLVMSPIRVLib.h>
+
+#if LLVM_SPIRV_LIB_MAXVER >= 0x00010600
+static const pocl_version_t MaxSPIRVLibSupportedVersion{1, 6};
+#elif LLVM_SPIRV_LIB_MAXVER >= 0x00010500
+static const pocl_version_t MaxSPIRVLibSupportedVersion{1, 5};
+#elif LLVM_SPIRV_LIB_MAXVER >= 0x00010400
+static const pocl_version_t MaxSPIRVLibSupportedVersion{1, 4};
+#elif LLVM_SPIRV_LIB_MAXVER >= 0x00010300
+static const pocl_version_t MaxSPIRVLibSupportedVersion{1, 3};
+#elif LLVM_SPIRV_LIB_MAXVER >= 0x00010200
+static const pocl_version_t MaxSPIRVLibSupportedVersion{1, 2};
+#elif LLVM_SPIRV_LIB_MAXVER >= 0x00010100
+static const pocl_version_t MaxSPIRVLibSupportedVersion{1, 1};
+#else
+static const pocl_version_t MaxSPIRVLibSupportedVersion{1, 0};
+#endif
+
+#else // HAVE_LLVM_SPIRV_LIB
+static const pocl_version_t MaxSPIRVLibSupportedVersion{1, 5};
 #endif
 
 #include "spirv_parser.hh"
@@ -218,9 +237,8 @@ int pocl_regen_spirv_binary(cl_program Program, cl_uint DeviceI) {
   cl_device_id Device = Program->devices[DeviceI];
 
   bool UnrecognizedVersion = false;
-  pocl_version_t MaxSupportedVersion;
-  getMaxSpirvVersion(MaxSupportedVersion, Device->num_ils_with_version,
-                     Device->ils_with_version);
+  // Don't limit the Max SPIR-V version when doing reverse translation
+  pocl_version_t MaxSupportedVersion = MaxSPIRVLibSupportedVersion;
   SPIRV::TranslatorOpts Opts =
       setupTranslOpts(Device->supported_spirv_extensions, UnrecognizedVersion,
                       MaxSupportedVersion);
@@ -317,11 +335,7 @@ int pocl_regen_spirv_binary(cl_program program, cl_uint device_i) {
   program_bc_spirv[0] = 0;
   unlinked_program_bc_temp[0] = 0;
 
-  pocl_version_t MaxV;
-  getMaxSpirvVersion(MaxV, Device->num_ils_with_version,
-                     Device->ils_with_version);
-  SpirvMaxVersion = "--spirv-max-version=" + std::to_string(MaxV.major) +
-                    "." + std::to_string(MaxV.minor);
+  // Don't limit the Max SPIR-V version when doing reverse translation
 
   /* using --spirv-target-env=CL2.0 here enables llvm-spirv to produce proper
    * OpenCL 2.0 atomics, unfortunately it also enables generic ptrs, which not
@@ -340,7 +354,6 @@ int pocl_regen_spirv_binary(cl_program program, cl_uint device_i) {
                         concated_spec_const_option,
                         spirv_target_env,
                         SpirvExts.c_str(),
-                        SpirvMaxVersion.c_str(),
                         "-r",
                         "-o",
                         unlinked_program_bc_temp,
@@ -509,6 +522,10 @@ static int convertBCorSPV(char *InputPath,
     return -1;
   }
 
+  const auto TargetVersionOpt = std::string("--spirv-max-version=") +
+                                std::to_string(TargetVersion.major) + "." +
+                                std::to_string(TargetVersion.minor);
+
 #ifdef HAVE_LLVM_SPIRV_LIB
   bool UnrecognizedVersion = false;
   SPIRV::TranslatorOpts Opts =
@@ -617,13 +634,7 @@ static int convertBCorSPV(char *InputPath,
   CompilationArgs.push_back(pocl_get_path("LLVM_SPIRV", LLVM_SPIRV));
   SpirvExts.append(SPVExtensions);
   CompilationArgs.push_back(SpirvExts);
-
-  if (!Reverse) {
-    const auto TargetVersionOpt = std::string("--spirv-max-version=") +
-                                  std::to_string(TargetVersion.major) + "." +
-                                  std::to_string(TargetVersion.minor);
-    CompilationArgs.push_back(TargetVersionOpt);
-  }
+  CompilationArgs.push_back(TargetVersionOpt);
 
   if (Reverse) {
     CompilationArgs.push_back("-r");
@@ -694,9 +705,6 @@ FINISHED:
 }
 
 #elif defined(USE_LLVM_SPIRV_TARGET)
-
-// SPIRV backend did not exist until LLVM 15
-static_assert(LLVM_MAJOR > 14);
 
 // implement IR -> SPIRV conversion using LLVM SPIRV backend
 static int convertBCorSPV(char *InputPath,
@@ -862,10 +870,6 @@ int pocl_convert_spirv_to_bitcode(char *TempSpirvPath, const char *SpirvContent,
                                   uint64_t *BitcodeSize) {
 
   std::string BuildLog;
-  cl_device_id Device = Program->devices[DeviceI];
-  pocl_version_t MaxSupportedVersion;
-  getMaxSpirvVersion(MaxSupportedVersion, Device->num_ils_with_version,
-                     Device->ils_with_version);
 
   int R = convertBCorSPV(
       TempSpirvPath, SpirvContent, SpirvSize, &BuildLog, SPVExtensions,
@@ -874,7 +878,8 @@ int pocl_convert_spirv_to_bitcode(char *TempSpirvPath, const char *SpirvContent,
       // Target version for SPIR-V emission. This is necessary to pass,
       // otherwise LLVM-SPIRV might return an error like:
       // Invalid SPIR-V module: incorrect SPIR-V version number 1.4 (66560) - it conflicts with maximum allowed version which is set to 1.2 (66304)
-      MaxSupportedVersion);
+      // For Reverse translation, set this to the maximum supported by the library
+      MaxSPIRVLibSupportedVersion);
   if (!BuildLog.empty())
     pocl_append_to_buildlog(Program, DeviceI, strdup(BuildLog.c_str()),
                             BuildLog.size());
