@@ -2992,9 +2992,9 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 
 
                               ",+SPV_INTEL_split_barrier"
-                              ",+SPV_INTEL_tensor_float32_rounding"
                               ",+SPV_INTEL_unstructured_loop_controls"
                               ",+SPV_INTEL_variable_length_array"
+                              ",+SPV_INTEL_memory_access_aliasing"
 
                               // ",+SPV_KHR_cooperative_matrix"
                               // ",+SPV_KHR_subgroup_rotate"
@@ -3003,7 +3003,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                               //
                               // "SPV_INTEL_arbitrary_precision_fixed_point"
                               // "SPV_INTEL_arbitrary_precision_floating_point"
-                              // "SPV_INTEL_memory_access_aliasing"
                               // "SPV_INTEL_tensor_float32_conversion"
                               // "SPV_EXT_relaxed_printf_string_address_space"
                               // "SPV_INTEL_bindless_images"
