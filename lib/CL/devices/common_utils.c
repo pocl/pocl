@@ -318,6 +318,9 @@ pocl_cpu_init_common (cl_device_id device)
                                        ",+SPV_KHR_expect_assume"
                                        ",+SPV_INTEL_fp_fast_math_mode"
                                        ",+SPV_EXT_shader_atomic_float_add"
+                                       ",+SPV_EXT_shader_atomic_float_min_max"
+                                       ",+SPV_INTEL_unstructured_loop_controls"
+                                       ",+SPV_INTEL_arbitrary_precision_integers"
                                        ",+SPV_INTEL_memory_access_aliasing"
                                        ",+SPV_INTEL_inline_assembly";
 
