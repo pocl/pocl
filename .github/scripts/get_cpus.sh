@@ -23,7 +23,7 @@ warning() {
 if [ -f /sys/fs/cgroup/cgroup.controllers ]; then
   verbose "cgroup v2 detected."
   if [ -f /proc/self/cgroup ]; then
-    CGROUP=$(cat /proc/self/cgroup | cut -d ':' -f 3)
+    CGROUP=$(grep '0::' /proc/self/cgroup | cut -d ':' -f 3)
     verbose "Using CGROUP: $CGROUP"
     CGROUPFILE="/sys/fs/cgroup$CGROUP/cpu.max"
     if [ -r "$CGROUPFILE" ]; then
