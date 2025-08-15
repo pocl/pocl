@@ -1150,7 +1150,7 @@ if(UNIX)
     # MacOS ld outputs useless warnings like
     # ld: warning: -macosx_version_min not specificed, assuming 10.7
     # suppress them with -w.
-    set(DEFAULT_HOST_LD_FLAGS "-dynamiclib -w -lm -nostartfiles")
+    set(DEFAULT_HOST_LD_FLAGS "-dynamiclib -w -nostartfiles")
   elseif(ANDROID)
     # TODO shouldn't Android use -nostartfiles ?
     set(DEFAULT_HOST_LD_FLAGS "-L/system/lib/ -shared -ldl -lc /system/lib/crtbegin_so.o /system/lib/crtend_so.o")
