@@ -1268,3 +1268,21 @@ pocl_cpu_execute_dbk (cl_program program,
       }
     }
 }
+
+#ifdef CPU_USE_LLD_LINK_WIN32
+int
+pocl_cpu_finalize_binary (cl_device_id dev,
+                          const char *output_binary,
+                          const char *input_binary)
+{
+  POCL_MSG_PRINT_LLVM ("Invoking lld-link through library API\n");
+  return pocl_invoke_lld_link_win32 (dev, input_binary, output_binary);
+}
+
+char *
+pocl_cpu_init_build (void *data)
+{
+  return strdup (
+    "-fno-builtin-printf -fno-builtin-memcpy -fno-builtin-memset");
+}
+#endif

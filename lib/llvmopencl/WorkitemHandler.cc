@@ -457,7 +457,7 @@ llvm::AllocaInst *WorkitemHandler::createAlignedAndPaddedContextAlloca(
     ElementType = SrcAlloca->getAllocatedType();
     AllocType = ElementType;
 
-    unsigned Alignment = SrcAlloca->getAlign().value();
+    uint64_t Alignment = SrcAlloca->getAlign().value();
     uint64_t StoreSize = Layout.getTypeStoreSize(SrcAlloca->getAllocatedType());
 
     if ((Alignment > 1) && (StoreSize & (Alignment - 1))) {
@@ -495,7 +495,7 @@ llvm::AllocaInst *WorkitemHandler::createAlignedAndPaddedContextAlloca(
         ArrayType *StructPadding = ArrayType::get(
             Type::getInt8Ty(M->getContext()), RequiredExtraBytes);
         std::vector<Type *> PaddedStructElements;
-        for (unsigned j = 0; j < OldStruct->getNumElements(); j++)
+        for (size_t j = 0; j < OldStruct->getNumElements(); j++)
           PaddedStructElements.push_back(OldStruct->getElementType(j));
         PaddedStructElements.push_back(StructPadding);
         PaddingAdded = true;

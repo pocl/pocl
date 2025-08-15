@@ -1245,20 +1245,20 @@ void WorkgroupImpl::privatizeContext(Function *F) {
     if (LocalSizeAllocas[0] != nullptr)
       LocalSizeXStore = Builder.CreateStore(
           ConstantInt::get(LocalSizeAllocas[0]->getAllocatedType(),
-                           WGLocalSizeX, 0),
+                           WGLocalSizeX),
           LocalSizeAllocas[0]);
 
     if (LocalSizeAllocas[1] != nullptr)
       Builder.CreateStore(
-        ConstantInt::get(
-          LocalSizeAllocas[1]->getAllocatedType(), WGLocalSizeY, 1),
-        LocalSizeAllocas[1]);
+          ConstantInt::get(LocalSizeAllocas[1]->getAllocatedType(),
+                           WGLocalSizeY),
+          LocalSizeAllocas[1]);
 
     if (LocalSizeAllocas[2] != nullptr)
       Builder.CreateStore(
-        ConstantInt::get(
-          LocalSizeAllocas[2]->getAllocatedType(), WGLocalSizeZ, 2),
-        LocalSizeAllocas[2]);
+          ConstantInt::get(LocalSizeAllocas[2]->getAllocatedType(),
+                           WGLocalSizeZ),
+          LocalSizeAllocas[2]);
   }
 
   privatizeGlobalLoads(

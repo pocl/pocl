@@ -189,8 +189,14 @@ int pocl_mk_tempname(char *output, const char *prefix, const char *suffix,
     ec = fs::createUniqueFile(p + random_pattern + suf, TmpPath,
                               fs::perms::owner_read | fs::perms::owner_write);
   }
-  if (ec)
+
+  if (ec) {
+    std::string msg = ec.message();
+    POCL_MSG_ERR("failed to mktempname  ERR CODE: %i | %s\n", ec.value(),
+                 msg.c_str());
     return -1;
+  }
+
   strncpy(output, TmpPath.c_str(), POCL_MAX_PATHNAME_LENGTH);
   return 0;
 }
@@ -275,7 +281,7 @@ static int pocl_write_file2(
     bool dont_rename, // don't rename to final path (output to TmpPath)
     llvm::SmallVector<char, 512> &TmpPath, llvm::Twine TmpSuffix) {
   fs::file_t fh;
-  int fd;
+  int fd = 0;
   std::error_code ec;
 
   assert(content != nullptr || Mod != nullptr);
@@ -293,7 +299,9 @@ static int pocl_write_file2(
                               TmpPath, fs::OpenFlags::OF_None,
                               fs::perms::owner_read | fs::perms::owner_write);
     if (ec) {
-      POCL_MSG_ERR("failed to open file WR 2 %s\n", path);
+      std::string msg = ec.message();
+      POCL_MSG_ERR("failed to open file WR 2 %s ERR CODE: %i | %s\n", path,
+                   ec.value(), msg.c_str());
       return -1;
     }
   }
@@ -334,7 +342,11 @@ static int pocl_write_file2(
     return 0;
   else {
     llvm::Twine TmpP(TmpPath);
-    return pocl_rename2(TmpP, FinalPath);
+    int r = pocl_rename2(TmpP, FinalPath);
+    if (r) {
+      POCL_MSG_ERR("Rename %s -> %s failed! \n", TmpPath.data(), path);
+    }
+    return r;
   }
 }
 
@@ -353,8 +365,10 @@ int pocl_write_tempfile(char *output_path, const char *prefix,
   llvm::SmallVector<char, 512> TmpPath;
   int err = pocl_write_file2(prefix, content, count, nullptr, false, true,
                              TmpPath, suffix);
-  if (err)
+  if (err) {
+    POCL_MSG_ERR("FAILED: pocl_write_file2\n");
     return err;
+  }
   if (TmpPath.size() >= POCL_MAX_PATHNAME_LENGTH) {
     POCL_MSG_ERR("Path name too long \n");
     return -1;

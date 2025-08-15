@@ -9,7 +9,7 @@ macro(execute_command_with_args CMD_WITH_ARGS)
     )
 
     if( CMD_RESULT )
-      message( SEND_ERROR "FAIL: Command exited with nonzero code (${CMD_RESULT}): ${CMD}\nSTDOUT:\n${stdout}\nSTDERR:\n${stderr}" )
+      message( SEND_ERROR "FAIL: Command ${CMD_SEPARATED} exited with nonzero code (${CMD_RESULT}): ${CMD}\nSTDOUT:\n${stdout}\nSTDERR:\n${stderr}" )
     else()
       message("${stdout}")
       message("${stderr}")
