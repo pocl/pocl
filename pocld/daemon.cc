@@ -295,6 +295,8 @@ static AvahiAdvertise *StartAvahiAdvert(addrinfo *RA,
 
       for (ifa = addrs; ifa; ifa = ifa->ifa_next) {
 
+        if (ifa->ifa_addr == nullptr)
+          continue;
         inet_ntop(AF_INET,
                   (void *)&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
                   BufInf, sizeof(BufInf));
@@ -313,6 +315,9 @@ static AvahiAdvertise *StartAvahiAdvert(addrinfo *RA,
     } else if (ResolvedAddress->ai_family == AF_INET6) {
 
       for (ifa = addrs; ifa; ifa = ifa->ifa_next) {
+
+        if (ifa->ifa_addr == nullptr)
+          continue;
 
         inet_ntop(AF_INET6,
                   (void *)&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr,
