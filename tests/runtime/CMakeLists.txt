@@ -54,7 +54,7 @@ if(HAVE_ONNXRT)
 endif()
 
 set(CXX_PROGRAMS_TO_BUILD test_device_address test_svm test_large_buf
-  test_subbuffers test_compile_n_link test_dbk_matmul)
+  test_subbuffers test_compile_n_link test_dbk_matmul test_tensor_view)
 
 add_compile_options(${OPENCL_CFLAGS} -I${CMAKE_SOURCE_DIR}/include)
 
@@ -179,6 +179,14 @@ if(HAVE_LIBXSMM)
     SKIP_RETURN_CODE 77
     DEPENDS "pocl_version_check")
 endif()
+
+add_test(NAME "runtime/test_tensor_view" COMMAND test_tensor_view)
+set_tests_properties("runtime/test_tensor_view"
+  PROPERTIES
+  COST 2.0
+  PROCESSORS 1
+  SKIP_RETURN_CODE 77
+  DEPENDS "pocl_version_check")
 
 if(HAVE_ONNXRT)
   add_test(NAME "runtime/test_dbk_onnx_inference" COMMAND "test_dbk_onnx_inference")
