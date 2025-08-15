@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2022-2024 Henry Linjamäki, Michal Babej / Intel Finland Oy
+ * Copyright (c) 2022-2025 Henry Linjamäki, Michal Babej / Intel Finland Oy
  *
  * PoCL-specific proof-of-concept (draft) of Defined Builtin Kernels extension.
  *
@@ -28,7 +28,6 @@
  * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
  ******************************************************************************/
 
-
 #ifndef OPENCL_EXP_TENSOR_H
 #define OPENCL_EXP_TENSOR_H
 #include <CL/cl.h>
@@ -36,6 +35,7 @@
 /* Based on spec v0.2.0
  * https://github.com/KhronosGroup/OpenCL-Docs/pull/1006
  */
+#define CL_EXP_TENSOR_EXTENSION_VERSION CL_MAKE_VERSION (0, 2, 1)
 
 /* types for describing dimensions & stride */
 typedef cl_ulong cl_tensor_shape_exp;
@@ -248,5 +248,28 @@ typedef struct _cl_tensor_layout_ml_exp
 {
   cl_tensor_layout_ml_type_exp ml_type;
 } cl_tensor_layout_ml_exp;
+
+/* A cl_buffer_create_type for clCreateSubBuffer() for which
+ * buffer_create_info structure points to cl_tensor_view_exp. This
+ * creation type allows viewing a region of the parent-buffer as a
+ * tensor of the given shape and datalayout.
+ *
+ * cl_tensor_view::tensor_desc must have a static, defined shape and
+ * data layout.
+ *
+ * Same limitations and requirements apply to this creation type as
+ * for CL_BUFFER_CREATE_TYPE_REGION (alignment requirements and
+ * behavior of concurrent accesses).
+ */
+#define CL_BUFFER_CREATE_TYPE_TENSOR_VIEW_EXP 0x12340001
+
+typedef struct _cl_tensor_view_exp
+{
+  /* In bytes. Must be at least CL_DEVICE_MEM_BASE_ADDR_ALIGN. */
+  size_t origin;
+
+  /* Tensor description. Its data layout must be well defined.  */
+  const cl_tensor_desc_exp *tensor_desc;
+} cl_tensor_view_exp;
 
 #endif /* OPENCL_EXP_TENSOR_H */
