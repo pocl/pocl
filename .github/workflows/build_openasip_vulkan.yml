@@ -109,7 +109,7 @@ jobs:
 
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
-          runCMake -DENABLE_VULKAN=1 -DCLSPV_DIR=/home/CLSPV -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LLVM=0
+          runCMake -DENABLE_VULKAN=1 -DCLSPV_DIR=/opt/CLSPV -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LLVM=0
 
       - name: Run Build
         id: build

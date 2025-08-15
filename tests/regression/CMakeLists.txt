@@ -449,12 +449,3 @@ set_tests_properties(
 "changing the value at global_id: 6, local_id 2, group_id 1, to: 3
 value is changed at global_id: 6, local_id 2, group_id 1, to: 3
 ")
-
-# Produced wrong results with LLVM 14. Works with all newer versions.
-# No point putting time for debugging.
-if(LLVM_VERSION_MAJOR EQUAL 14)
-  set_tests_properties(
-    "regression/test_alignment_with_dynamic_wg_225_cbs"
-    PROPERTIES DISABLED 1)
-endif()
-

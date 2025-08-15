@@ -115,11 +115,20 @@ static bool removeDuplicateDbgInfo(Module *Mod) {
   return Erased;
 }
 
+static bool modIsNvptx(llvm::Module *Mod) {
+#if LLVM_MAJOR > 20
+  return (Mod->getTargetTriple().getArch() == llvm::Triple::ArchType::nvptx ||
+          Mod->getTargetTriple().getArch() == llvm::Triple::ArchType::nvptx64);
+#else
+  return Mod->getTargetTriple().compare(0, 5, "nvptx") == 0;
+#endif
+}
+
 // fix mismatches between calling conv. This should not happen,
 // but sometimes can, esp with SPIR(-V) input
 static void fixCallingConv(llvm::Module *Mod, std::string &Log) {
 #if LLVM_MAJOR > 18
-  if (Mod->getTargetTriple().find("nvptx") != std::string::npos) {
+  if (modIsNvptx(Mod)) {
     for (llvm::Module::iterator MI = Mod->begin(); MI != Mod->end(); ++MI) {
       llvm::Function *F = &*MI;
       if (F->isDeclaration())
@@ -660,6 +669,8 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
   ValueToValueMapTy vvm;
   llvm::StringSet<> DeclaredFunctions;
 
+  pocl::removeClangGeneratedKernelStubs(Program);
+
   // Include auxiliary functions required by the device at hand.
   if (ClDev->device_aux_functions) {
     const char **Func = ClDev->device_aux_functions;
@@ -669,7 +680,6 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
   }
 
   llvm::Module::iterator FI, FE;
-
   // assign names to all functions
   for (FI = Program->begin(), FE = Program->end(); FI != FE; FI++) {
     // anonymous functions have no name, which breaks the algorithm later
@@ -758,7 +768,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
   // this one is a handled with a special pocl LLVM pass
   StringRef pocl_sampler_handler("__translate_sampler_initializer");
 
-  if (Program->getTargetTriple().compare(0, 5, "nvptx") != 0) {
+  if (!modIsNvptx(Program)) {
     for (auto &DeclIter : DeclaredFunctions) {
       llvm::StringRef FName = DeclIter.getKey();
       Function *F = Program->getFunction(FName);

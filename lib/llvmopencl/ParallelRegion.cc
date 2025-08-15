@@ -640,7 +640,9 @@ ParallelRegion::InjectPrintF
 
     AttributeList func_printf_PAL =
         AttributeList()
+#if LLVM_MAJOR < 21
             .addAttributeAtIndex(M->getContext(), 1U, Attribute::NoCapture)
+#endif
             .addAttributeAtIndex(M->getContext(), 4294967295U,
                                  Attribute::NoUnwind);
 

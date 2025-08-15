@@ -112,11 +112,10 @@ jobs:
                        -GNinja
                        -DCMAKE_BUILD_TYPE=Debug
                        -DENABLE_TESTS:Bool=OFF
-                       -DSTATIC_LLVM:Bool=On
                        -DCMAKE_INSTALL_PREFIX=$destdir
                        -DWITH_LLVM_CONFIG=$(LLVM_full_jll.artifact_dir)/tools/llvm-config
                        -DCMAKE_PREFIX_PATH="$(join(prefix, ";"))"
-                       -DKERNELLIB_HOST_CPU_VARIANTS=distro```)
+                       -DSTATIC_LLVM:BOOL=ON```)
 
                 run(```$(cmake()) --build $builddir --parallel $(Sys.CPU_THREADS) --target install```)
             end'
