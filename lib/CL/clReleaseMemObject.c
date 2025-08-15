@@ -197,6 +197,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
           POCL_UNLOCK_OBJ (context);
         }
 
+      POCL_MEM_FREE (memobj->tensor_layout);
       POCL_DESTROY_OBJECT (memobj);
       POCL_MEM_FREE(memobj);
 
