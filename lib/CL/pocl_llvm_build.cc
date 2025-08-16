@@ -505,7 +505,7 @@ int pocl_llvm_build_program(cl_program program,
   }
 
   // do not use LLVM builtin functions, rely on PoCL bitcode library only
-  ss << "-fno-builtin ";
+//  ss << "-fno-builtin ";
   // do not use jump/switch tables, these create a problem for VUA pass
   ss << "-fno-jump-tables ";
 
