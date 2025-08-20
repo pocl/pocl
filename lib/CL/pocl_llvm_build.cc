@@ -41,6 +41,10 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include <clang/Frontend/TextDiagnosticBuffer.h>
 #include <clang/Frontend/TextDiagnosticPrinter.h>
 
+#ifdef CPU_USE_LLD_LINK_WIN32
+#include <lld/Common/Driver.h>
+#endif
+
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
@@ -48,8 +52,8 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include <llvm/Linker/Linker.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/VirtualFileSystem.h>
-#include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/TargetParser/Host.h>
+#include <llvm/Transforms/Utils/Cloning.h>
 
 #include <iostream>
 #include <map>
@@ -1154,3 +1158,56 @@ int pocl_invoke_clang(const char* TTriple, const char** Args) {
   }
 
 }
+
+#ifdef CPU_USE_LLD_LINK_WIN32
+
+LLD_HAS_DRIVER(coff)
+
+int pocl_invoke_lld_link_win32(cl_device_id Device, const char *InFile,
+                               const char *OutFile) {
+  std::string OutArg{"/out:"};
+  OutArg.append(OutFile);
+
+  std::string LibraryRootDir;
+#ifdef ENABLE_POCL_BUILDING
+  if (pocl_get_bool_option("POCL_BUILDING", 0)) {
+    LibraryRootDir = BUILDDIR;
+    LibraryRootDir += "/lib/kernel/";
+    LibraryRootDir += Device->kernellib_subdir;
+  } else // POCL_BUILDING == 0, use install dir
+#endif
+  {
+    char Temp[POCL_MAX_PATHNAME_LENGTH];
+    pocl_get_private_datadir(Temp);
+    LibraryRootDir = Temp;
+  }
+
+  std::string ChkstkLibrary = LibraryRootDir + "/libchkstk.obj";
+  std::string StringLibrary = LibraryRootDir + "/libmemory.obj";
+
+  std::vector<const char *> LinkerArgs{
+      "lld-link", "/dll", "/nologo",
+#if HOST_DEVICE_ADDRESS_BITS == 64
+      "/machine:x64",
+#else
+      "/machine:x86",
+#endif
+      // these combinations of /defaultlib:X flags work,
+      // but require the .lib files on the destination machine,
+      // => require VS Build Tools:
+      //
+      // libcmt + ucrt + vcruntime
+      // msvcrt + ucrt + vcruntime
+      //
+      // instead, we avoid linking against C runtime lib completely.
+      // this way we get standalone libpocl
+      "/nodefaultlib", "/noentry", "/noimplib", OutArg.c_str(), InFile,
+      ChkstkLibrary.c_str(), StringLibrary.c_str() };
+
+  std::vector<lld::DriverDef> Drivers = {{lld::WinLink, &lld::coff::link}};
+  lld::Result Res =
+      lld::lldMain(LinkerArgs, llvm::outs(), llvm::errs(), Drivers);
+  return (!Res.retCode && Res.canRunAgain) ? 0 : 1;
+}
+
+#endif

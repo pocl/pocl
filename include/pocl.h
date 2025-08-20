@@ -48,6 +48,7 @@ typedef uint64_t pocl_obj_id_t;
  * NOTE: Trouble is expected if CL/opencl.h is not included for the
  *       first time here.
  */
+#undef CL_API_ENTRY
 #define CL_API_ENTRY __declspec(dllexport)
 #endif
 

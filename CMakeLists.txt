@@ -189,6 +189,20 @@ else()
   set(LLVM_VERIFY_MODULE_DEFAULT 0)
 endif()
 
+# Set default build type for cmake's try_compile module.
+# CMake 3.17 or newer sets CMAKE_DEFAULT_BUILD_TYPE to one of the
+# items from CMAKE_CONFIGURATION_TYPES. Logic below can be further
+# simplified once minimum CMake version is updated to 3.17.
+if(CMAKE_DEFAULT_BUILD_TYPE)
+  set(CMAKE_TRY_COMPILE_CONFIGURATION ${CMAKE_DEFAULT_BUILD_TYPE})
+else()
+  if(CMAKE_CONFIGURATION_TYPES)
+    list(GET CMAKE_CONFIGURATION_TYPES 0 CMAKE_TRY_COMPILE_CONFIGURATION)
+  elseif(CMAKE_BUILD_TYPE)
+    set(CMAKE_TRY_COMPILE_CONFIGURATION ${CMAKE_BUILD_TYPE})
+  endif()
+endif()
+
 ##################################################################################
 
 macro(set_expr VAR)
@@ -617,7 +631,7 @@ function(findImpLibAndDLL PACKAGE IMP_NAME DLL_NAME INCLUDE_FILE)
     set_target_properties(PkgConfig::${PACKAGE}
                 PROPERTIES
                 IMPORTED_IMPLIB "${TGT_LIB_IMPLIB}"
-				IMPORTED_LOCATION "${TGT_LIB_DLL}"
+                IMPORTED_LOCATION "${TGT_LIB_DLL}"
                 INTERFACE_INCLUDE_DIRECTORIES "${TGT_INCLUDE_DIRS}")
   else()
     message(STATUS "Library ${PACKAGE} not found")
@@ -628,7 +642,8 @@ if(PKG_CONFIG_FOUND)
   pkg_check_modules(HWLOC IMPORTED_TARGET hwloc>=1.0)
 endif()
 
-if(WIN32 AND NOT HWLOC_FOUND)
+if(WIN32 AND (NOT TARGET PkgConfig::HWLOC))
+  message(STATUS "Could not find libhwloc via pkg-config, trying to find it directly")
   findImpLibAndDLL(HWLOC "hwloc" "libhwloc-15.dll" "hwloc.h")
 endif()
 
@@ -2094,7 +2109,7 @@ if (ENABLE_LEVEL0)
     pkg_check_modules(LEVEL0 REQUIRED IMPORTED_TARGET level-zero>=1.3)
   endif()
 
-  if (NOT LEVEL0_FOUND)
+  if (NOT TARGET PkgConfig::LEVEL0)
     message(STATUS "Could not find level-zero via pkg-config, trying to find it directly")
     find_library(LEVEL0_LIBRARIES NAMES ze_loader REQUIRED)
     find_path(LEVEL0_INCLUDE_DIRS NAMES ze_api.h PATH_SUFFIXES level_zero)
@@ -2737,6 +2752,7 @@ if (ENABLE_LLVM)
   MESSAGE(STATUS "USE_LLVM_SPIRV_TARGET: ${USE_LLVM_SPIRV_TARGET}")
   if(ENABLE_HOST_CPU_DEVICES)
   MESSAGE(STATUS "CLANG_MARCH_FLAG: ${CLANG_MARCH_FLAG}")
+  MESSAGE(STATUS "CPU_USE_LLD_LINK_WIN32: ${CPU_USE_LLD_LINK_WIN32}")
   MESSAGE(STATUS "LLC_TRIPLE: ${LLC_TRIPLE}")
   MESSAGE(STATUS "LLC_HOST_CPU_AUTO: ${LLC_HOST_CPU_AUTO}")
   MESSAGE(STATUS "LLC_HOST_CPU: ${LLC_HOST_CPU}")

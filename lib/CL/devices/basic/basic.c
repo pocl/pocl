@@ -122,6 +122,9 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->build_builtin = pocl_driver_build_opencl_builtins;
   ops->build_defined_builtin = pocl_cpu_build_defined_builtin;
   ops->supports_dbk = pocl_cpu_supports_dbk;
+#ifdef CPU_USE_LLD_LINK_WIN32
+  ops->finalize_binary = pocl_cpu_finalize_binary;
+#endif
 
   ops->join = pocl_basic_join;
   ops->submit = pocl_basic_submit;
@@ -591,7 +594,7 @@ pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
   if (node->state != POCL_COMMAND_READY)
     {
       POCL_MSG_PRINT_EVENTS (
-        "basic: command related to the notified event %lu not ready\n",
+        "basic: command related to the notified event %" PRIu64 " not ready\n",
         event->id);
       return;
     }

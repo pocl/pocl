@@ -226,6 +226,25 @@ extern "C" {
 
   int pocl_invoke_clang (const char *TTriple, const char **Args);
 
+#ifdef CPU_USE_LLD_LINK_WIN32
+  /**
+   * Invoke LLVM's lld-link.exe linker through its C++ API. This has the
+   * advantage that we can bundle the linker library directly into libpocl,
+   * dropping a dependency on external executable. However, we need to figure
+   * out the link arguments without using Clang driver.
+   *
+   * @param Device the device triple
+   * @param InFile the input .obj file
+   * @param InFile the output .dll file
+   *
+   * @return 0 on success, error code otherwise.
+   */
+  POCL_EXPORT
+  int pocl_invoke_lld_link_win32 (cl_device_id Device,
+                                  const char *InFile,
+                                  const char *OutFile);
+#endif
+
   /**
    * \brief converts LLVM IR with "spir64-unknown-unknown" triple to SPIR-V
    *

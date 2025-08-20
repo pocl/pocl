@@ -111,6 +111,11 @@ POCL_EXPORT
 void pocl_cpu_probe ();
 
 POCL_EXPORT
+int pocl_cpu_finalize_binary (cl_device_id dev,
+                              const char *output_binary,
+                              const char *input_binary);
+
+POCL_EXPORT
 void pocl_setup_kernel_arg_array (kernel_run_command *k);
 
 POCL_EXPORT

@@ -60,12 +60,6 @@ function(add_test_pocl)
     set(VARIANTS "loopvec" "cbs")
   endif()
 
-  if(POCL_TEST_LABELS)
-    set(LABELS "${POCL_TEST_LABELS}")
-  else()
-    set(LABELS "")
-  endif()
-
   list(LENGTH VARIANTS VARIANTS_COUNT)
 
   foreach(VARIANT ${VARIANTS})
@@ -76,13 +70,21 @@ function(add_test_pocl)
     endif()
     unset(RUN_CMD)
 
+    set(POCL_TEST_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+    set(POCLBIN_DIR "${CMAKE_BINARY_DIR}/bin")
+    get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+    if(is_multi_config)
+      set(POCL_TEST_DIR "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
+      set(POCLBIN_DIR "${CMAKE_BINARY_DIR}/bin/$<CONFIG>")
+    endif()
+
     foreach(LOOPVAR ${POCL_TEST_COMMAND})
       if(NOT RUN_CMD)
         # Special command name expansion.
         if(${LOOPVAR} STREQUAL "poclcc")
-          set(RUN_CMD "${CMAKE_BINARY_DIR}/bin/${LOOPVAR}")
+          set(RUN_CMD "${POCLBIN_DIR}/poclcc")
         else()
-          set(RUN_CMD "${CMAKE_CURRENT_BINARY_DIR}/${LOOPVAR}")
+          set(RUN_CMD "${POCL_TEST_DIR}/${LOOPVAR}")
         endif()
       else()
         set(RUN_CMD "${RUN_CMD}####${LOOPVAR}")
@@ -109,7 +111,7 @@ function(add_test_pocl)
     endif()
     if(POCL_TEST_SORT_OUTPUT)
       list(APPEND POCL_TEST_ARGLIST "-Dsort_output=1")
-      endif()
+    endif()
     list(APPEND POCL_TEST_ARGLIST "-P" "${CMAKE_SOURCE_DIR}/cmake/run_test.cmake")
 
     if(NOT POCL_TEST_ONLY_FILECHECK)
@@ -131,7 +133,7 @@ function(add_test_pocl)
         ENVIRONMENT POCL_WORK_GROUP_METHOD=${VARIANT})
 
       set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
-        LABELS "${LABELS}")
+        LABELS "${POCL_TEST_LABELS}")
     endif()
 
 
@@ -153,7 +155,7 @@ function(add_test_pocl)
                           PASS_REGULAR_EXPRESSION "OK"
                           FAIL_REGULAR_EXPRESSION "FAIL"
                           ENVIRONMENT "POCL_WORK_GROUP_METHOD=${VARIANT};${POCL_TEST_ENVIRONMENT}"
-                          LABELS "${LABELS}"
+                          LABELS "${POCL_TEST_LABELS}"
                           DEPENDS "pocl_version_check")
 
     endif()

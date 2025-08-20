@@ -23,15 +23,9 @@
 
 #include "work_group_alloca.h"
 
-#define INFINITY (__builtin_inf())
-
-size_t _CL_OVERLOADABLE get_local_id (unsigned int dimindx);
-size_t _CL_OVERLOADABLE get_local_linear_id (void);
-size_t _CL_OVERLOADABLE get_local_size (unsigned int dimindx);
-void _CL_OVERLOADABLE
-    POCL_BUILTIN_PREFIX (work_group_barrier) (cl_mem_fence_flags flags);
-
-#define work_group_barrier POCL_BUILTIN_PREFIX (work_group_barrier)
+/* these are defined in builtin_renames.h */
+#undef min
+#undef max
 
 /* Align the stack temporary data by this multiple to facilitate easier
    vectorization. */
@@ -57,10 +51,12 @@ get_total_local_size ()
 /* Define both the non-prefixed (khr) and Intel-prefixed shuffles. */
 #define WORK_GROUP_SHUFFLE_T(TYPE) WORK_GROUP_SHUFFLE_PT (, TYPE)
 
+/*
 WORK_GROUP_SHUFFLE_T (char)
 WORK_GROUP_SHUFFLE_T (uchar)
 WORK_GROUP_SHUFFLE_T (short)
 WORK_GROUP_SHUFFLE_T (ushort)
+*/
 WORK_GROUP_SHUFFLE_T (int)
 WORK_GROUP_SHUFFLE_T (uint)
 WORK_GROUP_SHUFFLE_T (long)
