@@ -19,6 +19,11 @@ Notable user facing changes
   Print the infringing function in addition to the function where the recursion
   was encountered and demangle C++ function names.
 
+* Windows builds no longer require MS Visual Studio Build Tools for linking
+  CPU device kernels. This only works with 1) static LLVM built with lld-link,
+  2) PoCL built with MSVC compiler for x86(-64) target. The only remaining
+  runtime dependency is the MSVC runtime library.
+
 ===========================
 Driver-specific features
 ===========================
