@@ -1127,16 +1127,42 @@ static int pocl_level0_setup_spirv_metadata(cl_device_id Device,
 
 #ifdef ENABLE_NPU
 
-static bool pocl_npu_is_layout_gemm(cl_uint Rank, const void *Layout) {
-  const cl_tensor_layout_ml_exp *Ptr = (cl_tensor_layout_ml_exp *)Layout;
+static bool pocl_npu_is_layout_gemm(cl_uint Rank,
+                                    cl_tensor_layout_type_exp LayoutType,
+                                    const void *Layout) {
 
   // supported layouts from openvino compiler plugin /
-  // "rankToLegacyLayoutString": C, NC, CHW, NCHW, NCDHW
-  if (Ptr->ml_type == CL_TENSOR_LAYOUT_ML_NC_EXP && Rank == 2)
-    return true;
-  if (Ptr->ml_type == CL_TENSOR_LAYOUT_ML_CHW_EXP && Rank == 3)
-    return true;
-  return false;
+  // "rankToLegacyLayoutString": C, NC, CHW, NCHW, NCDHW and
+  // equivalent BLAS configurations of these. In princible, all data
+  // layouts could be supported by passing the data using "C" layout
+  // and applying reshapes, transposes, splits and etc. operations in
+  // the graphs.
+
+  switch (LayoutType) {
+  case CL_TENSOR_LAYOUT_ML_EXP: {
+    const cl_tensor_layout_ml_exp *Ptr = (cl_tensor_layout_ml_exp *)Layout;
+    if (Ptr->ml_type == CL_TENSOR_LAYOUT_ML_NC_EXP && Rank == 2)
+      return CL_SUCCESS;
+    if (Ptr->ml_type == CL_TENSOR_LAYOUT_ML_CHW_EXP && Rank == 3)
+      return CL_SUCCESS;
+
+    POCL_RETURN_ERROR_ON(true, CL_DBK_UNSUPPORTED_EXP,
+                         "ML layout type is not one of the supported ones: C, "
+                         "NC, CHW, NCHW, NCDHW");
+  }
+  case CL_TENSOR_LAYOUT_BLAS_EXP: {
+    const cl_tensor_layout_blas_exp *Ptr = (cl_tensor_layout_blas_exp *)Layout;
+    for (unsigned I = 0; I < Rank - 1; I++) {
+      if (Ptr->leading_dims[I] != (Rank - I - 1)) {
+        POCL_RETURN_ERROR_ON(true, CL_DBK_UNSUPPORTED_EXP,
+                             "BLAS layout is not supported.");
+      }
+    }
+    return CL_SUCCESS;
+  }
+  }
+
+  return CL_DBK_UNSUPPORTED_EXP;
 }
 
 int pocl_npu_validate_khr_gemm(cl_bool TransA, cl_bool TransB,
@@ -1173,22 +1199,24 @@ int pocl_npu_validate_khr_gemm(cl_bool TransA, cl_bool TransB,
                        "Datatype of C is smaller than A\n");
 
   // check validity of data layouts of the tensors.
-  POCL_RETURN_ERROR_ON(
-      (TenA->layout_type != CL_TENSOR_LAYOUT_ML_EXP ||
-       TenB->layout_type != CL_TENSOR_LAYOUT_ML_EXP ||
-       TenCOut->layout_type != CL_TENSOR_LAYOUT_ML_EXP ||
-       (TenCIOpt && TenCIOpt->layout_type != CL_TENSOR_LAYOUT_ML_EXP)),
-      CL_INVALID_TENSOR_LAYOUT_EXP,
-      "GEMM on NPU device only supports ML layouts\n");
+  for (auto *Tensor : {TenA, TenB, TenCIOpt, TenCOut}) {
+    if (!Tensor)
+      continue;
+    if (Tensor->layout_type != CL_TENSOR_LAYOUT_ML_EXP &&
+        Tensor->layout_type != CL_TENSOR_LAYOUT_BLAS_EXP)
+      POCL_RETURN_ERROR_ON(
+          true, CL_INVALID_TENSOR_LAYOUT_EXP,
+          "GEMM on NPU device only supports BLAS and ML layouts\n");
+  }
 
-  POCL_RETURN_ERROR_ON(
-      (!pocl_npu_is_layout_gemm(TenA->rank, TenA->layout) ||
-       !pocl_npu_is_layout_gemm(TenB->rank, TenB->layout) ||
-       !pocl_npu_is_layout_gemm(TenCOut->rank, TenCOut->layout) ||
-       (TenCIOpt &&
-        !pocl_npu_is_layout_gemm(TenCIOpt->rank, TenCIOpt->layout))),
-      CL_INVALID_TENSOR_LAYOUT_EXP,
-      "GEMM on NPU device only supports C, NC, CHW, NCHW, NCDHW layouts\n");
+  for (auto *Tensor : {TenA, TenB, TenCIOpt, TenCOut}) {
+    if (!Tensor)
+      continue;
+    cl_int Status = pocl_npu_is_layout_gemm(Tensor->rank, Tensor->layout_type,
+                                            Tensor->layout);
+    if (Status != CL_SUCCESS)
+      return Status;
+  }
 
   return CL_SUCCESS;
 }

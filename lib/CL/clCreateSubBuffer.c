@@ -24,6 +24,7 @@
 
 #include "devices.h"
 #include "pocl_cl.h"
+#include "pocl_tensor_util.h"
 #include "pocl_util.h"
 #include "utlist.h"
 
@@ -48,10 +49,34 @@ POname (clCreateSubBuffer) (cl_mem parent,
 
   POCL_GOTO_ERROR_COND((buffer_create_info == NULL), CL_INVALID_VALUE);
 
-  POCL_GOTO_ERROR_COND((buffer_create_type != CL_BUFFER_CREATE_TYPE_REGION),
+  POCL_GOTO_ERROR_COND (
+    (buffer_create_type != CL_BUFFER_CREATE_TYPE_REGION
+     && buffer_create_type != CL_BUFFER_CREATE_TYPE_TENSOR_VIEW_EXP),
     CL_INVALID_VALUE);
 
-  cl_buffer_region *info = (cl_buffer_region *)buffer_create_info;
+  cl_buffer_region temp_region_info;
+  const cl_buffer_region *info
+    = buffer_create_type == CL_BUFFER_CREATE_TYPE_REGION
+        ? (const cl_buffer_region *)buffer_create_info
+        : NULL;
+  const cl_tensor_view_exp *tr_info
+    = buffer_create_type == CL_BUFFER_CREATE_TYPE_TENSOR_VIEW_EXP
+        ? (const cl_tensor_view_exp *)buffer_create_info
+        : NULL;
+
+  if (buffer_create_type == CL_BUFFER_CREATE_TYPE_TENSOR_VIEW_EXP)
+    {
+      POCL_GOTO_ERROR_ON ((pocl_check_tensor_desc (tr_info->tensor_desc)),
+                          CL_INVALID_PROPERTY, "invalid tensor description.");
+
+      POCL_GOTO_ERROR_ON (!tr_info->tensor_desc->layout, CL_INVALID_VALUE,
+                          "tensor views datalayout is not well defined.");
+
+      temp_region_info.origin = tr_info->origin;
+      temp_region_info.size = pocl_tensor_data_size (tr_info->tensor_desc);
+      info = &temp_region_info;
+    }
+  assert (info);
 
   POCL_GOTO_ERROR_ON ((info->size == 0 && !parent->has_device_address),
                       CL_INVALID_BUFFER_SIZE,
@@ -138,6 +163,16 @@ POname (clCreateSubBuffer) (cl_mem parent,
   mem->origin = info->origin;
   pocl_cl_mem_inherit_flags (mem, parent, flags);
   /* All other struct members are NULL (not valid). */
+
+  if (tr_info)
+    {
+      mem->num_properties = 1;
+      mem->properties[0] = CL_MEM_TENSOR_EXP;
+      POCL_GOTO_ERROR_ON (
+        (pocl_copy_tensor_desc2mem (mem, tr_info->tensor_desc)),
+        CL_OUT_OF_HOST_MEMORY,
+        "Couldn't allocate space for tensor description.");
+    }
 
   /* The sub-parents should keep the parent parent alive until all of them are
    * released. */

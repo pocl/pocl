@@ -102,15 +102,8 @@ bool instantiateTemplateGEMM(const void *KernelAttrs,
   ReplaceMap["INPUT_ELEM_TYPE"] = dtype2elemtype(Attrs->a.dtype);
   ReplaceMap["INPUT_ELEM_TYPE"] = dtype2elemtype(Attrs->c_out.dtype);
 
-  assert(Attrs->a.layout_type == CL_TENSOR_LAYOUT_ML_EXP);
-  L = (cl_tensor_layout_ml_exp *)Attrs->a.layout;
-  ReplaceMap["INPUT_LAYOUT"] = layout2str(L->ml_type);
-  L = (cl_tensor_layout_ml_exp *)Attrs->b.layout;
-  ReplaceMap["INPUT_LAYOUT"] = layout2str(L->ml_type);
-
-  assert(Attrs->c_out.layout_type == CL_TENSOR_LAYOUT_ML_EXP);
-  L = (cl_tensor_layout_ml_exp *)Attrs->c_out.layout;
-  ReplaceMap["OUTPUT_LAYOUT"] = layout2str(L->ml_type);
+  ReplaceMap["INPUT_LAYOUT"] = layout2str(Attrs->a);
+  ReplaceMap["OUTPUT_LAYOUT"] = layout2str(Attrs->c_out);
 
   ReplaceMap["TRANSPOSE_A"] = Attrs->trans_a ? "true" : "false";
   ReplaceMap["TRANSPOSE_B"] = Attrs->trans_b ? "true" : "false";

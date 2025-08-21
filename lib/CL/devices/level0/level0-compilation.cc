@@ -1340,29 +1340,60 @@ const char *dtype2elemtype(cl_tensor_datatype_exp dtype) {
   return nullptr;
 }
 
-const char *layout2str(cl_tensor_layout_ml_type_exp l) {
-  switch (l) {
-  case CL_TENSOR_LAYOUT_ML_C_EXP:
-    return "C";
-  case CL_TENSOR_LAYOUT_ML_NC_EXP:
-    return "NC";
-  case CL_TENSOR_LAYOUT_ML_CN_EXP:
-    return "CN";
-  case CL_TENSOR_LAYOUT_ML_HW_EXP:
-    return "HW";
-  case CL_TENSOR_LAYOUT_ML_WH_EXP:
-    return "WH";
-  case CL_TENSOR_LAYOUT_ML_CHW_EXP:
-    return "CHW";
-  case CL_TENSOR_LAYOUT_ML_NCHW_EXP:
-    return "NCHW";
-  case CL_TENSOR_LAYOUT_ML_NHWC_EXP:
-    return "NHWC";
+const char *layout2str(const cl_tensor_desc_exp &Tensor) {
+  switch (Tensor.layout_type) {
   default:
     return "NULL";
+  case CL_TENSOR_LAYOUT_ML_EXP: {
+    const auto *Ptr =
+        static_cast<const cl_tensor_layout_ml_exp *>(Tensor.layout);
+    switch (Ptr->ml_type) {
+    case CL_TENSOR_LAYOUT_ML_C_EXP:
+      return "C";
+    case CL_TENSOR_LAYOUT_ML_NC_EXP:
+      return "NC";
+    case CL_TENSOR_LAYOUT_ML_CN_EXP:
+      return "CN";
+    case CL_TENSOR_LAYOUT_ML_HW_EXP:
+      return "HW";
+    case CL_TENSOR_LAYOUT_ML_WH_EXP:
+      return "WH";
+    case CL_TENSOR_LAYOUT_ML_CHW_EXP:
+      return "CHW";
+    case CL_TENSOR_LAYOUT_ML_NCHW_EXP:
+      return "NCHW";
+    case CL_TENSOR_LAYOUT_ML_NHWC_EXP:
+      return "NHWC";
+    default:
+      return "NULL";
+    }
   }
-}
+  case CL_TENSOR_LAYOUT_BLAS_EXP: {
+    const auto *Ptr =
+        static_cast<const cl_tensor_layout_blas_exp *>(Tensor.layout);
+    for (unsigned I = 0; I < Tensor.rank - 1; I++) {
+      if (Ptr->leading_dims[I] != (Tensor.rank - I - 1)) {
+        return "NULL";
+      }
+    }
+    switch (Tensor.rank) {
+    default:
+      return "NULL";
+    case 1:
+      return "C";
+    case 2:
+      return "NC";
+    case 3:
+      return "CHW";
+    case 4:
+      return "NCHW";
+    }
+  }
+  }
 
+  assert(!"UNREACHABLE");
+  return "NULL";
+}
 
 /// @brief Loads a native model from disk cache, or builds an XML+BIN model,
 /// or builds a DBK template model

@@ -4509,16 +4509,16 @@ void *DMABufAllocation::allocImport(Level0Device *D,
 
 bool DMABufAllocation::free(Level0Device *D) {
   if (D == ExportDev) {
-    if (BufferImportMap.empty()) {
-      D->freeUSMMem(ExportPtr);
-      ExportPtr = nullptr;
-      ExportDev = nullptr;
-      FD = -1;
-    } else {
-      POCL_MSG_PRINT_LEVEL0("Not freeing Export alloc "
-                            "because Import(s) remain\n");
-      return false; // can we release export mem while we have active imports?
-    }
+    // It's not specified whether an export allocation can be freed
+    // before its import allocations. Free it anyway and cross
+    // fingers. The reason for doing this is that the context the
+    // export allocation is bound to may be released and this has lead
+    // to segfault in the level zero driver when the export allocation
+    // gets to be free'd later on.
+    D->freeUSMMem(ExportPtr);
+    ExportPtr = nullptr;
+    ExportDev = nullptr;
+    FD = -1;
   } else {
     auto It = BufferImportMap.find(D);
     if (It == BufferImportMap.end()) {

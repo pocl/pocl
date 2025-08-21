@@ -1006,7 +1006,7 @@ tensor_get_blas_stride_in_elements (const cl_tensor_desc_exp *A, unsigned Dim)
     {
       const cl_tensor_layout_blas_exp *BL = A->layout;
       cl_tensor_stride_exp stride = 1;
-      for (unsigned i = 0; i < Dim; i++)
+      for (unsigned i = 0; i <= Dim; i++)
         {
           assert (A->shape[BL->leading_dims[i]]);
           stride *= A->shape[BL->leading_dims[i]];

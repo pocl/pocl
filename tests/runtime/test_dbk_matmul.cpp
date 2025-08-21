@@ -27,6 +27,7 @@
 #include <random>
 #include <string>
 #include <type_traits>
+#include <variant>
 #include <vector>
 
 #define ROW_MAJOR 0
@@ -86,38 +87,64 @@ findDeviceWithMatmulDBK() noexcept {
 }
 
 class TensorLayoutBLAS {
+protected:
   std::vector<cl_tensor_dim_exp> LeadingDims;
-  std::vector<size_t> LeadingStrides;
-  cl_tensor_layout_blas_pitched_exp Layout;
+  cl_tensor_layout_blas_exp PackedLayout;
 
 public:
-  TensorLayoutBLAS() { memset(&Layout, 0, sizeof(Layout)); }
-  TensorLayoutBLAS(std::initializer_list<cl_tensor_dim_exp> TheLeadingDims,
-                   std::initializer_list<size_t> TheLeadingStrides)
-      : LeadingDims(TheLeadingDims), LeadingStrides(TheLeadingStrides) {
-    memcpy(Layout.leading_dims, LeadingDims.data(),
+  TensorLayoutBLAS() { memset(&PackedLayout, 0, sizeof(PackedLayout)); }
+  TensorLayoutBLAS(const TensorLayoutBLAS &) = default;
+  TensorLayoutBLAS(std::initializer_list<cl_tensor_dim_exp> TheLeadingDims)
+      : LeadingDims(TheLeadingDims) {
+    memcpy(PackedLayout.leading_dims, LeadingDims.data(),
            LeadingDims.size() * sizeof(cl_tensor_dim_exp));
-    memcpy(Layout.leading_strides, LeadingStrides.data(),
-           LeadingStrides.size() * sizeof(size_t));
   }
 
   TensorLayoutBLAS &operator=(const TensorLayoutBLAS &Other) = default;
   TensorLayoutBLAS &operator=(TensorLayoutBLAS &&Other) = delete;
-  cl_tensor_layout_blas_pitched_exp *get() noexcept { return &Layout; }
+  cl_tensor_layout_blas_exp *get() noexcept { return &PackedLayout; }
 
-  // In elements.
-  size_t getSize() const noexcept { return LeadingStrides.back(); }
   unsigned getNumLeadingDims() const noexcept { return LeadingDims.size(); }
   const std::vector<cl_tensor_dim_exp> &getLeadingDims() const noexcept {
     return LeadingDims;
   }
 };
 
+class TensorLayoutBLASPitched : public TensorLayoutBLAS {
+  std::vector<size_t> LeadingStrides;
+  cl_tensor_layout_blas_pitched_exp PitchedLayout;
+
+public:
+  TensorLayoutBLASPitched() : TensorLayoutBLAS() {
+    memset(&PitchedLayout, 0, sizeof(PitchedLayout));
+  }
+  TensorLayoutBLASPitched(
+      std::initializer_list<cl_tensor_dim_exp> TheLeadingDims,
+      std::initializer_list<size_t> TheLeadingStrides)
+      : TensorLayoutBLAS(TheLeadingDims), LeadingStrides(TheLeadingStrides) {
+    memcpy(PitchedLayout.leading_strides, LeadingStrides.data(),
+           LeadingStrides.size() * sizeof(size_t));
+    memcpy(PitchedLayout.leading_dims, LeadingDims.data(),
+           LeadingDims.size() * sizeof(cl_tensor_dim_exp));
+  }
+
+  TensorLayoutBLASPitched(const TensorLayoutBLASPitched &) = default;
+
+  TensorLayoutBLASPitched &
+  operator=(const TensorLayoutBLASPitched &Other) = default;
+  TensorLayoutBLASPitched &operator=(TensorLayoutBLASPitched &&Other) = delete;
+  cl_tensor_layout_blas_pitched_exp *get() noexcept { return &PitchedLayout; }
+
+  // In elements.
+  size_t getSize() const noexcept { return LeadingStrides.back(); }
+};
+
 class TensorDesc {
   std::vector<cl_tensor_shape_exp> Shape;
-  TensorLayoutBLAS LayoutBLAS;
-  cl_tensor_layout_ml_exp LayoutML;
   cl_tensor_desc_exp Desc;
+  std::variant<TensorLayoutBLAS, TensorLayoutBLASPitched,
+               cl_tensor_layout_ml_exp>
+      Layout;
   size_t StorageSize;
 
 public:
@@ -138,33 +165,37 @@ public:
   }
 
   void setLayout(const TensorLayoutBLAS &TheLayout) {
-    LayoutBLAS = TheLayout;
-    assert(LayoutBLAS.getNumLeadingDims() == 0 ||
-           LayoutBLAS.getNumLeadingDims() == Shape.size() - 1);
+    Layout = TheLayout;
+    Desc.layout_type = CL_TENSOR_LAYOUT_BLAS_EXP;
+    Desc.layout = std::get<TensorLayoutBLAS>(Layout).get();
+    StorageSize = numElements() * elementSize();
+  }
+
+  void setLayout(const TensorLayoutBLASPitched &TheLayout) {
+    Layout = TheLayout;
+    assert(TheLayout.getNumLeadingDims() == 0 ||
+           TheLayout.getNumLeadingDims() == Shape.size() - 1);
     Desc.layout_type = CL_TENSOR_LAYOUT_BLAS_PITCHED_EXP;
-    Desc.layout = LayoutBLAS.get();
-    if (LayoutBLAS.getNumLeadingDims()) {
+    Desc.layout = std::get<TensorLayoutBLASPitched>(Layout).get();
+    if (TheLayout.getNumLeadingDims()) {
 
       // Awkward way to find trailing dimension.
-      auto Dims = LayoutBLAS.getLeadingDims();
+      auto Dims = TheLayout.getLeadingDims();
       std::sort(Dims.begin(), Dims.end());
       unsigned TrailingDim = 0;
       while (TrailingDim < Dims.size() && TrailingDim == Dims[TrailingDim])
         TrailingDim++;
 
       assert(TrailingDim < rank());
-      StorageSize = LayoutBLAS.getSize() * Shape[TrailingDim] * elementSize();
+      StorageSize = TheLayout.getSize() * Shape[TrailingDim] * elementSize();
     }
   }
 
   void setLayout(cl_tensor_layout_ml_type_exp LayoutMLType) {
-    LayoutML.ml_type = LayoutMLType;
+    Layout = cl_tensor_layout_ml_exp{LayoutMLType};
     Desc.layout_type = CL_TENSOR_LAYOUT_ML_EXP;
-    Desc.layout = &LayoutML;
-
-    StorageSize = elementSize();
-    for (unsigned i = 0; i < Shape.size(); ++i)
-      StorageSize *= Shape[i];
+    Desc.layout = &std::get<cl_tensor_layout_ml_exp>(Layout);
+    StorageSize = numElements() * elementSize();
   }
 
   const cl_tensor_desc_exp *get() const noexcept { return &Desc; }
@@ -186,6 +217,13 @@ public:
   }
 
   size_t getStorageSize() const noexcept { return StorageSize; }
+
+  size_t numElements() const noexcept {
+    size_t Result = 1;
+    for (unsigned i = 0; i < Shape.size(); ++i)
+      Result *= Shape[i];
+    return Result;
+  };
 };
 
 template <typename T>
@@ -209,6 +247,36 @@ cl::CommandQueue CmdQ;
 clCreateProgramWithDefinedBuiltInKernelsEXP_fn createProgramWithDBKs;
 cl_dbk_attributes_matmul_exp MatmulAttrs;
 
+template <typename DbkAttrT>
+std::tuple<cl::Program, cl::Kernel>
+assertCreateDBK(cl::Context Ctx, cl::Device Device, cl_dbk_id_exp DbkID,
+                const std::string &KernelName, DbkAttrT &Attributes) {
+
+  cl_int Status;
+  cl_device_id Devices[1] = {Device()};
+  cl_dbk_id_exp IDs[1] = {DbkID};
+  const char *Names[1] = {KernelName.c_str()};
+  cl_int DeviceStatus[1] = {0};
+  DbkAttrT *Attrs[1] = {&Attributes};
+  cl_program Yolo =
+      createProgramWithDBKs(Ctx(), 1, Devices, 1, IDs, Names,
+                            (const void **)Attrs, DeviceStatus, &Status);
+  EXPECT(Status == CL_SUCCESS);
+  cl::Program Prog(Yolo);
+
+  Status = Prog.build();
+  EXPECT(Status == CL_SUCCESS);
+
+  auto MatmulKernel = cl::Kernel(Prog, KernelName, &Status);
+  EXPECT(Status == CL_SUCCESS);
+
+  std::string ActualKernelName =
+      MatmulKernel.getInfo<CL_KERNEL_FUNCTION_NAME>();
+  EXPECT(ActualKernelName == KernelName);
+
+  return std::make_tuple(Prog, MatmulKernel);
+}
+
 void doFloatMatmul(bool ColumnMajor, unsigned Transpose, unsigned M, unsigned N,
                    unsigned K, std::initializer_list<float> AData, unsigned Lda,
                    std::initializer_list<float> BData, unsigned Ldb,
@@ -217,9 +285,9 @@ void doFloatMatmul(bool ColumnMajor, unsigned Transpose, unsigned M, unsigned N,
   float MarkerVal = 9999.0f;
   Result = std::vector<float>((ColumnMajor ? N : M) * Ldc, MarkerVal);
 
-  TensorLayoutBLAS ATLayout({ColumnMajor ? 0u : 1u}, {Lda});
-  TensorLayoutBLAS BTLayout({ColumnMajor ? 0u : 1u}, {Ldb});
-  TensorLayoutBLAS CTLayout({ColumnMajor ? 0u : 1u}, {Ldc});
+  TensorLayoutBLASPitched ATLayout({ColumnMajor ? 0u : 1u}, {Lda});
+  TensorLayoutBLASPitched BTLayout({ColumnMajor ? 0u : 1u}, {Ldb});
+  TensorLayoutBLASPitched CTLayout({ColumnMajor ? 0u : 1u}, {Ldc});
 
   TensorDesc ATDesc({M, K}, CL_TENSOR_DTYPE_FP32_EXP);
   TensorDesc BTDesc({K, N}, CL_TENSOR_DTYPE_FP32_EXP);
@@ -245,29 +313,12 @@ void doFloatMatmul(bool ColumnMajor, unsigned Transpose, unsigned M, unsigned N,
   MatmulAttrs.kernel_props[0] = 0;
   memset(MatmulAttrs.kernel_props, 0, sizeof(MatmulAttrs.kernel_props));
 
-  constexpr const char ExpextedKernelName[] = "my_matmul";
+  cl::Program MatmulProg;
+  cl::Kernel MatmulKernel;
+  std::tie(MatmulProg, MatmulKernel) =
+      assertCreateDBK(Ctx, Dev, CL_DBK_MATMUL_EXP, "my_matmul", MatmulAttrs);
+
   cl_int Status;
-  cl_device_id Devices[1] = {Dev()};
-  cl_dbk_id_exp IDs[1] = {CL_DBK_MATMUL_EXP};
-  const char *Names[1] = {ExpextedKernelName};
-  cl_int DeviceStatus[1] = {0};
-  cl_dbk_attributes_matmul_exp *Attrs[1] = {&MatmulAttrs};
-  cl_program Yolo =
-      createProgramWithDBKs(Ctx(), 1, Devices, 1, IDs, Names,
-                            (const void **)Attrs, DeviceStatus, &Status);
-  EXPECT(Status == CL_SUCCESS);
-  cl::Program MatmulProg(Yolo);
-
-  Status = MatmulProg.build();
-  EXPECT(Status == CL_SUCCESS);
-
-  auto MatmulKernel = cl::Kernel(MatmulProg, ExpextedKernelName, &Status);
-  EXPECT(Status == CL_SUCCESS);
-
-  std::string ActualKernelName =
-      MatmulKernel.getInfo<CL_KERNEL_FUNCTION_NAME>();
-  EXPECT(ActualKernelName == ExpextedKernelName);
-
   auto ATensor = createTensor(Ctx, ATDesc, AData.begin(), &Status);
   EXPECT(Status == CL_SUCCESS);
   auto BTensor = createTensor(Ctx, BTDesc, BData.begin(), &Status);
@@ -324,12 +375,76 @@ LoopNestExit:
     std::cout << "OK" << std::endl;
 }
 
+// Test matmul(<3x2, f16>, <2x4, f16>) -> <3x4, f32>
+static void testMatmulF16F32() {
+  std::vector<uint16_t> AData = {0x3C00, 0x0000,  // 1, 0
+                                 0x0000, 0x4000,  // 0, 2
+                                 0x4200, 0x0000}; // 3, 0
+  std::vector<uint16_t> BData = {
+      0x4900, 0x0000, 0x63D0, 0x0000,  // 10, 0, 1000, 0
+      0x0000, 0x5640, 0x0000, 0x70E2}; // 0, 100, 0, 10000
+  std::vector<float> Result = std::vector<float>(12, 0.999f);
+
+  TensorDesc ATDesc({3, 2}, CL_TENSOR_DTYPE_FP16_EXP);
+  TensorDesc BTDesc({2, 4}, CL_TENSOR_DTYPE_FP16_EXP);
+  TensorDesc CTDesc({3, 4}, CL_TENSOR_DTYPE_FP32_EXP);
+
+  TensorLayoutBLAS DL({1u});
+  ATDesc.setLayout(DL);
+  BTDesc.setLayout(DL);
+  CTDesc.setLayout(DL);
+
+  cl_dbk_attributes_matmul_exp MatmulAttrs;
+  memcpy(&MatmulAttrs.a, ATDesc.get(), sizeof(cl_tensor_desc_exp));
+  memcpy(&MatmulAttrs.b, BTDesc.get(), sizeof(cl_tensor_desc_exp));
+  memcpy(&MatmulAttrs.c, CTDesc.get(), sizeof(cl_tensor_desc_exp));
+  MatmulAttrs.trans_a = false;
+  MatmulAttrs.trans_b = false;
+  memset(MatmulAttrs.kernel_props, 0, sizeof(MatmulAttrs.kernel_props));
+
+  cl::Program MatmulProg;
+  cl::Kernel MatmulKernel;
+  std::tie(MatmulProg, MatmulKernel) = assertCreateDBK(
+      Ctx, Dev, CL_DBK_MATMUL_EXP, "matmul_f16_f32", MatmulAttrs);
+
+  cl_int Status;
+  auto ATensor = createTensor(Ctx, ATDesc, AData.data(), &Status);
+  EXPECT(Status == CL_SUCCESS);
+  auto BTensor = createTensor(Ctx, BTDesc, BData.data(), &Status);
+  EXPECT(Status == CL_SUCCESS);
+  auto CTensor = createTensor(Ctx, CTDesc, Result.data(), &Status);
+  EXPECT(Status == CL_SUCCESS);
+
+  MatmulKernel.setArg(0, ATensor);
+  MatmulKernel.setArg(1, BTensor);
+  MatmulKernel.setArg(2, CTensor);
+
+  Status = CmdQ.enqueueNDRangeKernel(MatmulKernel, cl::NullRange,
+                                     cl::NDRange{1, 1}, cl::NullRange);
+
+  EXPECT(Status == CL_SUCCESS);
+
+  Status = CmdQ.enqueueReadBuffer(CTensor, CL_FALSE, 0, CTDesc.getStorageSize(),
+                                  Result.data());
+  EXPECT(Status == CL_SUCCESS);
+
+  Status = CmdQ.finish();
+  EXPECT(Status == CL_SUCCESS);
+
+  check2DSlice(3, 4, Result, 4,
+               {10.f, 0.f, 1000.f, 0.f,   //
+                0.f, 200.f, 0.f, 20000.f, //
+                30.f, 0.f, 3000.f, 0.f},
+               4);
+}
+
 int main() {
   std::tie(Platform, Dev, DevName) = findDeviceWithMatmulDBK();
   bool isCustom = Dev.getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CUSTOM;
 
   // TODO we should have getInfo queries to query this information
-  if (isCustom && DevName.find("AI Boost") != std::string::npos) {
+  bool DeviceIsIntelNPU = DevName.find("AI Boost") != std::string::npos;
+  if (isCustom && DeviceIsIntelNPU) {
     DevUsesLayoutTypeML = true;
     DevSupportsColMajor = false;
     DevSupportsRowMajor = true;
@@ -475,6 +590,12 @@ int main() {
                   2, Result, 2);
 
     check2DSlice(2, 2, Result, 2, {2.0f, -6.0f, 6.0f, 7.0f}, 2);
+  }
+
+  // CPU driver fails this test.
+  if (DeviceIsIntelNPU) {
+    std::cout << "--- Matmul 7  ---" << std::endl;
+    testMatmulF16F32();
   }
 
   std::cout << "--- Completed ---" << std::endl;
