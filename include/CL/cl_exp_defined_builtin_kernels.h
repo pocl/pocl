@@ -126,6 +126,7 @@ typedef enum
   CL_DBK_ONNX_INFERENCE_EXP = 42,
   CL_DBK_IMG_COLOR_CONVERT_EXP = 43,
   CL_DBK_NMS_BOX_EXP = 44,
+  CL_DBK_CONVERT_EXP = 45,
   POCL_CDBI_LAST,
   POCL_CDBI_JIT_COMPILER = 0xFFFF
 } cl_dbk_id_exp; /* NOTE: the spec (v0.3.1) has an error (_exp is missing). */
@@ -344,5 +345,27 @@ typedef struct
   /* The number of input bounding boxes. */
   size_t num_boxes;
 } cl_dbk_attributes_nms_box_exp;
+
+/**
+ * name: "convert_exp"
+ *
+ * Attributes for performing element type conversion. All tensor
+ * operands must have the same shape but different element types.
+ *
+ * Rounding mode is unspecified for floating-point conversions.
+ *
+ * Overflow behavior is undefined for integer conversions (TBC: relax
+ * overflowing conversions to produce undefined values?).
+ */
+typedef struct
+{
+  cl_tensor_desc_exp src;
+  cl_tensor_desc_exp dst;
+
+  /* TBC: attribute for specifying rounding behavior? */
+
+  /* 0-terminated array of DBK properties */
+  cl_dbk_properties_exp kernel_props[CL_DBK_MAX_PROPERTIES_EXP];
+} cl_dbk_attributes_convert_exp;
 
 #endif /* OPENCL_EXP_DEFINED_BUILTIN_KERNELS */
