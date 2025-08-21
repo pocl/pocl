@@ -667,6 +667,7 @@ if(ENABLE_TBB_DEVICE)
   # related documentation: https://github.com/oneapi-src/oneTBB/tree/tbb_2020/cmake#binary-package-integration
   find_package(TBB REQUIRED)
   if(TARGET TBB::tbb)
+    message(STATUS "Found TBB::tbb target")
     set(TBB_IMPORTED_TARGETS TBB::tbb)
   elseif(NOT TBB_FOUND AND PKG_CONFIG_FOUND)
     message(STATUS "searching for TBB with pkg-config")
@@ -682,8 +683,11 @@ if(ENABLE_TBB_DEVICE)
   if(NOT TBB_LIBRARIES)
     get_target_property(TBB_LIBRARIES TBB::tbb IMPORTED_LOCATION_RELEASE)
   endif()
+  if(NOT TBB_LIBRARIES)
+    get_target_property(TBB_LIBRARIES TBB::tbb IMPORTED_LOCATION_NONE)
+  endif()
 
-  if(NOT TBB_FOUND)
+  if((NOT TBB_LIBRARIES) OR (NOT TBB_INCLUDE_DIRS))
     message(FATAL_ERROR "Can't find TBB libraries")
   endif()
 
@@ -1146,7 +1150,7 @@ if(UNIX)
     # MacOS ld outputs useless warnings like
     # ld: warning: -macosx_version_min not specificed, assuming 10.7
     # suppress them with -w.
-    set(DEFAULT_HOST_LD_FLAGS "-dynamiclib -w -lm -nostartfiles")
+    set(DEFAULT_HOST_LD_FLAGS "-dynamiclib -w -nostartfiles")
   elseif(ANDROID)
     # TODO shouldn't Android use -nostartfiles ?
     set(DEFAULT_HOST_LD_FLAGS "-L/system/lib/ -shared -ldl -lc /system/lib/crtbegin_so.o /system/lib/crtend_so.o")

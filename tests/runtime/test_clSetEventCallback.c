@@ -30,7 +30,7 @@
 #include <unistd.h>
 #endif
 
-#if !defined(__STDC_NO_THREADS__) && __STDC_VERSION__ >= 201112L
+#if !defined(__MINGW32__) && !defined(__STDC_NO_THREADS__) && (__STDC_VERSION__ >= 201112L)
 #include <threads.h>
 mtx_t mutex;
 static void
