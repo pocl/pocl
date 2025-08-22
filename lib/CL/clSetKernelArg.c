@@ -254,6 +254,18 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
                                                      "CL_DBK_NMS_BOX_EXP.\n");
           }
       }
+    case CL_DBK_CONVERT_EXP:
+      {
+        const cl_dbk_attributes_convert_exp *attrs
+          = meta->builtin_kernel_attrs;
+        if (arg_index == 0)
+          return pocl_verify_dbk_kernel_arg (buf, &attrs->src);
+        if (arg_index == 1)
+          return pocl_verify_dbk_kernel_arg (buf, &attrs->dst);
+        POCL_RETURN_ERROR (CL_INVALID_ARG_INDEX, "invalid arg index to "
+                                                 "CL_DBK_CONVERT_EXP");
+      }
+
   default:
       {
         POCL_MSG_ERR ("pocl_verify_dbk_kernel_args called on "

@@ -37,9 +37,10 @@
 #include "pocl_hash.h"
 #include "pocl_llvm.h"
 #include "pocl_local_size.h"
+#include "pocl_run_command.h"
+#include "pocl_tensor_util.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
-#include "pocl_run_command.h"
 
 #include <loader/ze_loader.h>
 #include <ze_api.h>
@@ -1225,12 +1226,57 @@ int pocl_npu_validate_khr_gemm(cl_bool TransA, cl_bool TransB,
 }
 #endif
 
+static cl_int checkDBKSupport(Level0Device &Device, cl_dbk_id_exp KernelId,
+                              const void *KernelAttributes) {
+#ifdef ENABLE_NPU
+  if (!Device.isIntelNPU())
+    return CL_DBK_UNSUPPORTED_EXP;
+
+  switch (KernelId) {
+  default:
+    return CL_DBK_UNSUPPORTED_EXP;
+  case CL_DBK_MATMUL_EXP:
+  case CL_DBK_GEMM_EXP:
+    // Already checked in pocl_level0_supports_dbk() via
+    // pocl_validate_dbk_attributes(..., pocl_npu_validate_khr_gemm) call.
+    return CL_SUCCESS;
+
+  case CL_DBK_CONVERT_EXP: {
+    auto *CvtAttrs =
+        static_cast<const cl_dbk_attributes_convert_exp *>(KernelAttributes);
+    if (!pocl_tensor_data_is_contiguous(&CvtAttrs->src) ||
+        !pocl_tensor_data_is_contiguous(&CvtAttrs->dst))
+      break;
+
+    for (auto &Tensor : {CvtAttrs->src, CvtAttrs->dst}) {
+      switch (Tensor.dtype) {
+      default:
+        return CL_DBK_UNSUPPORTED_EXP;
+      case CL_TENSOR_DTYPE_FP16_EXP:
+      case CL_TENSOR_DTYPE_FP32_EXP:
+        break;
+      }
+
+      return CL_SUCCESS;
+    }
+  }
+  }
+#endif
+
+  return CL_DBK_UNSUPPORTED_EXP;
+}
+
 int pocl_level0_supports_dbk(cl_device_id device, cl_dbk_id_exp kernel_id,
                              const void *kernel_attributes) {
 #ifdef ENABLE_NPU
   // check for NPU specific requirements on Tensors.
-  return pocl_validate_dbk_attributes(kernel_id, kernel_attributes,
-                                      pocl_npu_validate_khr_gemm);
+  cl_int Status = pocl_validate_dbk_attributes(kernel_id, kernel_attributes,
+                                               pocl_npu_validate_khr_gemm);
+  if (Status != CL_SUCCESS)
+    return Status;
+
+  auto *L0Device = static_cast<Level0Device *>(device->data);
+  return checkDBKSupport(*L0Device, kernel_id, kernel_attributes);
 
 #else
   POCL_RETURN_ERROR_ON(1, CL_DBK_UNSUPPORTED_EXP,
