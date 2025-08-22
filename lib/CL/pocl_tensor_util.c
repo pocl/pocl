@@ -311,6 +311,44 @@ pocl_copy_tensor_desc_layout (cl_tensor_desc_exp *dest,
     }
 }
 
+/**
+ * Return true if the rank and dimensions of the given tensors are equal.
+ */
+POCL_EXPORT int
+pocl_tensor_shape_equals (const cl_tensor_desc_exp *tensor0,
+                          const cl_tensor_desc_exp *tensor1)
+{
+  assert (tensor0);
+  assert (tensor1);
+  if (tensor0->rank != tensor1->rank)
+    return 0;
+
+  for (unsigned i = 0; i < tensor0->rank; ++i)
+    {
+      if (tensor0->shape[i] != tensor1->shape[i])
+        return 0;
+    }
+  return 1;
+}
+
+/**
+ * Return size of the tensor shape at the given dimension
+ *
+ * For positive 'dim' values this call is same as
+ * 'tensor->shape[dim]'. For negative values this method returns size
+ * from the '|dim|'th last dimension.
+ */
+POCL_EXPORT
+size_t
+pocl_tensor_dim_size (const cl_tensor_desc_exp *tensor, int dim)
+{
+  if (dim < 0)
+    dim = (int)tensor->rank + dim;
+  assert (dim >= 0 && "dimension exceeds tensor's rank!");
+  assert ((cl_uint)dim < tensor->rank && "dimension exceeds tensor's rank!");
+  return tensor->shape[dim];
+}
+
 int
 pocl_tensor_type_is_int (cl_tensor_datatype_exp dtype)
 {
@@ -371,18 +409,66 @@ pocl_tensor_type_size (cl_tensor_datatype_exp dtype)
     }
 }
 
+/**
+ * Return total number of elements if it is known statically.
+ *
+ * If not, return zero.
+ */
+POCL_EXPORT
+size_t
+pocl_tensor_element_count (const cl_tensor_desc_exp *t)
+{
+  size_t element_count = 1;
+  for (size_t dim = 0; dim < t->rank; ++dim)
+    {
+      element_count *= t->shape[dim];
+    }
+  return element_count;
+}
+
 size_t
 pocl_tensor_data_size (const cl_tensor_desc_exp *t)
 {
   int res = pocl_tensor_type_size (t->dtype);
   if (res < 0)
     return 0;
-  size_t data_len = (size_t)res;
-  for (size_t dim = 0; dim < t->rank; ++dim)
+
+  return pocl_tensor_element_count (t) * (size_t)res;
+}
+
+/**
+ * Return true if the elements of the tensor are stored contiguously.
+ */
+POCL_EXPORT
+int
+pocl_tensor_data_is_contiguous (const cl_tensor_desc_exp *tensor)
+{
+  assert (tensor);
+
+  switch (tensor->layout_type)
     {
-      data_len *= t->shape[dim];
+    default:
+      assert (!"Can't determine if tensor data is contiguous");
+      return 0;
+    case CL_TENSOR_LAYOUT_OPAQUE_EXP:
+      return 0;
+    case CL_TENSOR_LAYOUT_BLAS_EXP:
+    case CL_TENSOR_LAYOUT_ML_EXP:
+      return 1;
+    case CL_TENSOR_LAYOUT_BLAS_PITCHED_EXP:
+      {
+        const cl_tensor_layout_blas_pitched_exp *dl = tensor->layout;
+        for (unsigned i = 0, e = tensor->rank - 1; i < e; i++)
+          {
+            if (tensor->shape[dl->leading_dims[i]] != dl->leading_dims[i])
+              return 0;
+          }
+        return 1;
+      }
     }
-  return data_len;
+
+  assert (!"UNREACHABLE!");
+  return 0;
 }
 
 cl_bool
@@ -434,4 +520,46 @@ pocl_tensor_dtype_value_equals (const cl_tensor_datatype_exp dtype,
     default:
       return CL_FALSE;
     }
+}
+
+/** Destroys the members of the tensor description but not the
+ * 'tdesc' itself. */
+POCL_EXPORT
+void
+pocl_tensor_destroy_body (cl_tensor_desc_exp *tdesc)
+{
+  if (!tdesc)
+    return;
+
+  free ((void *)tdesc->layout);
+  tdesc->layout = NULL;
+}
+
+/**
+ * Perform deep copy assignment
+ *
+ * The body of 'dest' is destroyed before attempting copy.  On
+ * failure, returns non-zero value.
+ */
+int
+pocl_tensor_copy (cl_tensor_desc_exp *dest, const cl_tensor_desc_exp *src)
+{
+  assert (dest && "dest is NULL!");
+  assert (src && "src is NULL!");
+
+  pocl_tensor_destroy_body (dest);
+
+  if (pocl_copy_tensor_desc_layout (dest, src))
+    {
+      assert (!dest->layout);
+      return 1;
+    }
+
+  dest->rank = src->rank;
+  dest->dtype = src->dtype;
+  memcpy (dest->shape, src->shape, src->rank * sizeof (src->shape[0]));
+  memcpy (dest->properties, src->properties, sizeof (src->properties));
+  dest->layout_type = src->layout_type;
+
+  return 0;
 }
