@@ -808,10 +808,6 @@ pocl_validate_khr_gemm (cl_bool TransA,
      || TenCOut->dtype >= CL_TENSOR_DTYPE_LAST),
     CL_INVALID_TENSOR_DATATYPE_EXP, "Unknown data type in input Tensors");
 
-  POCL_RETURN_ERROR_ON ((TenA->dtype != TenB->dtype),
-                        CL_INVALID_TENSOR_DATATYPE_EXP,
-                        "datatype mismatch between A and B.\n");
-
   POCL_RETURN_ERROR_ON (TenCIOpt && (TenCIOpt->dtype != TenCOut->dtype),
                         CL_INVALID_TENSOR_DATATYPE_EXP,
                         "datatype mismatch between C_ind and C_out\n");
