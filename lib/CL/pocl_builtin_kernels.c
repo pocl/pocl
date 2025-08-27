@@ -25,6 +25,7 @@
 
 #include "pocl_tensor_util.h"
 
+#include "dbk/pocl_dbk_ggml_set_rows_shared.h"
 #include "dbk/pocl_dbk_khr_convert_shared.h"
 #include "dbk/pocl_dbk_khr_dnn_utils_shared.h"
 #include "dbk/pocl_dbk_khr_img_shared.h"
@@ -449,6 +450,12 @@ pocl_init_builtin_kernel_metadata ()
               // Placeholder types, actual operands are tensors.
               BI_ARG_READ_BUF ("uint8_t*", "input"),
               BI_ARG_WRITE_BUF ("uint8_t*", "output"), ),
+    BIKD_DBK (CL_DBK_GGML_SET_ROWS_EXP, "ggml_set_rows_exp", 4,
+              // Placeholder types, actual operands are tensors.
+              BI_ARG_READ_BUF ("uint8_t*", "data_in"),
+              BI_ARG_READ_BUF ("uint8_t*", "rows"),
+              BI_ARG_READ_BUF ("uint8_t*", "indices"),
+              BI_ARG_WRITE_BUF ("uint8_t*", "data_out"), ),
   };
   memcpy (pocl_BIDescriptors, temporary_BIDescriptors,
           sizeof (pocl_BIDescriptors));
@@ -876,6 +883,8 @@ pocl_validate_dbk_attributes (cl_dbk_id_exp kernel_id,
 #endif
     case CL_DBK_CONVERT_EXP:
       return pocl_validate_convert_attrs (kernel_id, kernel_attributes);
+    case CL_DBK_GGML_SET_ROWS_EXP:
+      return pocl_validate_ggml_set_rows_attrs (kernel_id, kernel_attributes);
     default:
       break;
     }
@@ -949,6 +958,8 @@ pocl_copy_defined_builtin_attributes (cl_dbk_id_exp kernel_id,
 #endif
     case CL_DBK_CONVERT_EXP:
       return pocl_copy_convert_attrs (kernel_id, kernel_attributes);
+    case CL_DBK_GGML_SET_ROWS_EXP:
+      return pocl_copy_ggml_set_rows_attrs (kernel_id, kernel_attributes);
     default:
       break;
     }
@@ -1006,6 +1017,11 @@ pocl_release_defined_builtin_attributes (cl_dbk_id_exp kernel_id,
     case CL_DBK_CONVERT_EXP:
       {
         pocl_release_convert_attrs (kernel_id, kernel_attributes);
+        return CL_SUCCESS;
+      }
+    case CL_DBK_GGML_SET_ROWS_EXP:
+      {
+        pocl_release_ggml_set_rows_attrs (kernel_id, kernel_attributes);
         return CL_SUCCESS;
       }
     default:
