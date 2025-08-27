@@ -127,6 +127,7 @@ typedef enum
   CL_DBK_IMG_COLOR_CONVERT_EXP = 43,
   CL_DBK_NMS_BOX_EXP = 44,
   CL_DBK_CONVERT_EXP = 45,
+  CL_DBK_SET_ROWS_EXP = 46,
   POCL_CDBI_LAST,
   POCL_CDBI_JIT_COMPILER = 0xFFFF
 } cl_dbk_id_exp; /* NOTE: the spec (v0.3.1) has an error (_exp is missing). */
@@ -367,5 +368,35 @@ typedef struct
   /* 0-terminated array of DBK properties */
   cl_dbk_properties_exp kernel_props[CL_DBK_MAX_PROPERTIES_EXP];
 } cl_dbk_attributes_convert_exp;
+
+/**
+ * name: "set_rows_exp"
+ *
+ * The operation replaces rows in 'data' pointed by 'indices' from
+ * 'rows'. In detail:
+ *
+ *   data[b0, b1, indices[b0 % I0, b1 % I1, r], e] = rows[b0, b1, r, e]
+ *
+ * where '0 <= b0 < B0', '0 <= b1 < B1', '0 <= r < R' and '0 <= e <
+ * E'. 'indices' has shape of [I0, I1, R] or [1, I0, I1, R],
+ * 'data_in' and 'data_out' have the same shape of [B0, B1, N, E] and
+ * 'rows' has shape of [B0, B1, R, E].
+ *
+ * B0 and B1 must be divisable by I0 and I1, respectively.
+ *
+ * The behavior is undefined if indices points to same rows in the 'data'.
+ *
+ * 'indices' must have element type of CL_TENSOR_DTYPE_INT64_EXP.
+ * 'rows' must have element type of CL_TENSOR_DTYPE_FP32_EXP. Rows
+ * will be implicitly converted to the element type of
+ * 'data_in'. 'data_in' and 'data_out' have the same element type.
+ */
+typedef struct
+{
+  cl_tensor_desc_exp data_in;
+  cl_tensor_desc_exp rows;
+  cl_tensor_desc_exp indices;
+  cl_tensor_desc_exp data_out;
+} cl_dbk_attributes_set_rows_exp;
 
 #endif /* OPENCL_EXP_DEFINED_BUILTIN_KERNELS */
