@@ -129,7 +129,7 @@ pocl_ventus_init_device_ops(struct pocl_device_ops *ops)
   ops->probe = pocl_ventus_probe;
 
   ops->uninit = pocl_ventus_uninit;
-  ops->reinit = NULL;
+  ops->reinit = pocl_ventus_reinit;
   ops->init = pocl_ventus_init;
 
   ops->alloc_mem_obj = pocl_ventus_alloc_mem_obj;
@@ -990,6 +990,42 @@ pocl_ventus_uninit (unsigned j, cl_device_id device)
   return CL_SUCCESS;
 }
 
+cl_int
+pocl_ventus_reinit (unsigned j, cl_device_id device)
+{
+  vt_device_data_t *d = (vt_device_data_t *)device->data;
+  
+  POCL_MSG_PRINT_VENTUS("REINIT: Starting reinit for device %u\n", j);
+  
+  if (d == NULL) {
+    POCL_MSG_PRINT_VENTUS("REINIT: Device data is NULL, calling full init\n");
+    return pocl_ventus_init(j, device, NULL);
+  }
+
+  // 重新建立硬件连接 - 关键的 GPU 设备特性
+  if (d->vt_device != NULL) {
+    POCL_MSG_PRINT_VENTUS("REINIT: Closing existing device connection\n");
+    vt_dev_close(d->vt_device);
+    d->vt_device = NULL;
+  }
+  
+  // 重新打开设备连接
+  POCL_MSG_PRINT_VENTUS("REINIT: Re-opening device connection\n");
+  if (vt_dev_open(&d->vt_device) != 0) {
+    POCL_MSG_ERR("REINIT: Failed to re-open ventus device\n");
+    return CL_DEVICE_NOT_AVAILABLE;
+  }
+
+  // 重置命令队列状态（类似 basic 设备）
+  POCL_LOCK(d->cq_lock);
+  d->ready_list = NULL;
+  d->command_list = NULL;
+  d->current_kernel = NULL;
+  POCL_UNLOCK(d->cq_lock);
+
+  POCL_MSG_PRINT_VENTUS("REINIT: Device %u reinitialized successfully\n", j);
+  return CL_SUCCESS;
+}
 
 void ventus_command_scheduler (struct vt_device_data_t *d)
 {
