@@ -1225,6 +1225,15 @@ static const Level0Model Level0GraphModels[] = {
                 /* .NGraphBin = */ "",
                 /* .BuildFlags = */ "",
                 /* .instantiateModel = */ instantiateTemplateCONVERT},
+    Level0Model{/* .Name = */ "set_rows_exp",
+                /* .DBK_ID = */ CL_DBK_SET_ROWS_EXP,
+                /* .Format = */ ZE_GRAPH_FORMAT_NGRAPH_LITE,
+                /* .NativeBin = */ "",
+                /* .NativeShaveBin = */ "",
+                /* .NGraphXml = */ "",
+                /* .NGraphBin = */ "",
+                /* .BuildFlags = */ "",
+                /* .instantiateModel = */ instantiateTemplateSET_ROWS},
 };
 
 constexpr unsigned NumLevel0GraphModels =
@@ -1455,7 +1464,7 @@ bool Level0BuiltinProgramBuild::loadModel(ze_context_handle_t ContextH,
       std::string ModelXMLInstance;
       std::string BuildFlagsInstance;
       assert(M->instantiateModel);
-      if (!M->instantiateModel(KernelAttrs, ModelXMLInstance,
+      if (!M->instantiateModel(KernelAttrs, ModelXMLInstance, ModelBin,
                                BuildFlagsInstance))
         return false;
       BuildLog.append("\n");

@@ -1226,6 +1226,9 @@ int pocl_npu_validate_khr_gemm(cl_bool TransA, cl_bool TransB,
 }
 #endif
 
+/// Checks the DBK is supported on the device.
+///
+/// Validity of 'KernelAttributes' must be checked prior calling this.
 static cl_int checkDBKSupport(Level0Device &Device, cl_dbk_id_exp KernelId,
                               const void *KernelAttributes) {
 #ifdef ENABLE_NPU
@@ -1259,6 +1262,25 @@ static cl_int checkDBKSupport(Level0Device &Device, cl_dbk_id_exp KernelId,
 
       return CL_SUCCESS;
     }
+  }
+  case CL_DBK_SET_ROWS_EXP: {
+    // The implementation currently only covers cases needed by llama.cpp.
+    auto *SetRowsAttrs =
+        static_cast<const cl_dbk_attributes_set_rows_exp *>(KernelAttributes);
+    if (!pocl_tensor_data_is_contiguous(&SetRowsAttrs->data_in) ||
+        !pocl_tensor_data_is_contiguous(&SetRowsAttrs->rows) ||
+        !pocl_tensor_data_is_contiguous(&SetRowsAttrs->indices) ||
+        !pocl_tensor_data_is_contiguous(&SetRowsAttrs->data_out))
+      break;
+
+    if (SetRowsAttrs->data_in.shape[0] != 1 ||
+        SetRowsAttrs->data_in.shape[1] != 1)
+      return CL_DBK_UNSUPPORTED_EXP;
+
+    if (SetRowsAttrs->data_in.dtype != CL_TENSOR_DTYPE_FP16_EXP &&
+        SetRowsAttrs->data_in.dtype != CL_TENSOR_DTYPE_FP32_EXP)
+      return CL_DBK_UNSUPPORTED_EXP;
+    return CL_SUCCESS;
   }
   }
 #endif

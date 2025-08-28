@@ -79,6 +79,7 @@ const char *GEMM_Flags_Template =
 
 bool instantiateTemplateGEMM(const void *KernelAttrs,
                              std::string &ModelXMLInstance,
+                             std::vector<uint8_t> &ModelBinary,
                              std::string &BuildFlagsInstance) {
   ModelXMLInstance = GEMM_XML_Template;
   BuildFlagsInstance = GEMM_Flags_Template;

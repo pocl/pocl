@@ -189,6 +189,7 @@ const char *MATMUL_Flags_Template =
 
 bool instantiateTemplateMATMUL(const void *KernelAttrs,
                                std::string &ModelXMLInstance,
+                               std::vector<uint8_t> &ModelBinary,
                                std::string &BuildFlagsInstance) {
 
   auto *Attrs = (const cl_dbk_attributes_matmul_exp *)KernelAttrs;

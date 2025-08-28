@@ -86,6 +86,7 @@ static const char *BuildFlagsTemplate =
 
 bool instantiateTemplateCONVERT(const void *KernelAttrs,
                                 std::string &ModelXMLInstance,
+                                std::vector<uint8_t> &ModelBinary,
                                 std::string &BuildFlagsInstance) {
 
   auto *Attrs = (const cl_dbk_attributes_convert_exp *)KernelAttrs;
