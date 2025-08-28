@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2022-2024 Henry Linjamäki, Michal Babej / Intel Finland Oy
+ * Copyright (c) 2022-2025 Henry Linjamäki, Michal Babej / Intel Finland Oy
  *
  * PoCL-specific proof-of-concept (draft) of Defined Builtin Kernels extension.
  *
@@ -34,6 +34,8 @@
 /* Based on spec v.0.3.1
  * https://github.com/KhronosGroup/OpenCL-Docs/pull/1007
  */
+#define CL_EXP_DEFINED_BUILTIN_KERNELS_EXTENSION_VERSION                      \
+  CL_MAKE_VERSION (0, 3, 1)
 
 #include "cl_exp_tensor.h"
 
