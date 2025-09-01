@@ -160,6 +160,9 @@ static cl_int pocl_level0_post_init(struct pocl_device_ops *ops) {
   pocl_llvm_initialize_spirv_ext_option();
 #endif
 
+  if (!pocl_get_bool_option("POCL_LEVEL0_CROSS_CTX_SHARED_MEM", 1))
+    return CL_SUCCESS;
+
   // TODO currently only works with two drivers
   if (L0DriverInstances.size() != 2)
     return CL_SUCCESS;

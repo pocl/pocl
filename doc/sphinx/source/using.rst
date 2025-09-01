@@ -269,6 +269,12 @@ pocl.
  If non-empty string, runs llvm-opt with this option after the linking step,
  before converting to SPIRV and handing over to L0 driver. Default: empty.
 
+- **POCL_LEVEL0_CROSS_CTX_SHARED_MEM**
+
+  If this is set to 1, level0 devices share the storage of the buffers
+  across level0 contexts (if supported). This option may reduce maximum
+  allocation sizes. Default: 1.
+
 - **POCL_LLVM_VERIFY**
 
   if enabled, some drivers (CUDA, CPU, Level0) use an extra step of
