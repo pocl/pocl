@@ -70,6 +70,7 @@ foreach(PROG ${CXX_PROGRAMS_TO_BUILD})
   set_source_files_properties( "${PROG}.cpp" PROPERTIES LANGUAGE CXX )
   add_executable("${PROG}" "${PROG}.cpp")
   target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
+  target_include_directories("${PROG}" PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   add_symlink_to_built_opencl_dynlib("${PROG}")
 endforeach()
 
