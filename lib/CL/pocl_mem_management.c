@@ -586,13 +586,14 @@ pocl_convert_to_subbuffer_migrations (pocl_buffer_migration_info *buffer_usage,
 static void
 update_subbuffer_versioning_data (cl_mem updated_buf)
 {
+  assert(!updated_buf->parent && "Argument must not be a sub-buffer!");
   if (updated_buf->sub_buffers == NULL)
     return;
 
   cl_mem_list_item_t *sub_buf;
   LL_FOREACH (updated_buf->sub_buffers, sub_buf)
     {
-      sub_buf->mem->latest_version = updated_buf->parent->latest_version;
+      sub_buf->mem->latest_version = updated_buf->latest_version;
     }
 }
 

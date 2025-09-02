@@ -416,14 +416,14 @@ POCLU_API int POCLU_CALL check_cl_error (cl_int cl_err, int line,
  * \brief check an expression and if false: print to stderr and exit of failure
  * @param EXP [in]
  */
-#define TEST_ASSERT(EXP)                                                \
-do {                                                                    \
-  if (!(EXP)) {                                                         \
-    fprintf(stderr, "Assertion: \n" #EXP "\nfailed on %s:%i\n",         \
-        __FILE__, __LINE__);                                            \
-    return EXIT_FAILURE;                                                \
-  }                                                                     \
-} while (0)
+#define TEST_ASSERT(EXP)                                                       \
+  do {                                                                         \
+    if (!(EXP)) {                                                              \
+      fprintf(stderr, "Assertion: \n" #EXP "\nfailed on %s:%i\n", __FILE__,    \
+              __LINE__);                                                       \
+      exit(EXIT_FAILURE);                                                      \
+    }                                                                          \
+  } while (0)
 
 /**
  * \brief check CL return value and print to stderr and jump to ERROR statement

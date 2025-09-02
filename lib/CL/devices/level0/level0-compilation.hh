@@ -578,6 +578,7 @@ struct Level0BuiltinKernelBuildResult {
 
 typedef bool (*instantiateModelTemplate_fn)(const void *KernelAttrs,
                                             std::string &ModelXMLInstance,
+                                            std::vector<uint8_t> &ModelBin,
                                             std::string &BuildFlagsInstance);
 
 struct Level0Model {
