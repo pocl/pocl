@@ -24,6 +24,7 @@
 */
 
 #include "config.h"
+#include "dbk/pocl_dbk_util.h"
 #include "pocl_cl.h"
 #include "pocl_debug.h"
 #include "pocl_tensor_util.h"
@@ -277,6 +278,17 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
         const cl_tensor_desc_exp *tdescs[4]
           = { &attrs->data_in, &attrs->rows, &attrs->indices,
               &attrs->data_out };
+        return pocl_verify_dbk_kernel_arg (buf, tdescs[arg_index]);
+      }
+    case CL_DBK_MUL_EXP:
+    case CL_DBK_ADD_EXP:
+      {
+        POCL_RETURN_ERROR_ON (arg_index >= 3, CL_INVALID_ARG_INDEX,
+                              "invalid arg index to "
+                              "CL_DBK_{ADD,MUL}_EXP");
+        const cl_tensor_desc_exp *tdescs[3];
+        pocl_dbk_unpack_bin_operands (meta->builtin_kernel_id,
+                                      meta->builtin_kernel_attrs, tdescs);
         return pocl_verify_dbk_kernel_arg (buf, tdescs[arg_index]);
       }
 
