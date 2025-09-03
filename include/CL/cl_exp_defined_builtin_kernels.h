@@ -128,6 +128,8 @@ typedef enum
   CL_DBK_NMS_BOX_EXP = 44,
   CL_DBK_CONVERT_EXP = 45,
   CL_DBK_SET_ROWS_EXP = 46,
+  CL_DBK_ADD_EXP = 47,
+  CL_DBK_MUL_EXP = 48,
   POCL_CDBI_LAST,
   POCL_CDBI_JIT_COMPILER = 0xFFFF
 } cl_dbk_id_exp; /* NOTE: the spec (v0.3.1) has an error (_exp is missing). */
@@ -398,5 +400,53 @@ typedef struct
   cl_tensor_desc_exp indices;
   cl_tensor_desc_exp data_out;
 } cl_dbk_attributes_set_rows_exp;
+
+/**
+ * name: "add_exp"
+ *
+ * Element-wise addition with numpy-flavored implicit broadcasting on
+ * input operands.
+ *
+ * Constraints:
+ *
+ * - Rank of the operands must be most two.
+ *
+ * - Element type of the operands must be the same.
+ *
+ * - Shape of the operands, after implicit broadcasts, must match.
+ */
+typedef struct
+{
+  cl_tensor_desc_exp src0;
+  cl_tensor_desc_exp src1;
+  cl_tensor_desc_exp dst;
+
+  /* 0-terminated array of DBK properties */
+  cl_dbk_properties_exp kernel_props[CL_DBK_MAX_PROPERTIES_EXP];
+} cl_dbk_attributes_add_exp;
+
+/**
+ * name: "mul_exp"
+ *
+ * Element-wise multiplication with numpy-flavored implicit broadcasting on
+ * input operands.
+ *
+ * Constraints:
+ *
+ * - Rank of the operands must be in [1, 3] range.
+ *
+ * - Element type of the operands must be the same.
+ *
+ * - Shape of the operands, after implicit broadcasts, must match.
+ */
+typedef struct
+{
+  cl_tensor_desc_exp src0;
+  cl_tensor_desc_exp src1;
+  cl_tensor_desc_exp dst;
+
+  /* 0-terminated array of DBK properties */
+  cl_dbk_properties_exp kernel_props[CL_DBK_MAX_PROPERTIES_EXP];
+} cl_dbk_attributes_mul_exp;
 
 #endif /* OPENCL_EXP_DEFINED_BUILTIN_KERNELS */
