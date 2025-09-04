@@ -31,10 +31,10 @@ from https://apt.llvm.org/ - these usually support more
 
 .. highlight:: bash
 
-Install requirements (e.g with LLVM 19) for Ubuntu/Debian::
+Install requirements (e.g with LLVM 21) for Ubuntu/Debian::
 
-    export LLVM_VERSION=19
-    apt install -y python3-dev libpython3-dev build-essential ocl-icd-libopencl1 \
+    export LLVM_VERSION=21
+    sudo apt install -y python3-dev libpython3-dev build-essential ocl-icd-libopencl1 \
     cmake git pkg-config libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} \
     llvm-${LLVM_VERSION} make ninja-build ocl-icd-libopencl1 ocl-icd-dev \
     ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils \
