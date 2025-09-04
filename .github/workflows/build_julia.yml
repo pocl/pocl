@@ -113,6 +113,8 @@ jobs:
                        -GNinja
                        -DCMAKE_BUILD_TYPE=Debug
                        -DENABLE_TESTS:Bool=OFF
+                       -DENABLE_EXAMPLES:Bool=OFF
+                       -DENABLE_CONFORMANCE:Bool=ON
                        -DCMAKE_INSTALL_PREFIX=$destdir
                        -DWITH_LLVM_CONFIG=$(LLVM_full_jll.artifact_dir)/tools/llvm-config
                        -DCMAKE_PREFIX_PATH="$(join(prefix, ";"))"
