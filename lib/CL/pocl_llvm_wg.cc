@@ -821,13 +821,13 @@ int pocl_llvm_extract_kernel_spirv(
 
 #endif // ENABLE_SPIRV
 
-static int pocl_llvm_run_pocl_passes(llvm::Module *Bitcode,
-                                     _cl_command_run *RunCommand, // optional
-                                     llvm::LLVMContext *LLVMContext,
-                                     PoclLLVMContextData *PoclCtx,
-                                     cl_program Program,
-                                     cl_kernel Kernel, // optional
-                                     cl_device_id Device, int Specialize) {
+static int
+pocl_llvm_run_pocl_passes(llvm::Module *Bitcode,
+                          _cl_command_run *RunCommand, // optional
+                          [[maybe_unused]] llvm::LLVMContext *LLVMContext,
+                          PoclLLVMContextData *PoclCtx, cl_program Program,
+                          cl_kernel Kernel, // optional
+                          cl_device_id Device, int Specialize) {
   // Set to true to generate a global offset 0 specialized WG function.
   bool WGAssumeZeroGlobalOffset;
   // If set to true, the next 3 parameters define the local size to specialize
@@ -1360,8 +1360,9 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program Program,
                             Modp, EmitAsm, EmitObj, Output, OutputSize);
 }
 
-void populateModulePM(void *Passes, void *Module, unsigned OptL, unsigned SizeL,
-                      bool Vectorize, TargetMachine *TM) {
+void populateModulePM([[maybe_unused]] void *Passes, void *Module,
+                      unsigned OptL, unsigned SizeL, bool Vectorize,
+                      TargetMachine *TM) {
 
   PipelineTuningOptions PTO;
 

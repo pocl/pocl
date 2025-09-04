@@ -59,7 +59,7 @@ std::vector<std::string> getKernelNames(cl_program Program) {
   return KernelNames;
 }
 
-int main(int Argc, char *Argv[]) {
+int main(int, char **) {
 
   cl_uint Count;
   cl_platform_id Platform;

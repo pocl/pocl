@@ -62,7 +62,7 @@ __kernel void test(__global long *output, __global long *input)
 
 using TestKernel = cl::KernelFunctor<cl::Buffer, cl::Buffer>;
 
-int main(int argc, char *argv[]) {
+int main(int, char **) {
   std::random_device RandomDevice;
 
   cl::Device device = cl::Device::getDefault();

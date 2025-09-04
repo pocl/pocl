@@ -3,8 +3,6 @@
 // "LLVM ERROR: Instruction Combining did not reach a fixpoint after 1 iterations"
 
 #define CL_HPP_ENABLE_EXCEPTIONS
-#define CL_HPP_MINIMUM_OPENCL_VERSION 120
-#define CL_HPP_TARGET_OPENCL_VERSION 120
 #include <CL/opencl.hpp>
 #include <iostream>
 
@@ -32,7 +30,7 @@ __kernel void krnl(int g) {
 }
 )RAW";
 
-int main(int argc, char *argv[]) {
+int main(int, char **) {
   cl_int err = CL_INVALID_VALUE;
 
   try {
