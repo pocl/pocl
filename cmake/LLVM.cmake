@@ -343,15 +343,31 @@ find_program_or_die(LLVM_LINK "llvm-link" "LLVM IR linker")
 find_program_or_die(LLVM_LLI  "lli"       "LLVM interpreter")
 
 if(ENABLE_LLVM_FILECHECKS)
+
   if(IS_ABSOLUTE "${LLVM_FILECHECK_BIN}" AND EXISTS "${LLVM_FILECHECK_BIN}")
     message(STATUS "LLVM IR checks enabled using ${LLVM_FILECHECK_BIN}.")
   else()
-    find_program_or_die(LLVM_FILECHECK_BIN "FileCheck" "LLVM FileCheck (not installed by default)")
+    message(STATUS "Looking for FileCheck${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX} or FileCheck")
+    find_program(LLVM_FILECHECK_BIN
+      NAMES "FileCheck${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "FileCheck"
+      DOC "LLVM FileCheck (not installed by default)")
   endif()
+
   if(IS_ABSOLUTE "${LLVM_DIS_BIN}" AND EXISTS "${LLVM_DIS_BIN}")
     message(STATUS "LLVM IR checks disassembled using ${LLVM_DIS_BIN}.")
   else()
-    find_program_or_die(LLVM_DIS_BIN "llvm-dis" "LLVM IR disassemble")
+    find_program(LLVM_DIS_BIN
+      NAMES "llvm-dis${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}"
+      "llvm-dis"
+      DOC "LLVM IR disassemble")
+  endif()
+  if(NOT LLVM_FILECHECK_BIN)
+    message(STATUS "LLVM IR checks not enabled, FileCheck not found.")
+    set(ENABLE_LLVM_FILECHECKS OFF)
+  endif()
+  if(NOT LLVM_DIS_BIN)
+    message(STATUS "LLVM IR checks not enabled, llvm-dis not found.")
+    set(ENABLE_LLVM_FILECHECKS OFF)
   endif()
 endif()
 
