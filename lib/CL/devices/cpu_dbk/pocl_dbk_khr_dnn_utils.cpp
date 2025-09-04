@@ -29,7 +29,8 @@
 using namespace std;
 using namespace cv::dnn;
 
-int pocl_cpu_execute_dbk_khr_nms_box(cl_program program, cl_kernel kernel,
+int pocl_cpu_execute_dbk_khr_nms_box(cl_program program,
+                                     [[maybe_unused]] cl_kernel kernel,
                                      pocl_kernel_metadata_t *meta,
                                      cl_uint dev_i,
                                      struct pocl_argument *arguments) {

@@ -55,7 +55,6 @@ static char VecAddSrc[] = R"raw(
 // no dependencies communicated by the client code to the runtime.
 int TestOutputDataDecomposition() {
 
-  unsigned Errors = 0;
   bool AllOK = true;
 
   try {

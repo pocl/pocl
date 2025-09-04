@@ -355,7 +355,7 @@ void dump2DSlice(unsigned Rows, unsigned Cols, const std::vector<T> &A,
 
 void check2DSlice(unsigned M, unsigned N, const std::vector<float> &A,
                   unsigned Lda, const std::vector<float> &B, unsigned Ldb,
-                  float Delta = 0.0f) {
+                  [[maybe_unused]] float Delta = 0.0f) {
   unsigned ErrorCount = 0;
   for (unsigned I = 0; I < M; I++)
     for (unsigned J = 0; J < N; J++) {

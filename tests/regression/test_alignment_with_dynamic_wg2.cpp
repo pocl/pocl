@@ -52,7 +52,7 @@ __kernel void evaluate(global const float *in, global float *out)
 
 #define ARRAY_SIZE 4
 
-int main(int argc, char *argv[]) {
+int main(int, char **) {
   cl::Platform platform = cl::Platform::getDefault();
   cl::Device device = cl::Device::getDefault();
   float in1[ARRAY_SIZE] = { 0.0f };

@@ -229,7 +229,7 @@ class SPIRVConstant {
   std::vector<int32_t> ConstantWords_;
 
 public:
-  SPIRVConstant(SPIRVtype *Type, size_t NumConstWords,
+  SPIRVConstant([[maybe_unused]] SPIRVtype *Type, size_t NumConstWords,
                 const int32_t *ConstWords) {
     ConstantWords_.insert(ConstantWords_.end(), ConstWords,
                           ConstWords + NumConstWords);
@@ -578,7 +578,7 @@ public:
                                   ID2Size3Map ReqLocalMap_,
                                   ID2Size3Map LocalHintMap_,
                                   ID2Size3Map VecTypeHintMap_,
-                                  size_t PointerSize) {
+                                  [[maybe_unused]] size_t PointerSize) {
     assert(Opcode_ == spv::Op::OpTypeFunction);
 
     OCLFuncInfo *Fi = new OCLFuncInfo;
@@ -827,7 +827,6 @@ private:
         OCLFuncInfo *FI = FunctionTypeMap_[KernelTypeID].get();
         OCLArgTypeInfo &AI = FI->ArgTypeInfo[CurrentKernelParam];
         int32_t ParamID = Inst.getFunctionParamID();
-        int32_t ParamType = Inst.getFunctionParamType();
         if (NameMap_.find(ParamID) != NameMap_.end()) {
           AI.Name = NameMap_[ParamID];
         } else {
@@ -911,7 +910,7 @@ private:
   // in the output stream, otherwise returns false and possibly sets
   bool fixBitcast(SPIRVinst &Inst, size_t InstSize, size_t I, size_t NumWords,
                   const int32_t *InStream, int32_t &ReplaceBitcastType,
-                  int32_t &ReplaceAtomicTypeID) {
+                  [[maybe_unused]] int32_t &ReplaceAtomicTypeID) {
     if (!Inst.isBitcast())
       return false;
 
