@@ -68,41 +68,43 @@ can be used from the build directory (without installing it system-wide).
 
 ### Linux
 
-| CPU device  |     LLVM 17    |     LLVM 18     |      LLVM 19     |     LLVM 20     |
-|:------------|:--------------:|:---------------:|:----------------:|:---------------:|
-| [x86-64](https://github.com/pocl/pocl/actions/workflows/build_linux_gh.yml) | :green_circle: | :green_circle: :large_blue_diamond: | :large_orange_diamond: | :large_orange_diamond: |
-| [ARM64](https://github.com/pocl/pocl/actions/workflows/build_arm64.yml)     | :yellow_circle: | :yellow_circle: | :green_circle: | :yellow_circle: |
-| i686    | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
-| ARM32   | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
-| RISC-V  | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
-| PowerPC | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
+| CPU device  |     LLVM 17    |     LLVM 18     |      LLVM 19     |     LLVM 20     |     LLVM 21     |
+|:------------|:--------------:|:---------------:|:----------------:|:---------------:|:---------------:|
+| [x86-64](https://github.com/pocl/pocl/actions/workflows/build_linux_gh.yml) | :green_circle: | :green_circle: :large_blue_diamond: | :green_circle: |  :large_orange_diamond: | :large_orange_diamond: |
+| [ARM64](https://github.com/pocl/pocl/actions/workflows/build_arm64.yml)     | :yellow_circle: | :yellow_circle: | :yellow_circle: |  :yellow_circle: | :green_circle: |
+| i686    | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
+| ARM32   | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
+| RISC-V  | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
+| PowerPC | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
 
-| GPU device  |     LLVM 17    |     LLVM 18     |      LLVM 19     |     LLVM 20     |
-|:------------|:--------------:|:---------------:|:----------------:|:---------------:|
-| [CUDA SM5.0](https://github.com/pocl/pocl/actions/workflows/build_cuda.yml) | :yellow_circle: | :green_circle: | :yellow_circle: | :green_circle: |
-| CUDA SM other than 5.0                                                      | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
-| [Level Zero](https://github.com/pocl/pocl/actions/workflows/build_level0.yml) | :yellow_circle: | :green_circle: | :green_circle: | :large_orange_diamond: |
-| [Vulkan](https://github.com/pocl/pocl/actions/workflows/build_openasip_vulkan.yml) | :green_circle: | :x: | :x: | :x: |
+| GPU device  |     LLVM 17    |     LLVM 18     |      LLVM 19     |     LLVM 20     |     LLVM 21     |
+|:------------|:--------------:|:---------------:|:----------------:|:---------------:|:---------------:|
+| [CUDA SM5.0](https://github.com/pocl/pocl/actions/workflows/build_cuda.yml) | :yellow_circle: | :green_circle: | :yellow_circle: | :green_circle: | :x: |
+| CUDA SM other than 5.0                                                      | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :x: |
+| [Level Zero](https://github.com/pocl/pocl/actions/workflows/build_level0.yml) | :yellow_circle: | :yellow_circle: | :green_circle: | :green_circle: | :large_orange_diamond: | 
+| [Vulkan](https://github.com/pocl/pocl/actions/workflows/build_openasip_vulkan.yml) | :green_circle: | :x: | :x: | :x: | :x: |
 
-| Special device |    LLVM 17    |     LLVM 18     |      LLVM 19     |     LLVM 20     |
-|:---------------|:-------------:|:---------------:|:----------------:|:---------------:|
-| [OpenASIP](https://github.com/pocl/pocl/actions/workflows/build_openasip_vulkan.yml) | :green_circle: | :x: | :x: | :x: |
-| [Remote](https://github.com/pocl/pocl/actions/workflows/build_remote.yml) | :green_circle: | :green_circle:  | :green_circle: | :green_circle: |
+Note: CUDA with LLVM 21 is broken due to a bug in Clang (https://github.com/llvm/llvm-project/issues/154772).
+
+| Special device |    LLVM 17    |     LLVM 18     |      LLVM 19     |     LLVM 20     |     LLVM 21     |
+|:---------------|:-------------:|:---------------:|:----------------:|:---------------:|:---------------:|
+| [OpenASIP](https://github.com/pocl/pocl/actions/workflows/build_openasip_vulkan.yml) | :green_circle: | :x: | :x: | :x: |  :x: |
+| [Remote](https://github.com/pocl/pocl/actions/workflows/build_remote.yml) | :green_circle: | :green_circle:  | :green_circle: | :green_circle: | :yellow_circle: |
 
 
 ### Mac OS X
 
-| CPU device  |     LLVM 17    |     LLVM 18     |      LLVM 19     |     LLVM 20     |
-|:------------|:--------------:|:---------------:|:----------------:|:---------------:|
-| [Apple Silicon](https://github.com/pocl/pocl/actions/workflows/build_macos.yml) | :yellow_circle: | :green_circle:  | :green_circle: | :yellow_circle: |
-| [Intel CPU](https://github.com/pocl/pocl/actions/workflows/build_macos.yml)     | :yellow_circle: | :yellow_circle: | :x: | :x: |
+| CPU device  |     LLVM 17    |     LLVM 18     |      LLVM 19     |     LLVM 20     |      LLVM 21     |
+|:------------|:--------------:|:---------------:|:----------------:|:---------------:|:----------------:|
+| [Apple Silicon](https://github.com/pocl/pocl/actions/workflows/build_macos.yml) | :yellow_circle: | :green_circle:  | :green_circle: | :yellow_circle: |  :yellow_circle: |
+| [Intel CPU](https://github.com/pocl/pocl/actions/workflows/build_macos.yml)     | :yellow_circle: | :yellow_circle: | :x: | :x: | :x: |
 
 ### Windows
 
-| CPU device  |     LLVM 18    |  LLVM 19        |     LLVM 20     |
-|:------------|:--------------:|:---------------:|:---------------:|
-| [MinGW](https://github.com/pocl/pocl/actions/workflows/build_mingw.yml) / x86-64  | :yellow_circle: | :green_circle: | :yellow_circle: |
-| [MSVC](https://github.com/pocl/pocl/actions/workflows/build_msvc.yml) / x86-64    | :yellow_circle: | :green_circle: | :green_circle:  |
+| CPU device  |     LLVM 18    |  LLVM 19        |     LLVM 20     |     LLVM 21     |
+|:------------|:--------------:|:---------------:|:---------------:|:---------------:|
+| [MinGW](https://github.com/pocl/pocl/actions/workflows/build_mingw.yml) / x86-64  | :yellow_circle: | :green_circle: | :yellow_circle: | :yellow_circle: |
+| [MSVC](https://github.com/pocl/pocl/actions/workflows/build_msvc.yml) / x86-64    | :yellow_circle: | :green_circle: | :green_circle:  | :yellow_circle: |
 
 
 ## Binary packages

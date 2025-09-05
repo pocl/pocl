@@ -68,7 +68,12 @@ function(add_symlink_to_built_opencl_dynlib_in_dir SYMLINK_DIR DEPENDENCY_TARGET
   #       the OpenCL.dll is.
 
   # Skip if PoCL is not building OpenCL runtime library on Windows.
-  if(NOT WIN32 AND NOT BUILD_SHARED_LIBS OR ENABLE_ICD)
+  #if(WIN32 AND (NOT ENABLE_ICD) AND BUILD_SHARED_LIBS)
+  if(NOT WIN32)
+    return()
+  endif()
+
+  if(ENABLE_ICD OR (NOT BUILD_SHARED_LIBS))
     return()
   endif()
 
