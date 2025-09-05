@@ -1234,6 +1234,24 @@ static const Level0Model Level0GraphModels[] = {
                 /* .NGraphBin = */ "",
                 /* .BuildFlags = */ "",
                 /* .instantiateModel = */ instantiateTemplateSET_ROWS},
+    Level0Model{/* .Name = */ "add_exp",
+                /* .DBK_ID = */ CL_DBK_ADD_EXP,
+                /* .Format = */ ZE_GRAPH_FORMAT_NGRAPH_LITE,
+                /* .NativeBin = */ "",
+                /* .NativeShaveBin = */ "",
+                /* .NGraphXml = */ "",
+                /* .NGraphBin = */ "",
+                /* .BuildFlags = */ "",
+                /* .instantiateModel = */ instantiateTemplateBINOP},
+    Level0Model{/* .Name = */ "mul_exp",
+                /* .DBK_ID = */ CL_DBK_MUL_EXP,
+                /* .Format = */ ZE_GRAPH_FORMAT_NGRAPH_LITE,
+                /* .NativeBin = */ "",
+                /* .NativeShaveBin = */ "",
+                /* .NGraphXml = */ "",
+                /* .NGraphBin = */ "",
+                /* .BuildFlags = */ "",
+                /* .instantiateModel = */ instantiateTemplateBINOP},
 };
 
 constexpr unsigned NumLevel0GraphModels =
@@ -1279,6 +1297,20 @@ void replaceAllStringsInMap(std::string &Buffer, const ReplaceMapT RepMap) {
     while ((Pos = Buffer.find(Old)) != std::string::npos) {
       Buffer.replace(Pos, Len, New);
     }
+  }
+}
+
+/// Converts DBK ID to corresponding OpenVINO IR operation type and returns it
+/// as a string.
+std::string pocl::toOpenvinoOpType(cl_dbk_id_exp Id) {
+  switch (Id) {
+  default:
+    assert(!"Don't know the corresponding OpenVINO IR operation for the DBK!");
+    return std::string("INVALID_DBK_ID_") + std::to_string(Id);
+  case CL_DBK_ADD_EXP:
+    return "Add";
+  case CL_DBK_MUL_EXP:
+    return "Multiply";
   }
 }
 
@@ -1464,7 +1496,8 @@ bool Level0BuiltinProgramBuild::loadModel(ze_context_handle_t ContextH,
       std::string ModelXMLInstance;
       std::string BuildFlagsInstance;
       assert(M->instantiateModel);
-      if (!M->instantiateModel(KernelAttrs, ModelXMLInstance, ModelBin,
+      if (!M->instantiateModel(static_cast<cl_dbk_id_exp>(M->DBK_ID),
+                               KernelAttrs, ModelXMLInstance, ModelBin,
                                BuildFlagsInstance))
         return false;
       BuildLog.append("\n");

@@ -132,7 +132,8 @@ static const char *GraphTemplate = R"(
 static const char *BuildFlagsTemplate =
     R"RAW(--inputs_precisions="0:DATA_PREC 1:ROWS_PREC 2:I64" --inputs_layouts="0:DATA_LAYOUT 1:ROWS_LAYOUT 2:INDICES_LAYOUT" --outputs_precisions="0:DATA_PREC" --outputs_layouts="0:DATA_LAYOUT" --config NPU_BATCH_MODE="AUTO" NPU_PLATFORM="3720")RAW";
 
-bool instantiateTemplateSET_ROWS(const void *KernelAttrs,
+bool instantiateTemplateSET_ROWS(cl_dbk_id_exp DbkId,
+                                 const void *KernelAttrs,
                                  std::string &ModelXMLInstance,
                                  std::vector<uint8_t> &ModelBinary,
                                  std::string &BuildFlagsInstance) {
