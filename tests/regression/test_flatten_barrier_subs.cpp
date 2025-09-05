@@ -79,14 +79,14 @@ cl::Platform get_platform(unsigned force_platform = 0)
     return platforms[force_platform];
 }
 
-cl::Device get_device(cl::Platform pl, unsigned force_device = 0)
-{
-    std::vector<cl::Device> devices;
-    pl.getDevices(CL_DEVICE_TYPE_ALL, &devices);
-    if(devices.empty())
-        throw std::runtime_error("No devices found!");
+cl::Device get_device(cl::Platform pl,
+                      [[maybe_unused]] unsigned force_device = 0) {
+  std::vector<cl::Device> devices;
+  pl.getDevices(CL_DEVICE_TYPE_ALL, &devices);
+  if (devices.empty())
+    throw std::runtime_error("No devices found!");
 
-    return devices[0];
+  return devices[0];
 }
 
 void exclusive_scan_cpu(const std::vector<int>& input, std::vector<int>& output)

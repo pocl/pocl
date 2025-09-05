@@ -55,7 +55,6 @@ static char GetAddrSourceCode[] = R"raw(
 
 int TestCGSVM(cl::Platform Platform) {
 
-  unsigned Errors = 0;
   bool AllOK = true;
 
   try {
@@ -240,7 +239,6 @@ int TestCGSVM(cl::Platform Platform) {
 
 int TestMultiDevice_CGSVM(cl::Platform Platform) {
 
-  unsigned Errors = 0;
   bool AllOK = true;
 
   try {
@@ -409,7 +407,6 @@ static char SimpleKernelSourceCode[] = R"raw(
 
 // OpenCL version of simple_kernel.hip in the chipStar samples.
 int TestSimpleKernel_CGSVM(cl::Platform Platform) {
-  unsigned Errors = 0;
   bool AllOK = true;
 
   try {
@@ -594,7 +591,6 @@ int TestCLMem_SVM(cl::Platform Platform) {
 
 int TestFGSVM(cl::Platform Platform) {
 
-  unsigned Errors = 0;
   bool AllOK = true;
 
   try {
@@ -774,7 +770,6 @@ int TestFGSVM(cl::Platform Platform) {
 
 int TestSSVM(cl::Platform Platform) {
 
-  unsigned Errors = 0;
   bool AllOK = true;
 
   try {

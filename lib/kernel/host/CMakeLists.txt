@@ -629,7 +629,7 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
   message(STATUS "${VARIANT} SLEEF bc list: ${BC_FILE_LIST}")
   message(STATUS "${VARIANT} SLEEF bc: ${SLEEF_BC}")
 
-  set(LINK_OPT_COMMAND COMMAND "${LLVM_LINK}" "-o" "${SLEEF_BC}" ${BC_FILE_LIST})
+  set(LINK_OPT_COMMAND COMMAND "${LLVM_LINK}" "--suppress-warnings" "-o" "${SLEEF_BC}" ${BC_FILE_LIST})
 
   add_custom_command( OUTPUT "${SLEEF_BC}"
     DEPENDS ${BC_FILE_LIST}

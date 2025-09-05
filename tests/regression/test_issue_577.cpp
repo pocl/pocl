@@ -17,7 +17,7 @@ const char *SOURCE = R"RAW(
 
 )RAW";
 
-int main(int argc, char *argv[]) {
+int main(int, char **) {
   cl::Platform platform = cl::Platform::getDefault();
   cl::Device device = cl::Device::getDefault();
   unsigned error_count = 0;

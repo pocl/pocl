@@ -38,7 +38,7 @@ __kernel void test(__global float* buf){
 
 #define ARRAY_SIZE 16
 
-int main(int argc, char *argv[]) {
+int main(int, char **) {
   cl::Platform platform = cl::Platform::getDefault();
   cl::Device device = cl::Device::getDefault();
   float out[ARRAY_SIZE] = {0.0f};

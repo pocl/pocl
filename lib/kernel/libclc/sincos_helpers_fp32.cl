@@ -185,8 +185,8 @@ _CL_OVERLOADABLE itype __pocl_argReductionLargeS(vtype *r, vtype *rr, vtype x)
     p5 = bitalign(p5, p4, 30);
 
     // Subtract 1 if msb of fraction is 1, i.e. fraction >= 0.5
-    utype flip = (i << 31) ? (utype)0xffffffffU : (utype)0U;
-    utype sign = (i << 31) ? (utype)0x80000000U : (utype)0U;
+    utype flip = (i << 31) != 0 ? (utype)0xffffffffU : (utype)0U;
+    utype sign = (i << 31) != 0 ? (utype)0x80000000U : (utype)0U;
     p7 = p7 ^ flip;
     p6 = p6 ^ flip;
     p5 = p5 ^ flip;

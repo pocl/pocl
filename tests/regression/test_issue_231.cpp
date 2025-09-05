@@ -77,13 +77,12 @@ void scan_scan_intervals_lev1(
 }
 )RAW";
 
-int main(int argc, char *argv[])
-{
-    cl::Platform platform = cl::Platform::getDefault();
-    cl::Device device = cl::Device::getDefault();
-    try {
-        cl::CommandQueue queue = cl::CommandQueue::getDefault();
-        cl::Program program(SOURCE, true);
+int main(int, char **) {
+  cl::Platform platform = cl::Platform::getDefault();
+  cl::Device device = cl::Device::getDefault();
+  try {
+    cl::CommandQueue queue = cl::CommandQueue::getDefault();
+    cl::Program program(SOURCE, true);
 
 #if (__GNUC__ > 5)
 #pragma GCC diagnostic push

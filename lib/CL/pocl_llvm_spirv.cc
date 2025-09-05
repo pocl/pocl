@@ -134,9 +134,9 @@ int pocl_preprocess_spirv_input(cl_program program) {
   }
 }
 
-static bool getMaxSpirvVersion(pocl_version_t &MaxVersion,
-                               size_t num_ils_with_version,
-                               const cl_name_version *ils_with_version) {
+[[maybe_unused]] static bool
+getMaxSpirvVersion(pocl_version_t &MaxVersion, size_t num_ils_with_version,
+                   const cl_name_version *ils_with_version) {
   if (num_ils_with_version == 0) {
     MaxVersion.major = 1;
     MaxVersion.minor = 0;
@@ -413,8 +413,8 @@ ERROR:
 }
 
 int pocl_get_program_spec_constants(cl_program program, char *spirv_path,
-                                    const void *spirv_content,
-                                    size_t spirv_len) {
+                                    [[maybe_unused]] const void *spirv_content,
+                                    [[maybe_unused]] size_t spirv_len) {
   const char *args[] = {pocl_get_path("LLVM_SPIRV", LLVM_SPIRV),
                         "--spec-const-info", spirv_path, NULL};
   char captured_output[MAX_OUTPUT_BYTES];
@@ -509,7 +509,7 @@ static int convertBCorSPV(char *InputPath,
   std::vector<std::string> CompilationArgs;
   std::vector<const char *> CompilationArgs2;
   std::vector<uint8_t> FinalSpirv;
-  llvm::Module *Mod = nullptr;
+  [[maybe_unused]] llvm::Module *Mod = nullptr;
   bool keepOutputPath, keepInputPath;
   char *Content = nullptr;
   uint64_t ContentSize = 0;

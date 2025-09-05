@@ -53,7 +53,7 @@ __kernel void findRange(__global const float* restrict data, uint length, __glob
 
 using FindRangeKernel = cl::KernelFunctor<cl::Buffer, unsigned, cl::Buffer>;
 
-int main(int argc, char *argv[]) {
+int main(int, char **) {
   std::random_device RandomDevice;
   std::mt19937 Mersenne{RandomDevice()};
   std::uniform_real_distribution<float> UniDist{-1000.0f, +2200.0f};
