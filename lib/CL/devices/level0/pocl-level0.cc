@@ -29,6 +29,7 @@
 #include "pocl_cl.h"
 #include "utlist.h"
 
+#include "dbk/pocl_dbk_util.h"
 #include "pocl-level0.h"
 #include "pocl_builtin_kernels.h"
 #include "pocl_cache.h"
@@ -1280,6 +1281,15 @@ static cl_int checkDBKSupport(Level0Device &Device, cl_dbk_id_exp KernelId,
     if (SetRowsAttrs->data_in.dtype != CL_TENSOR_DTYPE_FP16_EXP &&
         SetRowsAttrs->data_in.dtype != CL_TENSOR_DTYPE_FP32_EXP)
       return CL_DBK_UNSUPPORTED_EXP;
+    return CL_SUCCESS;
+  }
+  case CL_DBK_ADD_EXP:
+  case CL_DBK_MUL_EXP: {
+    const cl_tensor_desc_exp *Operands[3];
+    pocl_dbk_unpack_bin_operands(KernelId, KernelAttributes, Operands);
+    for (auto *Op : Operands)
+      if (!pocl_tensor_data_is_contiguous(Op))
+        return CL_DBK_UNSUPPORTED_EXP;
     return CL_SUCCESS;
   }
   }
