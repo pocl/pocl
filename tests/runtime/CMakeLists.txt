@@ -55,7 +55,7 @@ endif()
 
 set(CXX_PROGRAMS_TO_BUILD test_device_address test_svm test_large_buf
   test_subbuffers test_compile_n_link test_dbk_matmul test_tensor_view
-  test_dbk_convert test_dbk_set_rows)
+  test_dbk_convert test_dbk_set_rows test_dbk_eltwise_ops)
 
 add_compile_options(${OPENCL_CFLAGS} -I${CMAKE_SOURCE_DIR}/include)
 
