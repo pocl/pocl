@@ -322,6 +322,9 @@ pocl_cpu_init_common (cl_device_id device)
                                        ",+SPV_INTEL_unstructured_loop_controls"
                                        ",+SPV_INTEL_arbitrary_precision_integers"
                                        ",+SPV_INTEL_memory_access_aliasing"
+#ifndef ENABLE_CONFORMANCE
+                                       ",+SPV_INTEL_subgroups"
+#endif
                                        ",+SPV_INTEL_inline_assembly";
 
 #if LLVM_MAJOR >= 20
