@@ -130,6 +130,7 @@ typedef enum
   CL_DBK_SET_ROWS_EXP = 46,
   CL_DBK_ADD_EXP = 47,
   CL_DBK_MUL_EXP = 48,
+  CL_DBK_RMS_NORM_EXP = 49,
   POCL_CDBI_LAST,
   POCL_CDBI_JIT_COMPILER = 0xFFFF
 } cl_dbk_id_exp; /* NOTE: the spec (v0.3.1) has an error (_exp is missing). */
@@ -448,5 +449,37 @@ typedef struct
   /* 0-terminated array of DBK properties */
   cl_dbk_properties_exp kernel_props[CL_DBK_MAX_PROPERTIES_EXP];
 } cl_dbk_attributes_mul_exp;
+
+/**
+ * Perform RMS normalization on 'src' along dimension pointed by 'start_dim'
+ * and right of it*.
+ *
+ * *: e.g. if 'shapeof(src) = {A, B, C, D}' and 'start_dim == 2', then 'src'
+ *    is normalized along C and D dimensions.
+ *
+ * Behavior is undefined if 'epsilon' does not hold a value corresponding to
+ * the element type of the tensors.
+ *
+ * Constraints:
+ *
+ * - Rank of the operands must be in range [1, 4].
+ *
+ * - Shape of the tensor perands must match.
+ *
+ * - Element type of the operands must be the same.
+ *
+ * - 'start_dim' must be less than rank of the tensor operands.
+ */
+typedef struct
+{
+  cl_tensor_desc_exp src;
+  cl_tensor_desc_exp dst;
+
+  cl_tensor_dim_exp start_dim;
+  cl_tensor_datatype_value_exp epsilon;
+
+  /* 0-terminated array of DBK properties */
+  cl_dbk_properties_exp kernel_props[CL_DBK_MAX_PROPERTIES_EXP];
+} cl_dbk_attributes_rms_norm_exp;
 
 #endif /* OPENCL_EXP_DEFINED_BUILTIN_KERNELS */
