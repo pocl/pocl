@@ -591,7 +591,7 @@ endif()
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(pocl_utils)
 
-if(WIN32 AND NOT ENABLE_ICD AND BUILD_SHARED_LIBS)
+if(WIN32 AND (NOT ENABLE_ICD) AND BUILD_SHARED_LIBS)
   # To have executables link to PoCL built OpenCL.dll instead of a system one
   # we resort to symlinks which require elevated permissions or developer mode
   # enabled.
