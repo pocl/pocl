@@ -1252,6 +1252,15 @@ static const Level0Model Level0GraphModels[] = {
                 /* .NGraphBin = */ "",
                 /* .BuildFlags = */ "",
                 /* .instantiateModel = */ instantiateTemplateBINOP},
+    Level0Model{/* .Name = */ "rms_norm_exp",
+                /* .DBK_ID = */ CL_DBK_RMS_NORM_EXP,
+                /* .Format = */ ZE_GRAPH_FORMAT_NGRAPH_LITE,
+                /* .NativeBin = */ "",
+                /* .NativeShaveBin = */ "",
+                /* .NGraphXml = */ "",
+                /* .NGraphBin = */ "",
+                /* .BuildFlags = */ "",
+                /* .instantiateModel = */ instantiateTemplateRMSNORM},
 };
 
 constexpr unsigned NumLevel0GraphModels =
