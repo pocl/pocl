@@ -23,6 +23,8 @@
 
 #include "pocl_cl.h"
 
+#include <map>
+#include <string>
 #include <vector>
 
 typedef std::map<const char *, std::string> ReplaceMapT;
@@ -63,5 +65,10 @@ bool instantiateTemplateBINOP(cl_dbk_id_exp DbkId, const void *KernelAttrs,
                               std::string &ModelXMLInstance,
                               std::vector<uint8_t> &ModelBinary,
                               std::string &BuildFlagsInstance);
+
+bool instantiateTemplateRMSNORM(cl_dbk_id_exp DbkId, const void *KernelAttrs,
+                                std::string &ModelXMLInstance,
+                                std::vector<uint8_t> &ModelBinary,
+                                std::string &BuildFlagsInstance);
 
 #endif // NPU_DBK_HH

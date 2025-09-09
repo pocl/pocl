@@ -1292,6 +1292,19 @@ static cl_int checkDBKSupport(Level0Device &Device, cl_dbk_id_exp KernelId,
         return CL_DBK_UNSUPPORTED_EXP;
     return CL_SUCCESS;
   }
+  case CL_DBK_RMS_NORM_EXP: {
+    auto *RmsNormAttrs =
+        static_cast<const cl_dbk_attributes_rms_norm_exp *>(KernelAttributes);
+    if (!pocl_tensor_data_is_contiguous(&RmsNormAttrs->src) ||
+        !pocl_tensor_data_is_contiguous(&RmsNormAttrs->dst))
+      return CL_DBK_UNSUPPORTED_EXP;
+
+    if (RmsNormAttrs->src.dtype != CL_TENSOR_DTYPE_FP16_EXP &&
+        RmsNormAttrs->src.dtype != CL_TENSOR_DTYPE_FP32_EXP)
+      return CL_DBK_UNSUPPORTED_EXP;
+
+    return CL_SUCCESS;
+  }
   }
 #endif
 
