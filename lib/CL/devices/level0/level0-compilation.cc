@@ -1324,35 +1324,35 @@ const char *dtype2precision(cl_tensor_datatype_exp dtype) {
 const char *dtype2elemtype(cl_tensor_datatype_exp dtype) {
   switch (dtype) {
   case CL_TENSOR_DTYPE_FP64_EXP:
-    return "F64";
+    return "f64";
   case CL_TENSOR_DTYPE_INT64_EXP:
-    return "I64";
+    return "i64";
   case CL_TENSOR_DTYPE_UINT64_EXP:
-    return "U64";
+    return "u64";
   case CL_TENSOR_DTYPE_FP32_EXP:
-    return "F32";
+    return "f32";
   case CL_TENSOR_DTYPE_INT32_EXP:
-    return "I32";
+    return "i32";
   case CL_TENSOR_DTYPE_UINT32_EXP:
-    return "U32";
+    return "u32";
   case CL_TENSOR_DTYPE_FP16_EXP:
-    return "F16";
+    return "f16";
   case CL_TENSOR_DTYPE_INT16_EXP:
-    return "I16";
+    return "i16";
   case CL_TENSOR_DTYPE_UINT16_EXP:
-    return "U16";
+    return "u16";
   case CL_TENSOR_DTYPE_FP8E4M3_EXP:
-    return "F8E4M3";
+    return "f8e4m3";
   case CL_TENSOR_DTYPE_FP8E5M2_EXP:
-    return "F8E5M2";
+    return "f8e5m2";
   case CL_TENSOR_DTYPE_INT8_EXP:
-    return "I8";
+    return "i8";
   case CL_TENSOR_DTYPE_UINT8_EXP:
-    return "U8";
+    return "u8";
   case CL_TENSOR_DTYPE_INT4_EXP:
-    return "I4";
+    return "i4";
   case CL_TENSOR_DTYPE_UINT4_EXP:
-    return "U4";
+    return "u4";
   default:
   case CL_TENSOR_DTYPE_UNKNOWN:
     return "UNDEFINED";
