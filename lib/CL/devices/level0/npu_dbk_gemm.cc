@@ -5,7 +5,7 @@
 
 #include "CL/opencl.h"
 
-#include "npu_dbk.h"
+#include "npu_dbk.hh"
 
 #ifndef NPU_GEMM_H
 #define NPU_GEMM_H

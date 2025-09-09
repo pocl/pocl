@@ -35,7 +35,7 @@
 #include "pocl_util.h"
 
 #ifdef ENABLE_NPU
-#include "npu_dbk.h"
+#include "npu_dbk.hh"
 #endif
 
 #include <algorithm>

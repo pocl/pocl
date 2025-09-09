@@ -24,7 +24,7 @@
 #include <map>
 #include <string>
 
-#include "npu_dbk.h"
+#include "npu_dbk.hh"
 #include "pocl_tensor_util.h"
 
 static const char *GraphTemplate = R"(

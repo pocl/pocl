@@ -18,22 +18,22 @@
 /// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 /// IN THE SOFTWARE.
 
-#ifndef NPU_DBK_H
-#define NPU_DBK_H
+#ifndef NPU_DBK_HH
+#define NPU_DBK_HH
 
 #include "pocl_cl.h"
 
 #include <vector>
 
-typedef std::map<const char*, std::string> ReplaceMapT;
+typedef std::map<const char *, std::string> ReplaceMapT;
 
 void replaceAllStringsInMap(std::string &Buffer, ReplaceMapT RepMap);
 
-const char* dtype2precision(cl_tensor_datatype_exp dtype);
+const char *dtype2precision(cl_tensor_datatype_exp dtype);
 
-const char* dtype2elemtype(cl_tensor_datatype_exp dtype);
+const char *dtype2elemtype(cl_tensor_datatype_exp dtype);
 
-const char *layout2str (const cl_tensor_desc_exp &tensor);
+const char *layout2str(const cl_tensor_desc_exp &tensor);
 
 bool instantiateTemplateMATMUL(const void *KernelAttrs,
                                std::string &ModelXMLInstance,
@@ -55,4 +55,4 @@ bool instantiateTemplateSET_ROWS(const void *KernelAttrs,
                                  std::vector<uint8_t> &ModelBinary,
                                  std::string &BuildFlagsInstance);
 
-#endif
+#endif // NPU_DBK_HH
