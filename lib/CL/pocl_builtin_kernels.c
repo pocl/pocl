@@ -31,6 +31,7 @@
 #include "dbk/pocl_dbk_khr_img_shared.h"
 #include "dbk/pocl_dbk_khr_jpeg_shared.h"
 #include "dbk/pocl_dbk_khr_onnxrt_shared.h"
+#include "dbk/pocl_dbk_rms_norm_shared.h"
 #include "dbk/pocl_dbk_set_rows_shared.h"
 
 #include <string.h>
@@ -467,6 +468,10 @@ pocl_init_builtin_kernel_metadata ()
               BI_ARG_READ_BUF ("uint8_t*", "src0"),
               BI_ARG_READ_BUF ("uint8_t*", "src1"),
               BI_ARG_WRITE_BUF ("uint8_t*", "dst"), ),
+    BIKD_DBK (CL_DBK_RMS_NORM_EXP, "rms_norm_exp", 2,
+              // Placeholder types, actual operands are tensors.
+              BI_ARG_READ_BUF ("uint8_t*", "src"),
+              BI_ARG_WRITE_BUF ("uint8_t*", "dst"), ),
   };
   memcpy (pocl_BIDescriptors, temporary_BIDescriptors,
           sizeof (pocl_BIDescriptors));
@@ -900,6 +905,8 @@ pocl_validate_dbk_attributes (cl_dbk_id_exp kernel_id,
     case CL_DBK_MUL_EXP:
       return pocl_validate_eltwise_binary_dbk_attrs (kernel_id,
                                                      kernel_attributes);
+    case CL_DBK_RMS_NORM_EXP:
+      return pocl_validate_rms_norm_attrs (kernel_id, kernel_attributes);
     default:
       break;
     }
@@ -978,6 +985,8 @@ pocl_copy_defined_builtin_attributes (cl_dbk_id_exp kernel_id,
     case CL_DBK_ADD_EXP:
     case CL_DBK_MUL_EXP:
       return pocl_copy_eltwise_binary_dbk_attrs (kernel_id, kernel_attributes);
+    case CL_DBK_RMS_NORM_EXP:
+      return pocl_copy_rms_norm_attrs (kernel_id, kernel_attributes);
     default:
       break;
     }
@@ -1046,6 +1055,11 @@ pocl_release_defined_builtin_attributes (cl_dbk_id_exp kernel_id,
     case CL_DBK_MUL_EXP:
       {
         pocl_release_eltwise_binary_dbk_attrs (kernel_id, kernel_attributes);
+        return CL_SUCCESS;
+      }
+    case CL_DBK_RMS_NORM_EXP:
+      {
+        pocl_release_rms_norm_attrs (kernel_id, kernel_attributes);
         return CL_SUCCESS;
       }
 
