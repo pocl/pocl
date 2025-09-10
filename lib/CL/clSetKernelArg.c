@@ -291,6 +291,16 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
                                       meta->builtin_kernel_attrs, tdescs);
         return pocl_verify_dbk_kernel_arg (buf, tdescs[arg_index]);
       }
+    case CL_DBK_RMS_NORM_EXP:
+      {
+        POCL_RETURN_ERROR_ON (arg_index >= 2, CL_INVALID_ARG_INDEX,
+                              "invalid arg index to "
+                              "CL_DBK_RMS_NORM_EXP");
+        const cl_dbk_attributes_rms_norm_exp *attrs
+          = meta->builtin_kernel_attrs;
+        const cl_tensor_desc_exp *tdescs[2] = { &attrs->src, &attrs->dst };
+        return pocl_verify_dbk_kernel_arg (buf, tdescs[arg_index]);
+      }
 
   default:
       {
