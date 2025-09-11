@@ -29,8 +29,9 @@
 #include <iostream>
 #include <vector>
 
-static cl::Buffer createSubBuffer(cl::Context &Ctx, cl::Buffer &ParentBuf,
-                                  size_t Origin, size_t Size) {
+static cl::Buffer createSubBuffer([[maybe_unused]] cl::Context &Ctx,
+                                  cl::Buffer &ParentBuf, size_t Origin,
+                                  size_t Size) {
   cl_buffer_region Region{Origin, Size};
   return ParentBuf.createSubBuffer(0, CL_BUFFER_CREATE_TYPE_REGION, &Region);
 }

@@ -243,14 +243,14 @@ function(make_kernel_bc OUTPUT_VAR NAME SUBDIR USE_SLEEF EXTRA_BC EXTRA_CONFIG)
     list(APPEND FINAL_LINK_INPUTS "${LINK_OUTPUT}")
     add_custom_command(OUTPUT "${LINK_OUTPUT}"
       DEPENDS ${BC_LIST}
-      COMMAND "${LLVM_LINK}" "-o" "${LINK_OUTPUT}" ${BC_SUBLIST}
+      COMMAND "${LLVM_LINK}" "--suppress-warnings" "-o" "${LINK_OUTPUT}" ${BC_SUBLIST}
       COMMENT "Linking part of builtins library"
       VERBATIM)
     math(EXPR INDEX "${INDEX} + ${BCSUBLIST_LENGTH}")
   endwhile()
 
   # optimizing the bitcode library IR has undesirable side-effects. avoid them completely
-  set(LINK_OPT_COMMAND COMMAND "${LLVM_LINK}" "-o" "${KERNEL_BC}" ${FINAL_LINK_INPUTS})
+  set(LINK_OPT_COMMAND COMMAND "${LLVM_LINK}" "--suppress-warnings" "-o" "${KERNEL_BC}" ${FINAL_LINK_INPUTS})
 
   if(USE_SLEEF)
     list(APPEND FINAL_LINK_INPUTS "sleef_config_${VARIANT}")

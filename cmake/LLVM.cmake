@@ -53,9 +53,6 @@ if(NOT LLVM_CONFIG)
   message(FATAL_ERROR "llvm-config not found !")
 else()
   file(TO_CMAKE_PATH "${LLVM_CONFIG}" LLVM_CONFIG)
-  if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
-    file(REAL_PATH "${LLVM_CONFIG}"  LLVM_CONFIG)
-  endif()
   message(STATUS "Using llvm-config: ${LLVM_CONFIG}")
   if(LLVM_CONFIG MATCHES "llvmtce-config${CMAKE_EXECUTABLE_SUFFIX}$")
     set(LLVM_BINARY_SUFFIX "")
@@ -65,6 +62,13 @@ else()
     set(LLVM_BINARY_SUFFIX "${CMAKE_MATCH_1}")
   else()
     message(WARNING "Cannot determine llvm binary suffix from ${LLVM_CONFIG}")
+  endif()
+  if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
+    # Convert to real path only here, otherwise we fail to detect
+    # the binary suffix when symlinked to a non-suffix binary, like
+    # with the LLVM's Debian/Ubuntu packages.
+    # /usr/bin/llvm-config-21 -> ../lib/llvm-21/bin/llvm-config
+    file(REAL_PATH "${LLVM_CONFIG}"  LLVM_CONFIG)
   endif()
   message(STATUS "LLVM binaries suffix : ${LLVM_BINARY_SUFFIX}")
 endif()
@@ -160,6 +164,10 @@ endif()
 # - pocl doesn't compile with '-pedantic'
 #LLVM_CXX_FLAGS=$($LLVM_CONFIG --cxxflags | sed -e 's/ -pedantic / /g')
 string(REPLACE " -pedantic" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
+
+# Convert the LLVM's include path to -isystem so the headers are
+# treated as system headers and GCC won't emit warnings caused by them.
+string(REPLACE "-I" "-isystem" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 
 #llvm-config clutters CXXFLAGS with a lot of -W<whatever> flags.
 #(They are not needed - we want to use -Wall anyways)
@@ -315,6 +323,13 @@ endforeach()
 macro(find_program_or_die OUTPUT_VAR PROG_NAME DOCSTRING)
   find_program(${OUTPUT_VAR}
     NAMES "${PROG_NAME}${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}"
+    # At least the LLVM v21 .deb doesn't have a clang++-21 under
+    # /usr/lib/llvm-21/bin, but only 'clang++', 'clang' and
+    # clang-21 symlink. Thus when looking only in the install prefix,
+    # we don't find the clang++-21 symlink that is only in /usr/bin.
+    # So, look also for the non-suffixed ones since we are searching
+    # in the install/config dir.
+    "${PROG_NAME}${CMAKE_EXECUTABLE_SUFFIX}"
     HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}"
     DOC "${DOCSTRING}"
     NO_DEFAULT_PATH
@@ -328,9 +343,9 @@ macro(find_program_or_die OUTPUT_VAR PROG_NAME DOCSTRING)
   endif()
 endmacro()
 
-find_program_or_die( CLANG "clang" "clang binary")
+find_program_or_die(CLANG "clang" "clang binary")
 execute_process(COMMAND "${CLANG}" "--version" OUTPUT_VARIABLE LLVM_CLANG_VERSION RESULT_VARIABLE CLANG_RES)
-find_program_or_die( CLANGXX "clang++" "clang++ binary")
+find_program_or_die(CLANGXX "clang++" "clang++ binary")
 execute_process(COMMAND "${CLANGXX}" "--version" OUTPUT_VARIABLE LLVM_CLANGXX_VERSION RESULT_VARIABLE CLANGXX_RES)
 if(CLANGXX_RES OR CLANG_RES)
   message(FATAL_ERROR "Failed running clang/clang++ --version")
@@ -343,15 +358,31 @@ find_program_or_die(LLVM_LINK "llvm-link" "LLVM IR linker")
 find_program_or_die(LLVM_LLI  "lli"       "LLVM interpreter")
 
 if(ENABLE_LLVM_FILECHECKS)
+
   if(IS_ABSOLUTE "${LLVM_FILECHECK_BIN}" AND EXISTS "${LLVM_FILECHECK_BIN}")
     message(STATUS "LLVM IR checks enabled using ${LLVM_FILECHECK_BIN}.")
   else()
-    find_program_or_die(LLVM_FILECHECK_BIN "FileCheck" "LLVM FileCheck (not installed by default)")
+    message(STATUS "Looking for FileCheck${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX} or FileCheck")
+    find_program(LLVM_FILECHECK_BIN
+      NAMES "FileCheck${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "FileCheck"
+      DOC "LLVM FileCheck (not installed by default)")
   endif()
+
   if(IS_ABSOLUTE "${LLVM_DIS_BIN}" AND EXISTS "${LLVM_DIS_BIN}")
     message(STATUS "LLVM IR checks disassembled using ${LLVM_DIS_BIN}.")
   else()
-    find_program_or_die(LLVM_DIS_BIN "llvm-dis" "LLVM IR disassemble")
+    find_program(LLVM_DIS_BIN
+      NAMES "llvm-dis${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}"
+      "llvm-dis"
+      DOC "LLVM IR disassemble")
+  endif()
+  if(NOT LLVM_FILECHECK_BIN)
+    message(STATUS "LLVM IR checks not enabled, FileCheck not found.")
+    set(ENABLE_LLVM_FILECHECKS OFF)
+  endif()
+  if(NOT LLVM_DIS_BIN)
+    message(STATUS "LLVM IR checks not enabled, llvm-dis not found.")
+    set(ENABLE_LLVM_FILECHECKS OFF)
   endif()
 endif()
 

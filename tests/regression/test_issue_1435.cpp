@@ -114,7 +114,7 @@ __kernel void testkernel(__local float2 *b) {
 
 #endif
 
-int main(int argc, char *argv[]) {
+int main(int, char **) {
   cl::Device device = cl::Device::getDefault();
   cl::Program program(SOURCE);
   program.build("-cl-std=CL1.2");

@@ -309,7 +309,7 @@ option(ENABLE_POCL_BUILDING "When OFF, env var POCL_BUILDING has no effect. Defa
 
 option(ENABLE_PRINTF_IMMEDIATE_FLUSH "[currently only applies to CPU drivers] if enabled, printf is flushed immediately when encountered, instead of after all NDRange workgroups are finished" ON)
 
-option(ENABLE_LLVM_FILECHECKS "Enable kernel compiler/autovectorizer filechecks using the given FileCheck binary defined in LLVM_FILECHECK_BIN. Note: the checks are tested against recent Intel X86/SIMD CPUs for now.")
+option(ENABLE_LLVM_FILECHECKS "Enable kernel compiler/autovectorizer filechecks. The FileCheck binary can be defined via LLVM_FILECHECK_BIN, otherwise it's autodetected. Note: the checks are targeted against recent Intel X86/SIMD CPUs for now." ON)
 
 if(ENABLE_LEVEL0)
   set(DEFAULT_STATIC_LLVM ON)

@@ -585,7 +585,6 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
 
     llvm::MDNode *VecTypeHint = KernelFunction->getMetadata("vec_type_hint");
     if (VecTypeHint != nullptr) {
-      llvm::Value *VTHvalue = nullptr;
       if (isa<ValueAsMetadata>(VecTypeHint->getOperand(0))) {
         llvm::Value *val =
             dyn_cast<ValueAsMetadata>(VecTypeHint->getOperand(0))->getValue();

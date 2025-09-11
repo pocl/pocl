@@ -29,7 +29,7 @@ __kernel void __attribute__ ((reqd_work_group_size(128, 1, 1))) grudge_assign_0(
 }
 )RAW";
 
-int main(int argc, char *argv[]) {
+int main(int, char **) {
   int n = 8;
   int successful = 0;
 

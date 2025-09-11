@@ -129,36 +129,31 @@ private:
 
   // helpers: prints a vector as [0, 1, 2]
   // cast to int, so vectors of 'char' come out correctly
-  void print_in1(unsigned n, unsigned m)
-  {
+  void print_in1([[maybe_unused]] unsigned n, [[maybe_unused]] unsigned m) {
     std::cout << "["<<(int)in1[0];
     for(unsigned i=1; i<m; i++)
       std::cout << ", " <<(int)in1[i];
     std::cout << "]";
   }
-  void print_in2(unsigned n, unsigned m)
-  {
+  void print_in2([[maybe_unused]] unsigned n, unsigned m) {
     std::cout << "["<<(int)in2[0];
     for(unsigned i=1; i<m; i++)
       std::cout << ", " <<(int)in2[i];
     std::cout << "]";
   }
-  void print_mask1(unsigned n, unsigned m)
-  {
+  void print_mask1(unsigned n, [[maybe_unused]] unsigned m) {
     std::cout << "["<<(int)mask1[0];
     for(unsigned i=1; i<n; i++)
       std::cout << ", " <<(int)mask1[i];
     std::cout << "]";
   }
-  void print_mask2(unsigned n, unsigned m)
-  {
+  void print_mask2(unsigned n, [[maybe_unused]] unsigned m) {
     std::cout << "["<<(int)mask2[0];
     for(unsigned i=1; i<n; i++)
       std::cout << ", " <<(int)mask2[i];
     std::cout << "]";
   }
-  void print_out(unsigned n, unsigned m)
-  {
+  void print_out(unsigned n, [[maybe_unused]] unsigned m) {
     std::cout << "["<<(int)out[0];
     for(unsigned i=1; i<n; i++)
       std::cout << ", " <<(int)out[i];
