@@ -25,10 +25,12 @@
 
 #include "pocl_tensor_util.h"
 
+#include "dbk/pocl_dbk_khr_convert_shared.h"
 #include "dbk/pocl_dbk_khr_dnn_utils_shared.h"
 #include "dbk/pocl_dbk_khr_img_shared.h"
 #include "dbk/pocl_dbk_khr_jpeg_shared.h"
 #include "dbk/pocl_dbk_khr_onnxrt_shared.h"
+#include "dbk/pocl_dbk_set_rows_shared.h"
 
 #include <string.h>
 
@@ -444,7 +446,16 @@ pocl_init_builtin_kernel_metadata ()
               BI_ARG_READ_BUF ("float*", "scores"),
               BI_ARG_WRITE_BUF ("int32_t*", "index_count"),
               BI_ARG_WRITE_BUF ("int32_t*", "indices"), ),
-
+    BIKD_DBK (CL_DBK_CONVERT_EXP, "convert_exp", 2,
+              // Placeholder types, actual operands are tensors.
+              BI_ARG_READ_BUF ("uint8_t*", "input"),
+              BI_ARG_WRITE_BUF ("uint8_t*", "output"), ),
+    BIKD_DBK (CL_DBK_SET_ROWS_EXP, "set_rows_exp", 4,
+              // Placeholder types, actual operands are tensors.
+              BI_ARG_READ_BUF ("uint8_t*", "data_in"),
+              BI_ARG_READ_BUF ("uint8_t*", "rows"),
+              BI_ARG_READ_BUF ("uint8_t*", "indices"),
+              BI_ARG_WRITE_BUF ("uint8_t*", "data_out"), ),
   };
   memcpy (pocl_BIDescriptors, temporary_BIDescriptors,
           sizeof (pocl_BIDescriptors));
@@ -711,23 +722,6 @@ pocl_restore_builtin_kernel_name (cl_kernel kernel, char *saved_name)
   return 0;
 }
 
-static cl_bool
-pocl_tensor_shape_equals (const cl_tensor_desc_exp *A,
-                          const cl_tensor_desc_exp *B)
-{
-  assert (A);
-  assert (B);
-  if (A->rank != B->rank)
-    return CL_FALSE;
-
-  for (unsigned i = 0; i < A->rank; ++i)
-    {
-      if (A->shape[i] != B->shape[i])
-        return CL_FALSE;
-    }
-  return CL_TRUE;
-}
-
 static int
 pocl_validate_khr_gemm (cl_bool TransA,
                         cl_bool TransB,
@@ -767,8 +761,7 @@ pocl_validate_khr_gemm (cl_bool TransA,
                         "Rank mismatch between A/B and COut\n");
 
   POCL_RETURN_ERROR_ON (
-    (TenCIOpt != NULL
-     && pocl_tensor_shape_equals (TenCIOpt, TenCOut) == CL_FALSE),
+    (TenCIOpt != NULL && !pocl_tensor_shape_equals (TenCIOpt, TenCOut)),
     CL_INVALID_TENSOR_SHAPE_EXP,
     "Tensor shape mismatch between C_in and C_out.");
 
@@ -821,10 +814,6 @@ pocl_validate_khr_gemm (cl_bool TransA,
     (TenA->dtype >= CL_TENSOR_DTYPE_LAST || TenB->dtype >= CL_TENSOR_DTYPE_LAST
      || TenCOut->dtype >= CL_TENSOR_DTYPE_LAST),
     CL_INVALID_TENSOR_DATATYPE_EXP, "Unknown data type in input Tensors");
-
-  POCL_RETURN_ERROR_ON ((TenA->dtype != TenB->dtype),
-                        CL_INVALID_TENSOR_DATATYPE_EXP,
-                        "datatype mismatch between A and B.\n");
 
   POCL_RETURN_ERROR_ON (TenCIOpt && (TenCIOpt->dtype != TenCOut->dtype),
                         CL_INVALID_TENSOR_DATATYPE_EXP,
@@ -892,6 +881,10 @@ pocl_validate_dbk_attributes (cl_dbk_id_exp kernel_id,
     case CL_DBK_NMS_BOX_EXP:
       return pocl_validate_dnn_utils_attrs (kernel_id, kernel_attributes);
 #endif
+    case CL_DBK_CONVERT_EXP:
+      return pocl_validate_convert_attrs (kernel_id, kernel_attributes);
+    case CL_DBK_SET_ROWS_EXP:
+      return pocl_validate_set_rows_attrs (kernel_id, kernel_attributes);
     default:
       break;
     }
@@ -963,6 +956,10 @@ pocl_copy_defined_builtin_attributes (cl_dbk_id_exp kernel_id,
     case CL_DBK_NMS_BOX_EXP:
       return pocl_copy_dnn_utils_attrs (kernel_id, kernel_attributes);
 #endif
+    case CL_DBK_CONVERT_EXP:
+      return pocl_copy_convert_attrs (kernel_id, kernel_attributes);
+    case CL_DBK_SET_ROWS_EXP:
+      return pocl_copy_set_rows_attrs (kernel_id, kernel_attributes);
     default:
       break;
     }
@@ -1017,6 +1014,16 @@ pocl_release_defined_builtin_attributes (cl_dbk_id_exp kernel_id,
         return CL_SUCCESS;
       }
 #endif
+    case CL_DBK_CONVERT_EXP:
+      {
+        pocl_release_convert_attrs (kernel_id, kernel_attributes);
+        return CL_SUCCESS;
+      }
+    case CL_DBK_SET_ROWS_EXP:
+      {
+        pocl_release_set_rows_attrs (kernel_id, kernel_attributes);
+        return CL_SUCCESS;
+      }
     default:
       break;
     }

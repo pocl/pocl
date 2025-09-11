@@ -5,7 +5,7 @@
 
 #include "CL/opencl.h"
 
-#include "npu_dbk.h"
+#include "npu_dbk.hh"
 
 #ifndef NPU_GEMM_H
 #define NPU_GEMM_H
@@ -79,6 +79,7 @@ const char *GEMM_Flags_Template =
 
 bool instantiateTemplateGEMM(const void *KernelAttrs,
                              std::string &ModelXMLInstance,
+                             std::vector<uint8_t> &ModelBinary,
                              std::string &BuildFlagsInstance) {
   ModelXMLInstance = GEMM_XML_Template;
   BuildFlagsInstance = GEMM_Flags_Template;

@@ -1,3 +1,24 @@
+/// Level0/npu graph template for matmul_exp
+///
+/// Copyright (c) 2025 Michal Babej, Henry Linjamäki / Intel Finland Oy
+///
+/// Permission is hereby granted, free of charge, to any person obtaining a copy
+/// of this software and associated documentation files (the "Software"), to
+/// deal in the Software without restriction, including without limitation the
+/// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+/// sell copies of the Software, and to permit persons to whom the Software is
+/// furnished to do so, subject to the following conditions:
+///
+/// The above copyright notice and this permission notice shall be included in
+/// all copies or substantial portions of the Software.
+///
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+/// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+/// IN THE SOFTWARE.
 
 #include <cassert>
 #include <map>
@@ -5,10 +26,7 @@
 
 #include "CL/opencl.h"
 
-#include "npu_dbk.h"
-
-#ifndef NPU_GEMM_H
-#define NPU_GEMM_H
+#include "npu_dbk.hh"
 
 // Template for matmul(T, T) -> T.
 const char *MATMUL_T_XML_Template = R"(
@@ -80,15 +98,15 @@ const char *MATMUL_T_XML_Template = R"(
 </net>
 )";
 
-// Template for matmul(T, T) -> U.
-const char *MATMUL_T_U_XML_Template = R"(
+// Template for matmul(T, U) -> V.
+const char *MATMUL_T_U_V_XML_Template = R"(
 <?xml version="1.0"?>
 <net name="TensorFlow_Frontend_IR" version="11">
   <layers>
     <layer id="1" name="x1" type="Parameter" version="opset1">
-      <data shape="SHAPE_A_ROWS,SHAPE_A_COLS" element_type="INPUT_ELEM_TYPE" />
+      <data shape="SHAPE_A_ROWS,SHAPE_A_COLS" element_type="INPUT_A_ELEM_TYPE" />
       <output>
-        <port id="0" precision="INPUT_PREC" names="x1">
+        <port id="0" precision="INPUT_A_PREC" names="x1">
           <dim>SHAPE_A_ROWS</dim>
           <dim>SHAPE_A_COLS</dim>
         </port>
@@ -96,9 +114,9 @@ const char *MATMUL_T_U_XML_Template = R"(
     </layer>
 
     <layer id="0" name="x2" type="Parameter" version="opset1">
-      <data shape="SHAPE_B_ROWS,SHAPE_B_COLS" element_type="INPUT_ELEM_TYPE" />
+      <data shape="SHAPE_B_ROWS,SHAPE_B_COLS" element_type="INPUT_B_ELEM_TYPE" />
       <output>
-        <port id="0" precision="INPUT_PREC" names="x2">
+        <port id="0" precision="INPUT_B_PREC" names="x2">
           <dim>SHAPE_B_ROWS</dim>
           <dim>SHAPE_B_COLS</dim>
         </port>
@@ -185,16 +203,18 @@ const char *MATMUL_T_U_XML_Template = R"(
 )";
 
 const char *MATMUL_Flags_Template =
-    R"RAW(--inputs_precisions="x1:INPUT_PREC x2:INPUT_PREC" --inputs_layouts="x1:INPUT_LAYOUT x2:INPUT_LAYOUT" --outputs_precisions="model/dot/MatMul:OUTPUT_PREC" --outputs_layouts="model/dot/MatMul:OUTPUT_LAYOUT" --config   NPU_PLATFORM="3720" PERFORMANCE_HINT="LATENCY")RAW";
+    R"RAW(--inputs_precisions="x1:INPUT_A_PREC x2:INPUT_B_PREC" --inputs_layouts="x1:INPUT_LAYOUT x2:INPUT_LAYOUT" --outputs_precisions="model/dot/MatMul:OUTPUT_PREC" --outputs_layouts="model/dot/MatMul:OUTPUT_LAYOUT" --config   NPU_PLATFORM="3720" PERFORMANCE_HINT="LATENCY")RAW";
 
 bool instantiateTemplateMATMUL(const void *KernelAttrs,
                                std::string &ModelXMLInstance,
+                               std::vector<uint8_t> &ModelBinary,
                                std::string &BuildFlagsInstance) {
 
   auto *Attrs = (const cl_dbk_attributes_matmul_exp *)KernelAttrs;
-  ModelXMLInstance = (Attrs->a.dtype == Attrs->c.dtype)
-                         ? MATMUL_T_XML_Template
-                         : MATMUL_T_U_XML_Template;
+  bool OperandsHaveSameType =
+      Attrs->a.dtype == Attrs->b.dtype && Attrs->a.dtype == Attrs->c.dtype;
+  ModelXMLInstance =
+      OperandsHaveSameType ? MATMUL_T_XML_Template : MATMUL_T_U_V_XML_Template;
 
   BuildFlagsInstance = MATMUL_Flags_Template;
   ReplaceMapT ReplaceMap;
@@ -220,9 +240,11 @@ bool instantiateTemplateMATMUL(const void *KernelAttrs,
   assert(Attrs->a.layout_type == CL_TENSOR_LAYOUT_ML_EXP ||
          Attrs->a.layout_type == CL_TENSOR_LAYOUT_BLAS_EXP);
 
-  ReplaceMap["INPUT_PREC"] = dtype2precision(Attrs->a.dtype);
+  ReplaceMap["INPUT_A_PREC"] = dtype2precision(Attrs->a.dtype);
+  ReplaceMap["INPUT_B_PREC"] = dtype2precision(Attrs->b.dtype);
   ReplaceMap["OUTPUT_PREC"] = dtype2precision(Attrs->c.dtype);
-  ReplaceMap["INPUT_ELEM_TYPE"] = dtype2elemtype(Attrs->a.dtype);
+  ReplaceMap["INPUT_A_ELEM_TYPE"] = dtype2elemtype(Attrs->a.dtype);
+  ReplaceMap["INPUT_B_ELEM_TYPE"] = dtype2elemtype(Attrs->b.dtype);
   ReplaceMap["OUTPUT_ELEM_TYPE"] = dtype2elemtype(Attrs->c.dtype);
 
   ReplaceMap["INPUT_LAYOUT"] = layout2str(Attrs->a);
@@ -237,4 +259,3 @@ bool instantiateTemplateMATMUL(const void *KernelAttrs,
   return true;
 }
 
-#endif // NPU_GEMM_H

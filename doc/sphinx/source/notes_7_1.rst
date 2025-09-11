@@ -35,6 +35,13 @@ Driver-specific features
 Experimental and work-in-progress
 ===================================
 
+* Expanded existing defined built-in kernels and introduced a minimal
+  set of new ones and implemented them on level0/npu for supporting
+  llama.cpp single batch inferences on Intel NPU device. Tested with
+  ~1B fp16 parameter variants of Gemma 3.1, Qwen 3 and Llama 3.2
+  models using experimental branch
+  https://github.com/linehill/llama.cpp/tree/opencl-dbk.
+
 ===================================
 Deprecation/feature removal notices
 ===================================

@@ -28,7 +28,8 @@ set(SOURCES pocl-devices-level0
   level0-compilation.cc level0-compilation.hh
   level0-driver.cc level0-driver.hh)
 if(ENABLE_NPU)
-  list(APPEND SOURCES npu_dbk_gemm.cc npu_dbk_matmul.cc)
+  list(APPEND SOURCES npu_dbk_gemm.cc npu_dbk_matmul.cc npu_dbk_convert.cc
+    npu_dbk_set_rows.cc)
 endif()
 add_pocl_device_library(${SOURCES})
 

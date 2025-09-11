@@ -21,7 +21,15 @@
    IN THE SOFTWARE.
 */
 
+#ifndef POCL_TENSOR_UTIL_H
+#define POCL_TENSOR_UTIL_H
+
 #include "pocl_cl.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 int pocl_check_tensor_layout (cl_uint rank,
                               const cl_tensor_shape_exp *shape,
@@ -36,12 +44,25 @@ int pocl_copy_tensor_desc_layout (cl_tensor_desc_exp *dest,
                                   const cl_tensor_desc_exp *src);
 
 POCL_EXPORT
+int pocl_tensor_shape_equals (const cl_tensor_desc_exp *tensor0,
+                              const cl_tensor_desc_exp *tensor1);
+
+POCL_EXPORT
+size_t pocl_tensor_dim_size (const cl_tensor_desc_exp *tensor, int dim);
+
+POCL_EXPORT
 int pocl_tensor_type_is_int (cl_tensor_datatype_exp dtype);
 
 POCL_EXPORT
 int pocl_tensor_type_size (cl_tensor_datatype_exp dtype);
 
+POCL_EXPORT
+size_t pocl_tensor_element_count (const cl_tensor_desc_exp *t);
+
 size_t pocl_tensor_data_size (const cl_tensor_desc_exp *t);
+
+POCL_EXPORT
+int pocl_tensor_data_is_contiguous (const cl_tensor_desc_exp *t);
 
 cl_bool
 pocl_tensor_dtype_value_equals (const cl_tensor_datatype_exp dtype,
@@ -51,3 +72,14 @@ pocl_tensor_dtype_value_equals (const cl_tensor_datatype_exp dtype,
                                 cl_ulong ulong_const,
                                 char fp8_const,
                                 char int4_const);
+
+POCL_EXPORT void pocl_tensor_destroy_body (cl_tensor_desc_exp *tdesc);
+
+POCL_EXPORT
+int pocl_tensor_copy (cl_tensor_desc_exp *dest, const cl_tensor_desc_exp *src);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
+#endif /* POCL_TENSOR_UTIL_H */

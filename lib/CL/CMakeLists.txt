@@ -215,6 +215,10 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "dbk/pocl_dbk_khr_img_shared.h"
                    "dbk/pocl_dbk_khr_dnn_utils_shared.c"
                    "dbk/pocl_dbk_khr_dnn_utils_shared.h"
+                   "dbk/pocl_dbk_khr_convert_shared.c"
+                   "dbk/pocl_dbk_khr_convert_shared.h"
+                   "dbk/pocl_dbk_set_rows_shared.c"
+                   "dbk/pocl_dbk_set_rows_shared.h"
                    "pocl_raw_ptr_set.c"
 )
 

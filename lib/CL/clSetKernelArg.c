@@ -254,6 +254,32 @@ pocl_verify_dbk_kernel_args (cl_mem buf,
                                                      "CL_DBK_NMS_BOX_EXP.\n");
           }
       }
+    case CL_DBK_CONVERT_EXP:
+      {
+        const cl_dbk_attributes_convert_exp *attrs
+          = meta->builtin_kernel_attrs;
+        if (arg_index == 0)
+          return pocl_verify_dbk_kernel_arg (buf, &attrs->src);
+        if (arg_index == 1)
+          return pocl_verify_dbk_kernel_arg (buf, &attrs->dst);
+        POCL_RETURN_ERROR (CL_INVALID_ARG_INDEX, "invalid arg index to "
+                                                 "CL_DBK_CONVERT_EXP");
+      }
+    case CL_DBK_SET_ROWS_EXP:
+      {
+        if (arg_index >= 4)
+          {
+            POCL_RETURN_ERROR (CL_INVALID_ARG_INDEX, "invalid arg index to "
+                                                     "CL_DBK_SET_ROWS_EXP");
+          }
+        const cl_dbk_attributes_set_rows_exp *attrs
+          = meta->builtin_kernel_attrs;
+        const cl_tensor_desc_exp *tdescs[4]
+          = { &attrs->data_in, &attrs->rows, &attrs->indices,
+              &attrs->data_out };
+        return pocl_verify_dbk_kernel_arg (buf, tdescs[arg_index]);
+      }
+
   default:
       {
         POCL_MSG_ERR ("pocl_verify_dbk_kernel_args called on "

@@ -37,9 +37,10 @@
 #include "pocl_hash.h"
 #include "pocl_llvm.h"
 #include "pocl_local_size.h"
+#include "pocl_run_command.h"
+#include "pocl_tensor_util.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
-#include "pocl_run_command.h"
 
 #include <loader/ze_loader.h>
 #include <ze_api.h>
@@ -159,6 +160,9 @@ static cl_int pocl_level0_post_init(struct pocl_device_ops *ops) {
 #ifdef USE_LLVM_SPIRV_TARGET
   pocl_llvm_initialize_spirv_ext_option();
 #endif
+
+  if (!pocl_get_bool_option("POCL_LEVEL0_CROSS_CTX_SHARED_MEM", 1))
+    return CL_SUCCESS;
 
   // TODO currently only works with two drivers
   if (L0DriverInstances.size() != 2)
@@ -1222,12 +1226,79 @@ int pocl_npu_validate_khr_gemm(cl_bool TransA, cl_bool TransB,
 }
 #endif
 
+/// Checks the DBK is supported on the device.
+///
+/// Validity of 'KernelAttributes' must be checked prior calling this.
+static cl_int checkDBKSupport(Level0Device &Device, cl_dbk_id_exp KernelId,
+                              const void *KernelAttributes) {
+#ifdef ENABLE_NPU
+  if (!Device.isIntelNPU())
+    return CL_DBK_UNSUPPORTED_EXP;
+
+  switch (KernelId) {
+  default:
+    return CL_DBK_UNSUPPORTED_EXP;
+  case CL_DBK_MATMUL_EXP:
+  case CL_DBK_GEMM_EXP:
+    // Already checked in pocl_level0_supports_dbk() via
+    // pocl_validate_dbk_attributes(..., pocl_npu_validate_khr_gemm) call.
+    return CL_SUCCESS;
+
+  case CL_DBK_CONVERT_EXP: {
+    auto *CvtAttrs =
+        static_cast<const cl_dbk_attributes_convert_exp *>(KernelAttributes);
+    if (!pocl_tensor_data_is_contiguous(&CvtAttrs->src) ||
+        !pocl_tensor_data_is_contiguous(&CvtAttrs->dst))
+      break;
+
+    for (auto &Tensor : {CvtAttrs->src, CvtAttrs->dst}) {
+      switch (Tensor.dtype) {
+      default:
+        return CL_DBK_UNSUPPORTED_EXP;
+      case CL_TENSOR_DTYPE_FP16_EXP:
+      case CL_TENSOR_DTYPE_FP32_EXP:
+        break;
+      }
+
+      return CL_SUCCESS;
+    }
+  }
+  case CL_DBK_SET_ROWS_EXP: {
+    // The implementation currently only covers cases needed by llama.cpp.
+    auto *SetRowsAttrs =
+        static_cast<const cl_dbk_attributes_set_rows_exp *>(KernelAttributes);
+    if (!pocl_tensor_data_is_contiguous(&SetRowsAttrs->data_in) ||
+        !pocl_tensor_data_is_contiguous(&SetRowsAttrs->rows) ||
+        !pocl_tensor_data_is_contiguous(&SetRowsAttrs->indices) ||
+        !pocl_tensor_data_is_contiguous(&SetRowsAttrs->data_out))
+      break;
+
+    if (SetRowsAttrs->data_in.shape[0] != 1 ||
+        SetRowsAttrs->data_in.shape[1] != 1)
+      return CL_DBK_UNSUPPORTED_EXP;
+
+    if (SetRowsAttrs->data_in.dtype != CL_TENSOR_DTYPE_FP16_EXP &&
+        SetRowsAttrs->data_in.dtype != CL_TENSOR_DTYPE_FP32_EXP)
+      return CL_DBK_UNSUPPORTED_EXP;
+    return CL_SUCCESS;
+  }
+  }
+#endif
+
+  return CL_DBK_UNSUPPORTED_EXP;
+}
+
 int pocl_level0_supports_dbk(cl_device_id device, cl_dbk_id_exp kernel_id,
                              const void *kernel_attributes) {
 #ifdef ENABLE_NPU
   // check for NPU specific requirements on Tensors.
-  return pocl_validate_dbk_attributes(kernel_id, kernel_attributes,
-                                      pocl_npu_validate_khr_gemm);
+  cl_int Status = pocl_validate_dbk_attributes(kernel_id, kernel_attributes,
+                                               pocl_npu_validate_khr_gemm);
+  if (Status != CL_SUCCESS)
+    return Status;
+
+  auto *L0Device = static_cast<Level0Device *>(device->data);
+  return checkDBKSupport(*L0Device, kernel_id, kernel_attributes);
 
 #else
   POCL_RETURN_ERROR_ON(1, CL_DBK_UNSUPPORTED_EXP,

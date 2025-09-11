@@ -35,7 +35,7 @@
 #include "pocl_util.h"
 
 #ifdef ENABLE_NPU
-#include "npu_dbk.h"
+#include "npu_dbk.hh"
 #endif
 
 #include <algorithm>
@@ -1186,8 +1186,7 @@ static void getArgTypeAndSize(ze_graph_argument_properties_t &graphArgProps,
   assert(TotalSize != 0);
 }
 
-constexpr unsigned NumLevel0GraphModels = 3;
-static const Level0Model Level0GraphModels[NumLevel0GraphModels] = {
+static const Level0Model Level0GraphModels[] = {
     Level0Model{
         /* .Name = */ "pocl.googlenet.v1.fp32",
         /* .DBK_ID = */ 0,
@@ -1196,9 +1195,9 @@ static const Level0Model Level0GraphModels[NumLevel0GraphModels] = {
         /* .NativeShaveBin = */ "",
         /* .NGraphXml = */ "googlenet-v1.xml",
         /* .NGraphBin = */ "googlenet-v1.bin",
-        /* .BuildFlags = */ R"RAW(--inputs_precisions="data:U8" --inputs_layouts="data:NCHW"  --outputs_precisions="dot:FP16" --outputs_layouts="dot:NC" --config NPU_PLATFORM="3720" LOG_LEVEL="LOG_DEBUG")RAW",
-        /* .intantiateModel = */ nullptr
-    },
+        /* .BuildFlags = */
+        R"RAW(--inputs_precisions="data:U8" --inputs_layouts="data:NCHW"  --outputs_precisions="dot:FP16" --outputs_layouts="dot:NC" --config NPU_PLATFORM="3720" LOG_LEVEL="LOG_DEBUG")RAW",
+        /* .intantiateModel = */ nullptr},
     Level0Model{/* .Name = */ "gemm_exp",
                 /* .DBK_ID = */ CL_DBK_GEMM_EXP,
                 /* .Format = */ ZE_GRAPH_FORMAT_NGRAPH_LITE,
@@ -1217,7 +1216,28 @@ static const Level0Model Level0GraphModels[NumLevel0GraphModels] = {
                 /* .NGraphBin = */ "",
                 /* .BuildFlags = */ "",
                 /* .instantiateModel = */ instantiateTemplateMATMUL},
+    Level0Model{/* .Name = */ "convert_exp",
+                /* .DBK_ID = */ CL_DBK_CONVERT_EXP,
+                /* .Format = */ ZE_GRAPH_FORMAT_NGRAPH_LITE,
+                /* .NativeBin = */ "",
+                /* .NativeShaveBin = */ "",
+                /* .NGraphXml = */ "",
+                /* .NGraphBin = */ "",
+                /* .BuildFlags = */ "",
+                /* .instantiateModel = */ instantiateTemplateCONVERT},
+    Level0Model{/* .Name = */ "set_rows_exp",
+                /* .DBK_ID = */ CL_DBK_SET_ROWS_EXP,
+                /* .Format = */ ZE_GRAPH_FORMAT_NGRAPH_LITE,
+                /* .NativeBin = */ "",
+                /* .NativeShaveBin = */ "",
+                /* .NGraphXml = */ "",
+                /* .NGraphBin = */ "",
+                /* .BuildFlags = */ "",
+                /* .instantiateModel = */ instantiateTemplateSET_ROWS},
 };
+
+constexpr unsigned NumLevel0GraphModels =
+    sizeof(Level0GraphModels) / sizeof(Level0GraphModels[0]);
 
 // returns semicolon separated list of recognized models (TODO: excluding DBKs
 // ?)
@@ -1444,7 +1464,7 @@ bool Level0BuiltinProgramBuild::loadModel(ze_context_handle_t ContextH,
       std::string ModelXMLInstance;
       std::string BuildFlagsInstance;
       assert(M->instantiateModel);
-      if (!M->instantiateModel(KernelAttrs, ModelXMLInstance,
+      if (!M->instantiateModel(KernelAttrs, ModelXMLInstance, ModelBin,
                                BuildFlagsInstance))
         return false;
       BuildLog.append("\n");
