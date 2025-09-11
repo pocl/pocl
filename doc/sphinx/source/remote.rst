@@ -127,14 +127,15 @@ Known Bugs/Issues in OpenCL Implementations
 * ARM Mali OpenCL SDK (on Linux) and some Android OpenCL implementations fail
   to return anything for clGetKernelArgInfo calls,
   so it's unusable by itself (as backend for the proxy driver or for pocld).
-  It is usable if pocl is built with at least two drivers (proxy/remote/pthread
-  etc) of which at least one provides the build information.
-  For OpenCL (pocl) users, it means all CL programs (to be used with Mali) must
-  be built for at least two devices from two drivers,
-  so the other driver provides the build information Mali does not.
-  This Mali bug is only fixable by using another driver, or writing some extra
-  compilation/parsing step, because without argument metadata
-  it's impossible to tell if an argument to clSetKernelArg is a pointer or an integer.
+  If pocl is built with at least two drivers (proxy/remote/pthread
+  etc) of which at least one provides the build information, this problem is
+  avoided.
+  When none of the devices a CL program is built for provides kernel argument
+  information, pocl will attempt to parse the kernel source with a
+  `tree-sitter grammar`_ to extract kernel argument definitions as a best-effort
+  fallback.
+
+.. _tree-sitter grammar: https://github.com/lefp/tree-sitter-opencl.git
 
 .. _remote-how-to-build-label:
 
