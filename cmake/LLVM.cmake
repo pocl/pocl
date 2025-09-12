@@ -275,6 +275,17 @@ if(MINGW)
   list(APPEND LLVM_SYSLIBS "-lversion")
 elseif(MSVC)
   list(APPEND LLVM_SYSLIBS version.lib)
+
+  # This is for supporting conda-forge distributed LLVM. This fixes
+  # xml2 dependency that is named differently in conda-forge (in
+  # latest package versions) than what is reported by 'llvm-config
+  # --system-libs'.
+  list(FILTER LLVM_SYSLIBS EXCLUDE REGEX "xml2")
+  find_library(LIBXML2 NAMES xml2 PATH_SUFFIXES lib Library/lib)
+  if(NOT LIBXML2)
+    message(FATAL_ERROR "Could not locate 'xml2' library!")
+  endif()
+  list(APPEND LLVM_SYSLIBS ${LIBXML2})
 endif()
 
 ####################################################################
