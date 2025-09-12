@@ -65,6 +65,7 @@ jobs:
             llvmdev=${{ matrix.llvm_version }}
             clangdev=${{ matrix.llvm_version }}
             lld=${{ matrix.llvm_version }}
+            libxml2-devel
             khronos-opencl-icd-loader
             ninja
             zlib
