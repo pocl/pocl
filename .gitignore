@@ -1,4 +1,5 @@
 build*/*
+out/
 *~
 
 **/.deps
@@ -86,3 +87,9 @@ cmake-build-*/
 .cache
 
 .gdb_history
+
+# Visual Studio related files
+.vs
+
+# Cmake
+CMakeUserPresets.json
