@@ -23,3 +23,22 @@ entry:
   call void @llvm.nvvm.barrier0()
   ret void
 }
+
+define void @_Z18_cl_read_mem_fencej(i32) noduplicate {
+entry:
+  call void @llvm.nvvm.barrier0()
+  ret void
+}
+
+
+define void @_Z19_cl_write_mem_fencej(i32) noduplicate {
+entry:
+  call void @llvm.nvvm.barrier0()
+  ret void
+}
+
+define void @_Z13_cl_mem_fencej(i32) noduplicate {
+entry:
+  call void @llvm.nvvm.barrier0()
+  ret void
+}
