@@ -34,7 +34,7 @@ foreach(FILE
   async_work_group_copy.cl async_work_group_strided_copy.cl
   get_global_id.c get_global_size.c get_group_id.c
   get_local_id.c get_local_size.c get_num_groups.c
-  get_global_offset.c
+  get_global_offset.c get_linear_id.cl
   native_cos.cl native_sin.cl native_tan.cl
   native_log.cl native_log2.cl native_log10.cl
   native_exp.cl native_exp10.cl
