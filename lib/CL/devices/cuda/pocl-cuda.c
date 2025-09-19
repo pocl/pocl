@@ -756,7 +756,11 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   /* Create context */
   if (ret != CL_INVALID_DEVICE)
     {
+#if CUDA_VERSION_MAJOR < 13
       result = cuCtxCreate (&data->context, CU_CTX_MAP_HOST, data->device);
+#else
+      result = cuCtxCreate (&data->context, NULL, CU_CTX_MAP_HOST, data->device);
+#endif
       if (CUDA_CHECK_ERROR (result, "cuCtxCreate"))
         ret = CL_INVALID_DEVICE;
     }
