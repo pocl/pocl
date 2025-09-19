@@ -25,6 +25,7 @@
 
 find_package(CUDA REQUIRED)
 message(STATUS "CUDA_TOOLKIT_ROOT_DIR = ${CUDA_TOOLKIT_ROOT_DIR}")
+message(STATUS "CUDA version ${CUDA_VERSION}")
 
 # this is required, because we're compiling the C++ files of this directory
 # with LLVM-provided flags, which usually contain their own setting of
@@ -37,7 +38,12 @@ set(CMAKE_CXX_STANDARD ${POCL_CMAKE_CXX_STANDARD})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_pocl_device_library("pocl-devices-cuda" pocl-cuda.c pocl-cuda.h pocl-ptx-gen.cc pocl-ptx-gen.h)
-target_compile_definitions("pocl-devices-cuda" PRIVATE "-DCUDA_TOOLKIT_ROOT_DIR=\"${CUDA_TOOLKIT_ROOT_DIR}\"")
+target_compile_definitions("pocl-devices-cuda" PRIVATE 
+        "-DCUDA_TOOLKIT_ROOT_DIR=\"${CUDA_TOOLKIT_ROOT_DIR}\""
+        CUDA_VERSION_MAJOR=${CUDA_VERSION_MAJOR}
+        CUDA_VERSION_MINOR=${CUDA_VERSION_MINOR}
+)
+
 if(ENABLE_LOADABLE_DRIVERS)
   target_link_libraries(pocl-devices-cuda PRIVATE ${CUDA_POCL_TARGETS} ${CLANG_LINK_LIBRARIES} ${LLVM_LINK_LIBRARIES} ${PTHREAD_LIBRARY})
   target_link_directories(pocl-devices-cuda PRIVATE ${CLANG_LINK_DIRECTORIES} ${LLVM_LINK_DIRECTORIES})
