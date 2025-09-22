@@ -61,6 +61,13 @@ Level Zero driver
 * Various bugfixes.
 * Enable SPV_INTEL_memory_access_aliasing.
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+CUDA driver
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Reimplement support for global offsets and work dim.
+* Implement {read_|write_|}mem_fence() and get_{global|local}_linear_id().
+
 ===================================
 Experimental and work-in-progress
 ===================================

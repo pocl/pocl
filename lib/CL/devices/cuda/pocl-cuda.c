@@ -1768,6 +1768,7 @@ pocl_cuda_create_kernel (cl_device_id device, cl_program program,
 
   kdata->kernel_offsets = function;
   /* Get pointer alignment */
+  /* Allocate space for args, locals, work dim and global_offset_{x|y|z} */
   kdata->alignments
       = calloc (meta->num_args + meta->num_locals + 4, sizeof (size_t));
   pocl_cuda_get_ptr_arg_alignment (program->llvm_irs[device_i], kernel->name,
@@ -2143,16 +2144,15 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
   /* Add global work dimensionality */
   params[arg_index++] = &pc.work_dim;
 
-  /* Add global offsets if necessary */
-  if (has_offsets)
-    {
-      globalOffsets[0] = pc.global_offset[0];
-      globalOffsets[1] = pc.global_offset[1];
-      globalOffsets[2] = pc.global_offset[2];
-      params[arg_index++] = globalOffsets + 0;
-      params[arg_index++] = globalOffsets + 1;
-      params[arg_index++] = globalOffsets + 2;
-    }
+  /* Add global offsets */
+  /* Global offsets are added as arguments in the ptx-gen pass, so we
+   * must pass them */
+  globalOffsets[0] = pc.global_offset[0];
+  globalOffsets[1] = pc.global_offset[1];
+  globalOffsets[2] = pc.global_offset[2];
+  params[arg_index++] = globalOffsets + 0;
+  params[arg_index++] = globalOffsets + 1;
+  params[arg_index++] = globalOffsets + 2;
 
   /* Launch kernel */
   result = cuLaunchKernel (function, pc.num_groups[0], pc.num_groups[1],
