@@ -144,7 +144,7 @@ if [ -e "${CL_DEV_INFO}" ]; then
 
   if [ "$CL_DEVICE_IMAGE_SUPPORT" -eq 1 ]; then
     if [ "$CL_IS_30" = "true" ]; then
-      CL_EXTS="${CL_EXTS},+__opencl_c_images"
+      CL_EXTS="${CL_EXTS},+__opencl_c_images,+__opencl_c_read_write_images"
     fi
     CL_EXT_DEFS="${CL_EXT_DEFS} -D__IMAGE_SUPPORT__=1"
   else
