@@ -305,7 +305,7 @@ The string after "HSTR:" is the device build hash.
 
 **NOTE**: If you've enabled the :ref:`almaif device <almaif_usage>`
 , `HOST_DEVICE_BUILD_HASH` can be set to anything you want. Reason being, fixed function
-accelerators don't require compiling OpenCL kernels, therefore, no hash will ever be matched. 
+accelerators don't require compiling OpenCL kernels, therefore, no hash will ever be matched.
 
 Packaging PoCL
 --------------------------------------
@@ -321,7 +321,7 @@ PoCL supports CPACK. Additionally, these CMake options are of interest:
 - ``-DENABLE_POCL_BUILDING=OFF``
   to disable embedding the build path into libpocl
 
-- ``-DSTATIC_LLVM`` 
+- ``-DSTATIC_LLVM``
   to link against Clang & LLVM static component libraries. This may help avoid
   symbol clashes with other LLVM libraries linked in the same executable.
 
@@ -437,20 +437,25 @@ in your disk. For example, mounting using sshfs:
    sshfs username@bananapie.host.name:/ $BOARD_ROOT
 
 Then configure PoCL for a cross build and build it.
+Provide the paths to the board LLVM and ICD loader so the compiler can link against them.
 
 .. code-block:: console
 
    export RISCV_CPU=spacemit-x60
    export LLVM_NATIVE_HOME=$BOARD_ROOT/usr
+   export ICD_NATIVE_LIB=$BOARD_ROOT/usr/lib/riscv64-linux-gnu
+   export NATIVE_LIBS=${LLVM_NATIVE_HOME}:${ICD_NATIVE_LIB}
+
    cd pocl_source_dir
    mkdir build && cd build
-   cmake .. -DLLVM_CONFIG=$(which llvm-config-20)        \
+   cmake .. -DCMAKE_MAKE_PROGRAM=/usr/bin/make           \
+    -DLLVM_CONFIG=$(which llvm-config-20)                \
     -DHOST_DEVICE_BUILD_HASH=riscv64-unknown-linux-gnu   \
     -DCMAKE_TOOLCHAIN_FILE=../ToolchainRISCV.cmake       \
     -DLLC_TRIPLE=riscv64-unknown-linux-gnu               \
     -DLLC_HOST_CPU=${RISCV_CPU}                          \
     -DLLVM_HOST_TARGET=riscv64-unknown-linux-gnu         \
-    -DCMAKE_PREFIX_PATH=${LLVM_NATIVE_HOME}              \
+    -DCMAKE_PREFIX_PATH=${NATIVE_LIBS}                   \
     -DCMAKE_INSTALL_PREFIX=${BOARD_ROOT}/local/          \
     -DENABLE_ICD=ON                                      \
     -DENABLE_LOADABLE_DRIVERS=ON                         \
@@ -480,18 +485,18 @@ work with the current PoCL version with the rewritted printf.
 PowerPC support
 -----------------------------
 
-PoCL is used to provide OpenCL on IBM AC922 computers 
-featuring IBM Power9 processors and Nvidia Tesla V100 GPU 
-interconnected with NVlink v2 (up to 72 GByte/s). 
+PoCL is used to provide OpenCL on IBM AC922 computers
+featuring IBM Power9 processors and Nvidia Tesla V100 GPU
+interconnected with NVlink v2 (up to 72 GByte/s).
 This has been tested under debian_11 and Ubuntu_20.04.
 
-Officially, Nvidia does not support OpenCL on this platform 
+Officially, Nvidia does not support OpenCL on this platform
 and the driver they are shipping is lacking the compiler part.
 
 ## Building tricks (as of 04/2023):
 
-The PPC64le features 128-bit vector unit (Altivec/VSX) which 
-are easily confused by the C++ compiler with the C++ vector 
+The PPC64le features 128-bit vector unit (Altivec/VSX) which
+are easily confused by the C++ compiler with the C++ vector
 instruction when using the compile option `-std=c++XX`.
 The corresponding code usually fails compiling.
 The trick is to pass the option `-std=gnu++XX`.
