@@ -1271,10 +1271,9 @@ llvm::Instruction *SubCFGFormation::getLocalIdInRegion(llvm::Instruction *Instr,
   return Builder.CreateLoad(ST, GV);
 }
 
-/// CBS does not handle kernels without barriers.
 bool SubCFGFormation::canHandleKernel(llvm::Function &K,
                                       llvm::FunctionAnalysisManager &AM) {
-  return hasWorkgroupBarriers(K);
+  return true;
 }
 
 void moveAllocasToEntry(llvm::Function &F,
