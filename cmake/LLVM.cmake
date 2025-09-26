@@ -165,9 +165,12 @@ endif()
 #LLVM_CXX_FLAGS=$($LLVM_CONFIG --cxxflags | sed -e 's/ -pedantic / /g')
 string(REPLACE " -pedantic" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 
-# Convert the LLVM's include path to -isystem so the headers are
+# Convert the LLVM's include path to -idirafter so the headers are
 # treated as system headers and GCC won't emit warnings caused by them.
-string(REPLACE "-I" "-isystem" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
+# note that using -isystem here breaks the compilation if the LLVM headers
+# are located in a system directory (/usr/include), for details:
+# https://stackoverflow.com/questions/37218953/isystem-on-a-system-include-directory-causes-errors
+string(REPLACE "-I" "-idirafter" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 
 #llvm-config clutters CXXFLAGS with a lot of -W<whatever> flags.
 #(They are not needed - we want to use -Wall anyways)
