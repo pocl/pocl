@@ -39,6 +39,7 @@ clamp_int.cl
 clz.cl
 ctz.cl
 convert_type.cl
+copysign.cl
 cross.cl
 distance.cl
 dot.cl
@@ -205,7 +206,6 @@ sleef-pocl/atan2.cl
 sleef-pocl/atan.cl
 sleef-pocl/cbrt.cl
 sleef-pocl/ceil.cl
-sleef-pocl/copysign.cl
 sleef-pocl/erfc.cl
 sleef-pocl/erf.cl
 sleef-pocl/exp10.cl
