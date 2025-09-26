@@ -325,13 +325,14 @@ PoCL supports CPACK. Additionally, these CMake options are of interest:
   to link against Clang & LLVM static component libraries. This may help avoid
   symbol clashes with other LLVM libraries linked in the same executable.
 
+Cross-compiling PoCL
+---------------------
 
-Cross-compile PoCL
--------------------
-
-It's now possible to cross-compile pocl on x86-64 to run on ARM/MIPS/etc,
-There is a ToolchainExample.cmake file;
-copy it under different name, then follow the instructions in the file.
+It's now possible to cross-compile pocl on x86-64 to run on ARM/MIPS/RISC-V and
+others. For ARM64 & RISC-V we have CMake Toolchain files accompanied by Dockerfiles
+which cross-compile LLVM for the target machine. You can use the same Toolchain files
+for cross-compiling PoCL for the target machine. The files can be found in
+`tools/docker/LLVM/cross/`, the required preparation is described in each Dockerfile.
 
 Building & running in Docker
 -----------------------------
