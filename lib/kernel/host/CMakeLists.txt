@@ -542,6 +542,7 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
   endif()
   # current SLEEF code does not have code for
   # ARM32 NEON double vectors (if they even exist)
+  # TODO check properly!
   if(NOT ARM32)
     set(STR "#define SLEEF_DOUBLE_VEC_AVAILABLE\n")
     file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
@@ -563,9 +564,13 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
   if(HOST_DEVICE_ADDRESS_BITS EQUAL 32)
     set(SPIR_WRAPPER_FILE "host/spir_wrapper32.ll")
   else()
-    if(X86 OR ARM)
+    if(RISCV)
+      # for RISC-V, always use the generated SPIR wrapper with 128bits,
+      # the CPU vector width does not affect the ABI
+      generate_cpu_spir_wrapper(cpu_riscv ${VARIANT} 128 SPIR_WRAPPER_FILE)
+    elseif(X86 OR ARM)
       # for X86-64 & ARM, use the generated SPIR wrapper,
-      # based on CPU's largest supported vector size
+      # based on CPU's largest supported vector size (foreach loop below)
       set(SPIR_WRAPPER_FILE "")
     else()
       # for other CPUs, use a generic
