@@ -1353,8 +1353,8 @@ for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
 	else:
 		uarg_type = arg_type
 
-	for vector_size in [2,3,4,8,16]:
-		for perm_size in [2,3,4,8,16]:
+	for vector_size in [2,4,8,16]:
+		for perm_size in [2,4,8,16]:
 			ret_type = "Dv" + str(perm_size) + "_" + arg_type
 			in_type = "Dv" + str(vector_size) + "_" + arg_type
 			mask_type = "Dv" + str(perm_size) + "_" + uarg_type
