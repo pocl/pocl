@@ -25422,21 +25422,21 @@ define spir_func void @_Z26atomic_flag_clear_explicitPU3AS4VU7_Atomici12memory_o
 }
 
 ; Function Attrs: alwaysinline nounwind
-declare void @_Z21_cl_wait_group_eventsiPU9CLprivate9ocl_event(i32, ptr *) local_unnamed_addr #0
+declare void @_Z21_cl_wait_group_eventsiPU9CLprivate9ocl_event(i32, ptr) local_unnamed_addr #0
 
 ; Function Attrs: alwaysinline nounwind
-define spir_func void @_Z17wait_group_eventsiP9ocl_event(i32 %a, ptr * %b) local_unnamed_addr #0 {
-  tail call void @_Z21_cl_wait_group_eventsiPU9CLprivate9ocl_event(i32 %a, ptr * %b)
+define spir_func void @_Z17wait_group_eventsiP9ocl_event(i32 %a, ptr %b) local_unnamed_addr #0 {
+  tail call void @_Z21_cl_wait_group_eventsiPU9CLprivate9ocl_event(i32 %a, ptr %b)
   ret void
 }
 
 ; Function Attrs: alwaysinline nounwind
-declare void @_Z21_cl_wait_group_eventsiPU9CLgeneric9ocl_event(i32, ptr *) local_unnamed_addr #0
+declare void @_Z21_cl_wait_group_eventsiPU9CLgeneric9ocl_event(i32, ptr) local_unnamed_addr #0
 
 ; Function Attrs: alwaysinline nounwind
 define spir_func void @_Z17wait_group_eventsiPU3AS49ocl_event(i32 %a, ptr addrspace(4) %b) local_unnamed_addr #0 {
-  %1 = addrspacecast ptr addrspace(4) %b to ptr *
-  tail call void @_Z21_cl_wait_group_eventsiPU9CLgeneric9ocl_event(i32 %a, ptr * %1)
+  %1 = addrspacecast ptr addrspace(4) %b to ptr
+  tail call void @_Z21_cl_wait_group_eventsiPU9CLgeneric9ocl_event(i32 %a, ptr %1)
   ret void
 }
 
