@@ -29,6 +29,8 @@ set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
 set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TS_BASEDIR}/src/${TS_NAME}")
 
+get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+
 if(NOT HAVE_GIT)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires git to checkout sources")
   return()
@@ -97,7 +99,10 @@ else()
   message(WARNING "llvm-spirv or spirv-tools not found - disabling SPIRV tests in CTS")
 endif()
 
-set(UPSTREAM_CMAKE_ARGS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"   "-DCMAKE_CONFIGURATION_TYPES=${CMAKE_CONFIGURATION_TYPES}")
+unset(UPSTREAM_CMAKE_ARGS)
+if(NOT is_multi_config AND CMAKE_BUILD_TYPE)
+  set(UPSTREAM_CMAKE_ARGS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+endif()
 if(CMAKE_C_COMPILER_LAUNCHER)
   list(APPEND UPSTREAM_CMAKE_ARGS "-DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}")
 endif()
@@ -683,14 +688,21 @@ if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
 endif()
 
 if(HAVE_SPIRV_TOOLS)
+  # add the full testsuite with offline compilation from SPIR-V
   set(CACHE_DIR "${CMAKE_BINARY_DIR}/CTS_FULL_CACHE")
   file(MAKE_DIRECTORY "${CACHE_DIR}")
 
-  # add the full testsuite with offline compilation from SPIR-V
+  if(is_multi_config)
+  add_cts_full_tests("conformance_suite_full_spirv" "_spirv"
+                     "--compilation-mode" "spir-v"
+                     "--compilation-program" "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh.$<CONFIG>"
+                     "--compilation-cache-path" "${CACHE_DIR}")
+  else()
   add_cts_full_tests("conformance_suite_full_spirv" "_spirv"
                      "--compilation-mode" "spir-v"
                      "--compilation-program" "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh"
                      "--compilation-cache-path" "${CACHE_DIR}")
+  endif()
 endif()
 
 #################################################################################
