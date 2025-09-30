@@ -26,6 +26,23 @@
    anything. The event waiting is therefore a dummy function. */
 
 void _CL_OVERLOADABLE wait_group_events (int num_events,
-                                         event_t *event_list)
+                                         private event_t * event_list)
 {
 }
+
+void _CL_OVERLOADABLE wait_group_events (int num_events,
+                                         local event_t * event_list)
+{
+}
+
+void _CL_OVERLOADABLE wait_group_events (int num_events,
+                                         global event_t * event_list)
+{
+}
+
+#ifdef __opencl_c_generic_address_space
+void _CL_OVERLOADABLE wait_group_events (int num_events,
+                                         generic event_t * event_list)
+{
+}
+#endif

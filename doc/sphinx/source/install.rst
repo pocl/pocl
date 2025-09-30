@@ -305,7 +305,7 @@ The string after "HSTR:" is the device build hash.
 
 **NOTE**: If you've enabled the :ref:`almaif device <almaif_usage>`
 , `HOST_DEVICE_BUILD_HASH` can be set to anything you want. Reason being, fixed function
-accelerators don't require compiling OpenCL kernels, therefore, no hash will ever be matched. 
+accelerators don't require compiling OpenCL kernels, therefore, no hash will ever be matched.
 
 Packaging PoCL
 --------------------------------------
@@ -321,17 +321,18 @@ PoCL supports CPACK. Additionally, these CMake options are of interest:
 - ``-DENABLE_POCL_BUILDING=OFF``
   to disable embedding the build path into libpocl
 
-- ``-DSTATIC_LLVM`` 
+- ``-DSTATIC_LLVM``
   to link against Clang & LLVM static component libraries. This may help avoid
   symbol clashes with other LLVM libraries linked in the same executable.
 
+Cross-compiling PoCL
+---------------------
 
-Cross-compile PoCL
--------------------
-
-It's now possible to cross-compile pocl on x86-64 to run on ARM/MIPS/etc,
-There is a ToolchainExample.cmake file;
-copy it under different name, then follow the instructions in the file.
+It's now possible to cross-compile pocl on x86-64 to run on ARM/MIPS/RISC-V and
+others. For ARM64 & RISC-V we have CMake Toolchain files accompanied by Dockerfiles
+which cross-compile LLVM for the target machine. You can use the same Toolchain files
+for cross-compiling PoCL for the target machine. The files can be found in
+`tools/docker/LLVM/cross/`, the required preparation is described in each Dockerfile.
 
 Building & running in Docker
 -----------------------------
@@ -386,45 +387,117 @@ ARM specific build notes:
 RISC-V support
 -----------------------------
 
-The RISC-V support has been tested (as of Dec 2023) on Starfive VisionFive 2 using Ubuntu 23.10 preinstalled image,
-with LLVM 17 and GCC 13.2; of the internal tests, 98% tests pass, 4 tests fail out of 253.
-In particular, tests using printf with vector arguments are broken ATM. Other boards / CPUs
-have not been tested. RISC Vector extension is not supported.
+In general, RISC-V targets should work easily out of the box with the
+newer Clang/LLVMs. Both natively building PoCL in a RISC-V host and
+cross-compiling it in a development PC work.
 
-RISC-V specific build notes:
+General hints:
 
-* Avoid older LLVM and GCC versions (like GCC 11 / Clang 14 on the official
-  Starfive Debian images) as much as possible. Code generation is much
-  better with recent versions, and your experience will generally better
+* It is advisable to avoid older LLVM and GCC versions
+  thanks to the much improved RISC-V support in the recent versions.
 
-* LLVM might not recognize your CPU, in which case CMake will complain.
-  Run cmake with -DLLC_HOST_CPU=<yourcpu>. "yourcpu" must be something LLVM recognizes;
-  you can get the full list by running `llc -mcpu=help`.
+* LLVM might not recognize your CPU, in which case CMake will complain or
+  the bitcode library build will fail. To remediate this, add cmake parameter
+  -DLLC_HOST_CPU=<yourcpu>. "yourcpu" must be something LLVM recognizes,
+  for example "spacemit-x60". You can get the full list by
+  running `llc -mtriple=riscv64 -mcpu=help`.
 
-* on RISC-V, PoCL additionally needs to pass a target ABI flag to the compiler. There is
-  some autodetection in PoCL but right now it's limited, and Clang unfortunately does not
-  always get the defaults correctly. If you get errors similar to:
+* On RISC-V, PoCL additionally needs to pass a target ABI flag to the compiler to
+  ensure correct floating point ABI is used. There is some autodetection in PoCL
+  but it's not perfect, and Clang unfortunately does not always get the defaults
+  correctly. If you get errors related to linking double-float with soft-float
+  modules or similar, then most likely PoCL used the incorrect ABI. You can explicitly
+  specify the ABI to use with the HOST_CPU_TARGET_ABI CMake option (for example 'lp64d').
 
-      "can't link double-float modules with soft-float modules"
+Board-specific notes are given in the following subsections.
 
-  from linker, then most likely PoCL used the incorrect ABI. You can explicitly
-  specify the ABI to use with the HOST_CPU_TARGET_ABI CMake option.
+Banana Pi F3
+~~~~~~~~~~~~
+
+This board should work out-of-the-box. It was tested with Debian's LLVM 20
+packages both with a native and a cross build.
+
+Defining the CMake LLC_HOST_CPU parameter to 'spacemit-x60' should suffice
+for the native build after the basic PoCL build prerequisities have been
+installed.
+
+For the cross build, you can use the LLVM in your development PC as
+long as it supports the RISC-V target. It doesn't have to be the only/default
+target, the same LLVM you use for X86_64 development should work. Just
+make sure you use the same LLVM version as installed in the development board.
+
+You need the GNU cross compiler to build PoCL, which can be installed
+in Debian based distros via package 'g++-14-riscv64-linux-gnu'.
+
+Then, mount the root of the development board file system to some directory
+in your disk. For example, mounting using sshfs:
+
+.. code-block:: console
+
+   export BOARD_ROOT=$HOME/rv/root_fs
+   sshfs username@bananapie.host.name:/ $BOARD_ROOT
+
+Then configure PoCL for a cross build and build it.
+Provide the paths to the board LLVM and ICD loader so the compiler can link against them.
+
+.. code-block:: console
+
+   export RISCV_CPU=spacemit-x60
+   export LLVM_NATIVE_HOME=$BOARD_ROOT/usr
+   export ICD_NATIVE_LIB=$BOARD_ROOT/usr/lib/riscv64-linux-gnu
+   export NATIVE_LIBS=${LLVM_NATIVE_HOME}:${ICD_NATIVE_LIB}
+
+   cd pocl_source_dir
+   mkdir build && cd build
+   cmake .. -DCMAKE_MAKE_PROGRAM=/usr/bin/make           \
+    -DLLVM_CONFIG=$(which llvm-config-20)                \
+    -DHOST_DEVICE_BUILD_HASH=riscv64-unknown-linux-gnu   \
+    -DCMAKE_TOOLCHAIN_FILE=../ToolchainRISCV.cmake       \
+    -DLLC_TRIPLE=riscv64-unknown-linux-gnu               \
+    -DLLC_HOST_CPU=${RISCV_CPU}                          \
+    -DLLVM_HOST_TARGET=riscv64-unknown-linux-gnu         \
+    -DCMAKE_PREFIX_PATH=${NATIVE_LIBS}                   \
+    -DCMAKE_INSTALL_PREFIX=${BOARD_ROOT}/local/          \
+    -DENABLE_ICD=ON                                      \
+    -DENABLE_LOADABLE_DRIVERS=ON                         \
+    -DKERNELLIB_HOST_CPU_VARIANTS=${RISCV_CPU}
+
+    make -j5
+
+Now you have a build directory which should be runnable in the board. You can
+rsync it to the board and run it there.
+
+One caveat is that if you run tests on board, the tests might refer
+to files with full paths. This means that the location of the PoCL source
+and build should be exact the same on the board and the development
+host. You can use symlinks to workaround troubles with that.
+
+
+Starfive VisionFive 2
+~~~~~~~~~~~~~~~~~~~~~
+
+The RISC-V support has been tested (in Dec 2023) on Starfive VisionFive 2
+using an Ubuntu 23.10 preinstalled image with LLVM 17 and GCC 13.2. At
+that time, 98% tests pass, 4 tests fail out of 253. In particular,
+tests using printf with vector arguments were broken, but likely would
+work with the current PoCL version with the rewritted printf.
+
 
 PowerPC support
 -----------------------------
 
-PoCL is used to provide OpenCL on IBM AC922 computers 
-featuring IBM Power9 processors and Nvidia Tesla V100 GPU 
-interconnected with NVlink v2 (up to 72 GByte/s). 
+PoCL is used to provide OpenCL on IBM AC922 computers
+featuring IBM Power9 processors and Nvidia Tesla V100 GPU
+interconnected with NVlink v2 (up to 72 GByte/s).
 This has been tested under debian_11 and Ubuntu_20.04.
 
-Officially, Nvidia does not support OpenCL on this platform 
+Officially, Nvidia does not support OpenCL on this platform
 and the driver they are shipping is lacking the compiler part.
 
 ## Building tricks (as of 04/2023):
 
-The PPC64le features 128-bit vector unit (Altivec/VSX) which 
-are easily confused by the C++ compiler with the C++ vector 
+The PPC64le features 128-bit vector unit (Altivec/VSX) which
+are easily confused by the C++ compiler with the C++ vector
 instruction when using the compile option `-std=c++XX`.
 The corresponding code usually fails compiling.
 The trick is to pass the option `-std=gnu++XX`.

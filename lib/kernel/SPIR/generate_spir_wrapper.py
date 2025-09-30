@@ -1,4 +1,3 @@
-
 #!/usr/bin/python3
 #
 # A script to generate wrapping functions (SPIR-mangled with SPIR AS) that will wrap
@@ -39,7 +38,7 @@ parser = argparse.ArgumentParser(description='SPIR wrapper generator.')
 
 parser.add_argument('-t', '--target',
 	dest='target',
-	default="cpu_x86", choices=["cpu_x86", "cpu_arm", "cuda"],
+	default="cpu_x86", choices=["cpu_x86", "cpu_arm", "cuda", "cpu_riscv"],
 	help='target to generate wrapper for')
 
 parser.add_argument('-r', '--register-size',
@@ -78,11 +77,15 @@ AS_CASTS_REQUIRED = args.target.startswith('cpu')
 # use of byval/sret for args that don't fit into registers
 X86_CALLING_ABI = (args.target == 'cpu_x86')
 ARM_CALLING_ABI = (args.target == 'cpu_arm')
+RISCV64_CALLING_ABI = (args.target == 'cpu_riscv')
 SPIR_CALLING_ABI = (args.target == 'cuda')
 
 # size of the largest CPU (SIMD) register. Values larger than this
 # will be passed with byval/sret
 CPU_ABI_REG_SIZE = args.reg_size
+# for RISC-V the ABI is always 128bit max size
+if RISCV64_CALLING_ABI:
+	CPU_ABI_REG_SIZE = 128
 
 OPAQUE_POINTERS = True
 
@@ -329,6 +332,51 @@ elif ARM_CALLING_ABI:
 
 		"<3 x i32>": "<4 x i32>",
 	}
+elif RISCV64_CALLING_ABI:
+	COERCE_VECTOR_MAP = {
+		"<2 x i8>": "i64",
+		"<3 x i8>": "i64",
+		"<4 x i8>": "i64",
+		"<8 x i8>": "i64",
+		"<16 x i8>": "i128",
+
+		"<2 x i16>": "i64",
+		"<3 x i16>": "i64",
+		"<4 x i16>": "i64",
+		"<8 x i16>": "i128",
+
+		"<2 x half>": "i64",
+		"<3 x half>": "i64",
+		"<4 x half>": "i64",
+		"<8 x half>": "i128",
+
+		"<2 x i32>": "i64",
+		"<3 x i32>": "i128",
+		"<4 x i32>": "i128",
+
+		"<2 x float>": "i64",
+		"<3 x float>": "i128",
+		"<4 x float>": "i128",
+
+		"<2 x i64>": "i128",
+
+		"<2 x double>": "i128",
+	}
+	SHUFFLE_VECTOR_MAP = {
+		"<2 x i8>": "<8 x i8>",
+		"<3 x i8>": "<8 x i8>",
+		"<4 x i8>": "<8 x i8>",
+
+		"<2 x i16>": "<4 x i16>",
+		"<3 x i16>": "<4 x i16>",
+
+		"<2 x half>": "<4 x half>",
+		"<3 x half>": "<4 x half>",
+
+		"<3 x i32>": "<4 x i32>",
+
+		"<3 x float>": "<4 x float>",
+        }
 else:
 	COERCE_VECTOR_MAP = {
 	}
@@ -570,20 +618,56 @@ ALREADY_DECLARED = {
 }
 
 # some coerced args require a shuffle b/c different size in bits
-def shuffle_coerced_arg(llvm_i, input_type, input_arg, all_instr):
-	if input_type.startswith("<3"):
+# if the argument needs shuffling, inserts the shufle to `all_instrs` and return the new (shuffled) value;
+# otherwise return input_arg
+def shuffle_coerced_arg(llvm_i, input_type, coerced_arg_type, input_arg, all_instr):
+	if (not RISCV64_CALLING_ABI) and input_type.startswith("<3"):
 		four_vec = "<4" + input_type[2:]
-		all_instr.append("  %%%u = shufflevector %s, %s undef, <4 x i32> <i32 0, i32 1, i32 2, i32 undef>" % (llvm_i, input_arg, input_type))
+		all_instr.append("  %%%u = shufflevector %s, %s poison, <4 x i32> <i32 0, i32 1, i32 2, i32 poison>" % (llvm_i, input_arg, input_type))
 		shuffled_arg = four_vec + " %" + chr(48+llvm_i)
 		llvm_i += 1
+        # for ARM, shuffle 2xi8 -> 4xi8
 	elif ARM_CALLING_ABI and input_type == "<2 x i8>":
 		four_vec = "<4" + input_type[2:]
-		all_instr.append("  %%%u = shufflevector %s, %s undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>" % (llvm_i, input_arg, input_type))
+		all_instr.append("  %%%u = shufflevector %s, %s poison, <4 x i32> <i32 0, i32 1, i32 poison, i32 poison>" % (llvm_i, input_arg, input_type))
 		shuffled_arg = four_vec + " %" + chr(48+llvm_i)
+		llvm_i += 1
+	elif RISCV64_CALLING_ABI and (input_type in SHUFFLE_VECTOR_MAP):
+		new_vec = SHUFFLE_VECTOR_MAP[input_type]
+		num_elem = ord(new_vec[1]) - 48
+		num_input = ord(input_type[1]) - 48
+		num_undef = num_elem - num_input
+		def_elems = ", ".join(["i32 "+str(i) for i in range(0,num_input)])
+		undef_elems = ", ".join(["i32 poison" for i in range(0,num_undef)])
+		all_instr.append("  %%%u = shufflevector %s, %s poison, <%u x i32> <%s, %s>" % (llvm_i, input_arg, input_type, num_elem, def_elems, undef_elems))
+		shuffled_arg = new_vec + " %" + chr(48+llvm_i)
 		llvm_i += 1
 	else:
 		shuffled_arg = input_arg
 	return (shuffled_arg, llvm_i)
+
+def unshuffle_coerced_ret_type(coerced_ret_type, ret_type, coerced_name, retval_name):
+	if (not RISCV64_CALLING_ABI) and ret_type.startswith("<3"):
+		four_vec = "<4" + ret_type[2:]
+                # %bc_ret = bitcast i64 %%coerced_ret to <4 x i32>"
+		bitcast_inst = "  %%bc_ret = bitcast %s %%%s to %s \n" % (coerced_ret_type, coerced_name, four_vec)
+                # %final_ret = shufflevector <4 x i32> %bc_ret,  <4 x i32> poison, <0, 1, 2>
+		shuffle_inst = "  %%%s = shufflevector %s %%bc_ret, %s poison, <3 x i32> <i32 0, i32 1, i32 2>\n" % (retval_name, four_vec, four_vec)
+		return bitcast_inst + shuffle_inst
+
+	elif RISCV64_CALLING_ABI and (ret_type in SHUFFLE_VECTOR_MAP):
+		# e.g. ret_type = 2 x i8, coerced_ret_type = i64, bitcast_type = 8 x i8
+		bitcast_type = SHUFFLE_VECTOR_MAP[ret_type]
+                # %bc_ret = bitcast i64 %%coerced_ret to <8 x i8>"
+		bitcast_inst = "  %%bc_ret = bitcast %s %%%s to %s \n" % (coerced_ret_type, coerced_name, bitcast_type)
+		num_input = ord(ret_type[1]) - 48
+		def_elems = ", ".join(["i32 "+str(i) for i in range(0,num_input)])
+                # <2 x i8> %final_ret = shufflevector <8 x i8> %bc_ret,  <8 x i8> poison, <0, 1>
+		shuffle_inst = "  %%%s = shufflevector %s %%bc_ret, %s poison, <%u x i32> <%s>\n" % (retval_name, bitcast_type, bitcast_type, num_input, def_elems)
+		return bitcast_inst + shuffle_inst
+
+	else:
+		return None
 
 # returns a LLVM type with addrspace
 # e.g. for argtype=="Pi" returns "i32 *"
@@ -648,7 +732,8 @@ def replace_arg_type(argtype, replacement):
 
 # coerce vector type arguments (leave other types alone)
 def coerce_llvm_vector_type(type):
-	if (not X86_CALLING_ABI) and (not ARM_CALLING_ABI):
+	# only for ARM & X86 & RISCV, not SPIR
+	if SPIR_CALLING_ABI:
 		return type
 	if type in COERCE_VECTOR_MAP:
 		return COERCE_VECTOR_MAP[type]
@@ -657,18 +742,21 @@ def coerce_llvm_vector_type(type):
 
 # get arg type for types larger than cpu reg size
 def byval_llvm_vector_type(type):
-	if (not X86_CALLING_ABI) and (not ARM_CALLING_ABI):
+	# only for ARM & X86 & RISCV, not SPIR
+	if SPIR_CALLING_ABI:
 		return type
 	if type not in BYVAL_VECTOR_MAP:
 		return type
 	if X86_CALLING_ABI:
 		return BYVAL_VECTOR_MAP[type]
-	if ARM_CALLING_ABI:
+	if ARM_CALLING_ABI or RISCV64_CALLING_ABI:
 		return type+"*"
+	return None
 
-# return type, only required for ARM cpu
+# return type, only required for ARM & RISCV cpu
 def sret_llvm_vector_type(type):
-	if not ARM_CALLING_ABI:
+	# only for RISCV & ARM, not X86 & SPIR
+	if (not RISCV64_CALLING_ABI) and (not ARM_CALLING_ABI):
 		return type
 	if type not in SRET_VECTOR_MAP:
 		return type
@@ -727,18 +815,18 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 		# args without qualifiers, saved for mangling name compression
 		saved_pure_args = []
 
-		# ARM does not coerce return types, x86-64 does
+		# ARM does not coerce return types, x86-64 & RISC-V does
 		if ARM_CALLING_ABI:
 			coerced_ret_type = ret_type
 		else:
 			coerced_ret_type = coerce_llvm_vector_type(ret_type)
 
-		# handle sret returvn value for ARM
+		# handle sret returvn value for ARM & RISCV
 		# if the function uses even one sret type argument, it must also return with sret
 		sret_ret_type = sret_llvm_vector_type(ret_type)
 		retval_alloca_inst = None
 		retval_align = None
-		if ARM_CALLING_ABI and (ret_type != sret_ret_type):
+		if sret_ret_type and (ret_type != sret_ret_type):
 			# add alloca for retval
 			alignment = sret_ret_type.find("align")
 			if alignment > 0:
@@ -803,7 +891,7 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 			####### generate caller (SPIR wrapper function) llvm arg types
 			# get LLVM type name (e.g. <2 x i32>) for arg
 			spir_arg_type = llvm_arg_type(cast, LLVM_SPIR_AS[AS])
-			# get coerced type
+			# get coerced type e.g. i64
 			coerced_arg_type = coerce_llvm_vector_type(spir_arg_type)
 			# get byval type
 			byval_sret_arg_type = byval_llvm_vector_type(spir_arg_type)
@@ -822,7 +910,7 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 			# this shouldn't interact with addrspace casts.
 			if coerced_arg_type != spir_arg_type:
 				# some vectors require a shuffle
-				shuffled_arg, llvm_i = shuffle_coerced_arg(llvm_i, spir_arg_type, noext_caller_arg, all_instr)
+				shuffled_arg, llvm_i = shuffle_coerced_arg(llvm_i, spir_arg_type, coerced_arg_type, noext_caller_arg, all_instr)
 				all_instr.append("  %%%u = bitcast %s to %s" % (llvm_i, shuffled_arg, coerced_arg_type))
 				callee_args.append(coerced_arg_type + " %" + chr(48+llvm_i))
 				decl_args.append(coerced_arg_type)
@@ -892,10 +980,9 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 		else:
 			if ret_type != coerced_ret_type:
 				print("  %%coerced_ret = call %s %s(%s)" % (coerced_ret_type, ocl_mangled_name, callee_args))
-				if ret_type.startswith("<3"):
-					four_vec = "<4" + ret_type[2:]
-					print("  %%bc_ret = bitcast %s %%coerced_ret to %s" % (coerced_ret_type, four_vec))
-					print("  %%final_ret = shufflevector %s %%bc_ret, %s undef, <3 x i32> <i32 0, i32 1, i32 2>" % (four_vec, four_vec))
+				unshuffle_insts = unshuffle_coerced_ret_type(coerced_ret_type, ret_type, "coerced_ret", "final_ret")
+				if unshuffle_insts:
+					print(unshuffle_insts)
 				else:
 					print("  %%final_ret = bitcast %s %%coerced_ret to %s" % (coerced_ret_type, ret_type))
 
@@ -1289,8 +1376,8 @@ for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
 	else:
 		uarg_type = arg_type
 
-	for vector_size in [2,3,4,8,16]:
-		for perm_size in [2,3,4,8,16]:
+	for vector_size in [2,4,8,16]:
+		for perm_size in [2,4,8,16]:
 			ret_type = "Dv" + str(perm_size) + "_" + arg_type
 			in_type = "Dv" + str(vector_size) + "_" + arg_type
 			mask_type = "Dv" + str(perm_size) + "_" + uarg_type

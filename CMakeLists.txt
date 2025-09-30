@@ -2400,7 +2400,19 @@ rename_if_different("${CMAKE_BINARY_DIR}/pocl_opencl.h.new" "${CMAKE_BINARY_DIR}
 configure_file("cl_offline_compiler.sh.in.cmake" "cl_offline_compiler.sh.config.new" @ONLY)
 rename_if_different(
   "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh.config.new"
-  "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh" 1)
+  "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh.config" 1)
+if(ENABLE_SPIRV)
+  get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+  if(is_multi_config)
+    file(GENERATE
+      OUTPUT "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh.$<CONFIG>"
+      INPUT "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh.config")
+  else()
+    file(GENERATE
+      OUTPUT "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh"
+      INPUT "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh.config")
+  endif()
+endif()
 
 include_directories("${CMAKE_BINARY_DIR}")
 
@@ -2434,11 +2446,16 @@ if(ENABLE_ICD)
   # On Windows Khronos ICD loader looks for vendors in registry.
   # https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/cl_khr_icd.html#_icd_loader_vendor_enumeration_on_windows
   if (NOT WIN32)
+    get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+    if(is_multi_config)
+      message(FATAL_ERROR "When using multi-config generators on Linux/Unix, using ICD is not yet supported")
+    endif()
     install(FILES "${CMAKE_BINARY_DIR}/pocl.icd"
             DESTINATION "${POCL_INSTALL_ICD_VENDORDIR}" COMPONENT "icd")
     # write icd file for pocl testing
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/ocl-vendors")
-    file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd" CONTENT "$<TARGET_FILE:pocl>" CONDITION 1)
+    file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd"
+         CONTENT "$<TARGET_FILE:pocl>" CONDITION 1)
   endif()
 
   cpack_add_component("icd")

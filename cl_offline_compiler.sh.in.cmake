@@ -144,7 +144,7 @@ if [ -e "${CL_DEV_INFO}" ]; then
 
   if [ "$CL_DEVICE_IMAGE_SUPPORT" -eq 1 ]; then
     if [ "$CL_IS_30" = "true" ]; then
-      CL_EXTS="${CL_EXTS},+__opencl_c_images"
+      CL_EXTS="${CL_EXTS},+__opencl_c_images,+__opencl_c_read_write_images"
     fi
     CL_EXT_DEFS="${CL_EXT_DEFS} -D__IMAGE_SUPPORT__=1"
   else
@@ -247,10 +247,11 @@ fi
 
 SOURCE_BASE=$(basename ${SOURCE})
 TEMP_BC_FILE=$(mktemp --tmpdir ${SOURCE_BASE}.XXXXXX.bc)
+TEMP_SPV_ATOM_FILE=$(mktemp --tmpdir ${SOURCE_BASE}.atom.XXXXXX.spv)
 TEMP_SPV_FINAL_FILE=$(mktemp --tmpdir ${SOURCE_BASE}.final.XXXXXX.spv)
 
 function cleanup {
-  rm -f "${TEMP_BC_FILE}" "${TEMP_SPV_FINAL_FILE}"
+  rm -f "${TEMP_BC_FILE}" "${TEMP_SPV_FINAL_FILE}" "${TEMP_SPV_ATOM_FILE}"
 }
 
 trap cleanup EXIT
@@ -263,7 +264,7 @@ fi
 
 CLANG_OPTIONS="--target=${TARGET} -x cl ${CL_STD} ${BUILD_OPTIONS} -o ${TEMP_BC_FILE} -emit-llvm -c ${SOURCE}"
 
-LLVM_SPIRV_OPTIONS="--spirv-gen-kernel-arg-name-md --spirv-max-version=1.2 -o ${TEMP_SPV_FINAL_FILE} ${TEMP_BC_FILE}"
+LLVM_SPIRV_OPTIONS="--spirv-gen-kernel-arg-name-md --spirv-max-version=1.2 -o ${TEMP_SPV_ATOM_FILE} ${TEMP_BC_FILE}"
 
 if [ "$DEBUG" = "true" ]; then
   echo "Running @CLANG@ ${CLANG_OPTIONS}"
@@ -274,6 +275,11 @@ if [ "$DEBUG" = "true" ]; then
   echo "Running @LLVM_SPIRV@ ${LLVM_SPIRV_OPTIONS}"
 fi
 @LLVM_SPIRV@ ${LLVM_SPIRV_OPTIONS} || exit 1
+
+if [ "$DEBUG" = "true" ]; then
+  echo "Running $<TARGET_FILE:spirv_fix_atomic_compare_exchange> "${TEMP_SPV_ATOM_FILE}" "${TEMP_SPV_FINAL_FILE}""
+fi
+$<TARGET_FILE:spirv_fix_atomic_compare_exchange> "${TEMP_SPV_ATOM_FILE}" "${TEMP_SPV_FINAL_FILE}"
 
 mv -n "${TEMP_SPV_FINAL_FILE}" "${OUTPUT}" || echo "output already exists, skipping write"
 

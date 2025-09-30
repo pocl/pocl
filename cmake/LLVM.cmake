@@ -165,9 +165,12 @@ endif()
 #LLVM_CXX_FLAGS=$($LLVM_CONFIG --cxxflags | sed -e 's/ -pedantic / /g')
 string(REPLACE " -pedantic" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 
-# Convert the LLVM's include path to -isystem so the headers are
+# Convert the LLVM's include path to -idirafter so the headers are
 # treated as system headers and GCC won't emit warnings caused by them.
-string(REPLACE "-I" "-isystem" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
+# note that using -isystem here breaks the compilation if the LLVM headers
+# are located in a system directory (/usr/include), for details:
+# https://stackoverflow.com/questions/37218953/isystem-on-a-system-include-directory-causes-errors
+string(REPLACE "-I" "-idirafter" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 
 #llvm-config clutters CXXFLAGS with a lot of -W<whatever> flags.
 #(They are not needed - we want to use -Wall anyways)
@@ -455,15 +458,16 @@ if(NOT LLVM_SPIRV)
   find_library(LLVM_SPIRV_LIB "LLVMSPIRVLib" PATHS "${LLVM_LIBDIR}")
 endif()
 
-if(LLVM_SPIRV_INCLUDEDIR AND LLVM_SPIRV_LIB)
+if(LLVM_SPIRV_INCLUDEDIR AND LLVM_SPIRV_LIB AND (NOT DEFINED HAVE_LLVM_SPIRV_LIB))
   if(UNIX)
     set(LINK_OPTS LINK_OPTIONS "-Wl,-rpath,${LLVM_LIBDIR}")
   else()
     unset(LINK_OPTS)
   endif()
   message(STATUS "found LLVMSPIRV library: ${LLVM_SPIRV_INCLUDEDIR} | ${LLVM_SPIRV_LIB}")
-  set(LLVMSPIRVLIB_MAXVER_FILE "${CMAKE_SOURCE_DIR}/cmake/MaxSPIRVversion.cc")
-  try_run(LIBLLVMSPIRV_MAXVER_RUN_RESULT LIBLLVMSPIRV_MAXVER_COMPILE_RESULT
+  if(NOT LLVM_SPIRV_LIB_MAXVER)
+    set(LLVMSPIRVLIB_MAXVER_FILE "${CMAKE_SOURCE_DIR}/cmake/MaxSPIRVversion.cc")
+    try_run(LIBLLVMSPIRV_MAXVER_RUN_RESULT LIBLLVMSPIRV_MAXVER_COMPILE_RESULT
           "${CMAKE_BINARY_DIR}" "${LLVMSPIRVLIB_MAXVER_FILE}"
           COMPILE_DEFINITIONS ${LLVM_CXXFLAGS}
           CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_SPIRV_INCLUDEDIR};${LLVM_INCLUDE_DIRS}"
@@ -471,21 +475,23 @@ if(LLVM_SPIRV_INCLUDEDIR AND LLVM_SPIRV_LIB)
           ${LINK_OPTS}
           RUN_OUTPUT_VARIABLE LIBLLVMSPIRV_MAXVER_RUN_OUTPUT
           COMPILE_OUTPUT_VARIABLE LIBLLVMSPIRV_MAXVER_COMP_OUTPUT)
-  if(LIBLLVMSPIRV_MAXVER_COMPILE_RESULT AND (LIBLLVMSPIRV_MAXVER_RUN_RESULT EQUAL 0))
-    message(STATUS "ran libLLVMSPIRV test, result: ${LIBLLVMSPIRV_MAXVER_RUN_OUTPUT}")
-    set(HAVE_LLVM_SPIRV_LIB 1)
-    set(LLVM_SPIRV_LIB_MAXVER ${LIBLLVMSPIRV_MAXVER_RUN_OUTPUT})
-  else()
-    message(STATUS "failed to compile ${LIBLLVMSPIRV_MAXVER_COMPILE_RESULT} / run ${LIBLLVMSPIRV_MAXVER_RUN_RESULT} libLLVMSPIRV test")
-    message(STATUS "compile output: ${LIBLLVMSPIRV_MAXVER_COMP_OUTPUT}")
-    message(STATUS "run output: ${LIBLLVMSPIRV_MAXVER_RUN_OUTPUT}")
-    set(HAVE_LLVM_SPIRV_LIB 0)
-    set(LLVM_SPIRV_LIB_MAXVER 66048) # SPIR-V 1.2
+
+    if(LIBLLVMSPIRV_MAXVER_COMPILE_RESULT AND (LIBLLVMSPIRV_MAXVER_RUN_RESULT EQUAL 0))
+      message(STATUS "ran libLLVMSPIRV test, result: ${LIBLLVMSPIRV_MAXVER_RUN_OUTPUT}")
+      set(HAVE_LLVM_SPIRV_LIB ON CACHE BOOL "have libLLVMSPIRV")
+      set(LLVM_SPIRV_LIB_MAXVER ${LIBLLVMSPIRV_MAXVER_RUN_OUTPUT} CACHE STRING "maximum SPIR-V version supported by libLLVMSPIRV")
+    else()
+      message(STATUS "failed to compile ${LIBLLVMSPIRV_MAXVER_COMPILE_RESULT} / run ${LIBLLVMSPIRV_MAXVER_RUN_RESULT} libLLVMSPIRV test")
+      message(STATUS "compile output: ${LIBLLVMSPIRV_MAXVER_COMP_OUTPUT}")
+      message(STATUS "run output: ${LIBLLVMSPIRV_MAXVER_RUN_OUTPUT}")
+      set(HAVE_LLVM_SPIRV_LIB 0 CACHE BOOL "have libLLVMSPIRV")
+      set(LLVM_SPIRV_LIB_MAXVER 0 CACHE STRING "maximum SPIR-V version supported by libLLVMSPIRV")
+    endif()
   endif()
 else()
   message(STATUS "LLVMSPIRV library not found: ${LLVM_SPIRV_INCLUDEDIR} | ${LLVM_SPIRV_LIB}")
-  set(HAVE_LLVM_SPIRV_LIB 0)
-  set(LLVM_SPIRV_LIB_MAXVER 66048) # SPIR-V 1.2
+  set(HAVE_LLVM_SPIRV_LIB 0 CACHE BOOL "have libLLVMSPIRV")
+  set(LLVM_SPIRV_LIB_MAXVER 0 CACHE STRING "maximum SPIR-V version supported by libLLVMSPIRV")
 endif()
 
 set_expr(HAVE_SPIRV_LINK SPIRV_LINK)

@@ -32,8 +32,8 @@ env:
 jobs:
   openasip_matrix:
     env:
-      PATH: "/home/LLVM_${{ matrix.llvm }}0/bin:/home/TCE_${{ matrix.llvm }}0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-      LD_LIBRARY_PATH: "/home/TCE_${{ matrix.llvm }}0/lib"
+      PATH: "/opt/LLVMTCE_${{ matrix.llvm }}/bin:/opt/TCE_${{ matrix.llvm }}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      LD_LIBRARY_PATH: "/opt/TCE_${{ matrix.llvm }}/lib"
     name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
     runs-on: [self-hosted, linux, x64, openasip]
     strategy:
@@ -60,7 +60,7 @@ jobs:
             BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
             cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
-            -DWITH_LLVM_CONFIG=/home/LLVM_${{ matrix.llvm }}0/bin/llvmtce-config \
+            -DWITH_LLVM_CONFIG=/opt/LLVMTCE_${{ matrix.llvm }}/bin/llvmtce-config \
             "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
           }
 

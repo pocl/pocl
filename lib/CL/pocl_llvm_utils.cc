@@ -365,6 +365,22 @@ void cpu_setup_vector_widths(cl_device_id dev) {
     if (Features["sve"] || Features["sve2"] || Features["neon"])
       lane_width = 16;
 #endif
+#if defined(__linux__) && defined(__riscv)
+    if (Features["v"]) {
+#ifdef __riscv_zvl128b
+      lane_width = 16;
+#endif
+#ifdef __riscv_zvl256b
+      lane_width = 32;
+#endif
+#ifdef __riscv_zvl512b
+      lane_width = 64;
+#endif
+#ifdef __riscv_zvl1024b
+      lane_width = 128;
+#endif
+    }
+#endif
 #if defined(__i386__) || defined(_M_IX86) || \
     defined(__x86_64__) || defined(_M_X64)
     if (Features["sse"])

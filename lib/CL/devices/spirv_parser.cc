@@ -46,8 +46,8 @@
 #define logError(...) POCL_MSG_ERR(__VA_ARGS__);
 #else
 #define logTrace(...) ((void)0)
-#define logWarn(...) fprintf(stderr, __VA_ARGS__)
-#define logError(...) fprintf(stderr, __VA_ARGS__)
+#define logWarn(...) ((void)0)
+#define logError(...) ((void)0)
 #endif
 
 
