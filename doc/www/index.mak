@@ -1,5 +1,7 @@
 <%inherit file="basic_page.makt" />
-<p>PoCL is a portable open source (MIT-licensed) implementation of the
+<%namespace name="comp" file="components.mak"/>
+
+<p>PoCL is a portable MIT-licensed compliant implementation of the
 OpenCL standard. In addition to
 being an easily portable/layered multi-device
 open-source OpenCL implementation, a major goal of this project is
@@ -10,8 +12,8 @@ of OpenCL programs across device types utilizing runtime and compiler
 techniques.</p>
 
 <p>PoCL currently supports various CPU architectures (x86, ARM, RISC-V),
-NVIDIA GPUs via libCUDA, Intel GPUs via Level Zero and TCE ASIPs
-(<a href="http://openasip.org">OpenASIP</a>) at different feature coverage
+NVIDIA GPUs via libCUDA, Intel GPUs via Level Zero and
+<a href="http://openasip.org">OpenASIP</a> cores at different feature coverage
 levels. It also supports <a href="http://portablecl.org/docs/html/remote.html">a
 remote backend</a> for distributed OpenCL execution. PoCL is also known to
 have multiple (private) adaptations in active production use.</p>
@@ -22,6 +24,25 @@ and as a portability layer. Thus, if your desired target has an LLVM backend, it
 should be able to get OpenCL support easily by using PoCL.</p>
 
 <h1>News</h1>
+
+<h2>2025-09-30: <a href="publications.html">Publications and a master's thesis about PoCL-R</a> added</h2>
+
+<p>Publications from this and the last year that were missing from the publication list
+were added. This time they all happen to be related to the remote driver, PoCL-R:
+
+${comp.load_publications("pocl-publications-2025-09-30-additions.txt")}
+
+</p>
+
+<h2>2025-05-22: <a href="http://portablecl.org/docs/html/notes_7_0.html">Portable Computing Language (PoCL) v7.0 released</a></h2>
+
+<p>PoCL v7.0 has been released. The release notes can be read <a href="http://portablecl.org/docs/html/notes_7_0.html">here</a>
+and a packaged release is available <a href="https://github.com/pocl/pocl/releases/tag/v7.0">here.</a></p>
+
+<h2>2024-06-18: <a href="http://portablecl.org/docs/html/notes_6_0.html">Portable Computing Language (PoCL) v6.0 released</a></h2>
+
+<p>PoCL v6.0 has been released. The release notes can be read <a href="http://portablecl.org/docs/html/notes_6_0.html">here</a>
+and a packaged release is available <a href="https://github.com/pocl/pocl/releases/tag/v6.0">here.</a></p>
 
 <h2>2023-12-19: <a href="http://portablecl.org/docs/html/notes_5_0.html">Portable Computing Language (PoCL) v5.0 released</a></h2>
 
@@ -128,10 +149,4 @@ University of Bristol. Read more about it <a href="cuda-backend.html">here</a>.
 
 <br />
 <hr />
-<p align="center">
-
-<a class="twitter-timeline"  href="https://twitter.com/portablecl"  data-widget-id="399622661979918336">Tweets from @portablecl</a>
-    <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
-
-</p>
 

@@ -27,7 +27,7 @@
 
 generated_htmls=$(patsubst %.mak,%.html,$(wildcard *.mak))
 static_files=pocl-paper.bib img downloads
-WEB_REPOSITORY = $(HOME)/src/portablecl.github.io/
+WEB_REPOSITORY = $(HOME)/src/pocl.github.io/
 
 all: $(generated_htmls)
 

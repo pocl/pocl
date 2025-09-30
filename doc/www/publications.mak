@@ -1,49 +1,22 @@
 ## -*- coding: utf-8 -*-
 <%!
-        sub_page = "Download"
+        sub_page = "Publications"
 %>
 <%inherit file="basic_page.makt" />
-<%def name="load_publications(filename)">
-<%
-        lines = open(filename, 'r').readlines()
-        i = iter(lines)
-%>
-<ul>
-<%
-        papers = []
-        try:
-                while True:
-                      authors = next(i).strip()
-                      title = next(i).strip()
-                      url = next(i).strip()
-                      place = next(i).strip()
-                      if place.endswith("."): place = place[0:-1]
-                      empty = next(i)
-                      papers.append((authors.strip(), title.strip(), url, place))
-        except:
-                pass
-%>
-%for (authors, title, link, place) in papers:
-<li>${authors}:<br />
-<span class='paperTitle'>"<a href="${link}">${title}</a>"</span><br />
-${place}.
-</li>
-%endfor
+<%namespace name="comp" file="components.mak"/>
 
-</ul>
-</%def>
+<p>Academic publications such as research papers or master's thesis about PoCL or using PoCL
+for something are listed here.</p>
 
-<p>Publications (research papers, thesis) about or using pocl are listed here.
-If you use or somehow benefit from pocl in your research, please cite the "pocl-paper"
-below (<a href="pocl-paper.bib">bibtex</a>) and let us know. We are happy to add 
-your paper to this page.</p>
+<p>If you use or somehow benefit from PoCL in your research, please cite the "pocl-paper"
+below (<a href="pocl-paper.bib">bibtex</a>) and let us know. We are happy to add
+your paper to this page to get it more visibility.</p>
 
-<h1>About pocl (the open source project) itself</h1>
+<h1>About PoCL the open source project itself</h1>
 
-${load_publications("pocl-publications.txt")}
+${comp.load_publications("pocl-publications.txt")}
 
-<h1>Publications using pocl somehow</h1>
+<h1>Publications using PoCL somehow</h1>
 
-${load_publications("pocl-using-publications.txt")}
-
+${comp.load_publications("pocl-using-publications.txt")}
 

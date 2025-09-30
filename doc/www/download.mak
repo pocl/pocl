@@ -17,6 +17,14 @@ the version control system:</p>
 
 <ul>
 
+<li><b>Version 7.0:</b> Supports LLVM versions 14.0 to 20.0.
+            <a href="https://github.com/pocl/pocl/releases/tag/v7.0">download</a>,
+            <a href="http://portablecl.org/docs/html/notes_7_0.html">release notes</a></li>
+
+<li><b>Version 6.0:</b> Supports LLVM versions 14.0 to 18.0.
+            <a href="https://github.com/pocl/pocl/releases/tag/v6.0">download</a>,
+            <a href="http://portablecl.org/docs/html/notes_6_0.html">release notes</a></li>
+
 <li><b>Version 5.0:</b> Supports LLVM versions 10.0 to 17.0.
             <a href="https://github.com/pocl/pocl/releases/tag/v5.0">download</a>,
             <a href="http://portablecl.org/docs/html/notes_5_0.html">release notes</a></li>
@@ -26,105 +34,28 @@ the version control system:</p>
             <a href="https://github.com/pocl/pocl/blob/release_4_0/doc/notes_4_0.rst">release notes</a></li>
 
 <li><b>Version 3.1:</b> Supports LLVM versions 6.0 to 15.0.
-            <a href="downloads/pocl-3.1.tar.gz">pocl-3.1.tar.gz (1.6 M)</a>,
-            <a href="https://raw.githubusercontent.com/pocl/pocl/release_3_1/CHANGES">change log</a>,
+            <a href="https://github.com/pocl/pocl/archive/v3.1.tar.gz">pocl-3.1.tar.gz (1.6 M)</a>,
             <a href="https://raw.githubusercontent.com/pocl/pocl/release_3_1/doc/notes-3.1.txt">release notes</a></li>
 
 <li><b>Version 3.0:</b> Supports LLVM versions 6.0 to 14.0.
-            <a href="downloads/pocl-3.0.tar.gz">pocl-3.0.tar.gz (1.7 M)</a>,
-            <a href="downloads/CHANGES">change log</a>,
-            <a href="pocl-3.0.html">release notes</a></li>
+            <a href="https://github.com/pocl/pocl/archive/v3.0.tar.gz">pocl-3.0.tar.gz (1.7 M)</a>,
+            <a href="https://raw.githubusercontent.com/pocl/pocl/release_3_0/doc/notes-3.1.txt">release notes</a></li>
 
 <li><b>Version 1.8:</b> Supports LLVM versions 6.0 to 13.0.
-            <a href="downloads/pocl-1.8.tar.gz">pocl-1.8.tar.gz (1.6M)</a>,
-            <a href="downloads/CHANGES">change log</a>,
-            <a href="pocl-1.8.html">release notes</a></li>
+            <a href="https://github.com/pocl/pocl/archive/v1.8.tar.gz">pocl-1.8.tar.gz (1.6M)</a>,
+            <a href="https://raw.githubusercontent.com/pocl/pocl/release_1_8/doc/notes-1.8.txt">release notes</a></li>
 
 <li><b>Version 1.7:</b> Supports LLVM versions 6.0 to 12.0.
-            <a href="downloads/pocl-1.7.tar.gz">pocl-1.7.tar.gz (1.6M)</a>,
-            <a href="downloads/CHANGES">change log</a>,
-            <a href="pocl-1.7.html">release notes</a></li>
+            <a href="https://github.com/pocl/pocl/archive/v1.7.tar.gz">pocl-1.7.tar.gz (1.6M)</a>,
+            <a href="https://raw.githubusercontent.com/pocl/pocl/release_1_7/doc/notes-1.7.txt">release notes</a></li>
 
 <li><b>Version 1.6:</b> Supports LLVM versions 6.0 to 11.0.
-            <a href="downloads/pocl-1.6.tar.gz">pocl-1.6.tar.gz (1.6M)</a>,
-            <a href="downloads/CHANGES">change log</a>,
-            <a href="pocl-1.6.html">release notes</a></li>
+            <a href="https://github.com/pocl/pocl/archive/v1.6.tar.gz">pocl-1.6.tar.gz (1.6M)</a>,
+            <a href="https://raw.githubusercontent.com/pocl/pocl/release_1_6/doc/notes-1.6.txt">release notes</a></li>
 
 <li><b>Version 1.5:</b> Supports LLVM versions 6.0 to 10.0.
             <a href="https://github.com/pocl/pocl/archive/v1.5.tar.gz">pocl-1.5.tar.gz (1.5M)</a>,
-            <a href="/downloads/CHANGES">change log</a>,
-            <a href="pocl-1.5.html">release notes</a></li>
+            <a href="https://raw.githubusercontent.com/pocl/pocl/release_1_5/doc/notes-1.5.txt">release notes</a></li>
 
-<li><b>Version 1.4:</b> Supports LLVM versions 6.0 to 9.0.
-            <a href="https://github.com/pocl/pocl/archive/v1.4.tar.gz">pocl-1.4.tar.gz (1.5M)</a>,
-            <a href="/downloads/CHANGES">change log</a>,
-            <a href="pocl-1.4.html">release notes</a></li>
-
-<li><b>Version 1.3:</b> Supports LLVM versions 6.0 to 8.0.
-            <a href="https://github.com/pocl/pocl/archive/v1.3.tar.gz">pocl-1.3.tar.gz (1.4M)</a>,
-            <a href="/downloads/CHANGES">change log</a>,
-            <a href="pocl-1.3.html">release notes</a></li>
-
-<li><b>Version 1.2:</b> Supports LLVM 6.0 and 7.0.
-            <a href="https://github.com/pocl/pocl/archive/v1.2.tar.gz">pocl-1.2.tar.gz (1.6M)</a>,
-            <a href="/downloads/CHANGES">change log</a>,
-            <a href="pocl-1.2.html">release notes</a></li>
-
-<li><b>Version 1.1:</b> Supports LLVM 5.0 and 6.0.
-            <a href="https://github.com/pocl/pocl/archive/v1.1.tar.gz">pocl-1.1.tar.gz (1.5M)</a>,
-            <a href="/downloads/CHANGES">change log</a>,
-            <a href="pocl-1.1.html">release notes</a></li>
-
-
-<li><b>Version 1.0:</b> Supports LLVM 4.0 and 5.0.
-            <a href="/downloads/pocl-1.0.tar.gz">pocl-1.0.tar.gz (1.3M)</a>,
-            <a href="/downloads/CHANGES">change log</a>,
-            <a href="pocl-1.0.html">release notes</a></li>
-
-
-<li><b>Version 0.14:</b> Supports LLVM 3.9 and 4.0.
-            <a href="/downloads/pocl-0.14.tar.gz">pocl-0.14.tar.gz (1.2M)</a>,
-            <a href="/downloads/CHANGES">change log</a>,
-            <a href="pocl-0.14.html">release notes</a></li>
-
-<li><b>Version 0.13:</b> Supports LLVM 3.8.
-            <a href="/downloads/pocl-0.13.tar.gz">pocl-0.13.tar.gz (1.9M)</a>,
-            <a href="/downloads/CHANGES">change log</a>,
-            <a href="pocl-0.13.html">release notes</a></li>
-
-<li><b>Version 0.12:</b> Supports LLVM 3.7.
-            <a href="/downloads/pocl-0.12.tar.gz">pocl-0.12.tar.gz (1.7M)</a>,
-            <a href="/downloads/CHANGES">change log</a>,
-            <a href="pocl-0.12.html">release notes</a></li>
-
-<li><b>Version 0.11:</b> Supports LLVM 3.6.
-            <a href="/downloads/pocl-0.11.tar.gz">pocl-0.11.tar.gz (1.5M)</a>, 
-            <a href="/downloads/CHANGES">change log</a>,
-            <a href="pocl-0.11.html">release notes</a></li>
-
-<li><b>Version 0.10:</b> Supports LLVM 3.5.
-            <a href="/downloads/pocl-0.10.tar.gz">pocl-0.10.tar.gz (1.5M)</a>, 
-            <a href="/downloads/CHANGES">change log</a>,
-            <a href="pocl-0.10.html">release notes</a></li>
-
-<li><b>Version 0.9:</b> Supports LLVM 3.4.
-            <a href="/downloads/pocl-0.9.tar.gz">pocl-0.9.tar.gz (1.4M)</a>, 
-            <a href="/downloads/CHANGES">change log</a>,
-            <a href="pocl-0.9.html">release notes</a></li>
-
-<li><b>Version 0.8:</b> Supports LLVM 3.3.
-            <a href="http://pocl.sourceforge.net/downloads/pocl-0.8.tar.gz">pocl-0.8.tar.gz (1.3M)</a>, 
-            <a href="http://pocl.sourceforge.net/downloads/CHANGES">change log</a>,
-            <a href="http://pocl.sourceforge.net/pocl-0.8.html">release notes</a></li>
-
-<li><b>Version 0.7:</b> Supports LLVM 3.2.
-            <a href="http://pocl.sourceforge.net/downloads/pocl-0.7.tar.gz">pocl-0.7.tar.gz (1.0M)</a>, 
-            <a href="http://pocl.sourceforge.net/downloads/CHANGES">change log</a>, 
-            <a href="http://pocl.sourceforge.net/downloads/ANNOUNCEMENT">release notes</a></li>
-
-<li><b>Version 0.6:</b> Supports LLVM 3.1.
-            <a href="https://launchpad.net/pocl/0.6/0.6.0/+download/pocl-0.6.tar.gz">pocl-0.6.tar.gz (780K)</a>, 
-            <a href="https://launchpadlibrarian.net/112874115/CHANGES">change log</a>, 
-            <a href="https://launchpadlibrarian.net/112874413/notes-0.6.txt">release notes</a></li>
 </ul>
 

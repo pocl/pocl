@@ -23,6 +23,11 @@ Unified OpenCL Integration Methodology for FPGA Designs
 https://urn.fi/URN:NBN:fi:tuni-202111298778
 NorCAS 2021: IEEE Nordic Circuits and Systems Conference, October 2021.
 
+Tobias Baumann, Matthias Noack, Thomas Steinke
+Performance Evaluation and Improvements of the PoCL Open-Source OpenCL Implementation on Intel CPUs
+https://dl.acm.org/doi/10.1145/3456669.3456698
+IWOCL'21: International Workshop on OpenCL. April 2021.
+
 Topi Lepp&auml;nen, Atro Lotvonen, Pekka J&auml;&auml;skel&auml;inen
 Cross-vendor programming abstraction for diverse heterogeneous platforms,
 https://doi.org/10.3389/fcomp.2022.945652
@@ -33,12 +38,23 @@ Efficient OpenCL system integration of non-blocking FPGA accelerators,
 https://doi.org/10.1016/j.micpro.2023.104772
 Microprocessors and Microsystems, vol. 97, 2023.
 
-Tobias Baumann, Matthias Noack, Thomas Steinke
-Performance Evaluation and Improvements of the PoCL Open-Source OpenCL Implementation on Intel CPUs
-https://dl.acm.org/doi/10.1145/3456669.3456698
-IWOCL'21: International Workshop on OpenCL. April 2021.
+Yashvardhan Agarwal
+Dynamic Device Management and Automatic Network Resource Discovery in OpenCL for Multi-Access Edge Computing
+https://research.tue.nl/en/studentTheses/dynamic-device-management-and-automatic-network-resource-discover
+Master's thesis (Eindhoven University of Technology), Aug. 2024
+
+Jakub Žádník, Robin Bijl and Jan Solanti, Erno Joensuu, Markku Mäkitalo and Pekka Jääskeläinen
+Open Software Stack for Compression-Aware Adaptive Edge Offloading
+https://doi.org/10.1109/WCNC61545.2025.10978312
+IEEE Wireless Communications and Networking Conference (WCNC), Mar. 2025
+
+Jan Solanti, Pekka Jääskeläinen
+Latency Reduction Potential of Server-Side Command Buffers in OpenCL-Based Edge Offloading
+https://doi.org/10.1145/3731125.3731129
+IWOCL '25: International Workshop on OpenCL and SYCL (IWOCL). Apr. 2025.
 
 Jan Solanti, Michal Babej, Julius Ikkala, Pekka J&auml;&auml;skel&auml;inen
-PoCL-R: An Open Standard Based Offloading Layer for Heterogeneous Multi-Access Edge Computing with Server Side Scalability
-https://doi.org/10.48550/arXiv.2309.00407
-arXiv preprint
+PoCL-R: An open standard based heterogeneous offloading layer with server side scalability
+https://doi.org/10.1177/10943420251369350
+The International Journal of High Performance Computing Applications, online Sep. 1., 2025
+
