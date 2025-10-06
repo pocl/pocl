@@ -4,6 +4,11 @@ Release Notes for PoCL 7.1
 
 This is mostly a bug-fix/maintenance release after the large 7.0 one.
 
+The most notable improvements have been on solidifying and documenting
+the RISC-V port. For example, now 99% of the chipStar's internal
+tests pass when ran through PoCL on a Milk-V Jupiter board with RVV
+vector emission confirmed.
+
 ===========================
 Release highlights
 ===========================
