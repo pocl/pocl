@@ -13,7 +13,7 @@ vector emission confirmed.
 Release highlights
 ===========================
 
-* Support for LLVM 21 for the CPU devices.
+* Support for LLVM 21 for the CPU devices and LevelZero devices.
 
 * Support for cl_khr_icd v2.0.0, cl_khr_spirv_queries and SPV_KHR_expect_assume.
 
@@ -72,6 +72,8 @@ CUDA driver
 
 * Reimplement support for global offsets and work dim.
 * Implement {read_|write_|}mem_fence() and get_{global|local}_linear_id().
+* note that CUDA driver does not support LLVM 21, due to a bug
+  in upstream Clang code. Users must use LLVM 17 to 20 with CUDA.
 
 ===================================
 Experimental and work-in-progress

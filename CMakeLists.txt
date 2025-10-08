@@ -2198,6 +2198,10 @@ if(ENABLE_CUDA)
     message(FATAL_ERROR "CUDA build requested but LLVM does not support NVPTX target!")
   endif()
 
+  if(LLVM_VERSION_MAJOR EQUAL 21)
+    message(FATAL_ERROR "CUDA driver does not work with LLVM/Clang 21")
+  endif()
+
   set(OCL_DRIVERS "${OCL_DRIVERS} cuda")
   set(OCL_TARGETS "${OCL_TARGETS} cuda")
   # this is for config.h
