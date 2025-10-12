@@ -381,7 +381,7 @@ static struct _cl_device_id supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS]
     = { [0] = { .long_name = "Spectre",
                 .llvm_cpu = (HSAIL_ENABLED ? NULL : "kaveri"),
                 .llvm_target_triplet
-                = (HSAIL_ENABLED ? "hsail64" : "amdgcn--amdhsa"),
+                = (HSAIL_ENABLED ? "hsail64" : "amdgcn-amd-amdhsa"),
                 .spmd = CL_TRUE,
                 .autolocals_to_args = POCL_AUTOLOCALS_TO_ARGS_NEVER,
                 .device_alloca_locals = CL_FALSE,
@@ -448,6 +448,42 @@ static struct _cl_device_id supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS]
                 .device_aux_functions
                 = (HSAIL_ENABLED ? NULL : phsa_native_device_aux_funcs) } };
 
+static void
+configure_probably_amd_hsa_device(const char* dev_name, struct _cl_device_id* dev)
+{
+	dev->llvm_cpu = dev_name;
+	dev->llvm_target_triplet
+		= (HSAIL_ENABLED ? "hsail64" : "amdgcn-amd-amdhsa");
+	dev->spmd = CL_TRUE;
+	dev->arg_buffer_launcher = CL_TRUE;
+	dev->grid_launcher = CL_TRUE;
+	dev->autolocals_to_args = POCL_AUTOLOCALS_TO_ARGS_NEVER;
+	dev->device_alloca_locals = CL_FALSE;
+	dev->context_as_id = SPIR_ADDRESS_SPACE_GLOBAL;
+	dev->args_as_id = SPIR_ADDRESS_SPACE_GLOBAL;
+	dev->has_64bit_long = 1;
+	dev->global_mem_cache_type = CL_READ_WRITE_CACHE;
+	dev->max_constant_buffer_size = 65536;
+	dev->local_mem_type = CL_LOCAL;
+	dev->endian_little = CL_TRUE;
+	dev->extensions = HSA_DEVICE_EXTENSIONS;
+	dev->device_side_printf = !HSAIL_ENABLED;
+	dev->execution_capabilities = CL_EXEC_KERNEL;
+	dev->printf_buffer_size = PRINTF_BUFFER_SIZE * 1024;
+	dev->preferred_vector_width_char = 4;
+	dev->preferred_vector_width_short = 2;
+	dev->preferred_vector_width_int = 1;
+	dev->preferred_vector_width_long = 1;
+	dev->preferred_vector_width_float = 1;
+	dev->preferred_vector_width_double = 1;
+	dev->native_vector_width_char = 4;
+	dev->native_vector_width_short = 2;
+	dev->native_vector_width_int = 1;
+	dev->native_vector_width_long = 1;
+	dev->native_vector_width_float = 1;
+	dev->native_vector_width_double = 1;
+}
+
 char *
 pocl_hsa_build_hash (cl_device_id device)
 {
@@ -459,7 +495,7 @@ pocl_hsa_build_hash (cl_device_id device)
 // Detect the HSA device and populate its properties to the device
 // struct.
 static void
-get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
+get_hsa_device_features(const char* dev_name, struct _cl_device_id* dev)
 {
 
 #define COPY_ATTR(ATTR) dev->ATTR = supported_hsa_devices[i].ATTR
@@ -475,10 +511,10 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
     {
       if (strcmp(dev_name, supported_hsa_devices[i].long_name) == 0)
         {
-	  COPY_ATTR (llvm_cpu);
-	  COPY_ATTR (llvm_target_triplet);
-	  COPY_ATTR (spmd);
-	  COPY_ATTR (autolocals_to_args);
+          COPY_ATTR (llvm_cpu);
+          COPY_ATTR (llvm_target_triplet);
+          COPY_ATTR (spmd);
+          COPY_ATTR (autolocals_to_args);
           COPY_ATTR (device_alloca_locals);
           COPY_ATTR (context_as_id);
           COPY_ATTR (args_as_id);
@@ -501,10 +537,10 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
           COPY_ATTR (endian_little);
           COPY_ATTR (preferred_wg_size_multiple);
           COPY_ATTR (extensions);
-	  COPY_ATTR (final_linkage_flags);
-	  COPY_ATTR (device_aux_functions);
-	  COPY_ATTR (device_side_printf);
-	  COPY_ATTR (printf_buffer_size);
+          COPY_ATTR (final_linkage_flags);
+          COPY_ATTR (device_aux_functions);
+          COPY_ATTR (device_side_printf);
+          COPY_ATTR (printf_buffer_size);
           COPY_VECWIDTH (char);
           COPY_VECWIDTH (short);
           COPY_VECWIDTH (int);
@@ -515,17 +551,27 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
           break;
         }
     }
-  if (!found)
-    {
-      POCL_MSG_PRINT_INFO("pocl-hsa: found unknown HSA devices '%s'.\n",
-			  dev_name);
-      POCL_ABORT ("We found a device for which we don't have device "
-                  "OpenCL attribute information (compute unit count, "
-                  "constant buffer size etc), and there's no way to get all "
-                  "the required info from HSA API. Please create a "
-                  "new entry with the information in supported_hsa_devices, "
-                  "and send a note/patch to pocl developers. Thanks!\n");
-    }
+  if (found)
+    return;
+
+  POCL_MSG_PRINT_INFO("pocl-hsa: found unknown HSA devices '%s'.\n",
+                      dev_name);
+  /* AMD GPUs have device names in the form gfxMMmm
+   * where MM (one or two digits) and mm (two digits) are architectural version
+   * (the one exposed as CL_DEVICE_GFXIP_MAJOR_AMD and CL_DEVICE_GFXIP_MINOR_AMD
+   * device properties in the cl_amd_device_attribute_query).
+   * If the HSA_AGENT_INFO_VENDOR_NAME identified an AMD product,
+   */
+  if (!strncmp(dev_name, "gfx", 3) && dev->vendor_id == AMD_VENDOR_ID) {
+    configure_probably_amd_hsa_device(dev_name, dev);
+  } else {
+    POCL_ABORT ("We found a device for which we don't have device "
+                "OpenCL attribute information (compute unit count, "
+                "constant buffer size etc), and there's no way to get all "
+                "the required info from HSA API. Please create a "
+                "new entry with the information in supported_hsa_devices, "
+                "and send a note/patch to pocl developers. Thanks!\n");
+  }
 }
 
 unsigned int
@@ -698,14 +744,62 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->data = (void*)(uintptr_t)j;
   hsa_agent_t agent = hsa_agents[j];
 
-  uint32_t cache_sizes[4];
-  HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_CACHE_SIZE,
-                        &cache_sizes));
-  // The only nonzero value on Kaveri is the first (L1)
-  dev->global_mem_cache_size = cache_sizes[0];
+  hsa_device_type_t hsa_device;
+  HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_DEVICE, &hsa_device));
+  switch (hsa_device) {
+  case HSA_DEVICE_TYPE_CPU: dev->type = CL_DEVICE_TYPE_CPU; break;
+  case HSA_DEVICE_TYPE_GPU: dev->type = CL_DEVICE_TYPE_GPU; break;
+  case HSA_DEVICE_TYPE_DSP: dev->type = CL_DEVICE_TYPE_CUSTOM; break;
+  default: POCL_ABORT("Unknown HSA device type %x\n", hsa_device);
+  }
 
-  dev->short_name = dev->long_name = (char*)malloc (64*sizeof(char));
-  HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_NAME, dev->long_name));
+  uint8_t hsa_extensions[128];
+  HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_EXTENSIONS, &hsa_extensions));
+
+#if 0
+  printf("EXT:\n");
+  for (int i = 0; i < 128; ++i) {
+    uint8_t byte = hsa_extensions[i];
+    if (byte)
+      printf("0x%03X: %c%c%c%c%c%c%c%c\n", 8*i,
+        '0' + !!(byte & 0x01),
+        '0' + !!(byte & 0x02),
+        '0' + !!(byte & 0x04),
+        '0' + !!(byte & 0x08),
+        '0' + !!(byte & 0x10),
+        '0' + !!(byte & 0x20),
+        '0' + !!(byte & 0x40),
+        '0' + !!(byte & 0x80));
+  }
+  puts("");
+#endif
+
+  {
+    uint32_t wavefront;
+    HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_WAVEFRONT_SIZE, &wavefront));
+    dev->preferred_wg_size_multiple = wavefront;
+  }
+
+  {
+    uint32_t cache_sizes[4];
+    HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_CACHE_SIZE,
+                          &cache_sizes));
+    // The only nonzero value on Kaveri is the first (L1)
+    dev->global_mem_cache_size = cache_sizes[0];
+  }
+
+  {
+    char *name = (char*)malloc (64*sizeof(char));
+
+    HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_VENDOR_NAME, name));
+    dev->vendor = strdup(name);
+    if (!strcmp(name, "AMD"))
+      dev->vendor_id = AMD_VENDOR_ID;
+
+    HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_NAME, name));
+    dev->short_name = dev->long_name = strdup(name);
+    free(name);
+  }
   get_hsa_device_features (dev->long_name, dev);
 
   if (dev->llvm_target_triplet != NULL) {
@@ -714,14 +808,12 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
       dev->kernellib_fallback_name = NULL;
       dev->kernellib_subdir = "hsail64";
     }
-    if (strcmp(dev->llvm_target_triplet, "amdgcn--amdhsa") == 0) {
-      dev->kernellib_name = "kernel-amdgcn--amdhsa";
+    if (strcmp(dev->llvm_target_triplet, "amdgcn-amd-amdhsa") == 0) {
+      dev->kernellib_name = "kernel-amdgcn-amd-amdhsa";
       dev->kernellib_fallback_name = NULL;
       dev->kernellib_subdir = "amdgcn";
     }
   }
-
-  dev->type = CL_DEVICE_TYPE_GPU;
 
   // Enable when it's actually implemented AND if supported by
   // the target agent (check with hsa_agent_extension_supported).
@@ -774,6 +866,20 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
                                      &temp));
       dev->global_mem_cacheline_size = temp;
 
+      /* TODO: in recent ROCm versions AMD seems to use the HSA_AMD_AGENT_INFO_COOPERATIVE_COMPUTE_UNIT_COUNT
+       * instead of HSA_AMD_AGENT_INFO_COMPUTE_UNIT_COUNT. See also the HSA_COOP_CU_COUNT environment
+       * varibale discussed e.g. in https://docs.amd.com/en/docs-5.0.2/CHANGELOG.html
+       * On RDNA{1,2,3} devices, the hardware collects pairs of CUs into WorkGroup Processors (WGP),
+       * and the COOPERATIVE number corresponds to the number of WGPs.
+       * The distinction is important when allocating and using LDS, because instructions are different
+       * depending on whether wavefronts are in CU or WGP mode.
+       * (Weirdly, the HSA property comment talks about 'reliability', but AFAICS from the ISA documentation
+       * the distinction is merely one of performance, and which one is more convenient depends on use case)
+       * FIXME: how can this be exposed in OpenCL?
+       * NOTE: Mesa reports the CU count, whereas AMD ROCm 5.7.0 reports the WGP count
+       * both for CL_DEVICE_MAX_COMPUTE_UNITS and CL_DEVICE_MAX_REAL_TIME_COMPUTE_UNITS_AMD.
+       * Which one we should use probably depends on what the compiler produces.
+       */
       HSA_CHECK (hsa_agent_get_info (
           agent, HSA_AMD_AGENT_INFO_COMPUTE_UNIT_COUNT, &temp));
       dev->max_compute_units = temp;
@@ -1492,7 +1598,7 @@ pocl_hsa_uninit (unsigned j, cl_device_id device)
 }
 
 cl_int
-pocl_hsa_reinit (unsigned j, cl_device_id device)
+pocl_hsa_reinit (unsigned j, cl_device_id device, const char *parameters)
 {
   assert (device->data == NULL);
   device->data = init_dev_data (device, j);
