@@ -657,7 +657,7 @@ endif()
 if(X86)
   x86_distro_variant_to_flags("${VARIANT}" LLC_CPUFLAGS CLANG_CPUFLAGS)
 elseif(RISCV)
-  set(CLANG_CPUFLAGS "-mcpu=${VARIANT} -mabi=${HOST_CPU_TARGET_ABI}")
+  set(CLANG_CPUFLAGS "${CLANG_MARCH_FLAG}${VARIANT} -mabi=${HOST_CPU_TARGET_ABI}")
 
   if(LLVM_MARCH)
     set(CLANG_CPUFLAGS "${CLANG_CPUFLAGS} -march=${LLVM_MARCH}")
