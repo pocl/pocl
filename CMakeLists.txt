@@ -1150,7 +1150,9 @@ if(UNIX)
     # MacOS ld outputs useless warnings like
     # ld: warning: -macosx_version_min not specificed, assuming 10.7
     # suppress them with -w.
-    set(DEFAULT_HOST_LD_FLAGS "-dynamiclib -w -nostartfiles")
+    # Use execute_process to get SDK path and add -isysroot so clang can find libSystem.tbd
+    execute_process(COMMAND xcrun --show-sdk-path OUTPUT_VARIABLE MACOS_SDK_PATH OUTPUT_STRIP_TRAILING_WHITESPACE)
+    set(DEFAULT_HOST_LD_FLAGS "-dynamiclib -w -nostartfiles -isysroot ${MACOS_SDK_PATH}")
   elseif(ANDROID)
     # TODO shouldn't Android use -nostartfiles ?
     set(DEFAULT_HOST_LD_FLAGS "-L/system/lib/ -shared -ldl -lc /system/lib/crtbegin_so.o /system/lib/crtend_so.o")
