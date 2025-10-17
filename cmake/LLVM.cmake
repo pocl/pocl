@@ -822,6 +822,19 @@ endif(ENABLE_HOST_CPU_DEVICES)
 
 ####################################################################
 
+# To catch issue #2041. Determine if kernel compiler LLVM does not have sysroot set.
+# Simple include should trigger this. See: https://gitlab.kitware.com/cmake/cmake/-/issues/26863
+if(APPLE)
+  message(STATUS "Checking LLVM configuration")
+  custom_try_compile_clang_silent("#include <stdio.h>" "printf(\"Hello World!\");return 0;" RES --target=${LLC_TRIPLE})
+  if(RES)
+    message(FATAL_ERROR "LLVM/Clang failed to compile. Maybe an issue with LLVM sysroot? See: https://gitlab.kitware.com/cmake/cmake/-/issues/26863")
+  endif()
+  message(STATUS "LLVM configuration OK")
+endif()
+
+####################################################################
+
 # This tests that we can actually link to the llvm libraries.
 # Mostly to catch issues like #295 - cannot find -ledit
 
