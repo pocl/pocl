@@ -55,4 +55,8 @@ if(ENABLE_POCLCC)
   add_symlink_to_built_opencl_dynlib(poclcc)
 endif()
 
+if(ENABLE_MLIR)
+  add_subdirectory("pocl-mlir-opt")
+endif()
+
 pass_through_cpack_vars()

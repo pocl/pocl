@@ -96,11 +96,13 @@ typedef unsigned reserve_id_t;
 
 #define size_t csize_t
 #define uintptr_t cuintptr_t
+#define intptr_t cintptr_t
 
 #include <stdint.h>
 
 #undef size_t
 #undef uintptr_t
+#undef intptr_t
 
 typedef uint8_t uchar;
 typedef uint16_t ushort;

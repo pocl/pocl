@@ -146,6 +146,21 @@ else()
   endif()
 endif()
 
+if(ENABLE_CLANGIR)
+  find_package(MLIR CONFIG)
+  if (MLIR_FOUND)
+    message(STATUS "Found MLIRConfig.cmake in ${MLIR_DIR}")
+    list(APPEND CMAKE_MODULE_PATH "${MLIR_CMAKE_DIR}")
+  else()
+    message(FATAL_ERROR "Could not find MLIR config")
+  endif()
+  find_library(L_LIBFILE_MLIR NAME "MLIR" HINTS "${LLVM_LIBDIR}")
+  if(NOT L_LIBFILE_MLIR)
+    message(FATAL_ERROR "Could not find MLIR library")
+  endif()
+  set(ENABLE_MLIR 1)
+endif()
+
 ############################################################################
 
 # Prefer the CMake setup when possible, fallback to llvm-config
@@ -196,6 +211,27 @@ find_llvm_program_or_die(HOST_LLVM_LINK "llvm-link" "${SEARCH_LOCATION}" "Host L
 find_llvm_program(HOST_LLVM_SPIRV "llvm-spirv" "${SEARCH_LOCATION}"      "Host LLVM spirv translator")
 find_llvm_program(HOST_SPIRV_LINK "spirv-link" "${SEARCH_LOCATION}"      "Host spirv-link linker")
 find_llvm_program(HOST_LLVM_FILECHECK "FileCheck" "${SEARCH_LOCATION}"   "Host LLVM Filecheck")
+if(ENABLE_MLIR)
+  find_program_or_die(CIROPT "cir-opt" "cir-opt binary")
+  find_program_or_die(MLIR_TRANSLATE "mlir-translate" "mlir-translate binary")
+  if (POLYGEIST_BINDIR)
+    find_program(CGEIST
+      NAMES "cgeist${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}"
+      "cgeist${CMAKE_EXECUTABLE_SUFFIX}"
+      HINTS "${POLYGEIST_BINDIR}"
+      DOC "${DOCSTRING}"
+      NO_DEFAULT_PATH
+      NO_CMAKE_PATH
+      NO_CMAKE_ENVIRONMENT_PATH
+    )
+    if(EXISTS "${CGEIST}")
+      message(STATUS "Found cgeist ${CGEIST}")
+      set(ENABLE_POLYGEIST 1)
+    else()
+      message(FATAL_ERROR "cgeist executable not found! Unable to enable Polygeist for MLIR input")
+    endif()
+  endif()
+endif()
 
 
 if(CMAKE_CROSSCOMPILING)

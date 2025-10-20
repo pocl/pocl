@@ -131,6 +131,18 @@
 
 #cmakedefine ENABLE_LLVM
 
+#cmakedefine ENABLE_MLIR
+
+#define CIROPT_EXECUTABLE "@CIROPT@"
+
+#define MLIRTRANSLATE_EXECUTABLE "@MLIR_TRANSLATE@"
+
+#cmakedefine LLVM_LIBDIR "@LLVM_LIBDIR@"
+
+#cmakedefine ENABLE_POLYGEIST
+
+#define POLYGEIST_EXECUTABLE "@CGEIST@"
+
 #cmakedefine ENABLE_LOADABLE_DRIVERS
 
 /* this is used all over the runtime code */

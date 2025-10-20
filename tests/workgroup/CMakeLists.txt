@@ -225,4 +225,25 @@ set_property(TEST
   "workgroup/cond_barriers_in_for_loopvec"
   APPEND PROPERTY LABELS "level0")
 
+# The following tests seem to fail due to incorrect barrier elimination
+# making them quite interesting targets to eventually get working
+# "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier_cbs"
+# "workgroup/cond_barrier_in_var_for"
+# "workgroup/cond_barriers_in_for_cbs"
+# This one might work correctly, but the test may be too strict on WI order
+# "workgroup/unconditional_barriers_cbs"
+set_property(TEST
+  "workgroup/barriered_for_loops_cbs"
+  "workgroup/b_loop_with_two_latches_cbs"
+  "workgroup/conditional_barrier_cbs"
+  "workgroup/for_with_divergent_return_cbs"
+  "workgroup/issue_1747_wg_divergent_barrier_cbs"
+  "workgroup/issue_548_convergent_propagation_cbs"
+  "workgroup/loop_with_two_paths_to_the_latch_cbs"
+  "workgroup/range_md_large_grid_cbs"
+  "workgroup/range_md_small_grid_cbs"
+  "workgroup/unbarriered_for_loops_cbs"
+  "workgroup/workgroup_sizes_work_items_get_wrong_ids_cbs"
+  APPEND PROPERTY LABELS "mlir")
+
 add_symlink_to_built_opencl_dynlib(run_kernel)

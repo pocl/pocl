@@ -282,7 +282,25 @@ if (ENABLE_LLVM)
   endif()
   set(LLVM_API_SOURCES "pocl_llvm_build.cc" "pocl_llvm_metadata.cc" "pocl_llvm_utils.cc" "pocl_llvm_wg.cc" ${EXTRA_LLVM_SOURCES})
 
-  pocl_build_clang_llvm_object(lib_cl_llvm ${LLVM_API_SOURCES})
+  if (ENABLE_MLIR)
+    list(APPEND POCL_LIB_SOURCES
+                   "pocl_mlir.h"
+                   "pocl_mlir_file_util.hh"
+    )
+    include_directories("${CMAKE_SOURCE_DIR}/lib/mliropencl/include")
+
+    set(MLIR_API_SOURCES "pocl_mlir_build.cc" "pocl_mlir_wg.cc"
+                         "pocl_mlir_metadata.cc" "pocl_mlir_utils.cc"
+                         "pocl_mlir_file_util.cc")
+    set_source_files_properties(${MLIR_API_SOURCES} PROPERTIES
+      COMPILE_FLAGS "${LLVM_CXXFLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl\" -I\"${CMAKE_CURRENT_SOURCE_DIR}/../mliropencl\"")
+    list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:mlirpasses>")
+    pocl_build_clang_llvm_object(lib_cl_llvm ${LLVM_API_SOURCES})
+    add_dependencies("lib_cl_llvm" MLIRPoCLPassesIncGen)
+  else()
+    pocl_build_clang_llvm_object(lib_cl_llvm ${LLVM_API_SOURCES})
+  endif()
+
   if(LLVM_PACKAGE_VERSION)
     list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:obj.llvmpasses>")
     list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:obj.lib_cl_llvm>")
@@ -364,6 +382,13 @@ if(ENABLE_LLVM)
   endif()
   if (ENABLE_SPIRV AND HAVE_LLVM_SPIRV_LIB)
     list(PREPEND POCL_PRIVATE_LINK_LIST ${LLVM_SPIRV_LIB})
+  endif()
+
+  if (ENABLE_MLIR)
+    list(APPEND POCL_PRIVATE_LINK_LIBRARIES
+    MLIR
+    PoclDialect
+    )
   endif()
 endif()
 
