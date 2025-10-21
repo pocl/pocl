@@ -1,7 +1,7 @@
 <%inherit file="basic_page.makt" />
 <%namespace name="comp" file="components.mak"/>
 
-<p>PoCL is a portable MIT-licensed compliant implementation of the
+<p>PoCL is a portable MIT-licensed compliant implementation (for `x86-64 <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_450>`_ and `Level Zero <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_453>`_). of the
 OpenCL standard. In addition to
 being an easily portable/layered multi-device
 open-source OpenCL implementation, a major goal of this project is
@@ -33,6 +33,11 @@ were added. This time they all happen to be related to the remote driver, PoCL-R
 ${comp.load_publications("pocl-publications-2025-09-30-additions.txt")}
 
 </p>
+
+<h2>2025-10-08: Portable Computing Language (PoCL) v7.1 released</a></h2>
+
+<p>PoCL v7.1 has been released. The release notes can be read <a href="http://portablecl.org/docs/html/notes_7_1.html">here</a>
+and a packaged release is available <a href="https://github.com/pocl/pocl/releases/tag/v7.1">here.</a></p>
 
 <h2>2025-05-22: <a href="http://portablecl.org/docs/html/notes_7_0.html">Portable Computing Language (PoCL) v7.0 released</a></h2>
 

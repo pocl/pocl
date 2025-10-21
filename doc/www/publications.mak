@@ -16,7 +16,7 @@ your paper to this page to get it more visibility.</p>
 
 ${comp.load_publications("pocl-publications.txt")}
 
-<h1>Publications using PoCL somehow</h1>
+<h1><a href="https://www.researchgate.net/publication/265683693_pocl_A_Performance-Portable_OpenCL_Implementation/citations">Publications citing PoCL in ResearchGate</a></h1>
 
-${comp.load_publications("pocl-using-publications.txt")}
+## ${comp.load_publications("pocl-using-publications.txt")}
 
