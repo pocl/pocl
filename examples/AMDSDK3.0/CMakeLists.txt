@@ -76,7 +76,7 @@ ExternalProject_Add(
   DOWNLOAD_COMMAND ""
 
   PATCH_COMMAND  ${BASH} -c "if [ ! -e ${TS_ROOT}/AMD-APP-SDK-3.0/install.sh ] $<SEMICOLON> then \
-         ${AMD_APP_SDK_TGZ} --noexec --keep --target AMD-APP-SDK-3.0 && \
+         ${AMD_APP_SDK_TGZ} --nox11 --noexec --keep --target AMD-APP-SDK-3.0 && \
          patch -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/amdsdk3_0.patch && \
          rm ${TS_ROOT}/AMD-APP-SDK-3.0/lib/x86_64/libOpenCL* \
          $<SEMICOLON> fi"
