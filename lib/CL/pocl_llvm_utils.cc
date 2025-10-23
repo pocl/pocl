@@ -470,6 +470,41 @@ PoclCompilerMutexGuard::~PoclCompilerMutexGuard() { POCL_UNLOCK(*lock); }
 
 std::string CurrentWgMethod;
 
+/// Parses LLVM options from a string.
+///
+/// This method parses cl::opt defined options with optional value in following
+/// format:
+///
+///   option1,option2=foo,option3=bar
+static void
+parseOptionsFromCSVString(StringMap<llvm::cl::Option *> &RegisteredOptions,
+                          StringRef OptionsString) {
+  SmallVector<StringRef> SeparatedOptionStrings;
+  OptionsString.split(SeparatedOptionStrings, ',');
+
+  for (auto OptionString : SeparatedOptionStrings) {
+    StringRef OptionStr, ValueStr;
+    std::tie(OptionStr, ValueStr) = OptionString.split('=');
+
+    // Support option names as printed in LLVM tools' help text. LLVM's option
+    // definitions don't have leading dashes on their name.
+    while (OptionStr.consume_front("-")) {
+    }
+
+    auto *Opt = RegisteredOptions[OptionStr];
+    if (!Opt) {
+      POCL_MSG_WARN("Ignoring unknown LLVM option '%s'\n",
+                    OptionStr.str().c_str());
+      continue;
+    }
+    if (Opt->addOccurrence(/*bogus position*/ 1, OptionStr, ValueStr)) {
+      POCL_MSG_WARN("Ignoring LLVM option '%s' with an invalid value: '%s'\n",
+                    OptionStr.str().c_str(), ValueStr.str().c_str());
+      continue;
+    }
+  }
+}
+
 static bool LLVMInitialized = false;
 static bool LLVMOptionsInitialized = false;
 static bool LLVMUseGlobalContext = true;
@@ -562,6 +597,10 @@ void InitializeLLVM() {
       assert(O && "could not find LLVM option 'debug'");
       O->addOccurrence(1, StringRef("debug-only"), StringRef("inline"), false);
 #endif
+    }
+    if (auto *LLVMOptsString =
+            pocl_get_string_option("POCL_DEBUG_LLVM_OPTS", nullptr)) {
+      parseOptionsFromCSVString(opts, LLVMOptsString);
     }
     O = opts["inline-threshold"];
     assert(O && "inline-threshold not found");
