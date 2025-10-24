@@ -106,6 +106,16 @@ POP_COMPILER_DIAGS
 
 using namespace llvm;
 
+static bool verifyIR() {
+  return pocl_get_bool_option("POCL_LLVM_VERIFY", LLVM_VERIFY_MODULE_DEFAULT);
+}
+
+static bool enableDebugLogs() {
+  bool Enable = pocl_get_bool_option("POCL_DEBUG_LLVM_PASSES", 0);
+  Enable |= pocl_is_option_set("POCL_DEBUG_LLVM_OPTS");
+  return Enable;
+}
+
 // Returns the TargetMachine instance or zero if no triple is provided.
 static TargetMachine *GetTargetMachine(const char* TTriple,
                                        const char* MCPU = "",
@@ -148,11 +158,9 @@ class PoCLModulePassManager {
 #ifdef PER_STAGE_TARGET_MACHINE
   std::unique_ptr<llvm::TargetMachine> Machine;
 #endif
-#ifdef DEBUG_NEW_PASS_MANAGER
   PrintPassOptions PrintPassOpts;
   PassInstrumentationCallbacks PIC;
   llvm::LLVMContext Context; // for SI
-#endif
   std::unique_ptr<PassBuilder> PassB;
   unsigned OptimizeLevel;
   unsigned SizeLevel;
@@ -191,25 +199,20 @@ llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
   OptimizeLevel = OLevel;
   SizeLevel = SLevel;
 
-#ifdef DEBUG_NEW_PASS_MANAGER
-  PrintPassOpts.Verbose = true;
-  PrintPassOpts.SkipAnalyses = false;
+  PrintPassOpts.Verbose = false;
+  PrintPassOpts.SkipAnalyses = true;
   PrintPassOpts.Indent = true;
   SI.reset(new StandardInstrumentations(Context,
-                                        true, // debug logging
-                                        false, // verify each
+                                        enableDebugLogs(), // debug logging
+                                        verifyIR(),        // verify each
                                         PrintPassOpts));
   SI->registerCallbacks(PIC, &MAM);
-#endif
+
   // Create the new pass manager builder.
   // Take a look at the PassBuilder constructor parameters for more
   // customization, e.g. specifying a TargetMachine or various debugging
   // options.
-#ifdef DEBUG_NEW_PASS_MANAGER
   PassB.reset(new PassBuilder(TM, PTO, std::nullopt, &PIC));
-#else
-  PassB.reset(new PassBuilder(TM, PTO));
-#endif
   PassBuilder &PB = *PassB.get();
 
 #if 0
@@ -709,7 +712,7 @@ public:
       return false;
     }
 
-    if (pocl_get_bool_option("POCL_LLVM_VERIFY", LLVM_VERIFY_MODULE_DEFAULT)) {
+    if (verifyIR()) {
       std::string ErrorLog;
       llvm::raw_string_ostream Errs(ErrorLog);
       if (llvm::verifyModule(*ProgramGVarsNonKernelsBC.get(), &Errs)) {
@@ -736,7 +739,7 @@ public:
 
     copyKernelFromBitcode(KernelName, KernelBC.get(), ProgramBC.get(), nullptr);
 
-    if (pocl_get_bool_option("POCL_LLVM_VERIFY", LLVM_VERIFY_MODULE_DEFAULT)) {
+    if (verifyIR()) {
       llvm::raw_string_ostream Errs(*BuildLog);
       if (llvm::verifyModule(*KernelBC.get(), &Errs)) {
         POCL_MSG_ERR("Failed to verify Kernel Module:\n%s\n",
@@ -1379,24 +1382,20 @@ void populateModulePM([[maybe_unused]] void *Passes, void *Module,
   CGSCCAnalysisManager CGAM;
   ModuleAnalysisManager MAM;
 
-#ifdef DEBUG_NEW_PASS_MANAGER
   PrintPassOptions PrintPassOpts;
   PassInstrumentationCallbacks PIC;
   llvm::LLVMContext Context; // for SI
   std::unique_ptr<StandardInstrumentations> SI;
-  PrintPassOpts.Verbose = true;
-  PrintPassOpts.SkipAnalyses = false;
+  PrintPassOpts.Verbose = false;
+  PrintPassOpts.SkipAnalyses = true;
   PrintPassOpts.Indent = true;
   SI.reset(new StandardInstrumentations(Context,
-                                        true,  // debug logging
-                                        false, // verify each
+                                        enableDebugLogs(), // debug logging
+                                        verifyIR(),        // verify each
                                         PrintPassOpts));
   SI->registerCallbacks(PIC, &MAM);
 
   PassBuilder PB(TM, PTO, std::nullopt, &PIC);
-#else
-  PassBuilder PB(TM, PTO);
-#endif
 
   // Register all the basic analyses with the managers.
   PB.registerModuleAnalyses(MAM);
