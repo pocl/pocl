@@ -56,6 +56,8 @@ int pocl_cuda_get_ptr_arg_alignment (void *LLVM_IR, const char *KernelName,
                                      size_t *Alignments,
                                      void *AlignmentMapPtr);
 
+int pocl_cuda_define_sub_group_size (void *llvm_module, int SGSize);
+
 #ifdef __cplusplus
 }
 #endif
