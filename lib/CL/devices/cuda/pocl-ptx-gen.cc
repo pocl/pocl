@@ -1053,3 +1053,26 @@ int pocl_cuda_get_ptr_arg_alignment(void *LLVM_IR, const char *KernelName,
   std::memcpy(Alignments, AVec.data(), sizeof(size_t) * AVec.size());
   return 0;
 }
+
+int pocl_cuda_override_sub_group_size(void *llvm_module, int SGSize) {
+  llvm::Module *Module = (llvm::Module *)llvm_module;
+  assert(Module);
+
+  llvm::GlobalVariable *SGSizeVar =
+      Module->getGlobalVariable("_pocl_sub_group_size");
+  if (SGSizeVar == nullptr)
+    return 0;
+
+  std::unique_ptr<llvm::Module> Magic{
+      new llvm::Module("<pocl-cuda-subgroup-size>", Module->getContext())};
+  llvm::IRBuilder<> Builder(Magic->getContext());
+  llvm::GlobalVariable *Variable = new llvm::GlobalVariable(
+      Builder.getInt32Ty(), true,
+      llvm::GlobalVariable::LinkageTypes::ExternalLinkage,
+      Builder.getInt32(SGSize), "_pocl_sub_group_size");
+  Magic->insertGlobalVariable(Variable);
+  llvm::Linker Link(*Module);
+  Link.linkInModule(std::move(Magic));
+
+  return 0;
+}
