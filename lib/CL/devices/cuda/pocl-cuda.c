@@ -506,6 +506,8 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->svm_unmap = NULL;
   ops->svm_copy = pocl_cuda_svm_copy;
   ops->svm_fill = pocl_cuda_svm_fill;
+
+  ops->get_subgroup_info_ext = pocl_cuda_get_subgroup_info_ext;
 }
 
 cl_int
@@ -615,6 +617,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
       GET_CU_PROP (INTEGRATED, dev->host_unified_memory);
       data->supports_managed_memory = 0;
       GET_CU_PROP (MANAGED_MEMORY, data->supports_managed_memory);
+      GET_CU_PROP (WARP_SIZE, data->warp_size);
     }
   if (CUDA_CHECK_ERROR (result, "cuDeviceGetAttribute"))
     ret = CL_INVALID_DEVICE;
@@ -657,7 +660,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   data->available = CL_TRUE;
   dev->available = &data->available;
 
-  dev->preferred_wg_size_multiple = 32;
+  dev->preferred_wg_size_multiple = data->warp_size;
   dev->preferred_vector_width_char = 1;
   dev->preferred_vector_width_short = 1;
   dev->preferred_vector_width_int = 1;
@@ -693,10 +696,6 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 
 
   dev->local_mem_type = CL_LOCAL;
-
-  int warp_size = 32;
-  cuDeviceGetAttribute (&warp_size, CU_DEVICE_ATTRIBUTE_WARP_SIZE,
-                        data->device);
 
   if (ret != CL_INVALID_DEVICE)
     choose_sm_ptx_version_combo (driver_version, dev, data);
@@ -808,8 +807,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->sub_group_independent_forward_progress
       = (data->sm >= 70) ? CL_TRUE : CL_FALSE;
 
-  /* Just an arbitrary number here based on assumption of SG size 32. */
-  dev->max_num_sub_groups = dev->max_work_group_size / 32;
+  dev->max_num_sub_groups = dev->max_work_group_size / data->warp_size;
 
   // All devices starting from Compute Capability 2.0 have this limit;
   // See e.g.
@@ -1656,6 +1654,9 @@ pocl_cuda_post_build_program (cl_program program, cl_uint device_i)
   CUmodule ofs_module;
 
   assert (program->llvm_irs[device_i]);
+  result = pocl_cuda_define_sub_group_size (program->llvm_irs[device_i],
+                                            ddata->warp_size);
+  assert (result == CL_SUCCESS);
   result = pocl_llvm_run_passes_on_program (program, device_i);
   assert (result == CL_SUCCESS);
 
@@ -1806,7 +1807,7 @@ void
 submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
                     cl_device_id device, cl_event event)
 {
-  
+
   _cl_command_run run = cmd->command.run;
   cl_kernel kernel = run.kernel;
   cl_program prog = kernel->program;
@@ -1837,14 +1838,14 @@ submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
   int filt_c = *(int*)(arguments[8].value);
   int filt_h = *(int*)(arguments[9].value);
   int filt_w = *(int*)(arguments[10].value);
-  
+
   int str_h = *(int*)(arguments[11].value);
   int str_w = *(int*)(arguments[12].value);
   int dil_h = *(int*)(arguments[13].value);
   int dil_w = *(int*)(arguments[14].value);
   int pad_h = *(int*)(arguments[15].value);
   int pad_w = *(int*)(arguments[16].value);
-  
+
   int groups = *(int*)(arguments[17].value);
 
   float alpha = *(float*)(arguments[18].value);
@@ -1903,7 +1904,7 @@ submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
   // CUDNN_CALL(cudnnSetConvolutionMathType(conv_desc, CUDNN_TENSOR_OP_MATH)); // this may not be necessary
 
   // workspace
-  size_t ws_size; 
+  size_t ws_size;
   CUDNN_CALL(cudnnGetConvolutionForwardWorkspaceSize(
         cudnn, in_desc, filt_desc, conv_desc, out_desc, algo, &ws_size));
   float *ws_data;
@@ -2935,5 +2936,66 @@ pocl_cuda_get_device_info_ext (cl_device_id device, cl_device_info param_name,
       POCL_MSG_ERR ("Unknown param_name for get_device_info_ext: %u\n",
                     param_name);
       return CL_INVALID_VALUE;
+    }
+}
+
+cl_int
+pocl_cuda_get_subgroup_info_ext (cl_device_id dev,
+                                 cl_kernel kernel,
+                                 unsigned int program_device_i,
+                                 cl_kernel_sub_group_info param_name,
+                                 size_t input_value_size,
+                                 const void *input_value,
+                                 size_t param_value_size,
+                                 void *param_value,
+                                 size_t *param_value_size_ret)
+{
+  pocl_cuda_device_data_t *ddata = (pocl_cuda_device_data_t *)dev->data;
+  size_t sg_size = ddata->warp_size;
+
+  switch (param_name)
+    {
+    case CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE:
+      {
+        POCL_RETURN_GETINFO (size_t, sg_size);
+      }
+    case CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE:
+      {
+        size_t a = (size_t)dev->max_num_sub_groups;
+        size_t ndcount[3] = { 1, 1, 1 };
+        for (size_t i = 0; i < 3; ++i)
+          {
+            if (input_value_size / sizeof (size_t) > i)
+              ndcount[i] = ((size_t *)input_value)[i];
+          }
+        size_t b = ndcount[0] * ndcount[1] * ndcount[2];
+        b = (b + sg_size - 1) / sg_size;
+        POCL_RETURN_GETINFO (size_t, a < b ? a : b);
+      }
+    case CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT:
+      {
+        POCL_RETURN_ERROR_ON ((input_value == NULL), CL_INVALID_VALUE,
+                              "SG size wish not given.");
+        size_t n_wish = *(size_t *)input_value;
+
+        size_t nd[3];
+        if (n_wish * sg_size > dev->max_work_group_size)
+          {
+            nd[0] = nd[1] = nd[2] = 0;
+            POCL_RETURN_GETINFO_ARRAY (size_t,
+                                       param_value_size / sizeof (size_t), nd);
+          }
+        else
+          {
+            nd[0] = n_wish * sg_size;
+            nd[1] = 1;
+            nd[2] = 1;
+            POCL_RETURN_GETINFO_ARRAY (size_t,
+                                       param_value_size / sizeof (size_t), nd);
+          }
+      }
+    default:
+      POCL_RETURN_ERROR_ON (1, CL_INVALID_VALUE, "Unknown param_name: %u\n",
+                            param_name);
     }
 }

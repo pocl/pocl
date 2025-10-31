@@ -44,6 +44,7 @@ foreach(FILE
   printf.c
   wait_group_events.cl
   barrier.ll nvvm_functions.ll subgroup.ll
+  subgroup_core.cl
   )
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
   list(APPEND KERNEL_SOURCES "cuda/${FILE}")
@@ -85,30 +86,32 @@ separate_arguments(DEVICE_CL_FLAGS)
 
 # Kernel bitcodes generated:
 # * <triple>-sm30-ptx60lt
-#   * Includes subgroup shuffles.
-#   * Excludes subgroup ballot (see details in subgroup_ballot.cl).
+#   * Includes subgroup shuffles and scans.
+#   * Excludes subgroup ballot and reduce (see details in subgroup_ballot.cl).
 #   * Intended for targeting 3.0 <= SM <= 7.5.
 # * <triple>-sm30-ptx60-63:
-#   * Includes subgroup ballot and shuffles.
+#   * Includes subgroup ballot, shuffles, reduces and scans.
 #   * Targeted for PTX 6.0 - 6.3. This library uses intrinsics that work
 #     for both the LLVM and PTX assembler.
 #   * Intended for targeting 3.0 <= SM <= 7.5.
-# * <triple>-sm70-ptx64: Supports ballot and shfl
-#   * Excludes subgroup shuffles or ballot. The support would require
-#     use of .sync variants.
+# * <triple>-sm70-ptx64:
+#   * Includes subgroup shuffles (via .sync intrinsics), reduces and scans.
+#   * Excludes subgroup ballot (non-sync variants are deprecated, OpenCL C
+#     requires allowing thread divergence but CUDA requires non-divergent mask)
 #   * Inteded for targeting SM >=7.0.
 
 make_kernel_bc(KERNEL_BC_SM30_PTX60LT "${LLVM_TARGET}-sm30-ptx60lt"
   "sm30-ptx60-63-BCs" 0 0 0 ${KERNEL_SOURCES}
-  "cuda/subgroup_shuffle.cl")
+  "cuda/subgroup_legacy.cl")
 
 make_kernel_bc(KERNEL_BC_SM30_PTX60_63 "${LLVM_TARGET}-sm30-ptx60-63"
   "sm30-ptx60-63-BCs" 0 0 0 ${KERNEL_SOURCES}
-  "cuda/subgroup_shuffle.cl"
-  "cuda/subgroup_ballot.cl")
+  "cuda/subgroup_ballot.cl"
+  "cuda/subgroup_legacy.cl")
 
 make_kernel_bc(KERNEL_BC_SM70_PTX64 "${LLVM_TARGET}-sm70-ptx64"
- "sm70-ptx64-BCs" 0 0 0 ${KERNEL_SOURCES})
+ "sm70-ptx64-BCs" 0 0 0 ${KERNEL_SOURCES}
+ "cuda/subgroup_sync.cl")
 
 # just debug
 #message(STATUS "${LLVM_TARGET} Kernel BC: ${KERNEL_BC_SM30_PTX60_63}")
