@@ -44,6 +44,7 @@ foreach(FILE
   printf.c
   wait_group_events.cl
   barrier.ll nvvm_functions.ll subgroup.ll
+  subgroup_core.cl
   )
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
   list(APPEND KERNEL_SOURCES "cuda/${FILE}")
@@ -100,15 +101,16 @@ separate_arguments(DEVICE_CL_FLAGS)
 
 make_kernel_bc(KERNEL_BC_SM30_PTX60LT "${LLVM_TARGET}-sm30-ptx60lt"
   "sm30-ptx60-63-BCs" 0 0 0 ${KERNEL_SOURCES}
-  "cuda/subgroup_shuffle.cl")
+  "cuda/subgroup_legacy.cl")
 
 make_kernel_bc(KERNEL_BC_SM30_PTX60_63 "${LLVM_TARGET}-sm30-ptx60-63"
   "sm30-ptx60-63-BCs" 0 0 0 ${KERNEL_SOURCES}
-  "cuda/subgroup_shuffle.cl"
-  "cuda/subgroup_ballot.cl")
+  "cuda/subgroup_ballot.cl"
+  "cuda/subgroup_legacy.cl")
 
 make_kernel_bc(KERNEL_BC_SM70_PTX64 "${LLVM_TARGET}-sm70-ptx64"
- "sm70-ptx64-BCs" 0 0 0 ${KERNEL_SOURCES})
+ "sm70-ptx64-BCs" 0 0 0 ${KERNEL_SOURCES}
+ "cuda/subgroup_sync.cl")
 
 # just debug
 #message(STATUS "${LLVM_TARGET} Kernel BC: ${KERNEL_BC_SM30_PTX60_63}")
