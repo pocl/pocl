@@ -42,10 +42,17 @@ class Region;
 
 namespace pocl {
   // View CFG with visual aids to debug kernel compiler problems.
-void dumpCFG(llvm::Function &F, std::string fname = "",
+void dumpCFG(llvm::Function &F, std::string Filename,
              const std::vector<llvm::Region *> *Regions = nullptr,
              const ParallelRegion::ParallelRegionVector *ParRegions = nullptr,
              const std::set<llvm::BasicBlock *> *highlights = nullptr);
+
+/// Overloads for debbuggers (the above is too complicated to be called in gdb).
+void dumpCFG(llvm::Function &F);
+void dumpCFG(llvm::Function &F, const char *Filename);
+
+/// Opens CFG graph in a viewer.
+void viewCFG(llvm::Function &F);
 
 // Split large basic blocks to smaller one so dot doesn't crash when
 // calling viewCFG on it. This should be fixed in LLVM upstream.
