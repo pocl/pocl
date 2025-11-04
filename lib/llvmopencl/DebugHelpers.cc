@@ -34,6 +34,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Module.h>
+#include <llvm/Support/GraphWriter.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 
 #include "Barrier.h"
@@ -247,6 +248,20 @@ void dumpCFG(llvm::Function &F, std::string fname,
 #if 0
   std::cout << "### dumped CFG to " << fname << std::endl;
 #endif
+}
+
+void dumpCFG(llvm::Function &F, const char *Filename) {
+  dumpCFG(F, std::string(Filename));
+}
+
+void dumpCFG(llvm::Function &F) {
+  dumpCFG(F, "");
+}
+
+void viewCFG(llvm::Function &F) {
+  std::string Filename = std::string("pocl_cfg.") + F.getName().str() + ".dot";
+  dumpCFG(F, Filename);
+  llvm::DisplayGraph(Filename, /*wait=*/false, GraphProgram::DOT);
 }
 
 bool chopBBs(llvm::Function &F, llvm::Pass &) {
