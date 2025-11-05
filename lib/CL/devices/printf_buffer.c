@@ -487,30 +487,30 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                       case 1:
                         __pocl_print_ints_uchar (p, buffer, vector_length,
                                                  is_unsigned);
-                        /* stores of integers & vectors of size <= 64bits
-                         * are expanded to 64bits in the EmitPrintf. This
+                        /* stores of integers & vectors of size <= NativeIntBits
+                         * are expanded to NativeIntBits in the EmitPrintf. This
                          * is to avoid having to deal with various rules for
                          * int & vector promotions by different backends
                          * (x86, ARM, RISC-V etc...) */
-                        if (vector_length <= 8)
+                        if (vector_length <= pointer_size_bytes)
                           {
-                            alloca_length = 8;
+                            alloca_length = pointer_size_bytes;
                           }
                         break;
                       case 2:
                         __pocl_print_ints_ushort (p, buffer, vector_length,
                                                   is_unsigned);
-                        if (vector_length <= 4)
+                        if (vector_length <= pointer_size_bytes/2)
                           {
-                            alloca_length = 8;
+                            alloca_length = pointer_size_bytes;
                           }
                         break;
                       case 4:
                         __pocl_print_ints_uint (p, buffer, vector_length,
                                                 is_unsigned);
-                        if (vector_length <= 2)
+                        if (vector_length <= pointer_size_bytes/4)
                           {
-                            alloca_length = 8;
+                            alloca_length = pointer_size_bytes;
                           }
                         break;
                       case 8:
@@ -573,8 +573,8 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                                                       0);
 #endif
                             // half2 vectors <64 bits are stored in 64bits
-                            if (alloca_length < 8)
-                                alloca_length = 8;
+                            if (alloca_length < pointer_size_bytes)
+                                alloca_length = pointer_size_bytes;
                             break;
                           }
                       case 4:
@@ -640,8 +640,8 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                     DEBUG_PRINTF (("[printf:char4]\n"));
                     p->bf[0] = (char)*buffer;
                     p->bf[1] = 0;
-                    /* char is always promoted to int64 */
-                    FORWARD_BUFFER (sizeof (int64_t));
+                    /* char is always promoted to native int */
+                    FORWARD_BUFFER (pointer_size_bytes);
                     __pocl_printf_putchw (p);
                     DEBUG_PRINTF (
                       ("[printf:after char:buffer=%p buffer_size=%u]\n",

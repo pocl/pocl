@@ -29,7 +29,8 @@
 
 #define PRINTF_BUFFER_CTWORD_SKIP_FMT_STR (1 << 1)
 
-#define PRINTF_BUFFER_CTWORD_CHAR_SHORT_PR (1 << 2)
+/* disabled, was (1 << 2) */
+#undef PRINTF_BUFFER_CTWORD_CHAR_SHORT_PR
 
 #define PRINTF_BUFFER_CTWORD_FLOAT_PR (1 << 3)
 
