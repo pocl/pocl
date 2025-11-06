@@ -170,6 +170,19 @@ pocl.
  'refcounts', 'timing', 'hsa', 'tce', 'cuda', 'vulkan', 'proxy' and 'all'.
  Note: setting POCL_DEBUG to 1 still works and equals error+warning+general.
 
+- **POCL_DEBUG_LLVM_OPTS**
+
+  Set LLVM options for debugging purposes. Multiple options are
+  supported and are separated by ``,``. Options taking values are
+  defined as ``-some-option=some-value``. Leading dashes on the option
+  names are optional.
+
+  Most of the options listed in ``opt-XX --help`` and ``opt-XX
+  --help-hidden`` are assumed to work but some of them may be
+  unavailable due to being tied to specific tools and not to the LLVM
+  library or depending on the configuration of LLVM (e.g. ``-debug``
+  may not work in release builds of LLVM).
+
 - **POCL_DEBUG_LLVM_PASSES**
 
  When set to 1, enables debug output from LLVM passes during optimization.
@@ -280,7 +293,7 @@ pocl.
   if enabled, some drivers (CUDA, CPU, Level0) use an extra step of
   verification of LLVM modules at certain stages (program.bc always,
   kernel bitcode (parallel.bc) only with some drivers).
-  Defaults to 0 if CMAKE_BUILD_TYPE=Debug and 1 otherwise.
+  Defaults to 1 if CMAKE_BUILD_TYPE=Debug and 0 otherwise.
 
 - **POCL_MAX_WORK_GROUP_SIZE**
 
