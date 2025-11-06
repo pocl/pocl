@@ -31,9 +31,9 @@ jobs:
       matrix:
         include:
           - julia-version: '1.10'
-            llvm: 20
-          - julia-version: '1.11'
-            llvm: 20
+            llvm: 21
+          - julia-version: '1.12'
+            llvm: 21
 
     steps:
       - name: Checkout PoCL
@@ -114,7 +114,6 @@ jobs:
                        -DCMAKE_BUILD_TYPE=Debug
                        -DENABLE_TESTS:Bool=OFF
                        -DENABLE_EXAMPLES:Bool=OFF
-                       -DENABLE_CONFORMANCE:Bool=ON
                        -DCMAKE_INSTALL_PREFIX=$destdir
                        -DWITH_LLVM_CONFIG=$(LLVM_full_jll.artifact_dir)/tools/llvm-config
                        -DCMAKE_PREFIX_PATH="$(join(prefix, ";"))"
