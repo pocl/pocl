@@ -111,7 +111,8 @@ jobs:
 
           # append a closing empty hash (because of comma) and ']' to close the JSON array
           if [ -e "${{ github.workspace }}/build/amdsdk_bench_result.json" ]; then
-            echo '{} ]' >> "${{ github.workspace }}/build/amdsdk_bench_result.json"
+            sed -i '$s/,$/ ]/' "${{ github.workspace }}/build/amdsdk_bench_result.json"
+            cat "${{ github.workspace }}/build/amdsdk_bench_result.json"
           fi
 
       # Run `github-action-benchmark` action
