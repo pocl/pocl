@@ -55,7 +55,8 @@ endif()
 
 set(CXX_PROGRAMS_TO_BUILD test_device_address test_svm test_large_buf
   test_subbuffers test_compile_n_link test_dbk_matmul test_tensor_view
-  test_dbk_convert test_dbk_set_rows)
+  test_dbk_convert test_dbk_set_rows test_dbk_eltwise_ops
+  test_dbk_rms_norm)
 
 add_compile_options(${OPENCL_CFLAGS} -I${CMAKE_SOURCE_DIR}/include)
 
@@ -200,6 +201,14 @@ set_tests_properties("runtime/test_dbk_convert"
 
 add_test(NAME "runtime/test_dbk_set_rows" COMMAND test_dbk_set_rows)
 set_tests_properties("runtime/test_dbk_set_rows"
+  PROPERTIES
+  COST 2.0
+  PROCESSORS 1
+  SKIP_RETURN_CODE 77
+  DEPENDS "pocl_version_check")
+
+add_test(NAME "runtime/test_dbk_eltwise_ops" COMMAND test_dbk_eltwise_ops)
+set_tests_properties("runtime/test_dbk_eltwise_ops"
   PROPERTIES
   COST 2.0
   PROCESSORS 1
