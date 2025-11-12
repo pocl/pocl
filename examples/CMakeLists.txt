@@ -77,7 +77,7 @@ set(ALL_TESTSUITES
     opencl-book-samples OpenCV OpenVX_CTS
     Parboil piglit PyOpenCL SYCL_CTS
     Rodinia shoc sycl-bench VexCL ViennaCL
-    UnitCL)
+    UnitCL polybenchGPU)
 
 if("${ENABLE_TESTSUITES}" STREQUAL "all")
   set(ENABLE_TESTSUITES ${ALL_TESTSUITES})
