@@ -50,6 +50,8 @@ jobs:
             config: chipstar
           - llvm: 20
             config: openvx
+          - llvm: 20
+            config: polybench
 
     steps:
       - name: Checkout
@@ -94,6 +96,10 @@ jobs:
             mkdir -p ${EXAMPLES_DIR}/build_openvx
             mkdir -p ${EXAMPLES_DIR}/source
             runCMake -DENABLE_TESTSUITES=OpenVX_CTS -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_openvx
+          elif [ "${{ matrix.config }}" == "polybench" ]; then
+            mkdir -p ${EXAMPLES_DIR}/build_polybench
+            mkdir -p ${EXAMPLES_DIR}/source
+            runCMake -DENABLE_TESTSUITES=polybenchGPU -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_polybench
           elif [ "${{ matrix.config }}" == "asan" ]; then
             export BUILD_FLAGS="-O1 -ggdb -fno-omit-frame-pointer -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
             runCMake -DENABLE_ASAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DDEVELOPER_MODE=ON
@@ -149,6 +155,13 @@ jobs:
         run: |
           cd ${{ github.workspace }}/build/examples/OpenVX_CTS && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) OpenVX_CTS
 
+      - name: Build Polybench
+        id: build_polybench
+        timeout-minutes: 50
+        if: ${{ matrix.config == 'polybench' }}
+        run: |
+          cd ${{ github.workspace }}/build/examples/polybenchGPU && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) polybenchGPU
+
       - name: Get CMake version
         id: cmake_version
         run: echo "version=$(cmake --version | head -n 1)" >> $GITHUB_OUTPUT
@@ -185,6 +198,8 @@ jobs:
             runCTest -L chipStar
           elif [ "${{ matrix.config }}" == "openvx" ]; then
             runCTest -L openvx
+          elif [ "${{ matrix.config }}" == "polybench" ]; then
+            runCTest -L polybenchGPU
           elif [ "${{ matrix.config }}" == "asan" ]; then
           # test_large_buf consumes too much memory for the smaller bots
             runCTest -R runtime -E test_large_buf
