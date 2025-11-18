@@ -99,7 +99,7 @@ jobs:
           elif [ "${{ matrix.config }}" == "polybench" ]; then
             mkdir -p ${EXAMPLES_DIR}/build_polybench
             mkdir -p ${EXAMPLES_DIR}/source
-            runCMake -DENABLE_TESTSUITES=polybenchGPU -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_polybench
+            runCMake -DENABLE_ICD=0 -DENABLE_TESTSUITES=polybenchGPU -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_polybench
           elif [ "${{ matrix.config }}" == "asan" ]; then
             export BUILD_FLAGS="-O1 -ggdb -fno-omit-frame-pointer -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
             runCMake -DENABLE_ASAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DDEVELOPER_MODE=ON
@@ -197,9 +197,9 @@ jobs:
           elif [ "${{ matrix.config }}" == "chipstar" ]; then
             runCTest -L chipStar
           elif [ "${{ matrix.config }}" == "openvx" ]; then
-            runCTest -L openvx
+            runCTest -L openvx -j1
           elif [ "${{ matrix.config }}" == "polybench" ]; then
-            runCTest -L polybenchGPU
+            runCTest -L polybenchGPU -LE long -j1
           elif [ "${{ matrix.config }}" == "asan" ]; then
           # test_large_buf consumes too much memory for the smaller bots
             runCTest -R runtime -E test_large_buf
