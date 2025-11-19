@@ -38,6 +38,9 @@ jobs:
       fail-fast: false
       matrix:
         llvm: [20, 21]
+        # basic = simplest pthread build with ENABLE_CONFORMANCE
+        # devel = with devel options without ENABLE_CONFORMANCE
+        # TBB, OpenMP = CPU drivers with TBB/OpenMP support
         # cts_spirv = cts with SPIR-V
         # tier1 = includes CTS without SPIR-V
         # chipstar 1.1 only supports LLVM up to 17
@@ -50,6 +53,14 @@ jobs:
             config: chipstar
           - llvm: 20
             config: openvx
+          - llvm: 20
+            config: basic
+          - llvm: 21
+            config: devel
+          - llvm: 17
+            config: TBB
+          - llvm: 18
+            config: OpenMP
 
     steps:
       - name: Checkout
@@ -74,7 +85,15 @@ jobs:
 
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
-          if [ "${{ matrix.config }}" == "cts_spirv" ]; then
+          if [ "${{ matrix.config }}" == "basic" ]; then
+            runCMake -DENABLE_ICD=1 -DENABLE_LLVM_FILECHECKS=1 -DENABLE_CONFORMANCE=1
+          elif [ "${{ matrix.config }}" == "devel" ]; then
+            runCMake -DENABLE_RELOCATION=0 -DDEVELOPER_MODE=1 -DENABLE_VALGRIND=1 -DENABLE_EXTRA_VALIDITY_CHECKS=1 -DENABLE_CONFORMANCE=0
+          elif [ "${{ matrix.config }}" == "OpenMP" ]; then
+            runCMake -DENABLE_ICD=1 -DENABLE_HOST_CPU_DEVICES_OPENMP=1
+          elif [ "${{ matrix.config }}" == "TBB" ]; then
+            runCMake -DENABLE_ICD=1 -DENABLE_TBB_DEVICE=1
+          elif [ "${{ matrix.config }}" == "cts_spirv" ]; then
             mkdir -p ${EXAMPLES_DIR}/build_cts_spirv
             mkdir -p ${EXAMPLES_DIR}/source
             runCMake -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_cts_spirv
@@ -177,7 +196,9 @@ jobs:
           # hardcoded path in test_compiler / execute_after_included_header_link
           rm -rf /tmp/foo
           mkdir ${{ env.POCL_CACHE_DIR }}
-          if [ "${{ matrix.config }}" == "cts_spirv" ]; then
+          if [ "${{ matrix.config }}" == "basic" ] || [ "${{ matrix.config }}" == "devel" ] || [ "${{ matrix.config }}" == "TBB" ] || [ "${{ matrix.config }}" == "OpenMP" ]; then
+            runCTest
+          elif [ "${{ matrix.config }}" == "cts_spirv" ]; then
             runCTest -L conformance_suite_micro_spirv
           elif [ "${{ matrix.config }}" == "tier1" ]; then
             runCTest -L "amdsdk_30|piglit|PyOpenCL|conformance_suite_micro_main|IntelSVM|UnitCL"
