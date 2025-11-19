@@ -1205,6 +1205,9 @@ endif()
 if(ENABLE_SPIRV)
   # required for the wrapper generator
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
+else()
+  # optional, for testsuites
+  find_package(Python3 COMPONENTS Interpreter)
 endif()
 
 # Determine whether we can use SPIRV on the host CPU device

@@ -1,5 +1,5 @@
 ---
-name: Linux AMDSDK benchmarks
+name: Linux Polybench benchmarks
 
 permissions:
   contents: read
@@ -7,8 +7,8 @@ permissions:
 on:
   workflow_dispatch:
   schedule:
-# at 1:11 UTC every sunday
-    - cron: '11 1 * * 0'
+# at 2:23 UTC every sunday
+    - cron: '23 2 * * 0'
   pull_request:
     paths-ignore:
       - 'doc/**'
@@ -29,19 +29,18 @@ env:
   EXAMPLES_DIR: "${{ github.workspace }}/../../../examples"
 
 jobs:
-  amdsdk_bench_matrix:
-    name: "LLVM ${{ matrix.llvm }} - AMDSDK benchmarks on ${{ matrix.device }}"
-    runs-on: [self-hosted, linux, x64, "amdsdk_bench_${{matrix.device}}" ]
+  polybench_matrix:
+    name: "LLVM ${{ matrix.llvm }} - Polybench benchmarks on ${{ matrix.device }}"
+    runs-on: [self-hosted, linux, "polybench_${{matrix.device}}" ]
     strategy:
       fail-fast: false
       matrix:
-        llvm: [20]
-        # cpu, gpu
-        device: [cpu]
+        llvm: [21]
+        device: [x86_64]
 
     steps:
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Load Env vars
         id: load_env
@@ -55,35 +54,27 @@ jobs:
             BUILD_FLAGS="-O2 -march=native"
             cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
-            -DENABLE_TESTSUITES=AMDSDK3.0 -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_amdsdk_bench \
             -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/usr/bin/llvm-spirv-${{ matrix.llvm }} \
             "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
           }
 
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
-          mkdir -p ${EXAMPLES_DIR}/build_amdsdk_bench
+          mkdir -p ${EXAMPLES_DIR}/build_polybench
           mkdir -p ${EXAMPLES_DIR}/source
-
-          if [ "${{ matrix.device }}" == "cpu" ]; then
-            runCMake -DENABLE_HOST_CPU_DEVICES=1 -DENABLE_CONFORMANCE=OFF
-          elif [ "${{ matrix.device }}" == "gpu" ]; then
-            runCMake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LEVEL0=1 -DSTATIC_LLVM=ON -DENABLE_CONFORMANCE=OFF
-          else
-            echo "Unknown configuration" && exit 1
-          fi
+          runCMake -DENABLE_ICD=0 -DENABLE_TESTSUITES=polybenchGPU -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_polybench
 
       - name: Build PoCL
         id: build_pocl
-        timeout-minutes: 20
+        timeout-minutes: 30
         run: |
           cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh)
 
       - name: Build Examples
         id: build_examples
-        timeout-minutes: 180
+        timeout-minutes: 30
         run: |
-          cd ${{ github.workspace }}/build/examples/AMDSDK3.0 && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) AMDSDK3.0
+          cd ${{ github.workspace }}/build/examples/polybenchGPU && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) polybenchGPU
 
       # Download previous benchmark result from cache (if exists)
       # make sure to store with github.ref_name but always restore with 'main' branch,
@@ -92,32 +83,22 @@ jobs:
         uses: actions/cache@v4
         with:
           path: benchmark_cache
-          key: amdsdk_bench-${{ runner.name }}-llvm-${{ matrix.llvm }}-${{ matrix.device }}-${{ github.ref_name }}-${{ github.run_id }}
-          restore-keys: amdsdk_bench-${{ runner.name }}-llvm-${{ matrix.llvm }}-${{ matrix.device }}-main
+          key: polybench-${{ runner.name }}-llvm-${{ matrix.llvm }}-${{ matrix.device }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: polybench-${{ runner.name }}-llvm-${{ matrix.llvm }}-${{ matrix.device }}-main
 
-      - name: Run AMDSDK benchmarks
+      - name: Run Polybench benchmarks
         env:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
-        id: amdsdk_bench_full
+        id: run_polybench
         timeout-minutes: 60
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
+          cd ${{ github.workspace }}/build && ctest -j1 -L polybenchGPU -LE long
 
-          if [ "${{ matrix.device }}" == "cpu" ]; then
-            export POCL_DEVICES=cpu
-            cd ${{ github.workspace }}/build && ctest -j1 -L amdsdk_bench
-          elif [ "${{ matrix.device }}" == "gpu" ]; then
-            export POCL_DEVICES=level0
-            cd ${{ github.workspace }}/build && ctest -j1 -L amdsdk_bench
-          else
-            echo "Unknown Benchmark configuration" && exit 1
-          fi
-
-          # append a closing empty hash (because of comma) and ']' to close the JSON array
-          if [ -e "${{ github.workspace }}/build/amdsdk_bench_result.json" ]; then
-            echo '{} ]' >> "${{ github.workspace }}/build/amdsdk_bench_result.json"
-          fi
+          # replace the last ',' in the file by a closing bracket
+          sed -i '$s/,$/ ]/' "${{ github.workspace }}/build/polybench_result.json"
+          cat "${{ github.workspace }}/build/polybench_result.json"
 
       # Run `github-action-benchmark` action
       - name: Store benchmark result
@@ -126,9 +107,9 @@ jobs:
           # What benchmark tool the output.txt came from
           tool: 'customSmallerIsBetter'
           # Where the output from the benchmark tool is stored
-          output-file-path: build/amdsdk_bench_result.json
+          output-file-path: build/polybench_result.json
           # Where the previous data file is stored
-          external-data-json-path: benchmark_cache/amdsdk_bench_result.json
+          external-data-json-path: benchmark_cache/polybench_result.json
           # Enable Job Summary for PRs
           summary-always: true
           # Workflow will fail when an alert happens
