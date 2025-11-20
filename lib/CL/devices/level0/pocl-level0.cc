@@ -388,15 +388,19 @@ unsigned int pocl_level0_probe(struct pocl_device_ops *Ops) {
   ze_driver_handle_t DrvHandles[64];
 
 #if ZE_API_VERSION_CURRENT_M >= ZE_MAKE_VERSION(1, 10)
+  ze_init_driver_type_flags_t DeviceTypes = ZE_INIT_DRIVER_TYPE_FLAG_GPU;
+#ifdef ENABLE_NPU
+  DeviceTypes |= ZE_INIT_DRIVER_TYPE_FLAG_NPU;
+#endif
+
   if (LoaderVersion.major == 1 && LoaderVersion.minor > 18) {
 
     ze_init_driver_type_desc_t DriverDesc{};
-    DriverDesc.flags =
-        ZE_INIT_DRIVER_TYPE_FLAG_GPU | ZE_INIT_DRIVER_TYPE_FLAG_NPU;
+    DriverDesc.flags = DeviceTypes;
     Res = zeInitDrivers(&DriverCount, DrvHandles, &DriverDesc);
     if (Res != ZE_RESULT_SUCCESS) {
       // TODO: retry with deprecated zeDriverGet()?
-      POCL_MSG_ERR("zeInitDrivers FAILED\n");
+      POCL_MSG_ERR("zeInitDrivers FAILED (error code: 0x%x)\n", Res);
       return 0;
     }
   } else {
