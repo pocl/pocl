@@ -205,7 +205,7 @@ jobs:
           elif [ "${{ matrix.config }}" == "chipstar" ]; then
             runCTest -L chipStar
           elif [ "${{ matrix.config }}" == "openvx" ]; then
-            runCTest -L openvx
+            runCTest -L openvx -j1
           elif [ "${{ matrix.config }}" == "asan" ]; then
           # test_large_buf consumes too much memory for the smaller bots
             runCTest -R runtime -E test_large_buf

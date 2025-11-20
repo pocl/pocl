@@ -75,9 +75,9 @@ set(ALL_TESTSUITES
     intel-compute-samples oneapi-samples
     simple-sycl-samples dpcpp-book-samples
     opencl-book-samples OpenCV OpenVX_CTS
-    Parboil piglit PyOpenCL SYCL_CTS
-    Rodinia shoc sycl-bench VexCL ViennaCL
-    UnitCL)
+    Parboil piglit polybenchGPU PyOpenCL
+    Rodinia shoc sycl-bench SYCL_CTS
+    VexCL ViennaCL UnitCL)
 
 if("${ENABLE_TESTSUITES}" STREQUAL "all")
   set(ENABLE_TESTSUITES ${ALL_TESTSUITES})

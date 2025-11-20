@@ -45,12 +45,10 @@ if(NOT EXISTS "${AMD_APP_SDK_TGZ}")
   return()
 endif()
 
-find_package(Python3 3.8 COMPONENTS Interpreter)
-if(NOT Python3_FOUND)
+if(NOT Python3_EXECUTABLE)
   message(STATUS "Disabling testsuite ${TS_NAME}, can't find suitable python3")
   return()
 else()
-  message(STATUS "Using Python3: ${Python3_EXECUTABLE}")
   set(PYTHON_INTERP "${Python3_EXECUTABLE}")
 endif()
 
