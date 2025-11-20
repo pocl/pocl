@@ -25,6 +25,7 @@ SOURCE_DIR=$1
 BUILD_DIR=$2
 REMOTE_ADDRESS=$3
 REMOTE_USER=$4
+shift 4
 
 set -euxo pipefail
 
@@ -38,6 +39,11 @@ RSYNC_DEST=${REMOTE_USER}@${REMOTE_ADDRESS}
 for DDIR in cmake include tests examples tools; do
   rsync -a --delete ${SOURCE_DIR}/$DDIR/ ${RSYNC_DEST}:${SOURCE_DIR}/$DDIR/
 done
+# rsync the build dir to destination
 rsync -a --delete ${BUILD_DIR}/ ${RSYNC_DEST}:${BUILD_DIR}/
 
-ssh ${RSYNC_DEST} "source ~/.bashrc && cd $BUILD_DIR && rm -rf /tmp/POCL_CACHE && mkdir /tmp/POCL_CACHE && ctest --output-on-failure -LE cpu_fail -E test_large_buf -j8"
+ssh ${RSYNC_DEST} "cd $BUILD_DIR && rm -rf /tmp/POCL_CACHE && mkdir /tmp/POCL_CACHE"
+ssh ${RSYNC_DEST} "cd $BUILD_DIR && $@"
+
+# rsync the build dir back (to get things like Ctest logs etc)
+rsync -a  ${RSYNC_DEST}:${BUILD_DIR}/ ${BUILD_DIR}/
