@@ -267,14 +267,14 @@ CLANG_OPTIONS="--target=${TARGET} -x cl ${CL_STD} ${BUILD_OPTIONS} -o ${TEMP_BC_
 LLVM_SPIRV_OPTIONS="--spirv-gen-kernel-arg-name-md --spirv-max-version=1.2 -o ${TEMP_SPV_ATOM_FILE} ${TEMP_BC_FILE}"
 
 if [ "$DEBUG" = "true" ]; then
-  echo "Running @CLANG@ ${CLANG_OPTIONS}"
+  echo "Running @TARGET_CLANG@ ${CLANG_OPTIONS}"
 fi
-@CLANG@ ${CLANG_OPTIONS} || exit 1
+@TARGET_CLANG@ ${CLANG_OPTIONS} || exit 1
 
 if [ "$DEBUG" = "true" ]; then
-  echo "Running @LLVM_SPIRV@ ${LLVM_SPIRV_OPTIONS}"
+  echo "Running @TARGET_LLVM_SPIRV@ ${LLVM_SPIRV_OPTIONS}"
 fi
-@LLVM_SPIRV@ ${LLVM_SPIRV_OPTIONS} || exit 1
+@TARGET_LLVM_SPIRV@ ${LLVM_SPIRV_OPTIONS} || exit 1
 
 if [ "$DEBUG" = "true" ]; then
   echo "Running $<TARGET_FILE:spirv_fix_atomic_compare_exchange> "${TEMP_SPV_ATOM_FILE}" "${TEMP_SPV_FINAL_FILE}""

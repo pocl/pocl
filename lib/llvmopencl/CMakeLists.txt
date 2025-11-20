@@ -61,7 +61,6 @@ set(LLVMPASSES_SOURCES "AllocasToEntry.cc"
                        "LoopBarriers.cc"
                        "LoopBarriers.h"
                        "MinLegalVecSize.cc"
-                       "MinLegalVecSize.hh"
                        "OptimizeWorkItemGVars.cc"
                        "OptimizeWorkItemGVars.h"
                        "PHIsToAllocas.cc"
@@ -93,68 +92,35 @@ if (ENABLE_REMOTE_SERVER)
   list(APPEND LLVMPASSES_SOURCES "SVMOffset.cc")
 endif()
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LLVM_CFLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}")
-
-# This library (just a bunch of objects really) is linked against libpocl
-# to call the kernel compiler passes directly from the host library.
-#noinst_LTLIBRARIES = libllvmpasses.la
-add_library("llvmpasses" OBJECT ${LLVMPASSES_SOURCES})
-harden("llvmpasses")
+# add library of llvm passes (the object form is then linked to libpocl)
+if(LLVM_PACKAGE_VERSION)
+  # creates two targets: "llvmpasses" STATIC/SHARED library and "obj.llvmpasses" OBJECT library
+  add_clang_library(llvmpasses LINK_COMPONENTS ${POCL_CLANG_LINK_TARGETS} ${POCL_LLVM_LINK_TARGETS}
+    ${LLVM_LINK_TYPE} OBJECT ${LLVMPASSES_SOURCES} PARTIAL_SOURCES_INTENDED)
+  # TODO check if this works:
+  # harden("llvmpasses")
+  target_compile_options(llvmpasses PRIVATE ${LLVM_DEFINITIONS_LIST})
+  # we don't want "llvmpasses" library to be built by default
+  set_target_properties(llvmpasses PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
+  set_target_properties(obj.llvmpasses PROPERTIES EXCLUDE_FROM_ALL 0 EXCLUDE_FROM_DEFAULT_BUILD 0)
+  # set CXX standard, TODO why doesn't LLVMConfig.cmake set this?
+  set_target_properties(llvmpasses PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED 1)
+  set_target_properties(obj.llvmpasses PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED 1)
+else()
+  add_library("llvmpasses" OBJECT ${LLVMPASSES_SOURCES})
+  harden("llvmpasses")
+  target_compile_options(llvmpasses PRIVATE ${LLVM_CXXFLAGS_LIST})
+endif()
 
 target_include_directories(llvmpasses PRIVATE "${CMAKE_SOURCE_DIR}/lib/CL")
 target_include_directories(llvmpasses PRIVATE "${CMAKE_SOURCE_DIR}/lib/CL/devices")
 target_include_directories(llvmpasses PRIVATE ${LLVM_INCLUDE_DIRS})
 
+
 if(OCL_ICD_INCLUDE_DIRS)
   target_include_directories("llvmpasses" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
 endif()
 
-option(ENABLE_LIBLLVMOPENCL "Build separate libllvmopencl.so for use with 'opt'" OFF)
-if(ENABLE_LIBLLVMOPENCL)
-# This creates a separate llvmopencl.so that is loaded to 'opt'
-# for the pocl-workgroup version.
-#pkglib_LTLIBRARIES = llvmopencl.la
-add_library("llvmopencl" MODULE "$<TARGET_OBJECTS:llvmpasses>")
-harden("llvmopencl")
-
-# not sure where other platforms get their library linkage list, probably there is
-# way to make this more consistent on different platforms
-if(MSVC)
-  target_link_libraries("llvmopencl" ${CLANG_LINK_LIBRARIES} ${LLVM_LINK_LIBRARIES})
-  target_link_directories("llvmopencl" ${CLANG_LINK_DIRECTORIES} ${LLVM_LINK_DIRECTORIES})
-endif(MSVC)
-
-#target_link_libraries("llvmopencl" "${LLVM_SYSLIBS}")
-endif(ENABLE_LIBLLVMOPENCL)
-
-# TODO cmake should handle this, i might me missing something …
-if(APPLE)
-  set(ADD_LD_FLAGS "-Wl,-undefined -Wl,dynamic_lookup ")
-else()
-  set(ADD_LD_FLAGS "-Wl,-export-dynamic")
-endif()
-
-if(ENABLE_LIBLLVMOPENCL)
-# TODO ENABLE_EXPORTS -> Wl,export_dynamic
-# https://www.cmake.org/cmake/help/v2.8.12/cmake.html#prop_tgt:ENABLE_EXPORTS
-# https://www.cmake.org/pipermail/cmake/2011-November/047708.html
-set_target_properties("llvmopencl" PROPERTIES LINK_FLAGS "${LLVM_LDFLAGS} ${ADD_LD_FLAGS}")
-if(NOT APPLE)
-  set_target_properties("llvmopencl" PROPERTIES SOVERSION "${KERNEL_COMPILER_LIB_VERSION}" VERSION "${KERNEL_COMPILER_LIB_VERSION}")
-endif()
-
-install(TARGETS "llvmopencl"
-        LIBRARY DESTINATION ${POCL_INSTALL_PRIVATE_LIBDIR_REL}
-        COMPONENT "lib"
-        ARCHIVE DESTINATION ${POCL_INSTALL_PRIVATE_LIBDIR_REL}/static
-        COMPONENT "dev"
-)
-endif(ENABLE_LIBLLVMOPENCL)
-
 if(ENABLE_IPO)
   set_property(TARGET "llvmpasses" PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-if(ENABLE_LIBLLVMOPENCL)
-  set_property(TARGET "llvmopencl" PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-endif(ENABLE_LIBLLVMOPENCL)
 endif()

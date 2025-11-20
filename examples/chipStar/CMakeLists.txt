@@ -119,8 +119,8 @@ list(APPEND CMAKE_CALL_ENV "HIP_ARCH=spirv")
 # add llvm-spirv's directory to the PATH environment var. Necessary
 # for chipStar; in theory passing -DLLVM_SPIRV=... should be enough,
 # but it doesn't pass that to Clang (yet) so the compilation fails.
-if(LLVM_SPIRV)
-  get_filename_component(LLVM_SPIRV_DIR "${LLVM_SPIRV}" DIRECTORY)
+if(HOST_LLVM_SPIRV)
+  get_filename_component(LLVM_SPIRV_DIR "${HOST_LLVM_SPIRV}" DIRECTORY)
   set(NEW_PATH "${LLVM_SPIRV_DIR}:$ENV{PATH}")
   list(APPEND CMAKE_CALL_ENV "PATH=${NEW_PATH}")
 endif()
@@ -147,9 +147,9 @@ ExternalProject_Add(
   CMAKE_ARGS
     ${CMAKE_CALL_ENV}
     ${UPSTREAM_CMAKE_ARGS}
-    "-DCMAKE_CXX_COMPILER_PATH=${CLANGXX}"
-    "-DCMAKE_C_COMPILER_PATH=${CLANG}"
-    "-DLLVM_CONFIG_BIN=${LLVM_CONFIG}"
+    "-DCMAKE_CXX_COMPILER_PATH=${HOST_CLANGXX}"
+    "-DCMAKE_C_COMPILER_PATH=${HOST_CLANG}"
+    "-DLLVM_CONFIG_BIN=${LLVM_CONFIG_BIN}"
     "${TS_BASEDIR}/src/${TS_NAME}"
   BUILD_COMMAND ${CMAKE_COMMAND} ${CMAKE_CALL_ENV} --build . --parallel ${HOST_CPU_CORECOUNT} --target all build_tests
   INSTALL_COMMAND ${CMAKE_COMMAND} -E echo "install step disabled"

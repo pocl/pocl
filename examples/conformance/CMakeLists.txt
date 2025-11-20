@@ -380,15 +380,6 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_select"
 
 
 if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
-
-# this test requires a fix in llvm-spirv
-# https://github.com/KhronosGroup/SPIRV-LLVM-Translator/pull/1630
-option(LLVM_SPIRV_SPEC_CONST "llvm-spirv has working --spec-const option" OFF)
-unset(SPIRV_OCL_30_EXTRA_TEST)
-if(LLVM_SPIRV_SPEC_CONST OR (LLVM_VERSION VERSION_GREATER_EQUAL 16.0))
-  set(SPIRV_OCL_30_EXTRA_TEST op_spec_constant_double_simple)
-endif()
-
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new"
          COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS}
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
@@ -838,7 +829,7 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_1"
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_2"
-         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS} function_none  function_inline  function_noinline op_lifetime_simple  op_loop_merge_branch_none op_neg_float  op_neg_double op_not_int4  op_type_opaque_simple  op_phi_2_blocks op_selection_merge_if_none  op_selection_merge_if_flatten op_spec_constant_uchar_simple  op_spec_constant_ushort_simple ${SPIRV_OCL_30_EXTRA_TEST}  op_spec_constant_true_simple op_undef_true_simple op_undef_uint_simple  op_undef_char_simple op_undef_float_simple  op_undef_double_simple op_vector_int4_extract  op_vector_float4_extract op_vector_double2_extract  op_vector_char16_extract  op_vector_int4_insert op_vector_times_scalar_double
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS} function_none  function_inline  function_noinline op_lifetime_simple  op_loop_merge_branch_none op_neg_float  op_neg_double op_not_int4  op_type_opaque_simple  op_phi_2_blocks op_selection_merge_if_none  op_selection_merge_if_flatten op_spec_constant_uchar_simple  op_spec_constant_ushort_simple op_spec_constant_double_simple  op_spec_constant_true_simple op_undef_true_simple op_undef_uint_simple  op_undef_char_simple op_undef_float_simple  op_undef_double_simple op_vector_int4_extract  op_vector_float4_extract op_vector_double2_extract  op_vector_char16_extract  op_vector_int4_insert op_vector_times_scalar_double
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_3"
