@@ -29,7 +29,7 @@ endif()
 # the vectorization of this code only works with LLVM 19; earlier LLVM versions can
 # vectorize some but not all of the builtins in vecbuiltin.cl, therefore llvm-filecheck
 # will report a failure
-if(LLVM_VERSION VERSION_LESS 19.0)
+if(LLVM_VERSION_MAJOR LESS 19)
   return()
 endif()
 

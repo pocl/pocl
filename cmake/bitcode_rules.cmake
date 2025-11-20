@@ -44,7 +44,7 @@ function(compile_c_to_bc FILENAME SUBDIR BC_FILE_LIST)
         DEPENDS "${FULL_F_PATH}"
         "${CMAKE_SOURCE_DIR}/include/pocl_types.h"
         "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
-        COMMAND "${CLANG}" ${CLANG_FLAGS} ${DEVICE_CL_FLAGS}
+        COMMAND "${HOST_CLANG}" ${CLANG_FLAGS} ${DEVICE_CL_FLAGS}
         ${KERNEL_C_FLAGS} "-O0" "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         "-I${CMAKE_SOURCE_DIR}/include"
         "-include" "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
@@ -64,7 +64,7 @@ function(compile_cc_to_bc FILENAME SUBDIR BC_FILE_LIST)
 
     add_custom_command(OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
-        COMMAND  "${CLANGXX}" ${CLANG_FLAGS} ${KERNEL_CXX_FLAGS}
+        COMMAND  "${HOST_CLANGXX}" ${CLANG_FLAGS} ${KERNEL_CXX_FLAGS}
         ${DEVICE_C_FLAGS} "-O0" "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         COMMENT "Building C++ to LLVM bitcode ${BC_FILE}"
         VERBATIM)
@@ -120,7 +120,7 @@ function(compile_cl_to_bc FILENAME SUBDIR BC_FILE_LIST EXTRA_CONFIG)
     add_custom_command( OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
           ${DEPENDLIST}
-        COMMAND "${CLANG}" ${CLANG_FLAGS}
+        COMMAND "${HOST_CLANG}" ${CLANG_FLAGS}
         ${KERNEL_CL_FLAGS} ${DEVICE_CL_FLAGS}
         "-o" "${BC_FILE}" "-O0" "-c" "${FULL_F_PATH}"
         ${INCLUDELIST}
@@ -145,7 +145,7 @@ function(compile_sleef_c_to_bc EXT FILENAME SUBDIR BCLIST)
     add_custom_command( OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
         ${SLEEF_C_KERNEL_DEPEND_HEADERS}
-        COMMAND "${CLANG}" ${CLANG_FLAGS}
+        COMMAND "${HOST_CLANG}" ${CLANG_FLAGS}
         ${DEVICE_C_FLAGS} ${KERNEL_C_FLAGS} ${ARGN}
         "-I" "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/arch"
         "-I" "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/libm"
@@ -171,7 +171,7 @@ function(compile_ll_to_bc FILENAME SUBDIR BCLIST)
 
     add_custom_command( OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
-        COMMAND "${LLVM_AS}" "-o" "${BC_FILE}" "${FULL_F_PATH}"
+        COMMAND "${HOST_LLVM_AS}" "-o" "${BC_FILE}" "${FULL_F_PATH}"
         COMMENT "Building LL to LLVM bitcode ${BC_FILE}" 
         VERBATIM)
 endfunction()
@@ -200,7 +200,7 @@ function(generate_cuda_spir_wrapper OUTPUT)
 
   add_custom_command( OUTPUT "${FNAME}"
       DEPENDS "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py"
-      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" ${EXTRA_OPT} "-t" "cuda" "${FNAME}"
+      COMMAND "${HOST_PYTHON3}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" ${EXTRA_OPT} "-t" "cuda" "${FNAME}"
       COMMENT "Generating CUDA SPIR wrapper to ${FNAME}"
       VERBATIM)
 endfunction()
@@ -215,7 +215,7 @@ function(generate_cpu_spir_wrapper ARCH SUBDIR SIZE OUTPUT)
 
   add_custom_command( OUTPUT "${FNAME}"
       DEPENDS "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py"
-      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" ${EXTRA_OPT} "-t" "${ARCH}" "-r" "${SIZE}" "${FNAME}"
+      COMMAND "${HOST_PYTHON3}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" ${EXTRA_OPT} "-t" "${ARCH}" "-r" "${SIZE}" "${FNAME}"
       COMMENT "Generating ${ARCH} ${VECSIZE}-bit wrapper for ${SUBDIR} to ${FNAME}"
       VERBATIM)
 endfunction()
@@ -243,14 +243,14 @@ function(make_kernel_bc OUTPUT_VAR NAME SUBDIR USE_SLEEF EXTRA_BC EXTRA_CONFIG)
     list(APPEND FINAL_LINK_INPUTS "${LINK_OUTPUT}")
     add_custom_command(OUTPUT "${LINK_OUTPUT}"
       DEPENDS ${BC_LIST}
-      COMMAND "${LLVM_LINK}" "--suppress-warnings" "-o" "${LINK_OUTPUT}" ${BC_SUBLIST}
+      COMMAND "${HOST_LLVM_LINK}" "--suppress-warnings" "-o" "${LINK_OUTPUT}" ${BC_SUBLIST}
       COMMENT "Linking part of builtins library"
       VERBATIM)
     math(EXPR INDEX "${INDEX} + ${BCSUBLIST_LENGTH}")
   endwhile()
 
   # optimizing the bitcode library IR has undesirable side-effects. avoid them completely
-  set(LINK_OPT_COMMAND COMMAND "${LLVM_LINK}" "--suppress-warnings" "-o" "${KERNEL_BC}" ${FINAL_LINK_INPUTS})
+  set(LINK_OPT_COMMAND COMMAND "${HOST_LLVM_LINK}" "--suppress-warnings" "-o" "${KERNEL_BC}" ${FINAL_LINK_INPUTS})
 
   if(USE_SLEEF)
     list(APPEND FINAL_LINK_INPUTS "sleef_config_${VARIANT}")

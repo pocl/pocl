@@ -301,7 +301,7 @@ if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS)
     sqrt.cl
   )
 
-  if(LLVM_VERSION VERSION_GREATER_EQUAL 19.0)
+  if(LLVM_VERSION_MAJOR GREATER_EQUAL 19)
     list(REMOVE_ITEM SOURCES_WITH_SLEEF
       libclc-pocl/cosh.cl
       libclc-pocl/sinh.cl
@@ -583,7 +583,7 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
   foreach(VECSIZE "512" "256" "128")
 
     set(EXTRA_FLAGS "-DDORENAME;-DVEC${VECSIZE}")
-    custom_try_compile_any(1 "${CLANG}" "c" "${TEST_SRC}" RES
+    custom_try_compile_any(1 "${HOST_CLANG}" "c" "${TEST_SRC}" RES
       ${CLANG_FLAGS} ${EXTRA_FLAGS} "-c")
 
     if(${RES} EQUAL "0")
@@ -634,7 +634,7 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
   message(STATUS "${VARIANT} SLEEF bc list: ${BC_FILE_LIST}")
   message(STATUS "${VARIANT} SLEEF bc: ${SLEEF_BC}")
 
-  set(LINK_OPT_COMMAND COMMAND "${LLVM_LINK}" "--suppress-warnings" "-o" "${SLEEF_BC}" ${BC_FILE_LIST})
+  set(LINK_OPT_COMMAND COMMAND "${HOST_LLVM_LINK}" "--suppress-warnings" "-o" "${SLEEF_BC}" ${BC_FILE_LIST})
 
   add_custom_command( OUTPUT "${SLEEF_BC}"
     DEPENDS ${BC_FILE_LIST}

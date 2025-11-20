@@ -45,6 +45,7 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include <lld/Common/Driver.h>
 #endif
 
+IGNORE_COMPILER_WARNING("-Wcomment")
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
@@ -54,6 +55,7 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include <llvm/Support/VirtualFileSystem.h>
 #include <llvm/TargetParser/Host.h>
 #include <llvm/Transforms/Utils/Cloning.h>
+POP_COMPILER_DIAGS
 
 #include <iostream>
 #include <map>
