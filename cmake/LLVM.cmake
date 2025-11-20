@@ -280,6 +280,21 @@ elseif(MSVC)
   list(APPEND LLVM_SYSLIBS version.lib)
 endif()
 
+if(MLIR_DIR)
+  find_package(MLIR CONFIG)
+  if (MLIR_FOUND)
+    message(STATUS "Found MLIRConfig.cmake in ${MLIR_DIR}")
+    list(APPEND CMAKE_MODULE_PATH "${MLIR_CMAKE_DIR}")
+  else()
+    message(FATAL_ERROR "Could not find MLIR config")
+  endif()
+  find_library(L_LIBFILE_MLIR NAME "MLIR" HINTS "${LLVM_LIBDIR}")
+  if(NOT L_LIBFILE_MLIR)
+    message(FATAL_ERROR "Could not find MLIR library")
+  endif()
+  set(ENABLE_MLIR 1)
+endif()
+
 ####################################################################
 
 if(STATIC_LLVM)
@@ -359,6 +374,27 @@ find_program_or_die(LLVM_LLC  "llc"       "LLVM static compiler")
 find_program_or_die(LLVM_AS   "llvm-as"   "LLVM assembler")
 find_program_or_die(LLVM_LINK "llvm-link" "LLVM IR linker")
 find_program_or_die(LLVM_LLI  "lli"       "LLVM interpreter")
+if(ENABLE_MLIR)
+  find_program_or_die(CIROPT "cir-opt" "cir-opt binary")
+  find_program_or_die(MLIR_TRANSLATE "mlir-translate" "mlir-translate binary")
+  if (POLYGEIST_BINDIR)
+    find_program(CGEIST
+    NAMES "cgeist${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}"
+    "cgeist${CMAKE_EXECUTABLE_SUFFIX}"
+    HINTS "${POLYGEIST_BINDIR}"
+    DOC "${DOCSTRING}"
+    NO_DEFAULT_PATH
+    NO_CMAKE_PATH
+    NO_CMAKE_ENVIRONMENT_PATH
+  )
+  if(EXISTS "${CGEIST}")
+    message(STATUS "Found cgeist ${CGEIST}")
+    set(ENABLE_POLYGEIST 1)
+  else()
+    message(FATAL_ERROR "cgeist executable not found!")
+  endif()
+  endif()
+endif()
 
 if(ENABLE_LLVM_FILECHECKS)
 

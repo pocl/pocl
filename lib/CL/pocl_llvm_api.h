@@ -32,6 +32,10 @@
 #include <llvm/Support/raw_os_ostream.h>
 #include <llvm/Target/TargetMachine.h>
 
+#ifdef ENABLE_MLIR
+#include <mlir/IR/MLIRContext.h>
+#endif
+
 #include <map>
 #include <string>
 
@@ -125,6 +129,9 @@ struct PoclLLVMContextData
   llvm::raw_string_ostream *poclDiagStream;
   llvm::DiagnosticPrinterRawOStream *poclDiagPrinter;
   kernelLibraryMapTy *kernelLibraryMap;
+#ifdef ENABLE_MLIR
+  mlir::MLIRContext *MLIRContext;
+#endif
 };
 
 #ifdef __GNUC__

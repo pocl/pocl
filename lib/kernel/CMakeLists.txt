@@ -222,6 +222,10 @@ if(OCL_TARGETS MATCHES "cuda")
   add_subdirectory("cuda")
 endif()
 
+if (ENABLE_MLIR)
+  add_subdirectory("mlir")
+endif()
+
 #*********************************************************************
 
 # "Escape" a list before passing to an external command
