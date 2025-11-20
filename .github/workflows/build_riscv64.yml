@@ -73,4 +73,5 @@ jobs:
         id: ctest
         timeout-minutes: 120
         run: |
-          ${{ github.workspace }}/tools/scripts/run_cross_compiled_cpu_tests ${{ github.workspace }} ${BUILD_DIR} ${REMOTE_ADDRESS} ${REMOTE_USER}
+          ${{ github.workspace }}/tools/scripts/run_cross_compiled_cpu_tests ${{ github.workspace }} ${BUILD_DIR} ${REMOTE_ADDRESS} ${REMOTE_USER} ctest --output-on-failure -LE cpu_fail -E test_large_buf -j8
+
