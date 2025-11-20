@@ -29,8 +29,6 @@ set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
 set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TS_BASEDIR}/src/${TS_NAME}")
 
-get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-
 if(NOT HAVE_GIT)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires git to checkout sources")
   return()
@@ -98,18 +96,6 @@ if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
 else()
   message(WARNING "llvm-spirv or spirv-tools not found - disabling SPIRV tests in CTS")
 endif()
-
-unset(UPSTREAM_CMAKE_ARGS)
-if(NOT is_multi_config AND CMAKE_BUILD_TYPE)
-  set(UPSTREAM_CMAKE_ARGS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
-endif()
-if(CMAKE_C_COMPILER_LAUNCHER)
-  list(APPEND UPSTREAM_CMAKE_ARGS "-DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}")
-endif()
-if(CMAKE_CXX_COMPILER_LAUNCHER)
-  list(APPEND UPSTREAM_CMAKE_ARGS "-DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}")
-endif()
-
 
 ExternalProject_Add(
   ${TS_NAME}
