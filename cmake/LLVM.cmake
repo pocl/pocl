@@ -45,9 +45,43 @@ if(DEFINED WITH_LLVM_CONFIG AND WITH_LLVM_CONFIG)
   endif()
 endif()
 
-# TODO cannot use LLVM_CONFIG for storing path to llvm-config binary:
-# The full path to the configuration file is stored in the CMake variable <PackageName>_CONFIG
-# .. conflicts with find_package
+# fallback search for LLVMConfig.cmake of supported versions in descending order
+if(NOT LLVM_CONFIG_BIN AND NOT LLVM_PACKAGE_VERSION)
+  if(NOT MSVC)
+  find_package(LLVM 21.1.0...<21.2 CONFIG)
+  if(NOT LLVM_FOUND)
+    find_package(LLVM 20.1.0...<20.2 CONFIG)
+  endif()
+  if(NOT LLVM_FOUND)
+    find_package(LLVM 19.1.0...<19.2 CONFIG)
+  endif()
+  if(NOT LLVM_FOUND)
+    find_package(LLVM 18.1.0...<18.2 CONFIG)
+  endif()
+  if(NOT LLVM_FOUND)
+    find_package(LLVM 17.0.0...<17.1 CONFIG)
+  endif()
+  endif()
+  # at last, fallback to finding any llvm-config executable
+  if(NOT LLVM_FOUND AND NOT LLVM_CONFIG_BIN)
+    find_program(LLVM_CONFIG_BIN
+      NAMES
+        "llvmtce-config"
+        "llvm-config"
+        "llvm-config-mp-21.0" "llvm-config-mp-21" "llvm-config-21" "llvm-config210"
+        "llvm-config-mp-20.0" "llvm-config-mp-20" "llvm-config-20" "llvm-config200"
+        "llvm-config-mp-19.0" "llvm-config-mp-19" "llvm-config-19" "llvm-config190"
+        "llvm-config-mp-18.0" "llvm-config-mp-18" "llvm-config-18" "llvm-config180"
+        "llvm-config-mp-17.0" "llvm-config-mp-17" "llvm-config-17" "llvm-config170"
+        "llvm-config"
+      DOC "llvm-config executable")
+  endif()
+endif()
+
+if(NOT LLVM_CONFIG_BIN AND NOT LLVM_PACKAGE_VERSION)
+  message(FATAL_ERROR "Could not find either llvm-config or LLVMConfig.cmake !")
+endif()
+
 if(LLVM_CONFIG_BIN)
   if ((NOT IS_ABSOLUTE "${LLVM_CONFIG_BIN}") OR (NOT EXISTS "${LLVM_CONFIG_BIN}"))
     message(FATAL_ERROR "Found LLVM_CONFIG ${LLVM_CONFIG_BIN} but it isn't a valid executable")
@@ -98,39 +132,8 @@ if(LLVM_CONFIG_BIN)
   endif()
 endif()
 
-# fallback search for LLVMConfig.cmake of supported versions in descending order
-if(NOT LLVM_CONFIG_BIN AND NOT LLVM_PACKAGE_VERSION)
-  find_package(LLVM 21.1.0...<21.2 CONFIG)
-  if(NOT LLVM_FOUND)
-    find_package(LLVM 20.1.0...<20.2 CONFIG)
-  endif()
-  if(NOT LLVM_FOUND)
-    find_package(LLVM 19.1.0...<19.2 CONFIG)
-  endif()
-  if(NOT LLVM_FOUND)
-    find_package(LLVM 18.1.0...<18.2 CONFIG)
-  endif()
-  if(NOT LLVM_FOUND)
-    find_package(LLVM 17.0.0...<17.1 CONFIG)
-  endif()
-  # at last, fallback to finding any llvm-config executable
-  if(NOT LLVM_FOUND AND NOT LLVM_CONFIG_BIN)
-    find_program(LLVM_CONFIG_BIN
-      NAMES
-        "llvmtce-config"
-        "llvm-config"
-        "llvm-config-mp-21.0" "llvm-config-mp-21" "llvm-config-21" "llvm-config210"
-        "llvm-config-mp-20.0" "llvm-config-mp-20" "llvm-config-20" "llvm-config200"
-        "llvm-config-mp-19.0" "llvm-config-mp-19" "llvm-config-19" "llvm-config190"
-        "llvm-config-mp-18.0" "llvm-config-mp-18" "llvm-config-18" "llvm-config180"
-        "llvm-config-mp-17.0" "llvm-config-mp-17" "llvm-config-17" "llvm-config170"
-        "llvm-config"
-      DOC "llvm-config executable")
-  endif()
-endif()
-
-if(NOT LLVM_CONFIG_BIN AND NOT LLVM_PACKAGE_VERSION)
-  message(FATAL_ERROR "Could not find either llvm-config or LLVMConfig.cmake !")
+if(NOT LLVM_VERSION_MAJOR)
+  message(FATAL_ERROR "LLVM version unknown")
 endif()
 
 if(CMAKE_CROSSCOMPILING)

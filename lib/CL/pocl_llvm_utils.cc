@@ -516,10 +516,57 @@ void InitializeLLVM() {
     LLVMInitialized = true;
     // We have not initialized any pass managers for any device yet.
     // Run the global LLVM pass initialization functions.
-    InitializeAllTargets();
-    InitializeAllTargetMCs();
-    InitializeAllAsmPrinters();
-    InitializeAllAsmParsers();
+#ifdef ENABLE_HOST_CPU_DEVICES
+
+#if defined(__i386__) || defined(_M_IX86) || \
+        defined(__x86_64__) || defined(_M_X64)
+    LLVMInitializeX86TargetInfo();
+    LLVMInitializeX86Target();
+    LLVMInitializeX86TargetMC();
+    LLVMInitializeX86AsmPrinter();
+    LLVMInitializeX86AsmParser();
+#endif
+
+#ifdef __aarch64__
+    LLVMInitializeAArch64TargetInfo();
+    LLVMInitializeAArch64Target();
+    LLVMInitializeAArch64TargetMC();
+    LLVMInitializeAArch64AsmPrinter();
+    LLVMInitializeAArch64AsmParser();
+#endif
+
+#ifdef __arm__
+    LLVMInitializeARMTargetInfo();
+    LLVMInitializeARMTarget();
+    LLVMInitializeARMTargetMC();
+    LLVMInitializeARMAsmPrinter();
+    LLVMInitializeARMAsmParser();
+#endif
+
+
+#ifdef __riscv
+    LLVMInitializeRISCVTargetInfo();
+    LLVMInitializeRISCVTarget();
+    LLVMInitializeRISCVTargetMC();
+    LLVMInitializeRISCVAsmPrinter();
+    LLVMInitializeRISCVAsmParser();
+#endif
+
+#endif // ENABLE_HOST_CPU_DEVICES
+
+#ifdef BUILD_CUDA
+    LLVMInitializeNVPTXTargetInfo();
+    LLVMInitializeNVPTXTarget();
+    LLVMInitializeNVPTXTargetMC();
+    LLVMInitializeNVPTXAsmPrinter();
+#endif
+
+#ifdef USE_LLVM_SPIRV_TARGET
+    LLVMInitializeSPIRVTargetInfo();
+    LLVMInitializeSPIRVTarget();
+    LLVMInitializeSPIRVTargetMC();
+    LLVMInitializeSPIRVAsmPrinter();
+#endif
 
     PassRegistry &Registry = *PassRegistry::getPassRegistry();
 
@@ -530,9 +577,6 @@ void InitializeLLVM() {
     initializeAnalysis(Registry);
     initializeTransformUtils(Registry);
     initializeInstCombine(Registry);
-#if LLVM_MAJOR < 16
-    initializeInstrumentation(Registry);
-#endif
     initializeTarget(Registry);
   }
 

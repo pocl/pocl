@@ -36,13 +36,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm_version: [19, 20]
+        llvm_version: [20]
         shared_libs: [ON, OFF]
         config: [cpu]
         enable_icd: [ON, OFF]
         exclude:
           - enable_icd: ON
             shared_libs: OFF
+        include:
+          - config: cpu
+            llvm_version: 19
+            enable_icd: OFF
+            shared_libs: ON
+
 
     steps:
       - name: Checkout PoCL
@@ -84,6 +90,8 @@ jobs:
       # (docs/sphinx/source/windows.rst). This configuration step is
       # intended to pick up MSVC as the compiler, but if the
       # environment is not set properly, it might pick up MinGW-gcc instead.
+      # add this CMake option for verbose build output:
+      #        -DCMAKE_VERBOSE_MAKEFILE=1 ^
       - name: Configure PoCL
         run: |
           set "CC=cl.exe"

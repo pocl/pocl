@@ -120,6 +120,7 @@ set(POCL_LLVM_COMPONENTS
   LLVMCore
   LLVMCodeGen
   LLVMCodeGenTypes
+  LLVMCoverage
   LLVMIRPrinter
   LLVMIRReader
   LLVMBitReader
@@ -131,10 +132,13 @@ set(POCL_LLVM_COMPONENTS
   LLVMInstrumentation
   LLVMInstCombine
   LLVMScalarOpts
+  LLVMFrontendDriver
+  LLVMFrontendHLSL
   LLVMipo
   LLVMVectorize
   LLVMLinker
   LLVMAnalysis
+  LLVMLTO
   LLVMMC
   LLVMMCParser
   LLVMObjCopy
@@ -144,19 +148,65 @@ set(POCL_LLVM_COMPONENTS
   LLVMDebugInfoDWARF
   LLVMExecutionEngine
   LLVMTarget
-  LLVMX86CodeGen
-  LLVMX86AsmParser
-  LLVMX86Disassembler
-  LLVMX86TargetMCA
-  LLVMX86Desc
-  LLVMX86Info
   LLVMPasses
   LLVMTargetParser
   LLVMLibDriver
+  LLVMWindowsDriver
 )
 
-if(SPIRV IN_LIST LLVM_TARGETS_TO_BUILD)
-  list(APPEND POCL_LLVM_COMPONENTS LLVMSPIRVCodeGen;LLVMSPIRVDesc;LLVMSPIRVInfo;LLVMSPIRVAnalysis)
+if("X86" IN_LIST LLVM_TARGETS_TO_BUILD)
+  list(APPEND POCL_LLVM_COMPONENTS
+    LLVMX86CodeGen
+    LLVMX86AsmParser
+    LLVMX86Disassembler
+    LLVMX86TargetMCA
+    LLVMX86Desc
+    LLVMX86Info)
+endif()
+
+if("RISCV" IN_LIST LLVM_TARGETS_TO_BUILD)
+  list(APPEND POCL_LLVM_COMPONENTS
+    LLVMRISCVCodeGen
+    LLVMRISCVAsmParser
+    LLVMRISCVDisassembler
+    LLVMRISCVDesc
+    LLVMRISCVTargetMCA
+    LLVMRISCVInfo)
+endif()
+
+if("AArch64" IN_LIST LLVM_TARGETS_TO_BUILD)
+  list(APPEND POCL_LLVM_COMPONENTS
+    LLVMAArch64CodeGen
+    LLVMAArch64AsmParser
+    LLVMAArch64Disassembler
+    LLVMAArch64Desc
+    LLVMAArch64Info
+    LLVMAArch64Utils)
+endif()
+
+if("ARM" IN_LIST LLVM_TARGETS_TO_BUILD)
+  list(APPEND POCL_LLVM_COMPONENTS
+    LLVMARMCodeGen
+    LLVMARMAsmParser
+    LLVMARMDisassembler
+    LLVMARMDesc
+    LLVMARMInfo
+    LLVMARMUtils)
+endif()
+
+if("SPIRV" IN_LIST LLVM_TARGETS_TO_BUILD)
+  list(APPEND POCL_LLVM_COMPONENTS
+    LLVMSPIRVCodeGen
+    LLVMSPIRVDesc
+    LLVMSPIRVInfo
+    LLVMSPIRVAnalysis)
+endif()
+
+if("NVPTX" IN_LIST LLVM_TARGETS_TO_BUILD)
+  list(APPEND POCL_LLVM_COMPONENTS
+    LLVMNVPTXCodeGen
+    LLVMNVPTXDesc
+    LLVMNVPTXInfo)
 endif()
 
 # TODO UNSOLVED should find out if these have CMake Targets
@@ -186,6 +236,11 @@ if(STATIC_LLVM)
   set(LLVM_LIBS "${POCL_LLVM_COMPONENTS}")
   set(CLANG_LIBS "${POCL_CLANG_COMPONENTS}")
   set(LLVM_LINK_TYPE STATIC)
+  # these are enabled when LLVM is built with -DLLVM_BUILD_LLVM_DYLIB,
+  # but we must disable these if we're linking to static component libraries
+  set(CLANG_LINK_CLANG_DYLIB OFF)
+  set(LLVM_LINK_LLVM_DYLIB OFF)
+  set(DISABLE_LLVM_LINK_LLVM_DYLIB ON)
 else()
   # shared link LLVM
   # check if we have shared components
@@ -216,23 +271,27 @@ message(STATUS "POCL_LLVM_LINK_TARGETS: ${POCL_LLVM_LINK_TARGETS}")
 # to avoid creating an install target in add_clang_library()
 set(LLVM_INSTALL_TOOLCHAIN_ONLY ON)
 
-# neccesary hack. Unfortunately CMake targets for clang components have each
-# hardcoded "LLVM" in their INTERFACE_LINK_LIBRARIES, which is a problem if
-# we want to link against Clang and LLVM components instead of libLLVM
-# (e.g. for STATIC_LLVM=ON). Manually remove the LLVM dependency.
-foreach(CLANG_TARGET IN LISTS POCL_CLANG_LINK_TARGETS)
-  if(TARGET ${CLANG_TARGET})
-    message(STATUS "removing LLVM dependency on ${CLANG_TARGET}")
-    unset(IFACE_LIBS)
-    get_target_property(IFACE_LIBS ${CLANG_TARGET} INTERFACE_LINK_LIBRARIES)
-    if(IFACE_LIBS)
-      list(REMOVE_ITEM IFACE_LIBS "LLVM")
-      message(STATUS "New interface link libraries: ${IFACE_LIBS}")
-      set_target_properties(${CLANG_TARGET} PROPERTIES INTERFACE_LINK_LIBRARIES "${IFACE_LIBS}")
+if(LLVM_ENABLE_SHARED_LIBS OR STATIC_LLVM)
+  # neccesary hack. Unfortunately CMake targets for Clang components have each
+  # hardcoded "LLVM" Target in their INTERFACE_LINK_LIBRARIES, which is a problem
+  # if we want to link against Clang and LLVM components instead of libLLVM
+  # (e.g. for STATIC_LLVM=ON). Manually remove the LLVM dependency.
+  # POCL_CLANG_LINK_TARGETS has indirect dependencies -> remove
+  # LLVM from all Clang Targets (CLANG_EXPORTED_TARGETS)
+  foreach(CLANG_TARGET IN LISTS CLANG_EXPORTED_TARGETS)
+    if(TARGET ${CLANG_TARGET})
+      #message(STATUS "removing LLVM dependency on ${CLANG_TARGET}")
+      unset(IFACE_LIBS)
+      get_target_property(IFACE_LIBS ${CLANG_TARGET} INTERFACE_LINK_LIBRARIES)
+      if(IFACE_LIBS)
+        list(REMOVE_ITEM IFACE_LIBS "LLVM")
+        #message(STATUS "New interface link libraries: ${IFACE_LIBS}")
+        set_target_properties(${CLANG_TARGET} PROPERTIES INTERFACE_LINK_LIBRARIES "${IFACE_LIBS}")
+      #else()
+        #message(STATUS "INTERFACE_LINK_LIBRARIES for ${CLANG_TARGET} empty, skipping")
+      endif()
     else()
-      message(STATUS "INTERFACE_LINK_LIBRARIES for ${CLANG_TARGET} empty, skipping")
+      #message(STATUS "${CLANG_TARGET} is not a valid target, skipping")
     endif()
-  else()
-    message(FATAL_ERROR "${CLANG_TARGET} is not a valid target")
-  endif()
-endforeach()
+  endforeach()
+endif()

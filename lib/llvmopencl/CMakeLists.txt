@@ -96,16 +96,21 @@ endif()
 if(LLVM_PACKAGE_VERSION)
   # creates two targets: "llvmpasses" STATIC/SHARED library and "obj.llvmpasses" OBJECT library
   add_clang_library(llvmpasses LINK_COMPONENTS ${POCL_CLANG_LINK_TARGETS} ${POCL_LLVM_LINK_TARGETS}
-    ${LLVM_LINK_TYPE} OBJECT ${LLVMPASSES_SOURCES} PARTIAL_SOURCES_INTENDED)
+  ${LLVM_LINK_TYPE} OBJECT ${LLVMPASSES_SOURCES} PARTIAL_SOURCES_INTENDED)
   # TODO check if this works:
   # harden("llvmpasses")
-  target_compile_options(llvmpasses PRIVATE ${LLVM_DEFINITIONS_LIST})
+  target_compile_definitions(llvmpasses PRIVATE ${LLVM_DEFINITIONS_LIST})
+  target_compile_definitions(obj.llvmpasses PRIVATE ${LLVM_DEFINITIONS_LIST})
   # we don't want "llvmpasses" library to be built by default
   set_target_properties(llvmpasses PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
   set_target_properties(obj.llvmpasses PROPERTIES EXCLUDE_FROM_ALL 0 EXCLUDE_FROM_DEFAULT_BUILD 0)
   # set CXX standard, TODO why doesn't LLVMConfig.cmake set this?
   set_target_properties(llvmpasses PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED 1)
   set_target_properties(obj.llvmpasses PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED 1)
+  if(STATIC_LLVM AND DISABLE_LLVM_LINK_LLVM_DYLIB)
+    target_compile_definitions(llvmpasses PRIVATE CLANG_BUILD_STATIC LLVM_BUILD_STATIC)
+    target_compile_definitions(obj.llvmpasses PRIVATE CLANG_BUILD_STATIC LLVM_BUILD_STATIC)
+  endif()
 else()
   add_library("llvmpasses" OBJECT ${LLVMPASSES_SOURCES})
   harden("llvmpasses")

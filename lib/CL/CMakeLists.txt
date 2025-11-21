@@ -285,10 +285,11 @@ if (ENABLE_LLVM)
     #targets in the same directory, add PARTIAL_SOURCES_INTENDED to the target
     #specification, though it is discouraged.
     add_clang_library("lib_cl_llvm" LINK_COMPONENTS ${POCL_CLANG_LINK_TARGETS} ${POCL_LLVM_LINK_TARGETS}
-      ${LLVM_LINK_TYPE} OBJECT ${LLVM_API_SOURCES} PARTIAL_SOURCES_INTENDED)
+    ${LLVM_LINK_TYPE} OBJECT ${LLVM_API_SOURCES} PARTIAL_SOURCES_INTENDED)
     # TODO check if this works:
     #harden("lib_cl_llvm")
-    target_compile_options(lib_cl_llvm PRIVATE ${LLVM_DEFINITIONS_LIST})
+    target_compile_definitions(lib_cl_llvm PRIVATE ${LLVM_DEFINITIONS_LIST})
+    target_compile_definitions(obj.lib_cl_llvm PRIVATE ${LLVM_DEFINITIONS_LIST})
     # we don't want "lib_cl_llvm" library to be built by default
     # only the OBJECT library (obj.lib_cl_llvm)
     set_target_properties(lib_cl_llvm PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
@@ -298,6 +299,10 @@ if (ENABLE_LLVM)
     set_target_properties(obj.lib_cl_llvm PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED 1)
     list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:obj.llvmpasses>")
     list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:obj.lib_cl_llvm>")
+    if(STATIC_LLVM AND DISABLE_LLVM_LINK_LLVM_DYLIB)
+      target_compile_definitions(lib_cl_llvm PRIVATE CLANG_BUILD_STATIC LLVM_BUILD_STATIC)
+      target_compile_definitions(obj.lib_cl_llvm PRIVATE CLANG_BUILD_STATIC LLVM_BUILD_STATIC)
+    endif()
   else()
     add_library("lib_cl_llvm" OBJECT ${LLVM_API_SOURCES})
     harden("lib_cl_llvm")

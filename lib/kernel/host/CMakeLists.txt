@@ -611,7 +611,7 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
       message(STATUS "${VARIANT} SLEEF: ${VECSIZE}bit vectors NOT available.")
     endif()
 
-    custom_try_compile_any(1 "${CLANG}" "c" "${FMA_TEST_SRC}" RES
+    custom_try_compile_any(1 "${HOST_CLANG}" "c" "${FMA_TEST_SRC}" RES
       ${CLANG_FLAGS} ${EXTRA_FLAGS} "-c")
     if(${RES} EQUAL "0")
       unset(STR)
@@ -742,14 +742,14 @@ if(CPU_USE_LLD_LINK_WIN32)
   set(LIBCHKSTK_SRC "${CMAKE_CURRENT_SOURCE_DIR}/libchkstk.S")
   add_custom_command( OUTPUT "${LIBCHKSTK_OBJ}"
       DEPENDS ${LIBCHKSTK_SRC}
-      COMMAND ${CLANG} -DCHKSTK -o ${LIBCHKSTK_OBJ} -c ${LIBCHKSTK_SRC}
+      COMMAND ${HOST_CLANG} -DCHKSTK -o ${LIBCHKSTK_OBJ} -c ${LIBCHKSTK_SRC}
       COMMENT "Compiling CHKSTK" VERBATIM)
 
   set(LIBMEMORY_OBJ "${CMAKE_CURRENT_BINARY_DIR}/libmemory.obj")
   set(LIBMEMORY_SRC "${CMAKE_CURRENT_SOURCE_DIR}/libmemory.c")
   add_custom_command( OUTPUT "${LIBMEMORY_OBJ}"
       DEPENDS ${LIBMEMORY_SRC}
-      COMMAND ${CLANG} -DMEMSET -DMEMCPY -DMEMMOVE -DMEMCMP -DSTRLEN -Os -fno-builtin --target=${LLVM_HOST_TARGET} -o ${LIBMEMORY_OBJ} -c ${LIBMEMORY_SRC}
+      COMMAND ${HOST_CLANG} -DMEMSET -DMEMCPY -DMEMMOVE -DMEMCMP -DSTRLEN -Os -fno-builtin --target=${LLVM_HOST_TARGET} -o ${LIBMEMORY_OBJ} -c ${LIBMEMORY_SRC}
       COMMENT "Linking STRING library" VERBATIM)
 
   add_custom_target("kernel_host_freestanding" DEPENDS ${LIBCHKSTK_OBJ} ${LIBMEMORY_OBJ})
