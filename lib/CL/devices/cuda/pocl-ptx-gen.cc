@@ -903,6 +903,9 @@ void mapLibDeviceCalls(llvm::Module *Module) {
     {"remquo", "__nv_remquo"},
     {"remquof", "__nv_remquof"},
 
+    {"erf", "__nv_erf"},
+    {"erff", "__nv_erff"},
+
     // TODO: lgamma_r
     // TODO: rootn
   };
