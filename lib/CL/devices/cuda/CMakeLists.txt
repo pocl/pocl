@@ -38,9 +38,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_pocl_device_library("pocl-devices-cuda" pocl-cuda.c pocl-cuda.h pocl-ptx-gen.cc pocl-ptx-gen.h)
 target_compile_definitions("pocl-devices-cuda" PRIVATE "-DCUDA_TOOLKIT_ROOT_DIR=\"${CUDA_TOOLKIT_ROOT_DIR}\"")
+
 if(ENABLE_LOADABLE_DRIVERS)
-  target_link_libraries(pocl-devices-cuda PRIVATE ${CUDA_POCL_TARGETS} ${CLANG_LINK_LIBRARIES} ${LLVM_LINK_LIBRARIES} ${PTHREAD_LIBRARY})
-  target_link_directories(pocl-devices-cuda PRIVATE ${CLANG_LINK_DIRECTORIES} ${LLVM_LINK_DIRECTORIES})
+  if(LLVM_PACKAGE_VERSION)
+    set(CUDA_PRIVATE_LINK_LIST ${POCL_CLANG_LINK_TARGETS} ${POCL_LLVM_LINK_TARGETS})
+  else()
+    set(CUDA_PRIVATE_LINK_LIST ${CLANG_LINK_LIBRARIES} ${LLVM_LINK_LIBRARIES} ${LLVM_SYSLIBS})
+  endif()
+  if(CLANG_LINK_DIRS AND (NOT CLANG_LINK_DIRS STREQUAL LLVM_LIBDIR))
+    target_link_directories(pocl-devices-cuda PRIVATE ${CLANG_LINK_DIRS})
+  endif()
+  if(LLVM_LINK_DIRS AND (NOT LLVM_LINK_DIRS STREQUAL LLVM_LIBDIR))
+    target_link_directories(pocl-devices-cuda PRIVATE ${LLVM_LINK_DIRS})
+  endif()
+  target_link_libraries(pocl-devices-cuda PRIVATE ${CUDA_POCL_TARGETS} ${CUDA_PRIVATE_LINK_LIST} ${PTHREAD_LIBRARY})
 endif()
 
 
