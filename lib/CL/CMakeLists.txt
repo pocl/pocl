@@ -284,8 +284,13 @@ if (ENABLE_LLVM)
     #this target lists all files in that directory.  If you want multiple
     #targets in the same directory, add PARTIAL_SOURCES_INTENDED to the target
     #specification, though it is discouraged.
-    add_clang_library("lib_cl_llvm" LINK_COMPONENTS ${POCL_CLANG_LINK_TARGETS} ${POCL_LLVM_LINK_TARGETS}
+    if(DISABLE_LLVM_LINK_LLVM_DYLIB)
+      add_clang_library("lib_cl_llvm" DISABLE_LLVM_LINK_LLVM_DYLIB LINK_COMPONENTS ${POCL_CLANG_LINK_TARGETS} ${POCL_LLVM_LINK_TARGETS}
       ${LLVM_LINK_TYPE} OBJECT ${LLVM_API_SOURCES} PARTIAL_SOURCES_INTENDED)
+    else()
+      add_clang_library("lib_cl_llvm" LINK_COMPONENTS ${POCL_CLANG_LINK_TARGETS} ${POCL_LLVM_LINK_TARGETS}
+      ${LLVM_LINK_TYPE} OBJECT ${LLVM_API_SOURCES} PARTIAL_SOURCES_INTENDED)
+    endif()
     # TODO check if this works:
     #harden("lib_cl_llvm")
     target_compile_options(lib_cl_llvm PRIVATE ${LLVM_DEFINITIONS_LIST})

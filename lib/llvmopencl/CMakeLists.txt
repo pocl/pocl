@@ -95,8 +95,13 @@ endif()
 # add library of llvm passes (the object form is then linked to libpocl)
 if(LLVM_PACKAGE_VERSION)
   # creates two targets: "llvmpasses" STATIC/SHARED library and "obj.llvmpasses" OBJECT library
-  add_clang_library(llvmpasses LINK_COMPONENTS ${POCL_CLANG_LINK_TARGETS} ${POCL_LLVM_LINK_TARGETS}
+  if(DISABLE_LLVM_LINK_LLVM_DYLIB)
+    add_clang_library(llvmpasses DISABLE_LLVM_LINK_LLVM_DYLIB LINK_COMPONENTS ${POCL_CLANG_LINK_TARGETS} ${POCL_LLVM_LINK_TARGETS}
     ${LLVM_LINK_TYPE} OBJECT ${LLVMPASSES_SOURCES} PARTIAL_SOURCES_INTENDED)
+  else()
+    add_clang_library(llvmpasses LINK_COMPONENTS ${POCL_CLANG_LINK_TARGETS} ${POCL_LLVM_LINK_TARGETS}
+    ${LLVM_LINK_TYPE} OBJECT ${LLVMPASSES_SOURCES} PARTIAL_SOURCES_INTENDED)
+  endif()
   # TODO check if this works:
   # harden("llvmpasses")
   target_compile_options(llvmpasses PRIVATE ${LLVM_DEFINITIONS_LIST})

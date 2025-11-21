@@ -190,6 +190,7 @@ if(STATIC_LLVM)
   # but we must disable these if we're linking to static component libraries
   set(CLANG_LINK_CLANG_DYLIB OFF)
   set(LLVM_LINK_LLVM_DYLIB OFF)
+  set(DISABLE_LLVM_LINK_LLVM_DYLIB ON)
 else()
   # shared link LLVM
   # check if we have shared components
