@@ -186,6 +186,10 @@ if(STATIC_LLVM)
   set(LLVM_LIBS "${POCL_LLVM_COMPONENTS}")
   set(CLANG_LIBS "${POCL_CLANG_COMPONENTS}")
   set(LLVM_LINK_TYPE STATIC)
+  # these are enabled when LLVM is built with -DLLVM_BUILD_LLVM_DYLIB,
+  # but we must disable these if we're linking to static component libraries
+  set(CLANG_LINK_CLANG_DYLIB OFF)
+  set(LLVM_LINK_LLVM_DYLIB OFF)
 else()
   # shared link LLVM
   # check if we have shared components
