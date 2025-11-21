@@ -154,9 +154,14 @@ function(add_test_pocl)
       set_tests_properties(${POCL_TEST_IR_CHECK_NAME} PROPERTIES
                           PASS_REGULAR_EXPRESSION "OK"
                           FAIL_REGULAR_EXPRESSION "FAIL"
+                          SKIP_RETURN_CODE 77
                           ENVIRONMENT "POCL_WORK_GROUP_METHOD=${VARIANT};${POCL_TEST_ENVIRONMENT}"
                           LABELS "${POCL_TEST_LABELS}"
                           DEPENDS "pocl_version_check")
+      if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
+        set_tests_properties("${POCL_TEST_IR_CHECK_NAME}" PROPERTIES
+          SKIP_REGULAR_EXPRESSION "SKIP")
+      endif()
 
     endif()
 
