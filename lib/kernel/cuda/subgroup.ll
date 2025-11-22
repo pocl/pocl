@@ -4,7 +4,7 @@ target datalayout = "e-i64:64-i128:128-v16:16-v32:32-n16:32:64"
 target triple = "nvptx64-nvidia-cuda"
 
 ; Function Attrs: convergent mustprogress nounwind
-define void @_Z21_cl_sub_group_barrieri(i32 noundef %0) local_unnamed_addr #0 {
+define void @_Z21_cl_sub_group_barrierj(i32 noundef %0) local_unnamed_addr #0 {
   tail call void @llvm.nvvm.bar.warp.sync(i32 -1)
   %2 = and i32 %0, 1
   %3 = icmp eq i32 %2, 0
@@ -35,17 +35,6 @@ declare void @llvm.nvvm.membar.cta() #2
 
 ; Function Attrs: nocallback nounwind
 declare void @llvm.nvvm.membar.gl() #2
-
-; Function Attrs: convergent mustprogress nounwind
-define noundef i32 @_Z26_cl_get_sub_group_local_idv() local_unnamed_addr #0 {
-  %1 = tail call noundef i64 @_Z19get_local_linear_idv() #6
-  %2 = trunc i64 %1 to i32
-  %3 = and i32 %2, 31
-  ret i32 %3
-}
-
-; Function Attrs: convergent nounwind
-declare noundef i64 @_Z19get_local_linear_idv() local_unnamed_addr #5
 
 attributes #0 = { convergent mustprogress nounwind "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="sm_70" "target-features"="+ptx75,+sm_70" }
 attributes #1 = { convergent nocallback nounwind }
