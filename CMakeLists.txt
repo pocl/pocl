@@ -2202,7 +2202,7 @@ if(ENABLE_CUDA)
   endif()
 
   if(LLVM_VERSION_MAJOR EQUAL 21)
-    message(FATAL_ERROR "CUDA driver does not work with LLVM/Clang 21")
+    message(FATAL_ERROR "CUDA driver does not work with LLVM/Clang 21: https://github.com/llvm/llvm-project/issues/154772")
   endif()
 
   set(OCL_DRIVERS "${OCL_DRIVERS} cuda")
