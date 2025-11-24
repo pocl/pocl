@@ -117,6 +117,10 @@ The following is a non-comprehensive list of known issues in the CUDA backend:
 
 * image types and samplers are unimplemented
 * printf format support is incomplete
+* subgroup reduce is not supported with CUDA versions older than 9.0
+* subgroup ballot is only supported on SM_30 - SM_64 targets with CUDA 9.0+
+* LLVM 21 is not supported due to an upstream bug. Use LLVM 17-20 instead. For
+  details, see https://github.com/llvm/llvm-project/issues/154772
 
 Additionally, there has been little effort to optimize the performance of this
 backend so far - the current effort is on implementing remaining functionality.
