@@ -757,6 +757,45 @@ find_program(XARGS_EXEC
 
 ######################################################################################
 
+# IPO support for runtime library
+if(POLICY CMP0069)
+  cmake_policy(SET CMP0069 NEW)
+endif()
+
+if(NOT DEFINED DEFAULT_ENABLE_IPO)
+  set(DEFAULT_ENABLE_IPO OFF CACHE BOOL "IPO" FORCE)
+
+  if(NOT CMAKE_VERSION VERSION_LESS "3.9")
+
+    if(DEVELOPER_MODE)
+      set(IPO 0)
+    elseif(MINGW)
+      # XXX: IPO on MinGW runs into linker errors (such as `two or more sections
+      # for .gnu.lto__ZN4llvm12DenseMapInfoIPKNS_8MetadataEvE7isEqualES3_S3_.65576.2f694590`)
+      set(IPO 0)
+    else()
+      include(CheckIPOSupported)
+      check_ipo_supported(RESULT IPO OUTPUT IPO_OUTPUT)
+    endif()
+    set(DEFAULT_ENABLE_IPO ${IPO} CACHE BOOL "IPO" FORCE)
+
+    message(STATUS "Compiler supports IPO: ${DEFAULT_ENABLE_IPO}")
+    #message(STATUS "IPO check message: ${IPO_OUTPUT}")
+  endif()
+endif()
+
+setup_cached_var(ENABLE_IPO "Enable Link-Time Optimization (IPO) while building pocl runtime"
+  "Requested build with IPO, but IPO is not available"
+  "IPO available, but requested build without it")
+
+if(HAVE_VALGRIND)
+  option(ENABLE_VALGRIND "Enable valgrind support (this may slow down PoCL)" OFF)
+else()
+  set(ENABLE_VALGRIND OFF CACHE BOOL "valgrind is not available" FORCE)
+endif()
+
+######################################################################################
+
 if(ENABLE_LLVM)
 
   include(LLVM RESULT_VARIABLE RES)
@@ -991,45 +1030,6 @@ endif()
 # library directory (a place where loadable drivers are placed, for example).
 file(RELATIVE_PATH POCL_INSTALL_FROM_LIB_TO_PRIVATE_LIBDIR
   ${POCL_INSTALL_PUBLIC_LIBDIR} ${POCL_INSTALL_PRIVATE_LIBDIR})
-
-######################################################################################
-
-# IPO support for runtime library
-if(POLICY CMP0069)
-  cmake_policy(SET CMP0069 NEW)
-endif()
-
-if(NOT DEFINED DEFAULT_ENABLE_IPO)
-  set(DEFAULT_ENABLE_IPO OFF CACHE BOOL "IPO" FORCE)
-
-  if(NOT CMAKE_VERSION VERSION_LESS "3.9")
-
-    if(DEVELOPER_MODE)
-      set(IPO 0)
-    elseif(MINGW)
-      # XXX: IPO on MinGW runs into linker errors (such as `two or more sections
-      # for .gnu.lto__ZN4llvm12DenseMapInfoIPKNS_8MetadataEvE7isEqualES3_S3_.65576.2f694590`)
-      set(IPO 0)
-    else()
-      include(CheckIPOSupported)
-      check_ipo_supported(RESULT IPO OUTPUT IPO_OUTPUT)
-    endif()
-    set(DEFAULT_ENABLE_IPO ${IPO} CACHE BOOL "IPO" FORCE)
-
-    message(STATUS "Compiler supports IPO: ${DEFAULT_ENABLE_IPO}")
-    #message(STATUS "IPO check message: ${IPO_OUTPUT}")
-  endif()
-endif()
-
-setup_cached_var(ENABLE_IPO "Enable Link-Time Optimization (IPO) while building pocl runtime"
-  "Requested build with IPO, but IPO is not available"
-  "IPO available, but requested build without it")
-
-if(HAVE_VALGRIND)
-  option(ENABLE_VALGRIND "Enable valgrind support (this may slow down PoCL)" OFF)
-else()
-  set(ENABLE_VALGRIND OFF CACHE BOOL "valgrind is not available" FORCE)
-endif()
 
 ######################################################################################
 

@@ -348,3 +348,35 @@ endif()
 
 #####################################################################
 
+# add library of llvm passes (the object form is then linked to libpocl)
+function(pocl_build_clang_llvm_object TGT_NAME )
+  if(LLVM_PACKAGE_VERSION)
+    # creates two targets: "${TGT_NAME}" STATIC/SHARED library and "obj.${TGT_NAME}" OBJECT library
+    add_clang_library(${TGT_NAME} ${LLVM_LINK_TYPE} OBJECT LINK_COMPONENTS
+                      ${POCL_CLANG_LINK_TARGETS} ${POCL_LLVM_LINK_TARGETS}
+                      DISABLE_LLVM_LINK_LLVM_DYLIB PARTIAL_SOURCES_INTENDED
+                       ${ARGN})
+    # TODO check if this works:
+    harden(${TGT_NAME})
+    target_compile_definitions(${TGT_NAME} PRIVATE ${LLVM_DEFINITIONS_LIST})
+    target_compile_definitions(obj.${TGT_NAME} PRIVATE ${LLVM_DEFINITIONS_LIST})
+    # we don't want "${TGT_NAME}" library to be built by default
+    set_target_properties(${TGT_NAME} PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
+    set_target_properties(obj.${TGT_NAME} PROPERTIES EXCLUDE_FROM_ALL 0 EXCLUDE_FROM_DEFAULT_BUILD 0)
+    # set CXX standard, TODO why doesn't LLVMConfig.cmake set this?
+    set_target_properties(${TGT_NAME} PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED 1)
+    set_target_properties(obj.${TGT_NAME} PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED 1)
+    if(STATIC_LLVM AND DISABLE_LLVM_LINK_LLVM_DYLIB)
+      target_compile_definitions(${TGT_NAME} PRIVATE CLANG_BUILD_STATIC LLVM_BUILD_STATIC)
+      target_compile_definitions(obj.${TGT_NAME} PRIVATE CLANG_BUILD_STATIC LLVM_BUILD_STATIC)
+    endif()
+  else()
+    add_library(${TGT_NAME} OBJECT ${ARGN})
+    harden(${TGT_NAME})
+    target_compile_options(${TGT_NAME} PRIVATE ${LLVM_CXXFLAGS_LIST})
+  endif()
+  target_include_directories(${TGT_NAME} PRIVATE ${LLVM_INCLUDE_DIRS})
+  if(ENABLE_IPO)
+    set_property(TARGET ${TGT_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+  endif()
+endfunction()

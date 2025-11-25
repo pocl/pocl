@@ -278,35 +278,11 @@ if (ENABLE_LLVM)
 
   set(LLVM_API_SOURCES "pocl_llvm_build.cc" "pocl_llvm_metadata.cc" "pocl_llvm_utils.cc" "pocl_llvm_wg.cc" "pocl_llvm_spirv.cc" ${EXTRA_LLVM_SOURCES})
 
+  pocl_build_clang_llvm_object(lib_cl_llvm ${LLVM_API_SOURCES})
   if(LLVM_PACKAGE_VERSION)
-    #LLVM's build system enforces that all source files are added to a build
-    #target, that exactly one build target exists in each directory, and that
-    #this target lists all files in that directory.  If you want multiple
-    #targets in the same directory, add PARTIAL_SOURCES_INTENDED to the target
-    #specification, though it is discouraged.
-    add_clang_library("lib_cl_llvm" LINK_COMPONENTS ${POCL_CLANG_LINK_TARGETS} ${POCL_LLVM_LINK_TARGETS}
-    ${LLVM_LINK_TYPE} OBJECT ${LLVM_API_SOURCES} PARTIAL_SOURCES_INTENDED)
-    # TODO check if this works:
-    #harden("lib_cl_llvm")
-    target_compile_definitions(lib_cl_llvm PRIVATE ${LLVM_DEFINITIONS_LIST})
-    target_compile_definitions(obj.lib_cl_llvm PRIVATE ${LLVM_DEFINITIONS_LIST})
-    # we don't want "lib_cl_llvm" library to be built by default
-    # only the OBJECT library (obj.lib_cl_llvm)
-    set_target_properties(lib_cl_llvm PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
-    set_target_properties(obj.lib_cl_llvm PROPERTIES EXCLUDE_FROM_ALL 0 EXCLUDE_FROM_DEFAULT_BUILD 0)
-    # set CXX standard, TODO why doesn't LLVMConfig.cmake set this?
-    set_target_properties(lib_cl_llvm PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED 1)
-    set_target_properties(obj.lib_cl_llvm PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED 1)
     list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:obj.llvmpasses>")
     list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:obj.lib_cl_llvm>")
-    if(STATIC_LLVM AND DISABLE_LLVM_LINK_LLVM_DYLIB)
-      target_compile_definitions(lib_cl_llvm PRIVATE CLANG_BUILD_STATIC LLVM_BUILD_STATIC)
-      target_compile_definitions(obj.lib_cl_llvm PRIVATE CLANG_BUILD_STATIC LLVM_BUILD_STATIC)
-    endif()
   else()
-    add_library("lib_cl_llvm" OBJECT ${LLVM_API_SOURCES})
-    harden("lib_cl_llvm")
-    target_compile_options(lib_cl_llvm PRIVATE ${LLVM_CXXFLAGS_LIST})
     list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:llvmpasses>")
     list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:lib_cl_llvm>")
   endif()
@@ -318,13 +294,12 @@ if (ENABLE_LLVM)
   endif()
 
   target_include_directories(lib_cl_llvm PRIVATE "${CMAKE_SOURCE_DIR}/lib/llvmopencl")
-  target_include_directories(lib_cl_llvm PRIVATE ${LLVM_INCLUDE_DIRS})
 
   if(OCL_ICD_INCLUDE_DIRS)
     target_include_directories(lib_cl_llvm SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
   endif()
 
-  if (HAVE_LLVM_SPIRV_LIB)
+  if(HAVE_LLVM_SPIRV_LIB)
     target_include_directories(lib_cl_llvm PRIVATE ${LLVM_SPIRV_INCLUDEDIR})
   endif()
 
@@ -452,9 +427,6 @@ install(TARGETS "${POCL_LIBRARY_NAME}"
 
 
 if(ENABLE_IPO)
-  if (ENABLE_LLVM)
-    set_property(TARGET "lib_cl_llvm" PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-  endif()
   set_property(TARGET "${POCL_LIBRARY_NAME}" PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
