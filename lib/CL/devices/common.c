@@ -1615,16 +1615,8 @@ pocl_init_default_device_infos (cl_device_id dev,
   dev->max_parameter_size = 1024;
   dev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT;
   dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
+  /* minimum mandated */
   dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
-#if defined(__x86_64__) || defined(_M_X64)
-  dev->single_fp_config |= (CL_FP_DENORM | CL_FP_ROUND_TO_INF
-                            | CL_FP_ROUND_TO_ZERO
-                            | CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
-#ifdef ENABLE_LLVM
-  if (cpu_has_fma())
-    dev->single_fp_config |= CL_FP_FMA;
-#endif
-#endif
 
   if (strstr (device_extensions, "cl_khr_fp16") == NULL)
     {

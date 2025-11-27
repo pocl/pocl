@@ -395,17 +395,49 @@ pocl_cpu_init_common (cl_device_id device)
   /* 0 is the host memory shared with all drivers that use it */
   device->global_mem_id = 0;
 
-#ifndef HOST_CPU_ENABLE_DENORMS
-  if (device->single_fp_config)
-    device->single_fp_config = device->single_fp_config & (~CL_FP_DENORM);
-  if (device->half_fp_config)
-    device->half_fp_config = device->half_fp_config & (~CL_FP_DENORM);
-#ifndef ENABLE_CONFORMANCE
-  /* denorm is mandatory for FP64, but when conformance=OFF
-   * we can disable it also for FP64 */
-  if (device->double_fp_config)
-    device->double_fp_config = device->double_fp_config & (~CL_FP_DENORM);
+#ifdef __riscv
+#ifdef __riscv_f
+  device->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN
+                             | CL_FP_ROUND_TO_INF | CL_FP_ROUND_TO_ZERO
+                             | CL_FP_FMA | CL_FP_DENORM
+                             | CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT;
+#else
+  // minimum + SOFT_FLOAT
+  device->single_fp_config
+    = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN | CL_FP_SOFT_FLOAT;
 #endif
+#ifdef __riscv_d
+  device->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN
+                             | CL_FP_ROUND_TO_INF | CL_FP_ROUND_TO_ZERO
+                             | CL_FP_FMA | CL_FP_DENORM;
+  /* this is a workaround for issue 28 in https://github.com/Oblomov/clinfo
+   * https://github.com/Oblomov/clinfo/issues/28 */
+  device->double_fp_config |= CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT;
+#else
+  device->double_fp_config = 0;
+#endif
+#endif
+
+#if defined(__x86_64__) || defined(_M_X64)
+  device->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN
+                             | CL_FP_ROUND_TO_INF | CL_FP_ROUND_TO_ZERO
+                             | CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT;
+  device->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN
+                             | CL_FP_ROUND_TO_INF | CL_FP_ROUND_TO_ZERO;
+
+#ifdef ENABLE_LLVM
+  if (cpu_has_fma ())
+    {
+      device->single_fp_config |= CL_FP_FMA;
+      device->double_fp_config |= CL_FP_FMA;
+    }
+#endif
+#if defined(ENABLE_CONFORMANCE) || defined(HOST_CPU_ENABLE_DENORMS)
+  /* denorm is mandatory for FP64 when conformance=ON */
+  device->single_fp_config |= CL_FP_DENORM;
+  device->double_fp_config |= CL_FP_DENORM;
+#endif
+
 #endif
 
   device->version_of_latest_passed_cts = "v2024-08-08-00";
@@ -461,6 +493,17 @@ pocl_cpu_init_common (cl_device_id device)
     = CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
       | CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM
       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+
+#ifdef __riscv
+#ifndef __riscv_a
+  /* minimum mandated */
+  device->atomic_memory_capabilities
+    = CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
+  device->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
+                                      | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
+                                      | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
+#endif
+#endif
 
   device->svm_allocation_priority = 1;
 
