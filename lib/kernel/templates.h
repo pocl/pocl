@@ -2149,3 +2149,70 @@
   long8  _CL_OVERLOADABLE NAME(double8 );       \
   long16 _CL_OVERLOADABLE NAME(double16);)
 #endif
+
+/* these are used by CORE-math routines to define
+   FP16-only vector variants of functions */
+
+#define IMPLEMENT_FP16_EXPR_V_VVV(NAME, RETTYPE, EXPR)                        \
+  RETTYPE __attribute__ ((overloadable)) NAME (RETTYPE a, RETTYPE b,          \
+                                               RETTYPE c)                     \
+  {                                                                           \
+    return (RETTYPE)EXPR;                                                     \
+  }
+
+#define DEFINE_FP16_EXPR_V_VVV(NAME)                                          \
+  IMPLEMENT_FP16_EXPR_V_VVV (NAME, half2, NAME3_2 (NAME))                     \
+  IMPLEMENT_FP16_EXPR_V_VVV (NAME, half3, NAME3_3 (NAME))                     \
+  IMPLEMENT_FP16_EXPR_V_VVV (NAME, half4, NAME3_4 (NAME))                     \
+  IMPLEMENT_FP16_EXPR_V_VVV (NAME, half8, NAME3_8 (NAME))                     \
+  IMPLEMENT_FP16_EXPR_V_VVV (NAME, half16, NAME3_16 (NAME))
+
+#define IMPLEMENT_FP16_EXPR_V_VV(NAME, RETTYPE, EXPR)                         \
+  RETTYPE __attribute__ ((overloadable)) NAME (RETTYPE a, RETTYPE b)          \
+  {                                                                           \
+    return (RETTYPE)EXPR;                                                     \
+  }
+
+#define DEFINE_FP16_EXPR_V_VV(NAME)                                           \
+  IMPLEMENT_FP16_EXPR_V_VV (NAME, half2, NAME2_2 (NAME))                      \
+  IMPLEMENT_FP16_EXPR_V_VV (NAME, half3, NAME2_3 (NAME))                      \
+  IMPLEMENT_FP16_EXPR_V_VV (NAME, half4, NAME2_4 (NAME))                      \
+  IMPLEMENT_FP16_EXPR_V_VV (NAME, half8, NAME2_8 (NAME))                      \
+  IMPLEMENT_FP16_EXPR_V_VV (NAME, half16, NAME2_16 (NAME))
+
+#define IMPLEMENT_FP16_EXPR_V_V(NAME, RETTYPE, EXPR)                          \
+  RETTYPE __attribute__ ((overloadable)) NAME (RETTYPE a)                     \
+  {                                                                           \
+    return (RETTYPE)EXPR;                                                     \
+  }
+
+#define DEFINE_FP16_EXPR_V_V(NAME)                                            \
+  IMPLEMENT_FP16_EXPR_V_V (NAME, half2, NAME1_2 (NAME))                       \
+  IMPLEMENT_FP16_EXPR_V_V (NAME, half3, NAME1_3 (NAME))                       \
+  IMPLEMENT_FP16_EXPR_V_V (NAME, half4, NAME1_4 (NAME))                       \
+  IMPLEMENT_FP16_EXPR_V_V (NAME, half8, NAME1_8 (NAME))                       \
+  IMPLEMENT_FP16_EXPR_V_V (NAME, half16, NAME1_16 (NAME))
+
+#define IMPLEMENT_FP16_EXPR_V_VI(NAME, RETTYPE, INTTYPE, EXPR)                \
+  RETTYPE _CL_OVERLOADABLE NAME (RETTYPE a, INTTYPE b)                        \
+  {                                                                           \
+    return (RETTYPE)EXPR;                                                     \
+  }
+
+#define DEFINE_FP16_EXPR_V_VI(NAME)
+
+/* __builtin_isfpclass() returns 1 / 0, not -1 that we need */
+#define IMPLEMENT_FP16_BUILTIN_FPCLASS(NAME, CLASSNUM, FLTTYPE, INTTYPE)          \
+  INTTYPE _CL_OVERLOADABLE _CL_READNONE _cl_##NAME (FLTTYPE a)                \
+  {                                                                           \
+    return (__builtin_isfpclass (a, CLASSNUM) > (INTTYPE)0) ? (INTTYPE)(-1)   \
+                                                            : (INTTYPE)(0);   \
+  }
+
+#define DEFINE_FP16_BUILTIN_FPCLASS(NAME, CLASSNUM)                               \
+  IMPLEMENT_FP16_BUILTIN_FPCLASS (NAME, CLASSNUM, half, int)                      \
+  IMPLEMENT_FP16_BUILTIN_FPCLASS (NAME, CLASSNUM, half2, short2)                  \
+  IMPLEMENT_FP16_BUILTIN_FPCLASS (NAME, CLASSNUM, half3, short3)                  \
+  IMPLEMENT_FP16_BUILTIN_FPCLASS (NAME, CLASSNUM, half4, short4)                  \
+  IMPLEMENT_FP16_BUILTIN_FPCLASS (NAME, CLASSNUM, half8, short8)                  \
+  IMPLEMENT_FP16_BUILTIN_FPCLASS (NAME, CLASSNUM, half16, short16)
