@@ -27,6 +27,6 @@ _CL_OVERLOADABLE vtype tanpi(vtype x) {
   vtype sinpix = sinpi(x);
   vtype cospix = cospi(x);
   /* -0.0 -> 0.0 */
-  cospix = (as_itype(cospix) == (itype)SIGNBIT_DP64) ? (vtype)0.0f : cospix;
+  cospix = (as_itype(cospix) == (itype)SIGNBIT_DP64) ? (vtype)0.0 : cospix;
   return (sinpix / cospix);
 }

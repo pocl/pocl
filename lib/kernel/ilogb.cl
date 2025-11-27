@@ -22,11 +22,56 @@
    THE SOFTWARE.
 */
 
-#include "templates.h"
+#define IMPLEMENT_EXPR_J_V(NAME, EXPR, VTYPE, STYPE, RTYPE, JTYPE)     \
+RTYPE __attribute__ ((overloadable))                                  \
+convert_rtype(JTYPE X) { return convert_##RTYPE(X); };                                     \
+RTYPE __attribute__ ((overloadable))                                  \
+    NAME(VTYPE a)                                                         \
+{                                                                     \
+        typedef VTYPE vtype;                                                \
+        typedef STYPE stype;                                                \
+        typedef JTYPE jtype;                                                \
+        typedef RTYPE rtype;                                              \
+        union { vtype v; jtype j; } aa;                                   \
+        aa.v = fabs(a);                                                    \
+        return EXPR;                                                        \
+}
+#define DEFINE_EXPR_J_V(NAME, EXPR)                                     \
+__IF_FP16(                                                            \
+    IMPLEMENT_EXPR_J_V(NAME, EXPR, half    , half  , int,   ushort)      \
+    IMPLEMENT_EXPR_J_V(NAME, EXPR, half2   , half  , int2 , ushort2)      \
+    IMPLEMENT_EXPR_J_V(NAME, EXPR, half3   , half  , int3 , ushort3)      \
+    IMPLEMENT_EXPR_J_V(NAME, EXPR, half4   , half  , int4 , ushort4)      \
+    IMPLEMENT_EXPR_J_V(NAME, EXPR, half8   , half  , int8 , ushort8)      \
+    IMPLEMENT_EXPR_J_V(NAME, EXPR, half16  , half  , int16, ushort16))     \
+    IMPLEMENT_EXPR_J_V(NAME, EXPR, float   , float , int  , uint  )      \
+    IMPLEMENT_EXPR_J_V(NAME, EXPR, float2  , float , int2 , uint2  )      \
+    IMPLEMENT_EXPR_J_V(NAME, EXPR, float3  , float , int3 , uint3  )      \
+    IMPLEMENT_EXPR_J_V(NAME, EXPR, float4  , float , int4 , uint4  )      \
+    IMPLEMENT_EXPR_J_V(NAME, EXPR, float8  , float , int8 , uint8  )      \
+    IMPLEMENT_EXPR_J_V(NAME, EXPR, float16 , float , int16, uint16  )      \
+__IF_FP64(                                                            \
+    IMPLEMENT_EXPR_J_V(NAME, EXPR, double  , double, int   , ulong)      \
+    IMPLEMENT_EXPR_J_V(NAME, EXPR, double2 , double, int2  , ulong2)      \
+    IMPLEMENT_EXPR_J_V(NAME, EXPR, double3 , double, int3  , ulong3)      \
+    IMPLEMENT_EXPR_J_V(NAME, EXPR, double4 , double, int4  , ulong4)      \
+    IMPLEMENT_EXPR_J_V(NAME, EXPR, double8 , double, int8  , ulong8)      \
+    IMPLEMENT_EXPR_J_V(NAME, EXPR, double16, double, int16 , ulong16))
 
-#if !__has_builtin(__builtin_ilogbf16)
-#undef __IF_FP16
-#define __IF_FP16(X)
-#endif
 
-DEFINE_BUILTIN_K_V(ilogb)
+DEFINE_EXPR_J_V(ilogb,
+({
+  (sizeof(stype) == 2) ? convert_rtype((aa.j >> 14) + (jtype)(15)) :
+  (sizeof(stype) == 4) ? convert_rtype((aa.j >> 9) + (jtype)(127)) :
+  (sizeof(stype) == 8) ? convert_rtype((aa.j >> 12) + (jtype)(1023)) :
+  0;
+}))
+
+/*
+DEFINE_EXPR_V_VV(maxmag,
+                 ({
+                     fabs(a) > fabs(b) ? a :
+                         fabs(b) > fabs(a) ? b :
+                         fmax(a, b);
+                 }))
+*/

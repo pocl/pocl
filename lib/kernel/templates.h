@@ -335,45 +335,45 @@
   IMPLEMENT_BUILTIN_L_VV(NAME, double8 , double, long8 , lo, hi)        \
   IMPLEMENT_BUILTIN_L_VV(NAME, double16, double, long16, lo, hi))
 
-#define IMPLEMENT_BUILTIN_V_VJ(NAME, VTYPE, JTYPE, LO, HI)      \
-  VTYPE __attribute__ ((overloadable))                          \
-  NAME(VTYPE a, JTYPE b)                                        \
-  {                                                             \
-    return (VTYPE)(NAME(a.LO, b.LO), NAME(a.HI, b.HI));         \
-  }
-#define DEFINE_BUILTIN_V_VJ(NAME)                               \
-  __IF_FP16(                                                    \
-  half __attribute__ ((overloadable))                           \
-  NAME(half a, int b)                                           \
-  {                                                             \
-    return __builtin_##NAME##f16(a, b);                         \
-  }                                                             \
-  IMPLEMENT_BUILTIN_V_VJ(NAME, half2 , int2 , lo, hi)           \
-  IMPLEMENT_BUILTIN_V_VJ(NAME, half3 , int3 , lo, s2)           \
-  IMPLEMENT_BUILTIN_V_VJ(NAME, half4 , int4 , lo, hi)           \
-  IMPLEMENT_BUILTIN_V_VJ(NAME, half8 , int8 , lo, hi)           \
-  IMPLEMENT_BUILTIN_V_VJ(NAME, half16, int16, lo, hi))          \
-  float __attribute__ ((overloadable))                          \
-  NAME(float a, int b)                                          \
-  {                                                             \
-    return __builtin_##NAME##f(a, b);                           \
-  }                                                             \
-  IMPLEMENT_BUILTIN_V_VJ(NAME, float2  , int2 , lo, hi)         \
-  IMPLEMENT_BUILTIN_V_VJ(NAME, float3  , int3 , lo, s2)         \
-  IMPLEMENT_BUILTIN_V_VJ(NAME, float4  , int4 , lo, hi)         \
-  IMPLEMENT_BUILTIN_V_VJ(NAME, float8  , int8 , lo, hi)         \
-  IMPLEMENT_BUILTIN_V_VJ(NAME, float16 , int16, lo, hi)         \
-  __IF_FP64(                                                    \
-  double __attribute__ ((overloadable))                         \
-  NAME(double a, int b)                                         \
-  {                                                             \
-    return __builtin_##NAME(a, b);                              \
-  }                                                             \
-  IMPLEMENT_BUILTIN_V_VJ(NAME, double2 , int2 , lo, hi)         \
-  IMPLEMENT_BUILTIN_V_VJ(NAME, double3 , int3 , lo, s2)         \
-  IMPLEMENT_BUILTIN_V_VJ(NAME, double4 , int4 , lo, hi)         \
-  IMPLEMENT_BUILTIN_V_VJ(NAME, double8 , int8 , lo, hi)         \
-  IMPLEMENT_BUILTIN_V_VJ(NAME, double16, int16, lo, hi))
+#define IMPLEMENT_BUILTIN_V_VJ(NAME, VTYPE, JTYPE, EVAL)    \
+VTYPE _CL_OVERLOADABLE                                      \
+    NAME(VTYPE a, JTYPE b)                                  \
+{                                                           \
+        return (VTYPE)EVAL;                                 \
+}
+#define DEFINE_BUILTIN_V_VJ(NAME)                         \
+  __IF_FP16(                                              \
+  half _CL_OVERLOADABLE                                   \
+  NAME(half a, int b)                                     \
+  {                                                       \
+      return __builtin_##NAME##f16(a, b);                 \
+  }                                                       \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, half2, int2, NAME2_2(NAME))\
+  IMPLEMENT_BUILTIN_V_VJ(NAME, half3, int3, NAME2_3(NAME))   \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, half4, int4, NAME2_4(NAME))   \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, half8, int8, NAME2_8(NAME))   \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, half16, int16, NAME2_16(NAME))) \
+  float _CL_OVERLOADABLE                                  \
+  NAME(float a, int b)                                    \
+  {                                                       \
+      return __builtin_##NAME##f(a, b);                   \
+   }                                                       \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, float2, int2 , NAME2_2(NAME))   \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, float3, int3 , NAME2_3(NAME))   \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, float4, int4 , NAME2_4(NAME))   \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, float8, int8 , NAME2_8(NAME))   \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, float16, int16, NAME2_16(NAME))  \
+  __IF_FP64(                                              \
+  double _CL_OVERLOADABLE                                 \
+  NAME(double a, int b)                                   \
+  {                                                       \
+      return __builtin_##NAME(a, b);                      \
+  }                                                       \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, double2, int2, NAME2_2(NAME))   \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, double3, int3, NAME2_3(NAME))   \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, double4, int4, NAME2_4(NAME))   \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, double8, int8, NAME2_8(NAME))   \
+  IMPLEMENT_BUILTIN_V_VJ(NAME, double16, int16, NAME2_16(NAME)))
 
 #define IMPLEMENT_BUILTIN_V_VI(NAME, VTYPE, ITYPE, LO, HI)      \
   VTYPE __attribute__ ((overloadable))                          \

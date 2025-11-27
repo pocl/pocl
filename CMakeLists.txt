@@ -1104,6 +1104,7 @@ if(ENABLE_CONFORMANCE AND (NOT ENABLE_SLEEF))
   message(FATAL_ERROR "conformance needs enabled SLEEF")
 endif()
 
+# CONFORMANCE + VECTORIZE_BUILTINS is disabled b/c we cannot guarantee ULP of the vectorized functions
 set(ENABLE_HOST_CPU_VECTORIZE_BUILTINS OFF)
 if(ENABLE_LLVM AND ENABLE_HOST_CPU_DEVICES AND (NOT ENABLE_CONFORMANCE))
   # these are experimental options and may change in future
@@ -1117,8 +1118,8 @@ if(ENABLE_LLVM AND ENABLE_HOST_CPU_DEVICES AND (NOT ENABLE_CONFORMANCE))
     message(STATUS "CPU device: enabled vectorization of OpenCL builtins")
     set(ENABLE_HOST_CPU_VECTORIZE_BUILTINS ON)
   endif()
-
 endif()
+
 ######################################################################################
 ######################################################################################
 
@@ -1628,12 +1629,11 @@ endif()
 # FP16 support requires _Float16 type
 # LLVM <15 doesn't support _Float16;
 # LLVM 15 crashes on some code; LLVM 16 seems to work but fails with ldexp; LLVM 18 fails with isinf
-# CONFORMANCE=ON disables FP16 b/c PoCL support is incomplete
+# CONFORMANCE can be ON / OFF
+# ENABLE_HOST_CPU_VECTORIZE_BUILTINS can be ON / OFF
 if((LLVM_VERSION_MAJOR GREATER_EQUAL 19)
-   AND (NOT ENABLE_CONFORMANCE)
-   AND (NOT RISCV) AND (NOT I386)
+   AND (NOT I386)
    AND (CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
-   AND ENABLE_HOST_CPU_VECTORIZE_BUILTINS
    AND CLANG_SUPPORTS_FLOAT16_ON_CPU
    AND HOST_COMPILER_SUPPORTS_FLOAT16)
   message(STATUS "CPU device support for cl_khr_fp16 enabled")
