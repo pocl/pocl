@@ -314,8 +314,8 @@ POname(clSetKernelArg)(cl_kernel kernel,
   int is_local = ARGP_IS_LOCAL (pi);
 
   const void *ptr_value = NULL;
-  if (((pi->type == POCL_ARG_TYPE_POINTER)
-       || (pi->type == POCL_ARG_TYPE_IMAGE))
+  if (((pi->type == POCL_ARG_TYPE_POINTER) || (pi->type == POCL_ARG_TYPE_IMAGE)
+       || (pi->type == POCL_ARG_TYPE_SAMPLER))
       && arg_value)
     ptr_value = *(const void **)arg_value;
 
@@ -324,19 +324,10 @@ POname(clSetKernelArg)(cl_kernel kernel,
       const void *ptr_value = NULL;
       uint32_t uint32_value = 0;
       uint64_t uint64_value = 0;
-      if (((pi->type == POCL_ARG_TYPE_POINTER)
-           || (pi->type == POCL_ARG_TYPE_IMAGE))
-          && arg_value)
-        {
-          ptr_value = *(const void **)arg_value;
-        }
-      else
-        {
-          if (arg_value && (arg_size == 4))
-            uint32_value = *(uint32_t *)arg_value;
-          if (arg_value && (arg_size == 8))
-            uint64_value = *(uint64_t *)arg_value;
-        }
+      if (arg_value && (arg_size == 4))
+        uint32_value = *(uint32_t *)arg_value;
+      if (arg_value && (arg_size == 8))
+        uint64_value = *(uint64_t *)arg_value;
 
       char *hexval = NULL;
       if (arg_value && (arg_size < 1024))
@@ -358,27 +349,13 @@ POname(clSetKernelArg)(cl_kernel kernel,
       ((arg_value != NULL) && is_local), CL_INVALID_ARG_VALUE,
       "arg_value != NULL and arg %u is in local address space\n", arg_index);
 
-  /* Trigger CL_INVALID_ARG_VALUE if arg_value specified is NULL
-   * for an argument that is not declared with the __local qualifier. */
-  POCL_RETURN_ERROR_ON (
-      ((arg_value == NULL) && (!is_local)
-       && (pi->type != POCL_ARG_TYPE_POINTER)),
-      CL_INVALID_ARG_VALUE,
-      "arg_value == NULL and arg %u is not in local address space\n",
-      arg_index);
-
   /* Trigger CL_INVALID_ARG_SIZE if arg_size is zero
    * and the argument is declared with the __local qualifier. */
   POCL_RETURN_ERROR_ON (((arg_size == 0) && is_local), CL_INVALID_ARG_SIZE,
                         "arg_size == 0 and arg %u is in local address space\n",
                         arg_index);
 
-  POCL_RETURN_ERROR_ON (
-      ((pi->type == POCL_ARG_TYPE_SAMPLER) && (arg_value == NULL)),
-      CL_INVALID_SAMPLER, "arg_value == NULL and arg is a cl_sampler\n");
-
-  if (pi->type == POCL_ARG_TYPE_POINTER || pi->type == POCL_ARG_TYPE_IMAGE
-      || pi->type == POCL_ARG_TYPE_SAMPLER)
+  if (pi->type != POCL_ARG_TYPE_NONE)
     {
       POCL_RETURN_ERROR_ON (
           ((!is_local) && (arg_size != sizeof (cl_mem))), CL_INVALID_ARG_SIZE,
@@ -392,8 +369,23 @@ POname(clSetKernelArg)(cl_kernel kernel,
               CL_INVALID_ARG_VALUE,
               "Arg %u is not a valid CL object\n", arg_index);
         }
+      else
+        {
+          /* NULL values only accepted for pointers, not images & samplers */
+          POCL_RETURN_ERROR_ON ((pi->type == POCL_ARG_TYPE_SAMPLER),
+            CL_INVALID_SAMPLER, "Arg %u is not a valid Sampler\n", arg_index);
+          POCL_RETURN_ERROR_ON ((pi->type == POCL_ARG_TYPE_IMAGE),
+            CL_INVALID_MEM_OBJECT, "Arg %u is not a valid Image object\n",
+            arg_index);
+          /* If the argument is a buffer object, the arg_value pointer can be
+             NULL or point to a NULL value in which case a NULL value will be
+             used as the value */
+        }
     }
-  else if (pi->type_size)
+  else { /* POD arguments */
+    POCL_RETURN_ERROR_ON ((arg_value == NULL),
+      CL_INVALID_ARG_VALUE, "Arg %u is not a valid value\n", arg_index);
+    if (pi->type_size)
     {
       size_t as = arg_size;
       size_t as3 = arg_size;
@@ -406,6 +398,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
           "Arg %u is type %s, but arg_size (%zu) is not sizeof(type) == %u\n",
           arg_index, pi->type_name, arg_size, pi->type_size);
     }
+  }
 
   p = &(kernel->dyn_arguments[arg_index]);
   if (kernel->dyn_argument_storage == NULL)
@@ -422,9 +415,18 @@ POname(clSetKernelArg)(cl_kernel kernel,
     {
       if (pi->type == POCL_ARG_TYPE_IMAGE)
         {
-          p->is_readonly
-              = (pi->access_qualifier & CL_KERNEL_ARG_ACCESS_READ_ONLY ? 1
-                                                                       : 0);
+          cl_uint wronly
+            = pi->access_qualifier == CL_KERNEL_ARG_ACCESS_WRITE_ONLY;
+          cl_uint rdonly
+            = pi->access_qualifier == CL_KERNEL_ARG_ACCESS_READ_ONLY;
+          const cl_mem M = (const cl_mem)ptr_value;
+          POCL_RETURN_ERROR_ON ((wronly && (M->flags & CL_MEM_READ_ONLY)),
+            CL_INVALID_ARG_VALUE, "Image created with CL_MEM_READ_ONLY "
+            "passed to a write_only kernel argument %u\n", arg_index);
+          POCL_RETURN_ERROR_ON ((rdonly && (M->flags & CL_MEM_WRITE_ONLY)),
+            CL_INVALID_ARG_VALUE, "Image created with CL_MEM_WRITE_ONLY "
+            "passed to a read_only kernel argument %u\n", arg_index);
+          p->is_readonly = (rdonly ? 1 : 0);
         }
       if (pi->type == POCL_ARG_TYPE_POINTER)
         {
