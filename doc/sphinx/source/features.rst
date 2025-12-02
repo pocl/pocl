@@ -11,3 +11,4 @@ Supported OpenCL features, device drivers
    extensions
    drivers
    dbk
+   mlir

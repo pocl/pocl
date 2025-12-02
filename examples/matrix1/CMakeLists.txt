@@ -44,7 +44,7 @@ set_tests_properties( "examples/matrix1" "examples/matrix1_local" ${SPIREX}
 
 # devices which don't support SPIR
 set_property(TEST "examples/matrix1" "examples/matrix1_local"
-  APPEND PROPERTY LABELS "vulkan")
+  APPEND PROPERTY LABELS "vulkan;mlir")
 
 add_test(NAME "examples/matrix1_poclbin"
          COMMAND ${CMAKE_COMMAND}

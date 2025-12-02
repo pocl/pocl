@@ -61,6 +61,10 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "pocl_llvm_api.h"
 #include "pocl_runtime_config.h"
 
+#ifdef ENABLE_MLIR
+#include "pocl_mlir.h"
+#endif
+
 using namespace llvm;
 
 #include <string>
@@ -659,6 +663,9 @@ void pocl_llvm_create_context(cl_context ctx) {
     GlobalLLVMContext = data;
     ++GlobalLLVMContextRefcount;
   }
+#ifdef ENABLE_MLIR
+  poclMlirRegisterDialects(data);
+#endif
 
   POCL_MSG_PRINT_LLVM("Created context %" PRId64 " (%p)\n", ctx->id, ctx);
 }
@@ -699,6 +706,10 @@ void pocl_llvm_release_context(cl_context ctx) {
     data->kernelLibraryMap->clear();
     delete data->kernelLibraryMap;
   }
+
+#ifdef ENABLE_MLIR
+  delete data->MLIRContext;
+#endif
 
   POCL_DESTROY_LOCK(data->Lock);
   delete data->Context;
