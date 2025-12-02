@@ -807,6 +807,19 @@ pocl_cmdbuf_get_property (cl_command_buffer_khr command_buffer,
   return 0;
 }
 
+int
+pocl_is_cmdbuf_ready (cl_command_buffer_khr command_buffer)
+{
+  cl_command_buffer_flags_khr flags
+    = (cl_command_buffer_flags_khr)pocl_cmdbuf_get_property (
+      command_buffer, CL_COMMAND_BUFFER_FLAGS_KHR);
+  int is_ready
+    = command_buffer->state == CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR
+      || (command_buffer->state == CL_COMMAND_BUFFER_STATE_PENDING_KHR
+          && flags & CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR);
+  return is_ready;
+}
+
 /**
  * Create a command buffered command node.
  *

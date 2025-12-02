@@ -103,14 +103,8 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  cl_command_buffer_flags_khr flags
-    = (cl_command_buffer_flags_khr)pocl_cmdbuf_get_property (
-      command_buffer, CL_COMMAND_BUFFER_FLAGS_KHR);
   POCL_LOCK (command_buffer->mutex);
-  int is_ready
-      = command_buffer->state == CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR
-        || (command_buffer->state == CL_COMMAND_BUFFER_STATE_PENDING_KHR
-            && flags & CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR);
+  int is_ready = pocl_is_cmdbuf_ready (command_buffer);
   if (is_ready)
     {
       command_buffer->state = CL_COMMAND_BUFFER_STATE_PENDING_KHR;

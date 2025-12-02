@@ -37,9 +37,8 @@ POname (clUpdateMutableCommandsKHR) (
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_buffer)),
                           CL_INVALID_COMMAND_BUFFER_KHR);
 
-  POCL_RETURN_ERROR_COND (
-    (command_buffer->state != CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR),
-    CL_INVALID_OPERATION);
+  int is_ready = pocl_is_cmdbuf_ready (command_buffer);
+  POCL_RETURN_ERROR_COND (!is_ready, CL_INVALID_OPERATION);
 
   POCL_RETURN_ERROR_COND ((command_buffer->is_mutable == CL_FALSE),
                           CL_INVALID_OPERATION);
