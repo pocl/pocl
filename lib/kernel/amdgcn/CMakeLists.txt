@@ -37,11 +37,11 @@ foreach(FILE get_local_id.ll get_local_size.ll get_group_id.ll get_global_size.l
   list(APPEND KERNEL_SOURCES "amdgcn/${FILE}")
 endforeach()
 
-set(CLANG_FLAGS "-emit-llvm" "-target" "amdgcn--amdhsa" "-mcpu=kaveri")
+set(CLANG_FLAGS "-emit-llvm" "-target" "amdgcn-amd-amdhsa")
 
 set(LLC_FLAGS "")
 
-make_kernel_bc(KERNEL_BC "amdgcn--amdhsa" "gcn" 0 0 0 ${KERNEL_SOURCES})
+make_kernel_bc(KERNEL_BC "amdgcn-amd-amdhsa" "gcn" 0 0 0 ${KERNEL_SOURCES})
 
 # just debug
 message(STATUS "AMDGCN Kernel BC: ${KERNEL_BC}")
