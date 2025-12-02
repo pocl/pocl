@@ -24,10 +24,18 @@
 #=============================================================================
 
 add_mlir_dialect_library(PoclDialect
-			PoclDialect.cpp
-			DEPENDS
-			MLIRPoclOpsIncGen
-			)
+                        PoclDialect.cpp
+                        DEPENDS
+                        MLIRPoclOpsIncGen
+                        )
+
+if(NOT LLVM_HAS_RTTI)
+  if(MSVC)
+    target_compile_options(obj.PoclDialect PRIVATE "/GR-")
+  else()
+    target_compile_options(obj.PoclDialect PRIVATE "-fno-rtti")
+  endif()
+endif()
 
 target_include_directories(PoclDialect PRIVATE ${MLIR_INCLUDE_DIRS})
 target_include_directories(PoclDialect PRIVATE "${CMAKE_SOURCE_DIR}/lib/mliropencl/include")
