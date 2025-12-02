@@ -34,7 +34,6 @@ When building ClangIR, set::
 
   -DLLVM_ENABLE_PROJECTS="mlir;clang"
   -DCLANG_ENABLE_CIR=ON
-  -DLLVM_ENABLE_RTTI=ON
   -DLLVM_LINK_LLVM_DYLIB=ON
 
 When building PoCL, set::
