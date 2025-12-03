@@ -21,11 +21,10 @@
    IN THE SOFTWARE.
 */
 
-
 #include "pocl.h"
 #include "pocl_cl.h"
+#include "pocl_cmdbuf.h"
 #include "pocl_mem_management.h"
-#include "pocl_shared.h"
 #include "pocl_util.h"
 
 #include <CL/cl_ext.h>
@@ -104,7 +103,7 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
     return errcode;
 
   POCL_LOCK (command_buffer->mutex);
-  int is_ready = pocl_is_cmdbuf_ready (command_buffer);
+  int is_ready = pocl_cmdbuf_is_ready (command_buffer);
   if (is_ready)
     {
       command_buffer->state = CL_COMMAND_BUFFER_STATE_PENDING_KHR;

@@ -414,9 +414,9 @@ FINISH:
  * device.
  *
  * @return 0 If any of the allocations fails (can't run the command). */
-static int
-preallocate_buffers (cl_device_id dev,
-                     pocl_buffer_migration_info *migration_infos)
+int
+pocl_preallocate_buffers (cl_device_id dev,
+                          pocl_buffer_migration_info *migration_infos)
 {
   size_t i;
   int errcode;
@@ -544,7 +544,7 @@ pocl_create_command_full (_cl_command_node **cmd,
           migr_info->buffer = POCL_MEM_BS (migr_info->buffer);
         }
 
-      if (!preallocate_buffers (dev, buffer_usage))
+      if (!pocl_preallocate_buffers (dev, buffer_usage))
         return CL_OUT_OF_RESOURCES;
     }
 
@@ -734,199 +734,6 @@ pocl_create_command (_cl_command_node **cmd,
 {
   return pocl_create_command_full (cmd, command_queue, command_type, event_p,
                                    num_events, wait_list, migration_infos, 0);
-}
-
-cl_int
-pocl_cmdbuf_validate_queue_list (cl_uint num_queues,
-                                 const cl_command_queue *queues)
-{
-  POCL_RETURN_ERROR_COND ((num_queues == 0), CL_INVALID_VALUE);
-  POCL_RETURN_ERROR_COND ((queues == NULL), CL_INVALID_VALUE);
-
-  /* All queues must have the same OpenCL context */
-  cl_context ref_ctx = queues[0]->context;
-
-  for (unsigned i = 0; i < num_queues; ++i)
-    {
-      /* All queues must be valid Command queue objects */
-      POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (queues[i])),
-                              CL_INVALID_COMMAND_QUEUE);
-
-      POCL_RETURN_ERROR_COND ((queues[i]->device == NULL),
-                              CL_INVALID_COMMAND_QUEUE);
-
-      POCL_RETURN_ERROR_COND ((queues[i]->context == NULL),
-                              CL_INVALID_COMMAND_QUEUE);
-
-      POCL_RETURN_ERROR_COND ((queues[i]->context != ref_ctx),
-                              CL_INVALID_COMMAND_QUEUE);
-    }
-
-  return CL_SUCCESS;
-}
-
-cl_int
-pocl_cmdbuf_choose_recording_queue (cl_command_buffer_khr command_buffer,
-                                    cl_command_queue *command_queue)
-{
-  assert (command_queue != NULL);
-  cl_command_queue q = *command_queue;
-
-  POCL_RETURN_ERROR_COND ((q == NULL && command_buffer->num_queues != 1),
-                          CL_INVALID_COMMAND_QUEUE);
-
-  if (q)
-    {
-      POCL_RETURN_ERROR_COND (
-          (command_buffer->queues[0]->context != q->context),
-          CL_INVALID_CONTEXT);
-      int queue_in_buffer = 0;
-      for (unsigned i = 0; i < command_buffer->num_queues; ++i)
-        {
-          if (q == command_buffer->queues[i])
-            queue_in_buffer = 1;
-        }
-      POCL_RETURN_ERROR_COND ((!queue_in_buffer), CL_INVALID_COMMAND_QUEUE);
-    }
-  else
-    q = command_buffer->queues[0];
-
-  *command_queue = q;
-  return CL_SUCCESS;
-}
-
-cl_command_buffer_properties_khr
-pocl_cmdbuf_get_property (cl_command_buffer_khr command_buffer,
-                          cl_command_buffer_properties_khr name)
-{
-  for (unsigned i = 0; i < command_buffer->num_properties; ++i)
-    {
-      if (command_buffer->properties[2 * i] == name)
-        return command_buffer->properties[2 * i + 1];
-    }
-  return 0;
-}
-
-int
-pocl_is_cmdbuf_ready (cl_command_buffer_khr command_buffer)
-{
-  cl_command_buffer_flags_khr flags
-    = (cl_command_buffer_flags_khr)pocl_cmdbuf_get_property (
-      command_buffer, CL_COMMAND_BUFFER_FLAGS_KHR);
-  int is_ready
-    = command_buffer->state == CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR
-      || (command_buffer->state == CL_COMMAND_BUFFER_STATE_PENDING_KHR
-          && flags & CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR);
-  return is_ready;
-}
-
-/**
- * Create a command buffered command node.
- *
- * The node contains the minimum information to "clone" launchable
- * commands in clEnqueueCommandBufferKHR.c.
- */
-cl_int
-pocl_create_recorded_command (_cl_command_node **cmd,
-                              cl_command_buffer_khr command_buffer,
-                              cl_command_queue command_queue,
-                              cl_command_type command_type,
-                              cl_uint num_sync_points_in_wait_list,
-                              const cl_sync_point_khr *sync_point_wait_list,
-                              pocl_buffer_migration_info *buffer_usage)
-{
-  cl_int errcode = pocl_check_syncpoint_wait_list (
-    command_buffer, num_sync_points_in_wait_list, sync_point_wait_list);
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
-  if (buffer_usage != NULL)
-    {
-      /* If the buffer is an image backed by buffer storage,
-         replace with actual storage. */
-      pocl_buffer_migration_info *migr_info = NULL;
-      LL_FOREACH (buffer_usage, migr_info)
-        if (migr_info->buffer->buffer)
-          migr_info->buffer = migr_info->buffer->buffer;
-
-      if (!preallocate_buffers (command_queue->device, buffer_usage))
-        return CL_OUT_OF_RESOURCES;
-    }
-
-  *cmd = pocl_mem_manager_new_command ();
-  POCL_RETURN_ERROR_COND ((*cmd == NULL), CL_OUT_OF_HOST_MEMORY);
-  (*cmd)->type = command_type;
-  (*cmd)->buffered = 1;
-
-  /* pocl_cmdbuf_choose_recording_queue should have been called to ensure we
-   * have a valid command queue, usually via CMDBUF_VALIDATE_COMMON_HANDLES
-   * but at that time *cmd was not allocated at that time, so find the queue
-   * index again here */
-  for (unsigned i = 0; i < command_buffer->num_queues; ++i)
-    {
-      if (command_buffer->queues[i] == command_queue)
-        (*cmd)->queue_idx = i;
-    }
-
-  (*cmd)->sync.syncpoint.num_sync_points_in_wait_list
-    = num_sync_points_in_wait_list;
-  if (num_sync_points_in_wait_list > 0)
-    {
-      cl_sync_point_khr *wait_list
-        = malloc (sizeof (cl_sync_point_khr) * num_sync_points_in_wait_list);
-      if (wait_list == NULL)
-        {
-          POCL_MEM_FREE (*cmd);
-          return CL_OUT_OF_HOST_MEMORY;
-        }
-      memcpy (wait_list, sync_point_wait_list,
-              sizeof (cl_sync_point_khr) * num_sync_points_in_wait_list);
-      (*cmd)->sync.syncpoint.sync_point_wait_list = wait_list;
-    }
-
-  (*cmd)->migr_infos = buffer_usage;
-  pocl_buffer_migration_info *migr_info = NULL;
-
-  /* We need to retain the buffers as we expect them to be executed
-     later. They are retained again for each executed instance in
-     pocl_create_migration_commands() and those references are freed
-     after the executed instance is freed.  This one is freed at
-     command buffer free time. */
-  LL_FOREACH (buffer_usage, migr_info)
-    POname (clRetainMemObject) (migr_info->buffer);
-
-  return CL_SUCCESS;
-}
-
-cl_int
-pocl_command_record (cl_command_buffer_khr command_buffer,
-                     _cl_command_node *cmd, cl_sync_point_khr *sync_point)
-{
-  POCL_LOCK (command_buffer->mutex);
-  if (command_buffer->state != CL_COMMAND_BUFFER_STATE_RECORDING_KHR)
-    {
-      POCL_UNLOCK (command_buffer->mutex);
-      return CL_INVALID_OPERATION;
-    }
-  pocl_buffer_migration_info *mi;
-  LL_FOREACH (cmd->migr_infos, mi)
-    {
-      /* Note: mem object refcounts are NOT bumped here as deduplicating them
-       * to match the migration info list would introduce unnecessary
-       * complexity. The recorded commands themselves already hold counted
-       * references to their buffers and they are expected to live until the
-       * entire command buffer is destroyed. */
-      command_buffer->migr_infos = pocl_append_unique_migration_info (
-        command_buffer->migr_infos, mi->buffer, mi->read_only);
-    }
-  LL_APPEND (command_buffer->cmds, cmd);
-
-  if (sync_point != NULL)
-    *sync_point = command_buffer->num_syncpoints + 1;
-  command_buffer->num_syncpoints++;
-  cmd->cmd_buffer = command_buffer;
-  POCL_UNLOCK (command_buffer->mutex);
-  return CL_SUCCESS;
 }
 
 /* call with node->sync.event.event UNLOCKED */

@@ -24,10 +24,10 @@
    IN THE SOFTWARE.
 */
 
+#include "pocl_cmdbuf.h"
 #include "pocl_mem_management.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
-#include "utlist.h"
 
 cl_int
 pocl_validate_copy_buffer (cl_command_queue command_queue,
