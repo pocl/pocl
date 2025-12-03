@@ -75,6 +75,8 @@ jobs:
             khronos-opencl-icd-loader
             ninja
             zlib
+            spirv-tools
+            llvm-spirv=${{ matrix.llvm_version }}
 
       - name: Load Env vars
         id: load-env
