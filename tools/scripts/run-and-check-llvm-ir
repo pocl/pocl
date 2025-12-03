@@ -42,7 +42,11 @@ export POCL_KERNEL_CACHE=1
 export POCL_CACHE_DIR=$(mktemp -d /tmp/pocl-lit-test-XXXXXXXX)
 export POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES=1
 
-$APP_CMD || exit 1
+$APP_CMD
+RET=$?
+if [ $RET -ne 0 ]; then
+  exit $RET
+fi
 
 BC_FILES=$(find $POCL_CACHE_DIR -name parallel.bc)
 LL_FILE=$POCL_CACHE_DIR/parallel-bcs-to-filecheck.ll

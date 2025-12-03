@@ -1,5 +1,5 @@
 ---
-name: Linux Polybench benchmarks
+name: Linux CPU / Polybench benchmarks
 
 permissions:
   contents: read
@@ -30,14 +30,19 @@ env:
 
 jobs:
   polybench_matrix:
-    name: "LLVM ${{ matrix.llvm }} - Polybench benchmarks on ${{ matrix.device }}"
+    name: "LLVM ${{ matrix.llvm }} - Polybench benchmarks on ${{ matrix.device }} CPU"
     runs-on: [self-hosted, linux, "polybench_${{matrix.device}}" ]
     strategy:
       fail-fast: false
       matrix:
         llvm: [21]
-        device: [x86_64]
-
+        device: [x86_64, RISCV]
+        isPR:
+          - ${{ github.event_name == 'pull_request' }}
+        # don't run RISC-V on PR, only on schedule
+        exclude:
+          - device: RISCV
+            isPR: true
     steps:
       - name: Checkout
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3
@@ -47,22 +52,37 @@ jobs:
         run: |
           cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
 
+      - name: Load RISCV Env vars
+        id: load_riscv_env
+        if: ${{ matrix.device == 'RISCV' }}
+        run: |
+          cat $RISCV_CROSS_ENVIRONMENT >> $GITHUB_ENV
+
       - name: CMake
         id: cmake
         run: |
           runCMake() {
             BUILD_FLAGS="-O2 -march=native"
-            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            cmake -DENABLE_ICD=0 -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
-            -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/usr/bin/llvm-spirv-${{ matrix.llvm }} \
+            -DENABLE_TESTSUITES=polybenchGPU -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} \
             "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
           }
 
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
-          mkdir -p ${EXAMPLES_DIR}/build_polybench
-          mkdir -p ${EXAMPLES_DIR}/source
-          runCMake -DENABLE_ICD=0 -DENABLE_TESTSUITES=polybenchGPU -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_polybench
+
+          if [ "${{ matrix.device }}" == "x86_64" ]; then
+            runCMake -DLLVM_SPIRV=/usr/bin/llvm-spirv-${{ matrix.llvm }}
+          elif [ "${{ matrix.device }}" == "RISCV" ]; then
+            runCmake -DCMAKE_MAKE_PROGRAM=/usr/bin/make \
+            -DLLVM_DIR=${TARGET_ROOT}${TARGET_LLVM_INSTALL_DIR} \
+            -DHOST_DEVICE_BUILD_HASH=${TARGET_TRIPLE} -DCMAKE_TOOLCHAIN_FILE=${TARGET_TOOLCHAIN_FILE}  \
+            -DLLC_TRIPLE=${TARGET_TRIPLE} -DLLC_HOST_CPU=${TARGET_CPU} -DCMAKE_PREFIX_PATH=${TARGET_ROOT} \
+            -DENABLE_LOADABLE_DRIVERS=0 -DKERNELLIB_HOST_CPU_VARIANTS=${TARGET_CPU}
+          else
+            echo "Unknown configuration" && exit 1
+          fi
 
       - name: Build PoCL
         id: build_pocl
@@ -80,6 +100,7 @@ jobs:
       # make sure to store with github.ref_name but always restore with 'main' branch,
       # this way we're always comparing to latest main
       - name: Download previous benchmark data
+        id: download_bench
         uses: actions/cache@v4
         with:
           path: benchmark_cache
@@ -87,14 +108,21 @@ jobs:
           restore-keys: polybench-${{ runner.name }}-llvm-${{ matrix.llvm }}-${{ matrix.device }}-main
 
       - name: Run Polybench benchmarks
+        id: run_polybench
         env:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
-        id: run_polybench
         timeout-minutes: 60
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ctest -j1 -L polybenchGPU -LE long
+
+          if [ "${{ matrix.device }}" == "x86_64" ]; then
+            cd ${{ github.workspace }}/build && ctest -j1 -L polybenchGPU -LE long
+          elif [ "${{ matrix.device }}" == "RISCV" ]; then
+            ${{ github.workspace }}/tools/scripts/run_cross_compiled_cpu_tests ${{ github.workspace }} ${BUILD_DIR} ${REMOTE_ADDRESS} ${REMOTE_USER} ctest --output-on-failure -j1 -L polybenchGPU -LE long
+          else
+            echo "Unknown configuration" && exit 1
+          fi
 
           # replace the last ',' in the file by a closing bracket
           sed -i '$s/,$/ ]/' "${{ github.workspace }}/build/polybench_result.json"

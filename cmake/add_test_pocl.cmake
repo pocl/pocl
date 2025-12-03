@@ -138,7 +138,7 @@ function(add_test_pocl)
 
 
     if(ENABLE_LLVM_FILECHECKS AND POCL_TEST_LLVM_FILECHECK)
-      set(RUN_CMD "${CMAKE_SOURCE_DIR}/tools/scripts/run-and-check-llvm-ir####${LLVM_FILECHECK_BIN}####${LLVM_DIS_BIN}####${CMAKE_CURRENT_SOURCE_DIR}/${POCL_TEST_LLVM_FILECHECK}####${RUN_CMD}")
+      set(RUN_CMD "${CMAKE_SOURCE_DIR}/tools/scripts/run-and-check-llvm-ir####${TARGET_LLVM_FILECHECK}####${TARGET_LLVM_DIS}####${CMAKE_CURRENT_SOURCE_DIR}/${POCL_TEST_LLVM_FILECHECK}####${RUN_CMD}")
 
       set(POCL_TEST_IR_CHECK_NAME "${POCL_VARIANT_TEST_NAME}_llvm-ir-checks")
       set(POCL_TEST_ARGLIST "NAME" ${POCL_TEST_IR_CHECK_NAME})
@@ -154,9 +154,14 @@ function(add_test_pocl)
       set_tests_properties(${POCL_TEST_IR_CHECK_NAME} PROPERTIES
                           PASS_REGULAR_EXPRESSION "OK"
                           FAIL_REGULAR_EXPRESSION "FAIL"
+                          SKIP_RETURN_CODE 77
                           ENVIRONMENT "POCL_WORK_GROUP_METHOD=${VARIANT};${POCL_TEST_ENVIRONMENT}"
                           LABELS "${POCL_TEST_LABELS}"
                           DEPENDS "pocl_version_check")
+      if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
+        set_tests_properties("${POCL_TEST_IR_CHECK_NAME}" PROPERTIES
+          SKIP_REGULAR_EXPRESSION "SKIP")
+      endif()
 
     endif()
 
