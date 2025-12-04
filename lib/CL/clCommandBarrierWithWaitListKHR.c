@@ -39,7 +39,7 @@ POname (clCommandBarrierWithWaitListKHR) (
   CMDBUF_VALIDATE_COMMON_HANDLES;
   SETUP_MUTABLE_HANDLE;
 
-  errcode = pocl_create_recorded_command (
+  errcode = pocl_cmdbuf_create_command (
     mutable_handle, command_buffer, command_queue, CL_COMMAND_BARRIER,
     num_sync_points_in_wait_list, sync_point_wait_list, NULL);
   if (errcode != CL_SUCCESS)
@@ -48,7 +48,8 @@ POname (clCommandBarrierWithWaitListKHR) (
   (*mutable_handle)->command.barrier.has_wait_list
     = num_sync_points_in_wait_list != 0;
 
-  errcode = pocl_command_record (command_buffer, *mutable_handle, sync_point);
+  errcode
+    = pocl_cmdbuf_record_command (command_buffer, *mutable_handle, sync_point);
   if (errcode != CL_SUCCESS)
     goto ERROR;
 

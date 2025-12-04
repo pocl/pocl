@@ -111,7 +111,7 @@ pocl_write_buffer_common (cl_command_buffer_khr command_buffer,
     }
   else
     {
-      errcode = pocl_create_recorded_command (
+      errcode = pocl_cmdbuf_create_command (
         cmd, command_buffer, command_queue, CL_COMMAND_WRITE_BUFFER,
         num_items_in_wait_list, sync_point_wait_list,
         pocl_append_unique_migration_info (NULL, buffer, rdonly));

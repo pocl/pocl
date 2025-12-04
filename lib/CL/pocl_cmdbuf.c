@@ -28,20 +28,14 @@
 
 #include "pocl_cmdbuf.h"
 
-/**
- * Create a command buffered command node.
- *
- * The node contains the minimum information to "clone" launchable
- * commands in clEnqueueCommandBufferKHR.c.
- */
 cl_int
-pocl_create_recorded_command (_cl_command_node **cmd,
-                              cl_command_buffer_khr command_buffer,
-                              cl_command_queue command_queue,
-                              cl_command_type command_type,
-                              cl_uint num_sync_points_in_wait_list,
-                              const cl_sync_point_khr *sync_point_wait_list,
-                              pocl_buffer_migration_info *buffer_usage)
+pocl_cmdbuf_create_command (_cl_command_node **cmd,
+                            cl_command_buffer_khr command_buffer,
+                            cl_command_queue command_queue,
+                            cl_command_type command_type,
+                            cl_uint num_sync_points_in_wait_list,
+                            const cl_sync_point_khr *sync_point_wait_list,
+                            pocl_buffer_migration_info *buffer_usage)
 {
   cl_int errcode = pocl_check_syncpoint_wait_list (
     command_buffer, num_sync_points_in_wait_list, sync_point_wait_list);
@@ -107,9 +101,9 @@ pocl_create_recorded_command (_cl_command_node **cmd,
 }
 
 cl_int
-pocl_command_record (cl_command_buffer_khr command_buffer,
-                     _cl_command_node *cmd,
-                     cl_sync_point_khr *sync_point)
+pocl_cmdbuf_record_command (cl_command_buffer_khr command_buffer,
+                            _cl_command_node *cmd,
+                            cl_sync_point_khr *sync_point)
 {
   POCL_LOCK (command_buffer->mutex);
   if (command_buffer->state != CL_COMMAND_BUFFER_STATE_RECORDING_KHR)

@@ -56,7 +56,8 @@ POname (clCommandWriteBufferRectPOCL) (
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  errcode = pocl_command_record (command_buffer, *mutable_handle, sync_point);
+  errcode
+    = pocl_cmdbuf_record_command (command_buffer, *mutable_handle, sync_point);
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
