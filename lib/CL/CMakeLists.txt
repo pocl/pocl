@@ -204,6 +204,7 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "pocl_debug.h" "pocl_debug.c"
                    "pocl_tensor_util.h" "pocl_tensor_util.c"
                    "pocl_binary.c" "pocl_opengl.c" "pocl_cq_profiling.c"
+                   "pocl_cmdbuf.h" "pocl_cmdbuf.c"
                    # platform dep
                    "pocl_timing.h" "pocl_threads.h" "pocl_file_util.h"
                    # dbks

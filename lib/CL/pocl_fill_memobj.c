@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_cmdbuf.h"
 #include "pocl_image_util.h"
 #include "pocl_mem_management.h"
 #include "pocl_shared.h"
@@ -108,7 +109,7 @@ pocl_fill_buffer_common (cl_command_buffer_khr command_buffer,
     }
   else
     {
-      errcode = pocl_create_recorded_command (
+      errcode = pocl_cmdbuf_create_command (
         cmd, command_buffer, command_queue, CL_COMMAND_FILL_BUFFER,
         num_items_in_wait_list, sync_point_wait_list,
         pocl_append_unique_migration_info (NULL, buffer, rdonly));
@@ -226,7 +227,7 @@ pocl_fill_image_common (cl_command_buffer_khr command_buffer,
     }
   else
     {
-      errcode = pocl_create_recorded_command (
+      errcode = pocl_cmdbuf_create_command (
         cmd, command_buffer, command_queue, CL_COMMAND_FILL_IMAGE,
         num_items_in_wait_list, sync_point_wait_list,
         pocl_append_unique_migration_info (NULL, image, rdonly));

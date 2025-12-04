@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_cmdbuf.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
@@ -118,7 +119,7 @@ pocl_svm_memfill_rect_common (cl_command_buffer_khr command_buffer,
     }
   else
     {
-      errcode = pocl_create_recorded_command (
+      errcode = pocl_cmdbuf_create_command (
         cmd, command_buffer, command_queue, CL_COMMAND_SVM_MEMFILL_RECT_POCL,
         num_items_in_wait_list, sync_point_wait_list, NULL);
     }
