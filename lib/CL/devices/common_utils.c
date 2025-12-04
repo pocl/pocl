@@ -318,11 +318,11 @@ pocl_cpu_init_common (cl_device_id device)
                                        ",+SPV_KHR_expect_assume"
                                        ",+SPV_INTEL_fp_fast_math_mode"
                                        ",+SPV_EXT_shader_atomic_float_add"
-                                       ",+SPV_EXT_shader_atomic_float_min_max"
                                        ",+SPV_INTEL_unstructured_loop_controls"
                                        ",+SPV_INTEL_arbitrary_precision_integers"
                                        ",+SPV_INTEL_memory_access_aliasing"
 #ifndef ENABLE_CONFORMANCE
+                                       ",+SPV_EXT_shader_atomic_float_min_max"
                                        ",+SPV_INTEL_subgroups"
 #endif
                                        ",+SPV_INTEL_inline_assembly";
@@ -454,18 +454,22 @@ pocl_cpu_init_common (cl_device_id device)
     {
       device->single_fp_atomic_caps = device->double_fp_atomic_caps
         = CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT
+#ifndef ENABLE_CONFORMANCE
           | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT
-          | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT
-          | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT;
+          | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT
+#endif
+          | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT;
       device->features
         = HOST_DEVICE_FEATURES_30 " __opencl_c_ext_fp32_global_atomic_add"
                                   " __opencl_c_ext_fp64_global_atomic_add"
-                                  " __opencl_c_ext_fp32_local_atomic_add"
-                                  " __opencl_c_ext_fp64_local_atomic_add"
+#ifndef ENABLE_CONFORMANCE
                                   " __opencl_c_ext_fp32_global_atomic_min_max"
                                   " __opencl_c_ext_fp64_global_atomic_min_max"
                                   " __opencl_c_ext_fp32_local_atomic_min_max"
-                                  " __opencl_c_ext_fp64_local_atomic_min_max";
+                                  " __opencl_c_ext_fp64_local_atomic_min_max"
+#endif
+                                  " __opencl_c_ext_fp32_local_atomic_add"
+                                  " __opencl_c_ext_fp64_local_atomic_add";
     }
 
   pocl_setup_opencl_c_with_version (device, CL_TRUE);
