@@ -21,6 +21,8 @@
    IN THE SOFTWARE.
 */
 
+#pragma GCC visibility push(default)
+
 #include <mlir/IR/Builders.h>
 #include <mlir/IR/DialectImplementation.h>
 
@@ -43,3 +45,5 @@ void PoclDialect::initialize() {
 } // namespace mlir
 
 #include "pocl/Dialect/PoclOpsDialect.cpp.inc"
+
+#pragma GCC visibility pop
