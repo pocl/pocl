@@ -1740,11 +1740,16 @@ if(HOST_CPU_ENABLE_CL_KHR_FP64)
 endif()
 
 
-
 if(HOST_DEVICE_EXTENSIONS MATCHES "cl_ext_float_atomics")
-  set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp32_global_atomic_add __opencl_c_ext_fp32_local_atomic_add __opencl_c_ext_fp32_global_atomic_min_max __opencl_c_ext_fp32_local_atomic_min_max")
+  set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp32_global_atomic_add __opencl_c_ext_fp32_local_atomic_add")
+  if(NOT ENABLE_CONFORMANCE)
+    set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp32_global_atomic_min_max __opencl_c_ext_fp32_local_atomic_min_max")
+  endif()
   if(HOST_CPU_ENABLE_CL_KHR_FP64)
-    set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp64_global_atomic_add __opencl_c_ext_fp64_local_atomic_add __opencl_c_ext_fp64_global_atomic_min_max __opencl_c_ext_fp64_local_atomic_min_max")
+    set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp64_global_atomic_add __opencl_c_ext_fp64_local_atomic_add")
+    if(NOT ENABLE_CONFORMANCE)
+      set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp64_global_atomic_min_max __opencl_c_ext_fp64_local_atomic_min_max")
+    endif()
   endif()
   # __opencl_c_ext_fp16_global_atomic_add __opencl_c_ext_fp16_local_atomic_add __opencl_c_ext_fp16_global_atomic_min_max __opencl_c_ext_fp16_local_atomic_min_max
 endif()

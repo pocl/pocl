@@ -178,8 +178,10 @@ bool _CL_OVERLOADABLE QUAL(__pocl_atomic_compare_exchange_weak) ( volatile Q ATO
  * these might need different implementation depending on LLVM version;
  * atomic add/sub on floats is available since LLVM 13;
  * atomic min/max on floats is available since LLVM 17; */
+
 #if (defined(NON_INTEGER) && defined(cl_ext_float_atomics))
 
+#if defined(__opencl_c_ext_fp32_global_atomic_add)
 NONATOMIC_TYPE _CL_OVERLOADABLE QUAL(__pocl_atomic_fetch_add) ( volatile Q ATOMIC_TYPE  *object,
   NONATOMIC_TYPE  operand,
   memory_order order,
@@ -195,7 +197,9 @@ NONATOMIC_TYPE _CL_OVERLOADABLE QUAL(__pocl_atomic_fetch_sub) ( volatile Q ATOMI
 {
   return __opencl_atomic_fetch_sub(object, operand, order, scope);
 }
+#endif
 
+#if defined(__opencl_c_ext_fp32_global_atomic_min_max)
 NONATOMIC_TYPE _CL_OVERLOADABLE QUAL(__pocl_atomic_fetch_min) ( volatile Q ATOMIC_TYPE  *object,
   NONATOMIC_TYPE  operand,
   memory_order order,
@@ -211,6 +215,7 @@ NONATOMIC_TYPE _CL_OVERLOADABLE QUAL(__pocl_atomic_fetch_max) ( volatile Q ATOMI
 {
   return __opencl_atomic_fetch_max(object, operand, order, scope);
 }
+#endif
 
 #endif
 
