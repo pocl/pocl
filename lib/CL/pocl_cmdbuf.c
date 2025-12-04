@@ -124,9 +124,9 @@ pocl_cmdbuf_record_command (cl_command_buffer_khr command_buffer,
     }
   LL_APPEND (command_buffer->cmds, cmd);
 
-  if (sync_point != NULL)
-    *sync_point = command_buffer->num_syncpoints + 1;
   command_buffer->num_syncpoints++;
+  if (sync_point != NULL)
+    *sync_point = command_buffer->num_syncpoints;
   cmd->cmd_buffer = command_buffer;
   POCL_UNLOCK (command_buffer->mutex);
   return CL_SUCCESS;
