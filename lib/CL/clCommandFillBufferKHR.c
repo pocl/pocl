@@ -36,8 +36,10 @@ POname (clCommandFillBufferKHR) (
     cl_sync_point_khr *sync_point,
     cl_mutable_command_khr *mutable_handle) CL_API_SUFFIX__VERSION_1_2
 {
-  cl_int errcode;
-  CMDBUF_VALIDATE_COMMON_HANDLES;
+  cl_int errcode = pocl_cmdbuf_validate_common_handles (
+    command_buffer, &command_queue, mutable_handle);
+  if (errcode != CL_SUCCESS)
+    return errcode;
   SETUP_MUTABLE_HANDLE;
 
   errcode = pocl_fill_buffer_common (

@@ -61,9 +61,9 @@ pocl_cmdbuf_create_command (_cl_command_node **cmd,
   (*cmd)->buffered = 1;
 
   /* pocl_cmdbuf_choose_recording_queue should have been called to ensure we
-   * have a valid command queue, usually via CMDBUF_VALIDATE_COMMON_HANDLES
-   * but at that time *cmd was not allocated at that time, so find the queue
-   * index again here */
+   * have a valid command queue, usually via
+   * pocl_cmdbuf_validate_common_handles but at that time *cmd was not
+   * allocated at that time, so find the queue index again here */
   for (unsigned i = 0; i < command_buffer->num_queues; ++i)
     {
       if (command_buffer->queues[i] == command_queue)
@@ -201,6 +201,44 @@ pocl_cmdbuf_get_property (cl_command_buffer_khr command_buffer,
         return command_buffer->properties[2 * i + 1];
     }
   return 0;
+}
+
+cl_int
+pocl_cmdbuf_validate_common_handles (cl_command_buffer_khr command_buffer,
+                                     cl_command_queue *command_queue,
+                                     cl_mutable_command_khr *mutable_handle)
+{
+  assert (command_queue != NULL);
+  cl_command_queue q = *command_queue;
+
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_buffer)),
+                          CL_INVALID_COMMAND_BUFFER_KHR);
+  cl_device_id dev = command_buffer->queues[0]->device;
+  if (strstr (dev->extensions, "cl_khr_command_buffer_multi_device"))
+    {
+      POCL_RETURN_ERROR_COND ((q == NULL && command_buffer->num_queues > 1),
+                              CL_INVALID_COMMAND_QUEUE);
+      int queue_in_buffer = 0;
+      for (unsigned ii = 0; ii < command_buffer->num_queues; ++ii)
+        {
+          queue_in_buffer |= (q == command_buffer->queues[ii]);
+        }
+      POCL_RETURN_ERROR_COND ((q != NULL && !queue_in_buffer),
+                              CL_INVALID_COMMAND_QUEUE);
+    }
+  else
+    {
+      POCL_RETURN_ERROR_ON (
+        (q != NULL), CL_INVALID_COMMAND_QUEUE,
+        "device does not support cl_khr_command_buffer_multi_device");
+    }
+  if (dev->cmdbuf_mutable_dispatch_capabilities == 0)
+    {
+      POCL_RETURN_ERROR_COND ((mutable_handle != NULL), CL_INVALID_VALUE);
+    }
+  cl_int errcode
+    = pocl_cmdbuf_choose_recording_queue (command_buffer, command_queue);
+  return errcode;
 }
 
 /**
