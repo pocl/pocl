@@ -38,5 +38,5 @@ target_link_libraries(pocl-mlir-opt
     MLIR
     PoclDialect
     "$<TARGET_OBJECTS:mlirpasses>"
-    ${OPENCL_LIBS}
+    ${POCL_LIBRARY_NAME}
 )
