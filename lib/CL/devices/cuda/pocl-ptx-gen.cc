@@ -903,6 +903,9 @@ void mapLibDeviceCalls(llvm::Module *Module) {
     {"remquo", "__nv_remquo"},
     {"remquof", "__nv_remquof"},
 
+    {"erf", "__nv_erf"},
+    {"erff", "__nv_erff"},
+
     // TODO: lgamma_r
     // TODO: rootn
   };
@@ -1051,5 +1054,20 @@ int pocl_cuda_get_ptr_arg_alignment(void *LLVM_IR, const char *KernelName,
   std::vector<size_t> &AVec = AMap->at(Name);
   //  POCL_MSG_WARN("AVEC SIZE: %zu\n", AVec.size());
   std::memcpy(Alignments, AVec.data(), sizeof(size_t) * AVec.size());
+  return 0;
+}
+
+int pocl_cuda_define_sub_group_size(void *llvm_module, int SGSize) {
+  llvm::Module *Module = (llvm::Module *)llvm_module;
+  assert(Module);
+
+  llvm::GlobalVariable *SGSizeVar =
+      Module->getGlobalVariable("_pocl_warp_size");
+  if (SGSizeVar == nullptr)
+    return 0;
+
+  SGSizeVar->setInitializer(
+      llvm::ConstantInt::get(SGSizeVar->getValueType(), SGSize));
+
   return 0;
 }

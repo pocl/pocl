@@ -30,3 +30,36 @@ uint4 _CL_OVERLOADABLE sub_group_ballot(int predicate) {
   result.x = __nvvm_vote_ballot(!!predicate);
   return result;
 }
+
+#define SUB_GROUP_REDUCE_OT(OPNAME, OPERATION, TYPE)                          \
+  TYPE _CL_OVERLOADABLE sub_group_shuffle_xor (TYPE, uint);                   \
+  TYPE _CL_OVERLOADABLE sub_group_reduce##OPNAME (TYPE val)                   \
+  {                                                                           \
+    uint lane = get_sub_group_local_id ();                                    \
+    for (uint srcmask = get_max_sub_group_size () / 2; srcmask >= 1;          \
+         srcmask /= 2)                                                        \
+      {                                                                       \
+        uint src_lane = lane ^ srcmask;                                       \
+        TYPE a = val;                                                         \
+        TYPE b = sub_group_shuffle_xor (a, srcmask);                          \
+        /* Ignore values from inactive lanes */                               \
+        if ((1 << src_lane) & sub_group_ballot (1).x)                         \
+          {                                                                   \
+            val = OPERATION;                                                  \
+          }                                                                   \
+      }                                                                       \
+    return val;                                                               \
+  }
+
+#define SUB_GROUP_REDUCE_T(OPNAME, OPERATION)                                 \
+  SUB_GROUP_REDUCE_OT (OPNAME, OPERATION, int)                                \
+  SUB_GROUP_REDUCE_OT (OPNAME, OPERATION, uint)                               \
+  SUB_GROUP_REDUCE_OT (OPNAME, OPERATION, long)                               \
+  SUB_GROUP_REDUCE_OT (OPNAME, OPERATION, ulong)                              \
+  __IF_FP16 (SUB_GROUP_REDUCE_OT (OPNAME, OPERATION, half))                   \
+  SUB_GROUP_REDUCE_OT (OPNAME, OPERATION, float)                              \
+  __IF_FP64 (SUB_GROUP_REDUCE_OT (OPNAME, OPERATION, double))
+
+SUB_GROUP_REDUCE_T (_add, (a + b))
+SUB_GROUP_REDUCE_T (_min, (a > b ? b : a))
+SUB_GROUP_REDUCE_T (_max, (a > b ? a : b))
