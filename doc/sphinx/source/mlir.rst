@@ -57,7 +57,7 @@ Usage
 To test MLIR passes separately, you can run LIT-tests.
 You may need to set -DLLVM_EXTERNAL_LIT= in CMake to configure the correct LIT binary,
 
-  make check-pocl-opt
+  make check-pocl-mlir-opt
 
 The tests that are known to pass with Polygeist+MLIR are labeled with *mlir*,
 and can be run with:
