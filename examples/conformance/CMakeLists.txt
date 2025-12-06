@@ -94,7 +94,7 @@ set(TS_SRCDIR "${TS_SRCDIR}/test_conformance")
 if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
   message(STATUS "OpenCL-CTS: SPIR-V tests enabled")
 else()
-  message(WARNING "llvm-spirv or spirv-tools not found - disabling SPIRV tests in CTS")
+  message(WARNING "SPIRV disabled/not found, or spirv-tools not found - disabling SPIRV tests in CTS")
 endif()
 
 ExternalProject_Add(
