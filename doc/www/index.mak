@@ -1,8 +1,7 @@
 <%inherit file="basic_page.makt" />
 <%namespace name="comp" file="components.mak"/>
 
-<p>PoCL is a portable MIT-licensed compliant implementation (for `x86-64 <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_450>`_ and `Level Zero <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_453>`_). of the
-OpenCL standard. In addition to
+<p>PoCL is a portable MIT-licensed compliant implementation (for <a href="https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_450">x86-64</a> and <a href="https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_453">Level Zero</a>) of the OpenCL standard. In addition to
 being an easily portable/layered multi-device
 open-source OpenCL implementation, a major goal of this project is
 improving interoperability of diversity of OpenCL-capable devices by
@@ -12,7 +11,7 @@ of OpenCL programs across device types utilizing runtime and compiler
 techniques.</p>
 
 <p>PoCL currently supports various CPU architectures (x86, ARM, RISC-V),
-NVIDIA GPUs via libCUDA, Intel GPUs via Level Zero and
+Intel GPUs via Level Zero, NVIDIA GPUs via libCUDA and
 <a href="http://openasip.org">OpenASIP</a> cores at different feature coverage
 levels. It also supports <a href="http://portablecl.org/docs/html/remote.html">a
 remote backend</a> for distributed OpenCL execution. PoCL is also known to
