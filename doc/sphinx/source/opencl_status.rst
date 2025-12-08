@@ -67,7 +67,9 @@ Check out the corresponding branch for your installed LLVM version, then::
     make llvm-spirv
 
 This will produce an executable, ``tools/llvm-spirv/llvm-spirv``. You can copy this executable somewhere,
-then when running CMake on PoCL sources, add to the command line: ``-DLLVM_SPIRV=/path/to/llvm-spirv``
+then when running CMake on PoCL sources, add to the command line: ``-DHOST_LLVM_SPIRV=/path/to/llvm-spirv``
+If the executable is placed into the same directory as llvm-config, PoCL will find it even without
+specifying the -DHOST_LLVM_SPIRV variable.
 
 Compiling source to SPIR/SPIR-V
 --------------------------------
