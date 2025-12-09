@@ -168,6 +168,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 #####################################################
 
+# Unfortunately CMAKE_SYSROOT is inserted into FIND_ROOT_PATH and there is no way to disable this behavior, AFAICT.
+# As consequence, find_program() finds binaries in Target ROOTFS not Host. Using this to ignore binaries from the Target sysroot:
+if(CMAKE_CROSSCOMPILING AND CMAKE_SYSROOT)
+  set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_SYSROOT}/usr/bin;${CMAKE_SYSROOT}/usr/sbin;${CMAKE_SYSROOT}/bin;${CMAKE_SYSROOT}/sbin")
+endif()
+
+#####################################################
+
 if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
   set(DEFAULT_BUILD_TYPE "Debug")
 else()
