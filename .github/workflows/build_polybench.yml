@@ -73,7 +73,7 @@ jobs:
           mkdir ${{ github.workspace }}/build
 
           if [ "${{ matrix.device }}" == "x86_64" ]; then
-            runCMake -DLLVM_SPIRV=/usr/bin/llvm-spirv-${{ matrix.llvm }}
+            runCMake
           elif [ "${{ matrix.device }}" == "RISCV" ]; then
             runCmake -DCMAKE_MAKE_PROGRAM=/usr/bin/make \
             -DLLVM_DIR=${TARGET_ROOT}${TARGET_LLVM_INSTALL_DIR} \

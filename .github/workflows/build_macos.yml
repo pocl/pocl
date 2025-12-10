@@ -75,7 +75,7 @@ jobs:
             cmake -DDEVELOPER_MODE=ON -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_PREFIX_PATH=$CONDA_PREFIX \
             -DOPENCL_H=$CONDA_PREFIX/include/CL/opencl.h -DOPENCL_HPP=$CONDA_PREFIX/include/CL/opencl.hpp \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
-            -DWITH_LLVM_CONFIG=$CONDA_PREFIX/bin/llvm-config -DLLVM_SPIRV=$CONDA_PREFIX/bin/llvm-spirv \
+            -DWITH_LLVM_CONFIG=$CONDA_PREFIX/bin/llvm-config \
             "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
           }
 
