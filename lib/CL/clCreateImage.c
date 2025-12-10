@@ -26,6 +26,61 @@
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
+struct pocl_image_metadata_s
+{
+  const cl_image_format *format;
+  const cl_image_desc *desc;
+  size_t row_pitch;
+  size_t slice_pitch;
+  int channels;
+  int elem_size;
+  unsigned is_gl_texture;
+  cl_GLenum gl_target;
+  cl_GLint gl_miplevel;
+  cl_GLuint gl_texture;
+  CLeglDisplayKHR egl_display;
+  CLeglImageKHR egl_image;
+};
+
+void
+pocl_fill_memobj_image_metadata (cl_mem mem, const pocl_image_metadata_t *meta)
+{
+  mem->image_width = meta->desc->image_width;
+  if (meta->desc->image_type == CL_MEM_OBJECT_IMAGE2D
+      || meta->desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY
+      || meta->desc->image_type == CL_MEM_OBJECT_IMAGE3D)
+    mem->image_height = meta->desc->image_height;
+  else
+    mem->image_height = 0;
+  if (meta->desc->image_type == CL_MEM_OBJECT_IMAGE3D)
+    mem->image_depth = meta->desc->image_depth;
+  else
+    mem->image_depth = 0;
+  if (meta->desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY
+      || meta->desc->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
+    mem->image_array_size = meta->desc->image_array_size;
+  else
+    mem->image_array_size = 0;
+  mem->image_row_pitch = meta->row_pitch;
+  mem->image_slice_pitch = meta->slice_pitch;
+  mem->image_channel_data_type = meta->format->image_channel_data_type;
+  mem->image_channel_order = meta->format->image_channel_order;
+  mem->num_mip_levels = meta->desc->num_mip_levels;
+  mem->num_samples = meta->desc->num_samples;
+  mem->image_channels = meta->channels;
+  mem->image_elem_size = meta->elem_size;
+  mem->is_gl_texture = meta->is_gl_texture;
+  if (meta->is_gl_texture)
+    {
+      mem->is_gl_acquired = 0;
+      mem->target = meta->gl_target;
+      mem->miplevel = meta->gl_miplevel;
+      mem->texture = meta->gl_texture;
+      mem->egl_display = meta->egl_display;
+      mem->egl_image = meta->egl_image;
+    }
+}
+
 cl_mem
 pocl_create_image_internal (cl_context context, cl_mem_flags flags,
                             const cl_image_format *image_format,
@@ -41,10 +96,9 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
     size_t size = 0;
     int errcode = CL_SUCCESS;
     int *device_image_support = NULL;
-    size_t row_pitch;
-    size_t slice_pitch;
-    int elem_size;
-    int channels;
+    pocl_image_metadata_t meta
+      = { image_format, image_desc,  0,          0,           0,        0, 0,
+          gl_target,    gl_miplevel, gl_texture, egl_display, egl_image };
     size_t elem_bytes;
     cl_int image_type_idx;
     cl_mem_object_type image_type;
@@ -71,15 +125,14 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
      * values for param_name for clGetDeviceInfo FOR ALL DEVICES IN CONTEXT.
      */
     device_image_support = (int *)calloc (context->num_devices, sizeof (int));
+
 #ifdef ENABLE_OPENGL_INTEROP
-    unsigned is_gl_texture
-        = (unsigned)((intptr_t)gl_target | (intptr_t)gl_miplevel
-                     | (intptr_t)gl_texture);
+    meta.is_gl_texture
+      |= (unsigned)((intptr_t)gl_target | (intptr_t)gl_miplevel
+                    | (intptr_t)gl_texture);
 #elif defined(ENABLE_EGL_INTEROP)
-    unsigned is_gl_texture
-        = (unsigned)((intptr_t)egl_display | (intptr_t)egl_image);
-#else
-    unsigned is_gl_texture = 0;
+    meta.is_gl_texture
+      |= (unsigned)((intptr_t)egl_display | (intptr_t)egl_image);
 #endif
 
     for (i = 0; i < context->num_devices; i++)
@@ -90,8 +143,8 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
         else
           {
             if (pocl_check_device_supports_image (
-                    dev, image_format, image_desc, image_type_idx,
-                    is_gl_texture, &device_image_support[i])
+                  dev, image_format, image_desc, image_type_idx,
+                  meta.is_gl_texture, &device_image_support[i])
                 == CL_SUCCESS)
               {
                 /* can't break here as we need device_image_support[]
@@ -107,11 +160,10 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
 
     pocl_get_image_information (image_format->image_channel_order,
                                 image_format->image_channel_data_type,
-                                &channels, &elem_size);
-    elem_bytes = (size_t)elem_size * (size_t)channels;
-
-    row_pitch = image_desc->image_row_pitch;
-    slice_pitch = image_desc->image_slice_pitch;
+                                &meta.channels, &meta.elem_size);
+    elem_bytes = (size_t)meta.elem_size * (size_t)meta.channels;
+    meta.row_pitch = image_desc->image_row_pitch;
+    meta.slice_pitch = image_desc->image_slice_pitch;
 
     /* This must be 0 if host_ptr is NULL and can be either 0 or ≥
      * image_width * size of element in bytes if host_ptr is not NULL.
@@ -120,13 +172,13 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
      * image_row_pitch is not 0, it must be a multiple of the
      * image element size in bytes.
      */
-    if (row_pitch == 0)
+    if (meta.row_pitch == 0)
       {
-        row_pitch = image_desc->image_width * elem_bytes;
+        meta.row_pitch = image_desc->image_width * elem_bytes;
       }
     else
       {
-        POCL_GOTO_ERROR_COND ((row_pitch % elem_bytes), CL_INVALID_VALUE);
+        POCL_GOTO_ERROR_COND ((meta.row_pitch % elem_bytes), CL_INVALID_VALUE);
       }
 
     /* The size in bytes of each 2D slice in the 3D image or the size in bytes
@@ -140,28 +192,29 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
      * it must be a multiple of the image_row_pitch.
      */
 
-    if (slice_pitch == 0)
+    if (meta.slice_pitch == 0)
       {
         if (image_desc->image_type == CL_MEM_OBJECT_IMAGE3D ||
             image_desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY)
           {
-            slice_pitch = row_pitch * image_desc->image_height;
+            meta.slice_pitch = meta.row_pitch * image_desc->image_height;
           }
         if (image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
           {
-            slice_pitch = row_pitch;
+            meta.slice_pitch = meta.row_pitch;
           }
       }
     else
       {
-        POCL_GOTO_ERROR_COND ((slice_pitch % row_pitch), CL_INVALID_VALUE);
+        POCL_GOTO_ERROR_COND ((meta.slice_pitch % meta.row_pitch),
+                              CL_INVALID_VALUE);
       }
 
     if (image_desc->image_type == CL_MEM_OBJECT_IMAGE3D)
-      size = slice_pitch * image_desc->image_depth;
+      size = meta.slice_pitch * image_desc->image_depth;
 
     if (image_desc->image_type == CL_MEM_OBJECT_IMAGE2D)
-      size = row_pitch * image_desc->image_height;
+      size = meta.row_pitch * image_desc->image_height;
 
     /* "For a 1D image buffer created from a buffer object, the
         image_width * size of element in bytes must be <= size of the buffer
@@ -173,11 +226,11 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
      */
     if (image_desc->image_type == CL_MEM_OBJECT_IMAGE1D
         || image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
-      size = row_pitch;
+      size = meta.row_pitch;
 
     if (image_desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY
         || image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
-      size = slice_pitch * image_desc->image_array_size;
+      size = meta.slice_pitch * image_desc->image_array_size;
 
     /* Create buffer and fill in missing parts */
     if (image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
@@ -215,6 +268,7 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
 
         mem->parent = b;
         pocl_cl_mem_inherit_flags (mem, b, flags);
+        pocl_fill_memobj_image_metadata (mem, &meta);
 
         /* Retain the buffer we're referencing */
         POname (clRetainMemObject) (b);
@@ -245,49 +299,13 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
           }
 
         mem = pocl_create_memobject (
-          context, flags, size, image_desc->image_type, &device_image_support,
-          host_ptr, host_ptr_is_svm, &errcode);
+          context, flags, size, image_desc->image_type, &meta,
+          &device_image_support, host_ptr, host_ptr_is_svm, &errcode);
         if (mem == NULL)
           goto ERROR;
       }
 
-    mem->image_width = image_desc->image_width;
-    if (image_desc->image_type == CL_MEM_OBJECT_IMAGE2D
-        || image_desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY
-        || image_desc->image_type == CL_MEM_OBJECT_IMAGE3D)
-      mem->image_height = image_desc->image_height;
-    else
-      mem->image_height = 0;
-    if (image_desc->image_type == CL_MEM_OBJECT_IMAGE3D)
-      mem->image_depth = image_desc->image_depth;
-    else
-      mem->image_depth = 0;
-    if (image_desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY
-        || image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
-      mem->image_array_size = image_desc->image_array_size;
-    else
-      mem->image_array_size = 0;
-    mem->image_row_pitch = row_pitch;
-    mem->image_slice_pitch = slice_pitch;
-    mem->image_channel_data_type = image_format->image_channel_data_type;
-    mem->image_channel_order = image_format->image_channel_order;
-    mem->num_mip_levels = image_desc->num_mip_levels;
-    mem->num_samples = image_desc->num_samples;
-    mem->image_channels = channels;
-    mem->image_elem_size = elem_size;
-
     TP_CREATE_IMAGE (context->id, mem->id);
-
-    mem->is_gl_texture = is_gl_texture;
-    if (is_gl_texture)
-      {
-        mem->is_gl_acquired = 0;
-        mem->target = gl_target;
-        mem->miplevel = gl_miplevel;
-        mem->texture = gl_texture;
-        mem->egl_display = egl_display;
-        mem->egl_image = egl_image;
-      }
 
     POCL_RETAIN_OBJECT (context);
 

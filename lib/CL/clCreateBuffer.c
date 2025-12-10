@@ -35,6 +35,7 @@ pocl_create_memobject (cl_context context,
                        cl_mem_flags flags,
                        size_t size,
                        cl_mem_object_type type,
+                       const pocl_image_metadata_t *image_metadata,
                        int **device_image_support,
                        void *host_ptr,
                        int host_ptr_is_svm,
@@ -143,6 +144,8 @@ pocl_create_memobject (cl_context context,
   mem->is_pipe = (type == CL_MEM_OBJECT_PIPE);
   mem->mem_host_ptr_version = 0;
   mem->latest_version = 0;
+  if (image_metadata != NULL)
+    pocl_fill_memobj_image_metadata (mem, image_metadata);
 
   if (flags & CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT)
     {
@@ -327,8 +330,9 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBuffer) (
         }
     }
 
-  mem = pocl_create_memobject (context, flags, size, CL_MEM_OBJECT_BUFFER,
-                               NULL, host_ptr, host_ptr_is_svm, &errcode);
+  mem
+    = pocl_create_memobject (context, flags, size, CL_MEM_OBJECT_BUFFER, NULL,
+                             NULL, host_ptr, host_ptr_is_svm, &errcode);
   if (mem == NULL)
     goto ERROR;
 
