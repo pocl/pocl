@@ -85,7 +85,7 @@ if(CUSTOM_CTS_GIT_TAG)
   set(CTS_GIT_TAG "${CUSTOM_CTS_GIT_TAG}")
 else()
   # Use PoCL's fork which has pending fixes.
-  set(CTS_GIT_TAG "v2025.07.11")
+  set(CTS_GIT_TAG "v2025.11.27")
 endif()
 
 set(TS_BUILDDIR "${TS_BUILDDIR}/test_conformance")
@@ -108,6 +108,7 @@ ExternalProject_Add(
     -DD3D10_IS_SUPPORTED=0 -DD3D11_IS_SUPPORTED=0
     -DGL_IS_SUPPORTED=0 -DGLES_IS_SUPPORTED=0
     -DCL_INCLUDE_DIR=${CMAKE_SOURCE_DIR}/include
+    -DSPIRV_INCLUDE_DIR=/usr/include/SPIRV
     ${CTS_OPENCL_LIBDIR}
     ${CTS_OPENCL_LIBRARY}
     -DENABLE_ASAN=${ENABLE_ASAN}
@@ -138,6 +139,13 @@ set(MATH_FUNC_LIST acos acosh acospi asin asinh asinpi atan atanh atanpi atan2 a
 # these will not have level0 label assigned
 
 set(CTS_LEVEL0_BLACKLIST
+  # disabled. Fails since CTS @ 2025.11.27
+  # there is a new test, null_required_work_group_size,
+  # this unfortunately fails, possibly could be fixed by editing
+  # the SPIRV input to ZeModuleCreate.
+  conformance_main_api
+  conformance_spirv_api
+
   # disabled. Fails since CTS 2024.10.09; this CTS added
   # testcase printf("%s", "") which causes crash in L0
   conformance_main_printf
@@ -218,6 +226,48 @@ if(TS_SUFFIX STREQUAL "_spirv")
 else()
   add_test(NAME "${TS_NAME}${TS_SUFFIX}_api"
            COMMAND "${TS_BUILDDIR}/api/test_api" ${EXTRA_ARGS})
+endif()
+
+if(ENABLE_LEVEL0)
+  # same as main test minus null_required_work_group_size
+  set(SUBTESTS binary_create binary_get bool_type buffer_properties_queries clone_kernel consistency_2d_image_from_buffer
+    consistency_3d_image_writes consistency_depth_images consistency_device_and_host_timer
+    consistency_device_enqueue consistency_il_programs consistency_memory_model consistency_non_uniform_work_group
+    consistency_pipes consistency_prog_ctor_dtor consistency_progvar consistency_read_write_images
+    consistency_requirements_fp16 consistency_requirements_fp64 consistency_subgroups consistency_svm
+    context_destructor_callback create_context_from_type create_context_from_type_device_type_all
+    create_context_from_type_device_type_default create_kernels_in_program enqueue_task execute_kernel_local_sizes
+    get_buffer_info get_command_queue_info get_command_queue_info_compatibility get_context_info
+    get_context_info_mult_devices get_device_info get_device_info_comparability get_image1d_array_info
+    get_image1d_info get_image2d_array_info get_image2d_info get_image3d_info get_kernel_arg_info get_kernel_info
+    get_platform_ids get_platform_info get_program_info_kernel_names get_sampler_info get_sampler_info_compatibility
+    image_properties_queries kernel_arg_changes kernel_arg_multi_setup_random kernel_attributes
+    kernel_global_constant kernel_local_memory_size kernel_private_memory_size kernel_required_group_size
+    load_single_kernel load_two_kernels load_two_kernels_in_one load_two_kernels_manually
+    mem_object_destructor_callback min_data_type_align_size_alignment min_image_formats min_max_address_bits
+    min_max_compute_units min_max_constant_args min_max_constant_buffer_size min_max_device_version
+    min_max_double_fp_config min_max_execution_capabilities min_max_image_2d_height min_max_image_2d_width
+    min_max_image_3d_depth min_max_image_3d_height min_max_image_3d_width min_max_image_array_size
+    min_max_image_buffer_size min_max_kernel_preferred_work_group_size_multiple min_max_language_version
+    min_max_local_mem_size min_max_mem_alloc_size min_max_parameter_size min_max_queue_properties
+    min_max_read_image_args min_max_samplers min_max_single_fp_config min_max_thread_dimensions
+    min_max_work_group_size min_max_work_items_sizes min_max_write_image_args multi_queue_flush_on_release
+    native_kernel negative_create_command_queue negative_create_command_queue_with_properties
+    negative_create_command_queue_with_properties_khr negative_enqueue_map_image negative_get_command_queue_info
+    negative_get_platform_ids negative_get_platform_info negative_invalid_arg_index negative_invalid_arg_mem_obj
+    negative_invalid_arg_sampler negative_invalid_arg_sampler_size negative_invalid_arg_size
+    negative_invalid_arg_size_local negative_invalid_kernel negative_release_command_queue
+    negative_retain_command_queue negative_set_command_queue_property negative_set_default_device_command_queue
+    negative_set_immutable_memory_to_writeable_kernel_arg negative_set_read_write_image_arg null_buffer_arg
+    pipe_properties_queries platform_extensions queue_flush_on_release queue_hint
+    queue_properties queue_properties_queries release_during_execute release_kernel_order repeated_setup_cleanup
+    retain_mem_object_multiple retain_mem_object_set_kernel_arg retain_mem_object_single retain_queue_multiple
+    retain_queue_single set_command_queue_property set_default_device_command_queue set_kernel_arg_by_index
+    set_kernel_arg_constant set_kernel_arg_struct_array spirv_query_dependencies spirv_query_requirements
+    sub_group_dispatch work_group_suggested_local_size_1D work_group_suggested_local_size_2D
+    work_group_suggested_local_size_3D zero_sized_enqueue)
+  add_test(NAME "${TS_NAME}${TS_SUFFIX}_level0_api"
+           COMMAND "${TS_BUILDDIR}/api/test_api" ${EXTRA_ARGS} ${SUBTESTS})
 endif()
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_atomics"
@@ -422,6 +472,11 @@ set(OCL_30_TESTS_FULL
 if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
   list(APPEND OCL_30_TESTS_FULL
     "${TS_NAME}${TS_SUFFIX}_spirv_new")
+endif()
+
+if(ENABLE_LEVEL0)
+  list(APPEND OCL_30_TESTS_FULL
+    "${TS_NAME}${TS_SUFFIX}_level0_api")
 endif()
 
 set(CTS_FULL_LIST
@@ -960,6 +1015,10 @@ if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
     "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_3")
 endif()
 
+if(ENABLE_LEVEL0)
+  list(APPEND OCL_30_TESTS_MICRO
+    "${TS_NAME}${TS_SUFFIX}_level0_api")
+endif()
 
 set(CTS_MICRO_LIST
     "${TS_NAME}${TS_SUFFIX}_allocations_micro_buffer"

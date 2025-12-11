@@ -31,7 +31,7 @@ older may work but are untested.
 
 To build the Level Zero driver driver (with recommended options)::
 
-    cmake -DENABLE_LEVEL0=1 -DENABLE_LLVM=1 -DSTATIC_LLVM=ON -DWITH_LLVM_CONFIG=/path/to/bin/llvm-config -DLLVM_SPIRV=/path/to/llvm-spirv <path-to-pocl-source-dir>
+    cmake -DENABLE_LEVEL0=1 -DENABLE_LLVM=1 -DSTATIC_LLVM=ON -DWITH_LLVM_CONFIG=/path/to/bin/llvm-config <path-to-pocl-source-dir>
 
 Using STATIC_LLVM is recommended to avoid problems with symbol conflicts
 (the LevelZero driver uses its own version of LLVM), even though some
