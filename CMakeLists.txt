@@ -1216,8 +1216,8 @@ if(ENABLE_SPIRV)
 else()
   find_program(HOST_PYTHON3 NAMES python3)
 endif()
-# optional, used by several testsuites in examples/
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
+# optional, may find Python on Target (not Host), used by several testsuites in examples/
+find_package(Python3 3.8 COMPONENTS Interpreter)
 
 # Determine whether we can use SPIRV on the host CPU device
 # - we don't have a useful SPIRV wrapper for 32bit SPIRV

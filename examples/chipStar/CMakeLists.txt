@@ -75,15 +75,9 @@ if(ENABLE_HOST_CPU_DEVICES AND (ENABLE_CONFORMANCE))
   message(WARNING "${TS_NAME} + CPU driver with ENABLE_CONFORMANCE=ON will fail some tests")
 endif()
 
-
-
-find_package(Python3 3.8 COMPONENTS Interpreter Development)
-if(NOT Python3_FOUND)
+if(NOT Python3_EXECUTABLE)
   message(STATUS "Disabling testsuite ${TS_NAME}, can't find suitable python3")
   return()
-else()
-  message(STATUS "Using Python3: ${Python3_EXECUTABLE}")
-  set(PYTHON_INTERP "${Python3_EXECUTABLE}")
 endif()
 
 message(STATUS "Enabling testsuite ${TS_NAME}")
