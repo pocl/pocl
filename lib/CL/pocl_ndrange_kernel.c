@@ -23,6 +23,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_cmdbuf.h"
 #include "pocl_local_size.h"
 #include "pocl_mem_management.h"
 #include "pocl_shared.h"
@@ -514,7 +515,7 @@ pocl_record_ndrange_kernel (cl_command_buffer_khr command_buffer,
         POname (clRetainSampler) (cmd->command.run.arguments[i].value);
     }
 
-  errcode = pocl_command_record (command_buffer, cmd, sync_point_p);
+  errcode = pocl_cmdbuf_record_command (command_buffer, cmd, sync_point_p);
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
@@ -610,7 +611,7 @@ pocl_ndrange_kernel_common (cl_command_buffer_khr command_buffer,
     }
   else
     {
-      errcode = pocl_create_recorded_command (
+      errcode = pocl_cmdbuf_create_command (
         cmd_ptr, command_buffer, command_queue, CL_COMMAND_NDRANGE_KERNEL,
         num_items_in_wait_list, sync_point_wait_list, buf_migrations);
     }
