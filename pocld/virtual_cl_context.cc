@@ -501,7 +501,8 @@ int VirtualCLContext::run() {
         break;
 
       case MessageType_LinkProgram:
-        BuildOrLinkProgram(request, reply, false, false, false, false, true);
+        BuildOrLinkProgram(request, reply, false, false, false, false, false,
+                           true);
         break;
 
       case MessageType_FreeProgram:
