@@ -627,11 +627,11 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
     {
       result = cuDriverGetVersion(&driver_version);
       if (CUDA_CHECK_ERROR (result, "cuDriverGetVersion"))
-	{
+        {
           ret = CL_INVALID_DEVICE;
-	}
+        }
       else
-	{
+        {
 #if CUDA_VERSION >= 11010
           if (driver_version >= 11010)
             {
@@ -861,9 +861,9 @@ pocl_cuda_init_queue (cl_device_id device, cl_command_queue queue)
   queue_data->use_threads
       = !pocl_get_bool_option ("POCL_CUDA_DISABLE_QUEUE_THREADS", 1);
 
+  PTHREAD_CHECK (pthread_mutex_init (&queue_data->lock, NULL));
   if (queue_data->use_threads)
     {
-      PTHREAD_CHECK (pthread_mutex_init (&queue_data->lock, NULL));
       PTHREAD_CHECK (pthread_cond_init (&queue_data->pending_cond, NULL));
       PTHREAD_CHECK (pthread_cond_init (&queue_data->running_cond, NULL));
       int err = pthread_create (&queue_data->submit_thread, NULL,
@@ -2398,11 +2398,11 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
         {
           for (unsigned int i = 0; i < cmd->svm_free.num_svm_pointers; i++)
             {
-	      void *ptr = cmd->svm_free.svm_pointers[i];
-	      /* This updates bookkeeping associated with the 'ptr'
-		 done by the PoCL core. */
-	      POname (clSVMFree) (event->context, ptr);
-	    }
+          void *ptr = cmd->svm_free.svm_pointers[i];
+          /* This updates bookkeeping associated with the 'ptr'
+         done by the PoCL core. */
+          POname (clSVMFree) (event->context, ptr);
+        }
         }
       break;
     case CL_COMMAND_READ_IMAGE:
@@ -2584,14 +2584,24 @@ pocl_cuda_update_event (cl_device_id device, cl_event event)
     }
 }
 
+/* Waits for event and dependencies to be completed */
+/* Should be called with queue->data locked */
 void
 pocl_cuda_wait_event_recurse (cl_device_id device, cl_event event)
 {
   while (event->wait_list)
     pocl_cuda_wait_event_recurse (device, event->wait_list->event);
 
-  if (event->status > CL_COMPLETE)
-    pocl_cuda_finalize_command (device, event);
+  assert (event->status > CL_COMPLETE);
+  /* If another thread has handled submission, event data might not have been created yet */
+   while (!event->data)
+     ;
+  pocl_cuda_event_data_t *e_d = (pocl_cuda_event_data_t *)event->data;
+  while (!e_d->events_ready)
+    ;
+  assert (event->status == CL_SUBMITTED);
+  pocl_cuda_finalize_command (device, event);
+  assert (event->status == CL_COMPLETE);
 }
 
 void
@@ -2606,9 +2616,10 @@ pocl_cuda_notify_event_finished (cl_event event)
 void
 pocl_cuda_wait_event (cl_device_id device, cl_event event)
 {
+  pocl_cuda_queue_data_t *q_d = (pocl_cuda_queue_data_t *)event->queue->data;
   pocl_cuda_event_data_t *e_d = (pocl_cuda_event_data_t *)event->data;
 
-  if (((pocl_cuda_queue_data_t *)event->queue->data)->use_threads)
+  if (q_d->use_threads)
     {
       /* Wait until background thread marks command as complete */
       POCL_LOCK_OBJ (event);
@@ -2621,8 +2632,11 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
     }
   else
     {
-      /* Recursively finalize commands in this thread */
-      pocl_cuda_wait_event_recurse (device, event);
+      PTHREAD_CHECK (pthread_mutex_lock (&q_d->lock));
+      /* Ensure this event is completed */
+      if (event->status > CL_COMPLETE)
+        pocl_cuda_wait_event_recurse (device, event);
+      PTHREAD_CHECK (pthread_mutex_unlock (&q_d->lock));
     }
 }
 
@@ -2649,20 +2663,48 @@ pocl_cuda_free_event_data (cl_event event)
 void
 pocl_cuda_join (cl_device_id device, cl_command_queue cq)
 {
-  /* Grab event at end of queue */
+  /* Grab event at end of queue as soon as possible */
   POCL_LOCK_OBJ (cq);
   cl_event event = cq->last_event.event;
+  uint64_t event_id;
+  if (event)
+    event_id = event->id;
+  POCL_UNLOCK_OBJ (cq);
   if (!event)
+    return;
+
+  /* Only one user thread at a time may wait for events (non-threaded queue) */
+  pocl_cuda_queue_data_t *queue_data = (pocl_cuda_queue_data_t *)cq->data;
+  if (!queue_data->use_threads)
+    PTHREAD_CHECK (pthread_mutex_lock (&queue_data->lock));
+
+  POCL_LOCK_OBJ (cq);
+
+  /* Check if event has already been handled */
+  cl_event wait_event;
+  for (wait_event = cq->last_event.event; wait_event; wait_event = wait_event->wait_list->event)
+    {
+      if (wait_event->id == event_id)
+        break;
+    }
+  if (!wait_event)
     {
       POCL_UNLOCK_OBJ (cq);
+      if (!queue_data->use_threads)
+        PTHREAD_CHECK (pthread_mutex_unlock (&queue_data->lock));
       return;
     }
   POname (clRetainEvent) (event);
   POCL_UNLOCK_OBJ (cq);
 
-  pocl_cuda_wait_event (device, event);
+  if (queue_data->use_threads)
+    pocl_cuda_wait_event (device, event);
+  else
+    pocl_cuda_wait_event_recurse (device, event);
 
   POname (clReleaseEvent) (event);
+  if (!queue_data->use_threads)
+    PTHREAD_CHECK (pthread_mutex_unlock (&queue_data->lock));
 }
 
 void *
