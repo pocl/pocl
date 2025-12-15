@@ -56,7 +56,7 @@ if(NOT DEFINED LLC_HOST_CPU_AUTO)
       # sigh... STRING(STRIP is to workaround regexp bug in cmake
       string(STRIP "${CMAKE_MATCH_1}" LLC_HOST_CPU_AUTO)
     else()
-      message(FATAL_ERROR "Couldnt determine host CPU from llc output")
+      set(LLC_HOST_CPU_AUTO "native")
     endif()
 
     #TODO better
