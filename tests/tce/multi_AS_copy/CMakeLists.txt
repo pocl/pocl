@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2016 pocl developers
+#   Copyright (c) 2016,2025 Tampere University
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -31,20 +31,9 @@ add_compile_options( -Wno-deprecated -Wno-deprecated-declarations)
 
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
-add_test_pocl(NAME "tce/multi_AS_copy" COMMAND "multi_AS_copy" WORKITEM_HANDLER "loopvec")
-
 add_test_pocl(NAME "tcele/multi_AS_copy" COMMAND "multi_AS_copy" WORKITEM_HANDLER "loopvec")
 
 add_test_pocl(NAME "almaif/multi_AS_copy" COMMAND "multi_AS_copy" WORKITEM_HANDLER "loopvec")
-
-set_tests_properties( "tce/multi_AS_copy"
-  PROPERTIES
-    COST 40.0
-    PROCESSORS 1
-    PASS_REGULAR_EXPRESSION "OK"
-    LABELS "tce;tta;ttasim"
-    ENVIRONMENT "POCL_DEVICES=pthread ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine.adf"
-    DEPENDS "pocl_version_check")
 
 set_tests_properties( "tcele/multi_AS_copy"
   PROPERTIES
