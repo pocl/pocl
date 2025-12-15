@@ -76,7 +76,8 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreatePipe) (
     }
 
   mem = pocl_create_memobject (context, flags, pipe_max_packets,
-                               CL_MEM_OBJECT_PIPE, NULL, NULL, 0, &errcode);
+                               CL_MEM_OBJECT_PIPE, NULL, NULL, NULL, 0,
+                               &errcode);
   if (mem == NULL)
     goto ERROR;
 
