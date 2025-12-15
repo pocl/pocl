@@ -22,9 +22,9 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_cmdbuf.h"
 #include "pocl_mem_management.h"
 #include "pocl_shared.h"
-#include "pocl_util.h"
 
 CL_API_ENTRY cl_int
 POname (clCommandNDRangeKernelKHR) (
@@ -37,8 +37,10 @@ POname (clCommandNDRangeKernelKHR) (
     cl_sync_point_khr *sync_point,
     cl_mutable_command_khr *mutable_handle) CL_API_SUFFIX__VERSION_1_2
 {
-  cl_int errcode = CL_SUCCESS;
-  CMDBUF_VALIDATE_COMMON_HANDLES;
+  cl_int errcode = pocl_cmdbuf_validate_common_handles (
+    command_buffer, &command_queue, mutable_handle);
+  if (errcode != CL_SUCCESS)
+    return errcode;
   SETUP_MUTABLE_HANDLE;
 
   return pocl_record_ndrange_kernel (

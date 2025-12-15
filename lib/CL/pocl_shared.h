@@ -413,7 +413,7 @@ cl_int pocl_svm_migrate_mem_common (cl_command_type command_type,
         }                                                                     \
     }                                                                         \
   while (0)
-/* sync point wait list is validated in pocl_create_recorded_command */
+/* sync point wait list is validated in pocl_cmdbuf_create_command */
 
 int
 pocl_set_kernel_arg_pointer(cl_kernel kernel,
@@ -439,8 +439,7 @@ pocl_set_kernel_arg_pointer(cl_kernel kernel,
         }                                                                     \
     }                                                                         \
   while (0)
-/* sync point wait list is validated in pocl_create_recorded_command */
-
+/* sync point wait list is validated in pocl_cmdbuf_create_command */
 
 #ifdef __GNUC__
 #pragma GCC visibility pop
