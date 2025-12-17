@@ -84,7 +84,7 @@ jobs:
 
       # Download previous benchmark result from cache (if exists)
       - name: Download previous benchmark data
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: benchmark_cache
           key: sycl-bench-${{ runner.name }}-llvm-${{ matrix.llvm }}-${{ matrix.device }}-${{ github.run_id }}

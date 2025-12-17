@@ -89,7 +89,7 @@ jobs:
 
       - name: Cache Sycl-CTS timings
         id: cache_sycl_cts
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb
         if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
         with:
           path: ${{ github.workspace }}/build/Testing/Temporary/CTestCostData.txt
