@@ -37,6 +37,8 @@ CUDA driver
 
 * Initial bits for images support. Currently only the `IMAGE1D_BUFFER` image
   type is supported.
+* Make event synchronisation (clFinish and clWaitEvents) thread safe with non
+  threaded queue handling
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Remote driver
