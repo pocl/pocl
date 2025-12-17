@@ -1915,43 +1915,54 @@ int SharedCLContext::buildOrLinkProgram(
       temp_arg.access_qualifier =
           kernels[i].getArgInfo<CL_KERNEL_ARG_ACCESS_QUALIFIER>(arg_index,
                                                                 &ArgErr);
+      bool HaveAccessQualifier = (ArgErr == CL_SUCCESS);
+
       temp_arg.address_qualifier =
           kernels[i].getArgInfo<CL_KERNEL_ARG_ADDRESS_QUALIFIER>(arg_index,
                                                                  &ArgErr);
+      bool HaveAddressQualifier = (ArgErr == CL_SUCCESS);
+
       temp_arg.type_qualifier =
           kernels[i].getArgInfo<CL_KERNEL_ARG_TYPE_QUALIFIER>(arg_index,
                                                               &ArgErr);
+      bool HaveTypeQualifier = (ArgErr == CL_SUCCESS);
 
       std::string arg_typename =
           kernels[i].getArgInfo<CL_KERNEL_ARG_TYPE_NAME>(arg_index, &ArgErr);
-      if (ArgErr == CL_SUCCESS) {
+      bool HaveArgType = (ArgErr == CL_SUCCESS);
+      if (HaveArgType) {
         std::strncpy(temp_arg.type_name, arg_typename.c_str(),
                      MAX_PACKED_STRING_LEN);
       }
 
       std::string arg_name =
           kernels[i].getArgInfo<CL_KERNEL_ARG_NAME>(arg_index, &ArgErr);
-      if (ArgErr == CL_SUCCESS) {
+      bool HaveArgName = (ArgErr == CL_SUCCESS);
+      if (HaveArgName) {
         std::strncpy(temp_arg.name, arg_name.c_str(), MAX_PACKED_STRING_LEN);
       }
+
       // TODO this is hackish, but what else can we do here
       temp_arg.type = PoclRemoteArgType::POD;
 
-      if (temp_arg.access_qualifier != CL_KERNEL_ARG_ACCESS_NONE)
+      if (HaveAccessQualifier &&
+          temp_arg.access_qualifier != CL_KERNEL_ARG_ACCESS_NONE)
         temp_arg.type = PoclRemoteArgType::Image;
 
-      if (arg_typename.find("sampler_t") != std::string::npos)
+      if (HaveArgType && arg_typename.find("sampler_t") != std::string::npos)
         temp_arg.type = PoclRemoteArgType::Sampler;
 
-      if ((temp_arg.address_qualifier != CL_KERNEL_ARG_ADDRESS_PRIVATE) &&
-          (arg_typename.back() == '*')) {
+      if (HaveAddressQualifier && HaveArgType &&
+          (temp_arg.address_qualifier != CL_KERNEL_ARG_ADDRESS_PRIVATE) &&
+          !arg_typename.empty() && (arg_typename.back() == '*')) {
         temp_arg.type = PoclRemoteArgType::Pointer;
       }
 
       POCL_MSG_PRINT_GENERAL(
           "BUILD / KERNEL %s ARG %s / %u / %s : DETERMINED TYPE %d \n",
-          kernel_name.c_str(), arg_name.c_str(), arg_index,
-          arg_typename.c_str(), PoclRemoteArgType(temp_arg.type));
+          kernel_name.c_str(), HaveArgName ? arg_name.c_str() : "(unavailable)",
+          arg_index, HaveArgType ? arg_typename.c_str() : "(unavailable)",
+          PoclRemoteArgType(temp_arg.type));
     }
   }
 
