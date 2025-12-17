@@ -213,8 +213,8 @@ public:
 
   virtual bool isCommandReceived(uint64_t id) override;
 
-  virtual int writeKernelMeta(uint32_t program_id, char *buffer,
-                              size_t *written) override;
+  virtual int writeKernelMeta(uint32_t ProgramId, std::vector<uint8_t> &Buffer,
+                              size_t *Written) override;
 
   virtual EventPair getEventPairForId(uint64_t event_id) override;
 
@@ -1301,13 +1301,9 @@ int SharedCLContext::freeQueue(uint32_t queue_id) {
 /****************************************************************************************************************/
 
 #define WRITE_BYTES(var)                                                       \
-  std::memcpy(buf, &var, sizeof(var));                                         \
-  buf += sizeof(var);                                                          \
-  assert((size_t)(buf - buffer) <= buffer_size);
+  Buf.insert(Buf.end(), (uint8_t *)&var, ((uint8_t *)&var) + sizeof(var))
 #define WRITE_STRING(str, len)                                                 \
-  std::memcpy(buf, str, len);                                                  \
-  buf += len;                                                                  \
-  assert((size_t)(buf - buffer) <= buffer_size);
+  Buf.insert(Buf.end(), (uint8_t *)str, ((uint8_t *)str) + len)
 
 #if defined(CLANGCC) && defined(ENABLE_SPIRV) && defined(HAVE_LLVM_SPIRV)
 /**
@@ -1991,14 +1987,14 @@ int SharedCLContext::freeProgram(uint32_t program_id) {
   return 0;
 }
 
-int SharedCLContext::writeKernelMeta(uint32_t program_id, char *buffer,
-                                     size_t *written) {
+int SharedCLContext::writeKernelMeta(uint32_t ProgramId,
+                                     std::vector<uint8_t> &Buf,
+                                     size_t *Written) {
   clProgramStruct *p = nullptr;
-  char *buf = buffer;
-  size_t buffer_size = MAX_REMOTE_BUILDPROGRAM_SIZE;
+  size_t old_size = Buf.size();
   {
     std::unique_lock<std::mutex> lock(MainMutex);
-    auto search = ProgramIDmap.find(program_id);
+    auto search = ProgramIDmap.find(ProgramId);
     //  POCL_MSG_ERR ("write kernel meta {}\n", program_id);
     assert(search != ProgramIDmap.end());
     p = search->second.get();
@@ -2023,9 +2019,11 @@ int SharedCLContext::writeKernelMeta(uint32_t program_id, char *buffer,
     }
   }
 
-  *written = (size_t)(buf - buffer);
-  assert(*written > 0);
-  *((uint64_t *)buffer) = (uint64_t)(*written) - sizeof(placeholder);
+  *Written = (Buf.size() - old_size);
+  assert(*Written > 0);
+  // Overwrite the size field ("placeholder") with the actual size
+  placeholder = *Written - sizeof(placeholder);
+  std::memcpy(&Buf[old_size], &placeholder, sizeof(placeholder));
   return 0;
 }
 

@@ -49,8 +49,8 @@ public:
 
   virtual size_t numDevices() const = 0;
 
-  virtual int writeKernelMeta(uint32_t program_id, char *buffer,
-                              size_t *written) = 0;
+  virtual int writeKernelMeta(uint32_t ProgramID, std::vector<uint8_t> &Buffer,
+                              size_t *Written) = 0;
 
   virtual EventPair getEventPairForId(uint64_t event_id) = 0;
 
