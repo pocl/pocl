@@ -2594,10 +2594,10 @@ pocl_cuda_wait_event_recurse (cl_device_id device, cl_event event)
 
   assert (event->status > CL_COMPLETE);
   /* If another thread has handled submission, event data might not have been created yet */
-   while (!event->data)
-     ;
+  while (POCL_ATOMIC_LOAD (!event->data))
+    ;
   pocl_cuda_event_data_t *e_d = (pocl_cuda_event_data_t *)event->data;
-  while (!e_d->events_ready)
+  while (POCL_ATOMIC_LOAD (!e_d->events_ready))
     ;
   assert (event->status == CL_SUBMITTED);
   pocl_cuda_finalize_command (device, event);
