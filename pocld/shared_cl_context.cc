@@ -1534,7 +1534,7 @@ int SharedCLContext::buildOrLinkProgram(
     }
 
     cl_program LinkedProgram = ::clLinkProgram(
-        ContextWithAllDevices.get(), 0, nullptr, options,
+        ContextWithAllDevices.get(), 0, nullptr, opts.c_str(),
         static_cast<cl_uint>(InputPrograms.size()),
         reinterpret_cast<const cl_program *>(InputPrograms.data()), nullptr,
         nullptr, &err);
