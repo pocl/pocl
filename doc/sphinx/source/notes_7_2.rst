@@ -15,3 +15,16 @@ CUDA driver
 * Note that CUDA driver does not support LLVM 21, due to a bug
   in upstream Clang code. Users must use LLVM 17 to 20 with CUDA. For details,
   see https://github.com/llvm/llvm-project/issues/154772
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+OpenASIP (ttasim) driver
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Upgraded the driver to use OpenASIP v2.2(-pre) which uses LLVM 21.
+
+===================================
+Deprecation/feature removal notices
+===================================
+
+* Support for LLVM 17 will be removed in the next release.
+
