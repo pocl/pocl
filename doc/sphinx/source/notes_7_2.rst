@@ -7,6 +7,7 @@ Notable bugfixes
 ================
 
 * Fixed various clLinkProgram issues in the remote driver.
+* Fixed remote driver spuriously reconnecting for no apparent reason.
 
 ===========================
 Driver-specific features
