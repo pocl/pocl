@@ -2,6 +2,12 @@
 Release Notes for PoCL 7.2
 **************************
 
+================
+Notable bugfixes
+================
+
+* Fixed various clLinkProgram issues in the remote driver.
+
 ===========================
 Driver-specific features
 ===========================
