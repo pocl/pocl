@@ -176,9 +176,8 @@ void CommandQueue::RunCommand(Request *request) {
   EventPair p = backend->getEventPairForId(request->Body.event_id);
   // If the command failed or was a migration to this server, there won't be a
   // native event.
-  // XXX: does killing the server in debug builds help more with debugging than
-  // just ignoring the missing event?
-  if (request->Body.message_type != MessageType_MigrateD2D)
+  if (request->Body.message_type != MessageType_MigrateD2D &&
+      reply->rep.failed == CL_FALSE)
     assert(p.native.get());
   reply->event = p.native;
 
