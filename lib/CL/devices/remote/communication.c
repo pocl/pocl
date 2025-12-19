@@ -440,6 +440,8 @@ connection_init (remote_connection_t *connection,
   if (pipe_res != 0)
     POCL_MSG_ERR ("Failed to open socket notification pipe: %s\n",
                   strerror (errno));
+  connection->notify_pipe_r = pipe_pair[0];
+  connection->notify_pipe_w = pipe_pair[1];
 
   return pipe_res;
 }
@@ -579,7 +581,7 @@ static void
 connection_release (remote_connection_t *connection)
 {
   close (connection->notify_pipe_w);
-  close (connection->notify_pipe_w);
+  close (connection->notify_pipe_r);
   POCL_DESTROY_COND (connection->setup_guard.cond);
   POCL_DESTROY_LOCK (connection->setup_guard.mutex);
 }

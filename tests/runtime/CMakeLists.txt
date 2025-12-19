@@ -292,6 +292,8 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_clCreateKernelsInProgram")
   add_test(NAME "remote/clCreateSubDevices"
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_clCreateSubDevices")
+  add_test(NAME "remote/test_compile_n_link"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_compile_n_link")
   add_test(NAME "remote/test_event_free"
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_event_free")
   add_test(NAME "remote/test_event_double_wait"
@@ -359,7 +361,7 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
     "remote/test_enqueue_kernel_from_binary" "remote/test_user_event"
     "remote/test_buffer_migration" "remote/test_buffer_ping_pong"
     "remote/clSetMemObjectDestructorCallback" "remote/test_link_error"
-    "remote/test_cl_pocl_content_size"
+    "remote/test_compile_n_link" "remote/test_cl_pocl_content_size"
     "remote/test_cl_pocl_content_size_migration_host_remote"
     "remote/test_cl_pocl_content_size_migration_remote_remote"
     "remote/test_deviceside_enqueue"

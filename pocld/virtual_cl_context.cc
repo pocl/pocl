@@ -501,7 +501,8 @@ int VirtualCLContext::run() {
         break;
 
       case MessageType_LinkProgram:
-        BuildOrLinkProgram(request, reply, false, false, false, false, true);
+        BuildOrLinkProgram(request, reply, false, false, false, false, false,
+                           true);
         break;
 
       case MessageType_FreeProgram:
@@ -729,13 +730,9 @@ void VirtualCLContext::FreeBuffer(Request *req, Reply *rep) {
 }
 
 #define WRITE_BYTES(var)                                                       \
-  std::memcpy(buf, &var, sizeof(var));                                         \
-  buf += sizeof(var);                                                          \
-  assert((size_t)(buf - buffer) <= buffer_size);
+  Buf.insert(Buf.end(), (uint8_t *)&var, ((uint8_t *)&var) + sizeof(var))
 #define WRITE_STRING(str, len)                                                 \
-  std::memcpy(buf, str, len);                                                  \
-  buf += len;                                                                  \
-  assert((size_t)(buf - buffer) <= buffer_size);
+  Buf.insert(Buf.end(), (uint8_t *)str, ((uint8_t *)str) + len)
 
 void VirtualCLContext::BuildOrLinkProgram(Request *req, Reply *rep,
                                           bool is_binary, bool is_builtin,
@@ -824,10 +821,8 @@ void VirtualCLContext::BuildOrLinkProgram(Request *req, Reply *rep,
   TP_BUILD_PROGRAM(req->Body.msg_id, req->Body.client_did, id);
 
   // output reply
-  rep->extra_data.resize(MAX_REMOTE_BUILDPROGRAM_SIZE);
-  char *buffer = (char*)(rep->extra_data.data());
-  size_t buffer_size = MAX_REMOTE_BUILDPROGRAM_SIZE;
-  char *buf = buffer;
+  rep->extra_data.clear();
+  auto &Buf = rep->extra_data;
 
   // write build logs even on error
   WRITE_BYTES(m.num_devices);
@@ -847,10 +842,8 @@ void VirtualCLContext::BuildOrLinkProgram(Request *req, Reply *rep,
     // write metadata
     assert(ProgramContexts.size() > 0);
     size_t kernel_meta_size = 0;
-    ProgramContexts[0]->writeKernelMeta(id, buf, &kernel_meta_size);
+    ProgramContexts[0]->writeKernelMeta(id, Buf, &kernel_meta_size);
     POCL_MSG_PRINT_GENERAL("Kernel meta size: %" PRIuS " \n", kernel_meta_size);
-    assert(kernel_meta_size > 0);
-    buf += kernel_meta_size;
   }
 
   if (err == CL_SUCCESS) {
@@ -875,7 +868,7 @@ void VirtualCLContext::BuildOrLinkProgram(Request *req, Reply *rep,
     ProgramContexts.clear();
   }
 
-  rep->extra_size = (buf - buffer);
+  rep->extra_size = Buf.size();
 
   RETURN_IF_ERR_DATA;
   ProgramIDset.insert(id);

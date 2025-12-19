@@ -213,8 +213,8 @@ public:
 
   virtual bool isCommandReceived(uint64_t id) override;
 
-  virtual int writeKernelMeta(uint32_t program_id, char *buffer,
-                              size_t *written) override;
+  virtual int writeKernelMeta(uint32_t ProgramId, std::vector<uint8_t> &Buffer,
+                              size_t *Written) override;
 
   virtual EventPair getEventPairForId(uint64_t event_id) override;
 
@@ -1301,13 +1301,9 @@ int SharedCLContext::freeQueue(uint32_t queue_id) {
 /****************************************************************************************************************/
 
 #define WRITE_BYTES(var)                                                       \
-  std::memcpy(buf, &var, sizeof(var));                                         \
-  buf += sizeof(var);                                                          \
-  assert((size_t)(buf - buffer) <= buffer_size);
+  Buf.insert(Buf.end(), (uint8_t *)&var, ((uint8_t *)&var) + sizeof(var))
 #define WRITE_STRING(str, len)                                                 \
-  std::memcpy(buf, str, len);                                                  \
-  buf += len;                                                                  \
-  assert((size_t)(buf - buffer) <= buffer_size);
+  Buf.insert(Buf.end(), (uint8_t *)str, ((uint8_t *)str) + len)
 
 #if defined(CLANGCC) && defined(ENABLE_SPIRV) && defined(HAVE_LLVM_SPIRV)
 /**
@@ -1534,7 +1530,7 @@ int SharedCLContext::buildOrLinkProgram(
     }
 
     cl_program LinkedProgram = ::clLinkProgram(
-        ContextWithAllDevices.get(), 0, nullptr, options,
+        ContextWithAllDevices.get(), 0, nullptr, opts.c_str(),
         static_cast<cl_uint>(InputPrograms.size()),
         reinterpret_cast<const cl_program *>(InputPrograms.data()), nullptr,
         nullptr, &err);
@@ -1915,43 +1911,54 @@ int SharedCLContext::buildOrLinkProgram(
       temp_arg.access_qualifier =
           kernels[i].getArgInfo<CL_KERNEL_ARG_ACCESS_QUALIFIER>(arg_index,
                                                                 &ArgErr);
+      bool HaveAccessQualifier = (ArgErr == CL_SUCCESS);
+
       temp_arg.address_qualifier =
           kernels[i].getArgInfo<CL_KERNEL_ARG_ADDRESS_QUALIFIER>(arg_index,
                                                                  &ArgErr);
+      bool HaveAddressQualifier = (ArgErr == CL_SUCCESS);
+
       temp_arg.type_qualifier =
           kernels[i].getArgInfo<CL_KERNEL_ARG_TYPE_QUALIFIER>(arg_index,
                                                               &ArgErr);
+      bool HaveTypeQualifier = (ArgErr == CL_SUCCESS);
 
       std::string arg_typename =
           kernels[i].getArgInfo<CL_KERNEL_ARG_TYPE_NAME>(arg_index, &ArgErr);
-      if (ArgErr == CL_SUCCESS) {
+      bool HaveArgType = (ArgErr == CL_SUCCESS);
+      if (HaveArgType) {
         std::strncpy(temp_arg.type_name, arg_typename.c_str(),
                      MAX_PACKED_STRING_LEN);
       }
 
       std::string arg_name =
           kernels[i].getArgInfo<CL_KERNEL_ARG_NAME>(arg_index, &ArgErr);
-      if (ArgErr == CL_SUCCESS) {
+      bool HaveArgName = (ArgErr == CL_SUCCESS);
+      if (HaveArgName) {
         std::strncpy(temp_arg.name, arg_name.c_str(), MAX_PACKED_STRING_LEN);
       }
+
       // TODO this is hackish, but what else can we do here
       temp_arg.type = PoclRemoteArgType::POD;
 
-      if (temp_arg.access_qualifier != CL_KERNEL_ARG_ACCESS_NONE)
+      if (HaveAccessQualifier &&
+          temp_arg.access_qualifier != CL_KERNEL_ARG_ACCESS_NONE)
         temp_arg.type = PoclRemoteArgType::Image;
 
-      if (arg_typename.find("sampler_t") != std::string::npos)
+      if (HaveArgType && arg_typename.find("sampler_t") != std::string::npos)
         temp_arg.type = PoclRemoteArgType::Sampler;
 
-      if ((temp_arg.address_qualifier != CL_KERNEL_ARG_ADDRESS_PRIVATE) &&
-          (arg_typename.back() == '*')) {
+      if (HaveAddressQualifier && HaveArgType &&
+          (temp_arg.address_qualifier != CL_KERNEL_ARG_ADDRESS_PRIVATE) &&
+          !arg_typename.empty() && (arg_typename.back() == '*')) {
         temp_arg.type = PoclRemoteArgType::Pointer;
       }
 
       POCL_MSG_PRINT_GENERAL(
           "BUILD / KERNEL %s ARG %s / %u / %s : DETERMINED TYPE %d \n",
-          kernel_name.c_str(), arg_name.c_str(), arg_index,
-          arg_typename.c_str(), PoclRemoteArgType(temp_arg.type));
+          kernel_name.c_str(), HaveArgName ? arg_name.c_str() : "(unavailable)",
+          arg_index, HaveArgType ? arg_typename.c_str() : "(unavailable)",
+          PoclRemoteArgType(temp_arg.type));
     }
   }
 
@@ -1980,14 +1987,14 @@ int SharedCLContext::freeProgram(uint32_t program_id) {
   return 0;
 }
 
-int SharedCLContext::writeKernelMeta(uint32_t program_id, char *buffer,
-                                     size_t *written) {
+int SharedCLContext::writeKernelMeta(uint32_t ProgramId,
+                                     std::vector<uint8_t> &Buf,
+                                     size_t *Written) {
   clProgramStruct *p = nullptr;
-  char *buf = buffer;
-  size_t buffer_size = MAX_REMOTE_BUILDPROGRAM_SIZE;
+  size_t old_size = Buf.size();
   {
     std::unique_lock<std::mutex> lock(MainMutex);
-    auto search = ProgramIDmap.find(program_id);
+    auto search = ProgramIDmap.find(ProgramId);
     //  POCL_MSG_ERR ("write kernel meta {}\n", program_id);
     assert(search != ProgramIDmap.end());
     p = search->second.get();
@@ -2012,9 +2019,11 @@ int SharedCLContext::writeKernelMeta(uint32_t program_id, char *buffer,
     }
   }
 
-  *written = (size_t)(buf - buffer);
-  assert(*written > 0);
-  *((uint64_t *)buffer) = (uint64_t)(*written) - sizeof(placeholder);
+  *Written = (Buf.size() - old_size);
+  assert(*Written > 0);
+  // Overwrite the size field ("placeholder") with the actual size
+  placeholder = *Written - sizeof(placeholder);
+  std::memcpy(&Buf[old_size], &placeholder, sizeof(placeholder));
   return 0;
 }
 
