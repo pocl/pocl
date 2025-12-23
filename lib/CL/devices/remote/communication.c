@@ -1023,11 +1023,15 @@ pocl_remote_reader_pthread (void *aa)
         {
           if (running_cmd->reply.strings_size > 0)
             {
-              /* Allocate the memory for the reply here since only now we
-                 know the string pool's size. */
               assert (running_cmd->rep_extra_data == NULL);
+            }
+          if (running_cmd->rep_extra_data == NULL)
+            {
               running_cmd->rep_extra_data
                 = (char *)malloc (running_cmd->reply.data_size);
+            }
+          if (running_cmd->reply.strings_size > 0)
+            {
               running_cmd->strings
                 = running_cmd->rep_extra_data + running_cmd->rep_extra_size;
             }
@@ -2682,9 +2686,7 @@ pocl_network_build_or_link_program (remote_device_data_t *ddata,
   nc.req_extra_data2 = options;
   nc.req_extra_size2 = nc.request.m.build_program.options_len;
 
-  nc.rep_extra_data
-      = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, MAX_BUILD_SIZE);
-  nc.rep_extra_size = MAX_BUILD_SIZE;
+  /* Let reader thread allocate the extra data buffer for the reply */
 
   POCL_MSG_PRINT_REMOTE ("Compile/Build/LinkProgram %p\n", netcmd);
 
@@ -2722,7 +2724,7 @@ pocl_network_build_or_link_program (remote_device_data_t *ddata,
     }
 
   if (netcmd->reply.failed)
-    pocl_aligned_free (nc.rep_extra_data);
+    POCL_MEM_FREE (nc.rep_extra_data);
   CHECK_REPLY (BuildProgram);
 
   /*****************************************************************/
@@ -2768,7 +2770,7 @@ pocl_network_build_or_link_program (remote_device_data_t *ddata,
         }
     }
 
-  pocl_aligned_free (nc.rep_extra_data);
+  POCL_MEM_FREE (nc.rep_extra_data);
   POCL_MSG_PRINT_REMOTE ("NEW program ID: %u\n", prog_id);
 
   SET_REMOTE_ID (program, prog_id);

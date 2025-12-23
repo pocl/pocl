@@ -1784,10 +1784,14 @@ int SharedCLContext::buildOrLinkProgram(
     return err;
   }
 
-  err = p->createKernels(&prebuilt_kernels);
-  if (err) {
-    POCL_MSG_ERR("clCreateKernels failed\n");
-    return err;
+  /* clCompileProgram does *not* generate an executable, which is required for
+   * clCreateKernelsInProgram */
+  if (!CompileOnly) {
+    err = p->createKernels(&prebuilt_kernels);
+    if (err) {
+      POCL_MSG_ERR("clCreateKernels failed\n");
+      return err;
+    }
   }
 
   // for sources, return also the binary
