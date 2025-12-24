@@ -39,9 +39,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 15 to 17 should work, however 17 currently fails two tests (fp16)
-        # TODO: update to something newer when OpenASIP is updated
-        llvm: [17]
+        # OpenASIP 2.2 requires LLVM 21 installed via the OpenASIP installer script.
+        llvm: [21]
         config: [openasip]
 
     steps:
@@ -81,7 +80,7 @@ jobs:
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_tta_tests $CTEST_FLAGS
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_openasip_tests $CTEST_FLAGS
 
   # could be tried with multiple CLSPV versions
   vulkan_matrix:

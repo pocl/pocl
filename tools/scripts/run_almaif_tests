@@ -1,7 +1,7 @@
 #!/bin/bash
-# run_tta_tests - Runs tests against the tta device drivers.
+# run_almaif_tests - Runs tests against the tta device drivers.
 #
-# Copyright (c) 2021 Michal Babe / Tampere University
+# Copyright (c) 2021 Michal Babej / Tampere University
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal

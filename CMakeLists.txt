@@ -2043,8 +2043,8 @@ if(ENABLE_TCE)
   set(TCE_DEVICE_CL_VERSION "120")
   set(TCE_DEVICE_CL_STD "1.2")
 
-  if(LLVM_VERSION_MAJOR GREATER_EQUAL 18)
-    message(FATAL_ERROR "OpenASIP requires LLVM/Clang <= 17")
+  if(NOT LLVM_VERSION_MAJOR EQUAL 21)
+    message(FATAL_ERROR "OpenASIP target requires LLVM/Clang 21 supported by OpenASIP v2.2")
   endif()
 
   if("${LLVM_CXXFLAGS}" MATCHES "-fno-rtti")
