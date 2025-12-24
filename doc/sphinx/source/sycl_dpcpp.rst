@@ -137,7 +137,7 @@ Example PoCL build:
     git clone git@github.com:pocl/pocl.git
     cd pocl
     mkdir build && cd build
-    cmake .. -DCMAKE_INSTALL_PREFIX=<path-to-installation-directory> -DLLVM_SPIRV=<path-to-llvm-spirv> -DWITH_LLVM_CONFIG=<path-to-llvm-config>
+    cmake .. -DCMAKE_INSTALL_PREFIX=<path-to-installation-directory> -DWITH_LLVM_CONFIG=<path-to-llvm-config>
     ninja install
 
 To make PoCL visible to the ICD loader, either register the PoCL ICD (https://github.com/KhronosGroup/OpenCL-ICD-Loader#registering-icds)
