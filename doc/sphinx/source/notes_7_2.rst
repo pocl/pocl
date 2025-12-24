@@ -22,3 +22,7 @@ CUDA driver
 * Note that CUDA driver does not support LLVM 21, due to a bug
   in upstream Clang code. Users must use LLVM 17 to 20 with CUDA. For details,
   see https://github.com/llvm/llvm-project/issues/154772
+* Make event synchronisation (clFinish and clWaitEvents) thread safe with non
+  threaded queue handling
+* Remove threaded queue handling and POCL_DISABLE_QUEUE_THREADS environment 
+  variable
