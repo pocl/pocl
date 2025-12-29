@@ -2063,6 +2063,8 @@ cl_int pocl_level0_set_kernel_exec_info_ext(
   case CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT:
   case CL_KERNEL_EXEC_INFO_SVM_PTRS:
   case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL: {
+    if (param_value_size == 0 && param_value == nullptr)
+      return CL_SUCCESS;
     std::map<void *, size_t> UsedPtrs;
     cl_uint NumElem = param_value_size / sizeof(void *);
     if (NumElem == 0)

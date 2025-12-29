@@ -168,6 +168,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 #####################################################
 
+# Unfortunately CMAKE_SYSROOT is inserted into FIND_ROOT_PATH and there is no way to disable this behavior, AFAICT.
+# As consequence, find_program() finds binaries in Target ROOTFS not Host. Using this to ignore binaries from the Target sysroot:
+if(CMAKE_CROSSCOMPILING AND CMAKE_SYSROOT)
+  set(CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_SYSROOT}/usr/bin;${CMAKE_SYSROOT}/usr/sbin;${CMAKE_SYSROOT}/bin;${CMAKE_SYSROOT}/sbin")
+endif()
+
+#####################################################
+
 if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
   set(DEFAULT_BUILD_TYPE "Debug")
 else()
@@ -1740,11 +1748,18 @@ if(HOST_CPU_ENABLE_CL_KHR_FP64)
 endif()
 
 
-
 if(HOST_DEVICE_EXTENSIONS MATCHES "cl_ext_float_atomics")
-  set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp32_global_atomic_add __opencl_c_ext_fp32_local_atomic_add __opencl_c_ext_fp32_global_atomic_min_max __opencl_c_ext_fp32_local_atomic_min_max")
+  set(CTS_LLVM_SPIRV_EXTENSIONS "--spirv-ext=+SPV_KHR_no_integer_wrap_decoration,+SPV_KHR_expect_assume,+SPV_INTEL_fp_fast_math_mode,+SPV_EXT_shader_atomic_float_add,+SPV_INTEL_unstructured_loop_controls,+SPV_INTEL_arbitrary_precision_integers,+SPV_INTEL_memory_access_aliasing,+SPV_INTEL_inline_assembly")
+  set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp32_global_atomic_add __opencl_c_ext_fp32_local_atomic_add")
+  if(NOT ENABLE_CONFORMANCE)
+    set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp32_global_atomic_min_max __opencl_c_ext_fp32_local_atomic_min_max")
+    set(CTS_LLVM_SPIRV_EXTENSIONS "${CTS_LLVM_SPIRV_EXTENSIONS},+SPV_EXT_shader_atomic_float_min_max,+SPV_INTEL_subgroups")
+  endif()
   if(HOST_CPU_ENABLE_CL_KHR_FP64)
-    set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp64_global_atomic_add __opencl_c_ext_fp64_local_atomic_add __opencl_c_ext_fp64_global_atomic_min_max __opencl_c_ext_fp64_local_atomic_min_max")
+    set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp64_global_atomic_add __opencl_c_ext_fp64_local_atomic_add")
+    if(NOT ENABLE_CONFORMANCE)
+      set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp64_global_atomic_min_max __opencl_c_ext_fp64_local_atomic_min_max")
+    endif()
   endif()
   # __opencl_c_ext_fp16_global_atomic_add __opencl_c_ext_fp16_local_atomic_add __opencl_c_ext_fp16_global_atomic_min_max __opencl_c_ext_fp16_local_atomic_min_max
 endif()
