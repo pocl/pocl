@@ -290,6 +290,7 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   // kernel param size. this is a bit arbitrary
   dev->max_parameter_size = 64;
   dev->address_bits = 32;
+  dev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
 
   // This would be more logical as a per builtin kernel value?
   // there is a way to query it: clGetKernelWorkGroupInfo
@@ -1188,6 +1189,16 @@ void submit_and_barrier(AlmaifData *D, _cl_command_node *cmd) {
 
 void pocl_almaif_run(void *data, _cl_command_node *cmd) {}
 
+#define CHECK_AND_ALIGN_ARGBUFFER(DSIZE)                                       \
+  do {                                                                         \
+    if (write_pos + (DSIZE) > last_pos)                                        \
+      POCL_ABORT("tce: too many kernel arguments!\n");                         \
+    int AlignTarget = MAX_EXTENDED_ALIGNMENT;                                  \
+    unsigned T = (intptr_t)write_pos % AlignTarget;                            \
+    if (T > 0)                                                                 \
+      write_pos += (AlignTarget - T);                                          \
+  } while (0)
+
 void submit_kernel_packet(AlmaifData *D, _cl_command_node *cmd) {
   struct pocl_argument *al;
   unsigned i;
@@ -1199,19 +1210,11 @@ void submit_kernel_packet(AlmaifData *D, _cl_command_node *cmd) {
     return;
 
   // First pass to figure out total argument size
-  size_t arg_size = 0;
-  for (i = 0; i < meta->num_args; ++i) {
-    if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER) {
-      arg_size += D->Dev->PointerSize;
-    } else if (meta->arg_info[i].type == POCL_ARG_TYPE_PIPE) {
-      arg_size += 4;
-    } else {
-      al = &(cmd->command.run.arguments[i]);
-      arg_size += al->size;
-    }
-  }
-  void *arguments = malloc(arg_size);
-  char *current_arg = (char *)arguments;
+  size_t arg_size = meta->num_args * MAX_EXTENDED_ALIGNMENT;
+  char *arguments =
+      (char *)pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, arg_size);
+  char *write_pos = arguments;
+  char *last_pos = arguments + arg_size;
   /* TODO: Refactor this to a helper function (the argbuffer ABI). */
   /* Process the kernel arguments. Convert the opaque buffer
      pointers to real device pointers, allocate dynamic local
@@ -1227,7 +1230,7 @@ void submit_kernel_packet(AlmaifData *D, _cl_command_node *cmd) {
          Otherwise, the user must have created a buffer with per device
          pointers stored in the cl_mem. */
       if (al->value == NULL) {
-        *(size_t *)current_arg = 0;
+        *(size_t *)write_pos = 0;
       } else {
         // almaif doesn't support SVM pointers
         assert(al->is_raw_ptr == 0);
@@ -1244,9 +1247,10 @@ void submit_kernel_packet(AlmaifData *D, _cl_command_node *cmd) {
             POCL_ABORT("almaif: buffer outside of memory");
           }
         }
-        *(size_t *)current_arg = buffer;
+        CHECK_AND_ALIGN_ARGBUFFER(4);
+        *(size_t *)write_pos = buffer;
       }
-      current_arg += D->Dev->PointerSize;
+      write_pos += D->Dev->PointerSize;
     } else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE) {
       POCL_ABORT_UNIMPLEMENTED("almaif: image arguments");
     } else if (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER) {
@@ -1256,12 +1260,15 @@ void submit_kernel_packet(AlmaifData *D, _cl_command_node *cmd) {
       int *pipe_id_ptr =
           (int *)(m->device_ptrs[cmd->device->global_mem_id].mem_ptr);
       int pipe_id = *pipe_id_ptr;
-      *(int *)current_arg = pipe_id;
+      CHECK_AND_ALIGN_ARGBUFFER(4);
+      *(int *)write_pos = pipe_id;
       POCL_MSG_PRINT_ALMAIF("Setting pipe argument %d to id: %i\n", i, pipe_id);
-      current_arg += 4;
+      write_pos += 4;
     } else {
-      memcpy(current_arg, al->value, al->size);
-      current_arg += al->size;
+      size_t alignment = pocl_size_ceil2(al->size);
+      CHECK_AND_ALIGN_ARGBUFFER(alignment);
+      memcpy(write_pos, al->value, al->size);
+      write_pos += al->size;
     }
   }
 

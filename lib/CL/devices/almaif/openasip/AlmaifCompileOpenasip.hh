@@ -31,8 +31,8 @@
 int pocl_almaif_openasip_initialize(cl_device_id device,
                                     const std::string &parameters);
 int pocl_almaif_openasip_cleanup(cl_device_id device);
-void pocl_almaif_openasip_compile(_cl_command_node *cmd, cl_kernel kernel,
-                                  cl_device_id device, int specialize);
+int pocl_almaif_openasip_compile(_cl_command_node *cmd, cl_kernel kernel,
+                                 cl_device_id device, int specialize);
 void pocl_almaif_openasip_produce_standalone_program(AlmaifData *D,
                                                      _cl_command_node *cmd,
                                                      pocl_context32 *pc,

@@ -46,8 +46,8 @@ pocl_add_i32 (global const int *__restrict input1,
 }
 
 __kernel void
-pocl_abs_f32 (global const int *__restrict input,
-              global int *__restrict output)
+pocl_abs_f32 (global const float *__restrict input,
+              global float *__restrict output)
 {
   size_t i = get_global_id (0);
 #ifdef cl_TCE_ABSF

@@ -137,6 +137,7 @@ int pocl_almaif_compile_init(unsigned j, cl_device_id dev,
 #ifdef ENABLE_COMPILER
   dev->ops->compile_kernel = pocl_almaif_openasip_compile;
   dev->ops->init_build = pocl_almaif_openasip_init_build;
+  dev->ops->build_builtin = pocl_driver_build_opencl_builtins;
 #endif
   return CL_SUCCESS;
 }
@@ -181,7 +182,10 @@ int pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
   if (!program->pocl_binaries[dev_i]) {
     POCL_MSG_PRINT_ALMAIF("Compiling kernel %s to poclbinary\n", kernel->name);
 
-    d->compilationData->compile_kernel(cmd, kernel, device, specialize);
+    int status =
+        d->compilationData->compile_kernel(cmd, kernel, device, specialize);
+    if (status != CL_SUCCESS)
+      return status;
   }
 #endif
 
