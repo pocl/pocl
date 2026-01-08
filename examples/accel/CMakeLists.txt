@@ -120,14 +120,14 @@ endif ()
     add_custom_target(${core_name}_firmware ALL DEPENDS firmwares/${core_name}.tpef)
     
     
-    add_custom_command(OUTPUT rtls/rtl_${core_name}
-      COMMAND rm -rf rtls/rtl_${core_name}
-      COMMAND generateprocessor -t --prefer-generation -o rtls/rtl_${core_name} -e tta_core --icd-arg-list=debugger:minimal
+    add_custom_command(OUTPUT test_${core_name}/rtl_${core_name}
+      COMMAND rm -rf test_${core_name}/rtl_${core_name}
+      COMMAND generateprocessor -t --prefer-generation -o test_${core_name}/rtl_${core_name} -e tta_core --icd-arg-list=debugger:minimal
       --hdb-list=generate_lsu_32.hdb,generate_rf_iu.hdb,xilinx_series7.hdb,generate_base32.hdb
       -f onchip -d onchip -g AlmaIFIntegrator -p ${TPEF} ${ADF}
-      COMMAND generatebits -x rtls/rtl_${core_name} -e tta_core ${ADF}
+      COMMAND generatebits -x test_${core_name}/rtl_${core_name} -e tta_core ${ADF}
       DEPENDS ${ADF})
-    add_custom_target(${core_name}_rtl ALL DEPENDS rtls/rtl_${core_name})
+    add_custom_target(${core_name}_rtl ALL DEPENDS test_${core_name}/rtl_${core_name})
 
 
     add_custom_command(OUTPUT bitstreams/${core_name}.bit
@@ -165,8 +165,12 @@ endif ()
     add_test_pocl(NAME "examples/accel/add.i32/ttasim_${core_name}" COMMAND "accel_example" "pocl.add.i32" WORKITEM_HANDLER "loopvec")
     add_test_pocl(NAME "examples/accel/mul.i32/ttasim_${core_name}" COMMAND "accel_example" "pocl.mul.i32" WORKITEM_HANDLER "loopvec")
 
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/test_${core_name}")
     #Bit clunky to add test from different directory. However, this file contains the list of different tta configurations
-    add_test_pocl(NAME "examples/example0/ttasim_${core_name}" COMMAND "../example0/example0####o" WORKITEM_HANDLER "loopvec")
+    add_test_pocl(NAME "examples/example0/ttasim_${core_name}"
+      COMMAND "../example0/example0####o"
+      WORKITEM_HANDLER "loopvec"
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/test_${core_name}")
 
     set_tests_properties( "examples/accel/add.i32/ttasim_${core_name}" "examples/accel/mul.i32/ttasim_${core_name}"
                           "examples/example0/ttasim_${core_name}" "examples/example0/ttasim_poclbin_${core_name}"
@@ -186,13 +190,15 @@ endif ()
     # The actual standalone tests
     add_test_pocl(NAME "examples/example0/ttasim_standalone_${core_name}"
       COMMAND "run_standalone_ttasim.sh####${core_name}"
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/test_${core_name}"
       WORKITEM_HANDLER "loopvec"
-      EXPECTED_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/golden_output.txt")
+      EXPECTED_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/test_${core_name}/golden_output.txt")
 
     add_test_pocl(NAME "examples/example0/rtlsim_standalone_${core_name}"
       COMMAND "run_standalone_rtlsim.sh####${core_name}"
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/test_${core_name}"
       WORKITEM_HANDLER "loopvec"
-      EXPECTED_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/golden_output.txt")
+      EXPECTED_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/test_${core_name}/golden_output.txt")
 
     set_tests_properties ("examples/example0/ttasim_standalone_${core_name}" "examples/example0/rtlsim_standalone_${core_name}"
         PROPERTIES
