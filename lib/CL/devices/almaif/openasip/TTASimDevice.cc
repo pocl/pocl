@@ -234,7 +234,7 @@ void TTASimDevice::loadProgramToDevice(almaif_kernel_data_s *kd,
     kd->kernel_address = proc.startAddress().location();
   } else {
     POCL_ABORT("Couldn't find wg_function procedure %s from the program\n",
-               wg_func_name);
+               wg_func_name.c_str());
   }
 
   /*  for (int i=0; i<prog->procedureCount(); i++){

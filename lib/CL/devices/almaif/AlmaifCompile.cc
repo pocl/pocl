@@ -43,8 +43,7 @@
 
 extern int pocl_offline_compile;
 
-int pocl_almaif_compile_init(unsigned j, cl_device_id dev,
-                             const std::string &parameters) {
+int pocl_almaif_compile_init(cl_device_id dev, const std::string &parameters) {
   AlmaifData *d = (AlmaifData *)dev->data;
 
   d->compilationData = (compilation_data_t *)pocl_aligned_malloc(
@@ -142,7 +141,7 @@ int pocl_almaif_compile_init(unsigned j, cl_device_id dev,
   return CL_SUCCESS;
 }
 
-cl_int pocl_almaif_compile_uninit(unsigned j, cl_device_id dev) {
+cl_int pocl_almaif_compile_uninit(cl_device_id dev) {
   AlmaifData *d = (AlmaifData *)dev->data;
 
 #ifdef ENABLE_COMPILER
@@ -204,8 +203,9 @@ int pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
   return CL_SUCCESS;
 }
 
-int pocl_almaif_create_kernel(cl_device_id device, cl_program program,
-                              cl_kernel kernel, unsigned device_i) {
+int pocl_almaif_create_kernel(cl_device_id device POCL_UNUSED,
+                              cl_program program POCL_UNUSED, cl_kernel kernel,
+                              unsigned device_i) {
   assert(kernel->data != NULL);
   assert(kernel->data[device_i] == NULL);
 
@@ -214,8 +214,9 @@ int pocl_almaif_create_kernel(cl_device_id device, cl_program program,
   return CL_SUCCESS;
 }
 
-int pocl_almaif_free_kernel(cl_device_id device, cl_program program,
-                            cl_kernel kernel, unsigned device_i) {
+int pocl_almaif_free_kernel(cl_device_id device POCL_UNUSED,
+                            cl_program program POCL_UNUSED, cl_kernel kernel,
+                            unsigned device_i) {
   assert(kernel->data != NULL);
   // may happen if creating kernel fails
   if (kernel->data[device_i] == NULL)

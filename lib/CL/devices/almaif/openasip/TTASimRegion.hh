@@ -26,6 +26,15 @@
 
 #include "../AlmaIFRegion.hh"
 
+// To silence warnings due to tce_config.h redefining these.
+#ifdef HAVE_DLFCN_H
+#undef HAVE_DLFCN_H
+#endif
+
+#ifdef LLVM_VERSION
+#undef LLVM_VERSION
+#endif
+
 #include <Memory.hh>
 #include <MemorySystem.hh>
 

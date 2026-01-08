@@ -138,13 +138,14 @@ void pocl_almaif_init_device_ops(struct pocl_device_ops *ops) {
 }
 
 // AlmaIF's driver by default has nothing to build for BiKs.
-int pocl_almaif_build_builtin(cl_program program, cl_uint device_i) {
+int pocl_almaif_build_builtin(cl_program program POCL_UNUSED,
+                              cl_uint device_i POCL_UNUSED) {
   return CL_SUCCESS;
 }
 
 void pocl_almaif_write(void *data, const void *__restrict__ src_host_ptr,
-                      pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
-                      size_t offset, size_t size) {
+                       pocl_mem_identifier *dst_mem_id,
+                       cl_mem dst_buf POCL_UNUSED, size_t offset, size_t size) {
   AlmaifData *d = (AlmaifData *)data;
 
   d->Dev->writeDataToDevice(dst_mem_id, (const char *__restrict)src_host_ptr,
@@ -152,8 +153,8 @@ void pocl_almaif_write(void *data, const void *__restrict__ src_host_ptr,
 }
 
 void pocl_almaif_read(void *data, void *__restrict__ dst_host_ptr,
-                     pocl_mem_identifier *src_mem_id, cl_mem src_buf,
-                     size_t offset, size_t size) {
+                      pocl_mem_identifier *src_mem_id,
+                      cl_mem src_buf POCL_UNUSED, size_t offset, size_t size) {
   AlmaifData *d = (AlmaifData *)data;
 
   d->Dev->readDataFromDevice((char *__restrict__)dst_host_ptr, src_mem_id, size,
@@ -161,9 +162,10 @@ void pocl_almaif_read(void *data, void *__restrict__ dst_host_ptr,
 }
 
 void pocl_almaif_copy(void *data, pocl_mem_identifier *dst_mem_id,
-                     cl_mem dst_buf, pocl_mem_identifier *src_mem_id,
-                     cl_mem src_buf, size_t dst_offset, size_t src_offset,
-                     size_t size) {
+                      cl_mem dst_buf POCL_UNUSED,
+                      pocl_mem_identifier *src_mem_id,
+                      cl_mem src_buf POCL_UNUSED, size_t dst_offset,
+                      size_t src_offset, size_t size) {
 
   chunk_info_t *src_chunk = (chunk_info_t *)src_mem_id->mem_ptr;
   chunk_info_t *dst_chunk = (chunk_info_t *)dst_mem_id->mem_ptr;
@@ -205,9 +207,8 @@ void pocl_almaif_memfill(void *data, pocl_mem_identifier *dst_mem_id,
   POCL_MEM_FREE(tmp_memfill_buf);
 }
 
-
 cl_int pocl_almaif_alloc_mem_obj(cl_device_id device, cl_mem mem_obj,
-                                void *host_ptr) {
+                                 void *host_ptr POCL_UNUSED) {
 
   AlmaifData *data = (AlmaifData *)device->data;
 
@@ -227,7 +228,6 @@ cl_int pocl_almaif_alloc_mem_obj(cl_device_id device, cl_mem mem_obj,
 
   return alloc_success;
 }
-
 
 void pocl_almaif_free(cl_device_id device, cl_mem mem) {
 
@@ -473,7 +473,7 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
     dev->compiler_available = CL_TRUE;
     dev->linker_available = CL_TRUE;
     std::string adf_file = device_init_file + ".adf";
-    pocl_almaif_compile_init(j, dev, adf_file);
+    pocl_almaif_compile_init(dev, adf_file);
 
   } else {
     D->compilationData = NULL;
@@ -551,7 +551,7 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   return CL_SUCCESS;
 }
 
-cl_int pocl_almaif_uninit(unsigned j, cl_device_id device) {
+cl_int pocl_almaif_uninit(unsigned j POCL_UNUSED, cl_device_id device) {
   POCL_MSG_PRINT_ALMAIF("almaif: uninit\n");
 
   POCL_LOCK(runningDeviceLock);
@@ -564,7 +564,7 @@ cl_int pocl_almaif_uninit(unsigned j, cl_device_id device) {
 
   AlmaifData *D = (AlmaifData *)device->data;
   if (D->compilationData != NULL) {
-    pocl_almaif_compile_uninit(j, device);
+    pocl_almaif_compile_uninit(device);
     D->compilationData = NULL;
   }
 
@@ -1080,7 +1080,7 @@ bool isEventDone(AlmaifData *data, cl_event event) {
   return (status == 1);
 }
 
-void pocl_almaif_wait_event(cl_device_id device, cl_event event) {
+void pocl_almaif_wait_event(cl_device_id device POCL_UNUSED, cl_event event) {
   almaif_event_data_t *ed = (almaif_event_data_t *)event->data;
 
   POCL_LOCK_OBJ(event);
@@ -1113,14 +1113,16 @@ void pocl_almaif_notify_event_finished(cl_event event) {
   }
 }
 
-int pocl_almaif_init_queue(cl_device_id device, cl_command_queue queue) {
+int pocl_almaif_init_queue(cl_device_id device POCL_UNUSED,
+                           cl_command_queue queue) {
   queue->data = malloc(sizeof(pthread_cond_t));
   pthread_cond_t *cond = (pthread_cond_t *)queue->data;
   POCL_INIT_COND(*cond);
   return CL_SUCCESS;
 }
 
-int pocl_almaif_free_queue(cl_device_id device, cl_command_queue queue) {
+int pocl_almaif_free_queue(cl_device_id device POCL_UNUSED,
+                           cl_command_queue queue) {
   pthread_cond_t *cond = (pthread_cond_t *)queue->data;
   POCL_DESTROY_COND(*cond);
   POCL_MEM_FREE(queue->data);
@@ -1187,7 +1189,8 @@ void submit_and_barrier(AlmaifData *D, _cl_command_node *cmd) {
   }
 }
 
-void pocl_almaif_run(void *data, _cl_command_node *cmd) {}
+void pocl_almaif_run(void *data POCL_UNUSED,
+                     _cl_command_node *cmd POCL_UNUSED) {}
 
 #define CHECK_AND_ALIGN_ARGBUFFER(DSIZE)                                       \
   do {                                                                         \
@@ -1355,16 +1358,14 @@ void *runningThreadFunc(void *) {
   return NULL;
 }
 
-void pocl_almaif_copy_rect(void *data, pocl_mem_identifier *dst_mem_id,
-                          cl_mem dst_buf, pocl_mem_identifier *src_mem_id,
-                          cl_mem src_buf,
-                          const size_t *__restrict__ const dst_origin,
-                          const size_t *__restrict__ const src_origin,
-                          const size_t *__restrict__ const region,
-                          size_t const dst_row_pitch,
-                          size_t const dst_slice_pitch,
-                          size_t const src_row_pitch,
-                          size_t const src_slice_pitch) {
+void pocl_almaif_copy_rect(
+    void *data, pocl_mem_identifier *dst_mem_id, cl_mem dst_buf POCL_UNUSED,
+    pocl_mem_identifier *src_mem_id, cl_mem src_buf POCL_UNUSED,
+    const size_t *__restrict__ const dst_origin,
+    const size_t *__restrict__ const src_origin,
+    const size_t *__restrict__ const region, size_t const dst_row_pitch,
+    size_t const dst_slice_pitch, size_t const src_row_pitch,
+    size_t const src_slice_pitch) {
   AlmaifData *d = (AlmaifData *)data;
 
   size_t src_offset = src_origin[0] + src_row_pitch * src_origin[1] +
@@ -1390,14 +1391,15 @@ void pocl_almaif_copy_rect(void *data, pocl_mem_identifier *dst_mem_id,
 }
 
 void pocl_almaif_write_rect(void *data, const void *__restrict__ src_host_ptr,
-                           pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
-                           const size_t *__restrict__ const buffer_origin,
-                           const size_t *__restrict__ const host_origin,
-                           const size_t *__restrict__ const region,
-                           size_t const buffer_row_pitch,
-                           size_t const buffer_slice_pitch,
-                           size_t const host_row_pitch,
-                           size_t const host_slice_pitch) {
+                            pocl_mem_identifier *dst_mem_id,
+                            cl_mem dst_buf POCL_UNUSED,
+                            const size_t *__restrict__ const buffer_origin,
+                            const size_t *__restrict__ const host_origin,
+                            const size_t *__restrict__ const region,
+                            size_t const buffer_row_pitch,
+                            size_t const buffer_slice_pitch,
+                            size_t const host_row_pitch,
+                            size_t const host_slice_pitch) {
   AlmaifData *d = (AlmaifData *)data;
   size_t adjusted_dst_offset = buffer_origin[0] +
                                buffer_row_pitch * buffer_origin[1] +
@@ -1423,14 +1425,15 @@ void pocl_almaif_write_rect(void *data, const void *__restrict__ src_host_ptr,
 }
 
 void pocl_almaif_read_rect(void *data, void *__restrict__ dst_host_ptr,
-                          pocl_mem_identifier *src_mem_id, cl_mem src_buf,
-                          const size_t *__restrict__ const buffer_origin,
-                          const size_t *__restrict__ const host_origin,
-                          const size_t *__restrict__ const region,
-                          size_t const buffer_row_pitch,
-                          size_t const buffer_slice_pitch,
-                          size_t const host_row_pitch,
-                          size_t const host_slice_pitch) {
+                           pocl_mem_identifier *src_mem_id,
+                           cl_mem src_buf POCL_UNUSED,
+                           const size_t *__restrict__ const buffer_origin,
+                           const size_t *__restrict__ const host_origin,
+                           const size_t *__restrict__ const region,
+                           size_t const buffer_row_pitch,
+                           size_t const buffer_slice_pitch,
+                           size_t const host_row_pitch,
+                           size_t const host_slice_pitch) {
   AlmaifData *d = (AlmaifData *)data;
   size_t adjusted_src_offset = buffer_origin[0] +
                                buffer_row_pitch * buffer_origin[1] +

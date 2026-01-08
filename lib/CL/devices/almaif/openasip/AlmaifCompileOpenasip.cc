@@ -34,18 +34,21 @@
 #include <iostream>
 #include <string>
 
+// To silence warnings due to tce_config.h redefining these.
+#ifdef HAVE_DLFCN_H
+#undef HAVE_DLFCN_H
+#endif
+
+#ifdef LLVM_VERSION
+#undef LLVM_VERSION
+#endif
+
 #include <AddressSpace.hh>
 #include <Environment.hh>
 #include <Machine.hh>
 #include <Procedure.hh>
 #include <Program.hh>
 #include <SimpleSimulatorFrontend.hh>
-/*#include <CodeLabel.hh>
-#include <DataLabel.hh>
-
-#include <GlobalScope.hh>
-#include <Program.hh>
-*/
 
 #include "../AlmaifCompile.hh"
 #include "../AlmaifShared.hh"
@@ -91,7 +94,7 @@ int pocl_almaif_openasip_initialize(cl_device_id device,
     uint64_t size = 0;
     pocl_read_file(bd->machine_file.c_str(), &content, &size);
     if ((size == 0) || (content == NULL))
-      POCL_ABORT("Can't read ADF file: %s\n", bd->machine_file);
+      POCL_ABORT("Can't read ADF file: %s\n", bd->machine_file.c_str());
 
     device->endian_little = (strstr(content, "<little-endian") != NULL);
     unsigned cores = 0;
@@ -306,8 +309,8 @@ int pocl_almaif_openasip_compile(_cl_command_node *cmd, cl_kernel kernel,
   cmd->command.run.device_data = strdup(cachedir);
 
   // output TPEF
-  char assemblyFileName[POCL_MAX_PATHNAME_LENGTH];
-  snprintf(assemblyFileName, POCL_MAX_PATHNAME_LENGTH, "%s%s", cachedir,
+  char assemblyFileName[POCL_MAX_PATHNAME_LENGTH + 16];
+  snprintf(assemblyFileName, POCL_MAX_PATHNAME_LENGTH + 16, "%s%s", cachedir,
            "/parallel.tpef");
 
   char tempDir[POCL_MAX_PATHNAME_LENGTH];
@@ -318,8 +321,8 @@ int pocl_almaif_openasip_compile(_cl_command_node *cmd, cl_kernel kernel,
     pocl_openasip_write_kernel_descriptor(descriptor_content, (64 * 1024), cmd,
                                           kernel, device, specialize);
 
-    error = snprintf(inputBytecode, POCL_MAX_PATHNAME_LENGTH, "%s%s", cachedir,
-                     POCL_PARALLEL_BC_FILENAME);
+    error = snprintf(inputBytecode, POCL_MAX_PATHNAME_LENGTH + 13, "%s%s",
+                     cachedir, POCL_PARALLEL_BC_FILENAME);
 
     std::string commandLine =
         oaccCommandLine(&cmd->command.run, d, tempDir,
@@ -346,8 +349,8 @@ int pocl_almaif_openasip_compile(_cl_command_node *cmd, cl_kernel kernel,
     }
   }
 
-  char md_path[POCL_MAX_PATHNAME_LENGTH];
-  snprintf(md_path, POCL_MAX_PATHNAME_LENGTH, "%s/kernel_address.txt",
+  char md_path[POCL_MAX_PATHNAME_LENGTH + 20];
+  snprintf(md_path, POCL_MAX_PATHNAME_LENGTH + 20, "%s/kernel_address.txt",
            cachedir);
 
   if (!pocl_exists(md_path)) {
@@ -744,10 +747,10 @@ std::string set_preprocessor_directives(AlmaifData *d, const std::string &adf,
       strcpy(private_as_name, as->name().c_str());
     }
   }
-  if (private_as_name == "") {
+  if (private_as_name[0] == '\0') {
     POCL_ABORT("Couldn't find the private address space from machine\n");
   }
-  if (global_as_name == "") {
+  if (global_as_name[0] == '\0') {
     POCL_ABORT("Couldn't find the global address space from machine\n");
   }
 
@@ -756,7 +759,6 @@ std::string set_preprocessor_directives(AlmaifData *d, const std::string &adf,
   unsigned CQSize = d->Dev->CQMemory->Size();
 
   bool relativeAddressing = d->Dev->RelativeAddressing;
-  int i = 0;
   output += "-DQUEUE_LENGTH=" + std::to_string(AQL_queue_length) + " ";
   if (!separatePrivateMem) {
     unsigned initsp = DmemSize;

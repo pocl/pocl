@@ -222,7 +222,7 @@ void *emulate_almaif(void *E_void) {
       int red_count = 0;
       uint8_t min = 255;
       uint8_t max = 0;
-      uint32_t minlocx, minlocy, maxlocx, maxlocy;
+      uint32_t minlocx = 0, minlocy = 0, maxlocx = 0, maxlocy = 0;
       POCL_MSG_PRINT_ALMAIF(
           "almaif emulate: Parsing done: starting loops with dims (%i,%i,%i)\n",
           dim_x, dim_y, dim_z);
