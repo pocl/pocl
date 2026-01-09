@@ -207,6 +207,23 @@ typedef struct remote_connection_s
   sync_t discovery_reconnect_guard;
 } remote_connection_t;
 
+typedef struct pocl_remote_timing_s pocl_remote_timing_t;
+struct pocl_remote_timing_s
+{
+  pocl_remote_timing_t *next;
+  enum RequestMessageType kind;
+  int failed;
+  uint64_t qid;
+  uint64_t eid;
+  uint64_t submitted;
+  uint64_t write_start;
+  uint64_t write_end;
+  uint64_t exec_start;
+  uint64_t exec_end;
+  uint64_t read_start;
+  uint64_t read_end;
+};
+
 #define INITIAL_ARRAY_CAP 1024
 
 /* in nanoseconds */
@@ -245,6 +262,7 @@ typedef struct remote_server_data_s
   uint32_t num_platforms;
   uint32_t num_devices;
   uint32_t *platform_devices;
+  pocl_remote_timing_t *profiling_data;
 
   /* network handling threads / ids */
   network_queue *slow_read_queue;

@@ -685,9 +685,17 @@ pocl_remote_reconnect_rediscover (const char *address_with_port)
  * finished callback and cleans up the netcmd when done.
  */
 static void
-finish_running_cmd (network_command *running_cmd,
+finish_running_cmd (remote_server_data_t *server,
+                    network_command *running_cmd,
                     network_command_status_t status)
 {
+  pocl_remote_timing_t *profile = NULL;
+  if (pocl_get_bool_option ("POCL_REMOTE_NETWORK_TRACE", 0))
+    {
+      profile = calloc (1, sizeof (pocl_remote_timing_t));
+      profile->kind = running_cmd->request.message_type;
+      profile->eid = running_cmd->event_id;
+    }
 
   /* When a server is lost while some application is running then the running
    * commands certain fields have to be accordingly modified.
@@ -715,7 +723,62 @@ finish_running_cmd (network_command *running_cmd,
       running_cmd->reply.did = running_cmd->request.did;
       running_cmd->reply.pid = running_cmd->request.pid;
     }
+  if (profile && running_cmd->reply.failed)
+    profile->failed = 1;
+
+  /* No-op until writer has finished writing timestamps
+   * If we get stuck here something has gone wrong */
+  uint64_t start, end;
+  do
+    {
+      end = POCL_ATOMIC_LOAD (running_cmd->client_write_end_timestamp_ns);
+      start = POCL_ATOMIC_LOAD (running_cmd->client_write_start_timestamp_ns);
+    }
+  while (end <= start);
+  /* TODO this compares times of write() syscalls, but that may not be
+   * equal to transfer times */
+  uint64_t local_writing_ns = end - start;
+
+  assert (running_cmd->reply.server_read_end_timestamp_ns
+          >= running_cmd->reply.server_read_start_timestamp_ns);
+  uint64_t remote_reading_ns
+    = running_cmd->reply.server_read_end_timestamp_ns
+      - running_cmd->reply.server_read_start_timestamp_ns;
+
+  /* in theory, local_writing should be +- equal remote reading, select
+   * larger */
+  uint64_t client_to_remote = remote_reading_ns > local_writing_ns
+                                ? remote_reading_ns
+                                : local_writing_ns;
+
+  if (profile)
+    {
+      profile->write_start = start;
+      profile->write_end = start + client_to_remote;
+    }
   running_cmd->client_read_end_timestamp_ns = pocl_gettimemono_ns ();
+  /* TODO we don't have the timings for remote writing */
+  uint64_t remote_writing_ns = 0;
+
+  /* No-op until reader has finished writing timestamps (should never be
+   * necessary) If we get stuck here something has gone wrong */
+  end = POCL_ATOMIC_LOAD (running_cmd->client_read_end_timestamp_ns);
+  do
+    {
+      start = POCL_ATOMIC_LOAD (running_cmd->client_read_start_timestamp_ns);
+    }
+  while (end <= start);
+  uint64_t local_reading_ns = end - start;
+
+  /* should be +- equal, select larger */
+  uint64_t remote_to_client = local_reading_ns > remote_writing_ns
+                                ? local_reading_ns
+                                : remote_writing_ns;
+  if (profile)
+    {
+      profile->read_start = start;
+      profile->read_end = start + remote_to_client;
+    }
 
   TP_MSG_RECEIVED (running_cmd->reply.msg_id, running_cmd->event_id,
                    running_cmd->reply.client_did, running_cmd->reply.did,
@@ -723,6 +786,12 @@ finish_running_cmd (network_command *running_cmd,
 
   if (running_cmd->synchronous)
     {
+      if (profile)
+        {
+          profile->submitted = profile->write_start;
+          profile->qid = UINT64_MAX;
+          LL_PREPEND (server->profiling_data, profile);
+        }
       POCL_LOCK (running_cmd->data.sync.mutex);
       POCL_SIGNAL_COND (running_cmd->data.sync.cond);
       TP_MSG_RECEIVED (running_cmd->reply.msg_id, running_cmd->event_id,
@@ -743,6 +812,11 @@ finish_running_cmd (network_command *running_cmd,
       /* setup event timestamps */
       cl_event e = running_cmd->data.async.node->sync.event.event;
       cl_command_type type = running_cmd->data.async.node->type;
+      if (profile)
+        {
+          profile->submitted = e->time_submit;
+          profile->qid = e->queue->id;
+        }
 
       uint64_t ocl_in_host_queue = 0, ocl_in_dev_queue = 0, ocl_on_dev = 0;
       if (running_cmd->reply.timing.submitted
@@ -757,51 +831,6 @@ finish_running_cmd (network_command *running_cmd,
           >= running_cmd->reply.timing.started)
         ocl_on_dev = running_cmd->reply.timing.completed
                      - running_cmd->reply.timing.started;
-
-      /* No-op until writer has finished writing timestamps
-       * If we get stuck here something has gone wrong */
-      uint64_t start, end;
-      do
-        {
-          end = POCL_ATOMIC_LOAD (running_cmd->client_write_end_timestamp_ns);
-          start
-            = POCL_ATOMIC_LOAD (running_cmd->client_write_start_timestamp_ns);
-        }
-      while (end <= start);
-      /* TODO this compares times of write() syscalls, but that may not be
-       * equal to transfer times */
-      uint64_t local_writing_ns = end - start;
-
-      assert (running_cmd->reply.server_read_end_timestamp_ns
-              >= running_cmd->reply.server_read_start_timestamp_ns);
-      uint64_t remote_reading_ns
-        = running_cmd->reply.server_read_end_timestamp_ns
-          - running_cmd->reply.server_read_start_timestamp_ns;
-
-      /* in theory, local_writing should be +- equal remote reading, select
-       * larger */
-      uint64_t client_to_remote = remote_reading_ns > local_writing_ns
-                                    ? remote_reading_ns
-                                    : local_writing_ns;
-
-      /* TODO we don't have the timings for remote writing */
-      uint64_t remote_writing_ns = 0;
-
-      /* No-op until reader has finished writing timestamps (should never be
-       * necessary) If we get stuck here something has gone wrong */
-      end = POCL_ATOMIC_LOAD (running_cmd->client_read_end_timestamp_ns);
-      do
-        {
-          start
-            = POCL_ATOMIC_LOAD (running_cmd->client_read_start_timestamp_ns);
-        }
-      while (end <= start);
-      uint64_t local_reading_ns = end - start;
-
-      /* should be +- equal, select larger */
-      uint64_t remote_to_client = local_reading_ns > remote_writing_ns
-                                    ? local_reading_ns
-                                    : remote_writing_ns;
 
       switch (type)
         {
@@ -838,6 +867,17 @@ finish_running_cmd (network_command *running_cmd,
 
         default:
           break;
+        }
+
+      if (profile)
+        {
+          profile->exec_start
+            = profile->write_end
+              + (running_cmd->reply.server_cmd_start_timestamp_ns
+                 - running_cmd->reply.server_read_end_timestamp_ns)
+              + ocl_in_host_queue + ocl_in_dev_queue;
+          profile->exec_end = profile->exec_start + ocl_on_dev;
+          LL_PREPEND (server->profiling_data, profile);
         }
 
 #ifdef ENABLE_RDMA
@@ -923,7 +963,7 @@ pocl_remote_reader_pthread (void *aa)
                   DL_FOREACH_SAFE (inflight->queue, cmd, tmp)
                     {
                       DL_DELETE (inflight->queue, cmd);
-                      finish_running_cmd (cmd, NETCMD_FAILED);
+                      finish_running_cmd (remote, cmd, NETCMD_FAILED);
                     }
                   POCL_UNLOCK (inflight->mutex);
 
@@ -1044,7 +1084,7 @@ pocl_remote_reader_pthread (void *aa)
       POCL_LOCK (inflight->mutex);
       DL_DELETE (inflight->queue, running_cmd);
       POCL_UNLOCK (inflight->mutex);
-      finish_running_cmd (running_cmd, NETCMD_FINISHED);
+      finish_running_cmd (remote, running_cmd, NETCMD_FINISHED);
     }
   return NULL;
 }
@@ -1137,7 +1177,7 @@ pocl_remote_rdma_reader_pthread (void *aa)
       DL_DELETE (this->queue, cmd);
       POCL_UNLOCK (this->mutex);
 
-      finish_running_cmd (cmd, NETCMD_FINISHED);
+      finish_running_cmd (remote, cmd, NETCMD_FINISHED);
 
       POCL_LOCK (this->mutex);
     }
@@ -1656,12 +1696,207 @@ stop_engines (remote_server_data_t *d)
 #undef NOTIFY_SHUTDOWN
 }
 
+static const char *
+request_to_str (enum RequestMessageType type)
+{
+  switch (type)
+    {
+    case MessageType_InvalidRequest:
+      return "INVALID REQUEST";
+    case MessageType_CreateOrAttachSession:
+      return "CreateOrAttachSession";
+    case MessageType_ServerInfo:
+      return "ServerInfo";
+    case MessageType_DeviceInfo:
+      return "DeviceInfo";
+    case MessageType_ConnectPeer:
+      return "ConnectPeer";
+    case MessageType_PeerHandshake:
+      return "PeerHandshake";
+
+    case MessageType_CreateBuffer:
+      return "CreateBuffer";
+    case MessageType_FreeBuffer:
+      return "FreeBuffer";
+
+    case MessageType_CreateCommandQueue:
+      return "CreateCommandQueue";
+    case MessageType_FreeCommandQueue:
+      return "FreeCommandQueue";
+
+    case MessageType_CreateSampler:
+      return "CreateSampler";
+    case MessageType_FreeSampler:
+      return "FreeSampler";
+
+    case MessageType_CreateImage:
+      return "CreateImage";
+    case MessageType_FreeImage:
+      return "FreeImage";
+
+    case MessageType_CreateKernel:
+      return "CreateKernel";
+    case MessageType_FreeKernel:
+      return "FreeKernel";
+
+    case MessageType_BuildProgramFromSource:
+      return "BuildProgramFromSource";
+    case MessageType_CompileProgramFromSource:
+      return "CompileProgramFromSource";
+    case MessageType_BuildProgramFromBinary:
+      return "BuildProgramFromBinary";
+    case MessageType_BuildProgramFromSPIRV:
+      return "BuildProgramFromSPIRV";
+    case MessageType_CompileProgramFromSPIRV:
+      return "CompileProgramFromSPIRV";
+    case MessageType_LinkProgram:
+      return "LinkProgram";
+    case MessageType_BuildProgramWithBuiltins:
+      return "BuildProgramWithBuiltins";
+    case MessageType_BuildProgramWithDefinedBuiltins:
+      return "BuildProgramWithDefinedBuiltins";
+    case MessageType_FreeProgram:
+      return "FreeProgram";
+
+    case MessageType_MigrateD2D:
+      return "MigrateD2D";
+    case MessageType_Barrier:
+      return "Barrier";
+
+    case MessageType_ReadBuffer:
+      return "ReadBuffer";
+    case MessageType_WriteBuffer:
+      return "WriteBuffer";
+    case MessageType_CopyBuffer:
+      return "CopyBuffer";
+    case MessageType_FillBuffer:
+      return "FillBuffer";
+
+    case MessageType_ReadBufferRect:
+      return "ReadBufferRect";
+    case MessageType_WriteBufferRect:
+      return "WriteBufferRect";
+    case MessageType_CopyBufferRect:
+      return "CopyBufferRect";
+
+    case MessageType_CopyImage2Buffer:
+      return "CopyImage2Buffer";
+    case MessageType_CopyBuffer2Image:
+      return "CopyBuffer2Image";
+    case MessageType_CopyImage2Image:
+      return "CopyImage2Image";
+    case MessageType_ReadImageRect:
+      return "ReadImageRect";
+    case MessageType_WriteImageRect:
+      return "WriteImageRect";
+    case MessageType_FillImageRect:
+      return "FillImageRect";
+
+    case MessageType_RunKernel:
+      return "RunKernel";
+
+    case MessageType_NotifyEvent:
+      return "NotifyEvent";
+
+    case MessageType_RdmaBufferRegistration:
+      return "RdmaBufferRegistration";
+
+    case MessageType_Finish:
+      return "Finish";
+
+    case MessageType_Shutdown:
+      return "Shutdown";
+
+    case MessageType_CreateCommandBuffer:
+      return "CreateCommandBuffer";
+    case MessageType_FreeCommandBuffer:
+      return "FreeCommandBuffer";
+    case MessageType_RunCommandBuffer:
+      return "RunCommandBuffer";
+
+    default:
+      return "UNKNOWN";
+    }
+}
+
+static int remote_atexit_set = 0;
+static void
+dump_netcmd_trace_at_exit ()
+{
+  const uint8_t MSGLABEL_ID = 1;
+  const uint8_t SERVERLABEL_ID = 2;
+  const uint8_t SERVER_START = 3;
+  const uint8_t SERVER_END = 4;
+  const uint8_t EVENT_ID = 6;
+  remote_server_data_t *rsd;
+  FILE *f = fopen ("pocl-remote.trace", "wb");
+  fprintf (f, "POCLRTRC");
+  for (int i = 0; i < MessageType_Shutdown; ++i)
+    {
+      fwrite (&MSGLABEL_ID, sizeof (MSGLABEL_ID), 1, f);
+      uint32_t t = i;
+      fwrite (&t, sizeof (t), 1, f);
+      const char *label = request_to_str (i);
+      uint32_t label_len = strlen (label);
+      fwrite (&label_len, sizeof (label_len), 1, f);
+      fwrite (label, 1, label_len, f);
+    }
+
+  DL_FOREACH (servers, rsd)
+    {
+      pocl_remote_timing_t *prof = NULL;
+      pocl_remote_timing_t *del = NULL;
+
+      fwrite (&SERVER_START, sizeof (SERVER_START), 1, f);
+      fwrite (&SERVERLABEL_ID, sizeof (SERVERLABEL_ID), 1, f);
+      uint32_t label_len = strlen (rsd->address_with_port);
+      fwrite (&label_len, sizeof (label_len), 1, f);
+      fwrite (rsd->address_with_port, 1, label_len, f);
+
+      LL_FOREACH (rsd->profiling_data, prof)
+        {
+          if (del)
+            POCL_MEM_FREE (del);
+
+          uint32_t tmp;
+          fwrite (&EVENT_ID, sizeof (EVENT_ID), 1, f);
+          tmp = prof->kind;
+          fwrite (&tmp, sizeof (tmp), 1, f);
+          fwrite (&prof->qid, sizeof (prof->qid), 1, f);
+          fwrite (&prof->eid, sizeof (prof->eid), 1, f);
+          fwrite (&prof->submitted, sizeof (prof->submitted), 1, f);
+          fwrite (&prof->write_start, sizeof (prof->write_start), 1, f);
+          fwrite (&prof->write_end, sizeof (prof->write_end), 1, f);
+          fwrite (&prof->exec_start, sizeof (prof->exec_start), 1, f);
+          fwrite (&prof->exec_end, sizeof (prof->exec_end), 1, f);
+          fwrite (&prof->read_start, sizeof (prof->read_start), 1, f);
+          fwrite (&prof->read_end, sizeof (prof->read_end), 1, f);
+          tmp = prof->failed;
+          fwrite (&tmp, sizeof (tmp), 1, f);
+
+          LL_DELETE (rsd->profiling_data, prof);
+          del = prof;
+        }
+      if (del)
+        POCL_MEM_FREE (del);
+
+      fwrite (&SERVER_END, sizeof (SERVER_END), 1, f);
+    }
+  fclose (f);
+}
+
 static remote_server_data_t *
 find_or_create_server (const char *address_with_port, unsigned port,
                        remote_device_data_t *ddata, cl_device_id device,
                        const char *const parameters)
 {
   size_t l = strlen (address_with_port);
+  if (pocl_get_bool_option ("POCL_REMOTE_NETWORK_TRACE", 0)
+      && !remote_atexit_set)
+    {
+      remote_atexit_set = 1;
+      atexit (dump_netcmd_trace_at_exit);
+    }
 
   remote_server_data_t *rsd = NULL;
   DL_FOREACH (servers, rsd)

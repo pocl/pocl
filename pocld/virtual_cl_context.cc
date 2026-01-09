@@ -377,7 +377,12 @@ void VirtualCLContext::broadcastToPeers(const Request &req) {
 }
 
 void VirtualCLContext::unknownRequest(Request *req) {
-  Reply *rep = new Reply(req);
+  auto Now = std::chrono::steady_clock::now();
+  uint64_t ProcessingStart =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(
+          Now.time_since_epoch())
+          .count();
+  Reply *rep = new Reply(req, ProcessingStart);
   POCL_MSG_ERR("Unknown request type: %d\n", req->Body.message_type);
   replyFail(&rep->rep, &req->Body, CL_INVALID_OPERATION);
   WriteFast->pushReply(rep);
@@ -401,7 +406,12 @@ int VirtualCLContext::checkPlatformDeviceValidity(Request *req) {
       (did < SharedContextList[pid]->numDevices()))
     return 0;
 
-  Reply *reply = new Reply(req);
+  auto Now = std::chrono::steady_clock::now();
+  uint64_t ProcessingStart =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(
+          Now.time_since_epoch())
+          .count();
+  Reply *reply = new Reply(req, ProcessingStart);
 
   int err =
       (pid < PlatformList.size() ? CL_INVALID_DEVICE : CL_INVALID_PLATFORM);
@@ -438,7 +448,12 @@ int VirtualCLContext::run() {
       reply = nullptr;
       if (request->Body.message_type != MessageType_MigrateD2D &&
           request->Body.message_type != MessageType_RdmaBufferRegistration) {
-        reply = new Reply(request);
+        auto Now = std::chrono::steady_clock::now();
+        uint64_t ProcessingStart =
+            std::chrono::duration_cast<std::chrono::nanoseconds>(
+                Now.time_since_epoch())
+                .count();
+        reply = new Reply(request, ProcessingStart);
       }
 
       // PROCESSS REQUEST, then PUSH REPLY to WRITE Q

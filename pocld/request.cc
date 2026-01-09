@@ -197,10 +197,10 @@ template <class T> bool RequestReadImpl(Request *Req, T *Source) {
   RequestMsg_t *Body = &Req->Body;
 
   if (!Req->ReadStartTimestampNS) {
-    auto now1 = std::chrono::system_clock::now();
+    auto Now = std::chrono::steady_clock::now();
     Req->ReadStartTimestampNS =
         std::chrono::duration_cast<std::chrono::nanoseconds>(
-            now1.time_since_epoch())
+            Now.time_since_epoch())
             .count();
   }
 
@@ -320,10 +320,10 @@ template <class T> bool RequestReadImpl(Request *Req, T *Source) {
   /*****************************/
 
   if (!Req->ReadEndTimestampNS) {
-    auto now2 = std::chrono::system_clock::now();
+    auto Now = std::chrono::steady_clock::now();
     Req->ReadEndTimestampNS =
         std::chrono::duration_cast<std::chrono::nanoseconds>(
-            now2.time_since_epoch())
+            Now.time_since_epoch())
             .count();
   }
 
