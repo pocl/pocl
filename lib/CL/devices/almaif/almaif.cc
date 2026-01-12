@@ -473,7 +473,7 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
     dev->compiler_available = CL_TRUE;
     dev->linker_available = CL_TRUE;
     std::string adf_file = device_init_file + ".adf";
-    pocl_almaif_compile_init(dev, adf_file);
+    pocl_almaif_compile_init(j, dev, adf_file);
 
   } else {
     D->compilationData = NULL;

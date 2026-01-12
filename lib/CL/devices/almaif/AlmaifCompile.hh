@@ -70,7 +70,8 @@ typedef struct almaif_kernel_data_s {
   uint32_t kernel_md_offset;
 } almaif_kernel_data_t;
 
-int pocl_almaif_compile_init(cl_device_id dev, const std::string &parameters);
+int pocl_almaif_compile_init(unsigned j, cl_device_id dev,
+                             const std::string &parameters);
 cl_int pocl_almaif_compile_uninit(cl_device_id dev);
 
 extern "C" {

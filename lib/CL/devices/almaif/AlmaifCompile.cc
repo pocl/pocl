@@ -43,7 +43,8 @@
 
 extern int pocl_offline_compile;
 
-int pocl_almaif_compile_init(cl_device_id dev, const std::string &parameters) {
+int pocl_almaif_compile_init(unsigned j, cl_device_id dev,
+                             const std::string &parameters) {
   AlmaifData *d = (AlmaifData *)dev->data;
 
   d->compilationData = (compilation_data_t *)pocl_aligned_malloc(
