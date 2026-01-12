@@ -65,7 +65,7 @@ jobs:
 
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
-          runCMake -DENABLE_TCE=ON
+          runCMake -DENABLE_TCE=ON -DLLC_HOST_CPU=haswell
 
       - name: Run Build
         id: build
