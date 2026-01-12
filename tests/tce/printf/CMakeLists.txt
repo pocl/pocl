@@ -33,22 +33,10 @@ add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
 add_test_pocl(NAME "tcele/printf" COMMAND "printf_host" run WORKITEM_HANDLER "loopvec")
 
-add_test_pocl(NAME "almaif/printf" COMMAND "printf_host" run WORKITEM_HANDLER "loopvec")
-
 set_tests_properties( "tcele/printf"
   PROPERTIES
     COST 40.0
     PROCESSORS 1
     PASS_REGULAR_EXPRESSION "PING23456.000000 2000001OK"
-    LABELS "tce;tta;ttasim;tcemc"
-    ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
-    DEPENDS "pocl_version_check")
-
-set_tests_properties( "almaif/printf"
-  PROPERTIES
-    COST 40.0
-    PROCESSORS 1
-    PASS_REGULAR_EXPRESSION "PING23456.000000 2000001OK"
-    LABELS "almaif"
-    ENVIRONMENT "POCL_DEVICES=almaif;POCL_ALMAIF0_PARAMETERS=0xB,${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE"
+    LABELS "tce;tta;ttasim;tcemc;almaif"
     DEPENDS "pocl_version_check")
