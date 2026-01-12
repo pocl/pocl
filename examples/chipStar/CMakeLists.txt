@@ -64,10 +64,10 @@ if(NOT ENABLE_HOST_CPU_DEVICES)
   return()
 endif()
 
-if((LLVM_VERSION_MAJOR GREATER_EQUAL 16) AND HOST_CPU_ENABLE_CL_KHR_FP16)
+if(HOST_CPU_ENABLE_CL_KHR_FP16)
   message(STATUS "${TS_NAME}: fp16 enabled")
 else()
-  message(STATUS "Disabling ${TS_NAME}, needs at least LLVM 16 (for fp16 support in CPU device)")
+  message(STATUS "Disabling ${TS_NAME}, needs fp16 support in CPU device")
   return()
 endif()
 

@@ -26,8 +26,4 @@
 // There is no libdevice function to calll the approximate reciprocal
 // intrinsic. We use clang's intrinsics here.
 
-#if __clang_major__ >= 15
 DEFINE_NATIVE_F_F(native_recip, __nvvm_rcp_approx_ftz_f(a), (stype)1/a)
-#else
-DEFINE_NATIVE_F_F(native_recip, (stype)1/a, (stype)1/a)
-#endif

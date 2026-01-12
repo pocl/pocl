@@ -57,7 +57,7 @@ jobs:
             config: basic
           - llvm: 21
             config: devel
-          - llvm: 17
+          - llvm: 19
             config: TBB
           - llvm: 18
             config: OpenMP

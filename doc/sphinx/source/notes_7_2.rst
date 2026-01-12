@@ -20,7 +20,7 @@ CUDA driver
 * Implement sub_group_{reduce,scan_exclusive,scan_inclusive}_* and
   sub_group_{all,any,broadcast}. (reduce is only available for PTX6.0+)
 * Note that CUDA driver does not support LLVM 21, due to a bug
-  in upstream Clang code. Users must use LLVM 17 to 20 with CUDA. For details,
+  in upstream Clang code. Users must use LLVM 18 to 20 with CUDA. For details,
   see https://github.com/llvm/llvm-project/issues/154772
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -33,5 +33,4 @@ OpenASIP (ttasim) driver
 Deprecation/feature removal notices
 ===================================
 
-* Support for LLVM 17 will be removed in the next release.
-
+* Support for LLVM version 17 was removed, versions 18 to 21 are supported

@@ -549,11 +549,9 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 #if LLVM_MAJOR >= 20
   dev->supported_spir_v_versions
     = "SPIR-V_1.5 SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
-#elif LLVM_MAJOR >= 18
+#else
   dev->supported_spir_v_versions
     = "SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
-#else
-  dev->supported_spir_v_versions = "SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
 #endif
   dev->supported_spirv_extensions = "+SPV_KHR_no_integer_wrap_decoration"
                                     ",+SPV_INTEL_fp_fast_math_mode"
