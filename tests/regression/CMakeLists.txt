@@ -387,22 +387,10 @@ set_property(TEST
 
 # Label tests that work with MLIR
 set_property(TEST
-  "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_cbs"
-  "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_cbs"
-  "regression/barrier_between_two_for_loops_cbs"
-  "regression/case_with_multiple_variable_length_loops_and_a_barrier_in_one_cbs"
   "regression/clSetKernelArg_overwriting_the_previous_kernel's_args_cbs"
-  "regression/early_return_before_a_barrier_region_cbs"
-  "regression/for-loop_with_a_variable_iteration_count_cbs"
-  "regression/simple_for-loop_with_a_barrier_inside_cbs"
-  "regression/test_issue_1525"
-  "regression/test_issue_2005_cbs"
-  "regression/test_issue_231_cbs"
   "regression/test_issue_445_cbs"
   "regression/test_issue_757_cbs"
-  "regression/test_issue_893_cbs"
   "regression/test_workitem_func_outside_kernel_cbs"
-  "regression/undominated_variable_from_conditional_barrier_handling_cbs"
   APPEND PROPERTY LABELS "mlir")
 
 if(ENABLE_LEVEL0)

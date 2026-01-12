@@ -36,7 +36,6 @@ def Workgroup : Pass<"pocl-workgroup", "mlir::ModuleOp"> {
 	"mlir::func::FuncDialect",
 	"mlir::arith::ArithDialect",
 	"mlir::gpu::GPUDialect",
-	"mlir::polygeist::PolygeistDialect",
 	];
 }
 
@@ -45,15 +44,6 @@ def ConvertAffineParallelToAffineFor : Pass<"pocl-affine-parallel-to-for", "mlir
 	let constructor = "mlir::pocl::createConvertAffineParallelToAffineForPass()";
 	let dependentDialects = [
 	"mlir::affine::AffineDialect",
-	];
-}
-
-def MemrefGlobalOpToAllocas : Pass<"pocl-memref-globalop-to-allocas", "mlir::ModuleOp"> {
-	let summary = "Convert all memref GetGlobalOps to AllocaOps";
-	let constructor = "mlir::pocl::createMemrefGlobalOpToAllocasPass()";
-	let dependentDialects = [
-	"mlir::memref::MemRefDialect",
-	"mlir::func::FuncDialect",
 	];
 }
 
@@ -84,6 +74,14 @@ def LowerOpenCLBuiltins : Pass<"pocl-lower-opencl-builtins", "mlir::ModuleOp"> {
 	"mlir::gpu::GPUDialect",
 	"mlir::scf::SCFDialect",
 	"mlir::pocl::PoclDialect",
+	];
+}
+
+def StripMemSpaces : Pass<"pocl-strip-memspaces", "mlir::ModuleOp"> {
+	let summary = "TODO";
+	let constructor = "mlir::pocl::createStripMemSpacesPass()";
+	let dependentDialects = [
+	"mlir::memref::MemRefDialect",
 	];
 }
 

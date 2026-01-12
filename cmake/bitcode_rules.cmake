@@ -193,26 +193,6 @@ macro(compile_to_bc SUBDIR OUTPUT_FILE_LIST EXTRA_CONFIG)
   endforeach()
 endmacro()
 
-function(compile_c_to_cir FILENAME SUBDIR)
-    get_filename_component(FNAME "${FILENAME}" NAME)
-    set(CIR_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.cir")
-    if(IS_ABSOLUTE "${FILENAME}")
-      set(FULL_F_PATH "${FILENAME}")
-    else()
-      set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
-    endif()
-    add_custom_command( OUTPUT "${CIR_FILE}"
-        DEPENDS "${FULL_F_PATH}"
-        "${CMAKE_SOURCE_DIR}/include/pocl_types.h"
-        "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
-        COMMAND "${CLANG}" ${CLANG_FLAGS} ${DEVICE_CL_FLAGS} "-O1"
-        "-I${CMAKE_SOURCE_DIR}/include"
-        "-include" "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
-        ${KERNEL_C_FLAGS} "${FULL_F_PATH}" "-o" ${CIR_FILE}
-        COMMENT "Building C to CIR bytecode ${CIR_FILE}"
-        VERBATIM)
-endfunction()
-
 function(compile_cl_to_cir FILENAME SUBDIR)
     get_filename_component(FNAME "${FILENAME}" NAME)
     set(CIR_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.cir")
@@ -225,7 +205,7 @@ function(compile_cl_to_cir FILENAME SUBDIR)
         DEPENDS "${FULL_F_PATH}"
         "${CMAKE_SOURCE_DIR}/include/pocl_types.h"
         "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
-        COMMAND "${CLANG}" ${CLANG_FLAGS} ${DEVICE_CL_FLAGS} "-O1"
+        COMMAND "${HOST_CLANG}" ${CLANG_FLAGS} ${DEVICE_CL_FLAGS} "-O1"
         "-I${CMAKE_SOURCE_DIR}/include"
         "-include" "${CMAKE_SOURCE_DIR}/include/_kernel.h"
         ${KERNEL_CL_FLAGS} "${FULL_F_PATH}" "-o" ${CIR_FILE}
@@ -240,7 +220,7 @@ function(compile_cir_to_mlir FILENAME SUBDIR MLIR_FILE_LIST)
     set(${MLIR_FILE_LIST} ${${MLIR_FILE_LIST}} ${MLIR_FILE} PARENT_SCOPE)
     add_custom_command( OUTPUT "${MLIR_FILE}"
         DEPENDS "${CIR_FILE}"
-        COMMAND "${CIROPT}" ${CIR_FILE} "-cir-mlir-scf-prepare"
+        COMMAND "${CIROPT}" ${CIR_FILE} "-mem2reg" "-cir-mlir-scf-prepare"
         "-cir-to-mlir" "-mem2reg" "-cse" "-canonicalize"
         "-o" "${MLIR_FILE}"
         COMMENT "Building CIR to MLIR bytecode ${MLIR_FILE}"
@@ -266,10 +246,7 @@ endfunction()
 
 macro(compile_to_mlir SUBDIR OUTPUT_FILE_LIST EXTRA_CONFIG)
   foreach(FILENAME ${ARGN})
-  if(FILENAME MATCHES "[.]c$")
-    compile_c_to_cir("${FILENAME}" "${SUBDIR}")
-    compile_cir_to_mlir("${FILENAME}" "${SUBDIR}" ${OUTPUT_FILE_LIST})
-  elseif(FILENAME MATCHES "[.]cl$")
+  if(FILENAME MATCHES "[.]cl$")
     compile_cl_to_cir("${FILENAME}" "${SUBDIR}")
     compile_cir_to_mlir("${FILENAME}" "${SUBDIR}" ${OUTPUT_FILE_LIST})
   elseif(FILENAME MATCHES "[.]mlir$")

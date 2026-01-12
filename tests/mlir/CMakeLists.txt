@@ -23,17 +23,19 @@
 #
 #=============================================================================
 
-configure_lit_site_cfg(
-  ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.py.in
-  ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg.py
-  MAIN_CONFIG
-  ${CMAKE_CURRENT_SOURCE_DIR}/lit.cfg.py
-)
+if(LLVM_EXTERNAL_LIT)
+  configure_lit_site_cfg(
+    ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.py.in
+    ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg.py
+    MAIN_CONFIG
+    ${CMAKE_CURRENT_SOURCE_DIR}/lit.cfg.py
+  )
 
-add_lit_testsuite(check-pocl-mlir-opt "Verify PoCL MLIR passes perform correctly"
+  add_lit_testsuite(check-pocl-mlir-opt "Verify PoCL MLIR passes perform correctly"
     ${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS pocl-mlir-opt
     ARGS -v
-)
+  )
+  set_target_properties(check-pocl-mlir-opt PROPERTIES FOLDER "Tests")
 
-set_target_properties(check-pocl-mlir-opt PROPERTIES FOLDER "Tests")
+endif()

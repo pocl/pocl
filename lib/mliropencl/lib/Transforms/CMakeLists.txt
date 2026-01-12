@@ -30,19 +30,23 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LLVM_CFLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}")
 
 set(MLIRPASSES_SOURCES "Workgroup.cpp"
-			"MemrefGlobalOpToAllocas.cpp"
 			"Linker.cpp"
 			"AffineParallelToAffineFor.cpp"
 			"ConvertMemrefToLLVMKernelArgs.cpp"
 			"LowerOpenCLBuiltins.cpp"
+			"StripMemSpaces.cpp"
 			)
 
-add_library("mlirpasses" OBJECT ${MLIRPASSES_SOURCES})
-harden("mlirpasses")
+pocl_build_clang_llvm_object(mlirpasses ${MLIRPASSES_SOURCES})
 
-target_include_directories("mlirpasses" SYSTEM PRIVATE ${MLIR_INCLUDE_DIRS})
-target_include_directories("mlirpasses" PRIVATE "${CMAKE_SOURCE_DIR}/lib/CL")
-target_include_directories("mlirpasses" PRIVATE "${CMAKE_SOURCE_DIR}/lib/mliropencl/include")
-target_include_directories("mlirpasses" PRIVATE "${CMAKE_BINARY_DIR}/lib/mliropencl/include")
+target_include_directories(mlirpasses PRIVATE "${CMAKE_SOURCE_DIR}/lib/CL")
+target_include_directories(mlirpasses PRIVATE "${CMAKE_SOURCE_DIR}/lib/mliropencl/include")
+target_include_directories(mlirpasses PRIVATE "${CMAKE_BINARY_DIR}/lib/mliropencl/include")
 
-add_dependencies("mlirpasses" MLIRPoCLPassesIncGen)
+if(LLVM_PACKAGE_VERSION)
+  set(LIBMLIRPASSES "obj.mlirpasses")
+else()
+  set(LIBMLIRPASSES "mlirpasses")
+endif()
+add_dependencies(${LIBMLIRPASSES} MLIRPoCLPassesIncGen)
+

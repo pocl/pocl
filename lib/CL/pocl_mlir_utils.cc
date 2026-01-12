@@ -44,7 +44,6 @@
 #include <mlir/Dialect/SCF/IR/SCF.h>
 #include <mlir/Dialect/Vector/IR/VectorOps.h>
 #include <mlir/IR/MLIRContext.h>
-#include <mlir/Polygeist/Dialect/Dialect.h>
 
 #include "pocl/Dialect/Dialect.hh"
 
@@ -57,13 +56,13 @@ void poclMlirRegisterDialects(PoclLLVMContextData *Data) {
   Data->MLIRContext = new mlir::MLIRContext();
   assert(Data->MLIRContext);
   mlir::DialectRegistry Registry;
-  Registry.insert<mlir::func::FuncDialect, mlir::memref::MemRefDialect,
-                  mlir::affine::AffineDialect, mlir::math::MathDialect,
-                  mlir::arith::ArithDialect, mlir::scf::SCFDialect,
-                  mlir::gpu::GPUDialect, mlir::LLVM::LLVMDialect,
-                  mlir::index::IndexDialect, mlir::vector::VectorDialect,
-                  mlir::DLTIDialect, cir::CIRDialect,
-                  mlir::polygeist::PolygeistDialect, mlir::pocl::PoclDialect>();
+  Registry
+      .insert<mlir::func::FuncDialect, mlir::memref::MemRefDialect,
+              mlir::affine::AffineDialect, mlir::math::MathDialect,
+              mlir::arith::ArithDialect, mlir::scf::SCFDialect,
+              mlir::gpu::GPUDialect, mlir::LLVM::LLVMDialect,
+              mlir::index::IndexDialect, mlir::vector::VectorDialect,
+              mlir::DLTIDialect, cir::CIRDialect, mlir::pocl::PoclDialect>();
   mlir::func::registerInlinerExtension(Registry);
   mlir::LLVM::registerInlinerInterface(Registry);
   // MLIR to LLVM conversion registrations:

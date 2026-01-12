@@ -23,7 +23,7 @@
 #
 #=============================================================================
 
-add_mlir_dialect_library(PoclDialect
+add_mlir_dialect_library(PoclDialect OBJECT
                         PoclDialect.cpp
                         DEPENDS
                         MLIRPoclOpsIncGen
@@ -41,3 +41,8 @@ target_include_directories(PoclDialect PRIVATE ${MLIR_INCLUDE_DIRS})
 target_include_directories(PoclDialect PRIVATE "${CMAKE_SOURCE_DIR}/lib/mliropencl/include")
 target_include_directories(PoclDialect PRIVATE "${CMAKE_BINARY_DIR}/lib/mliropencl/include")
 
+install(TARGETS PoclDialect
+        LIBRARY DESTINATION ${POCL_INSTALL_PRIVATE_LIBDIR_REL}
+        COMPONENT "lib"
+        RUNTIME DESTINATION ${POCL_INSTALL_PRIVATE_LIBDIR_REL}
+        COMPONENT "lib")

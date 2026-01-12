@@ -60,8 +60,8 @@ Deprecation/feature removal notices
 Experimental and work-in-progress
 ===================================
 
-* Added experimental MLIR-based OpenCL C kernel compilation flow for CPUs.
+* Added a work-in-progress MLIR-based OpenCL C kernel compilation flow for CPUs.
   The flow supports both Polygeist and ClangIR front-ends.
   Support for basic features such as local memory and some built-ins is included,
-  but the majority of built-in functions not yet supported.
+  but the majority of built-in functions or barriers are not yet supported.
   Contributions are welcome to increase the test coverage.

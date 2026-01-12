@@ -282,31 +282,34 @@ if (ENABLE_LLVM)
   endif()
   set(LLVM_API_SOURCES "pocl_llvm_build.cc" "pocl_llvm_metadata.cc" "pocl_llvm_utils.cc" "pocl_llvm_wg.cc" ${EXTRA_LLVM_SOURCES})
 
-  if (ENABLE_MLIR)
-    list(APPEND POCL_LIB_SOURCES
-                   "pocl_mlir.h"
-                   "pocl_mlir_file_util.hh"
-    )
-    include_directories("${CMAKE_SOURCE_DIR}/lib/mliropencl/include")
-
-    set(MLIR_API_SOURCES "pocl_mlir_build.cc" "pocl_mlir_wg.cc"
-                         "pocl_mlir_metadata.cc" "pocl_mlir_utils.cc"
-                         "pocl_mlir_file_util.cc")
-    set_source_files_properties(${MLIR_API_SOURCES} PROPERTIES
-      COMPILE_FLAGS "${LLVM_CXXFLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl\" -I\"${CMAKE_CURRENT_SOURCE_DIR}/../mliropencl\"")
-    list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:mlirpasses>")
-    pocl_build_clang_llvm_object(lib_cl_llvm ${LLVM_API_SOURCES})
-    add_dependencies("lib_cl_llvm" MLIRPoCLPassesIncGen)
-  else()
-    pocl_build_clang_llvm_object(lib_cl_llvm ${LLVM_API_SOURCES})
-  endif()
-
+  pocl_build_clang_llvm_object(lib_cl_llvm ${LLVM_API_SOURCES})
   if(LLVM_PACKAGE_VERSION)
     list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:obj.llvmpasses>")
     list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:obj.lib_cl_llvm>")
   else()
     list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:llvmpasses>")
     list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:lib_cl_llvm>")
+  endif()
+
+  if (ENABLE_MLIR)
+    list(APPEND POCL_LIB_SOURCES
+                   "pocl_mlir.h"
+                   "pocl_mlir_file_util.hh"
+    )
+    set(MLIR_API_SOURCES "pocl_mlir_build.cc" "pocl_mlir_wg.cc"
+                         "pocl_mlir_metadata.cc" "pocl_mlir_utils.cc"
+                         "pocl_mlir_file_util.cc")
+    pocl_build_clang_llvm_object(lib_cl_mlir ${MLIR_API_SOURCES})
+    target_include_directories(lib_cl_mlir PRIVATE "${CMAKE_SOURCE_DIR}/lib/mliropencl/include")
+    target_include_directories(lib_cl_mlir PRIVATE "${CMAKE_BINARY_DIR}/lib/mliropencl/include")
+
+    if(LLVM_PACKAGE_VERSION)
+      list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:obj.mlirpasses>")
+      list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:obj.lib_cl_mlir>")
+    else()
+      list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:mlirpasses>")
+      list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:lib_cl_mlir>")
+    endif()
   endif()
 
   if(BUILD_SHARED_LIBS AND MSVC)
@@ -385,7 +388,7 @@ if(ENABLE_LLVM)
   endif()
 
   if (ENABLE_MLIR)
-    list(APPEND POCL_PRIVATE_LINK_LIBRARIES
+    list(APPEND POCL_PRIVATE_LINK_LIST
     MLIR
     PoclDialect
     )
@@ -454,6 +457,10 @@ install(TARGETS "${POCL_LIBRARY_NAME}"
         COMPONENT "lib"
 )
 
+if (ENABLE_MLIR)
+  set_property(TARGET "${POCL_LIBRARY_NAME}" APPEND PROPERTY
+    INSTALL_RPATH "\$ORIGIN/../${POCL_INSTALL_PRIVATE_LIBDIR_REL}")
+endif()
 
 if(ENABLE_IPO)
   set_property(TARGET "${POCL_LIBRARY_NAME}" PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)

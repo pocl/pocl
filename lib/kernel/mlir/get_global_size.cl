@@ -21,11 +21,8 @@
    IN THE SOFTWARE.
 */
 
-unsigned long _Z14get_local_sizej (unsigned int dimindx);
-unsigned long _Z14get_num_groupsj (unsigned int dimindx);
-
-unsigned long
-_Z15get_global_sizej (unsigned int dimindx)
+size_t _CL_OVERLOADABLE
+get_global_size (unsigned int dim)
 {
-  return _Z14get_num_groupsj (dimindx) * _Z14get_local_sizej (dimindx);
+  return get_num_groups (dim) * get_local_size (dim);
 }

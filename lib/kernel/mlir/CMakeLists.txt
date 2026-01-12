@@ -29,16 +29,14 @@ include("bitcode_rules")
 set(MLIR_KERNELLIB_SOURCES
 "mlir/get_global_id.cl"
 "mlir/get_global_offset.cl"
-"mlir/get_global_size.c"
+"mlir/get_global_size.cl"
 "mlir/math.mlir"
 )
 
-set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=120 -DPOCL_DEVICE_ADDRESS_BITS=64 -fclangir -emit-cir")
+set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=120 -DPOCL_DEVICE_ADDRESS_BITS=64 -fclangir -emit-cir --target=spirv64")
 separate_arguments(DEVICE_CL_FLAGS)
 
 set(KERNEL_CL_FLAGS "-D__OPENCL_C_VERSION__=120" )
-
-set(KERNEL_C_FLAGS -xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fPIC )
 
 make_kernel_mlir(KERNEL_MLIR "mlirbc" "mlir" 0 0 0 ${MLIR_KERNELLIB_SOURCES})
 

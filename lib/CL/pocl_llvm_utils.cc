@@ -63,6 +63,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #if LLVM_MAJOR < 22
 using LLVMOptionMap = llvm::StringMap<llvm::cl::Option *>;
+#elif defined(ENABLE_MLIR)
+using LLVMOptionMap = llvm::StringMap<llvm::cl::Option *>;
 #else
 using LLVMOptionMap = llvm::DenseMap<llvm::StringRef, llvm::cl::Option *>;
 #endif

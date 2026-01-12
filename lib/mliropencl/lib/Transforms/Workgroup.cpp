@@ -38,12 +38,11 @@
 #include <mlir/IR/PatternMatch.h>
 #include <mlir/IR/ValueRange.h>
 #include <mlir/Pass/Pass.h>
-#include <mlir/Polygeist/Dialect/Dialect.h>
-#include <mlir/Polygeist/Dialect/Ops.h>
 #include <mlir/Transforms/InliningUtils.h>
 
 #include "pocl/Dialect/PoclOps.hh"
 #include "pocl/Transforms/Passes.hh"
+#include "llvm/ADT/STLExtras.h"
 
 #include "pocl_util.h"
 
@@ -60,7 +59,7 @@ struct Workgroup : public impl::WorkgroupBase<Workgroup> {
 
   mlir::affine::AffineParallelOp
   createAffineParallelLoop(mlir::func::FuncOp FuncOp,
-                           mlir::OpBuilder &Builder) {
+                           mlir::IRRewriter &Builder) {
     //  Create a builder with the same context as the block
     auto *Context = Builder.getContext();
     auto Loc = Builder.getUnknownLoc();
@@ -87,16 +86,16 @@ struct Workgroup : public impl::WorkgroupBase<Workgroup> {
                                    POCL_CONTEXT_NUM_ELEMENTS_AS_ARGS - 6;
       mlir::Value LocalSizeX = FuncOp.getFunctionBody().getArgument(
           TotalNumOfArguments - LocalSizeOffsetFromEnd + 0);
-      auto LocalSizeXCasted = Builder.create<mlir::arith::IndexCastOp>(
-          Builder.getUnknownLoc(), Builder.getIndexType(), LocalSizeX);
+      auto LocalSizeXCasted = mlir::arith::IndexCastOp::create(
+          Builder, Builder.getUnknownLoc(), Builder.getIndexType(), LocalSizeX);
       mlir::Value LocalSizeY = FuncOp.getFunctionBody().getArgument(
           TotalNumOfArguments - LocalSizeOffsetFromEnd + 1);
-      auto LocalSizeYCasted = Builder.create<mlir::arith::IndexCastOp>(
-          Builder.getUnknownLoc(), Builder.getIndexType(), LocalSizeY);
+      auto LocalSizeYCasted = mlir::arith::IndexCastOp::create(
+          Builder, Builder.getUnknownLoc(), Builder.getIndexType(), LocalSizeY);
       mlir::Value LocalSizeZ = FuncOp.getFunctionBody().getArgument(
           TotalNumOfArguments - LocalSizeOffsetFromEnd + 2);
-      auto LocalSizeZCasted = Builder.create<mlir::arith::IndexCastOp>(
-          Builder.getUnknownLoc(), Builder.getIndexType(), LocalSizeZ);
+      auto LocalSizeZCasted = mlir::arith::IndexCastOp::create(
+          Builder, Builder.getUnknownLoc(), Builder.getIndexType(), LocalSizeZ);
       UpperBoundValues = mlir::ValueRange(
           {LocalSizeXCasted, LocalSizeYCasted, LocalSizeZCasted});
       OpsNotToCopy.push_back(LocalSizeXCasted);
@@ -110,8 +109,8 @@ struct Workgroup : public impl::WorkgroupBase<Workgroup> {
 
     int64_t Step = 1;
     mlir::affine::AffineParallelOp AffineParallelOp =
-        Builder.create<mlir::affine::AffineParallelOp>(
-            Loc, mlir::TypeRange(),
+        mlir::affine::AffineParallelOp::create(
+            Builder, Loc, mlir::TypeRange(),
             llvm::ArrayRef<mlir::arith::AtomicRMWKind>(),
             llvm::ArrayRef<mlir::AffineMap>{LbMapX, LbMapY, LbMapZ},
             mlir::ValueRange(),
@@ -143,15 +142,22 @@ struct Workgroup : public impl::WorkgroupBase<Workgroup> {
       for (mlir::Operation &OpTmp :
            llvm::make_early_inc_range(Block.getOperations())) {
         auto *Op = &OpTmp;
-        if (std::find(OpsNotToCopy.begin(), OpsNotToCopy.end(), Op) !=
-            OpsNotToCopy.end())
+        if (llvm::find(OpsNotToCopy, Op) != OpsNotToCopy.end())
           continue;
         if (auto AllocaOp = mlir::dyn_cast<mlir::memref::AllocaOp>(Op)) {
           auto Memref = AllocaOp.getMemref();
           auto Memreftype = Memref.getType();
-          auto As = Memreftype.getMemorySpaceAsInt();
-          // if (as == mlir::gpu::GPUDialect::getWorkgroupAddressSpace()) {
-          if (As == 5)
+
+          auto AsAttr = Memreftype.getMemorySpace();
+          // ClangIR produces a proper AS attribute
+          auto GPUAsAttr =
+              mlir::dyn_cast_or_null<mlir::gpu::AddressSpaceAttr>(AsAttr);
+          if (GPUAsAttr &&
+              GPUAsAttr.getValue() == mlir::gpu::AddressSpace::Workgroup)
+            continue;
+          // Polygeist generates numeric id
+          auto NumIdAsAttr = mlir::dyn_cast_or_null<mlir::IntegerAttr>(AsAttr);
+          if (NumIdAsAttr && NumIdAsAttr.getValue() == 5)
             continue;
         }
         Builder.setInsertionPointToEnd(NewBlock);
@@ -176,7 +182,7 @@ struct Workgroup : public impl::WorkgroupBase<Workgroup> {
     // Now it should be safe to erase the original operations
     for (auto It = OrigOpReplaced.rbegin(); It != OrigOpReplaced.rend(); ++It) {
       auto *Op = *It;
-      Op->erase();
+      Builder.eraseOp(Op);
     }
 
     // Move return op from the middle of parallel loop to the end of function
@@ -185,57 +191,40 @@ struct Workgroup : public impl::WorkgroupBase<Workgroup> {
         &AffineParallelOp->getParentRegion()->back());
     AffineParallelOp->walk([&](mlir::func::ReturnOp ReturnOp) {
       Builder.clone(*ReturnOp);
-      ReturnOp->erase();
+      Builder.eraseOp(ReturnOp);
       return;
     });
 
-    std::vector<mlir::Operation *> OpsToErase;
     int I = 0;
     for (auto Dim : {mlir::gpu::Dimension::x, mlir::gpu::Dimension::y,
                      mlir::gpu::Dimension::z}) {
       auto LocalIdValue = AffineParallelOp.getRegion().front().getArgument(I);
       FuncOp->walk([&](mlir::gpu::ThreadIdOp Gop) {
         if (Gop.getDimension() == Dim) {
-          Gop.replaceAllUsesWith(LocalIdValue);
-          OpsToErase.push_back(Gop);
+          Builder.replaceOp(Gop, LocalIdValue);
         }
       });
       I++;
     }
-    for (auto *Op : OpsToErase) {
-      Op->erase();
-    }
     mlir::Value IdxX = AffineParallelOp.getRegion().front().getArgument(0);
     mlir::Value IdxY = AffineParallelOp.getRegion().front().getArgument(1);
     mlir::Value IdxZ = AffineParallelOp.getRegion().front().getArgument(2);
-    mlir::SmallVector<mlir::Value, 3> BarrierArgs{IdxX, IdxY, IdxZ};
-    std::vector<mlir::gpu::BarrierOp> OldBarriers;
-    FuncOp->walk([&](mlir::gpu::BarrierOp Op) {
-      Builder.setInsertionPoint(Op);
-      Builder.create<mlir::polygeist::BarrierOp>(Loc, BarrierArgs);
-      OldBarriers.push_back(Op);
-    });
-    for (auto Op : OldBarriers) {
-      Op.erase();
-    }
 
     int Counter = 0;
-    std::vector<mlir::Operation *> OldAffineOpsToDelete;
     FuncOp->walk([&](mlir::affine::AffineStoreOp Storeop) {
       Builder.setInsertionPoint(Storeop);
       mlir::AffineMap AffineMap = Storeop.getAffineMap();
       llvm::SmallVector<mlir::Value, 4> Indices;
       for (unsigned I = 0, E = AffineMap.getNumResults(); I < E; ++I) {
-        auto ApplyOp = Builder.create<mlir::affine::AffineApplyOp>(
-            Storeop.getLoc(), AffineMap.getSliceMap(I, 1),
+        auto ApplyOp = mlir::affine::AffineApplyOp::create(
+            Builder, Storeop.getLoc(), AffineMap.getSliceMap(I, 1),
             Storeop.getMapOperands());
         Indices.push_back(ApplyOp);
       }
-      mlir::memref::StoreOp NewStoreOp = Builder.create<mlir::memref::StoreOp>(
-          Storeop.getLoc(), Storeop.getValueToStore(), Storeop.getMemref(),
-          Indices);
-      Storeop->replaceAllUsesWith(NewStoreOp);
-      OldAffineOpsToDelete.push_back(Storeop);
+      mlir::memref::StoreOp NewStoreOp = mlir::memref::StoreOp::create(
+          Builder, Storeop.getLoc(), Storeop.getValueToStore(),
+          Storeop.getMemref(), Indices);
+      Builder.replaceOp(Storeop, NewStoreOp);
       Counter++;
     });
     FuncOp->walk([&](mlir::affine::AffineLoadOp Loadop) {
@@ -243,21 +232,17 @@ struct Workgroup : public impl::WorkgroupBase<Workgroup> {
       mlir::AffineMap AffineMap = Loadop.getAffineMap();
       llvm::SmallVector<mlir::Value, 4> Indices;
       for (unsigned I = 0, E = AffineMap.getNumResults(); I < E; ++I) {
-        auto ApplyOp = Builder.create<mlir::affine::AffineApplyOp>(
-            Loadop.getLoc(), AffineMap.getSliceMap(I, 1),
+        auto ApplyOp = mlir::affine::AffineApplyOp::create(
+            Builder, Loadop.getLoc(), AffineMap.getSliceMap(I, 1),
             Loadop.getMapOperands());
         Indices.push_back(ApplyOp);
       }
-      mlir::memref::LoadOp NewLoadOp = Builder.create<mlir::memref::LoadOp>(
-          Loadop.getLoc(), Loadop.getMemRef(), Indices);
-      Loadop.replaceAllUsesWith((mlir::Operation *)NewLoadOp);
-      OldAffineOpsToDelete.push_back(Loadop);
+      mlir::memref::LoadOp NewLoadOp = mlir::memref::LoadOp::create(
+          Builder, Loadop.getLoc(), Loadop.getMemRef(), Indices);
+      Builder.replaceOp(Loadop, NewLoadOp);
 
       Counter++;
     });
-    for (auto *Op : OldAffineOpsToDelete) {
-      Op->erase();
-    }
 
     return AffineParallelOp;
   }
@@ -319,8 +304,7 @@ struct Workgroup : public impl::WorkgroupBase<Workgroup> {
   }
 
   void privatizeMLIRContextGPU(mlir::func::FuncOp &F,
-                               mlir::OpBuilder &Builder) {
-    std::vector<mlir::Operation *> OpsToErase;
+                               mlir::IRRewriter &Builder) {
     int I = 0;
     for (auto Dim : {mlir::gpu::Dimension::x, mlir::gpu::Dimension::y,
                      mlir::gpu::Dimension::z}) {
@@ -334,14 +318,14 @@ struct Workgroup : public impl::WorkgroupBase<Workgroup> {
             auto LocalSize = F.getFunctionBody().getArgument(
                 TotalNumOfArguments - LocalSizeOffsetFromEnd + I);
 
-            LocalSizeValue = Builder.create<mlir::arith::IndexCastOp>(
-                LocalSizeOp.getLoc(), Builder.getIndexType(), LocalSize);
+            LocalSizeValue = mlir::arith::IndexCastOp::create(
+                Builder, LocalSizeOp.getLoc(), Builder.getIndexType(),
+                LocalSize);
           } else {
-            LocalSizeValue = Builder.create<mlir::arith::ConstantIndexOp>(
-                LocalSizeOp.getLoc(), WGLocalSize[I]);
+            LocalSizeValue = mlir::arith::ConstantIndexOp::create(
+                Builder, LocalSizeOp.getLoc(), WGLocalSize[I]);
           }
-          LocalSizeOp->replaceAllUsesWith(LocalSizeValue);
-          OpsToErase.push_back(LocalSizeOp);
+          Builder.replaceOp(LocalSizeOp, LocalSizeValue);
         }
       });
       I++;
@@ -357,10 +341,9 @@ struct Workgroup : public impl::WorkgroupBase<Workgroup> {
           auto GridDim = F.getFunctionBody().getArgument(
               TotalNumOfArguments - GridDimOffsetFromEnd + I);
 
-          auto GridDimValue = Builder.create<mlir::arith::IndexCastOp>(
-              GridDimOp.getLoc(), Builder.getIndexType(), GridDim);
-          GridDimOp->replaceAllUsesWith(GridDimValue);
-          OpsToErase.push_back(GridDimOp);
+          auto GridDimValue = mlir::arith::IndexCastOp::create(
+              Builder, GridDimOp.getLoc(), Builder.getIndexType(), GridDim);
+          Builder.replaceOp(GridDimOp, GridDimValue);
         }
       });
       I++;
@@ -370,15 +353,13 @@ struct Workgroup : public impl::WorkgroupBase<Workgroup> {
                      mlir::gpu::Dimension::z}) {
       F->walk([&](mlir::gpu::BlockIdOp GroupIdOp) {
         if (GroupIdOp.getDimension() == Dim) {
-          // replace all the loadops that used the value of this getGlobalOp
           int TotalNumOfArguments = F.getFunctionBody().getNumArguments();
           auto GroupId = F.getFunctionBody().getArgument(
               TotalNumOfArguments - GROUP_ID_NUM_DIMENSIONS_AS_ARGS + I);
 
-          auto CastedGroupId = Builder.create<mlir::arith::IndexCastOp>(
-              GroupIdOp.getLoc(), Builder.getIndexType(), GroupId);
-          GroupIdOp->replaceAllUsesWith(CastedGroupId);
-          OpsToErase.push_back(GroupIdOp);
+          auto CastedGroupId = mlir::arith::IndexCastOp::create(
+              Builder, GroupIdOp.getLoc(), Builder.getIndexType(), GroupId);
+          Builder.replaceOp(GroupIdOp, CastedGroupId);
         }
       });
       I++;
@@ -387,15 +368,10 @@ struct Workgroup : public impl::WorkgroupBase<Workgroup> {
       int WorkDimOffsetFromEnd = GROUP_ID_NUM_DIMENSIONS_AS_ARGS +
                                  POCL_CONTEXT_NUM_ELEMENTS_AS_ARGS - 13;
       int TotalNumOfArguments = F.getFunctionBody().getNumArguments();
-      auto GroupId = F.getFunctionBody().getArgument(TotalNumOfArguments -
-                                                     WorkDimOffsetFromEnd);
-      WorkDimOp->getResult(0).replaceAllUsesWith(GroupId);
-      OpsToErase.push_back(WorkDimOp);
+      auto WorkDimValue = F.getFunctionBody().getArgument(TotalNumOfArguments -
+                                                          WorkDimOffsetFromEnd);
+      Builder.replaceOp(WorkDimOp, WorkDimValue);
     });
-
-    for (auto *Op : OpsToErase) {
-      Op->erase();
-    }
   }
 
   void runOnOperation() override {
@@ -423,9 +399,12 @@ struct Workgroup : public impl::WorkgroupBase<Workgroup> {
       bool IsKernel =
           FuncOp->hasAttr(mlir::gpu::GPUDialect::getKernelFuncAttrName());
       if (!IsKernel) {
-        return mlir::WalkResult::advance();
+        // Erase every non-kernel function, these should've been inlined
+        // already. They need to be deleted, because otherwise problems arise
+        // when trying to lower WI builtins used in them.
+        Builder.eraseOp(FuncOp);
+        return mlir::WalkResult::skip();
       }
-
       Builder.setInsertionPointToStart(&FuncOp.getFunctionBody().front());
 
       std::vector<mlir::Value> KernelArguments;
@@ -434,8 +413,7 @@ struct Workgroup : public impl::WorkgroupBase<Workgroup> {
       privatizeMLIRContextGPU(FuncOp, Builder);
 
       createAffineParallelLoop(FuncOp, Builder);
-
-      return mlir::WalkResult::interrupt();
+      return mlir::WalkResult::advance();
     });
   }
 

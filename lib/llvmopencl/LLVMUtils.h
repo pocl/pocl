@@ -38,6 +38,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Passes/PassBuilder.h>
 #if LLVM_MAJOR < 22
 #include <llvm/Passes/PassPlugin.h>
+#elif defined(ENABLE_MLIR)
+#include <llvm/Passes/PassPlugin.h>
 #else
 #include <llvm/Plugins/PassPlugin.h>
 #endif

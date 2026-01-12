@@ -50,7 +50,6 @@
 #include <mlir/IR/OwningOpRef.h>
 #include <mlir/IR/Verifier.h>
 #include <mlir/Pass/PassManager.h>
-#include <mlir/Polygeist/Transforms/Passes.h>
 #include <mlir/Transforms/DialectConversion.h>
 #include <mlir/Transforms/GreedyPatternRewriteDriver.h>
 #include <mlir/Transforms/Passes.h>
@@ -73,7 +72,7 @@ static void generateLlvmFunctionNowrite(mlir::OwningOpRef<mlir::ModuleOp> &Mod,
   mlir::PassManager PMLower(MLIRContext);
   PMLower.addPass(mlir::pocl::createConvertAffineParallelToAffineForPass());
   if (mlir::failed(PMLower.run(*Mod))) {
-    POCL_MSG_PRINT_LLVM("Failed lowering the affine parallle to affine for\n");
+    POCL_MSG_PRINT_LLVM("Failed lowering the affine parallel to affine for\n");
   }
 
   pocl::mlir::runAffinePasses(Mod, true);
@@ -85,7 +84,7 @@ static void generateLlvmFunctionNowrite(mlir::OwningOpRef<mlir::ModuleOp> &Mod,
 
   std::string Error;
   const llvm::Target *Target =
-      llvm::TargetRegistry::lookupTarget(TargetTriple, Error);
+      llvm::TargetRegistry::lookupTarget(llvm::Triple(TargetTriple), Error);
   if (!Target) {
     POCL_ABORT("Failed getting the default target: %s\n", Error.c_str());
   }
@@ -100,6 +99,7 @@ static void generateLlvmFunctionNowrite(mlir::OwningOpRef<mlir::ModuleOp> &Mod,
   PMLLVM.addPass(mlir::createSetLLVMModuleDataLayoutPass({DataLayout}));
   PMLLVM.addPass(mlir::createLowerAffinePass());
   PMLLVM.addPass(mlir::createSCFToControlFlowPass());
+  PMLLVM.addPass(mlir::pocl::createStripMemSpacesPass());
   PMLLVM.addPass(mlir::createConvertToLLVMPass());
   PMLLVM.addPass(mlir::createReconcileUnrealizedCastsPass());
   PMLLVM.addPass(mlir::pocl::createConvertMemrefToLLVMKernelArgsPass());
@@ -114,34 +114,28 @@ int pocl::mlir::runAffinePasses(mlir::OwningOpRef<mlir::ModuleOp> &Mod,
                                 bool RaiseAffine) {
   mlir::GreedyRewriteConfig CanonicalizerConfig;
   CanonicalizerConfig.setMaxIterations(400);
-  {
-    mlir::PassManager PMAffine(Mod->getContext());
-    mlir::OpPassManager &OptPmAffine = PMAffine.nest<mlir::func::FuncOp>();
-    PMAffine.addPass(mlir::createCanonicalizerPass());
-    if (RaiseAffine) {
-      PMAffine.addPass(mlir::polygeist::createRaiseToAffinePass());
-      PMAffine.addPass(mlir::polygeist::replaceAffineCFGPass());
-    }
-    PMAffine.addPass(mlir::createCanonicalizerPass());
-    PMAffine.addPass(mlir::polygeist::createInlinerPass());
-    PMAffine.addPass(mlir::createLoopInvariantCodeMotionPass());
-    PMAffine.addNestedPass<mlir::func::FuncOp>(
-        mlir::affine::createLoopCoalescingPass());
-    PMAffine.addPass(mlir::affine::createLoopFusionPass());
-    PMAffine.addPass(mlir::createCSEPass());
-    PMAffine.addPass(mlir::createLoopInvariantCodeMotionPass());
-    PMAffine.addPass(mlir::createMem2Reg());
-    OptPmAffine.addPass(
-        mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
-    PMAffine.addPass(mlir::createCanonicalizerPass());
-    PMAffine.addPass(mlir::affine::createLoopFusionPass());
-    PMAffine.addNestedPass<mlir::func::FuncOp>(
-        mlir::affine::createLoopCoalescingPass());
-    PMAffine.addPass(mlir::createCanonicalizerPass());
-    if (mlir::failed(PMAffine.run(*Mod))) {
-      Mod->dump();
-      return CL_FAILED;
-    }
+  mlir::PassManager PMAffine(Mod->getContext());
+  mlir::OpPassManager &OptPmAffine = PMAffine.nest<mlir::func::FuncOp>();
+  PMAffine.addPass(mlir::createCanonicalizerPass());
+  PMAffine.addPass(mlir::createCanonicalizerPass());
+  PMAffine.addPass(mlir::createInlinerPass());
+  PMAffine.addPass(mlir::createLoopInvariantCodeMotionPass());
+  PMAffine.addNestedPass<mlir::func::FuncOp>(
+      mlir::affine::createLoopCoalescingPass());
+  PMAffine.addPass(mlir::affine::createLoopFusionPass());
+  PMAffine.addPass(mlir::createCSEPass());
+  PMAffine.addPass(mlir::createLoopInvariantCodeMotionPass());
+  PMAffine.addPass(mlir::createMem2Reg());
+  OptPmAffine.addPass(
+      mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
+  PMAffine.addPass(mlir::createCanonicalizerPass());
+  PMAffine.addPass(mlir::affine::createLoopFusionPass());
+  PMAffine.addNestedPass<mlir::func::FuncOp>(
+      mlir::affine::createLoopCoalescingPass());
+  PMAffine.addPass(mlir::createCanonicalizerPass());
+  if (mlir::failed(PMAffine.run(*Mod))) {
+    Mod->dump();
+    return CL_FAILED;
   }
   return CL_SUCCESS;
 }
@@ -167,27 +161,32 @@ static int runPoclPasses(mlir::OwningOpRef<mlir::ModuleOp> &Mod,
   mlir::GreedyRewriteConfig CanonicalizerConfig;
   CanonicalizerConfig.setMaxIterations(400);
 
-  mlir::PassManager PM11(MLIRContext);
-  mlir::OpPassManager &OptPM11 = PM11.nest<mlir::func::FuncOp>();
-  PM11.addPass(mlir::createCanonicalizerPass());
-  PM11.addPass(mlir::polygeist::createInlinerPass());
-  PM11.addPass(mlir::polygeist::createMem2RegPass());
+  mlir::PassManager Pm(MLIRContext);
+  mlir::OpPassManager &OptPm = Pm.nest<mlir::func::FuncOp>();
+  Pm.addPass(mlir::createCanonicalizerPass());
+  Pm.addPass(mlir::createInlinerPass());
+  OptPm.addPass(mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
+  OptPm.addPass(mlir::createCSEPass());
+  OptPm.addPass(mlir::createMem2Reg());
+  Pm.addPass(mlir::createCanonicalizerPass());
 
-  OptPM11.addPass(mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
-  OptPM11.addPass(mlir::createCSEPass());
-  OptPM11.addPass(mlir::createMem2Reg());
-  OptPM11.addPass(mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
-  OptPM11.addPass(mlir::createCSEPass());
+  Pm.addPass(mlir::pocl::createWorkgroupPass());
 
-  PM11.addPass(mlir::createCanonicalizerPass());
-  PM11.addPass(mlir::pocl::createWorkgroupPass());
-  PM11.addPass(mlir::createCanonicalizerPass());
-
-  PM11.addPass(mlir::memref::createNormalizeMemRefsPass());
-  PM11.addPass(mlir::createCanonicalizerPass());
-
-  if (mlir::failed(PM11.run(*Mod))) {
-    POCL_MSG_PRINT_LLVM("Failed running the MLIR compiler passes 1\n");
+  Pm.addPass(mlir::createCanonicalizerPass());
+  Pm.addPass(mlir::memref::createNormalizeMemRefsPass());
+  Pm.addPass(mlir::createCanonicalizerPass());
+  Pm.addPass(mlir::createSymbolDCEPass());
+  OptPm.addPass(mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
+  OptPm.addPass(mlir::createMem2Reg());
+  OptPm.addPass(mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
+  OptPm.addPass(mlir::createLoopInvariantCodeMotionPass());
+  OptPm.addPass(mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
+  OptPm.addPass(mlir::createCSEPass());
+  OptPm.addPass(mlir::createMem2Reg());
+  Pm.addPass(mlir::createSymbolDCEPass());
+  Pm.addPass(mlir::createCanonicalizerPass());
+  if (mlir::failed(Pm.run(*Mod))) {
+    POCL_MSG_PRINT_LLVM("Failed running the MLIR compiler passes\n");
     return CL_FAILED;
   }
   if (mlir::failed(mlir::verify(*Mod))) {
@@ -195,79 +194,16 @@ static int runPoclPasses(mlir::OwningOpRef<mlir::ModuleOp> &Mod,
     return CL_FAILED;
   }
 
-  {
-    mlir::PassManager Pm(MLIRContext);
-    mlir::OpPassManager &OptPm = Pm.nest<mlir::func::FuncOp>();
-    OptPm.addPass(mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
-    Pm.addPass(mlir::createSymbolDCEPass());
-    mlir::OpPassManager &NoptPm = Pm.nest<mlir::func::FuncOp>();
-    NoptPm.addPass(mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
-    NoptPm.addPass(mlir::createMem2Reg());
-    NoptPm.addPass(mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
-    Pm.addPass(mlir::createInlinerPass());
-    mlir::OpPassManager &NoptPM2 = Pm.nest<mlir::func::FuncOp>();
-    NoptPM2.addPass(mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
-    NoptPM2.addPass(mlir::createMem2Reg());
-    NoptPM2.addPass(mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
-    NoptPM2.addPass(mlir::createCSEPass());
-    NoptPM2.addPass(mlir::createLoopInvariantCodeMotionPass());
-    NoptPM2.addPass(mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
-    Pm.addPass(mlir::createCanonicalizerPass());
-    if (mlir::failed(Pm.run(*Mod))) {
-      POCL_MSG_PRINT_LLVM("Failed running the MLIR compiler passes 2\n");
-      return CL_FAILED;
-    }
-  }
-  if (mlir::failed(mlir::verify(*Mod))) {
-    Mod->dump();
+  if (pocl::mlir::runAffinePasses(Mod, false) == CL_FAILED) {
+    POCL_MSG_PRINT_LLVM("Failed running the MLIR affine passes\n");
     return CL_FAILED;
   }
-  {
-    mlir::PassManager Pm(MLIRContext);
-    mlir::OpPassManager &OptPm = Pm.nest<mlir::func::FuncOp>();
-    OptPm.addPass(mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
-    OptPm.addPass(mlir::createCSEPass());
-    OptPm.addPass(mlir::createMem2Reg());
-    OptPm.addPass(mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
-    OptPm.addPass(mlir::createCSEPass());
-    OptPm.addPass(mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
-    OptPm.addPass(mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
-    Pm.addPass(mlir::createCanonicalizerPass());
 
-    mlir::polygeist::DistributeBarriersOptions BarrierMethod = {
-        "distribute.mincut"};
-    Pm.addPass(mlir::polygeist::createDistributeBarriersPass(BarrierMethod));
-    OptPm.addPass(mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
-    Pm.addPass(mlir::pocl::createMemrefGlobalOpToAllocasPass());
-    Pm.addPass(mlir::createCanonicalizerPass());
-    OptPm.addPass(mlir::createCSEPass());
-    Pm.addPass(mlir::polygeist::createMem2RegPass());
-    OptPm.addPass(mlir::createMem2Reg());
-    OptPm.addPass(mlir::createCanonicalizerPass(CanonicalizerConfig, {}, {}));
-    OptPm.addPass(mlir::createCSEPass());
-    Pm.addPass(mlir::createSymbolDCEPass());
-    Pm.addPass(mlir::createCanonicalizerPass());
-    if (mlir::failed(Pm.run(*Mod))) {
-      POCL_MSG_PRINT_LLVM("Failed running the MLIR compiler passes 2\n");
-      return CL_FAILED;
-    }
-    if (mlir::failed(mlir::verify(*Mod))) {
-      Mod->dump();
-      return CL_FAILED;
-    }
-
-    if (pocl::mlir::runAffinePasses(Mod, false) == CL_FAILED) {
-      POCL_MSG_PRINT_LLVM(
-          "Failed running the MLIR affine parallel lowering pass\n");
-      return CL_FAILED;
-    }
-
-    // Remove all function atributes, TODO: Check if some would still be needed
-    // At least the cir ones need to be removed, since hls tools may not know
-    // about them
-    for (auto Attr : (*Mod)->getAttrs()) {
-      (*Mod)->removeAttr(Attr.getName());
-    }
+  // Remove all function atributes, TODO: Check if some would still be needed
+  // At least the cir ones need to be removed, since hls tools may not know
+  // about them
+  for (auto Attr : (*Mod)->getAttrs()) {
+    (*Mod)->removeAttr(Attr.getName());
   }
 
   POCL_MEASURE_FINISH(mlir_workgroup_ir_func_gen);

@@ -27,6 +27,7 @@
 #include <mlir/Dialect/MemRef/IR/MemRef.h>
 
 #include "pocl/Transforms/Passes.hh"
+#include "llvm/ADT/STLExtras.h"
 
 #include "pocl_debug.h"
 #include "pocl_llvm_api.h"
@@ -50,8 +51,7 @@ struct Linker : public impl::LinkerBase<Linker> {
 
     // First check if the function already exists in 'to' in case it has been
     // included twice.
-    bool Exists = std::find(NestedFuncs.begin(), NestedFuncs.end(),
-                            FuncName.str()) != NestedFuncs.end();
+    bool Exists = llvm::find(NestedFuncs, FuncName.str()) != NestedFuncs.end();
     if (Exists) {
       return 0;
     }
@@ -109,8 +109,7 @@ struct Linker : public impl::LinkerBase<Linker> {
     FromRegion->walk([&](mlir::func::FuncOp Func) {
       std::string FuncName = Func.getName().str();
       if (Func.isDeclaration()) {
-        if (std::find(NestedFuncs.begin(), NestedFuncs.end(), FuncName) ==
-            NestedFuncs.end()) {
+        if (llvm::find(NestedFuncs, FuncName) == NestedFuncs.end()) {
           Builder.setInsertionPoint(&To.getRegion().front().back());
           Builder.clone(
               *Func); // Copy the empty function body to be the copying target
@@ -121,15 +120,11 @@ struct Linker : public impl::LinkerBase<Linker> {
 
     // Delete any leftover declarations, these are only copies incase some
     // built-in function was included twice
-    std::vector<mlir::func::FuncOp> FuncsToDelete;
     To.walk([&](mlir::func::FuncOp Func) {
       if (Func.isDeclaration() && FuncName == Func.getName()) {
-        FuncsToDelete.push_back(Func);
+        Builder.eraseOp(Func);
       }
     });
-    for (auto FuncToDelete : FuncsToDelete) {
-      FuncToDelete.erase();
-    }
 
     return 0;
   }
@@ -160,16 +155,15 @@ struct Linker : public impl::LinkerBase<Linker> {
     auto &Block = ProgramMod.getRegion().front();
 
     auto &OldOps = Block.getOperations();
-    auto Builder = mlir::OpBuilder(ProgramMod.getContext());
+    auto Builder = mlir::IRRewriter(ProgramMod.getContext());
     std::vector<mlir::func::FuncOp> OpsToErase;
     std::vector<std::string> ClonedOps;
     for (auto &OldOp : OldOps) {
-      bool IsKernel = false;
       if (auto Func = mlir::dyn_cast<mlir::func::FuncOp>(OldOp)) {
-        IsKernel =
+        bool IsKernel =
             Func->hasAttr(mlir::gpu::GPUDialect::getKernelFuncAttrName());
-        if (IsKernel && (std::find(ClonedOps.begin(), ClonedOps.end(),
-                                   Func.getName().str()) == ClonedOps.end())) {
+        if (IsKernel &&
+            (llvm::find(ClonedOps, Func.getName().str()) == ClonedOps.end())) {
           // move the kernel FuncOps to the very end
           Builder.setInsertionPointToEnd(&Block);
           Builder.clone(OldOp);
@@ -179,7 +173,7 @@ struct Linker : public impl::LinkerBase<Linker> {
       }
     }
     for (auto &Op : OpsToErase) {
-      Op.erase();
+      Builder.eraseOp(Op);
     }
 
     return 0;

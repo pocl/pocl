@@ -53,8 +53,8 @@ struct AffineParallelToAffineForPattern
       auto UbOperands = ParallelOp.getUpperBoundsOperands();
       auto Step = ParallelOp.getSteps()[I];
 
-      auto ForOp = Rewriter.create<mlir::affine::AffineForOp>(
-          Loc, LbOperands, LbMap, UbOperands, UbMap, Step);
+      auto ForOp = mlir::affine::AffineForOp::create(
+          Rewriter, Loc, LbOperands, LbMap, UbOperands, UbMap, Step);
 
       Ivs.push_back(ForOp.getInductionVar());
       // Move the insertion point inside the newly created loop

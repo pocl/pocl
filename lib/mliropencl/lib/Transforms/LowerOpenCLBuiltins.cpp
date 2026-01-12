@@ -41,9 +41,9 @@ static LogicalResult lowerOpenCL3DimFunc(func::CallOp Op,
   std::array<gpu::Dimension, 3> Dims = {gpu::Dimension::x, gpu::Dimension::y,
                                         gpu::Dimension::z};
   Value IndexVal =
-      Rewriter.create<arith::IndexCastOp>(Loc, IndexType, Op.getOperand(0));
-  auto SwitchOp = Rewriter.create<scf::IndexSwitchOp>(
-      Loc, I64Type, IndexVal,
+      arith::IndexCastOp::create(Rewriter, Loc, IndexType, Op.getOperand(0));
+  auto SwitchOp = scf::IndexSwitchOp::create(
+      Rewriter, Loc, I64Type, IndexVal,
       /*caseValues=*/ArrayRef<int64_t>{0, 1, 2}, Dims.size());
 
   // === Default case ===
@@ -52,9 +52,9 @@ static LogicalResult lowerOpenCL3DimFunc(func::CallOp Op,
     Block *CaseBlock = new Block();
     CaseRegion.push_back(CaseBlock);
     OpBuilder CaseBuilder(CaseBlock, CaseBlock->begin());
-    Value C0I64 = CaseBuilder.create<arith::ConstantOp>(
-        Loc, I64Type, Rewriter.getI64IntegerAttr(0));
-    CaseBuilder.create<scf::YieldOp>(Loc, C0I64);
+    Value C0I64 = arith::ConstantOp::create(CaseBuilder, Loc, I64Type,
+                                            Rewriter.getI64IntegerAttr(0));
+    scf::YieldOp::create(CaseBuilder, Loc, C0I64);
   }
   for (size_t I = 0; I < Dims.size(); ++I) {
     auto Dim = Dims[I];
@@ -62,9 +62,10 @@ static LogicalResult lowerOpenCL3DimFunc(func::CallOp Op,
     Block *CaseBlock = new Block();
     CaseRegion.push_back(CaseBlock);
     OpBuilder CaseBuilder(CaseBlock, CaseBlock->begin());
-    Value TidX = CaseBuilder.create<GPUOpType>(Loc, Dim);
-    Value TidXCast = CaseBuilder.create<arith::IndexCastOp>(Loc, I64Type, TidX);
-    CaseBuilder.create<scf::YieldOp>(Loc, TidXCast);
+    Value TidX = GPUOpType::create(CaseBuilder, Loc, Dim);
+    Value TidXCast =
+        arith::IndexCastOp::create(CaseBuilder, Loc, I64Type, TidX);
+    scf::YieldOp::create(CaseBuilder, Loc, TidXCast);
   }
   Rewriter.replaceOp(Op, SwitchOp);
   return LogicalResult::success();

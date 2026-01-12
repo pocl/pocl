@@ -32,7 +32,6 @@
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/IR/OwningOpRef.h>
 #include <mlir/Pass/PassManager.h>
-#include <mlir/Polygeist/Transforms/Passes.h>
 
 #include "pocl.h"
 #include "pocl_cache.h"
@@ -184,7 +183,20 @@ int poclMlirBuildProgram(cl_program Program, unsigned DeviceI,
   while (Iss >> Token) { // operator>> skips whitespace
     UserOptionsStorage.push_back(std::move(Token));
   }
-  std::string KernelIncludeDir = std::string(SRCDIR) + "/include/_kernel.h";
+#ifdef ENABLE_POCL_BUILDING
+  bool PoclBuilding = pocl_get_bool_option("POCL_BUILDING", 0);
+#else
+  bool PoclBuilding = false;
+#endif
+  std::string KernelIncludeDir;
+  if (PoclBuilding) {
+    KernelIncludeDir = SRCDIR "/include/_kernel.h";
+  } else {
+    char Temp[POCL_MAX_PATHNAME_LENGTH];
+    pocl_get_private_datadir(Temp);
+    KernelIncludeDir = Temp;
+    KernelIncludeDir.append("/include/_kernel.h");
+  }
   std::string ClangIncludeDir = std::string(LLVM_LIBDIR) + "/clang/22/include/";
 #ifdef ENABLE_POLYGEIST
   std::vector<const char *> PolygeistArgs = {POLYGEIST_EXECUTABLE,
@@ -215,6 +227,7 @@ int poclMlirBuildProgram(cl_program Program, unsigned DeviceI,
   std::string TmpCIRPath = std::string(ProgramMlirPath) + ".cir";
   std::vector<const char *> ClangIRArgs = {
       CLANGCC, "-include", KernelIncludeDir.c_str(), "-fclangir", "-emit-cir",
+      "--target=spirv64",
       /*-cir-flatten-cfg*/
       SourceFile, "-o", TmpCIRPath.c_str()};
   for (auto &S : UserOptionsStorage) {
