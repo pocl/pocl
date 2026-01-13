@@ -26,8 +26,15 @@
 
 #include "../AlmaifShared.hh"
 
+#ifdef HAVE_DLFCN_H
+#undef HAVE_DLFCN_H
+#endif
+
+#ifdef LLVM_VERSION
+#undef LLVM_VERSION
+#endif
+
 #include <SimpleSimulatorFrontend.hh>
-//#include <SimulatorFrontend.hh>
 #include <AddressSpace.hh>
 #include <Machine.hh>
 
@@ -73,11 +80,13 @@ void TTASimControlRegion::Write32(size_t offset, uint32_t value) {
   }
 }
 
-void TTASimControlRegion::Write64(size_t offset, uint64_t value) {
+void TTASimControlRegion::Write64(size_t offset POCL_UNUSED,
+                                  uint64_t value POCL_UNUSED) {
   POCL_ABORT("64b writes to ttasimcontrolregion unimplemented\n");
 }
 
-void TTASimControlRegion::Write16(size_t offset, uint16_t value) {
+void TTASimControlRegion::Write16(size_t offset POCL_UNUSED,
+                                  uint16_t value POCL_UNUSED) {
   POCL_ABORT("Unimplemented 16bit writes to ttasimcontrolregion\n");
 }
 
@@ -92,19 +101,22 @@ uint64_t TTASimControlRegion::Read64(size_t offset) {
   return value;
 }
 
-void TTASimControlRegion::CopyToMMAP(size_t destination, const void *source,
-                                     size_t bytes) {
+void TTASimControlRegion::CopyToMMAP(size_t destination POCL_UNUSED,
+                                     const void *source POCL_UNUSED,
+                                     size_t bytes POCL_UNUSED) {
   POCL_ABORT("Unimplemented copytommap for ttasimcontrolregion\n");
 }
 
-void TTASimControlRegion::CopyFromMMAP(void *destination, size_t source,
-                                       size_t bytes) {
+void TTASimControlRegion::CopyFromMMAP(void *destination POCL_UNUSED,
+                                       size_t source POCL_UNUSED,
+                                       size_t bytes POCL_UNUSED) {
 
   POCL_ABORT("Unimplemented copyfrommmap for ttasimcontrolregion\n");
 }
 
-void TTASimControlRegion::CopyInMem(size_t source, size_t destination,
-                                    size_t bytes) {
+void TTASimControlRegion::CopyInMem(size_t source POCL_UNUSED,
+                                    size_t destination POCL_UNUSED,
+                                    size_t bytes POCL_UNUSED) {
 
   POCL_ABORT("Unimplemented copyinmem for ttasimcontrolregion\n");
 }

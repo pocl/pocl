@@ -21,12 +21,9 @@
    IN THE SOFTWARE.
 */
 
+#include "pocl_debug.h"
 
 #include "TTASimRegion.hh"
-
-#include <Memory.hh>
-
-#include "pocl_util.h"
 
 #include <assert.h>
 

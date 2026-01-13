@@ -57,10 +57,11 @@ int
 main (int argc, char **argv)
 {
 
-  if (argc > 1 && !(argv[1][0] == 'v' || argv[1][0] == 'b'))
+  if (argc > 1
+      && !(argv[1][0] == 'v' || argv[1][0] == 'b' || argv[1][0] == 'o'))
     {
       printf ("unknown argument '%c', options are 'v' for spir-v or 'b' for "
-              "pocl binaries.\n",
+              "pocl binaries or 'o' for generating golden output file.\n",
               argv[1][0]);
       return -1;
     }

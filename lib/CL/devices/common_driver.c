@@ -1047,7 +1047,7 @@ pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i)
 
   cl_device_id dev = program->devices[device_i];
 
-  if (dev->compiler_available == CL_FALSE || dev->llvm_cpu == NULL)
+  if (dev->compiler_available == CL_FALSE)
     return CL_BUILD_PROGRAM_FAILURE;
 
 // TODO this should probably be outside

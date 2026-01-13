@@ -275,27 +275,6 @@ unset(EXTRA_TCE_CLANG_FLAGS)
 
 set(KERNEL_CL_FLAGS "-D__OPENCL_C_VERSION__=${TCE_DEVICE_CL_VERSION}" "-Xclang" "-cl-std=CL${TCE_DEVICE_CL_STD}" "-Xclang" "-cl-ext=all,-cl_khr_fp64")
 
-########### TCE big endian kernel library
-
-set(TCE_TARGET_TRIPLE "tce-tut-llvm")
-
-set(CLANG_FLAGS ${TCE_TARGET_CLANG_FLAGS} "-DPRINTF_BUFFER_AS_ID=1" "-emit-llvm" "-mllvm" "--disable-loop-idiom-memcpy" "-mllvm" "--disable-loop-idiom-memset" "-fno-vectorize" "-fno-slp-vectorize" "-ffp-contract=off" "-target" ${TCE_TARGET_TRIPLE} "-isystem" "${TCE_PREFIX}/tce-llvm/include" ${EXTRA_TCE_CLANG_FLAGS})
-
-make_kernel_bc(KERNEL_BC ${TCE_TARGET_TRIPLE} "tta" 0 0 0 ${TCE_SOURCES})
-
-message(STATUS "TCE Kernel BC: ${KERNEL_BC}")
-
-list(APPEND KERNEL_BC_LIST "${KERNEL_BC}")
-set(KERNEL_BC_LIST "${KERNEL_BC_LIST}" PARENT_SCOPE)
-
-add_custom_target("kernel_tce" DEPENDS ${KERNEL_BC})
-
-list(APPEND KERNEL_TARGET_LIST "kernel_tce")
-set(KERNEL_TARGET_LIST "${KERNEL_TARGET_LIST}" PARENT_SCOPE)
-
-install(FILES "${KERNEL_BC}"
-        DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR_REL}" COMPONENT "lib")
-
 ########### TCE little endian kernel library
 
 set(TCE_TARGET_TRIPLE "tcele-tut-llvm")

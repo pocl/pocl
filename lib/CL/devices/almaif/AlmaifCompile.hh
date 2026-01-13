@@ -45,8 +45,8 @@ typedef struct compilation_data_s {
   chunk_info_t *pocl_context;
 
   /* device-specific callbacks */
-  void (*compile_kernel)(_cl_command_node *cmd, cl_kernel kernel,
-                         cl_device_id device, int specialize);
+  int (*compile_kernel)(_cl_command_node *cmd, cl_kernel kernel,
+                        cl_device_id device, int specialize);
   int (*initialize_device)(cl_device_id device, const std::string &parameters);
   int (*cleanup_device)(cl_device_id device);
 
@@ -72,7 +72,7 @@ typedef struct almaif_kernel_data_s {
 
 int pocl_almaif_compile_init(unsigned j, cl_device_id dev,
                              const std::string &parameters);
-cl_int pocl_almaif_compile_uninit(unsigned j, cl_device_id dev);
+cl_int pocl_almaif_compile_uninit(cl_device_id dev);
 
 extern "C" {
 int pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,

@@ -138,13 +138,14 @@ void pocl_almaif_init_device_ops(struct pocl_device_ops *ops) {
 }
 
 // AlmaIF's driver by default has nothing to build for BiKs.
-int pocl_almaif_build_builtin(cl_program program, cl_uint device_i) {
+int pocl_almaif_build_builtin(cl_program program POCL_UNUSED,
+                              cl_uint device_i POCL_UNUSED) {
   return CL_SUCCESS;
 }
 
 void pocl_almaif_write(void *data, const void *__restrict__ src_host_ptr,
-                      pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
-                      size_t offset, size_t size) {
+                       pocl_mem_identifier *dst_mem_id,
+                       cl_mem dst_buf POCL_UNUSED, size_t offset, size_t size) {
   AlmaifData *d = (AlmaifData *)data;
 
   d->Dev->writeDataToDevice(dst_mem_id, (const char *__restrict)src_host_ptr,
@@ -152,8 +153,8 @@ void pocl_almaif_write(void *data, const void *__restrict__ src_host_ptr,
 }
 
 void pocl_almaif_read(void *data, void *__restrict__ dst_host_ptr,
-                     pocl_mem_identifier *src_mem_id, cl_mem src_buf,
-                     size_t offset, size_t size) {
+                      pocl_mem_identifier *src_mem_id,
+                      cl_mem src_buf POCL_UNUSED, size_t offset, size_t size) {
   AlmaifData *d = (AlmaifData *)data;
 
   d->Dev->readDataFromDevice((char *__restrict__)dst_host_ptr, src_mem_id, size,
@@ -161,9 +162,10 @@ void pocl_almaif_read(void *data, void *__restrict__ dst_host_ptr,
 }
 
 void pocl_almaif_copy(void *data, pocl_mem_identifier *dst_mem_id,
-                     cl_mem dst_buf, pocl_mem_identifier *src_mem_id,
-                     cl_mem src_buf, size_t dst_offset, size_t src_offset,
-                     size_t size) {
+                      cl_mem dst_buf POCL_UNUSED,
+                      pocl_mem_identifier *src_mem_id,
+                      cl_mem src_buf POCL_UNUSED, size_t dst_offset,
+                      size_t src_offset, size_t size) {
 
   chunk_info_t *src_chunk = (chunk_info_t *)src_mem_id->mem_ptr;
   chunk_info_t *dst_chunk = (chunk_info_t *)dst_mem_id->mem_ptr;
@@ -205,9 +207,8 @@ void pocl_almaif_memfill(void *data, pocl_mem_identifier *dst_mem_id,
   POCL_MEM_FREE(tmp_memfill_buf);
 }
 
-
 cl_int pocl_almaif_alloc_mem_obj(cl_device_id device, cl_mem mem_obj,
-                                void *host_ptr) {
+                                 void *host_ptr POCL_UNUSED) {
 
   AlmaifData *data = (AlmaifData *)device->data;
 
@@ -227,7 +228,6 @@ cl_int pocl_almaif_alloc_mem_obj(cl_device_id device, cl_mem mem_obj,
 
   return alloc_success;
 }
-
 
 void pocl_almaif_free(cl_device_id device, cl_mem mem) {
 
@@ -290,6 +290,7 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   // kernel param size. this is a bit arbitrary
   dev->max_parameter_size = 64;
   dev->address_bits = 32;
+  dev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
 
   // This would be more logical as a per builtin kernel value?
   // there is a way to query it: clGetKernelWorkGroupInfo
@@ -550,7 +551,7 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   return CL_SUCCESS;
 }
 
-cl_int pocl_almaif_uninit(unsigned j, cl_device_id device) {
+cl_int pocl_almaif_uninit(unsigned j POCL_UNUSED, cl_device_id device) {
   POCL_MSG_PRINT_ALMAIF("almaif: uninit\n");
 
   POCL_LOCK(runningDeviceLock);
@@ -563,7 +564,7 @@ cl_int pocl_almaif_uninit(unsigned j, cl_device_id device) {
 
   AlmaifData *D = (AlmaifData *)device->data;
   if (D->compilationData != NULL) {
-    pocl_almaif_compile_uninit(j, device);
+    pocl_almaif_compile_uninit(device);
     D->compilationData = NULL;
   }
 
@@ -1079,7 +1080,7 @@ bool isEventDone(AlmaifData *data, cl_event event) {
   return (status == 1);
 }
 
-void pocl_almaif_wait_event(cl_device_id device, cl_event event) {
+void pocl_almaif_wait_event(cl_device_id device POCL_UNUSED, cl_event event) {
   almaif_event_data_t *ed = (almaif_event_data_t *)event->data;
 
   POCL_LOCK_OBJ(event);
@@ -1112,14 +1113,16 @@ void pocl_almaif_notify_event_finished(cl_event event) {
   }
 }
 
-int pocl_almaif_init_queue(cl_device_id device, cl_command_queue queue) {
+int pocl_almaif_init_queue(cl_device_id device POCL_UNUSED,
+                           cl_command_queue queue) {
   queue->data = malloc(sizeof(pthread_cond_t));
   pthread_cond_t *cond = (pthread_cond_t *)queue->data;
   POCL_INIT_COND(*cond);
   return CL_SUCCESS;
 }
 
-int pocl_almaif_free_queue(cl_device_id device, cl_command_queue queue) {
+int pocl_almaif_free_queue(cl_device_id device POCL_UNUSED,
+                           cl_command_queue queue) {
   pthread_cond_t *cond = (pthread_cond_t *)queue->data;
   POCL_DESTROY_COND(*cond);
   POCL_MEM_FREE(queue->data);
@@ -1186,7 +1189,18 @@ void submit_and_barrier(AlmaifData *D, _cl_command_node *cmd) {
   }
 }
 
-void pocl_almaif_run(void *data, _cl_command_node *cmd) {}
+void pocl_almaif_run(void *data POCL_UNUSED,
+                     _cl_command_node *cmd POCL_UNUSED) {}
+
+#define CHECK_AND_ALIGN_ARGBUFFER(DSIZE)                                       \
+  do {                                                                         \
+    if (write_pos + (DSIZE) > last_pos)                                        \
+      POCL_ABORT("tce: too many kernel arguments!\n");                         \
+    int AlignTarget = MAX_EXTENDED_ALIGNMENT;                                  \
+    unsigned T = (intptr_t)write_pos % AlignTarget;                            \
+    if (T > 0)                                                                 \
+      write_pos += (AlignTarget - T);                                          \
+  } while (0)
 
 void submit_kernel_packet(AlmaifData *D, _cl_command_node *cmd) {
   struct pocl_argument *al;
@@ -1199,19 +1213,11 @@ void submit_kernel_packet(AlmaifData *D, _cl_command_node *cmd) {
     return;
 
   // First pass to figure out total argument size
-  size_t arg_size = 0;
-  for (i = 0; i < meta->num_args; ++i) {
-    if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER) {
-      arg_size += D->Dev->PointerSize;
-    } else if (meta->arg_info[i].type == POCL_ARG_TYPE_PIPE) {
-      arg_size += 4;
-    } else {
-      al = &(cmd->command.run.arguments[i]);
-      arg_size += al->size;
-    }
-  }
-  void *arguments = malloc(arg_size);
-  char *current_arg = (char *)arguments;
+  size_t arg_size = meta->num_args * MAX_EXTENDED_ALIGNMENT;
+  char *arguments =
+      (char *)pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, arg_size);
+  char *write_pos = arguments;
+  char *last_pos = arguments + arg_size;
   /* TODO: Refactor this to a helper function (the argbuffer ABI). */
   /* Process the kernel arguments. Convert the opaque buffer
      pointers to real device pointers, allocate dynamic local
@@ -1227,7 +1233,7 @@ void submit_kernel_packet(AlmaifData *D, _cl_command_node *cmd) {
          Otherwise, the user must have created a buffer with per device
          pointers stored in the cl_mem. */
       if (al->value == NULL) {
-        *(size_t *)current_arg = 0;
+        *(size_t *)write_pos = 0;
       } else {
         // almaif doesn't support SVM pointers
         assert(al->is_raw_ptr == 0);
@@ -1244,9 +1250,10 @@ void submit_kernel_packet(AlmaifData *D, _cl_command_node *cmd) {
             POCL_ABORT("almaif: buffer outside of memory");
           }
         }
-        *(size_t *)current_arg = buffer;
+        CHECK_AND_ALIGN_ARGBUFFER(4);
+        *(size_t *)write_pos = buffer;
       }
-      current_arg += D->Dev->PointerSize;
+      write_pos += D->Dev->PointerSize;
     } else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE) {
       POCL_ABORT_UNIMPLEMENTED("almaif: image arguments");
     } else if (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER) {
@@ -1256,12 +1263,15 @@ void submit_kernel_packet(AlmaifData *D, _cl_command_node *cmd) {
       int *pipe_id_ptr =
           (int *)(m->device_ptrs[cmd->device->global_mem_id].mem_ptr);
       int pipe_id = *pipe_id_ptr;
-      *(int *)current_arg = pipe_id;
+      CHECK_AND_ALIGN_ARGBUFFER(4);
+      *(int *)write_pos = pipe_id;
       POCL_MSG_PRINT_ALMAIF("Setting pipe argument %d to id: %i\n", i, pipe_id);
-      current_arg += 4;
+      write_pos += 4;
     } else {
-      memcpy(current_arg, al->value, al->size);
-      current_arg += al->size;
+      size_t alignment = pocl_size_ceil2(al->size);
+      CHECK_AND_ALIGN_ARGBUFFER(alignment);
+      memcpy(write_pos, al->value, al->size);
+      write_pos += al->size;
     }
   }
 
@@ -1348,16 +1358,14 @@ void *runningThreadFunc(void *) {
   return NULL;
 }
 
-void pocl_almaif_copy_rect(void *data, pocl_mem_identifier *dst_mem_id,
-                          cl_mem dst_buf, pocl_mem_identifier *src_mem_id,
-                          cl_mem src_buf,
-                          const size_t *__restrict__ const dst_origin,
-                          const size_t *__restrict__ const src_origin,
-                          const size_t *__restrict__ const region,
-                          size_t const dst_row_pitch,
-                          size_t const dst_slice_pitch,
-                          size_t const src_row_pitch,
-                          size_t const src_slice_pitch) {
+void pocl_almaif_copy_rect(
+    void *data, pocl_mem_identifier *dst_mem_id, cl_mem dst_buf POCL_UNUSED,
+    pocl_mem_identifier *src_mem_id, cl_mem src_buf POCL_UNUSED,
+    const size_t *__restrict__ const dst_origin,
+    const size_t *__restrict__ const src_origin,
+    const size_t *__restrict__ const region, size_t const dst_row_pitch,
+    size_t const dst_slice_pitch, size_t const src_row_pitch,
+    size_t const src_slice_pitch) {
   AlmaifData *d = (AlmaifData *)data;
 
   size_t src_offset = src_origin[0] + src_row_pitch * src_origin[1] +
@@ -1383,14 +1391,15 @@ void pocl_almaif_copy_rect(void *data, pocl_mem_identifier *dst_mem_id,
 }
 
 void pocl_almaif_write_rect(void *data, const void *__restrict__ src_host_ptr,
-                           pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
-                           const size_t *__restrict__ const buffer_origin,
-                           const size_t *__restrict__ const host_origin,
-                           const size_t *__restrict__ const region,
-                           size_t const buffer_row_pitch,
-                           size_t const buffer_slice_pitch,
-                           size_t const host_row_pitch,
-                           size_t const host_slice_pitch) {
+                            pocl_mem_identifier *dst_mem_id,
+                            cl_mem dst_buf POCL_UNUSED,
+                            const size_t *__restrict__ const buffer_origin,
+                            const size_t *__restrict__ const host_origin,
+                            const size_t *__restrict__ const region,
+                            size_t const buffer_row_pitch,
+                            size_t const buffer_slice_pitch,
+                            size_t const host_row_pitch,
+                            size_t const host_slice_pitch) {
   AlmaifData *d = (AlmaifData *)data;
   size_t adjusted_dst_offset = buffer_origin[0] +
                                buffer_row_pitch * buffer_origin[1] +
@@ -1416,14 +1425,15 @@ void pocl_almaif_write_rect(void *data, const void *__restrict__ src_host_ptr,
 }
 
 void pocl_almaif_read_rect(void *data, void *__restrict__ dst_host_ptr,
-                          pocl_mem_identifier *src_mem_id, cl_mem src_buf,
-                          const size_t *__restrict__ const buffer_origin,
-                          const size_t *__restrict__ const host_origin,
-                          const size_t *__restrict__ const region,
-                          size_t const buffer_row_pitch,
-                          size_t const buffer_slice_pitch,
-                          size_t const host_row_pitch,
-                          size_t const host_slice_pitch) {
+                           pocl_mem_identifier *src_mem_id,
+                           cl_mem src_buf POCL_UNUSED,
+                           const size_t *__restrict__ const buffer_origin,
+                           const size_t *__restrict__ const host_origin,
+                           const size_t *__restrict__ const region,
+                           size_t const buffer_row_pitch,
+                           size_t const buffer_slice_pitch,
+                           size_t const host_row_pitch,
+                           size_t const host_slice_pitch) {
   AlmaifData *d = (AlmaifData *)data;
   size_t adjusted_src_offset = buffer_origin[0] +
                                buffer_row_pitch * buffer_origin[1] +
