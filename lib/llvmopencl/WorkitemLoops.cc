@@ -426,6 +426,19 @@ WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
   builder.SetInsertPoint(loopEndBB);
   builder.CreateBr(oldExit);
 
+  // append metadata for vectorization pass
+  Instruction *Term = LoopBodyEntryBB->getTerminator();
+  Term->setMetadata("myrole", MDNode::get(C, MDString::get(C, "pregion_for_entry")));
+
+  Term = forInitBB->getTerminator();
+  Term->setMetadata("myrole", MDNode::get(C, MDString::get(C, "pregion_for_init")));
+
+  Term = loopEndBB->getTerminator();
+  Term->setMetadata("myrole", MDNode::get(C, MDString::get(C, "pregion_for_end")));
+
+  Term = forCondBB->getTerminator();
+  Term->setMetadata("myrole", MDNode::get(C, MDString::get(C, "pregion_for_cond")));
+
   return std::make_pair(forInitBB, loopEndBB);
 }
 
@@ -1328,6 +1341,9 @@ llvm::BasicBlock *WorkitemLoopsImpl::appendIncBlock(llvm::BasicBlock *After,
                       GlobalIdVar);
 
   builder.CreateBr(oldExit);
+
+  Instruction *Term = forIncBB->getTerminator();
+  Term->setMetadata("myrole", MDNode::get(C, MDString::get(C, "pregion_for_inc")));
 
   return forIncBB;
 }
