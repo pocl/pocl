@@ -1531,6 +1531,19 @@ remote_push_command (_cl_command_node *node)
   POCL_UNLOCK (d->wq_lock);
 }
 
+static int
+remote_command_is_ready (cl_event event)
+{
+  struct event_node *e;
+  LL_FOREACH(event->wait_list, e)
+  {
+    if (e->event->queue->device->ops->submit != &pocl_remote_submit) {
+      return CL_FALSE;
+    }
+  }
+  return CL_TRUE;
+}
+
 void
 pocl_remote_submit (_cl_command_node *node, cl_command_queue cq)
 {
@@ -1544,7 +1557,7 @@ pocl_remote_submit (_cl_command_node *node, cl_command_queue cq)
   e->data = (void *)e_d;
 
   node->state = POCL_COMMAND_READY;
-  if (pocl_command_is_ready (node->sync.event.event))
+  if (remote_command_is_ready (node->sync.event.event))
     {
       pocl_update_event_submitted (node->sync.event.event);
       remote_push_command (node);
@@ -1623,7 +1636,7 @@ pocl_remote_notify (cl_device_id device, cl_event event, cl_event finished)
       return;
     }
 
-  if (pocl_command_is_ready (node->sync.event.event))
+  if (remote_command_is_ready (node->sync.event.event))
     {
       assert (event->status == CL_QUEUED);
       pocl_update_event_submitted (event);
