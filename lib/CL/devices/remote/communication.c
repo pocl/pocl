@@ -2480,8 +2480,6 @@ pocl_network_free_buffer (remote_device_data_t *ddata, uint64_t mem_id,
   buf += len;                                                                 \
   assert ((size_t)(buf - buffer) <= (size_t)nc.reply.data_size)
 
-#define MAX_BUILD_SIZE (16 << 20)
-
 cl_int
 pocl_network_setup_metadata (char *buffer, size_t total_size,
                              cl_program program, size_t *num_kernels,
