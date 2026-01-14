@@ -41,12 +41,8 @@ int main(int argc, char *argv[]) {
 
   CompilerInstance CI;
   CompilerInvocation &pocl_build = CI.getInvocation();
-#if (LLVM_MAJOR < 18)
-  LangOptions *la = pocl_build.getLangOpts();
-#else
   LangOptions L = pocl_build.getLangOpts();
   LangOptions *la = &L;
-#endif
   PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
   po.Includes.push_back("/usr/include/test/path.h");
 

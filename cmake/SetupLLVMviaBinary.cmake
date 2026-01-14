@@ -158,14 +158,10 @@ endif()
 ####################################################################
 
 if(STATIC_LLVM)
-  set(CLANG_LIBNAMES clangCodeGen clangFrontendTool clangFrontend clangDriver clangSerialization
-      clangParse clangSema clangRewrite clangRewriteFrontend
+  set(CLANG_LIBNAMES clangCodeGen clangFrontendTool clangFrontend clangAPINotes clangDriver
+      clangSerialization  clangParse clangSema clangRewrite clangRewriteFrontend
       clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
       clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangASTMatchers clangLex clangSupport clangBasic)
-  # must come after clangFrontend
-  if(LLVM_VERSION_MAJOR GREATER 17)
-     list(INSERT CLANG_LIBNAMES 4 clangAPINotes)
-  endif()
 else()
   # For non-static builds, link against a single shared library
   # instead of multiple component shared libraries.

@@ -10,14 +10,14 @@
 # 5) put all files (cross.cmake & tars) into the same directory as this dockerfile,
 #    then run docker build
 
-FROM amd64/debian:bookworm@sha256:27586f4609433f2f49a9157405b473c62c3cb28a581c413393975b4e8496d0ab
+FROM amd64/ubuntu:24.04
 
 # number of threads to use for building (make -jX)
 ARG JOBS=16
 # max number of simultaneous link jobs. These require lots of memory
 ARG LINK_JOBS=4
 # LLVM version to use
-ARG BRANCH=17
+ARG BRANCH=21
 
 LABEL branch=release_${BRANCH} distro=Debian version=1.0
 RUN echo "using Branch: release_${BRANCH} Jobs: ${JOBS} Link-jobs: ${LINK_JOBS}" && sleep 10
@@ -29,7 +29,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update
 RUN apt upgrade -y
 RUN apt install -y build-essential nano cmake git pkg-config make ninja-build zlib1g zlib1g-dev python3-dev libpython3-dev
-RUN apt install -y gcc-riscv64-linux-gnu g++-riscv64-linux-gnu cpp-riscv64-linux-gnu binutils-riscv64-linux-gnu
+RUN apt install -y gcc-14-riscv64-linux-gnu g++-14-riscv64-linux-gnu cpp-14-riscv64-linux-gnu binutils-riscv64-linux-gnu
 
 # where the target's root filesystem lives
 ENV PATH_TO_SBC_ROOT=/mnt/ROOTFS
@@ -39,7 +39,7 @@ ENV LLVM_SOURCE_DIR_PARENT=/home/llvm/source
 # cmake build dir
 ENV BUILD=/home/llvm/build
 # LLVM install dir
-ENV INSTALL=/opt/LLVM_${BRANCH}0
+ENV INSTALL=/opt/LLVM_${BRANCH}
 # cmake toolchain file
 ENV CROSS=/tmp/cross.cmake
 
@@ -59,10 +59,10 @@ COPY cross.cmake /tmp/
 RUN mkdir -p $BUILD/cross && cd $BUILD/cross
 
 RUN cd $BUILD/cross && cmake -G Ninja -DCMAKE_CROSSCOMPILING=1 -DCMAKE_TOOLCHAIN_FILE=$CROSS -DCMAKE_INSTALL_PREFIX=$INSTALL \
-   -DBUILD_SHARED_LIBS=ON -DLLVM_DEFAULT_TARGET_TRIPLE=riscv64-linux-gnu -DLLVM_TARGET_ARCH=riscv64 -DLLVM_TARGETS_TO_BUILD=RISCV \
-   -DLLVM_ENABLE_ASSERTIONS=ON -DLLVM_ENABLE_THREADS=OFF \
+   -DLLVM_DEFAULT_TARGET_TRIPLE=riscv64-linux-gnu -DLLVM_TARGET_ARCH=riscv64 -DLLVM_TARGETS_TO_BUILD=RISCV \
+   -DLLVM_BUILD_LLVM_DYLIB=ON -DLLVM_LINK_LLVM_DYLIB=ON \
+   -DLLVM_ENABLE_ASSERTIONS=ON -DLLVM_PARALLEL_LINK_JOBS=${LINK_JOBS} \
    -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang;lld" \
-   -DLLVM_PARALLEL_LINK_JOBS=${LINK_JOBS} \
    $LLVM_SOURCE_DIR/llvm
 
 ########## currently build does not finish, requires manually adding -latomic in several places in build.ninja

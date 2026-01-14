@@ -46,9 +46,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Linker/Linker.h>
-#if LLVM_MAJOR >= 18
 #include <llvm/Support/CodeGen.h>
-#endif
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Target/TargetOptions.h>
 #include <llvm/Transforms/Utils/Cloning.h>
@@ -59,9 +57,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Passes/StandardInstrumentations.h>
 #include <llvm/Transforms/Scalar/LoopPassManager.h>
-#if LLVM_MAJOR >= 18
 #include <llvm/Frontend/Driver/CodeGenOptions.h>
-#endif
 
 #include "LLVMUtils.h"
 POP_COMPILER_DIAGS
@@ -134,11 +130,7 @@ static TargetMachine *GetTargetMachine(const char* TTriple,
   TargetMachine *TM = TheTarget->createTargetMachine(
       TTriple, MCPU, Features, TargetOptions(),
       Reloc::PIC_, CodeModel::Small,
-#if LLVM_MAJOR >= 18
       CodeGenOptLevel::Aggressive);
-#else
-      CodeGenOpt::Aggressive);
-#endif
 
   assert(TM != NULL && "llvm target has no targetMachine constructor");
 
@@ -1239,12 +1231,8 @@ int pocl_llvm_codegen2(const char* TTriple, const char* MCPU,
     TLIIPtr.reset(initPassManagerForCodeGen(PMObj, TTriple, DevType));
 
     cannotEmitFile = Target->addPassesToEmitFile(PMObj, SOS, nullptr,
-  #if LLVM_MAJOR < 18
-                                                 llvm::CGFT_ObjectFile);
-  #else
                                                  llvm::CodeGenFileType::
-                                                     ObjectFile);
-  #endif
+                                                 ObjectFile);
     LLVMGeneratesObjectFiles = !cannotEmitFile;
 
     if (LLVMGeneratesObjectFiles) {
@@ -1283,12 +1271,7 @@ int pocl_llvm_codegen2(const char* TTriple, const char* MCPU,
     // to produce the binary.
 
     if (Target->addPassesToEmitFile(PMAsm, SOS, nullptr,
-  #if LLVM_MAJOR < 18
-                                    llvm::CGFT_AssemblyFile)
-  #else
-                                    llvm::CodeGenFileType::AssemblyFile)
-  #endif
-    ) {
+                                    llvm::CodeGenFileType::AssemblyFile)) {
       POCL_MSG_ERR(
           "llvm_codegen: The target supports neither obj nor asm emission!");
       return -1;

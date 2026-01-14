@@ -3,11 +3,24 @@ Release Notes for PoCL 7.2
 **************************
 
 ================
+CMake changes
+================
+
+* PoCL now supports configuring LLVM via both llvm-config binary (`-DWITH_LLVM_CONFIG=<path>`),
+  and LLVMConfig.cmake (`-DLLVM_DIR=<path>`). Support for cross-compiling was also improved,
+  and requires using both these options, pointing to target & host LLVMs.
+
+* `LLVM_SPIRV` CMake option was replaced by `HOST_LLVM_SPIRV`
+
+================
 Notable bugfixes
 ================
 
 * Fixed various clLinkProgram issues in the remote driver.
 * Fixed remote driver spuriously reconnecting for no apparent reason.
+* OpenCL-CTS updated to 2025.11.27 and fixed newly uncovered bugs
+  (some corner-cases in clSetKernelArg, clSetKernelExecInfo,
+   clEnqueueNDRange with local_size == NULL and nonzero reqq-wg-size)
 
 ===========================
 Driver-specific features
@@ -20,7 +33,7 @@ CUDA driver
 * Implement sub_group_{reduce,scan_exclusive,scan_inclusive}_* and
   sub_group_{all,any,broadcast}. (reduce is only available for PTX6.0+)
 * Note that CUDA driver does not support LLVM 21, due to a bug
-  in upstream Clang code. Users must use LLVM 17 to 20 with CUDA. For details,
+  in upstream Clang code. Users must use LLVM 18 to 20 with CUDA. For details,
   see https://github.com/llvm/llvm-project/issues/154772
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -29,9 +42,16 @@ OpenASIP (ttasim) driver
 
 * Upgraded the driver to use OpenASIP v2.2(-pre) which uses LLVM 21.
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+CPU driver
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* The atomic min/max operation on floats (cl_ext_float_atomic) are now
+  disabled when `-DENABLE_CONFORMANCE=ON` ; atomic sub/add are enabled.
+  When `-DENABLE_CONFORMANCE=OFF`, all atomics on floats are enabled.
+
 ===================================
 Deprecation/feature removal notices
 ===================================
 
-* Support for LLVM 17 will be removed in the next release.
-
+* Support for LLVM version 17 was removed, versions 18 to 21 are supported

@@ -29,8 +29,8 @@ include(LLVMHelpers)
 # if the user provided CMake package root, use only that (NO_DEFAULT_PATH)
 if(DEFINED LLVM_DIR OR DEFINED ENV{LLVM_DIR})
   find_package(LLVM REQUIRED CONFIG NO_DEFAULT_PATH HINTS "${LLVM_DIR}" ENV{LLVM_DIR})
-  if((LLVM_VERSION_MAJOR LESS 17) OR (LLVM_VERSION_MAJOR GREATER 21))
-    message(FATAL_ERROR "LLVM version between 17.0 and 21.0 required, found: ${LLVM_VERSION_MAJOR}")
+  if((LLVM_VERSION_MAJOR LESS 18) OR (LLVM_VERSION_MAJOR GREATER 21))
+    message(FATAL_ERROR "LLVM version between 18.0 and 21.0 required, found: ${LLVM_VERSION_MAJOR}")
   endif()
 endif()
 
@@ -58,9 +58,6 @@ if(NOT LLVM_CONFIG_BIN AND NOT LLVM_PACKAGE_VERSION)
   if(NOT LLVM_FOUND)
     find_package(LLVM 18.1.0...<18.2 CONFIG)
   endif()
-  if(NOT LLVM_FOUND)
-    find_package(LLVM 17.0.0...<17.1 CONFIG)
-  endif()
   endif()
   # at last, fallback to finding any llvm-config executable
   if(NOT LLVM_FOUND AND NOT LLVM_CONFIG_BIN)
@@ -72,7 +69,6 @@ if(NOT LLVM_CONFIG_BIN AND NOT LLVM_PACKAGE_VERSION)
         "llvm-config-mp-20.0" "llvm-config-mp-20" "llvm-config-20" "llvm-config200"
         "llvm-config-mp-19.0" "llvm-config-mp-19" "llvm-config-19" "llvm-config190"
         "llvm-config-mp-18.0" "llvm-config-mp-18" "llvm-config-18" "llvm-config180"
-        "llvm-config-mp-17.0" "llvm-config-mp-17" "llvm-config-17" "llvm-config170"
         "llvm-config"
       DOC "llvm-config executable")
   endif()

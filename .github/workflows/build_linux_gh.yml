@@ -64,26 +64,26 @@ jobs:
           sudo apt update -y &&
           sudo apt install -y wget gpg python3-dev libpython3-dev build-essential ocl-icd-libopencl1 cmake make git pkg-config ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g-dev libtbb-dev
 
-      - name: Install LLVM 17 (+ llvm-spirv)
-        if: ${{ matrix.llvm == 17 }}
+      - name: Install LLVM 18 (+ llvm-spirv)
+        if: ${{ matrix.llvm == 18 }}
         run: >
           export LLVM_VERSION=${{ matrix.llvm }} &&
           sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} llvm-spirv-${LLVM_VERSION} libpolly-${LLVM_VERSION}-dev spirv-tools
 
-      - name: Install LLVM 18 (+ llvm-spirv + libllvmspirv)
-        if: ${{ matrix.llvm == 18 }}
+      - name: Install LLVM 19 (+ llvm-spirv + libllvmspirv)
+        if: ${{ matrix.llvm == 19 }}
         run: >
           export LLVM_VERSION=${{ matrix.llvm }} &&
           sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} libllvmspirvlib-${LLVM_VERSION}-dev llvm-spirv-${LLVM_VERSION} libpolly-${LLVM_VERSION}-dev spirv-tools
 
-      - name: Install LLVM 19 (+ libllvmspirv)
-        if: ${{ matrix.llvm == 19 }}
+      - name: Install LLVM 20 (+ libllvmspirv)
+        if: ${{ matrix.llvm == 20 }}
         run: >
           export LLVM_VERSION=${{ matrix.llvm }} &&
           sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} libllvmspirvlib-${LLVM_VERSION}-dev libpolly-${LLVM_VERSION}-dev spirv-tools
 
-      - name: Install LLVM >= 20 (from apt.llvm.org)
-        if: ${{ matrix.llvm >= 20 }}
+      - name: Install LLVM >= 21 (from apt.llvm.org)
+        if: ${{ matrix.llvm >= 21 }}
         run: >
           export LLVM_VERSION=${{ matrix.llvm }} &&
           wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/llvm-snapshot.gpg &&

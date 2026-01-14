@@ -104,15 +104,11 @@ endif()
 ####################################################################
 
 set(POCL_CLANG_COMPONENTS clangSupport clangCodeGen clangFrontendTool
-  clangFrontend clangDriver clangSerialization
+  clangFrontend clangAPINotes clangDriver clangSerialization
   clangParse clangSema clangRewrite clangRewriteFrontend
   clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
   clangStaticAnalyzerCore clangAnalysis clangEdit
   clangAST clangASTMatchers clangLex clangBasic)
-# must come after clangFrontend
-if(LLVM_VERSION_MAJOR GREATER 17)
-   list(INSERT POCL_CLANG_COMPONENTS 4 clangAPINotes)
-endif()
 
 set(POCL_LLVM_COMPONENTS
   LLVMDemangle

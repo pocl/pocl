@@ -101,6 +101,8 @@ jobs:
         id: ctest
         timeout-minutes: 120
         run: |
+          # hardcoded path in test_compiler / execute_after_included_header_link
+          rm -rf /tmp/foo
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
           # exclude long tests

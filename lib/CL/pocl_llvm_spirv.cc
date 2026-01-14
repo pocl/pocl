@@ -35,9 +35,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/SourceMgr.h>
 
-#if LLVM_MAJOR >= 18
 #include <llvm/Frontend/Driver/CodeGenOptions.h>
-#endif
 #include <llvm/Support/CommandLine.h>
 
 #include "LLVMUtils.h"
@@ -785,10 +783,8 @@ static int convertBCorSPV(char *InputPath,
   case 105:
     Triple = "spirv64v1.5-unknown-unknown";
     break;
-#if LLVM_MAJOR >= 18
-    case 106:
+  case 106:
     Triple = "spirv64v1.6-unknown-unknown";
-#endif
     break;
   }
 

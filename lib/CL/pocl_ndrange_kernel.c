@@ -170,17 +170,34 @@ pocl_kernel_calc_wg_size (cl_device_id dev, cl_kernel kernel,
     }
 
   /* If the kernel has the reqd_work_group_size attribute, then the local
-   * work size _must_ be specified, and it _must_ match the attribute
+   * work size can be specified, and if it is, it _must_ match the attribute
    * specification
    */
   if (kernel->meta->reqd_wg_size[0] > 0 && kernel->meta->reqd_wg_size[1] > 0
       && kernel->meta->reqd_wg_size[2] > 0)
     {
-      POCL_RETURN_ERROR_COND ((local_work_size == NULL
-                               || local_x != kernel->meta->reqd_wg_size[0]
-                               || local_y != kernel->meta->reqd_wg_size[1]
-                               || local_z != kernel->meta->reqd_wg_size[2]),
-                              CL_INVALID_WORK_GROUP_SIZE);
+      int failed_check = (local_x != kernel->meta->reqd_wg_size[0]);
+      if (work_dim > 1)
+        failed_check
+          = failed_check || local_y != kernel->meta->reqd_wg_size[1];
+      if (work_dim > 2)
+        failed_check
+          = failed_check || local_z != kernel->meta->reqd_wg_size[2];
+      POCL_RETURN_ERROR_ON ((local_work_size != NULL && failed_check),
+                            CL_INVALID_WORK_GROUP_SIZE,
+                            "Local WG size doesn't match required WG size.");
+      if (local_work_size == NULL)
+        {
+          local_x = kernel->meta->reqd_wg_size[0];
+          if (work_dim > 1)
+            local_y = kernel->meta->reqd_wg_size[1];
+          else
+            local_y = 1;
+          if (work_dim > 2)
+            local_z = kernel->meta->reqd_wg_size[2];
+          else
+            local_z = 1;
+        }
     }
   /* Otherwise, if the local work size was not specified find the optimal one.
    * Note that at some point we also checked for local > global. This doesn't
@@ -549,8 +566,6 @@ pocl_ndrange_kernel_common (cl_command_buffer_khr command_buffer,
   size_t local[3] = { 0, 0, 0 };
 
   int errcode = 0;
-
-  size_t raw_ptr_count = 0;
 
   /* A linked list of memobjects implicit migration data. */
   pocl_buffer_migration_info *buf_migrations = NULL;

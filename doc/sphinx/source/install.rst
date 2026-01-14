@@ -148,7 +148,7 @@ use ";" as separator (you'll have to escape it for bash).
   Note that not all builds of LLVM support both Static & Shared linkage; this
   will result in CMake error.
 
-- ``-DLLVM_SPIRV`` Path to a llvm-spirv binary of SPIRV-LLVM-Translator. Note that
+- ``-DHOST_LLVM_SPIRV`` Path to a llvm-spirv binary of SPIRV-LLVM-Translator. Note that
   only the builds of open-source Khronos Translator are supported, and the binary
   must be built for the same LLVM version as PoCL is being built against. If not
   given, PoCL will try to autodetect a llvm-spirv binary with suitable version.

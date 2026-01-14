@@ -706,11 +706,7 @@ Value *pocl::emitPrintfCall(IRBuilder<> &Builder,
 
     // End block, returns -1 on failure
     BranchInst::Create(End, ArgPush);
-#if LLVM_MAJOR > 17
     Builder.SetInsertPoint(End->getFirstInsertionPt());
-#else
-    Builder.SetInsertPoint(&*End->getFirstInsertionPt());
-#endif
     return Builder.CreateSExt(Builder.CreateNot(Cmp), Int32Ty, "printf_result");
   }
 
