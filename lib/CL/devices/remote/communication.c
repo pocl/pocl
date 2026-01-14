@@ -2523,6 +2523,10 @@ pocl_network_setup_metadata (char *buffer, size_t total_size,
         p[i].reqd_wg_size[0] = temp_kernel.reqd_wg_size.x;
         p[i].reqd_wg_size[1] = temp_kernel.reqd_wg_size.y;
         p[i].reqd_wg_size[2] = temp_kernel.reqd_wg_size.z;
+        p[i].max_workgroup_size
+          = calloc (program->num_devices, sizeof (size_t));
+        for (j = 0; j < program->num_devices; ++j)
+          p[i].max_workgroup_size[0] = temp_kernel.max_workgroup_size;
 
         p[i].arg_info = calloc (p[i].num_args, sizeof (pocl_argument_info));
       }

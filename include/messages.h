@@ -808,6 +808,7 @@ extern "C"
     STRING_TYPE (name);
     STRING_TYPE (attributes);
     vec3_t reqd_wg_size;
+    uint64_t max_workgroup_size;
     uint64_t total_local_size;
     uint32_t num_args;
   } KernelMetaInfo_t;
