@@ -2225,25 +2225,18 @@ pocl_free_kernel_metadata (cl_program program, unsigned kernel_i)
       POCL_MEM_FREE (meta->arg_info[j].name);
       POCL_MEM_FREE (meta->arg_info[j].type_name);
     }
-  POCL_MEM_FREE (meta->max_subgroups);
-  POCL_MEM_FREE (meta->compile_subgroups);
-  POCL_MEM_FREE (meta->max_workgroup_size);
-  POCL_MEM_FREE (meta->preferred_wg_multiple);
-  POCL_MEM_FREE (meta->local_mem_size);
-  POCL_MEM_FREE (meta->private_mem_size);
-  POCL_MEM_FREE (meta->spill_mem_size);
   POCL_MEM_FREE (meta->arg_info);
-  if (meta->data != NULL)
-    for (j = 0; j < program->num_devices; ++j)
-      if (meta->data[j] != NULL)
-        {
-          POCL_MSG_WARN ("kernel metadata not freed\n");
-          meta->data[j] = NULL; // TODO free data in driver callback
-        }
-  POCL_MEM_FREE (meta->data);
   if (program->builtin_kernel_names == NULL)
     POCL_MEM_FREE (meta->local_sizes);
   POCL_MEM_FREE (meta->build_hash);
+  for (j = 0; j < program->associated_num_devices; ++j)
+    {
+      if (program->kernel_meta[kernel_i].devices[j].driver_data)
+        POCL_MSG_WARN ("Driver-specific kernel metadata not freed in "
+                       "program=%lu for device=%u!\n",
+                       program->id, j);
+    }
+  POCL_MEM_FREE (program->kernel_meta[kernel_i].devices);
 }
 
 int

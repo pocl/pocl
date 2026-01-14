@@ -476,13 +476,7 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
   for (j = 0; j < program->num_kernels; ++j) {
 
     pocl_kernel_metadata_t *meta = &program->kernel_meta[j];
-    meta->data = (void**)calloc(program->num_devices, sizeof(void*));
-    meta->local_mem_size =
-        (cl_ulong *)calloc(program->num_devices, sizeof(cl_ulong));
-    meta->private_mem_size =
-        (cl_ulong *)calloc(program->num_devices, sizeof(cl_ulong));
-    meta->spill_mem_size =
-        (cl_ulong *)calloc(program->num_devices, sizeof(cl_ulong));
+    pocl_kernel_device_metadata_t *device_meta = &meta->devices[device_i];
 
     llvm::Function *KernelFunction = kernels[j];
 
@@ -526,7 +520,7 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
       printf("### automatic local %d size %u\n", i, auto_local_size);
 #endif
     }
-    meta->local_mem_size[device_i] = total_local_size;
+    device_meta->local_mem_size = total_local_size;
 
     i = 0;
     for (llvm::Function::const_arg_iterator ii = KernelFunction->arg_begin(),
@@ -755,15 +749,12 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
           EstStackSize > 0) {
         size_t WorkItemsStackLimit =
             Device->work_group_stack_size / EstStackSize;
-        if (meta->max_workgroup_size == nullptr)
-          meta->max_workgroup_size = (size_t *)malloc(
-              sizeof(size_t) * program->associated_num_devices);
         // The estimate is the worst-case only; keep the minimum of 1 work item
-        meta->max_workgroup_size[device_i] =
+        device_meta->max_workgroup_size =
             std::max((size_t)1, std::min((size_t)Device->max_work_group_size,
                                          WorkItemsStackLimit));
         POCL_MSG_PRINT_LLVM("Kernel %s: limited max WG size to %zu \n",
-                            meta->name, meta->max_workgroup_size[device_i]);
+                            meta->name, device_meta->max_workgroup_size);
       }
     }
   } // for each kernel
