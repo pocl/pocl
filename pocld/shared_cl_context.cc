@@ -1890,9 +1890,54 @@ int SharedCLContext::buildOrLinkProgram(
   for (size_t i = 0; i < num_kernels; ++i) {
     KernelMetaInfo_t &temp_kernel = program->kernel_meta[i].meta;
     cl_int ArgErr = CL_SUCCESS;
+    program->kernel_meta[i].DeviceMeta.resize(program->devices.size());
 
     temp_kernel.total_local_size = 0;
-    temp_kernel.reqd_wg_size = {0, 0, 0};
+
+    size_t Size3[3] = {0, 0, 0};
+    ArgErr = kernels[i].getWorkGroupInfo(
+        program->devices[0], CL_KERNEL_COMPILE_WORK_GROUP_SIZE, &Size3);
+    assert(ArgErr == CL_SUCCESS);
+    temp_kernel.reqd_wg_size = {Size3[0], Size3[1], Size3[2]};
+
+    for (size_t j = 0; j < program->devices.size(); ++j) {
+      clKernelDeviceMetadata &DeviceMeta =
+          program->kernel_meta[i].DeviceMeta[j];
+
+      ArgErr = kernels[i].getWorkGroupInfo(program->devices[j],
+                                           CL_KERNEL_WORK_GROUP_SIZE,
+                                           &DeviceMeta.MaxWorkGroupSize);
+      assert(ArgErr == CL_SUCCESS);
+      ArgErr = kernels[i].getWorkGroupInfo(
+          program->devices[j], CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
+          &DeviceMeta.PreferredWgMultiple);
+      assert(ArgErr == CL_SUCCESS);
+      ArgErr = kernels[i].getWorkGroupInfo(program->devices[j],
+                                           CL_KERNEL_LOCAL_MEM_SIZE,
+                                           &DeviceMeta.LocalMemSize);
+      assert(ArgErr == CL_SUCCESS);
+      ArgErr = kernels[i].getWorkGroupInfo(program->devices[j],
+                                           CL_KERNEL_PRIVATE_MEM_SIZE,
+                                           &DeviceMeta.PrivateMemSize);
+      assert(ArgErr == CL_SUCCESS);
+
+      ArgErr = kernels[i].getWorkGroupInfo(program->devices[j],
+                                           CL_KERNEL_SPILL_MEM_SIZE_INTEL,
+                                           &DeviceMeta.SpillMemSize);
+      if (ArgErr != CL_SUCCESS)
+        DeviceMeta.SpillMemSize = 0;
+
+      ArgErr = kernels[i].getSubGroupInfo(
+          program->devices[j], CL_KERNEL_MAX_NUM_SUB_GROUPS, cl::NullRange,
+          &DeviceMeta.MaxSubgroups);
+      if (ArgErr != CL_SUCCESS)
+        DeviceMeta.MaxSubgroups = 0;
+      ArgErr = kernels[i].getSubGroupInfo(
+          program->devices[j], CL_KERNEL_COMPILE_NUM_SUB_GROUPS, cl::NullRange,
+          &DeviceMeta.CompileSubgroups);
+      if (ArgErr != CL_SUCCESS)
+        DeviceMeta.CompileSubgroups = 0;
+    }
 
     std::string kernel_name =
         kernels[i].getInfo<CL_KERNEL_FUNCTION_NAME>(&ArgErr);
@@ -2022,6 +2067,7 @@ int SharedCLContext::writeKernelMeta(uint32_t ProgramId,
   // assert (p->kernel_meta.size() > 0);
   std::vector<clKernelMetadata> &meta = p->kernel_meta;
   uint32_t num_kernels = meta.size();
+  uint32_t num_devices = p->devices.size();
   uint64_t placeholder = 0;
 
   WRITE_BYTES(placeholder);
@@ -2033,6 +2079,17 @@ int SharedCLContext::writeKernelMeta(uint32_t ProgramId,
     WRITE_BYTES(num_args);
     for (size_t j = 0; j < num_args; ++j) {
       WRITE_STRING(&meta[i].arg_meta[j], sizeof(ArgumentInfo_t));
+    }
+
+    WRITE_BYTES(num_devices);
+    for (size_t j = 0; j < num_devices; ++j) {
+      WRITE_BYTES(meta[i].DeviceMeta[j].MaxSubgroups);
+      WRITE_BYTES(meta[i].DeviceMeta[j].CompileSubgroups);
+      WRITE_BYTES(meta[i].DeviceMeta[j].MaxWorkGroupSize);
+      WRITE_BYTES(meta[i].DeviceMeta[j].PreferredWgMultiple);
+      WRITE_BYTES(meta[i].DeviceMeta[j].LocalMemSize);
+      WRITE_BYTES(meta[i].DeviceMeta[j].PrivateMemSize);
+      WRITE_BYTES(meta[i].DeviceMeta[j].SpillMemSize);
     }
   }
 

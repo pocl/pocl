@@ -1750,15 +1750,15 @@ pocl_cuda_create_kernel (cl_device_id device, cl_program program,
       = (pocl_cuda_program_data_t *)program->data[device_i];
   assert (pdata != NULL);
   pocl_cuda_kernel_data_t *kdata
-      = (pocl_cuda_kernel_data_t *)meta->data[device_i];
+    = (pocl_cuda_kernel_data_t *)meta->devices[device_i].driver_data;
   if (kdata != NULL)
     {
       ++kdata->refcount;
       return CL_SUCCESS;
     }
 
-  kdata = meta->data[device_i]
-      = (void *)calloc (1, sizeof (pocl_cuda_kernel_data_t));
+  kdata = meta->devices[device_i].driver_data
+    = (void *)calloc (1, sizeof (pocl_cuda_kernel_data_t));
 
   /* Get kernel function */
   CUfunction function = NULL;
@@ -1773,7 +1773,7 @@ pocl_cuda_create_kernel (cl_device_id device, cl_program program,
   if (result != CUDA_SUCCESS)
     {
       POCL_MSG_ERR ("pocl_cuda_create_kernel: cuModuleGetFunction() failed\n");
-      POCL_MEM_FREE (meta->data[device_i]);
+      POCL_MEM_FREE (meta->devices[device_i].driver_data);
       return CL_OUT_OF_RESOURCES;
     }
 
@@ -1795,14 +1795,14 @@ pocl_cuda_free_kernel (cl_device_id device, cl_program program,
 {
   pocl_kernel_metadata_t *meta = kernel->meta;
   pocl_cuda_kernel_data_t *kdata
-      = (pocl_cuda_kernel_data_t *)meta->data[device_i];
+    = (pocl_cuda_kernel_data_t *)meta->devices[device_i].driver_data;
   if (kdata != NULL)
     {
       --kdata->refcount;
       if (kdata->refcount == 0)
         {
-          POCL_MEM_FREE (kdata);
-          meta->data[device_i] = NULL;
+          kdata = NULL;
+          POCL_MEM_FREE (meta->devices[device_i].driver_data);
         }
     }
   return CL_SUCCESS;
@@ -2001,7 +2001,8 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
             }
         }
       int has_offsets1 = 1;
-      kdata = (pocl_cuda_kernel_data_t *)meta->data[cmd->program_device_i];
+      kdata = (pocl_cuda_kernel_data_t *)meta->devices[cmd->program_device_i]
+                .driver_data;
       pocl_cuda_program_data_t *pdata
           = (pocl_cuda_program_data_t *)prog->data[cmd->program_device_i];
       module = has_offsets1 ? pdata->module_offsets : pdata->module;

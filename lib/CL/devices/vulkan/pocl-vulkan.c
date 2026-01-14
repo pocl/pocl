@@ -2322,7 +2322,6 @@ parse_new_kernel (pocl_kernel_metadata_t *p, char *line)
       = POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER | POCL_HAS_KERNEL_ARG_NAME;
   p->arg_info = calloc (MAX_ARGS, sizeof (pocl_argument_info));
   p->total_argument_storage_size = 0;
-  p->data = NULL;
   p->build_hash = NULL;
   p->builtin_kernel_id = 0;
 

@@ -113,12 +113,10 @@
          | POCL_HAS_KERNEL_ARG_NAME),                                         \
     .reqd_wg_size = { 0, 0, 0 }, .wg_size_hint = { 0, 0, 0 },                 \
     .vectypehint = { 0 }, .total_argument_storage_size = 0,                   \
-    .max_subgroups = NULL, .compile_subgroups = NULL,                         \
-    .max_workgroup_size = NULL,                                               \
-    .preferred_wg_multiple = NULL, .local_mem_size = NULL,                    \
-    .private_mem_size = NULL, .spill_mem_size = NULL, .build_hash = NULL,     \
-    .builtin_kernel_id = ID, .builtin_kernel_attrs = NULL,                    \
-    .builtin_max_global_work = {{ 0, 0, 0 }}, .data = NULL                    \
+    .build_hash = NULL, .builtin_kernel_id = ID,                              \
+    .builtin_kernel_attrs = NULL,                                             \
+    .builtin_max_global_work                                                  \
+      = { { 0, 0, 0 } }                                                       \
   }
 
 // BIKD for non-DBK
@@ -679,8 +677,10 @@ pocl_setup_builtin_metadata (cl_device_id device,
                 device, program->builtin_kernel_names[i],
                 &program->kernel_meta[i]);
             }
-          program->kernel_meta[i].data
-            = (void **)calloc (program->num_devices, sizeof (void *));
+          program->kernel_meta[i].devices
+            = (pocl_kernel_device_metadata_t *)calloc (
+              program->associated_num_devices,
+              sizeof (pocl_kernel_device_metadata_t));
         }
     }
 

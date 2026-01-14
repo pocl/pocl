@@ -868,8 +868,6 @@ pocl_driver_setup_metadata (cl_device_id device, cl_program program,
   if (num_kernels)
     {
       program->num_kernels = num_kernels;
-      program->kernel_meta = (pocl_kernel_metadata_t *)calloc (
-        program->num_kernels, sizeof (pocl_kernel_metadata_t));
       poclMlirGetKernelsMetadata (program, program_device_i);
     }
   return 1;
@@ -881,8 +879,6 @@ pocl_driver_setup_metadata (cl_device_id device, cl_program program,
   if (num_kernels)
     {
       program->num_kernels = num_kernels;
-      program->kernel_meta
-          = calloc (program->num_kernels, sizeof (pocl_kernel_metadata_t));
       pocl_llvm_get_kernels_metadata (program, program_device_i);
     }
   return 1;
