@@ -1519,21 +1519,18 @@ int SharedCLContext::buildOrLinkProgram(
   if (LinkOnly) {
     // Collect the previously built programs from the server-side cache and link
     // them.
-    std::vector<cl_program> InputPrograms;
+    std::vector<cl::Program> InputPrograms;
     for (auto &E : InputBinaries) {
       uint32_t ClientProgramID = E.first;
       if (ProgramIDmap.find(ClientProgramID) == ProgramIDmap.end()) {
         POCL_MSG_ERR("Unable to find program with id %u in the ID map.",
                      ClientProgramID);
       }
-      InputPrograms.push_back(ProgramIDmap[ClientProgramID]->uptr->get());
+      InputPrograms.push_back(*ProgramIDmap[ClientProgramID]->uptr.get());
     }
 
-    cl_program LinkedProgram = ::clLinkProgram(
-        ContextWithAllDevices.get(), 0, nullptr, opts.c_str(),
-        static_cast<cl_uint>(InputPrograms.size()),
-        reinterpret_cast<const cl_program *>(InputPrograms.data()), nullptr,
-        nullptr, &err);
+    cl::Program LinkedProgram =
+        cl::linkProgram(InputPrograms, opts, nullptr, nullptr, &err);
 
     if (err != CL_SUCCESS) {
       POCL_MSG_ERR("clLinkProgram() failed\n");
@@ -1738,20 +1735,7 @@ int SharedCLContext::buildOrLinkProgram(
       err = CompileOnly ? p->compile(opts.c_str()) : p->build(opts.c_str());
     } else {
       if (CompileOnly) {
-        // cl2.hpp doesn't have device-limiting versions of compile()
-        // reported in https://github.com/KhronosGroup/OpenCL-CLHPP/issues/285
-
-        std::size_t NumDevices = program->devices.size();
-        std::vector<cl_device_id> DeviceIDs(NumDevices);
-
-        for (std::size_t DeviceIndex = 0; DeviceIndex < NumDevices;
-             ++DeviceIndex) {
-          DeviceIDs[DeviceIndex] = (program->devices[DeviceIndex])();
-        }
-
-        err = ::clCompileProgram(p->get(), NumDevices, DeviceIDs.data(),
-                                 opts.c_str(), 0, nullptr, nullptr, nullptr,
-                                 nullptr);
+        err = p->compile(opts, program->devices, {}, {});
       } else {
         err = p->build(program->devices, opts.c_str());
       }
