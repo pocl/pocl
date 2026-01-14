@@ -3260,17 +3260,14 @@ int SharedCLContext::runKernel(
   {
     std::unique_lock<std::mutex> Lock(BufferMapMutex);
     std::vector<void *> SVMPtrs;
-#if 0
-    // Do we need to pass the SVM regions here? It will kill the perf.
-    // as the regions are large.
-    // TODO: We should pass the indirect SVM
-    // pointers from the client-side, but they are not passed either.
-    if (SVMRegions.size() > 0)
-      SVMPtrs.push_back(SVMPool);
-#endif
-    for (auto &S : SVMBackingStoreMap)
-      SVMPtrs.push_back(S.second);
-    k->setSVMPointers(SVMPtrs);
+    // Some drivers don't like it when applications attempt to set SVM pointers
+    // without setting up SVM regions, even when just passing in an empty list,
+    // so let's avoid touching that API when it's not actually being used.
+    if (!SVMBackingStoreMap.empty()) {
+      for (auto &S : SVMBackingStoreMap)
+        SVMPtrs.push_back(S.second);
+      k->setSVMPointers(SVMPtrs);
+    }
   }
   {
     err = cq->enqueueNDRangeKernel(
