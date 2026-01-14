@@ -45,6 +45,7 @@ foreach(FILE
   wait_group_events.cl
   barrier.ll nvvm_functions.ll subgroup.ll
   subgroup_core.cl
+  read_image.cl write_image.cl
   )
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
   list(APPEND KERNEL_SOURCES "cuda/${FILE}")
