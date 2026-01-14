@@ -768,6 +768,7 @@ pocl_vulkan_init_device_ops (struct pocl_device_ops *ops)
   ops->build_binary = pocl_vulkan_build_binary;
   ops->link_program = NULL;
   ops->free_program = pocl_vulkan_free_program;
+  ops->count_kernels = pocl_vulkan_count_kernels;
   ops->setup_metadata = pocl_vulkan_setup_metadata;
   ops->supports_binary = pocl_vulkan_supports_binary;
   ops->build_poclbinary = pocl_vulkan_build_poclbinary;
@@ -1019,6 +1020,9 @@ pocl_vulkan_setup_memfill_kernels (cl_device_id dev,
   d->memfill64_prog->data = calloc (1, sizeof (void *));
   d->memfill64_prog->build_hash = calloc (1, sizeof (SHA1_digest_t));
   d->memfill64_prog->build_log = calloc (1, sizeof (char *));
+  d->memfill64_prog->kernel_meta = calloc (1, sizeof (pocl_kernel_metadata_t));
+  d->memfill64_prog->kernel_meta->devices
+    = calloc (1, sizeof (pocl_kernel_device_metadata_t));
 
   d->memfill64_prog->num_devices = 1;
   d->memfill64_prog->devices[0] = dev;
@@ -1051,6 +1055,10 @@ pocl_vulkan_setup_memfill_kernels (cl_device_id dev,
   d->memfill128_prog->data = calloc (1, sizeof (void *));
   d->memfill128_prog->build_hash = calloc (1, sizeof (SHA1_digest_t));
   d->memfill128_prog->build_log = calloc (1, sizeof (char *));
+  d->memfill128_prog->kernel_meta
+    = calloc (1, sizeof (pocl_kernel_metadata_t));
+  d->memfill128_prog->kernel_meta->devices
+    = calloc (1, sizeof (pocl_kernel_device_metadata_t));
 
   d->memfill128_prog->num_devices = 1;
   d->memfill128_prog->devices[0] = dev;
@@ -1912,8 +1920,7 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
 
   const char *COMPILATION[MAX_COMPILATION_ARGS]
     = { CLSPV, "-x=cl", "--spv-version=1.0", "--cl-kernel-arg-info",
-        "--keep-unused-arguments", "--uniform-workgroup-size",
-        "--global-offset", "--long-vector",
+        "--uniform-workgroup-size", "--global-offset", "--long-vector",
         "--global-offset-push-constant", // goffs as push constant
         "--module-constants-in-storage-buffer",
         /* push constants should be faster,
@@ -1921,7 +1928,7 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
         /* "--pod-pushconstant",*/
         "--pod-ubo", "--cluster-pod-kernel-args", NULL };
 
-  unsigned last_arg_idx = 12;
+  unsigned last_arg_idx = 11;
 
   if (d->have_i8_shader)
     COMPILATION[last_arg_idx++] = "--int8";
@@ -2322,7 +2329,6 @@ parse_new_kernel (pocl_kernel_metadata_t *p, char *line)
       = POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER | POCL_HAS_KERNEL_ARG_NAME;
   p->arg_info = calloc (MAX_ARGS, sizeof (pocl_argument_info));
   p->total_argument_storage_size = 0;
-  p->data = NULL;
   p->build_hash = NULL;
   p->builtin_kernel_id = 0;
 
@@ -2795,15 +2801,79 @@ ERROR:
 }
 
 int
+pocl_vulkan_count_kernels (cl_device_id device,
+                           cl_program program,
+                           unsigned program_device_i,
+                           size_t *count)
+{
+  if (!program->data[program_device_i])
+    return 0;
+
+  pocl_vulkan_program_data_t *vpd = program->data[program_device_i];
+  *count = vpd->num_kernels;
+  return 1;
+}
+
+int
 pocl_vulkan_setup_metadata (cl_device_id device, cl_program program,
                             unsigned program_device_i)
 {
   assert (program->data[program_device_i] != NULL);
   pocl_vulkan_program_data_t *vpd = program->data[program_device_i];
 
-  program->num_kernels = vpd->num_kernels;
-  program->kernel_meta = vpd->kernel_meta;
-  vpd->kernel_meta = NULL;
+  for (size_t i = 0; i < vpd->num_kernels; ++i)
+    {
+      pocl_kernel_metadata_t *km = &program->kernel_meta[i];
+      pocl_kernel_metadata_t *vm = &vpd->kernel_meta[i];
+      km->num_args = vm->num_args;
+      km->num_locals = vm->num_locals;
+      if (km->local_sizes == NULL)
+        {
+          km->local_sizes
+            = (size_t *)malloc (vm->num_locals * sizeof (size_t));
+          memcpy (km->local_sizes, vm->local_sizes,
+                  vm->num_locals * sizeof (size_t));
+        }
+      if (km->name == NULL && vm->name != NULL)
+        km->name = strdup (vm->name);
+      if (km->attributes == NULL && km->attributes != NULL)
+        km->attributes = strdup (vm->attributes);
+      if (km->arg_info == NULL)
+        {
+          km->arg_info = (struct pocl_argument_info *)calloc (
+            vm->num_args, sizeof (struct pocl_argument_info));
+          for (size_t j = 0; j < vm->num_args; ++j)
+            {
+              km->arg_info[j].name
+                = vm->arg_info[j].name ? strdup (vm->arg_info[j].name) : NULL;
+              km->arg_info[j].type_name
+                = vm->arg_info[j].type_name
+                    ? strdup (vm->arg_info[j].type_name)
+                    : NULL;
+              km->arg_info[j].type = vm->arg_info[j].type;
+              km->arg_info[j].type_size = vm->arg_info[j].type_size;
+              km->arg_info[j].address_qualifier
+                = vm->arg_info[j].address_qualifier;
+              km->arg_info[j].access_qualifier
+                = vm->arg_info[j].access_qualifier;
+              km->arg_info[j].type_qualifier = vm->arg_info[j].type_qualifier;
+            }
+        }
+      km->has_arg_metadata = vm->has_arg_metadata;
+      memcpy (km->reqd_wg_size, vm->reqd_wg_size, sizeof (vm->reqd_wg_size));
+      memcpy (km->wg_size_hint, vm->wg_size_hint, sizeof (vm->wg_size_hint));
+      memcpy (km->vectypehint, vm->vectypehint, sizeof (vm->vectypehint));
+      km->reqd_sub_group_size = vm->reqd_sub_group_size;
+      km->total_argument_storage_size = vm->total_argument_storage_size;
+      // TODO: kernel build hashes do not match the size that pocl-vulkan
+      // actually allocates...
+      km->builtin_kernel_id = vm->builtin_kernel_id;
+      memcpy (km->builtin_max_global_work.size,
+              vm->builtin_max_global_work.size,
+              sizeof (vm->builtin_max_global_work.size));
+      // TODO: obtain device-specific subgroup an wg metadata for
+      // km->devices[program_device_i]
+    }
 
   return 1;
 }

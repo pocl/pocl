@@ -849,6 +849,21 @@ struct pocl_device_ops {
                        unsigned program_device_i);
 
   /**
+   * Compute program->num_kernels from driver-specific program data.
+   *
+   * Called before setup_metadata on device drivers that do NOT populate
+   * program->pocl_binaries. For devices that do populate
+   * program->pocl_binaries this information is obtained directly from said
+   * binary instead.
+   *
+   * \return Zero on error or if program is not an executable binary
+   */
+  int (*count_kernels) (cl_device_id device,
+                        cl_program program,
+                        unsigned program_device_i,
+                        size_t *count);
+
+  /**
    * The driver should setup kernel metadata here, if it can, and return
    * non-zero on success.
    *
@@ -1893,6 +1908,32 @@ struct _cl_mem_list_item_t
 
 typedef uint8_t SHA1_digest_t[SHA1_DIGEST_SIZE * 2 + 1];
 
+/** Per-device kernel metadata */
+typedef struct pocl_device_kernel_metadata_s
+{
+  /****** subgroups *******/
+  /* CL_KERNEL_MAX_NUM_SUB_GROUPS */
+  size_t max_subgroups;
+  /* per-device value for CL_KERNEL_COMPILE_NUM_SUB_GROUPS */
+  size_t compile_subgroups;
+
+  /****** workgroups *******/
+  /* per-device value for CL_KERNEL_WORK_GROUP_SIZE */
+  size_t max_workgroup_size;
+  /* per-device value for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE */
+  size_t preferred_wg_multiple;
+  /* per-device value for CL_KERNEL_LOCAL_MEM_SIZE */
+  cl_ulong local_mem_size;
+  /* per-device value for CL_KERNEL_PRIVATE_MEM_SIZE */
+  cl_ulong private_mem_size;
+  /* per-device value for CL_KERNEL_SPILL_MEM_SIZE_INTEL */
+  cl_ulong spill_mem_size;
+
+  /* driver-specific data */
+  void *driver_data;
+} pocl_kernel_device_metadata_t;
+
+/** Device agnostic kernel metadata */
 typedef struct pocl_kernel_metadata_s
 {
   cl_uint num_args;
@@ -1913,24 +1954,6 @@ typedef struct pocl_kernel_metadata_s
    * the total size here. see struct _cl_kernel on why */
   size_t total_argument_storage_size;
 
-  /****** subgroups *******/
-  /* per-device value for CL_KERNEL_MAX_NUM_SUB_GROUPS */
-  size_t *max_subgroups;
-  /* per-device value for CL_KERNEL_COMPILE_NUM_SUB_GROUPS */
-  size_t *compile_subgroups;
-
-  /****** workgroups *******/
-  /* per-device value for CL_KERNEL_WORK_GROUP_SIZE */
-  size_t *max_workgroup_size;
-  /* per-device value for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE */
-  size_t *preferred_wg_multiple;
-  /* per-device value for CL_KERNEL_LOCAL_MEM_SIZE */
-  cl_ulong *local_mem_size;
-  /* per-device value for CL_KERNEL_PRIVATE_MEM_SIZE */
-  cl_ulong *private_mem_size;
-  /* per-device value for CL_KERNEL_SPILL_MEM_SIZE_INTEL */
-  cl_ulong *spill_mem_size;
-
   /* per-device array of hashes */
   pocl_kernel_hash_t *build_hash;
 
@@ -1942,8 +1965,9 @@ typedef struct pocl_kernel_metadata_s
    * Only applies to builtin kernels */
   size_t_3 builtin_max_global_work;
 
-  /* device-specific METAdata, void* array[program->num_devices] */
-  void **data;
+  /* Array with one entry for each associated device for device-specific
+   * metadata */
+  pocl_kernel_device_metadata_t *devices;
 } pocl_kernel_metadata_t;
 
 #define MAIN_PROGRAM_LOG_SIZE 6400

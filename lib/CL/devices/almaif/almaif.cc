@@ -98,6 +98,7 @@ void pocl_almaif_init_device_ops(struct pocl_device_ops *ops) {
   ops->uninit = pocl_almaif_uninit;
   ops->probe = pocl_almaif_probe;
   ops->build_hash = pocl_almaif_build_hash;
+  ops->count_kernels = pocl_driver_count_kernels;
   ops->setup_metadata = pocl_setup_builtin_metadata;
 
   /* TODO: Bufalloc-based allocation from the onchip memories. */

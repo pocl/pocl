@@ -122,6 +122,10 @@
                                          cl_uint device_i);                   \
   int pocl_##__DRV__##_free_program (cl_device_id device, cl_program program, \
                                      unsigned program_device_i);              \
+  int pocl_##__DRV__##_count_kernels (cl_device_id device,                    \
+                                        cl_program program,                   \
+                                        unsigned program_device_i,            \
+                                        size_t *count);                       \
   int pocl_##__DRV__##_setup_metadata (                                       \
       cl_device_id device, cl_program program, unsigned program_device_i);    \
   int pocl_##__DRV__##_supports_binary (cl_device_id device, size_t length,   \
