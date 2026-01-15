@@ -30,6 +30,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <numeric>
 #include <sstream>
 #include <unistd.h>
 #include <variant>
@@ -944,6 +945,16 @@ static void appendImageFormats(DeviceInfo_t &devi, unsigned i,
 }
 #undef DI
 
+static std::string
+packCLVersionNameList(const std::vector<cl_name_version> &values) {
+  std::string acc;
+  for (size_t i = 0; i < values.size(); ++i) {
+    acc.append((i ? "\n" : "") + std::to_string(values[i].version) + " " +
+               std::string(values[i].name));
+  }
+  return acc;
+}
+
 /**
  * Returns the basic device infos that can be asked via clGetDeviceInfo.
  *
@@ -1078,6 +1089,14 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
   }
 
   PUSH_STRING(i.extensions, exts);
+
+  std::string CLCVersionString = packCLVersionNameList(
+      clientDevice.getInfo<CL_DEVICE_OPENCL_C_ALL_VERSIONS>());
+  PUSH_STRING(i.opencl_c_all_versions, CLCVersionString);
+
+  std::string CLCFeatureString = packCLVersionNameList(
+      clientDevice.getInfo<CL_DEVICE_OPENCL_C_FEATURES>());
+  PUSH_STRING(i.opencl_c_features, CLCFeatureString);
 
   i.vendor_id = clientDevice.getInfo<CL_DEVICE_VENDOR_ID>();
   i.address_bits = clientDevice.getInfo<CL_DEVICE_ADDRESS_BITS>();

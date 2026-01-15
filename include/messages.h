@@ -254,6 +254,8 @@ extern "C"
     POCL_ALIGNAS(8) // Meant for aligning the structure, not the members.
     uint64_t name;
     uint64_t opencl_c_version;
+    uint64_t opencl_c_all_versions;
+    uint64_t opencl_c_features;
     uint64_t device_version;
     uint64_t driver_version;
     uint64_t vendor;
