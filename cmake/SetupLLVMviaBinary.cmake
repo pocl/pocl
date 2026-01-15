@@ -54,20 +54,6 @@ endif()
 
 ####################################################################
 
-# In windows llvm-config reports --target=x86_64-pc-windows-msvc
-# however this causes clang to use MicrosoftCXXMangler, which does not
-# yet support mangling for extended vector types (with llvm 3.5)
-# so for now hardcode LLVM_HOST_TARGET to be x86_64-pc with windows
-# TODO is this still required ???
-if(WIN32 AND (NOT MINGW))
-  # Using the following target causes clang to invoke gcc for linking
-  # instead of MSVC's link.exe.
-  # TODO: lower LLVM version requirement until the above issue is hit.
-  if (NOT MSVC OR LLVM_VERSION_MAJOR LESS 18)
-    set(LLVM_HOST_TARGET "x86_64-pc")
-  endif()
-endif()
-
 # A few work-arounds for llvm-config issues
 
 # - pocl doesn't compile with '-pedantic'
