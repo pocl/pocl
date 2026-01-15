@@ -1148,6 +1148,7 @@ int pocl_invoke_clang(const char* TTriple, const char** Args) {
 
 #ifdef CPU_USE_LLD_LINK_WIN32
 
+LLD_HAS_DRIVER(mingw)
 LLD_HAS_DRIVER(coff)
 
 int pocl_invoke_lld_link_win32(cl_device_id Device, const char *InFile,
@@ -1191,7 +1192,8 @@ int pocl_invoke_lld_link_win32(cl_device_id Device, const char *InFile,
       "/nodefaultlib", "/noentry", "/noimplib", OutArg.c_str(), InFile,
       ChkstkLibrary.c_str(), StringLibrary.c_str() };
 
-  std::vector<lld::DriverDef> Drivers = {{lld::WinLink, &lld::coff::link}};
+  std::vector<lld::DriverDef> Drivers = {{lld::MinGW, &lld::mingw::link}, {lld::WinLink, &lld::coff::link}};
+
   lld::Result Res =
       lld::lldMain(LinkerArgs, llvm::outs(), llvm::errs(), Drivers);
   return (!Res.retCode && Res.canRunAgain) ? 0 : 1;

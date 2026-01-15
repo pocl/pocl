@@ -185,14 +185,15 @@ endif()
 # if enabled, CPU driver on Windows will use lld-link (invoked via library API)
 # to link final kernel object files, instead of the default Clang driver linking.
 set(CPU_USE_LLD_LINK_WIN32 OFF)
-# TODO WIN32 or MSVC ? does this work with MINGW ?
-if(ENABLE_HOST_CPU_DEVICES AND MSVC AND ENABLE_LLVM AND STATIC_LLVM AND X86)
+# TODO does not yet work with MINGW; tested but the linked DLL is empty
+if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM AND STATIC_LLVM AND MSVC)
   find_library(LIB_LLD_COFF NAMES "lldCOFF" HINTS "${LLVM_LIBDIR}")
+  find_library(LIB_LLD_MINGW NAMES "lldMinGW" HINTS "${LLVM_LIBDIR}")
   find_library(LIB_LLD_COMMON NAMES "lldCommon" HINTS "${LLVM_LIBDIR}")
-  if(LIB_LLD_COFF AND LIB_LLD_COMMON)
+  if(LIB_LLD_COFF AND LIB_LLD_MINGW AND LIB_LLD_COMMON)
     message(STATUS "Using lld-link via library to link kernels for CPU devices")
     set(CPU_USE_LLD_LINK_WIN32 ON)
-  list(APPEND LLVM_LINK_LIBRARIES ${LIB_LLD_COFF} ${LIB_LLD_COMMON})
+    list(APPEND LLVM_LINK_LIBRARIES ${LIB_LLD_COFF} ${LIB_LLD_MINGW} ${LIB_LLD_COMMON})
   endif()
 endif()
 
