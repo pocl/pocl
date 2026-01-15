@@ -1207,6 +1207,16 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
     }
 
   ci->dlhandle = pocl_dynlib_open (module_fn, 0, 1);
+  if (ci->dlhandle == NULL)
+    {
+      POCL_MSG_ERR ("pocl_dynlib_open(\"%s\") failed.\n"
+                    "note: this may be caused by missing symbols "
+                    " in the kernel binary\n.",
+                    module_fn);
+      POCL_UNLOCK (pocl_dlhandle_lock);
+      free (ci);
+      return NULL;
+    }
 
   size_t workgroup_len = strlen (run_cmd->kernel->name) + 30;
   workgroup_string = (char *)malloc (workgroup_len);
