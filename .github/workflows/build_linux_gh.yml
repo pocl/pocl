@@ -165,9 +165,8 @@ jobs:
           if [ "${{ matrix.config }}" == "install" ]; then
             # Do not use the run_cpu_tests script as we want to test the installation, not
             # the build dir.
-            # the pocl_test_dlopen tests try to dlopen libraries from the build dir;
-            # however, we removed it at the install step to ensure we test the installed
-            # so
+            # the pocl_test_dlopen tests try to dlopen libraries from the build dir; however,
+            # we removed that libpocl.so at the install step to ensure we test the installed libpocl
             cd ${{ github.workspace }}/build && ctest -j$(nproc) -E pocl_test_dlopen_ -LE cpu_fail $CTEST_FLAGS "$@"
           else
             cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cpu_tests -j$(nproc) $CTEST_FLAGS "$@"

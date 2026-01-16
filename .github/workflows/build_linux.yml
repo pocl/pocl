@@ -61,6 +61,8 @@ jobs:
             config: TBB
           - llvm: 18
             config: OpenMP
+          - llvm: 22
+            config: basic
 
     steps:
       - name: Checkout
@@ -100,7 +102,7 @@ jobs:
           elif [ "${{ matrix.config }}" == "tier1" ]; then
             mkdir -p ${EXAMPLES_DIR}/build_tier1_llvm_${{ matrix.llvm }}
             # disable UnitCL for LLVM 21, it's incompatible with it
-            if [ "${{ matrix.llvm }}" == "21"  ]; then
+            if [ "${{ matrix.llvm }}" -ge "21"  ]; then
               runCMake "-DENABLE_TESTSUITES=AMDSDK3.0;piglit;conformance;PyOpenCL;IntelSVM" -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_tier1_llvm_${{ matrix.llvm }}
             else
               runCMake "-DENABLE_TESTSUITES=AMDSDK3.0;piglit;conformance;PyOpenCL;IntelSVM;UnitCL" -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_tier1_llvm_${{ matrix.llvm }}
