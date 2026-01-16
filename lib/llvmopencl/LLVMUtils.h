@@ -24,6 +24,8 @@
 #ifndef POCL_LLVM_UTILS_H
 #define POCL_LLVM_UTILS_H
 
+#include "config.h"
+
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/Twine.h>
@@ -34,7 +36,11 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Metadata.h>
 #include <llvm/IR/Module.h>
 #include <llvm/Passes/PassBuilder.h>
+#if LLVM_MAJOR < 22
 #include <llvm/Passes/PassPlugin.h>
+#else
+#include <llvm/Plugins/PassPlugin.h>
+#endif
 #include <llvm/Transforms/Utils/Cloning.h> // for CloneFunctionIntoAbs
 POP_COMPILER_DIAGS
 

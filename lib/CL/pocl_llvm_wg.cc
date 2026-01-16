@@ -128,7 +128,12 @@ static TargetMachine *GetTargetMachine(const char* TTriple,
   }
 
   TargetMachine *TM = TheTarget->createTargetMachine(
-      TTriple, MCPU, Features, TargetOptions(),
+#if LLVM_MAJOR < 22
+      TTriple,
+#else
+      Triple(TTriple),
+#endif
+      MCPU, Features, TargetOptions(),
       Reloc::PIC_, CodeModel::Small,
       CodeGenOptLevel::Aggressive);
 

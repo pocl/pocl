@@ -61,6 +61,12 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "pocl_llvm_api.h"
 #include "pocl_runtime_config.h"
 
+#if LLVM_MAJOR < 22
+using LLVMOptionMap = llvm::StringMap<llvm::cl::Option *>;
+#else
+using LLVMOptionMap = llvm::DenseMap<llvm::StringRef, llvm::cl::Option *>;
+#endif
+
 using namespace llvm;
 
 #include <string>
@@ -476,8 +482,9 @@ std::string CurrentWgMethod;
 /// format:
 ///
 ///   option1,option2=foo,option3=bar
+
 static void
-parseOptionsFromCSVString(StringMap<llvm::cl::Option *> &RegisteredOptions,
+parseOptionsFromCSVString(LLVMOptionMap &RegisteredOptions,
                           StringRef OptionsString) {
   SmallVector<StringRef> SeparatedOptionStrings;
   OptionsString.split(SeparatedOptionStrings, ',');
@@ -593,7 +600,7 @@ void InitializeLLVM() {
 
     LLVMOptionsInitialized = true;
 
-    StringMap<llvm::cl::Option *> &opts = llvm::cl::getRegisteredOptions();
+    LLVMOptionMap &opts = llvm::cl::getRegisteredOptions();
 
     llvm::cl::Option *O = nullptr;
 

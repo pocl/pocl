@@ -197,8 +197,13 @@ llvm::AllocaInst *getLoopStateAllocaForLoad(llvm::LoadInst &LInst) {
 // bring along the llvm.dbg.value intrinsics when cloning values
 void copyDgbValues(llvm::Value *From, llvm::Value *To,
                    llvm::Instruction *InsertBefore) {
+#if LLVM_MAJOR < 22
   llvm::SmallVector<llvm::DbgValueInst *, 1> DbgValues;
   llvm::findDbgValues(DbgValues, From);
+#else
+  llvm::SmallVector<llvm::DbgVariableRecord *, 1> DbgValues;
+  llvm::findDbgValues(From, DbgValues);
+#endif
   if (!DbgValues.empty()) {
     auto *DbgValue = DbgValues.back();
     llvm::DIBuilder DbgBuilder{

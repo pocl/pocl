@@ -44,7 +44,19 @@
 
 #ifdef __F16C__
 
+#if !__has_builtin(__builtin_ia32_vcvtph2ps)
+float4 __builtin_ia32_vcvtph2ps(short8 in_h)
+{
+  return __builtin_convertvector(in_h.lo, float4);
+}
+#endif
 
+#if !__has_builtin(__builtin_ia32_vcvtph2ps256)
+float8 __builtin_ia32_vcvtph2ps256(short8 in_h)
+{
+  return __builtin_convertvector(in_h, float8);
+}
+#endif
 
 
 /** FLOAT -> HALF vec4 ************************************************/
