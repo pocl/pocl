@@ -1569,6 +1569,8 @@ SubCFGFormation::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
   handleWorkitemFunctions();
   GenerateGlobalIdComputation();
 
+  eraseInvalidLifetimeMarkers(&F);
+
   PreservedAnalyses PAChanged = PreservedAnalyses::none();
   PAChanged.preserve<WorkitemHandlerChooser>();
   return PAChanged;

@@ -270,6 +270,23 @@ bool isGVarUsedByFunction(llvm::GlobalVariable *GVar, llvm::Function *F) {
   return false;
 }
 
+// Erase lifetime.start markers which reference invalid values
+// Only valid values are Poison & Alloca
+void eraseInvalidLifetimeMarkers(llvm::Function *F) {
+    for (BasicBlock &BB : *F) {
+        for (Instruction &I : llvm::make_early_inc_range(BB)) {
+            auto *II = dyn_cast<LifetimeIntrinsic>(&I);
+            if (!II)
+                continue;
+
+            Value *Mem = II->getOperand(0);
+            if (isa<PoisonValue>(Mem) || isa<AllocaInst>(Mem))
+                continue;
+
+            II->eraseFromParent();
+        }
+    }
+}
 
 bool
 isAutomaticLocal(llvm::Function *F, llvm::GlobalVariable &Var) {
