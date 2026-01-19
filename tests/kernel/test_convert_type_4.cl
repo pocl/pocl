@@ -37,16 +37,16 @@ constant size_t ulong_values_length = sizeof(ulong_values) / sizeof(ulong_values
 #endif
 
 #ifdef cl_khr_fp64
-constant float float_sat_offsets[16] =
+constant float float_sat_offsets[17] =
 {
    0.0f, (float)CHAR_MAX, (float)CHAR_MIN, (float)UCHAR_MAX, (float)SHRT_MIN, (float)SHRT_MAX, (float)USHRT_MAX, (float)INT_MAX,
-   (float)INT_MIN, (float)UINT_MAX, (float)LONG_MAX, (float)LONG_MIN, (float)ULONG_MAX, 0.0f, 1.0e15f, -1.0e15f
+   (float)INT_MIN, (float)UINT_MAX, (float)LONG_MAX, (float)LONG_MIN, (float)ULONG_MAX, 0.0f, 1.0e15f, -1.0e15f, 0.0f
 };
 #else
-constant float float_sat_offsets[13] =
+constant float float_sat_offsets[17] =
 {
    0.0f, (float)CHAR_MAX, (float)CHAR_MIN, (float)UCHAR_MAX, (float)SHRT_MIN, (float)SHRT_MAX, (float)USHRT_MAX, (float)INT_MAX,
-   (float)INT_MIN, (float)UINT_MAX, 0.0f, 1.0e15f, -1.0e15f
+   (float)INT_MIN, (float)UINT_MAX, 0.0f, 1.0e15f, -1.0e15f, 0.0f, 0.0f, 0.0f, 0.0f
 };
 #endif
 
@@ -57,22 +57,22 @@ constant int float_rounded_values_rte[17] = { -2     , -2      , -2     , -1    
 constant int float_rounded_values_rtp[17] = { -2     , -1      , -1     , -1      , -1     ,  0      ,  0     ,  0      , 0     , 1      , 1     , 1      , 1     , 2      , 2     , 2      , 2      };
 constant int float_rounded_values_rtn[17] = { -2     , -2      , -2     , -2      , -1     , -1      , -1     , -1      , 0     , 0      , 0     , 0      , 1     , 1      , 1     , 1      , 2      };
 
-constant size_t float_values_length = sizeof(float_values) / sizeof(float_values[0]);
+constant size_t float_values_length = 17;
 
 
 #ifdef cl_khr_fp64
 
 #ifdef cl_khr_fp64
-constant double double_sat_offsets[16] =
+constant double double_sat_offsets[17] =
 {
    0.0, (double)CHAR_MAX, (double)CHAR_MIN, (double)UCHAR_MAX, (double)SHRT_MIN, (double)SHRT_MAX, (double)USHRT_MAX, (double)INT_MAX,
-   (double)INT_MIN, (double)UINT_MAX, (double)LONG_MAX, (double)LONG_MIN, (double)ULONG_MAX, 0.0, 1.0e15, -1.0e15
+   (double)INT_MIN, (double)UINT_MAX, (double)LONG_MAX, (double)LONG_MIN, (double)ULONG_MAX, 0.0, 1.0e15, -1.0e15, 0.0
 };
 #else
-constant double double_sat_offsets[13] =
+constant double double_sat_offsets[17] =
 {
    0.0, (double)CHAR_MAX, (double)CHAR_MIN, (double)UCHAR_MAX, (double)SHRT_MIN, (double)SHRT_MAX, (double)USHRT_MAX, (double)INT_MAX,
-   (double)INT_MIN, (double)UINT_MAX, 0.0, 1.0e15, -1.0e15
+   (double)INT_MIN, (double)UINT_MAX, 0.0, 1.0e15, -1.0e15, 0.0, 0.0, 0.0, 0.0
 };
 #endif
 
@@ -83,7 +83,7 @@ constant long double_rounded_values_rte[17] = { -2     , -2      , -2     , -1  
 constant long double_rounded_values_rtp[17] = { -2     , -1      , -1     , -1      , -1     ,  0      ,  0     ,  0      , 0     , 1      , 1     , 1      , 1     , 2      , 2     , 2      , 2      };
 constant long double_rounded_values_rtn[17] = { -2     , -2      , -2     , -2      , -1     , -1      , -1     , -1      , 0     , 0      , 0     , 0      , 1     , 1      , 1     , 1      , 2      };
 
-constant size_t double_values_length = sizeof(double_values) / sizeof(double_values[0]);
+constant size_t double_values_length = 17;
 
 
 #endif
