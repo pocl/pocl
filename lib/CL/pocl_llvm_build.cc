@@ -346,10 +346,10 @@ int pocl_llvm_build_program(cl_program program,
 #if LLVM_MAJOR < 21
   llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagOpts =
       new clang::DiagnosticOptions();
-  clang::DiagnosticsEngine diags(diagID, &*diagOpts, diagsBuffer);
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> diags(new clang::DiagnosticsEngine(diagID, &*diagOpts, diagsBuffer));
 #else
   clang::DiagnosticOptions diagOpts{};
-  clang::DiagnosticsEngine diags(diagID, diagOpts, diagsBuffer);
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> diags(new clang::DiagnosticsEngine(diagID, diagOpts, diagsBuffer));
 #endif
 
   CompilerInstance CI;
@@ -587,7 +587,7 @@ int pocl_llvm_build_program(cl_program program,
           pocl_build,
           ArrayRef<const char *>(itemcstrs.data(),
                                  itemcstrs.data() + itemcstrs.size()),
-          diags)) {
+          *diags)) {
     pocl_cache_create_program_cachedir(program, device_i, program->source,
                                        strlen(program->source),
                                        program_bc_path);
@@ -667,10 +667,10 @@ int pocl_llvm_build_program(cl_program program,
 #ifdef DEBUG_POCL_LLVM_API
   std::cout << "### Triple: " << ta.Triple.c_str() <<  ", CPU: " << ta.CPU.c_str();
 #endif
-#if LLVM_MAJOR < 20
-  CI.createDiagnostics(diagsBuffer, false);
+#if LLVM_MAJOR < 22
+  CI.setDiagnostics(&*diags);
 #else
-  CI.createDiagnostics(*llvm::vfs::getRealFileSystem(), diagsBuffer, false);
+  CI.setDiagnostics(diags);
 #endif
 
   // Read input source to clang::FrontendOptions.

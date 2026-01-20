@@ -214,6 +214,7 @@ bool WorkitemLoopsImpl::runOnFunction(Function &Func) {
   releaseParallelRegions();
   LLVM_DEBUG(dbgs() << "After WILoops:\n");
   LLVM_DEBUG(Func.dump());
+  eraseInvalidLifetimeMarkers(&Func);
   return Changed;
 }
 

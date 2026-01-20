@@ -29,8 +29,8 @@ include(LLVMHelpers)
 # if the user provided CMake package root, use only that (NO_DEFAULT_PATH)
 if(DEFINED LLVM_DIR OR DEFINED ENV{LLVM_DIR})
   find_package(LLVM REQUIRED CONFIG NO_DEFAULT_PATH HINTS "${LLVM_DIR}" ENV{LLVM_DIR})
-  if((LLVM_VERSION_MAJOR LESS 18) OR (LLVM_VERSION_MAJOR GREATER 21))
-    message(FATAL_ERROR "LLVM version between 18.0 and 21.0 required, found: ${LLVM_VERSION_MAJOR}")
+  if((LLVM_VERSION_MAJOR LESS 18) OR (LLVM_VERSION_MAJOR GREATER 22))
+    message(FATAL_ERROR "LLVM version between 18.0 and 22.0 required, found: ${LLVM_VERSION_MAJOR}")
   endif()
 endif()
 
@@ -48,9 +48,9 @@ endif()
 # fallback search for LLVMConfig.cmake of supported versions in descending order
 if(NOT LLVM_CONFIG_BIN AND NOT LLVM_PACKAGE_VERSION)
   if(NOT MSVC)
-  find_package(LLVM 21.1.0...<21.2 CONFIG)
+  find_package(LLVM 22.1.0...<22.2 CONFIG)
   if(NOT LLVM_FOUND)
-    find_package(LLVM 20.1.0...<20.2 CONFIG)
+    find_package(LLVM 21.1.0...<21.2 CONFIG)
   endif()
   if(NOT LLVM_FOUND)
     find_package(LLVM 19.1.0...<19.2 CONFIG)
@@ -65,6 +65,7 @@ if(NOT LLVM_CONFIG_BIN AND NOT LLVM_PACKAGE_VERSION)
       NAMES
         "llvmtce-config"
         "llvm-config"
+        "llvm-config-mp-22.0" "llvm-config-mp-22" "llvm-config-22" "llvm-config220"
         "llvm-config-mp-21.0" "llvm-config-mp-21" "llvm-config-21" "llvm-config210"
         "llvm-config-mp-20.0" "llvm-config-mp-20" "llvm-config-20" "llvm-config200"
         "llvm-config-mp-19.0" "llvm-config-mp-19" "llvm-config-19" "llvm-config190"

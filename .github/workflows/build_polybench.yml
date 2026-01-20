@@ -117,6 +117,9 @@ jobs:
           mkdir ${{ env.POCL_CACHE_DIR }}
 
           if [ "${{ matrix.device }}" == "x86_64" ]; then
+            # run once to create binaries in pocl cache
+            cd ${{ github.workspace }}/build && ctest -j1 -L polybenchGPU -LE long
+            cd ${{ github.workspace }}/build && rm polybench_result.json
             cd ${{ github.workspace }}/build && ctest -j1 -L polybenchGPU -LE long
           elif [ "${{ matrix.device }}" == "RISCV" ]; then
             ${{ github.workspace }}/tools/scripts/run_cross_compiled_cpu_tests ${{ github.workspace }} ${BUILD_DIR} ${REMOTE_ADDRESS} ${REMOTE_USER} ctest --output-on-failure -j1 -L polybenchGPU -LE long

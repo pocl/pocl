@@ -56,6 +56,8 @@
    or such. The pointers are global SVM so they should be fixed as well.
 */
 
+#include "config.h"
+
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/Twine.h>
@@ -66,7 +68,11 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Module.h>
 #include <llvm/Pass.h>
 #include <llvm/Passes/PassBuilder.h>
+#if LLVM_MAJOR < 22
 #include <llvm/Passes/PassPlugin.h>
+#else
+#include <llvm/Plugins/PassPlugin.h>
+#endif
 #include <llvm/Support/CommandLine.h>
 POP_COMPILER_DIAGS
 
