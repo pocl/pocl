@@ -49,16 +49,23 @@ else()
   set(OPENCL_LIBRARY "$<TARGET_FILE:${POCL_LIBRARY_NAME}>")
 endif()
 
+if(X86_64)
+  set(NITERS 120)
+else()
+  set(NITERS 12)
+endif()
+
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
   GIT_REPOSITORY "https://github.com/cpc/polybench.git"
-  GIT_TAG "abc08a37a035b281b3657f21552925dae8a05d11"
+  GIT_TAG "iters"
   ${GIT_OPTIONS}
   CMAKE_ARGS
     ${UPSTREAM_CMAKE_ARGS}
     -DUSE_SMALL_DATASET=OFF
     -DENABLE_VERIFICATION=OFF
+    -DENQUEUE_ITERS=${NITERS}
     "-DOPENCL_INCLUDE_PATH=${CMAKE_SOURCE_DIR}/include/"
     "-DOPENCL_opencl_LIBRARY:STRING=${OPENCL_LIBRARY}"
   INSTALL_COMMAND ""
@@ -204,16 +211,13 @@ set_tests_properties(
 
 set_tests_properties(
   polybenchGPU_CORR
+  polybenchGPU_CORR_cmd_buffer
+  polybenchGPU_COVAR
+  polybenchGPU_COVAR_cmd_buffer
   polybenchGPU_GRAMSCHM
-  polybenchGPU_2MM_cmd_buffer
+  polybenchGPU_GRAMSCHM_cmd_buffer
   polybenchGPU_2MM
+  polybenchGPU_2MM_cmd_buffer
   PROPERTIES
   LABELS "long")
 
-foreach(BENCH IN ITEMS 2DCONV 2MM 3DCONV 3MM ATAX BICG CORR COVAR GEMM GEMVER GESUMMV GRAMSCHM
-    JACOBI1D JACOBI2D LU MVT SYR2K SYRK 2DCONV_cmd_buffer 2MM_cmd_buffer
-    3DCONV_cmd_buffer 3MM_cmd_buffer ATAX_cmd_buffer BICG_cmd_buffer
-    CORR_cmd_buffer COVAR_cmd_buffer GEMM_cmd_buffer GEMVER_cmd_buffer
-    GESUMMV_cmd_buffer GRAMSCHM_cmd_buffer JACOBI1D_cmd_buffer JACOBI2D_cmd_buffer
-    LU_cmd_buffer MVT_cmd_buffer SYR2K_cmd_buffer SYRK_cmd_buffer)
-endforeach()
