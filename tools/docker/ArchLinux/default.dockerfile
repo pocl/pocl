@@ -1,4 +1,4 @@
-FROM library/archlinux:latest@sha256:f7047b912073aba008a42602920728e3fd604f4a1b50ae35babd64012eba5b3e
+FROM library/archlinux:latest@sha256:417aa2d3e8e4cc8377360a94bf48ae1ed38e593cbecfcb34feb16d57e3efa1b5
 ARG GIT_COMMIT=main
 LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Arch version=1.0
 
