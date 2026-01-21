@@ -233,6 +233,8 @@ void fixPrintF(llvm::Module *Module) {
   // Remove calls to va_start and va_end.
   pocl::eraseFunctionAndCallers(Module->getFunction("llvm.va_start"));
   pocl::eraseFunctionAndCallers(Module->getFunction("llvm.va_end"));
+  pocl::eraseFunctionAndCallers(Module->getFunction("llvm.va_start.p0"));
+  pocl::eraseFunctionAndCallers(Module->getFunction("llvm.va_end.p0"));
 
   // Create new non-variadic printf function.
   llvm::Type *ReturnType = OldPrintF->getReturnType();
