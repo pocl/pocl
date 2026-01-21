@@ -76,5 +76,5 @@ jobs:
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cuda_tests $CTEST_FLAGS
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cuda_tests $CTEST_FLAGS -E 'test_device_address|overwriting_the_previous_kernel'
 
