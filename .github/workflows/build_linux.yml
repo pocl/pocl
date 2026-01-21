@@ -198,8 +198,11 @@ jobs:
           # hardcoded path in test_compiler / execute_after_included_header_link
           rm -rf /tmp/foo
           mkdir ${{ env.POCL_CACHE_DIR }}
-          if [ "${{ matrix.config }}" == "basic" ] || [ "${{ matrix.config }}" == "devel" ] || [ "${{ matrix.config }}" == "TBB" ] || [ "${{ matrix.config }}" == "OpenMP" ]; then
+          if [ "${{ matrix.config }}" == "basic" ] || [ "${{ matrix.config }}" == "devel" ] || [ "${{ matrix.config }}" == "TBB" ]; then
             runCTest
+          elif [ "${{ matrix.config }}" == "OpenMP" ]; then
+            # this test passes, but is extremely slow on some CI runners
+            runCTest -E EinsteinToolkit
           elif [ "${{ matrix.config }}" == "cts_spirv" ]; then
             runCTest -L conformance_suite_micro_spirv
           elif [ "${{ matrix.config }}" == "tier1" ]; then
