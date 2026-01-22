@@ -11,4 +11,4 @@ shift
 # -s is useful as it dumps the PoCL logs directly without capture.
 # -k can be used to filter the test
 
-cd "${TS_SRCDIR}/test" && ${DBG_CMD} ${TS_BUILDDIR}/bin/python3 ${TS_BUILDDIR}/bin/py.test -s -v --tb=native $@
+cd "${TS_SRCDIR}/test" && ${DBG_CMD} ${TS_BUILDDIR}/bin/python3 ${TS_BUILDDIR}/bin/py.test -s -v --tb=native "$@"
