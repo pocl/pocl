@@ -62,7 +62,9 @@ WORK_GROUP_SHUFFLE_T (uint)
 WORK_GROUP_SHUFFLE_T (long)
 WORK_GROUP_SHUFFLE_T (ulong)
 WORK_GROUP_SHUFFLE_T (float)
+#ifdef cl_khr_fp64
 WORK_GROUP_SHUFFLE_T (double)
+#endif
 
 #define WORK_GROUP_BROADCAST_T(TYPE)                                          \
   __attribute__ ((always_inline)) TYPE _CL_OVERLOADABLE                       \
@@ -88,7 +90,9 @@ WORK_GROUP_BROADCAST_T (uint)
 WORK_GROUP_BROADCAST_T (long)
 WORK_GROUP_BROADCAST_T (ulong)
 WORK_GROUP_BROADCAST_T (float)
+#ifdef cl_khr_fp64
 WORK_GROUP_BROADCAST_T (double)
+#endif
 
 #define WORK_GROUP_REDUCE_OT(OPNAME, OPERATION, TYPE)                         \
   __attribute__ ((always_inline))                                             \
@@ -110,6 +114,7 @@ WORK_GROUP_BROADCAST_T (double)
     return temp_storage[0];                                                   \
   }
 
+#ifdef cl_khr_fp64
 #define WORK_GROUP_REDUCE_T(OPNAME, OPERATION)                                \
   WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, int)                               \
   WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, uint)                              \
@@ -117,6 +122,14 @@ WORK_GROUP_BROADCAST_T (double)
   WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, ulong)                             \
   WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, float)                             \
   WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, double)
+#else
+#define WORK_GROUP_REDUCE_T(OPNAME, OPERATION)                                \
+  WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, int)                               \
+  WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, uint)                              \
+  WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, long)                              \
+  WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, ulong)                             \
+  WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, float)
+#endif
 
 WORK_GROUP_REDUCE_T (add, a + b)
 WORK_GROUP_REDUCE_T (min, a > b ? b : a)
@@ -142,6 +155,7 @@ WORK_GROUP_REDUCE_T (max, a > b ? a : b)
     return data[get_local_linear_id ()];                                      \
   }
 
+#ifdef cl_khr_fp64
 #define WORK_GROUP_SCAN_INCLUSIVE_T(OPNAME, OPERATION)                        \
   WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, int)                       \
   WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, uint)                      \
@@ -149,6 +163,14 @@ WORK_GROUP_REDUCE_T (max, a > b ? a : b)
   WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, ulong)                     \
   WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, float)                     \
   WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, double)
+#else
+#define WORK_GROUP_SCAN_INCLUSIVE_T(OPNAME, OPERATION)                        \
+  WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, int)                       \
+  WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, uint)                      \
+  WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, long)                      \
+  WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, ulong)                     \
+  WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, float)
+#endif
 
 WORK_GROUP_SCAN_INCLUSIVE_T (add, a + b)
 WORK_GROUP_SCAN_INCLUSIVE_T (min, a > b ? b : a)
@@ -181,21 +203,24 @@ WORK_GROUP_SCAN_EXCLUSIVE_OT (add, a + b, uint, 0)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (add, a + b, long, 0)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (add, a + b, ulong, 0)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (add, a + b, float, 0.0f)
-WORK_GROUP_SCAN_EXCLUSIVE_OT (add, a + b, double, 0.0)
 
 WORK_GROUP_SCAN_EXCLUSIVE_OT (min, a > b ? b : a, int, INT_MAX)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (min, a > b ? b : a, uint, UINT_MAX)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (min, a > b ? b : a, long, LONG_MAX)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (min, a > b ? b : a, ulong, ULONG_MAX)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (min, a > b ? b : a, float, +INFINITY)
-WORK_GROUP_SCAN_EXCLUSIVE_OT (min, a > b ? b : a, double, +INFINITY)
 
 WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, int, INT_MIN)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, uint, 0)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, long, LONG_MIN)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, ulong, 0)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, float, -INFINITY)
+
+#ifdef cl_khr_fp64
+WORK_GROUP_SCAN_EXCLUSIVE_OT (add, a + b, double, 0.0)
+WORK_GROUP_SCAN_EXCLUSIVE_OT (min, a > b ? b : a, double, +INFINITY)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, double, -INFINITY)
+#endif
 
 __attribute__ ((always_inline)) int _CL_OVERLOADABLE
 work_group_any (int predicate)
