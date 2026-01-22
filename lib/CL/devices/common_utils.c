@@ -447,8 +447,10 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
       device->single_fp_atomic_caps = device->double_fp_atomic_caps
         = CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT
           | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT
+          | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT
+          | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT
           | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT
-          | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT;
+          | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT;
     }
 
   pocl_setup_opencl_c_with_version (device, CL_TRUE);
