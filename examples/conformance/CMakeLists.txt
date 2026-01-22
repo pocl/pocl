@@ -1247,7 +1247,8 @@ ${TS_BUILDDIR}/images/kernel_image_methods
 ${TS_BUILDDIR}/images/kernel_read_write
 ${TS_BUILDDIR}/images/samplerlessReads)
 
-add_custom_target(create_cts_links ALL DEPENDS ${TS_NAME})
+add_custom_target(create_cts_links)
+add_dependencies(${TS_NAME} create_cts_links)
 
 foreach(CTS_DIR IN LISTS OPENCL_CTS_DIR_LIST)
   #message(STATUS "Adding symlink in DIR: ${CTS_DIR}")

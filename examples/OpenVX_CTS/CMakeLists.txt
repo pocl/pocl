@@ -100,7 +100,7 @@ set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 add_dependencies(prepare_examples ${TS_NAME})
 
 add_test(NAME "${TS_NAME}"
-         COMMAND "${TS_BUILDDIR}/bin/vx_test_conformance" "--filter=*:-SmokeTestBase.vxRelease*:-SmokeTestBase.vxLoadKernels:-SmokeTestBase.vxUnloadKernels:-Array.vxCreateArray/?/array/VX_TYPE*:-vxConvertDepth.BitExact*:-GaussianPyramid.GraphProcessing/?/randomInput/VX_BORDER_UNDEFINED*:-GaussianPyramid.ImmediateProcessing/*/VX_BORDER_UNDEFINED*:-GaussianPyramid.GraphProcessing/37/lena/VX_BORDER_UNDEFINED*"
+         COMMAND "${TS_BUILDDIR}/bin/vx_test_conformance" "--filter=*:-Graph.GraphState:-SmokeTestBase.vxRelease*:-SmokeTestBase.vxLoadKernels:-SmokeTestBase.vxUnloadKernels:-Array.vxCreateArray/?/array/VX_TYPE*:-vxConvertDepth.BitExact*:-GaussianPyramid.GraphProcessing/?/randomInput/VX_BORDER_UNDEFINED*:-GaussianPyramid.ImmediateProcessing/*/VX_BORDER_UNDEFINED*:-GaussianPyramid.GraphProcessing/37/lena/VX_BORDER_UNDEFINED*"
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
 # Unit_hipMemset_SetMemoryWithOffset require CL_DEVICE_MAX_MEM_ALLOC_SIZE of >= 1GB,

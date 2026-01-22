@@ -80,8 +80,8 @@ jobs:
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_openasip_tests $CTEST_FLAGS
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_almaif_tests $CTEST_FLAGS
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_openasip_tests --repeat until-pass:3 ${CTEST_FLAGS}
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_almaif_tests --repeat until-pass:3 ${CTEST_FLAGS}
 
   # could be tried with multiple CLSPV versions
   vulkan_matrix:

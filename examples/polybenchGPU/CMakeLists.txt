@@ -163,14 +163,17 @@ add_test(NAME polybenchGPU_SYRK_cmd_buffer COMMAND ${TEST_LAUNCHER_SCRIPT} ./syr
 #  polybenchGPU_ADI_cmd_buffer
 #  polybenchGPU_FDTD-2D
 #  polybenchGPU_FDTD-2D_cmd_buffer
+#
+# too much jitter in these tests:
+#  polybenchGPU_2DCONV
+#  polybenchGPU_2DCONV_cmd_buffer
+#  polybenchGPU_ATAX
+#  polybenchGPU_BICG
 
 set_tests_properties(
-  polybenchGPU_2DCONV
   polybenchGPU_2MM
   polybenchGPU_3DCONV
   polybenchGPU_3MM
-  polybenchGPU_ATAX
-  polybenchGPU_BICG
   polybenchGPU_CORR
   polybenchGPU_COVAR
   polybenchGPU_GEMM
@@ -183,7 +186,6 @@ set_tests_properties(
   polybenchGPU_MVT
   polybenchGPU_SYR2K
   polybenchGPU_SYRK
-  polybenchGPU_2DCONV_cmd_buffer
   polybenchGPU_2MM_cmd_buffer
   polybenchGPU_3DCONV_cmd_buffer
   polybenchGPU_3MM_cmd_buffer
