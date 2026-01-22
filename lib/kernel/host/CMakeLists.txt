@@ -353,7 +353,7 @@ if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS) # implies CONFORMANCE=OFF
 
 else() # ENABLE_HOST_CPU_VECTORIZE_BUILTINS=OFF
 
-  # vectorization via library disabled, conformance on/off
+  # vectorization via library disabled, conformance implied OFF
   if(HOST_CPU_ENABLE_CL_KHR_FP16)
 
     # first, remove SLEEF/libpocl & add the fp64/32/16 "BUILTIN_XYZ" implementations
