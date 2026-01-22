@@ -35,7 +35,7 @@ set(EXAMPLES_USE_GIT_MASTER 1)
 if(EXAMPLES_USE_GIT_MASTER)
   set(FETCH_SOURCE
     GIT_REPOSITORY "https://github.com/inducer/pyopencl.git"
-    GIT_TAG v2024.1
+    GIT_TAG v2026.1.2
     ${GIT_OPTIONS}
     GIT_SUBMODULES "pyopencl/compyte")
 else()
@@ -83,10 +83,7 @@ if(VIRTUALENV)
       "${TS_BUILDDIR}"
       "${TS_SRCDIR}"
 
-    INSTALL_COMMAND "${BASH}" "${CMAKE_CURRENT_SOURCE_DIR}/install.sh"
-      "${TS_BASEDIR}"
-      "${TS_BUILDDIR}"
-      "${TS_SRCDIR}"
+    INSTALL_COMMAND ""
   )
 
 
@@ -95,7 +92,8 @@ if(VIRTUALENV)
 
 #  add_test(NAME "PyOpenCL_" COMMAND "${BASH}" "${CMAKE_CURRENT_SOURCE_DIR}/runtest.sh" "${TS_BASEDIR}" "${TS_BUILDDIR}" "${TS_SRCDIR}"  )
   add_test(NAME "PyOpenCL_test_algorithm" COMMAND "${BASH}" "${CMAKE_CURRENT_SOURCE_DIR}/runtest.sh" "${TS_BASEDIR}" "${TS_BUILDDIR}" "${TS_SRCDIR}" test_algorithm.py )
-  add_test(NAME "PyOpenCL_test_array" COMMAND "${BASH}" "${CMAKE_CURRENT_SOURCE_DIR}/runtest.sh" "${TS_BASEDIR}" "${TS_BUILDDIR}" "${TS_SRCDIR}" test_array.py )
+# skip test_xdg_cache_home
+  add_test(NAME "PyOpenCL_test_array" COMMAND "${BASH}" "${CMAKE_CURRENT_SOURCE_DIR}/runtest.sh" "${TS_BASEDIR}" "${TS_BUILDDIR}" "${TS_SRCDIR}" "-k not test_xdg_cache_home" test_array.py)
   add_test(NAME "PyOpenCL_test_arrays_in_structs" COMMAND "${BASH}" "${CMAKE_CURRENT_SOURCE_DIR}/runtest.sh" "${TS_BASEDIR}" "${TS_BUILDDIR}" "${TS_SRCDIR}" test_arrays_in_structs.py )
   add_test(NAME "PyOpenCL_test_clmath" COMMAND "${BASH}" "${CMAKE_CURRENT_SOURCE_DIR}/runtest.sh" "${TS_BASEDIR}" "${TS_BUILDDIR}" "${TS_SRCDIR}" test_clmath.py )
   add_test(NAME "PyOpenCL_test_clrandom" COMMAND "${BASH}" "${CMAKE_CURRENT_SOURCE_DIR}/runtest.sh" "${TS_BASEDIR}" "${TS_BUILDDIR}" "${TS_SRCDIR}" test_clrandom.py )

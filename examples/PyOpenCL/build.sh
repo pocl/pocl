@@ -4,4 +4,4 @@ TS_BASEDIR="$1"
 TS_BUILDDIR="$2"
 TS_SRCDIR="$3"
 
-cd "${TS_SRCDIR}" && ${TS_BUILDDIR}/bin/python3 setup.py build
+cd "${TS_SRCDIR}" && ${TS_BUILDDIR}/bin/pip3 install .
