@@ -1046,6 +1046,17 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
     }
   }
 
+  // remove unused globals that were copied
+  std::vector<GlobalVariable *> EraseGVs;
+  for (GlobalVariable &GV : Program->globals()) {
+    if (GV.use_empty())
+      EraseGVs.push_back(&GV);
+  }
+  for (auto GV : EraseGVs) {
+    assert(GV);
+    GV->eraseFromParent();
+  }
+
   return 0;
 }
 
