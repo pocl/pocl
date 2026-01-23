@@ -1046,6 +1046,30 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
     }
   }
 
+//  program->dump();
+  // remove unused globals that were copied
+  std::vector<GlobalVariable *> EraseGVs;
+//  for (gi=Program->global_begin(), ge=Program->global_end(); gi != ge; ) {
+  for (GlobalVariable &GV : Program->globals()) {
+      // this is a hack. For (yet) unknown reasons, removing some .str
+      // makes LLVM fail with:
+      // Referencing global in another module!
+      // [2 x ptr] [ptr @.str, ptr @.str.1]
+      if (GV.hasName() && GV.getName().starts_with(".str"))
+        continue;
+      if (GV.use_empty())
+        EraseGVs.push_back(&GV);
+  }
+  for (auto GV: EraseGVs) {
+    assert(GV);
+//    if (GV->hasName())
+//      std::cerr << "Removing GVar: " << GV->getName().str() << "\n";
+//    else
+//      std::cerr << "Removing unnamed GVar:\n";
+//    GV->dump();
+    GV->eraseFromParent();
+  }
+
   return 0;
 }
 
