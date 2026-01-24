@@ -68,14 +68,14 @@ can be used from the build directory (without installing it system-wide).
 
 ### Linux
 
-| CPU device  |     LLVM 17    |     LLVM 18     |      LLVM 19     |     LLVM 20     |     LLVM 21     |
-|:------------|:--------------:|:---------------:|:----------------:|:---------------:|:---------------:|
-| [x86-64](https://github.com/pocl/pocl/actions/workflows/build_linux_gh.yml) | :green_circle: | :green_circle: :large_blue_diamond: | :green_circle: |  :large_orange_diamond: | :large_orange_diamond: |
-| [ARM64](https://github.com/pocl/pocl/actions/workflows/build_arm64.yml)     | :yellow_circle: | :yellow_circle: | :yellow_circle: |  :yellow_circle: | :green_circle: |
-| i686    | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
-| ARM32   | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
-| RISC-V  | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
-| PowerPC | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
+| CPU device  |     LLVM 17    |     LLVM 18     |      LLVM 19     |     LLVM 20     |     LLVM 21     |     LLVM 22     |
+|:------------|:--------------:|:---------------:|:----------------:|:---------------:|:---------------:|:---------------:|
+| [x86-64](https://github.com/pocl/pocl/actions/workflows/build_linux_gh.yml) | :green_circle: | :green_circle: :large_blue_diamond: | :green_circle: |  :large_orange_diamond: | :large_orange_diamond: | :green_circle: |
+| [ARM64](https://github.com/pocl/pocl/actions/workflows/build_arm64.yml)     | :yellow_circle: | :yellow_circle: | :yellow_circle: |  :yellow_circle: | :green_circle: |:yellow_circle: |
+| i686    | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
+| ARM32   | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
+| RISC-V  | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
+| PowerPC | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
 
 | GPU device  |     LLVM 17    |     LLVM 18     |      LLVM 19     |     LLVM 20     |     LLVM 21     |
 |:------------|:--------------:|:---------------:|:----------------:|:---------------:|:---------------:|
