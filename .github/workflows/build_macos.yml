@@ -38,13 +38,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [18, 19]
         # basic = simplest pthread build
         # devel = with devel options
         # cts_spirv = cts with SPIR-V
         # tier1 = includes CTS without SPIR-V
         # asan, tsan, ubsan = sanitizers
-        config: [basic, devel]
+        include:
+          - llvm: 20
+            config: basic
+          - llvm: 21
+            config: devel
 
     steps:
       - name: Checkout
@@ -75,7 +78,7 @@ jobs:
             cmake -DDEVELOPER_MODE=ON -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_PREFIX_PATH=$CONDA_PREFIX \
             -DOPENCL_H=$CONDA_PREFIX/include/CL/opencl.h -DOPENCL_HPP=$CONDA_PREFIX/include/CL/opencl.hpp \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
-            -DWITH_LLVM_CONFIG=$CONDA_PREFIX/bin/llvm-config \
+            -DWITH_LLVM_CONFIG=$CONDA_PREFIX/bin/llvm-config -DLLC_HOST_CPU=apple-m3 \
             "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
           }
 

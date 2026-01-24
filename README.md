@@ -96,7 +96,7 @@ Note: CUDA with LLVM 21 is broken due to a bug in Clang (https://github.com/llvm
 
 | CPU device  |     LLVM 17    |     LLVM 18     |      LLVM 19     |     LLVM 20     |      LLVM 21     |
 |:------------|:--------------:|:---------------:|:----------------:|:---------------:|:----------------:|
-| [Apple Silicon](https://github.com/pocl/pocl/actions/workflows/build_macos.yml) | :yellow_circle: | :green_circle:  | :green_circle: | :yellow_circle: |  :yellow_circle: |
+| [Apple Silicon](https://github.com/pocl/pocl/actions/workflows/build_macos.yml) | :yellow_circle: | :yellow_circle: | :yellow_circle: | :green_circle: | :green_circle: |
 | [Intel CPU](https://github.com/pocl/pocl/actions/workflows/build_macos.yml)     | :yellow_circle: | :yellow_circle: | :x: | :x: | :x: |
 
 ### Windows
