@@ -130,7 +130,7 @@ jobs:
 
   remote_discovery_avahi_matrix:
     name: LLVM ${{ matrix.llvm }} - discovery_avahi
-    runs-on: [self-hosted, linux, x64, remote]
+    runs-on: [self-hosted, linux, x64, avahi]
     strategy:
       fail-fast: false
       matrix:
@@ -180,7 +180,7 @@ jobs:
 
   remote_discovery_dht_matrix:
     name: LLVM ${{ matrix.llvm }} - discovery_dht
-    runs-on: [self-hosted, linux, x64, remote]
+    runs-on: [self-hosted, linux, x64, opendht]
     strategy:
       fail-fast: false
       matrix:
