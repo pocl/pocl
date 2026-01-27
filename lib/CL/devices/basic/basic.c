@@ -208,7 +208,7 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   device->data = d;
   device->available = &d->available;
 
-  ret = pocl_cpu_init_common (device);
+  ret = pocl_cpu_init_common (device, j);
   if (ret != CL_SUCCESS)
     return ret;
 

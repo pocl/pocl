@@ -38,6 +38,7 @@
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
 #include "pocl_tensor_util.h"
+#include "pocl_version.h"
 #include "spirv_queries.h"
 #include "topology/pocl_topology.h"
 #include "utlist.h"
@@ -263,7 +264,7 @@ static const char *final_ld_flags[] = { HOST_LD_FLAGS_ARRAY, NULL };
  * for non-CPU (host) devices.
  */
 cl_int
-pocl_cpu_init_common (cl_device_id device)
+pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
 {
   int ret = CL_SUCCESS;
 
@@ -577,6 +578,12 @@ pocl_cpu_init_common (cl_device_id device)
     = CL_MUTABLE_DISPATCH_GLOBAL_SIZE_KHR | CL_MUTABLE_DISPATCH_LOCAL_SIZE_KHR
       | CL_MUTABLE_DISPATCH_GLOBAL_OFFSET_KHR;
 #endif
+
+  pocl_set_device_uuid (device->device_uuid, dev_i, device->ops->device_name);
+  pocl_set_driver_uuid (device->driver_uuid, POCL_VERSION_FULL);
+  device->luid_is_valid = 0;
+  memset (device->device_luid, 0, CL_LUID_SIZE_KHR);
+  device->device_node_mask = 1;
 
   return ret;
 }

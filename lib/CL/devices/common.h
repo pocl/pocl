@@ -76,6 +76,14 @@ POCL_EXPORT
 char *pocl_cpu_build_hash (cl_device_id device);
 
 POCL_EXPORT
+void pocl_set_device_uuid (cl_uchar *device_uuid,
+                           unsigned dev_i,
+                           const char *extra);
+
+POCL_EXPORT
+void pocl_set_driver_uuid (cl_uchar *device_uuid, const char *extra);
+
+POCL_EXPORT
 void pocl_broadcast (cl_event event);
 
 POCL_EXPORT
