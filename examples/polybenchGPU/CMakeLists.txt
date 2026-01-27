@@ -168,7 +168,9 @@ add_test(NAME polybenchGPU_SYRK_cmd_buffer COMMAND ${TEST_LAUNCHER_SCRIPT} ./syr
 #  polybenchGPU_2DCONV
 #  polybenchGPU_2DCONV_cmd_buffer
 #  polybenchGPU_ATAX
+#  polybenchGPU_ATAX_cmd_buffer
 #  polybenchGPU_BICG
+#  polybenchGPU_GEMVER
 
 set_tests_properties(
   polybenchGPU_2MM
@@ -177,7 +179,6 @@ set_tests_properties(
   polybenchGPU_CORR
   polybenchGPU_COVAR
   polybenchGPU_GEMM
-  polybenchGPU_GEMVER
   polybenchGPU_GESUMMV
   polybenchGPU_GRAMSCHM
   polybenchGPU_JACOBI1D
@@ -189,7 +190,6 @@ set_tests_properties(
   polybenchGPU_2MM_cmd_buffer
   polybenchGPU_3DCONV_cmd_buffer
   polybenchGPU_3MM_cmd_buffer
-  polybenchGPU_ATAX_cmd_buffer
   polybenchGPU_BICG_cmd_buffer
   polybenchGPU_CORR_cmd_buffer
   polybenchGPU_COVAR_cmd_buffer
