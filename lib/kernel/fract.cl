@@ -42,9 +42,11 @@ DEFINE_EXPR_V_VPV (fract, ({
 DEFINE_EXPR_V_VPV (fract, ({
                      vtype fl = select ((vtype)floor (a), (vtype)NAN,
                                         (itype)isnan (a));
-                     fl = select ((vtype)fl, (vtype)0.0f, (itype)isinf (a));
+                     fl = select ((vtype)fl, (vtype)a, (itype)isinf (a));
                      *b = fl;
                      vtype ret = fmin (a - floor (a), (vtype)0x1.fffffep-1f);
-                     select ((vtype)ret, (vtype)NAN, (itype)isnan (a));
+
+                     ret = select ((vtype)ret, (vtype)0.0f, (itype)isinf (a));
+                     select ((vtype)ret, (vtype) (NAN), (itype)isnan (a));
                    }))
 #endif
