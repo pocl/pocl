@@ -43,7 +43,7 @@ MATH_MANGLE(pow)(vtype x, vtype y)
     itype is_odd = (nyi << 63);
 #else
     vtype tay = BUILTIN_TRUNC_F64(ay);
-    itype is_int = (ay == tay);
+    itype is_int = (ay == tay) && !isinf(ay);
     vtype unused;
     itype is_odd = is_int ? (fract(tay*0.5, &unused) != vZERO_DP64) : (itype)0;
 

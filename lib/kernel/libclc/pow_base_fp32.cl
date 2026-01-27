@@ -45,7 +45,7 @@ MATH_MANGLE(pow)(vtype x, vtype y)
 #else
 
     vtype tay = BUILTIN_TRUNC_F32(ay);
-    itype is_int = (ay == tay);
+    itype is_int = (ay == tay) && !isinf(ay);
     vtype unused;
     itype is_odd = is_int ? (fract(tay*0.5f, &unused) != vZERO_SP32) : (itype)0;
 
