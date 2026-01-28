@@ -1631,6 +1631,21 @@ for int_type in SUBGROUP_VEC_TYPES:
 		for suffix in ['_up', '_down']:
 			generate_function("intel_sub_group_shuffle"+suffix, SIG_TO_LLVM_TYPE_MAP[ret_type], '', False, arg_type, arg_type, mask_type)
 
+BITOPS_TYPES = ['c', 'h', 's', 't', 'i', 'j', 'l', 'm' ]
+for arg_type in BITOPS_TYPES:
+	for vecsize in ['','2','3','4','8','16']:
+		if vecsize:
+			vec_type = 'Dv'+vecsize+'_'+arg_type
+			signext = ''
+		else:
+			vec_type = arg_type
+			signext = LLVM_TYPE_EXT_MAP[arg_type]
+		mask_type = 'j'
+		generate_function("bitfield_insert", SIG_TO_LLVM_TYPE_MAP[arg_type], signext, False, vec_type, vec_type, mask_type, mask_type)
+		generate_function("bitfield_extract_signed", SIG_TO_LLVM_TYPE_MAP[arg_type], signext, False, vec_type, mask_type, mask_type)
+		generate_function("bitfield_extract_unsigned", SIG_TO_LLVM_TYPE_MAP[arg_type], signext, False, vec_type, mask_type, mask_type)
+
+
 for vecsize in ['','2','4','8']:
 	# uints
 	if vecsize:

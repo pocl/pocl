@@ -1661,6 +1661,10 @@ cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
 cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes cl_ext_float_atomics \
 cl_intel_unified_shared_memory cl_ext_buffer_device_address cl_khr_device_uuid")
 
+if(LLVM_VERSION_MAJOR GREATER_EQUAL 20)
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_extended_bit_ops")
+endif()
+
 # Host CPU device: list of OpenCL 3.0 features that are always enabled
 # TODO: __opencl_c_atomic_scope_all_devices works with CPU device but not others
 # for now it's included because CTS test 'C11 atomics' subtest 'atomic_flag' requires it

@@ -1143,4 +1143,8 @@
 #define intel_sub_group_block_write_ui4 _cl_intel_sub_group_block_write_ui4
 #define intel_sub_group_block_write_ui8 _cl_intel_sub_group_block_write_ui8
 
+#define bitfield_insert _cl_bitfield_insert
+#define bitfield_extract_signed _cl_bitfield_extract_signed
+#define bitfield_extract_unsigned _cl_bitfield_extract_unsigned
+
 #endif

@@ -1867,6 +1867,7 @@ static const cl_name_version OPENCL_EXTENSIONS[]
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_global_int32_base_atomics" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_global_int32_extended_atomics" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_local_int32_base_atomics" },
+      { CL_MAKE_VERSION (1, 0, 0), "cl_khr_extended_bit_ops" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_local_int32_extended_atomics" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_int64_base_atomics" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_int64_extended_atomics" },
