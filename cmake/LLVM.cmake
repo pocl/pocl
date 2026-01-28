@@ -251,6 +251,10 @@ if(ENABLE_LLVM_FILECHECKS)
   if(ENABLE_LLVM_FILECHECKS)
     message(STATUS "LLVM IR checks enabled.")
   endif()
+  if(ENABLE_UBSAN)
+    message(STATUS "UBSAN enabled, LLVM IR checks disabled.")
+    set(ENABLE_LLVM_FILECHECKS OFF)
+  endif()
 endif()
 
 ############################################################################
