@@ -1659,7 +1659,8 @@ set(HOST_DEVICE_CL_VERSION_MINOR 0)
 set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
 cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
 cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes cl_ext_float_atomics \
-cl_intel_unified_shared_memory cl_ext_buffer_device_address cl_khr_device_uuid")
+cl_intel_unified_shared_memory cl_ext_buffer_device_address cl_khr_device_uuid \
+cl_khr_suggested_local_work_size")
 
 if(LLVM_VERSION_MAJOR GREATER_EQUAL 20)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_extended_bit_ops")

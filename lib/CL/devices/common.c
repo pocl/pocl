@@ -1880,6 +1880,7 @@ static const cl_name_version OPENCL_EXTENSIONS[]
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_shuffle" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_shuffle_relative" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_clustered_reduce" },
+      { CL_MAKE_VERSION (1, 0, 0), "cl_khr_suggested_local_work_size" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_3d_image_writes" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_fp16" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_fp64" },

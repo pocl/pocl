@@ -226,6 +226,9 @@ CL_API_SUFFIX__VERSION_1_2
     return (void *)&POname (clGetMutableCommandInfoKHR);
 #endif
 
+  if (strcmp (func_name, "clGetKernelSuggestedLocalWorkSizeKHR") == 0)
+    return (void *)&POname (clGetKernelSuggestedLocalWorkSizeKHR);
+
   if (strcmp (func_name, "clCreateProgramWithDefinedBuiltInKernelsEXP") == 0)
     return (void *)&POname (clCreateProgramWithDefinedBuiltInKernelsEXP);
 

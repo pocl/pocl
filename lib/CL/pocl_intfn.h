@@ -229,6 +229,9 @@ POdeclsym (clSetKernelArgDevicePointerEXT)
 /* cl_exp_defined_builtin_kernels */
 POdeclsym (clCreateProgramWithDefinedBuiltInKernelsEXP)
 
+/* cl_khr_suggested_local_work_size */
+POdeclsym(clGetKernelSuggestedLocalWorkSizeKHR)
+
 /* clang-format on */
 
 #ifdef __cplusplus
