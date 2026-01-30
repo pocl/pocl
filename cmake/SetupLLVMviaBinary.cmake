@@ -54,20 +54,6 @@ endif()
 
 ####################################################################
 
-# In windows llvm-config reports --target=x86_64-pc-windows-msvc
-# however this causes clang to use MicrosoftCXXMangler, which does not
-# yet support mangling for extended vector types (with llvm 3.5)
-# so for now hardcode LLVM_HOST_TARGET to be x86_64-pc with windows
-# TODO is this still required ???
-if(WIN32 AND (NOT MINGW))
-  # Using the following target causes clang to invoke gcc for linking
-  # instead of MSVC's link.exe.
-  # TODO: lower LLVM version requirement until the above issue is hit.
-  if (NOT MSVC OR LLVM_VERSION_MAJOR LESS 18)
-    set(LLVM_HOST_TARGET "x86_64-pc")
-  endif()
-endif()
-
 # A few work-arounds for llvm-config issues
 
 # - pocl doesn't compile with '-pedantic'
@@ -199,14 +185,15 @@ endif()
 # if enabled, CPU driver on Windows will use lld-link (invoked via library API)
 # to link final kernel object files, instead of the default Clang driver linking.
 set(CPU_USE_LLD_LINK_WIN32 OFF)
-# TODO WIN32 or MSVC ? does this work with MINGW ?
-if(ENABLE_HOST_CPU_DEVICES AND MSVC AND ENABLE_LLVM AND STATIC_LLVM AND X86)
+# TODO does not yet work with MINGW; tested but the linked DLL is empty
+if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM AND STATIC_LLVM AND MSVC)
   find_library(LIB_LLD_COFF NAMES "lldCOFF" HINTS "${LLVM_LIBDIR}")
+  find_library(LIB_LLD_MINGW NAMES "lldMinGW" HINTS "${LLVM_LIBDIR}")
   find_library(LIB_LLD_COMMON NAMES "lldCommon" HINTS "${LLVM_LIBDIR}")
-  if(LIB_LLD_COFF AND LIB_LLD_COMMON)
+  if(LIB_LLD_COFF AND LIB_LLD_MINGW AND LIB_LLD_COMMON)
     message(STATUS "Using lld-link via library to link kernels for CPU devices")
     set(CPU_USE_LLD_LINK_WIN32 ON)
-  list(APPEND LLVM_LINK_LIBRARIES ${LIB_LLD_COFF} ${LIB_LLD_COMMON})
+    list(APPEND LLVM_LINK_LIBRARIES ${LIB_LLD_COFF} ${LIB_LLD_MINGW} ${LIB_LLD_COMMON})
   endif()
 endif()
 

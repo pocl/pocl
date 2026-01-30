@@ -75,7 +75,10 @@ static bool inlineKernelCalls(Function &F, NamedMDNode *KernelMDs) {
         if (Callee == nullptr)
           continue;
 
-        if (!pocl::isKernelToProcess(*Callee)) {
+        bool CalleeIsSpirvWrapped = Callee->hasName() && Callee->getName().starts_with("_spirv_wrapped");
+        // single block with 2 instructions, call & ret void
+        CalleeIsSpirvWrapped = CalleeIsSpirvWrapped && (F.size() == 1 && F.front().sizeWithoutDebug() == 2);
+        if (!pocl::isKernelToProcess(*Callee) && !CalleeIsSpirvWrapped) {
 #ifdef DEBUG_INLINE_KERNELS
           std::cerr << "NOT a kernel, NOT Inlining call "
                     << Callee->getName().str() << "\n";

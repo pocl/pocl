@@ -47,7 +47,7 @@ jobs:
         # chipstar 1.2 only supports LLVM up to 19
         # asan, tsan, ubsan = sanitizers
         # openvx = OpenVX-CTS
-        config: [cts_spirv, tier1, asan, tsan, ubsan]
+        config: [cts_spirv, tier1]
         include:
           - llvm: 19
             config: chipstar
@@ -57,12 +57,18 @@ jobs:
             config: basic
           - llvm: 21
             config: devel
-          - llvm: 19
+          - llvm: 20
             config: TBB
-          - llvm: 18
+          - llvm: 19
             config: OpenMP
           - llvm: 22
             config: basic
+          - llvm: 21
+            config: asan
+          - llvm: 21
+            config: tsan
+          - llvm: 21
+            config: ubsan
 
     steps:
       - name: Checkout
@@ -117,13 +123,13 @@ jobs:
             runCMake -DENABLE_TESTSUITES=OpenVX_CTS -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_openvx
           elif [ "${{ matrix.config }}" == "asan" ]; then
             export BUILD_FLAGS="-O1 -ggdb -fno-omit-frame-pointer -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
-            runCMake -DENABLE_ASAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DDEVELOPER_MODE=ON
+            runCMake -DENABLE_ASAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DDEVELOPER_MODE=ON -DWITH_LLVM_CONFIG=/opt/LLVM_21_ASAN/bin/llvm-config -DENABLE_SPIRV=0
           elif [ "${{ matrix.config }}" == "tsan" ]; then
             export BUILD_FLAGS="-O1 -ggdb -fno-omit-frame-pointer -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
-            runCMake -DENABLE_TSAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DDEVELOPER_MODE=ON -DENABLE_PRINTF_IMMEDIATE_FLUSH=OFF
+            runCMake -DENABLE_TSAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DDEVELOPER_MODE=ON -DWITH_LLVM_CONFIG=/opt/LLVM_21_TSAN/bin/llvm-config -DENABLE_SPIRV=0
           elif [ "${{ matrix.config }}" == "ubsan" ]; then
             export BUILD_FLAGS="-O1 -ggdb -fno-omit-frame-pointer -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
-            runCMake -DENABLE_UBSAN=1 -DENABLE_LATEST_CXX_STD=ON -DENABLE_ICD=0 -DDEVELOPER_MODE=ON -DENABLE_LOADABLE_DRIVERS=0
+            runCMake -DENABLE_UBSAN=1 -DENABLE_LATEST_CXX_STD=ON -DENABLE_ICD=0 -DDEVELOPER_MODE=ON -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_LLVM_FILECHECKS=0
           else
             echo "Unknown configuration" && exit 1
           fi

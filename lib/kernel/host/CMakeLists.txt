@@ -598,7 +598,7 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
       set(STR "#define SLEEF_VEC_${VECSIZE}_AVAILABLE\n")
       file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
 
-      if(ENABLE_SPIRV AND NOT SPIR_WRAPPER_FILE)
+      if(HOST_CPU_ENABLE_SPIRV AND NOT SPIR_WRAPPER_FILE)
         if (ARM)
           generate_cpu_spir_wrapper(cpu_arm ${VARIANT} ${VECSIZE} SPIR_WRAPPER_FILE)
         endif()
@@ -623,7 +623,7 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
 
   endforeach()
 
-  if(ENABLE_SPIRV)
+  if(HOST_CPU_ENABLE_SPIRV)
     compile_ll_to_bc("${SPIR_WRAPPER_FILE}" "${VARIANT}" BC_FILE_LIST)
   endif()
 

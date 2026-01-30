@@ -27,13 +27,15 @@
 # LLVM_CMAKE_DIR contains LLVM_INSTALL_PREFIX/lib/cmake/llvm
 get_filename_component(CLANG_CMAKE_DIR "${LLVM_CMAKE_DIR}" DIRECTORY)
 # CLANG_CMAKE_DIR will contain LLVM_INSTALL_PREFIX/lib/cmake/clang
+set(LLD_CMAKE_DIR "${CLANG_CMAKE_DIR}/lld")
 set(CLANG_CMAKE_DIR "${CLANG_CMAKE_DIR}/clang")
 
 message(STATUS "LLVM CMAKE dir: ${LLVM_CMAKE_DIR}")
 message(STATUS "CLANG CMAKE dir: ${CLANG_CMAKE_DIR}")
+message(STATUS "LLD CMAKE dir: ${LLD_CMAKE_DIR}")
 
 find_package(Clang CONFIG REQUIRED HINTS "${CLANG_CMAKE_DIR}" NO_DEFAULT_PATH)
-list(APPEND CMAKE_MODULE_PATH "${CLANG_CMAKE_DIR}" "${LLVM_CMAKE_DIR}")
+list(APPEND CMAKE_MODULE_PATH "${LLD_CMAKE_DIR}" "${CLANG_CMAKE_DIR}" "${LLVM_CMAKE_DIR}" )
 list(REMOVE_DUPLICATES CMAKE_MODULE_PATH)
 
 message(STATUS "Using CMake module path: ${CMAKE_MODULE_PATH}")
@@ -205,21 +207,6 @@ if("NVPTX" IN_LIST LLVM_TARGETS_TO_BUILD)
     LLVMNVPTXInfo)
 endif()
 
-# TODO UNSOLVED should find out if these have CMake Targets
-# if enabled, CPU driver on Windows will use lld-link (invoked via library API)
-# to link final kernel object files, instead of the default Clang driver linking.
-set(CPU_USE_LLD_LINK_WIN32 OFF)
-# TODO WIN32 or MSVC ? does this work with MINGW ?
-#if(ENABLE_HOST_CPU_DEVICES AND MSVC AND ENABLE_LLVM AND STATIC_LLVM AND X86)
-#  find_library(LIB_LLD_COFF NAMES "lldCOFF" HINTS "${LLVM_LIBDIR}")
-#  find_library(LIB_LLD_COMMON NAMES "lldCommon" HINTS "${LLVM_LIBDIR}")
-#  if(LIB_LLD_COFF AND LIB_LLD_COMMON)
-#    message(STATUS "Using lld-link via library to link kernels for CPU devices")
-#    set(CPU_USE_LLD_LINK_WIN32 ON)
-#        list(APPEND POCL_LLVM_EXTRA ${LIB_LLD_COFF} ${LIB_LLD_COMMON})
-#  endif()
-#endif()
-
 # LLVM_ENABLE_SHARED_LIBS = LLVM is built with shared component libraries
 # (libLLVMxyz.so ); the same applies to libclangxyz.so
 
@@ -255,6 +242,19 @@ else()
     set(CLANG_LIBS "clang-cpp")
   endif()
   set(LLVM_LINK_TYPE SHARED)
+endif()
+
+# if enabled, CPU driver on Windows will use lld-link (invoked via library API)
+# to link final kernel object files, instead of the default Clang driver linking.
+set(CPU_USE_LLD_LINK_WIN32 OFF)
+# TODO does not yet work with MINGW; tested but the linked DLL is empty
+if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM AND STATIC_LLVM AND MSVC)
+  find_package(LLD ${LLVM_VERSION} EXACT CONFIG HINTS "${LLD_CMAKE_DIR}" NO_DEFAULT_PATH)
+  if(lldCommon IN_LIST LLD_EXPORTED_TARGETS)
+    message(STATUS "Using lld-link via library to link kernels for CPU devices")
+    set(CPU_USE_LLD_LINK_WIN32 ON)
+    list(APPEND LLVM_LIBS lldCommon lldCOFF lldMinGW)
+  endif()
 endif()
 
 set(POCL_CLANG_LINK_TARGETS ${CLANG_LIBS})
