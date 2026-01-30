@@ -62,7 +62,10 @@ and can be run with:
 
 To test MLIR passes separately, you can run LIT-tests.
 You need to set -DLLVM_EXTERNAL_LIT= in CMake to configure the correct LIT binary.
-If LLVM_EXTERNAL_LIT is not set, the check-pocl-mlir-opt CMake target is not created,
+LIT-tests use FileCheck, so when ClangIR is built, the -DLLVM_INSTALL_UTILS should be ON
+in order for PoCL to find the FileCheck binary.
+If LLVM_EXTERNAL_LIT is not set and FileCheck is not found,
+the check-pocl-mlir-opt CMake target is not created,
 but the MLIR-compiler will still work.
 To run the tests:
 

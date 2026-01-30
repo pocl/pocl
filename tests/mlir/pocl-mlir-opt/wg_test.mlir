@@ -1,4 +1,4 @@
-// RUN: pocl-mlir-opt --pocl-workgroup --allow-unregistered-dialect --split-input-file %s | FileCheck %s
+// RUN: pocl-mlir-opt --pocl-workgroup --allow-unregistered-dialect --split-input-file %s | %FileCheck %s
 
 module attributes {gpu.workgroup_size = array<i64: 8, 1, 1>} {
   func.func @vecadd_kernel(%arg0: memref<?xi32>, %arg1: i32) attributes {gpu.kernel} {

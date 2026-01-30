@@ -1,4 +1,4 @@
-// RUN: pocl-mlir-opt --pocl-affine-parallel-to-for --allow-unregistered-dialect --split-input-file %s | FileCheck %s
+// RUN: pocl-mlir-opt --pocl-affine-parallel-to-for --allow-unregistered-dialect --split-input-file %s | %FileCheck %s
 module {
   func.func @pocl_mlir_command_buffer(%arg0: memref<?xi32>) {
     affine.parallel (%arg1, %arg2, %arg3) = (0, 0, 0) to (256, 1, 1) {

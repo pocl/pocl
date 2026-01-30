@@ -1,4 +1,4 @@
-// RUN: pocl-mlir-opt --pocl-lower-opencl-builtins --split-input-file %s | FileCheck %s
+// RUN: pocl-mlir-opt --pocl-lower-opencl-builtins --split-input-file %s | %FileCheck %s
 module {
   func.func private @_Z14get_num_groupsj(i32) -> i64
   func.func private @_Z14get_local_sizej(i32) -> i64

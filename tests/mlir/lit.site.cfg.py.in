@@ -26,6 +26,8 @@
 import sys
 
 config.pocl_tools_dir = "@CMAKE_BINARY_DIR@/bin/pocl-mlir-opt"
+config.filecheck_path = "@HOST_LLVM_FILECHECK@"
+config.substitutions.append(("%FileCheck", config.filecheck_path))
 
 import lit.llvm
 lit.llvm.initialize(lit_config, config)
