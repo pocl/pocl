@@ -315,18 +315,20 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
   pocl_init_default_device_infos (device, HOST_DEVICE_EXTENSIONS);
 
 #ifdef HOST_CPU_ENABLE_SPIRV
-  device->supported_spirv_extensions = "+SPV_KHR_no_integer_wrap_decoration"
-                                       ",+SPV_KHR_expect_assume"
-                                       ",+SPV_INTEL_fp_fast_math_mode"
-                                       ",+SPV_EXT_shader_atomic_float_add"
-                                       ",+SPV_INTEL_unstructured_loop_controls"
-                                       ",+SPV_INTEL_arbitrary_precision_integers"
-                                       ",+SPV_INTEL_memory_access_aliasing"
+  device->supported_spirv_extensions
+    = "+SPV_KHR_no_integer_wrap_decoration"
+      ",+SPV_KHR_expect_assume"
+      ",+SPV_INTEL_fp_fast_math_mode"
+      ",+SPV_EXT_shader_atomic_float_add"
+      ",+SPV_INTEL_unstructured_loop_controls"
+      ",+SPV_INTEL_arbitrary_precision_integers"
+      ",+SPV_INTEL_memory_access_aliasing"
+      ",+SPV_KHR_integer_dot_product"
 #ifndef ENABLE_CONFORMANCE
-                                       ",+SPV_EXT_shader_atomic_float_min_max"
-                                       ",+SPV_INTEL_subgroups"
+      ",+SPV_EXT_shader_atomic_float_min_max"
+      ",+SPV_INTEL_subgroups"
 #endif
-                                       ",+SPV_INTEL_inline_assembly";
+      ",+SPV_INTEL_inline_assembly";
 
 #if LLVM_MAJOR >= 20
   device->supported_spir_v_versions
@@ -393,6 +395,14 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
 
   /* 0 is the host memory shared with all drivers that use it */
   device->global_mem_id = 0;
+
+  device->dot_product_caps
+    = CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR
+      | CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_PACKED_KHR;
+  memset (&device->dot_product_accel_props_8bit, 0,
+          sizeof (cl_device_integer_dot_product_acceleration_properties_khr));
+  memset (&device->dot_product_accel_props_4x8bit, 0,
+          sizeof (cl_device_integer_dot_product_acceleration_properties_khr));
 
 #ifdef __riscv
 #ifdef __riscv_f

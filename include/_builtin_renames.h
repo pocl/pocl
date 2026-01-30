@@ -1147,4 +1147,15 @@
 #define bitfield_extract_signed _cl_bitfield_extract_signed
 #define bitfield_extract_unsigned _cl_bitfield_extract_unsigned
 
+#define dot _cl_dot
+#define dot_acc_sat _cl_dot_acc_sat
+#define dot_4x8packed_uu_uint _cl_dot_4x8packed_uu_uint
+#define dot_4x8packed_ss_int _cl_dot_4x8packed_ss_int
+#define dot_4x8packed_us_int _cl_dot_4x8packed_us_int
+#define dot_4x8packed_su_int _cl_dot_4x8packed_su_int
+#define dot_acc_sat_4x8packed_uu_uint _cl_dot_acc_sat_4x8packed_uu_uint
+#define dot_acc_sat_4x8packed_su_int _cl_dot_acc_sat_4x8packed_su_int
+#define dot_acc_sat_4x8packed_us_int _cl_dot_acc_sat_4x8packed_us_int
+#define dot_acc_sat_4x8packed_ss_int _cl_dot_acc_sat_4x8packed_ss_int
+
 #endif
