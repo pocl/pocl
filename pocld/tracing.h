@@ -80,6 +80,11 @@
   tracepoint (pocld_trace, ndrange_setup, msg_id, dev_id, queue_id,           \
               kernel_id, stat);
 
+#define TP_BARRIER(msg_id, dev_id, queue_id, stat)                            \
+  tracepoint (pocld_trace, msg_id, queue_id, stat);
+#define TP_MARKER(msg_id, dev_id, queue_id, stat)                             \
+  tracepoint (pocld_trace, msg_id, queue_id, stat);
+
 #define TP_READ_IMAGE_RECT(msg_id, dev_id, queue_id, obj_id, x, y, z, stat)   \
   tracepoint (pocld_trace, read_image_rect, msg_id, dev_id, queue_id, obj_id, \
               x, y, z, stat);
@@ -143,6 +148,9 @@
 #define TP_FILL_BUFFER(msg_id, dev_id, queue_id, obj_id, size, stat)
 #define TP_NDRANGE_KERNEL(msg_id, dev_id, queue_id, kernel_id, stat)
 #define TP_NDRANGE_SETUP(msg_id, dev_id, queue_id, kernel_id, stat)
+
+#define TP_BARRIER(msg_id, dev_id, queue_id, stat)
+#define TP_MARKER(msg_id, dev_id, queue_id, stat)
 
 #define TP_READ_IMAGE_RECT(msg_id, dev_id, queue_id, obj_id, x, y, z, stat)
 #define TP_WRITE_IMAGE_RECT(msg_id, dev_id, queue_id, obj_id, x, y, z, stat)

@@ -185,6 +185,12 @@ public:
                         const sizet_vec3 &global,
                         const sizet_vec3 *local = nullptr) = 0;
 
+  virtual int barrier(uint64_t ev_id, uint32_t cq_id, EventTiming_t &evt,
+                      uint32_t waitlist_size, uint64_t *waitlist) = 0;
+
+  virtual int marker(uint64_t ev_id, uint32_t cq_id, EventTiming_t &evt,
+                     uint32_t waitlist_size, uint64_t *waitlist) = 0;
+
   virtual int runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
                                uint32_t CmdBufId, uint32_t NumQueues,
                                uint32_t *QueueIds, uint32_t waitlist_size,

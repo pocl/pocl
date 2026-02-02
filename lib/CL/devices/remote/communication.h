@@ -523,6 +523,12 @@ cl_int pocl_network_run_command_buffer (remote_device_data_t *ddata,
                                         void *arg,
                                         _cl_command_node *node);
 
+cl_int pocl_network_barrier_or_marker (uint32_t cq_id,
+                                       remote_device_data_t *ddata,
+                                       network_command_callback cb,
+                                       void *arg,
+                                       _cl_command_node *node);
+
 /****************************************************************************/
 
 cl_int pocl_network_copy_image_rect (
