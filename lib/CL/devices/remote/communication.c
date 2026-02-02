@@ -384,7 +384,7 @@ connection_writev_full (remote_connection_t *connection,
 
   struct iovec *ary = alloca (sizeof (struct iovec) * num);
   size_t total = 0;
-  int res = 0;
+  size_t written = 0;
   unsigned i;
 
   for (i = 0; i < num; ++i)
@@ -394,32 +394,17 @@ connection_writev_full (remote_connection_t *connection,
       total += sizes[i];
     }
 
-  /* TODO there has to be a better way to handle this */
-  if (total >= THRESHOLD)
+  for (i = 0; i < num; ++i)
     {
-
-      for (i = 0; i < num; ++i)
-        {
-          res = connection_write_full (connection, ary[i].iov_base,
-                                       ary[i].iov_len, sinfo);
-          if (res < 0)
-            break;
-        }
-    }
-  else
-    {
-      POCL_ATOMIC_ADD (sinfo->tx_bytes_submitted, total);
-      ssize_t written = writev (connection->fd, ary, num);
-      if (written < 0)
-        res = -1;
-      else
-        {
-          POCL_ATOMIC_ADD (sinfo->tx_bytes_confirmed, total);
-          assert ((size_t)written == total);
-        }
+      ssize_t res = connection_write_full (connection, ary[i].iov_base,
+                                           ary[i].iov_len, sinfo);
+      if (res < 0)
+        return res;
+      written += ary[i].iov_len;
     }
 
-  return res;
+  assert (written == total);
+  return written;
 }
 
 static cl_int
