@@ -52,11 +52,11 @@ pocl_set_kernel_arg_pointer (cl_kernel kernel, cl_uint arg_index,
 
   p = &(kernel->dyn_arguments[arg_index]);
   pi = &(kernel->meta->arg_info[arg_index]);
-  POCL_RETURN_ERROR_ON ((ARGP_IS_LOCAL (pi)), CL_INVALID_ARG_VALUE,
+  POCL_RETURN_ERROR_ON ((ARGP_IS_LOCAL (pi)), CL_INVALID_ARG_INDEX,
                         "arg %u is in local address space\n", arg_index);
 
   POCL_RETURN_ERROR_ON ((pi->type != POCL_ARG_TYPE_POINTER),
-                        CL_INVALID_ARG_VALUE, "arg %u is not a pointer\n",
+                        CL_INVALID_ARG_INDEX, "arg %u is not a pointer\n",
                         arg_index);
 
   if (kernel->dyn_argument_storage != NULL)
