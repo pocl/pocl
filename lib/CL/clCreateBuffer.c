@@ -248,10 +248,12 @@ pocl_create_memobject (cl_context context,
               item->size = mem_size;
               item->shadow_cl_mem = mem;
               int inserted = pocl_raw_ptr_set_insert (context->raw_ptrs, item);
-              assert (inserted);
-              (void)inserted;
-
               POCL_UNLOCK_OBJ (context);
+
+              if (!inserted) {
+                  POCL_MEM_FREE (item);
+                  goto ERROR;
+              }
 
               POCL_MSG_PRINT_MEMORY (
                 "Registered a cl_ext_buffer_device_address"
