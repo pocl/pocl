@@ -128,6 +128,7 @@ extern "C"
 
     MessageType_MigrateD2D,
 
+    MessageType_Marker,
     MessageType_Barrier,
 
     MessageType_ReadBuffer,
@@ -191,6 +192,9 @@ extern "C"
     // ***********************************************
 
     MessageType_MigrateD2DReply,
+
+    MessageType_BarrierReply,
+    MessageType_MarkerReply,
 
     MessageType_ReadBufferReply,
     MessageType_WriteBufferReply,

@@ -1028,8 +1028,10 @@ void PoclDaemon::readAllClientSocketsThread() {
                   case MessageType_ReadImageRect:
                   case MessageType_WriteImageRect:
                   case MessageType_FillImageRect:
-                  case MessageType_RunCommandBuffer:
-                  case MessageType_RunKernel: {
+                  case MessageType_RunKernel:
+                  case MessageType_Barrier:
+                  case MessageType_Marker:
+                  case MessageType_RunCommandBuffer: {
                     Ctx->queuedPush(R);
                     break;
                   }

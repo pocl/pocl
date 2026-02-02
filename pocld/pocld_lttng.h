@@ -103,6 +103,25 @@ TRACEPOINT_EVENT (
                                    ctf_integer (int, event_status,
                                                 event_status)))
 
+/**
+ *  Synchronization commands
+ */
+// Command queue barrier
+TRACEPOINT_EVENT (
+    pocld_trace, barrier,
+    TP_ARGS (uint64_t, msg_id, uint32_t, queue_id, int, event_status),
+    TP_FIELDS (ctf_integer_hex (uint64_t, msg_id, msg_id)
+                   ctf_integer_hex (uint32_t, queue_id, queue_id)
+                       ctf_integer (int, event_status, event_status)))
+
+// Command queue marker
+TRACEPOINT_EVENT (
+    pocld_trace, marker,
+    TP_ARGS (uint64_t, msg_id, uint32_t, queue_id, int, event_status),
+    TP_FIELDS (ctf_integer_hex (uint64_t, msg_id, msg_id)
+                   ctf_integer_hex (uint32_t, queue_id, queue_id)
+                       ctf_integer (int, event_status, event_status)))
+
 /******************************************************************************
 *******************************************************************************
 ******************************************************************************/
