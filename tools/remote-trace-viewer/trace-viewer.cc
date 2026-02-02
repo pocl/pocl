@@ -29,80 +29,9 @@ const float EVENTVIEW_EVENT_HEIGHT = 12;
 #define DARKORANGE 255, 140, 0
 #define TOMATO 255, 99, 71
 
-enum RequestMessageType {
-  MessageType_InvalidRequest,
-  MessageType_CreateOrAttachSession,
-  MessageType_ServerInfo,
-  MessageType_DeviceInfo,
-  MessageType_ConnectPeer,
-  MessageType_PeerHandshake,
-
-  MessageType_CreateBuffer,
-  MessageType_FreeBuffer,
-
-  MessageType_CreateCommandQueue,
-  MessageType_FreeCommandQueue,
-
-  MessageType_CreateSampler,
-  MessageType_FreeSampler,
-
-  MessageType_CreateImage,
-  MessageType_FreeImage,
-
-  MessageType_CreateKernel,
-  MessageType_FreeKernel,
-
-  MessageType_BuildProgramFromSource,
-  MessageType_BuildProgramFromBinary,
-  MessageType_BuildProgramWithBuiltins,
-  MessageType_BuildProgramWithDefinedBuiltins,
-  // Special message type for SPIR-V IL for now. No support for
-  // vendor-specific ILs.
-  MessageType_BuildProgramFromSPIRV,
-  MessageType_CompileProgramFromSPIRV,
-  MessageType_CompileProgramFromSource,
-  MessageType_LinkProgram,
-  MessageType_FreeProgram,
-
-  MessageType_CreateCommandBuffer,
-  MessageType_FreeCommandBuffer,
-
-  // ***********************************************
-
-  MessageType_MigrateD2D,
-
-  MessageType_Barrier,
-
-  MessageType_ReadBuffer,
-  MessageType_WriteBuffer,
-  MessageType_CopyBuffer,
-  MessageType_FillBuffer,
-
-  MessageType_ReadBufferRect,
-  MessageType_WriteBufferRect,
-  MessageType_CopyBufferRect,
-
-  MessageType_CopyImage2Buffer,
-  MessageType_CopyBuffer2Image,
-  MessageType_CopyImage2Image,
-  MessageType_ReadImageRect,
-  MessageType_WriteImageRect,
-  MessageType_FillImageRect,
-
-  MessageType_RunKernel,
-  MessageType_RunCommandBuffer,
-
-  MessageType_NotifyEvent,
-  MessageType_RdmaBufferRegistration,
-
-  // TODO finish
-  MessageType_Finish,
-
-  MessageType_Shutdown,
-};
-
 typedef struct {
   uint32_t Kind;
+  uint32_t IsCopy;
   uint64_t EID;
   uint64_t QID;
   uint64_t Submitted;
@@ -187,6 +116,7 @@ bool readServer(std::istream &InStream, TraceFile &Data) {
       Event E{};
       ServerData &Server = Data.Servers.back();
       InStream.read((char *)&E.Kind, sizeof(E.Kind));
+      InStream.read((char *)&E.IsCopy, sizeof(E.Kind));
       InStream.read((char *)&E.QID, sizeof(E.QID));
       InStream.read((char *)&E.EID, sizeof(E.EID));
       InStream.read((char *)&E.Submitted, sizeof(E.Submitted));
@@ -493,26 +423,9 @@ int drawEventView(SDL_Renderer *Renderer, float OffsetY, float Width,
   } while (0)
 
         WRITE_HIGHLIGHT(Send, GREEN);
-        switch (E.Kind) {
-        case MessageType_ServerInfo:
-        case MessageType_DeviceInfo:
-        case MessageType_MigrateD2D:
-        case MessageType_ReadBuffer:
-        case MessageType_WriteBuffer:
-        case MessageType_CopyBuffer:
-        case MessageType_FillBuffer:
-        case MessageType_ReadBufferRect:
-        case MessageType_WriteBufferRect:
-        case MessageType_CopyBufferRect:
-        case MessageType_CopyImage2Buffer:
-        case MessageType_CopyBuffer2Image:
-        case MessageType_CopyImage2Image:
-        case MessageType_ReadImageRect:
-        case MessageType_WriteImageRect:
-        case MessageType_FillImageRect:
+        if (E.IsCopy) {
           WRITE_HIGHLIGHT(Run, ORCHID);
-          break;
-        default:
+        } else {
           WRITE_HIGHLIGHT(Run, ORANGE);
         }
         WRITE_HIGHLIGHT(Recv, TEAL);

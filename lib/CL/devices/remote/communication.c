@@ -1862,6 +1862,33 @@ dump_netcmd_trace_at_exit ()
           fwrite (&EVENT_ID, sizeof (EVENT_ID), 1, f);
           tmp = prof->kind;
           fwrite (&tmp, sizeof (tmp), 1, f);
+
+          switch (prof->kind)
+            {
+            case MessageType_ServerInfo:
+            case MessageType_DeviceInfo:
+            case MessageType_MigrateD2D:
+            case MessageType_ReadBuffer:
+            case MessageType_WriteBuffer:
+            case MessageType_CopyBuffer:
+            case MessageType_FillBuffer:
+            case MessageType_ReadBufferRect:
+            case MessageType_WriteBufferRect:
+            case MessageType_CopyBufferRect:
+            case MessageType_CopyImage2Buffer:
+            case MessageType_CopyBuffer2Image:
+            case MessageType_CopyImage2Image:
+            case MessageType_ReadImageRect:
+            case MessageType_WriteImageRect:
+            case MessageType_FillImageRect:
+              tmp = 1;
+              break;
+            default:
+              tmp = 0;
+            }
+          /* IsCopy flag */
+          fwrite (&tmp, sizeof (tmp), 1, f);
+
           fwrite (&prof->qid, sizeof (prof->qid), 1, f);
           fwrite (&prof->eid, sizeof (prof->eid), 1, f);
           fwrite (&prof->submitted, sizeof (prof->submitted), 1, f);
