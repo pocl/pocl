@@ -106,7 +106,7 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
   int is_ready = pocl_cmdbuf_is_ready (command_buffer);
   if (is_ready)
     {
-      command_buffer->state = CL_COMMAND_BUFFER_STATE_PENDING_KHR;
+      command_buffer->state = CL_COMMAND_BUFFER_STATE_FINALIZED_KHR;
       command_buffer->pending += 1;
     }
   POCL_UNLOCK (command_buffer->mutex);

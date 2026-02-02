@@ -285,7 +285,7 @@ POname (clRemapCommandBufferKHR) (cl_command_buffer_khr command_buffer,
   }
 
   if (command_buffer->state == CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR
-      || command_buffer->state == CL_COMMAND_BUFFER_STATE_PENDING_KHR)
+      || command_buffer->state == CL_COMMAND_BUFFER_STATE_FINALIZED_KHR)
     {
       errcode = POname (clFinalizeCommandBufferKHR) (new_cmdbuf);
       if (errcode != CL_SUCCESS)
