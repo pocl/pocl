@@ -18,8 +18,9 @@ Notable bugfixes
 
 * Fixed various clLinkProgram issues in the remote driver.
 * Fixed remote driver spuriously reconnecting for no apparent reason.
-* OpenCL-CTS updated to 2025.11.27 and fixed newly uncovered bugs
-  (some corner-cases in clSetKernelArg, clSetKernelExecInfo,
+* OpenCL-CTS updated to 2026.01.27 and fixed newly uncovered bugs
+  (some corner-cases in clSetKernelArg, clSetKernelExecInfo, clCreateContext,
+   clCreateContextFromType, clGetDeviceIDs, clSetKernelArgSVMPointer,
    clEnqueueNDRange with local_size == NULL and nonzero reqq-wg-size)
 
 ===========================
@@ -49,6 +50,9 @@ CPU driver
 * The atomic min/max operation on floats (cl_ext_float_atomic) are now
   disabled when `-DENABLE_CONFORMANCE=ON` ; atomic sub/add are enabled.
   When `-DENABLE_CONFORMANCE=OFF`, all atomics on floats are enabled.
+
+* Implemented new extensions: cl_khr_extended_bit_ops, cl_khr_device_uuid,
+  cl_khr_suggested_local_work_size, cl_khr_integer_dot_product
 
 ===================================
 Deprecation/feature removal notices
