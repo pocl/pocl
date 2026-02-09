@@ -1,0 +1,77 @@
+---
+name: Linux / CPU MLIR tests
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'release*'
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - 'CHANGES'
+      - 'COPYING'
+      - 'CREDITS'
+      - 'LICENSE'
+      - 'README.*'
+      - 'tools/docker/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  CCACHE_BASEDIR: "${{ github.workspace }}"
+  CCACHE_DIR: "${{ github.workspace }}/../../../ccache_storage"
+  EXAMPLES_DIR: "${{ github.workspace }}/../../../examples"
+  BUILD_DIR: "${{ github.workspace }}/build"
+
+jobs:
+  arm64_matrix:
+    name: LLVM ${{ matrix.llvm }} - x86-64 MLIR ${{ matrix.config }}
+    runs-on: [self-hosted, linux, X64, MLIR]
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm: [22]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Load Env vars
+        id: load-env
+        run: |
+          cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
+
+      - name: Run CMake
+        id: cmake
+        run: |
+          rm -rf $BUILD_DIR
+          mkdir -p $BUILD_DIR
+
+          export BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+          cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
+            -DENABLE_CLANGIR=ON -DMLIR_DIR=/opt/LLVM_CLANGIR_${{ matrix.llvm }}/lib/cmake/mlir \
+            -DWITH_LLVM_CONFIG=/opt/LLVM_CLANGIR_${{ matrix.llvm }}/bin/llvm-config -DENABLE_LLVM_FILECHECKS=1 \
+            -DENABLE_ICD=1 "$@" -B $BUILD_DIR ${{ github.workspace }}
+
+      - name: Run Build
+        id: build
+        run: |
+          cd $BUILD_DIR && make -j$(nproc)
+
+      - name: Run Tests
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+        id: ctest
+        timeout-minutes: 120
+        run: |
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          cd $BUILD_DIR && ${{ github.workspace }}/tools/scripts/run_cpu_tests -j$(nproc) -L mlir
