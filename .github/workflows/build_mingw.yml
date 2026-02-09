@@ -114,6 +114,7 @@ jobs:
             -DWITH_LLVM_CONFIG=${{ env.WORKSPACE }}/install-llvm/bin/llvm-config.exe \
             -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }} \
             -DENABLE_ICD=OFF \
+            -DLLC_HOST_CPU=haswell \
             -DENABLE_LOADABLE_DRIVERS=${{ matrix.shared_libs }} \
             -G "Ninja"
         # XXX: ENABLE_ICD=OFF because ocl-icd doesn't support Windows,
