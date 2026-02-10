@@ -47,6 +47,11 @@ POname(clGetDeviceIDs)(cl_platform_id   platform,
   POCL_RETURN_ERROR_ON ((platform != tmp_platform), CL_INVALID_PLATFORM,
                         "Can only return devices from the POCL platform\n");
 
+  POCL_RETURN_ERROR_COND (
+    ((device_type == 0)
+     || (device_type > 31 && device_type != CL_DEVICE_TYPE_ALL)),
+    CL_INVALID_DEVICE_TYPE);
+
   int err = pocl_init_devices (platform);
   if (err)
     return err;

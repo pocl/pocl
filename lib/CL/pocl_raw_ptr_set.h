@@ -1,7 +1,7 @@
 /* Provides container for mapping VM and BDA addresses to pocl_raw_ptr
    objects.
 
-   Copyright (c) 2025 Henry Linjam‰ki / Intel Finland Oy
+   Copyright (c) 2025 Henry Linjam√§ki / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to

@@ -84,6 +84,13 @@ context_set_properties (cl_context context,
               break;
 
             case CL_CONTEXT_INTEROP_USER_SYNC:
+              if (p[1] != CL_FALSE && p[1] != CL_TRUE)
+                {
+                  POCL_MSG_ERR ("Unknown property value %lu for "
+                                "CL_CONTEXT_INTEROP_USER_SYNC\n",
+                                (unsigned long)p[1]);
+                  return CL_INVALID_PROPERTY;
+                }
             case CL_GL_CONTEXT_KHR:
             case CL_EGL_DISPLAY_KHR:
             case CL_GLX_DISPLAY_KHR:

@@ -1,6 +1,6 @@
 /* Implementation of pocl_raw_ptr_set.
 
-   Copyright (c) 2025 Henry Linjamäki / Intel Finland Oy
+   Copyright (c) 2025 Henry LinjamÃ¤ki / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -126,8 +126,10 @@ pocl_raw_ptr_set_insert (pocl_raw_ptr_set *set, pocl_raw_ptr *raw_ptr)
       addr_range_t key = { raw_ptr->vm_ptr, raw_ptr->size };
       vm_ptr_map_t_result result
         = vm_ptr_map_t_insert (&set->vm_ptr_map, key, raw_ptr);
-      assert (result.inserted && "Overlapping VM pointer!");
-      (void)result;
+      if (!result.inserted) {
+          POCL_MSG_ERR("Overlapping VM pointer!");
+          return 0;
+      }
     }
 
   if (raw_ptr->dev_ptr)
@@ -136,8 +138,10 @@ pocl_raw_ptr_set_insert (pocl_raw_ptr_set *set, pocl_raw_ptr *raw_ptr)
         = { { raw_ptr->dev_ptr, raw_ptr->size }, raw_ptr->device };
       bda_ptr_map_t_result result
         = bda_ptr_map_t_insert (&set->bda_ptr_map, key, raw_ptr);
-      assert (result.inserted && "Overlapping BDA pointer!");
-      (void)result;
+      if (!result.inserted) {
+          POCL_MSG_ERR("Overlapping BDA pointer!");
+          return 0;
+      }
     }
 
   DL_APPEND (set->head, raw_ptr);

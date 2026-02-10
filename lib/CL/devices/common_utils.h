@@ -91,7 +91,7 @@ void free_kernel_run_command (kernel_run_command *k);
 #endif
 
 POCL_EXPORT
-cl_int pocl_cpu_init_common (cl_device_id device);
+cl_int pocl_cpu_init_common (cl_device_id device, unsigned dev_i);
 
 POCL_EXPORT
 int pocl_cpu_supports_dbk (cl_device_id device,

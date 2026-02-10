@@ -75,7 +75,7 @@ jobs:
           if [ "${{ matrix.device }}" == "x86_64" ]; then
             runCMake
           elif [ "${{ matrix.device }}" == "RISCV" ]; then
-            runCmake -DCMAKE_MAKE_PROGRAM=/usr/bin/make \
+            runCMake -DCMAKE_MAKE_PROGRAM=/usr/bin/make \
             -DLLVM_DIR=${TARGET_ROOT}${TARGET_LLVM_INSTALL_DIR} \
             -DHOST_DEVICE_BUILD_HASH=${TARGET_TRIPLE} -DCMAKE_TOOLCHAIN_FILE=${TARGET_TOOLCHAIN_FILE}  \
             -DLLC_TRIPLE=${TARGET_TRIPLE} -DLLC_HOST_CPU=${TARGET_CPU} -DCMAKE_PREFIX_PATH=${TARGET_ROOT} \
@@ -117,12 +117,9 @@ jobs:
           mkdir ${{ env.POCL_CACHE_DIR }}
 
           if [ "${{ matrix.device }}" == "x86_64" ]; then
-            # run once to create binaries in pocl cache
-            cd ${{ github.workspace }}/build && ctest -j1 -L polybenchGPU -LE long
-            cd ${{ github.workspace }}/build && rm polybench_result.json
             cd ${{ github.workspace }}/build && ctest -j1 -L polybenchGPU -LE long
           elif [ "${{ matrix.device }}" == "RISCV" ]; then
-            ${{ github.workspace }}/tools/scripts/run_cross_compiled_cpu_tests ${{ github.workspace }} ${BUILD_DIR} ${REMOTE_ADDRESS} ${REMOTE_USER} ctest --output-on-failure -j1 -L polybenchGPU -LE long
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cross_compiled_cpu_tests ${{ github.workspace }} ${BUILD_DIR} ${REMOTE_ADDRESS} ${REMOTE_USER} ctest --output-on-failure -j1 -L polybenchGPU -LE long
           else
             echo "Unknown configuration" && exit 1
           fi

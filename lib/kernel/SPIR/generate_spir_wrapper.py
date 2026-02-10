@@ -1631,6 +1631,37 @@ for int_type in SUBGROUP_VEC_TYPES:
 		for suffix in ['_up', '_down']:
 			generate_function("intel_sub_group_shuffle"+suffix, SIG_TO_LLVM_TYPE_MAP[ret_type], '', False, arg_type, arg_type, mask_type)
 
+BITOPS_TYPES = ['c', 'h', 's', 't', 'i', 'j', 'l', 'm' ]
+for arg_type in BITOPS_TYPES:
+	for vecsize in ['','2','3','4','8','16']:
+		if vecsize:
+			vec_type = 'Dv'+vecsize+'_'+arg_type
+			signext = ''
+		else:
+			vec_type = arg_type
+			signext = LLVM_TYPE_EXT_MAP[arg_type]
+		mask_type = 'j'
+		generate_function("bitfield_insert", SIG_TO_LLVM_TYPE_MAP[arg_type], signext, False, vec_type, vec_type, mask_type, mask_type)
+		generate_function("bitfield_extract_signed", SIG_TO_LLVM_TYPE_MAP[arg_type], signext, False, vec_type, mask_type, mask_type)
+		generate_function("bitfield_extract_unsigned", SIG_TO_LLVM_TYPE_MAP[arg_type], signext, False, vec_type, mask_type, mask_type)
+
+DOT_CHAR_VECS = { 'i': 'Dv4_c', 'j': 'Dv4_h' }
+DOT_CHAR_C = { 'i': 's', 'j': 'u' }
+DOT_CHAR_RET_C = { 'i': 'int', 'j': 'uint' }
+for arg1_type in [ 'i', 'j' ]:
+	for arg2_type in [ 'i', 'j' ]:
+		if arg1_type == 'j' and arg2_type == 'j':
+			ret_type = 'j'
+		else:
+			ret_type = 'i'
+		signext = LLVM_TYPE_EXT_MAP[ret_type]
+		generate_function("dot", SIG_TO_LLVM_TYPE_MAP[ret_type], signext, False, DOT_CHAR_VECS[arg1_type], DOT_CHAR_VECS[arg2_type])
+		generate_function("dot_acc_sat", SIG_TO_LLVM_TYPE_MAP[ret_type], signext, False, DOT_CHAR_VECS[arg1_type], DOT_CHAR_VECS[arg2_type], ret_type)
+		packed_name = "dot_4x8packed_" + DOT_CHAR_C[arg1_type] + DOT_CHAR_C[arg2_type] + "_" + DOT_CHAR_RET_C[ret_type]
+		generate_function(packed_name, SIG_TO_LLVM_TYPE_MAP[ret_type], signext, False, 'j', 'j')
+		packed_name = "dot_acc_sat_4x8packed_" + DOT_CHAR_C[arg1_type] + DOT_CHAR_C[arg2_type] + "_" + DOT_CHAR_RET_C[ret_type]
+		generate_function(packed_name, SIG_TO_LLVM_TYPE_MAP[ret_type], signext, False, 'j', 'j', ret_type)
+
 for vecsize in ['','2','4','8']:
 	# uints
 	if vecsize:

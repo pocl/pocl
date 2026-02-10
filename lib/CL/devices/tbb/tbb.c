@@ -108,7 +108,7 @@ static cl_bool tbb_unavailable = CL_FALSE;
 
 cl_int pocl_tbb_init(unsigned j, cl_device_id device, const char *parameters) {
   device->available = &tbb_unavailable;
-  cl_int err = pocl_cpu_init_common(device);
+  cl_int err = pocl_cpu_init_common(device, j);
   if (err) {
     POCL_MSG_ERR("pocl_cpu_init_common failed\n");
     return CL_INVALID_DEVICE;

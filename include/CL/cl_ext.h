@@ -103,7 +103,7 @@ typedef struct _cl_command_node *cl_mutable_command_khr;
 /* cl_command_buffer_state_khr */
 #define CL_COMMAND_BUFFER_STATE_RECORDING_KHR               0
 #define CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR              1
-#define CL_COMMAND_BUFFER_STATE_PENDING_KHR                 2
+#define CL_COMMAND_BUFFER_STATE_FINALIZED_KHR               2
 
 /* cl_command_type */
 #define CL_COMMAND_COMMAND_BUFFER_KHR                       0x12A8

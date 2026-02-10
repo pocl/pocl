@@ -1867,6 +1867,7 @@ static const cl_name_version OPENCL_EXTENSIONS[]
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_global_int32_base_atomics" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_global_int32_extended_atomics" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_local_int32_base_atomics" },
+      { CL_MAKE_VERSION (1, 0, 0), "cl_khr_extended_bit_ops" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_local_int32_extended_atomics" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_int64_base_atomics" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_int64_extended_atomics" },
@@ -1879,6 +1880,7 @@ static const cl_name_version OPENCL_EXTENSIONS[]
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_shuffle" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_shuffle_relative" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_clustered_reduce" },
+      { CL_MAKE_VERSION (1, 0, 0), "cl_khr_suggested_local_work_size" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_3d_image_writes" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_fp16" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_fp64" },
@@ -2091,4 +2093,63 @@ pocl_setup_builtin_kernels_with_version (cl_device_id dev)
                     "There are %u built-in kernels, but only %u were found\n",
                     dev->num_builtin_kernels, i);
     }
+}
+
+/* deviceUUID must be immutable for a given device across instances,
+ * processes, driver APIs, driver versions, and system reboots. It is
+ * intended to identify and correlate devices across API and driver boundaries.
+ * hard-coded deviceUUID values, especially all-0 bits, should never be used.
+ *
+ * A combination of values unique to the vendor, the driver, and the
+ * hardware environment can be used to provide a deviceUUID
+ * which is unique to a high degree of certainty. Some possible
+ * inputs to such a computation are:
+ *   Information reported by vkGetPhysicalDeviceProperties
+ *   PCI device ID (if defined)
+ *   PCI bus ID, or similar system configuration information.
+ *   Driver binary checksums.
+ *
+ * Applications can compare the driverUUID value across instance and process
+ * boundaries, and can make similar queries in external APIs to determine
+ * whether they are capable of sharing memory objects and resources
+ * using them with the device.
+ */
+
+static void
+set_uuid (cl_uchar *uuid,
+          const cl_uchar *UUID_SEED,
+          const char *extra,
+          unsigned i)
+{
+  memcpy (uuid, UUID_SEED, CL_UUID_SIZE_KHR);
+  SHA1_CTX ctx;
+  uint8_t digest[SHA1_DIGEST_SIZE];
+  pocl_SHA1_Init (&ctx);
+  pocl_SHA1_Update (&ctx, UUID_SEED, CL_UUID_SIZE_KHR);
+  pocl_SHA1_Update (&ctx, (const uint8_t *)extra, strlen (extra));
+  pocl_SHA1_Update (&ctx, (const uint8_t *)&i, sizeof (i));
+  pocl_SHA1_Final (&ctx, digest);
+  _Static_assert (CL_UUID_SIZE_KHR <= SHA1_DIGEST_SIZE,
+                  "UUID size must be < SHA1 size");
+  memcpy (uuid, digest, CL_UUID_SIZE_KHR);
+}
+
+void
+pocl_set_device_uuid (cl_uchar *device_uuid,
+                      unsigned int dev_i,
+                      const char *extra)
+{
+  static const uint8_t POCL_DEVICE_UUID[CL_UUID_SIZE_KHR]
+    = { 0x39, 0xa2, 0x78, 0xbf, 0xb6, 0xda, 0x40, 0x2d,
+        0xa2, 0x54, 0x58, 0x8c, 0x10, 0xba, 0x85, 0x1b };
+  set_uuid (device_uuid, POCL_DEVICE_UUID, extra, dev_i);
+}
+
+void
+pocl_set_driver_uuid (cl_uchar *driver_uuid, const char *extra)
+{
+  static const uint8_t POCL_DRIVER_UUID[CL_UUID_SIZE_KHR]
+    = { 0xe0, 0xa6, 0xee, 0xb6, 0x34, 0x6c, 0x43, 0x87,
+        0xb8, 0x2d, 0x40, 0xf0, 0x5b, 0xc5, 0x07, 0xdc };
+  set_uuid (driver_uuid, POCL_DRIVER_UUID, extra, 0);
 }

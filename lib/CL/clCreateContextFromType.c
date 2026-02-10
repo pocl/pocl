@@ -45,24 +45,14 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
   POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), CL_INVALID_DEVICE,
                       "Could not initialize devices\n");
 
+  POCL_GOTO_ERROR_COND (
+    ((device_type == 0)
+     || (device_type > 31 && device_type != CL_DEVICE_TYPE_ALL)),
+    CL_INVALID_DEVICE_TYPE);
+
   unsigned num_devices = pocl_get_device_type_count (device_type);
 
-  if (num_devices == 0)
-    {
-      if (errcode_ret != NULL) 
-        {
-          *errcode_ret = (CL_DEVICE_NOT_FOUND); 
-        } 
-      /* Return a dummy context so icd call to clReleaseContext() still
-         works. This fixes AMD SDK OpenCL samples to work (as of 2012-12-05). */
-      POCL_MSG_WARN("Couldn't find any device of type %lu; returning "
-                    "a dummy context with 0 devices\n", (unsigned long)device_type);
-
-      cl_context context = (cl_context)calloc (1, sizeof (struct _cl_context));
-      POCL_GOTO_ERROR_COND ((context == NULL), CL_OUT_OF_HOST_MEMORY);
-      POCL_INIT_OBJECT (context, platform);
-      return context;
-    }
+  POCL_GOTO_ERROR_COND ((num_devices == 0), CL_DEVICE_NOT_FOUND);
 
   cl_device_id *devs
       = (cl_device_id *)alloca (num_devices * sizeof (cl_device_id));

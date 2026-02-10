@@ -128,7 +128,7 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   device->data = NULL;
   device->available = &pthread_unavailable;
 
-  cl_int ret = pocl_cpu_init_common (device);
+  cl_int ret = pocl_cpu_init_common (device, j);
   if (ret != CL_SUCCESS)
     return ret;
 

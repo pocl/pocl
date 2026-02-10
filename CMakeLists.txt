@@ -1659,7 +1659,13 @@ set(HOST_DEVICE_CL_VERSION_MINOR 0)
 set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
 cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
 cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes cl_ext_float_atomics \
-cl_intel_unified_shared_memory cl_ext_buffer_device_address")
+cl_intel_unified_shared_memory cl_ext_buffer_device_address cl_khr_device_uuid \
+cl_khr_suggested_local_work_size cl_khr_integer_dot_product")
+
+# Clang 20 is required for __builtin_elementwise_bitreverse
+if(LLVM_VERSION_MAJOR GREATER_EQUAL 20)
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_extended_bit_ops")
+endif()
 
 # Host CPU device: list of OpenCL 3.0 features that are always enabled
 # TODO: __opencl_c_atomic_scope_all_devices works with CPU device but not others
@@ -1668,7 +1674,8 @@ cl_intel_unified_shared_memory cl_ext_buffer_device_address")
 set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes  __opencl_c_images \
 __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
 __opencl_c_atomic_scope_device __opencl_c_atomic_scope_all_devices \
-__opencl_c_generic_address_space __opencl_c_work_group_collective_functions")
+__opencl_c_generic_address_space __opencl_c_work_group_collective_functions \
+__opencl_c_integer_dot_product_input_4x8bit __opencl_c_integer_dot_product_input_4x8bit_packed")
 
 # enabled by default
 # when disabled, depending on setting of ENABLE_CONFORMANCE, denorms are disabled
@@ -1752,7 +1759,7 @@ endif()
 
 
 if(HOST_DEVICE_EXTENSIONS MATCHES "cl_ext_float_atomics")
-  set(CTS_LLVM_SPIRV_EXTENSIONS "--spirv-ext=+SPV_KHR_no_integer_wrap_decoration,+SPV_KHR_expect_assume,+SPV_INTEL_fp_fast_math_mode,+SPV_EXT_shader_atomic_float_add,+SPV_INTEL_unstructured_loop_controls,+SPV_INTEL_arbitrary_precision_integers,+SPV_INTEL_memory_access_aliasing,+SPV_INTEL_inline_assembly,+SPV_EXT_shader_atomic_float_min_max")
+  set(CTS_LLVM_SPIRV_EXTENSIONS "--spirv-ext=+SPV_KHR_no_integer_wrap_decoration,+SPV_KHR_expect_assume,+SPV_INTEL_fp_fast_math_mode,+SPV_EXT_shader_atomic_float_add,+SPV_INTEL_unstructured_loop_controls,+SPV_INTEL_arbitrary_precision_integers,+SPV_INTEL_memory_access_aliasing,+SPV_INTEL_inline_assembly,+SPV_EXT_shader_atomic_float_min_max,+SPV_KHR_integer_dot_product")
   set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp32_global_atomic_add __opencl_c_ext_fp32_local_atomic_add")
   if(NOT ENABLE_CONFORMANCE)
     set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp32_global_atomic_min_max __opencl_c_ext_fp32_local_atomic_min_max")

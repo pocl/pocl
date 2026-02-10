@@ -378,6 +378,13 @@ if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_subgroup")
   list(APPEND SOURCES_WITH_SLEEF subgroups.cl)
 endif()
 
+if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_extended_bit_ops")
+  list(APPEND SOURCES_WITH_SLEEF extended_bitops.cl)
+endif()
+
+if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_integer_dot_product")
+  list(APPEND SOURCES_WITH_SLEEF integer_dot_product.cl)
+endif()
 
 include("bitcode_rules")
 
