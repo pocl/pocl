@@ -38,10 +38,17 @@ if(LLVM_PACKAGE_VERSION)
 else()
   set(LIBMLIRPASSES "mlirpasses")
 endif()
+if(TARGET MLIR)
+  set(POCL_MLIR_OPT_LINK_LIBS MLIR)
+  set(LIBPOCLDIALECT PoclDialect)
+else()
+  get_property(POCL_MLIR_OPT_LINK_LIBS GLOBAL PROPERTY MLIR_ALL_LIBS)
+  set(LIBPOCLDIALECT obj.PoclDialect)
+endif()
 target_link_libraries(pocl-mlir-opt
     PRIVATE
-    MLIR
-    PoclDialect
+    ${POCL_MLIR_OPT_LINK_LIBS}
+    ${LIBPOCLDIALECT}
     ${LIBMLIRPASSES}
     ${POCL_LIBRARY_NAME}
 )

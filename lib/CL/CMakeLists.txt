@@ -310,6 +310,11 @@ if (ENABLE_LLVM)
       list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:mlirpasses>")
       list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:lib_cl_mlir>")
     endif()
+    # With static MLIR, embed PoclDialect objects directly into libpocl.
+    # With shared MLIR, PoclDialect.so is linked separately.
+    if(NOT TARGET MLIR)
+      list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:obj.PoclDialect>")
+    endif()
   endif()
 
   if(BUILD_SHARED_LIBS AND MSVC)
@@ -388,10 +393,14 @@ if(ENABLE_LLVM)
   endif()
 
   if (ENABLE_MLIR)
-    list(APPEND POCL_PRIVATE_LINK_LIST
-    MLIR
-    PoclDialect
-    )
+    if(TARGET MLIR)
+      list(APPEND POCL_PRIVATE_LINK_LIST PoclDialect)
+      set(POCL_MLIR_LINK_LIBS MLIR)
+    else()
+      get_property(POCL_MLIR_LINK_LIBS GLOBAL PROPERTY MLIR_ALL_LIBS)
+      list(APPEND POCL_MLIR_LINK_LIBS MLIRCIR)
+    endif()
+    list(APPEND POCL_PRIVATE_LINK_LIST ${POCL_MLIR_LINK_LIBS})
   endif()
 endif()
 

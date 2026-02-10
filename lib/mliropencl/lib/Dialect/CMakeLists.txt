@@ -41,8 +41,12 @@ target_include_directories(PoclDialect PRIVATE ${MLIR_INCLUDE_DIRS})
 target_include_directories(PoclDialect PRIVATE "${CMAKE_SOURCE_DIR}/lib/mliropencl/include")
 target_include_directories(PoclDialect PRIVATE "${CMAKE_BINARY_DIR}/lib/mliropencl/include")
 
-install(TARGETS PoclDialect
-        LIBRARY DESTINATION ${POCL_INSTALL_PRIVATE_LIBDIR_REL}
-        COMPONENT "lib"
-        RUNTIME DESTINATION ${POCL_INSTALL_PRIVATE_LIBDIR_REL}
-        COMPONENT "lib")
+if(TARGET MLIR)
+  install(TARGETS PoclDialect
+          LIBRARY DESTINATION ${POCL_INSTALL_PRIVATE_LIBDIR_REL}
+          COMPONENT "lib"
+          RUNTIME DESTINATION ${POCL_INSTALL_PRIVATE_LIBDIR_REL}
+          COMPONENT "lib")
+else()
+  set_target_properties(PoclDialect PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
+endif()
