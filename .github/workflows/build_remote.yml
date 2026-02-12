@@ -85,7 +85,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [18]
+        llvm: [21]
 
     steps:
       - name: Checkout

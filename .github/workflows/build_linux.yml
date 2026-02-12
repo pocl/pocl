@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [20, 21]
+        llvm: [20, 22]
         # basic = simplest pthread build with ENABLE_CONFORMANCE
         # devel = with devel options without ENABLE_CONFORMANCE
         # TBB, OpenMP = CPU drivers with TBB/OpenMP support
@@ -55,14 +55,14 @@ jobs:
             config: openvx
           - llvm: 20
             config: basic
+          - llvm: 22
+            config: basic
           - llvm: 21
             config: devel
           - llvm: 20
             config: TBB
-          - llvm: 19
+          - llvm: 21
             config: OpenMP
-          - llvm: 22
-            config: basic
           - llvm: 21
             config: asan
           - llvm: 21
@@ -158,7 +158,7 @@ jobs:
           # currently broken
           #cd ${{ github.workspace }}/build/examples/PyOpenCL && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) PyOpenCL
           cd ${{ github.workspace }}/build/examples/IntelSVM && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) IntelSVM
-          if [ "${{ matrix.llvm }}" != "21"  ]; then
+          if [ "${{ matrix.llvm }}" -lt "21"  ]; then
             cd ${{ github.workspace }}/build/examples/UnitCL && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) UnitCL
           fi
 

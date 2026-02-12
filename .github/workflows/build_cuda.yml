@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [18, 20]
+        llvm: [20, 22]
         config: [cuda]
 
     steps:
