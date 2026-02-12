@@ -7,8 +7,8 @@ permissions:
 on:
   workflow_dispatch:
   schedule:
-# at 7:11 UTC every wednesday
-    - cron: '11 7 * * 3'
+# at 3:11 UTC every wednesday
+    - cron: '11 3 * * 3'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
@@ -30,7 +30,7 @@ jobs:
         # cts_asan = CTS build with AddressSanitizer
         # cts_tsan = CTS build with ThreadSanitizer
         include:
-          - llvm: 20
+          - llvm: 21
             config: cts_tsan
           - llvm: 21
             config: cts_asan
@@ -52,7 +52,6 @@ jobs:
             cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo "-DCMAKE_C_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
             "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
-            -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} \
             "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
           }
 
@@ -61,11 +60,11 @@ jobs:
           if [ "${{ matrix.config }}" == "cts_asan" ]; then
             mkdir -p ${EXAMPLES_DIR}/build_cts_asan
             mkdir -p ${EXAMPLES_DIR}/source
-            runCMake -DENABLE_ICD=0 -DENABLE_ASAN=1 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_cts_asan
+            runCMake -DENABLE_ICD=0 -DENABLE_ASAN=1 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_cts_asan -DWITH_LLVM_CONFIG=/opt/LLVM_21_ASAN/bin/llvm-config
           elif [ "${{ matrix.config }}" == "cts_tsan" ]; then
             mkdir -p ${EXAMPLES_DIR}/build_cts_tsan
             mkdir -p ${EXAMPLES_DIR}/source
-            runCMake -DENABLE_ICD=0 -DENABLE_TSAN=1 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_cts_tsan
+            runCMake -DENABLE_ICD=0 -DENABLE_TSAN=1 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_cts_tsan -DWITH_LLVM_CONFIG=/opt/LLVM_21_TSAN/bin/llvm-config
           else
             echo "Unknown configuration" && exit 1
           fi
@@ -104,8 +103,9 @@ jobs:
         id: ctest
         timeout-minutes: 120
         run: |
+          # limit CPUs to 4 instead of $(${{ github.workspace }}/.github/scripts/get_cpus.sh)
           runCTest() {
-            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cpu_tests -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) $CTEST_FLAGS "$@"
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cpu_tests -j4 $CTEST_FLAGS "$@"
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           # hardcoded path in test_compiler / execute_after_included_header_link
