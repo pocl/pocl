@@ -40,23 +40,19 @@ if(NOT HAVE_GIT)
 endif()
 endif()
 
-# disabled b/c requires SPV_EXT_shader_atomic_float_min_max:
-# test_reduction
-# test_atomic_ref
-
 set(SYCL_CTS_TEST_LIST
 test_has_kernel_bundle_core_atomic64_ctx_only    test_has_kernel_bundle_core_atomic64_dev                                  test_math_builtin_api
 test_address_space                               test_has_kernel_bundle_core_fp16_ctx_only                                 test_multi_ptr
 test_atomic                                      test_has_kernel_bundle_core_fp16_dev                                      test_namespace
 test_atomic_fence                                test_has_kernel_bundle_core_fp64_ctx_only                                 test_nd_item
-                                                 test_has_kernel_bundle_core_fp64_dev                                      test_nd_range
+test_atomic_ref                                  test_has_kernel_bundle_core_fp64_dev                                      test_nd_range
 test_atomic_ref_stress                           test_has_kernel_bundle_core_like_support_reqd_sub_group_size_ctx_only     test_optional_kernel_features
 test_bit_cast                                    test_has_kernel_bundle_core_like_support_reqd_sub_group_size_dev          test_platform
 test_buffer                                      test_has_kernel_bundle_core_like_unsupport_reqd_sub_group_size_ctx_only   test_pointers
 test_context                                     test_has_kernel_bundle_core_like_unsupport_reqd_sub_group_size_dev        test_property
 test_device                                      test_has_kernel_bundle_core_reqd_like_support_work_group_size_ctx_only    test_queue
 test_device_event                                test_has_kernel_bundle_core_reqd_like_support_work_group_size_dev         test_range
-test_device_selector                             test_has_kernel_bundle_core_reqd_like_unsupport_work_group_size_ctx_only
+test_device_selector                             test_has_kernel_bundle_core_reqd_like_unsupport_work_group_size_ctx_only  test_reduction
 test_error                                       test_has_kernel_bundle_core_reqd_like_unsupport_work_group_size_dev       test_sampler
 test_event                                       test_has_kernel_bundle_multiple_kernels_ctx_only                          test_scalars
 test_exception_handling                          test_has_kernel_bundle_multiple_kernels_dev                               test_spec_constants
