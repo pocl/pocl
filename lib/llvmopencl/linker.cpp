@@ -59,6 +59,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "pocl_cl.h"
 #include "pocl_llvm_api.h"
+#include "pocl_spir.h"
 
 #include "Barrier.h"
 #include "EmitPrintf.hh"
@@ -73,6 +74,35 @@ using namespace llvm;
 #define DB_PRINT(...)
 
 namespace pocl {
+
+// The purpose is to lower SPIR-V "Target Extension" types when we're
+// linking incoming bitcode from SPIR-V translator or Clang SPIRV target.
+// These types in particular:
+//    target("spirv.Image", ...)
+//    target("spirv.Sampler")
+// since we cannot do anything useful with them (like bitcasting),
+// we copy the functions using them with a Remapper that maps
+// arguments/values of these types to 'ptr addrspace(1)' type.
+// This is necessary after recent change in SPIRV translator, see
+// commit 2feb3e3eafc48553e4768d3b0118afb469365b2f in
+// https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/3287
+
+class PoclTargetExtTypeRemapper : public ValueMapTypeRemapper {
+public:
+  PoclTargetExtTypeRemapper() {}
+  virtual ~PoclTargetExtTypeRemapper() {}
+
+  virtual Type *remapType(Type *SrcTy) {
+    if (SrcTy->isTargetExtTy()) {
+      PointerType *PT =
+          PointerType::get(SrcTy->getContext(), SPIR_ADDRESS_SPACE_GLOBAL);
+      if (SrcTy->getTargetExtName() == "spirv.Image" ||
+          SrcTy->getTargetExtName() == "spirv.Sampler")
+        return PT;
+    }
+    return SrcTy;
+  }
+};
 
 using ValueToSizeTMapTy = ValueMap<const Value *, size_t>;
 
@@ -527,6 +557,179 @@ static bool convertAddrSpaceOperator(llvm::Function *Func, std::string &Log) {
   return true;
 }
 
+// Find all functions in the calltree of F, including declarations,
+// using postorder traversal, and puts them into CalledFuncList
+// @return: bool true on success, false on recursion detected
+static bool
+get_postorder_callstack(llvm::Function &F,
+                        llvm::SmallVector<llvm::Function *> &CalledFuncList,
+                        SmallFunctionSet &CallStack) {
+  // if the function is already in the CalledFuncList because
+  // it was called by another function, return immediately
+  auto It = std::find(CalledFuncList.begin(), CalledFuncList.end(), &F);
+  if (It != CalledFuncList.end()) {
+    return true;
+  }
+
+  CallStack.insert(&F);
+  assert(F.hasName());
+  std::string FName = F.getName().str();
+
+  for (auto &I : instructions(F)) {
+
+    CallInst *CI = dyn_cast<CallInst>(&I);
+    if (CI == nullptr)
+      continue;
+
+    llvm::Function *Callee = CI->getCalledFunction();
+    // this happens with e.g. inline asm calls
+    if (Callee == nullptr) {
+      DB_PRINT("search: %s callee NULL\n", FName.c_str());
+      continue;
+    }
+
+    assert(Callee->hasName());
+    std::string CName = Callee->getName().str();
+
+    if (CallStack.contains(Callee)) {
+      DB_PRINT("Recursion detected: %s\n", CName.c_str());
+      return false;
+    }
+    DB_PRINT("Function %s calls %s\n", FName.c_str(), CName.c_str());
+
+    auto It = std::find(CalledFuncList.begin(), CalledFuncList.end(), Callee);
+    if (It != CalledFuncList.end()) {
+      DB_PRINT("already contained in CalledList: %s\n", CName.c_str());
+      continue;
+    } else {
+      DB_PRINT("function %s not seen before, recursing into it\n",
+               CName.c_str());
+      if (!get_postorder_callstack(*Callee, CalledFuncList, CallStack))
+        return false;
+      DB_PRINT("inserting %s into CalledList\n", CName.c_str());
+      CalledFuncList.push_back(Callee);
+    }
+  }
+
+  CalledFuncList.push_back(&F);
+  CallStack.erase(&F);
+  return true;
+}
+
+// Find all functions in module M, return them for postorder traversal
+static bool
+sort_functions_postorder(llvm::Module &M,
+                         llvm::SmallVector<llvm::Function *> &CalledFuncList) {
+
+  for (auto &F : M.functions()) {
+    if (F.isDeclaration()) {
+      CalledFuncList.push_back(&F);
+    }
+  }
+
+  SmallFunctionSet CallStack;
+  for (auto &F : M.functions()) {
+    if (F.isDeclaration())
+      continue;
+    if (!get_postorder_callstack(F, CalledFuncList, CallStack))
+      return false;
+  }
+  return true;
+}
+
+// Copies a function with TargetExt types remapped to 'ptr' type
+// @returs true if copy was performed, false if skipped because no remapping
+static bool CopyFuncNoTargetExt(llvm::Function *Src, llvm::Module &M,
+                                ValueToValueMapTy &VVMap) {
+  PoclTargetExtTypeRemapper TR;
+
+  FunctionType *SrcFT = cast<FunctionType>(Src->getValueType());
+  SmallVector<Type *> DstArgT;
+  for (auto SrcA : SrcFT->params()) {
+    DstArgT.push_back(TR.remapType(SrcA));
+  }
+  Type *SrcRet = SrcFT->getReturnType();
+  Type *DstRet = TR.remapType(SrcRet);
+  assert(Src->hasName());
+  FunctionType *DstFT = FunctionType::get(DstRet, DstArgT, SrcFT->isVarArg());
+  if (DstFT == SrcFT) {
+    DB_PRINT("CopyFuncNoTargetExt: function %s signature identical, "
+             "skipping remap copy\n",
+             Src->getName().c_str());
+    return false;
+  } else {
+    DB_PRINT("CopyFuncNoTargetExt: function %s signature DIFFERENT, "
+             "performing remap copy\n",
+             Src->getName().c_str());
+  }
+
+  StringRef NewName = Src->getName();
+  Src->setName(NewName + ".beforeTgtExt");
+  llvm::Function *Dst = Function::Create(DstFT, Src->getLinkage(), NewName, M);
+  Dst->copyAttributesFrom(Src);
+
+  VVMap[Src] = Dst;
+
+  Function::arg_iterator DstArgI = Dst->arg_begin();
+  for (Function::const_arg_iterator SrcArgI = Src->arg_begin(),
+                                    SrcArgE = Src->arg_end();
+       SrcArgI != SrcArgE; ++SrcArgI) {
+    DstArgI->setName(SrcArgI->getName());
+    VVMap[&*SrcArgI] = &*DstArgI;
+    ++DstArgI;
+  }
+  if (!Src->isDeclaration()) {
+    SmallVector<ReturnInst *, 8> RI; // Ignore returns cloned.
+    DB_PRINT("  cloning %s\n", Name.data());
+
+    llvm::ClonedCodeInfo CodeInfo;
+    CloneFunctionIntoAbs(Dst, Src, VVMap, RI,
+                         true,        // same module
+                         ".noTgtExt", // suffix
+                         &CodeInfo,   // codeInfo
+                         &TR,         // type remapper
+                         nullptr);    // materializer
+  } else {
+    DB_PRINT("  found %s, but its a declaration, do nothing\n", Name.data());
+  }
+  return true;
+}
+
+static bool convertSpirvTargetExtTypes(llvm::Module &Mod, std::string &Log) {
+  PoclTargetExtTypeRemapper TypeMapper;
+  ValueToValueMapTy VVM;
+  for (auto &F : Mod.functions()) {
+    if (!F.hasName())
+      F.setName("__anonymous_function");
+  }
+
+  SmallVector<Function *> CalledFuncList;
+  if (!sort_functions_postorder(Mod, CalledFuncList)) {
+    Log.append("convertSpirvTargetExtTypes: Failed to sort fuctions b/c of "
+               "recursion\n");
+    return false;
+  }
+
+  ValueToValueMapTy VVMap;
+  SmallVector<Function *> RemoveFuncList;
+  for (auto *F : CalledFuncList) {
+    if (CopyFuncNoTargetExt(F, Mod, VVMap))
+      // removal needs to be in reverse order
+      RemoveFuncList.insert(RemoveFuncList.begin(), F);
+  }
+
+  for (auto *F : RemoveFuncList) {
+    if (F->use_empty())
+      F->eraseFromParent();
+  }
+  // std::cerr << "*******************************************************";
+  // std::cerr << "  AFTER convertSpirvTargetExtTypes: *******************";
+  // Mod.dump();
+  // std::cerr << "*******************************************************";
+  // std::cerr << "*******************************************************";
+  return true;
+}
+
 /* Replace printf calls with generated bitcode that stores the format-string
  * and the arguments to a printf buffer. The replacement bitcode generated
  * by emitPrintfCall is:
@@ -670,6 +873,9 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
   llvm::StringSet<> DeclaredFunctions;
 
   pocl::removeClangGeneratedKernelStubs(Program);
+
+  if (!pocl::convertSpirvTargetExtTypes(*Program, Log))
+    return -1;
 
   // Include auxiliary functions required by the device at hand.
   if (ClDev->device_aux_functions) {
