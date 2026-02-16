@@ -315,28 +315,9 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
   pocl_init_default_device_infos (device, HOST_DEVICE_EXTENSIONS);
 
 #ifdef HOST_CPU_ENABLE_SPIRV
-  device->supported_spirv_extensions
-    = "+SPV_KHR_no_integer_wrap_decoration"
-      ",+SPV_KHR_expect_assume"
-      ",+SPV_INTEL_fp_fast_math_mode"
-      ",+SPV_EXT_shader_atomic_float_add"
-      ",+SPV_INTEL_unstructured_loop_controls"
-      ",+SPV_INTEL_arbitrary_precision_integers"
-      ",+SPV_INTEL_memory_access_aliasing"
-      ",+SPV_EXT_shader_atomic_float_min_max"
-      ",+SPV_KHR_integer_dot_product"
-#ifndef ENABLE_CONFORMANCE
-      ",+SPV_INTEL_subgroups"
-#endif
-      ",+SPV_INTEL_inline_assembly";
+  device->supported_spirv_extensions = HOST_DEVICE_SPV_EXTENSIONS;
 
-#if LLVM_MAJOR >= 20
-  device->supported_spir_v_versions
-    = "SPIR-V_1.5 SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
-#else
-  device->supported_spir_v_versions
-    = "SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
-#endif
+  device->supported_spir_v_versions = HOST_DEVICE_SPV_VERSIONS;
 #endif
 
   if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_subgroup") != NULL)
@@ -452,8 +433,10 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
   device->version_of_latest_passed_cts = "v2024-08-08-00";
   device->extensions = HOST_DEVICE_EXTENSIONS;
 
-  device->features = HOST_DEVICE_FEATURES_30;
-  if (strstr (HOST_DEVICE_FEATURES_30, "__opencl_c_program_scope_global_variables") != NULL)
+  device->features = HOST_DEVICE_FEATURES;
+  if (strstr (HOST_DEVICE_FEATURES,
+              "__opencl_c_program_scope_global_variables")
+      != NULL)
     device->run_program_scope_variables_pass = CL_TRUE;
   device->generic_as_support = CL_TRUE;
   device->wg_collective_func_support = CL_TRUE;
@@ -466,15 +449,6 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
           | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT
           | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT
           | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT;
-      device->features
-        = HOST_DEVICE_FEATURES_30 " __opencl_c_ext_fp32_global_atomic_add"
-                                  " __opencl_c_ext_fp64_global_atomic_add"
-                                  " __opencl_c_ext_fp32_local_atomic_add"
-                                  " __opencl_c_ext_fp64_local_atomic_add"
-                                  " __opencl_c_ext_fp32_global_atomic_min_max"
-                                  " __opencl_c_ext_fp64_global_atomic_min_max"
-                                  " __opencl_c_ext_fp32_local_atomic_min_max"
-                                  " __opencl_c_ext_fp64_local_atomic_min_max";
     }
 
   pocl_setup_opencl_c_with_version (device, CL_TRUE);
