@@ -300,3 +300,67 @@ _CL_OVERLOADABLE v2type __pocl_sincos_piby4(vtype x, vtype xx) {
 
     return ret;
 }
+
+
+
+_CL_OVERLOADABLE void __pocl_tan_piby4(vtype x, vtype xx,
+                                      private vtype *leadval,
+                                      private vtype *tailval) {
+  // 0x3fe921fb54442d18
+  const vtype piby4_lead = 7.85398163397448278999e-01;
+  // 0x3c81a62633145c06
+  const vtype piby4_tail = 3.06161699786838240164e-17;
+
+  // In order to maintain relative precision transform using the identity:
+  // tan(pi/4-x) = (1-tan(x))/(1+tan(x)) for arguments close to pi/4.
+  // Similarly use tan(x-pi/4) = (tan(x)-1)/(tan(x)+1) close to -pi/4.
+
+  itype ca = x > (vtype)0.68;
+  itype cb = x < (vtype)-0.68;
+  vtype transform = ca ? (vtype)1.0 : (vtype)0.0;
+  transform = cb ? (vtype)(-1.0) : transform;
+
+  vtype tx = pocl_fma(-transform, x, piby4_lead) +
+                     pocl_fma(-transform, xx, piby4_tail);
+  itype c = ca | cb;
+  x = c ? tx : x;
+  xx = c ? (vtype)0.0 : xx;
+
+  // Core Remez [2,3] approximation to tan(x+xx) on the interval [0,0.68].
+  vtype t1 = x;
+  vtype r = pocl_fma(2.0, x * xx, x * x);
+
+  vtype a = pocl_fma(r,
+              pocl_fma(r, 0.224044448537022097264602535574e-3,
+                         -0.229345080057565662883358588111e-1),
+                         0.372379159759792203640806338901e0);
+
+  vtype b =
+      pocl_fma(r,
+        pocl_fma(r,
+          pocl_fma(r, -0.232371494088563558304549252913e-3,
+                       0.260656620398645407524064091208e-1),
+                      -0.515658515729031149329237816945e0),
+                0.111713747927937668539901657944e1);
+
+  vtype t2 = pocl_fma(MATH_DIVIDE(a, b), x * r, xx);
+
+  vtype tp = t1 + t2;
+
+  // Compute -1.0/(t1 + t2) accurately
+  vtype z1 =
+      as_vtype(as_itype(tp) & (itype)0xffffffff00000000L);
+  vtype z2 = t2 - (z1 - t1);
+  vtype trec = -MATH_RECIP(tp);
+  vtype trec_top =
+      as_vtype(as_itype(trec) & (itype)0xffffffff00000000L);
+
+  vtype tpr = pocl_fma(
+      pocl_fma(trec_top, z2, pocl_fma(trec_top, z1, (vtype)1.0)), trec, trec_top);
+
+  vtype tpt = transform * (1.0 - MATH_DIVIDE((vtype)2.0 * tp, (vtype)1.0 + tp));
+  vtype tptr = transform * (MATH_DIVIDE((vtype)2.0 * tp, tp - (vtype)1.0) - (vtype)1.0);
+
+  *leadval = c ? tpt : tp;
+  *tailval = c ? tptr : tpr;
+}

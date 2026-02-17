@@ -28,5 +28,6 @@
 _CL_OVERLOADABLE void __pocl_remainder_piby2_medium(vtype x, vtype *r, vtype *rr, itype *regn);
 _CL_OVERLOADABLE void __pocl_remainder_piby2_large(vtype x, vtype *r, vtype *rr, itype *regn);
 _CL_OVERLOADABLE v2type __pocl_sincos_piby4(vtype x, vtype xx);
+_CL_OVERLOADABLE void __pocl_tan_piby4(vtype x, vtype xx, private vtype *leadval, private vtype *tailval);
 
 #endif
