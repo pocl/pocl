@@ -292,6 +292,32 @@ if (ENABLE_LLVM)
     list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:lib_cl_llvm>")
   endif()
 
+  if (ENABLE_MLIR)
+    list(APPEND POCL_LIB_SOURCES
+                   "pocl_mlir.h"
+                   "pocl_mlir_file_util.hh"
+    )
+    set(MLIR_API_SOURCES "pocl_mlir_build.cc" "pocl_mlir_wg.cc"
+                         "pocl_mlir_metadata.cc" "pocl_mlir_utils.cc"
+                         "pocl_mlir_file_util.cc")
+    pocl_build_clang_llvm_object(lib_cl_mlir ${MLIR_API_SOURCES})
+    target_include_directories(lib_cl_mlir PRIVATE "${CMAKE_SOURCE_DIR}/lib/mliropencl/include")
+    target_include_directories(lib_cl_mlir PRIVATE "${CMAKE_BINARY_DIR}/lib/mliropencl/include")
+
+    if(LLVM_PACKAGE_VERSION)
+      list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:obj.mlirpasses>")
+      list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:obj.lib_cl_mlir>")
+    else()
+      list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:mlirpasses>")
+      list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:lib_cl_mlir>")
+    endif()
+    # With static MLIR, embed PoclDialect objects directly into libpocl.
+    # With shared MLIR, PoclDialect.so is linked separately.
+    if(NOT TARGET MLIR)
+      list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:obj.PoclDialect>")
+    endif()
+  endif()
+
   if(BUILD_SHARED_LIBS AND MSVC)
     # Inject __declspec(dllexport).
     target_compile_definitions(lib_cl_llvm PRIVATE EXPORT_POCL_LIB)
@@ -366,6 +392,17 @@ if(ENABLE_LLVM)
   if (ENABLE_SPIRV AND HAVE_LLVM_SPIRV_LIB)
     list(PREPEND POCL_PRIVATE_LINK_LIST ${LLVM_SPIRV_LIB})
   endif()
+
+  if (ENABLE_MLIR)
+    if(TARGET MLIR)
+      list(APPEND POCL_PRIVATE_LINK_LIST PoclDialect)
+      set(POCL_MLIR_LINK_LIBS MLIR)
+    else()
+      get_property(POCL_MLIR_LINK_LIBS GLOBAL PROPERTY MLIR_ALL_LIBS)
+      list(APPEND POCL_MLIR_LINK_LIBS MLIRCIR)
+    endif()
+    list(APPEND POCL_PRIVATE_LINK_LIST ${POCL_MLIR_LINK_LIBS})
+  endif()
 endif()
 
 if(HAVE_LTTNG_UST)
@@ -430,6 +467,10 @@ install(TARGETS "${POCL_LIBRARY_NAME}"
         COMPONENT "lib"
 )
 
+if (ENABLE_MLIR)
+  set_property(TARGET "${POCL_LIBRARY_NAME}" APPEND PROPERTY
+    INSTALL_RPATH "\$ORIGIN/../${POCL_INSTALL_PRIVATE_LIBDIR_REL}")
+endif()
 
 if(ENABLE_IPO)
   set_property(TARGET "${POCL_LIBRARY_NAME}" PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)

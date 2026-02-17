@@ -44,6 +44,9 @@
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
+#ifdef ENABLE_MLIR
+#include "pocl_mlir.h"
+#endif
 
 #include "common_driver.h"
 
@@ -741,9 +744,15 @@ pocl_driver_build_source (cl_program program, cl_uint device_i,
 
   POCL_MSG_PRINT_LLVM ("building from sources for device %d\n", device_i);
 
+#ifdef ENABLE_MLIR
+  return poclMlirBuildProgram (program, device_i, num_input_headers,
+                               input_headers, header_include_names,
+                               link_builtin_lib);
+#else
   return pocl_llvm_build_program (program, device_i, num_input_headers,
                                   input_headers, header_include_names,
                                   link_builtin_lib);
+#endif
 
 #else
   POCL_RETURN_ERROR (CL_BUILD_PROGRAM_FAILURE,
@@ -853,6 +862,17 @@ pocl_driver_setup_metadata (cl_device_id device, cl_program program,
     return pocl_setup_builtin_metadata (device, program, program_device_i);
 
 #ifdef ENABLE_LLVM
+#ifdef ENABLE_MLIR
+  unsigned num_kernels = poclMlirGetKernelCount (program, program_device_i);
+  if (num_kernels)
+    {
+      program->num_kernels = num_kernels;
+      program->kernel_meta = (pocl_kernel_metadata_t *)calloc (
+        program->num_kernels, sizeof (pocl_kernel_metadata_t));
+      poclMlirGetKernelsMetadata (program, program_device_i);
+    }
+  return 1;
+#else
   unsigned num_kernels
       = pocl_llvm_get_kernel_count (program, program_device_i);
 
@@ -865,6 +885,7 @@ pocl_driver_setup_metadata (cl_device_id device, cl_program program,
       pocl_llvm_get_kernels_metadata (program, program_device_i);
     }
   return 1;
+#endif
 #else
   return 0;
 #endif

@@ -385,6 +385,14 @@ set_property(TEST
   "regression/clSetKernelArg_overwriting_the_previous_kernel's_args_loopvec"
   APPEND PROPERTY LABELS "vulkan")
 
+# Label tests that work with MLIR
+set_property(TEST
+  "regression/clSetKernelArg_overwriting_the_previous_kernel's_args_cbs"
+  "regression/test_issue_445_cbs"
+  "regression/test_issue_757_cbs"
+  "regression/test_workitem_func_outside_kernel_cbs"
+  APPEND PROPERTY LABELS "mlir")
+
 if(ENABLE_LEVEL0)
 set_property(TEST
   "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_loopvec"

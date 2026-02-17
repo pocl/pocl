@@ -422,5 +422,11 @@ set_property(TEST
   "kernel/test_image_query_funcs_loopvec"
   APPEND PROPERTY LABELS "level0")
 
+if(ENABLE_MLIR)
+set_property(TEST
+  "kernel/test_convert_sat_regression_cbs"
+  APPEND PROPERTY LABELS "mlir")
+endif()
+
 add_symlink_to_built_opencl_dynlib(
   kernel test_shuffle image_query_funcs sampler_address_clamp)

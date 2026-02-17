@@ -322,6 +322,8 @@ option(ENABLE_PRINTF_IMMEDIATE_FLUSH "[currently only applies to CPU drivers] if
 
 option(ENABLE_LLVM_FILECHECKS "Enable kernel compiler/autovectorizer filechecks. The FileCheck binary can be defined via LLVM_FILECHECK_BIN, otherwise it's autodetected. Note: the checks are targeted against recent Intel X86/SIMD CPUs for now." ON)
 
+option(ENABLE_CLANGIR "Build pocl with ClangIR. Default is OFF." OFF)
+
 if(ENABLE_LEVEL0)
   set(DEFAULT_STATIC_LLVM ON)
 else()
@@ -2910,6 +2912,7 @@ MESSAGE(STATUS "INSTALL_OPENCL_HEADERS (Install our headers): ${INSTALL_OPENCL_H
 MESSAGE(STATUS "OCL_DRIVERS (Drivers built): ${OCL_DRIVERS}")
 MESSAGE(STATUS "OCL_TARGETS (Targets built): ${OCL_TARGETS}")
 MESSAGE(STATUS "ENABLE_LLVM: ${ENABLE_LLVM}")
+MESSAGE(STATUS "ENABLE_CLANGIR: ${ENABLE_CLANGIR}")
 if(PARALLEL_COMPILE_JOBS AND CMAKE_GENERATOR STREQUAL "Ninja")
   MESSAGE(STATUS "PARALLEL_COMPILE_JOBS: ${PARALLEL_COMPILE_JOBS}")
 endif()

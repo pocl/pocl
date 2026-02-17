@@ -46,6 +46,9 @@ set_tests_properties( "examples/matrix1" "examples/matrix1_local" ${SPIREX}
 set_property(TEST "examples/matrix1" "examples/matrix1_local"
   APPEND PROPERTY LABELS "vulkan")
 
+set_property(TEST "examples/matrix1"
+  APPEND PROPERTY LABELS "mlir")
+
 add_test(NAME "examples/matrix1_poclbin"
          COMMAND ${CMAKE_COMMAND}
             "-DCMD1=${CMAKE_BINARY_DIR}/bin/poclcc####-o####${CMAKE_BINARY_DIR}/matrix1_poclbin.bin####${CMAKE_CURRENT_SOURCE_DIR}/matrix1.cl"

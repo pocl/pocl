@@ -63,8 +63,14 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #if LLVM_MAJOR < 22
 using LLVMOptionMap = llvm::StringMap<llvm::cl::Option *>;
+#elif defined(ENABLE_MLIR)
+using LLVMOptionMap = llvm::StringMap<llvm::cl::Option *>;
 #else
 using LLVMOptionMap = llvm::DenseMap<llvm::StringRef, llvm::cl::Option *>;
+#endif
+
+#ifdef ENABLE_MLIR
+#include "pocl_mlir.h"
 #endif
 
 using namespace llvm;
@@ -710,6 +716,9 @@ void pocl_llvm_create_context(cl_context ctx) {
     GlobalLLVMContext = data;
     ++GlobalLLVMContextRefcount;
   }
+#ifdef ENABLE_MLIR
+  poclMlirRegisterDialects(data);
+#endif
 
   POCL_MSG_PRINT_LLVM("Created context %" PRId64 " (%p)\n", ctx->id, ctx);
 }
@@ -750,6 +759,10 @@ void pocl_llvm_release_context(cl_context ctx) {
     data->kernelLibraryMap->clear();
     delete data->kernelLibraryMap;
   }
+
+#ifdef ENABLE_MLIR
+  delete data->MLIRContext;
+#endif
 
   POCL_DESTROY_LOCK(data->Lock);
   delete data->Context;

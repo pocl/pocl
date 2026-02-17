@@ -146,6 +146,17 @@ else()
   endif()
 endif()
 
+if(ENABLE_CLANGIR)
+  find_package(MLIR CONFIG)
+  if (MLIR_FOUND)
+    message(STATUS "Found MLIRConfig.cmake in ${MLIR_DIR}")
+    list(APPEND CMAKE_MODULE_PATH "${MLIR_CMAKE_DIR}")
+  else()
+    message(FATAL_ERROR "Could not find MLIR config")
+  endif()
+  set(ENABLE_MLIR 1)
+endif()
+
 ############################################################################
 
 # Prefer the CMake setup when possible, fallback to llvm-config
@@ -196,6 +207,15 @@ find_llvm_program_or_die(HOST_LLVM_LINK "llvm-link" "${SEARCH_LOCATION}" "Host L
 find_llvm_program(HOST_LLVM_SPIRV "llvm-spirv" "${SEARCH_LOCATION}"      "Host LLVM spirv translator")
 find_llvm_program(HOST_SPIRV_LINK "spirv-link" "${SEARCH_LOCATION}"      "Host spirv-link linker")
 find_llvm_program(HOST_LLVM_FILECHECK "FileCheck" "${SEARCH_LOCATION}"   "Host LLVM Filecheck")
+if(ENABLE_MLIR)
+  find_llvm_program_or_die(CIROPT "cir-opt" "${SEARCH_LOCATION}" "cir-opt binary")
+  find_llvm_program_or_die(MLIR_TRANSLATE "mlir-translate" "${SEARCH_LOCATION}" "mlir-translate binary")
+  if (POLYGEIST_BINDIR)
+    find_llvm_program_or_die(CGEIST "cgeist" "${POLYGEIST_BINDIR}" "cgeist binary")
+    message(STATUS "Found cgeist ${CGEIST}")
+    set(ENABLE_POLYGEIST 1)
+  endif()
+endif()
 
 
 if(CMAKE_CROSSCOMPILING)

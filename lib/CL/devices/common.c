@@ -66,6 +66,9 @@
 
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
+#ifdef ENABLE_MLIR
+#include "pocl_mlir.h"
+#endif
 #endif
 
 #include "_kernel_constants.h"
@@ -140,6 +143,17 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
 
   assert (strlen (final_binary_path) < (POCL_MAX_PATHNAME_LENGTH - 3));
 
+#ifdef ENABLE_MLIR
+  error = poclMlirGenerateWorkgroupFunctionNowrite (
+    device_i, device, kernel, command, &llvm_module, specialize, program);
+  if (error)
+    {
+      POCL_MSG_PRINT_LLVM ("poclMlirGenerateWorkgroupFunction() failed"
+                           " for kernel %s\n",
+                           kernel_name);
+      goto FINISH;
+    }
+#else
   error = pocl_llvm_generate_workgroup_function_nowrite (
       device_i, device, kernel, command, &llvm_module, specialize);
   if (error)
@@ -171,6 +185,7 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
                            kernel->name);
       goto FINISH;
     }
+#endif
 
   /* May happen if another thread is building the same program & wins the llvm
      lock. */
@@ -318,7 +333,11 @@ FINISH:
   if (have_locked_mutex)
     pocl_ipc_mutex_unlock_and_release (&ipc_mtx);
 #endif
+#ifdef ENABLE_MLIR
+  poclDestroyMlirModule (llvm_module);
+#else
   pocl_destroy_llvm_module (llvm_module, kernel->context);
+#endif
   POCL_MEM_FREE (objfile);
   POCL_MEASURE_FINISH (llvm_codegen);
 
@@ -1060,7 +1079,11 @@ pocl_check_kernel_disk_cache (char *module_fn,
 
   /* static WG binary for the local size does not exist. If we have the LLVM IR
    * (program.bc), try to compile a new parallel.bc and static binary */
+#ifdef ENABLE_MLIR
+  if (1)
+#else
   if (p->binaries[dev_i])
+#endif
     {
 #ifdef ENABLE_LLVM
       POCL_LOCK (pocl_llvm_codegen_lock);

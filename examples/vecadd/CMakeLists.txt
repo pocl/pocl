@@ -46,5 +46,5 @@ set_tests_properties(
     COST 3.0
     ${PROPS}
     PROCESSORS 1
-    LABELS "vulkan;level0"
+    LABELS "vulkan;level0;mlir"
     DEPENDS "pocl_version_check")
