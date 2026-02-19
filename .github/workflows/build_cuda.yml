@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [18, 20]
+        llvm: [20, 22]
         config: [cuda]
 
     steps:
@@ -66,7 +66,7 @@ jobs:
       - name: Run Build
         id: build
         run: |
-          cd ${{ github.workspace }}/build && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh)
+          cd ${{ github.workspace }}/build ; make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) || make -j4 || make -j4
 
       - name: Run Tests
         env:

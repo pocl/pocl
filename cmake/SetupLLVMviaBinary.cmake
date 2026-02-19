@@ -148,6 +148,9 @@ if(STATIC_LLVM)
       clangSerialization  clangParse clangSema clangRewrite clangRewriteFrontend
       clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
       clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangASTMatchers clangLex clangSupport clangBasic)
+  if(LLVM_VERSION_MAJOR GREATER_EQUAL 22)
+    list(INSERT CLANG_LIBNAMES 10 clangAnalysisLifetimeSafety clangOptions)
+  endif()
 else()
   # For non-static builds, link against a single shared library
   # instead of multiple component shared libraries.

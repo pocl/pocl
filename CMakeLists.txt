@@ -1653,7 +1653,6 @@ if(HOST_CPU_ENABLE_CL_KHR_FP16)
 endif()
 
 # set the host device OpenCL version (and OpenCL C version too)
-# LLVM 14 has sufficient OpenCL 3.0 support, so just enable it
 set(HOST_DEVICE_CL_VERSION_MAJOR 3)
 set(HOST_DEVICE_CL_VERSION_MINOR 0)
 
@@ -1667,13 +1666,18 @@ cl_khr_suggested_local_work_size cl_khr_integer_dot_product")
 # Clang 20 is required for __builtin_elementwise_bitreverse
 if(LLVM_VERSION_MAJOR GREATER_EQUAL 20)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_extended_bit_ops")
+  set(HOST_DEVICE_SPV_VERSIONS "SPIR-V_1.5 SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0")
+  set(HOST_DEVICE_MAX_SPV_VERSION "1.5")
+else()
+  set(HOST_DEVICE_SPV_VERSIONS "SPIR-V_1.4 SPIR-V_1.3 SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0")
+  set(HOST_DEVICE_MAX_SPV_VERSION "1.4")
 endif()
 
 # Host CPU device: list of OpenCL 3.0 features that are always enabled
 # TODO: __opencl_c_atomic_scope_all_devices works with CPU device but not others
 # for now it's included because CTS test 'C11 atomics' subtest 'atomic_flag' requires it
 # .... seems like a bug in CTS, but needs to be investigated.
-set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes  __opencl_c_images \
+set(HOST_DEVICE_FEATURES "__opencl_c_3d_image_writes  __opencl_c_images \
 __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
 __opencl_c_atomic_scope_device __opencl_c_atomic_scope_all_devices \
 __opencl_c_generic_address_space __opencl_c_work_group_collective_functions \
@@ -1708,7 +1712,7 @@ cl_khr_subgroups cl_khr_subgroup_ballot cl_khr_subgroup_shuffle \
 cl_intel_subgroups cl_intel_subgroups_short cl_intel_subgroups_char cl_intel_required_subgroup_size cl_exp_tensor")
   # read-write images are still partially broken
   # program-scope variables work on OpenCL C input, but breaks with SPIR-V input (llvm-spirv bugs)
-  set(HOST_DEVICE_FEATURES_30  "${HOST_DEVICE_FEATURES_30} __opencl_c_subgroups __opencl_c_read_write_images __opencl_c_program_scope_global_variables")
+  set(HOST_DEVICE_FEATURES  "${HOST_DEVICE_FEATURES} __opencl_c_subgroups __opencl_c_read_write_images __opencl_c_program_scope_global_variables")
 endif()
 
 # Extensions that are considered feature-complete (preferably CTS-tested).
@@ -1742,7 +1746,7 @@ endif()
 #   is required for PoCL CPU device pass the official upstream OpenCL-CTS.
 
 if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_subgroup")
-  set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_subgroups")
+  set(HOST_DEVICE_FEATURES "${HOST_DEVICE_FEATURES} __opencl_c_subgroups")
 endif()
 
 if(HOST_CPU_ENABLE_SPIRV)
@@ -1751,29 +1755,25 @@ endif()
 
 if(HOST_CPU_ENABLE_CL_KHR_FP16)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp16")
-  set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_fp16")
+  set(HOST_DEVICE_FEATURES "${HOST_DEVICE_FEATURES} __opencl_c_fp16")
 endif()
 
 if(HOST_CPU_ENABLE_CL_KHR_FP64)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64")
-  set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_fp64")
+  set(HOST_DEVICE_FEATURES "${HOST_DEVICE_FEATURES} __opencl_c_fp64")
 endif()
 
-
+set(HOST_DEVICE_SPV_EXTENSIONS "+SPV_KHR_no_integer_wrap_decoration,+SPV_KHR_expect_assume,+SPV_INTEL_fp_fast_math_mode,+SPV_INTEL_unstructured_loop_controls,+SPV_INTEL_arbitrary_precision_integers,+SPV_INTEL_memory_access_aliasing,+SPV_INTEL_inline_assembly,+SPV_KHR_integer_dot_product")
 if(HOST_DEVICE_EXTENSIONS MATCHES "cl_ext_float_atomics")
-  set(CTS_LLVM_SPIRV_EXTENSIONS "--spirv-ext=+SPV_KHR_no_integer_wrap_decoration,+SPV_KHR_expect_assume,+SPV_INTEL_fp_fast_math_mode,+SPV_EXT_shader_atomic_float_add,+SPV_INTEL_unstructured_loop_controls,+SPV_INTEL_arbitrary_precision_integers,+SPV_INTEL_memory_access_aliasing,+SPV_INTEL_inline_assembly,+SPV_EXT_shader_atomic_float_min_max,+SPV_KHR_integer_dot_product")
-  set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp32_global_atomic_add __opencl_c_ext_fp32_local_atomic_add")
-  if(NOT ENABLE_CONFORMANCE)
-    set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp32_global_atomic_min_max __opencl_c_ext_fp32_local_atomic_min_max")
-    set(CTS_LLVM_SPIRV_EXTENSIONS "${CTS_LLVM_SPIRV_EXTENSIONS},+SPV_EXT_shader_atomic_float_min_max,+SPV_INTEL_subgroups")
-  endif()
+  set(HOST_DEVICE_FEATURES "${HOST_DEVICE_FEATURES} __opencl_c_ext_fp32_global_atomic_add __opencl_c_ext_fp32_local_atomic_add __opencl_c_ext_fp32_global_atomic_min_max __opencl_c_ext_fp32_local_atomic_min_max")
+  set(HOST_DEVICE_SPV_EXTENSIONS "${HOST_DEVICE_SPV_EXTENSIONS},+SPV_EXT_shader_atomic_float_add,+SPV_EXT_shader_atomic_float_min_max")
   if(HOST_CPU_ENABLE_CL_KHR_FP64)
-    set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp64_global_atomic_add __opencl_c_ext_fp64_local_atomic_add")
-    if(NOT ENABLE_CONFORMANCE)
-      set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp64_global_atomic_min_max __opencl_c_ext_fp64_local_atomic_min_max")
-    endif()
+    set(HOST_DEVICE_FEATURES "${HOST_DEVICE_FEATURES} __opencl_c_ext_fp64_global_atomic_add __opencl_c_ext_fp64_local_atomic_add __opencl_c_ext_fp64_global_atomic_min_max __opencl_c_ext_fp64_local_atomic_min_max")
   endif()
   # __opencl_c_ext_fp16_global_atomic_add __opencl_c_ext_fp16_local_atomic_add __opencl_c_ext_fp16_global_atomic_min_max __opencl_c_ext_fp16_local_atomic_min_max
+endif()
+if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_extended_bit_ops")
+  set(HOST_DEVICE_SPV_EXTENSIONS "${HOST_DEVICE_SPV_EXTENSIONS},+SPV_KHR_bit_instructions")
 endif()
 
 # don't include cl_khr_int64 in HOST_DEVICE_EXTENSIONS list, because
@@ -1781,7 +1781,7 @@ endif()
 # for FULL profile, int64 is always enabled;
 # for embedded profiles, it's optional
 set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} -Dcl_khr_int64=1")
-set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_int64")
+set(HOST_DEVICE_FEATURES "${HOST_DEVICE_FEATURES} __opencl_c_int64")
 set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
 
 
@@ -1794,7 +1794,7 @@ foreach(EXT ${TEMP_EXT})
 endforeach()
 
 if(HOST_DEVICE_CL_VERSION_MAJOR GREATER_EQUAL 3)
-  set(TEMP_EXT "${HOST_DEVICE_FEATURES_30}")
+  set(TEMP_EXT "${HOST_DEVICE_FEATURES}")
   separate_arguments(TEMP_EXT)
   foreach(EXT ${TEMP_EXT})
     set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} -D${EXT}=1")

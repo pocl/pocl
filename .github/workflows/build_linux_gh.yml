@@ -45,9 +45,9 @@ jobs:
         # install = install PoCL system-wide and run tests
         # DBK = ONNX / libjpeg-turbo DBKs enabled
         include:
-          - llvm: 19
-            config: DBKs
           - llvm: 21
+            config: DBKs
+          - llvm: 22
             config: install
 
     steps:

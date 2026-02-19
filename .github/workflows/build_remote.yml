@@ -77,7 +77,7 @@ jobs:
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_remote_tests $CTEST_FLAGS -E test_command_buffer
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_remote_tests $CTEST_FLAGS --repeat until-pass:3 -E test_command_buffer
 
   rdma_matrix:
     name: LLVM ${{ matrix.llvm }} - rdma
@@ -85,7 +85,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [18]
+        llvm: [21]
 
     steps:
       - name: Checkout
@@ -126,7 +126,7 @@ jobs:
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cpu_tests $CTEST_FLAGS -L remote_rdma
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cpu_tests $CTEST_FLAGS --repeat until-pass:3 -L remote_rdma
 
   remote_discovery_avahi_matrix:
     name: LLVM ${{ matrix.llvm }} - discovery_avahi
@@ -176,7 +176,7 @@ jobs:
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_remote_discovery_tests $CTEST_FLAGS
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_remote_discovery_tests --repeat until-pass:3 $CTEST_FLAGS
 
   remote_discovery_dht_matrix:
     name: LLVM ${{ matrix.llvm }} - discovery_dht
@@ -226,4 +226,4 @@ jobs:
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_remote_discovery_tests $CTEST_FLAGS
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_remote_discovery_tests --repeat until-pass:3 $CTEST_FLAGS

@@ -106,6 +106,7 @@ jobs:
               -DENABLE_LLVM=1 ^
               -DENABLE_LOADABLE_DRIVERS=${{ matrix.shared_libs }} ^
               -DSTATIC_LLVM=ON ^
+              -DLLC_HOST_CPU=haswell ^
               -DENABLE_TESTS=${{ matrix.shared_libs }} ^
               -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL ^
               -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }} ^

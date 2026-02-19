@@ -38,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [21]
+        llvm: [22]
 
     steps:
       - name: Checkout
@@ -56,7 +56,7 @@ jobs:
           rm -rf $BUILD_DIR
           mkdir -p $BUILD_DIR
           cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_MAKE_PROGRAM=/usr/bin/make -DCMAKE_BUILD_TYPE=Release \
-            -DLLVM_DIR=${TARGET_ROOT}${TARGET_LLVM_INSTALL_DIR} -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} \
+            -DLLVM_DIR=${TARGET_ROOT}/opt/LLVM_${{ matrix.llvm }} -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} \
             -DHOST_DEVICE_BUILD_HASH=${TARGET_TRIPLE} -DCMAKE_TOOLCHAIN_FILE=${TARGET_TOOLCHAIN_FILE}  \
             -DLLC_TRIPLE=${TARGET_TRIPLE} -DLLC_HOST_CPU=${TARGET_CPU} -DCMAKE_PREFIX_PATH=${TARGET_ROOT} \
             -DENABLE_ICD=ON -DENABLE_LOADABLE_DRIVERS=0 -DKERNELLIB_HOST_CPU_VARIANTS=${TARGET_CPU} \

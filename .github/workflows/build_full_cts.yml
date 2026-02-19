@@ -25,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [21]
+        llvm: [22]
         config: [full_cts_cpu, full_cts_cpu_spirv]
 
     steps:
