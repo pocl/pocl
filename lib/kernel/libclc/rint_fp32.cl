@@ -31,7 +31,8 @@ _CL_OVERLOADABLE vtype rint(vtype d)
 
   fr = ((fr < (vtype)0) | ((fr == (vtype)0) & isodd)) ? fr+(vtype)(1.0f) : fr;
 
-  x = (d == (vtype)0.50000005960464477539f) ? (vtype)(0) : x;  // nextafterf(0.5, 1)
+  const itype NA = (itype)(0x3f000001);
+  x = (d == as_vtype(NA)) ? (vtype)(0.0f) : x;  // nextafterf(0.5, 1)
 
   return (isinf(d) || fabs(d) >= (vtype)(1UL << 23)) ? d : copysign(x - fr, d);
 }
