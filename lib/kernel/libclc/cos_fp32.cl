@@ -34,7 +34,7 @@ _CL_OVERLOADABLE vtype cos(vtype x)
     vtype ss = -__pocl_sinf_piby4(r0, r1);
     vtype cc =  __pocl_cosf_piby4(r0, r1);
 
-    vtype c = (regn << 31) ? ss : cc;
+    vtype c = (regn << 31) != 0 ? ss : cc;
     itype t = ((regn >> 1) << 31);
     c = as_vtype(as_itype(c) ^ t);
 

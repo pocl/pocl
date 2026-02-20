@@ -40,7 +40,7 @@ _CL_OVERLOADABLE vtype sin(vtype x) {
 
     itype ss = as_itype(sc.lo);
     itype cc = as_itype(sc.hi);
-    itype s = (regn << 63) ? cc : ss;
+    itype s = (regn << 63) != 0 ? cc : ss;
     s ^= ((regn >> 1) << 63);
     s ^= (as_itype(x) & (itype)SIGNBIT_DP64);
 

@@ -36,7 +36,7 @@ _CL_OVERLOADABLE vtype sin(vtype x)
     vtype ss = __pocl_sinf_piby4(r0, r1);
     vtype cc = __pocl_cosf_piby4(r0, r1);
 
-    vtype s = (regn << 31) ? cc : ss;
+    vtype s = (regn << 31) != 0 ? cc : ss;
     itype mask = ((regn > (itype)1) ? (itype)SIGNBIT_SP32 : (itype)0);
     s = as_vtype(as_itype(s) ^ mask ^ (ix ^ ax));
 

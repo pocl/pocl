@@ -41,7 +41,7 @@ _CL_OVERLOADABLE vtype cos(vtype x) {
     itype ss = as_itype(-sc.lo);
     itype cc = as_itype(sc.hi);
 
-    itype c = (regn << 63) ? ss : cc;
+    itype c = (regn << 63) != 0 ? ss : cc;
     c ^= ((regn >> 1) << 63);
 
     return (isnan(x) | isinf(x)) ? as_vtype((utype)QNANBITPATT_DP64) : as_vtype(c);
