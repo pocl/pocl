@@ -265,6 +265,7 @@ if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS) # implies CONFORMANCE=OFF
     sleef-pocl/exp2.cl
     sleef-pocl/fabs.cl
     sleef-pocl/fma.cl
+    libclc-pocl/pocl_fma.cl
 
     sleef-pocl/fmax.cl
     sleef-pocl/fmin.cl
