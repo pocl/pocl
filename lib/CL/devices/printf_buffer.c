@@ -422,6 +422,12 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
                   ch = *format++;
                   element_size = 8; /* "l" -> long */
                 }
+              else if (ch == 'z' || ch == 't')
+                {
+                  ch = *format++;
+                  element_size = pointer_size_bytes; /* "z" -> size_t */
+                }
+
               if (vector_length > 0 && element_size == 0)
                 {
                   POCL_MSG_ERR (
@@ -445,6 +451,9 @@ __pocl_printf_format_full (param_t *p, char *buffer, uint32_t buffer_size)
               DEBUG_PRINTF (("[printf:vector_length=%d]\n", vector_length));
 
               DEBUG_PRINTF (("[printf:elem_length=%d]\n", element_size));
+
+              if (ch == 'o' || ch == 'u' || ch == 'x' || ch == 'X' || ch == 't' || ch == 'z')
+                flags.always_sign = 0;
 
               p->flags = flags;
               p->conv = ch;
