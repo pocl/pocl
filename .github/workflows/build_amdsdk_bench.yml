@@ -89,7 +89,7 @@ jobs:
       # make sure to store with github.ref_name but always restore with 'main' branch,
       # this way we're always comparing to latest main
       - name: Download previous benchmark data
-        uses: actions/cache@v5
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb
         with:
           path: benchmark_cache
           key: amdsdk_bench-${{ runner.name }}-llvm-${{ matrix.llvm }}-${{ matrix.device }}-${{ github.ref_name }}-${{ github.run_id }}
@@ -122,7 +122,7 @@ jobs:
 
       # Run `github-action-benchmark` action
       - name: Store benchmark result
-        uses: benchmark-action/github-action-benchmark@v1
+        uses: benchmark-action/github-action-benchmark@4bdcce38c94cec68da58d012ac24b7b1155efe8b
         with:
           # What benchmark tool the output.txt came from
           tool: 'customSmallerIsBetter'
