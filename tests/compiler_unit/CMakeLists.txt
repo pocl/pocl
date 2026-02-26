@@ -48,7 +48,8 @@ function(add_llvm_check)
         "${CMAKE_CURRENT_SOURCE_DIR}/${POCL_UTEST_SPIRV_NAME}.spirv"
         WORKITEM_HANDLER "${WORKITEM_HANDLER}"
         LLVM_FILECHECK "${POCL_UTEST_SPIRV_NAME}.fc"
-        ONLY_FILECHECK 1)
+        ONLY_FILECHECK 1
+        ENVIRONMENT "${POCL_UTEST_ENVIRONMENT}")
     endif()
   endif()
   if (POCL_UTEST_OPENCLC_NAME)
@@ -66,6 +67,7 @@ endfunction()
 add_llvm_check(SPIRV_NAME dirty-as-casts)
 add_llvm_check(SPIRV_NAME issue-1871-unreachables-remaining)
 add_llvm_check(SPIRV_NAME issue-1872-switch-to-a-bb-with-unreachable)
-add_llvm_check(SPIRV_NAME switch-to-unreachable-with-a-phi-in-dest)
+add_llvm_check(SPIRV_NAME switch-to-unreachable-with-a-phi-in-dest
+               ENVIRONMENT "POCL_WILOOPS_DELETE_BLOCKS_WITH_UNREACHABLES=1")
 add_llvm_check(OPENCLC_NAME force-vector-width ENVIRONMENT "POCL_VECTORIZER_FORCE_VECTOR_WIDTH=4")
 add_llvm_check(OPENCLC_NAME prefer-vector-width ENVIRONMENT "POCL_VECTORIZER_PREFER_VECTOR_WIDTH=512")
