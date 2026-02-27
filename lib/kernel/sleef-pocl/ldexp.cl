@@ -88,12 +88,11 @@ _cl_ldexp (double16 x, int16 k)
 
 #endif /* cl_khr_fp64 */
 
-
-#if ENABLE_CONFORMANCE == 1
-
-#ifndef cl_khr_fp64
-#error ldexp_fp32 requires cl_khr_fp64
+#if (ENABLE_CONFORMANCE == 1) && !defined(cl_khr_fp64)
+#warning ldexp_fp32 requires cl_khr_fp64
 #endif
+
+#if (ENABLE_CONFORMANCE == 1) && defined(cl_khr_fp64)
 
 /* calculate the fp32 ldexp values using the fp64 ldexp. This is necessary to
    pass the Full CTS math test, because some values (involving denormals) are

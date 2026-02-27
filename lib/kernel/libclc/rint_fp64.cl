@@ -25,15 +25,15 @@
 
 _CL_OVERLOADABLE vtype rint(vtype d)
 {
-  vtype x = d + (vtype)0.5f;
-  vtype fr = x - (vtype)(1UL << 31) * FAST_TRUNC(x * (1.0 / (1UL << 31)));
-  itype isodd = ((itype)1 & convert_itype(fr)) ? (itype)-1 : (itype)0;
-  fr = fr - FAST_TRUNC(fr);
+  vtype x = d + (vtype)0.5;
+  itype isodd = ((itype)1 & convert_itype (x)) ? (itype)-1 : (itype)0;
+  vtype fr = x - FAST_TRUNC (x);
 
-  fr = ((fr < (vtype)0) | ((fr == (vtype)0) & isodd)) ? fr+(vtype)(1.0f) : fr;
+  fr = ((fr < (vtype)0) | ((fr == (vtype)0) & isodd)) ? fr + (vtype)(1.0) : fr;
 
-  x = (d == (vtype)0.50000000000000011102) ? (vtype)(0.0f) : x;  // nextafterf(0.5, 1)
+  const itype NA = (itype)(0x3fe0000000000001LL);
+  x = (d == as_vtype (NA)) ? (vtype)(0.0) : x; // nextafterf(0.5, 1)
 
-  return (isinf(d) || fabs(d) >= (vtype)(1UL << 52)) ? d : copysign(x - fr, d);
-
+  return (isinf (d) | (fabs (d) >= (vtype)(1UL << 52))) ? d
+                                                        : copysign (x - fr, d);
 }

@@ -116,7 +116,7 @@ atom_add (volatile Q float *p, float val)
   return atomic_add (p, val);
 }
 
-#ifdef cl_khr_int64_base_atomics
+#ifdef cl_khr_fp64
 
 __attribute__ ((overloadable)) double
 atomic_xchg (volatile Q double *p, double val)

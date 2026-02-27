@@ -30,3 +30,5 @@
 #endif
 
 DEFINE_BUILTIN_V_VVV(fma)
+
+DEFINE_EXPR_V_VVV(pocl_fma, fma(a,b,c))

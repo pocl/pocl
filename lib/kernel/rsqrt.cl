@@ -24,4 +24,9 @@
 
 #include "templates.h"
 
+// TODO FIXME
+#undef cl_khr_fp16
+#undef __IF_FP16
+#define __IF_FP16(X)
+
 DEFINE_EXPR_V_V(rsqrt, (stype)1/sqrt(a))
