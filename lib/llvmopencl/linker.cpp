@@ -881,7 +881,11 @@ static void convertPoclTrap(llvm::Module *Program, cl_device_id ClDev) {
     return;
 
   Function *TrapIntrinsic =
+#if LLVM_MAJOR >= 20
       Intrinsic::getOrInsertDeclaration(Program, Intrinsic::trap);
+#else
+      Intrinsic::getDeclaration(Program, Intrinsic::trap);
+#endif
 
   SmallVector<CallInst *, 4> TrapCalls;
   for (User *U : PoclTrapFn->users())
@@ -932,7 +936,11 @@ static void convertPoclExit(llvm::Module *Program, cl_device_id ClDev) {
   } else {
     // Other GPU: fallback to llvm.trap
     Function *TrapIntrinsic =
+#if LLVM_MAJOR >= 20
         Intrinsic::getOrInsertDeclaration(Program, Intrinsic::trap);
+#else
+        Intrinsic::getDeclaration(Program, Intrinsic::trap);
+#endif
     for (auto *CI : Calls) {
       IRBuilder<> Builder(CI);
       Builder.CreateCall(TrapIntrinsic);
