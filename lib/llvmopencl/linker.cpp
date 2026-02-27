@@ -46,8 +46,11 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/GlobalValue.h>
+#include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/InstIterator.h>
+#include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Instructions.h>
+#include <llvm/IR/Intrinsics.h>
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
@@ -862,6 +865,85 @@ static void replaceIntrinsics(llvm::Module *Program, const llvm::Module *Lib,
 }
 }
 
+static void convertPoclTrap(llvm::Module *Program, cl_device_id ClDev) {
+  Function *PoclTrapFn = Program->getFunction("__pocl_trap");
+  if (!PoclTrapFn || PoclTrapFn->use_empty())
+    return;
+
+  // Ensure proper attributes regardless of what the frontend provided.
+  // These are needed by optimization passes that run before ConvertPoclExit.
+  PoclTrapFn->addFnAttr(Attribute::NoReturn);
+  PoclTrapFn->addFnAttr(Attribute::Cold);
+  PoclTrapFn->addFnAttr(Attribute::NoUnwind);
+
+  // CPU: leave for the ConvertPoclExit pass (flag-store + return)
+  if (!ClDev->spmd)
+    return;
+
+  Function *TrapIntrinsic =
+      Intrinsic::getOrInsertDeclaration(Program, Intrinsic::trap);
+
+  SmallVector<CallInst *, 4> TrapCalls;
+  for (User *U : PoclTrapFn->users())
+    if (auto *CI = dyn_cast<CallInst>(U))
+      TrapCalls.push_back(CI);
+
+  for (auto *CI : TrapCalls) {
+    IRBuilder<> Builder(CI);
+    Builder.CreateCall(TrapIntrinsic);
+    CI->eraseFromParent();
+  }
+
+  if (PoclTrapFn->use_empty())
+    PoclTrapFn->eraseFromParent();
+}
+
+static void convertPoclExit(llvm::Module *Program, cl_device_id ClDev) {
+  Function *ExitFn = Program->getFunction("__pocl_exit");
+  if (!ExitFn || ExitFn->use_empty())
+    return;
+
+  // Ensure proper attributes regardless of what the frontend provided.
+  // These are needed by optimization passes that run before ConvertPoclExit.
+  ExitFn->addFnAttr(Attribute::NoReturn);
+  ExitFn->addFnAttr(Attribute::Cold);
+  ExitFn->addFnAttr(Attribute::NoUnwind);
+
+  // CPU: leave for the ConvertPoclExit pass (runs before UTR)
+  if (!ClDev->spmd)
+    return;
+
+  // Collect calls before modifying
+  SmallVector<CallInst *, 4> Calls;
+  for (User *U : ExitFn->users())
+    if (auto *CI = dyn_cast<CallInst>(U))
+      Calls.push_back(CI);
+
+  if (pocl::modIsNvptx(Program)) {
+    // CUDA/PTX: inline asm "exit;"
+    InlineAsm *ExitAsm = InlineAsm::get(
+        FunctionType::get(Type::getVoidTy(Program->getContext()), false),
+        "exit;", "", /*hasSideEffects=*/true);
+    for (auto *CI : Calls) {
+      IRBuilder<> Builder(CI);
+      Builder.CreateCall(ExitAsm);
+      CI->eraseFromParent();
+    }
+  } else {
+    // Other GPU: fallback to llvm.trap
+    Function *TrapIntrinsic =
+        Intrinsic::getOrInsertDeclaration(Program, Intrinsic::trap);
+    for (auto *CI : Calls) {
+      IRBuilder<> Builder(CI);
+      Builder.CreateCall(TrapIntrinsic);
+      CI->eraseFromParent();
+    }
+  }
+
+  if (ExitFn->use_empty())
+    ExitFn->eraseFromParent();
+}
+
 using namespace pocl;
 
 int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
@@ -958,6 +1040,8 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
   convertAddrSpaceOperator(Program->getFunction("__to_local"), Log);
   convertAddrSpaceOperator(Program->getFunction("__to_private"), Log);
   convertAddrSpaceOperator(Program->getFunction("__to_global"), Log);
+  convertPoclTrap(Program, ClDev);
+  convertPoclExit(Program, ClDev);
 
   // check all function declarations in the program
   // *after* we have linked functions from the library
@@ -987,7 +1071,9 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
            !F->getName().starts_with("llvm.") &&
            F->getName() != BARRIER_FUNCTION_NAME &&
            F->getName() != "__pocl_local_mem_alloca" &&
-           F->getName() != "__pocl_work_group_alloca")) {
+           F->getName() != "__pocl_work_group_alloca" &&
+           F->getName() != "__pocl_trap" &&
+           F->getName() != "__pocl_exit")) {
         Log.append("Cannot find symbol ");
         Log.append(FName.str());
         Log.append(" in kernel library\n");
