@@ -46,6 +46,7 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/ADT/SmallPtrSet.h>
+#include <llvm/Analysis/ValueTracking.h>
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/IRBuilder.h>
@@ -254,22 +255,86 @@ static void detachBBFromPredecessor(BasicBlock &BB,
   }
 }
 
+// Returns true if all non-PHI instructions before unreachable are guaranteed
+// to transfer execution to their successor (!mayThrow() && willReturn()).
+// Such blocks are purely computational dead code and can be deleted.
+// Returns false if any instruction may not transfer (trap, noreturn call,
+// call that may throw) — these blocks have meaningful side effects.
+static bool hasOnlySafeToRemoveInstructions(BasicBlock &BB) {
+  for (auto &I : BB) {
+    if (isa<UnreachableInst>(&I))
+      break;
+    if (isa<PHINode>(&I))
+      continue;
+    if (!isGuaranteedToTransferExecutionToSuccessor(&I))
+      return false;
+  }
+  return true;
+}
+
 static bool deleteBlocksWithUnreachable(Function &F) {
 
   SmallBBSet UnreachableBBs;
+  SmallVector<Instruction *, 4> SideEffectUnreachables;
 
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
     BasicBlock &BB = *I;
     assert(BB.getTerminator());
     if (isa<UnreachableInst>(BB.getTerminator())) {
-      LLVM_DEBUG(dbgs() << "UNREACHABLE found, deleting BB\n");
-      LLVM_DEBUG(BB.dump());
-      UnreachableBBs.insert(&BB);
+      if (hasOnlySafeToRemoveInstructions(BB)) {
+        LLVM_DEBUG(dbgs() << "UNREACHABLE found, deleting BB\n");
+        LLVM_DEBUG(BB.dump());
+        UnreachableBBs.insert(&BB);
+      } else {
+        LLVM_DEBUG(dbgs() << "UNREACHABLE found, BB has side effects, "
+                             "converting to return\n");
+        LLVM_DEBUG(BB.dump());
+        SideEffectUnreachables.push_back(BB.getTerminator());
+      }
     }
   }
 
+  // Convert side-effecting unreachable blocks to flag-store + return,
+  // preserving the side effects while marking the event as CL_FAILED.
+  bool Changed = false;
+  if (!SideEffectUnreachables.empty()) {
+    Module *M = F.getParent();
+
+    BasicBlock *RetBB = nullptr;
+    for (BasicBlock &BB : F) {
+      assert(BB.getTerminator());
+      if ((BB.sizeWithoutDebug() == 1) &&
+          isa<ReturnInst>(BB.getTerminator())) {
+        RetBB = &BB;
+        break;
+      }
+    }
+
+    Type *I32Ty = Type::getInt32Ty(M->getContext());
+    M->getOrInsertGlobal("__pocl_context_unreachable", I32Ty);
+    GlobalVariable *UnreachGV =
+        M->getNamedGlobal("__pocl_context_unreachable");
+    Constant *ConstOne = ConstantInt::get(I32Ty, 1);
+    IRBuilder<> Builder(M->getContext());
+
+    for (auto *UI : SideEffectUnreachables) {
+#if LLVM_MAJOR < 20
+      Builder.SetInsertPoint(UI);
+#else
+      Builder.SetInsertPoint(UI->getIterator());
+#endif
+      Builder.CreateStore(ConstOne, UnreachGV);
+      if (RetBB)
+        Builder.CreateBr(RetBB);
+      else
+        Builder.CreateRetVoid();
+      UI->eraseFromParent();
+    }
+    Changed = true;
+  }
+
   if (UnreachableBBs.empty())
-    return false;
+    return Changed;
 
   // Check BB predecessors recursively, and disconnect them
   // from blocks which contain an unreachable.
