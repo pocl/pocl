@@ -133,6 +133,9 @@ ConvertPoclExit::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
     }
 
     // __pocl_trap: fatal, store flag + return (reports CL_FAILED)
+    // Use a single shared flag-store block so that the WI loop has at most
+    // one store to the loop-invariant execution_failed address, which LLVM's
+    // loop vectorizer can handle.
     if (!TrapCalls.empty()) {
       Type *I32Ty = Type::getInt32Ty(M->getContext());
       M->getOrInsertGlobal("__pocl_context_unreachable", I32Ty);
@@ -140,17 +143,23 @@ ConvertPoclExit::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
           M->getNamedGlobal("__pocl_context_unreachable");
       Constant *ConstOne = ConstantInt::get(I32Ty, 1);
 
+      // Create one shared block: store flag + branch to return.
+      BasicBlock *FlagStoreBB =
+          BasicBlock::Create(M->getContext(), "pocl_trap_flag", &F);
+      IRBuilder<> FlagBuilder(FlagStoreBB);
+      FlagBuilder.CreateStore(ConstOne, UnreachGV);
+      if (RetBB)
+        FlagBuilder.CreateBr(RetBB);
+      else
+        FlagBuilder.CreateRetVoid();
+
       for (auto *CI : TrapCalls) {
 #if LLVM_MAJOR < 20
         Builder.SetInsertPoint(CI);
 #else
         Builder.SetInsertPoint(CI->getIterator());
 #endif
-        Builder.CreateStore(ConstOne, UnreachGV);
-        if (RetBB)
-          Builder.CreateBr(RetBB);
-        else
-          Builder.CreateRetVoid();
+        Builder.CreateBr(FlagStoreBB);
         eraseFromCallToEndOfBlock(CI);
       }
     }
