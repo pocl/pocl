@@ -332,6 +332,73 @@ Some of them are listed in the following:
  types of local buffers, the ones passed as arguments and the ones instantiated
  in the kernel.
 
+Kernel termination and error handling
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A kernel work-item can terminate abnormally in three ways. Each has different
+semantics and is lowered differently depending on the target.
+
+* ``OpUnreachable``
+
+  The SPIR-V ``OpUnreachable`` instruction (lowered to LLVM's
+  ``unreachable``) is an optimizer hint asserting that a point in the code is
+  never reached. Two passes cooperate to handle it:
+
+  First, the ``flatten-globals`` pass force-inlines all non-kernel functions
+  that contain an ``unreachable`` instruction (as well as functions using
+  work-group variables or calling barriers). This absorbs most helper
+  functions — such as ``noreturn`` error-throwing wrappers — into the kernel
+  before later passes run.
+
+  After inlining, ``UnreachablesToReturns`` classifies the remaining
+  unreachable blocks by checking whether each instruction is guaranteed to
+  transfer execution to its successor (using LLVM's
+  ``isGuaranteedToTransferExecutionToSuccessor``):
+
+  - **Pure dead code** (all instructions will return — no calls lacking
+    ``willreturn``, no infinite loops): the block is removed entirely.
+    Predecessors are disconnected, conditional branches to the block are
+    simplified, and switch cases targeting it are pruned along with
+    corresponding PHI entries.
+
+  - **Side-effecting code** (contains a call that is not guaranteed to
+    return, e.g. a function without the ``willreturn`` attribute): the
+    ``unreachable`` terminator is replaced with a flag-store
+    (``execution_failed = 1``) and a return. This preserves the side effects
+    while ensuring the work-item terminates gracefully. The event is marked
+    ``CL_FAILED``. Note that plain stores and most arithmetic *do* transfer
+    execution and are not considered side-effecting for this purpose.
+
+  The ``function-attrs`` pass (``PostOrderFunctionAttrsPass``) runs before
+  ``UnreachablesToReturns`` to infer ``willreturn``/``noreturn``/``nounwind``
+  attributes from function bodies. This is important for functions that were
+  not inlined by ``flatten-globals`` (because they contain no
+  ``unreachable``): without ``function-attrs``, any call to a function
+  lacking an explicit ``willreturn`` attribute would be conservatively
+  treated as side-effecting, even if the function body is trivial.
+
+* ``__pocl_trap`` — signalling exit
+
+  The work-item terminates and the event is marked ``CL_FAILED``
+  (``execution_failed`` flag). On CPU, the ``ConvertPoclExit`` pass lowers
+  this to a flag-store + return. On GPU, the linker converts it to
+  ``llvm.trap``. The ``flatten-termination-subs`` pass force-inlines any
+  non-kernel function containing a ``__pocl_trap`` call so that later passes
+  see the termination directly. The idiomatic pattern is
+  ``call @__pocl_trap()`` followed by ``OpUnreachable`` — the trap call is
+  guaranteed to be preserved (not optimized away), while the
+  ``OpUnreachable`` lets the optimizer simplify the surrounding CFG.
+
+* ``__pocl_exit`` — graceful exit
+
+  The work-item terminates and the event completes with ``CL_COMPLETE`` (no
+  error). On CPU, ``ConvertPoclExit`` lowers this to a plain return. On CUDA,
+  it becomes PTX ``exit;``. On other GPU backends it falls back to
+  ``llvm.trap`` (no graceful exit support). Like ``__pocl_trap``, it is
+  typically followed by ``OpUnreachable``. This is useful for implementing
+  custom exception handling where the kernel needs to exit early without
+  signalling an error.
+
 .. _opencl-optimizations:
 
 Other OpenCL-specific optimizations
