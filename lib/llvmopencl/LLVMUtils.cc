@@ -39,9 +39,11 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "AutomaticLocals.h"
 #include "BarrierTailReplication.h"
 #include "CanonicalizeBarriers.h"
+#include "ConvertPoclExit.h"
 #include "DebugHelpers.h"
 #include "Flatten.hh"
 #include "FlattenBarrierSubs.hh"
+#include "FlattenTerminationSubs.hh"
 #include "FlattenGlobals.hh"
 #include "HandleSamplerInitialization.h"
 #include "ImplicitConditionalBarriers.h"
@@ -678,9 +680,11 @@ void registerPassBuilderPasses(llvm::PassBuilder &PB) {
   BarrierTailReplication::registerWithPB(PB);
   CanonicalizeBarriers::registerWithPB(PB);
   SanitizeUBofDivRem::registerWithPB(PB);
+  ConvertPoclExit::registerWithPB(PB);
   ConvertUnreachablesToReturns::registerWithPB(PB);
   FlattenAll::registerWithPB(PB);
   FlattenBarrierSubs::registerWithPB(PB);
+  FlattenTerminationSubs::registerWithPB(PB);
   FlattenGlobals::registerWithPB(PB);
   HandleSamplerInitialization::registerWithPB(PB);
   ImplicitConditionalBarriers::registerWithPB(PB);

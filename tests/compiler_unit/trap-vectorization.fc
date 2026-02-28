@@ -1,0 +1,15 @@
+; Verify that kernels with __pocl_trap flag stores vectorize correctly.
+; The flag-store pattern (store to execution_failed in the pocl context)
+; must not prevent LLVM's loop vectorizer from vectorizing the WI loop.
+;
+; Requires POCL_VECTORIZER_FORCE_VECTOR_WIDTH=4.
+;
+; CHECK-DAG is used because each kernel compiles to a separate parallel.bc
+; and the concatenation order from find(1) is non-deterministic.
+
+CHECK-DAG: @_pocl_kernel_baseline_workgroup
+CHECK-DAG: @_pocl_kernel_trap_nonuniform_workgroup
+CHECK-DAG: @_pocl_kernel_multi_trap_workgroup
+CHECK-DAG: vector.body:
+CHECK-DAG: vector.body:
+CHECK-DAG: vector.body:

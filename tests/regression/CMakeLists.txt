@@ -30,6 +30,7 @@ set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_llvm_segfault_issue_889
      test_issue_1711 test_issue_1794 test_issue_1747
      test_rematerialized_alloca_load_with_outside_pr_users
+     test_kernel_exit_modes
 )
 foreach(PROG ${C_PROGRAMS_TO_BUILD})
   add_executable("${PROG}" "${PROG}.c")
@@ -139,6 +140,8 @@ add_test_pocl(NAME "regression/test_issue_1794b" COMMAND "test_issue_1794" "0" "
 
 add_test_pocl(NAME "regression/test_issue_1747" COMMAND "test_issue_1747" "0" "${CMAKE_CURRENT_SOURCE_DIR}/test_issue_1747.spv" LABELS ${SPIRV_LABELS})
 
+add_test_pocl(NAME "regression/test_kernel_exit_modes" COMMAND "test_kernel_exit_modes" "0" "${CMAKE_CURRENT_SOURCE_DIR}/test_kernel_exit_modes.spv" LABELS ${SPIRV_LABELS})
+
 add_test_pocl(NAME "regression/test_issue_893" COMMAND "test_issue_893")
 
 add_test_pocl(NAME "regression/test_flatten_barrier_subs" COMMAND "test_flatten_barrier_subs" EXPECTED_OUTPUT "test_flatten_barrier_subs.output")
@@ -199,6 +202,7 @@ set_tests_properties(
   "regression/test_issue_1747_${VARIANT}"
   "regression/test_issue_1794a_${VARIANT}"
   "regression/test_issue_1794b_${VARIANT}"
+  "regression/test_kernel_exit_modes_${VARIANT}"
   "regression/test_issue_1826_${VARIANT}"
   "regression/test_builtin_regression_${VARIANT}"
   "regression/test_mem_host_ptr_issue_${VARIANT}"

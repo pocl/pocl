@@ -46,6 +46,7 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/ADT/SmallPtrSet.h>
+#include <llvm/Analysis/ValueTracking.h>
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/IRBuilder.h>
@@ -88,37 +89,21 @@ using namespace llvm;
 
 using SmallBBSet = llvm::SmallPtrSet<BasicBlock *, 8>;
 
-// convert unreachable inst to a store of a flag + return instruction
-static bool convertUnreachablesToReturns(Function &F) {
+// Convert unreachable instructions to a store of a flag + branch to a shared
+// return block. Uses a single flag-store block so that the WI loop has at most
+// one store to the loop-invariant execution_failed address, which LLVM's loop
+// vectorizer can handle.
+static bool
+convertUnreachablesToReturns(Function &F,
+                             SmallVectorImpl<Instruction *> &Unreachables) {
+  if (Unreachables.empty())
+    return false;
 
   Module *M = F.getParent();
 
-  SmallVector<Instruction *, 8> PendingUnreachableInst;
-  SmallVector<BasicBlock *, 8> PendingDeletableBBs;
-  for (BasicBlock &BB : F) {
-    assert(BB.getTerminator() != nullptr);
-    if (auto UI = dyn_cast<UnreachableInst>(BB.getTerminator())) {
-      LLVM_DEBUG(dbgs() << "UNREACHABLE found: replacing Inst in "
-                        << F.getName().str() << "\n");
-      // this can happen when inlining functions which have unreachable Inst
-      // we end up with a BB with 0 predecessors and a single unreachable
-      if (BB.hasNPredecessors(0))
-        PendingDeletableBBs.push_back(&BB);
-      else
-        PendingUnreachableInst.push_back(UI);
-    }
-  }
-
-  for (auto BB : PendingDeletableBBs)
-    BB->eraseFromParent();
-
-  if (PendingUnreachableInst.empty())
-    return false;
-
-  // Find basic block with return instruction
+  // Find single-instruction return block
   BasicBlock *RetBB = nullptr;
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-    BasicBlock &BB = *I;
+  for (BasicBlock &BB : F) {
     assert(BB.getTerminator());
     if ((BB.sizeWithoutDebug() == 1) && isa<ReturnInst>(BB.getTerminator())) {
       RetBB = &BB;
@@ -130,22 +115,27 @@ static bool convertUnreachablesToReturns(Function &F) {
   M->getOrInsertGlobal("__pocl_context_unreachable", I32Ty);
   GlobalVariable *UnreachGV = M->getNamedGlobal("__pocl_context_unreachable");
   Constant *ConstOne = ConstantInt::get(I32Ty, 1);
+
+  // Single shared flag-store block: store 1 + branch to return
+  BasicBlock *FlagStoreBB =
+      BasicBlock::Create(M->getContext(), "pocl_unreachable_flag", &F);
+  IRBuilder<> FlagBuilder(FlagStoreBB);
+  FlagBuilder.CreateStore(ConstOne, UnreachGV);
+  if (RetBB)
+    FlagBuilder.CreateBr(RetBB);
+  else
+    FlagBuilder.CreateRetVoid();
+
   IRBuilder<> Builder(M->getContext());
-  for (auto UI : PendingUnreachableInst) {
+  for (auto *UI : Unreachables) {
 #if LLVM_MAJOR < 20
     Builder.SetInsertPoint(UI);
 #else
     Builder.SetInsertPoint(UI->getIterator());
 #endif
-    Builder.CreateStore(ConstOne, UnreachGV);
-    if (RetBB)
-      Builder.CreateBr(RetBB);
-    else
-      Builder.CreateRetVoid();
-  }
-
-  for (auto UI : PendingUnreachableInst)
+    Builder.CreateBr(FlagStoreBB);
     UI->eraseFromParent();
+  }
 
   return true;
 }
@@ -254,22 +244,49 @@ static void detachBBFromPredecessor(BasicBlock &BB,
   }
 }
 
+// Returns true if all non-PHI instructions before unreachable are guaranteed
+// to transfer execution to their successor (!mayThrow() && willReturn()).
+// Such blocks are purely computational dead code and can be deleted.
+// Returns false if any instruction may not transfer (trap, noreturn call,
+// call that may throw) — these blocks have meaningful side effects.
+static bool hasOnlySafeToRemoveInstructions(BasicBlock &BB) {
+  for (auto &I : BB) {
+    if (isa<UnreachableInst>(&I))
+      break;
+    if (isa<PHINode>(&I))
+      continue;
+    if (!isGuaranteedToTransferExecutionToSuccessor(&I))
+      return false;
+  }
+  return true;
+}
+
 static bool deleteBlocksWithUnreachable(Function &F) {
 
   SmallBBSet UnreachableBBs;
+  SmallVector<Instruction *, 4> SideEffectUnreachables;
 
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
     BasicBlock &BB = *I;
     assert(BB.getTerminator());
     if (isa<UnreachableInst>(BB.getTerminator())) {
-      LLVM_DEBUG(dbgs() << "UNREACHABLE found, deleting BB\n");
-      LLVM_DEBUG(BB.dump());
-      UnreachableBBs.insert(&BB);
+      if (hasOnlySafeToRemoveInstructions(BB)) {
+        LLVM_DEBUG(dbgs() << "UNREACHABLE found, deleting BB\n");
+        LLVM_DEBUG(BB.dump());
+        UnreachableBBs.insert(&BB);
+      } else {
+        LLVM_DEBUG(dbgs() << "UNREACHABLE found, BB has side effects, "
+                             "converting to return\n");
+        LLVM_DEBUG(BB.dump());
+        SideEffectUnreachables.push_back(BB.getTerminator());
+      }
     }
   }
 
+  bool Changed = convertUnreachablesToReturns(F, SideEffectUnreachables);
+
   if (UnreachableBBs.empty())
-    return false;
+    return Changed;
 
   // Check BB predecessors recursively, and disconnect them
   // from blocks which contain an unreachable.
@@ -321,11 +338,27 @@ ConvertUnreachablesToReturns::run(llvm::Function &F,
     return PreservedAnalyses::all();
 
   // LOOPS: remove the blocks with unreachable inst.
-  // CBS: replace unreachable with ret void
+  // CBS: replace unreachable with flag store + return
   WorkitemHandlerType WIH = AM.getResult<WorkitemHandlerChooser>(F).WIH;
-  bool Changed = (WIH == WorkitemHandlerType::LOOPS)
-                     ? deleteBlocksWithUnreachable(F)
-                     : convertUnreachablesToReturns(F);
+  bool Changed = false;
+  if (WIH == WorkitemHandlerType::LOOPS) {
+    Changed = deleteBlocksWithUnreachable(F);
+  } else {
+    SmallVector<Instruction *, 8> Unreachables;
+    SmallVector<BasicBlock *, 8> DeletableBBs;
+    for (BasicBlock &BB : F) {
+      assert(BB.getTerminator() != nullptr);
+      if (isa<UnreachableInst>(BB.getTerminator())) {
+        if (BB.hasNPredecessors(0))
+          DeletableBBs.push_back(&BB);
+        else
+          Unreachables.push_back(BB.getTerminator());
+      }
+    }
+    for (auto *BB : DeletableBBs)
+      BB->eraseFromParent();
+    Changed = convertUnreachablesToReturns(F, Unreachables);
+  }
 
 #ifdef DEBUG_CONVERT_UNREACHABLE
   for (BasicBlock &BB : F) {

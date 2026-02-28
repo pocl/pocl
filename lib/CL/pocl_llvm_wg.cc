@@ -480,6 +480,7 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
   } else {
     addPass(Passes, "flatten-globals", PassType::Module);
     addPass(Passes, "flatten-barrier-subs", PassType::Module);
+    addPass(Passes, "flatten-termination-subs", PassType::Module);
   }
 
   addPass(Passes, "always-inline", PassType::Module);
@@ -487,12 +488,23 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
   // both of these must be done AFTER inlining, see note above
   addPass(Passes, "automatic-locals", PassType::Module);
 
+  // Convert __pocl_exit calls to flag-store + return on CPU.
+  // Must run after inlining and before UTR.
+  if (!Dev->spmd)
+    addPass(Passes, "pocl-exit");
+
+  // Infer noreturn/nounwind/willreturn from function bodies so UTR's
+  // side-effect analysis (isGuaranteedToTransferExecutionToSuccessor)
+  // is accurate for noinline functions.
+  //
   // Handle UnreachableInsts by converting them to returns or just deleting
   // them. Julia expects graceful handling of UIs with printouts before them. We
   // should convert the UIs in the input here otherwise optimizers will remove
   // them.
-  if (!Dev->spmd)
+  if (!Dev->spmd) {
+    addPass(Passes, "function-attrs", PassType::CGSCC);
     addPass(Passes, "unreachables-to-returns");
+  }
 
   // must come AFTER flatten-globals & always-inline
   addPass(Passes, "optimize-wi-gvars");
@@ -519,8 +531,10 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
 
     // ...we have to call UTR again here because some optimizations in LLVM
     // might generate UIs.
-    if (!Dev->spmd)
+    if (!Dev->spmd) {
+      addPass(Passes, "function-attrs", PassType::CGSCC);
       addPass(Passes, "unreachables-to-returns");
+    }
 
     // required for OLD PM
     addAnalysis(Passes, "workitem-handler-chooser");
