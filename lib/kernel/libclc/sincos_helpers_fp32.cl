@@ -378,3 +378,23 @@ _CL_OVERLOADABLE vtype __pocl_sinf_piby4(vtype x, vtype y) {
 
     return ret;
 }
+
+_CL_OVERLOADABLE vtype
+__pocl_tanf_piby4 (vtype x, vtype regn)
+{
+  // Core Remez [1,2] approximation to tan(x) on the interval [0,pi/4].
+  vtype r = x * x;
+
+  vtype a
+    = pocl_fma (r, -0.0172032480471481694693109f, 0.385296071263995406715129f);
+
+  vtype b = pocl_fma (
+    r,
+    pocl_fma (r, 0.01844239256901656082986661f, -0.51396505478854532132342f),
+    1.15588821434688393452299f);
+
+  vtype t = pocl_fma (x * r, MATH_DIVIDE (a, b), x);
+  vtype tr = -MATH_RECIP (t);
+
+  return ((as_itype (regn) & (itype)1) != (itype)0) ? tr : t;
+}
