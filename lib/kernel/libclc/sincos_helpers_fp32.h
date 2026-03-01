@@ -27,3 +27,4 @@ _CL_OVERLOADABLE vtype __pocl_sinf_piby4(vtype x, vtype y);
 _CL_OVERLOADABLE vtype __pocl_cosf_piby4(vtype x, vtype y);
 _CL_OVERLOADABLE itype __pocl_argReductionS(vtype *r, vtype *rr, vtype x);
 _CL_OVERLOADABLE v2type __pocl_sincosf_piby4(vtype x);
+_CL_OVERLOADABLE vtype __pocl_tanf_piby4 (vtype x, vtype regn);
