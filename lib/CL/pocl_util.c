@@ -292,7 +292,7 @@ pocl_create_event (cl_event *event,
 
   /* user events have a NULL command queue, don't retain it */
   if (command_queue)
-    POname (clRetainCommandQueue) (command_queue);
+    PoCLRetainCommandQueue (command_queue);
   else
     POname (clRetainContext) (context);
 
@@ -1306,6 +1306,7 @@ pocl_setup_context (cl_context context)
         props |= CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
       context->default_queues[i]
         = POname (clCreateCommandQueue) (context, dev, props, &err);
+      context->default_queues[i]->user_refcount = 0;
 
       if (err == CL_DEVICE_NOT_AVAILABLE)
         return CL_DEVICE_NOT_AVAILABLE;

@@ -24,6 +24,7 @@
 #include "pocl_cl.h"
 #include "pocl_mem_management.h"
 #include "pocl_util.h"
+#include "pocl_shared.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
@@ -61,7 +62,7 @@ POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
         event->queue->device->ops->free_event_data(event);
 
       if (event->queue)
-        POname(clReleaseCommandQueue) (event->queue);
+        PoCLReleaseCommandQueue (event->queue);
       else
         POname(clReleaseContext) (event->context);
 

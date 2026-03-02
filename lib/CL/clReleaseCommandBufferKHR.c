@@ -24,6 +24,7 @@
 #include "pocl_cl.h"
 #include "pocl_mem_management.h"
 #include "pocl_util.h"
+#include "pocl_shared.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
@@ -71,7 +72,7 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
 
               freed_devs[num_freed++] = q->device;
             }
-          POname (clReleaseCommandQueue) (q);
+          PoCLReleaseCommandQueue (q);
         }
 
       pocl_buffer_migration_info *mi, *tmp;

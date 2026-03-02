@@ -26,6 +26,7 @@
 #include "devices/devices.h"
 #include "pocl_runtime_config.h"
 #include "pocl_util.h"
+#include "pocl_shared.h"
 
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
@@ -81,7 +82,7 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
         {
           cl_device_id dev = context->devices[i];
           if (context->default_queues && context->default_queues[i])
-            POname (clReleaseCommandQueue) (context->default_queues[i]);
+            PoCLReleaseCommandQueue (context->default_queues[i]);
           if (dev->ops->free_context)
             dev->ops->free_context (dev, context);
         }

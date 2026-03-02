@@ -24,6 +24,7 @@
 #include "pocl_cl.h"
 #include "pocl_debug.h"
 #include "pocl_util.h"
+#include "pocl_shared.h"
 
 #include <CL/cl_ext.h>
 
@@ -216,7 +217,7 @@ POname (clCreateCommandBufferKHR) (
 
   for (unsigned i = 0; i < num_queues; ++i)
     {
-      POname (clRetainCommandQueue) (queues[i]);
+      PoCLRetainCommandQueue (queues[i]);
       if (queues[i]->device != queues[0]->device)
         cmdbuf->is_multi_device = 1;
     }

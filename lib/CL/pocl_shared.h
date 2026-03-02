@@ -39,6 +39,9 @@ extern "C" {
 
 void pocl_check_uninit_devices ();
 
+cl_int PoCLReleaseCommandQueue (cl_command_queue command_queue);
+cl_int PoCLRetainCommandQueue (cl_command_queue command_queue);
+
 cl_program create_program_skeleton (cl_context context, cl_uint num_devices,
                                     const cl_device_id *device_list,
                                     const size_t *lengths,

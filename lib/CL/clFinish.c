@@ -55,7 +55,7 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
   POCL_LOCK_OBJ (command_queue);
   --command_queue->notification_waiting_threads;
   POCL_UNLOCK_OBJ (command_queue);
-  POname (clReleaseCommandQueue) (command_queue);
+  PoCLReleaseCommandQueue (command_queue);
 
   return CL_SUCCESS;
 }

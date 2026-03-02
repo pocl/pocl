@@ -171,7 +171,7 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
 
   if (properties)
     {
-      assert (i < 10);
+      assert (i < POCL_MAX_QUEUE_PROPS);
       cq_ret->properties = queue_props;
       cq_ret->priority = priority;
       cq_ret->throttle = throttle;
