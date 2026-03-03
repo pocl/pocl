@@ -118,6 +118,7 @@
 
 static uint64_t last_message_id = 1992;
 static uint64_t last_peer_id = 42;
+static const char *tracefile_path = NULL;
 
 #ifndef POLLRDHUP
 #define POLLRDHUP 0
@@ -690,7 +691,7 @@ finish_running_cmd (remote_server_data_t *server,
                     network_command_status_t status)
 {
   pocl_remote_timing_t *profile = NULL;
-  if (pocl_get_bool_option ("POCL_REMOTE_NETWORK_TRACE", 0))
+  if (tracefile_path != NULL)
     {
       profile = calloc (1, sizeof (pocl_remote_timing_t));
       profile->kind = running_cmd->request.message_type;
@@ -1819,7 +1820,6 @@ request_to_str (enum RequestMessageType type)
     }
 }
 
-static int remote_atexit_set = 0;
 static void
 dump_netcmd_trace_at_exit ()
 {
@@ -1829,7 +1829,7 @@ dump_netcmd_trace_at_exit ()
   const uint8_t SERVER_END = 4;
   const uint8_t EVENT_ID = 6;
   remote_server_data_t *rsd;
-  FILE *f = fopen ("pocl-remote.trace", "wb");
+  FILE *f = fopen (tracefile_path, "wb");
   fprintf (f, "POCLRTRC");
   for (int i = 0; i < MessageType_Shutdown; ++i)
     {
@@ -1918,10 +1918,14 @@ find_or_create_server (const char *address_with_port, unsigned port,
                        const char *const parameters)
 {
   size_t l = strlen (address_with_port);
-  if (pocl_get_bool_option ("POCL_REMOTE_NETWORK_TRACE", 0)
-      && !remote_atexit_set)
+  const char *new_tracefile
+    = pocl_get_string_option ("POCL_REMOTE_NETWORK_TRACE", NULL);
+  if (new_tracefile != NULL && strlen (new_tracefile) == 0)
+    new_tracefile = NULL;
+
+  if (new_tracefile != NULL
+      && POCL_ATOMIC_CAS (&tracefile_path, NULL, new_tracefile) == NULL)
     {
-      remote_atexit_set = 1;
       atexit (dump_netcmd_trace_at_exit);
     }
 
