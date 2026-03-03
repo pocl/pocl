@@ -226,7 +226,6 @@ set_property(TEST
   APPEND PROPERTY LABELS "level0")
 
 set_property(TEST
-  "workgroup/range_md_large_grid_cbs"
   "workgroup/range_md_small_grid_cbs"
   "workgroup/unbarriered_for_loops_cbs"
   "workgroup/workgroup_sizes_work_items_get_wrong_ids_cbs"

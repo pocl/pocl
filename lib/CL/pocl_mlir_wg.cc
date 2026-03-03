@@ -90,8 +90,9 @@ static void generateLlvmFunctionNowrite(mlir::OwningOpRef<mlir::ModuleOp> &Mod,
   }
   llvm::TargetOptions Opt;
   std::optional<llvm::Reloc::Model> RM = std::nullopt;
-  llvm::TargetMachine *TargetMachine = Target->createTargetMachine(
-      llvm::Triple(TargetTriple), "generic", "", Opt, RM);
+  std::unique_ptr<llvm::TargetMachine> TargetMachine(
+      Target->createTargetMachine(llvm::Triple(TargetTriple), "generic", "",
+                                  Opt, RM));
   std::string DataLayout =
       TargetMachine->createDataLayout().getStringRepresentation();
 
