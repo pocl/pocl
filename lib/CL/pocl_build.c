@@ -71,6 +71,7 @@ static const char cl_parameters[] =
   "-cl-std=CL2.1 "
   "-cl-std=CL2.2 "
   "-cl-std=CL3.0 "
+  "-cl-std=CL3.1 "
   "-cl-kernel-arg-info "
   "-cl-strict-aliasing "
   "-cl-denorms-are-zero "

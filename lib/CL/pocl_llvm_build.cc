@@ -421,8 +421,6 @@ int pocl_llvm_build_program(cl_program program,
     fp_contract = "fast";
   }
 
-  ss << user_options << " ";
-
   if (device->endian_little)
     ss << "-D__ENDIAN_LITTLE__=1 ";
 
@@ -448,19 +446,45 @@ int pocl_llvm_build_program(cl_program program,
 
   ss << "-D__OPENCL_VERSION__=" << device->version_as_int << " ";
 
-  if (user_options.find("-cl-std=") == std::string::npos)
-    ss << "-cl-std=" << device->opencl_c_version_as_opt << " ";
+  int UserClStd = 0;
+  size_t ClStdPos = user_options.find("-cl-std=CL");
 
-  std::string temp(ss.str());
-  size_t pos = temp.find("-cl-std=CL");
-  pos += 10;
-  int cl_std_major = temp.c_str()[pos] - '0';
-  int cl_std_minor = temp.c_str()[pos+2] - '0';
-  int cl_std_i = cl_std_major * 100 + cl_std_minor * 10;
-  ss << "-D__OPENCL_C_VERSION__=" << cl_std_i << " ";
+  if (ClStdPos == std::string::npos) {
+    // use device defaults
+#if LLVM_MAJOR < 23
+    // limit -cl-std to CL3.0 when using LLVM < 23
+    if (device->version_as_int > 300) {
+      ss << "-cl-std=CL3.0 ";
+      UserClStd = 300;
+    } else
+#endif
+    {
+      ss << "-cl-std=" << device->opencl_c_version_as_opt << " ";
+      UserClStd = device->version_as_int;
+    }
+    // doesn't use UserClStd here; we're passing 310 here even if -cl-std=CL3.0,
+    // because some of the 3.1 features in include/CL headers are behind this macro
+    ss << "-U__OPENCL_C_VERSION__ -D__OPENCL_C_VERSION__=" << device->version_as_int << " ";
+  } else {
+    // use what the user options requested
+    ClStdPos += 10; // skip until "=CL"
+    int ClStdMajor = user_options.c_str()[ClStdPos] - '0';
+    int ClStdMinor = user_options.c_str()[ClStdPos+2] - '0';
+    UserClStd = ClStdMajor * 100 + ClStdMinor * 10;
+    ss << "-U__OPENCL_C_VERSION__ -D__OPENCL_C_VERSION__=" << UserClStd << " ";
+#if LLVM_MAJOR < 23
+    // limit -cl-std to CL3.0 when using LLVM < 23
+    if (UserClStd > 300) {
+        user_options[ClStdPos+2] = '0';
+        UserClStd = 300;
+    }
+#endif
+  }
+
+  ss << user_options << " ";
 
   std::string exts = device->extensions;
-  if (cl_std_major >= 3 && device->features != nullptr) {
+  if (UserClStd >= 300 && device->features != nullptr) {
     exts += ' ';
     exts += device->features;
   }
@@ -609,7 +633,7 @@ int pocl_llvm_build_program(cl_program program,
   la->CharIsSigned = true;
 
   // the per-file types don't seem to override this
-  la->OpenCLVersion = cl_std_i;
+  la->OpenCLVersion = UserClStd;
   la->FakeAddressSpaceMap = false;
   la->Blocks = true; //-fblocks
   la->MathErrno = false; // -fno-math-errno
