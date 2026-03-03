@@ -384,7 +384,7 @@ connection_writev_full (remote_connection_t *connection,
 
   struct iovec *ary = alloca (sizeof (struct iovec) * num);
   size_t total = 0;
-  int res = 0;
+  size_t written = 0;
   unsigned i;
 
   for (i = 0; i < num; ++i)
@@ -394,32 +394,17 @@ connection_writev_full (remote_connection_t *connection,
       total += sizes[i];
     }
 
-  /* TODO there has to be a better way to handle this */
-  if (total >= THRESHOLD)
+  for (i = 0; i < num; ++i)
     {
-
-      for (i = 0; i < num; ++i)
-        {
-          res = connection_write_full (connection, ary[i].iov_base,
-                                       ary[i].iov_len, sinfo);
-          if (res < 0)
-            break;
-        }
-    }
-  else
-    {
-      POCL_ATOMIC_ADD (sinfo->tx_bytes_submitted, total);
-      ssize_t written = writev (connection->fd, ary, num);
-      if (written < 0)
-        res = -1;
-      else
-        {
-          POCL_ATOMIC_ADD (sinfo->tx_bytes_confirmed, total);
-          assert ((size_t)written == total);
-        }
+      ssize_t res = connection_write_full (connection, ary[i].iov_base,
+                                           ary[i].iov_len, sinfo);
+      if (res < 0)
+        return res;
+      written += ary[i].iov_len;
     }
 
-  return res;
+  assert (written == total);
+  return written;
 }
 
 static cl_int
@@ -2078,6 +2063,47 @@ pocl_network_init_device (cl_device_id device, remote_device_data_t *ddata,
   return 0;
 }
 
+static size_t
+unpack_cl_name_version_list (const cl_name_version **dst, char *packed)
+{
+  size_t count = *packed ? 1 : 0;
+  char *end = packed;
+
+  for (char *p = packed; *p; ++p, ++end)
+    {
+      if (*p == '\n')
+        {
+          count++;
+          *p = 0;
+        }
+    }
+
+  cl_name_version *list = calloc (count, sizeof (cl_name_version));
+  char *p = packed;
+  size_t i = 0;
+  for (; p < end && i < count; ++p)
+    {
+      char *e;
+      list[i].version = strtoul (p, &e, 10);
+      if (list[i].version != 0)
+        {
+          strncpy (list[i].name, e, CL_NAME_VERSION_MAX_NAME_SIZE);
+          ++i;
+          while (*p)
+            ++p;
+        }
+      else
+        {
+          free (list);
+          return 0;
+        }
+    }
+
+  if (dst)
+    *dst = list;
+  return count;
+}
+
 #define D(x) device->x = devinfo->x
 
 /**
@@ -2181,6 +2207,14 @@ pocl_network_fetch_devinfo (cl_device_id device,
   device->vendor = GET_STRING (devinfo->vendor);
   device->extensions = GET_STRING (devinfo->extensions);
   pocl_setup_extensions_with_version (device);
+  char *temp = GET_STRING (devinfo->opencl_c_all_versions);
+  device->num_opencl_c_with_version
+    = unpack_cl_name_version_list (&device->opencl_c_with_version, temp);
+  POCL_MEM_FREE (temp);
+  temp = GET_STRING (devinfo->opencl_c_features);
+  device->num_opencl_features_with_version = unpack_cl_name_version_list (
+    &device->opencl_features_with_version, temp);
+  POCL_MEM_FREE (temp);
   device->supported_spir_v_versions
       = GET_STRING (devinfo->supported_spir_v_versions);
   pocl_setup_ils_with_version (device);
@@ -2479,8 +2513,6 @@ pocl_network_free_buffer (remote_device_data_t *ddata, uint64_t mem_id,
   (str)[len] = 0;                                                             \
   buf += len;                                                                 \
   assert ((size_t)(buf - buffer) <= (size_t)nc.reply.data_size)
-
-#define MAX_BUILD_SIZE (16 << 20)
 
 cl_int
 pocl_network_setup_metadata (char *buffer, size_t total_size,

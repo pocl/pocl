@@ -30,6 +30,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <numeric>
 #include <sstream>
 #include <unistd.h>
 #include <variant>
@@ -944,6 +945,16 @@ static void appendImageFormats(DeviceInfo_t &devi, unsigned i,
 }
 #undef DI
 
+static std::string
+packCLVersionNameList(const std::vector<cl_name_version> &values) {
+  std::string acc;
+  for (size_t i = 0; i < values.size(); ++i) {
+    acc.append((i ? "\n" : "") + std::to_string(values[i].version) + " " +
+               std::string(values[i].name));
+  }
+  return acc;
+}
+
 /**
  * Returns the basic device infos that can be asked via clGetDeviceInfo.
  *
@@ -1078,6 +1089,14 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
   }
 
   PUSH_STRING(i.extensions, exts);
+
+  std::string CLCVersionString = packCLVersionNameList(
+      clientDevice.getInfo<CL_DEVICE_OPENCL_C_ALL_VERSIONS>());
+  PUSH_STRING(i.opencl_c_all_versions, CLCVersionString);
+
+  std::string CLCFeatureString = packCLVersionNameList(
+      clientDevice.getInfo<CL_DEVICE_OPENCL_C_FEATURES>());
+  PUSH_STRING(i.opencl_c_features, CLCFeatureString);
 
   i.vendor_id = clientDevice.getInfo<CL_DEVICE_VENDOR_ID>();
   i.address_bits = clientDevice.getInfo<CL_DEVICE_ADDRESS_BITS>();
@@ -1519,21 +1538,18 @@ int SharedCLContext::buildOrLinkProgram(
   if (LinkOnly) {
     // Collect the previously built programs from the server-side cache and link
     // them.
-    std::vector<cl_program> InputPrograms;
+    std::vector<cl::Program> InputPrograms;
     for (auto &E : InputBinaries) {
       uint32_t ClientProgramID = E.first;
       if (ProgramIDmap.find(ClientProgramID) == ProgramIDmap.end()) {
         POCL_MSG_ERR("Unable to find program with id %u in the ID map.",
                      ClientProgramID);
       }
-      InputPrograms.push_back(ProgramIDmap[ClientProgramID]->uptr->get());
+      InputPrograms.push_back(*ProgramIDmap[ClientProgramID]->uptr.get());
     }
 
-    cl_program LinkedProgram = ::clLinkProgram(
-        ContextWithAllDevices.get(), 0, nullptr, opts.c_str(),
-        static_cast<cl_uint>(InputPrograms.size()),
-        reinterpret_cast<const cl_program *>(InputPrograms.data()), nullptr,
-        nullptr, &err);
+    cl::Program LinkedProgram =
+        cl::linkProgram(InputPrograms, opts, nullptr, nullptr, &err);
 
     if (err != CL_SUCCESS) {
       POCL_MSG_ERR("clLinkProgram() failed\n");
@@ -1738,20 +1754,7 @@ int SharedCLContext::buildOrLinkProgram(
       err = CompileOnly ? p->compile(opts.c_str()) : p->build(opts.c_str());
     } else {
       if (CompileOnly) {
-        // cl2.hpp doesn't have device-limiting versions of compile()
-        // reported in https://github.com/KhronosGroup/OpenCL-CLHPP/issues/285
-
-        std::size_t NumDevices = program->devices.size();
-        std::vector<cl_device_id> DeviceIDs(NumDevices);
-
-        for (std::size_t DeviceIndex = 0; DeviceIndex < NumDevices;
-             ++DeviceIndex) {
-          DeviceIDs[DeviceIndex] = (program->devices[DeviceIndex])();
-        }
-
-        err = ::clCompileProgram(p->get(), NumDevices, DeviceIDs.data(),
-                                 opts.c_str(), 0, nullptr, nullptr, nullptr,
-                                 nullptr);
+        err = p->compile(opts, program->devices, {}, {});
       } else {
         err = p->build(program->devices, opts.c_str());
       }
@@ -3276,17 +3279,14 @@ int SharedCLContext::runKernel(
   {
     std::unique_lock<std::mutex> Lock(BufferMapMutex);
     std::vector<void *> SVMPtrs;
-#if 0
-    // Do we need to pass the SVM regions here? It will kill the perf.
-    // as the regions are large.
-    // TODO: We should pass the indirect SVM
-    // pointers from the client-side, but they are not passed either.
-    if (SVMRegions.size() > 0)
-      SVMPtrs.push_back(SVMPool);
-#endif
-    for (auto &S : SVMBackingStoreMap)
-      SVMPtrs.push_back(S.second);
-    k->setSVMPointers(SVMPtrs);
+    // Some drivers don't like it when applications attempt to set SVM pointers
+    // without setting up SVM regions, even when just passing in an empty list,
+    // so let's avoid touching that API when it's not actually being used.
+    if (!SVMBackingStoreMap.empty()) {
+      for (auto &S : SVMBackingStoreMap)
+        SVMPtrs.push_back(S.second);
+      k->setSVMPointers(SVMPtrs);
+    }
   }
   {
     err = cq->enqueueNDRangeKernel(
