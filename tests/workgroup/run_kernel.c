@@ -171,6 +171,8 @@ main (int argc, char **argv)
   CHECK_CL_ERROR2 (err);
 
 ERROR:
+  if (inbuf)
+    CHECK_CL_ERROR (clReleaseMemObject (inbuf));
   if (outbuf)
     CHECK_CL_ERROR (clReleaseMemObject (outbuf));
   if (kernel)
