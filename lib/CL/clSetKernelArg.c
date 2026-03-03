@@ -349,12 +349,6 @@ POname(clSetKernelArg)(cl_kernel kernel,
       ((arg_value != NULL) && is_local), CL_INVALID_ARG_VALUE,
       "arg_value != NULL and arg %u is in local address space\n", arg_index);
 
-  /* Trigger CL_INVALID_ARG_SIZE if arg_size is zero
-   * and the argument is declared with the __local qualifier. */
-  POCL_RETURN_ERROR_ON (((arg_size == 0) && is_local), CL_INVALID_ARG_SIZE,
-                        "arg_size == 0 and arg %u is in local address space\n",
-                        arg_index);
-
   if (pi->type != POCL_ARG_TYPE_NONE)
     {
       POCL_RETURN_ERROR_ON (

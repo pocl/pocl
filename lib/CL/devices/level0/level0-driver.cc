@@ -1619,10 +1619,8 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
   ze_result_t Res = ZE_RESULT_SUCCESS;
   for (i = 0; i < Kernel->meta->num_args; ++i) {
     if (ARG_IS_LOCAL(Kernel->meta->arg_info[i])) {
-      assert(PoclArg[i].size > 0);
       Res = zeKernelSetArgumentValue(KernelH, i, PoclArg[i].size, NULL);
       LEVEL0_CHECK_ABORT(Res);
-
     } else if (Kernel->meta->arg_info[i].type == POCL_ARG_TYPE_POINTER) {
       assert(PoclArg[i].size == sizeof(void *));
 

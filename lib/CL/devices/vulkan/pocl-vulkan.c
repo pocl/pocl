@@ -3789,6 +3789,7 @@ pocl_vulkan_setup_kernel_arguments (
            * specialization constant. The specialization ID is reported in the
            * descriptor map file, generated via the -descriptormap option.
            */
+          /* TODO: handle zero local-size arguments */
           assert (pa[i].size > 0);
 
           assert (kdata->locals[locals].ord == i);
