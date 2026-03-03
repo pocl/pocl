@@ -28,14 +28,17 @@
     CL_TARGET_OPENCL_VERSION != 200 && \
     CL_TARGET_OPENCL_VERSION != 210 && \
     CL_TARGET_OPENCL_VERSION != 220 && \
-    CL_TARGET_OPENCL_VERSION != 300
-#pragma message("cl_version: CL_TARGET_OPENCL_VERSION is not a valid value (100, 110, 120, 200, 210, 220, 300). Defaulting to 300 (OpenCL 3.0)")
+    CL_TARGET_OPENCL_VERSION != 300 && \
+    CL_TARGET_OPENCL_VERSION != 310
+#pragma message("cl_version: CL_TARGET_OPENCL_VERSION is not a valid value (100, 110, 120, 200, 210, 220, 300, 310). Defaulting to 300 (OpenCL 3.0)")
 #undef CL_TARGET_OPENCL_VERSION
 #define CL_TARGET_OPENCL_VERSION 300
 #endif
 
-
 /* OpenCL Version */
+#if CL_TARGET_OPENCL_VERSION >= 310 && !defined(CL_VERSION_3_1)
+#define CL_VERSION_3_1  1
+#endif
 #if CL_TARGET_OPENCL_VERSION >= 300 && !defined(CL_VERSION_3_0)
 #define CL_VERSION_3_0  1
 #endif

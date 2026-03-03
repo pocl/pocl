@@ -454,8 +454,9 @@
     CL_HPP_TARGET_OPENCL_VERSION != 200 && \
     CL_HPP_TARGET_OPENCL_VERSION != 210 && \
     CL_HPP_TARGET_OPENCL_VERSION != 220 && \
-    CL_HPP_TARGET_OPENCL_VERSION != 300
-# pragma message("opencl.hpp: CL_HPP_TARGET_OPENCL_VERSION is not a valid value (100, 110, 120, 200, 210, 220 or 300). It will be set to 300 (OpenCL 3.0).")
+    CL_HPP_TARGET_OPENCL_VERSION != 300 && \
+    CL_HPP_TARGET_OPENCL_VERSION != 310
+# pragma message("opencl.hpp: CL_HPP_TARGET_OPENCL_VERSION is not a valid value (100, 110, 120, 200, 210, 220, 300 or 310). It will be set to 300 (OpenCL 3.0).")
 # undef CL_HPP_TARGET_OPENCL_VERSION
 # define CL_HPP_TARGET_OPENCL_VERSION 300
 #endif

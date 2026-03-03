@@ -329,6 +329,13 @@ typedef struct _cl_icd_dispatch {
   void *clSetContextDestructorCallback;
 #endif
 
+  /* OpenCL 3.1 */
+#ifdef CL_VERSION_3_1
+  clGetKernelSuggestedLocalWorkSize_t *clGetKernelSuggestedLocalWorkSize;
+#else
+  void *clGetKernelSuggestedLocalWorkSize;
+#endif
+
 } cl_icd_dispatch;
 
 #ifdef __cplusplus

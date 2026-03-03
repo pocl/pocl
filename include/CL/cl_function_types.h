@@ -1181,4 +1181,19 @@ clCreateImageWithProperties_fn CL_API_SUFFIX__VERSION_3_0;
 
 #endif /* CL_VERSION_3_0 */
 
+#ifdef CL_VERSION_3_1
+
+typedef cl_int CL_API_CALL clGetKernelSuggestedLocalWorkSize_t(
+    cl_command_queue command_queue,
+    cl_kernel kernel,
+    cl_uint work_dim,
+    const size_t* global_work_offset,
+    const size_t* global_work_size,
+    size_t* suggested_local_work_size) CL_API_SUFFIX__VERSION_3_1;
+
+typedef clGetKernelSuggestedLocalWorkSize_t *
+clGetKernelSuggestedLocalWorkSize_fn CL_API_SUFFIX__VERSION_3_1;
+
+#endif /* CL_VERSION_3_1 */
+
 #endif /* OPENCL_CL_FUNCTION_TYPES_H_ */
