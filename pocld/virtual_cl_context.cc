@@ -116,6 +116,11 @@ class VirtualCLContext : public VirtualContextBase {
   std::mutex MainMutex;
   std::deque<Request *> MainQueue;
 
+  std::thread QueuedThread;
+  std::condition_variable QueuedCond;
+  std::mutex QueuedMutex;
+  std::deque<Request *> QueuedQueue;
+
 #ifdef ENABLE_RDMA
   std::shared_ptr<RdmaConnection> client_rdma;
 #ifdef RDMA_USE_SVM
@@ -150,6 +155,9 @@ public:
     MainCond.notify_one();
     if (MainThread.joinable())
       MainThread.join();
+    QueuedCond.notify_one();
+    if (QueuedThread.joinable())
+      QueuedThread.join();
     POCL_MSG_PRINT_GENERAL("VCTX: DEST\n");
 
     // Wake up IO threads in case they were waiting for a connection
@@ -193,6 +201,8 @@ public:
   virtual void unknownRequest(Request *req) override;
 
   virtual int run() override;
+
+  virtual int queuedRun() override;
 
   virtual SharedContextBase *getDefaultContext() override {
     return SharedContextList.empty() ? nullptr : SharedContextList[0];
@@ -288,6 +298,7 @@ size_t VirtualCLContext::init(PoclDaemon *d, ClientConnections_t conns,
                                           &ExitSignal, netstat));
   initPlatforms();
   MainThread = std::move(std::thread(&VirtualCLContext::run, this));
+  QueuedThread = std::move(std::thread(&VirtualCLContext::queuedRun, this));
 
   POCL_MSG_PRINT_INFO("Created shared contexts for %" PRIuS
                       " platforms / %" PRIuS " devices\n",
@@ -356,7 +367,10 @@ void VirtualCLContext::queuedPush(Request *req) {
   POCL_MSG_PRINT_GENERAL(
       "VCTX QUEUED PUSH (msg: %" PRIu64 ", event: %" PRIu64 ")\n",
       uint64_t(req->Body.msg_id), uint64_t(req->Body.event_id));
-  SharedContextList[req->Body.pid]->queuedPush(req);
+
+  std::unique_lock<std::mutex> Lock(QueuedMutex);
+  QueuedQueue.push_back(req);
+  QueuedCond.notify_one();
 }
 
 void VirtualCLContext::notifyEvent(uint64_t event_id, cl_int status) {
@@ -428,6 +442,32 @@ int VirtualCLContext::checkPlatformDeviceValidity(Request *req) {
 
 /****************************************************************************************************************/
 /****************************************************************************************************************/
+
+int VirtualCLContext::queuedRun() {
+  Reply *reply;
+  while (1) {
+
+    if (ExitSignal.exit_requested()) {
+      auto e = ExitSignal.status();
+      POCL_MSG_PRINT_GENERAL("VCTX: exit req, status: %d\n", e);
+      return e;
+    }
+
+    std::unique_lock<std::mutex> Lock(QueuedMutex);
+    if (QueuedQueue.size() > 0) {
+      Request *R = QueuedQueue.front();
+      QueuedQueue.pop_front();
+      Lock.unlock();
+
+      SharedContextList[R->Body.pid]->queuedPush(R);
+    } else {
+      auto now = std::chrono::system_clock::now();
+      std::chrono::duration<unsigned long> d(3);
+      now += d;
+      QueuedCond.wait_until(Lock, now);
+    }
+  }
+}
 
 int VirtualCLContext::run() {
   Reply *reply;
