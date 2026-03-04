@@ -61,6 +61,8 @@ public:
 
   virtual int run() = 0;
 
+  virtual int queuedRun() = 0;
+
   virtual SharedContextBase *getDefaultContext() = 0;
 };
 
