@@ -1106,7 +1106,7 @@ endif()
 
 # CONFORMANCE + VECTORIZE_BUILTINS is disabled b/c we cannot guarantee ULP of the vectorized functions
 set(ENABLE_HOST_CPU_VECTORIZE_BUILTINS OFF)
-if(ENABLE_LLVM AND ENABLE_HOST_CPU_DEVICES AND (NOT ENABLE_CONFORMANCE))
+if(ENABLE_LLVM AND ENABLE_HOST_CPU_DEVICES AND (NOT ENABLE_CONFORMANCE) AND (LLVM_VERSION_MAJOR GREATER_EQUAL 19))
   # these are experimental options and may change in future
   option(ENABLE_HOST_CPU_VECTORIZE_SLEEF "vectorize builtins with SLEEF (ARM only)" ${HAVE_SLEEF})
   option(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC "vectorize builtins with LIBMVEC" ${HAVE_LIBMVEC})
