@@ -871,12 +871,12 @@ static void convertPoclTrap(llvm::Module *Program, cl_device_id ClDev) {
     return;
 
   // Ensure proper attributes regardless of what the frontend provided.
-  // These are needed by optimization passes that run before ConvertPoclExit.
+  // These are needed by optimization passes that run before UTR.
   PoclTrapFn->addFnAttr(Attribute::NoReturn);
   PoclTrapFn->addFnAttr(Attribute::Cold);
   PoclTrapFn->addFnAttr(Attribute::NoUnwind);
 
-  // CPU: leave for the ConvertPoclExit pass (flag-store + return)
+  // CPU: handled by convertPoclExitCalls() in UTR (flag-store + return)
   if (!ClDev->spmd)
     return;
 
@@ -908,12 +908,12 @@ static void convertPoclExit(llvm::Module *Program, cl_device_id ClDev) {
     return;
 
   // Ensure proper attributes regardless of what the frontend provided.
-  // These are needed by optimization passes that run before ConvertPoclExit.
+  // These are needed by optimization passes that run before UTR.
   ExitFn->addFnAttr(Attribute::NoReturn);
   ExitFn->addFnAttr(Attribute::Cold);
   ExitFn->addFnAttr(Attribute::NoUnwind);
 
-  // CPU: leave for the ConvertPoclExit pass (runs before UTR)
+  // CPU: handled by convertPoclExitCalls() in UTR
   if (!ClDev->spmd)
     return;
 

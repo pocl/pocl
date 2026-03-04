@@ -39,7 +39,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "AutomaticLocals.h"
 #include "BarrierTailReplication.h"
 #include "CanonicalizeBarriers.h"
-#include "ConvertPoclExit.h"
 #include "DebugHelpers.h"
 #include "Flatten.hh"
 #include "FlattenSubs.hh"
@@ -679,7 +678,6 @@ void registerPassBuilderPasses(llvm::PassBuilder &PB) {
   BarrierTailReplication::registerWithPB(PB);
   CanonicalizeBarriers::registerWithPB(PB);
   SanitizeUBofDivRem::registerWithPB(PB);
-  ConvertPoclExit::registerWithPB(PB);
   ConvertUnreachablesToReturns::registerWithPB(PB);
   FlattenAll::registerWithPB(PB);
   FlattenSubs::registerWithPB(PB);

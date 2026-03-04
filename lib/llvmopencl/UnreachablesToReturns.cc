@@ -89,6 +89,129 @@ using namespace llvm;
 
 using SmallBBSet = llvm::SmallPtrSet<BasicBlock *, 8>;
 
+// Erase instructions from CI to end of its basic block (inclusive).
+static void eraseFromCallToEndOfBlock(CallInst *CI) {
+  BasicBlock *BB = CI->getParent();
+  SmallVector<Instruction *, 8> ToErase;
+  bool Found = false;
+  for (Instruction &I : *BB) {
+    if (&I == CI)
+      Found = true;
+    if (Found)
+      ToErase.push_back(&I);
+  }
+  for (auto It = ToErase.rbegin(); It != ToErase.rend(); ++It)
+    (*It)->eraseFromParent();
+}
+
+// Collect calls to Fn within F.
+static void collectCalls(Function &F, Function *Fn,
+                         SmallVectorImpl<CallInst *> &Calls) {
+  if (!Fn)
+    return;
+  for (BasicBlock &BB : F)
+    for (Instruction &I : BB)
+      if (auto *CI = dyn_cast<CallInst>(&I))
+        if (CI->getCalledFunction() == Fn)
+          Calls.push_back(CI);
+}
+
+// Convert __pocl_exit/__pocl_trap calls on CPU backends.
+//
+// __pocl_exit: non-fatal, just returns (kernel stops executing).
+// __pocl_trap: stores __pocl_context_unreachable flag + returns (CL_FAILED).
+//
+// For non-kernel functions, we just erase the calls and let the function
+// return normally. The caller (kernel) has an unreachable after the call
+// which UTR will convert to flag-store + return.
+static bool convertPoclExitCalls(Function &F) {
+  Module *M = F.getParent();
+  Function *ExitFn = M->getFunction("__pocl_exit");
+  Function *TrapFn = M->getFunction("__pocl_trap");
+
+  SmallVector<CallInst *, 4> ExitCalls, TrapCalls;
+  collectCalls(F, ExitFn, ExitCalls);
+  collectCalls(F, TrapFn, TrapCalls);
+
+  if (ExitCalls.empty() && TrapCalls.empty())
+    return false;
+
+  bool IsKernel = isKernelToProcess(F);
+  IRBuilder<> Builder(M->getContext());
+
+  if (!IsKernel) {
+    for (auto *CI : ExitCalls)
+      CI->eraseFromParent();
+    for (auto *CI : TrapCalls)
+      CI->eraseFromParent();
+  } else {
+    // Find a single-instruction return block
+    BasicBlock *RetBB = nullptr;
+    for (BasicBlock &BB : F) {
+      assert(BB.getTerminator());
+      if ((BB.sizeWithoutDebug() == 1) &&
+          isa<ReturnInst>(BB.getTerminator())) {
+        RetBB = &BB;
+        break;
+      }
+    }
+
+    // __pocl_exit: non-fatal, just return
+    for (auto *CI : ExitCalls) {
+#if LLVM_MAJOR < 20
+      Builder.SetInsertPoint(CI);
+#else
+      Builder.SetInsertPoint(CI->getIterator());
+#endif
+      if (RetBB)
+        Builder.CreateBr(RetBB);
+      else
+        Builder.CreateRetVoid();
+      eraseFromCallToEndOfBlock(CI);
+    }
+
+    // __pocl_trap: fatal, store flag + return (reports CL_FAILED)
+    // Use a single shared flag-store block so that the WI loop has at most
+    // one store to the loop-invariant execution_failed address, which LLVM's
+    // loop vectorizer can handle.
+    if (!TrapCalls.empty()) {
+      Type *I32Ty = Type::getInt32Ty(M->getContext());
+      M->getOrInsertGlobal("__pocl_context_unreachable", I32Ty);
+      GlobalVariable *UnreachGV =
+          M->getNamedGlobal("__pocl_context_unreachable");
+      Constant *ConstOne = ConstantInt::get(I32Ty, 1);
+
+      // Create one shared block: store flag + branch to return.
+      BasicBlock *FlagStoreBB =
+          BasicBlock::Create(M->getContext(), "pocl_trap_flag", &F);
+      IRBuilder<> FlagBuilder(FlagStoreBB);
+      FlagBuilder.CreateStore(ConstOne, UnreachGV);
+      if (RetBB)
+        FlagBuilder.CreateBr(RetBB);
+      else
+        FlagBuilder.CreateRetVoid();
+
+      for (auto *CI : TrapCalls) {
+#if LLVM_MAJOR < 20
+        Builder.SetInsertPoint(CI);
+#else
+        Builder.SetInsertPoint(CI->getIterator());
+#endif
+        Builder.CreateBr(FlagStoreBB);
+        eraseFromCallToEndOfBlock(CI);
+      }
+    }
+  }
+
+  // Clean up if no more uses remain across the module
+  if (ExitFn && ExitFn->use_empty())
+    ExitFn->eraseFromParent();
+  if (TrapFn && TrapFn->use_empty())
+    TrapFn->eraseFromParent();
+
+  return true;
+}
+
 // Convert unreachable instructions to a store of a flag + branch to a shared
 // return block. Uses a single flag-store block so that the WI loop has at most
 // one store to the loop-invariant execution_failed address, which LLVM's loop
@@ -334,15 +457,17 @@ ConvertUnreachablesToReturns::run(llvm::Function &F,
   PreservedAnalyses PAChanged = PreservedAnalyses::none();
   PAChanged.preserve<WorkitemHandlerChooser>();
 
+  // Convert __pocl_exit/__pocl_trap calls before handling unreachables.
+  bool Changed = convertPoclExitCalls(F);
+
   if (!isKernelToProcess(F))
-    return PreservedAnalyses::all();
+    return Changed ? PAChanged : PreservedAnalyses::all();
 
   // LOOPS: remove the blocks with unreachable inst.
   // CBS: replace unreachable with flag store + return
   WorkitemHandlerType WIH = AM.getResult<WorkitemHandlerChooser>(F).WIH;
-  bool Changed = false;
   if (WIH == WorkitemHandlerType::LOOPS) {
-    Changed = deleteBlocksWithUnreachable(F);
+    Changed |= deleteBlocksWithUnreachable(F);
   } else {
     SmallVector<Instruction *, 8> Unreachables;
     SmallVector<BasicBlock *, 8> DeletableBBs;
@@ -357,7 +482,7 @@ ConvertUnreachablesToReturns::run(llvm::Function &F,
     }
     for (auto *BB : DeletableBBs)
       BB->eraseFromParent();
-    Changed = convertUnreachablesToReturns(F, Unreachables);
+    Changed |= convertUnreachablesToReturns(F, Unreachables);
   }
 
 #ifdef DEBUG_CONVERT_UNREACHABLE

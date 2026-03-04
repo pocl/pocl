@@ -487,11 +487,6 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
   // both of these must be done AFTER inlining, see note above
   addPass(Passes, "automatic-locals", PassType::Module);
 
-  // Convert __pocl_exit calls to flag-store + return on CPU.
-  // Must run after inlining and before UTR.
-  if (!Dev->spmd)
-    addPass(Passes, "pocl-exit");
-
   // Infer noreturn/nounwind/willreturn from function bodies so UTR's
   // side-effect analysis (isGuaranteedToTransferExecutionToSuccessor)
   // is accurate for noinline functions.
