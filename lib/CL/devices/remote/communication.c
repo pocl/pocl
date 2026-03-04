@@ -2565,6 +2565,8 @@ pocl_network_fetch_devinfo (cl_device_id device,
   device->max_work_item_sizes[1] = devinfo->max_work_item_size_y;
   device->max_work_item_sizes[2] = devinfo->max_work_item_size_z;
 
+  D (max_num_sub_groups);
+
   D (native_vector_width_char);
   D (native_vector_width_short);
   D (native_vector_width_int);
@@ -2582,48 +2584,45 @@ pocl_network_fetch_devinfo (cl_device_id device,
   D (printf_buffer_size);
   D (profiling_timer_resolution);
 
-  /****************************************/
-  /****************************************/
-
-  if (devinfo->image_support == CL_FALSE)
-    {
-      free (devinfo);
-      return 0;
-    }
-
-  D (max_read_image_args);
-  D (max_write_image_args);
-  D (max_samplers);
-  D (image2d_max_height);
-  D (image2d_max_width);
-  D (image3d_max_height);
-  D (image3d_max_width);
-  D (image3d_max_depth);
-  D (image_max_buffer_size);
-  D (image_max_array_size);
-
-  D (max_num_sub_groups);
   D (host_unified_memory);
 
-  size_t i, j;
-  for (i = 0; i < NUM_OPENCL_IMAGE_TYPES; ++i)
+  /****************************************/
+  /****************************************/
+
+  if (devinfo->image_support != CL_FALSE)
     {
-      ImgFormatInfo_t p = devinfo->supported_image_formats[i];
-      if (p.num_formats == 0)
-        continue;
+      D (max_read_image_args);
+      D (max_write_image_args);
+      D (max_samplers);
+      D (image2d_max_height);
+      D (image2d_max_width);
+      D (image3d_max_height);
+      D (image3d_max_width);
+      D (image3d_max_depth);
+      D (image_max_buffer_size);
+      D (image_max_array_size);
 
-      assert (p.memobj_type != 0);
-      int k = pocl_opencl_image_type_to_index (
-          (cl_mem_object_type)p.memobj_type);
-
-      cl_image_format *ary = calloc (p.num_formats, sizeof (cl_image_format));
-      device->image_formats[k] = ary;
-      device->num_image_formats[k] = p.num_formats;
-
-      for (j = 0; j < p.num_formats; ++j)
+      size_t i, j;
+      for (i = 0; i < NUM_OPENCL_IMAGE_TYPES; ++i)
         {
-          ary[j].image_channel_data_type = p.formats[j].channel_data_type;
-          ary[j].image_channel_order = p.formats[j].channel_order;
+          ImgFormatInfo_t p = devinfo->supported_image_formats[i];
+          if (p.num_formats == 0)
+            continue;
+
+          assert (p.memobj_type != 0);
+          int k = pocl_opencl_image_type_to_index (
+            (cl_mem_object_type)p.memobj_type);
+
+          cl_image_format *ary
+            = calloc (p.num_formats, sizeof (cl_image_format));
+          device->image_formats[k] = ary;
+          device->num_image_formats[k] = p.num_formats;
+
+          for (j = 0; j < p.num_formats; ++j)
+            {
+              ary[j].image_channel_data_type = p.formats[j].channel_data_type;
+              ary[j].image_channel_order = p.formats[j].channel_order;
+            }
         }
     }
 
