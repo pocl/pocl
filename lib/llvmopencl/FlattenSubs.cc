@@ -1,7 +1,7 @@
-// FlattenTerminationSubs, a pass to force inlining of non-kernel functions
-// with __pocl_exit or __pocl_trap calls
+// FlattenSubs, a pass to force inlining of non-kernel functions
+// with barrier calls or __pocl_exit/__pocl_trap termination calls
 //
-// Copyright (c) 2026 Tim Besard
+// Copyright (c) 2018 Michal Babej / TUT
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/Support/CommandLine.h"
 #include <llvm/IR/Instructions.h>
 
-#include "FlattenTerminationSubs.hh"
+#include "Barrier.h"
+#include "FlattenSubs.hh"
 #include "LLVMUtils.h"
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
@@ -43,22 +44,22 @@ POP_COMPILER_DIAGS
 #include <iostream>
 #include <string>
 
-//#define DEBUG_FLATTEN_TERMINATION_SUBS
+//#define DEBUG_FLATTEN_SUBS
 
-#define PASS_NAME "flatten-termination-subs"
-#define PASS_CLASS pocl::FlattenTerminationSubs
-#define PASS_DESC "Flatten subroutines with __pocl_exit/__pocl_trap termination calls"
+#define PASS_NAME "flatten-subs"
+#define PASS_CLASS pocl::FlattenSubs
+#define PASS_DESC "Flatten subroutines with barriers or termination calls"
 
 namespace pocl {
 
 using namespace llvm;
 
-static bool recursivelyInlineExitUsers(Function *F, bool ChangeInlineFlag) {
+static bool recursivelyInlineForcedUsers(Function *F, bool ChangeInlineFlag) {
 
-  bool ExitIsCalled = false;
+  bool MustInline = false;
 
-#ifdef DEBUG_FLATTEN_TERMINATION_SUBS
-  std::cerr << "### FlattenTerminationSubs: SCANNING " << F->getName().str()
+#ifdef DEBUG_FLATTEN_SUBS
+  std::cerr << "### FlattenSubs: SCANNING " << F->getName().str()
             << std::endl;
 #endif
 
@@ -73,26 +74,30 @@ static bool recursivelyInlineExitUsers(Function *F, bool ChangeInlineFlag) {
       if ((Callee == nullptr) || Callee->getName().starts_with("llvm."))
         continue;
 
-      if (Callee->getName() == "__pocl_exit" ||
-          Callee->getName() == "__pocl_trap")
-        ExitIsCalled = true;
-      else if (recursivelyInlineExitUsers(Callee, true))
-        ExitIsCalled = true;
+      if (llvm::isa<pocl::Barrier>(CallInstr))
+        MustInline = true;
+      else if (Callee->getName() == "__pocl_exit" ||
+               Callee->getName() == "__pocl_trap")
+        MustInline = true;
+      // we cannot break the loop here, since we want to inline all functions
+      // that could call a barrier or termination, not just the first one
+      else if (recursivelyInlineForcedUsers(Callee, true))
+        MustInline = true;
     }
   }
 
-  if (ChangeInlineFlag & ExitIsCalled) {
+  if (ChangeInlineFlag & MustInline) {
     markFunctionAlwaysInline(F);
     F->setLinkage(llvm::GlobalValue::InternalLinkage);
-#ifdef DEBUG_FLATTEN_TERMINATION_SUBS
-    std::cerr << "### FlattenTerminationSubs: AlwaysInline ENABLED on "
+#ifdef DEBUG_FLATTEN_SUBS
+    std::cerr << "### FlattenSubs: AlwaysInline ENABLED on "
               << F->getName().str() << std::endl;
 #endif
   }
-  return ExitIsCalled;
+  return MustInline;
 }
 
-static bool flattenTerminationSubs(Module &M) {
+static bool flattenSubs(Module &M) {
   bool Changed = false;
 
   std::string KernelName;
@@ -105,12 +110,12 @@ static bool flattenTerminationSubs(Module &M) {
 
     if (KernelName == F->getName().str() || isKernelToProcess(*F)) {
 
-#ifdef DEBUG_FLATTEN_TERMINATION_SUBS
-      std::cerr << "### FlattenTerminationSubs Pass running on " << KernelName
+#ifdef DEBUG_FLATTEN_SUBS
+      std::cerr << "### FlattenSubs Pass running on " << KernelName
                 << std::endl;
 #endif
       // we don't want to set alwaysInline on a Kernel, only its subroutines.
-      Changed = recursivelyInlineExitUsers(F, false);
+      Changed = recursivelyInlineForcedUsers(F, false);
     }
   }
   return Changed;
@@ -118,10 +123,10 @@ static bool flattenTerminationSubs(Module &M) {
 
 
 llvm::PreservedAnalyses
-FlattenTerminationSubs::run(llvm::Module &M, llvm::ModuleAnalysisManager &AM) {
+FlattenSubs::run(llvm::Module &M, llvm::ModuleAnalysisManager &AM) {
   PreservedAnalyses PAChanged = PreservedAnalyses::none();
   PAChanged.preserve<WorkitemHandlerChooser>();
-  return flattenTerminationSubs(M) ? PAChanged : PreservedAnalyses::all();
+  return flattenSubs(M) ? PAChanged : PreservedAnalyses::all();
 }
 
 REGISTER_NEW_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);

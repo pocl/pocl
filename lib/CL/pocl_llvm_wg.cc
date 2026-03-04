@@ -479,8 +479,7 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
     addPass(Passes, "flatten-inline-all", PassType::Module);
   } else {
     addPass(Passes, "flatten-globals", PassType::Module);
-    addPass(Passes, "flatten-barrier-subs", PassType::Module);
-    addPass(Passes, "flatten-termination-subs", PassType::Module);
+    addPass(Passes, "flatten-subs", PassType::Module);
   }
 
   addPass(Passes, "always-inline", PassType::Module);

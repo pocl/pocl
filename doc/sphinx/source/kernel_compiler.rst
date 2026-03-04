@@ -382,9 +382,9 @@ semantics and is lowered differently depending on the target.
   The work-item terminates and the event is marked ``CL_FAILED``
   (``execution_failed`` flag). On CPU, the ``ConvertPoclExit`` pass lowers
   this to a flag-store + return. On GPU, the linker converts it to
-  ``llvm.trap``. The ``flatten-termination-subs`` pass force-inlines any
-  non-kernel function containing a ``__pocl_trap`` call so that later passes
-  see the termination directly. The idiomatic pattern is
+  ``llvm.trap``. The ``flatten-subs`` pass force-inlines any
+  non-kernel function containing a barrier or ``__pocl_trap`` call so that
+  later passes see the termination directly. The idiomatic pattern is
   ``call @__pocl_trap()`` followed by ``OpUnreachable`` — the trap call is
   guaranteed to be preserved (not optimized away), while the
   ``OpUnreachable`` lets the optimizer simplify the surrounding CFG.
