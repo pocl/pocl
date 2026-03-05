@@ -844,6 +844,7 @@ extern "C"
     // set by remote server
     uint64_t server_read_start_timestamp_ns;
     uint64_t server_read_end_timestamp_ns;
+    uint64_t server_cmd_start_timestamp_ns;
     uint64_t server_write_start_timestamp_ns;
     union
     {

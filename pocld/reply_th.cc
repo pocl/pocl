@@ -209,7 +209,7 @@ void ReplyQueueThread::writeThread() {
         ReplyMessageType t =
             static_cast<ReplyMessageType>(reply->rep.message_type);
 
-        auto now1 = std::chrono::system_clock::now();
+        auto now1 = std::chrono::steady_clock::now();
         reply->write_start_timestamp_ns =
             std::chrono::duration_cast<std::chrono::nanoseconds>(
                 now1.time_since_epoch())

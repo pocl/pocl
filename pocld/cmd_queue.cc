@@ -73,7 +73,12 @@ bool CommandQueue::TryRun(Request *request) {
 }
 
 void CommandQueue::RunCommand(Request *request) {
-  Reply *reply = new Reply(request);
+  auto Now = std::chrono::steady_clock::now();
+  uint64_t ProcessingStart =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(
+          Now.time_since_epoch())
+          .count();
+  Reply *reply = new Reply(request, ProcessingStart);
   int slow = 0;
 
   POCL_MSG_PRINT_GENERAL("CQ %" PRIu32 " DID %" PRIu32
