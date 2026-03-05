@@ -113,7 +113,7 @@ jobs:
             export "PKG_CONFIG_PATH=/opt/xsmm/lib"
           fi
           runCMake() {
-            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            BUILD_FLAGS="-O1 -march=x86-64-v3 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
             cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             "-DCMAKE_C_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
             "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
@@ -126,7 +126,7 @@ jobs:
           if [ "${{ matrix.config }}" == "install" ]; then
             runCMake -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_ICD=1 -DKERNELLIB_HOST_CPU_VARIANTS=distro -DPOCL_ICD_ABSOLUTE_PATH=OFF -DENABLE_POCL_BUILDING=OFF
           elif [ "${{ matrix.config }}" == "DBKs" ]; then
-            runCMake -DENABLE_ICD=1 -DENABLE_HOST_CPU_DEVICES=1
+            runCMake -DENABLE_ICD=1 -DENABLE_HOST_CPU_DEVICES=1 -DLLC_HOST_CPU=haswell
           else
             echo "Unknown configuration" && exit 1
           fi
