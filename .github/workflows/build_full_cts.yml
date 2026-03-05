@@ -110,7 +110,7 @@ jobs:
   level_zero_cts:
     name: LLVM ${{ matrix.llvm }} - LevelZero ${{ matrix.config }}
     runs-on: [self-hosted, linux, x64, "${{ matrix.config }}"]
-    timeout-minutes: 1600
+    timeout-minutes: 2880
     env:
       CCACHE_BASEDIR: "${{ github.workspace }}"
       CCACHE_DIR: "${{ github.workspace }}/../../../../ccache_storage"
@@ -120,7 +120,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [20]
+        llvm: [22]
         config: [full_cts_lz, full_cts_lz_spirv]
 
     steps:
