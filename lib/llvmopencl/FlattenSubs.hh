@@ -1,7 +1,8 @@
-// FlattenBarrierSubs, a pass to force inlining of non-kernel functions
-// with barrier calls
+// FlattenSubs, a pass to force inlining of non-kernel functions
+// with barrier calls or __pocl_exit/__pocl_trap termination calls
 //
 // Copyright (c) 2018 Michal Babej / TUT
+//               2026 Tim Besard
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +22,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef POCL_FLATTEN_BARRIER_SUBS_H
-#define POCL_FLATTEN_BARRIER_SUBS_H
+#ifndef POCL_FLATTEN_SUBS_H
+#define POCL_FLATTEN_SUBS_H
 
 #include "config.h"
 
@@ -34,7 +35,7 @@
 namespace pocl {
 
 
-class FlattenBarrierSubs : public llvm::PassInfoMixin<FlattenBarrierSubs> {
+class FlattenSubs : public llvm::PassInfoMixin<FlattenSubs> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);

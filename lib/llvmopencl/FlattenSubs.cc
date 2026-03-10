@@ -1,5 +1,5 @@
-// FlattenBarrierSubs, a pass to force inlining of non-kernel functions
-// with barrier calls
+// FlattenSubs, a pass to force inlining of non-kernel functions
+// with barrier calls or __pocl_exit/__pocl_trap termination calls
 //
 // Copyright (c) 2018 Michal Babej / TUT
 //
@@ -33,7 +33,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Instructions.h>
 
 #include "Barrier.h"
-#include "FlattenBarrierSubs.hh"
+#include "FlattenSubs.hh"
 #include "LLVMUtils.h"
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
@@ -46,20 +46,20 @@ POP_COMPILER_DIAGS
 
 //#define DEBUG_FLATTEN_SUBS
 
-#define PASS_NAME "flatten-barrier-subs"
-#define PASS_CLASS pocl::FlattenBarrierSubs
-#define PASS_DESC "Flatten subroutines with barriers and/or local arguments"
+#define PASS_NAME "flatten-subs"
+#define PASS_CLASS pocl::FlattenSubs
+#define PASS_DESC "Flatten subroutines with barriers or termination calls"
 
 namespace pocl {
 
 using namespace llvm;
 
-static bool recursivelyInlineBarrierUsers(Function *F, bool ChangeInlineFlag) {
+static bool recursivelyInlineForcedUsers(Function *F, bool ChangeInlineFlag) {
 
-  bool BarrierIsCalled = false;
+  bool MustInline = false;
 
 #ifdef DEBUG_FLATTEN_SUBS
-  std::cerr << "### FlattenBarrierSubs: SCANNING " << F->getName().str()
+  std::cerr << "### FlattenSubs: SCANNING " << F->getName().str()
             << std::endl;
 #endif
 
@@ -75,26 +75,29 @@ static bool recursivelyInlineBarrierUsers(Function *F, bool ChangeInlineFlag) {
         continue;
 
       if (llvm::isa<pocl::Barrier>(CallInstr))
-        BarrierIsCalled = true;
+        MustInline = true;
+      else if (Callee->getName() == "__pocl_exit" ||
+               Callee->getName() == "__pocl_trap")
+        MustInline = true;
       // we cannot break the loop here, since we want to inline all functions
-      // that could call a barrier, not just the first one
-      else if (recursivelyInlineBarrierUsers(Callee, true))
-        BarrierIsCalled = true;
+      // that could call a barrier or termination, not just the first one
+      else if (recursivelyInlineForcedUsers(Callee, true))
+        MustInline = true;
     }
   }
 
-  if (ChangeInlineFlag & BarrierIsCalled) {
+  if (ChangeInlineFlag & MustInline) {
     markFunctionAlwaysInline(F);
     F->setLinkage(llvm::GlobalValue::InternalLinkage);
 #ifdef DEBUG_FLATTEN_SUBS
-    std::cerr << "### FlattenBarrierSubs: AlwaysInline ENABLED on "
+    std::cerr << "### FlattenSubs: AlwaysInline ENABLED on "
               << F->getName().str() << std::endl;
 #endif
   }
-  return BarrierIsCalled;
+  return MustInline;
 }
 
-static bool flattenBarrierSubs(Module &M) {
+static bool flattenSubs(Module &M) {
   bool Changed = false;
 
   std::string KernelName;
@@ -108,11 +111,11 @@ static bool flattenBarrierSubs(Module &M) {
     if (KernelName == F->getName().str() || isKernelToProcess(*F)) {
 
 #ifdef DEBUG_FLATTEN_SUBS
-      std::cerr << "### FlattenBarrierSubs Pass running on " << KernelName
+      std::cerr << "### FlattenSubs Pass running on " << KernelName
                 << std::endl;
 #endif
       // we don't want to set alwaysInline on a Kernel, only its subroutines.
-      Changed = recursivelyInlineBarrierUsers(F, false);
+      Changed = recursivelyInlineForcedUsers(F, false);
     }
   }
   return Changed;
@@ -120,10 +123,10 @@ static bool flattenBarrierSubs(Module &M) {
 
 
 llvm::PreservedAnalyses
-FlattenBarrierSubs::run(llvm::Module &M, llvm::ModuleAnalysisManager &AM) {
+FlattenSubs::run(llvm::Module &M, llvm::ModuleAnalysisManager &AM) {
   PreservedAnalyses PAChanged = PreservedAnalyses::none();
   PAChanged.preserve<WorkitemHandlerChooser>();
-  return flattenBarrierSubs(M) ? PAChanged : PreservedAnalyses::all();
+  return flattenSubs(M) ? PAChanged : PreservedAnalyses::all();
 }
 
 REGISTER_NEW_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
