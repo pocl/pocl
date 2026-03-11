@@ -2781,7 +2781,7 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
   cl_event event = node->sync.event.event;
   cl_command_queue cq = node->sync.event.event->queue;
 
-  if (*(cq->device->available) == CL_FALSE)
+  if (POCL_ATOMIC_LOAD_PTR (cq->device->available) == CL_FALSE)
     {
       node->state = POCL_COMMAND_FAILED;
       goto EARLY_FINISH;
@@ -3111,7 +3111,8 @@ pocl_remote_driver_pthread (void *cldev)
           else
             {
               cl_int status = CL_FAILED;
-              if (*(event->queue->device->available) == CL_FALSE)
+              if (POCL_ATOMIC_LOAD_PTR (event->queue->device->available)
+                  == CL_FALSE)
                 status = CL_DEVICE_NOT_AVAILABLE;
               POCL_UPDATE_EVENT_FAILED_MSG (status, event, msg);
             }

@@ -69,7 +69,8 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
       for (i = 0; i < program->num_devices; ++i)
         {
           cl_device_id device = program->devices[i];
-          if (device->ops->free_program && *(device->available) == CL_TRUE)
+          if (device->ops->free_program
+              && POCL_ATOMIC_LOAD_PTR (device->available) == CL_TRUE)
             device->ops->free_program (device, program, i);
         }
 

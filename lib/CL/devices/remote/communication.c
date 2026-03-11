@@ -605,7 +605,7 @@ pocl_remote_reconnect_socket (remote_server_data_t *remote,
     connection->is_fast ? NETWORK_BUF_SIZE_FAST : NETWORK_BUF_SIZE_SLOW, NULL);
   if (res == CL_SUCCESS)
     {
-      connection->reconnect_count += 1;
+      POCL_ATOMIC_INC (connection->reconnect_count);
       int waiting = POCL_ATOMIC_DEC (remote->threads_awaiting_reconnect);
       if (waiting == 0)
         POCL_ATOMIC_CAS (&remote->available, CL_FALSE, CL_TRUE);
@@ -865,7 +865,9 @@ finish_running_cmd (remote_server_data_t *server,
                  - running_cmd->reply.server_read_end_timestamp_ns)
               + ocl_in_host_queue + ocl_in_dev_queue;
           profile->exec_end = profile->exec_start + ocl_on_dev;
+          POCL_LOCK (server->profiling_lock);
           LL_PREPEND (server->profiling_data, profile);
+          POCL_UNLOCK (server->profiling_lock);
         }
 
 #ifdef ENABLE_RDMA
@@ -929,7 +931,7 @@ pocl_remote_reader_pthread (void *aa)
     {
       POCL_LOCK (connection->setup_guard.mutex);
       int fd = connection->fd;
-      reader_reconnects = connection->reconnect_count;
+      reader_reconnects = POCL_ATOMIC_LOAD (connection->reconnect_count);
       POCL_UNLOCK (connection->setup_guard.mutex);
       if (fd < 0)
         {
@@ -969,8 +971,9 @@ pocl_remote_reader_pthread (void *aa)
           else
             {
               fd = connection->fd;
-              reader_reconnects = connection->reconnect_count;
-              connection->reconnect_attempts = 0;
+              reader_reconnects
+                = POCL_ATOMIC_LOAD (connection->reconnect_count);
+              POCL_ATOMIC_STORE (connection->reconnect_attempts, 0);
               POCL_BROADCAST_COND (connection->setup_guard.cond);
               POCL_UNLOCK (connection->setup_guard.mutex);
             }
@@ -1339,7 +1342,7 @@ pocl_remote_writer_pthread (void *aa)
   POCL_IGNORE_SIGNAL_IN_THREAD (SIGPIPE);
 #endif
   POCL_LOCK (connection->setup_guard.mutex);
-  reconnect_count = connection->reconnect_count;
+  reconnect_count = POCL_ATOMIC_LOAD (connection->reconnect_count);
   POCL_UNLOCK (connection->setup_guard.mutex);
 
   network_command *cmd;
@@ -1393,7 +1396,8 @@ pocl_remote_writer_pthread (void *aa)
             /* This is only hit if there is an error from CHECK_WRITE */
             TRY_RECONNECT:
               /* Only sleep if the reader thread has *not* reconnected yet */
-              if (reconnect_count == connection->reconnect_count)
+              if (reconnect_count
+                  == POCL_ATOMIC_LOAD (connection->reconnect_count))
                 {
                   POCL_MSG_PRINT_REMOTE (
                     "(%s) writer waiting for reader to reconnect\n",
@@ -1409,7 +1413,7 @@ pocl_remote_writer_pthread (void *aa)
                                   connection->setup_guard.mutex);
                 }
             }
-          reconnect_count = connection->reconnect_count;
+          reconnect_count = POCL_ATOMIC_LOAD (connection->reconnect_count);
 
           /* WRITE DATA */
           if (cmd->req_extra_data2)
@@ -1948,6 +1952,7 @@ find_or_create_server (const char *address_with_port, unsigned port,
   d->peer_id = POCL_ATOMIC_INC (last_peer_id);
   d->available = CL_TRUE;
   d->threads_awaiting_reconnect = 0;
+  POCL_INIT_LOCK (d->profiling_lock);
 
   connection_init (&d->fast_connection, TransportDomain_Unset, 1);
   connection_init (&d->slow_connection, TransportDomain_Unset, 0);

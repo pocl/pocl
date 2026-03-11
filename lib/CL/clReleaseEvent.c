@@ -58,7 +58,8 @@ POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
                                 event);
       if (event->command_type != CL_COMMAND_USER
           && event->queue->device->ops->free_event_data
-          && (*(event->queue->device->available) == CL_TRUE))
+          && (POCL_ATOMIC_LOAD_PTR (event->queue->device->available)
+              == CL_TRUE))
         event->queue->device->ops->free_event_data(event);
 
       if (event->queue)
