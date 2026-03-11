@@ -261,20 +261,24 @@ ushort8 _cl_float2half8_rtz (const float8 data);
   void _CL_OVERLOADABLE vstore_half4##SUFFIX (float4 data, size_t offset,     \
                                               MOD half *p)                    \
   {                                                                           \
-    ((MOD ushort4 *)p)[offset] = _cl_float2half4##SUFFIX (data);              \
+    ushort4 val = _cl_float2half4##SUFFIX (data);                             \
+    __builtin_memcpy_inline (&p[offset * 4], &val, sizeof (ushort4));         \
   }                                                                           \
                                                                               \
   void _CL_OVERLOADABLE vstore_half8##SUFFIX (float8 data, size_t offset,     \
                                               MOD half *p)                    \
   {                                                                           \
-    ((MOD ushort8 *)p)[offset] = _cl_float2half8##SUFFIX (data);              \
+    ushort8 val = _cl_float2half8##SUFFIX (data);                             \
+    __builtin_memcpy_inline (&p[offset * 8], &val, sizeof (ushort8));         \
   }                                                                           \
                                                                               \
   void _CL_OVERLOADABLE vstore_half16##SUFFIX (float16 data, size_t offset,   \
                                                MOD half *p)                   \
   {                                                                           \
-    ((MOD ushort8 *)p)[offset * 2] = _cl_float2half8##SUFFIX (data.lo);       \
-    ((MOD ushort8 *)p)[offset * 2 + 1] = _cl_float2half8##SUFFIX (data.hi);   \
+    ushort8 val1 = _cl_float2half8##SUFFIX (data.lo);                         \
+    ushort8 val2 = _cl_float2half8##SUFFIX (data.hi);                         \
+    __builtin_memcpy_inline (&p[offset * 16], &val1, sizeof (ushort8));       \
+    __builtin_memcpy_inline (&p[offset * 16 + 8], &val2, sizeof (ushort8));   \
   }                                                                           \
                                                                               \
   void _CL_OVERLOADABLE vstorea_half##SUFFIX (float data, size_t offset,      \
@@ -294,7 +298,7 @@ ushort8 _cl_float2half8_rtz (const float8 data);
                                                MOD half *p)                   \
   {                                                                           \
     vstorea_half2##SUFFIX (data.lo, offset * 2, p);                           \
-    vstorea_half2##SUFFIX ((float2) (data.z, 0.0f), offset * 2 + 1, p);       \
+    vstorea_half2##SUFFIX ((float2)(data.z, 0.0f), offset * 2 + 1, p);        \
   }                                                                           \
                                                                               \
   void _CL_OVERLOADABLE vstorea_half4##SUFFIX (float4 data, size_t offset,    \
@@ -460,24 +464,24 @@ IF_GEN_AS(IMPLEMENT_VSTORE_HALF (__generic, _rtn))
   void _CL_OVERLOADABLE vstore_half4##SUFFIX (double4 data, size_t offset,    \
                                               MOD half *p)                    \
   {                                                                           \
-    ((MOD ushort4 *)p)[offset]                                                \
-        = _cl_float2half4##SUFFIX (convert_float4##SUFFIX (data));            \
+    ushort4 val = _cl_float2half4##SUFFIX (convert_float4##SUFFIX (data));    \
+    __builtin_memcpy_inline (&p[offset * 4], &val, sizeof (ushort4));         \
   }                                                                           \
                                                                               \
   void _CL_OVERLOADABLE vstore_half8##SUFFIX (double8 data, size_t offset,    \
                                               MOD half *p)                    \
   {                                                                           \
-    ((MOD ushort8 *)p)[offset]                                                \
-        = _cl_float2half8##SUFFIX (convert_float8##SUFFIX (data));            \
+    ushort8 val = _cl_float2half8##SUFFIX (convert_float8##SUFFIX (data));    \
+    __builtin_memcpy_inline (&p[offset * 8], &val, sizeof (ushort8));         \
   }                                                                           \
                                                                               \
   void _CL_OVERLOADABLE vstore_half16##SUFFIX (double16 data, size_t offset,  \
                                                MOD half *p)                   \
   {                                                                           \
-    ((MOD ushort8 *)p)[offset * 2]                                            \
-        = _cl_float2half8##SUFFIX (convert_float8##SUFFIX (data.lo));         \
-    ((MOD ushort8 *)p)[offset * 2 + 1]                                        \
-        = _cl_float2half8##SUFFIX (convert_float8##SUFFIX (data.hi));         \
+    ushort8 v1 = _cl_float2half8##SUFFIX (convert_float8##SUFFIX (data.lo));  \
+    ushort8 v2 = _cl_float2half8##SUFFIX (convert_float8##SUFFIX (data.hi));  \
+    __builtin_memcpy_inline (&p[offset * 16], &v1, sizeof (ushort8));         \
+    __builtin_memcpy_inline (&p[offset * 16 + 8], &v2, sizeof (ushort8));     \
   }                                                                           \
                                                                               \
   void _CL_OVERLOADABLE vstorea_half##SUFFIX (double data, size_t offset,     \
@@ -497,30 +501,30 @@ IF_GEN_AS(IMPLEMENT_VSTORE_HALF (__generic, _rtn))
                                                MOD half *p)                   \
   {                                                                           \
     vstorea_half2##SUFFIX (data.lo, offset * 2, p);                           \
-    vstorea_half2##SUFFIX ((float2) (data.z, 0.0f), offset * 2 + 1, p);       \
+    vstorea_half2##SUFFIX ((float2)(data.z, 0.0f), offset * 2 + 1, p);        \
   }                                                                           \
                                                                               \
   void _CL_OVERLOADABLE vstorea_half4##SUFFIX (double4 data, size_t offset,   \
                                                MOD half *p)                   \
   {                                                                           \
     ((MOD ushort4 *)p)[offset]                                                \
-        = _cl_float2half4##SUFFIX (convert_float4##SUFFIX (data));            \
+      = _cl_float2half4##SUFFIX (convert_float4##SUFFIX (data));              \
   }                                                                           \
                                                                               \
   void _CL_OVERLOADABLE vstorea_half8##SUFFIX (double8 data, size_t offset,   \
                                                MOD half *p)                   \
   {                                                                           \
     ((MOD ushort8 *)p)[offset]                                                \
-        = _cl_float2half8##SUFFIX (convert_float8##SUFFIX (data));            \
+      = _cl_float2half8##SUFFIX (convert_float8##SUFFIX (data));              \
   }                                                                           \
                                                                               \
   void _CL_OVERLOADABLE vstorea_half16##SUFFIX (double16 data, size_t offset, \
                                                 MOD half *p)                  \
   {                                                                           \
     ((MOD ushort8 *)p)[offset * 2]                                            \
-        = _cl_float2half8##SUFFIX (convert_float8##SUFFIX (data.lo));         \
+      = _cl_float2half8##SUFFIX (convert_float8##SUFFIX (data.lo));           \
     ((MOD ushort8 *)p)[offset * 2 + 1]                                        \
-        = _cl_float2half8##SUFFIX (convert_float8##SUFFIX (data.hi));         \
+      = _cl_float2half8##SUFFIX (convert_float8##SUFFIX (data.hi));           \
   }
 
 // __F16C__
