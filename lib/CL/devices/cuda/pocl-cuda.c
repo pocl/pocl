@@ -952,7 +952,7 @@ pocl_cuda_uninit (unsigned j, cl_device_id device)
 {
   pocl_cuda_device_data_t *data = device->data;
 
-  if (*(device->available) == CL_TRUE)
+  if (POCL_ATOMIC_LOAD_PTR (device->available) == CL_TRUE)
     {
       cuEventDestroy (data->epoch_event);
       cuCtxDestroy (data->context);

@@ -40,8 +40,9 @@ POname(clCreateCommandQueue)(cl_context context,
 
   POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (device)), CL_INVALID_DEVICE);
 
-  POCL_GOTO_ERROR_ON (((*device->available) != CL_TRUE), CL_INVALID_DEVICE,
-                      "Device %d is not available\n", device->dev_id);
+  POCL_GOTO_ERROR_ON ((POCL_ATOMIC_LOAD_PTR (device->available) != CL_TRUE),
+                      CL_INVALID_DEVICE, "Device %d is not available\n",
+                      device->dev_id);
 
   /* validate flags */
   cl_command_queue_properties all_properties

@@ -555,8 +555,8 @@ pocl_create_command_full (_cl_command_node **cmd,
   int err = CL_SUCCESS;
   size_t i;
 
-  POCL_RETURN_ERROR_ON ((*dev->available == CL_FALSE), CL_INVALID_DEVICE,
-                        "device is not available\n");
+  POCL_RETURN_ERROR_ON ((POCL_ATOMIC_LOAD (dev->available) == CL_FALSE),
+                        CL_INVALID_DEVICE, "device is not available\n");
 
   if (buffer_usage != NULL)
     {

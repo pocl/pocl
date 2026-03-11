@@ -353,7 +353,8 @@ pocl_get_devices (cl_device_type device_type, cl_device_id *devices,
 
   LL_FOREACH_ATOMIC (pocl_devices, device)
   {
-    if (!pocl_offline_compile && (*device->available == CL_FALSE))
+    if (!pocl_offline_compile
+        && (POCL_ATOMIC_LOAD_PTR (device->available) == CL_FALSE))
       continue;
 
     if (device_type == CL_DEVICE_TYPE_DEFAULT)
@@ -397,7 +398,8 @@ pocl_get_device_type_count(cl_device_type device_type)
 
   LL_FOREACH_ATOMIC (pocl_devices, device)
   {
-    if (!pocl_offline_compile && (*device->available == CL_FALSE))
+    if (!pocl_offline_compile
+        && (POCL_ATOMIC_LOAD_PTR (device->available) == CL_FALSE))
       continue;
 
     if (device->type & device_type)

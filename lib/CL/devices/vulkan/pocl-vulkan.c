@@ -1,4 +1,4 @@
-﻿/* pocl-vulkan.c - driver for Vulkan Compute API devices.
+﻿﻿/* pocl-vulkan.c - driver for Vulkan Compute API devices.
 
    Copyright (c) 2018-2021 Michal Babej / Tampere University
 
@@ -1695,7 +1695,7 @@ pocl_vulkan_uninit (unsigned j, cl_device_id device)
 {
   pocl_vulkan_device_data_t *d = (pocl_vulkan_device_data_t*)device->data;
 
-  if (device->available != CL_FALSE)
+  if (POCL_ATOMIC_LOAD_PTR (device->available) != CL_FALSE)
     {
 
       POCL_LOCK (d->wq_lock_fast);
