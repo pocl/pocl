@@ -27,6 +27,7 @@ env:
   CCACHE_BASEDIR: "${{ github.workspace }}"
   CCACHE_DIR: "${{ github.workspace }}/../../../ccache_storage"
   EXAMPLES_DIR: "${{ github.workspace }}/../../../examples"
+  BUILD_DIR: "${{ github.workspace }}/build"
 
 jobs:
   polybench_matrix:
@@ -62,10 +63,10 @@ jobs:
         id: cmake
         run: |
           runCMake() {
-            BUILD_FLAGS="-O2 -march=native"
-            cmake -DENABLE_ICD=0 -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
-            -DENABLE_TESTSUITES=polybenchGPU -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} \
+            cmake -DCMAKE_BUILD_TYPE=Release  -DENABLE_TESTSUITES=polybenchGPU \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
+            -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} \
             "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
           }
 
@@ -73,10 +74,12 @@ jobs:
           mkdir ${{ github.workspace }}/build
 
           if [ "${{ matrix.device }}" == "x86_64" ]; then
-            runCMake
+            export BUILD_FLAGS="-O2 -march=native"
+            runCMake -DENABLE_ICD=0
           elif [ "${{ matrix.device }}" == "RISCV" ]; then
-            runCMake -DCMAKE_MAKE_PROGRAM=/usr/bin/make \
-            -DLLVM_DIR=${TARGET_ROOT}${TARGET_LLVM_INSTALL_DIR} \
+            export BUILD_FLAGS="-O2 -DNDEBUG"
+            runCMake -DCMAKE_MAKE_PROGRAM=/usr/bin/make -DENABLE_ICD=0 \
+            -DLLVM_DIR=${TARGET_ROOT}/opt/LLVM_${{ matrix.llvm }} -DCMAKE_INSTALL_PREFIX=/usr \
             -DHOST_DEVICE_BUILD_HASH=${TARGET_TRIPLE} -DCMAKE_TOOLCHAIN_FILE=${TARGET_TOOLCHAIN_FILE}  \
             -DLLC_TRIPLE=${TARGET_TRIPLE} -DLLC_HOST_CPU=${TARGET_CPU} -DCMAKE_PREFIX_PATH=${TARGET_ROOT} \
             -DENABLE_LOADABLE_DRIVERS=0 -DKERNELLIB_HOST_CPU_VARIANTS=${TARGET_CPU}
@@ -101,7 +104,7 @@ jobs:
       # this way we're always comparing to latest main
       - name: Download previous benchmark data
         id: download_bench
-        uses: actions/cache@v5
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb
         with:
           path: benchmark_cache
           key: polybench-${{ runner.name }}-llvm-${{ matrix.llvm }}-${{ matrix.device }}-${{ github.ref_name }}-${{ github.run_id }}
@@ -130,7 +133,7 @@ jobs:
 
       # Run `github-action-benchmark` action
       - name: Store benchmark result
-        uses: benchmark-action/github-action-benchmark@v1
+        uses: benchmark-action/github-action-benchmark@4bdcce38c94cec68da58d012ac24b7b1155efe8b
         with:
           # What benchmark tool the output.txt came from
           tool: 'customSmallerIsBetter'

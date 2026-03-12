@@ -23,6 +23,7 @@
 
 export POCL_BUILDING=1
 export POCL_DEVICES=cpu
+export OMP_SCHEDULE=static
 
 if [ -z "$OCL_ICD_VENDORS" ]; then
   export OCL_ICD_VENDORS=$PWD/ocl-vendors

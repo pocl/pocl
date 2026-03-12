@@ -47,14 +47,23 @@
 #if !__has_builtin(__builtin_ia32_vcvtph2ps)
 float4 __builtin_ia32_vcvtph2ps(short8 in_h)
 {
-  return __builtin_convertvector(in_h.lo, float4);
+  typedef __fp16 v4fp16 __attribute__((__vector_size__(8)));
+  typedef __fp16 v8fp16 __attribute__((__vector_size__(16)));
+  v8fp16 inash;
+  __builtin_memcpy(&inash, &in_h, sizeof(in_h));
+  v4fp16 inash2 = __builtin_shufflevector(inash, inash, 0, 1, 2, 3);
+  return __builtin_convertvector(inash2, float4);
 }
 #endif
 
 #if !__has_builtin(__builtin_ia32_vcvtph2ps256)
 float8 __builtin_ia32_vcvtph2ps256(short8 in_h)
 {
-  return __builtin_convertvector(in_h, float8);
+  typedef __fp16 v8fp16 __attribute__((__vector_size__(16)));
+  v8fp16 inash;
+  _Static_assert(sizeof(short8) == sizeof(v8fp16), "vector sizes must match");
+  __builtin_memcpy(&inash, &in_h, sizeof(in_h));
+  return __builtin_convertvector(inash, float8);
 }
 #endif
 

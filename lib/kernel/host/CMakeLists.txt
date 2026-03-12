@@ -252,113 +252,69 @@ list(APPEND SOURCES_WITH_SLEEF "host/addrspace_operators.ll" "host/addrspace_ope
 # if ENABLE_HOST_CPU_VECTORIZE_BUILTINS is enabled, use Clang/LLVM builtins
 # this makes vectorization of (some) OpenCL builtins possible,
 # while also making FP16 versions available (if FP16 is available)
-if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS)
+if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS) # implies CONFORMANCE=OFF
   list(REMOVE_ITEM SOURCES_WITH_SLEEF
     libclc-pocl/cos.cl
-    libclc-pocl/sin.cl
+    libclc-pocl/cosh.cl
+    libclc-pocl/frexp.cl
+    libclc-pocl/isinf.cl
+    libclc-pocl/isnan.cl
+    libclc-pocl/isfinite.cl
+    libclc-pocl/isnormal.cl
     libclc-pocl/log2.cl
     libclc-pocl/pow.cl
+    libclc-pocl/pown.cl
     libclc-pocl/fmod.cl
+    libclc-pocl/rint.cl
+    libclc-pocl/sin.cl
+    libclc-pocl/sinh.cl
+    libclc-pocl/tan.cl
+    libclc-pocl/tanh.cl
 
+    sleef-pocl/acos.cl
+    sleef-pocl/asin.cl
+    sleef-pocl/atan.cl
+    sleef-pocl/ceil.cl
     sleef-pocl/exp.cl
+    sleef-pocl/exp10.cl
     sleef-pocl/exp2.cl
     sleef-pocl/fabs.cl
+    sleef-pocl/fdim.cl
+    sleef-pocl/floor.cl
     sleef-pocl/fma.cl
-
     sleef-pocl/fmax.cl
     sleef-pocl/fmin.cl
     sleef-pocl/log10.cl
-
     sleef-pocl/log.cl
     sleef-pocl/ldexp.cl
     sleef-pocl/rint.cl
     sleef-pocl/round.cl
     sleef-pocl/sqrt.cl
+    sleef-pocl/trunc.cl
 
+    libclc-pocl/pocl_fma.cl
     sleef-pocl/scalars.cl
     )
 
   list(APPEND SOURCES_WITH_SLEEF
-    cos.cl
-    sin.cl
-    log2.cl
-    pow.cl
-    fmod.cl
-
-    exp.cl
-    exp2.cl
-    fabs.cl
-    fma.cl
-
-    fmax.cl
-    fmin.cl
-    log10.cl
-
-    log.cl
-    ldexp.cl
-    rint.cl
-    round.cl
-    sqrt.cl
-  )
-
-  if(LLVM_VERSION_MAJOR GREATER_EQUAL 19)
-    list(REMOVE_ITEM SOURCES_WITH_SLEEF
-      libclc-pocl/cosh.cl
-      libclc-pocl/sinh.cl
-      libclc-pocl/pown.cl
-      libclc-pocl/tan.cl
-      libclc-pocl/tanh.cl
-      libclc-pocl/isinf.cl
-      libclc-pocl/isnan.cl
-      libclc-pocl/isfinite.cl
-      libclc-pocl/isnormal.cl
-      libclc-pocl/frexp.cl
-
-      # only available on Apple OS X
-      # libclc-pocl/sinpi.cl
-      # libclc-pocl/cospi.cl
-      # libclc-pocl/tanpi.cl
-
-      # these are available as Clang builtins (__builtin_XYZ), but not as LLVM
-      # intrinsics (llvm.XYZ.f32), only library calls.
-      #libclc-pocl/acosh.cl
-      #libclc-pocl/asinh.cl
-      #libclc-pocl/atanh.cl
-      #libclc-pocl/logb.cl
-      #sleef-pocl/log1p.cl
-      #sleef-pocl/expm1.cl
-      #sleef-pocl/modf.cl
-      #sleef-pocl/ilogb.cl
-      #sleef-pocl/hypot.cl
-      #sleef-pocl/atan2.cl
-      #sleef-pocl/erf.cl
-      #sleef-pocl/erfc.cl
-      #sleef-pocl/fdim.cl
-      #sleef-pocl/nextafter.cl
-      #libclc-pocl/remainder.cl
-      #libclc-pocl/remquo.cl
-
-      sleef-pocl/trunc.cl
-      sleef-pocl/ceil.cl
-      sleef-pocl/exp10.cl
-      sleef-pocl/floor.cl
-      sleef-pocl/acos.cl
-      sleef-pocl/asin.cl
-      sleef-pocl/atan.cl
-    )
-  list(APPEND SOURCES_WITH_SLEEF
-    cosh.cl
-    sinh.cl
-    tanh.cl
-    ceil.cl
-
-    pown.cl
-    tan.cl
     acos.cl
     asin.cl
     atan.cl
 
+    ceil.cl
+    cos.cl
+    cosh.cl
+
+    exp.cl
+    exp2.cl
     exp10.cl
+
+    fabs.cl
+    fmod.cl
+    fdim.cl
+    fma.cl
+    fmax.cl
+    fmin.cl
     floor.cl
     frexp.cl
 
@@ -367,12 +323,56 @@ if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS)
     isnan.cl
     isnormal.cl
 
+    ldexp.cl
+    log.cl
+    log10.cl
+    log2.cl
+
+    pow.cl
+    pown.cl
+
+    rint.cl
+    round.cl
+
+    sin.cl
+    sinh.cl
+    sqrt.cl
+
+    tan.cl
+    tanh.cl
+
     trunc.cl
     )
+endif()  # ENABLE_HOST_CPU_VECTORIZE_BUILTINS
+
+
+# add conformant versions of FP16 builtins from CORE-Math library
+if(HOST_CPU_ENABLE_CL_KHR_FP16)
+  # if VECTORIZE_BUILTINS=ON, add only those FP16 functions for which we don't have LLVM builtins
+  # (= not present in the list above)
+  if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS) # implies CONFORMANCE=OFF
+    foreach(FILE IN ITEMS
+        acospif16.cl  atan2f16.cl    hypotf16.cl     log2p1f16.cl    tgammaf16.cl
+        acoshf16.cl   atan2pif16.cl  exp10m1f16.cl   lgammaf16.cl    sinpif16.cl
+        atanhf16.cl   cospif16.cl    exp2m1f16.cl    log10p1f16.cl   asinhf16.cl
+        atanpif16.cl  erfcf16.cl     log1pf16.cl     sincosf16.cl    asinpif16.cl
+        cbrtf16.cl    erff16.cl      expm1f16.cl     tanpif16.cl)
+      list(APPEND SOURCES_WITH_SLEEF "core-math/${FILE}")
+    endforeach()
+  else()
+    # VECTORIZE_BUILTINS=OFF, add all available CORE-math functions
+    foreach(FILE IN ITEMS
+        acosf16.cl    atan2f16.cl    exp10f16.cl     hypotf16.cl    log2p1f16.cl   sinhf16.cl    tgammaf16.cl
+        acoshf16.cl   atan2pif16.cl  cosf16.cl       exp10m1f16.cl  lgammaf16.cl   logf16.cl     sinpif16.cl
+        acospif16.cl  atanf16.cl     coshf16.cl      exp2f16.cl     log10f16.cl    powf16.cl
+        asinf16.cl    atanhf16.cl    cospif16.cl     exp2m1f16.cl   log10p1f16.cl  tanf16.cl
+        asinhf16.cl   atanpif16.cl   erfcf16.cl      expf16.cl      log1pf16.cl    sincosf16.cl  tanhf16.cl
+        asinpif16.cl  cbrtf16.cl     erff16.cl       expm1f16.cl    log2f16.cl     sinf16.cl     tanpif16.cl
+        additionalf16.cl)
+      list(APPEND SOURCES_WITH_SLEEF "core-math/${FILE}")
+    endforeach()
   endif()
-
 endif()
-
 
 if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_subgroup")
   list(APPEND SOURCES_WITH_SLEEF subgroups.cl)

@@ -430,6 +430,12 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
 
 #endif
 
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_fp64") == NULL)
+    device->double_fp_config = 0;
+
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_fp16") == NULL)
+    device->half_fp_config = 0;
+
   device->version_of_latest_passed_cts = "v2024-08-08-00";
   device->extensions = HOST_DEVICE_EXTENSIONS;
 

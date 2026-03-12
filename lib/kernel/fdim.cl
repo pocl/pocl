@@ -24,17 +24,4 @@
 
 #include "templates.h"
 
-#if __has_builtin(__builtin_fdim)
-
-#if !__has_builtin(__builtin_fdimf16)
-#undef __IF_FP16
-#define __IF_FP16(X)
-#endif
-
-DEFINE_BUILTIN_V_VV(fdim)
-
-#else
-
-DEFINE_EXPR_V_VV(fdim, fmax(a-b, (stype)0))
-
-#endif
+DEFINE_EXPR_V_VV(fdim, (isnan(a) ? a : (isnan(b) ? b : fmax(a-b, (stype)0))))

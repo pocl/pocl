@@ -7,8 +7,8 @@ permissions:
 on:
   workflow_dispatch:
   schedule:
-# at 3:11 UTC every wednesday
-    - cron: '11 3 * * 3'
+# at 3:11 UTC every sunday
+    - cron: '11 3 * * 0'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
@@ -48,7 +48,7 @@ jobs:
         id: cmake
         run: |
           runCMake() {
-            BUILD_FLAGS="-O1 -ggdb -g3 -fno-omit-frame-pointer -march=native"
+            BUILD_FLAGS="-O2 -ggdb -fno-omit-frame-pointer -march=native"
             cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo "-DCMAKE_C_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
             "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
@@ -101,11 +101,9 @@ jobs:
           CL_PLATFORM_NAME: "Portable"
           CL_DEVICE_TYPE: "cpu"
         id: ctest
-        timeout-minutes: 120
         run: |
-          # limit CPUs to 4 instead of $(${{ github.workspace }}/.github/scripts/get_cpus.sh)
           runCTest() {
-            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cpu_tests -j4 $CTEST_FLAGS "$@"
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cpu_tests -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) $CTEST_FLAGS "$@"
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           # hardcoded path in test_compiler / execute_after_included_header_link

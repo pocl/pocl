@@ -24,41 +24,42 @@
 
 #include "templates.h"
 
-
-
-#define IMPLEMENT_VLOAD(TYPE, MOD)                                      \
-                                                                        \
-  TYPE##2 _CL_OVERLOADABLE                                              \
-  vload2(size_t offset, const MOD TYPE *p)                              \
-  {                                                                     \
-    return (TYPE##2)(p[offset*2], p[offset*2+1]);                       \
-  }                                                                     \
-                                                                        \
-  TYPE##3 _CL_OVERLOADABLE                                              \
-  vload3(size_t offset, const MOD TYPE *p)                              \
-  {                                                                     \
-    return (TYPE##3)(vload2(0, &p[offset*3]), p[offset*3+2]);           \
-  }                                                                     \
-                                                                        \
-  TYPE##4 _CL_OVERLOADABLE                                              \
-  vload4(size_t offset, const MOD TYPE *p)                              \
-  {                                                                     \
-    return (TYPE##4)(vload2(0, &p[offset*4]), vload2(0, &p[offset*4+2])); \
-  }                                                                     \
-                                                                        \
-  TYPE##8 _CL_OVERLOADABLE                                              \
-  vload8(size_t offset, const MOD TYPE *p)                              \
-  {                                                                     \
-    return (TYPE##8)(vload4(0, &p[offset*8]), vload4(0, &p[offset*8+4])); \
-  }                                                                     \
-                                                                        \
-  TYPE##16 _CL_OVERLOADABLE                                             \
-  vload16(size_t offset, const MOD TYPE *p)                             \
-  {                                                                     \
-    return (TYPE##16)(vload8(0, &p[offset*16]), vload8(0, &p[offset*16+8])); \
+#define IMPLEMENT_VLOAD(TYPE, MOD)                                            \
+                                                                              \
+  TYPE##2 _CL_OVERLOADABLE vload2 (size_t offset, const MOD TYPE *p)          \
+  {                                                                           \
+    TYPE##2 retval;                                                           \
+    __builtin_memcpy_inline (&retval, &p[offset * 2], sizeof (TYPE##2));      \
+    return retval;                                                            \
+  }                                                                           \
+                                                                              \
+  TYPE##3 _CL_OVERLOADABLE vload3 (size_t offset, const MOD TYPE *p)          \
+  {                                                                           \
+    TYPE##3 retval;                                                           \
+    __builtin_memcpy_inline (&retval, &p[offset * 3], sizeof (TYPE##3));      \
+    return retval;                                                            \
+  }                                                                           \
+                                                                              \
+  TYPE##4 _CL_OVERLOADABLE vload4 (size_t offset, const MOD TYPE *p)          \
+  {                                                                           \
+    TYPE##4 retval;                                                           \
+    __builtin_memcpy_inline (&retval, &p[offset * 4], sizeof (TYPE##4));      \
+    return retval;                                                            \
+  }                                                                           \
+                                                                              \
+  TYPE##8 _CL_OVERLOADABLE vload8 (size_t offset, const MOD TYPE *p)          \
+  {                                                                           \
+    TYPE##8 retval;                                                           \
+    __builtin_memcpy_inline (&retval, &p[offset * 8], sizeof (TYPE##8));      \
+    return retval;                                                            \
+  }                                                                           \
+                                                                              \
+  TYPE##16 _CL_OVERLOADABLE vload16 (size_t offset, const MOD TYPE *p)        \
+  {                                                                           \
+    TYPE##16 retval;                                                          \
+    __builtin_memcpy_inline (&retval, &p[offset * 16], sizeof (TYPE##16));    \
+    return retval;                                                            \
   }
-
-
 
 IMPLEMENT_VLOAD(char  , __global)
 IMPLEMENT_VLOAD(short , __global)
