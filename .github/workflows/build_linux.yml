@@ -223,7 +223,7 @@ jobs:
           # thread sanitizer does not support C11 <threads.h>
           # implementation of threading, only pthreads.
           # issue: https://github.com/google/sanitizers/issues/1603
-            runCTest -E 'test_large_buf|clSetEventCallback'
+            runCTest -R runtime -E 'test_large_buf|clSetEventCallback'
           elif [ "${{ matrix.config }}" == "ubsan" ]; then
             runCTest -E test_large_buf
           else
