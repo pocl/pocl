@@ -596,6 +596,7 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
   // be to add hidden context struct parameters to the builtins that need the
   // context data and fix the calls early.
   if (Dev->run_workgroup_pass) {
+    addPass(Passes, "enforce-vectorization");
     addPass(Passes, "workgroup", PassType::Module);
     addPass(Passes, "always-inline", PassType::Module);
   }
@@ -647,7 +648,8 @@ static bool runKernelCompilerPasses(cl_device_id Device, llvm::Module &Mod,
   addStage2PassesToPipeline(Device, Passes2);
   std::string P2 = convertPassesToPipelineString(Passes2);
 
-  Error E = PM.build(Device, P1, Optimize ? 1 : 0, 0, P2, Optimize ? 3 : 0, 0);
+  // Error E = PM.build(Device, P1, Optimize ? 1 : 0, 0, P2, Optimize ? 3 : 0, 0);
+  Error E = PM.build(Device, P1, Optimize ? 1 : 0, 0, P2, 0, 0);
   if (E) {
     std::cerr << "LLVM: failed to create compilation pipeline";
     return false;
