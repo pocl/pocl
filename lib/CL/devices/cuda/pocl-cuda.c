@@ -2146,7 +2146,7 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
                 = (pocl_cuda_event_data_t *)dep->event->data;
 
             /* Wait until dependency has finished being submitted */
-            while (!dep_data->events_ready)
+            while (!POCL_ATOMIC_LOAD (dep_data->events_ready))
               ;
 
             result = cuStreamWaitEvent (stream, dep_data->end, 0);
@@ -2369,7 +2369,7 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
   result = cuEventRecord (event_data->end, stream);
   CUDA_CHECK_ABORT (result, "cuEventRecord");
 
-  event_data->events_ready = 1;
+  POCL_ATOMIC_STORE (event_data->events_ready, 1);
 }
 
 void
@@ -2516,12 +2516,23 @@ pocl_cuda_update_event (cl_device_id device, cl_event event)
 void
 pocl_cuda_wait_event_recurse (cl_device_id device, cl_event event)
 {
-  while (event->wait_list)
-    pocl_cuda_wait_event_recurse (device, event->wait_list->event);
+  while (1)
+    {
+      POCL_LOCK_OBJ (event);
+      /* Lock event so that wait list is not modified in pocl_create_event_sync() */
+      if (!event->wait_list)
+        { 
+          POCL_UNLOCK_OBJ (event);
+          break;
+        }
+      cl_event wait_event = event->wait_list->event;
+      POCL_UNLOCK_OBJ (event);
+      pocl_cuda_wait_event_recurse(device, wait_event);
+    }
 
   assert (event->status > CL_COMPLETE);
   /* If another thread has handled submission, event data might not have been created yet */
-  while (!POCL_ATOMIC_LOAD (event->data))
+   while (!POCL_ATOMIC_LOAD (event->data))
     ;
   pocl_cuda_event_data_t *e_d = (pocl_cuda_event_data_t *)event->data;
   while (!POCL_ATOMIC_LOAD (e_d->events_ready))
@@ -2582,6 +2593,7 @@ pocl_cuda_join (cl_device_id device, cl_command_queue cq)
   POCL_LOCK_OBJ (cq);
 
   /* Check if event has already been handled */
+  /* The command queue is locked so no need to obtain a lock on wait list events */
   cl_event wait_event;
   for (wait_event = cq->last_event.event; wait_event; wait_event = wait_event->wait_list->event)
     {
