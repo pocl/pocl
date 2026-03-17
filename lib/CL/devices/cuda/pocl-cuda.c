@@ -3025,6 +3025,7 @@ pocl_cuda_get_subgroup_info_ext (cl_device_id dev,
                                  void *param_value,
                                  size_t *param_value_size_ret)
 {
+  cl_int errcode = CL_SUCCESS;
   pocl_cuda_device_data_t *ddata = (pocl_cuda_device_data_t *)dev->data;
   size_t sg_size = ddata->warp_size;
 
@@ -3049,7 +3050,7 @@ pocl_cuda_get_subgroup_info_ext (cl_device_id dev,
       }
     case CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT:
       {
-        POCL_RETURN_ERROR_ON ((input_value == NULL), CL_INVALID_VALUE,
+        POCL_GOTO_ERROR_ON ((input_value == NULL), CL_INVALID_VALUE,
                               "SG size wish not given.");
         size_t n_wish = *(size_t *)input_value;
 
@@ -3070,7 +3071,10 @@ pocl_cuda_get_subgroup_info_ext (cl_device_id dev,
           }
       }
     default:
-      POCL_RETURN_ERROR_ON (1, CL_INVALID_VALUE, "Unknown param_name: %u\n",
+      POCL_GOTO_ERROR_ON (1, CL_INVALID_VALUE, "Unknown param_name: %u\n",
                             param_name);
     }
+
+ERROR:
+  return errcode;
 }
