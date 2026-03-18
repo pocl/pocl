@@ -896,10 +896,9 @@ pocl_basic_get_device_info_ext (cl_device_id device, cl_device_info param_name,
         /* We can basically support fixing any WG size with the CPU devices,
            but let's report something semi-sensible here for vectorization aid.
          */
-        size_t *sizes = alloca (sizeof (size_t) * device->max_work_group_size);
-        for (unsigned i = 0; i < device->max_work_group_size; ++i)
-          sizes[i] = i;
-        POCL_RETURN_GETINFO_ARRAY (size_t, device->max_work_group_size, sizes);
+        size_t sizes[] = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512 };
+        POCL_RETURN_GETINFO_ARRAY (size_t, sizeof (sizes) / sizeof (size_t),
+                                   sizes);
       }
     default:
       POCL_MSG_ERR ("Unknown param_name for get_device_info_ext: %u\n",
