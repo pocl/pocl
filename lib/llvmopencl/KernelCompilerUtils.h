@@ -27,7 +27,6 @@
 
 #define LID_G_NAME_VECTORIZED (std::string("_local_id_vectorized_"))
 #define GID_G_NAME_VECTORIZED (std::string("_global_id_vectorized_"))
-#define GANG_SIZE (4)
 
 // Generates the name for the global magic variable for the local id.
 #define LID_G_NAME(DIM) (std::string("_local_id_") + (char)('x' + DIM))
