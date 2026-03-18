@@ -1501,7 +1501,12 @@ if(NOT DEFINED DEFAULT_ENABLE_ICD)
         endif()
       endif()
       if(NOT OPENCL_FOUND)
-        find_library(OPENCL_LIBRARIES OpenCL)
+        # issue 2111
+        if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.24.0)
+          find_library(OPENCL_LIBRARIES OpenCL NO_CMAKE_INSTALL_PREFIX)
+        else()
+          find_library(OPENCL_LIBRARIES OpenCL)
+        endif()
         # version check the found library
         if(OPENCL_LIBRARIES)
           set(CMAKE_REQUIRED_LIBRARIES "${OPENCL_LIBRARIES}")
