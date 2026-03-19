@@ -230,14 +230,19 @@ if [ -e "${CL_DEV_INFO}" ]; then
         cl_ext_float_atomics)
           CL_EXT_DEFS="${CL_EXT_DEFS} -D__opencl_c_ext_fp32_global_atomic_add=1 -D__opencl_c_ext_fp32_local_atomic_add=1 -D__opencl_c_ext_fp32_global_atomic_min_max=1 -D__opencl_c_ext_fp32_local_atomic_min_max=1 -D__opencl_c_ext_fp64_global_atomic_add=1 -D__opencl_c_ext_fp64_local_atomic_add=1 -D__opencl_c_ext_fp64_global_atomic_min_max=1 -D__opencl_c_ext_fp64_local_atomic_min_max=1"
           CL_EXTS="${CL_EXTS},+__opencl_c_ext_fp32_global_atomic_add,+__opencl_c_ext_fp32_local_atomic_add,+__opencl_c_ext_fp32_global_atomic_min_max,+__opencl_c_ext_fp32_local_atomic_min_max,+__opencl_c_ext_fp64_global_atomic_add,+__opencl_c_ext_fp64_local_atomic_add,+__opencl_c_ext_fp64_global_atomic_min_max,+__opencl_c_ext_fp64_local_atomic_min_max"
+          SPV_EXTS="${SPV_EXTS},+SPV_EXT_shader_atomic_float_add,+SPV_EXT_shader_atomic_float_min_max"
           ;;
         cl_khr_integer_dot_product)
           CL_EXT_DEFS="${CL_EXT_DEFS} -D__opencl_c_integer_dot_product_input_4x8bit=1 -D__opencl_c_integer_dot_product_input_4x8bit_packed=1"
           CL_EXTS="${CL_EXTS},+__opencl_c_integer_dot_product_input_4x8bit,+__opencl_c_integer_dot_product_input_4x8bit_packed"
+          SPV_EXTS="${SPV_EXTS},+SPV_KHR_integer_dot_product"
           ;;
         cl_khr_fp16)
           CL_EXT_DEFS="${CL_EXT_DEFS} -D__opencl_c_fp16=1"
           CL_EXTS="${CL_EXTS},+__opencl_c_fp16"
+          ;;
+        cl_khr_extended_bit_ops)
+          SPV_EXTS="${SPV_EXTS},+SPV_KHR_bit_instructions"
           ;;
       esac
     fi

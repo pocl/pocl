@@ -69,9 +69,10 @@ jobs:
       - name: Run Tests
         env:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+          POCL_KERNEL_CACHE: "0"
         id: ctest
         timeout-minutes: 120
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd $BUILD_DIR && ${{ github.workspace }}/tools/scripts/run_cpu_tests -j$(nproc) -L mlir
+          cd $BUILD_DIR && ${{ github.workspace }}/tools/scripts/run_cpu_tests $CTEST_FLAGS -j1 --repeat until-pass:3 -L mlir

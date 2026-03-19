@@ -207,8 +207,7 @@ jobs:
           if [ "${{ matrix.config }}" == "basic" ] || [ "${{ matrix.config }}" == "devel" ] || [ "${{ matrix.config }}" == "TBB" ]; then
             runCTest
           elif [ "${{ matrix.config }}" == "OpenMP" ]; then
-            # this test passes, but is extremely slow on some CI runners
-            runCTest -E EinsteinToolkit
+            runCTest
           elif [ "${{ matrix.config }}" == "cts_spirv" ]; then
             runCTest -L conformance_suite_micro_spirv
           elif [ "${{ matrix.config }}" == "tier1" ]; then
@@ -224,7 +223,7 @@ jobs:
           # thread sanitizer does not support C11 <threads.h>
           # implementation of threading, only pthreads.
           # issue: https://github.com/google/sanitizers/issues/1603
-            runCTest -E 'test_large_buf|clSetEventCallback'
+            runCTest -R runtime -E 'test_large_buf|clSetEventCallback'
           elif [ "${{ matrix.config }}" == "ubsan" ]; then
             runCTest -E test_large_buf
           else

@@ -62,32 +62,39 @@ float8 _cl_half2float8 (const ushort8 data);
                                                                               \
   float2 _CL_OVERLOADABLE vload_half2 (size_t offset, const MOD half *p)      \
   {                                                                           \
-    return (float2) (vload_half (offset * 2, p),                              \
-                     vload_half (offset * 2 + 1, p));                         \
+    return (float2)(vload_half (offset * 2, p),                               \
+                    vload_half (offset * 2 + 1, p));                          \
   }                                                                           \
                                                                               \
   float3 _CL_OVERLOADABLE vload_half3 (size_t offset, const MOD half *p)      \
   {                                                                           \
-    return (float3) (vload_half (offset * 3, p),                              \
-                     vload_half (offset * 3 + 1, p),                          \
-                     vload_half (offset * 3 + 2, p));                         \
+    return (float3)(vload_half (offset * 3, p),                               \
+                    vload_half (offset * 3 + 1, p),                           \
+                    vload_half (offset * 3 + 2, p));                          \
   }                                                                           \
                                                                               \
   float4 _CL_OVERLOADABLE vload_half4 (size_t offset, const MOD half *p)      \
   {                                                                           \
-    return _cl_half2float4 (((const MOD ushort4 *)p)[offset]);                \
+    ushort4 val;                                                              \
+    __builtin_memcpy_inline (&val, &p[offset * 4], sizeof (val));             \
+    return _cl_half2float4 (val);                                             \
   }                                                                           \
                                                                               \
   float8 _CL_OVERLOADABLE vload_half8 (size_t offset, const MOD half *p)      \
   {                                                                           \
-    return _cl_half2float8 (((const MOD ushort8 *)p)[offset]);                \
+    ushort8 val;                                                              \
+    __builtin_memcpy_inline (&val, &p[offset * 8], sizeof (val));             \
+    return _cl_half2float8 (val);                                             \
   }                                                                           \
                                                                               \
   float16 _CL_OVERLOADABLE vload_half16 (size_t offset, const MOD half *p)    \
   {                                                                           \
-    float8 hi = _cl_half2float8 (((const MOD ushort8 *)p)[offset * 2]);       \
-    float8 lo = _cl_half2float8 (((const MOD ushort8 *)p)[offset * 2 + 1]);   \
-    return (float16) (hi, lo);                                                \
+    ushort8 val1, val2;                                                       \
+    __builtin_memcpy_inline (&val1, &p[offset * 16], sizeof (val1));          \
+    __builtin_memcpy_inline (&val2, &p[offset * 16 + 8], sizeof (val2));      \
+    float8 hi = _cl_half2float8 (val1);                                       \
+    float8 lo = _cl_half2float8 (val2);                                       \
+    return (float16)(hi, lo);                                                 \
   }                                                                           \
                                                                               \
   float _CL_OVERLOADABLE vloada_half (size_t offset, const MOD half *p)       \
@@ -97,14 +104,14 @@ float8 _cl_half2float8 (const ushort8 data);
                                                                               \
   float2 _CL_OVERLOADABLE vloada_half2 (size_t offset, const MOD half *p)     \
   {                                                                           \
-    return (float2) (vloada_half (offset * 2, p),                             \
-                     vloada_half (offset * 2, p + 1));                        \
+    return (float2)(vloada_half (offset * 2, p),                              \
+                    vloada_half (offset * 2, p + 1));                         \
   }                                                                           \
                                                                               \
   float3 _CL_OVERLOADABLE vloada_half3 (size_t offset, const MOD half *p)     \
   {                                                                           \
     float4 tmp = vloada_half4 (offset, p);                                    \
-    return (float3) (tmp.xyz);                                                \
+    return (float3)(tmp.xyz);                                                 \
   }                                                                           \
                                                                               \
   float4 _CL_OVERLOADABLE vloada_half4 (size_t offset, const MOD half *p)     \
@@ -121,7 +128,7 @@ float8 _cl_half2float8 (const ushort8 data);
   {                                                                           \
     float8 hi = _cl_half2float8 (((const MOD ushort8 *)p)[offset * 2]);       \
     float8 lo = _cl_half2float8 (((const MOD ushort8 *)p)[offset * 2 + 1]);   \
-    return (float16) (hi, lo);                                                \
+    return (float16)(hi, lo);                                                 \
   }                                                                           \
                                                                               \
 // __F16C__

@@ -375,7 +375,7 @@ endif()
 function(pocl_build_clang_llvm_object TGT_NAME )
   if(LLVM_PACKAGE_VERSION)
     # creates two targets: "${TGT_NAME}" STATIC/SHARED library and "obj.${TGT_NAME}" OBJECT library
-    add_clang_library(${TGT_NAME} ${LLVM_LINK_TYPE} OBJECT LINK_COMPONENTS
+    add_clang_library(${TGT_NAME} ${LLVM_LINK_TYPE} OBJECT LINK_LIBS
                       ${POCL_CLANG_LINK_TARGETS} ${POCL_LLVM_LINK_TARGETS}
                       DISABLE_LLVM_LINK_LLVM_DYLIB PARTIAL_SOURCES_INTENDED
                        ${ARGN})
