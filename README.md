@@ -40,7 +40,28 @@ For more details, consult the [install guide](http://portablecl.org/docs/html/in
 Building PoCL follows the usual CMake build steps. Note however, that PoCL
 can be used from the build directory (without installing it system-wide).
 
-## Supported environments
+## Device drivers
+
+PoCL supports several backend drivers, with different levels of maturity
+in terms of received testing, reliability and available features.
+CPU/x86_64 is continuously tested to pass CTS, and is also able to pass >99%
+of all CTS tests when built with Thread or Address sanitizers.
+CPU driver is also tested on RISCV and ARM64;
+CPU driver on ARM32, i386, PPC, S390x is not tested or supported. We won't
+prevent building on these architectures, but we don't actively support them ATM.
+
+
+|     Driver  |   Maturity      |  OpenCL version  | input SPIR-V   |
+|:------------|:---------------:|:----------------:|:--------------:|
+| CPU/x86_64  |   very high     |    3.0           |  1.4           |
+| CPU/ARM64   |   high          |    3.0           |  1.4           |
+| CPU/RISCV   |   high          |    3.0           |  1.4           |
+| LevelZero   |   high          |    3.0           |  as LZ runtime |
+| CUDA        |   low           |    3.0           |  1.2           |
+| OpenASIP    |   low           |    1.2           |  none          |
+| Vulkan      |   low           |    3.0           |  ExecModel=Shader only |
+
+## Supported CI environments
 
 ### CI status:
 
