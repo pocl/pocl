@@ -62,7 +62,7 @@ jobs:
 
       - name: Restore Cached LLVM
         id: cache-llvm
-        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7
         with:
           path: install-llvm
           key: llvm-mingw-${{ matrix.llvm_version }}-${{ runner.os }}
@@ -97,7 +97,7 @@ jobs:
 
       - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
         name: Save LLVM
-        uses: actions/cache/save@9255dc7a253b0ccc959486e2bca901246202afeb
+        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7
         with:
           path: install-llvm
           key: llvm-mingw-${{ matrix.llvm_version }}-${{ runner.os }}
