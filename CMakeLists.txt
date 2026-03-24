@@ -1660,6 +1660,7 @@ set(HOST_DEVICE_CL_VERSION_MAJOR 3)
 set(HOST_DEVICE_CL_VERSION_MINOR 0)
 
 # Host CPU device: list of extensions that are always enabled, for both OpenCL 1.2 and 3.0
+# NOTE: update README.md when changing the list
 set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
 cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
 cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes cl_ext_float_atomics \
@@ -2245,6 +2246,7 @@ if(ENABLE_CUDA)
   set(CUDA_DEVICE_CL_STD "3.0")
 
   # CUDA device: list of extensions that are always enabled, for both OpenCL 1.2 and 3.0
+  # NOTE: update README.md when changing the list
   set(CUDA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
     cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
     cl_khr_local_int32_extended_atomics cl_khr_int64_base_atomics \
