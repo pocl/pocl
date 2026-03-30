@@ -52,7 +52,7 @@ jobs:
         id: cmake
         run: |
           runCMake() {
-            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            BUILD_FLAGS="-O1 -march=x86-64-v2 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
             cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
             -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} \
@@ -61,7 +61,11 @@ jobs:
 
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
-          runCMake -DENABLE_CUDA=ON
+          if [ ${{ github.ref == 'main' || startsWith(github.ref, 'release_') }} ]; then
+            runCMake -DENABLE_CUDA=ON -DSTATIC_LLVM=ON -DENABLE_HOST_CPU_DEVICES=0
+          else
+            runCMake -DENABLE_CUDA=ON
+          fi
 
       - name: Run Build
         id: build
@@ -78,3 +82,15 @@ jobs:
           mkdir ${{ env.POCL_CACHE_DIR }}
           cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cuda_tests $CTEST_FLAGS -E 'test_device_address|overwriting_the_previous_kernel'
 
+      - name: Archive Artifacts
+        run: |
+          cd ${{ github.workspace }}/build && make install DESTDIR=/tmp/pocl_cuda_llvm_${{ matrix.llvm }}_${{ github.sha }}
+          tar -C /tmp -cvf pocl_cuda_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar pocl_cuda_llvm_${{ matrix.llvm }}_${{ github.sha }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
+        with:
+          name: "PoCL-CUDA-LLVM_${{ matrix.llvm }}-${{ github.ref }}-${{ github.sha }}"
+          path: "/tmp/pocl_cuda_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar"
+          if-no-files-found: error
+          compression-level: 4

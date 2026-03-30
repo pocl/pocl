@@ -73,12 +73,17 @@ jobs:
         shell: bash -el {0}
         id: cmake
         run: |
+
+          if [ ${{ github.ref == 'main' || startsWith(github.ref, 'release_') }} ]; then
+            EXTRA_FLAGS="-DSTATIC_LLVM=1"
+          fi
+
           runCMake() {
-            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            BUILD_FLAGS="-O1 -march=apple-m1 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
             cmake -DDEVELOPER_MODE=ON -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_PREFIX_PATH=$CONDA_PREFIX \
             -DOPENCL_H=$CONDA_PREFIX/include/CL/opencl.h -DOPENCL_HPP=$CONDA_PREFIX/include/CL/opencl.hpp \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
-            -DWITH_LLVM_CONFIG=$CONDA_PREFIX/bin/llvm-config -DLLC_HOST_CPU=apple-m3 \
+            -DWITH_LLVM_CONFIG=$CONDA_PREFIX/bin/llvm-config -DLLC_HOST_CPU=apple-m1 $EXTRA_FLAGS \
             "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
           }
 
@@ -129,3 +134,16 @@ jobs:
           else
             echo "Unknown configuration" && exit 1
           fi
+
+      - name: Archive Artifacts
+        run: |
+          cd ${{ github.workspace }}/build && make install DESTDIR=/tmp/pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}
+          tar -C /tmp -cvf pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
+        with:
+          name: "PoCL-MacOSX-${{ matrix.config }}-LLVM_${{ matrix.llvm }}-${{ github.ref }}-${{ github.sha }}"
+          path: "/tmp/pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar"
+          if-no-files-found: error
+          compression-level: 4
