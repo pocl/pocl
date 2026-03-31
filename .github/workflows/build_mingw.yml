@@ -59,12 +59,6 @@ jobs:
           # Convert the Windows workspace path to an MSYS2 compatible one
           WORKSPACE=$(cygpath -u "${{ github.workspace }}")
           echo "WORKSPACE=${WORKSPACE}" >> $GITHUB_ENV
-          if ${{ (github.ref_name == 'main') || startsWith(github.ref_name, 'release_') }} ; then
-            POCL_INSTALL_PREFIX="/c/PoCL"
-          else
-            POCL_INSTALL_PREFIX="${{ env.WORKSPACE }}/install-pocl"
-          fi
-          echo "POCL_INSTALL_PREFIX=${POCL_INSTALL_PREFIX}" >> $GITHUB_ENV
 
       - name: Restore Cached LLVM
         id: cache-llvm
@@ -115,22 +109,15 @@ jobs:
 
       - name: Configure PoCL
         run: |
-          if ${{ github.ref_name == 'main' || startsWith(github.ref_name, 'release_') }} ; then
-            echo "Static linking libLLVM"
-            EXTRA_FLAGS="-DSTATIC_LLVM=1 -DKERNELLIB_HOST_CPU_VARIANTS=distro"
-          else
-            echo "Dynamic linking libLLVM"
-            EXTRA_FLAGS="-DLLC_HOST_CPU=haswell"
-          fi
-
           BUILD_FLAGS="-O2 -march=x86-64-v2 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
           cmake -S ${{ env.WORKSPACE }} -B ${{ env.WORKSPACE }}/build-pocl \
             -DCMAKE_BUILD_TYPE=Release \
             "-DCMAKE_C_FLAGS_RELEASE=${BUILD_FLAGS}"  "-DCMAKE_CXX_FLAGS_RELEASE=${BUILD_FLAGS}" \
-            -DCMAKE_INSTALL_PREFIX=${{ env.POCL_INSTALL_PREFIX }} \
+            -DCMAKE_INSTALL_PREFIX=${{ env.WORKSPACE }}/install-pocl \
             -DWITH_LLVM_CONFIG=${{ env.WORKSPACE }}/install-llvm/bin/llvm-config.exe \
             -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }} \
-            -DENABLE_ICD=OFF $EXTRA_FLAGS \
+            -DENABLE_ICD=OFF \
+            -DLLC_HOST_CPU=haswell \
             -DENABLE_LOADABLE_DRIVERS=${{ matrix.shared_libs }} \
             -G "Ninja"
         # XXX: ENABLE_ICD=OFF because ocl-icd doesn't support Windows,
@@ -153,7 +140,7 @@ jobs:
 
       - name: Archive Artifacts
         run: |
-          C:/msys64/usr/bin/tar.exe --force-local -cvf D:/a/_temp/pocl_llvm_${{ matrix.llvm_version }}_${{ github.sha }}.tar ${{ env.POCL_INSTALL_PREFIX }}
+          C:/msys64/usr/bin/tar.exe --force-local -cvf D:/a/_temp/pocl_llvm_${{ matrix.llvm_version }}_${{ github.sha }}.tar ${{ env.WORKSPACE }}/install-pocl
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f

@@ -74,10 +74,6 @@ jobs:
         id: cmake
         run: |
 
-          if ${{ (github.ref_name == 'main') || startsWith(github.ref_name, 'release_') }} ; then
-            EXTRA_FLAGS="-DSTATIC_LLVM=1"
-          fi
-
           runCMake() {
             BUILD_FLAGS="-O2 -mcpu=apple-m1 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
             cmake -DDEVELOPER_MODE=ON -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_PREFIX_PATH=$CONDA_PREFIX \
@@ -90,7 +86,7 @@ jobs:
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
           if [ "${{ matrix.config }}" == "basic" ]; then
-            runCMake -DENABLE_ICD=0
+            runCMake -DENABLE_ICD=0 -DSTATIC_LLVM=1
           elif [ "${{ matrix.config }}" == "devel" ]; then
             runCMake -DENABLE_ICD=0 -DENABLE_EXTRA_VALIDITY_CHECKS=1 -DENABLE_RELOCATION=0
           else
