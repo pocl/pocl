@@ -142,17 +142,14 @@ jobs:
       - name: Test packaging
         run: cpack --config ${{ github.workspace }}\build-pocl\CPackConfig.cmake -G NSIS
 
-      - name: Archive Artifacts
-        run: |
-          C:\msys64\usr\bin\tar.exe --force-local -cvf D:\a\_temp\pocl_llvm_${{ matrix.llvm_version }}_icd_${{ matrix.enable_icd }}_${{ github.sha }}.tar ${{ github.workspace }}\install-pocl
-
       - name: Upload install-dir Artifact
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
           name: 'PoCL-MSVC-x86_64-LLVM_${{ matrix.llvm_version }}-ICD_${{ matrix.enable_icd }}-Shared_${{ matrix.shared_libs }}-${{ github.ref_name }}-${{ github.sha }}'
-          path: 'D:\a\_temp\pocl_llvm_${{ matrix.llvm_version }}_icd_${{ matrix.enable_icd }}_${{ github.sha }}.tar'
+          path: '${{ env.WORKSPACE }}/install-pocl/'
           if-no-files-found: error
           compression-level: 4
+          archive: true
 
       - name: Upload NSIS installer Artifact
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
@@ -160,4 +157,4 @@ jobs:
           name: 'PoCL-MSVC-NSIS-x86_64-LLVM_${{ matrix.llvm_version }}-ICD_${{ matrix.enable_icd }}-Shared_${{ matrix.shared_libs }}-${{ github.ref_name }}-${{ github.sha }}'
           path: 'D:\a\pocl\pocl\PoCL*.exe'
           if-no-files-found: error
-          compression-level: 4
+          archive: false

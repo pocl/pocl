@@ -78,12 +78,12 @@ jobs:
       - name: Archive Artifacts
         run: |
           cd $BUILD_DIR && make install DESTDIR=/tmp/pocl_llvm_${{ matrix.llvm }}_${{ github.sha }}
-          tar -C /tmp -cvf /tmp/pocl_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar pocl_llvm_${{ matrix.llvm }}_${{ github.sha }}
+          tar -C /tmp -cavf /tmp/pocl_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst pocl_llvm_${{ matrix.llvm }}_${{ github.sha }}
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
           name: "PoCL-RISCV-LLVM_${{ matrix.llvm }}-${{ github.ref_name }}-${{ github.sha }}"
-          path: "/tmp/pocl_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar"
+          path: "/tmp/pocl_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst"
           if-no-files-found: error
-          compression-level: 4
+          archive: false

@@ -179,13 +179,13 @@ jobs:
       - name: Archive Artifacts
         if: ${{ matrix.config == 'install' }}
         run: |
-          tar -C /tmp -cvf /tmp/pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}
+          tar -C /tmp -cavf /tmp/pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}
 
       - name: Upload Artifacts
         if: ${{ matrix.config == 'install' }}
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
           name: "PoCL-x86_64-${{ matrix.config }}-LLVM_${{ matrix.llvm }}-${{ github.ref_name }}-${{ github.sha }}"
-          path: "/tmp/pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar"
+          path: "/tmp/pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst"
           if-no-files-found: error
-          compression-level: 4
+          archive: false

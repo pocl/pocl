@@ -81,12 +81,12 @@ jobs:
       - name: Archive Artifacts
         run: |
           cd ${{ github.workspace }}/build && make install DESTDIR=/tmp/pocl_cuda_llvm_${{ matrix.llvm }}_${{ github.sha }}
-          tar -C /tmp -cvf /tmp/pocl_cuda_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar pocl_cuda_llvm_${{ matrix.llvm }}_${{ github.sha }}
+          tar -C /tmp -cavf /tmp/pocl_cuda_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst pocl_cuda_llvm_${{ matrix.llvm }}_${{ github.sha }}
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
-          name: "PoCL-CUDA-LLVM_${{ matrix.llvm }}-${{ github.ref_name }}-${{ github.sha }}"
-          path: "/tmp/pocl_cuda_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar"
+          name: 'PoCL-CUDA-LLVM_${{ matrix.llvm }}-${{ github.ref_name }}-${{ github.sha }}'
+          path: '/tmp/pocl_cuda_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst'
           if-no-files-found: error
-          compression-level: 4
+          archive: false
