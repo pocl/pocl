@@ -61,7 +61,7 @@ jobs:
         with:
           arch: x64
 
-      - uses: mamba-org/setup-micromamba@add3a49764cedee8ee24e82dfde87f5bc2914462
+      - uses: mamba-org/setup-micromamba@d7c9bd84e824b79d2af72a2d4196c7f4300d3476
         with:
           environment-name: pocl-deps
           init-shell: >-
