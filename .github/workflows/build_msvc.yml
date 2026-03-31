@@ -48,7 +48,11 @@ jobs:
             llvm_version: 19
             enable_icd: OFF
             shared_libs: ON
-
+          # builds an .exe installer
+          - config: nsis
+            llvm_version: 20
+            enable_icd: ON
+            shared_libs: ON
 
     steps:
       - name: Checkout PoCL
@@ -100,24 +104,32 @@ jobs:
 
           :: Fix an issue with llvm-config on windows
           copy %DEPS_DIR%\lib\zstd.lib %DEPS_DIR%\lib\zstd.dll.lib
+
+          if ${{ matrix.config == 'nsis' }}==false (
+            set "EXTRA_FLAGS=-DLLC_HOST_CPU=haswell"
+          ) else (
+            set "EXTRA_FLAGS=-DENABLE_LOADABLE_DRIVERS=0 -DENABLE_EXAMPLES=0 -DENABLE_TESTS=0 -DENABLE_CONFORMANCE=1 -DENABLE_RELOCATION=1 -DKERNELLIB_HOST_CPU_VARIANTS=distro -DENABLE_POCL_BUILDING=0"
+          )
+
           cmake -S . -B build-pocl ^
               -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\install-pocl ^
               -DCMAKE_PREFIX_PATH=%DEPS_DIR% ^
               -DENABLE_ICD=${{ matrix.enable_icd }} ^
-              -DENABLE_LLVM=1 ^
+              -DENABLE_LLVM=ON ^
               -DENABLE_LOADABLE_DRIVERS=${{ matrix.shared_libs }} ^
               -DSTATIC_LLVM=ON ^
-              -DLLC_HOST_CPU=haswell ^
               -DENABLE_TESTS=${{ matrix.shared_libs }} ^
               -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL ^
               -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }} ^
               -DCMAKE_BUILD_TYPE=Release ^
+              %EXTRA_FLAGS% ^
               -G "Ninja"
 
       - name: Build PoCL
         run: cmake --build build-pocl --target install
 
       - name: Run Tests
+        if: ${{ matrix.config != 'nsis' }}
         env:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         timeout-minutes: 120
@@ -140,6 +152,7 @@ jobs:
           & ${{ github.workspace }}\tools\scripts\run_cpu_tests.ps1 --output-on-failure -j$Env:NUMBER_OF_PROCESSORS
 
       - name: Test packaging
+        if: ${{ matrix.config == 'nsis' }}
         run: cpack --config ${{ github.workspace }}\build-pocl\CPackConfig.cmake -G NSIS
 
       - name: Upload install-dir Artifact
@@ -152,7 +165,7 @@ jobs:
           archive: true
 
       - name: Upload NSIS installer Artifact
-        if: ${{ matrix.shared_libs == 'ON' && matrix.enable_icd == 'ON' }}
+        if: ${{ matrix.config == 'nsis' }}
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
           # NOTE: if archive is false, the uploaded file's name is used as artifact name
