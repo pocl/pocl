@@ -61,11 +61,7 @@ jobs:
 
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
-          if ${{ (github.ref_name == 'main') || startsWith(github.ref_name, 'release_') }} ; then
-            runCMake -DENABLE_CUDA=ON -DSTATIC_LLVM=ON -DENABLE_HOST_CPU_DEVICES=0
-          else
-            runCMake -DENABLE_CUDA=ON
-          fi
+          runCMake -DENABLE_CUDA=ON
 
       - name: Run Build
         id: build
