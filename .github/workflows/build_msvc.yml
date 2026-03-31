@@ -156,14 +156,14 @@ jobs:
           ) else (
             set "INSTALL_PREFIX=C:\PoCL"
           )
-          C:\msys64\usr\bin\tar.exe --force-local -cvf D:\a\_temp\pocl_llvm_${{ matrix.llvm }}_icd_${{ matrix.enable_icd }}_${{ github.sha }}.tar %INSTALL_PREFIX%
+          C:\msys64\usr\bin\tar.exe --force-local -cvf D:\a\_temp\pocl_llvm_${{ matrix.llvm_version }}_icd_${{ matrix.enable_icd }}_${{ github.sha }}.tar %INSTALL_PREFIX%
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
-          name: "PoCL-MSVC-x86_64-LLVM_${{ matrix.llvm }}-ICD-${{ matrix.enable_icd }}-${{ github.ref_name }}-${{ github.sha }}"
+          name: "PoCL-MSVC-x86_64-LLVM_${{ matrix.llvm_version }}-ICD-${{ matrix.enable_icd }}-${{ github.ref_name }}-${{ github.sha }}"
           path: |
-            "D:\a\_temp\pocl_llvm_${{ matrix.llvm }}_icd_${{ matrix.enable_icd }}_${{ github.sha }}.tar"
-            "D:\a\pocl\pocl\PoCL*.exe"
+            'D:\a\_temp\pocl_llvm_${{ matrix.llvm_version }}_icd_${{ matrix.enable_icd }}_${{ github.sha }}.tar'
+            'D:\a\pocl\pocl\PoCL*.exe'
           if-no-files-found: error
           compression-level: 4

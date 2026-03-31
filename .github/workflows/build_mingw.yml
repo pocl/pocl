@@ -153,12 +153,12 @@ jobs:
 
       - name: Archive Artifacts
         run: |
-          C:/msys64/usr/bin/tar.exe --force-local -cvf D:/a/_temp/pocl_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar ${{ env.POCL_INSTALL_PREFIX }}
+          C:/msys64/usr/bin/tar.exe --force-local -cvf D:/a/_temp/pocl_llvm_${{ matrix.llvm_version }}_${{ github.sha }}.tar ${{ env.POCL_INSTALL_PREFIX }}
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
-          name: "PoCL-MinGW-x86_64-LLVM_${{ matrix.llvm }}-${{ github.ref_name }}-${{ github.sha }}"
-          path: "/d/a/_temp/pocl_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar"
+          name: 'PoCL-MinGW-x86_64-LLVM_${{ matrix.llvm_version }}-${{ github.ref_name }}-${{ github.sha }}'
+          path: 'D:/a/_temp/pocl_llvm_${{ matrix.llvm_version }}_${{ github.sha }}.tar'
           if-no-files-found: error
           compression-level: 4
