@@ -59,7 +59,7 @@ jobs:
           # Convert the Windows workspace path to an MSYS2 compatible one
           WORKSPACE=$(cygpath -u "${{ github.workspace }}")
           echo "WORKSPACE=${WORKSPACE}" >> $GITHUB_ENV
-          if [ ${{ github.ref == 'main' || startsWith(github.ref, 'release_') }} -ne 0 ]; then
+          if ${{ (github.ref == 'main') || startsWith(github.ref, 'release_') }} ; then
             POCL_INSTALL_PREFIX="/c/PoCL"
           else
             POCL_INSTALL_PREFIX="${{ env.WORKSPACE }}/install-pocl"
@@ -153,12 +153,12 @@ jobs:
 
       - name: Archive Artifacts
         run: |
-          C:/msys64/usr/bin/tar.exe -cvf D:/a/_temp/pocl_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar ${{ env.POCL_INSTALL_PREFIX }}
+          C:/msys64/usr/bin/tar.exe -cvf /d/a/_temp/pocl_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar ${{ env.POCL_INSTALL_PREFIX }}
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
         with:
           name: "PoCL-MinGW-x86_64-LLVM_${{ matrix.llvm }}-${{ github.ref }}-${{ github.sha }}"
-          path: "D:/a/_temp/pocl_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar"
+          path: "/d/a/_temp/pocl_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar"
           if-no-files-found: error
           compression-level: 4

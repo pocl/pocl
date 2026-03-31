@@ -83,7 +83,7 @@ jobs:
       - name: Archive Artifacts
         run: |
           cd $BUILD_DIR && make install DESTDIR=/tmp/pocl_arm64_llvm_${{ matrix.llvm }}_${{ github.sha }}
-          tar -C /tmp -cvf pocl_arm64_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar pocl_arm64_llvm_${{ matrix.llvm }}_${{ github.sha }}
+          tar -C /tmp -cvf /tmp/pocl_arm64_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar pocl_arm64_llvm_${{ matrix.llvm }}_${{ github.sha }}
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf

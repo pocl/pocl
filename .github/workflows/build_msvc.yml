@@ -97,7 +97,7 @@ jobs:
           set "CC=cl.exe"
           set "CXX=cl.exe"
           set "DEPS_DIR=%MAMBA_ROOT_PREFIX%\envs\pocl-deps\Library"
-          if ${{ github.ref == 'main' || startsWith(github.ref, 'release_') }}==0 (
+          if ${{ (github.ref == 'main') || startsWith(github.ref, 'release_') }}==false (
             set "CPU_FLAGS=-DLLC_HOST_CPU=haswell"
             set "INSTALL_PREFIX=${{ github.workspace }}\install-pocl"
           ) else (
@@ -151,12 +151,12 @@ jobs:
 
       - name: Archive Artifacts
         run: |
-          if ${{ github.ref == 'main' || startsWith(github.ref, 'release_') }}==0 (
+          if ${{ github.ref == 'main' || startsWith(github.ref, 'release_') }}==false (
             set "INSTALL_PREFIX=${{ github.workspace }}\install-pocl"
           ) else (
             set "INSTALL_PREFIX=C:\PoCL"
           )
-          C:\msys64\usr\bin\tar.exe -cvf D:\a\_temp\pocl_llvm_${{ matrix.llvm }}_icd_${{ matrix.enable_icd }}_${{ github.sha }}.tar %INSTALL_PREFIX%
+          C:\msys64\usr\bin\tar.exe --force-local -cvf D:\a\_temp\pocl_llvm_${{ matrix.llvm }}_icd_${{ matrix.enable_icd }}_${{ github.sha }}.tar %INSTALL_PREFIX%
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
