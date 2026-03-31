@@ -97,7 +97,7 @@ jobs:
           set "CC=cl.exe"
           set "CXX=cl.exe"
           set "DEPS_DIR=%MAMBA_ROOT_PREFIX%\envs\pocl-deps\Library"
-          if ${{ (github.ref == 'main') || startsWith(github.ref, 'release_') }}==false (
+          if ${{ (github.ref_name == 'main') || startsWith(github.ref_name, 'release_') }}==false (
             set "CPU_FLAGS=-DLLC_HOST_CPU=haswell"
             set "INSTALL_PREFIX=${{ github.workspace }}\install-pocl"
           ) else (
@@ -151,7 +151,7 @@ jobs:
 
       - name: Archive Artifacts
         run: |
-          if ${{ github.ref == 'main' || startsWith(github.ref, 'release_') }}==false (
+          if ${{ github.ref_name == 'main' || startsWith(github.ref_name, 'release_') }}==false (
             set "INSTALL_PREFIX=${{ github.workspace }}\install-pocl"
           ) else (
             set "INSTALL_PREFIX=C:\PoCL"
@@ -161,9 +161,8 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
         with:
-          name: "PoCL-MSVC-x86_64-LLVM_${{ matrix.llvm }}-ICD-${{ matrix.enable_icd }}-${{ github.ref }}-${{ github.sha }}"
+          name: "PoCL-MSVC-x86_64-LLVM_${{ matrix.llvm }}-ICD-${{ matrix.enable_icd }}-${{ github.ref_name }}-${{ github.sha }}"
           path: |
             "D:\a\_temp\pocl_llvm_${{ matrix.llvm }}_icd_${{ matrix.enable_icd }}_${{ github.sha }}.tar"
             "D:\a\pocl\pocl\PoCL*.exe"
           if-no-files-found: error
-          compression-level: 4
