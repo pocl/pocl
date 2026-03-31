@@ -141,8 +141,9 @@ jobs:
           tar -C /tmp -cvf /tmp/pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
           name: "PoCL-MacOSX-${{ matrix.config }}-LLVM_${{ matrix.llvm }}-${{ github.ref_name }}-${{ github.sha }}"
           path: "/tmp/pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar"
           if-no-files-found: error
+          compression-level: 4
