@@ -271,6 +271,7 @@ typedef struct remote_server_data_s
   network_queue *inflight_queue;
   network_queue *slow_write_queue;
   network_queue *fast_write_queue;
+  network_queue *finalize_queue;
 #ifdef ENABLE_RDMA
   network_queue *rdma_read_queue;
   network_queue *rdma_write_queue;

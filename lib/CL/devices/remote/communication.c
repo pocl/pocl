@@ -894,6 +894,37 @@ finish_running_cmd (remote_server_data_t *server,
     }
 }
 
+static void *
+pocl_remote_finalizer_pthread (void *aa)
+{
+  network_queue_arg *a = aa;
+  remote_server_data_t *remote = a->remote;
+  network_queue *inflight = a->in_flight;
+  network_queue *this = a->ours;
+  POCL_MEM_FREE (a);
+
+  network_command *cmd;
+  POCL_LOCK (this->mutex);
+  while (!this->exit_requested)
+    {
+      cmd = this->queue;
+      if (cmd)
+        {
+          DL_DELETE (this->queue, cmd);
+          POCL_UNLOCK (this->mutex);
+          assert (cmd->status == NETCMD_READ);
+          finish_running_cmd (remote, cmd, NETCMD_FINISHED);
+          POCL_LOCK (this->mutex);
+        }
+      else
+        {
+          POCL_WAIT_COND (this->cond, this->mutex);
+        }
+    }
+
+  return NULL;
+}
+
 /** Main function for the socket reader thread */
 static void *
 pocl_remote_reader_pthread (void *aa)
@@ -1066,7 +1097,10 @@ pocl_remote_reader_pthread (void *aa)
       POCL_LOCK (inflight->mutex);
       DL_DELETE (inflight->queue, running_cmd);
       POCL_UNLOCK (inflight->mutex);
-      finish_running_cmd (remote, running_cmd, NETCMD_FINISHED);
+      POCL_LOCK (remote->finalize_queue->mutex);
+      DL_APPEND (remote->finalize_queue->queue, running_cmd);
+      POCL_SIGNAL_COND (remote->finalize_queue->cond);
+      POCL_UNLOCK (remote->finalize_queue->mutex);
     }
   return NULL;
 }
@@ -1159,7 +1193,10 @@ pocl_remote_rdma_reader_pthread (void *aa)
       DL_DELETE (this->queue, cmd);
       POCL_UNLOCK (this->mutex);
 
-      finish_running_cmd (remote, cmd, NETCMD_FINISHED);
+      POCL_LOCK (remote->finalize_queue->mutex);
+      DL_APPEND (remote->finalize_queue->queue, running_cmd);
+      POCL_SIGNAL_COND (remote->finalize_queue->cond);
+      POCL_UNLOCK (remote->finalize_queue->mutex);
 
       POCL_LOCK (this->mutex);
     }
@@ -1577,6 +1614,12 @@ start_engines (remote_server_data_t *d, remote_device_data_t *devd,
   d->inflight_queue = calloc (1, sizeof (network_queue));
   SETUP_NETW_Q (d->inflight_queue);
 
+  d->finalize_queue = calloc (1, sizeof (network_queue));
+  SETUP_NETW_Q (d->finalize_queue);
+  SETUP_NETW_Q_ARG (a, d, d->finalize_queue, NULL);
+  POCL_CREATE_THREAD (d->finalize_queue->thread_id,
+                      pocl_remote_finalizer_pthread, a);
+
   d->traffic_monitor = calloc (1, sizeof (network_queue));
   SETUP_NETW_Q (d->traffic_monitor);
   SETUP_NETW_Q_ARG (a, d, d->traffic_monitor, NULL);
@@ -1672,6 +1715,9 @@ stop_engines (remote_server_data_t *d)
   POCL_JOIN_THREAD (d->rdma_read_queue->thread_id);
   POCL_JOIN_THREAD (d->rdma_write_queue->thread_id);
 #endif
+
+  NOTIFY_SHUTDOWN (d->finalize_queue);
+  POCL_JOIN_THREAD (d->finalize_queue->thread_id);
 
   NOTIFY_SHUTDOWN (d->traffic_monitor);
   POCL_JOIN_THREAD (d->traffic_monitor->thread_id);
