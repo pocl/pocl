@@ -47,7 +47,7 @@ class ReplyQueueThread {
   std::string ThreadIdentifier;
   VirtualContextBase *virtualContext;
   std::vector<Reply *> IOInflight;
-  std::mutex io_mutex;
+  std::mutex IOMutex;
   std::condition_variable IONotifier;
   std::thread IOThread;
   ExitHelper *eh;

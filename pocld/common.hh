@@ -285,8 +285,6 @@ struct PeerConnection {
 };
 
 struct ClientConnections_t {
-  std::shared_ptr<Connection> low_latency;
-  std::shared_ptr<Connection> bulk_throughput;
   std::mutex *incoming_peer_mutex;
   std::pair<std::condition_variable, std::vector<PeerConnection>>
       *incoming_peer_queue;

@@ -61,7 +61,6 @@
 #endif
 #define POLLFD_ERROR_BITS (POLLHUP | POLLERR | POLLNVAL | POLLRDHUP)
 
-
 #define PERROR_CHECK(cond, str)                                                \
   do {                                                                         \
     if (cond) {                                                                \
@@ -474,8 +473,8 @@ void StartDHTAdvert(PoclDaemon *d, addrinfo *RA, struct ServerPorts &Ports) {
 PoclDaemon::~PoclDaemon() {
   if (ClientPoller.joinable())
     ClientPoller.join();
-  if (peer_listener_th.joinable())
-    peer_listener_th.join();
+  if (PeerListenerThread.joinable())
+    PeerListenerThread.join();
 #ifdef ENABLE_REMOTE_ADVERTISEMENT_AVAHI
   delete avahiAdvertiseP;
 #endif
@@ -489,6 +488,8 @@ PoclDaemon::~PoclDaemon() {
   if (pl_rdma_event_th.joinable())
     pl_rdma_event_th.join();
 #endif
+  if (ContextDeleter.joinable())
+    ContextDeleter.join();
 }
 
 VirtualContextBase *createVirtualContext(PoclDaemon *d,
@@ -712,22 +713,25 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports,
   }
 
   if (!UseVsock) {
-    peer_listener_data.port = ListenPorts.peer;
+    PeerListenerData.port = ListenPorts.peer;
 #ifdef ENABLE_RDMA
-  peer_listener_data.peer_rdma_port = ListenPorts.peer_rdma;
-  peer_listener_data.rdma_listener.reset(new RdmaListener);
-  pl_rdma_event_th = std::move(
-      std::thread(listen_rdmacm_events<VirtualContextBase *>,
-                  peer_listener_data.rdma_listener->eventChannel(),
-                  std::ref(peer_listener_data.peer_cm_id_to_vctx),
-                  std::ref(peer_listener_data.peer_cm_id_to_vctx_mutex)));
+    PeerListenerData.peer_rdma_port = ListenPorts.peer_rdma;
+    PeerListenerData.rdma_listener.reset(new RdmaListener);
+    pl_rdma_event_th = std::move(
+        std::thread(listen_rdmacm_events<VirtualContextBase *>,
+                    PeerListenerData.rdma_listener->eventChannel(),
+                    std::ref(PeerListenerData.peer_cm_id_to_vctx),
+                    std::ref(PeerListenerData.peer_cm_id_to_vctx_mutex)));
 #endif
-  peer_listener_th =
-      std::move(std::thread(listen_peers, (void *)&peer_listener_data));
+    PeerListenerThread =
+        std::move(std::thread(listen_peers, (void *)&PeerListenerData));
   }
 
   ClientPoller = std::move(
       std::thread(std::bind(&PoclDaemon::readAllClientSocketsThread, this)));
+
+  ContextDeleter = std::move(
+      std::thread(std::bind(&PoclDaemon::contextDeleterThread, this)));
 
   return 0;
 }
@@ -749,10 +753,6 @@ PoclDaemon::performSessionSetup(std::shared_ptr<Connection> Conn, Request *R) {
   session = ++LastSessionId;
   SessionKeys.insert(std::make_pair(session, authkey));
   Conn->configure(R->Body.m.get_session.fast_socket);
-  if (R->Body.m.get_session.fast_socket)
-    connections.low_latency = Conn;
-  else
-    connections.bulk_throughput = Conn;
 
   ReplyMsg_t Reply = {};
   Reply.message_type = MessageType_CreateOrAttachSessionReply;
@@ -763,13 +763,13 @@ PoclDaemon::performSessionSetup(std::shared_ptr<Connection> Conn, Request *R) {
   authkey_hex =
       std::accumulate(authkey.begin(), authkey.end(), std::string(), hexdigits);
 
-  std::unique_lock<std::mutex> l(peer_listener_data.mutex);
+  std::unique_lock<std::mutex> l(PeerListenerData.mutex);
   auto p =
       new std::pair<std::condition_variable, std::vector<PeerConnection>>();
-  connections.incoming_peer_mutex = &peer_listener_data.mutex;
+  connections.incoming_peer_mutex = &PeerListenerData.mutex;
   connections.incoming_peer_queue = p;
-  peer_listener_data.incoming_peers.insert({session, p});
-  peer_listener_data.SessionPeerId.insert(
+  PeerListenerData.incoming_peers.insert({session, p});
+  PeerListenerData.SessionPeerId.insert(
       {session, uint64_t(R->Body.m.get_session.peer_id)});
   POCL_MSG_PRINT_INFO("Registered new client session %" PRIu64 " %s\n", session,
                       authkey_hex.c_str());
@@ -793,6 +793,8 @@ PoclDaemon::performSessionSetup(std::shared_ptr<Connection> Conn, Request *R) {
 
   // Start virtual_cl_context thread
   ctx = createVirtualContext(this, connections, session, R->Body.m.get_session);
+  ctx->setConnection(Conn, R->Body.m.get_session.fast_socket,
+                     R->Body.m.get_session.reply_socket);
 #ifdef ENABLE_RDMA
   if (Reply.m.get_session.use_rdma) {
     {
@@ -801,14 +803,14 @@ PoclDaemon::performSessionSetup(std::shared_ptr<Connection> Conn, Request *R) {
     }
     {
       std::unique_lock<std::mutex> l(
-          peer_listener_data.peer_cm_id_to_vctx_mutex);
-      peer_listener_data.peer_cm_id_to_vctx.insert(
+          PeerListenerData.peer_cm_id_to_vctx_mutex);
+      PeerListenerData.peer_cm_id_to_vctx.insert(
           {*connections.rdma->id(), ctx});
     }
   }
   {
-    std::unique_lock<std::mutex> l(peer_listener_data.vctx_map_mutex);
-    peer_listener_data.vctx_map.insert({session, ctx});
+    std::unique_lock<std::mutex> l(PeerListenerData.vctx_map_mutex);
+    PeerListenerData.vctx_map.insert({session, ctx});
   }
 #endif
   ClientSessions.insert({session, ctx});
@@ -825,9 +827,6 @@ void PoclDaemon::readAllClientSocketsThread() {
   std::vector<std::shared_ptr<Connection>> DroppedConnections;
   bool ConnectionsChanged = true;
   std::vector<struct pollfd> pfds;
-
-  SocketContexts.clear();
-  SocketContexts.resize(NumListenFds, nullptr);
 
   while (!exit_helper.exit_requested()) {
     /* Changes to the list of sockets should be relatively rare so let's
@@ -846,7 +845,6 @@ void PoclDaemon::readAllClientSocketsThread() {
 
     /* These *really* ought to stay consistent */
     assert(pfds.size() == OpenClientConnections.size() &&
-           SocketContexts.size() == OpenClientConnections.size() &&
            IncompleteRequests.size() == OpenClientConnections.size());
 
     /* Just block forever. If/when a socket is closed - including the client
@@ -885,7 +883,6 @@ void PoclDaemon::readAllClientSocketsThread() {
           if (NewFd >= 0) {
             OpenClientConnections.push_back(std::shared_ptr<Connection>(
                 new Connection(Transport->domain(), NewFd, nullptr)));
-            SocketContexts.push_back(nullptr);
             IncompleteRequests.push_back(new Request());
             ConnectionsChanged = true;
             std::string client_address_string = describe_sockaddr(
@@ -934,16 +931,11 @@ void PoclDaemon::readAllClientSocketsThread() {
           if (R->read(OpenClientConnections.at(i).get())) {
             if (R->IsFullyRead) {
               if (R->Body.message_type == MessageType_CreateOrAttachSession) {
-                int Fast = R->Body.m.get_session.fast_socket;
                 uint64_t Session = R->Body.session;
                 if (Session == 0) {
                   VirtualContextBase *ctx =
                       performSessionSetup(OpenClientConnections.at(i), R);
-                  if (ctx == nullptr) {
-                    DroppedConnections.push_back(OpenClientConnections.at(i));
-                  } else {
-                    SocketContexts.at(i) = ctx;
-                  }
+                  DroppedConnections.push_back(OpenClientConnections.at(i));
                 } else {
                   std::unique_lock<std::mutex> L(SessionListMtx);
                   auto it = SessionKeys.find(Session);
@@ -952,14 +944,6 @@ void PoclDaemon::readAllClientSocketsThread() {
                                     AUTHKEY_LENGTH) == 0) {
                       auto cit = ClientSessions.find(Session);
                       assert(cit != ClientSessions.end());
-                      if (Fast)
-                        cit->second->replaceConnections(
-                            OpenClientConnections.at(i), nullptr);
-                      else
-                        cit->second->replaceConnections(
-                            nullptr, OpenClientConnections.at(i));
-                      SocketContexts.at(i) = cit->second;
-                      L.unlock();
 
                       ReplyMsg_t Reply = {};
                       Reply.message_type =
@@ -969,6 +953,12 @@ void PoclDaemon::readAllClientSocketsThread() {
                              AUTHKEY_LENGTH);
                       OpenClientConnections.at(i)->writeFull(&Reply,
                                                              sizeof(Reply));
+
+                      cit->second->setConnection(
+                          OpenClientConnections.at(i),
+                          R->Body.m.get_session.fast_socket,
+                          R->Body.m.get_session.reply_socket);
+                      DroppedConnections.push_back(OpenClientConnections.at(i));
                     } else {
                       POCL_MSG_ERR(
                           "Client attempted to connect with invalid key\n");
@@ -976,90 +966,11 @@ void PoclDaemon::readAllClientSocketsThread() {
                     }
                   }
                 }
-                delete R;
               } else {
-                std::unique_lock<std::mutex> LSessions(SessionListMtx);
-                auto it = ClientSessions.find(R->Body.session);
-                VirtualContextBase *Ctx =
-                    it == ClientSessions.end() ? nullptr : it->second;
-                LSessions.unlock();
-                if (Ctx) {
-                  switch (R->Body.message_type) {
-                  case MessageType_ServerInfo:
-                  case MessageType_ConnectPeer:
-                  case MessageType_DeviceInfo:
-                  case MessageType_CreateBuffer:
-                  case MessageType_FreeBuffer:
-                  case MessageType_CreateCommandQueue:
-                  case MessageType_FreeCommandQueue:
-                  case MessageType_CreateSampler:
-                  case MessageType_FreeSampler:
-                  case MessageType_CreateImage:
-                  case MessageType_FreeImage:
-                  case MessageType_CreateCommandBuffer:
-                  case MessageType_FreeCommandBuffer:
-                  case MessageType_CreateKernel:
-                  case MessageType_FreeKernel:
-                  case MessageType_BuildProgramFromSource:
-                  case MessageType_BuildProgramFromBinary:
-                  case MessageType_BuildProgramFromSPIRV:
-                  case MessageType_CompileProgramFromSource:
-                  case MessageType_CompileProgramFromSPIRV:
-                  case MessageType_BuildProgramWithBuiltins:
-                  case MessageType_BuildProgramWithDefinedBuiltins:
-                  case MessageType_LinkProgram:
-                  case MessageType_FreeProgram:
-                  case MessageType_MigrateD2D:
-                  case MessageType_RdmaBufferRegistration:
-                  case MessageType_Shutdown: {
-                    Ctx->nonQueuedPush(R);
-                    break;
-                  }
-                  case MessageType_ReadBuffer:
-                  case MessageType_WriteBuffer:
-                  case MessageType_CopyBuffer:
-                  case MessageType_FillBuffer:
-                  case MessageType_ReadBufferRect:
-                  case MessageType_WriteBufferRect:
-                  case MessageType_CopyBufferRect:
-                  case MessageType_CopyImage2Buffer:
-                  case MessageType_CopyBuffer2Image:
-                  case MessageType_CopyImage2Image:
-                  case MessageType_ReadImageRect:
-                  case MessageType_WriteImageRect:
-                  case MessageType_FillImageRect:
-                  case MessageType_RunKernel:
-                  case MessageType_Barrier:
-                  case MessageType_Marker:
-                  case MessageType_RunCommandBuffer: {
-                    Ctx->queuedPush(R);
-                    break;
-                  }
-                  case MessageType_NotifyEvent: {
-                    // TODO: this message should probably contain an actual
-                    // status... (see also rdma thread)
-                    Ctx->notifyEvent(R->Body.event_id, CL_COMPLETE);
-                    delete R;
-                    break;
-                  }
-
-                  default: {
-                    Ctx->unknownRequest(R);
-                    break;
-                  }
-                  }
-
-                } else {
-                  POCL_MSG_ERR(
-                      "Client sent request for nonexistent context %" PRIu64
-                      ", ignoring \n",
-                      R->Body.session);
-                  delete R;
-                }
+                POCL_MSG_ERR("Wrong request on new connection, expected "
+                             "CreateOrAttachSession\n");
+                DroppedConnections.push_back(OpenClientConnections.at(i));
               }
-
-              /* R is now someone else's responsibility, simply "leak" it */
-              IncompleteRequests.at(i) = new Request();
             }
           } else {
             POCL_MSG_ERR("Something went wrong while reading request, closing "
@@ -1086,11 +997,6 @@ void PoclDaemon::readAllClientSocketsThread() {
           std::swap(OpenClientConnections.at(i), OpenClientConnections.back());
           OpenClientConnections.pop_back();
 
-          std::swap(SocketContexts.at(i), SocketContexts.back());
-          VirtualContextBase *vctx = SocketContexts.back();
-          DroppedVCtxs.insert(vctx);
-          SocketContexts.pop_back();
-
           std::swap(IncompleteRequests.at(i), IncompleteRequests.back());
           delete IncompleteRequests.back();
           IncompleteRequests.pop_back();
@@ -1101,37 +1007,29 @@ void PoclDaemon::readAllClientSocketsThread() {
       }
     }
     DroppedConnections.clear();
-
-    // TODO: The reconnect should have a time window as it holds resources.
-    // Especially with SVM on, it will hold the SVMPool which can be a large
-    // chunk of virt mem. Let's not enable reconnect by default until this is
-    // sanitized.
-    if (!pocl_get_bool_option("POCLD_ALLOW_CLIENT_RECONNECT", 0)) {
-      // Free unusued vctxs if reconnect is not enabled.
-      for (auto VContext : DroppedVCtxs) {
-        if (std::find(SocketContexts.begin(), SocketContexts.end(), VContext) !=
-            SocketContexts.end())
-          continue;
-        VContext->requestExit(0,
-                              "Client disconnected and reconnect not enabled.");
-        std::unique_lock<std::mutex> L(SessionListMtx);
-        uint64_t Session = 0;
-        for (auto it : ClientSessions) {
-          if (it.second == VContext) {
-            Session = it.first;
-            break;
-          }
-        }
-        if (Session != 0) {
-          SessionKeys.erase(Session);
-          ClientSessions.erase(Session);
-        }
-        delete VContext;
-      }
-    }
-    DroppedVCtxs.clear();
   }
 
   /* Close all remaining sockets, including the client listeners */
   OpenClientConnections.clear();
+}
+
+void PoclDaemon::contextDeleterThread() {
+  std::unique_lock<std::mutex> L(ContextDeleterMtx);
+  while (1) {
+    if (ContextDeleteQueue.empty()) {
+      if (exit_helper.exit_requested())
+        return;
+      ContextDeleterCond.wait(L);
+    } else {
+      VirtualContextBase *Ctx = ContextDeleteQueue.back();
+      ContextDeleteQueue.pop_back();
+      L.unlock();
+
+      POCL_MSG_PRINT_GENERAL("Deleting context...\n");
+      delete Ctx;
+      POCL_MSG_PRINT_GENERAL("Context deleted.\n");
+
+      L.lock();
+    }
+  }
 }
