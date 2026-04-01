@@ -237,6 +237,7 @@ extern "C"
     uint16_t peer_port;
     uint8_t use_rdma;
     uint8_t fast_socket;
+    uint8_t reply_socket;
   } CreateOrAttachSessionMsg_t;
 
   typedef struct __attribute__ ((packed))

@@ -3183,7 +3183,7 @@ pocl_remote_get_device_info_ext (cl_device_id device,
       {
         remote_device_data_t *dev_data = (remote_device_data_t *)device->data;
         remote_server_data_t *server = dev_data->server;
-        POCL_RETURN_GETINFO (unsigned, server->fast_port);
+        POCL_RETURN_GETINFO (unsigned, server->client_port);
       }
     }
 

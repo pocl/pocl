@@ -39,7 +39,7 @@ class RequestQueueThread {
   std::mutex ConnectionGuard;
   std::condition_variable ConnectionNotifier;
   std::shared_ptr<Connection> InboundConnection;
-  VirtualContextBase *virtualContext;
+  VirtualContextBase *VirtualContext;
   std::thread IOThread;
   ExitHelper *eh;
   std::string ThreadIdentifier;

@@ -22,6 +22,7 @@
    IN THE SOFTWARE.
 */
 
+#include <atomic>
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
@@ -47,6 +48,7 @@
 #include "traffic_monitor.hh"
 
 #include "messages.h"
+#include "pocl_runtime_config.h"
 
 SharedContextBase *createSharedCLContext(cl::Platform *platform, size_t pid,
                                          VirtualContextBase *v,
@@ -95,6 +97,9 @@ public:
 class VirtualCLContext : public VirtualContextBase {
   PoclDaemon *Daemon;
   ExitHelper ExitSignal;
+  std::atomic<int> DeleteRequested;
+  RequestQueueThreadUPtr ReadSlow;
+  RequestQueueThreadUPtr ReadFast;
   ReplyQueueThreadUPtr WriteSlow;
   ReplyQueueThreadUPtr WriteFast;
 #ifdef ENABLE_RDMA
@@ -150,6 +155,7 @@ public:
   VirtualCLContext() = default;
 
   ~VirtualCLContext() {
+    POCL_MSG_PRINT_GENERAL("VCTX: ~VirtualCLContext\n");
     // stop threads
     assert(ExitSignal.exit_requested());
     MainCond.notify_one();
@@ -158,11 +164,12 @@ public:
     QueuedCond.notify_one();
     if (QueuedThread.joinable())
       QueuedThread.join();
-    POCL_MSG_PRINT_GENERAL("VCTX: DEST\n");
 
-    // Wake up IO threads in case they were waiting for a connection
-    WriteFast->setConnection(nullptr);
-    WriteSlow->setConnection(nullptr);
+    // Wake up IO threads so they can exit
+    ReadFast->setConnection(nullptr);
+    ReadSlow->setConnection(nullptr);
+    WriteFast->pushReply(nullptr);
+    WriteSlow->pushReply(nullptr);
 
     // make sure no shared context tries to broadcast stuff
     std::unique_lock<std::mutex> Lock(MainMutex);
@@ -177,8 +184,10 @@ public:
   virtual size_t init(PoclDaemon *d, ClientConnections_t conns,
                       uint64_t session, CreateOrAttachSessionMsg_t &params);
 
-  virtual void replaceConnections(std::shared_ptr<Connection> Command,
-                                  std::shared_ptr<Connection> Stream) override;
+  virtual void setConnection(std::shared_ptr<Connection> Conn, bool IsFast,
+                             bool IsReplyChannel) override;
+
+  virtual void connectionLost() override;
 
   virtual void nonQueuedPush(Request *req) override;
 
@@ -264,6 +273,7 @@ size_t VirtualCLContext::init(PoclDaemon *d, ClientConnections_t conns,
   current_printf_position = 0;
   TotalDevices = 0;
   peer_id = params.peer_id;
+  DeleteRequested = 0;
 #ifdef ENABLE_RDMA
   client_uses_rdma = params.use_rdma;
   if (client_uses_rdma) {
@@ -273,10 +283,6 @@ size_t VirtualCLContext::init(PoclDaemon *d, ClientConnections_t conns,
 
   std::string id_string = std::to_string(session);
   netstat.reset(new TrafficMonitor(&ExitSignal, id_string));
-  if (conns.low_latency.get())
-    conns.low_latency->setMeter(netstat);
-  if (conns.bulk_throughput.get())
-    conns.bulk_throughput->setMeter(netstat);
 
 #ifdef ENABLE_RDMA
   if (client_uses_rdma) {
@@ -288,10 +294,10 @@ size_t VirtualCLContext::init(PoclDaemon *d, ClientConnections_t conns,
                             &client_mem_regions, &client_regions_mutex));
   }
 #endif
-  WriteSlow = ReplyQueueThreadUPtr(
-      new ReplyQueueThread(conns.bulk_throughput, this, &ExitSignal, "WT_S"));
-  WriteFast = ReplyQueueThreadUPtr(
-      new ReplyQueueThread(conns.low_latency, this, &ExitSignal, "WT_F"));
+  WriteSlow.reset(new ReplyQueueThread({}, this, &ExitSignal, "WT_S"));
+  WriteFast.reset(new ReplyQueueThread({}, this, &ExitSignal, "WT_F"));
+  ReadSlow.reset(new RequestQueueThread({}, this, &ExitSignal, "RT_S"));
+  ReadFast.reset(new RequestQueueThread({}, this, &ExitSignal, "RT_F"));
 
   peers = PeerHandlerUPtr(new PeerHandler(peer_id, conns.incoming_peer_mutex,
                                           conns.incoming_peer_queue, this,
@@ -307,16 +313,28 @@ size_t VirtualCLContext::init(PoclDaemon *d, ClientConnections_t conns,
   return TotalDevices;
 }
 
-void VirtualCLContext::replaceConnections(
-    std::shared_ptr<Connection> Latency,
-    std::shared_ptr<Connection> Throughput) {
-  if (Latency.get()) {
-    Latency->setMeter(netstat);
-    WriteFast->setConnection(Latency);
+void VirtualCLContext::setConnection(std::shared_ptr<Connection> NewConnection,
+                                     bool IsFast, bool IsReplyChannel) {
+  NewConnection->setMeter(netstat);
+  if (IsFast) {
+    if (IsReplyChannel)
+      WriteFast->setConnection(NewConnection);
+    else
+      ReadFast->setConnection(NewConnection);
+  } else {
+    if (IsReplyChannel)
+      WriteSlow->setConnection(NewConnection);
+    else
+      ReadSlow->setConnection(NewConnection);
   }
-  if (Throughput.get()) {
-    Throughput->setMeter(netstat);
-    WriteSlow->setConnection(Throughput);
+}
+
+void VirtualCLContext::connectionLost() {
+  if (!pocl_get_bool_option("POCLD_ALLOW_CLIENT_RECONNECT", 0) &&
+      !DeleteRequested) {
+    DeleteRequested = 1;
+    ExitSignal.requestExit("Connection lost", 1);
+    Daemon->releaseContextDeferred(this);
   }
 }
 
