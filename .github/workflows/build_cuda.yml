@@ -52,7 +52,7 @@ jobs:
         id: cmake
         run: |
           runCMake() {
-            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            BUILD_FLAGS="-O2 -march=x86-64-v2 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
             cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
             -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} \
@@ -78,3 +78,15 @@ jobs:
           mkdir ${{ env.POCL_CACHE_DIR }}
           cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cuda_tests $CTEST_FLAGS -E 'test_device_address|overwriting_the_previous_kernel'
 
+      - name: Archive Artifacts
+        run: |
+          cd ${{ github.workspace }}/build && make install DESTDIR=/tmp/pocl_cuda_llvm_${{ matrix.llvm }}_${{ github.sha }}
+          tar -C /tmp -cavf /tmp/pocl_cuda_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst pocl_cuda_llvm_${{ matrix.llvm }}_${{ github.sha }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        with:
+          name: 'PoCL-CUDA-LLVM_${{ matrix.llvm }}-${{ github.sha }}'
+          path: '/tmp/pocl_cuda_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst'
+          if-no-files-found: error
+          archive: false

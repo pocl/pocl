@@ -75,3 +75,15 @@ jobs:
         run: |
           ${{ github.workspace }}/tools/scripts/run_cross_compiled_cpu_tests ${{ github.workspace }} ${BUILD_DIR} ${REMOTE_ADDRESS} ${REMOTE_USER} ctest --output-on-failure -LE cpu_fail -E test_large_buf -j8
 
+      - name: Archive Artifacts
+        run: |
+          cd $BUILD_DIR && make install DESTDIR=/tmp/pocl_llvm_${{ matrix.llvm }}_${{ github.sha }}
+          tar -C /tmp -cavf /tmp/pocl_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst pocl_llvm_${{ matrix.llvm }}_${{ github.sha }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        with:
+          name: "PoCL-RISCV-LLVM_${{ matrix.llvm }}-${{ github.sha }}"
+          path: "/tmp/pocl_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst"
+          if-no-files-found: error
+          archive: false

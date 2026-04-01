@@ -109,8 +109,10 @@ jobs:
 
       - name: Configure PoCL
         run: |
+          BUILD_FLAGS="-O2 -march=x86-64-v2 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
           cmake -S ${{ env.WORKSPACE }} -B ${{ env.WORKSPACE }}/build-pocl \
             -DCMAKE_BUILD_TYPE=Release \
+            "-DCMAKE_C_FLAGS_RELEASE=${BUILD_FLAGS}"  "-DCMAKE_CXX_FLAGS_RELEASE=${BUILD_FLAGS}" \
             -DCMAKE_INSTALL_PREFIX=${{ env.WORKSPACE }}/install-pocl \
             -DWITH_LLVM_CONFIG=${{ env.WORKSPACE }}/install-llvm/bin/llvm-config.exe \
             -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }} \
@@ -123,7 +125,7 @@ jobs:
 
       - name: Build PoCL
         run: |
-          cmake --build ${{ env.WORKSPACE }}/build-pocl
+          cmake --build ${{ env.WORKSPACE }}/build-pocl --target install
 
       - name: Run Tests
         env:
@@ -135,3 +137,12 @@ jobs:
           cd ${{ env.WORKSPACE }}/build-pocl
           export PATH=${{ env.WORKSPACE }}/install-llvm/bin:$PATH
           ${{ env.WORKSPACE }}/tools/scripts/run_cpu_tests mingw $CTEST_FLAGS -j$(nproc)
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        with:
+          name: 'PoCL-MinGW-x86_64-LLVM_${{ matrix.llvm_version }}-shared_${{ matrix.shared_libs }}-${{ github.sha }}'
+          path: 'D:/a/pocl/pocl/install-pocl'
+          if-no-files-found: error
+          compression-level: 4
+          archive: true
