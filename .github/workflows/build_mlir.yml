@@ -54,7 +54,7 @@ jobs:
           rm -rf $BUILD_DIR
           mkdir -p $BUILD_DIR
 
-          export BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+          BUILD_FLAGS="-O2 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
           cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
             -DENABLE_CLANGIR=ON -DMLIR_DIR=/opt/LLVM_CLANGIR_${{ matrix.llvm }}/lib/cmake/mlir \
