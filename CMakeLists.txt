@@ -1754,7 +1754,7 @@ if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_subgroup")
 endif()
 
 if(HOST_CPU_ENABLE_SPIRV)
-  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_il_program cl_khr_spirv_queries")
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_il_program cl_khr_spirv_queries cl_khr_spirv_linkonce_odr cl_khr_spirv_no_integer_wrap_decoration")
 endif()
 
 if(HOST_CPU_ENABLE_CL_KHR_FP16)
@@ -1767,7 +1767,7 @@ if(HOST_CPU_ENABLE_CL_KHR_FP64)
   set(HOST_DEVICE_FEATURES "${HOST_DEVICE_FEATURES} __opencl_c_fp64")
 endif()
 
-set(HOST_DEVICE_SPV_EXTENSIONS "+SPV_KHR_no_integer_wrap_decoration,+SPV_KHR_expect_assume,+SPV_INTEL_fp_fast_math_mode,+SPV_INTEL_unstructured_loop_controls,+SPV_INTEL_arbitrary_precision_integers,+SPV_INTEL_memory_access_aliasing,+SPV_INTEL_inline_assembly,+SPV_KHR_integer_dot_product")
+set(HOST_DEVICE_SPV_EXTENSIONS "+SPV_KHR_no_integer_wrap_decoration,+SPV_KHR_linkonce_odr,+SPV_KHR_expect_assume,+SPV_INTEL_fp_fast_math_mode,+SPV_INTEL_unstructured_loop_controls,+SPV_INTEL_arbitrary_precision_integers,+SPV_INTEL_memory_access_aliasing,+SPV_INTEL_inline_assembly,+SPV_KHR_integer_dot_product")
 if(HOST_DEVICE_EXTENSIONS MATCHES "cl_ext_float_atomics")
   set(HOST_DEVICE_FEATURES "${HOST_DEVICE_FEATURES} __opencl_c_ext_fp32_global_atomic_add __opencl_c_ext_fp32_local_atomic_add __opencl_c_ext_fp32_global_atomic_min_max __opencl_c_ext_fp32_local_atomic_min_max")
   set(HOST_DEVICE_SPV_EXTENSIONS "${HOST_DEVICE_SPV_EXTENSIONS},+SPV_EXT_shader_atomic_float_add,+SPV_EXT_shader_atomic_float_min_max")

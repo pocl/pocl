@@ -133,7 +133,7 @@ with a few exceptions; these are marked Unsupported in the table.
 | cl_khr_spir | :red_circle: | :red_circle: | :red_circle: | :red_circle: | :red_circle: |
 | cl_khr_spirv_queries | :yellow_circle: :three: | :yellow_circle: :three: | :yellow_circle: :three: | | |
 | cl_khr_spirv_no_integer_wrap_decoration | :green_circle: | :green_circle: | | | |
-| cl_khr_spirv_linkonce_odr | :red_circle: | :yellow_circle: :one: | | | |
+| cl_khr_spirv_linkonce_odr | :green_circle: | :yellow_circle: :one: | | | |
 | cl_khr_fp16 | :yellow_circle: :four: | :yellow_circle: :two: :one: | :yellow_circle: :seven: | | |
 | cl_khr_fp64 | :yellow_circle: :five: | :yellow_circle: :two: :one: | :green_circle: | | |
 | cl_nv_device_attribute_query |:red_circle: | :red_circle: | :green_circle: | | :red_circle: |

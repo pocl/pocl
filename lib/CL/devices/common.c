@@ -1884,6 +1884,7 @@ static const cl_name_version OPENCL_EXTENSIONS[]
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_subgroup_local_block_io" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_spirv_subgroups" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_spirv_no_integer_wrap_decoration" },
+      { CL_MAKE_VERSION (1, 0, 0), "cl_khr_spirv_linkonce_odr" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_spirv_queries" },
 
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_byte_addressable_store" },
