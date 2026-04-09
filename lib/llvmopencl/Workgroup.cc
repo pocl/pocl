@@ -1128,7 +1128,14 @@ void WorkgroupImpl::privatizeGlobalStores(
                                                    PrivatePointers[j].second);
 
         Builder.SetInsertPoint(ii->getParent(), ii->getIterator());
-        Builder.CreateStore(StoredVal, PrivatePointers[j].first);
+        llvm::StoreInst *NewS =
+            Builder.CreateStore(StoredVal, PrivatePointers[j].first);
+        // Preserve !llvm.access.group metadata for loop vectorization.
+        // WorkitemLoops adds this metadata to all memory ops in the WI
+        // loop body; dropping it here would prevent LAA from proving the
+        // store is safe to vectorize.
+        if (MDNode *AG = S->getMetadata(LLVMContext::MD_access_group))
+          NewS->setMetadata(LLVMContext::MD_access_group, AG);
         ii->eraseFromParent();
 
         break;

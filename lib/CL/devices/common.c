@@ -689,7 +689,11 @@ pocl_exec_command (_cl_command_node *node)
       pocl_update_event_running (event);
       assert (dev->ops->run);
       dev->ops->run (dev->data, node);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Enqueue NDRange       ");
+      if (node->command.run.pc.execution_failed)
+        POCL_UPDATE_EVENT_FAILED_MSG (CL_FAILED, event,
+                                      "Event Enqueue NDRange       ");
+      else
+        POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Enqueue NDRange       ");
       break;
 
     case CL_COMMAND_NATIVE_KERNEL:

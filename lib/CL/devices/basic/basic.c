@@ -398,6 +398,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
           execution_failed |= pc->execution_failed;
         }
 
+  pc->execution_failed = execution_failed;
   pocl_cpu_restore_rm_and_ftz (rm, ftz);
 
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
