@@ -407,21 +407,20 @@ if CPU_ABI_REG_SIZE == 128:
 		"<3 x double>": "<3 x double>* sret(<3 x double>) align 16",
 		"<3 x i64>": "<3 x i64>* sret(<3 x i64>) align 16",
 
-		"<4 x i64>":"<4 x i64>* sret(<4 x i64>) align 16",
-		"<4 x double>": "<4 x double>* sret(<4 x double>) align 16",
-		"<8 x i32>":"<8 x i32>* sret(<8 x i32>) align 16",
-		"<8 x float>": "<8 x float>* sret(<8 x float>) align 16",
-		"<16 x i16>": "<16 x i16>* sret(<16 x i16>) align 16",
-		"<16 x half>": "<16 x half>* sret(<16 x half>) align 16",
+		"<4 x i64>":"<4 x i64>* sret(<4 x i64>) align 32",
+		"<4 x double>": "<4 x double>* sret(<4 x double>) align 32",
+		"<8 x i32>":"<8 x i32>* sret(<8 x i32>) align 32",
+		"<8 x float>": "<8 x float>* sret(<8 x float>) align 32",
+		"<16 x i16>": "<16 x i16>* sret(<16 x i16>) align 32",
+		"<16 x half>": "<16 x half>* sret(<16 x half>) align 32",
 
-		"<8 x i64>":"<8 x i64>* sret(<8 x i64>) align 16",
-		"<8 x double>": "<8 x double>* sret(<8 x double>) align 16",
+		"<8 x i64>":"<8 x i64>* sret(<8 x i64>) align 64",
+		"<8 x double>": "<8 x double>* sret(<8 x double>) align 64",
+		"<16 x i32>": "<16 x i32>* sret(<16 x i32>) align 64",
+		"<16 x float>": "<16 x float>* sret(<16 x float>) align 64",
 
-		"<16 x i32>": "<16 x i32>* sret(<16 x i32>) align 16",
-		"<16 x float>": "<16 x float>* sret(<16 x float>) align 16",
-
-		"<16 x i64>":"<16 x i64>* sret(<16 x i64>) align 16",
-		"<16 x double>": "<16 x double>* sret(<16 x double>) align 16",
+		"<16 x i64>":"<16 x i64>* sret(<16 x i64>) align 128",
+		"<16 x double>": "<16 x double>* sret(<16 x double>) align 128",
 	}
 
 elif CPU_ABI_REG_SIZE == 256:
@@ -439,11 +438,11 @@ elif CPU_ABI_REG_SIZE == 256:
 		"<8 x i64>":"<8 x i64>* sret(<8 x i64>) align 32",
 		"<8 x double>": "<8 x double>* sret(<8 x double>) align 32",
 
-		"<16 x i32>": "<16 x i32>* sret(<16 x i32>) align 32",
-		"<16 x float>": "<16 x float>* sret(<16 x float>) align 32",
+		"<16 x i32>": "<16 x i32>* sret(<16 x i32>) align 64",
+		"<16 x float>": "<16 x float>* sret(<16 x float>) align 64",
 
-		"<16 x i64>":"<16 x i64>* sret(<16 x i64>) align 32",
-		"<16 x double>": "<16 x double>* sret(<16 x double>) align 32",
+		"<16 x i64>":"<16 x i64>* sret(<16 x i64>) align 128",
+		"<16 x double>": "<16 x double>* sret(<16 x double>) align 128",
 	}
 
 elif CPU_ABI_REG_SIZE == 512:
@@ -452,8 +451,8 @@ elif CPU_ABI_REG_SIZE == 512:
 		"<16 x double>": "<16 x double>* byval(<16 x double>) align 128",
 	}
 	SRET_VECTOR_MAP = {
-		"<16 x i64>":"<16 x i64>* sret(<16 x i64>) align 64",
-		"<16 x double>": "<16 x double>* sret(<16 x double>) align 64",
+		"<16 x i64>":"<16 x i64>* sret(<16 x i64>) align 128",
+		"<16 x double>": "<16 x double>* sret(<16 x double>) align 128",
 	}
 
 else:
@@ -987,7 +986,7 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 					print("  %%final_ret = bitcast %s %%coerced_ret to %s" % (coerced_ret_type, ret_type))
 
 				print("  ret %s %%final_ret" % ret_type)
-			elif ARM_CALLING_ABI and (ret_type != sret_ret_type):
+			elif ret_type != sret_ret_type:
 				print("  call void %s(%s)" % (ocl_mangled_name, callee_args))
 				# add load from alloca
 				if OPAQUE_POINTERS:

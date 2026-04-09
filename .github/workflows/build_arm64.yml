@@ -54,7 +54,7 @@ jobs:
         id: cmake
         run: |
           runCMake() {
-            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            BUILD_FLAGS="-O2 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
             cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
             -DWITH_LLVM_CONFIG=/opt/LLVM_${{ matrix.llvm }}0/bin/llvm-config  -DENABLE_LLVM_FILECHECKS=0 \
@@ -79,3 +79,16 @@ jobs:
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
           cd $BUILD_DIR && ${{ github.workspace }}/tools/scripts/run_cpu_tests -j$(nproc) $CTEST_FLAGS -E 'test_shuffle_half_'
+
+      - name: Archive Artifacts
+        run: |
+          cd $BUILD_DIR && make install DESTDIR=/tmp/pocl_arm64_llvm_${{ matrix.llvm }}_${{ github.sha }}
+          tar -C /tmp -cavf /tmp/pocl_arm64_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst pocl_arm64_llvm_${{ matrix.llvm }}_${{ github.sha }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        with:
+          name: "PoCL-ARM64-LLVM_${{ matrix.llvm }}-${{ github.sha }}"
+          path: "/tmp/pocl_arm64_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst"
+          if-no-files-found: error
+          archive: false

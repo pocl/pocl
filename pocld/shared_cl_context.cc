@@ -1032,6 +1032,7 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
   std::string extName;
   std::string exts;
 
+  // Note: update README.md when changing this list
   const std::vector<std::string> unsupportedExts{
       // need to delegate
       // device.getInfo<CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL>()

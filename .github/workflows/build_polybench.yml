@@ -74,10 +74,10 @@ jobs:
           mkdir ${{ github.workspace }}/build
 
           if [ "${{ matrix.device }}" == "x86_64" ]; then
-            export BUILD_FLAGS="-O2 -march=native"
+            BUILD_FLAGS="-O2 -march=native"
             runCMake -DENABLE_ICD=0
           elif [ "${{ matrix.device }}" == "RISCV" ]; then
-            export BUILD_FLAGS="-O2 -DNDEBUG"
+            BUILD_FLAGS="-O2 -DNDEBUG"
             runCMake -DCMAKE_MAKE_PROGRAM=/usr/bin/make -DENABLE_ICD=0 \
             -DLLVM_DIR=${TARGET_ROOT}/opt/LLVM_${{ matrix.llvm }} -DCMAKE_INSTALL_PREFIX=/usr \
             -DHOST_DEVICE_BUILD_HASH=${TARGET_TRIPLE} -DCMAKE_TOOLCHAIN_FILE=${TARGET_TOOLCHAIN_FILE}  \

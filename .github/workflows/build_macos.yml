@@ -73,19 +73,20 @@ jobs:
         shell: bash -el {0}
         id: cmake
         run: |
+
           runCMake() {
-            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            BUILD_FLAGS="-O2 -mcpu=apple-m1 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
             cmake -DDEVELOPER_MODE=ON -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_PREFIX_PATH=$CONDA_PREFIX \
             -DOPENCL_H=$CONDA_PREFIX/include/CL/opencl.h -DOPENCL_HPP=$CONDA_PREFIX/include/CL/opencl.hpp \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
-            -DWITH_LLVM_CONFIG=$CONDA_PREFIX/bin/llvm-config -DLLC_HOST_CPU=apple-m3 \
+            -DWITH_LLVM_CONFIG=$CONDA_PREFIX/bin/llvm-config -DLLC_HOST_CPU=apple-m1 $EXTRA_FLAGS \
             "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
           }
 
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
           if [ "${{ matrix.config }}" == "basic" ]; then
-            runCMake -DENABLE_ICD=0
+            runCMake -DENABLE_ICD=0 -DSTATIC_LLVM=1
           elif [ "${{ matrix.config }}" == "devel" ]; then
             runCMake -DENABLE_ICD=0 -DENABLE_EXTRA_VALIDITY_CHECKS=1 -DENABLE_RELOCATION=0
           else
@@ -129,3 +130,16 @@ jobs:
           else
             echo "Unknown configuration" && exit 1
           fi
+
+      - name: Archive Artifacts
+        run: |
+          cd ${{ github.workspace }}/build && make install DESTDIR=/tmp/pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}
+          tar -C /tmp -cavf /tmp/pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        with:
+          name: 'PoCL-MacOSX-${{ matrix.config }}-LLVM_${{ matrix.llvm }}-${{ github.sha }}'
+          path: '/tmp/pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst'
+          if-no-files-found: error
+          archive: false
