@@ -1983,7 +1983,7 @@ copy_deferred_command (char *buf,
       break;
     case CL_COMMAND_NDRANGE_KERNEL:
       {
-        int requires_kernarg_update;
+        int requires_kernarg_update = 0;
         cl_kernel kernel = node->command.run.kernel;
         kernel_data_t *kd
           = (kernel_data_t *)(kernel->data[node->program_device_i]);
@@ -2008,6 +2008,11 @@ copy_deferred_command (char *buf,
         req.m.run_kernel.has_new_args
           = 1; //(uint8_t)node->command.run.requires_kernarg_update;
 
+        // Update kernel args from command node
+        cl_device_id queue_dev = cmdbuf->queues[node->queue_idx]->device;
+        prepare_kernel_args (queue_dev, kernel, kd,
+                             node->command.run.arguments,
+                             &requires_kernarg_update);
         req.m.run_kernel.args_num = kernel_md->num_args;
         req.m.run_kernel.pod_arg_size = kd->pod_total_size;
         extra_size = (kernel_md->num_args * sizeof (uint64_t))
@@ -2015,12 +2020,6 @@ copy_deferred_command (char *buf,
         extra_size2 = kd->pod_total_size;
         if (buf)
           {
-            // Update kernel args from command node
-            cl_device_id queue_dev = cmdbuf->queues[node->queue_idx]->device;
-            prepare_kernel_args (queue_dev, kernel, kd,
-                                 node->command.run.arguments,
-                                 &requires_kernarg_update);
-
             extra_data = malloc (extra_size);
             unsigned char *ptr_is_svm_pos
               = (unsigned char *)extra_data
@@ -2109,9 +2108,10 @@ pocl_remote_create_finalized_command_buffer (cl_device_id device,
       payload_cursor += cmd_size;
     }
 
+  assert (num_commands == cmdbuf->num_syncpoints);
   r = pocl_network_create_command_buffer (
-    device->data, cmdbuf->id, cmdbuf->num_syncpoints, commands_offset,
-    commands_size, cmdbuf->num_queues, queues_offset, payload);
+    device->data, cmdbuf->id, num_commands, commands_offset, commands_size,
+    cmdbuf->num_queues, queues_offset, payload);
   POCL_MEM_FREE (payload);
   return r;
 }
