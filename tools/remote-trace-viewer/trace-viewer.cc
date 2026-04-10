@@ -563,7 +563,7 @@ int main(int Argc, char **Argv) {
                            (WindowRect.h - MINIMAP_Y - MINIMAP_HEIGHT - 20)));
           ;
         } else if (CtrlIsHeld) {
-          TimeScale = std::max(1.0f, TimeScale + Ev.wheel.y * (TimeScale / 10));
+          TimeScale = std::max(1.0f, TimeScale - Ev.wheel.y * (TimeScale / 10));
           TimeScale = std::min(TimeScale, Trace.Duration / WindowRect.w);
         } else {
           int64_t Shift = WindowRect.w * Ev.wheel.y * TimeScale / 10.0f;
