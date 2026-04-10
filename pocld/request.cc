@@ -96,6 +96,8 @@ const char *request_to_str(RequestMessageType type) {
 
   case MessageType_MigrateD2D:
     return "MigrateD2D";
+  case MessageType_Marker:
+    return "Marker";
   case MessageType_Barrier:
     return "Barrier";
 
