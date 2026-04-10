@@ -2396,7 +2396,16 @@ pocl_network_fetch_devinfo (cl_device_id device,
   device->version = remote_dev_version;
   device->driver_version = GET_STRING (devinfo->driver_version);
   device->vendor = GET_STRING (devinfo->vendor);
-  device->extensions = GET_STRING (devinfo->extensions);
+  char *exts = GET_STRING (devinfo->extensions);
+  const char *cmdbuf_ext = "cl_khr_command_buffer";
+  if (!strstr(exts, cmdbuf_ext)) {
+    size_t len = strlen(exts) + strlen(cmdbuf_ext)+2;
+    char *tmp = malloc(len);
+    snprintf(tmp, len, "%s %s", exts, cmdbuf_ext);
+    free(exts);
+    exts = tmp;
+  }
+  device->extensions = exts;
   pocl_setup_extensions_with_version (device);
   char *temp = GET_STRING (devinfo->opencl_c_all_versions);
   device->num_opencl_c_with_version
