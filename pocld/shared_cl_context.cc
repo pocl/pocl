@@ -2173,6 +2173,7 @@ int SharedCLContext::createCommandBuffer(
         dependencies.push_back(syncpoints.at(idx));
       }
 
+      // TODO: deduplicate this with runCommandBuffer
       switch (R->Body.message_type) {
       case MessageType_FillBuffer: {
         uint32_t buffer_id = R->Body.obj_id;
@@ -2360,10 +2361,10 @@ int SharedCLContext::createCommandBuffer(
             {}, *k, offset,
             (dim == 2 ? global2 : (dim < 2 ? global1 : global3)),
             ((R->Body.m.run_kernel.has_local)
-                 ? cl::NullRange
-                 : cl::NDRange(R->Body.m.run_kernel.local.x,
+                 ? cl::NDRange(R->Body.m.run_kernel.local.x,
                                R->Body.m.run_kernel.local.y,
-                               R->Body.m.run_kernel.local.z)),
+                               R->Body.m.run_kernel.local.z)
+                 : cl::NullRange),
             &dependencies, &syncpoint, nullptr, &Queues[R->Body.cq_id]);
       } break;
       case MessageType_Barrier: {
@@ -3574,10 +3575,10 @@ int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
         err = Queues[R->Body.cq_id].enqueueNDRangeKernel(
             *k, offset, (dim == 2 ? global2 : (dim < 2 ? global1 : global3)),
             ((R->Body.m.run_kernel.has_local)
-                 ? cl::NullRange
-                 : cl::NDRange(R->Body.m.run_kernel.local.x,
+                 ? cl::NDRange(R->Body.m.run_kernel.local.x,
                                R->Body.m.run_kernel.local.y,
-                               R->Body.m.run_kernel.local.z)),
+                               R->Body.m.run_kernel.local.z)
+                 : cl::NullRange),
             &Deps, &event);
       } break;
       case MessageType_Barrier: {
