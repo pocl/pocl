@@ -139,7 +139,7 @@ jobs:
           ${{ env.WORKSPACE }}/tools/scripts/run_cpu_tests mingw $CTEST_FLAGS -j$(nproc)
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: 'PoCL-MinGW-x86_64-LLVM_${{ matrix.llvm_version }}-shared_${{ matrix.shared_libs }}-${{ github.sha }}'
           path: 'D:/a/pocl/pocl/install-pocl'

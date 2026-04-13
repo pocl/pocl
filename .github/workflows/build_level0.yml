@@ -118,7 +118,7 @@ jobs:
           tar -C /tmp -cavf /tmp/pocl_level0_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst pocl_level0_llvm_${{ matrix.llvm }}_${{ github.sha }}
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: "PoCL-LevelZero-CTS_${{ matrix.conformance }}-LLVM_${{ matrix.llvm }}-${{ github.sha }}"
           path: "/tmp/pocl_level0_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst"
