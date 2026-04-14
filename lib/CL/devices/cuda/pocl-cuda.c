@@ -820,11 +820,9 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->run_program_scope_variables_pass = CL_FALSE;
   dev->generic_as_support = CL_TRUE;
 
-  pocl_setup_opencl_c_with_version (dev, CL_TRUE);
-  pocl_setup_features_with_version (dev);
-#else
-  pocl_setup_opencl_c_with_version (dev, CL_FALSE);
 #endif
+  pocl_setup_opencl_c_with_version (dev);
+  pocl_setup_features_with_version (dev);
 
   pocl_setup_extensions_with_version (dev);
 

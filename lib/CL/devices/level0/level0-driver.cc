@@ -3155,7 +3155,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     ClDev->features = OpenCL30Features.c_str();
     ClDev->supported_spirv_extensions = SPVExtensions.c_str();
 
-    pocl_setup_opencl_c_with_version(ClDev, CL_TRUE);
+    pocl_setup_opencl_c_with_version(ClDev);
     pocl_setup_features_with_version(ClDev);
     pocl_setup_extensions_with_version(ClDev);
     pocl_setup_ils_with_version(ClDev);

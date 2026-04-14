@@ -121,7 +121,7 @@ void pocl_init_default_device_infos (cl_device_id dev,
                                      const char *device_extensions);
 
 POCL_EXPORT
-void pocl_setup_opencl_c_with_version (cl_device_id dev, int supports_30);
+void pocl_setup_opencl_c_with_version (cl_device_id dev);
 
 POCL_EXPORT
 void pocl_setup_extensions_with_version (cl_device_id dev);

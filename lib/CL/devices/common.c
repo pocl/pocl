@@ -1865,13 +1865,14 @@ static const cl_name_version OPENCL_C_VERSIONS[]
     = { { CL_MAKE_VERSION (1, 0, 0), "OpenCL C" },
         { CL_MAKE_VERSION (1, 1, 0), "OpenCL C" },
         { CL_MAKE_VERSION (1, 2, 0), "OpenCL C" },
-        { CL_MAKE_VERSION (3, 0, 0), "OpenCL C" } };
+        { CL_MAKE_VERSION (3, 0, 0), "OpenCL C" },
+        { CL_MAKE_VERSION (3, 1, 0), "OpenCL C" } };
 
 void
-pocl_setup_opencl_c_with_version (cl_device_id dev, int supports_30)
+pocl_setup_opencl_c_with_version (cl_device_id dev)
 {
   dev->opencl_c_with_version = OPENCL_C_VERSIONS;
-  dev->num_opencl_c_with_version = supports_30 ? 4 : 3;
+  dev->num_opencl_c_with_version = dev->version_as_int >= 300 ? (dev->version_as_int >= 310 ? 5 : 4) : 3;
 }
 
 /* this is a list of recognized extensions, not a list of reported extensions;
@@ -2069,6 +2070,9 @@ const size_t OPENCL_C_FEATURES_NUM
 void
 pocl_setup_features_with_version (cl_device_id dev)
 {
+  if (dev->version_as_int < 300)
+    return;
+
   cl_name_version *tmp = NULL;
   unsigned ret = pocl_space_delim_string_to_cl_name_version_array (
       &tmp, dev->features, OPENCL_C_FEATURES, OPENCL_C_FEATURES_NUM);

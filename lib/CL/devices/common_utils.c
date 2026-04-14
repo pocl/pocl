@@ -458,7 +458,7 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
           | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT;
     }
 
-  pocl_setup_opencl_c_with_version (device, CL_TRUE);
+  pocl_setup_opencl_c_with_version (device);
   pocl_setup_features_with_version (device);
 
   pocl_setup_extensions_with_version (device);
