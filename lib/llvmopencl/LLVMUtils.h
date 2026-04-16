@@ -47,6 +47,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 POP_COMPILER_DIAGS
 
 #include <map>
+#include <set>
 #include <string>
 
 #include "pocl.h"

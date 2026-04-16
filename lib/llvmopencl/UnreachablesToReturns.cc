@@ -120,7 +120,7 @@ static bool convertUnreachablesToReturns(Function &F) {
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
     BasicBlock &BB = *I;
     assert(BB.getTerminator());
-    if ((BB.sizeWithoutDebug() == 1) && isa<ReturnInst>(BB.getTerminator())) {
+    if ((BB.size() == 1) && isa<ReturnInst>(BB.getTerminator())) {
       RetBB = &BB;
       break;
     }
