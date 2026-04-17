@@ -142,12 +142,12 @@ ReplyQueueThread::~ReplyQueueThread() {
   IOThread.join();
 }
 
-void ReplyQueueThread::pushReply(Reply *reply) {
+void ReplyQueueThread::pushReply(Reply *Completed) {
   if (eh->exit_requested())
     return;
 
   std::unique_lock<std::mutex> Lock(IOMutex);
-  IOInflight.push_back(reply);
+  IOInflight.push(Completed);
   IONotifier.notify_one();
 }
 
@@ -173,149 +173,127 @@ void ReplyQueueThread::writeThread() {
     }
 
     std::unique_lock<std::mutex> InflightLock(IOMutex);
-    if ((IOInflight.size() > 0)) {
-      Reply *reply = IOInflight[i];
-      if (!reply) {
-        if (i != IOInflight.size() - 1) {
-          std::swap(IOInflight[i], IOInflight[IOInflight.size() - 1]);
-        }
-        IOInflight.pop_back();
-        continue;
-      }
+    if (IOInflight.empty()) {
+      IONotifier.wait(InflightLock);
+    } else {
+      Reply *Completed = IOInflight.front();
       InflightLock.unlock();
 
-      cl_int Status =
-          (reply->event.get() == nullptr)
-              ? CL_COMPLETE
-              : reply->event.getInfo<CL_EVENT_COMMAND_EXECUTION_STATUS>();
-      if (Status <= CL_COMPLETE) {
-        // clGetEventInfo is NOT a synchronization mechanism and gives no
-        // guarantees that everything related to the event is done, so
-        // wait explicitly (should be instant since the event is already
-        // signaled as complete)
+      // clGetEventInfo is NOT a synchronization mechanism and gives no
+      // guarantees that everything related to the event is done, so
+      // wait explicitly (should be instant since the event is already
+      // signaled as complete)
 
-        EventTiming_t Timing{0, 0, 0, 0};
+      EventTiming_t Timing{0, 0, 0, 0};
 
-        if (reply->event()) {
-          Timing.queued = 0;
-          Timing.submitted = 0;
-          Timing.started = 0;
-          Timing.completed = 0;
-          cl_int stat = reply->event.wait();
-          // This should never actually happen but can't hurt to check
-          if (Status == CL_COMPLETE && stat != CL_SUCCESS)
-            Status = stat;
+      cl_int Status = CL_COMPLETE;
+      if (Completed->event()) {
+        Timing.queued = 0;
+        Timing.submitted = 0;
+        Timing.started = 0;
+        Timing.completed = 0;
+        cl_int err = Completed->event.wait();
+        assert(err == CL_SUCCESS ||
+               err == CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST);
+        Status = Completed->event.getInfo<CL_EVENT_COMMAND_EXECUTION_STATUS>();
 #ifdef QUEUE_PROFILING
-          int err = CL_SUCCESS;
-          uint64_t tmp;
-          tmp =
-              reply->event.getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>(&err);
-          if (err == CL_SUCCESS)
-            Timing.queued = tmp;
-          tmp =
-              reply->event.getProfilingInfo<CL_PROFILING_COMMAND_SUBMIT>(&err);
-          if (err == CL_SUCCESS)
-            Timing.submitted = tmp;
-          tmp = reply->event.getProfilingInfo<CL_PROFILING_COMMAND_START>(&err);
-          if (err == CL_SUCCESS)
-            Timing.started = tmp;
-          tmp = reply->event.getProfilingInfo<CL_PROFILING_COMMAND_END>(&err);
-          if (err == CL_SUCCESS)
-            Timing.completed = tmp;
+        uint64_t tmp;
+        tmp = Completed->event.getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>(
+            &err);
+        if (err == CL_SUCCESS)
+          Timing.queued = tmp;
+        tmp = Completed->event.getProfilingInfo<CL_PROFILING_COMMAND_SUBMIT>(
+            &err);
+        if (err == CL_SUCCESS)
+          Timing.submitted = tmp;
+        tmp =
+            Completed->event.getProfilingInfo<CL_PROFILING_COMMAND_START>(&err);
+        if (err == CL_SUCCESS)
+          Timing.started = tmp;
+        tmp = Completed->event.getProfilingInfo<CL_PROFILING_COMMAND_END>(&err);
+        if (err == CL_SUCCESS)
+          Timing.completed = tmp;
 #endif
-        }
+      }
 
-        // Change reply to FAILURE if the command has failed after submitting
-        if (Status < CL_COMPLETE) {
-          reply->rep.failed = 1;
-          reply->rep.fail_details = Status;
-          reply->rep.message_type = MessageType_Failure;
-        }
+      // Change reply to FAILURE if the command has failed after submitting
+      if (Status < CL_COMPLETE) {
+        Completed->rep.failed = 1;
+        Completed->rep.fail_details = Status;
+        Completed->rep.message_type = MessageType_Failure;
+      }
 
-        ReplyMessageType t =
-            static_cast<ReplyMessageType>(reply->rep.message_type);
+      ReplyMessageType t =
+          static_cast<ReplyMessageType>(Completed->rep.message_type);
 
-        auto now1 = std::chrono::steady_clock::now();
-        reply->write_start_timestamp_ns =
-            std::chrono::duration_cast<std::chrono::nanoseconds>(
-                now1.time_since_epoch())
-                .count();
+      auto now1 = std::chrono::steady_clock::now();
+      Completed->write_start_timestamp_ns =
+          std::chrono::duration_cast<std::chrono::nanoseconds>(
+              now1.time_since_epoch())
+              .count();
 
-        reply->rep.timing = Timing;
-        reply->rep.server_write_start_timestamp_ns =
-            reply->write_start_timestamp_ns;
+      Completed->rep.timing = Timing;
+      Completed->rep.server_write_start_timestamp_ns =
+          Completed->write_start_timestamp_ns;
 
-        std::unique_lock<std::mutex> ConnectionLock(ConnectionGuard);
-        if (Conn.get() == nullptr) {
-          POCL_MSG_PRINT_REMOTE(
-              "%s: Got messages to send but no connection, sleeping.\n",
-              ThreadIdentifier.c_str());
-          ConnectionNotifier.wait(ConnectionLock);
-          continue;
-        }
+      std::unique_lock<std::mutex> ConnectionLock(ConnectionGuard);
+      if (Conn.get() == nullptr) {
+        POCL_MSG_PRINT_REMOTE(
+            "%s: Got messages to send but no connection, sleeping.\n",
+            ThreadIdentifier.c_str());
+        ConnectionNotifier.wait(ConnectionLock);
+        continue;
+      }
 
-        POCL_MSG_PRINT_GENERAL(
-            "%s: SENDING MESSAGE, ID: %" PRIu64 " TYPE: %s SIZE: %" PRIuS
-            " EXTRA: %" PRIuS " FAILED: %" PRIu32 "\n",
-            ThreadIdentifier.c_str(), uint64_t(reply->rep.msg_id),
-            reply_to_str(t), sizeof(ReplyMsg_t), reply->extra_size,
-            uint32_t(reply->rep.failed));
+      POCL_MSG_PRINT_GENERAL(
+          "%s: SENDING MESSAGE, ID: %" PRIu64 " TYPE: %s SIZE: %" PRIuS
+          " EXTRA: %" PRIuS " FAILED: %" PRIu32 "\n",
+          ThreadIdentifier.c_str(), uint64_t(Completed->rep.msg_id),
+          reply_to_str(t), sizeof(ReplyMsg_t), Completed->extra_size,
+          uint32_t(Completed->rep.failed));
 
-        // WRITE REPLY
-        if (Conn->writeFull(&reply->rep, sizeof(ReplyMsg_t)) < 0) {
+      // WRITE REPLY
+      if (Conn->writeFull(&Completed->rep, sizeof(ReplyMsg_t)) < 0) {
+        Conn.reset();
+        virtualContext->connectionLost();
+        continue;
+      }
+
+      // TODO: handle reconnecting & resending when RDMA is used
+      if (Completed->extra_size > 0 && !Completed->extra_data.empty()) {
+        POCL_MSG_PRINT_INFO("%s: WRITING EXTRA: %" PRIuS " \n",
+                            ThreadIdentifier.c_str(), Completed->extra_size);
+        if (Conn->writeFull(Completed->extra_data.data(),
+                            Completed->extra_size) < 0) {
           Conn.reset();
           virtualContext->connectionLost();
           continue;
         }
-
-        // TODO: handle reconnecting & resending when RDMA is used
-        if (reply->extra_size > 0 && !reply->extra_data.empty()) {
-          POCL_MSG_PRINT_INFO("%s: WRITING EXTRA: %" PRIuS " \n",
-                              ThreadIdentifier.c_str(), reply->extra_size);
-          if (Conn->writeFull(reply->extra_data.data(), reply->extra_size) <
-              0) {
-            Conn.reset();
-            virtualContext->connectionLost();
-            continue;
-          }
-        }
-        ConnectionLock.unlock();
-
-        POCL_MSG_PRINT_GENERAL("%s: MESSAGE FULLY WRITTEN, ID: %" PRIu64 "\n",
-                               ThreadIdentifier.c_str(),
-                               uint64_t(reply->rep.msg_id));
-
-        TP_MSG_SENT(reply->rep.msg_id, reply->rep.did, reply->rep.failed,
-                    reply->rep.message_type);
-
-        if (reply->event.get() != nullptr) {
-          virtualContext->notifyEvent(reply->req->Body.event_id, Status);
-          Request PeerNotice{};
-          PeerNotice.Body.msg_id = reply->rep.msg_id;
-          PeerNotice.Body.event_id = reply->req->Body.event_id;
-          PeerNotice.Body.message_type = MessageType_NotifyEvent;
-          virtualContext->broadcastToPeers(PeerNotice);
-        }
-
-        // swap the current element into last place and pop it off the vector
-        InflightLock.lock();
-        if (i != IOInflight.size() - 1) {
-          std::swap(IOInflight[i], IOInflight[IOInflight.size() - 1]);
-        }
-        IOInflight.pop_back();
-
-        // move to next item (now in the old place of the current item)
-        i = i % std::max(IOInflight.size(), (size_t)1);
-        InflightLock.unlock();
-
-        delete reply;
-      } else {
-        InflightLock.lock();
-        i = (i + 1) % IOInflight.size();
-        // InflightLock is dropped after this
       }
-    } else {
-      IONotifier.wait(InflightLock);
+      ConnectionLock.unlock();
+
+      POCL_MSG_PRINT_GENERAL("%s: MESSAGE FULLY WRITTEN, ID: %" PRIu64 "\n",
+                             ThreadIdentifier.c_str(),
+                             uint64_t(Completed->rep.msg_id));
+
+      TP_MSG_SENT(reply->rep.msg_id, reply->rep.did, reply->rep.failed,
+                  reply->rep.message_type);
+
+      if (Completed->event.get() != nullptr) {
+        virtualContext->notifyEvent(Completed->req->Body.event_id, Status);
+        Request PeerNotice{};
+        PeerNotice.Body.msg_id = Completed->rep.msg_id;
+        PeerNotice.Body.event_id = Completed->req->Body.event_id;
+        PeerNotice.Body.message_type = MessageType_NotifyEvent;
+        virtualContext->broadcastToPeers(PeerNotice);
+      }
+
+      // pop the successfully written reply from the queue
+      InflightLock.lock();
+      IOInflight.pop();
+      InflightLock.unlock();
+
+      delete Completed;
     }
   }
 
