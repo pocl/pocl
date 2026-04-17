@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <memory>
+#include <queue>
 #include <unordered_set>
 
 #include "CL/cl_ext.h"
@@ -119,12 +120,12 @@ class VirtualCLContext : public VirtualContextBase {
   std::thread MainThread;
   std::condition_variable MainCond;
   std::mutex MainMutex;
-  std::deque<Request *> MainQueue;
+  std::queue<Request *> MainQueue;
 
   std::thread QueuedThread;
   std::condition_variable QueuedCond;
   std::mutex QueuedMutex;
-  std::deque<Request *> QueuedQueue;
+  std::queue<Request *> QueuedQueue;
 
 #ifdef ENABLE_RDMA
   std::shared_ptr<RdmaConnection> client_rdma;
@@ -373,7 +374,7 @@ void VirtualCLContext::nonQueuedPush(Request *req) {
                          uint64_t(req->Body.msg_id));
 
   std::unique_lock<std::mutex> Lock(MainMutex);
-  MainQueue.push_back(req);
+  MainQueue.push(req);
   MainCond.notify_one();
 }
 
@@ -387,7 +388,7 @@ void VirtualCLContext::queuedPush(Request *req) {
       uint64_t(req->Body.msg_id), uint64_t(req->Body.event_id));
 
   std::unique_lock<std::mutex> Lock(QueuedMutex);
-  QueuedQueue.push_back(req);
+  QueuedQueue.push(req);
   QueuedCond.notify_one();
 }
 
@@ -474,7 +475,7 @@ int VirtualCLContext::queuedRun() {
     std::unique_lock<std::mutex> Lock(QueuedMutex);
     if (QueuedQueue.size() > 0) {
       Request *R = QueuedQueue.front();
-      QueuedQueue.pop_front();
+      QueuedQueue.pop();
       Lock.unlock();
 
       SharedContextList[R->Body.pid]->queuedPush(R);
@@ -500,7 +501,7 @@ int VirtualCLContext::run() {
     std::unique_lock<std::mutex> Lock(MainMutex);
     if (MainQueue.size() > 0) {
       Request *request = MainQueue.front();
-      MainQueue.pop_front();
+      MainQueue.pop();
       Lock.unlock();
 
       reply = nullptr;
