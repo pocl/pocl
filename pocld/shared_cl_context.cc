@@ -2667,12 +2667,14 @@ int SharedCLContext::createBuffer(BufferId_t BufferID, size_t Size,
   Flags = Flags & (cl_bitfield)(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY |
                                 CL_MEM_READ_ONLY);
 
-  if (ParentID == 0) {
+#ifdef ENABLE_RDMA
+  if (clientUsesRdma() && ParentID == 0) {
     // When RDMA is used, VirtualClContext passes in a pointer from clSVMAlloc
     Flags = Flags | (cl_bitfield)(HostPtr ? CL_MEM_USE_HOST_PTR
                                           : CL_MEM_ALLOC_HOST_PTR);
     // Note: Sub-buffer creation cannot have the HOST_PTR flags set.
   }
+#endif
 
   cl_int Err;
   clBufferPtr Buf;
