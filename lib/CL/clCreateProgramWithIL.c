@@ -47,6 +47,21 @@ CL_API_SUFFIX__VERSION_2_1
 
   POCL_GOTO_ERROR_COND ((length == 0), CL_INVALID_VALUE);
 
+  /* this hack is necessary for now:
+
+    "consistency_il_programs" test in CTS is using bogus SPIRV input,
+    in a code branch where devices don't support IL programs. Therefore
+    the test is triggering two different error conditions (with different
+    error values) simultaneously, but it only accepts one returned error
+    (CL_INVALID_OPERATION)
+
+    ... should be fixed in OpenCL-CTS once PR #2624 is pulled in.
+  */
+#if !defined(ENABLE_SPIRV) && !defined(ENABLE_VULKAN)
+  POCL_GOTO_ERROR_ON (1, CL_INVALID_OPERATION,
+    "This build of PoCL was built withoun any SPIR-V support.\n");
+#else
+
   int is_spirv = 0;
   int is_spirv_kernel
     = pocl_bitcode_is_spirv_execmodel_kernel ((const char *)il, length, 0);
@@ -113,6 +128,7 @@ CL_API_SUFFIX__VERSION_2_1
 
 #endif
 
+#endif
 
 ERROR:
   if (errcode_ret)
