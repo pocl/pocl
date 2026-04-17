@@ -25,6 +25,8 @@
 
 #include <cassert>
 
+#include "CL/cl.h"
+
 #include "cmd_queue.hh"
 #include "common_cl.hh"
 #include "reply_th.hh"
@@ -71,6 +73,20 @@ bool CommandQueue::TryRun(Request *request) {
 
   return !unknown_events;
 }
+
+namespace {
+class ReplyHelper {
+public:
+  ReplyHelper() = delete;
+  ReplyQueueThread *Queue;
+  Reply *Cmd;
+  static void Submit(cl_event, cl_int, void *user_data) {
+    ReplyHelper *tmp = (ReplyHelper *)user_data;
+    tmp->Queue->pushReply(tmp->Cmd);
+    delete tmp;
+  }
+};
+} // anonymous namespace
 
 void CommandQueue::RunCommand(Request *request) {
   auto Now = std::chrono::steady_clock::now();
@@ -195,7 +211,8 @@ void CommandQueue::RunCommand(Request *request) {
   reply->event = p.native;
 
   ReplyQueueThread *rqt = (slow ? write_slow : write_fast);
-  rqt->pushReply(reply);
+  ReplyHelper *tmp = new ReplyHelper{rqt, reply};
+  reply->event.setCallback(CL_COMPLETE, ReplyHelper::Submit, tmp);
 }
 
 /***********    CMD QUEUE    *******************/

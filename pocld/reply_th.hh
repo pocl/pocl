@@ -28,9 +28,9 @@
 #include <condition_variable>
 #include <memory>
 #include <mutex>
+#include <queue>
 #include <string>
 #include <thread>
-#include <vector>
 
 #include "common.hh"
 #include "traffic_monitor.hh"
@@ -46,7 +46,7 @@ class ReplyQueueThread {
   std::shared_ptr<Connection> Conn;
   std::string ThreadIdentifier;
   VirtualContextBase *virtualContext;
-  std::vector<Reply *> IOInflight;
+  std::queue<Reply *> IOInflight;
   std::mutex IOMutex;
   std::condition_variable IONotifier;
   std::thread IOThread;
