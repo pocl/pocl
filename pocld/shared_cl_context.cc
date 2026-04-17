@@ -3386,10 +3386,10 @@ int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
                  CmdBuf.enqueueCommandBuffer(Queues, &Dependencies, &event));
     return err;
   } else {
-    const CommandBuffer::Emulated *CmdBuf =
-        std::get_if<CommandBuffer::Emulated>(&Cb->Buffer);
+    const CommandBuffer::Emulated &CmdBuf =
+        std::get<CommandBuffer::Emulated>(Cb->Buffer);
     std::vector<cl::Event> Syncpoints;
-    for (Request *R : CmdBuf->Cmds) {
+    for (Request *R : CmdBuf.Cmds) {
       EventTiming_t evt;
       // Copy buffer-level dependencies to all commands
       std::vector<cl::Event> Deps = Dependencies;
