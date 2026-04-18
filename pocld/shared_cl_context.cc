@@ -913,6 +913,7 @@ void SharedCLContext::notifyEvent(uint64_t id, cl_int status) {
     POCL_MSG_PRINT_EVENTS(
         "no event %" PRIu64 " found, creating new user event\n", id);
   }
+  lock.unlock();
   for (auto &q : QueueMap) {
     q.second->notify();
   }
