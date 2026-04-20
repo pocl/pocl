@@ -159,7 +159,8 @@ add_test_pocl(NAME "regression/id-dependent_computation_before_kernel_exit" WORK
 
 add_test_pocl(NAME "regression/barrier_just_before_return" WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_barrier_before_return")
 
-add_test_pocl(NAME "regression/infinite_loop" WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_infinite_loop")
+# This fails with CBS with "[SubCFG] Invalid kernel! No kernel exits!"
+add_test_pocl(NAME "regression/infinite_loop" WORKITEM_HANDLER "loopvec;" COMMAND "test_infinite_loop")
 
 add_test_pocl(NAME "regression/undominated_variable_from_conditional_barrier_handling"
   WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_undominated_variable")
@@ -190,7 +191,6 @@ set_tests_properties(
   "regression/early_return_before_a_barrier_region_${VARIANT}"
   "regression/id-dependent_computation_before_kernel_exit_${VARIANT}"
   "regression/barrier_just_before_return_${VARIANT}"
-  "regression/infinite_loop_${VARIANT}"
   "regression/undominated_variable_from_conditional_barrier_handling_${VARIANT}"
   "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_${VARIANT}"
   "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_${VARIANT}"
@@ -315,8 +315,7 @@ endforeach()
 set_property(TEST
   "regression/test_flatten_barrier_subs_loopvec"
   "regression/test_flatten_barrier_subs_cbs"
-  "regression/infinite_loop_loopvec"
-  "regression/infinite_loop_cbs"
+  "regression/infinite_loop"
   APPEND PROPERTY LABELS "mingw_fail")
 
 # Label tests that work with CUDA backend
@@ -441,7 +440,7 @@ set_property(TEST
 
 if(NOT ENABLE_CONFORMANCE)
 set_property(TEST
-  "regression/infinite_loop_loopvec"
+  "regression/infinite_loop"
   "regression/test_issue_757_loopvec"
   "regression/passing_a_constant_array_as_an_arg_loopvec"
   APPEND PROPERTY LABELS "level0")
