@@ -45,16 +45,12 @@ public:
 
   virtual void notifyEvent(uint64_t id, cl_int status) = 0;
 
-  virtual bool isCommandReceived(uint64_t id) = 0;
+  virtual bool alreadyProcessed(uint64_t id) = 0;
 
   virtual size_t numDevices() const = 0;
 
   virtual int writeKernelMeta(uint32_t ProgramID, std::vector<uint8_t> &Buffer,
                               size_t *Written) = 0;
-
-  virtual EventPair getEventPairForId(uint64_t event_id) = 0;
-
-  virtual int waitAndDeleteEvent(uint64_t event_id) = 0;
 
   virtual std::vector<cl::Event> remapWaitlist(size_t num_events, uint64_t *ids,
                                                uint64_t dep) = 0;
@@ -124,8 +120,9 @@ public:
 
   virtual int migrateMemObject(uint64_t ev_id, uint32_t cq_id,
                                uint32_t mem_obj_id, unsigned is_image,
-                               EventTiming_t &evt, uint32_t waitlist_size,
-                               uint64_t *waitlist) = 0;
+                               EventTiming_t &evt,
+                               std::vector<cl::Event> &Dependencies,
+                               cl::Event &event) = 0;
 
   /**********************************************************************/
   /**********************************************************************/
@@ -134,34 +131,39 @@ public:
   virtual int readBuffer(uint64_t ev_id, uint32_t cq_id, uint64_t buffer_id,
                          int is_svm, uint32_t size_id, size_t size,
                          size_t offset, void *host_ptr, uint64_t *content_size,
-                         EventTiming_t &evt, uint32_t waitlist_size,
-                         uint64_t *waitlist) = 0;
+                         EventTiming_t &evt,
+                         std::vector<cl::Event> &Dependencies,
+                         cl::Event &event) = 0;
 
   virtual int writeBuffer(uint64_t ev_id, uint32_t cq_id, uint64_t buffer_id,
                           int is_svm, size_t size, size_t offset,
                           void *host_ptr, EventTiming_t &evt,
-                          uint32_t waitlist_size, uint64_t *waitlist) = 0;
+                          std::vector<cl::Event> &Dependencies,
+                          cl::Event &event) = 0;
 
   virtual int copyBuffer(uint64_t ev_id, uint32_t cq_id, uint32_t src_buffer_id,
                          uint32_t dst_buffer_id,
                          uint32_t content_size_buffer_id, size_t size,
                          size_t src_offset, size_t dst_offset,
-                         EventTiming_t &evt, uint32_t waitlist_size,
-                         uint64_t *waitlist) = 0;
+                         EventTiming_t &evt,
+                         std::vector<cl::Event> &Dependencies,
+                         cl::Event &event) = 0;
 
   virtual int readBufferRect(uint64_t ev_id, uint32_t cq_id, uint32_t buffer_id,
                              sizet_vec3 &buffer_origin, sizet_vec3 &region,
                              size_t buffer_row_pitch, size_t buffer_slice_pitch,
                              void *host_ptr, size_t host_bytes,
-                             EventTiming_t &evt, uint32_t waitlist_size,
-                             uint64_t *waitlist) = 0;
+                             EventTiming_t &evt,
+                             std::vector<cl::Event> &Dependencies,
+                             cl::Event &event) = 0;
 
   virtual int writeBufferRect(uint64_t ev_id, uint32_t cq_id,
                               uint32_t buffer_id, sizet_vec3 &buffer_origin,
                               sizet_vec3 &region, size_t buffer_row_pitch,
                               size_t buffer_slice_pitch, void *host_ptr,
                               size_t host_bytes, EventTiming_t &evt,
-                              uint32_t waitlist_size, uint64_t *waitlist) = 0;
+                              std::vector<cl::Event> &Dependencies,
+                              cl::Event &event) = 0;
 
   virtual int copyBufferRect(uint64_t ev_id, uint32_t cq_id,
                              uint32_t dst_buffer_id, uint32_t src_buffer_id,
@@ -169,32 +171,37 @@ public:
                              sizet_vec3 &region, size_t dst_row_pitch,
                              size_t dst_slice_pitch, size_t src_row_pitch,
                              size_t src_slice_pitch, EventTiming_t &evt,
-                             uint32_t waitlist_size, uint64_t *waitlist) = 0;
+                             std::vector<cl::Event> &Dependencies,
+                             cl::Event &event) = 0;
 
   virtual int fillBuffer(uint64_t ev_id, uint32_t cq_id, uint32_t buffer_id,
                          size_t offset, size_t size, void *pattern,
                          size_t pattern_size, EventTiming_t &evt,
-                         uint32_t waitlist_size, uint64_t *waitlist) = 0;
+                         std::vector<cl::Event> &Dependencies,
+                         cl::Event &event) = 0;
 
   virtual int runKernel(uint64_t ev_id, uint32_t cq_id, uint32_t device_id,
                         uint16_t has_new_args, size_t arg_count, uint64_t *args,
                         unsigned char *is_svm_ptr, size_t pod_size,
                         char *pod_buf, EventTiming_t &evt, uint32_t kernel_id,
-                        uint32_t waitlist_size, uint64_t *waitlist,
+                        std::vector<cl::Event> &Dependencies, cl::Event &event,
                         unsigned dim, const sizet_vec3 &offset,
                         const sizet_vec3 &global,
                         const sizet_vec3 *local = nullptr) = 0;
 
   virtual int barrier(uint64_t ev_id, uint32_t cq_id, EventTiming_t &evt,
-                      uint32_t waitlist_size, uint64_t *waitlist) = 0;
+                      std::vector<cl::Event> &Dependencies,
+                      cl::Event &event) = 0;
 
   virtual int marker(uint64_t ev_id, uint32_t cq_id, EventTiming_t &evt,
-                     uint32_t waitlist_size, uint64_t *waitlist) = 0;
+                     std::vector<cl::Event> &Dependencies,
+                     cl::Event &event) = 0;
 
   virtual int runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
                                uint32_t CmdBufId, uint32_t NumQueues,
-                               uint32_t *QueueIds, uint32_t waitlist_size,
-                               uint64_t *waitlist) = 0;
+                               uint32_t *QueueIds,
+                               std::vector<cl::Event> &Dependencies,
+                               cl::Event &event) = 0;
 
   /**********************************************************************/
   /**********************************************************************/
@@ -203,37 +210,43 @@ public:
   virtual int fillImage(uint64_t ev_id, uint32_t cq_id, uint32_t image_id,
                         sizet_vec3 &origin, sizet_vec3 &region,
                         void *fill_color, EventTiming_t &evt,
-                        uint32_t waitlist_size, uint64_t *waitlist) = 0;
+                        std::vector<cl::Event> &Dependencies,
+                        cl::Event &event) = 0;
 
   virtual int copyImage2Buffer(uint64_t ev_id, uint32_t cq_id,
                                uint32_t image_id, uint32_t dst_buf_id,
                                sizet_vec3 &origin, sizet_vec3 &region,
                                size_t offset, EventTiming_t &evt,
-                               uint32_t waitlist_size, uint64_t *waitlist) = 0;
+                               std::vector<cl::Event> &Dependencies,
+                               cl::Event &event) = 0;
 
   virtual int copyBuffer2Image(uint64_t ev_id, uint32_t cq_id,
                                uint32_t image_id, uint32_t src_buf_id,
                                sizet_vec3 &origin, sizet_vec3 &region,
                                size_t offset, EventTiming_t &evt,
-                               uint32_t waitlist_size, uint64_t *waitlist) = 0;
+                               std::vector<cl::Event> &Dependencies,
+                               cl::Event &event) = 0;
 
   virtual int copyImage2Image(uint64_t ev_id, uint32_t cq_id,
                               uint32_t dst_image_id, uint32_t src_image_id,
                               sizet_vec3 &dst_origin, sizet_vec3 &src_origin,
                               sizet_vec3 &region, EventTiming_t &evt,
-                              uint32_t waitlist_size, uint64_t *waitlist) = 0;
+                              std::vector<cl::Event> &Dependencies,
+                              cl::Event &event) = 0;
 
   virtual int readImageRect(uint64_t ev_id, uint32_t cq_id, uint32_t image_id,
                             sizet_vec3 &origin, sizet_vec3 &region,
                             void *host_ptr, size_t host_bytes,
-                            EventTiming_t &evt, uint32_t waitlist_size,
-                            uint64_t *waitlist) = 0;
+                            EventTiming_t &evt,
+                            std::vector<cl::Event> &Dependencies,
+                            cl::Event &event) = 0;
 
   virtual int writeImageRect(uint64_t ev_id, uint32_t cq_id, uint32_t image_id,
                              sizet_vec3 &origin, sizet_vec3 &region,
                              void *host_ptr, size_t host_bytes,
-                             EventTiming_t &evt, uint32_t waitlist_size,
-                             uint64_t *waitlist) = 0;
+                             EventTiming_t &evt,
+                             std::vector<cl::Event> &Dependencies,
+                             cl::Event &event) = 0;
 };
 
 #ifdef __GNUC__

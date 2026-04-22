@@ -28,6 +28,7 @@
 #include <poll.h>
 #include <sys/socket.h>
 
+#include "CL/opencl.hpp"
 #include "common.hh"
 #include "messages.h"
 #include "request_th.hh"

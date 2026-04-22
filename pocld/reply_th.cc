@@ -26,6 +26,7 @@
 #include <mutex>
 #include <queue>
 
+#include "CL/cl.h"
 #include "common.hh"
 #include "messages.h"
 #include "pocl_debug.h"
@@ -179,19 +180,20 @@ void ReplyQueueThread::writeThread() {
       Reply *Completed = IOInflight.front();
       InflightLock.unlock();
 
-      // clGetEventInfo is NOT a synchronization mechanism and gives no
-      // guarantees that everything related to the event is done, so
-      // wait explicitly (should be instant since the event is already
-      // signaled as complete)
-
       EventTiming_t Timing{0, 0, 0, 0};
 
-      cl_int Status = CL_COMPLETE;
+      cl_int Status =
+          Completed->rep.failed ? Completed->rep.fail_details : CL_SUCCESS;
       if (Completed->event()) {
         Timing.queued = 0;
         Timing.submitted = 0;
         Timing.started = 0;
         Timing.completed = 0;
+
+        // clGetEventInfo is NOT a synchronization mechanism and gives no
+        // guarantees that everything related to the event is done, so
+        // wait explicitly (should be instant since the event is already
+        // signaled as complete)
         cl_int err = Completed->event.wait();
         assert(err == CL_SUCCESS ||
                err == CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST);
@@ -279,7 +281,7 @@ void ReplyQueueThread::writeThread() {
       TP_MSG_SENT(reply->rep.msg_id, reply->rep.did, reply->rep.failed,
                   reply->rep.message_type);
 
-      if (Completed->event.get() != nullptr) {
+      if (Completed->event()) {
         virtualContext->notifyEvent(Completed->req->Body.event_id, Status);
         Request PeerNotice{};
         PeerNotice.Body.msg_id = Completed->rep.msg_id;

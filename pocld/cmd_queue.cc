@@ -23,12 +23,19 @@
    IN THE SOFTWARE.
 */
 
+#include <algorithm>
 #include <cassert>
+#include <cstdint>
+#include <mutex>
+#include <vector>
 
 #include "CL/cl.h"
 
+#include "CL/opencl.hpp"
 #include "cmd_queue.hh"
+#include "common.hh"
 #include "common_cl.hh"
+#include "pocl_debug.h"
 #include "reply_th.hh"
 #include "shared_cl_context.hh"
 
@@ -48,30 +55,60 @@ CommandQueue::~CommandQueue() {
 }
 
 void CommandQueue::push(Request *request) {
-  if (!TryRun(request))
-    pending.push_back(request);
-}
-
-void CommandQueue::notify() {
-  for (size_t i = 0; i < pending.size();) {
-    if (TryRun(pending[i]))
-      pending.erase(pending.begin() + i);
-    else
-      i += 1;
-  }
-}
-
-bool CommandQueue::TryRun(Request *request) {
-  size_t unknown_events = request->Body.waitlist_size;
-  for (size_t i = 0; i < request->Body.waitlist_size; ++i) {
-    if (backend->isCommandReceived(request->Waitlist[i]))
-      unknown_events -= 1;
-  }
-
-  if (!unknown_events)
+  std::unique_lock<std::mutex> Lock(PendingMutex);
+  request->LocalWaitlist = backend->remapWaitlist(
+      request->ClientWaitlist.size(), request->ClientWaitlist.data(),
+      request->Body.event_id);
+  if (ReadyToRun(request)) {
+    Lock.unlock();
     RunCommand(request);
+  } else {
+    Pending.push_back(request);
+  }
+}
 
-  return !unknown_events;
+void CommandQueue::notify(EventWithId Event) {
+  std::vector<Request *> Runnable;
+  std::unique_lock<std::mutex> Lock(PendingMutex);
+  for (size_t i = 0; i < Pending.size();) {
+
+    // Add real cl::Event to LocalWaitlist if needed and missing
+    Request *Req = Pending.at(i);
+    for (uint64_t Id : Req->ClientWaitlist) {
+      if (Id == Event.first) {
+        bool Added = false;
+        for (cl::Event &Mapped : Req->LocalWaitlist) {
+          if (Mapped() == Event.second()) {
+            Added = true;
+            break;
+          }
+        }
+        if (!Added) {
+          Req->LocalWaitlist.push_back(Event.second);
+        }
+      }
+    }
+
+    if (ReadyToRun(Req)) {
+      Runnable.push_back(Req);
+      Pending.erase(Pending.begin() + i);
+    } else {
+      ++i;
+    }
+  }
+
+  for (Request *Req : Runnable) {
+    RunCommand(Req);
+  }
+}
+
+bool CommandQueue::ReadyToRun(Request *Req) {
+  bool Ready = (Req->LocalWaitlist.size() == Req->Body.waitlist_size);
+  POCL_MSG_PRINT_EVENTS("Event %lu %s ready to run with %lu/%lu dependencies\n",
+                        (unsigned long)Req->Body.event_id, Ready ? "is" : "not",
+                        (unsigned long)Req->LocalWaitlist.size(),
+                        (unsigned long)Req->ClientWaitlist.size());
+  return Ready;
 }
 
 namespace {
@@ -89,6 +126,11 @@ public:
 } // anonymous namespace
 
 void CommandQueue::RunCommand(Request *request) {
+  if (backend->alreadyProcessed(request->Body.event_id)) {
+    delete request;
+    return;
+  }
+
   auto Now = std::chrono::steady_clock::now();
   uint64_t ProcessingStart =
       std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -199,20 +241,13 @@ void CommandQueue::RunCommand(Request *request) {
     assert(false && "unknown message type");
   }
 
-  // TODO: move this to reply thread?
-  // Probably not necessary since we can only have the real event by this
-  // point...
-  EventPair p = backend->getEventPairForId(request->Body.event_id);
-  // If the command failed or was a migration to this server, there won't be a
-  // native event.
-  if (request->Body.message_type != MessageType_MigrateD2D &&
-      reply->rep.failed == CL_FALSE)
-    assert(p.native.get());
-  reply->event = p.native;
-
   ReplyQueueThread *rqt = (slow ? write_slow : write_fast);
-  ReplyHelper *tmp = new ReplyHelper{rqt, reply};
-  reply->event.setCallback(CL_COMPLETE, ReplyHelper::Submit, tmp);
+  if (reply->event()) {
+    ReplyHelper *tmp = new ReplyHelper{rqt, reply};
+    reply->event.setCallback(CL_COMPLETE, ReplyHelper::Submit, tmp);
+  } else {
+    rqt->pushReply(reply);
+  }
 }
 
 /***********    CMD QUEUE    *******************/
@@ -232,7 +267,7 @@ void CommandQueue::MigrateMemObj(uint32_t queue_id, Request *req, Reply *rep) {
     // direct mig within 1 platform
     RETURN_IF_ERR_CODE(backend->migrateMemObject(
         req->Body.event_id, queue_id, req->Body.obj_id, m.is_image, evt_timing,
-        req->Body.waitlist_size, req->Waitlist.data()));
+        req->LocalWaitlist, rep->event));
     // TP_WRITE_BUFFER(req->Body.msg_id, req->Body.client_did, queue_id,
     // req->Body.obj_id, m.size, CL_FINISHED);
   }
@@ -259,8 +294,8 @@ void CommandQueue::MigrateMemObj(uint32_t queue_id, Request *req, Reply *rep) {
                           CL_RUNNING);
       RETURN_IF_ERR_CODE(backend->writeImageRect(
           req->Body.event_id, queue_id, req->Body.obj_id, origin, region,
-          host_ptr, req->ExtraDataSize, evt_timing, req->Body.waitlist_size,
-          req->Waitlist.data()));
+          host_ptr, req->ExtraDataSize, evt_timing, req->LocalWaitlist,
+          rep->event));
       TP_WRITE_IMAGE_RECT(req->Body.msg_id, req->Body.client_did, queue_id,
                           req->Body.obj_id, m.width, m.height, m.depth,
                           CL_FINISHED);
@@ -269,7 +304,7 @@ void CommandQueue::MigrateMemObj(uint32_t queue_id, Request *req, Reply *rep) {
                       req->Body.obj_id, m.size, CL_RUNNING);
       RETURN_IF_ERR_CODE(backend->writeBuffer(
           req->Body.event_id, queue_id, req->Body.obj_id, 0, m.size, 0,
-          host_ptr, evt_timing, req->Body.waitlist_size, req->Waitlist.data()));
+          host_ptr, evt_timing, req->LocalWaitlist, rep->event));
       TP_WRITE_BUFFER(req->Body.msg_id, req->Body.client_did, queue_id,
                       req->Body.obj_id, m.size, CL_FINISHED);
     }
@@ -318,7 +353,7 @@ void CommandQueue::ReadBuffer(uint32_t queue_id, Request *req, Reply *rep) {
   RETURN_IF_ERR_CODE(backend->readBuffer(
       req->Body.event_id, queue_id, req->Body.obj_id, m.is_svm,
       m.content_size_id, m.size, m.src_offset, host_ptr, &m.size, evt_timing,
-      req->Body.waitlist_size, req->Waitlist.data()));
+      req->LocalWaitlist, rep->event));
   TP_READ_BUFFER(req->Body.msg_id, req->Body.client_did, queue_id,
                  req->Body.obj_id, m.size, CL_FINISHED);
 
@@ -339,8 +374,7 @@ void CommandQueue::WriteBuffer(uint32_t queue_id, Request *req, Reply *rep) {
                   req->Body.obj_id, m.size, CL_RUNNING);
   RETURN_IF_ERR_CODE(backend->writeBuffer(
       req->Body.event_id, queue_id, req->Body.obj_id, req->Body.m.write.is_svm,
-      m.size, m.dst_offset, data, evt_timing, req->Body.waitlist_size,
-      req->Waitlist.data()));
+      m.size, m.dst_offset, data, evt_timing, req->LocalWaitlist, rep->event));
   TP_WRITE_BUFFER(req->Body.msg_id, req->Body.client_did, queue_id,
                   req->Body.obj_id, m.size, CL_FINISHED);
 
@@ -356,7 +390,7 @@ void CommandQueue::CopyBuffer(uint32_t queue_id, Request *req, Reply *rep) {
   RETURN_IF_ERR_CODE(backend->copyBuffer(
       req->Body.event_id, queue_id, m.src_buffer_id, m.dst_buffer_id,
       m.size_buffer_id, m.size, m.src_offset, m.dst_offset, evt_timing,
-      req->Body.waitlist_size, req->Waitlist.data()));
+      req->LocalWaitlist, rep->event));
   TP_COPY_BUFFER(req->Body.msg_id, req->Body.client_did, queue_id,
                  m.src_buffer_id, m.dst_buffer_id, m.size, CL_FINISHED);
 
@@ -388,7 +422,7 @@ void CommandQueue::ReadBufferRect(uint32_t queue_id, Request *req, Reply *rep) {
   RETURN_IF_ERR_CODE(backend->readBufferRect(
       req->Body.event_id, queue_id, req->Body.obj_id, buffer_origin, region,
       m.buffer_row_pitch, m.buffer_slice_pitch, host_ptr, m.host_bytes,
-      evt_timing, req->Body.waitlist_size, req->Waitlist.data()));
+      evt_timing, req->LocalWaitlist, rep->event));
   TP_READ_BUFFER_RECT(req->Body.msg_id, req->Body.client_did, queue_id,
                       req->Body.obj_id, m.region.x, m.region.y, m.region.z,
                       CL_FINISHED);
@@ -416,7 +450,7 @@ void CommandQueue::WriteBufferRect(uint32_t queue_id, Request *req,
   RETURN_IF_ERR_CODE(backend->writeBufferRect(
       req->Body.event_id, queue_id, req->Body.obj_id, buffer_origin, region,
       m.buffer_row_pitch, m.buffer_slice_pitch, data, req->ExtraDataSize,
-      evt_timing, req->Body.waitlist_size, req->Waitlist.data()));
+      evt_timing, req->LocalWaitlist, rep->event));
   TP_WRITE_BUFFER_RECT(req->Body.msg_id, req->Body.client_did, queue_id,
                        req->Body.obj_id, m.region.x, m.region.y, m.region.z,
                        CL_FINISHED);
@@ -438,8 +472,8 @@ void CommandQueue::CopyBufferRect(uint32_t queue_id, Request *req, Reply *rep) {
   RETURN_IF_ERR_CODE(backend->copyBufferRect(
       req->Body.event_id, queue_id, m.dst_buffer_id, m.src_buffer_id,
       dst_origin, src_origin, region, m.dst_row_pitch, m.dst_slice_pitch,
-      m.src_row_pitch, m.src_slice_pitch, evt_timing, req->Body.waitlist_size,
-      req->Waitlist.data()));
+      m.src_row_pitch, m.src_slice_pitch, evt_timing, req->LocalWaitlist,
+      rep->event));
   TP_COPY_BUFFER_RECT(req->Body.msg_id, req->Body.client_did, queue_id,
                       m.src_buffer_id, m.dst_buffer_id, m.region.x, m.region.y,
                       m.region.z, CL_FINISHED);
@@ -455,8 +489,8 @@ void CommandQueue::FillBuffer(uint32_t queue_id, Request *req, Reply *rep) {
                  req->Body.obj_id, m.size, CL_RUNNING);
   RETURN_IF_ERR_CODE(backend->fillBuffer(
       req->Body.event_id, queue_id, req->Body.obj_id, m.dst_offset, m.size,
-      req->ExtraData.data(), m.pattern_size, evt_timing,
-      req->Body.waitlist_size, req->Waitlist.data()));
+      req->ExtraData.data(), m.pattern_size, evt_timing, req->LocalWaitlist,
+      rep->event));
   TP_FILL_BUFFER(req->Body.msg_id, req->Body.client_did, queue_id,
                  req->Body.obj_id, m.size, CL_FINISHED);
 
@@ -481,8 +515,8 @@ void CommandQueue::RunKernel(uint32_t queue_id, Request *req, Reply *rep) {
       (uint64_t *)req->ExtraData.data(),
       (unsigned char *)req->ExtraData.data() + m.args_num * sizeof(uint64_t),
       m.pod_arg_size, (char *)req->ExtraData2.data(), evt_timing,
-      req->Body.obj_id, req->Body.waitlist_size, req->Waitlist.data(), dim,
-      offset, global, (m.has_local ? &local : nullptr)));
+      req->Body.obj_id, req->LocalWaitlist, rep->event, dim, offset, global,
+      (m.has_local ? &local : nullptr)));
   TP_NDRANGE_KERNEL(req->Body.msg_id, req->Body.client_did, queue_id, ker_id,
                     CL_FINISHED);
 
@@ -495,8 +529,7 @@ void CommandQueue::Barrier(uint32_t queue_id, Request *req, Reply *rep) {
 
   TP_BARRIER(req->Body.msg_id, req->Body.client_did, queue_id, CL_RUNNING);
   RETURN_IF_ERR_CODE(backend->barrier(req->Body.event_id, queue_id, evt_timing,
-                                      req->Body.waitlist_size,
-                                      req->Waitlist.data()));
+                                      req->LocalWaitlist, rep->event));
   TP_BARRIER(req->Body.msg_id, req->Body.client_did, queue_id, CL_FINISHED);
 
   replyOK(rep, evt_timing, MessageType_BarrierReply);
@@ -508,8 +541,7 @@ void CommandQueue::Marker(uint32_t queue_id, Request *req, Reply *rep) {
 
   TP_MARKER(req->Body.msg_id, req->Body.client_did, queue_id, CL_RUNNING);
   RETURN_IF_ERR_CODE(backend->marker(req->Body.event_id, queue_id, evt_timing,
-                                     req->Body.waitlist_size,
-                                     req->Waitlist.data()));
+                                     req->LocalWaitlist, rep->event));
   TP_MARKER(req->Body.msg_id, req->Body.client_did, queue_id, CL_FINISHED);
 
   replyOK(rep, evt_timing, MessageType_MarkerReply);
@@ -522,9 +554,9 @@ void CommandQueue::RunCommandBuffer(uint32_t queue_id, Request *req,
 
   TP_NDRANGE_KERNEL(req->Body.msg_id, req->Body.client_did, queue_id, cmdbuf_id,
                     CL_RUNNING);
-  RETURN_IF_ERR_CODE(backend->runCommandBuffer(
-      req->Body.event_id, evt_timing, CmdbufId, 1, &req->Body.cq_id,
-      req->Body.waitlist_size, req->Waitlist.data()));
+  RETURN_IF_ERR_CODE(backend->runCommandBuffer(req->Body.event_id, evt_timing,
+                                               CmdbufId, 1, &req->Body.cq_id,
+                                               req->LocalWaitlist, rep->event));
   TP_NDRANGE_KERNEL(req->Body.msg_id, req->Body.client_did, queue_id, cmdbuf_id,
                     CL_FINISHED);
 
@@ -545,8 +577,7 @@ void CommandQueue::FillImage(uint32_t queue_id, Request *req, Reply *rep) {
   assert(req->ExtraDataSize == 16);
   RETURN_IF_ERR_CODE(backend->fillImage(
       req->Body.event_id, queue_id, req->Body.obj_id, img_origin, img_region,
-      req->ExtraData.data(), evt_timing, req->Body.waitlist_size,
-      req->Waitlist.data()));
+      req->ExtraData.data(), evt_timing, req->LocalWaitlist, rep->event));
   TP_FILL_IMAGE(req->Body.msg_id, req->Body.client_did, queue_id,
                 req->Body.obj_id, CL_FINISHED);
 
@@ -568,8 +599,8 @@ void CommandQueue::ReadImageRect(uint32_t queue_id, Request *req, Reply *rep) {
                      CL_RUNNING);
   RETURN_IF_ERR_CODE(backend->readImageRect(
       req->Body.event_id, queue_id, req->Body.obj_id, img_origin, img_region,
-      rep->extra_data.data(), m.host_bytes, evt_timing, req->Body.waitlist_size,
-      req->Waitlist.data()));
+      rep->extra_data.data(), m.host_bytes, evt_timing, req->LocalWaitlist,
+      rep->event));
   TP_READ_IMAGE_RECT(req->Body.msg_id, req->Body.client_did, queue_id,
                      req->Body.obj_id, m.region.x, m.region.y, m.region.z,
                      CL_FINISHED);
@@ -590,8 +621,8 @@ void CommandQueue::WriteImageRect(uint32_t queue_id, Request *req, Reply *rep) {
   RETURN_IF_ERR_CODE(backend->writeImageRect(
       req->Body.event_id, queue_id, req->Body.obj_id, img_origin, img_region,
       // m.IMAGE_row_pitch, m.IMAGE_slice_pitch,
-      req->ExtraData.data(), req->ExtraDataSize, evt_timing,
-      req->Body.waitlist_size, req->Waitlist.data()));
+      req->ExtraData.data(), req->ExtraDataSize, evt_timing, req->LocalWaitlist,
+      rep->event));
   TP_WRITE_IMAGE_RECT(req->Body.msg_id, req->Body.client_did, queue_id,
                       req->Body.obj_id, m.region.x, m.region.y, m.region.z,
                       CL_FINISHED);
@@ -612,8 +643,7 @@ void CommandQueue::CopyBuffer2Image(uint32_t queue_id, Request *req,
                      m.region.z, CL_RUNNING);
   RETURN_IF_ERR_CODE(backend->copyBuffer2Image(
       req->Body.event_id, queue_id, req->Body.obj_id, m.src_buf_id, img_origin,
-      img_region, m.src_offset, evt_timing, req->Body.waitlist_size,
-      req->Waitlist.data()));
+      img_region, m.src_offset, evt_timing, req->LocalWaitlist, rep->event));
   TP_COPY_IMAGE_RECT(req->Body.msg_id, req->Body.client_did, queue_id,
                      m.src_buf_id, req->Body.obj_id, m.region.x, m.region.y,
                      m.region.z, CL_FINISHED);
@@ -634,8 +664,7 @@ void CommandQueue::CopyImage2Buffer(uint32_t queue_id, Request *req,
                      m.region.z, CL_RUNNING);
   RETURN_IF_ERR_CODE(backend->copyImage2Buffer(
       req->Body.event_id, queue_id, req->Body.obj_id, m.dst_buf_id, img_origin,
-      img_region, m.dst_offset, evt_timing, req->Body.waitlist_size,
-      req->Waitlist.data()));
+      img_region, m.dst_offset, evt_timing, req->LocalWaitlist, rep->event));
   TP_COPY_IMAGE_RECT(req->Body.msg_id, req->Body.client_did, queue_id,
                      req->Body.obj_id, m.dst_buf_id, m.region.x, m.region.y,
                      m.region.z, CL_FINISHED);
@@ -657,8 +686,7 @@ void CommandQueue::CopyImage2Image(uint32_t queue_id, Request *req,
                      m.region.z, CL_RUNNING);
   RETURN_IF_ERR_CODE(backend->copyImage2Image(
       req->Body.event_id, queue_id, m.dst_image_id, m.src_image_id, dst_origin,
-      src_origin, img_region, evt_timing, req->Body.waitlist_size,
-      req->Waitlist.data()));
+      src_origin, img_region, evt_timing, req->LocalWaitlist, rep->event));
   TP_COPY_IMAGE_RECT(req->Body.msg_id, req->Body.client_did, queue_id,
                      m.src_image_id, m.dst_image_id, m.region.x, m.region.y,
                      m.region.z, CL_FINISHED);
