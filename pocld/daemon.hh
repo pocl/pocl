@@ -110,11 +110,7 @@ public:
    * process is delegated to a separate thread in order to not block the socket
    * polling thread.
    */
-  void releaseContextDeferred(VirtualContextBase *Ctx) {
-    std::unique_lock<std::mutex> L(ContextDeleterMtx);
-    ContextDeleteQueue.push_back(Ctx);
-    ContextDeleterCond.notify_one();
-  }
+  void releaseContextDeferred(VirtualContextBase *Ctx);
 
   /**
    * Main loop for the thread in charge of deleting VirtualCLContexts
