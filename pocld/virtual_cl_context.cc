@@ -171,9 +171,13 @@ public:
 
     // Wake up IO threads so they can exit
     ReadFast->setConnection(nullptr);
+    ReadFast.reset();
     ReadSlow->setConnection(nullptr);
+    ReadSlow.reset();
     WriteFast->pushReply(nullptr);
+    WriteFast.reset();
     WriteSlow->pushReply(nullptr);
+    WriteSlow.reset();
 
     // make sure no shared context tries to broadcast stuff
     std::unique_lock<std::mutex> Lock(MainMutex);
@@ -334,9 +338,9 @@ void VirtualCLContext::setConnection(std::shared_ptr<Connection> NewConnection,
 }
 
 void VirtualCLContext::connectionLost() {
+  int zero = 0;
   if (!pocl_get_bool_option("POCLD_ALLOW_CLIENT_RECONNECT", 0) &&
-      !DeleteRequested) {
-    DeleteRequested = 1;
+      DeleteRequested.compare_exchange_strong(zero, 1)) {
     ExitSignal.requestExit("Connection lost", 1);
     Daemon->releaseContextDeferred(this);
   }
