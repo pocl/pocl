@@ -29,8 +29,10 @@
 #include <memory>
 #include <queue>
 #include <unordered_set>
+#include <vector>
 
 #include "CL/cl_ext.h"
+#include "CL/opencl.hpp"
 #include "common.hh"
 #include "request.hh"
 
@@ -126,6 +128,7 @@ class VirtualCLContext : public VirtualContextBase {
   std::condition_variable QueuedCond;
   std::mutex QueuedMutex;
   std::queue<Request *> QueuedQueue;
+  std::queue<std::pair<uint64_t, uint32_t> *> EventQueue;
 
 #ifdef ENABLE_RDMA
   std::shared_ptr<RdmaConnection> client_rdma;
@@ -393,8 +396,8 @@ void VirtualCLContext::queuedPush(Request *req) {
 }
 
 void VirtualCLContext::notifyEvent(uint64_t event_id, cl_int status) {
-  POCL_MSG_PRINT_EVENTS("Updating event %" PRIu64 " status to %d\n", event_id,
-                        status);
+  POCL_MSG_PRINT_EVENTS("Notifying event %" PRIu64 " with status %d\n",
+                        event_id, status);
   for (auto ctx : SharedContextList) {
     ctx->notifyEvent(event_id, status);
   }
@@ -472,13 +475,29 @@ int VirtualCLContext::queuedRun() {
       return e;
     }
 
+    std::pair<uint64_t, uint32_t> *NewEvent = nullptr;
+    Request *NewRequest = nullptr;
     std::unique_lock<std::mutex> Lock(QueuedMutex);
+    if (EventQueue.size() > 0) {
+      NewEvent = EventQueue.front();
+      EventQueue.pop();
+    }
     if (QueuedQueue.size() > 0) {
-      Request *R = QueuedQueue.front();
+      NewRequest = QueuedQueue.front();
       QueuedQueue.pop();
-      Lock.unlock();
+    }
 
-      SharedContextList[R->Body.pid]->queuedPush(R);
+    if (NewEvent || NewRequest) {
+      Lock.unlock();
+      if (NewEvent) {
+        for (auto ctx : SharedContextList) {
+          ctx->notifyEvent(NewEvent->first, NewEvent->second);
+        }
+        delete NewEvent;
+      }
+      if (NewRequest) {
+        SharedContextList[NewRequest->Body.pid]->queuedPush(NewRequest);
+      }
     } else {
       auto now = std::chrono::system_clock::now();
       std::chrono::duration<unsigned long> d(3);
@@ -1193,6 +1212,8 @@ void VirtualCLContext::MigrateD2D(Request *req) {
 
 #ifndef RDMA_USE_SVM
       SharedContextBase *src = SharedContextList[m.source_pid];
+      std::vector<cl::Event> NoDependencies;
+      cl::Event TmpEvent;
       if (m.is_image == 0) {
         uint64_t content_size;
         // TODO we should probably wait for events in DST SharedCLcontext
@@ -1200,7 +1221,7 @@ void VirtualCLContext::MigrateD2D(Request *req) {
         // enqueue a read buffer in the *source* context ...
         err = src->readBuffer(fake_ev_id, def_queue_id, mem_obj_id, 0,
                               size_buffer_id, m.size, 0, storage, &content_size,
-                              evt, 0, nullptr);
+                              evt, NoDependencies, TmpEvent);
         m.size = content_size;
       } else {
         sizet_vec3 origin = {0, 0, 0};
@@ -1210,12 +1231,13 @@ void VirtualCLContext::MigrateD2D(Request *req) {
         // before launching readBuffer in SRC SharedCLcontext
         // enqueue a read buffer in the *source* context ...
         err = src->readImageRect(fake_ev_id, def_queue_id, mem_obj_id, origin,
-                                 region, storage, m.size, evt, 0, nullptr);
+                                 region, storage, m.size, evt, NoDependencies,
+                                 TmpEvent);
       }
       // TODO error handling
       assert(err == 0);
       // .... and wait for it here.
-      src->waitAndDeleteEvent(fake_ev_id);
+      TmpEvent.wait();
 #endif
     }
 

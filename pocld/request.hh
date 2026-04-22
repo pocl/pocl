@@ -28,6 +28,8 @@
 #include <cstring>
 #include <vector>
 
+#include <CL/opencl.hpp>
+
 #include "connection.hh"
 #include "messages.h"
 
@@ -67,9 +69,11 @@ public:
   size_t BodyBytesRead = 0;
 
   /// List of event ids that must complete before this Request can be processed
-  std::vector<uint64_t> Waitlist;
+  std::vector<uint64_t> ClientWaitlist;
   /// Tracker for how many bytes of the waitlist have been read
   size_t WaitlistBytesRead = 0;
+  /// Local dependency events, filled in by CommandQueue
+  std::vector<cl::Event> LocalWaitlist;
 
   /// Auxiliary data required for the Request (buffer contents, program binaries
   /// etc)
