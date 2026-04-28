@@ -1158,4 +1158,11 @@
 #define dot_acc_sat_4x8packed_us_int _cl_dot_acc_sat_4x8packed_us_int
 #define dot_acc_sat_4x8packed_ss_int _cl_dot_acc_sat_4x8packed_ss_int
 
+#define clock_read_device _cl_clock_read_device
+#define clock_read_work_group _cl_clock_read_work_group
+#define clock_read_sub_group _cl_clock_read_sub_group
+#define clock_read_hilo_device _cl_clock_read_hilo_device
+#define clock_read_hilo_work_group _cl_clock_read_hilo_work_group
+#define clock_read_hilo_sub_group _cl_clock_read_hilo_sub_group
+
 #endif

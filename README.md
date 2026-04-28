@@ -118,6 +118,7 @@ with a few exceptions; these are marked Unsupported in the table.
 | cl_khr_pci_bus_info | :red_circle: | :yellow_circle: :one: | | | |
 | cl_khr_depth_images | :red_circle: | :yellow_circle: :two: | | | |
 | cl_khr_integer_dot_product | :green_circle: | :yellow_circle: :one: | | | |
+| cl_khr_kernel_clock | :yellow_circle: :two: :eight: | | | | |
 | cl_khr_command_buffer | :yellow_circle: :two: | :yellow_circle: :two: | | | |
 | cl_khr_command_buffer_multi_device | :yellow_circle: :two: | | | | | |
 | cl_khr_command_buffer_mutable_dispatch | :yellow_circle: :two: | | | | |
@@ -159,6 +160,9 @@ supported by the device.
 | __opencl_c_work_group_collective_functions | :green_circle: | :green_circle:  | | | |
 | __opencl_c_integer_dot_product_input_4x8bit |  :green_circle: | :yellow_circle: :two: :one: | | | |
 | __opencl_c_integer_dot_product_input_4x8bit_packed | :green_circle: | :yellow_circle: :two: :one: | | | |
+| __opencl_c_kernel_clock_scope_device | :yellow_circle: :two: :eight: | | | | |
+| __opencl_c_kernel_clock_scope_work_group | :yellow_circle: :two: :eight: | | | | |
+| __opencl_c_kernel_clock_scope_sub_group | :yellow_circle: :two: :eight: | | | | |
 | __opencl_c_subgroups | :yellow_circle: :two: | :yellow_circle: :two: :one: | :yellow_circle: :two: | | |
 | __opencl_c_read_write_images | :yellow_circle: :two: | :yellow_circle: :one: | | | |
 | __opencl_c_program_scope_global_variables | :yellow_circle: :two: | :yellow_circle: :two: | :green_circle:  | | |
@@ -189,6 +193,7 @@ supported by the device.
    unless explicitly disabled.
 6. The `cl_khr_extended_bit_ops` is only supported with LLVM 20+.
 7. The `cl_khr_fp16` is supported on CUDA devices with Compute Capability >= 6.0 only.
+8. Kernel clock functionality is only supported on native x86 CPU builds.
 
 
 ## Supported CI environments

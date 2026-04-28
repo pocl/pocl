@@ -54,6 +54,9 @@ CPU driver
 * Implemented new extensions: cl_khr_extended_bit_ops, cl_khr_device_uuid,
   cl_khr_suggested_local_work_size, cl_khr_integer_dot_product
 
+* Implemented experimental host CPU support for the `cl_khr_kernel_clock`
+  extension on native x86 builds (may be disabled in conformance builds).
+
 ===================================
 Deprecation/feature removal notices
 ===================================

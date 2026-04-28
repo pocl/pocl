@@ -209,6 +209,10 @@ POname(clGetDeviceInfo)(cl_device_id   device,
       cl_device_integer_dot_product_acceleration_properties_khr,
       device->dot_product_accel_props_4x8bit);
 
+  case CL_DEVICE_KERNEL_CLOCK_CAPABILITIES_KHR:
+    POCL_RETURN_GETINFO (cl_device_kernel_clock_capabilities_khr,
+                         device->kernel_clock_caps);
+
   case CL_DEVICE_NAME:
     POCL_RETURN_GETINFO_STR(device->long_name);
    

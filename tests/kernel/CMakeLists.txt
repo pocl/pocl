@@ -97,6 +97,11 @@ add_test_pocl(NAME "kernel/test_short16"
 add_test_pocl(NAME "kernel/test_frexp_modf"
               COMMAND "kernel" "test_frexp_modf")
 
+if(HOST_CPU_ENABLE_CL_KHR_KERNEL_CLOCK)
+  add_test_pocl(NAME "kernel/test_kernel_clock"
+                COMMAND "kernel" "test_kernel_clock")
+endif()
+
 add_test_pocl(NAME "kernel/test_halfs"
               COMMAND "kernel" "test_halfs")
 
@@ -141,6 +146,16 @@ foreach(VARIANT ${VARIANTS})
       PROCESSORS 1
       DEPENDS "pocl_version_check")
 endforeach()
+
+if(HOST_CPU_ENABLE_CL_KHR_KERNEL_CLOCK)
+  foreach(VARIANT ${VARIANTS})
+    set_tests_properties("kernel/test_kernel_clock_${VARIANT}"
+      PROPERTIES
+        COST 4.0
+        PROCESSORS 1
+        DEPENDS "pocl_version_check")
+  endforeach()
+endif()
 
 ######################################################################
 add_executable("sampler_address_clamp" "sampler_address_clamp.c")

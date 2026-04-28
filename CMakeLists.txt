@@ -1659,6 +1659,9 @@ endif()
 set(HOST_DEVICE_CL_VERSION_MAJOR 3)
 set(HOST_DEVICE_CL_VERSION_MINOR 0)
 
+# Probe native host CPU support for cl_khr_kernel_clock
+include(CheckHostCpuKernelClock)
+
 # Host CPU device: list of extensions that are always enabled, for both OpenCL 1.2 and 3.0
 # NOTE: update README.md when changing the list
 set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
@@ -1765,6 +1768,18 @@ endif()
 if(HOST_CPU_ENABLE_CL_KHR_FP64)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64")
   set(HOST_DEVICE_FEATURES "${HOST_DEVICE_FEATURES} __opencl_c_fp64")
+endif()
+
+if(HOST_CPU_ENABLE_CL_KHR_KERNEL_CLOCK)
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_kernel_clock")
+endif()
+
+if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_kernel_clock")
+  set(HOST_DEVICE_FEATURES "${HOST_DEVICE_FEATURES} \
+    __opencl_c_kernel_clock_scope_device \
+    __opencl_c_kernel_clock_scope_work_group \
+    __opencl_c_kernel_clock_scope_sub_group"
+  )
 endif()
 
 set(HOST_DEVICE_SPV_EXTENSIONS "+SPV_KHR_no_integer_wrap_decoration,+SPV_KHR_linkonce_odr,+SPV_KHR_expect_assume,+SPV_INTEL_fp_fast_math_mode,+SPV_INTEL_unstructured_loop_controls,+SPV_INTEL_arbitrary_precision_integers,+SPV_INTEL_memory_access_aliasing,+SPV_INTEL_inline_assembly,+SPV_KHR_integer_dot_product")

@@ -127,6 +127,25 @@ double _CL_OVERLOADABLE _CL_READNONE dot (double16 p0, double16 p1);
 
 #endif
 
+#if defined(cl_khr_kernel_clock)
+
+#if defined(__opencl_c_kernel_clock_scope_device)
+ulong _CL_OVERLOADABLE _CL_CONV clock_read_device(void);
+uint2 _CL_OVERLOADABLE _CL_CONV clock_read_hilo_device(void);
+#endif // __opencl_c_kernel_clock_scope_device
+
+#if defined(__opencl_c_kernel_clock_scope_work_group)
+ulong _CL_OVERLOADABLE _CL_CONV clock_read_work_group(void);
+uint2 _CL_OVERLOADABLE _CL_CONV clock_read_hilo_work_group(void);
+#endif // __opencl_c_kernel_clock_scope_work_group
+
+#if defined(__opencl_c_kernel_clock_scope_sub_group)
+ulong _CL_OVERLOADABLE _CL_CONV clock_read_sub_group(void);
+uint2 _CL_OVERLOADABLE _CL_CONV clock_read_hilo_sub_group(void);
+#endif // __opencl_c_kernel_clock_scope_sub_group
+
+#endif // cl_khr_kernel_clock
+
 /**************************************************************************/
 
 #if defined(cl_intel_subgroups_char)
