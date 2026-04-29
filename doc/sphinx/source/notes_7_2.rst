@@ -22,6 +22,12 @@ Notable bugfixes
   (some corner-cases in clSetKernelArg, clSetKernelExecInfo, clCreateContext,
    clCreateContextFromType, clGetDeviceIDs, clSetKernelArgSVMPointer,
    clEnqueueNDRange with local_size == NULL and nonzero reqq-wg-size)
+* `clGetKernelArgInfo(CL_KERNEL_ARG_NAME)` now returns the source
+  argument names for SPIR/SPIR-V binaries on the CPU driver (previously
+  returned `CL_KERNEL_ARG_INFO_NOT_AVAILABLE` even when the binary
+  contained the names). The `llvm-spirv` translator preserves SPIR-V
+  `OpName` decorations on `llvm::Argument`s rather than as
+  `!kernel_arg_name` metadata, and PoCL now reads them from there.
 
 ===========================
 Driver-specific features
