@@ -388,24 +388,24 @@ static int pocl_get_kernel_arg_function_metadata(llvm::Function *Kernel,
     // `llvm::Argument`s of the kernel function. Recover them from there
     // so reflection via `clGetKernelArgInfo(CL_KERNEL_ARG_NAME)` works
     // for SPIR / SPIR-V binaries too.
-    bool all_named = true;
-    unsigned j = 0;
+    bool AllNamed = true;
+    unsigned NumNamedArgs = 0;
     for (const llvm::Argument &Arg : Kernel->args()) {
       if (!Arg.hasName()) {
-        all_named = false;
+        AllNamed = false;
         break;
       }
-      ++j;
+      ++NumNamedArgs;
     }
-    if (all_named && j == kernel_meta->num_args) {
+    if (AllNamed && NumNamedArgs == kernel_meta->num_args) {
       kernel_meta->has_arg_metadata |= POCL_HAS_KERNEL_ARG_NAME;
-      j = 0;
+      unsigned ArgIdx = 0;
       for (const llvm::Argument &Arg : Kernel->args()) {
-        llvm::StringRef name = Arg.getName();
-        current_arg = &kernel_meta->arg_info[j++];
-        current_arg->name = (char *)malloc(name.size() + 1);
-        std::memcpy(current_arg->name, name.data(), name.size());
-        current_arg->name[name.size()] = '\0';
+        llvm::StringRef Name = Arg.getName();
+        current_arg = &kernel_meta->arg_info[ArgIdx++];
+        current_arg->name = (char *)malloc(Name.size() + 1);
+        std::memcpy(current_arg->name, Name.data(), Name.size());
+        current_arg->name[Name.size()] = '\0';
       }
     } else {
       POCL_MSG_PRINT_LLVM("no name metadata for kernel args"
