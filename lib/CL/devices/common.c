@@ -1915,6 +1915,7 @@ static const cl_name_version OPENCL_EXTENSIONS[]
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_create_command_queue" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_pci_bus_info" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_device_uuid" },
+      { CL_MAKE_VERSION (1, 0, 0), "cl_khr_kernel_clock" },
 
       { CL_MAKE_VERSION (0, 9, 6), "cl_khr_command_buffer" },
       { CL_MAKE_VERSION (0, 9, 1), "cl_khr_command_buffer_multi_device" },
@@ -2053,6 +2054,9 @@ static const cl_name_version OPENCL_C_FEATURES[] = {
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp64_local_atomic_load_store" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_integer_dot_product_input_4x8bit" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_integer_dot_product_input_4x8bit_packed" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_kernel_clock_scope_device" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_kernel_clock_scope_work_group" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_kernel_clock_scope_sub_group" },
 };
 
 const size_t OPENCL_C_FEATURES_NUM

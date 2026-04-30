@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "CL/cl.h"
+#include "config.h"
 #include "config2.h"
 
 #include "common.h"
@@ -563,6 +564,12 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
   device->cmdbuf_mutable_dispatch_capabilities
     = CL_MUTABLE_DISPATCH_GLOBAL_SIZE_KHR | CL_MUTABLE_DISPATCH_LOCAL_SIZE_KHR
       | CL_MUTABLE_DISPATCH_GLOBAL_OFFSET_KHR;
+
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_kernel_clock") != NULL)
+    device->kernel_clock_caps = CL_DEVICE_KERNEL_CLOCK_SCOPE_DEVICE_KHR
+                                | CL_DEVICE_KERNEL_CLOCK_SCOPE_WORK_GROUP_KHR
+                                | CL_DEVICE_KERNEL_CLOCK_SCOPE_SUB_GROUP_KHR;
+
 #endif
 
   pocl_set_device_uuid (device->device_uuid, dev_i, device->ops->device_name);

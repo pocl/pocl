@@ -386,6 +386,10 @@ if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_integer_dot_product")
   list(APPEND SOURCES_WITH_SLEEF integer_dot_product.cl)
 endif()
 
+if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_kernel_clock")
+  list(APPEND SOURCES_WITH_SLEEF kernel_clock.cl)
+endif()
+
 include("bitcode_rules")
 
 set(SLEEF_CL_KERNEL_DEPEND_HEADERS "")
