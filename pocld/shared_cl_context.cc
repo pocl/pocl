@@ -1467,15 +1467,17 @@ int SharedCLContext::buildOrLinkProgram(
   std::vector<cl::Kernel> prebuilt_kernels;
   SPIRVParser::OpenCLFunctionInfoMap KernelInfoMap;
 
-  bool AlwaysBuildAll = DeviceList.empty();
+  size_t NvidiaCount = 0;
   for (auto i : DeviceList) {
     std::string vendor = CLDevices[i].getInfo<CL_DEVICE_VENDOR>();
     std::string device_version = CLDevices[i].getInfo<CL_DEVICE_VERSION>();
     if (vendor.find("NVIDIA") != std::string::npos &&
         !(device_version.find("PoCL") != std::string::npos &&
-          device_version.find("CUDA") != std::string::npos))
-      AlwaysBuildAll = true;
+          device_version.find("CUDA") != std::string::npos)) {
+      NvidiaCount++;
+    }
   }
+  bool AlwaysBuildAll = DeviceList.empty() || NvidiaCount > 0;
 
   POCL_MSG_PRINT_INFO("P %u Building Program %" PRIu32 "\n", plat_id,
                       program_id);
@@ -1492,13 +1494,33 @@ int SharedCLContext::buildOrLinkProgram(
 
   std::string opts(options);
 
-  /* Kernel argument information is only available when building
-     from sources, but some implementations seem to return metadata
-     also for binaries/SPIR-V.
+  // Kernel argument information is only available when building
+  // from sources, but some implementations seem to return metadata
+  // also for binaries/SPIR-V.
+  //
+  // https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/
+  // clGetKernelArgInfo.html*/
+  //
+  // HACK: Strictly speaking -cl-kernel-arg-info is not a valid option to
+  // clLinkProgram, but the proprietery NVIDIA driver seems to 1) accept it and
+  // 2) strip argument info in clLinkProgram if that option is NOT given, so
+  // special case NVIDIA-only builds.
+  if (NvidiaCount == DeviceList.size() || !LinkOnly) {
+    opts += " -cl-kernel-arg-info";
+  }
 
-     https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/
-     clGetKernelArgInfo.html*/
-  opts += " -cl-kernel-arg-info";
+  // HACK: pocl_build.c/process_options() replaces -cl-denorms-are-zero with a
+  // clang-specific option that is not valid to pass to OpenCL functions.
+  // Revert the change here to avoid problems with drivers that don't use clang
+  // to compile kernels.
+  {
+    const char *FdenormalStr = "-fdenormal-fp-math=positive-zero";
+    auto FdenormalPos = opts.find(FdenormalStr);
+    if (FdenormalPos != opts.npos) {
+      opts.replace(FdenormalPos, FdenormalPos + ::strlen(FdenormalStr),
+                   "-cl-denorms-are-zero");
+    }
+  }
 
   if (LinkOnly) {
     // Collect the previously built programs from the server-side cache and link
