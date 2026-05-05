@@ -1467,17 +1467,9 @@ int SharedCLContext::buildOrLinkProgram(
   std::vector<cl::Kernel> prebuilt_kernels;
   SPIRVParser::OpenCLFunctionInfoMap KernelInfoMap;
 
-  size_t NvidiaCount = 0;
-  for (auto i : DeviceList) {
-    std::string vendor = CLDevices[i].getInfo<CL_DEVICE_VENDOR>();
-    std::string device_version = CLDevices[i].getInfo<CL_DEVICE_VERSION>();
-    if (vendor.find("NVIDIA") != std::string::npos &&
-        !(device_version.find("PoCL") != std::string::npos &&
-          device_version.find("CUDA") != std::string::npos)) {
-      NvidiaCount++;
-    }
-  }
-  bool AlwaysBuildAll = DeviceList.empty() || NvidiaCount > 0;
+  std::vector<cl::Platform> Platforms;
+  cl::Platform::get(&Platforms);
+  bool NvidiaPlatform = std::string(Platforms.at(plat_id).getInfo<CL_PLATFORM_NAME>()) == std::string("NVIDIA CUDA");
 
   POCL_MSG_PRINT_INFO("P %u Building Program %" PRIu32 "\n", plat_id,
                       program_id);
@@ -1498,14 +1490,13 @@ int SharedCLContext::buildOrLinkProgram(
   // from sources, but some implementations seem to return metadata
   // also for binaries/SPIR-V.
   //
-  // https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/
-  // clGetKernelArgInfo.html*/
+  // https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/clGetKernelArgInfo.html
   //
   // HACK: Strictly speaking -cl-kernel-arg-info is not a valid option to
   // clLinkProgram, but the proprietery NVIDIA driver seems to 1) accept it and
   // 2) strip argument info in clLinkProgram if that option is NOT given, so
   // special case NVIDIA-only builds.
-  if (NvidiaCount == DeviceList.size() || !LinkOnly) {
+  if (NvidiaPlatform || !LinkOnly) {
     opts += " -cl-kernel-arg-info";
   }
 
@@ -1735,16 +1726,10 @@ int SharedCLContext::buildOrLinkProgram(
 
   if (!LinkOnly) {
     // build
-    if (AlwaysBuildAll) {
-      // XXX: hacky workaround for wonky behaviour with certain drivers
-      // when compiling a program for only a subset of the context's devices
-      err = CompileOnly ? p->compile(opts.c_str()) : p->build(opts.c_str());
+    if (CompileOnly) {
+      err = p->compile(opts, program->devices, {}, {});
     } else {
-      if (CompileOnly) {
-        err = p->compile(opts, program->devices, {}, {});
-      } else {
-        err = p->build(program->devices, opts.c_str());
-      }
+      err = p->build(program->devices, opts.c_str());
     }
   }
 
@@ -1845,7 +1830,20 @@ int SharedCLContext::buildOrLinkProgram(
         uint64_t id = ((uint64_t)plat_id << 32) + DeviceList[i];
         POCL_MSG_PRINT_GENERAL("Writing binary for Dev ID: %u / %" PRIu32 " \n",
                                plat_id, DeviceList[i]);
-        output_binaries[id] = std::move(binaries[j]);
+        if (NvidiaPlatform) {
+          if (binaries[j].empty()) {
+            for (size_t n = 0; n < binaries.size(); ++n) {
+              if (!binaries[n].empty()) {
+                output_binaries[id] = binaries[n];
+                break;
+              }
+            }
+          } else {
+            output_binaries[id] = binaries[j];
+          }
+        } else {
+          output_binaries[id] = std::move(binaries[j]);
+        }
       }
     }
   }
