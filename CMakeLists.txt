@@ -1685,7 +1685,8 @@ set(HOST_DEVICE_FEATURES "__opencl_c_3d_image_writes  __opencl_c_images \
 __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
 __opencl_c_atomic_scope_device __opencl_c_atomic_scope_all_devices \
 __opencl_c_generic_address_space __opencl_c_work_group_collective_functions \
-__opencl_c_integer_dot_product_input_4x8bit __opencl_c_integer_dot_product_input_4x8bit_packed")
+__opencl_c_integer_dot_product_input_4x8bit __opencl_c_integer_dot_product_input_4x8bit_packed \
+__opencl_c_program_scope_global_variables")
 
 # enabled by default
 # when disabled, depending on setting of ENABLE_CONFORMANCE, denorms are disabled
@@ -1716,7 +1717,7 @@ cl_khr_subgroups cl_khr_subgroup_ballot cl_khr_subgroup_shuffle \
 cl_intel_subgroups cl_intel_subgroups_short cl_intel_subgroups_char cl_intel_required_subgroup_size cl_exp_tensor")
   # read-write images are still partially broken
   # program-scope variables work on OpenCL C input, but breaks with SPIR-V input (llvm-spirv bugs)
-  set(HOST_DEVICE_FEATURES  "${HOST_DEVICE_FEATURES} __opencl_c_subgroups __opencl_c_read_write_images __opencl_c_program_scope_global_variables")
+  set(HOST_DEVICE_FEATURES  "${HOST_DEVICE_FEATURES} __opencl_c_subgroups __opencl_c_read_write_images")
 endif()
 
 # Extensions that are considered feature-complete (preferably CTS-tested).
