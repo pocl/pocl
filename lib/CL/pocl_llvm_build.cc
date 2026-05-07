@@ -871,7 +871,6 @@ static int pocl_convert_spir_bitcode_to_target(llvm::Module *p,
                          "SPIR is only supported on little-endian devices\n");
 
     if (device->address_bits != SpirAddrBits) {
-      delete p;
       POCL_RETURN_ERROR_ON(1, CL_LINK_PROGRAM_FAILURE,
                            "Device address bits != SPIR binary triple address "
                            "bits, device: %s / module: %s\n",
@@ -887,8 +886,9 @@ static int pocl_convert_spir_bitcode_to_target(llvm::Module *p,
 
     if (p->getModuleFlag("PIC Level") == nullptr)
       p->setPICLevel(PICLevel::BigPIC);
-    return CL_SUCCESS;
+
   }
+
   return CL_SUCCESS;
 }
 
@@ -939,6 +939,16 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
       POCL_RETURN_ERROR_ON((Ptr == nullptr), CL_LINK_PROGRAM_FAILURE,
                            "could not parse module\n");
       TempModule.reset(Ptr);
+    }
+
+    /* this is necessary, because LinkOnceODRLinkage functions can be removed
+     * if the Linker determines they're unnecessary, and since there is no Linker API
+     * to link >2 modules at once, the Linker could remove LinkOnceODR before it is used.
+     * WeakODR is the same as LinkOnceODR except Linker is not allowed to remove it. */
+    for (Function &F : TempModule->functions()) {
+      if (F.getLinkage() == llvm::GlobalValue::LinkOnceODRLinkage) {
+        F.setLinkage(llvm::GlobalValue::WeakODRLinkage);
+      }
     }
 
     error = pocl_convert_spir_bitcode_to_target(TempModule.get(), LibraryModule,
