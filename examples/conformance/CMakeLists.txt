@@ -85,7 +85,7 @@ if(CUSTOM_CTS_GIT_TAG)
   set(CTS_GIT_TAG "${CUSTOM_CTS_GIT_TAG}")
 else()
   # Use PoCL's fork which has pending fixes.
-  set(CTS_GIT_TAG "v2026.02.13")
+  set(CTS_GIT_TAG "v2026.05.05")
 endif()
 
 set(TS_BUILDDIR "${TS_BUILDDIR}/test_conformance")
@@ -108,7 +108,7 @@ ExternalProject_Add(
     -DD3D10_IS_SUPPORTED=0 -DD3D11_IS_SUPPORTED=0
     -DGL_IS_SUPPORTED=0 -DGLES_IS_SUPPORTED=0
     -DCL_INCLUDE_DIR=${CMAKE_SOURCE_DIR}/include
-    -DSPIRV_INCLUDE_DIR=/usr/include/SPIRV
+    -DSPIRV_INCLUDE_DIR=/usr
     ${CTS_OPENCL_LIBDIR}
     ${CTS_OPENCL_LIBRARY}
     -DENABLE_ASAN=${ENABLE_ASAN}
