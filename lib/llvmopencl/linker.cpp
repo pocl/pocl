@@ -524,8 +524,10 @@ static bool convertAddrSpaceOperator(llvm::Function *Func, std::string &Log) {
     return true;
   }
 
+  SmallVector<CallInst *> RemoveCallInstList;
   for (auto *U : Func->users()) {
     if (llvm::CallInst *Call = dyn_cast<llvm::CallInst>(U)) {
+
       PointerType *ArgPT =
           dyn_cast<PointerType>(Call->getArgOperand(0)->getType());
       PointerType *RetPT =
@@ -537,7 +539,6 @@ static bool convertAddrSpaceOperator(llvm::Function *Func, std::string &Log) {
       if (ArgPT->getAddressSpace() == RetPT->getAddressSpace()) {
         Value *V = Call->getArgOperand(0);
         Call->replaceAllUsesWith(V);
-        Call->eraseFromParent();
       } else {
         llvm::AddrSpaceCastInst *AsCast = new llvm::AddrSpaceCastInst(
             Call->getArgOperand(0), Call->getFunctionType()->getReturnType(),
@@ -548,9 +549,20 @@ static bool convertAddrSpaceOperator(llvm::Function *Func, std::string &Log) {
             Call->getIterator());
 #endif
         Call->replaceAllUsesWith(AsCast);
-        Call->eraseFromParent();
       }
+      RemoveCallInstList.push_back(Call);
+    } else {
+      Log.append("Unknown use of operator __to_{local,global,private}");
+      return false;
     }
+  }
+
+  for (auto CI : RemoveCallInstList)
+    CI->eraseFromParent();
+
+  if (!Func->use_empty()) {
+    Log.append("Uses of operator __to_{local,global,private} still exist");
+    return false;
   }
 
   Func->eraseFromParent();
