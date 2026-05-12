@@ -70,6 +70,8 @@ static bool flattenAll(Module &M) {
       AuxFuncs.insert(token);
       DevAuxFunctionsList.erase(0, pos + 1);
     }
+    if (!DevAuxFunctionsList.empty())
+      AuxFuncs.insert(DevAuxFunctionsList);
   }
 
   for (llvm::Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
