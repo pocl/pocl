@@ -26,7 +26,7 @@ concurrency:
 
 jobs:
   mingw_test_matrix:
-    name: LLVM ${{ matrix.llvm_version }} - ${{ matrix.config }} - shared libs:${{ matrix.shared_libs }}
+    name: LLVM MSYS2 - CPU - shared libs:${{ matrix.shared_libs }}
     runs-on: windows-latest
     defaults:
       run:
@@ -34,11 +34,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm_version: [19]
         shared_libs: [ON, OFF]
-        config: [cpu]
 
     steps:
+      - name: Checkout PoCL
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
       - name: Setup MSYS2
         uses: msys2/setup-msys2@e9898307ac31d1a803454791be09ab9973336e1c # v2.31.1
         with:
@@ -49,58 +50,19 @@ jobs:
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-ninja
             mingw-w64-x86_64-hwloc
-            mingw-w64-x86_64-pkg-config
-
-      - name: Checkout PoCL
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-clang
+            mingw-w64-x86_64-clang-libs
+            mingw-w64-x86_64-clang-tools-extra
+            mingw-w64-x86_64-llvm
+            mingw-w64-x86_64-llvm-libs
+            mingw-w64-x86_64-llvm-tools
 
       - name: Setup Build Environment
         run: |
           # Convert the Windows workspace path to an MSYS2 compatible one
           WORKSPACE=$(cygpath -u "${{ github.workspace }}")
           echo "WORKSPACE=${WORKSPACE}" >> $GITHUB_ENV
-
-      - name: Restore Cached LLVM
-        id: cache-llvm
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
-        with:
-          path: install-llvm
-          key: llvm-mingw-${{ matrix.llvm_version }}-${{ runner.os }}
-
-      - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
-        name: Checkout LLVM
-        id: checkout-llvm
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-        with:
-          repository: llvm/llvm-project
-          ref: release/${{ matrix.llvm_version }}.x
-          path: llvm-project
-
-      - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
-        name: Configure LLVM
-        run: |
-          cmake -S llvm-project/llvm -B build-llvm \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DLLVM_ENABLE_PROJECTS=clang \
-            -DLLVM_TARGETS_TO_BUILD=host \
-            -DCMAKE_INSTALL_PREFIX=${{ env.WORKSPACE }}/install-llvm \
-            -DLLVM_BUILD_LLVM_DYLIB=ON \
-            -DLLVM_LINK_LLVM_DYLIB=ON \
-            -G "Ninja"
-        # XXX: DYLIBs are necessary to work around export ordinal overflows
-
-      - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
-        name: Build LLVM
-        run: |
-          cmake --build build-llvm
-          cmake --install build-llvm
-
-      - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
-        name: Save LLVM
-        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae
-        with:
-          path: install-llvm
-          key: llvm-mingw-${{ matrix.llvm_version }}-${{ runner.os }}
 
       - name: Load Env vars
         id: load-env
@@ -114,10 +76,10 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             "-DCMAKE_C_FLAGS_RELEASE=${BUILD_FLAGS}"  "-DCMAKE_CXX_FLAGS_RELEASE=${BUILD_FLAGS}" \
             -DCMAKE_INSTALL_PREFIX=${{ env.WORKSPACE }}/install-pocl \
-            -DWITH_LLVM_CONFIG=${{ env.WORKSPACE }}/install-llvm/bin/llvm-config.exe \
             -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }} \
             -DENABLE_ICD=OFF \
             -DLLC_HOST_CPU=haswell \
+            -DENABLE_LLVM_FILECHECKS=0 \
             -DENABLE_LOADABLE_DRIVERS=${{ matrix.shared_libs }} \
             -G "Ninja"
         # XXX: ENABLE_ICD=OFF because ocl-icd doesn't support Windows,
@@ -141,7 +103,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: 'PoCL-MinGW-x86_64-LLVM_${{ matrix.llvm_version }}-shared_${{ matrix.shared_libs }}-${{ github.sha }}'
+          name: 'PoCL-MinGW-x86_64-LLVM_MSYS2-shared_${{ matrix.shared_libs }}-${{ github.sha }}'
           path: 'D:/a/pocl/pocl/install-pocl'
           if-no-files-found: error
           compression-level: 4
