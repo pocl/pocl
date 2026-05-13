@@ -1563,7 +1563,7 @@ LLVMValueRef WorkgroupImpl::createAllocaMemcpyForStruct(
     args[1] = CARG1;
     args[2] = Size;
 
-    LLVMTypeRef FnTy = LLVMGetCalledFunctionType(MemCpy4);
+    LLVMTypeRef FnTy = LLVMGlobalGetValueType(MemCpy4);
     LLVMBuildCall2(Builder, FnTy, MemCpy4, args, 3, "");
   } else {
     LLVMTypeRef i8PtrAS0 = LLVMPointerType(Int8Type, 0);
@@ -1578,7 +1578,7 @@ LLVMValueRef WorkgroupImpl::createAllocaMemcpyForStruct(
     args[1] = CARG1;
     args[2] = Size;
 
-    LLVMTypeRef FnTy = LLVMGetCalledFunctionType(MemCpy1);
+    LLVMTypeRef FnTy = LLVMGlobalGetValueType(MemCpy1);
     LLVMBuildCall2(Builder, FnTy, MemCpy1, args, 3, "");
   }
 
