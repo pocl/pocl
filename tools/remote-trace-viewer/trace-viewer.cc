@@ -52,6 +52,9 @@ const float EVENTVIEW_EVENT_HEIGHT = 12;
 #define LIGHTSTEELBLUE 176, 196, 222
 #define DARKORANGE 255, 140, 0
 #define TOMATO 255, 99, 71
+#define LIGHTSALMON 255, 160, 122
+#define LIGHTGREY 211, 211, 211
+#define DARKVIOLET 148, 0, 211
 
 typedef struct {
   uint32_t Kind;
@@ -291,8 +294,8 @@ void computeNewMinimap(const TraceFile &Data, float Width,
       float EventStartTS =
           ((E.Submitted - Data.FirstSubmitTS) / (double)(Data.Duration)) *
           Width;
-      SDL_FRect Ev{std::round(EventStartTS), OffsetY + 3 * E.Lane,
-                   std::max(EventWidth, 3.0f), 4};
+      SDL_FRect Ev{std::round(EventStartTS), OffsetY + 2 * E.Lane,
+                   std::max(EventWidth, 3.0f), 3};
 
       size_t FirstIdxAfter = 0;
       bool Merged = false;
@@ -324,7 +327,7 @@ void computeNewMinimap(const TraceFile &Data, float Width,
     for (std::vector<SDL_FRect> &lane : Chunks) {
       AllChunks.insert(AllChunks.end(), lane.begin(), lane.end());
     }
-    OffsetY += 3 * S.NumLanes;
+    OffsetY += 2 * S.NumLanes;
   }
 
   std::cout << "Minimap has " << AllChunks.size() << " chunks" << std::endl;
@@ -390,18 +393,18 @@ int drawMinimap(SDL_Renderer *Renderer, float OffsetY, float Width,
   return Ok;
 }
 
-int drawEventView(SDL_Renderer *Renderer, float OffsetY, float Width,
-                  float Height, float ScrollY, uint64_t StartTS, uint64_t EndTS,
-                  const TraceFile &Trace) {
+int drawEventView(SDL_Renderer *Renderer, const float TopY, float Width,
+                  float Height, SDL_FPoint &Cursor, float ScrollY,
+                  uint64_t StartTS, uint64_t EndTS, const TraceFile &Trace) {
   int Ok = 1;
   uint64_t ViewDuration = EndTS - StartTS;
+  float OffsetY = TopY;
   for (const ServerData &S : Trace.Servers) {
-    SDL_SetRenderDrawColor(Renderer, BLACK, SDL_ALPHA_OPAQUE);
-    SDL_RenderDebugText(Renderer, 0, OffsetY, S.Name.c_str());
     OffsetY += 12;
-    SDL_Rect EventClipRect{0, (int)OffsetY, (int)Width, (int)Height - 12};
-    SDL_SetRenderClipRect(Renderer, &EventClipRect);
+    SDL_Rect EventClipRect{0, (int)TopY, (int)Width, (int)Height - 12};
+    Ok &= SDL_SetRenderClipRect(Renderer, &EventClipRect);
     for (const Event &E : S.Events) {
+      // Only process events that overlap with the visible time slice
       if (E.RecvEnd >= StartTS && E.Submitted <= EndTS) {
         SDL_FRect R;
         if (E.Submitted >= StartTS)
@@ -413,39 +416,60 @@ int drawEventView(SDL_Renderer *Renderer, float OffsetY, float Width,
             3.0f,
             (float)((E.RecvEnd - E.Submitted) / (double)ViewDuration) * Width);
         R.h = EVENTVIEW_EVENT_HEIGHT;
-        SDL_SetRenderDrawColor(Renderer, BLACK, SDL_ALPHA_OPAQUE);
-        SDL_RenderFillRect(Renderer, &R);
+
+        // Skip drawing for events that are not in view vertically
+        if (R.y < TopY - R.h || R.y > (TopY + Height))
+          continue;
+
+        bool Hovered = SDL_PointInRectFloat(&Cursor, &R);
+        if (Hovered) {
+          Ok &= SDL_SetRenderDrawColor(Renderer, DARKVIOLET, SDL_ALPHA_OPAQUE);
+        } else {
+          Ok &= SDL_SetRenderDrawColor(Renderer, BLACK, SDL_ALPHA_OPAQUE);
+        }
+        Ok &= SDL_RenderFillRect(Renderer, &R);
         SDL_Rect cr{(int)R.x, std::max((int)R.y, EventClipRect.y), (int)R.w,
                     (int)R.h};
-        cr.h = std::max(0, std::min(cr.h, (int)(R.y - OffsetY + 12)));
+        cr.h = std::max(0, std::min(cr.h, (int)(R.y - TopY + 12)));
         if (cr.h == 0)
           continue;
-        SDL_SetRenderClipRect(Renderer, &cr);
+        Ok &= SDL_SetRenderClipRect(Renderer, &cr);
         R.x += 1;
         R.y += 1;
         R.w -= 2;
         R.h -= 2;
-        if (E.Failed)
-          SDL_SetRenderDrawColor(Renderer, TOMATO, SDL_ALPHA_OPAQUE);
-        else
-          SDL_SetRenderDrawColor(Renderer, DARKGREY, SDL_ALPHA_OPAQUE);
-        SDL_RenderFillRect(Renderer, &R);
+        if (Hovered) {
+          if (E.Failed)
+            Ok &=
+                SDL_SetRenderDrawColor(Renderer, LIGHTSALMON, SDL_ALPHA_OPAQUE);
+          else
+            Ok &= SDL_SetRenderDrawColor(Renderer, LIGHTGREY, SDL_ALPHA_OPAQUE);
+        } else {
+          if (E.Failed)
+            Ok &= SDL_SetRenderDrawColor(Renderer, TOMATO, SDL_ALPHA_OPAQUE);
+          else
+            Ok &= SDL_SetRenderDrawColor(Renderer, DARKGREY, SDL_ALPHA_OPAQUE);
+        }
+        Ok &= SDL_RenderFillRect(Renderer, &R);
 
 #define WRITE_HIGHLIGHT(name, fillcolor)                                       \
   do {                                                                         \
     SDL_FRect Rect{R.x, R.y, R.w, R.h};                                        \
     Rect.x =                                                                   \
         R.x + ((E.name##Start - E.Submitted) / (double)ViewDuration) * Width;  \
+    Rect.x = std::max(PrevStart + 1, Rect.x);                                  \
     Rect.x = std::min(Rect.x, R.x + R.w - 1.0f);                               \
+    PrevStart = Rect.x;                                                        \
     int64_t Length = (E.name##End - E.name##Start);                            \
     Rect.w = std::max((((double)Length) / (double)ViewDuration) * Width, 1.0); \
     if (E.name##End == 0 || Length <= 0) {                                     \
       break; /* skip */                                                        \
     }                                                                          \
-    SDL_SetRenderDrawColor(Renderer, fillcolor, SDL_ALPHA_OPAQUE);             \
-    SDL_RenderFillRect(Renderer, &Rect);                                       \
+    Ok &= SDL_SetRenderDrawColor(Renderer, fillcolor, SDL_ALPHA_OPAQUE);       \
+    Ok &= SDL_RenderFillRect(Renderer, &Rect);                                 \
   } while (0)
 
+        float PrevStart = 0;
         WRITE_HIGHLIGHT(Send, GREEN);
         if (E.IsCopy) {
           WRITE_HIGHLIGHT(Run, ORCHID);
@@ -456,23 +480,40 @@ int drawEventView(SDL_Renderer *Renderer, float OffsetY, float Width,
 
 #undef WRITE_HIGHLIGHT
 
-        SDL_SetRenderDrawColor(Renderer, BLACK, SDL_ALPHA_OPAQUE);
-        if (E.QID == UINT64_MAX) {
-          SDL_RenderDebugText(Renderer, R.x + 1, R.y + 1,
-                              Trace.EventKindLabels.at(E.Kind).c_str());
+        if (Hovered) {
+          Ok &= SDL_SetRenderDrawColor(Renderer, DARKVIOLET, SDL_ALPHA_OPAQUE);
         } else {
-          SDL_RenderDebugTextFormat(Renderer, R.x + 1, R.y + 1,
-                                    "%s Q:%lu/E:%lu",
-                                    Trace.EventKindLabels.at(E.Kind).c_str(),
-                                    (unsigned long)E.QID, (unsigned long)E.EID);
+          Ok &= SDL_SetRenderDrawColor(Renderer, BLACK, SDL_ALPHA_OPAQUE);
         }
-        SDL_SetRenderClipRect(Renderer, &EventClipRect);
+        if (E.QID == UINT64_MAX) {
+          Ok &= SDL_RenderDebugText(Renderer, R.x + 1, R.y + 1,
+                                    Trace.EventKindLabels.at(E.Kind).c_str());
+        } else {
+          Ok &= SDL_RenderDebugTextFormat(
+              Renderer, R.x + 1, R.y + 1, "%s Q:%lu/E:%lu",
+              Trace.EventKindLabels.at(E.Kind).c_str(), (unsigned long)E.QID,
+              (unsigned long)E.EID);
+        }
+        Ok &= SDL_SetRenderClipRect(Renderer, &EventClipRect);
       }
     }
-    OffsetY += EVENTVIEW_EVENT_HEIGHT * (S.NumLanes + 1);
+    float ServerHeight = EVENTVIEW_EVENT_HEIGHT * (S.NumLanes + 1);
+    {
+      SDL_FRect R = {0, OffsetY - 14 - ScrollY, 8.0f * S.Name.size(), 12};
+      if (R.y >= -ServerHeight) {
+        R.y = std::max(TopY, R.y);
+        Ok &=
+            SDL_SetRenderDrawColor(Renderer, LIGHTSTEELBLUE, SDL_ALPHA_OPAQUE);
+        Ok &= SDL_RenderFillRect(Renderer, &R);
+        Ok &= SDL_SetRenderDrawColor(Renderer, BLACK, SDL_ALPHA_OPAQUE);
+        Ok &= SDL_RenderDebugText(Renderer, 0, R.y + 2, S.Name.c_str());
+      }
+    }
+
+    OffsetY += ServerHeight;
   }
 
-  SDL_SetRenderClipRect(Renderer, nullptr);
+  Ok &= SDL_SetRenderClipRect(Renderer, nullptr);
   return Ok;
 }
 
@@ -491,6 +532,7 @@ int main(int Argc, char **Argv) {
     return 1;
   }
 
+  SDL_FPoint MousePosition{0, 0};
   SDL_Window *Window;
   SDL_Renderer *Renderer;
   SDL_FRect WindowRect = {0, 0, INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT};
@@ -522,12 +564,14 @@ int main(int Argc, char **Argv) {
       std::cerr << "SDL_WaitEvent: " << SDL_GetError() << std::endl;
       return 1;
     }
-    while (SDL_PollEvent(&Ev)) {
-      if (Ev.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED ||
-          Ev.type == SDL_EVENT_QUIT) {
+    while (!Done && SDL_PollEvent(&Ev)) {
+      switch (Ev.type) {
+      case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+      case SDL_EVENT_QUIT: {
         Done = true;
         break;
-      } else if (Ev.type == SDL_EVENT_KEY_DOWN) {
+      }
+      case SDL_EVENT_KEY_DOWN: {
         if (Ev.key.key == SDLK_ESCAPE) {
           Done = true;
           break;
@@ -536,31 +580,42 @@ int main(int Argc, char **Argv) {
         } else if (Ev.key.key == SDLK_LCTRL) {
           CtrlIsHeld = Ev.key.down;
         }
-      } else if (Ev.type == SDL_EVENT_KEY_UP) {
+        break;
+      }
+      case SDL_EVENT_KEY_UP: {
         if (Ev.key.key == SDLK_LSHIFT) {
           ShiftIsHeld = Ev.key.down;
         } else if (Ev.key.key == SDLK_LCTRL) {
           CtrlIsHeld = Ev.key.down;
         }
-      } else if (Ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
-                 Ev.button.button == SDL_BUTTON_LEFT) {
-        if (Ev.button.y >= MINIMAP_Y &&
-            Ev.button.y <= MINIMAP_Y + MINIMAP_HEIGHT) {
-          ViewTargetTS =
-              (uint64_t)((double)(Ev.button.x / WindowRect.w) * Trace.Duration);
-          StartTS = ViewTargetTS;
-          EndTS = StartTS + ViewDuration;
+        break;
+      }
+      case SDL_EVENT_MOUSE_MOTION: {
+        MousePosition.x = Ev.motion.x;
+        MousePosition.y = Ev.motion.y;
+        break;
+      }
+      case SDL_EVENT_MOUSE_BUTTON_DOWN: {
+        if (Ev.button.button == SDL_BUTTON_LEFT) {
+          if (Ev.button.y >= MINIMAP_Y &&
+              Ev.button.y <= MINIMAP_Y + MINIMAP_HEIGHT) {
+            ViewTargetTS = (uint64_t)((double)(Ev.button.x / WindowRect.w) *
+                                      Trace.Duration);
+            StartTS = ViewTargetTS;
+            EndTS = StartTS + ViewDuration;
+          }
         }
-      } else if (Ev.type == SDL_EVENT_MOUSE_WHEEL) {
+        break;
+      }
+      case SDL_EVENT_MOUSE_WHEEL: {
         if (ShiftIsHeld) {
           EventsScrollY =
               std::max(0.0f, EventsScrollY -
                                  Ev.wheel.y * EVENTVIEW_EVENT_HEIGHT * 10.0f);
           EventsScrollY = std::min(
               EventsScrollY,
-              std::max(0.0f,
-                       Trace.TotalNumLanes * EVENTVIEW_EVENT_HEIGHT -
-                           (WindowRect.h - MINIMAP_Y - MINIMAP_HEIGHT - 20)));
+              std::max(0.0f, (Trace.TotalNumLanes + Trace.Servers.size()) *
+                                 EVENTVIEW_EVENT_HEIGHT));
           ;
         } else if (CtrlIsHeld) {
           TimeScale = std::max(1.0f, TimeScale - Ev.wheel.y * (TimeScale / 10));
@@ -572,16 +627,24 @@ int main(int Argc, char **Argv) {
           else
             StartTS = std::min(StartTS - Shift, Trace.Duration - ViewDuration);
         }
-      } else if (Ev.type == SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED)
+        break;
+      }
+      case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED: {
         std::cerr << "TODO: SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED"
                   << std::endl;
-      else if (Ev.type == SDL_EVENT_WINDOW_RESIZED |
-               Ev.type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED) {
+        break;
+      }
+      case SDL_EVENT_WINDOW_RESIZED:
+      case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
         if (Ev.window.data1 > 0 && Ev.window.data2 > 0) {
           WindowRect.w = (float)Ev.window.data1;
           WindowRect.h = (float)Ev.window.data2;
           NeedNewMinimap = true;
         }
+        break;
+      }
+      default:
+        break;
       }
     }
 
@@ -604,7 +667,8 @@ int main(int Argc, char **Argv) {
                       (EndTS - StartTS) / (double)Trace.Duration, MinimapImage);
     Ok &= drawEventView(Renderer, MINIMAP_Y + MINIMAP_HEIGHT + 8, WindowRect.w,
                         WindowRect.h - MINIMAP_Y + MINIMAP_HEIGHT + 8,
-                        EventsScrollY, StartTS + Trace.FirstSubmitTS,
+                        MousePosition, EventsScrollY,
+                        StartTS + Trace.FirstSubmitTS,
                         EndTS + Trace.FirstSubmitTS, Trace);
 
     Ok &= SDL_RenderPresent(Renderer);
