@@ -23,4 +23,4 @@ RUN cd /home/pocl ; mkdir b ; cd b; cmake -G Ninja -DWITH_LLVM_CONFIG=/usr/bin/l
 RUN cd /home/pocl/b ; ninja install
 # removing this picks up PoCL from the system install, not the build dir
 RUN cd /home/pocl/b ; rm -f CTestCustom.cmake
-CMD cd /home/pocl/b ; ctest -j4 --output-on-failure -L internal
+CMD cd /home/pocl/b ; ctest -j4 --output-on-failure -LE cpu_fail
