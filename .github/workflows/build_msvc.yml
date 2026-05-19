@@ -67,6 +67,10 @@ jobs:
 
       - uses: mamba-org/setup-micromamba@d7c9bd84e824b79d2af72a2d4196c7f4300d3476
         with:
+          # temporary workaround, see:
+          #  https://github.com/mamba-org/setup-micromamba/issues/306
+          #  https://github.com/mamba-org/micromamba-releases/issues/97
+          micromamba-version: '2.6.0-0'
           environment-name: pocl-deps
           init-shell: >-
             cmd.exe
