@@ -1,4 +1,4 @@
-FROM amd64/ubuntu:24.04@sha256:042ed8226ebeefec04028d26d1ab54e121782d811db96c8030762684e47bb626
+FROM amd64/ubuntu:24.04
 
 ARG GIT_COMMIT=main
 ARG GH_PR
@@ -27,4 +27,4 @@ RUN cd /home/pocl ; mkdir b ; cd b; \
 RUN cd /home/pocl/b ; ninja install
 # removing this picks up PoCL from the system install, not the build dir
 RUN cd /home/pocl/b ; rm -f CTestCustom.cmake
-CMD cd /home/pocl/b ; ctest -j4 --output-on-failure -L internal
+CMD cd /home/pocl/b ; ctest -j4 --output-on-failure -LE cpu_fail

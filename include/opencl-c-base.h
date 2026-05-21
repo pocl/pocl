@@ -159,69 +159,79 @@ typedef __INTPTR_TYPE__ intptr_t;
 typedef __UINTPTR_TYPE__ uintptr_t;
 
 // built-in vector data types:
-typedef char char2 __attribute__((ext_vector_type(2)));
-typedef char char3 __attribute__((ext_vector_type(3)));
-typedef char char4 __attribute__((ext_vector_type(4)));
-typedef char char8 __attribute__((ext_vector_type(8)));
-typedef char char16 __attribute__((ext_vector_type(16)));
-typedef uchar uchar2 __attribute__((ext_vector_type(2)));
-typedef uchar uchar3 __attribute__((ext_vector_type(3)));
-typedef uchar uchar4 __attribute__((ext_vector_type(4)));
-typedef uchar uchar8 __attribute__((ext_vector_type(8)));
-typedef uchar uchar16 __attribute__((ext_vector_type(16)));
-typedef short short2 __attribute__((ext_vector_type(2)));
-typedef short short3 __attribute__((ext_vector_type(3)));
-typedef short short4 __attribute__((ext_vector_type(4)));
-typedef short short8 __attribute__((ext_vector_type(8)));
-typedef short short16 __attribute__((ext_vector_type(16)));
-typedef ushort ushort2 __attribute__((ext_vector_type(2)));
-typedef ushort ushort3 __attribute__((ext_vector_type(3)));
-typedef ushort ushort4 __attribute__((ext_vector_type(4)));
-typedef ushort ushort8 __attribute__((ext_vector_type(8)));
-typedef ushort ushort16 __attribute__((ext_vector_type(16)));
-typedef int int2 __attribute__((ext_vector_type(2)));
-typedef int int3 __attribute__((ext_vector_type(3)));
-typedef int int4 __attribute__((ext_vector_type(4)));
-typedef int int8 __attribute__((ext_vector_type(8)));
-typedef int int16 __attribute__((ext_vector_type(16)));
-typedef uint uint2 __attribute__((ext_vector_type(2)));
-typedef uint uint3 __attribute__((ext_vector_type(3)));
-typedef uint uint4 __attribute__((ext_vector_type(4)));
-typedef uint uint8 __attribute__((ext_vector_type(8)));
-typedef uint uint16 __attribute__((ext_vector_type(16)));
-typedef long long2 __attribute__((ext_vector_type(2)));
-typedef long long3 __attribute__((ext_vector_type(3)));
-typedef long long4 __attribute__((ext_vector_type(4)));
-typedef long long8 __attribute__((ext_vector_type(8)));
-typedef long long16 __attribute__((ext_vector_type(16)));
-typedef ulong ulong2 __attribute__((ext_vector_type(2)));
-typedef ulong ulong3 __attribute__((ext_vector_type(3)));
-typedef ulong ulong4 __attribute__((ext_vector_type(4)));
-typedef ulong ulong8 __attribute__((ext_vector_type(8)));
-typedef ulong ulong16 __attribute__((ext_vector_type(16)));
-typedef float float2 __attribute__((ext_vector_type(2)));
-typedef float float3 __attribute__((ext_vector_type(3)));
-typedef float float4 __attribute__((ext_vector_type(4)));
-typedef float float8 __attribute__((ext_vector_type(8)));
-typedef float float16 __attribute__((ext_vector_type(16)));
+typedef char char2 __attribute__((ext_vector_type(2))) __attribute__((aligned(2)));
+typedef char char3 __attribute__((ext_vector_type(3))) __attribute__((aligned(4)));
+typedef char char4 __attribute__((ext_vector_type(4))) __attribute__((aligned(4)));
+typedef char char8 __attribute__((ext_vector_type(8))) __attribute__((aligned(8)));
+typedef char char16 __attribute__((ext_vector_type(16))) __attribute__((aligned(16)));
+
+typedef uchar uchar2 __attribute__((ext_vector_type(2))) __attribute__((aligned(2)));
+typedef uchar uchar3 __attribute__((ext_vector_type(3))) __attribute__((aligned(4)));
+typedef uchar uchar4 __attribute__((ext_vector_type(4))) __attribute__((aligned(4)));
+typedef uchar uchar8 __attribute__((ext_vector_type(8))) __attribute__((aligned(8)));
+typedef uchar uchar16 __attribute__((ext_vector_type(16))) __attribute__((aligned(16)));
+
+typedef short short2 __attribute__((ext_vector_type(2))) __attribute__((aligned(4)));
+typedef short short3 __attribute__((ext_vector_type(3))) __attribute__((aligned(8)));
+typedef short short4 __attribute__((ext_vector_type(4))) __attribute__((aligned(8)));
+typedef short short8 __attribute__((ext_vector_type(8))) __attribute__((aligned(16)));
+typedef short short16 __attribute__((ext_vector_type(16))) __attribute__((aligned(32)));
+
+typedef ushort ushort2 __attribute__((ext_vector_type(2))) __attribute__((aligned(4)));
+typedef ushort ushort3 __attribute__((ext_vector_type(3))) __attribute__((aligned(8)));
+typedef ushort ushort4 __attribute__((ext_vector_type(4))) __attribute__((aligned(8)));
+typedef ushort ushort8 __attribute__((ext_vector_type(8))) __attribute__((aligned(16)));
+typedef ushort ushort16 __attribute__((ext_vector_type(16))) __attribute__((aligned(32)));
+
+typedef int int2 __attribute__((ext_vector_type(2))) __attribute__((aligned(8)));
+typedef int int3 __attribute__((ext_vector_type(3))) __attribute__((aligned(16)));
+typedef int int4 __attribute__((ext_vector_type(4))) __attribute__((aligned(16)));
+typedef int int8 __attribute__((ext_vector_type(8))) __attribute__((aligned(32)));
+typedef int int16 __attribute__((ext_vector_type(16))) __attribute__((aligned(64)));
+
+typedef uint uint2 __attribute__((ext_vector_type(2))) __attribute__((aligned(8)));
+typedef uint uint3 __attribute__((ext_vector_type(3))) __attribute__((aligned(16)));
+typedef uint uint4 __attribute__((ext_vector_type(4))) __attribute__((aligned(16)));
+typedef uint uint8 __attribute__((ext_vector_type(8))) __attribute__((aligned(32)));
+typedef uint uint16 __attribute__((ext_vector_type(16))) __attribute__((aligned(64)));
+
+typedef long long2 __attribute__((ext_vector_type(2))) __attribute__((aligned(16)));
+typedef long long3 __attribute__((ext_vector_type(3))) __attribute__((aligned(32)));
+typedef long long4 __attribute__((ext_vector_type(4))) __attribute__((aligned(32)));
+typedef long long8 __attribute__((ext_vector_type(8))) __attribute__((aligned(64)));
+typedef long long16 __attribute__((ext_vector_type(16))) __attribute__((aligned(128)));
+
+typedef ulong ulong2 __attribute__((ext_vector_type(2))) __attribute__((aligned(16)));
+typedef ulong ulong3 __attribute__((ext_vector_type(3))) __attribute__((aligned(32)));
+typedef ulong ulong4 __attribute__((ext_vector_type(4))) __attribute__((aligned(32)));
+typedef ulong ulong8 __attribute__((ext_vector_type(8))) __attribute__((aligned(64)));
+typedef ulong ulong16 __attribute__((ext_vector_type(16))) __attribute__((aligned(128)));
+
+typedef float float2 __attribute__((ext_vector_type(2))) __attribute__((aligned(8)));
+typedef float float3 __attribute__((ext_vector_type(3))) __attribute__((aligned(16)));
+typedef float float4 __attribute__((ext_vector_type(4))) __attribute__((aligned(16)));
+typedef float float8 __attribute__((ext_vector_type(8))) __attribute__((aligned(32)));
+typedef float float16 __attribute__((ext_vector_type(16))) __attribute__((aligned(64)));
+
 #ifdef cl_khr_fp16
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
-typedef half half2 __attribute__((ext_vector_type(2)));
-typedef half half3 __attribute__((ext_vector_type(3)));
-typedef half half4 __attribute__((ext_vector_type(4)));
-typedef half half8 __attribute__((ext_vector_type(8)));
-typedef half half16 __attribute__((ext_vector_type(16)));
+typedef half half2 __attribute__((ext_vector_type(2))) __attribute__((aligned(4)));
+typedef half half3 __attribute__((ext_vector_type(3))) __attribute__((aligned(8)));
+typedef half half4 __attribute__((ext_vector_type(4))) __attribute__((aligned(8)));
+typedef half half8 __attribute__((ext_vector_type(8))) __attribute__((aligned(16)));
+typedef half half16 __attribute__((ext_vector_type(16))) __attribute__((aligned(32)));
 #endif
 #ifdef cl_khr_fp64
 #if __OPENCL_C_VERSION__ < CL_VERSION_1_2
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #endif
-typedef double double2 __attribute__((ext_vector_type(2)));
-typedef double double3 __attribute__((ext_vector_type(3)));
-typedef double double4 __attribute__((ext_vector_type(4)));
-typedef double double8 __attribute__((ext_vector_type(8)));
-typedef double double16 __attribute__((ext_vector_type(16)));
+typedef double double2 __attribute__((ext_vector_type(2))) __attribute__((aligned(16)));
+typedef double double3 __attribute__((ext_vector_type(3))) __attribute__((aligned(32)));
+typedef double double4 __attribute__((ext_vector_type(4))) __attribute__((aligned(32)));
+typedef double double8 __attribute__((ext_vector_type(8))) __attribute__((aligned(64)));
+typedef double double16 __attribute__((ext_vector_type(16))) __attribute__((aligned(128)));
 #endif
+
 
 // An internal alias for half, for use by OpenCLBuiltins.td.
 #define __half half

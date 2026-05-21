@@ -1,9 +1,9 @@
-FROM amd64/ubuntu:24.04
+FROM amd64/ubuntu:26.04
 
 ARG GIT_COMMIT=main
 ARG GH_PR
 ARG GH_SLUG=pocl/pocl
-ARG LLVM_VERSION=18
+ARG LLVM_VERSION=22
 
 LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Ubuntu version=1.0
 

@@ -32,7 +32,7 @@ defaults:
 jobs:
   msvc_test_matrix:
     name: LLVM ${{ matrix.llvm_version }} - ${{ matrix.config }} - shared libs:${{ matrix.shared_libs }} - ICD ${{ matrix.enable_icd }}
-    runs-on: [windows-2022]
+    runs-on: [windows-latest]
     strategy:
       fail-fast: false
       matrix:
@@ -67,6 +67,10 @@ jobs:
 
       - uses: mamba-org/setup-micromamba@d7c9bd84e824b79d2af72a2d4196c7f4300d3476
         with:
+          # temporary workaround, see:
+          #  https://github.com/mamba-org/setup-micromamba/issues/306
+          #  https://github.com/mamba-org/micromamba-releases/issues/97
+          micromamba-version: '2.6.0-0'
           environment-name: pocl-deps
           init-shell: >-
             cmd.exe
@@ -150,6 +154,18 @@ jobs:
           mkdir ${{ env.POCL_CACHE_DIR }}
           cd ${{ github.workspace }}\build-pocl
           & ${{ github.workspace }}\tools\scripts\run_cpu_tests.ps1 --output-on-failure -j$Env:NUMBER_OF_PROCESSORS
+
+      - name: Install NSIS with 8192-character limit override
+        if: ${{ matrix.config == 'nsis' }}
+        env:
+          NSIS_VERSION: '3.11'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest "https://sourceforge.net/projects/nsis/files/NSIS%203/${env:NSIS_VERSION}/nsis-${env:NSIS_VERSION}.zip/download" -UserAgent "PowerShell" -Outfile "./nsis.zip"
+          Expand-Archive -LiteralPath ./nsis.zip -DestinationPath "${env:ProgramFiles(x86)}\"
+          Invoke-WebRequest "https://sourceforge.net/projects/nsis/files/NSIS%203/${env:NSIS_VERSION}/nsis-${env:NSIS_VERSION}-strlen_8192.zip/download" -UserAgent "PowerShell" -Outfile "./nsis-8192.zip"
+          Expand-Archive -Force -LiteralPath ./nsis-8192.zip -DestinationPath "${env:ProgramFiles(x86)}\nsis-${env:NSIS_VERSION}\"
+          echo "${env:ProgramFiles(x86)}\nsis-${env:NSIS_VERSION}" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Test packaging
         if: ${{ matrix.config == 'nsis' }}
