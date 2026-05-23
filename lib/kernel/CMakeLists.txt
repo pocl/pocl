@@ -29,6 +29,7 @@ acos.cl
 acosh.cl
 acospi.cl
 add_sat.cl
+addrspace_operators.ll
 all.cl
 any.cl
 as_type.cl
