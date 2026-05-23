@@ -221,6 +221,12 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "dbk/pocl_dbk_khr_convert_shared.h"
                    "dbk/pocl_dbk_set_rows_shared.c"
                    "dbk/pocl_dbk_set_rows_shared.h"
+                   "dbk/pocl_dbk_eltwise_shared.c"
+                   "dbk/pocl_dbk_eltwise_shared.h"
+                   "dbk/pocl_dbk_rms_norm_shared.c"
+                   "dbk/pocl_dbk_rms_norm_shared.h"
+                   "dbk/pocl_dbk_util.h"
+                   "dbk/pocl_dbk_util.c"
                    "pocl_raw_ptr_set.c"
 )
 

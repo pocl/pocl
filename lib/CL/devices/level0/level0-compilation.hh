@@ -46,6 +46,8 @@
 
 #include "config.h"
 
+#include <CL/cl_exp_defined_builtin_kernels.h>
+
 #ifdef ENABLE_NPU
 #include <ze_graph_ext.h>
 #include <ze_graph_profiling_ext.h>
@@ -576,7 +578,8 @@ struct Level0BuiltinKernelBuildResult {
   }
 };
 
-typedef bool (*instantiateModelTemplate_fn)(const void *KernelAttrs,
+typedef bool (*instantiateModelTemplate_fn)(cl_dbk_id_exp DbkId,
+                                            const void *KernelAttrs,
                                             std::string &ModelXMLInstance,
                                             std::vector<uint8_t> &ModelBin,
                                             std::string &BuildFlagsInstance);

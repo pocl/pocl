@@ -163,6 +163,7 @@ pocl_size_ceil2_64 (uint64_t x)
 }
 
 /* Rounds up to the (power of two) alignment */
+POCL_EXPORT
 size_t pocl_align_value (size_t value, size_t alignment)
 {
   if (value & (alignment-1))
