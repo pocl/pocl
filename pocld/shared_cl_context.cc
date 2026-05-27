@@ -1470,6 +1470,7 @@ int SharedCLContext::buildOrLinkProgram(
   std::vector<cl::Platform> Platforms;
   cl::Platform::get(&Platforms);
   bool NvidiaPlatform = std::string(Platforms.at(plat_id).getInfo<CL_PLATFORM_NAME>()) == std::string("NVIDIA CUDA");
+  bool RocmPlatform = std::string(Platforms.at(plat_id).getInfo<CL_PLATFORM_NAME>()) == std::string("AMD Accelerated Parallel Processing");
 
   POCL_MSG_PRINT_INFO("P %u Building Program %" PRIu32 "\n", plat_id,
                       program_id);
@@ -1480,6 +1481,11 @@ int SharedCLContext::buildOrLinkProgram(
     assert(DeviceList[i] < CLDevices.size());
     program->devices[i] = CLDevices[DeviceList[i]];
   }
+
+  // ROCm 6.4.4 segfaults when linking multiple programs together if they were
+  // only compiled for a subset of devices in the context.
+  if (RocmPlatform)
+    program->devices = CLDevices;
 
   if (options == nullptr)
     options = "";
