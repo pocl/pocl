@@ -1105,6 +1105,14 @@ if FP16:
 else:
 	FLOAT_TYPES = ["float", "double"]
 
+# list of mangled type names, for generating wrappers for OpenCL builtins that are
+# overloaded for all OpenCL types (e.g. shuffle, convert_type, vload/vstore etc)
+# IGENTYPES = integer only, FGENTYPES = IGENTYPES + float types
+FGENTYPES = ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']
+IGENTYPES = ['c', 'h', 's', 't', 'i', 'j', 'l', 'm']
+if FP16:
+	FGENTYPES.append('Dh')
+
 # math funcs, vectorized
 for llvm_type in FLOAT_TYPES:
 	for vector_size in [1,2,3,4,8,16]:
@@ -1256,7 +1264,7 @@ for mang_type in ['s', 't', 'i', 'j', 'l', 'm']:
 		generate_function("upsample", SIG_TO_LLVM_TYPE_MAP[ret_type], '', False, arg_1st, arg_2nd)
 
 # vload / vstore / prefetch / async
-for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
+for arg_type in FGENTYPES:
 	for vector_size in [1,2,3,4,8,16]:
 		arg = arg_type
 		PConstArg = 'PK' + arg_type
@@ -1310,7 +1318,7 @@ for ret_type in ['f','d']:
 			generate_function("vstorea_"+suffix+rounding, SIG_TO_LLVM_TYPE_MAP['v'], '', True, ret, 'm', PArg)
 
 # Integer
-for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm']:
+for arg_type in IGENTYPES:
 	for vector_size in [1,2,3,4,8,16]:
 
 		arg_i = arg_type
@@ -1347,7 +1355,7 @@ for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm']:
 			generate_function("mad24", ret_type, signext, False, arg_i, arg_i, arg_i)
 
 # shuffle / shuffle2
-for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
+for arg_type in FGENTYPES:
 	if arg_type == 'd':
 		uarg_type = 'm'
 	elif arg_type == 'f':
@@ -1366,12 +1374,8 @@ for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
 			generate_function("shuffle2", SIG_TO_LLVM_TYPE_MAP[ret_type], '', False, in_type, in_type, mask_type)
 
 # convert
-CONVERT_TYPES = ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']
-if FP16:
-	CONVERT_TYPES.append('Dh')
-
-for dst_type in CONVERT_TYPES:
-	for src_type in CONVERT_TYPES:
+for dst_type in FGENTYPES:
+	for src_type in FGENTYPES:
 		for sat in ['', '_sat']:
 			if (sat == '_sat') and (dst_type in ['f','d', 'Dh']):
 				continue
@@ -1580,11 +1584,8 @@ generate_function("sub_group_all", SIG_TO_LLVM_TYPE_MAP['i'], '', None, 'i')
 generate_function("sub_group_barrier", SIG_TO_LLVM_TYPE_MAP['v'], '', None, 'j')
 generate_function("sub_group_barrier", SIG_TO_LLVM_TYPE_MAP['v'], '', None, 'j', '12memory_scope')
 
-SUBGROUP_TYPES = ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']
-if FP16:
-	SUBGROUP_TYPES.append('Dh')
 
-for arg_type in SUBGROUP_TYPES:
+for arg_type in FGENTYPES:
 	ret_type = arg_type
 	signext = LLVM_TYPE_EXT_MAP[ret_type]
 	mask_type = 'j'
