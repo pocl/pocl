@@ -182,16 +182,7 @@ static const char *tracefile_path = NULL;
   req->obj_id = (uint32_t)(-1);
 
 #define ID_REQUEST(type, req_id)                                              \
-  RequestMsg_t *req = &netcmd->request;                                       \
-  memset (req, 0, sizeof (RequestMsg_t));                                     \
-  req->session = data->session;                                               \
-  memcpy (req->authkey, data->authkey, AUTHKEY_LENGTH);                       \
-  req->message_type = MessageType_##type;                                     \
-  req->msg_id = POCL_ATOMIC_INC (last_message_id);                            \
-  req->event_id = netcmd->event_id;                                           \
-  req->did = ddata->remote_device_index;                                      \
-  req->client_did = ddata->local_did;                                         \
-  req->pid = ddata->remote_platform_index;                                    \
+  REQUEST (type);                                                             \
   req->obj_id = (uint64_t)req_id;
 
 #define REQUEST_PEERCONN                                                      \
@@ -3865,9 +3856,8 @@ pocl_network_copy_buf2img (uint32_t cq_id, remote_device_data_t *ddata,
 
   CREATE_ASYNC_NETCMD;
 
-  REQUEST (CopyBuffer2Image);
+  ID_REQUEST (CopyBuffer2Image, dst_remote_id);
   req->cq_id = cq_id;
-  req->obj_id = dst_remote_id;
 
   req->m.copy_buf2img.origin.x = origin[0];
   req->m.copy_buf2img.origin.y = origin[1];
@@ -3900,9 +3890,8 @@ pocl_network_write_image_rect (uint32_t cq_id, remote_device_data_t *ddata,
 
   CREATE_ASYNC_NETCMD;
 
-  REQUEST (WriteImageRect);
+  ID_REQUEST (WriteImageRect, dst_remote_id);
   req->cq_id = cq_id;
-  req->obj_id = dst_remote_id;
 
   req->m.write_image_rect.origin.x = origin[0];
   req->m.write_image_rect.origin.y = origin[1];
@@ -3948,9 +3937,8 @@ pocl_network_copy_img2buf (uint32_t cq_id, remote_device_data_t *ddata,
 
   CREATE_ASYNC_NETCMD;
 
-  REQUEST (CopyImage2Buffer);
+  ID_REQUEST (CopyImage2Buffer, src_remote_id);
   req->cq_id = cq_id;
-  req->obj_id = src_remote_id;
 
   req->m.copy_img2buf.origin.x = origin[0];
   req->m.copy_img2buf.origin.y = origin[1];
@@ -3982,9 +3970,8 @@ pocl_network_read_image_rect (uint32_t cq_id, remote_device_data_t *ddata,
 
   CREATE_ASYNC_NETCMD;
 
-  REQUEST (ReadImageRect);
+  ID_REQUEST (ReadImageRect, src_remote_id);
   req->cq_id = cq_id;
-  req->obj_id = src_remote_id;
 
   /* REPLY */
   netcmd->rep_extra_data = p;
