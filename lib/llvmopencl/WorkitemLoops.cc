@@ -673,6 +673,10 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
     PR->insertPrologue(0, 0, 0);
     builder.SetInsertPoint(&*(PR->entryBB()->getFirstInsertionPt()));
     builder.CreateStore(ConstantInt::get(ST, 1), LocalIdXFirstVar);
+    // insertPrologue() reset the local ids to 0; re-base the global ids too,
+    // else the peeled WI reads a stale (loop-updated) global id.
+    for (int Dim = 0; Dim < 3; ++Dim)
+      builder.CreateStore(getGlobalIdOrigin(Dim), GlobalIdIterators[Dim]);
   }
 
   if (!WGDynamicLocalSize)
