@@ -675,9 +675,10 @@ static bool CopyFuncNoTargetExt(llvm::Function *Src, llvm::Module &M,
              Src->getName().c_str());
   }
 
-  StringRef NewName = Src->getName();
-  Src->setName(NewName + ".beforeTgtExt");
-  llvm::Function *Dst = Function::Create(DstFT, Src->getLinkage(), NewName, M);
+  std::string OriginalName = Src->getName().str();
+  Src->setName(Twine(OriginalName, ".beforeTgtExt"));
+  llvm::Function *Dst = Function::Create(DstFT, Src->getLinkage(),
+                                         StringRef(OriginalName), M);
   Dst->copyAttributesFrom(Src);
 
   VVMap[Src] = Dst;
