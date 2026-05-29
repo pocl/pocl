@@ -75,6 +75,13 @@ int main(int argc, char **argv) {
     return 77;
   }
 
+  // The reduced kernel's barrier lowers to a sub_group_barrier, so the program
+  // only links on devices whose builtin library has the subgroup builtins.
+  if (!poclu_supports_extension(device, "cl_khr_subgroups")) {
+    printf("SKIP: The test requires cl_khr_subgroups\n");
+    return 77;
+  }
+
   cl_context context = clCreateContext(NULL, 1, &device, NULL, NULL, &err);
   CHECK_ERROR(err);
   cl_queue_properties props[] = {0};
