@@ -1622,9 +1622,9 @@ for arg_type in BITOPS_TYPES:
 			vec_type = arg_type
 			signext = LLVM_TYPE_EXT_MAP[arg_type]
 		mask_type = 'j'
-		generate_function("bitfield_insert", SIG_TO_LLVM_TYPE_MAP[arg_type], signext, False, vec_type, vec_type, mask_type, mask_type)
-		generate_function("bitfield_extract_signed", SIG_TO_LLVM_TYPE_MAP[arg_type], signext, False, vec_type, mask_type, mask_type)
-		generate_function("bitfield_extract_unsigned", SIG_TO_LLVM_TYPE_MAP[arg_type], signext, False, vec_type, mask_type, mask_type)
+		generate_function("bitfield_insert", SIG_TO_LLVM_TYPE_MAP[vec_type], signext, False, vec_type, vec_type, mask_type, mask_type)
+		generate_function("bitfield_extract_signed", SIG_TO_LLVM_TYPE_MAP[vec_type], signext, False, vec_type, mask_type, mask_type)
+		generate_function("bitfield_extract_unsigned", SIG_TO_LLVM_TYPE_MAP[vec_type], signext, False, vec_type, mask_type, mask_type)
 
 DOT_CHAR_VECS = { 'i': 'Dv4_c', 'j': 'Dv4_h' }
 DOT_CHAR_C = { 'i': 's', 'j': 'u' }
