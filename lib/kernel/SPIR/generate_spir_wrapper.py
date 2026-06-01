@@ -1275,17 +1275,17 @@ for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
 
 		generate_function("prefetch", SIG_TO_LLVM_TYPE_MAP['v'], '', True, PConstArg, 'm')
 
-		generate_function("async_work_group_copy", '%opencl.event_t*', '',
+		generate_function("async_work_group_copy", 'ptr', '',
 											("global", "local", "none", "none", "none"),
 											PArg, PConstArg, 'm', '9ocl_event')
-		generate_function("async_work_group_copy", '%opencl.event_t*', '',
+		generate_function("async_work_group_copy", 'ptr', '',
 											("local", "global", "none", "none", "none"),
 											PArg, PConstArg, 'm', '9ocl_event')
 
-		generate_function("async_work_group_strided_copy", '%opencl.event_t*', '',
+		generate_function("async_work_group_strided_copy", 'ptr', '',
 											("global", "local", "none", "none", "none"),
 											PArg, PConstArg, 'm', 'm', '9ocl_event')
-		generate_function("async_work_group_strided_copy", '%opencl.event_t*', '',
+		generate_function("async_work_group_strided_copy", 'ptr', '',
 											("local", "global", "none", "none", "none"),
 											PArg, PConstArg, 'm', 'm', '9ocl_event')
 

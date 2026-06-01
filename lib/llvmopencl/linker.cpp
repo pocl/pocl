@@ -94,11 +94,17 @@ public:
 
   virtual Type *remapType(Type *SrcTy) {
     if (SrcTy->isTargetExtTy()) {
-      PointerType *PT =
+      PointerType *PGl =
           PointerType::get(SrcTy->getContext(), SPIR_ADDRESS_SPACE_GLOBAL);
+      PointerType *P0 = PointerType::get(SrcTy->getContext(), 0);
       if (SrcTy->getTargetExtName() == "spirv.Image" ||
           SrcTy->getTargetExtName() == "spirv.Sampler")
-        return PT;
+        return PGl;
+      // mapped to Ptr AS 0, because this is also used as return value
+      // (from async_work_group_copy), and the SPIRV wrapper would have
+      // to be update to deal with casting between AS on return values.
+      if (SrcTy->getTargetExtName() == "spirv.Event")
+        return P0;
     }
     return SrcTy;
   }
@@ -649,9 +655,8 @@ sort_functions_postorder(llvm::Module &M,
   return true;
 }
 
-// Copies a function with TargetExt types remapped to 'ptr' type
-// @returs true if copy was performed, false if skipped because no remapping
-static bool CopyFuncNoTargetExt(llvm::Function *Src, llvm::Module &M,
+// Copies a function with all TargetExt types remapped
+static void CopyFuncNoTargetExt(llvm::Function *Src, llvm::Module &M,
                                 ValueToValueMapTy &VVMap) {
   PoclTargetExtTypeRemapper TR;
 
@@ -664,15 +669,11 @@ static bool CopyFuncNoTargetExt(llvm::Function *Src, llvm::Module &M,
   Type *DstRet = TR.remapType(SrcRet);
   assert(Src->hasName());
   FunctionType *DstFT = FunctionType::get(DstRet, DstArgT, SrcFT->isVarArg());
+  const char *FN = Src->getName().data();
   if (DstFT == SrcFT) {
-    DB_PRINT("CopyFuncNoTargetExt: function %s signature identical, "
-             "skipping remap copy\n",
-             Src->getName().c_str());
-    return false;
+    DB_PRINT("CopyFuncNoTargetExt: function %s signature identical\n", FN);
   } else {
-    DB_PRINT("CopyFuncNoTargetExt: function %s signature DIFFERENT, "
-             "performing remap copy\n",
-             Src->getName().c_str());
+    DB_PRINT("CopyFuncNoTargetExt: function %s signature DIFFERENT\n", FN);
   }
 
   std::string OriginalName = Src->getName().str();
@@ -693,7 +694,7 @@ static bool CopyFuncNoTargetExt(llvm::Function *Src, llvm::Module &M,
   }
   if (!Src->isDeclaration()) {
     SmallVector<ReturnInst *, 8> RI; // Ignore returns cloned.
-    DB_PRINT("  cloning %s\n", Name.data());
+    DB_PRINT("CopyFuncNoTargetExt: cloning %s\n", OriginalName.data());
 
     llvm::ClonedCodeInfo CodeInfo;
     CloneFunctionIntoAbs(Dst, Src, VVMap, RI,
@@ -703,17 +704,25 @@ static bool CopyFuncNoTargetExt(llvm::Function *Src, llvm::Module &M,
                          &TR,         // type remapper
                          nullptr);    // materializer
   } else {
-    DB_PRINT("  found %s, but its a declaration, do nothing\n", Name.data());
+    DB_PRINT("CopyFuncNoTargetExt: found %s, but its a declaration,"
+             " do nothing\n", OriginalName.data());
   }
-  return true;
 }
 
 static bool convertSpirvTargetExtTypes(llvm::Module &Mod, std::string &Log) {
   PoclTargetExtTypeRemapper TypeMapper;
   ValueToValueMapTy VVM;
+  bool HasTargetExtTypes = false;
   for (auto &F : Mod.functions()) {
     if (!F.hasName())
       F.setName("__anonymous_function");
+    HasTargetExtTypes = HasTargetExtTypes || F.getReturnType()->isTargetExtTy();
+    for (auto &A : F.args())
+      HasTargetExtTypes = HasTargetExtTypes || A.getType()->isTargetExtTy();
+  }
+  if (!HasTargetExtTypes) {
+    DB_PRINT("convertSpirvTargetExtTypes: no TargetExt types detected\n");
+    return true;
   }
 
   SmallVector<Function *> CalledFuncList;
@@ -726,20 +735,22 @@ static bool convertSpirvTargetExtTypes(llvm::Module &Mod, std::string &Log) {
   ValueToValueMapTy VVMap;
   SmallVector<Function *> RemoveFuncList;
   for (auto *F : CalledFuncList) {
-    if (CopyFuncNoTargetExt(F, Mod, VVMap))
-      // removal needs to be in reverse order
-      RemoveFuncList.insert(RemoveFuncList.begin(), F);
+    CopyFuncNoTargetExt(F, Mod, VVMap);
+    // removal needs to be in reverse order
+    RemoveFuncList.insert(RemoveFuncList.begin(), F);
   }
 
   for (auto *F : RemoveFuncList) {
-    if (F->use_empty())
+    const char *FN = F->getName().data();
+    if (F->use_empty()) {
+      DB_PRINT("  convertTgtExt: %s empty uses, removing\n", FN);
       F->eraseFromParent();
+    } else {
+      DB_PRINT("  convertTgtExt: ERROR: %s uses not empty!\n", FN);
+      return false;
+    }
   }
-  // std::cerr << "*******************************************************";
-  // std::cerr << "  AFTER convertSpirvTargetExtTypes: *******************";
-  // Mod.dump();
-  // std::cerr << "*******************************************************";
-  // std::cerr << "*******************************************************";
+
   return true;
 }
 
@@ -887,8 +898,10 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
 
   pocl::removeClangGeneratedKernelStubs(Program);
 
-  if (!pocl::convertSpirvTargetExtTypes(*Program, Log))
-    return -1;
+  if (ClDev->type == CL_DEVICE_TYPE_CPU) {
+    if (!pocl::convertSpirvTargetExtTypes(*Program, Log))
+      return -1;
+  }
 
   // Include auxiliary functions required by the device at hand.
   if (ClDev->device_aux_functions) {
