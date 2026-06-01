@@ -68,6 +68,7 @@ POP_COMPILER_DIAGS
 #include "pocl_file_util.h"
 #include "pocl_llvm.h"
 #include "pocl_llvm_api.h"
+#include "pocl_run_command.h"
 #include "pocl_spir.h"
 #include "pocl_util.h"
 
@@ -985,10 +986,9 @@ int pocl_llvm_generate_workgroup_function_nowrite(
   if (!FinalizerCommand.empty()) {
     // Run a user-defined command on the final bitcode.
     char TempParallelBCFileName[POCL_MAX_PATHNAME_LENGTH];
-    int FD = -1, Err = 0;
+    int Err = 0;
 
-    Err = pocl_mk_tempname(TempParallelBCFileName, "/tmp/pocl-parallel", ".bc",
-                           &FD);
+    Err = pocl_cache_tempname(TempParallelBCFileName, ".bc", nullptr);
     POCL_RETURN_ERROR_ON((Err != 0), CL_FAILED,
                          "Failed to create "
                          "temporary file %s\n",
@@ -999,19 +999,33 @@ int pocl_llvm_generate_workgroup_function_nowrite(
                          "into temporary file %s\n",
                          TempParallelBCFileName);
 
-    std::string Command = std::regex_replace(
-        FinalizerCommand, std::regex(R"(%\(bc\))"), TempParallelBCFileName);
-    Err = system(Command.c_str());
-    POCL_RETURN_ERROR_ON((Err != 0), CL_FAILED,
-                         "Failed to execute "
-                         "bitcode finalizer\n");
+    std::vector<std::string> FinalizerArgsStr;
+    std::stringstream SS(FinalizerCommand);
+    std::string Token;
+    while (SS >> Token) {
+      if (Token == "%(bc)")
+        FinalizerArgsStr.push_back(TempParallelBCFileName);
+      else
+        FinalizerArgsStr.push_back(Token);
+    }
+    if (FinalizerArgsStr.size() > 0) {
+      std::vector<const char *> FinalizerArgs;
+      for (std::string &Str : FinalizerArgsStr)
+        FinalizerArgs.push_back(Str.c_str());
+      FinalizerArgs.push_back(nullptr);
 
-    llvm::Module *NewBitcode =
-        parseModuleIR(TempParallelBCFileName, LLVMContext);
-    POCL_RETURN_ERROR_ON((NewBitcode == nullptr), CL_FAILED,
-                         "failed to parse bitcode from finalizer\n");
-    delete ParallelBC;
-    ParallelBC = NewBitcode;
+      Err = pocl_run_command(FinalizerArgs.data());
+      POCL_RETURN_ERROR_ON((Err != 0), CL_FAILED,
+                           "Failed to execute "
+                           "bitcode finalizer\n");
+
+      llvm::Module *NewBitcode =
+          parseModuleIR(TempParallelBCFileName, LLVMContext);
+      POCL_RETURN_ERROR_ON((NewBitcode == nullptr), CL_FAILED,
+                           "failed to parse bitcode from finalizer\n");
+      delete ParallelBC;
+      ParallelBC = NewBitcode;
+    }
   }
 
   assert(Output != NULL);
