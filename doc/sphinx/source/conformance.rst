@@ -31,7 +31,6 @@ Supported & Unsupported optional OpenCL 3.0 features
 
 This list is only related to CPU devices (cpu & cpu-minimal drivers).
 Other drivers (CUDA, TCE etc) only support OpenCL 1.2.
-Note that 3.0 support on CPU devices requires LLVM 14 or newer.
 
 Supported 3.0 features:
 
@@ -88,21 +87,6 @@ Note that running ``ctest -L conformance_suite_micro`` will run *both* variants
 
 Additionally, there is a new cmake label, ``conformance_30_only``
 to run tests which are only relevant to OpenCL 3.0.
-
-.. _known-issues:
-
-Known issues related to CTS
----------------------------
-
-- With LLVM 15 and 16, when running CTS with the offline compilation mode
-  (= via SPIR-V), Clang + SPIR-V translator produce invalid
-  SPIR-V for several tests. PoCL bugreport:
-  `<https://github.com/pocl/pocl/issues/1232>`_
-  Related Khronos issues:
-  `<https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/2008>`_
-  `<https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/2024>`_
-  `<https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/2025>`_
-
 
 Conformance tests results
 -----------------------------------------------------------------------

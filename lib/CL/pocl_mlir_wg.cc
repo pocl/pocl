@@ -65,6 +65,7 @@
 #include "pocl_mlir.h"
 #include "pocl_mlir_file_util.hh"
 #include "pocl_mlir_passes.hh"
+#include "pocl_run_command.h"
 
 static void generateLlvmFunctionNowrite(mlir::OwningOpRef<mlir::ModuleOp> &Mod,
                                         mlir::MLIRContext *MLIRContext) {
@@ -308,13 +309,13 @@ int poclMlirGenerateLlvmFunction(unsigned DeviceI, cl_device_id Device,
   std::string KernelParallelLlPath = Cachedir;
   KernelParallelLlPath += POCL_PARALLEL_BC_FILENAME;
 
-  std::string InvokeMlir = MLIRTRANSLATE_EXECUTABLE;
-  InvokeMlir += " -o ";
-  InvokeMlir += KernelParallelLlPath;
-  InvokeMlir += " --mlir-to-llvmir ";
-  InvokeMlir += KernelLlvmMlirPath;
-  POCL_MSG_PRINT_LLVM("MLIR-Translate cmd: %s\n", InvokeMlir.c_str());
-  system(InvokeMlir.c_str());
-
-  return 0;
+  const char *CommandArray [] =
+    { MLIRTRANSLATE_EXECUTABLE,
+      "-o",
+      KernelParallelLlPath.c_str(),
+      "--mlir-to-llvmir",
+      KernelLlvmMlirPath.c_str(),
+      nullptr
+  };
+  return pocl_run_command(CommandArray);
 }

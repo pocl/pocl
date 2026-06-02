@@ -87,7 +87,6 @@ CPU_ABI_REG_SIZE = args.reg_size
 if RISCV64_CALLING_ABI:
 	CPU_ABI_REG_SIZE = 128
 
-OPAQUE_POINTERS = True
 
 GENERIC_AS = args.generic_as
 
@@ -384,75 +383,75 @@ else:
 
 if CPU_ABI_REG_SIZE == 128:
 	BYVAL_VECTOR_MAP = {
-		"<3 x double>": "<3 x double>* byval(<3 x double>) align 32",
-		"<3 x i64>": "<3 x i64>* byval(<3 x i64>) align 32",
+		"<3 x double>":"ptr noundef byval(<3 x double>) align 32",
+		"<3 x i64>":"ptr noundef byval(<3 x i64>) align 32",
 
-		"<4 x i64>":"<4 x i64>* byval(<4 x i64>) align 32",
-		"<4 x double>": "<4 x double>* byval(<4 x double>) align 32",
-		"<8 x i32>":"<8 x i32>* byval(<8 x i32>) align 32",
-		"<8 x float>": "<8 x float>* byval(<8 x float>) align 32",
-		"<16 x i16>": "<16 x i16>* byval(<16 x i16>) align 32",
-		"<16 x half>": "<16 x half>* byval(<16 x half>) align 32",
+		"<4 x i64>":"ptr noundef byval(<4 x i64>) align 32",
+		"<4 x double>":"ptr noundef byval(<4 x double>) align 32",
+		"<8 x i32>":"ptr noundef byval(<8 x i32>) align 32",
+		"<8 x float>":"ptr noundef byval(<8 x float>) align 32",
+		"<16 x i16>":"ptr noundef byval(<16 x i16>) align 32",
+		"<16 x half>":"ptr noundef byval(<16 x half>) align 32",
 
-		"<8 x i64>":"<8 x i64>* byval(<8 x i64>) align 64",
-		"<8 x double>": "<8 x double>* byval(<8 x double>) align 64",
+		"<8 x i64>":"ptr noundef byval(<8 x i64>) align 64",
+		"<8 x double>":"ptr noundef byval(<8 x double>) align 64",
 
-		"<16 x i32>": "<16 x i32>* byval(<16 x i32>) align 64",
-		"<16 x float>": "<16 x float>* byval(<16 x float>) align 64",
+		"<16 x i32>":"ptr noundef byval(<16 x i32>) align 64",
+		"<16 x float>":"ptr noundef byval(<16 x float>) align 64",
 
-		"<16 x i64>":"<16 x i64>* byval(<16 x i64>) align 128",
-		"<16 x double>": "<16 x double>* byval(<16 x double>) align 128",
+		"<16 x i64>":"ptr noundef byval(<16 x i64>) align 128",
+		"<16 x double>":"ptr noundef byval(<16 x double>) align 128",
 	}
 	SRET_VECTOR_MAP = {
-		"<3 x double>": "<3 x double>* sret(<3 x double>) align 16",
-		"<3 x i64>": "<3 x i64>* sret(<3 x i64>) align 16",
+		"<3 x double>":"ptr noundef sret(<3 x double>) align 16",
+		"<3 x i64>":"ptr noundef sret(<3 x i64>) align 16",
 
-		"<4 x i64>":"<4 x i64>* sret(<4 x i64>) align 32",
-		"<4 x double>": "<4 x double>* sret(<4 x double>) align 32",
-		"<8 x i32>":"<8 x i32>* sret(<8 x i32>) align 32",
-		"<8 x float>": "<8 x float>* sret(<8 x float>) align 32",
-		"<16 x i16>": "<16 x i16>* sret(<16 x i16>) align 32",
-		"<16 x half>": "<16 x half>* sret(<16 x half>) align 32",
+		"<4 x i64>":"ptr noundef sret(<4 x i64>) align 32",
+		"<4 x double>":"ptr noundef sret(<4 x double>) align 32",
+		"<8 x i32>":"ptr noundef sret(<8 x i32>) align 32",
+		"<8 x float>":"ptr noundef sret(<8 x float>) align 32",
+		"<16 x i16>":"ptr noundef sret(<16 x i16>) align 32",
+		"<16 x half>":"ptr noundef sret(<16 x half>) align 32",
 
-		"<8 x i64>":"<8 x i64>* sret(<8 x i64>) align 64",
-		"<8 x double>": "<8 x double>* sret(<8 x double>) align 64",
-		"<16 x i32>": "<16 x i32>* sret(<16 x i32>) align 64",
-		"<16 x float>": "<16 x float>* sret(<16 x float>) align 64",
+		"<8 x i64>":"ptr noundef sret(<8 x i64>) align 64",
+		"<8 x double>":"ptr noundef sret(<8 x double>) align 64",
+		"<16 x i32>":"ptr noundef sret(<16 x i32>) align 64",
+		"<16 x float>":"ptr noundef sret(<16 x float>) align 64",
 
-		"<16 x i64>":"<16 x i64>* sret(<16 x i64>) align 128",
-		"<16 x double>": "<16 x double>* sret(<16 x double>) align 128",
+		"<16 x i64>":"ptr noundef sret(<16 x i64>) align 128",
+		"<16 x double>":"ptr noundef sret(<16 x double>) align 128",
 	}
 
 elif CPU_ABI_REG_SIZE == 256:
 	BYVAL_VECTOR_MAP = {
-		"<8 x i64>":"<8 x i64>* byval(<8 x i64>) align 64",
-		"<8 x double>": "<8 x double>* byval(<8 x double>) align 64",
+		"<8 x i64>":"ptr noundef byval(<8 x i64>) align 64",
+		"<8 x double>":"ptr noundef byval(<8 x double>) align 64",
 
-		"<16 x i32>": "<16 x i32>* byval(<16 x i32>) align 64",
-		"<16 x float>": "<16 x float>* byval(<16 x float>) align 64",
+		"<16 x i32>":"ptr noundef byval(<16 x i32>) align 64",
+		"<16 x float>":"ptr noundef byval(<16 x float>) align 64",
 
-		"<16 x i64>":"<16 x i64>* byval(<16 x i64>) align 128",
-		"<16 x double>": "<16 x double>* byval(<16 x double>) align 128",
+		"<16 x i64>":"ptr noundef byval(<16 x i64>) align 128",
+		"<16 x double>":"ptr noundef byval(<16 x double>) align 128",
 	}
 	SRET_VECTOR_MAP = {
-		"<8 x i64>":"<8 x i64>* sret(<8 x i64>) align 32",
-		"<8 x double>": "<8 x double>* sret(<8 x double>) align 32",
+		"<8 x i64>":"ptr noundef sret(<8 x i64>) align 32",
+		"<8 x double>":"ptr noundef sret(<8 x double>) align 32",
 
-		"<16 x i32>": "<16 x i32>* sret(<16 x i32>) align 64",
-		"<16 x float>": "<16 x float>* sret(<16 x float>) align 64",
+		"<16 x i32>":"ptr noundef sret(<16 x i32>) align 64",
+		"<16 x float>":"ptr noundef sret(<16 x float>) align 64",
 
-		"<16 x i64>":"<16 x i64>* sret(<16 x i64>) align 128",
-		"<16 x double>": "<16 x double>* sret(<16 x double>) align 128",
+		"<16 x i64>":"ptr noundef sret(<16 x i64>) align 128",
+		"<16 x double>":"ptr noundef sret(<16 x double>) align 128",
 	}
 
 elif CPU_ABI_REG_SIZE == 512:
 	BYVAL_VECTOR_MAP = {
-		"<16 x i64>":"<16 x i64>* byval(<16 x i64>) align 128",
-		"<16 x double>": "<16 x double>* byval(<16 x double>) align 128",
+		"<16 x i64>":"ptr noundef byval(<16 x i64>) align 128",
+		"<16 x double>":"ptr noundef byval(<16 x double>) align 128",
 	}
 	SRET_VECTOR_MAP = {
-		"<16 x i64>":"<16 x i64>* sret(<16 x i64>) align 128",
-		"<16 x double>": "<16 x double>* sret(<16 x double>) align 128",
+		"<16 x i64>":"ptr noundef sret(<16 x i64>) align 128",
+		"<16 x double>":"ptr noundef sret(<16 x double>) align 128",
 	}
 
 else:
@@ -672,20 +671,9 @@ def unshuffle_coerced_ret_type(coerced_ret_type, ret_type, coerced_name, retval_
 # e.g. for argtype=="Pi" returns "i32 *"
 def llvm_arg_type(argtype, AS):
 	if argtype.count("ocl_image")>0 or argtype.count("ocl_sampler")>0 or argtype.count("ocl_event")>0:
-		if OPAQUE_POINTERS:
-			return "ptr " + AS
-		else:
-			return SIG_TO_LLVM_TYPE_MAP[argtype] + AS + "*"
+		return "ptr " + AS
 	if argtype[0] == 'P':
-		idx = 1
-		if argtype[1] == 'V' or argtype[1] == 'K':
-			idx = 2
-			if argtype[2] == 'A':
-				idx = 3
-		if OPAQUE_POINTERS:
-			return "ptr " + AS
-		else:
-			return SIG_TO_LLVM_TYPE_MAP[argtype[idx:]] + AS + "*"
+		return "ptr " + AS
 	else:
 		return SIG_TO_LLVM_TYPE_MAP[argtype]
 
@@ -929,10 +917,7 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 					align = "align 8"
 				all_instr.append("  %%%u = alloca %s, %s" % (llvm_i, spir_arg_type, align))
 				alloca_inst = "%" + chr(48+llvm_i)
-				if OPAQUE_POINTERS:
-					all_instr.append("  store %s, ptr %s, %s" % (noext_caller_arg, alloca_inst, align))
-				else:
-					all_instr.append("  store %s, %s* %s, %s" % (noext_caller_arg, spir_arg_type, alloca_inst, align))
+				all_instr.append("  store %s, ptr %s, %s" % (noext_caller_arg, alloca_inst, align))
 				callee_args.append(ocl_arg_type + "* " + alloca_inst)
 				decl_args.append(byval_sret_arg_type)
 				llvm_i += 1
@@ -989,10 +974,7 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 			elif ret_type != sret_ret_type:
 				print("  call void %s(%s)" % (ocl_mangled_name, callee_args))
 				# add load from alloca
-				if OPAQUE_POINTERS:
-					print("  %%%u = load %s, ptr %s, %s" % (llvm_i, ret_type, retval_alloca_inst, retval_align))
-				else:
-					print("  %%%u = load %s, %s* %s, %s" % (llvm_i, ret_type, ret_type, retval_alloca_inst, retval_align))
+				print("  %%%u = load %s, ptr %s, %s" % (llvm_i, ret_type, retval_alloca_inst, retval_align))
 				print("  ret %s %%%u" % (ret_type, llvm_i))
 
 			else:
@@ -1122,6 +1104,14 @@ if FP16:
 	FLOAT_TYPES = ["float", "double", "half"]
 else:
 	FLOAT_TYPES = ["float", "double"]
+
+# list of mangled type names, for generating wrappers for OpenCL builtins that are
+# overloaded for all OpenCL types (e.g. shuffle, convert_type, vload/vstore etc)
+# IGENTYPES = integer only, FGENTYPES = IGENTYPES + float types
+FGENTYPES = ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']
+IGENTYPES = ['c', 'h', 's', 't', 'i', 'j', 'l', 'm']
+if FP16:
+	FGENTYPES.append('Dh')
 
 # math funcs, vectorized
 for llvm_type in FLOAT_TYPES:
@@ -1274,7 +1264,7 @@ for mang_type in ['s', 't', 'i', 'j', 'l', 'm']:
 		generate_function("upsample", SIG_TO_LLVM_TYPE_MAP[ret_type], '', False, arg_1st, arg_2nd)
 
 # vload / vstore / prefetch / async
-for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
+for arg_type in FGENTYPES:
 	for vector_size in [1,2,3,4,8,16]:
 		arg = arg_type
 		PConstArg = 'PK' + arg_type
@@ -1293,17 +1283,17 @@ for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
 
 		generate_function("prefetch", SIG_TO_LLVM_TYPE_MAP['v'], '', True, PConstArg, 'm')
 
-		generate_function("async_work_group_copy", '%opencl.event_t*', '',
+		generate_function("async_work_group_copy", 'ptr', '',
 											("global", "local", "none", "none", "none"),
 											PArg, PConstArg, 'm', '9ocl_event')
-		generate_function("async_work_group_copy", '%opencl.event_t*', '',
+		generate_function("async_work_group_copy", 'ptr', '',
 											("local", "global", "none", "none", "none"),
 											PArg, PConstArg, 'm', '9ocl_event')
 
-		generate_function("async_work_group_strided_copy", '%opencl.event_t*', '',
+		generate_function("async_work_group_strided_copy", 'ptr', '',
 											("global", "local", "none", "none", "none"),
 											PArg, PConstArg, 'm', 'm', '9ocl_event')
-		generate_function("async_work_group_strided_copy", '%opencl.event_t*', '',
+		generate_function("async_work_group_strided_copy", 'ptr', '',
 											("local", "global", "none", "none", "none"),
 											PArg, PConstArg, 'm', 'm', '9ocl_event')
 
@@ -1328,7 +1318,7 @@ for ret_type in ['f','d']:
 			generate_function("vstorea_"+suffix+rounding, SIG_TO_LLVM_TYPE_MAP['v'], '', True, ret, 'm', PArg)
 
 # Integer
-for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm']:
+for arg_type in IGENTYPES:
 	for vector_size in [1,2,3,4,8,16]:
 
 		arg_i = arg_type
@@ -1365,7 +1355,7 @@ for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm']:
 			generate_function("mad24", ret_type, signext, False, arg_i, arg_i, arg_i)
 
 # shuffle / shuffle2
-for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
+for arg_type in FGENTYPES:
 	if arg_type == 'd':
 		uarg_type = 'm'
 	elif arg_type == 'f':
@@ -1384,12 +1374,8 @@ for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
 			generate_function("shuffle2", SIG_TO_LLVM_TYPE_MAP[ret_type], '', False, in_type, in_type, mask_type)
 
 # convert
-CONVERT_TYPES = ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']
-if FP16:
-	CONVERT_TYPES.append('Dh')
-
-for dst_type in CONVERT_TYPES:
-	for src_type in CONVERT_TYPES:
+for dst_type in FGENTYPES:
+	for src_type in FGENTYPES:
 		for sat in ['', '_sat']:
 			if (sat == '_sat') and (dst_type in ['f','d', 'Dh']):
 				continue
@@ -1598,11 +1584,8 @@ generate_function("sub_group_all", SIG_TO_LLVM_TYPE_MAP['i'], '', None, 'i')
 generate_function("sub_group_barrier", SIG_TO_LLVM_TYPE_MAP['v'], '', None, 'j')
 generate_function("sub_group_barrier", SIG_TO_LLVM_TYPE_MAP['v'], '', None, 'j', '12memory_scope')
 
-SUBGROUP_TYPES = ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']
-if FP16:
-	SUBGROUP_TYPES.append('Dh')
 
-for arg_type in SUBGROUP_TYPES:
+for arg_type in FGENTYPES:
 	ret_type = arg_type
 	signext = LLVM_TYPE_EXT_MAP[ret_type]
 	mask_type = 'j'
@@ -1640,9 +1623,9 @@ for arg_type in BITOPS_TYPES:
 			vec_type = arg_type
 			signext = LLVM_TYPE_EXT_MAP[arg_type]
 		mask_type = 'j'
-		generate_function("bitfield_insert", SIG_TO_LLVM_TYPE_MAP[arg_type], signext, False, vec_type, vec_type, mask_type, mask_type)
-		generate_function("bitfield_extract_signed", SIG_TO_LLVM_TYPE_MAP[arg_type], signext, False, vec_type, mask_type, mask_type)
-		generate_function("bitfield_extract_unsigned", SIG_TO_LLVM_TYPE_MAP[arg_type], signext, False, vec_type, mask_type, mask_type)
+		generate_function("bitfield_insert", SIG_TO_LLVM_TYPE_MAP[vec_type], signext, False, vec_type, vec_type, mask_type, mask_type)
+		generate_function("bitfield_extract_signed", SIG_TO_LLVM_TYPE_MAP[vec_type], signext, False, vec_type, mask_type, mask_type)
+		generate_function("bitfield_extract_unsigned", SIG_TO_LLVM_TYPE_MAP[vec_type], signext, False, vec_type, mask_type, mask_type)
 
 DOT_CHAR_VECS = { 'i': 'Dv4_c', 'j': 'Dv4_h' }
 DOT_CHAR_C = { 'i': 's', 'j': 'u' }
