@@ -88,72 +88,9 @@ _cl_ldexp (double16 x, int16 k)
 
 #endif /* cl_khr_fp64 */
 
-
-#if ENABLE_CONFORMANCE == 1
-
-#ifndef cl_khr_fp64
-#error ldexp_fp32 requires cl_khr_fp64
-#endif
-
-/* calculate the fp32 ldexp values using the fp64 ldexp. This is necessary to
-   pass the Full CTS math test, because some values (involving denormals) are
-   not correctly calculated by the fp32 version of ldexp from SLEEF.  */
-
-_CL_OVERLOADABLE
-float
-_cl_ldexp (float x, int k)
-{
-  double xd = convert_double (x);
-  double ret = _cl_ldexp (xd, k);
-  return convert_float (ret);
-}
-
-_CL_OVERLOADABLE
-float2
-_cl_ldexp (float2 x, int2 k)
-{
-  double2 xd = convert_double2 (x);
-  double2 ret = _cl_ldexp (xd, k);
-  return convert_float2 (ret);
-}
-
-_CL_OVERLOADABLE
-float3
-_cl_ldexp (float3 x, int3 k)
-{
-  double3 xd = convert_double3 (x);
-  double3 ret = _cl_ldexp (xd, k);
-  return convert_float3 (ret);
-}
-
-_CL_OVERLOADABLE
-float4
-_cl_ldexp (float4 x, int4 k)
-{
-  double4 xd = convert_double4 (x);
-  double4 ret = _cl_ldexp (xd, k);
-  return convert_float4 (ret);
-}
-
-_CL_OVERLOADABLE
-float8
-_cl_ldexp (float8 x, int8 k)
-{
-  double8 xd = convert_double8 (x);
-  double8 ret = _cl_ldexp (xd, k);
-  return convert_float8 (ret);
-}
-
-_CL_OVERLOADABLE
-float16
-_cl_ldexp (float16 x, int16 k)
-{
-  double16 xd = convert_double16 (x);
-  double16 ret = _cl_ldexp (xd, k);
-  return convert_float16 (ret);
-}
-
-#else /* ENABLE_CONFORMANCE */
+/* calculate the fp32 ldexp values using the non-SIMD SLEEF code. This is necessary
+   to pass the Full CTS math test, because some values (involving denormals) are
+   not correctly calculated by the fp32 SIMD version of ldexp from SLEEF.  */
 
 _CL_OVERLOADABLE
 float
@@ -166,7 +103,6 @@ _CL_OVERLOADABLE
 float2
 _cl_ldexp (float2 x, int2 k)
 {
-
   float lo = _cl_ldexp (x.lo, k.lo);
   float hi = _cl_ldexp (x.hi, k.hi);
   return (float2)(lo, hi);
@@ -179,60 +115,43 @@ _CL_OVERLOADABLE
 float3
 _cl_ldexp (float3 x, int3 k)
 {
-
-  float4 x_3to4 = (float4)(x, (float)0);
-  int4 k_3to4 = (int4)(k, (float)0);
-
-  float4 r = _cl_ldexp (x_3to4, k_3to4);
-  return r.xyz;
+  float s0 = _cl_ldexp (x.s0, k.s0);
+  float s1 = _cl_ldexp (x.s1, k.s1);
+  float s2 = _cl_ldexp (x.s2, k.s2);
+  return (float3)(s0, s1, s2);
 }
 
 _CL_OVERLOADABLE
 float4
 _cl_ldexp (float4 x, int4 k)
 {
-
-#if defined(SLEEF_VEC_128_AVAILABLE)
-  return Sleef_ldexpf4 (x, k);
-#else
-
-  float2 lo = _cl_ldexp (x.lo, k.lo);
-  float2 hi = _cl_ldexp (x.hi, k.hi);
-  return (float4)(lo, hi);
-
-#endif
+  float s0 = _cl_ldexp (x.s0, k.s0);
+  float s1 = _cl_ldexp (x.s1, k.s1);
+  float s2 = _cl_ldexp (x.s2, k.s2);
+  float s3 = _cl_ldexp (x.s3, k.s3);
+  return (float4)(s0, s1, s2, s3);
 }
 
 _CL_OVERLOADABLE
 float8
 _cl_ldexp (float8 x, int8 k)
 {
-
-#if defined(SLEEF_VEC_256_AVAILABLE)
-  return Sleef_ldexpf8 (x, k);
-#else
-
-  float4 lo = _cl_ldexp (x.lo, k.lo);
-  float4 hi = _cl_ldexp (x.hi, k.hi);
-  return (float8)(lo, hi);
-
-#endif
+  float s0 = _cl_ldexp (x.s0, k.s0);
+  float s1 = _cl_ldexp (x.s1, k.s1);
+  float s2 = _cl_ldexp (x.s2, k.s2);
+  float s3 = _cl_ldexp (x.s3, k.s3);
+  float s4 = _cl_ldexp (x.s4, k.s4);
+  float s5 = _cl_ldexp (x.s5, k.s5);
+  float s6 = _cl_ldexp (x.s6, k.s6);
+  float s7 = _cl_ldexp (x.s7, k.s7);
+  return (float8)(s0, s1, s2, s3, s4, s5, s6, s7);
 }
 
 _CL_OVERLOADABLE
 float16
 _cl_ldexp (float16 x, int16 k)
 {
-
-#if defined(SLEEF_VEC_512_AVAILABLE)
-  return Sleef_ldexpf16 (x, k);
-#else
-
   float8 lo = _cl_ldexp (x.lo, k.lo);
   float8 hi = _cl_ldexp (x.hi, k.hi);
   return (float16)(lo, hi);
-
-#endif
 }
-
-#endif /* ENABLE_CONFORMANCE */
