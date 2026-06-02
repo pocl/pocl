@@ -1457,7 +1457,11 @@ pocl_print_system_memory_stats()
  * this should be reasonable for CPU.
  * setting this to 8192 causes some tests to fail,
  * because of stack overflow. */
+#if defined(__riscv) && defined(ENABLE_CONFORMANCE)
+#define DEFAULT_WG_SIZE 1024
+#else
 #define DEFAULT_WG_SIZE 4096
+#endif
 
 static cl_device_partition_property basic_partition_properties[1] = { 0 };
 

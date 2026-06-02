@@ -1649,7 +1649,7 @@ else()
   set(HOST_CPU_ENABLE_CL_KHR_FP16 0)
 endif()
 
-if(HOST_CPU_SUPPORTS_DOUBLE)
+if(HOST_CPU_SUPPORTS_DOUBLE AND NOT (RISCV AND ENABLE_CONFORMANCE))
   set(HOST_CPU_ENABLE_CL_KHR_FP64 1)
 else()
   set(HOST_CPU_ENABLE_CL_KHR_FP64 0)
@@ -1666,9 +1666,15 @@ include(CheckHostCpuKernelClock)
 # NOTE: update README.md when changing the list
 set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
 cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
-cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes cl_ext_float_atomics \
+cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes \
 cl_intel_unified_shared_memory cl_ext_buffer_device_address cl_khr_device_uuid \
 cl_khr_suggested_local_work_size cl_khr_integer_dot_product")
+
+# this is temporarily disabled because of bugs in OpenCL-CTS
+# see https://github.com/KhronosGroup/OpenCL-CTS/pull/2700
+if (NOT ENABLE_CONFORMANCE)
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_ext_float_atomics")
+endif()
 
 # Clang 20 is required for __builtin_elementwise_bitreverse
 if(LLVM_VERSION_MAJOR GREATER_EQUAL 20)
