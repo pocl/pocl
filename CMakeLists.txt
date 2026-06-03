@@ -332,6 +332,13 @@ endif()
 
 option(STATIC_LLVM "If ON, link to static LLVM libraries. OFF (default) = link to shared LLVM libraries." ${DEFAULT_STATIC_LLVM})
 
+# When dynamically linking LLVM, add rpaths to installed binaries so they can
+# find LLVM libraries without requiring LD_LIBRARY_PATH/DYLD_LIBRARY_PATH.
+# This is especially important on macOS where DYLD_LIBRARY_PATH doesn't help
+# resolve @rpath references.
+if(NOT STATIC_LLVM)
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH ON)
+endif()
 
 if(WIN32)
   set(DEFAULT_LLVM_PLATFORM_SUPPORT ON)
