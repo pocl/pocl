@@ -43,12 +43,15 @@ homebrew and can be installed with::
     brew install pocl
 
 Note that this installs an ICD loader from KhronoGroup and the built-in OpenCL
-implementation will be invisible when your application is linked to this loader. To make it visible and having both GPU icd from Apple and CPU icd from PoCL, aka, dual devices. The steps are as follows (take Apple Silicon device as examples). Run these commands in a terminal::
+implementation will be invisible when your application is linked to this loader. 
+
+To make both the Apple GPU ICD and the PoCL CPU ICD visible—i.e., to enable dual devices—follow these steps (using an Apple Silicon device as an example). Run the following commands in a terminal::
 
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     xcode-select --install
     brew install autoconf automake libtool git
     brew install ocl-icd pocl
+
 After installing `ocl-icd`, create a symbolic link so that `/opt/homebrew/lib/libOpenCL.dylib` exists (needed for linking)::
 
     # Find the actual library version (e.g., 2.3.5)
@@ -98,12 +101,12 @@ Expected output::
     Platform #1: Portable Computing Language
      `-- Device #0: cpu
 
-Set Environment Variables (Required for Every Session): Add the following lines to your `~/.zshrc` (or `~/.bash_profile`) to make them permanent:
+Set Environment Variables (Required for Every Session): Add the following lines to your `~/.zshrc` (or `~/.bash_profile`) to make them permanent::
 
     export DYLD_LIBRARY_PATH=/opt/homebrew/lib
     export OCL_ICD_VENDORS=/opt/homebrew/etc/OpenCL/vendors
 
-Then apply:
+Then apply::
 
     source ~/.zshrc
 
@@ -119,19 +122,17 @@ Temporary fix (for one terminal session)::
 
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
-    export SDKROOT=$(xcrun --sdk macosx --show-sdk-path)
-    export LDFLAGS="-L$SDKROOT/usr/lib -lSystem"
-    export CPATH="$SDKROOT/usr/include"
-    export LIBRARY_PATH="$SDKROOT/usr/lib"
+    export LDFLAGS="-L/usr/lib -lSystem"
+    export CPATH="/usr/include"
+    export LIBRARY_PATH="/usr/lib"
 
 Permanent fix (add to `~/.zshrc`)::
 
     echo 'export CC=/usr/bin/clang' >> ~/.zshrc
     echo 'export CXX=/usr/bin/clang++' >> ~/.zshrc
-    echo 'export SDKROOT=$(xcrun --sdk macosx --show-sdk-path)' >> ~/.zshrc
-    echo 'export LDFLAGS="-L$SDKROOT/usr/lib -lSystem"' >> ~/.zshrc
-    echo 'export CPATH="$SDKROOT/usr/include"' >> ~/.zshrc
-    echo 'export LIBRARY_PATH="$SDKROOT/usr/lib"' >> ~/.zshrc
+    echo 'export LDFLAGS="-L/usr/lib -lSystem"' >> ~/.zshrc
+    echo 'export CPATH="/usr/include"' >> ~/.zshrc
+    echo 'export LIBRARY_PATH="/usr/lib"' >> ~/.zshrc
     source ~/.zshrc
 
 After applying these environment variables, you can reinstall PoCL from source (if needed) or any other software that requires system libraries::
