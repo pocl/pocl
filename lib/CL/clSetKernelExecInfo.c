@@ -105,7 +105,7 @@ POname(clSetKernelExecInfo)(cl_kernel kernel,
         if (param_name == CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL
             && ret_val == CL_SUCCESS)
           pocl_reset_indirect_ptrs (kernel, (void **)param_value,
-                                    param_value_size);
+                                    param_value_size / sizeof (void *));
         return ret_val;
       }
 

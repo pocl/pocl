@@ -22,6 +22,10 @@ Notable bugfixes
   (some corner-cases in clSetKernelArg, clSetKernelExecInfo, clCreateContext,
    clCreateContextFromType, clGetDeviceIDs, clSetKernelArgSVMPointer,
    clEnqueueNDRange with local_size == NULL and nonzero reqq-wg-size)
+* Fixed an out-of-bounds read in `clSetKernelExecInfo` when registering
+  indirect USM pointers (`CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL`): the size of
+  the pointer list was passed on in bytes where a pointer count was expected,
+  causing the runtime to read past the end of the user-provided list.
 * `clGetKernelArgInfo(CL_KERNEL_ARG_NAME)` now returns the source
   argument names for SPIR/SPIR-V binaries on the CPU driver (previously
   returned `CL_KERNEL_ARG_INFO_NOT_AVAILABLE` even when the binary
