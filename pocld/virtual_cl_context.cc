@@ -1271,4 +1271,3 @@ VirtualContextBase *createVirtualContext(PoclDaemon *d,
   vctx->init(d, conns, session, params);
   return vctx;
 }
-

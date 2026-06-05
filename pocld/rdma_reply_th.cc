@@ -143,11 +143,23 @@ void RdmaReplyThread::rdmaWriterThread() {
         Netstat->txConfirmed(sizeof(ReplyMsg_t) + data_size);
 
       virtualContext->notifyEvent(reply->req->Body.event_id, CL_COMPLETE);
-      Request peer_notice{};
-      peer_notice.Body.msg_id = reply->rep.msg_id;
-      peer_notice.Body.event_id = reply->req->Body.event_id;
-      peer_notice.Body.message_type = MessageType_NotifyEvent;
-      virtualContext->broadcastToPeers(peer_notice);
+      ReplyMessageType t =
+          static_cast<ReplyMessageType>(reply->req->Body.message_type);
+
+      if (!reply->req->Body.skip_peer_notify) {
+        Request PeerNotice{};
+        PeerNotice.Body.msg_id = reply->rep.msg_id;
+        PeerNotice.Body.event_id = reply->req->Body.event_id;
+        PeerNotice.Body.message_type = MessageType_NotifyEvent;
+        POCL_MSG_PRINT_EVENTS(
+            "Notify for %s %lu (%lu)\n", pocld_reply_type_to_str(t),
+            reply->req->Body.event_id, reply->req->Body.msg_id);
+        virtualContext->broadcastToPeers(PeerNotice);
+      } else {
+        POCL_MSG_PRINT_EVENTS(
+            "Skipping notify for %s %lu (%lu)\n", pocld_reply_type_to_str(t),
+            reply->req->Body.event_id, reply->req->Body.msg_id);
+      }
 
       delete reply;
     } else {

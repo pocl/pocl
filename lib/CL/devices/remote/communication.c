@@ -3348,6 +3348,8 @@ pocl_network_migrate_d2d (uint32_t cq_id, uint32_t mem_id, uint32_t size_id,
 
   ID_REQUEST (MigrateD2D, mem_id);
   req->cq_id = cq_id;
+  /* Migrations can generate unexpected cross-platform dependencies */
+  req->skip_peer_notify = 0;
 
   req->m.migrate.source_pid = source->remote_platform_index;
   req->m.migrate.source_did = source->remote_device_index;
@@ -3383,6 +3385,7 @@ pocl_network_read (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (ReadBuffer, mem_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
   req->m.read.src_offset = offset;
   req->m.read.size = size;
   req->m.read.content_size_id = size_id;
@@ -3414,6 +3417,7 @@ pocl_network_write (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (WriteBuffer, mem_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
   req->m.write.dst_offset = offset;
   req->m.write.size = size;
 
@@ -3457,6 +3461,7 @@ pocl_network_copy (uint32_t cq_id, remote_device_data_t *ddata,
 
   REQUEST (CopyBuffer);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
   req->m.copy.src_buffer_id = src_id;
   req->m.copy.dst_buffer_id = dst_id;
   req->m.copy.size_buffer_id = content_size_id;
@@ -3489,6 +3494,7 @@ pocl_network_read_rect (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (ReadBufferRect, src_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   req->m.read_rect.buffer_origin.x = buffer_origin[0];
   req->m.read_rect.buffer_origin.y = buffer_origin[1];
@@ -3529,6 +3535,7 @@ pocl_network_write_rect (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (WriteBufferRect, dst_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   req->m.write_rect.buffer_origin.x = buffer_origin[0];
   req->m.write_rect.buffer_origin.y = buffer_origin[1];
@@ -3579,6 +3586,7 @@ pocl_network_copy_rect (
 
   REQUEST (CopyBufferRect);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   req->m.copy_rect.src_buffer_id = src_id;
   req->m.copy_rect.dst_buffer_id = dst_id;
@@ -3620,6 +3628,7 @@ pocl_network_fill_buffer (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (FillBuffer, mem_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
   req->m.fill_buffer.dst_offset = offset;
   req->m.fill_buffer.size = size;
   req->m.fill_buffer.pattern_size = pattern_size;
@@ -3655,6 +3664,7 @@ pocl_network_run_kernel (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (RunKernel, kernel_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
   req->m.run_kernel.global = global;
   req->m.run_kernel.local = local;
   req->m.run_kernel.offset = offset;
@@ -3716,6 +3726,7 @@ pocl_network_barrier_or_marker (uint32_t cq_id,
   if (node->type == CL_COMMAND_BARRIER)
     req->message_type = MessageType_Barrier;
   req->cq_id = node->sync.event.event->queue->id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   SEND_REQ_FAST;
 
@@ -3734,6 +3745,7 @@ pocl_network_run_command_buffer (remote_device_data_t *ddata,
 
   ID_REQUEST (RunCommandBuffer, node->command.replay.buffer->id);
   req->cq_id = node->sync.event.event->queue->id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   TP_COMMAND_BUFFER (req->msg_id, node->sync.event.event->id,
                      node->command.run_cmdbuf.id, node->sync.event.event->id);
@@ -3758,6 +3770,7 @@ pocl_network_copy_image_rect (uint32_t cq_id, remote_device_data_t *ddata,
 
   REQUEST (CopyImage2Image);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
   req->m.copy_img2img.src_image_id = src_remote_id;
   req->m.copy_img2img.dst_image_id = dst_remote_id;
 
@@ -3794,6 +3807,7 @@ pocl_network_copy_buf2img (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (CopyBuffer2Image, dst_remote_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   req->m.copy_buf2img.origin.x = origin[0];
   req->m.copy_buf2img.origin.y = origin[1];
@@ -3828,6 +3842,7 @@ pocl_network_write_image_rect (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (WriteImageRect, dst_remote_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   req->m.write_image_rect.origin.x = origin[0];
   req->m.write_image_rect.origin.y = origin[1];
@@ -3875,6 +3890,7 @@ pocl_network_copy_img2buf (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (CopyImage2Buffer, src_remote_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   req->m.copy_img2buf.origin.x = origin[0];
   req->m.copy_img2buf.origin.y = origin[1];
@@ -3908,6 +3924,7 @@ pocl_network_read_image_rect (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (ReadImageRect, src_remote_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   /* REPLY */
   netcmd->rep_extra_data = p;
@@ -3944,6 +3961,7 @@ pocl_network_fill_image (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (FillImageRect, image_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   req->m.fill_image.origin.x = origin[0];
   req->m.fill_image.origin.y = origin[1];

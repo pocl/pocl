@@ -873,10 +873,13 @@ void SharedCLContext::notifyEvent(uint64_t id, cl_int status) {
     auto Res = Eventmap.insert({id, u});
     if (Res.second) {
       POCL_MSG_PRINT_EVENTS("Created user event for %" PRIu64 "\n", id);
+    } else {
+      POCL_MSG_PRINT_EVENTS("Event %" PRIu64 " was already registered\n", id);
     }
     Evt = Res.first->second;
   }
 
+  // Go through pending commands and unblock any that depend on this event
   for (auto &q : QueueMap) {
     q.second->notify({id, Evt});
   }
