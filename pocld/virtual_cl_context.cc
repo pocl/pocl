@@ -1252,6 +1252,22 @@ void VirtualCLContext::MigrateD2D(Request *req) {
     // .... and now we can push the writeBuffer to the queue
     if (m.dest_peer_id == peer_id) {
       SharedContextList[r.pid]->queuedPush(req);
+
+      // The same memobj may be migrated from here to other peers without
+      // another write. In that case the migration would have the previous write
+      // event as a dependency, and this node not knowing about that event would
+      // cause a deadlock. To avoid that, register a user event on the
+      // destination peer in S2S migrations. The source peer will always either
+      // have a native event from the previous write, or a user event registered
+      // in a previous migration. Uninitialized memobjects may not have a write.
+      if (m.source_peer_id != peer_id && r.m.migrate.last_write_id) {
+        notifyEvent(r.m.migrate.last_write_id, CL_SUCCESS);
+        POCL_MSG_WARN("Register %lu as last write before %lu\n",
+                      r.m.migrate.last_write_id, r.event_id);
+      } else {
+        POCL_MSG_WARN("Skipping registering %lu as last write before %lu\n",
+                      r.m.migrate.last_write_id, r.event_id);
+      }
     } else {
       peers->pushRequest(req, m.dest_peer_id);
     }
@@ -1317,4 +1333,3 @@ VirtualContextBase *createVirtualContext(PoclDaemon *d,
   vctx->init(d, conns, session, params);
   return vctx;
 }
-

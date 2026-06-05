@@ -283,11 +283,20 @@ void ReplyQueueThread::writeThread() {
 
       if (Completed->event()) {
         virtualContext->notifyEvent(Completed->req->Body.event_id, Status);
-        Request PeerNotice{};
-        PeerNotice.Body.msg_id = Completed->rep.msg_id;
-        PeerNotice.Body.event_id = Completed->req->Body.event_id;
-        PeerNotice.Body.message_type = MessageType_NotifyEvent;
-        virtualContext->broadcastToPeers(PeerNotice);
+
+        if (!Completed->req->Body.skip_peer_notify) {
+          Request PeerNotice{};
+          PeerNotice.Body.msg_id = Completed->rep.msg_id;
+          PeerNotice.Body.event_id = Completed->req->Body.event_id;
+          PeerNotice.Body.message_type = MessageType_NotifyEvent;
+          POCL_MSG_WARN("Notify for %s %lu (%lu)\n", reply_to_str(t),
+                        Completed->req->Body.event_id,
+                        Completed->req->Body.msg_id);
+          virtualContext->broadcastToPeers(PeerNotice);
+        } else
+          POCL_MSG_WARN("Skipping notify for %s %lu (%lu)\n", reply_to_str(t),
+                        Completed->req->Body.event_id,
+                        Completed->req->Body.msg_id);
       }
 
       // pop the successfully written reply from the queue

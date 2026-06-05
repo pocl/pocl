@@ -113,7 +113,7 @@ _cl_command_node* pocl_mem_manager_new_command ()
   if ((cmd = mm->cmd_list))
     LL_DELETE (mm->cmd_list, cmd);
   POCL_UNLOCK (mm->cmd_lock);
-  
+
   if (cmd)
     {
       memset (cmd, 0, sizeof (struct _cl_command_node));
@@ -143,7 +143,7 @@ event_node* pocl_mem_manager_new_event_node ()
   if ((ed = mm->event_node_list))
     LL_DELETE (mm->event_node_list, ed);
   POCL_UNLOCK (mm->event_node_lock);
-  
+
   if (ed)
     {
       memset (ed, 0, sizeof(event_node));
@@ -900,6 +900,8 @@ FINISH_VER_SETUP:
 
       cmd_export->command.migrate.type = ENQUEUE_MIGRATE_TYPE_D2H;
       cmd_export->command.migrate.implicit = 1;
+      cmd_export->command.migrate.last_write_id
+        = previous_last_event ? previous_last_event->id : 0;
       cmd_export->command.migrate.migration_size = migration_size;
       cmd_export->command.migrate.num_buffers = 1;
       cmd_export->migr_infos
@@ -949,6 +951,8 @@ FINISH_VER_SETUP:
           cmd_import->command.migrate.implicit = 1;
           cmd_import->command.migrate.migration_size = migration_size;
         }
+      cmd_import->command.migrate.last_write_id
+        = previous_last_event ? previous_last_event->id : 0;
       cmd_import->command.migrate.num_buffers = 1;
       cmd_import->migr_infos
         = pocl_append_unique_migration_info (NULL, mem, 0);
