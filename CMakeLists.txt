@@ -1250,9 +1250,15 @@ endif()
 # The LLVM floor lets old LLVM fall back to the Clang-driver link / lld-link
 # path. JITLink's COFF backend is newer than its ELF/Mach-O backends (validated
 # on LLVM 22 vs 18/21), so Windows requires a more recent LLVM.
+# SVML vectorization links a static Intel library (libsvml.a) into each kernel
+# for a redistributable-independent binary; that static-link model is
+# incompatible with the in-process JIT (which resolves symbols from loaded
+# shared libraries, not by static linking), so SVML builds keep the Clang-driver
+# link path. The other veclibs (libmvec, SLEEF) are shared and the JIT loads
+# them at run time (see pocl_llvm_orc.cc).
 set(HOST_CPU_JIT_SUPPORTED OFF)
 set(HOST_CPU_JIT_MIN_LLVM_MAJOR 18)
-if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM)
+if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM AND (NOT ENABLE_HOST_CPU_VECTORIZE_SVML))
   if(NOT WIN32)
     set(HOST_CPU_JIT_SUPPORTED ON)
   elseif((NOT CPU_USE_LLD_LINK_WIN32)

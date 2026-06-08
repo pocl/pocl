@@ -34,6 +34,7 @@
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
 #include <llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h>
 #include <llvm/ExecutionEngine/Orc/Shared/ExecutorSymbolDef.h>
+#include <llvm/Support/DynamicLibrary.h>
 #include <llvm/Support/Error.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/TargetParser/Triple.h>
@@ -199,6 +200,28 @@ pocl_jit_initialize (const char *TripleStr, const char *CPU,
     }
   TheJIT = std::move (*JIT);
 
+  /* When CPU codegen vectorizes libm calls (expf, sinf, ...) it lowers them to
+     a vector-math library's symbols (e.g. libmvec's _ZGVdN8v_expf). Which
+     library is chosen at configure time, matching the codegen veclib selection
+     in pocl_llvm_wg.cc. On the old link path that library was pulled in as a
+     NEEDED lib of the kernel .so; the JIT does no such link, so load it into the
+     process here (LoadLibraryPermanently uses RTLD_GLOBAL, so its symbols join
+     the scope the JIT searches). SVML is intentionally not handled: it is a
+     static-only library incompatible with the JIT, so SVML builds keep the link
+     path (HOST_CPU_ENABLE_JIT is off there). */
+#if defined(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
+  const char *VecMathLib = "libmvec.so.1";
+#elif defined(ENABLE_HOST_CPU_VECTORIZE_SLEEF)
+  const char *VecMathLib = "libsleef.so";
+#else
+  const char *VecMathLib = nullptr;
+#endif
+  if (VecMathLib && sys::DynamicLibrary::LoadLibraryPermanently (VecMathLib))
+    POCL_MSG_PRINT_LLVM (
+        "pocl_jit: could not load vector-math library '%s'; vectorized math "
+        "kernels may fail to resolve their symbols\n",
+        VecMathLib);
+
 #ifdef _WIN32
   /* Build the shared runtime JITDylib from the freestanding helper objects.
      A failure here is not fatal at init time (a kernel that doesn't reference
@@ -262,11 +285,25 @@ pocl_jit_load_object (const char *Path, const char *UniqName)
 
 #ifdef _WIN32
   /* Resolve the freestanding runtime helpers (stack probe, mem*) from the
-     shared runtime JITDylib. The kernel JD already links against the process
-     symbols (appended as LLJIT's default link order); the runtime JD supplies
-     the CRT-less symbols the process doesn't export. */
+     shared runtime JITDylib, and crucially do so *before* the process symbols.
+     A kernel reaches these helpers with a direct call (PCRel32, +-2GB range);
+     the process CRT's copies live in a loaded DLL far outside that range, so a
+     direct call to them overflows the relocation (COFF/x86-64 JITLink does not
+     insert a far-call stub the way the ELF/Mach-O path does). The runtime JD's
+     copies are JIT-allocated next to the kernel code, so the call is in range.
+     The kernel JD's link order after createJITDylib is [self, <process>,
+     <platform>]; insert the runtime JD right after self so it wins over the
+     process CRT. */
   if (RuntimeJD)
-    (*JD).addToLinkOrder (*RuntimeJD);
+    {
+      JITDylibSearchOrder Order;
+      (*JD).withLinkOrderDo (
+          [&] (const JITDylibSearchOrder &O) { Order = O; });
+      Order.insert (Order.begin () + (Order.empty () ? 0 : 1),
+                    { RuntimeJD, JITDylibLookupFlags::MatchExportedSymbolsOnly });
+      (*JD).setLinkOrder (std::move (Order),
+                          /*LinkAgainstThisJITDylibFirst=*/false);
+    }
 #endif
 
   if (Error Err = TheJIT->addObjectFile (*JD, std::move (*Buf)))

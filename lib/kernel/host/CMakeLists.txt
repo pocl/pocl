@@ -762,18 +762,26 @@ if(CPU_USE_LLD_LINK_WIN32 OR (HOST_CPU_ENABLE_JIT AND WIN32))
   else()
     set(CHKSTK_DEFINE "-DCHKSTK_MS")
   endif()
+  # For the JIT path these objects are linked by JITLink, which (without a
+  # COFFPlatform, which would need the ORC runtime) cannot resolve the
+  # image-relative relocations in x86-64 SEH unwind data: .pdata/.xdata encode
+  # RVAs against __ImageBase, which is 0 in that setup, so the ADDR32NB fixups
+  # overflow. These freestanding helpers never participate in unwinding, so drop
+  # their unwind tables, leaving a .text-only object JITLink links cleanly.
+  # (Harmless for the lld-link path, which links a real DLL.)
+  set(FREESTANDING_NO_UNWIND -fno-asynchronous-unwind-tables -fno-unwind-tables)
   set(LIBCHKSTK_OBJ "${CMAKE_CURRENT_BINARY_DIR}/libchkstk.obj")
   set(LIBCHKSTK_SRC "${CMAKE_CURRENT_SOURCE_DIR}/libchkstk.S")
   add_custom_command( OUTPUT "${LIBCHKSTK_OBJ}"
       DEPENDS ${LIBCHKSTK_SRC}
-      COMMAND ${HOST_CLANG} ${CHKSTK_DEFINE} -o ${LIBCHKSTK_OBJ} -c ${LIBCHKSTK_SRC}
+      COMMAND ${HOST_CLANG} ${CHKSTK_DEFINE} ${FREESTANDING_NO_UNWIND} -o ${LIBCHKSTK_OBJ} -c ${LIBCHKSTK_SRC}
       COMMENT "Compiling CHKSTK" VERBATIM)
 
   set(LIBMEMORY_OBJ "${CMAKE_CURRENT_BINARY_DIR}/libmemory.obj")
   set(LIBMEMORY_SRC "${CMAKE_CURRENT_SOURCE_DIR}/libmemory.c")
   add_custom_command( OUTPUT "${LIBMEMORY_OBJ}"
       DEPENDS ${LIBMEMORY_SRC}
-      COMMAND ${HOST_CLANG} -DMEMSET -DMEMCPY -DMEMMOVE -DMEMCMP -DSTRLEN -Os -fno-builtin --target=${LLVM_HOST_TARGET} -o ${LIBMEMORY_OBJ} -c ${LIBMEMORY_SRC}
+      COMMAND ${HOST_CLANG} -DMEMSET -DMEMCPY -DMEMMOVE -DMEMCMP -DSTRLEN -Os -fno-builtin ${FREESTANDING_NO_UNWIND} --target=${LLVM_HOST_TARGET} -o ${LIBMEMORY_OBJ} -c ${LIBMEMORY_SRC}
       COMMENT "Linking STRING library" VERBATIM)
 
   add_custom_target("kernel_host_freestanding" DEPENDS ${LIBCHKSTK_OBJ} ${LIBMEMORY_OBJ})
