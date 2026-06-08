@@ -270,6 +270,17 @@ pocl_cache_final_binary_path (char *final_binary_path, cl_program program,
     {
       char file_name[POCL_MAX_FILENAME_LENGTH + 1];
       pocl_hash_clipped_name (kernel->name, &file_name[0]);
+#ifdef HOST_CPU_ENABLE_JIT
+      /* Devices that link kernels through the default Clang driver (i.e. have
+         no custom finalize_binary) load them in-process via ORC/JITLink. The
+         cached artifact is then the relocatable object file itself, not a
+         linked shared library. The distinct extension also invalidates stale
+         shared-library caches from pre-JIT builds. */
+      if (kernel->program->devices[device_i]->ops->finalize_binary == NULL)
+        bytes_written = snprintf (final_binary_name, POCL_MAX_PATHNAME_LENGTH,
+                                  "/%s" OBJ_EXT, file_name);
+      else
+#endif
       bytes_written = snprintf (final_binary_name, POCL_MAX_PATHNAME_LENGTH,
 #ifdef _WIN32
                                 "/%s.dll",

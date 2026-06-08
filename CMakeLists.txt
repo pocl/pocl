@@ -1232,6 +1232,19 @@ if(ENABLE_HOST_CPU_DEVICES AND ENABLE_SPIRV AND (NOT MSVC) AND (HOST_DEVICE_ADDR
   set(HOST_CPU_ENABLE_SPIRV ON)
 endif()
 
+# When enabled, CPU host devices link and load kernel object files in-process
+# via the LLVM ORC LLJIT + JITLink, instead of linking them into a shared
+# library through the Clang driver (which pulls in a host toolchain: a linker
+# to exec, startup files, default libs) and dlopen()ing the result. JITLink
+# acts as both linker and loader, removing the external linker invocation and
+# the crt0/sysroot dependencies. ELF/Mach-O hosts only; Windows keeps the
+# existing path.
+if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM AND (NOT WIN32))
+  option(HOST_CPU_ENABLE_JIT "Load CPU kernels in-process via ORC/JITLink instead of the Clang-driver link + dlopen." ON)
+else()
+  set(HOST_CPU_ENABLE_JIT OFF)
+endif()
+
 ######################################################################################
 
 set(HAVE_DLFCN_H OFF CACHE BOOL "dlopen" FORCE)
@@ -2848,6 +2861,7 @@ if (ENABLE_LLVM)
   MESSAGE(STATUS "ENABLE_HOST_CPU_VECTORIZE_LIBMVEC: ${ENABLE_HOST_CPU_VECTORIZE_LIBMVEC}")
   MESSAGE(STATUS "ENABLE_HOST_CPU_VECTORIZE_SVML: ${ENABLE_HOST_CPU_VECTORIZE_SVML}")
   MESSAGE(STATUS "ENABLE_HOST_CPU_VECTORIZE_BUILTINS: ${ENABLE_HOST_CPU_VECTORIZE_BUILTINS}")
+  MESSAGE(STATUS "HOST_CPU_ENABLE_JIT: ${HOST_CPU_ENABLE_JIT}")
   endif()
 endif()
 MESSAGE(STATUS "")

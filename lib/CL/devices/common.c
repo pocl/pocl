@@ -51,6 +51,9 @@
 #include "pocl_cache.h"
 #include "pocl_debug.h"
 #include "pocl_dynlib.h"
+#ifdef HOST_CPU_ENABLE_JIT
+#include "pocl_llvm_orc.h"
+#endif
 #include "pocl_file_util.h"
 #include "pocl_image_util.h"
 #include "pocl_mem_management.h"
@@ -217,6 +220,22 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
       POCL_MSG_PRINT_LLVM ("Written kernel object: %s size: %zu\n",
                           tmp_objfile, (size_t)objfile_size);
     }
+
+#ifdef HOST_CPU_ENABLE_JIT
+  /* Devices that link through the default Clang driver (no finalize_binary)
+     instead load the kernel in-process via ORC/JITLink. The relocatable
+     object IS the final artifact: no shared library is produced and no
+     external linker is invoked. JITLink links and maps it at load time. */
+  if (device->ops->finalize_binary == NULL)
+    {
+      error = pocl_rename (tmp_objfile, final_binary_path);
+      if (error)
+        POCL_MSG_PRINT_LLVM (
+            "Renaming temporary kernel object to final ('%s') failed.\n",
+            final_binary_path);
+      goto FINISH;
+    }
+#endif
 
   /* Temporary filename for kernel.so. Create it in the parallel.bc's
      directory to enable a potential customized finalization step to
@@ -968,6 +987,9 @@ struct pocl_dlhandle_cache_item
 
   void *wg;
   void *dlhandle;
+  /* If nonzero, dlhandle is an ORC/JITLink module handle (pocl_jit_*) rather
+     than a native shared-library handle (pocl_dynlib_*). */
+  int is_jit;
   pocl_dlhandle_cache_item *next;
   pocl_dlhandle_cache_item *prev;
   unsigned ref_count;
@@ -1010,7 +1032,12 @@ get_new_dlhandle_cache_item ()
   if ((handle_count >= MAX_CACHE_ITEMS) && ci && (ci != pocl_dlhandle_cache))
     {
       DL_DELETE (pocl_dlhandle_cache, ci);
-      pocl_dynlib_close (ci->dlhandle);
+#ifdef HOST_CPU_ENABLE_JIT
+      if (ci->is_jit)
+        pocl_jit_unload (ci->dlhandle);
+      else
+#endif
+        pocl_dynlib_close (ci->dlhandle);
       memset (ci, 0, sizeof (pocl_dlhandle_cache_item));
     }
   else
@@ -1229,10 +1256,23 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
       return NULL;
     }
 
-  ci->dlhandle = pocl_dynlib_open (module_fn, 0, 1);
+#ifdef HOST_CPU_ENABLE_JIT
+  /* Devices that link through the default Clang driver (no finalize_binary)
+     load the kernel object in-process via ORC/JITLink instead of dlopen()ing
+     a shared library. */
+  ci->is_jit = (command->device->ops->finalize_binary == NULL);
+  if (ci->is_jit)
+    {
+      pocl_jit_initialize (command->device->llvm_target_triplet,
+                           command->device->llvm_cpu);
+      ci->dlhandle = pocl_jit_load_object (module_fn, run_cmd->kernel->name);
+    }
+  else
+#endif
+    ci->dlhandle = pocl_dynlib_open (module_fn, 0, 1);
   if (ci->dlhandle == NULL)
     {
-      POCL_MSG_ERR ("pocl_dynlib_open(\"%s\") failed.\n"
+      POCL_MSG_ERR ("loading kernel binary \"%s\" failed.\n"
                     "note: this may be caused by missing symbols "
                     " in the kernel binary\n.",
                     module_fn);
@@ -1246,21 +1286,39 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   snprintf (workgroup_string, workgroup_len, "_pocl_kernel_%s_workgroup",
             run_cmd->kernel->name);
 
-  ci->wg = pocl_dynlib_symbol_address (ci->dlhandle, workgroup_string);
+#ifdef HOST_CPU_ENABLE_JIT
+  /* ORC mangles the unmangled name for the target (e.g. adds the leading
+     underscore on Mach-O), so the JIT path needs no separate fallback. */
+  if (ci->is_jit)
+    ci->wg = pocl_jit_lookup (ci->dlhandle, workgroup_string);
+  else
+#endif
+    ci->wg = pocl_dynlib_symbol_address (ci->dlhandle, workgroup_string);
 
   if (ci->wg == NULL)
     {
       // Older OSX dyld APIs need the name without the underscore.
       snprintf (workgroup_string, workgroup_len, "pocl_kernel_%s_workgroup",
                 run_cmd->kernel->name);
-      ci->wg = pocl_dynlib_symbol_address (ci->dlhandle, workgroup_string);
+#ifdef HOST_CPU_ENABLE_JIT
+      if (ci->is_jit)
+        ci->wg = pocl_jit_lookup (ci->dlhandle, workgroup_string);
+      else
+#endif
+        ci->wg = pocl_dynlib_symbol_address (ci->dlhandle, workgroup_string);
 
       if (ci->wg == NULL)
         {
-          POCL_MSG_ERR ("pocl_dynlib_symbol_address(\"%s\", \"%s\") failed.\n"
+          POCL_MSG_ERR ("looking up \"%s\" in kernel binary \"%s\" failed.\n"
                         "note: missing symbols in the kernel binary might be"
                         " reported as 'file not found' errors.\n",
-                        module_fn, workgroup_string);
+                        workgroup_string, module_fn);
+#ifdef HOST_CPU_ENABLE_JIT
+          if (ci->is_jit)
+            pocl_jit_unload (ci->dlhandle);
+          else
+#endif
+            pocl_dynlib_close (ci->dlhandle);
           POCL_UNLOCK (pocl_dlhandle_lock);
           free (ci);
           free (workgroup_string);

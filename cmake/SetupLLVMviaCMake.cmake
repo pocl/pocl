@@ -152,6 +152,20 @@ set(POCL_LLVM_COMPONENTS
   LLVMWindowsDriver
 )
 
+# In-process kernel loading on CPU host devices (HOST_CPU_ENABLE_JIT) uses the
+# ORC LLJIT + JITLink. These components are only consulted for static and
+# shared-component LLVM builds; the monolithic libLLVM dylib already contains
+# them and ignores this list. HOST_CPU_ENABLE_JIT is finalized later, so guard
+# on the (already-known) superset condition.
+if(ENABLE_HOST_CPU_DEVICES AND (NOT WIN32))
+  list(APPEND POCL_LLVM_COMPONENTS
+    LLVMOrcJIT
+    LLVMJITLink
+    LLVMOrcTargetProcess
+    LLVMOrcShared
+    LLVMRuntimeDyld)
+endif()
+
 if("X86" IN_LIST LLVM_TARGETS_TO_BUILD)
   list(APPEND POCL_LLVM_COMPONENTS
     LLVMX86CodeGen
