@@ -1237,10 +1237,38 @@ endif()
 # library through the Clang driver (which pulls in a host toolchain: a linker
 # to exec, startup files, default libs) and dlopen()ing the result. JITLink
 # acts as both linker and loader, removing the external linker invocation and
-# the crt0/sysroot dependencies. ELF/Mach-O hosts only; Windows keeps the
-# existing path.
-if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM AND (NOT WIN32))
+# the crt0/sysroot dependencies.
+#
+# It is turned ON by default on every platform that supports it and has a recent
+# enough LLVM, so CI exercises this path wherever it can run. A platform is
+# supported when:
+#   - it is non-Windows (ELF/Mach-O): JITLink's ELF/Mach-O backends; or
+#   - it is Windows x86_64 (MinGW): JITLink's COFF_x86_64 backend. Windows arm64
+#     has no COFF_aarch64 backend, and MSVC keeps its in-process lld-link path
+#     (CPU_USE_LLD_LINK_WIN32 sets finalize_binary, which defers the JIT gate).
+#
+# The LLVM floor lets old LLVM fall back to the Clang-driver link / lld-link
+# path. JITLink's COFF backend is newer than its ELF/Mach-O backends (validated
+# on LLVM 22 vs 18/21), so Windows requires a more recent LLVM.
+set(HOST_CPU_JIT_SUPPORTED OFF)
+set(HOST_CPU_JIT_MIN_LLVM_MAJOR 18)
+if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM)
+  if(NOT WIN32)
+    set(HOST_CPU_JIT_SUPPORTED ON)
+  elseif((NOT CPU_USE_LLD_LINK_WIN32)
+         AND (CMAKE_SIZEOF_VOID_P EQUAL 8)
+         AND (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64|AMD64|amd64|x64)"))
+    set(HOST_CPU_JIT_SUPPORTED ON)
+    set(HOST_CPU_JIT_MIN_LLVM_MAJOR 20)
+  endif()
+endif()
+
+if(HOST_CPU_JIT_SUPPORTED
+   AND (LLVM_VERSION_MAJOR GREATER_EQUAL HOST_CPU_JIT_MIN_LLVM_MAJOR))
   option(HOST_CPU_ENABLE_JIT "Load CPU kernels in-process via ORC/JITLink instead of the Clang-driver link + dlopen." ON)
+elseif(HOST_CPU_JIT_SUPPORTED)
+  message(STATUS "HOST_CPU_ENABLE_JIT: off (LLVM ${LLVM_VERSION_MAJOR} < required ${HOST_CPU_JIT_MIN_LLVM_MAJOR} for this platform)")
+  set(HOST_CPU_ENABLE_JIT OFF)
 else()
   set(HOST_CPU_ENABLE_JIT OFF)
 endif()

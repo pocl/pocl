@@ -1263,8 +1263,25 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   ci->is_jit = (command->device->ops->finalize_binary == NULL);
   if (ci->is_jit)
     {
+      const char *runtime_lib_dir = NULL;
+#ifdef _WIN32
+      /* Windows kernel objects are freestanding and reference compiler runtime
+         helpers (stack probe, mem*) that PoCL ships as relocatable objects next
+         to the kernel library. Locate that directory the same way the lld-link
+         path does, so the JIT can load them into its shared runtime JITDylib. */
+      char runtime_dir[POCL_MAX_PATHNAME_LENGTH];
+#ifdef ENABLE_POCL_BUILDING
+      if (pocl_get_bool_option ("POCL_BUILDING", 0))
+        snprintf (runtime_dir, POCL_MAX_PATHNAME_LENGTH, "%s/lib/kernel/%s",
+                  BUILDDIR, command->device->kernellib_subdir);
+      else
+#endif
+        if (pocl_get_private_datadir (runtime_dir))
+          runtime_dir[0] = 0;
+      runtime_lib_dir = runtime_dir;
+#endif
       pocl_jit_initialize (command->device->llvm_target_triplet,
-                           command->device->llvm_cpu);
+                           command->device->llvm_cpu, runtime_lib_dir);
       ci->dlhandle = pocl_jit_load_object (module_fn, run_cmd->kernel->name);
     }
   else

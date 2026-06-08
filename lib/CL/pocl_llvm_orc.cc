@@ -73,6 +73,19 @@ std::mutex JITMutex;
    counter guarantees that regardless of the caller-supplied name. */
 std::atomic<uint64_t> JDCounter{ 0 };
 
+#ifdef _WIN32
+/* Windows kernel objects are compiled freestanding (no CRT), so they reference
+   a handful of compiler-emitted runtime symbols that no process library
+   exports: the stack-probe (___chkstk_ms on MinGW, __chkstk on MSVC) and the
+   mem* helpers (memcpy/memset/memmove/memcmp/strlen). PoCL ships these as two
+   relocatable objects (lib/kernel/host/libchkstk.S + libmemory.c). We JIT-link
+   them once into a shared "runtime" JITDylib and add it to every kernel JD's
+   link order, the COFF analog of the absolute-symbol injection used for the
+   host callbacks below. (On ELF/Mach-O these symbols resolve from libc in the
+   process, so no runtime JD is needed there.) */
+JITDylib *RuntimeJD = nullptr;
+#endif
+
 /* Bookkeeping for a single loaded kernel object. */
 struct PoclJITModule
 {
@@ -101,10 +114,35 @@ defineHostSymbols (JITDylib &JD)
 #endif
 }
 
+#ifdef _WIN32
+/* JIT-link a relocatable object file from 'Path' into 'JD'. Used to populate
+   the shared runtime JITDylib with the freestanding helper objects. */
+bool
+loadObjectFileInto (JITDylib &JD, const std::string &Path)
+{
+  ErrorOr<std::unique_ptr<MemoryBuffer> > Buf = MemoryBuffer::getFile (
+      Path.c_str (), /*IsText=*/false, /*RequiresNullTerminator=*/false);
+  if (!Buf)
+    {
+      POCL_MSG_ERR ("pocl_jit: cannot read runtime object '%s': %s\n",
+                    Path.c_str (), Buf.getError ().message ().c_str ());
+      return false;
+    }
+  if (Error Err = TheJIT->addObjectFile (JD, std::move (*Buf)))
+    {
+      POCL_MSG_ERR ("pocl_jit: addObjectFile('%s') failed: %s\n", Path.c_str (),
+                    toString (std::move (Err)).c_str ());
+      return false;
+    }
+  return true;
+}
+#endif
+
 } // namespace
 
 int
-pocl_jit_initialize (const char *TripleStr, const char *CPU)
+pocl_jit_initialize (const char *TripleStr, const char *CPU,
+                     const char *RuntimeLibDir)
 {
   std::lock_guard<std::mutex> Lock (JITMutex);
   if (TheJIT)
@@ -122,14 +160,15 @@ pocl_jit_initialize (const char *TripleStr, const char *CPU)
   /* The object-linking-layer creator callback signature has changed across
      LLVM releases:
         LLVM <= 20 : (ExecutionSession&, const Triple&)
-        LLVM 21    : (ExecutionSession&)
-        LLVM >= 22 : (ExecutionSession&, jitlink::JITLinkMemoryManager&)
-     Verified directly against LLVM 18, 20 and 21; the >=22 form matches an
-     LLVM 23 (trunk) checkout, so the 22 boundary is approximate. In every case
+        LLVM 21, 22: (ExecutionSession&)
+        LLVM >= 23 : (ExecutionSession&, jitlink::JITLinkMemoryManager&)
+     Verified directly against LLVM 18, 20, 21 and 22 (22.1's
+     ObjectLinkingLayerCreator is the single-arg form); the >=23 form matches an
+     LLVM 23 (trunk) checkout, so the 23 boundary is approximate. In every case
      we construct an ObjectLinkingLayer, which uses the ExecutorProcessControl's
      in-process memory manager when not given one explicitly. */
   Builder.setObjectLinkingLayerCreator (
-#if LLVM_MAJOR >= 22
+#if LLVM_MAJOR >= 23
       [] (ExecutionSession &ES, jitlink::JITLinkMemoryManager &MM)
           -> Expected<std::unique_ptr<ObjectLayer> > {
         return std::make_unique<ObjectLinkingLayer> (ES, MM);
@@ -159,6 +198,32 @@ pocl_jit_initialize (const char *TripleStr, const char *CPU)
       return -1;
     }
   TheJIT = std::move (*JIT);
+
+#ifdef _WIN32
+  /* Build the shared runtime JITDylib from the freestanding helper objects.
+     A failure here is not fatal at init time (a kernel that doesn't reference
+     these symbols still links), but kernels that do reference them will fail
+     to look up later, so report it. */
+  if (RuntimeLibDir && RuntimeLibDir[0])
+    {
+      Expected<JITDylib &> RJD = TheJIT->createJITDylib ("pocl_runtime");
+      if (!RJD)
+        {
+          POCL_MSG_ERR ("pocl_jit: creating runtime JITDylib failed: %s\n",
+                        toString (RJD.takeError ()).c_str ());
+        }
+      else
+        {
+          RuntimeJD = &*RJD;
+          std::string Dir (RuntimeLibDir);
+          loadObjectFileInto (*RuntimeJD, Dir + "/libchkstk.obj");
+          loadObjectFileInto (*RuntimeJD, Dir + "/libmemory.obj");
+        }
+    }
+#else
+  (void)RuntimeLibDir;
+#endif
+
   return 0;
 }
 
@@ -194,6 +259,15 @@ pocl_jit_load_object (const char *Path, const char *UniqName)
     }
 
   defineHostSymbols (*JD);
+
+#ifdef _WIN32
+  /* Resolve the freestanding runtime helpers (stack probe, mem*) from the
+     shared runtime JITDylib. The kernel JD already links against the process
+     symbols (appended as LLJIT's default link order); the runtime JD supplies
+     the CRT-less symbols the process doesn't export. */
+  if (RuntimeJD)
+    (*JD).addToLinkOrder (*RuntimeJD);
+#endif
 
   if (Error Err = TheJIT->addObjectFile (*JD, std::move (*Buf)))
     {

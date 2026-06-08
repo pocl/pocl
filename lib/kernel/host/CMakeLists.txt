@@ -748,12 +748,25 @@ install(FILES "${KERNEL_BC}"
 endforeach()
 
 
-if(CPU_USE_LLD_LINK_WIN32)
+# The freestanding runtime objects (stack-probe + mem* helpers) are linked into
+# every kernel binary that is built without a C runtime: both the MSVC in-process
+# lld-link path (CPU_USE_LLD_LINK_WIN32) and the MinGW ORC/JITLink path
+# (HOST_CPU_ENABLE_JIT on Windows) need them. JITLink loads these .obj files into
+# a shared runtime JITDylib that each kernel links against (see pocl_llvm_orc.cc).
+if(CPU_USE_LLD_LINK_WIN32 OR (HOST_CPU_ENABLE_JIT AND WIN32))
+  # Pick the stack-probe symbol the host compiler actually emits: MinGW (GNU
+  # target) calls ___chkstk_ms, MSVC calls __chkstk. libchkstk.S emits one or
+  # the other depending on the define.
+  if(MSVC)
+    set(CHKSTK_DEFINE "-DCHKSTK")
+  else()
+    set(CHKSTK_DEFINE "-DCHKSTK_MS")
+  endif()
   set(LIBCHKSTK_OBJ "${CMAKE_CURRENT_BINARY_DIR}/libchkstk.obj")
   set(LIBCHKSTK_SRC "${CMAKE_CURRENT_SOURCE_DIR}/libchkstk.S")
   add_custom_command( OUTPUT "${LIBCHKSTK_OBJ}"
       DEPENDS ${LIBCHKSTK_SRC}
-      COMMAND ${HOST_CLANG} -DCHKSTK -o ${LIBCHKSTK_OBJ} -c ${LIBCHKSTK_SRC}
+      COMMAND ${HOST_CLANG} ${CHKSTK_DEFINE} -o ${LIBCHKSTK_OBJ} -c ${LIBCHKSTK_SRC}
       COMMENT "Compiling CHKSTK" VERBATIM)
 
   set(LIBMEMORY_OBJ "${CMAKE_CURRENT_BINARY_DIR}/libmemory.obj")

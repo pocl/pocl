@@ -39,8 +39,13 @@ extern "C"
 
   /* Lazily create the process-global LLJIT used to load kernel objects.
      Idempotent and thread-safe; the triple/CPU determine the JIT's data
-     layout (and thus symbol mangling). Returns 0 on success. */
-  int pocl_jit_initialize (const char *triple, const char *cpu);
+     layout (and thus symbol mangling). On Windows, 'runtime_lib_dir' is the
+     directory holding the freestanding helper objects (libchkstk.obj,
+     libmemory.obj) that kernel objects reference; it is loaded once into a
+     shared runtime JITDylib. Ignored on ELF/Mach-O hosts (pass NULL).
+     Returns 0 on success. */
+  int pocl_jit_initialize (const char *triple, const char *cpu,
+                           const char *runtime_lib_dir);
 
   /* Read a relocatable kernel object file from 'path', JIT-link it into the
      process inside a fresh isolated namespace, and return an opaque handle
