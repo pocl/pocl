@@ -1247,9 +1247,9 @@ endif()
 #     has no COFF_aarch64 backend, and MSVC keeps its in-process lld-link path
 #     (CPU_USE_LLD_LINK_WIN32 sets finalize_binary, which defers the JIT gate).
 #
-# The LLVM floor lets old LLVM fall back to the Clang-driver link / lld-link
-# path. JITLink's COFF backend is newer than its ELF/Mach-O backends (validated
-# on LLVM 22 vs 18/21), so Windows requires a more recent LLVM.
+# The LLVM floor (18, = PoCL's own minimum) lets even older LLVM fall back to the
+# Clang-driver link / lld-link path. The in-process JIT is validated on LLVM 18
+# (ELF/Mach-O and Windows COFF) and 22 (Windows COFF).
 # SVML vectorization links a static Intel library (libsvml.a) into each kernel
 # for a redistributable-independent binary; that static-link model is
 # incompatible with the in-process JIT (which resolves symbols from loaded
@@ -1264,8 +1264,8 @@ if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM AND (NOT ENABLE_HOST_CPU_VECTORIZE_SV
   elseif((NOT CPU_USE_LLD_LINK_WIN32)
          AND (CMAKE_SIZEOF_VOID_P EQUAL 8)
          AND (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64|AMD64|amd64|x64)"))
+    # Windows x86_64 (MinGW): JITLink's COFF_x86_64 backend; no COFF_aarch64.
     set(HOST_CPU_JIT_SUPPORTED ON)
-    set(HOST_CPU_JIT_MIN_LLVM_MAJOR 20)
   endif()
 endif()
 
