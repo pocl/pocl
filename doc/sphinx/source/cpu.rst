@@ -83,9 +83,10 @@ no development environment.
 The symbols a kernel object refers to still have to come from somewhere. C
 library and math functions are resolved from the running process. PoCL's own
 host callbacks, such as the printf flush, are supplied directly. The vector-math
-library chosen at configure time (libmvec or SLEEF) is loaded once at startup.
-SVML is the exception: it ships only as a static library, so SVML builds keep
-the Clang-driver link path and leave ``HOST_CPU_ENABLE_JIT`` off.
+library chosen at configure time is made available at startup: the shared ones
+(libmvec or SLEEF) are loaded as dynamic libraries, while SVML, which ships only
+as static archives, is JIT-linked from ``libsvml.a`` (and its ``libirc.a``
+helpers) in-process, its referenced members pulled in on demand.
 
 The JIT covers ELF and Mach-O hosts and Windows x86-64 (MinGW), and needs LLVM
 18 or newer; on older LLVM the drivers keep the Clang-driver link path. Turn it

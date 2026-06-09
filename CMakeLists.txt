@@ -1144,6 +1144,17 @@ if(ENABLE_HOST_CPU_VECTORIZE_SLEEF AND LIBSLEEF)
   endif()
 endif()
 
+# SVML ships only as static archives (libsvml.a + its libirc.a helpers). The
+# old link path linked them into each kernel .so; the JIT instead JIT-links the
+# referenced members in-process via a StaticLibraryDefinitionGenerator, so it
+# needs the archive paths at run time (see pocl_llvm_orc.cc).
+set(HOST_CPU_SVML_LIBRARY "")
+set(HOST_CPU_IRC_LIBRARY "")
+if(ENABLE_HOST_CPU_VECTORIZE_SVML AND LIBSVML AND LIBIRC)
+  set(HOST_CPU_SVML_LIBRARY "${LIBSVML}")
+  set(HOST_CPU_IRC_LIBRARY "${LIBIRC}")
+endif()
+
 ######################################################################################
 ######################################################################################
 
@@ -1274,15 +1285,12 @@ endif()
 # The LLVM floor (18, = PoCL's own minimum) lets even older LLVM fall back to the
 # Clang-driver link / lld-link path. The in-process JIT is validated on LLVM 18
 # (ELF/Mach-O and Windows COFF) and 22 (Windows COFF).
-# SVML vectorization links a static Intel library (libsvml.a) into each kernel
-# for a redistributable-independent binary; that static-link model is
-# incompatible with the in-process JIT (which resolves symbols from loaded
-# shared libraries, not by static linking), so SVML builds keep the Clang-driver
-# link path. The other veclibs (libmvec, SLEEF) are shared and the JIT loads
-# them at run time (see pocl_llvm_orc.cc).
+# All veclibs work with the JIT: the shared ones (libmvec, SLEEF) are loaded at
+# run time, and SVML's static archives (libsvml.a + libirc.a) are JIT-linked
+# in-process via a StaticLibraryDefinitionGenerator (see pocl_llvm_orc.cc).
 set(HOST_CPU_JIT_SUPPORTED OFF)
 set(HOST_CPU_JIT_MIN_LLVM_MAJOR 18)
-if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM AND (NOT ENABLE_HOST_CPU_VECTORIZE_SVML))
+if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM)
   if(NOT WIN32)
     set(HOST_CPU_JIT_SUPPORTED ON)
   elseif((NOT CPU_USE_LLD_LINK_WIN32)

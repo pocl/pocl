@@ -99,6 +99,30 @@ static bool loadVecMathLibrary(const char *Library) {
   return true;
 }
 
+/* Make a static archive's members resolvable by JIT'd kernels. JITLink pulls in
+   archive members lazily, materializing only those that satisfy a referenced
+   symbol (the same semantics as a static link). Used for SVML, whose __svml_*
+   symbols ship only in Intel's static libsvml.a (with helper symbols in
+   libirc.a). Attaches a StaticLibraryDefinitionGenerator for the archive to the
+   process-symbols JITDylib that every kernel JITDylib links against. Returns
+   false (and leaves the JIT usable) if the archive cannot be loaded. */
+static bool loadStaticArchive(const char *Path) {
+  if (!Path || !Path[0])
+    return false;
+  JITDylibSP PSJD = TheJIT->getProcessSymbolsJITDylib();
+  if (!PSJD)
+    return false;
+  Expected<std::unique_ptr<StaticLibraryDefinitionGenerator>> Gen =
+      StaticLibraryDefinitionGenerator::Load(TheJIT->getObjLinkingLayer(),
+                                             Path);
+  if (!Gen) {
+    consumeError(Gen.takeError());
+    return false;
+  }
+  PSJD->addGenerator(std::move(*Gen));
+  return true;
+}
+
 #ifdef _WIN32
 /* Windows kernel objects are compiled freestanding (no CRT), so they reference
    a handful of compiler-emitted runtime symbols that no process library
@@ -216,14 +240,14 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU,
   TheJIT = std::move(*JIT);
 
   /* When CPU codegen vectorizes libm calls (expf, sinf, ...) it lowers them to
-     a vector-math library's symbols (e.g. libmvec's _ZGVdN8v_expf). Which
-     library is chosen at configure time, matching the codegen veclib selection
-     in pocl_llvm_wg.cc. On the old link path that library was pulled in as a
-     NEEDED lib of the kernel .so; the JIT does no such link, so expose the
-     library's symbols to the JIT here via a DynamicLibrarySearchGenerator (see
-     loadVecMathLibrary). SVML is intentionally not handled: it is a static-only
-     library incompatible with the JIT, so SVML builds keep the link path
-     (HOST_CPU_ENABLE_JIT is off there). */
+     a vector-math library's symbols (e.g. libmvec's _ZGVdN8v_expf, SVML's
+     __svml_expf8). Which library is chosen at configure time, matching the
+     codegen veclib selection in pocl_llvm_wg.cc. On the old link path that
+     library was pulled in when linking the kernel .so; the JIT does no such
+     link, so expose it here: the shared veclibs (libmvec, SLEEF) via a
+     DynamicLibrarySearchGenerator, and SVML's static archives (libsvml.a plus
+     its libirc.a helpers) via a StaticLibraryDefinitionGenerator that JIT-links
+     the referenced members in-process. */
 #if defined(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
   const char *VecMathLib = "libmvec.so.1";
   if (!loadVecMathLibrary(VecMathLib))
@@ -253,6 +277,20 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU,
         "pocl_jit: could not load vector-math library '%s'; vectorized math "
         "kernels may fail to resolve their symbols\n",
         VecMathLib);
+#elif defined(ENABLE_HOST_CPU_VECTORIZE_SVML)
+  /* libsvml members reference libirc helpers, so load both archives; either
+     generator resolves symbols for the other lazily as members materialize. */
+  bool VecMathLoaded = true;
+#ifdef HOST_CPU_IRC_LIBRARY
+  VecMathLoaded &= loadStaticArchive(HOST_CPU_IRC_LIBRARY);
+#endif
+#ifdef HOST_CPU_SVML_LIBRARY
+  VecMathLoaded &= loadStaticArchive(HOST_CPU_SVML_LIBRARY);
+#endif
+  if (!VecMathLoaded)
+    POCL_MSG_PRINT_LLVM(
+        "pocl_jit: could not load the SVML static archives; vectorized math "
+        "kernels may fail to resolve their symbols\n");
 #endif
 
 #ifdef _WIN32
