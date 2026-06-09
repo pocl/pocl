@@ -62,7 +62,7 @@ extern "C" void pocl_flush_printf_buffer(char *buffer, uint32_t buffer_size);
 #ifdef _WIN32
 /* MinGW kernel objects reference the libgcc/compiler-rt stack probe
    ___chkstk_ms (emitted for frames > 4KB), which no Windows system DLL
-   exports -- unlike MSVC's __chkstk, which ntdll/kernel32 do export. libpocl
+   exports, unlike MSVC's __chkstk, which ntdll/kernel32 do export. libpocl
    is itself linked against a libgcc/compiler-rt that provides ___chkstk_ms, so
    defineHostSymbols() hands that copy to JIT'd kernels as an absolute symbol.
    (The mem* helpers kernels also call resolve from msvcrt via the JIT's
@@ -74,7 +74,7 @@ extern "C" void ___chkstk_ms(void);
 
 namespace {
 
-/* The process-global JIT used to load all kernel objects, created lazily on
+/* The process-global JIT that loads all kernel objects, created lazily on
    the first pocl_jit_initialize() call. ORC's ExecutionSession is internally
    synchronized, so a single instance is shared across all CPU host devices.
    Access is additionally serialized by JITMutex so initialization races and
@@ -145,8 +145,8 @@ struct PoclJITModule {
    rather than exported by a process library: PoCL's own host callbacks and, on
    Windows, the libgcc/compiler-rt stack probe. Defining them as absolute
    symbols makes resolution independent of libpocl's (deliberately hidden)
-   dynamic-symbol visibility. Everything else -- libc/libm/compiler-rt and
-   msvcrt's mem* helpers -- resolves automatically via the JIT's default
+   dynamic-symbol visibility. Everything else (libc/libm/compiler-rt and
+   msvcrt's mem* helpers) resolves automatically via the JIT's default
    process-symbol search order. */
 void defineHostSymbols(JITDylib &JD) {
   SymbolMap Syms;
@@ -179,10 +179,10 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
      target) runs before any kernel object is loaded. */
   LLJITBuilder Builder;
 
-  /* Force the JITLink-based object-linking layer (LLJIT still defaults to
+  /* Force the JITLink-based object-linking layer (LLJIT defaults to
      RuntimeDyld). JITLink resolves relocations, maps code into executable
-     memory, and registers EH frames entirely in-process: this is what
-     replaces the external linker. */
+     memory, and registers EH frames entirely in-process, so no external
+     linker is needed. */
   /* The object-linking-layer creator callback signature has changed across
      LLVM releases:
         LLVM <= 20 : (ExecutionSession&, const Triple&)
@@ -226,10 +226,9 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
 
   /* When CPU codegen vectorizes libm calls (expf, sinf, ...) it lowers them to
      a vector-math library's symbols (e.g. libmvec's _ZGVdN8v_expf, SVML's
-     __svml_expf8). Which library is chosen at configure time, matching the
-     codegen veclib selection in pocl_llvm_wg.cc. On the old link path that
-     library was pulled in when linking the kernel .so; the JIT does no such
-     link, so expose it here: the shared veclibs (libmvec, SLEEF) via a
+     __svml_expf8). The library is chosen at configure time, matching the
+     codegen veclib selection in pocl_llvm_wg.cc. Expose it to the JIT so those
+     symbols resolve: the shared veclibs (libmvec, SLEEF) via a
      DynamicLibrarySearchGenerator, and SVML's static archives (libsvml.a plus
      its libirc.a helpers) via a StaticLibraryDefinitionGenerator that JIT-links
      the referenced members in-process. */

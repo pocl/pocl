@@ -22,12 +22,11 @@
    IN THE SOFTWARE.
 */
 
-/* These functions replace the "link kernel object into a shared library via
-   the Clang driver, then dlopen() it" pipeline for CPU host devices with an
-   in-process ORC LLJIT whose object-linking layer is JITLink. JITLink acts as
-   both the linker and the loader: it resolves relocations, maps the kernel
-   code into executable memory, and registers EH frames, all without spawning
-   an external linker and without producing an on-disk shared object. */
+/* In-process JIT linking and loading of CPU host-device kernel objects via an
+   ORC LLJIT whose object-linking layer is JITLink. JITLink is both the linker
+   and the loader: it resolves relocations, maps the kernel code into
+   executable memory, and registers EH frames, without spawning an external
+   linker and without producing an on-disk shared object. */
 
 #ifndef POCL_LLVM_ORC_H
 #define POCL_LLVM_ORC_H
@@ -37,7 +36,7 @@ extern "C"
 {
 #endif
 
-/* Lazily create the process-global LLJIT used to load kernel objects.
+/* Lazily create the process-global LLJIT that loads kernel objects.
    Idempotent and thread-safe; the triple/CPU determine the JIT's data
    layout (and thus symbol mangling). Returns 0 on success. */
 int pocl_jit_initialize (const char *triple,

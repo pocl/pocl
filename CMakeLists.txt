@@ -1145,9 +1145,9 @@ if(ENABLE_HOST_CPU_VECTORIZE_SLEEF AND LIBSLEEF)
 endif()
 
 # SVML ships only as static archives (libsvml.a + its libirc.a helpers). The
-# old link path linked them into each kernel .so; the JIT instead JIT-links the
-# referenced members in-process via a StaticLibraryDefinitionGenerator, so it
-# needs the archive paths at run time (see pocl_llvm_orc.cc).
+# JIT resolves their referenced members in-process via a
+# StaticLibraryDefinitionGenerator, so it needs the archive paths at run time
+# (see pocl_llvm_orc.cc).
 set(HOST_CPU_SVML_LIBRARY "")
 set(HOST_CPU_IRC_LIBRARY "")
 if(ENABLE_HOST_CPU_VECTORIZE_SVML AND LIBSVML AND LIBIRC)
