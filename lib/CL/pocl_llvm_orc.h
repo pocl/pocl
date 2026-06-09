@@ -37,15 +37,16 @@ extern "C"
 #endif
 
 /* Lazily create the process-global LLJIT that loads kernel objects.
-   Idempotent and thread-safe; the triple/CPU determine the JIT's data
-   layout (and thus symbol mangling). Returns 0 on success. */
+   Idempotent and thread-safe; the triple determines the JIT's data layout
+   (and thus symbol mangling). Returns 0 on success. */
 int pocl_jit_initialize (const char *triple,
                          const char *cpu);
 
-/* Read a relocatable kernel object file from 'path', JIT-link it into the
-   process inside a fresh isolated namespace, and return an opaque handle
-   (NULL on failure). 'uniq_name' is used only for diagnostics and need not
-   be unique. */
+/* Read a relocatable kernel object file from 'path' and stage it for
+   in-process JIT-linking in a fresh isolated JITDylib, returning an opaque
+   handle (NULL on failure). Relocation and linking are deferred until the
+   first pocl_jit_lookup() on the handle. 'uniq_name' is used only for
+   diagnostics and need not be unique. */
 void *pocl_jit_load_object (const char *path, const char *uniq_name);
 
 /* Look up an (unmangled) symbol in a previously loaded object. Returns the

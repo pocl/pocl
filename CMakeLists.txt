@@ -1120,12 +1120,10 @@ if(ENABLE_LLVM AND ENABLE_HOST_CPU_DEVICES AND (NOT ENABLE_CONFORMANCE) AND (LLV
   endif()
 endif()
 
+# Record the SONAME of the SLEEF library for the JIT to link against
 set(HOST_CPU_SLEEF_LIBRARY "")
 set(HOST_CPU_SLEEF_LIBRARY_FALLBACK "")
 if(ENABLE_HOST_CPU_VECTORIZE_SLEEF AND LIBSLEEF)
-  # The old shared-library link path records SLEEF's SONAME as a NEEDED entry.
-  # Prefer that same runtime name for the JIT path, and keep the discovered
-  # library path as a fallback for platforms/tools that do not report SONAME.
   set(HOST_CPU_SLEEF_LIBRARY "${LIBSLEEF}")
   if(CMAKE_OBJDUMP)
     execute_process(
@@ -1144,10 +1142,7 @@ if(ENABLE_HOST_CPU_VECTORIZE_SLEEF AND LIBSLEEF)
   endif()
 endif()
 
-# SVML ships only as static archives (libsvml.a + its libirc.a helpers). The
-# JIT resolves their referenced members in-process via a
-# StaticLibraryDefinitionGenerator, so it needs the archive paths at run time
-# (see pocl_llvm_orc.cc).
+# Record the paths to the SVML static libraries for the JIT to link against.
 set(HOST_CPU_SVML_LIBRARY "")
 set(HOST_CPU_IRC_LIBRARY "")
 if(ENABLE_HOST_CPU_VECTORIZE_SVML AND LIBSVML AND LIBIRC)
@@ -1267,29 +1262,11 @@ if(ENABLE_HOST_CPU_DEVICES AND ENABLE_SPIRV AND (NOT MSVC) AND (HOST_DEVICE_ADDR
   set(HOST_CPU_ENABLE_SPIRV ON)
 endif()
 
-# When enabled, CPU host devices link and load kernel object files in-process
-# via the LLVM ORC LLJIT + JITLink, instead of linking them into a shared
-# library through the Clang driver (which pulls in a host toolchain: a linker
-# to exec, startup files, default libs) and dlopen()ing the result. JITLink
-# acts as both linker and loader, removing the external linker invocation and
-# the crt0/sysroot dependencies.
-#
-# It is turned ON by default on every platform that supports it and has a recent
-# enough LLVM, so CI exercises this path wherever it can run. A platform is
-# supported when:
-#   - it is non-Windows (ELF/Mach-O): JITLink's ELF/Mach-O backends; or
-#   - it is Windows x86_64 (MinGW): JITLink's COFF_x86_64 backend. Windows arm64
-#     has no COFF_aarch64 backend, and MSVC keeps its in-process lld-link path
-#     (CPU_USE_LLD_LINK_WIN32 sets finalize_binary, which defers the JIT gate).
-#
-# The LLVM floor (18, = PoCL's own minimum) lets even older LLVM fall back to the
-# Clang-driver link / lld-link path. The in-process JIT is validated on LLVM 18
-# (ELF/Mach-O and Windows COFF) and 22 (Windows COFF).
-# All veclibs work with the JIT: the shared ones (libmvec, SLEEF) are loaded at
-# run time, and SVML's static archives (libsvml.a + libirc.a) are JIT-linked
-# in-process via a StaticLibraryDefinitionGenerator (see pocl_llvm_orc.cc).
+# The JIT for CPU devices is supported on
+#   - non-Windows platforms (ELF/Mach-O) via JITLink's ELF/Mach-O backends;
+#   - Windows x86_64 (MinGW) via JITLink's COFF_x86_64 backend. Windows arm64
+#     has no COFF_aarch64 backend, and MSVC keeps its in-process lld-link path.
 set(HOST_CPU_JIT_SUPPORTED OFF)
-set(HOST_CPU_JIT_MIN_LLVM_MAJOR 18)
 if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM)
   if(NOT WIN32)
     set(HOST_CPU_JIT_SUPPORTED ON)
@@ -1301,12 +1278,8 @@ if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM)
   endif()
 endif()
 
-if(HOST_CPU_JIT_SUPPORTED
-   AND (LLVM_VERSION_MAJOR GREATER_EQUAL HOST_CPU_JIT_MIN_LLVM_MAJOR))
-  option(HOST_CPU_ENABLE_JIT "Load CPU kernels in-process via ORC/JITLink instead of the Clang-driver link + dlopen." ON)
-elseif(HOST_CPU_JIT_SUPPORTED)
-  message(STATUS "HOST_CPU_ENABLE_JIT: off (LLVM ${LLVM_VERSION_MAJOR} < required ${HOST_CPU_JIT_MIN_LLVM_MAJOR} for this platform)")
-  set(HOST_CPU_ENABLE_JIT OFF)
+if(HOST_CPU_JIT_SUPPORTED)
+  option(HOST_CPU_ENABLE_JIT "JIT CPU kernels via ORC/JITLink instead of Clang+dlopen." ON)
 else()
   set(HOST_CPU_ENABLE_JIT OFF)
 endif()

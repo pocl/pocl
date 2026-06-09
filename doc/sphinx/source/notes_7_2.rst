@@ -73,7 +73,7 @@ CPU driver
   the run-time dependency on a host linker and the C startup files, which helps
   when shipping PoCL to machines without a development environment. It is
   controlled by the new ``-DHOST_CPU_ENABLE_JIT`` CMake option, on by default on
-  ELF and Mach-O hosts and on Windows x86-64 (MinGW) with LLVM 18 or newer.
+  ELF and Mach-O hosts and on Windows x86-64 (MinGW).
   Set ``POCL_CPU_JIT=0`` to fall back to the Clang-driver link path at run time.
   See :ref:`cpu-jit`.
 

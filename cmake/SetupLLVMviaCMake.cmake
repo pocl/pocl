@@ -152,14 +152,7 @@ set(POCL_LLVM_COMPONENTS
   LLVMWindowsDriver
 )
 
-# In-process kernel loading on CPU host devices (HOST_CPU_ENABLE_JIT) uses the
-# ORC LLJIT + JITLink. These components are only consulted for static and
-# shared-component LLVM builds; the monolithic libLLVM dylib already contains
-# them and ignores this list. HOST_CPU_ENABLE_JIT is finalized later, so guard
-# on the (already-known) superset condition. LLVMJITLink also carries the
-# COFF_x86_64 backend used for the Windows (MinGW) JIT path. They are only
-# pulled into the static link when something references them (i.e. when JIT is
-# actually enabled), so listing them unconditionally for host CPU is harmless.
+# CPU devices use ORC LLJIT + JITLink for the JIT
 if(ENABLE_HOST_CPU_DEVICES)
   list(APPEND POCL_LLVM_COMPONENTS
     LLVMOrcJIT

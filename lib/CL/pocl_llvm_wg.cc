@@ -131,16 +131,14 @@ static TargetMachine *GetTargetMachine(const char* TTriple,
     return nullptr;
   }
 
-  // The JIT links the emitted object with JITLink, whose COFF/x86-64 backend
-  // does not synthesize far-call stubs the way its ELF and Mach-O backends do.
-  // With the small code model a kernel's +-2GB PC-relative call to a runtime
-  // helper mapped far from the JIT-allocated code overflows: the libgcc stack
-  // probe (___chkstk_ms) and msvcrt's mem* helpers both live in libraries
-  // outside that range. The large code model emits 64-bit indirect calls
-  // instead, so those helpers resolve wherever they are. Restrict this to the
-  // COFF JIT: ELF/Mach-O JITLink stubs far calls (small + PIC is correct and
-  // cheaper there), and the Clang-driver / lld-link paths link through a real
-  // linker. Julia's JIT likewise uses the large code model on 64-bit targets.
+  // JITLink's COFF/x86-64 backend does not synthesize far-call stubs (its ELF
+  // and Mach-O backends do). Under the small code model a kernel's +-2GB
+  // PC-relative call to a runtime helper mapped far from the JIT-allocated code
+  // overflows: the libgcc stack probe (___chkstk_ms) and msvcrt's mem* helpers
+  // both live in libraries outside that range. The large code model emits
+  // 64-bit indirect calls instead, so they resolve wherever they are. Hence the
+  // COFF JIT only; ELF/Mach-O and the linker-based paths are fine with small +
+  // PIC.
   llvm::Triple TheTriple(TTriple);
   CodeModel::Model CM = CodeModel::Small;
   if (ForJIT && TheTriple.isOSBinFormatCOFF())

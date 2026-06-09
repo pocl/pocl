@@ -65,31 +65,31 @@ The TBB driver can be tuned with at runtime with environment variables, see :ref
 In-process kernel JIT
 ========================
 
-By default a CPU driver turns each kernel into native code by handing the
-compiled object to the Clang driver, which links it into a shared library that
-PoCL then loads with ``dlopen()``. The link step needs a host toolchain present
-at run time: a linker to exec, plus the C startup files and default libraries.
+A CPU driver turns each kernel into native code by generating a relocatable
+object, which it then has to link and load. By default it does this in-process,
+with LLVM's ORC LLJIT and the JITLink object-linking layer. JITLink resolves the
+object's relocations and maps its code into executable memory, so it acts as
+both the linker and the loader. Nothing is exec'd and no shared library is
+written; the relocatable object from code generation is the cached artifact
+itself, stored with an ``.o`` suffix rather than ``.so`` or ``.dll``.
 
-Built with ``-DHOST_CPU_ENABLE_JIT=ON`` (the default where it is supported), the
-CPU drivers load the kernel object in-process instead, using LLVM's ORC LLJIT
-with the JITLink object-linking layer. JITLink resolves the object's relocations
-and maps its code into executable memory, so it stands in for both the linker
-and the loader. Nothing is exec'd and no shared library is written: the
-relocatable object from code generation is the cached artifact itself, stored
-with an ``.o`` suffix rather than ``.so`` or ``.dll``. Removing the host linker
-and the startup files is what makes it practical to ship PoCL to a machine with
-no development environment.
+The alternative is to hand the object to the Clang driver, which links it into a
+shared library that PoCL loads with ``dlopen()``. That link step needs a host
+toolchain present at run time: a linker to exec, plus the C startup files and
+default libraries. Avoiding that step lets PoCL run on a machine with no
+development environment, which is the main reason to use the JIT.
 
 The symbols a kernel object refers to still have to come from somewhere. C
-library and math functions are resolved from the running process. PoCL's own
-host callbacks, such as the printf flush, are supplied directly. The vector-math
-library chosen at configure time is made available at startup: the shared ones
-(libmvec or SLEEF) are loaded as dynamic libraries, while SVML, which ships only
-as static archives, is JIT-linked from ``libsvml.a`` (and its ``libirc.a``
-helpers) in-process, its referenced members pulled in on demand.
+library and math functions resolve against the running process, and PoCL
+supplies its own host callbacks, such as the printf flush, directly. The
+vector-math library chosen at configure time becomes available at startup: the
+shared ones (libmvec or SLEEF) load as dynamic libraries, while SVML, which
+ships only as static archives, is JIT-linked from ``libsvml.a`` and its
+``libirc.a`` helpers, pulling in only the members it references.
 
-The JIT covers ELF and Mach-O hosts and Windows x86-64 (MinGW), and needs LLVM
-18 or newer; on older LLVM the drivers keep the Clang-driver link path. Turn it
-off at build time with ``-DHOST_CPU_ENABLE_JIT=OFF``, or for a single run with
-``POCL_CPU_JIT=0`` (see :ref:`pocl-env-variables`); either one selects the
-Clang-driver link path.
+The JIT is the default on every platform that supports it: ELF and Mach-O hosts,
+and Windows x86-64 (MinGW). It is unavailable on Windows arm64 (JITLink has no
+COFF_aarch64 backend) and on MSVC builds, which keep their own in-process
+lld-link path. To turn the JIT off, build with ``-DHOST_CPU_ENABLE_JIT=OFF``, or
+set ``POCL_CPU_JIT=0`` for a single run (see :ref:`pocl-env-variables`); either
+one selects the Clang-driver link path.

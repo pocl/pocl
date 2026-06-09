@@ -90,12 +90,9 @@ uint64_t JDCounter = 0;
    resolvable by JIT'd kernels. Attaches a DynamicLibrarySearchGenerator for
    the library to the process-symbols JITDylib, which every kernel JITDylib
    links against (LLJIT links each JITDylib it creates against the
-   process-symbols JITDylib by default). This is the
-   idiomatic ORC way to expose a runtime library to the JIT: lookups are served
-   from the library's own handle through the JIT's generator chain, rather than
-   loading the library and relying on LLJIT's default process-symbol search to
-   pick the symbols up. Returns false (and leaves the JIT usable) if the
-   library cannot be loaded. */
+   process-symbols JITDylib by default). Lookups are then served from the
+   library's own handle through the JIT's generator chain. Returns false (and
+   leaves the JIT usable) if the library cannot be loaded. */
 static bool loadVecMathLibrary(const char *Library) {
   if (!Library || !Library[0])
     return false;
@@ -232,14 +229,10 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
   if (JITDylibSP PSJD = TheJIT->getProcessSymbolsJITDylib())
     defineHostSymbols(*PSJD);
 
-  /* When CPU codegen vectorizes libm calls (expf, sinf, ...) it lowers them to
-     a vector-math library's symbols (e.g. libmvec's _ZGVdN8v_expf, SVML's
-     __svml_expf8). The library is chosen at configure time, matching the
-     codegen veclib selection in pocl_llvm_wg.cc. Expose it to the JIT so those
-     symbols resolve: the shared veclibs (libmvec, SLEEF) via a
-     DynamicLibrarySearchGenerator, and SVML's static archives (libsvml.a plus
-     its libirc.a helpers) via a StaticLibraryDefinitionGenerator that JIT-links
-     the referenced members in-process. */
+  /* CPU codegen vectorizes libm calls (expf, sinf, ...) into a vector-math
+     library's symbols (e.g. _ZGVdN8v_expf, __svml_expf8). The library is chosen
+     at configure time, matching codegen's veclib selection in pocl_llvm_wg.cc;
+     expose that same one to the JIT so the symbols resolve. */
 #if defined(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
   const char *VecMathLib = "libmvec.so.1";
   if (!loadVecMathLibrary(VecMathLib))
