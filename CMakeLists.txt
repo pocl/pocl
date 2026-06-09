@@ -1120,6 +1120,30 @@ if(ENABLE_LLVM AND ENABLE_HOST_CPU_DEVICES AND (NOT ENABLE_CONFORMANCE) AND (LLV
   endif()
 endif()
 
+set(HOST_CPU_SLEEF_LIBRARY "")
+set(HOST_CPU_SLEEF_LIBRARY_FALLBACK "")
+if(ENABLE_HOST_CPU_VECTORIZE_SLEEF AND LIBSLEEF)
+  # The old shared-library link path records SLEEF's SONAME as a NEEDED entry.
+  # Prefer that same runtime name for the JIT path, and keep the discovered
+  # library path as a fallback for platforms/tools that do not report SONAME.
+  set(HOST_CPU_SLEEF_LIBRARY "${LIBSLEEF}")
+  if(CMAKE_OBJDUMP)
+    execute_process(
+      COMMAND "${CMAKE_OBJDUMP}" -p "${LIBSLEEF}"
+      OUTPUT_VARIABLE POCL_SLEEF_OBJDUMP_OUTPUT
+      ERROR_QUIET
+      RESULT_VARIABLE POCL_SLEEF_OBJDUMP_RESULT)
+    if(POCL_SLEEF_OBJDUMP_RESULT STREQUAL "0")
+      string(REGEX MATCH "SONAME[ \t]+([^ \r\n]+)"
+             POCL_SLEEF_SONAME_MATCH "${POCL_SLEEF_OBJDUMP_OUTPUT}")
+      if(POCL_SLEEF_SONAME_MATCH)
+        set(HOST_CPU_SLEEF_LIBRARY "${CMAKE_MATCH_1}")
+        set(HOST_CPU_SLEEF_LIBRARY_FALLBACK "${LIBSLEEF}")
+      endif()
+    endif()
+  endif()
+endif()
+
 ######################################################################################
 ######################################################################################
 

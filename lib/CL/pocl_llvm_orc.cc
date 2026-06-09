@@ -74,6 +74,13 @@ std::mutex JITMutex;
    counter guarantees that regardless of the caller-supplied name. */
 std::atomic<uint64_t> JDCounter{ 0 };
 
+static bool
+loadPermanentLibrary (const char *Library)
+{
+  return Library && Library[0]
+         && !sys::DynamicLibrary::LoadLibraryPermanently (Library);
+}
+
 #ifdef _WIN32
 /* Windows kernel objects are compiled freestanding (no CRT), so they reference
    a handful of compiler-emitted runtime symbols that no process library
@@ -211,16 +218,36 @@ pocl_jit_initialize (const char *TripleStr, const char *CPU,
      path (HOST_CPU_ENABLE_JIT is off there). */
 #if defined(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
   const char *VecMathLib = "libmvec.so.1";
-#elif defined(ENABLE_HOST_CPU_VECTORIZE_SLEEF)
-  const char *VecMathLib = "libsleef.so";
-#else
-  const char *VecMathLib = nullptr;
-#endif
-  if (VecMathLib && sys::DynamicLibrary::LoadLibraryPermanently (VecMathLib))
+  if (!loadPermanentLibrary (VecMathLib))
     POCL_MSG_PRINT_LLVM (
         "pocl_jit: could not load vector-math library '%s'; vectorized math "
         "kernels may fail to resolve their symbols\n",
         VecMathLib);
+#elif defined(ENABLE_HOST_CPU_VECTORIZE_SLEEF)
+  const char *VecMathLib = nullptr;
+  bool VecMathLoaded = false;
+#ifdef HOST_CPU_SLEEF_LIBRARY
+  VecMathLib = HOST_CPU_SLEEF_LIBRARY;
+  VecMathLoaded = loadPermanentLibrary (VecMathLib);
+#endif
+#ifdef HOST_CPU_SLEEF_LIBRARY_FALLBACK
+  if (!VecMathLoaded)
+    {
+      VecMathLib = HOST_CPU_SLEEF_LIBRARY_FALLBACK;
+      VecMathLoaded = loadPermanentLibrary (VecMathLib);
+    }
+#endif
+  if (!VecMathLoaded)
+    {
+      VecMathLib = "libsleef.so";
+      VecMathLoaded = loadPermanentLibrary (VecMathLib);
+    }
+  if (!VecMathLoaded)
+    POCL_MSG_PRINT_LLVM (
+        "pocl_jit: could not load vector-math library '%s'; vectorized math "
+        "kernels may fail to resolve their symbols\n",
+        VecMathLib);
+#endif
 
 #ifdef _WIN32
   /* Build the shared runtime JITDylib from the freestanding helper objects.
