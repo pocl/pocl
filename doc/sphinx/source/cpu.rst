@@ -58,3 +58,37 @@ It is strongly recommended to **NOT** create more TBB devices as the TBB device
 always uses all cores and has no subdevice support.
 
 The TBB driver can be tuned with at runtime with environment variables, see :ref:`pocl-env-variables`.
+
+.. _cpu-jit:
+
+========================
+In-process kernel JIT
+========================
+
+By default a CPU driver turns each kernel into native code by handing the
+compiled object to the Clang driver, which links it into a shared library that
+PoCL then loads with ``dlopen()``. The link step needs a host toolchain present
+at run time: a linker to exec, plus the C startup files and default libraries.
+
+Built with ``-DHOST_CPU_ENABLE_JIT=ON`` (the default where it is supported), the
+CPU drivers load the kernel object in-process instead, using LLVM's ORC LLJIT
+with the JITLink object-linking layer. JITLink resolves the object's relocations
+and maps its code into executable memory, so it stands in for both the linker
+and the loader. Nothing is exec'd and no shared library is written: the
+relocatable object from code generation is the cached artifact itself, stored
+with an ``.o`` suffix rather than ``.so`` or ``.dll``. Removing the host linker
+and the startup files is what makes it practical to ship PoCL to a machine with
+no development environment.
+
+The symbols a kernel object refers to still have to come from somewhere. C
+library and math functions are resolved from the running process. PoCL's own
+host callbacks, such as the printf flush, are supplied directly. The vector-math
+library chosen at configure time (libmvec or SLEEF) is loaded once at startup.
+SVML is the exception: it ships only as a static library, so SVML builds keep
+the Clang-driver link path and leave ``HOST_CPU_ENABLE_JIT`` off.
+
+The JIT covers ELF and Mach-O hosts and Windows x86-64 (MinGW), and needs LLVM
+18 or newer; on older LLVM the drivers keep the Clang-driver link path. Turn it
+off at build time with ``-DHOST_CPU_ENABLE_JIT=OFF``, or for a single run with
+``POCL_CPU_JIT=0`` (see :ref:`pocl-env-variables`); either one selects the
+Clang-driver link path.

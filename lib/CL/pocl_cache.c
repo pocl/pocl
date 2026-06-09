@@ -275,8 +275,11 @@ pocl_cache_final_binary_path (char *final_binary_path, cl_program program,
          no custom finalize_binary) load them in-process via ORC/JITLink. The
          cached artifact is then the relocatable object file itself, not a
          linked shared library. The distinct extension also invalidates stale
-         shared-library caches from pre-JIT builds. */
-      if (kernel->program->devices[device_i]->ops->finalize_binary == NULL)
+         shared-library caches from pre-JIT builds. POCL_CPU_JIT=0 selects the
+         link path instead; the gate must match llvm_codegen() and the dlhandle
+         cache so the cached name and the load method agree. */
+      if (kernel->program->devices[device_i]->ops->finalize_binary == NULL
+          && pocl_get_bool_option ("POCL_CPU_JIT", 1))
         bytes_written = snprintf (final_binary_name, POCL_MAX_PATHNAME_LENGTH,
                                   "/%s" OBJ_EXT, file_name);
       else

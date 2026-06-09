@@ -225,8 +225,11 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   /* Devices that link through the default Clang driver (no finalize_binary)
      instead load the kernel in-process via ORC/JITLink. The relocatable
      object IS the final artifact: no shared library is produced and no
-     external linker is invoked. JITLink links and maps it at load time. */
-  if (device->ops->finalize_binary == NULL)
+     external linker is invoked. JITLink links and maps it at load time.
+     POCL_CPU_JIT=0 falls back to the Clang-driver link path; the gate must
+     match the one in pocl_cache_final_binary_path() and the dlhandle cache. */
+  if (device->ops->finalize_binary == NULL
+      && pocl_get_bool_option ("POCL_CPU_JIT", 1))
     {
       error = pocl_rename (tmp_objfile, final_binary_path);
       if (error)
@@ -1259,8 +1262,10 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 #ifdef HOST_CPU_ENABLE_JIT
   /* Devices that link through the default Clang driver (no finalize_binary)
      load the kernel object in-process via ORC/JITLink instead of dlopen()ing
-     a shared library. */
-  ci->is_jit = (command->device->ops->finalize_binary == NULL);
+     a shared library, unless POCL_CPU_JIT=0 selects the link path. The gate
+     must match pocl_cache_final_binary_path() and llvm_codegen(). */
+  ci->is_jit = (command->device->ops->finalize_binary == NULL)
+               && pocl_get_bool_option ("POCL_CPU_JIT", 1);
   if (ci->is_jit)
     {
       const char *runtime_lib_dir = NULL;
