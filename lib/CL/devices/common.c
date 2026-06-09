@@ -234,8 +234,8 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
       error = pocl_rename (tmp_objfile, final_binary_path);
       if (error)
         POCL_MSG_PRINT_LLVM (
-            "Renaming temporary kernel object to final ('%s') failed.\n",
-            final_binary_path);
+          "Renaming temporary kernel object to final ('%s') failed.\n",
+          final_binary_path);
       goto FINISH;
     }
 #endif
@@ -1271,9 +1271,10 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
       const char *runtime_lib_dir = NULL;
 #ifdef _WIN32
       /* Windows kernel objects are freestanding and reference compiler runtime
-         helpers (stack probe, mem*) that PoCL ships as relocatable objects next
-         to the kernel library. Locate that directory the same way the lld-link
-         path does, so the JIT can load them into its shared runtime JITDylib. */
+         helpers (stack probe, mem*) that PoCL ships as relocatable objects
+         next to the kernel library. Locate that directory the same way the
+         lld-link path does, so the JIT can load them into its shared runtime
+         JITDylib. */
       char runtime_dir[POCL_MAX_PATHNAME_LENGTH];
 #ifdef ENABLE_POCL_BUILDING
       if (pocl_get_bool_option ("POCL_BUILDING", 0))
@@ -1282,7 +1283,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
       else
 #endif
         if (pocl_get_private_datadir (runtime_dir))
-          runtime_dir[0] = 0;
+        runtime_dir[0] = 0;
       runtime_lib_dir = runtime_dir;
 #endif
       pocl_jit_initialize (command->device->llvm_target_triplet,

@@ -24,8 +24,8 @@
 
 #include "config.h"
 
-#include "pocl_llvm_orc.h"
 #include "pocl_debug.h"
+#include "pocl_llvm_orc.h"
 
 #include <llvm/ExecutionEngine/JITLink/JITLinkMemoryManager.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
@@ -56,11 +56,10 @@ using namespace llvm::orc;
 #ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
 /* Host-side printf flush callback referenced by kernels built with immediate
    flush; defined in libpocl (lib/CL/devices/printf_buffer.c). */
-extern "C" void pocl_flush_printf_buffer (char *buffer, uint32_t buffer_size);
+extern "C" void pocl_flush_printf_buffer(char *buffer, uint32_t buffer_size);
 #endif
 
-namespace
-{
+namespace {
 
 /* The process-global JIT used to load all kernel objects, created lazily on
    the first pocl_jit_initialize() call. ORC's ExecutionSession is internally
@@ -72,7 +71,7 @@ std::mutex JITMutex;
 
 /* JITDylib names must be unique within an ExecutionSession; a monotonic
    counter guarantees that regardless of the caller-supplied name. */
-std::atomic<uint64_t> JDCounter{ 0 };
+std::atomic<uint64_t> JDCounter{0};
 
 /* Make a vector-math library's symbols (e.g. libmvec's _ZGVdN8v_expf)
    resolvable by JIT'd kernels. Attaches a DynamicLibrarySearchGenerator for
@@ -83,23 +82,20 @@ std::atomic<uint64_t> JDCounter{ 0 };
    loading the library and relying on LLJIT's default process-symbol search to
    pick the symbols up. Returns false (and leaves the JIT usable) if the
    library cannot be loaded. */
-static bool
-loadVecMathLibrary (const char *Library)
-{
+static bool loadVecMathLibrary(const char *Library) {
   if (!Library || !Library[0])
     return false;
-  JITDylibSP PSJD = TheJIT->getProcessSymbolsJITDylib ();
+  JITDylibSP PSJD = TheJIT->getProcessSymbolsJITDylib();
   if (!PSJD)
     return false;
-  Expected<std::unique_ptr<DynamicLibrarySearchGenerator> > Gen
-      = DynamicLibrarySearchGenerator::Load (
-          Library, TheJIT->getDataLayout ().getGlobalPrefix ());
-  if (!Gen)
-    {
-      consumeError (Gen.takeError ());
-      return false;
-    }
-  PSJD->addGenerator (std::move (*Gen));
+  Expected<std::unique_ptr<DynamicLibrarySearchGenerator>> Gen =
+      DynamicLibrarySearchGenerator::Load(
+          Library, TheJIT->getDataLayout().getGlobalPrefix());
+  if (!Gen) {
+    consumeError(Gen.takeError());
+    return false;
+  }
+  PSJD->addGenerator(std::move(*Gen));
   return true;
 }
 
@@ -117,8 +113,7 @@ JITDylib *RuntimeJD = nullptr;
 #endif
 
 /* Bookkeeping for a single loaded kernel object. */
-struct PoclJITModule
-{
+struct PoclJITModule {
   JITDylib *JD;
 };
 
@@ -128,17 +123,15 @@ struct PoclJITModule
    mode it was dlopen()ed with. Process symbols (libc/libm/compiler-rt) are
    resolved automatically via the JIT's default process-symbols search order,
    so only PoCL's own host callbacks need to be defined here. */
-void
-defineHostSymbols (JITDylib &JD)
-{
+void defineHostSymbols(JITDylib &JD) {
 #ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
   SymbolMap Syms;
-  Syms[TheJIT->mangleAndIntern ("pocl_flush_printf_buffer")]
-      = { ExecutorAddr::fromPtr (&pocl_flush_printf_buffer),
-          JITSymbolFlags::Exported | JITSymbolFlags::Callable };
-  if (Error Err = JD.define (absoluteSymbols (std::move (Syms))))
-    POCL_MSG_ERR ("pocl_jit: failed to define host symbols: %s\n",
-                  toString (std::move (Err)).c_str ());
+  Syms[TheJIT->mangleAndIntern("pocl_flush_printf_buffer")] = {
+      ExecutorAddr::fromPtr(&pocl_flush_printf_buffer),
+      JITSymbolFlags::Exported | JITSymbolFlags::Callable};
+  if (Error Err = JD.define(absoluteSymbols(std::move(Syms))))
+    POCL_MSG_ERR("pocl_jit: failed to define host symbols: %s\n",
+                 toString(std::move(Err)).c_str());
 #else
   (void)JD;
 #endif
@@ -147,34 +140,28 @@ defineHostSymbols (JITDylib &JD)
 #ifdef _WIN32
 /* JIT-link a relocatable object file from 'Path' into 'JD'. Used to populate
    the shared runtime JITDylib with the freestanding helper objects. */
-bool
-loadObjectFileInto (JITDylib &JD, const std::string &Path)
-{
-  ErrorOr<std::unique_ptr<MemoryBuffer> > Buf = MemoryBuffer::getFile (
-      Path.c_str (), /*IsText=*/false, /*RequiresNullTerminator=*/false);
-  if (!Buf)
-    {
-      POCL_MSG_ERR ("pocl_jit: cannot read runtime object '%s': %s\n",
-                    Path.c_str (), Buf.getError ().message ().c_str ());
-      return false;
-    }
-  if (Error Err = TheJIT->addObjectFile (JD, std::move (*Buf)))
-    {
-      POCL_MSG_ERR ("pocl_jit: addObjectFile('%s') failed: %s\n", Path.c_str (),
-                    toString (std::move (Err)).c_str ());
-      return false;
-    }
+bool loadObjectFileInto(JITDylib &JD, const std::string &Path) {
+  ErrorOr<std::unique_ptr<MemoryBuffer>> Buf = MemoryBuffer::getFile(
+      Path.c_str(), /*IsText=*/false, /*RequiresNullTerminator=*/false);
+  if (!Buf) {
+    POCL_MSG_ERR("pocl_jit: cannot read runtime object '%s': %s\n",
+                 Path.c_str(), Buf.getError().message().c_str());
+    return false;
+  }
+  if (Error Err = TheJIT->addObjectFile(JD, std::move(*Buf))) {
+    POCL_MSG_ERR("pocl_jit: addObjectFile('%s') failed: %s\n", Path.c_str(),
+                 toString(std::move(Err)).c_str());
+    return false;
+  }
   return true;
 }
 #endif
 
 } // namespace
 
-int
-pocl_jit_initialize (const char *TripleStr, const char *CPU,
-                     const char *RuntimeLibDir)
-{
-  std::lock_guard<std::mutex> Lock (JITMutex);
+int pocl_jit_initialize(const char *TripleStr, const char *CPU,
+                        const char *RuntimeLibDir) {
+  std::lock_guard<std::mutex> Lock(JITMutex);
   if (TheJIT)
     return 0;
 
@@ -197,37 +184,36 @@ pocl_jit_initialize (const char *TripleStr, const char *CPU,
      LLVM 23 (trunk) checkout, so the 23 boundary is approximate. In every case
      we construct an ObjectLinkingLayer, which uses the ExecutorProcessControl's
      in-process memory manager when not given one explicitly. */
-  Builder.setObjectLinkingLayerCreator (
+  Builder.setObjectLinkingLayerCreator(
 #if LLVM_MAJOR >= 23
-      [] (ExecutionSession &ES, jitlink::JITLinkMemoryManager &MM)
-          -> Expected<std::unique_ptr<ObjectLayer> > {
-        return std::make_unique<ObjectLinkingLayer> (ES, MM);
+      [](ExecutionSession &ES, jitlink::JITLinkMemoryManager &MM)
+          -> Expected<std::unique_ptr<ObjectLayer>> {
+        return std::make_unique<ObjectLinkingLayer>(ES, MM);
       }
 #elif LLVM_MAJOR >= 21
-      [] (ExecutionSession &ES) -> Expected<std::unique_ptr<ObjectLayer> > {
-        return std::make_unique<ObjectLinkingLayer> (ES);
+      [](ExecutionSession &ES) -> Expected<std::unique_ptr<ObjectLayer>> {
+        return std::make_unique<ObjectLinkingLayer>(ES);
       }
 #else
-      [] (ExecutionSession &ES, const llvm::Triple &)
-          -> Expected<std::unique_ptr<ObjectLayer> > {
-        return std::make_unique<ObjectLinkingLayer> (ES);
+      [](ExecutionSession &ES,
+         const llvm::Triple &) -> Expected<std::unique_ptr<ObjectLayer>> {
+        return std::make_unique<ObjectLinkingLayer>(ES);
       }
 #endif
   );
 
-  JITTargetMachineBuilder JTMB{ llvm::Triple (TripleStr ? TripleStr : "") };
+  JITTargetMachineBuilder JTMB{llvm::Triple(TripleStr ? TripleStr : "")};
   if (CPU && CPU[0])
-    JTMB.setCPU (CPU);
-  Builder.setJITTargetMachineBuilder (std::move (JTMB));
+    JTMB.setCPU(CPU);
+  Builder.setJITTargetMachineBuilder(std::move(JTMB));
 
-  Expected<std::unique_ptr<LLJIT> > JIT = Builder.create ();
-  if (!JIT)
-    {
-      POCL_MSG_ERR ("pocl_jit: LLJIT creation failed: %s\n",
-                    toString (JIT.takeError ()).c_str ());
-      return -1;
-    }
-  TheJIT = std::move (*JIT);
+  Expected<std::unique_ptr<LLJIT>> JIT = Builder.create();
+  if (!JIT) {
+    POCL_MSG_ERR("pocl_jit: LLJIT creation failed: %s\n",
+                 toString(JIT.takeError()).c_str());
+    return -1;
+  }
+  TheJIT = std::move(*JIT);
 
   /* When CPU codegen vectorizes libm calls (expf, sinf, ...) it lowers them to
      a vector-math library's symbols (e.g. libmvec's _ZGVdN8v_expf). Which
@@ -240,8 +226,8 @@ pocl_jit_initialize (const char *TripleStr, const char *CPU,
      (HOST_CPU_ENABLE_JIT is off there). */
 #if defined(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
   const char *VecMathLib = "libmvec.so.1";
-  if (!loadVecMathLibrary (VecMathLib))
-    POCL_MSG_PRINT_LLVM (
+  if (!loadVecMathLibrary(VecMathLib))
+    POCL_MSG_PRINT_LLVM(
         "pocl_jit: could not load vector-math library '%s'; vectorized math "
         "kernels may fail to resolve their symbols\n",
         VecMathLib);
@@ -250,22 +236,20 @@ pocl_jit_initialize (const char *TripleStr, const char *CPU,
   bool VecMathLoaded = false;
 #ifdef HOST_CPU_SLEEF_LIBRARY
   VecMathLib = HOST_CPU_SLEEF_LIBRARY;
-  VecMathLoaded = loadVecMathLibrary (VecMathLib);
+  VecMathLoaded = loadVecMathLibrary(VecMathLib);
 #endif
 #ifdef HOST_CPU_SLEEF_LIBRARY_FALLBACK
-  if (!VecMathLoaded)
-    {
-      VecMathLib = HOST_CPU_SLEEF_LIBRARY_FALLBACK;
-      VecMathLoaded = loadVecMathLibrary (VecMathLib);
-    }
+  if (!VecMathLoaded) {
+    VecMathLib = HOST_CPU_SLEEF_LIBRARY_FALLBACK;
+    VecMathLoaded = loadVecMathLibrary(VecMathLib);
+  }
 #endif
+  if (!VecMathLoaded) {
+    VecMathLib = "libsleef.so";
+    VecMathLoaded = loadVecMathLibrary(VecMathLib);
+  }
   if (!VecMathLoaded)
-    {
-      VecMathLib = "libsleef.so";
-      VecMathLoaded = loadVecMathLibrary (VecMathLib);
-    }
-  if (!VecMathLoaded)
-    POCL_MSG_PRINT_LLVM (
+    POCL_MSG_PRINT_LLVM(
         "pocl_jit: could not load vector-math library '%s'; vectorized math "
         "kernels may fail to resolve their symbols\n",
         VecMathLib);
@@ -276,22 +260,18 @@ pocl_jit_initialize (const char *TripleStr, const char *CPU,
      A failure here is not fatal at init time (a kernel that doesn't reference
      these symbols still links), but kernels that do reference them will fail
      to look up later, so report it. */
-  if (RuntimeLibDir && RuntimeLibDir[0])
-    {
-      Expected<JITDylib &> RJD = TheJIT->createJITDylib ("pocl_runtime");
-      if (!RJD)
-        {
-          POCL_MSG_ERR ("pocl_jit: creating runtime JITDylib failed: %s\n",
-                        toString (RJD.takeError ()).c_str ());
-        }
-      else
-        {
-          RuntimeJD = &*RJD;
-          std::string Dir (RuntimeLibDir);
-          loadObjectFileInto (*RuntimeJD, Dir + "/libchkstk.obj");
-          loadObjectFileInto (*RuntimeJD, Dir + "/libmemory.obj");
-        }
+  if (RuntimeLibDir && RuntimeLibDir[0]) {
+    Expected<JITDylib &> RJD = TheJIT->createJITDylib("pocl_runtime");
+    if (!RJD) {
+      POCL_MSG_ERR("pocl_jit: creating runtime JITDylib failed: %s\n",
+                   toString(RJD.takeError()).c_str());
+    } else {
+      RuntimeJD = &*RJD;
+      std::string Dir(RuntimeLibDir);
+      loadObjectFileInto(*RuntimeJD, Dir + "/libchkstk.obj");
+      loadObjectFileInto(*RuntimeJD, Dir + "/libmemory.obj");
     }
+  }
 #else
   (void)RuntimeLibDir;
 #endif
@@ -299,38 +279,33 @@ pocl_jit_initialize (const char *TripleStr, const char *CPU,
   return 0;
 }
 
-void *
-pocl_jit_load_object (const char *Path, const char *UniqName)
-{
-  std::lock_guard<std::mutex> Lock (JITMutex);
-  if (!TheJIT)
-    {
-      POCL_MSG_ERR ("pocl_jit: load_object called before initialize\n");
-      return nullptr;
-    }
+void *pocl_jit_load_object(const char *Path, const char *UniqName) {
+  std::lock_guard<std::mutex> Lock(JITMutex);
+  if (!TheJIT) {
+    POCL_MSG_ERR("pocl_jit: load_object called before initialize\n");
+    return nullptr;
+  }
 
-  ErrorOr<std::unique_ptr<MemoryBuffer> > Buf = MemoryBuffer::getFile (
+  ErrorOr<std::unique_ptr<MemoryBuffer>> Buf = MemoryBuffer::getFile(
       Path, /*IsText=*/false, /*RequiresNullTerminator=*/false);
-  if (!Buf)
-    {
-      POCL_MSG_ERR ("pocl_jit: cannot read object '%s': %s\n", Path,
-                    Buf.getError ().message ().c_str ());
-      return nullptr;
-    }
+  if (!Buf) {
+    POCL_MSG_ERR("pocl_jit: cannot read object '%s': %s\n", Path,
+                 Buf.getError().message().c_str());
+    return nullptr;
+  }
 
   /* Give each loaded object its own JITDylib so symbol names never collide
      across kernels/specializations and can be unloaded independently. */
-  std::string Name = std::string (UniqName ? UniqName : "kernel") + "#"
-                     + std::to_string (JDCounter.fetch_add (1));
-  Expected<JITDylib &> JD = TheJIT->createJITDylib (std::move (Name));
-  if (!JD)
-    {
-      POCL_MSG_ERR ("pocl_jit: createJITDylib failed: %s\n",
-                    toString (JD.takeError ()).c_str ());
-      return nullptr;
-    }
+  std::string Name = std::string(UniqName ? UniqName : "kernel") + "#" +
+                     std::to_string(JDCounter.fetch_add(1));
+  Expected<JITDylib &> JD = TheJIT->createJITDylib(std::move(Name));
+  if (!JD) {
+    POCL_MSG_ERR("pocl_jit: createJITDylib failed: %s\n",
+                 toString(JD.takeError()).c_str());
+    return nullptr;
+  }
 
-  defineHostSymbols (*JD);
+  defineHostSymbols(*JD);
 
 #ifdef _WIN32
   /* Resolve the freestanding runtime helpers (stack probe, mem*) from the
@@ -343,64 +318,55 @@ pocl_jit_load_object (const char *Path, const char *UniqName)
      The kernel JD's link order after createJITDylib is [self, <process>,
      <platform>]; insert the runtime JD right after self so it wins over the
      process CRT. */
-  if (RuntimeJD)
-    {
-      JITDylibSearchOrder Order;
-      (*JD).withLinkOrderDo (
-          [&] (const JITDylibSearchOrder &O) { Order = O; });
-      Order.insert (Order.begin () + (Order.empty () ? 0 : 1),
-                    { RuntimeJD, JITDylibLookupFlags::MatchExportedSymbolsOnly });
-      (*JD).setLinkOrder (std::move (Order),
-                          /*LinkAgainstThisJITDylibFirst=*/false);
-    }
+  if (RuntimeJD) {
+    JITDylibSearchOrder Order;
+    (*JD).withLinkOrderDo([&](const JITDylibSearchOrder &O) { Order = O; });
+    Order.insert(Order.begin() + (Order.empty() ? 0 : 1),
+                 {RuntimeJD, JITDylibLookupFlags::MatchExportedSymbolsOnly});
+    (*JD).setLinkOrder(std::move(Order),
+                       /*LinkAgainstThisJITDylibFirst=*/false);
+  }
 #endif
 
-  if (Error Err = TheJIT->addObjectFile (*JD, std::move (*Buf)))
-    {
-      POCL_MSG_ERR ("pocl_jit: addObjectFile('%s') failed: %s\n", Path,
-                    toString (std::move (Err)).c_str ());
-      if (Error RmErr = TheJIT->getExecutionSession ().removeJITDylib (*JD))
-        consumeError (std::move (RmErr));
-      return nullptr;
-    }
+  if (Error Err = TheJIT->addObjectFile(*JD, std::move(*Buf))) {
+    POCL_MSG_ERR("pocl_jit: addObjectFile('%s') failed: %s\n", Path,
+                 toString(std::move(Err)).c_str());
+    if (Error RmErr = TheJIT->getExecutionSession().removeJITDylib(*JD))
+      consumeError(std::move(RmErr));
+    return nullptr;
+  }
 
-  return new PoclJITModule{ &*JD };
+  return new PoclJITModule{&*JD};
 }
 
-void *
-pocl_jit_lookup (void *Handle, const char *SymbolName)
-{
-  std::lock_guard<std::mutex> Lock (JITMutex);
-  PoclJITModule *M = static_cast<PoclJITModule *> (Handle);
+void *pocl_jit_lookup(void *Handle, const char *SymbolName) {
+  std::lock_guard<std::mutex> Lock(JITMutex);
+  PoclJITModule *M = static_cast<PoclJITModule *>(Handle);
   if (!TheJIT || M == nullptr || M->JD == nullptr)
     return nullptr;
 
   /* ORC mangles the unmangled name for the target (e.g. adds the leading
      underscore on Mach-O), so we pass the plain C symbol name. Linking and
      relocation of the object happen here, on first lookup. */
-  Expected<ExecutorAddr> Addr = TheJIT->lookup (*M->JD, SymbolName);
-  if (!Addr)
-    {
-      /* Not necessarily fatal: callers may probe alternative names. */
-      consumeError (Addr.takeError ());
-      return nullptr;
-    }
-  return reinterpret_cast<void *> (Addr->getValue ());
+  Expected<ExecutorAddr> Addr = TheJIT->lookup(*M->JD, SymbolName);
+  if (!Addr) {
+    /* Not necessarily fatal: callers may probe alternative names. */
+    consumeError(Addr.takeError());
+    return nullptr;
+  }
+  return reinterpret_cast<void *>(Addr->getValue());
 }
 
-int
-pocl_jit_unload (void *Handle)
-{
-  std::lock_guard<std::mutex> Lock (JITMutex);
-  PoclJITModule *M = static_cast<PoclJITModule *> (Handle);
+int pocl_jit_unload(void *Handle) {
+  std::lock_guard<std::mutex> Lock(JITMutex);
+  PoclJITModule *M = static_cast<PoclJITModule *>(Handle);
   if (M == nullptr)
     return 0;
-  if (TheJIT && M->JD)
-    {
-      if (Error Err = TheJIT->getExecutionSession ().removeJITDylib (*M->JD))
-        POCL_MSG_ERR ("pocl_jit: removeJITDylib failed: %s\n",
-                      toString (std::move (Err)).c_str ());
-    }
+  if (TheJIT && M->JD) {
+    if (Error Err = TheJIT->getExecutionSession().removeJITDylib(*M->JD))
+      POCL_MSG_ERR("pocl_jit: removeJITDylib failed: %s\n",
+                   toString(std::move(Err)).c_str());
+  }
   delete M;
   return 1;
 }
