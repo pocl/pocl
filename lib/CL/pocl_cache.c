@@ -270,26 +270,19 @@ pocl_cache_final_binary_path (char *final_binary_path, cl_program program,
     {
       char file_name[POCL_MAX_FILENAME_LENGTH + 1];
       pocl_hash_clipped_name (kernel->name, &file_name[0]);
-#ifdef HOST_CPU_ENABLE_JIT
-      /* Devices that link kernels through the default Clang driver (i.e. have
-         no custom finalize_binary) load them in-process via ORC/JITLink. The
-         cached artifact is then the relocatable object file itself, not a
-         linked shared library, so it carries the object-file extension. That
-         also keeps it from being confused with a .so/.dll the link path
-         writes. POCL_CPU_JIT=0 selects the link path instead; the gate must
-         match llvm_codegen() and the dlhandle cache so the cached name and the
-         load method agree. */
-      if (kernel->program->devices[device_i]->ops->finalize_binary == NULL
-          && pocl_get_bool_option ("POCL_CPU_JIT", 1))
+      /* A JIT device loads the kernel object in-process, so its cached artifact
+         is the relocatable object itself (OBJ_EXT) rather than a linked shared
+         library; the distinct extension also keeps the two from colliding in
+         the cache dir. See pocl_cpu_device_uses_jit(). */
+      if (pocl_cpu_device_uses_jit (kernel->program->devices[device_i]))
         bytes_written = snprintf (final_binary_name, POCL_MAX_PATHNAME_LENGTH,
                                   "/%s" OBJ_EXT, file_name);
       else
-#endif
         bytes_written = snprintf (final_binary_name, POCL_MAX_PATHNAME_LENGTH,
 #ifdef _WIN32
                                   "/%s.dll",
 #else
-                                "/%s.so",
+                                  "/%s.so",
 #endif
                                   file_name);
     }

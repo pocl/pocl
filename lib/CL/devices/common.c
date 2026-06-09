@@ -221,15 +221,11 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
                           tmp_objfile, (size_t)objfile_size);
     }
 
-#ifdef HOST_CPU_ENABLE_JIT
-  /* Devices that link through the default Clang driver (no finalize_binary)
-     instead load the kernel in-process via ORC/JITLink. The relocatable
-     object IS the final artifact: no shared library is produced and no
-     external linker is invoked. JITLink links and maps it at load time.
-     POCL_CPU_JIT=0 falls back to the Clang-driver link path; the gate must
-     match the one in pocl_cache_final_binary_path() and the dlhandle cache. */
-  if (device->ops->finalize_binary == NULL
-      && pocl_get_bool_option ("POCL_CPU_JIT", 1))
+  /* JIT devices load the kernel in-process via ORC/JITLink, so the relocatable
+     object IS the final artifact: no shared library is produced and no external
+     linker is invoked. Just publish the object under its cached name and return
+     (pocl_cpu_device_uses_jit() is the shared gate; see its definition). */
+  if (pocl_cpu_device_uses_jit (device))
     {
       error = pocl_rename (tmp_objfile, final_binary_path);
       if (error)
@@ -238,7 +234,6 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
           final_binary_path);
       goto FINISH;
     }
-#endif
 
   /* Temporary filename for kernel.so. Create it in the parallel.bc's
      directory to enable a potential customized finalization step to
@@ -1259,13 +1254,10 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
       return NULL;
     }
 
+  /* A JIT device loads the kernel object in-process via ORC/JITLink instead of
+     dlopen()ing a shared library (see pocl_cpu_device_uses_jit()). */
+  ci->is_jit = pocl_cpu_device_uses_jit (command->device);
 #ifdef HOST_CPU_ENABLE_JIT
-  /* Devices that link through the default Clang driver (no finalize_binary)
-     load the kernel object in-process via ORC/JITLink instead of dlopen()ing
-     a shared library, unless POCL_CPU_JIT=0 selects the link path. The gate
-     must match pocl_cache_final_binary_path() and llvm_codegen(). */
-  ci->is_jit = (command->device->ops->finalize_binary == NULL)
-               && pocl_get_bool_option ("POCL_CPU_JIT", 1);
   if (ci->is_jit)
     {
       pocl_jit_initialize (command->device->llvm_target_triplet,

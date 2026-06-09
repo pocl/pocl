@@ -212,6 +212,7 @@ extern "C" {
                          const char* MCPU,
                          const char *Features,
                          cl_device_type DevType,
+                         int ForJIT,
                          pocl_lock_t *Lock,
                          void *Modp, int EmitAsm,
                          int EmitObj, char **Output, uint64_t *OutputSize);

@@ -141,15 +141,16 @@ static TargetMachine *GetTargetMachine(const char* TTriple,
   // COFF JIT: ELF/Mach-O JITLink stubs far calls (small + PIC is correct and
   // cheaper there), and the Clang-driver / lld-link paths link through a real
   // linker. Julia's JIT likewise uses the large code model on 64-bit targets.
+  llvm::Triple TheTriple(TTriple);
   CodeModel::Model CM = CodeModel::Small;
-  if (ForJIT && Triple(TTriple).isOSBinFormatCOFF())
+  if (ForJIT && TheTriple.isOSBinFormatCOFF())
     CM = CodeModel::Large;
 
   TargetMachine *TM = TheTarget->createTargetMachine(
 #if LLVM_MAJOR < 22
       TTriple,
 #else
-      Triple(TTriple),
+      TheTriple,
 #endif
       MCPU, Features, TargetOptions(),
       Reloc::PIC_, CM,
@@ -158,19 +159,6 @@ static TargetMachine *GetTargetMachine(const char* TTriple,
   assert(TM != NULL && "llvm target has no targetMachine constructor");
 
   return TM;
-}
-
-// Whether codegen targets a host CPU device that loads the emitted object
-// in-process via the ORC/JITLink JIT instead of dlopen()ing a linked library.
-// Must match the gate in pocl_check_kernel_dlhandle_cache() (common.c) so the
-// object is compiled with the JIT's code model.
-static bool useJITForCodegen([[maybe_unused]] cl_device_type DevType) {
-#ifdef HOST_CPU_ENABLE_JIT
-  return DevType == CL_DEVICE_TYPE_CPU
-         && pocl_get_bool_option("POCL_CPU_JIT", 1);
-#else
-  return false;
-#endif
 }
 
 
@@ -1252,7 +1240,7 @@ static TargetLibraryInfoImpl *initPassManagerForCodeGen(legacy::PassManager &PM,
  * Output native object file (<kernel>.so.o). */
 int pocl_llvm_codegen2(const char* TTriple, const char* MCPU,
                        const char *Features, cl_device_type DevType,
-                       pocl_lock_t *Lock, void *Modp, int EmitAsm,
+                       int ForJIT, pocl_lock_t *Lock, void *Modp, int EmitAsm,
                        int EmitObj, char **Output, uint64_t *OutputSize) {
 
   PoclCompilerMutexGuard LockHolder(Lock);
@@ -1263,7 +1251,7 @@ int pocl_llvm_codegen2(const char* TTriple, const char* MCPU,
   std::unique_ptr<llvm::TargetLibraryInfoImpl> TLIIPtr;
 
   std::unique_ptr<llvm::TargetMachine> TM(
-      GetTargetMachine(TTriple, MCPU, Features, useJITForCodegen(DevType)));
+      GetTargetMachine(TTriple, MCPU, Features, ForJIT));
   llvm::TargetMachine *Target = TM.get();
 
   // First try direct object code generation from LLVM, if supported by the
@@ -1392,7 +1380,8 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program Program,
   PoclLLVMContextData *LLVMCtx = (PoclLLVMContextData *)Ctx->llvm_context_data;
 
   return pocl_llvm_codegen2 (Device->llvm_target_triplet, Device->llvm_cpu,
-                            Features, Device->type, &LLVMCtx->Lock,
+                            Features, Device->type,
+                            pocl_cpu_device_uses_jit (Device), &LLVMCtx->Lock,
                             Modp, EmitAsm, EmitObj, Output, OutputSize);
 }
 

@@ -796,7 +796,7 @@ static int convertBCorSPV(char *InputPath,
   }
   pocl_lock_t Lock;
   POCL_INIT_LOCK(Lock);
-  if (pocl_llvm_codegen2(Triple, "", "", CL_DEVICE_TYPE_GPU, &Lock,
+  if (pocl_llvm_codegen2(Triple, "", "", CL_DEVICE_TYPE_GPU, /*ForJIT=*/0, &Lock,
                          Mod, CL_FALSE, CL_TRUE, &Content, &ContentSize) != CL_SUCCESS) {
     BuildLog->append("failed to convert LLVM IR to SPIR-V "
                      "using LLVM SPIRV backend\n");

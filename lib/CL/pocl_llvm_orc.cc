@@ -44,7 +44,6 @@
 #include <llvm/ExecutionEngine/Orc/AbsoluteSymbols.h>
 #endif
 
-#include <atomic>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -83,13 +82,15 @@ std::unique_ptr<LLJIT> TheJIT;
 std::mutex JITMutex;
 
 /* JITDylib names must be unique within an ExecutionSession; a monotonic
-   counter guarantees that regardless of the caller-supplied name. */
-std::atomic<uint64_t> JDCounter{0};
+   counter guarantees that regardless of the caller-supplied name. Only ever
+   touched under JITMutex, so a plain integer suffices. */
+uint64_t JDCounter = 0;
 
 /* Make a vector-math library's symbols (e.g. libmvec's _ZGVdN8v_expf)
    resolvable by JIT'd kernels. Attaches a DynamicLibrarySearchGenerator for
    the library to the process-symbols JITDylib, which every kernel JITDylib
-   links against (see the link order in pocl_jit_load_object). This is the
+   links against (LLJIT links each JITDylib it creates against the
+   process-symbols JITDylib by default). This is the
    idiomatic ORC way to expose a runtime library to the JIT: lookups are served
    from the library's own handle through the JIT's generator chain, rather than
    loading the library and relying on LLJIT's default process-symbol search to
@@ -145,9 +146,11 @@ struct PoclJITModule {
    rather than exported by a process library: PoCL's own host callbacks and, on
    Windows, the libgcc/compiler-rt stack probe. Defining them as absolute
    symbols makes resolution independent of libpocl's (deliberately hidden)
-   dynamic-symbol visibility. Everything else (libc/libm/compiler-rt and
-   msvcrt's mem* helpers) resolves automatically via the JIT's default
-   process-symbol search order. */
+   dynamic-symbol visibility. They are constant for the process, so this is done
+   once at init into the process-symbols JITDylib that every kernel JITDylib
+   links against. Everything else (libc/libm/compiler-rt and msvcrt's mem*
+   helpers) resolves automatically via the JIT's default process-symbol search
+   order. */
 void defineHostSymbols(JITDylib &JD) {
   SymbolMap Syms;
 #ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
@@ -224,6 +227,11 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
   }
   TheJIT = std::move(*JIT);
 
+  /* Define PoCL's host callbacks (and the Windows stack probe) once, into the
+     process-symbols JITDylib that every kernel JITDylib links against. */
+  if (JITDylibSP PSJD = TheJIT->getProcessSymbolsJITDylib())
+    defineHostSymbols(*PSJD);
+
   /* When CPU codegen vectorizes libm calls (expf, sinf, ...) it lowers them to
      a vector-math library's symbols (e.g. libmvec's _ZGVdN8v_expf, SVML's
      __svml_expf8). The library is chosen at configure time, matching the
@@ -298,15 +306,13 @@ void *pocl_jit_load_object(const char *Path, const char *UniqName) {
   /* Give each loaded object its own JITDylib so symbol names never collide
      across kernels/specializations and can be unloaded independently. */
   std::string Name = std::string(UniqName ? UniqName : "kernel") + "#" +
-                     std::to_string(JDCounter.fetch_add(1));
+                     std::to_string(JDCounter++);
   Expected<JITDylib &> JD = TheJIT->createJITDylib(std::move(Name));
   if (!JD) {
     POCL_MSG_ERR("pocl_jit: createJITDylib failed: %s\n",
                  toString(JD.takeError()).c_str());
     return nullptr;
   }
-
-  defineHostSymbols(*JD);
 
   if (Error Err = TheJIT->addObjectFile(*JD, std::move(*Buf))) {
     POCL_MSG_ERR("pocl_jit: addObjectFile('%s') failed: %s\n", Path,
