@@ -59,6 +59,19 @@ using namespace llvm::orc;
 extern "C" void pocl_flush_printf_buffer(char *buffer, uint32_t buffer_size);
 #endif
 
+#ifdef _WIN32
+/* MinGW kernel objects reference the libgcc/compiler-rt stack probe
+   ___chkstk_ms (emitted for frames > 4KB), which no Windows system DLL
+   exports -- unlike MSVC's __chkstk, which ntdll/kernel32 do export. libpocl
+   is itself linked against a libgcc/compiler-rt that provides ___chkstk_ms, so
+   defineHostSymbols() hands that copy to JIT'd kernels as an absolute symbol.
+   (The mem* helpers kernels also call resolve from msvcrt via the JIT's
+   default process-symbol search.) Both are reachable because the COFF JIT
+   emits kernels with the large code model; see GetTargetMachine() in
+   pocl_llvm_wg.cc. */
+extern "C" void ___chkstk_ms(void);
+#endif
+
 namespace {
 
 /* The process-global JIT used to load all kernel objects, created lazily on
@@ -123,68 +136,40 @@ static bool loadStaticArchive(const char *Path) {
   return true;
 }
 
-#ifdef _WIN32
-/* Windows kernel objects are compiled freestanding (no CRT), so they reference
-   a handful of compiler-emitted runtime symbols that no process library
-   exports: the stack-probe (___chkstk_ms on MinGW, __chkstk on MSVC) and the
-   mem* helpers (memcpy/memset/memmove/memcmp/strlen). PoCL ships these as two
-   relocatable objects (lib/kernel/host/libchkstk.S + libmemory.c). We JIT-link
-   them once into a shared "runtime" JITDylib and add it to every kernel JD's
-   link order, the COFF analog of the absolute-symbol injection used for the
-   host callbacks below. (On ELF/Mach-O these symbols resolve from libc in the
-   process, so no runtime JD is needed there.) */
-JITDylib *RuntimeJD = nullptr;
-#endif
-
 /* Bookkeeping for a single loaded kernel object. */
 struct PoclJITModule {
   JITDylib *JD;
 };
 
-/* Inject host-side symbols that kernel objects reference but that are defined
-   in libpocl (the running process). Defining them as absolute symbols makes
-   resolution independent of libpocl's dynamic-symbol visibility and of the
-   mode it was dlopen()ed with. Process symbols (libc/libm/compiler-rt) are
-   resolved automatically via the JIT's default process-symbols search order,
-   so only PoCL's own host callbacks need to be defined here. */
+/* Inject symbols that kernel objects reference but that are linked into libpocl
+   rather than exported by a process library: PoCL's own host callbacks and, on
+   Windows, the libgcc/compiler-rt stack probe. Defining them as absolute
+   symbols makes resolution independent of libpocl's (deliberately hidden)
+   dynamic-symbol visibility. Everything else -- libc/libm/compiler-rt and
+   msvcrt's mem* helpers -- resolves automatically via the JIT's default
+   process-symbol search order. */
 void defineHostSymbols(JITDylib &JD) {
-#ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
   SymbolMap Syms;
+#ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
   Syms[TheJIT->mangleAndIntern("pocl_flush_printf_buffer")] = {
       ExecutorAddr::fromPtr(&pocl_flush_printf_buffer),
       JITSymbolFlags::Exported | JITSymbolFlags::Callable};
+#endif
+#ifdef _WIN32
+  Syms[TheJIT->mangleAndIntern("___chkstk_ms")] = {
+      ExecutorAddr::fromPtr(&___chkstk_ms),
+      JITSymbolFlags::Exported | JITSymbolFlags::Callable};
+#endif
+  if (Syms.empty())
+    return;
   if (Error Err = JD.define(absoluteSymbols(std::move(Syms))))
     POCL_MSG_ERR("pocl_jit: failed to define host symbols: %s\n",
                  toString(std::move(Err)).c_str());
-#else
-  (void)JD;
-#endif
 }
-
-#ifdef _WIN32
-/* JIT-link a relocatable object file from 'Path' into 'JD'. Used to populate
-   the shared runtime JITDylib with the freestanding helper objects. */
-bool loadObjectFileInto(JITDylib &JD, const std::string &Path) {
-  ErrorOr<std::unique_ptr<MemoryBuffer>> Buf = MemoryBuffer::getFile(
-      Path.c_str(), /*IsText=*/false, /*RequiresNullTerminator=*/false);
-  if (!Buf) {
-    POCL_MSG_ERR("pocl_jit: cannot read runtime object '%s': %s\n",
-                 Path.c_str(), Buf.getError().message().c_str());
-    return false;
-  }
-  if (Error Err = TheJIT->addObjectFile(JD, std::move(*Buf))) {
-    POCL_MSG_ERR("pocl_jit: addObjectFile('%s') failed: %s\n", Path.c_str(),
-                 toString(std::move(Err)).c_str());
-    return false;
-  }
-  return true;
-}
-#endif
 
 } // namespace
 
-int pocl_jit_initialize(const char *TripleStr, const char *CPU,
-                        const char *RuntimeLibDir) {
+int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
   std::lock_guard<std::mutex> Lock(JITMutex);
   if (TheJIT)
     return 0;
@@ -293,27 +278,6 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU,
         "kernels may fail to resolve their symbols\n");
 #endif
 
-#ifdef _WIN32
-  /* Build the shared runtime JITDylib from the freestanding helper objects.
-     A failure here is not fatal at init time (a kernel that doesn't reference
-     these symbols still links), but kernels that do reference them will fail
-     to look up later, so report it. */
-  if (RuntimeLibDir && RuntimeLibDir[0]) {
-    Expected<JITDylib &> RJD = TheJIT->createJITDylib("pocl_runtime");
-    if (!RJD) {
-      POCL_MSG_ERR("pocl_jit: creating runtime JITDylib failed: %s\n",
-                   toString(RJD.takeError()).c_str());
-    } else {
-      RuntimeJD = &*RJD;
-      std::string Dir(RuntimeLibDir);
-      loadObjectFileInto(*RuntimeJD, Dir + "/libchkstk.obj");
-      loadObjectFileInto(*RuntimeJD, Dir + "/libmemory.obj");
-    }
-  }
-#else
-  (void)RuntimeLibDir;
-#endif
-
   return 0;
 }
 
@@ -344,27 +308,6 @@ void *pocl_jit_load_object(const char *Path, const char *UniqName) {
   }
 
   defineHostSymbols(*JD);
-
-#ifdef _WIN32
-  /* Resolve the freestanding runtime helpers (stack probe, mem*) from the
-     shared runtime JITDylib, and crucially do so *before* the process symbols.
-     A kernel reaches these helpers with a direct call (PCRel32, +-2GB range);
-     the process CRT's copies live in a loaded DLL far outside that range, so a
-     direct call to them overflows the relocation (COFF/x86-64 JITLink does not
-     insert a far-call stub the way the ELF/Mach-O path does). The runtime JD's
-     copies are JIT-allocated next to the kernel code, so the call is in range.
-     The kernel JD's link order after createJITDylib is [self, <process>,
-     <platform>]; insert the runtime JD right after self so it wins over the
-     process CRT. */
-  if (RuntimeJD) {
-    JITDylibSearchOrder Order;
-    (*JD).withLinkOrderDo([&](const JITDylibSearchOrder &O) { Order = O; });
-    Order.insert(Order.begin() + (Order.empty() ? 0 : 1),
-                 {RuntimeJD, JITDylibLookupFlags::MatchExportedSymbolsOnly});
-    (*JD).setLinkOrder(std::move(Order),
-                       /*LinkAgainstThisJITDylibFirst=*/false);
-  }
-#endif
 
   if (Error Err = TheJIT->addObjectFile(*JD, std::move(*Buf))) {
     POCL_MSG_ERR("pocl_jit: addObjectFile('%s') failed: %s\n", Path,

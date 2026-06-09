@@ -114,9 +114,12 @@ static bool enableDebugLogs() {
 }
 
 // Returns the TargetMachine instance or zero if no triple is provided.
+// ForJIT selects a code model suitable for the in-process ORC/JITLink JIT (see
+// pocl_llvm_orc.cc); it only changes codegen on COFF targets.
 static TargetMachine *GetTargetMachine(const char* TTriple,
                                        const char* MCPU = "",
-                                       const char* Features = "") {
+                                       const char* Features = "",
+                                       bool ForJIT = false) {
 
   std::string Error;
 
@@ -128,6 +131,20 @@ static TargetMachine *GetTargetMachine(const char* TTriple,
     return nullptr;
   }
 
+  // The JIT links the emitted object with JITLink, whose COFF/x86-64 backend
+  // does not synthesize far-call stubs the way its ELF and Mach-O backends do.
+  // With the small code model a kernel's +-2GB PC-relative call to a runtime
+  // helper mapped far from the JIT-allocated code overflows: the libgcc stack
+  // probe (___chkstk_ms) and msvcrt's mem* helpers both live in libraries
+  // outside that range. The large code model emits 64-bit indirect calls
+  // instead, so those helpers resolve wherever they are. Restrict this to the
+  // COFF JIT: ELF/Mach-O JITLink stubs far calls (small + PIC is correct and
+  // cheaper there), and the Clang-driver / lld-link paths link through a real
+  // linker. Julia's JIT likewise uses the large code model on 64-bit targets.
+  CodeModel::Model CM = CodeModel::Small;
+  if (ForJIT && Triple(TTriple).isOSBinFormatCOFF())
+    CM = CodeModel::Large;
+
   TargetMachine *TM = TheTarget->createTargetMachine(
 #if LLVM_MAJOR < 22
       TTriple,
@@ -135,12 +152,25 @@ static TargetMachine *GetTargetMachine(const char* TTriple,
       Triple(TTriple),
 #endif
       MCPU, Features, TargetOptions(),
-      Reloc::PIC_, CodeModel::Small,
+      Reloc::PIC_, CM,
       CodeGenOptLevel::Aggressive);
 
   assert(TM != NULL && "llvm target has no targetMachine constructor");
 
   return TM;
+}
+
+// Whether codegen targets a host CPU device that loads the emitted object
+// in-process via the ORC/JITLink JIT instead of dlopen()ing a linked library.
+// Must match the gate in pocl_check_kernel_dlhandle_cache() (common.c) so the
+// object is compiled with the JIT's code model.
+static bool useJITForCodegen([[maybe_unused]] cl_device_type DevType) {
+#ifdef HOST_CPU_ENABLE_JIT
+  return DevType == CL_DEVICE_TYPE_CPU
+         && pocl_get_bool_option("POCL_CPU_JIT", 1);
+#else
+  return false;
+#endif
 }
 
 
@@ -1232,7 +1262,8 @@ int pocl_llvm_codegen2(const char* TTriple, const char* MCPU,
   *Output = nullptr;
   std::unique_ptr<llvm::TargetLibraryInfoImpl> TLIIPtr;
 
-  std::unique_ptr<llvm::TargetMachine> TM(GetTargetMachine(TTriple, MCPU, Features));
+  std::unique_ptr<llvm::TargetMachine> TM(
+      GetTargetMachine(TTriple, MCPU, Features, useJITForCodegen(DevType)));
   llvm::TargetMachine *Target = TM.get();
 
   // First try direct object code generation from LLVM, if supported by the
