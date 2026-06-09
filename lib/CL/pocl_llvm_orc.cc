@@ -30,11 +30,11 @@
 #include <llvm/ExecutionEngine/JITLink/JITLinkMemoryManager.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
 #include <llvm/ExecutionEngine/Orc/Core.h>
+#include <llvm/ExecutionEngine/Orc/ExecutionUtils.h>
 #include <llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h>
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
 #include <llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h>
 #include <llvm/ExecutionEngine/Orc/Shared/ExecutorSymbolDef.h>
-#include <llvm/Support/DynamicLibrary.h>
 #include <llvm/Support/Error.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/TargetParser/Triple.h>
@@ -74,11 +74,33 @@ std::mutex JITMutex;
    counter guarantees that regardless of the caller-supplied name. */
 std::atomic<uint64_t> JDCounter{ 0 };
 
+/* Make a vector-math library's symbols (e.g. libmvec's _ZGVdN8v_expf)
+   resolvable by JIT'd kernels. Attaches a DynamicLibrarySearchGenerator for
+   the library to the process-symbols JITDylib, which every kernel JITDylib
+   links against (see the link order in pocl_jit_load_object). This is the
+   idiomatic ORC way to expose a runtime library to the JIT: lookups are served
+   from the library's own handle through the JIT's generator chain, rather than
+   loading the library and relying on LLJIT's default process-symbol search to
+   pick the symbols up. Returns false (and leaves the JIT usable) if the
+   library cannot be loaded. */
 static bool
-loadPermanentLibrary (const char *Library)
+loadVecMathLibrary (const char *Library)
 {
-  return Library && Library[0]
-         && !sys::DynamicLibrary::LoadLibraryPermanently (Library);
+  if (!Library || !Library[0])
+    return false;
+  JITDylibSP PSJD = TheJIT->getProcessSymbolsJITDylib ();
+  if (!PSJD)
+    return false;
+  Expected<std::unique_ptr<DynamicLibrarySearchGenerator> > Gen
+      = DynamicLibrarySearchGenerator::Load (
+          Library, TheJIT->getDataLayout ().getGlobalPrefix ());
+  if (!Gen)
+    {
+      consumeError (Gen.takeError ());
+      return false;
+    }
+  PSJD->addGenerator (std::move (*Gen));
+  return true;
 }
 
 #ifdef _WIN32
@@ -211,14 +233,14 @@ pocl_jit_initialize (const char *TripleStr, const char *CPU,
      a vector-math library's symbols (e.g. libmvec's _ZGVdN8v_expf). Which
      library is chosen at configure time, matching the codegen veclib selection
      in pocl_llvm_wg.cc. On the old link path that library was pulled in as a
-     NEEDED lib of the kernel .so; the JIT does no such link, so load it into the
-     process here (LoadLibraryPermanently uses RTLD_GLOBAL, so its symbols join
-     the scope the JIT searches). SVML is intentionally not handled: it is a
-     static-only library incompatible with the JIT, so SVML builds keep the link
-     path (HOST_CPU_ENABLE_JIT is off there). */
+     NEEDED lib of the kernel .so; the JIT does no such link, so expose the
+     library's symbols to the JIT here via a DynamicLibrarySearchGenerator (see
+     loadVecMathLibrary). SVML is intentionally not handled: it is a static-only
+     library incompatible with the JIT, so SVML builds keep the link path
+     (HOST_CPU_ENABLE_JIT is off there). */
 #if defined(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
   const char *VecMathLib = "libmvec.so.1";
-  if (!loadPermanentLibrary (VecMathLib))
+  if (!loadVecMathLibrary (VecMathLib))
     POCL_MSG_PRINT_LLVM (
         "pocl_jit: could not load vector-math library '%s'; vectorized math "
         "kernels may fail to resolve their symbols\n",
@@ -228,19 +250,19 @@ pocl_jit_initialize (const char *TripleStr, const char *CPU,
   bool VecMathLoaded = false;
 #ifdef HOST_CPU_SLEEF_LIBRARY
   VecMathLib = HOST_CPU_SLEEF_LIBRARY;
-  VecMathLoaded = loadPermanentLibrary (VecMathLib);
+  VecMathLoaded = loadVecMathLibrary (VecMathLib);
 #endif
 #ifdef HOST_CPU_SLEEF_LIBRARY_FALLBACK
   if (!VecMathLoaded)
     {
       VecMathLib = HOST_CPU_SLEEF_LIBRARY_FALLBACK;
-      VecMathLoaded = loadPermanentLibrary (VecMathLib);
+      VecMathLoaded = loadVecMathLibrary (VecMathLib);
     }
 #endif
   if (!VecMathLoaded)
     {
       VecMathLib = "libsleef.so";
-      VecMathLoaded = loadPermanentLibrary (VecMathLib);
+      VecMathLoaded = loadVecMathLibrary (VecMathLib);
     }
   if (!VecMathLoaded)
     POCL_MSG_PRINT_LLVM (
