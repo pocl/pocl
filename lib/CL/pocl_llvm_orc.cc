@@ -46,12 +46,22 @@
 #endif
 
 #include <cstdint>
+#include <cstdlib>
 #include <memory>
 #include <mutex>
 #include <string>
 
 using namespace llvm;
 using namespace llvm::orc;
+
+/* Latched (under JITMutex) when LLJIT creation fails, after which
+   pocl_jit_initialize() fails fast and pocl_cpu_device_uses_jit() reports the
+   device as not using the JIT, routing kernels through the linker path
+   instead. Never reset: a creation failure (unsupported triple, executor
+   setup) is not transient. Read without the lock by the gate; the flag only
+   ever flips 0 -> 1, so a stale read at worst routes one more kernel into
+   pocl_jit_initialize()'s locked fail-fast path. */
+extern "C" int pocl_jit_unavailable = 0;
 
 #ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
 /* Host-side printf flush callback referenced by kernels built with immediate
@@ -176,6 +186,8 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
   std::lock_guard<std::mutex> Lock(JITMutex);
   if (TheJIT)
     return 0;
+  if (pocl_jit_unavailable)
+    return -1;
 
   /* The native target and asm printer are already initialized by
      InitializeLLVM() during device setup; kernel codegen (which uses the same
@@ -220,9 +232,17 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
   Builder.setJITTargetMachineBuilder(std::move(JTMB));
 
   Expected<std::unique_ptr<LLJIT>> JIT = Builder.create();
+  /* Test hook: simulate an environment where the JIT cannot be brought up
+     (unsupported triple, executor setup failure) to exercise the linker
+     fallback; see test_jit_fallback.jl. */
+  if (JIT && getenv("POCL_FAULT_INJECT_JIT"))
+    JIT = createStringError(inconvertibleErrorCode(),
+                            "injected failure (POCL_FAULT_INJECT_JIT)");
   if (!JIT) {
-    POCL_MSG_ERR("pocl_jit: LLJIT creation failed: %s\n",
-                 toString(JIT.takeError()).c_str());
+    POCL_MSG_WARN("pocl_jit: LLJIT creation failed: %s;"
+                  " falling back to linking kernel binaries\n",
+                  toString(JIT.takeError()).c_str());
+    pocl_jit_unavailable = 1;
     return -1;
   }
   TheJIT = std::move(*JIT);

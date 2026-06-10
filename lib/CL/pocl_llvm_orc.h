@@ -36,9 +36,15 @@ extern "C"
 {
 #endif
 
+/* Nonzero once LLJIT creation has failed. pocl_cpu_device_uses_jit() reads
+   this, so a latched failure reroutes kernels through the linker path; see
+   pocl_check_kernel_dlhandle_cache() for where that fallback is armed. */
+extern int pocl_jit_unavailable;
+
 /* Lazily create the process-global LLJIT that loads kernel objects.
    Idempotent and thread-safe; the triple determines the JIT's data layout
-   (and thus symbol mangling). Returns 0 on success. */
+   (and thus symbol mangling). Returns 0 on success. A failure to create the
+   JIT is latched in pocl_jit_unavailable and every later call fails fast. */
 int pocl_jit_initialize (const char *triple,
                          const char *cpu);
 

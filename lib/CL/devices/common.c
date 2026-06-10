@@ -1342,6 +1342,20 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 
   char module_fn[POCL_MAX_PATHNAME_LENGTH];
   int uses_jit_loader = 0;
+
+#ifdef HOST_CPU_ENABLE_JIT
+  /* Bring up the JIT before deciding how to build and load the kernel. A
+     failed LLJIT creation latches pocl_jit_unavailable, turning the
+     pocl_cpu_device_uses_jit() gate off, so the disk-cache probe and codegen
+     below fall back to the linker path: a cached kernel object is linked into
+     a shared library on the spot (see probe_final_binary()), a fresh build
+     produces the shared library directly, and the result is dlopen()ed. The
+     return value thus needs no handling here. */
+  if (pocl_cpu_device_uses_jit (command->device))
+    (void)pocl_jit_initialize (command->device->llvm_target_triplet,
+                               command->device->llvm_cpu);
+#endif
+
   int err = pocl_check_kernel_disk_cache (module_fn, command, specialize,
                                           &uses_jit_loader);
   if (err)
@@ -1356,12 +1370,9 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
      probe_final_binary()). */
   ci->is_jit = uses_jit_loader;
 #ifdef HOST_CPU_ENABLE_JIT
+  /* uses_jit_loader implies the JIT initialized successfully above. */
   if (ci->is_jit)
-    {
-      pocl_jit_initialize (command->device->llvm_target_triplet,
-                           command->device->llvm_cpu);
-      ci->dlhandle = pocl_jit_load_object (module_fn, run_cmd->kernel->name);
-    }
+    ci->dlhandle = pocl_jit_load_object (module_fn, run_cmd->kernel->name);
   else
 #endif
     ci->dlhandle = pocl_dynlib_open (module_fn, 0, 1);
@@ -1386,8 +1397,6 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
       if (err == 0)
         {
           ci->is_jit = 1;
-          pocl_jit_initialize (command->device->llvm_target_triplet,
-                               command->device->llvm_cpu);
           ci->dlhandle
             = pocl_jit_load_object (module_fn, run_cmd->kernel->name);
         }
@@ -1396,10 +1405,12 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 
   if (ci->dlhandle == NULL)
     {
-      POCL_MSG_ERR ("loading kernel binary \"%s\" failed.\n"
-                    "note: this may be caused by missing symbols "
-                    " in the kernel binary\n.",
-                    module_fn);
+      POCL_MSG_ERR ("loading kernel binary \"%s\" failed.%s\n",
+                    module_fn,
+                    ci->is_jit
+                        ? ""
+                        : "\nnote: this may be caused by missing symbols"
+                          " in the kernel binary.");
       POCL_UNLOCK (pocl_dlhandle_lock);
       free (ci);
       return NULL;

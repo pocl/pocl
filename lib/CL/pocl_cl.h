@@ -52,6 +52,9 @@
 
 #include "pocl_debug.h"
 #include "pocl_hash.h"
+#ifdef HOST_CPU_ENABLE_JIT
+#include "pocl_llvm_orc.h"
+#endif
 #include "pocl_runtime_config.h"
 #include "pocl_threads.h"
 #include "pocl_tracing.h"
@@ -1436,12 +1439,14 @@ struct _cl_device_id {
    run-time switch is left on. This is the single gate that codegen (the kernel
    object's code model) and the cached artifact's name (.o vs .so/.dll)
    consult; the loader accepts either artifact and follows what it finds (see
-   pocl_check_kernel_disk_cache()). Returns 0 when the JIT is not compiled in. */
+   pocl_check_kernel_disk_cache()). Returns 0 when the JIT is not compiled in,
+   and once bringing up the JIT has failed (pocl_jit_unavailable), after which
+   kernels fall back to the linker path. */
 static inline int
 pocl_cpu_device_uses_jit (cl_device_id device)
 {
 #ifdef HOST_CPU_ENABLE_JIT
-  return device->ops->finalize_binary == NULL
+  return device->ops->finalize_binary == NULL && !pocl_jit_unavailable
          && pocl_get_bool_option ("POCL_CPU_JIT", 1);
 #else
   (void)device;
