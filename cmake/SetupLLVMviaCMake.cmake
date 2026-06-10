@@ -291,3 +291,53 @@ if(LLVM_ENABLE_SHARED_LIBS OR STATIC_LLVM)
     endif()
   endforeach()
 endif()
+
+if(APPLE AND STATIC_LLVM AND VISIBILITY_HIDDEN)
+  # Mach-O ld has no --exclude-libs (which lib/CL/CMakeLists.txt uses on ELF to
+  # keep the statically-linked LLVM out of libpocl's exports), so symbols pulled
+  # from the LLVM/Clang static archives would be re-exported -- and their weak
+  # definitions (vtables, template instantiations) coalesced by dyld with any
+  # other LLVM copy in the process, which is fatal when the versions differ.
+  # Link the archives through ld64's -hidden-l instead, which marks every symbol
+  # they contribute private-extern, like SetupLLVMviaBinary.cmake already does.
+  # The component target names equal the archive base names (LLVMCore ->
+  # libLLVMCore.a), but the imported targets also carry the transitive system
+  # libraries (zstd, zlib, curses, xml2, ...) in their interface, so walk that
+  # interface and keep the non-LLVM/Clang entries on the regular link list.
+  set(_HIDDEN_LINK_FLAGS)
+  set(_HIDDEN_EXTERNAL_DEPS)
+  set(_HIDDEN_VISITED)
+  set(_HIDDEN_WORKLIST ${POCL_CLANG_LINK_TARGETS} ${POCL_LLVM_LINK_TARGETS})
+  while(_HIDDEN_WORKLIST)
+    list(POP_FRONT _HIDDEN_WORKLIST _ITEM)
+    if(_ITEM IN_LIST _HIDDEN_VISITED)
+      continue()
+    endif()
+    list(APPEND _HIDDEN_VISITED ${_ITEM})
+    # static library targets wrap their private deps in $<LINK_ONLY:...>;
+    # unwrap so LLVM components named that way are hidden, not relinked plainly
+    if(_ITEM MATCHES "^\\$<LINK_ONLY:(.+)>$")
+      list(APPEND _HIDDEN_WORKLIST ${CMAKE_MATCH_1})
+      continue()
+    endif()
+    # (exact "LLVM" is the dylib, which -hidden-l cannot apply to; the hack
+    # above strips it from the Clang targets, but be defensive)
+    if(_ITEM MATCHES "^(LLVM|clang|lld)" AND NOT _ITEM STREQUAL "LLVM" AND TARGET ${_ITEM})
+      list(APPEND _HIDDEN_LINK_FLAGS "-Wl,-hidden-l${_ITEM}")
+      get_target_property(_ITEM_IFACE ${_ITEM} INTERFACE_LINK_LIBRARIES)
+      if(_ITEM_IFACE)
+        list(APPEND _HIDDEN_WORKLIST ${_ITEM_IFACE})
+      endif()
+    else()
+      # a system library (m, dl, ...) or an imported target (ZLIB::ZLIB,
+      # zstd::libzstd_shared, ...): link as usual
+      list(APPEND _HIDDEN_EXTERNAL_DEPS ${_ITEM})
+    endif()
+  endwhile()
+  # -hidden-l only takes a library name, so the archive directory must be on
+  # the search path; LLVM_LDFLAGS ends up in libpocl's LINK_FLAGS.
+  set(LLVM_LDFLAGS "-L${LLVM_LIBDIR}")
+  set(POCL_CLANG_LINK_TARGETS)
+  set(POCL_LLVM_LINK_TARGETS ${_HIDDEN_LINK_FLAGS} ${_HIDDEN_EXTERNAL_DEPS})
+  message(STATUS "Hiding statically-linked LLVM/Clang symbols via -hidden-l: ${POCL_LLVM_LINK_TARGETS}")
+endif()

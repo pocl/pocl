@@ -390,7 +390,18 @@ if(ENABLE_LLVM)
     list(APPEND POCL_PRIVATE_LINK_LIST ${CLANG_LINK_LIBRARIES} ${LLVM_LINK_LIBRARIES} ${LLVM_SYSLIBS})
   endif()
   if (ENABLE_SPIRV AND HAVE_LLVM_SPIRV_LIB)
-    list(PREPEND POCL_PRIVATE_LINK_LIST ${LLVM_SPIRV_LIB})
+    if(APPLE AND VISIBILITY_HIDDEN AND LLVM_SPIRV_LIB MATCHES "\\.a$")
+      # like the LLVM/Clang archives (see SetupLLVMviaCMake.cmake), keep the
+      # translator's symbols (including weak LLVM template instantiations from
+      # its objects) out of libpocl's exports; ld64 has no --exclude-libs, so
+      # load the archive with -hidden-l instead.
+      get_filename_component(LLVM_SPIRV_LIB_DIR "${LLVM_SPIRV_LIB}" DIRECTORY)
+      get_filename_component(LLVM_SPIRV_LIB_NAME "${LLVM_SPIRV_LIB}" NAME_WE)
+      string(REGEX REPLACE "^lib" "" LLVM_SPIRV_LIB_NAME "${LLVM_SPIRV_LIB_NAME}")
+      list(PREPEND POCL_PRIVATE_LINK_LIST "-L${LLVM_SPIRV_LIB_DIR}" "-Wl,-hidden-l${LLVM_SPIRV_LIB_NAME}")
+    else()
+      list(PREPEND POCL_PRIVATE_LINK_LIST ${LLVM_SPIRV_LIB})
+    endif()
   endif()
 
   if (ENABLE_MLIR)
