@@ -1039,6 +1039,21 @@ pocl_init_dlhandle_cache ()
 static unsigned handle_count = 0;
 #define MAX_CACHE_ITEMS 128
 
+/* Unloads a cache item's kernel module with the loader that loaded it
+   (see pocl_dlhandle_cache_item::is_jit). */
+static void
+release_dlhandle (pocl_dlhandle_cache_item *ci)
+{
+#ifdef HOST_CPU_ENABLE_JIT
+  if (ci->is_jit)
+    {
+      pocl_jit_unload (ci->dlhandle);
+      return;
+    }
+#endif
+  pocl_dynlib_close (ci->dlhandle);
+}
+
 /* must be called with pocl_dlhandle_lock LOCKED */
 static pocl_dlhandle_cache_item *
 get_new_dlhandle_cache_item ()
@@ -1056,12 +1071,7 @@ get_new_dlhandle_cache_item ()
   if ((handle_count >= MAX_CACHE_ITEMS) && ci && (ci != pocl_dlhandle_cache))
     {
       DL_DELETE (pocl_dlhandle_cache, ci);
-#ifdef HOST_CPU_ENABLE_JIT
-      if (ci->is_jit)
-        pocl_jit_unload (ci->dlhandle);
-      else
-#endif
-        pocl_dynlib_close (ci->dlhandle);
+      release_dlhandle (ci);
       memset (ci, 0, sizeof (pocl_dlhandle_cache_item));
     }
   else
@@ -1453,7 +1463,6 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
                         " failed: %s\n",
                         workgroup_string, module_fn,
                         jit_error != NULL ? jit_error : "unknown error");
-          pocl_jit_unload (ci->dlhandle);
         }
       else
 #endif
@@ -1462,8 +1471,8 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
                         "note: missing symbols in the kernel binary might be"
                         " reported as 'file not found' errors.\n",
                         workgroup_string, module_fn);
-          pocl_dynlib_close (ci->dlhandle);
         }
+      release_dlhandle (ci);
       POCL_UNLOCK (pocl_dlhandle_lock);
       free (ci);
       free (workgroup_string);

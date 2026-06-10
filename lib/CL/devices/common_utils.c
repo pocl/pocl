@@ -315,6 +315,8 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
 
   pocl_init_default_device_infos (device, HOST_DEVICE_EXTENSIONS);
 
+  device->kernels_run_on_host_cpu = CL_TRUE;
+
 #ifdef HOST_CPU_ENABLE_SPIRV
   device->supported_spirv_extensions = HOST_DEVICE_SPV_EXTENSIONS;
 
