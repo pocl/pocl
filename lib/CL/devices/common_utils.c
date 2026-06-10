@@ -36,6 +36,9 @@
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
+#ifdef HOST_CPU_ENABLE_JIT
+#include "pocl_llvm_orc.h"
+#endif
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
 #include "pocl_tensor_util.h"
@@ -315,7 +318,17 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
 
   pocl_init_default_device_infos (device, HOST_DEVICE_EXTENSIONS);
 
-  device->kernels_run_on_host_cpu = CL_TRUE;
+#ifdef HOST_CPU_ENABLE_JIT
+  /* Bring up the process-global JIT and latch the device's load mode for its
+     lifetime (see pocl_cpu_device_uses_jit()). A bring-up failure
+     (unsupported triple, executor setup) is not transient, so the device
+     permanently keeps the linker path. */
+  if (device->ops->finalize_binary == NULL
+      && pocl_get_bool_option ("POCL_CPU_JIT", 1)
+      && pocl_jit_initialize (device->llvm_target_triplet, device->llvm_cpu)
+           == 0)
+    device->uses_cpu_jit = CL_TRUE;
+#endif
 
 #ifdef HOST_CPU_ENABLE_SPIRV
   device->supported_spirv_extensions = HOST_DEVICE_SPV_EXTENSIONS;

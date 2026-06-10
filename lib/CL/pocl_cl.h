@@ -52,9 +52,6 @@
 
 #include "pocl_debug.h"
 #include "pocl_hash.h"
-#ifdef HOST_CPU_ENABLE_JIT
-#include "pocl_llvm_orc.h"
-#endif
 #include "pocl_runtime_config.h"
 #include "pocl_threads.h"
 #include "pocl_tracing.h"
@@ -1188,10 +1185,10 @@ struct _cl_device_id {
    * This pass adds checks of input operands to div/rem so that UB is
    * never triggered. */
   cl_bool run_sanitize_divrem_pass;
-  /* CL_TRUE for devices that execute kernels on the host CPU through the
-   * common dlhandle/codegen machinery; latched in pocl_cpu_init_common().
-   * Gates the in-process kernel JIT (see pocl_cpu_device_uses_jit()). */
-  cl_bool kernels_run_on_host_cpu;
+  /* CL_TRUE for CPU host devices that load kernel objects in-process via the
+   * ORC/JITLink JIT; latched in pocl_cpu_init_common() (see
+   * pocl_cpu_device_uses_jit()). */
+  cl_bool uses_cpu_jit;
 
   /* If CL_TRUE, pocl_llvm_build_program will ignore pocl's OpenCL headers
    * that perform built-in renames during OpenCL C build and relies on
@@ -1438,27 +1435,17 @@ struct _cl_device_id {
 /* Whether a CPU host device loads kernel objects in-process via the ORC/JITLink
    JIT (HOST_CPU_ENABLE_JIT) rather than linking them into a shared library
    (in-process via lld, or through the Clang driver) and dlopen()ing the
-   result. A device qualifies when it runs kernels on the host CPU
-   (kernels_run_on_host_cpu, latched in pocl_cpu_init_common()), has no custom
-   binary finalizer -- custom back-ends set finalize_binary and keep the link
-   path -- and the POCL_CPU_JIT
-   run-time switch is left on. This is the single gate that codegen (the kernel
-   object's code model) and the cached artifact's name (.o vs .so/.dll)
-   consult; the loader accepts either artifact and follows what it finds (see
-   pocl_check_kernel_disk_cache()). Returns 0 when the JIT is not compiled in,
-   and once bringing up the JIT has failed (pocl_jit_unavailable), after which
-   kernels fall back to the linker path. */
+   result. Latched for the device's lifetime in pocl_cpu_init_common(): a
+   device qualifies when it has no custom binary finalizer -- custom back-ends
+   set finalize_binary and keep the link path --, the POCL_CPU_JIT run-time
+   switch is left on, and the process-global JIT could be brought up. This is
+   the single gate that codegen (the kernel object's code model) and the
+   cached artifact's name (.o vs .so/.dll) consult; the loader accepts either
+   artifact and follows what it finds (see pocl_check_kernel_disk_cache()). */
 static inline int
 pocl_cpu_device_uses_jit (cl_device_id device)
 {
-#ifdef HOST_CPU_ENABLE_JIT
-  return device->kernels_run_on_host_cpu
-         && device->ops->finalize_binary == NULL && !pocl_jit_unavailable
-         && pocl_get_bool_option ("POCL_CPU_JIT", 1);
-#else
-  (void)device;
-  return 0;
-#endif
+  return device->uses_cpu_jit;
 }
 
 #define DEVICE_SVM_FINEGR(dev) (dev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_BUFFER \

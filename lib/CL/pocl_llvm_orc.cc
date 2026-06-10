@@ -26,6 +26,7 @@
 
 #include "pocl_debug.h"
 #include "pocl_dynlib.h"
+#include "pocl_llvm.h"
 #include "pocl_llvm_orc.h"
 
 #include <llvm/ExecutionEngine/JITLink/JITLinkMemoryManager.h>
@@ -53,15 +54,6 @@
 
 using namespace llvm;
 using namespace llvm::orc;
-
-/* Latched (under JITMutex) when LLJIT creation fails, after which
-   pocl_jit_initialize() fails fast and pocl_cpu_device_uses_jit() reports the
-   device as not using the JIT, routing kernels through the linker path
-   instead. Never reset: a creation failure (unsupported triple, executor
-   setup) is not transient. Read without the lock by the gate; the flag only
-   ever flips 0 -> 1, so a stale read at worst routes one more kernel into
-   pocl_jit_initialize()'s locked fail-fast path. */
-extern "C" int pocl_jit_unavailable = 0;
 
 #ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
 /* Host-side printf flush callback referenced by kernels built with immediate
@@ -101,6 +93,14 @@ namespace {
    code-stays-mapped-through-exit guarantee. */
 LLJIT *TheJIT = nullptr;
 std::mutex JITMutex;
+
+/* Latched (under JITMutex) when LLJIT creation fails, after which
+   pocl_jit_initialize() fails fast. Never reset: a creation failure
+   (unsupported triple, executor setup) is not transient. Device init
+   consults the result through pocl_jit_initialize()'s return value and
+   latches the linker-path fallback per device (see
+   pocl_cpu_device_uses_jit()). */
+bool JITFailed = false;
 
 /* JITDylib names must be unique within an ExecutionSession; a monotonic
    counter guarantees that regardless of the caller-supplied name. Only ever
@@ -202,12 +202,14 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
   std::lock_guard<std::mutex> Lock(JITMutex);
   if (TheJIT)
     return 0;
-  if (pocl_jit_unavailable)
+  if (JITFailed)
     return -1;
 
-  /* The native target and asm printer are already initialized by
-     InitializeLLVM() during device setup; kernel codegen (which uses the same
-     target) runs before any kernel object is loaded. */
+  /* Called from device init, which runs before clCreateContext's
+     InitializeLLVM() call, so register the native target (and the rest of
+     the one-time LLVM setup) here. InitializeLLVM() is idempotent. */
+  InitializeLLVM();
+
   LLJITBuilder Builder;
 
   /* Force the JITLink-based object-linking layer (LLJIT defaults to
@@ -258,7 +260,7 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
     POCL_MSG_WARN("pocl_jit: LLJIT creation failed: %s;"
                   " falling back to linking kernel binaries\n",
                   toString(JIT.takeError()).c_str());
-    pocl_jit_unavailable = 1;
+    JITFailed = true;
     return -1;
   }
   TheJIT = JIT->release();
