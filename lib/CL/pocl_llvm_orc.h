@@ -56,8 +56,16 @@ int pocl_jit_initialize (const char *triple,
 void *pocl_jit_load_object (const char *path, const char *uniq_name);
 
 /* Look up an (unmangled) symbol in a previously loaded object. Returns the
-   executable address, or NULL if not found. */
+   executable address, or NULL on failure; the failure text is then available
+   from pocl_jit_last_error(). */
 void *pocl_jit_lookup (void *handle, const char *symbol_name);
+
+/* Text of the most recent pocl_jit_lookup() failure (a dlerror() analogue),
+   or NULL if no lookup has failed yet. With JITLink the first lookup is where
+   linking happens, so this is the diagnostic that names unresolved symbols or
+   relocation problems. The returned pointer is valid until the next failing
+   lookup; use (or copy) it immediately. */
+const char *pocl_jit_last_error (void);
 
 /* Unload a previously loaded object, reclaiming its code and memory.
    Returns nonzero on success. */

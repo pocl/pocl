@@ -107,6 +107,12 @@ std::mutex JITMutex;
    touched under JITMutex, so a plain integer suffices. */
 uint64_t JDCounter = 0;
 
+/* Text of the most recent pocl_jit_lookup() failure, kept for
+   pocl_jit_last_error() (a dlerror() analogue). With JITLink the first
+   lookup is where linking happens, so this is the error that names unresolved
+   symbols or relocation problems. Guarded by JITMutex. */
+std::string LastLookupError;
+
 /* Make a dynamic library's symbols (e.g. libmvec's _ZGVdN8v_expf, or
    libpocl's own dependency chain) resolvable by JIT'd kernels. Attaches a
    DynamicLibrarySearchGenerator for the library to the process-symbols
@@ -290,7 +296,7 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
 #if defined(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
   const char *VecMathLib = "libmvec.so.1";
   if (!addLibrarySearchGenerator(VecMathLib))
-    POCL_MSG_PRINT_LLVM(
+    POCL_MSG_WARN(
         "pocl_jit: could not load vector-math library '%s'; vectorized math "
         "kernels may fail to resolve their symbols\n",
         VecMathLib);
@@ -312,7 +318,7 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
     VecMathLoaded = addLibrarySearchGenerator(VecMathLib);
   }
   if (!VecMathLoaded)
-    POCL_MSG_PRINT_LLVM(
+    POCL_MSG_WARN(
         "pocl_jit: could not load vector-math library '%s'; vectorized math "
         "kernels may fail to resolve their symbols\n",
         VecMathLib);
@@ -327,7 +333,7 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
   VecMathLoaded &= loadStaticArchive(HOST_CPU_SVML_LIBRARY);
 #endif
   if (!VecMathLoaded)
-    POCL_MSG_PRINT_LLVM(
+    POCL_MSG_WARN(
         "pocl_jit: could not load the SVML static archives; vectorized math "
         "kernels may fail to resolve their symbols\n");
 #endif
@@ -383,11 +389,20 @@ void *pocl_jit_lookup(void *Handle, const char *SymbolName) {
      relocation of the object happen here, on first lookup. */
   Expected<ExecutorAddr> Addr = TheJIT->lookup(*M->JD, SymbolName);
   if (!Addr) {
-    /* Not necessarily fatal: callers may probe alternative names. */
-    consumeError(Addr.takeError());
+    /* Not necessarily fatal: callers may probe alternative names, so only
+       record the diagnostic for pocl_jit_last_error() instead of printing an
+       error here. */
+    LastLookupError = toString(Addr.takeError());
+    POCL_MSG_PRINT_LLVM("pocl_jit: lookup('%s') failed: %s\n", SymbolName,
+                        LastLookupError.c_str());
     return nullptr;
   }
   return reinterpret_cast<void *>(Addr->getValue());
+}
+
+const char *pocl_jit_last_error(void) {
+  std::lock_guard<std::mutex> Lock(JITMutex);
+  return LastLookupError.empty() ? nullptr : LastLookupError.c_str();
 }
 
 int pocl_jit_unload(void *Handle) {

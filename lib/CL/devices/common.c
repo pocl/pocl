@@ -1428,37 +1428,46 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
     ci->wg = pocl_jit_lookup (ci->dlhandle, workgroup_string);
   else
 #endif
-    ci->wg = pocl_dynlib_symbol_address (ci->dlhandle, workgroup_string);
+    {
+      ci->wg = pocl_dynlib_symbol_address (ci->dlhandle, workgroup_string);
+      if (ci->wg == NULL)
+        {
+          // Older OSX dyld APIs need the name without the underscore.
+          snprintf (workgroup_string, workgroup_len,
+                    "pocl_kernel_%s_workgroup", run_cmd->kernel->name);
+          ci->wg
+            = pocl_dynlib_symbol_address (ci->dlhandle, workgroup_string);
+        }
+    }
 
   if (ci->wg == NULL)
     {
-      // Older OSX dyld APIs need the name without the underscore.
-      snprintf (workgroup_string, workgroup_len, "pocl_kernel_%s_workgroup",
-                run_cmd->kernel->name);
 #ifdef HOST_CPU_ENABLE_JIT
       if (ci->is_jit)
-        ci->wg = pocl_jit_lookup (ci->dlhandle, workgroup_string);
+        {
+          /* The JIT links the object on first lookup, so its lookup error
+             carries the real diagnostic (unresolved symbols, relocation
+             problems). */
+          const char *jit_error = pocl_jit_last_error ();
+          POCL_MSG_ERR ("looking up \"%s\" in kernel object \"%s\""
+                        " failed: %s\n",
+                        workgroup_string, module_fn,
+                        jit_error != NULL ? jit_error : "unknown error");
+          pocl_jit_unload (ci->dlhandle);
+        }
       else
 #endif
-        ci->wg = pocl_dynlib_symbol_address (ci->dlhandle, workgroup_string);
-
-      if (ci->wg == NULL)
         {
           POCL_MSG_ERR ("looking up \"%s\" in kernel binary \"%s\" failed.\n"
                         "note: missing symbols in the kernel binary might be"
                         " reported as 'file not found' errors.\n",
                         workgroup_string, module_fn);
-#ifdef HOST_CPU_ENABLE_JIT
-          if (ci->is_jit)
-            pocl_jit_unload (ci->dlhandle);
-          else
-#endif
-            pocl_dynlib_close (ci->dlhandle);
-          POCL_UNLOCK (pocl_dlhandle_lock);
-          free (ci);
-          free (workgroup_string);
-          return NULL;
+          pocl_dynlib_close (ci->dlhandle);
         }
+      POCL_UNLOCK (pocl_dlhandle_lock);
+      free (ci);
+      free (workgroup_string);
+      return NULL;
     }
 
   run_cmd->wg = ci->wg;
