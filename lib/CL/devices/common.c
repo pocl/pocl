@@ -100,6 +100,99 @@ size_t event_c;
  */
 
 #ifdef ENABLE_LLVM
+/* Links a compiled kernel object into the final shared library the dynamic
+   loader can pick up, through the device's custom finalization step if it
+   has one and the Clang driver otherwise. The object file is left in place. */
+int
+pocl_link_final_binary (cl_device_id device, const char *objfile,
+                        const char *final_binary_path)
+{
+  int error;
+
+  /* Temporary filename for kernel.so. Create it next to the final binary
+     to enable a potential customized finalization step to create multiple
+     files next to it. */
+  char tmp_module[POCL_MAX_PATHNAME_LENGTH];
+  if (pocl_mk_tempname (tmp_module, final_binary_path, SHARED_LIB_EXT, NULL))
+    {
+      POCL_MSG_PRINT_LLVM ("Creating temporary kernel.so file"
+                           " for %s FAILED\n",
+                           final_binary_path);
+      return -1;
+    }
+  else
+    POCL_MSG_PRINT_LLVM ("Temporary shared-lib file"
+                         " for %s is: %s\n",
+                         final_binary_path, tmp_module);
+
+  POCL_MSG_PRINT_LLVM ("Linking final module\n");
+
+  /* If the device has a custom linkage/binary generation step, call it
+     instead of the default Clang-driven linkage step. It's likely a
+     non-host target in that case. */
+  if (device->ops->finalize_binary != NULL)
+    {
+      error = device->ops->finalize_binary (device, tmp_module, objfile);
+    }
+  else
+    {
+      /* Link through Clang driver interface which knows the correct toolchains
+         for all of its targets.  */
+      const char *cmd_line[64]
+        = { pocl_get_path ("CLANG", CLANGCC), "-o", tmp_module, objfile };
+      unsigned last_arg_idx = 4;
+
+#ifdef _MSC_VER
+      /* NOTE: This intended for targets having 'msvc' triple component.
+       * These options, passed to MSVC's linker:
+       * - prevent *.exp and *.lib files to be generated and wasting disk
+       *   space.
+       * - suppress "Creating library *.lib and object *.exp" to be written
+       *   stdout which messes up regex checking on some internal tests.  */
+      cmd_line[last_arg_idx++] = "-Xlinker";
+      cmd_line[last_arg_idx++] = "-noexp";
+      cmd_line[last_arg_idx++] = "-Xlinker";
+      cmd_line[last_arg_idx++] = "-noimplib";
+#endif
+
+      /* ENABLE_PRINTF_IMMEDIATE_FLUSH results in "pocl_flush_printf_buffer"
+       * symbol referenced in the built kernel.so; however that function exists
+       * only on the host side, therefore link to libpocl.so which provides it
+       */
+#ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
+#ifdef HAVE_DLFCN_H
+      const char *fname = pocl_dynlib_pathname ((void *)pocl_cache_tempname);
+      assert (fname != NULL);
+      cmd_line[last_arg_idx++] = fname;
+#else
+#error ENABLE_PRINTF_IMMEDIATE_FLUSH requires HAVE_DLFCN_H
+#endif
+#endif
+      const char **last_arg = &cmd_line[last_arg_idx];
+      const char **device_ld_arg = device->final_linkage_flags;
+      while ((*last_arg++ = *device_ld_arg++))
+        {
+        }
+
+      error = pocl_invoke_clang (device->llvm_target_triplet, cmd_line);
+    }
+  if (error)
+    {
+      POCL_MSG_PRINT_LLVM ("Linking kernel.so.o -> kernel.so has failed\n");
+      return error;
+    }
+
+  /* rename temporary kernel.so */
+  error = pocl_rename (tmp_module, final_binary_path);
+
+  if (error)
+    POCL_MSG_PRINT_LLVM (
+        "Renaming temporary kernel.so to final ('%s') has failed.\n",
+        final_binary_path);
+
+  return error;
+}
+
 static int
 llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
               cl_device_id device, _cl_command_node *command, int specialize)
@@ -108,7 +201,6 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   int error = 0;
   void *llvm_module = NULL;
 
-  char tmp_module[POCL_MAX_PATHNAME_LENGTH];
   char tmp_objfile[POCL_MAX_PATHNAME_LENGTH];
 
   char *objfile = NULL;
@@ -235,96 +327,9 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
       goto FINISH;
     }
 
-  /* Temporary filename for kernel.so. Create it in the parallel.bc's
-     directory to enable a potential customized finalization step to
-     create multiple files next to it. */
-  char parallel_bc_dir[POCL_MAX_PATHNAME_LENGTH + 2];
-
-  pocl_cache_kernel_cachedir_path (parallel_bc_dir, program, device_i, kernel,
-                                   "", command, specialize);
-  strncat (parallel_bc_dir, "/parallel", POCL_MAX_PATHNAME_LENGTH);
-  parallel_bc_dir[POCL_MAX_PATHNAME_LENGTH - 1] = 0;
-
-  if (pocl_mk_tempname (tmp_module, parallel_bc_dir, SHARED_LIB_EXT, NULL))
-    {
-      POCL_MSG_PRINT_LLVM ("Creating temporary kernel.so file"
-                           " for kernel %s FAILED\n",
-                           kernel_name);
-      goto FINISH;
-    }
-  else
-    POCL_MSG_PRINT_LLVM ("Temporary shared-lib file"
-                         " for kernel %s is: %s\n",
-                         kernel_name, tmp_module);
-
-  POCL_MSG_PRINT_LLVM ("Linking final module\n");
-
-  /* If the device has a custom linkage/binary generation step, call it
-     instead of the default Clang-driven linkage step. It's likely a
-     non-host target in that case. */
-  if (device->ops->finalize_binary != NULL)
-    {
-      error = device->ops->finalize_binary (program->devices[device_i],
-                                            tmp_module, tmp_objfile);
-    }
-  else
-    {
-      /* Link through Clang driver interface which knows the correct toolchains
-         for all of its targets.  */
-      const char *cmd_line[64]
-        = { pocl_get_path ("CLANG", CLANGCC), "-o", tmp_module, tmp_objfile };
-      unsigned last_arg_idx = 4;
-
-#ifdef _MSC_VER
-      /* NOTE: This intended for targets having 'msvc' triple component.
-       * These options, passed to MSVC's linker:
-       * - prevent *.exp and *.lib files to be generated and wasting disk
-       *   space.
-       * - suppress "Creating library *.lib and object *.exp" to be written
-       *   stdout which messes up regex checking on some internal tests.  */
-      cmd_line[last_arg_idx++] = "-Xlinker";
-      cmd_line[last_arg_idx++] = "-noexp";
-      cmd_line[last_arg_idx++] = "-Xlinker";
-      cmd_line[last_arg_idx++] = "-noimplib";
-#endif
-
-      /* ENABLE_PRINTF_IMMEDIATE_FLUSH results in "pocl_flush_printf_buffer"
-       * symbol referenced in the built kernel.so; however that function exists
-       * only on the host side, therefore link to libpocl.so which provides it
-       */
-#ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
-#ifdef HAVE_DLFCN_H
-      const char *fname = pocl_dynlib_pathname ((void *)pocl_cache_tempname);
-      assert (fname != NULL);
-      cmd_line[last_arg_idx++] = fname;
-#else
-#error ENABLE_PRINTF_IMMEDIATE_FLUSH requires HAVE_DLFCN_H
-#endif
-#endif
-      const char **last_arg = &cmd_line[last_arg_idx];
-      const char **device_ld_arg = device->final_linkage_flags;
-      while ((*last_arg++ = *device_ld_arg++))
-        {
-        }
-
-      error = pocl_invoke_clang (device->llvm_target_triplet, cmd_line);
-    }
+  error = pocl_link_final_binary (device, tmp_objfile, final_binary_path);
   if (error)
-    {
-      POCL_MSG_PRINT_LLVM ("Linking kernel.so.o -> kernel.so has failed\n");
-      goto FINISH;
-    }
-
-  /* rename temporary kernel.so */
-  error = pocl_rename (tmp_module, final_binary_path);
-
-  if (error)
-    {
-      POCL_MSG_PRINT_LLVM (
-          "Renaming temporary kernel.so to final ('%s') has failed.\n",
-          final_binary_path);
-      goto FINISH;
-    }
+    goto FINISH;
 
   /* if LEAVE_COMPILER_FILES, rename temporary kernel.so.o, else delete it */
   if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
@@ -1071,6 +1076,74 @@ pocl_release_dlhandle_cache (void *dlhandle_cache_item)
 }
 
 /**
+ * Probes the disk cache for a loadable final binary of the given kernel
+ * command, accepting either of the two artifact variants the CPU drivers
+ * produce (see pocl_cache_final_binary_variant_path()).
+ *
+ * The two variants hold the same kernel, so a cache populated in the other
+ * JIT mode -- through a poclbinary from a differently-configured producer,
+ * or a POCL_CPU_JIT toggle on a shared cache -- remains usable: a found JIT
+ * kernel object is linked on the spot when the device doesn't run the JIT.
+ *
+ * \param module_fn [out] The file name of the final binary.
+ * \param command The kernel run command.
+ * \param specialized 1 if should check the per-command specialized one instead
+ * of the generic one.
+ * \param uses_jit_loader [out] 1 if the binary must be loaded with the JIT
+ * instead of the dynamic loader.
+ * \returns 1 if a loadable binary was found.
+ */
+static int
+probe_final_binary (char *module_fn, _cl_command_node *command,
+                    int specialized, int *uses_jit_loader)
+{
+  cl_kernel k = command->command.run.kernel;
+  cl_program p = k->program;
+  unsigned dev_i = command->program_device_i;
+
+  /* Prefer the linked shared library: any build can dlopen it, whereas the
+     JIT kernel object needs either the in-process JIT or a linker. */
+  pocl_cache_final_binary_variant_path (module_fn, p, dev_i, k, command,
+                                        specialized, 0);
+  if (pocl_exists (module_fn))
+    {
+      *uses_jit_loader = 0;
+      return 1;
+    }
+
+  pocl_cache_final_binary_variant_path (module_fn, p, dev_i, k, command,
+                                        specialized, 1);
+  if (!pocl_exists (module_fn))
+    return 0;
+
+  if (pocl_cpu_device_uses_jit (command->device))
+    {
+      *uses_jit_loader = 1;
+      return 1;
+    }
+
+#ifdef ENABLE_LLVM
+  /* A JIT kernel object in the cache of a device that doesn't run the JIT
+     (the POCL_CPU_JIT switch was turned off after the object was cached):
+     link it into the shared library that the device would have produced. */
+  char so_path[POCL_MAX_PATHNAME_LENGTH];
+  pocl_cache_final_binary_variant_path (so_path, p, dev_i, k, command,
+                                        specialized, 0);
+  POCL_LOCK (pocl_llvm_codegen_lock);
+  int error = pocl_link_final_binary (command->device, module_fn, so_path);
+  POCL_UNLOCK (pocl_llvm_codegen_lock);
+  if (error == 0)
+    {
+      memcpy (module_fn, so_path, POCL_MAX_PATHNAME_LENGTH);
+      *uses_jit_loader = 0;
+      return 1;
+    }
+  POCL_MSG_WARN ("Linking the cached kernel object %s failed.\n", module_fn);
+#endif
+  return 0;
+}
+
+/**
  * Checks if a built binary is found in the disk for the given kernel command,
  * if not, builds the kernel, caches it, and returns the file name of the
  * end result.
@@ -1079,24 +1152,27 @@ pocl_release_dlhandle_cache (void *dlhandle_cache_item)
  * \param command The kernel run command.
  * \param specialized 1 if should check the per-command specialized one instead
  * of the generic one.
- * \returns The filename of the built binary in the disk.
+ * \param uses_jit_loader [out] 1 if the binary must be loaded with the JIT
+ * instead of the dynamic loader.
+ * \returns CL_SUCCESS if module_fn names a loadable binary.
  */
 int
 pocl_check_kernel_disk_cache (char *module_fn,
                               _cl_command_node *command,
-                              int specialized)
+                              int specialized,
+                              int *uses_jit_loader)
 {
   _cl_command_run *run_cmd = &command->command.run;
   cl_kernel k = run_cmd->kernel;
   cl_program p = k->program;
   unsigned dev_i = command->program_device_i;
 
+  *uses_jit_loader = 0;
+
   /* First try to find a static WG binary for the local size as they
      are always more efficient than the dynamic ones.  Also, in case
      of reqd_wg_size, there might not be a dynamic sized one at all.  */
-  pocl_cache_final_binary_path (module_fn, p, dev_i, k, command, specialized);
-
-  if (pocl_exists (module_fn))
+  if (probe_final_binary (module_fn, command, specialized, uses_jit_loader))
     {
       POCL_MSG_PRINT_INFO ("Using a cached WG function: %s\n", module_fn);
       return CL_SUCCESS;
@@ -1120,6 +1196,7 @@ pocl_check_kernel_disk_cache (char *module_fn,
           POCL_MSG_ERR ("Final linking of kernel %s failed.\n", k->name);
           return -1;
         }
+      *uses_jit_loader = pocl_cpu_device_uses_jit (command->device);
       POCL_MSG_PRINT_INFO ("Built a %sWG function: %s\n",
                            specialized ? "specialized " : "generic ",
                            module_fn);
@@ -1138,14 +1215,11 @@ pocl_check_kernel_disk_cache (char *module_fn,
     {
       /* First try to find a specialized WG binary, if allowed by the
          command. */
-      if (!run_cmd->force_generic_wg_func)
-        pocl_cache_final_binary_path (module_fn, p, dev_i, k, command, 1);
-
-      if (run_cmd->force_generic_wg_func || !pocl_exists (module_fn))
+      if (run_cmd->force_generic_wg_func
+          || !probe_final_binary (module_fn, command, 1, uses_jit_loader))
         {
           /* Then check for a dynamic (non-specialized) kernel. */
-          pocl_cache_final_binary_path (module_fn, p, dev_i, k, command, 0);
-          if (!pocl_exists (module_fn))
+          if (!probe_final_binary (module_fn, command, 0, uses_jit_loader))
             {
               POCL_MSG_ERR ("Generic WG function binary does not exist.\n");
               return -1;
@@ -1246,7 +1320,9 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   ci->max_grid_dim_width = max_grid_width;
 
   char module_fn[POCL_MAX_PATHNAME_LENGTH];
-  int err = pocl_check_kernel_disk_cache (module_fn, command, specialize);
+  int uses_jit_loader = 0;
+  int err = pocl_check_kernel_disk_cache (module_fn, command, specialize,
+                                          &uses_jit_loader);
   if (err)
     {
       free (ci);
@@ -1254,9 +1330,10 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
       return NULL;
     }
 
-  /* A JIT device loads the kernel object in-process via ORC/JITLink instead of
-     dlopen()ing a shared library (see pocl_cpu_device_uses_jit()). */
-  ci->is_jit = pocl_cpu_device_uses_jit (command->device);
+  /* The load method follows the found artifact: a JIT kernel object is loaded
+     in-process via ORC/JITLink, a shared library is dlopen()ed (see
+     probe_final_binary()). */
+  ci->is_jit = uses_jit_loader;
 #ifdef HOST_CPU_ENABLE_JIT
   if (ci->is_jit)
     {
@@ -1267,6 +1344,35 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   else
 #endif
     ci->dlhandle = pocl_dynlib_open (module_fn, 0, 1);
+
+#ifdef HOST_CPU_ENABLE_JIT
+  /* A cached shared library can fail to dlopen() in this process, e.g. one
+     imported through a poclbinary whose dynamic dependencies do not resolve
+     here. A JIT device can still recover by recompiling the kernel object
+     from the program IR and loading that in-process. */
+  if (ci->dlhandle == NULL && !ci->is_jit
+      && pocl_cpu_device_uses_jit (command->device)
+      && run_cmd->kernel->program->binaries[command->program_device_i])
+    {
+      POCL_MSG_WARN ("loading the cached kernel binary \"%s\" failed;"
+                     " recompiling for the JIT\n",
+                     module_fn);
+      POCL_LOCK (pocl_llvm_codegen_lock);
+      err = llvm_codegen (module_fn, command->program_device_i,
+                          run_cmd->kernel, command->device, command,
+                          specialize);
+      POCL_UNLOCK (pocl_llvm_codegen_lock);
+      if (err == 0)
+        {
+          ci->is_jit = 1;
+          pocl_jit_initialize (command->device->llvm_target_triplet,
+                               command->device->llvm_cpu);
+          ci->dlhandle
+            = pocl_jit_load_object (module_fn, run_cmd->kernel->name);
+        }
+    }
+#endif
+
   if (ci->dlhandle == NULL)
     {
       POCL_MSG_ERR ("loading kernel binary \"%s\" failed.\n"

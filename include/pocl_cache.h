@@ -160,6 +160,13 @@ void pocl_cache_final_binary_path (char *final_binary_path, cl_program program,
                                    unsigned device_i, cl_kernel kernel,
                                    _cl_command_node *command, int specialize);
 
+POCL_EXPORT
+void pocl_cache_final_binary_variant_path (char *final_binary_path,
+                                           cl_program program,
+                                           unsigned device_i, cl_kernel kernel,
+                                           _cl_command_node *command,
+                                           int specialize, int jit_object);
+
 
 #ifdef __cplusplus
 }
