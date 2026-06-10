@@ -1430,12 +1430,13 @@ struct _cl_device_id {
 
 /* Whether a CPU host device loads kernel objects in-process via the ORC/JITLink
    JIT (HOST_CPU_ENABLE_JIT) rather than linking them into a shared library
-   through the Clang driver and dlopen()ing the result. A device qualifies when
-   it has no custom binary finalizer -- the lld-link and other back-ends set
-   finalize_binary and keep the link path -- and the POCL_CPU_JIT run-time switch
-   is left on. This is the single gate that codegen (the kernel object's code
-   model), the cached artifact's name (.o vs .so/.dll), and the load method all
-   consult, so they always agree. Returns 0 when the JIT is not compiled in. */
+   (in-process via lld, or through the Clang driver) and dlopen()ing the
+   result. A device qualifies when it has no custom binary finalizer -- custom
+   back-ends set finalize_binary and keep the link path -- and the POCL_CPU_JIT
+   run-time switch is left on. This is the single gate that codegen (the kernel
+   object's code model) and the cached artifact's name (.o vs .so/.dll)
+   consult; the loader accepts either artifact and follows what it finds (see
+   pocl_check_kernel_disk_cache()). Returns 0 when the JIT is not compiled in. */
 static inline int
 pocl_cpu_device_uses_jit (cl_device_id device)
 {

@@ -100,9 +100,55 @@ size_t event_c;
  */
 
 #ifdef ENABLE_LLVM
+/* Links a kernel object into a shared library through the Clang driver
+   interface, which knows the correct toolchains for all of its targets. */
+static int
+link_with_clang_driver (cl_device_id device, const char *objfile,
+                        const char *out_module)
+{
+  const char *cmd_line[64]
+    = { pocl_get_path ("CLANG", CLANGCC), "-o", out_module, objfile };
+  unsigned last_arg_idx = 4;
+
+#ifdef _MSC_VER
+  /* NOTE: This intended for targets having 'msvc' triple component.
+   * These options, passed to MSVC's linker:
+   * - prevent *.exp and *.lib files to be generated and wasting disk
+   *   space.
+   * - suppress "Creating library *.lib and object *.exp" to be written
+   *   stdout which messes up regex checking on some internal tests.  */
+  cmd_line[last_arg_idx++] = "-Xlinker";
+  cmd_line[last_arg_idx++] = "-noexp";
+  cmd_line[last_arg_idx++] = "-Xlinker";
+  cmd_line[last_arg_idx++] = "-noimplib";
+#endif
+
+  /* ENABLE_PRINTF_IMMEDIATE_FLUSH results in "pocl_flush_printf_buffer"
+   * symbol referenced in the built kernel.so; however that function exists
+   * only on the host side, therefore link to libpocl.so which provides it
+   */
+#ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
+#ifdef HAVE_DLFCN_H
+  const char *fname = pocl_dynlib_pathname ((void *)pocl_cache_tempname);
+  assert (fname != NULL);
+  cmd_line[last_arg_idx++] = fname;
+#else
+#error ENABLE_PRINTF_IMMEDIATE_FLUSH requires HAVE_DLFCN_H
+#endif
+#endif
+  const char **last_arg = &cmd_line[last_arg_idx];
+  const char **device_ld_arg = device->final_linkage_flags;
+  while ((*last_arg++ = *device_ld_arg++))
+    {
+    }
+
+  return pocl_invoke_clang (device->llvm_target_triplet, cmd_line);
+}
+
 /* Links a compiled kernel object into the final shared library the dynamic
    loader can pick up, through the device's custom finalization step if it
-   has one and the Clang driver otherwise. The object file is left in place. */
+   has one, in-process lld where compiled in, and the Clang driver otherwise.
+   The object file is left in place. */
 int
 pocl_link_final_binary (cl_device_id device, const char *objfile,
                         const char *final_binary_path)
@@ -136,45 +182,20 @@ pocl_link_final_binary (cl_device_id device, const char *objfile,
     }
   else
     {
-      /* Link through Clang driver interface which knows the correct toolchains
-         for all of its targets.  */
-      const char *cmd_line[64]
-        = { pocl_get_path ("CLANG", CLANGCC), "-o", tmp_module, objfile };
-      unsigned last_arg_idx = 4;
-
-#ifdef _MSC_VER
-      /* NOTE: This intended for targets having 'msvc' triple component.
-       * These options, passed to MSVC's linker:
-       * - prevent *.exp and *.lib files to be generated and wasting disk
-       *   space.
-       * - suppress "Creating library *.lib and object *.exp" to be written
-       *   stdout which messes up regex checking on some internal tests.  */
-      cmd_line[last_arg_idx++] = "-Xlinker";
-      cmd_line[last_arg_idx++] = "-noexp";
-      cmd_line[last_arg_idx++] = "-Xlinker";
-      cmd_line[last_arg_idx++] = "-noimplib";
+      error = -1;
+#ifdef CPU_USE_LLD_LINK
+      /* Prefer linking in-process through lld: nothing is exec'd and no
+         startup files are involved, so kernel linking (and with it
+         poclbinary export) works in deployments without a host
+         toolchain. */
+      error = pocl_invoke_lld_link (device, objfile, tmp_module);
+      if (error)
+        POCL_MSG_WARN ("In-process lld link of %s failed;"
+                       " retrying with the Clang driver.\n",
+                       objfile);
 #endif
-
-      /* ENABLE_PRINTF_IMMEDIATE_FLUSH results in "pocl_flush_printf_buffer"
-       * symbol referenced in the built kernel.so; however that function exists
-       * only on the host side, therefore link to libpocl.so which provides it
-       */
-#ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
-#ifdef HAVE_DLFCN_H
-      const char *fname = pocl_dynlib_pathname ((void *)pocl_cache_tempname);
-      assert (fname != NULL);
-      cmd_line[last_arg_idx++] = fname;
-#else
-#error ENABLE_PRINTF_IMMEDIATE_FLUSH requires HAVE_DLFCN_H
-#endif
-#endif
-      const char **last_arg = &cmd_line[last_arg_idx];
-      const char **device_ld_arg = device->final_linkage_flags;
-      while ((*last_arg++ = *device_ld_arg++))
-        {
-        }
-
-      error = pocl_invoke_clang (device->llvm_target_triplet, cmd_line);
+      if (error)
+        error = link_with_clang_driver (device, objfile, tmp_module);
     }
   if (error)
     {

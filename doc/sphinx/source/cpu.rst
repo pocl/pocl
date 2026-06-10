@@ -73,11 +73,13 @@ both the linker and the loader. Nothing is exec'd and no shared library is
 written; the relocatable object from code generation is the cached artifact
 itself, stored with an ``.o`` suffix rather than ``.so`` or ``.dll``.
 
-The alternative is to hand the object to the Clang driver, which links it into a
-shared library that PoCL loads with ``dlopen()``. That link step needs a host
-toolchain present at run time: a linker to exec, plus the C startup files and
-default libraries. Avoiding that step lets PoCL run on a machine with no
-development environment, which is the main reason to use the JIT.
+The alternative is to link the object into a shared library that PoCL loads
+with ``dlopen()``. Where lld is available at build time (``CPU_USE_LLD_LINK``),
+that link also happens in-process through lld's library API: nothing is exec'd
+and no startup files are needed, since the kernel binary's undefined symbols
+resolve at ``dlopen()`` time the same way the JIT resolves them. Otherwise the
+object is handed to the Clang driver, which needs a host toolchain present at
+run time: a linker to exec, plus the C startup files and default libraries.
 
 The symbols a kernel object refers to still have to come from somewhere. C
 library and math functions resolve against the running process, and PoCL
@@ -89,10 +91,10 @@ ships only as static archives, is JIT-linked from ``libsvml.a`` and its
 
 The JIT is the default on every platform that supports it: ELF and Mach-O hosts,
 and Windows x86-64 (MinGW). It is unavailable on Windows arm64 (JITLink has no
-COFF_aarch64 backend) and on MSVC builds, which keep their own in-process
-lld-link path. To turn the JIT off, build with ``-DHOST_CPU_ENABLE_JIT=OFF``, or
-set ``POCL_CPU_JIT=0`` for a single run (see :ref:`pocl-env-variables`); either
-one selects the Clang-driver link path.
+COFF_aarch64 backend) and on MSVC builds, which link through lld in-process
+(without the C runtime, against bundled helper objects). To turn the JIT off,
+build with ``-DHOST_CPU_ENABLE_JIT=OFF``, or set ``POCL_CPU_JIT=0`` for a single
+run (see :ref:`pocl-env-variables`); either one selects the link path.
 
 The JIT does not affect program binaries: a poclbinary exported through
 ``clGetProgramInfo(CL_PROGRAM_BINARIES)`` contains the linked shared
@@ -103,9 +105,9 @@ likewise shared between the modes: the loader accepts whichever artifact it
 finds, dlopening a shared library even when the JIT is on, and linking a
 cached kernel object on the spot when it is off.
 
-Exporting fully portable binaries does require a working linker on the
-producer. Without one -- a JIT-only deployment shipping no host toolchain --
-the export falls back to serializing the kernel objects themselves. Such a
-binary still loads on any consumer with the JIT enabled (it is JIT-loaded
-directly) or with LLVM available (it is linked on import); only a consumer
-without LLVM cannot use it.
+With in-process lld this holds even in deployments that ship no host
+toolchain at all. Should the export-time link fail anyway, the export falls
+back to serializing the kernel objects themselves; such a binary still loads
+on any consumer with the JIT enabled (it is JIT-loaded directly) or with LLVM
+available (it is linked on import), only a consumer without LLVM cannot use
+it.
