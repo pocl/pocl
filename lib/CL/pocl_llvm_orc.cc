@@ -88,8 +88,18 @@ namespace {
    the first pocl_jit_initialize() call. ORC's ExecutionSession is internally
    synchronized, so a single instance is shared across all CPU host devices.
    Access is additionally serialized by JITMutex so initialization races and
-   the (already serialized) PoCL dlhandle cache stay consistent. */
-std::unique_ptr<LLJIT> TheJIT;
+   the (already serialized) PoCL dlhandle cache stay consistent.
+
+   Deliberately a raw pointer that is never deleted: a static destructor
+   (at exit() or libpocl dlclose) would end the ExecutionSession and unmap all
+   JIT'd kernel code, while the pthread/TBB scheduler threads are only joined
+   under POCL_ENABLE_UNINIT (default off) and so may still be executing that
+   code -- a shutdown SIGSEGV the linker path cannot hit, since it never
+   dlcloses the dlhandle cache's kernel .so handles either (not even under
+   POCL_ENABLE_UNINIT: the cache, including its work-group function pointers,
+   survives device uninit/reinit). Leaking the JIT gives the exact same
+   code-stays-mapped-through-exit guarantee. */
+LLJIT *TheJIT = nullptr;
 std::mutex JITMutex;
 
 /* JITDylib names must be unique within an ExecutionSession; a monotonic
@@ -245,7 +255,7 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
     pocl_jit_unavailable = 1;
     return -1;
   }
-  TheJIT = std::move(*JIT);
+  TheJIT = JIT->release();
 
   /* Define PoCL's host callbacks (and the Windows stack probe) once, into the
      process-symbols JITDylib that every kernel JITDylib links against. */
