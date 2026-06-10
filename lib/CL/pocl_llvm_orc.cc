@@ -25,6 +25,7 @@
 #include "config.h"
 
 #include "pocl_debug.h"
+#include "pocl_dynlib.h"
 #include "pocl_llvm_orc.h"
 
 #include <llvm/ExecutionEngine/JITLink/JITLinkMemoryManager.h>
@@ -86,14 +87,16 @@ std::mutex JITMutex;
    touched under JITMutex, so a plain integer suffices. */
 uint64_t JDCounter = 0;
 
-/* Make a vector-math library's symbols (e.g. libmvec's _ZGVdN8v_expf)
-   resolvable by JIT'd kernels. Attaches a DynamicLibrarySearchGenerator for
-   the library to the process-symbols JITDylib, which every kernel JITDylib
-   links against (LLJIT links each JITDylib it creates against the
-   process-symbols JITDylib by default). Lookups are then served from the
-   library's own handle through the JIT's generator chain. Returns false (and
-   leaves the JIT usable) if the library cannot be loaded. */
-static bool loadVecMathLibrary(const char *Library) {
+/* Make a dynamic library's symbols (e.g. libmvec's _ZGVdN8v_expf, or
+   libpocl's own dependency chain) resolvable by JIT'd kernels. Attaches a
+   DynamicLibrarySearchGenerator for the library to the process-symbols
+   JITDylib, which every kernel JITDylib links against (LLJIT links each
+   JITDylib it creates against the process-symbols JITDylib by default).
+   Lookups are then served from the library's own handle through the JIT's
+   generator chain; on POSIX that dlsym scope includes the library's
+   dependencies. Returns false (and leaves the JIT usable) if the library
+   cannot be loaded. */
+static bool addLibrarySearchGenerator(const char *Library) {
   if (!Library || !Library[0])
     return false;
   JITDylibSP PSJD = TheJIT->getProcessSymbolsJITDylib();
@@ -146,8 +149,8 @@ struct PoclJITModule {
    dynamic-symbol visibility. They are constant for the process, so this is done
    once at init into the process-symbols JITDylib that every kernel JITDylib
    links against. Everything else (libc/libm/compiler-rt and msvcrt's mem*
-   helpers) resolves automatically via the JIT's default process-symbol search
-   order. */
+   helpers) resolves via the JIT's default process-symbol search, backed up on
+   POSIX by a search of libpocl's own handle (see pocl_jit_initialize). */
 void defineHostSymbols(JITDylib &JD) {
   SymbolMap Syms;
 #ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
@@ -229,13 +232,34 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
   if (JITDylibSP PSJD = TheJIT->getProcessSymbolsJITDylib())
     defineHostSymbols(*PSJD);
 
+#ifdef HAVE_DLFCN_H
+  /* The JIT's default process-symbol search resolves through the global dlsym
+     scope, which misses libpocl's private dependencies (libgcc_s for compiler
+     builtins like __aeabi_uldivmod or __extendhfsf2, libm before glibc 2.34)
+     when libpocl was dlopen'd RTLD_LOCAL, as ICD loaders do. The Clang-driver
+     link path satisfied those references from each kernel .so's implicit
+     -lgcc and own DT_NEEDED entries; restore that visibility by also searching
+     libpocl's own dlopen handle, whose dlsym scope includes its dependency
+     chain. This pins libpocl in memory, which the process-lifetime JIT
+     effectively does anyway. On failure (e.g. libpocl linked statically into
+     the executable) kernels fall back to the plain process-global lookup. */
+  const char *SelfPath =
+      pocl_dynlib_pathname(reinterpret_cast<void *>(&pocl_jit_initialize));
+  if (!addLibrarySearchGenerator(SelfPath))
+    POCL_MSG_PRINT_LLVM(
+        "pocl_jit: could not add libpocl's own libraries ('%s') to the symbol "
+        "search; kernels needing libpocl's private dependencies (libgcc_s, "
+        "libm) may fail to resolve symbols if those are not process-global\n",
+        SelfPath ? SelfPath : "<unknown>");
+#endif
+
   /* CPU codegen vectorizes libm calls (expf, sinf, ...) into a vector-math
      library's symbols (e.g. _ZGVdN8v_expf, __svml_expf8). The library is chosen
      at configure time, matching codegen's veclib selection in pocl_llvm_wg.cc;
      expose that same one to the JIT so the symbols resolve. */
 #if defined(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
   const char *VecMathLib = "libmvec.so.1";
-  if (!loadVecMathLibrary(VecMathLib))
+  if (!addLibrarySearchGenerator(VecMathLib))
     POCL_MSG_PRINT_LLVM(
         "pocl_jit: could not load vector-math library '%s'; vectorized math "
         "kernels may fail to resolve their symbols\n",
@@ -245,17 +269,17 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
   bool VecMathLoaded = false;
 #ifdef HOST_CPU_SLEEF_LIBRARY
   VecMathLib = HOST_CPU_SLEEF_LIBRARY;
-  VecMathLoaded = loadVecMathLibrary(VecMathLib);
+  VecMathLoaded = addLibrarySearchGenerator(VecMathLib);
 #endif
 #ifdef HOST_CPU_SLEEF_LIBRARY_FALLBACK
   if (!VecMathLoaded) {
     VecMathLib = HOST_CPU_SLEEF_LIBRARY_FALLBACK;
-    VecMathLoaded = loadVecMathLibrary(VecMathLib);
+    VecMathLoaded = addLibrarySearchGenerator(VecMathLib);
   }
 #endif
   if (!VecMathLoaded) {
     VecMathLib = "libsleef.so";
-    VecMathLoaded = loadVecMathLibrary(VecMathLib);
+    VecMathLoaded = addLibrarySearchGenerator(VecMathLib);
   }
   if (!VecMathLoaded)
     POCL_MSG_PRINT_LLVM(
