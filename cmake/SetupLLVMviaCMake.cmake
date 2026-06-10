@@ -256,7 +256,10 @@ endif()
 
 # see cmake/SetupLLD.cmake for what CPU_USE_LLD_LINK enables
 if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM)
-  find_package(LLD ${LLVM_VERSION} EXACT CONFIG HINTS "${LLD_CMAKE_DIR}" NO_DEFAULT_PATH)
+  # No version requirement: find_package() rejects LLVM's prerelease version
+  # strings ("22.0.0git", "21.1.0-rc3") outright, and the NO_DEFAULT_PATH
+  # search of LLD_CMAKE_DIR already pins the LLD matching the found LLVM.
+  find_package(LLD CONFIG HINTS "${LLD_CMAKE_DIR}" NO_DEFAULT_PATH)
 endif()
 set(POCL_LLD_FIND_MODE "cmake")
 include(SetupLLD)
