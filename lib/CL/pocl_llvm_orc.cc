@@ -298,27 +298,25 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
         "kernels may fail to resolve their symbols\n",
         VecMathLib);
 #elif defined(ENABLE_HOST_CPU_VECTORIZE_SLEEF)
-  const char *VecMathLib = nullptr;
-  bool VecMathLoaded = false;
+  /* The configured SONAME first, then the configure-time path, then the
+     plain library name as a last resort. */
+  const char *Candidates[] = {
 #ifdef HOST_CPU_SLEEF_LIBRARY
-  VecMathLib = HOST_CPU_SLEEF_LIBRARY;
-  VecMathLoaded = addLibrarySearchGenerator(VecMathLib);
+      HOST_CPU_SLEEF_LIBRARY,
 #endif
 #ifdef HOST_CPU_SLEEF_LIBRARY_FALLBACK
-  if (!VecMathLoaded) {
-    VecMathLib = HOST_CPU_SLEEF_LIBRARY_FALLBACK;
-    VecMathLoaded = addLibrarySearchGenerator(VecMathLib);
-  }
+      HOST_CPU_SLEEF_LIBRARY_FALLBACK,
 #endif
-  if (!VecMathLoaded) {
-    VecMathLib = "libsleef.so";
-    VecMathLoaded = addLibrarySearchGenerator(VecMathLib);
-  }
+      "libsleef.so",
+  };
+  bool VecMathLoaded = false;
+  for (const char *VecMathLib : Candidates)
+    if ((VecMathLoaded = addLibrarySearchGenerator(VecMathLib)))
+      break;
   if (!VecMathLoaded)
     POCL_MSG_WARN(
-        "pocl_jit: could not load vector-math library '%s'; vectorized math "
-        "kernels may fail to resolve their symbols\n",
-        VecMathLib);
+        "pocl_jit: could not load the SLEEF vector-math library; vectorized "
+        "math kernels may fail to resolve their symbols\n");
 #elif defined(ENABLE_HOST_CPU_VECTORIZE_SVML)
   /* libsvml members reference libirc helpers, so load both archives; either
      generator resolves symbols for the other lazily as members materialize. */
