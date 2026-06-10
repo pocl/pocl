@@ -163,11 +163,6 @@ static bool loadStaticArchive(const char *Path) {
   return true;
 }
 
-/* Bookkeeping for a single loaded kernel object. */
-struct PoclJITModule {
-  JITDylib *JD;
-};
-
 /* Inject symbols that kernel objects reference but that are linked into libpocl
    rather than exported by a process library: PoCL's own host callbacks and, on
    Windows, the libgcc/compiler-rt stack probe. Defining them as absolute
@@ -359,7 +354,8 @@ void *pocl_jit_load_object(const char *Path, const char *UniqName) {
   }
 
   /* Give each loaded object its own JITDylib so symbol names never collide
-     across kernels/specializations and can be unloaded independently. */
+     across kernels/specializations and can be unloaded independently. The
+     JITDylib pointer doubles as the opaque module handle. */
   std::string Name = std::string(UniqName ? UniqName : "kernel") + "#" +
                      std::to_string(JDCounter++);
   Expected<JITDylib &> JD = TheJIT->createJITDylib(std::move(Name));
@@ -377,19 +373,19 @@ void *pocl_jit_load_object(const char *Path, const char *UniqName) {
     return nullptr;
   }
 
-  return new PoclJITModule{&*JD};
+  return &*JD;
 }
 
 void *pocl_jit_lookup(void *Handle, const char *SymbolName) {
   std::lock_guard<std::mutex> Lock(JITMutex);
-  PoclJITModule *M = static_cast<PoclJITModule *>(Handle);
-  if (!TheJIT || M == nullptr || M->JD == nullptr)
+  JITDylib *JD = static_cast<JITDylib *>(Handle);
+  if (!TheJIT || JD == nullptr)
     return nullptr;
 
   /* ORC mangles the unmangled name for the target (e.g. adds the leading
      underscore on Mach-O), so we pass the plain C symbol name. Linking and
      relocation of the object happen here, on first lookup. */
-  Expected<ExecutorAddr> Addr = TheJIT->lookup(*M->JD, SymbolName);
+  Expected<ExecutorAddr> Addr = TheJIT->lookup(*JD, SymbolName);
   if (!Addr) {
     /* Not necessarily fatal: callers may probe alternative names, so only
        record the diagnostic for pocl_jit_last_error() instead of printing an
@@ -409,14 +405,13 @@ const char *pocl_jit_last_error(void) {
 
 int pocl_jit_unload(void *Handle) {
   std::lock_guard<std::mutex> Lock(JITMutex);
-  PoclJITModule *M = static_cast<PoclJITModule *>(Handle);
-  if (M == nullptr)
+  JITDylib *JD = static_cast<JITDylib *>(Handle);
+  if (JD == nullptr)
     return 0;
-  if (TheJIT && M->JD) {
-    if (Error Err = TheJIT->getExecutionSession().removeJITDylib(*M->JD))
+  if (TheJIT) {
+    if (Error Err = TheJIT->getExecutionSession().removeJITDylib(*JD))
       POCL_MSG_ERR("pocl_jit: removeJITDylib failed: %s\n",
                    toString(std::move(Err)).c_str());
   }
-  delete M;
   return 1;
 }
