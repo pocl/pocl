@@ -254,42 +254,14 @@ else()
   set(LLVM_LINK_TYPE SHARED)
 endif()
 
-# if enabled, the CPU drivers link final kernel binaries in-process through
-# lld's library API instead of invoking the Clang driver, which needs no
-# external toolchain (no linker to exec, no startup files). This keeps
-# kernel linking -- and with it poclbinary export -- working in deployments
-# that ship no host toolchain at all (see also the JIT, which loads the
-# kernel objects without linking them). On Windows (MSVC) the kernel
-# binaries are additionally linked without the C runtime, against bundled
-# helper objects, so they need no VS Build Tools at run time either.
-set(CPU_USE_LLD_LINK OFF)
+# see cmake/SetupLLD.cmake for what CPU_USE_LLD_LINK enables
 if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM)
   find_package(LLD ${LLVM_VERSION} EXACT CONFIG HINTS "${LLD_CMAKE_DIR}" NO_DEFAULT_PATH)
-  # TODO MinGW: the "empty DLL" this produced was a missing export table -- the
-  # work-group function only carried dllexport on MSVC triples (fixed in
-  # Workgroup.cc). Enabling MinGW still needs the helper objects built for it.
-  if(MSVC AND STATIC_LLVM)
-    if(lldCommon IN_LIST LLD_EXPORTED_TARGETS)
-      message(STATUS "Using lld via library to link kernels for CPU devices")
-      set(CPU_USE_LLD_LINK ON)
-      # the lld libraries reference LLVM (and lldCommon) symbols, so they
-      # must precede the LLVM libraries on the link line
-      list(INSERT LLVM_LIBS 0 lldCOFF lldMinGW lldCommon)
-    endif()
-  elseif(NOT WIN32)
-    if(APPLE)
-      set(LLD_FORMAT_TARGET lldMachO)
-    else()
-      set(LLD_FORMAT_TARGET lldELF)
-    endif()
-    if(${LLD_FORMAT_TARGET} IN_LIST LLD_EXPORTED_TARGETS)
-      message(STATUS "Using lld via library to link kernels for CPU devices")
-      set(CPU_USE_LLD_LINK ON)
-      # the lld libraries reference LLVM (and lldCommon) symbols, so they
-      # must precede the LLVM libraries on the link line
-      list(INSERT LLVM_LIBS 0 ${LLD_FORMAT_TARGET} lldCommon)
-    endif()
-  endif()
+endif()
+set(POCL_LLD_FIND_MODE "cmake")
+include(SetupLLD)
+if(CPU_USE_LLD_LINK)
+  list(INSERT LLVM_LIBS 0 ${POCL_LLD_LIBRARIES})
 endif()
 
 set(POCL_CLANG_LINK_TARGETS ${CLANG_LIBS})

@@ -185,46 +185,11 @@ if(CLANG_LINK_DIRS)
   list(REMOVE_DUPLICATES CLANG_LINK_DIRS)
 endif()
 
-# if enabled, the CPU drivers link final kernel binaries in-process through
-# lld's library API instead of invoking the Clang driver, which needs no
-# external toolchain (no linker to exec, no startup files). This keeps
-# kernel linking -- and with it poclbinary export -- working in deployments
-# that ship no host toolchain at all (see also the JIT, which loads the
-# kernel objects without linking them). On Windows (MSVC) the kernel
-# binaries are additionally linked without the C runtime, against bundled
-# helper objects, so they need no VS Build Tools at run time either.
-set(CPU_USE_LLD_LINK OFF)
-if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM)
-  # TODO MinGW: the "empty DLL" this produced was a missing export table -- the
-  # work-group function only carried dllexport on MSVC triples (fixed in
-  # Workgroup.cc). Enabling MinGW still needs the helper objects built for it.
-  if(MSVC AND STATIC_LLVM)
-    find_library(LIB_LLD_COFF NAMES "lldCOFF" HINTS "${LLVM_LIBDIR}")
-    find_library(LIB_LLD_MINGW NAMES "lldMinGW" HINTS "${LLVM_LIBDIR}")
-    find_library(LIB_LLD_COMMON NAMES "lldCommon" HINTS "${LLVM_LIBDIR}")
-    if(LIB_LLD_COFF AND LIB_LLD_MINGW AND LIB_LLD_COMMON)
-      message(STATUS "Using lld via library to link kernels for CPU devices")
-      set(CPU_USE_LLD_LINK ON)
-      # the lld libraries reference LLVM (and lldCommon) symbols, so they
-      # must precede the LLVM libraries on the link line
-      list(INSERT LLVM_LINK_LIBRARIES 0
-           ${LIB_LLD_COFF} ${LIB_LLD_MINGW} ${LIB_LLD_COMMON})
-    endif()
-  elseif(NOT WIN32)
-    if(APPLE)
-      find_library(LIB_LLD_FORMAT NAMES "lldMachO" HINTS "${LLVM_LIBDIR}")
-    else()
-      find_library(LIB_LLD_FORMAT NAMES "lldELF" HINTS "${LLVM_LIBDIR}")
-    endif()
-    find_library(LIB_LLD_COMMON NAMES "lldCommon" HINTS "${LLVM_LIBDIR}")
-    if(LIB_LLD_FORMAT AND LIB_LLD_COMMON)
-      message(STATUS "Using lld via library to link kernels for CPU devices")
-      set(CPU_USE_LLD_LINK ON)
-      # the lld archives reference LLVM (and lldCommon) symbols, so they must
-      # precede the LLVM libraries on the link line
-      list(INSERT LLVM_LINK_LIBRARIES 0 ${LIB_LLD_FORMAT} ${LIB_LLD_COMMON})
-    endif()
-  endif()
+# see cmake/SetupLLD.cmake for what CPU_USE_LLD_LINK enables
+set(POCL_LLD_FIND_MODE "library")
+include(SetupLLD)
+if(CPU_USE_LLD_LINK)
+  list(INSERT LLVM_LINK_LIBRARIES 0 ${POCL_LLD_LIBRARIES})
 endif()
 
 ####################################################################
