@@ -36,6 +36,7 @@ extern uint _pocl_sub_group_size;
 size_t _CL_OVERLOADABLE get_local_id (unsigned int dimindx);
 size_t _CL_OVERLOADABLE get_local_linear_id (void);
 size_t _CL_OVERLOADABLE get_local_size (unsigned int dimindx);
+size_t _CL_OVERLOADABLE get_enqueued_local_size (unsigned int dimindx);
 
 void _CL_OVERLOADABLE _CL_CONVERGENT work_group_barrier(cl_mem_fence_flags);
 void _CL_OVERLOADABLE
@@ -69,34 +70,47 @@ sub_group_all (int predicate)
 }
 
 uint _CL_OVERLOADABLE
-get_sub_group_size (void)
-{
-  return _pocl_sub_group_size;
-}
-
-uint _CL_OVERLOADABLE
 get_max_sub_group_size (void)
 {
-  return get_sub_group_size ();
-}
-
-uint _CL_OVERLOADABLE
-get_num_sub_groups (void)
-{
-  return (uint)get_local_size (0) * get_local_size (1) * get_local_size (2)
-         / get_max_sub_group_size ();
-}
-
-uint _CL_OVERLOADABLE
-get_enqueued_num_sub_groups (void)
-{
-  return 1;
+  return _pocl_sub_group_size;
 }
 
 uint _CL_OVERLOADABLE
 get_sub_group_id (void)
 {
   return (uint)get_local_linear_id () / get_max_sub_group_size ();
+}
+
+uint _CL_OVERLOADABLE
+get_sub_group_size (void)
+{
+  /* The last sub-group of the work-group can have fewer work-items than
+     the maximum sub-group size when the work-group size is not evenly
+     divisible by it. */
+  uint wg_size
+    = (uint)get_local_size (0) * get_local_size (1) * get_local_size (2);
+  uint remaining = wg_size - get_sub_group_id () * get_max_sub_group_size ();
+  return remaining < get_max_sub_group_size () ? remaining
+                                               : get_max_sub_group_size ();
+}
+
+uint _CL_OVERLOADABLE
+get_num_sub_groups (void)
+{
+  /* Round up to account for a possibly smaller last sub-group. */
+  uint wg_size
+    = (uint)get_local_size (0) * get_local_size (1) * get_local_size (2);
+  return (wg_size + get_max_sub_group_size () - 1)
+         / get_max_sub_group_size ();
+}
+
+uint _CL_OVERLOADABLE
+get_enqueued_num_sub_groups (void)
+{
+  uint wg_size = (uint)get_enqueued_local_size (0)
+                 * get_enqueued_local_size (1) * get_enqueued_local_size (2);
+  return (wg_size + get_max_sub_group_size () - 1)
+         / get_max_sub_group_size ();
 }
 
 uint _CL_OVERLOADABLE

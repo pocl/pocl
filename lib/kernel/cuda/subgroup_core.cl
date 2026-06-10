@@ -52,7 +52,7 @@ get_max_sub_group_size (void)
 uint _CL_OVERLOADABLE
 get_num_sub_groups (void)
 {
-  uint tmp = get_global_size (0) * get_global_size (1) * get_global_size (2);
+  uint tmp = get_local_size (0) * get_local_size (1) * get_local_size (2);
   return (tmp + get_max_sub_group_size () - 1) / get_max_sub_group_size ();
 }
 
