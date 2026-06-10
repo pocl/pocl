@@ -1267,13 +1267,14 @@ endif()
 #     backend (x86(-64), AArch64, ARM32, RISC-V, PPC64, LoongArch); s390x,
 #     MIPS and SPARC have none, so they keep the Clang+dlopen path;
 #   - Windows x86_64 (MinGW) via JITLink's COFF_x86_64 backend. Windows arm64
-#     has no COFF_aarch64 backend, and MSVC keeps its in-process lld-link path.
+#     has no COFF_aarch64 backend, and MSVC keeps its existing link paths
+#     (in-process lld-link, or the Clang driver).
 set(HOST_CPU_JIT_SUPPORTED OFF)
 if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM)
   if((NOT WIN32) AND (CMAKE_SYSTEM_PROCESSOR MATCHES
      "^(x86_64|amd64|AMD64|i[3-6]86|aarch64|arm64|arm.*|riscv32|riscv64|ppc64|ppc64le|powerpc64|powerpc64le|loongarch64)$"))
     set(HOST_CPU_JIT_SUPPORTED ON)
-  elseif((NOT CPU_USE_LLD_LINK_WIN32)
+  elseif(MINGW
          AND (CMAKE_SIZEOF_VOID_P EQUAL 8)
          AND (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64|AMD64|amd64|x64)"))
     # Windows x86_64 (MinGW): JITLink's COFF_x86_64 backend; no COFF_aarch64.

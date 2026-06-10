@@ -58,7 +58,7 @@ using namespace llvm::orc;
 extern "C" void pocl_flush_printf_buffer(char *buffer, uint32_t buffer_size);
 #endif
 
-#ifdef _WIN32
+#ifdef __MINGW32__
 /* MinGW kernel objects reference the libgcc/compiler-rt stack probe
    ___chkstk_ms (emitted for frames > 4KB), which no Windows system DLL
    exports, unlike MSVC's __chkstk, which ntdll/kernel32 do export. libpocl
@@ -155,7 +155,7 @@ void defineHostSymbols(JITDylib &JD) {
       ExecutorAddr::fromPtr(&pocl_flush_printf_buffer),
       JITSymbolFlags::Exported | JITSymbolFlags::Callable};
 #endif
-#ifdef _WIN32
+#ifdef __MINGW32__
   Syms[TheJIT->mangleAndIntern("___chkstk_ms")] = {
       ExecutorAddr::fromPtr(&___chkstk_ms),
       JITSymbolFlags::Exported | JITSymbolFlags::Callable};
