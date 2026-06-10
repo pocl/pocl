@@ -1107,6 +1107,19 @@ pocl_release_dlhandle_cache (void *dlhandle_cache_item)
 }
 
 /**
+ * Whether a final-binary path names a JIT-loadable kernel object rather than
+ * a shared library, going by the distinct artifact-variant extensions (see
+ * pocl_cache_final_binary_variant_path()).
+ */
+static int
+final_binary_is_jit_object (const char *path)
+{
+  size_t len = strlen (path);
+  size_t ext_len = strlen (OBJ_EXT);
+  return len > ext_len && strcmp (path + len - ext_len, OBJ_EXT) == 0;
+}
+
+/**
  * Probes the disk cache for a loadable final binary of the given kernel
  * command, accepting either of the two artifact variants the CPU drivers
  * produce (see pocl_cache_final_binary_variant_path()).
@@ -1116,17 +1129,16 @@ pocl_release_dlhandle_cache (void *dlhandle_cache_item)
  * or a POCL_CPU_JIT toggle on a shared cache -- remains usable: a found JIT
  * kernel object is linked on the spot when the device doesn't run the JIT.
  *
- * \param module_fn [out] The file name of the final binary.
+ * \param module_fn [out] The file name of the final binary; its extension
+ * tells the load method (see final_binary_is_jit_object()).
  * \param command The kernel run command.
  * \param specialized 1 if should check the per-command specialized one instead
  * of the generic one.
- * \param uses_jit_loader [out] 1 if the binary must be loaded with the JIT
- * instead of the dynamic loader.
  * \returns 1 if a loadable binary was found.
  */
 static int
 probe_final_binary (char *module_fn, _cl_command_node *command,
-                    int specialized, int *uses_jit_loader)
+                    int specialized)
 {
   cl_kernel k = command->command.run.kernel;
   cl_program p = k->program;
@@ -1137,10 +1149,7 @@ probe_final_binary (char *module_fn, _cl_command_node *command,
   pocl_cache_final_binary_variant_path (module_fn, p, dev_i, k, command,
                                         specialized, 0);
   if (pocl_exists (module_fn))
-    {
-      *uses_jit_loader = 0;
-      return 1;
-    }
+    return 1;
 
   pocl_cache_final_binary_variant_path (module_fn, p, dev_i, k, command,
                                         specialized, 1);
@@ -1148,10 +1157,7 @@ probe_final_binary (char *module_fn, _cl_command_node *command,
     return 0;
 
   if (pocl_cpu_device_uses_jit (command->device))
-    {
-      *uses_jit_loader = 1;
-      return 1;
-    }
+    return 1;
 
 #ifdef ENABLE_LLVM
   /* A JIT kernel object in the cache of a device that doesn't run the JIT
@@ -1166,7 +1172,6 @@ probe_final_binary (char *module_fn, _cl_command_node *command,
   if (error == 0)
     {
       memcpy (module_fn, so_path, POCL_MAX_PATHNAME_LENGTH);
-      *uses_jit_loader = 0;
       return 1;
     }
   POCL_MSG_WARN ("Linking the cached kernel object %s failed.\n", module_fn);
@@ -1179,31 +1184,27 @@ probe_final_binary (char *module_fn, _cl_command_node *command,
  * if not, builds the kernel, caches it, and returns the file name of the
  * end result.
  *
- * \param module_fn [out] The file name of the final binary.
+ * \param module_fn [out] The file name of the final binary; its extension
+ * tells the load method (see final_binary_is_jit_object()).
  * \param command The kernel run command.
  * \param specialized 1 if should check the per-command specialized one instead
  * of the generic one.
- * \param uses_jit_loader [out] 1 if the binary must be loaded with the JIT
- * instead of the dynamic loader.
  * \returns CL_SUCCESS if module_fn names a loadable binary.
  */
 int
 pocl_check_kernel_disk_cache (char *module_fn,
                               _cl_command_node *command,
-                              int specialized,
-                              int *uses_jit_loader)
+                              int specialized)
 {
   _cl_command_run *run_cmd = &command->command.run;
   cl_kernel k = run_cmd->kernel;
   cl_program p = k->program;
   unsigned dev_i = command->program_device_i;
 
-  *uses_jit_loader = 0;
-
   /* First try to find a static WG binary for the local size as they
      are always more efficient than the dynamic ones.  Also, in case
      of reqd_wg_size, there might not be a dynamic sized one at all.  */
-  if (probe_final_binary (module_fn, command, specialized, uses_jit_loader))
+  if (probe_final_binary (module_fn, command, specialized))
     {
       POCL_MSG_PRINT_INFO ("Using a cached WG function: %s\n", module_fn);
       return CL_SUCCESS;
@@ -1227,7 +1228,6 @@ pocl_check_kernel_disk_cache (char *module_fn,
           POCL_MSG_ERR ("Final linking of kernel %s failed.\n", k->name);
           return -1;
         }
-      *uses_jit_loader = pocl_cpu_device_uses_jit (command->device);
       POCL_MSG_PRINT_INFO ("Built a %sWG function: %s\n",
                            specialized ? "specialized " : "generic ",
                            module_fn);
@@ -1247,10 +1247,10 @@ pocl_check_kernel_disk_cache (char *module_fn,
       /* First try to find a specialized WG binary, if allowed by the
          command. */
       if (run_cmd->force_generic_wg_func
-          || !probe_final_binary (module_fn, command, 1, uses_jit_loader))
+          || !probe_final_binary (module_fn, command, 1))
         {
           /* Then check for a dynamic (non-specialized) kernel. */
-          if (!probe_final_binary (module_fn, command, 0, uses_jit_loader))
+          if (!probe_final_binary (module_fn, command, 0))
             {
               POCL_MSG_ERR ("Generic WG function binary does not exist.\n");
               return -1;
@@ -1351,10 +1351,8 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   ci->max_grid_dim_width = max_grid_width;
 
   char module_fn[POCL_MAX_PATHNAME_LENGTH];
-  int uses_jit_loader = 0;
 
-  int err = pocl_check_kernel_disk_cache (module_fn, command, specialize,
-                                          &uses_jit_loader);
+  int err = pocl_check_kernel_disk_cache (module_fn, command, specialize);
   if (err)
     {
       free (ci);
@@ -1365,10 +1363,10 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   /* The load method follows the found artifact: a JIT kernel object is loaded
      in-process via ORC/JITLink, a shared library is dlopen()ed (see
      probe_final_binary()). */
-  ci->is_jit = uses_jit_loader;
+  ci->is_jit = final_binary_is_jit_object (module_fn);
 #ifdef HOST_CPU_ENABLE_JIT
-  /* uses_jit_loader implies the device's JIT came up at init (see
-     pocl_cpu_device_uses_jit()). */
+  /* A JIT object is only produced or accepted when the device's JIT came up
+     at init (see pocl_cpu_device_uses_jit()). */
   if (ci->is_jit)
     ci->dlhandle = pocl_jit_load_object (module_fn, run_cmd->kernel->name);
   else

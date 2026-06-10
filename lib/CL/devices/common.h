@@ -92,8 +92,7 @@ void pocl_init_dlhandle_cache ();
 POCL_EXPORT
 int pocl_check_kernel_disk_cache (char *module_fn,
                                   _cl_command_node *cmd,
-                                  int specialized,
-                                  int *uses_jit_loader);
+                                  int specialized);
 
 #ifdef ENABLE_LLVM
 POCL_EXPORT
