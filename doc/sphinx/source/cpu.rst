@@ -81,6 +81,16 @@ resolve at ``dlopen()`` time the same way the JIT resolves them. Otherwise the
 object is handed to the Clang driver, which needs a host toolchain present at
 run time: a linker to exec, plus the C startup files and default libraries.
 
+With in-process lld both modes are thus self-contained; what sets the JIT
+apart is not needing the OS loader. It never ``dlopen()``\ s cache files, so
+it works with the cache on a ``noexec`` filesystem and in sandboxes; it
+resolves symbols against libpocl itself, so it works in statically linked
+deployments where a kernel library's references could not resolve
+dynamically; and its kernels can be unloaded, where ``dlopen()``\ ed ones
+accumulate for the lifetime of the process. Conversely, environments that
+forbid runtime code generation but allow loading shared libraries want the
+link path.
+
 The symbols a kernel object refers to still have to come from somewhere. C
 library and math functions resolve against the running process, and PoCL
 supplies its own host callbacks, such as the printf flush, directly. The
