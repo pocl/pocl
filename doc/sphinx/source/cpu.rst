@@ -82,8 +82,9 @@ object is handed to the Clang driver, which needs a host toolchain present at
 run time: a linker to exec, plus the C startup files and default libraries.
 
 With in-process lld both modes are thus self-contained; what sets the JIT
-apart is not needing the OS loader. It never ``dlopen()``\ s cache files, so
-it works with the cache on a ``noexec`` filesystem and in sandboxes; it
+apart is not needing the OS loader. The kernels it builds load without
+``dlopen()``, so it works with the cache on a ``noexec`` filesystem and in
+sandboxes; it
 resolves symbols against libpocl itself, so it works in statically linked
 deployments where a kernel library's references could not resolve
 dynamically; and its kernels can be unloaded, where ``dlopen()``\ ed ones

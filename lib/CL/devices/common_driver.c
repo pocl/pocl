@@ -925,7 +925,8 @@ pocl_driver_supports_binary (cl_device_id device, size_t length,
    variant is missing. An exported binary must carry the shared libraries: a
    JIT device caches only the kernel objects, which an LLVM-less consumer --
    the primary deployment target of poclbinaries -- cannot load or link.
-   The objects themselves are not serialized (see pocl_binary.c). */
+   Objects whose shared library exists are then skipped at serialization
+   (see pocl_binary.c). */
 static void
 link_jit_objects (cl_device_id device, const char *path)
 {

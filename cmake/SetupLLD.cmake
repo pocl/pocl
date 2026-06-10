@@ -20,9 +20,11 @@ set(POCL_LLD_LIBRARIES "")
 set(POCL_LLD_COMPONENTS "")
 
 if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM)
-  # TODO MinGW: the "empty DLL" this produced was a missing export table -- the
-  # work-group function only carried dllexport on MSVC triples (fixed in
-  # Workgroup.cc). Enabling MinGW still needs the helper objects built for it.
+  # TODO MinGW is excluded: the C-runtime-free link needs the bundled helper
+  # objects (libchkstk/libmemory), which are only built for MSVC (see
+  # lib/kernel/host/CMakeLists.txt). The work-group function carries
+  # dllexport on all Windows triples (Workgroup.cc), so the DLL export table
+  # is not a blocker.
   if(MSVC AND STATIC_LLVM)
     set(POCL_LLD_COMPONENTS lldCOFF lldMinGW lldCommon)
   elseif(NOT WIN32)

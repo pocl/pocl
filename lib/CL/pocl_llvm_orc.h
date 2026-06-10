@@ -36,12 +36,12 @@ extern "C"
 {
 #endif
 
-/* Lazily create the process-global LLJIT that loads kernel objects.
-   Idempotent and thread-safe; the triple determines the JIT's data layout
-   (and thus symbol mangling). Returns 0 on success. A failure to create the
-   JIT is latched internally and every later call fails fast; device init
-   uses the result to permanently route the device through the linker path
-   (see pocl_cpu_device_uses_jit()). */
+/* Create the process-global LLJIT that loads kernel objects. Called from
+   CPU device init; idempotent and thread-safe. The triple determines the
+   JIT's data layout (and thus symbol mangling). Returns 0 on success. A
+   failure to create the JIT is latched internally and every later call
+   fails fast; device init uses the result to permanently route the device
+   through the linker path (see pocl_cpu_device_uses_jit()). */
 int pocl_jit_initialize (const char *triple,
                          const char *cpu);
 

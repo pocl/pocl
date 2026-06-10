@@ -76,8 +76,9 @@ extern "C" void ___chkstk_ms(void);
 
 namespace {
 
-/* The process-global JIT that loads all kernel objects, created lazily on
-   the first pocl_jit_initialize() call. ORC's ExecutionSession is internally
+/* The process-global JIT that loads all kernel objects, created on the
+   first pocl_jit_initialize() call, which CPU device init makes (see
+   pocl_cpu_init_common()). ORC's ExecutionSession is internally
    synchronized, so a single instance is shared across all CPU host devices.
    Access is additionally serialized by JITMutex so initialization races and
    the (already serialized) PoCL dlhandle cache stay consistent.
@@ -385,9 +386,9 @@ void *pocl_jit_lookup(void *Handle, const char *SymbolName) {
      relocation of the object happen here, on first lookup. */
   Expected<ExecutorAddr> Addr = TheJIT->lookup(*JD, SymbolName);
   if (!Addr) {
-    /* Not necessarily fatal: callers may probe alternative names, so only
-       record the diagnostic for pocl_jit_last_error() instead of printing an
-       error here. */
+    /* Leave reporting to the caller, which retrieves the diagnostic through
+       pocl_jit_last_error() (the dlerror() pattern), so only record it
+       instead of printing an error here. */
     LastLookupError = toString(Addr.takeError());
     POCL_MSG_PRINT_LLVM("pocl_jit: lookup('%s') failed: %s\n", SymbolName,
                         LastLookupError.c_str());

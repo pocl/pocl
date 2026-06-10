@@ -140,10 +140,12 @@ pocl.
 - **POCL_CPU_JIT**
 
  Specific to the CPU drivers, and only effective when PoCL was built with
- ``-DHOST_CPU_ENABLE_JIT=ON``. Set to 0 to load kernels through the Clang-driver
- link plus ``dlopen()`` path rather than the in-process ORC/JITLink loader.
- Defaults to 1. Use it to work around a JIT-specific problem without rebuilding
- PoCL. See :ref:`cpu-jit`.
+ ``-DHOST_CPU_ENABLE_JIT=ON``. Set to 0 to link kernels into shared libraries
+ and ``dlopen()`` them (in-process through lld where compiled in, through the
+ Clang driver otherwise) rather than loading them with the in-process
+ ORC/JITLink loader. Read once at device initialization; defaults to 1. Use it
+ to work around a JIT-specific problem without rebuilding PoCL. See
+ :ref:`cpu-jit`.
 
 - **POCL_CPU_LOCAL_MEM_SIZE**
 
