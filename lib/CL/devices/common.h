@@ -94,6 +94,12 @@ int pocl_check_kernel_disk_cache (char *module_fn,
                                   _cl_command_node *cmd,
                                   int specialized);
 
+#ifdef ENABLE_LLVM
+POCL_EXPORT
+int pocl_link_final_binary (cl_device_id device, const char *objfile,
+                            const char *final_binary_path);
+#endif
+
 POCL_EXPORT
 size_t pocl_cmd_max_grid_dim_width (_cl_command_run *cmd);
 
