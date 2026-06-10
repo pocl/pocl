@@ -270,7 +270,7 @@
 #define LLVM_VERSION "@LLVM_VERSION_FULL@"
 #endif
 
-#cmakedefine CPU_USE_LLD_LINK_WIN32
+#cmakedefine CPU_USE_LLD_LINK
 
 #cmakedefine USE_LLVM_SPIRV_TARGET
 

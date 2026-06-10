@@ -244,17 +244,17 @@ else()
   set(LLVM_LINK_TYPE SHARED)
 endif()
 
-# if enabled, CPU driver on Windows will use lld-link (invoked via library API)
-# to link final kernel object files, instead of the default Clang driver linking.
-set(CPU_USE_LLD_LINK_WIN32 OFF)
-# TODO does not yet work with MINGW; tested but the linked DLL is empty
-if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM AND STATIC_LLVM AND MSVC)
-  find_package(LLD ${LLVM_VERSION} EXACT CONFIG HINTS "${LLD_CMAKE_DIR}" NO_DEFAULT_PATH)
-  if(lldCommon IN_LIST LLD_EXPORTED_TARGETS)
-    message(STATUS "Using lld-link via library to link kernels for CPU devices")
-    set(CPU_USE_LLD_LINK_WIN32 ON)
-    list(APPEND LLVM_LIBS lldCommon lldCOFF lldMinGW)
-  endif()
+# see cmake/SetupLLD.cmake for what CPU_USE_LLD_LINK enables
+if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM)
+  # No version requirement: find_package() rejects LLVM's prerelease version
+  # strings ("22.0.0git", "21.1.0-rc3") outright, and the NO_DEFAULT_PATH
+  # search of LLD_CMAKE_DIR already pins the LLD matching the found LLVM.
+  find_package(LLD CONFIG HINTS "${LLD_CMAKE_DIR}" NO_DEFAULT_PATH)
+endif()
+set(POCL_LLD_FIND_MODE "cmake")
+include(SetupLLD)
+if(CPU_USE_LLD_LINK)
+  list(INSERT LLVM_LIBS 0 ${POCL_LLD_LIBRARIES})
 endif()
 
 set(POCL_CLANG_LINK_TARGETS ${CLANG_LIBS})
