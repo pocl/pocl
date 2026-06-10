@@ -1143,25 +1143,28 @@ probe_final_binary (char *module_fn, _cl_command_node *command,
   cl_kernel k = command->command.run.kernel;
   cl_program p = k->program;
   unsigned dev_i = command->program_device_i;
+  int uses_jit = pocl_cpu_device_uses_jit (command->device);
 
-  /* Prefer the linked shared library: any build can dlopen it, whereas the
-     JIT kernel object needs either the in-process JIT or a linker. */
+  /* The variant the device itself produces first; when both exist (a
+     POCL_CPU_JIT toggle on a shared cache) a JIT device then keeps loading
+     in-process instead of dlopen()ing the shared library. */
   pocl_cache_final_binary_variant_path (module_fn, p, dev_i, k, command,
-                                        specialized, 0);
+                                        specialized, uses_jit);
   if (pocl_exists (module_fn))
     return 1;
 
   pocl_cache_final_binary_variant_path (module_fn, p, dev_i, k, command,
-                                        specialized, 1);
+                                        specialized, !uses_jit);
   if (!pocl_exists (module_fn))
     return 0;
 
-  if (pocl_cpu_device_uses_jit (command->device))
+  /* The other mode's artifact. A shared library any build can dlopen. */
+  if (uses_jit)
     return 1;
 
 #ifdef ENABLE_LLVM
   /* A JIT kernel object in the cache of a device that doesn't run the JIT
-     (the POCL_CPU_JIT switch was turned off after the object was cached):
+     (e.g. imported through a poclbinary whose export-time link failed):
      link it into the shared library that the device would have produced. */
   char so_path[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_final_binary_variant_path (so_path, p, dev_i, k, command,
