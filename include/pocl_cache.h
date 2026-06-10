@@ -167,6 +167,9 @@ void pocl_cache_final_binary_variant_path (char *final_binary_path,
                                            _cl_command_node *command,
                                            int specialize, int jit_object);
 
+POCL_EXPORT
+int pocl_cache_object_shlib_variant (char *so_path, const char *path);
+
 
 #ifdef __cplusplus
 }

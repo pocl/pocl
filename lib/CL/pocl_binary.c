@@ -341,10 +341,6 @@ static unsigned char *
 recursively_serialize_path (const char *path, size_t basedir_offset,
                             unsigned char *buffer)
 {
-
-  size_t len = strlen (path);
-  size_t obj_ext_len = strlen (OBJ_EXT);
-
   switch (pocl_get_file_type (path))
     {
     default:
@@ -358,19 +354,12 @@ recursively_serialize_path (const char *path, size_t basedir_offset,
          export-time link failed, e.g. for lack of a toolchain) ship the
          object as a fallback only JIT-enabled or linker-equipped consumers
          can load. */
-      if (len > obj_ext_len
-          && strcmp (path + len - obj_ext_len, OBJ_EXT) == 0)
-        {
-          char so_path[POCL_MAX_PATHNAME_LENGTH];
-          size_t stem_len = len - obj_ext_len;
-          if (stem_len + strlen (SHARED_LIB_EXT) < POCL_MAX_PATHNAME_LENGTH)
-            {
-              memcpy (so_path, path, stem_len);
-              strcpy (so_path + stem_len, SHARED_LIB_EXT);
-              if (pocl_exists (so_path))
-                return buffer;
-            }
-        }
+      {
+        char so_path[POCL_MAX_PATHNAME_LENGTH];
+        if (pocl_cache_object_shlib_variant (so_path, path)
+            && pocl_exists (so_path))
+          return buffer;
+      }
       return serialize_file (path, basedir_offset, buffer);
     case POCL_FS_DIRECTORY:
       {

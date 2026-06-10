@@ -290,6 +290,31 @@ pocl_cache_final_binary_variant_path (char *final_binary_path,
                                    specialized);
 }
 
+/* If 'path' names a cached kernel object (the OBJ_EXT artifact variant of a
+   final binary; see pocl_cache_final_binary_variant_path()), write the path
+   of its shared-library sibling variant into 'so_path' and return 1. Returns
+   0 for other files, including leftover temporary objects of already-linked
+   libraries ("<kernel>.dll.o", kept by POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES
+   on platforms where OBJ_EXT doesn't embed SHARED_LIB_EXT). */
+int
+pocl_cache_object_shlib_variant (char *so_path, const char *path)
+{
+  size_t len = strlen (path);
+  size_t obj_ext_len = strlen (OBJ_EXT);
+  size_t so_ext_len = strlen (SHARED_LIB_EXT);
+  if (len <= obj_ext_len || strcmp (path + len - obj_ext_len, OBJ_EXT) != 0)
+    return 0;
+  size_t stem_len = len - obj_ext_len;
+  if (stem_len >= so_ext_len
+      && strcmp (path + stem_len - so_ext_len, SHARED_LIB_EXT) == 0)
+    return 0;
+  if (stem_len + so_ext_len >= POCL_MAX_PATHNAME_LENGTH)
+    return 0;
+  memcpy (so_path, path, stem_len);
+  strcpy (so_path + stem_len, SHARED_LIB_EXT);
+  return 1;
+}
+
 /* Return the path of the final binary a device generates for the given
    work-group function: a JIT device produces the kernel object to load
    in-process, the others a linked shared library (see

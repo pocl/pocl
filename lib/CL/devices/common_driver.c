@@ -935,25 +935,9 @@ link_jit_objects (cl_device_id device, const char *path)
       return;
     case POCL_FS_REGULAR:
       {
-        size_t len = strlen (path);
-        size_t obj_ext_len = strlen (OBJ_EXT);
-        size_t so_ext_len = strlen (SHARED_LIB_EXT);
-        if (len <= obj_ext_len
-            || strcmp (path + len - obj_ext_len, OBJ_EXT) != 0)
-          return;
-        size_t stem_len = len - obj_ext_len;
-        /* Skip leftover temporary objects of already-linked libraries
-           ("<kernel>.dll.o", kept by POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES
-           on platforms where OBJ_EXT doesn't embed SHARED_LIB_EXT). */
-        if (stem_len >= so_ext_len
-            && strcmp (path + stem_len - so_ext_len, SHARED_LIB_EXT) == 0)
-          return;
         char so_path[POCL_MAX_PATHNAME_LENGTH];
-        if (stem_len + so_ext_len >= POCL_MAX_PATHNAME_LENGTH)
-          return;
-        memcpy (so_path, path, stem_len);
-        strcpy (so_path + stem_len, SHARED_LIB_EXT);
-        if (pocl_exists (so_path))
+        if (!pocl_cache_object_shlib_variant (so_path, path)
+            || pocl_exists (so_path))
           return;
         if (pocl_link_final_binary (device, path, so_path))
           POCL_MSG_WARN ("Linking %s for the exported binary failed.\n",
