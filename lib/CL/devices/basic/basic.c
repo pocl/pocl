@@ -918,25 +918,32 @@ pocl_basic_get_subgroup_info_ext (cl_device_id device,
                                   void *param_value,
                                   size_t *param_value_size_ret)
 {
+  /* The SG size is the size required with the intel_reqd_sub_group_size
+     kernel attribute, otherwise WG_x. This must be kept in sync with the
+     device-side implementation in lib/kernel/subgroups.cl. */
+  size_t sg_size = kernel->meta->reqd_sub_group_size;
+  if (sg_size == 0 && input_value != NULL && input_value_size >= sizeof (size_t))
+    sg_size = ((size_t *)input_value)[0];
+
   switch (param_name)
     {
     case CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE:
       {
-        /* For now assume SG == WG_x. */
-        POCL_RETURN_GETINFO (size_t, ((size_t *)input_value)[0]);
+        POCL_RETURN_GETINFO (size_t, sg_size);
       }
     case CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE:
       {
-        /* For now assume SG == WG_x and thus we have WG_size_y*WG_size_z of
-           them per WG. */
-        POCL_RETURN_GETINFO (
-          size_t,
-          min (device->max_num_sub_groups,
-               (input_value_size > sizeof (size_t) ? ((size_t *)input_value)[1]
-                                                   : 1)
-                 * (input_value_size > sizeof (size_t) * 2
-                      ? ((size_t *)input_value)[2]
-                      : 1)));
+        size_t wg_size = ((size_t *)input_value)[0]
+                         * (input_value_size > sizeof (size_t)
+                              ? ((size_t *)input_value)[1]
+                              : 1)
+                         * (input_value_size > sizeof (size_t) * 2
+                              ? ((size_t *)input_value)[2]
+                              : 1);
+        /* Round up to account for a possibly smaller last SG. */
+        size_t sg_count = sg_size ? (wg_size + sg_size - 1) / sg_size : 0;
+        POCL_RETURN_GETINFO (size_t,
+                             min (device->max_num_sub_groups, sg_count));
       }
     case CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT:
       {

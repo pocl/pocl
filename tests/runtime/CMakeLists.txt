@@ -47,7 +47,7 @@ set(C_PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_cl_pocl_content_size test_cl_pocl_content_size_migration
   test_deviceside_enqueue test_command_buffer test_command_buffer_images
   test_command_buffer_multi_device test_queue_creation_with_hints
-  test_remote_discovery test_dbk_color_convert)
+  test_remote_discovery test_dbk_color_convert test_subgroup_queries)
 
 if(HAVE_ONNXRT)
   list(APPEND C_PROGRAMS_TO_BUILD test_dbk_onnx_inference)
@@ -111,6 +111,8 @@ add_test(NAME "runtime/test_buffer-image-copy" COMMAND "test_buffer-image-copy")
 add_test_pocl(NAME "runtime/clCreateKernel" COMMAND "test_clCreateKernel" WORKITEM_HANDLER "loopvec")
 
 add_test_pocl(NAME "runtime/clGetKernelArgInfo" COMMAND "test_clGetKernelArgInfo" WORKITEM_HANDLER "loopvec")
+
+add_test_pocl(NAME "runtime/test_subgroup_queries" COMMAND "test_subgroup_queries" WORKITEM_HANDLER "loopvec")
 
 add_test_pocl(NAME "runtime/clSetEventCallback"
               COMMAND "test_clSetEventCallback"
@@ -242,6 +244,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/test_queue_creation_with_hints"
   "runtime/clGetKernelArgInfo"
   "runtime/clCreateSubDevices"
+  "runtime/test_subgroup_queries"
   PROPERTIES
     COST 2.0
     PROCESSORS 1

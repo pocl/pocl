@@ -1870,6 +1870,9 @@ typedef struct pocl_kernel_metadata_s
   size_t reqd_wg_size[OPENCL_MAX_DIMENSION];
   size_t wg_size_hint[OPENCL_MAX_DIMENSION];
   char vectypehint[16];
+  /* required sub-group size set with the intel_reqd_sub_group_size kernel
+     attribute; 0 if not set */
+  size_t reqd_sub_group_size;
 
   /* if we know the size of _every_ kernel argument, we store
    * the total size here. see struct _cl_kernel on why */
