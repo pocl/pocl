@@ -1498,11 +1498,10 @@ int SharedCLContext::buildOrLinkProgram(
   //
   // https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/clGetKernelArgInfo.html
   //
-  // HACK: Strictly speaking -cl-kernel-arg-info is not a valid option to
-  // clLinkProgram, but the proprietery NVIDIA driver seems to 1) accept it and
-  // 2) strip argument info in clLinkProgram if that option is NOT given, so
-  // special case NVIDIA-only builds.
-  if (NvidiaPlatform || !LinkOnly) {
+  // ROCm errors if this is passed to clLinkProgram but NVIDIA and PoCL will
+  // strip out argument info if it is only given to clCompileProgram and not
+  // clLinkProgram.
+  if (!(RocmPlatform && LinkOnly)) {
     opts += " -cl-kernel-arg-info";
   }
 
