@@ -912,9 +912,37 @@ pocl_remote_reader_pthread (void *aa)
       int fd = connection->fd;
       if (fd < 0)
         {
+          int reconnected;
         TRY_RECONNECT:
-          connection->fd = -1;
-          break;
+          reconnected = pocl_remote_reconnect_socket (remote, connection);
+          if (reconnected != CL_SUCCESS)
+            {
+              if (connection->reconnect_attempts
+                  >= POCL_REMOTE_RECONNECT_MAX_ATTEMPTS)
+                {
+                  network_command *cmd = NULL, *tmp = NULL;
+                  POCL_LOCK (inflight->mutex);
+                  /* Each command in the inflight queue of the failed server
+                   * has to be handled and marked as failed to prevent
+                   * deadlock. */
+                  DL_FOREACH_SAFE (inflight->queue, cmd, tmp)
+                    {
+                      DL_DELETE (inflight->queue, cmd);
+                      finish_running_cmd (remote, cmd, NETCMD_FAILED);
+                    }
+                  POCL_UNLOCK (inflight->mutex);
+
+#if defined(ENABLE_REMOTE_DISCOVERY_AVAHI)                                    \
+  || defined(ENABLE_REMOTE_DISCOVERY_DHT)                                     \
+  || defined(ENABLE_REMOTE_DISCOVERY_ANDROID)
+                  POCL_LOCK (connection->discovery_reconnect_guard.mutex);
+                  POCL_WAIT_COND (connection->discovery_reconnect_guard.cond,
+                                  connection->discovery_reconnect_guard.mutex);
+                  POCL_UNLOCK (connection->discovery_reconnect_guard.mutex);
+#endif
+                }
+              continue;
+            }
         }
 
       /* READ MSG */
@@ -1305,8 +1333,39 @@ pocl_remote_writer_pthread (void *aa)
           if (0)
             {
             /* This is only hit if there is an error from CHECK_WRITE */
+            int reconnected;
             TRY_RECONNECT:
-              return NULL;
+              reconnected = pocl_remote_reconnect_socket (remote, connection);
+              if (reconnected != CL_SUCCESS)
+                {
+                  if (connection->reconnect_attempts
+                      >= POCL_REMOTE_RECONNECT_MAX_ATTEMPTS)
+                    {
+                      network_command *cmd = NULL, *tmp = NULL;
+                      POCL_LOCK (this->mutex);
+                      /* Each command in the inflight queue of the failed
+                       * server has to be handled and marked as failed to
+                       * prevent deadlock. */
+                      DL_FOREACH_SAFE (this->queue, cmd, tmp)
+                        {
+                          DL_DELETE (this->queue, cmd);
+                          finish_running_cmd (remote, cmd, NETCMD_FAILED);
+                        }
+                      POCL_UNLOCK (this->mutex);
+
+#if defined(ENABLE_REMOTE_DISCOVERY_AVAHI)                                    \
+  || defined(ENABLE_REMOTE_DISCOVERY_DHT)                                     \
+  || defined(ENABLE_REMOTE_DISCOVERY_ANDROID)
+                      POCL_LOCK (connection->discovery_reconnect_guard.mutex);
+                      POCL_WAIT_COND (
+                        connection->discovery_reconnect_guard.cond,
+                        connection->discovery_reconnect_guard.mutex);
+                      POCL_UNLOCK (
+                        connection->discovery_reconnect_guard.mutex);
+#endif
+                    }
+                  continue;
+                }
             }
 
           /* WRITE DATA */
