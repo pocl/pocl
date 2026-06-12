@@ -54,7 +54,7 @@
   int err = 0;
 
 #define EVENT_TIMING_POST(msg)                                                 \
-  {                                                                            \
+  if (ev_id != 0) {                                                            \
     std::unique_lock<std::mutex> lock(EventmapMutex);                          \
     auto map_result = Eventmap.insert({ev_id, event});                         \
     if (!map_result.second) {                                                  \
@@ -200,6 +200,10 @@ public:
   virtual cl::Context getHandle() const override {
     return ContextWithAllDevices;
   }
+
+  virtual unsigned platformID() const override { return plat_id; }
+
+  virtual VirtualContextBase *parentVCtx() const override { return ParentCtx; }
 
   virtual size_t numDevices() const override { return CLDevices.size(); }
 
@@ -840,6 +844,12 @@ void SharedCLContext::queuedPush(Request *req) {
   }
 
   uint32_t cq_id = req->Body.cq_id;
+
+  // Override cq_id when exporting buffer contents
+  if (req->Body.message_type == MessageType_MigrateD2D &&
+      req->IsMigrationExportRequired) {
+    cq_id = DEFAULT_QUE_ID + req->Body.m.migrate.source_did;
+  }
   POCL_MSG_PRINT_GENERAL("SHCTX %u QUEUED PUSH QID %" PRIu32 " DID %" PRIu32
                          "\n",
                          plat_id, cq_id, uint32_t(req->Body.did));

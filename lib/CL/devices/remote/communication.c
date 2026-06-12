@@ -3406,8 +3406,8 @@ pocl_network_migrate_d2d (uint32_t cq_id, uint32_t mem_id, uint32_t size_id,
 
   ID_REQUEST (MigrateD2D, mem_id);
   req->cq_id = cq_id;
-  req->skip_peer_notify
-    = node->sync.event.event->implicit_event | node->command.migrate.implicit;
+  /* Migrations can generate unexpected cross-platform dependencies */
+  req->skip_peer_notify = 0;
 
   req->m.migrate.source_pid = source->remote_platform_index;
   req->m.migrate.source_did = source->remote_device_index;
