@@ -64,7 +64,9 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
           if (!is_freed)
             {
               int errcode = CL_SUCCESS;
-              if (q->device->ops->free_command_buffer)
+              // Make sure to match the logic in clFinalizeCommandBufferKHR.c
+              if ((!command_buffer->is_multi_device)
+                  && q->device->ops->free_command_buffer)
                 errcode = q->device->ops->free_command_buffer (q->device,
                                                                command_buffer);
               if (errcode != CL_SUCCESS)
