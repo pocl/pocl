@@ -1636,17 +1636,24 @@ pocl_remote_notify (cl_device_id device, cl_event event, cl_event finished)
       return;
     }
 
-  if (remote_command_is_ready (node->sync.event.event))
+  /* Remote commands are held in queue until all non-remote events are
+   * finished, but remote dependencies may trigger notifications after
+   * submission. In that case no further action is needed, as remote events
+   * are signaled between servers in a P2P fashion. */
+  if (event->status == CL_QUEUED)
     {
-      assert (event->status == CL_QUEUED);
-      pocl_update_event_submitted (event);
-      remote_push_command (node);
-    }
-  else
-    {
-      POCL_MSG_PRINT_EVENTS (
-          "remote: sync event %lu is not ready for the notified event %lu\n",
-          node->sync.event.event->id, event->id);
+      if (remote_command_is_ready (node->sync.event.event))
+        {
+          pocl_update_event_submitted (event);
+          remote_push_command (node);
+        }
+      else
+        {
+          POCL_MSG_PRINT_EVENTS (
+            "remote: notify target event %lu still has unfinished non-remote "
+            "dependencies, can't submit\n",
+            event->id);
+        }
     }
 
   return;
