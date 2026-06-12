@@ -593,6 +593,16 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
                    ReqdWGSize->getOperand(2))->getValue()))->getLimitedValue();
     }
 
+    llvm::MDNode *ReqdSGSize =
+        KernelFunction->getMetadata("intel_reqd_sub_group_size");
+    if (ReqdSGSize != nullptr) {
+      meta->reqd_sub_group_size =
+          (llvm::cast<ConstantInt>(
+               llvm::dyn_cast<ConstantAsMetadata>(ReqdSGSize->getOperand(0))
+                   ->getValue()))
+              ->getLimitedValue();
+    }
+
     llvm::MDNode *WGSizeHint =
         KernelFunction->getMetadata("work_group_size_hint");
     if (WGSizeHint != nullptr) {
@@ -695,6 +705,13 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
       attrstr << "__attribute__((reqd_work_group_size("
               << reqdx << ", " << reqdy
               << ", " << reqdz << " )))";
+    }
+
+    if (meta->reqd_sub_group_size) {
+      if (attrstr.tellp() > 0)
+        attrstr << " ";
+      attrstr << "__attribute__((intel_reqd_sub_group_size("
+              << meta->reqd_sub_group_size << ")))";
     }
 
     if (wghintx || wghinty || wghintz) {

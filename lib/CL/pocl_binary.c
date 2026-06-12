@@ -52,10 +52,11 @@
 /* changes for version 8: compilation parameters are stored in module metadata
  * changes for version 9: support other than "program.bc" files in root dir
  * changes for version 10: support program scope variables
- * changes for version 11: support extra subgroup & workgroup metadata */
+ * changes for version 11: support extra subgroup & workgroup metadata
+ * changes for version 12: store the required sub-group size */
 
 #define FIRST_SUPPORTED_POCLCC_VERSION 9
-#define POCLCC_VERSION 11
+#define POCLCC_VERSION 12
 
 /* pocl binary structures */
 
@@ -68,6 +69,7 @@
 
 #define POCL_KERNEL_HAS_WORKG_META (1 << 1)
 #define POCL_KERNEL_HAS_SUBG_META (1 << 2)
+#define POCL_KERNEL_HAS_REQD_SUBG_SIZE (1 << 3)
 
 typedef struct pocl_binary_kernel_s
 {
@@ -107,6 +109,9 @@ typedef struct pocl_binary_kernel_s
 
   /* required work-group size */
   uint64_t reqd_wg_size[OPENCL_MAX_DIMENSION];
+
+  /* required sub-group size */
+  uint32_t reqd_sub_group_size;
 
   /* Stores: cl_bitfield kernel->meta->has_arg_metadata */
   uint32_t has_arg_metadata;
@@ -438,6 +443,8 @@ pocl_binary_serialize_kernel_to_buffer(cl_program program,
       || (meta->preferred_wg_multiple
           && meta->preferred_wg_multiple[device_i]))
     flags |= POCL_KERNEL_HAS_WORKG_META;
+  if (meta->reqd_sub_group_size)
+    flags |= POCL_KERNEL_HAS_REQD_SUBG_SIZE;
   BUFFER_STORE (flags, uint32_t);
 
   if (flags & POCL_KERNEL_HAS_SUBG_META)
@@ -474,6 +481,12 @@ pocl_binary_serialize_kernel_to_buffer(cl_program program,
       tmp = 0;
       if (meta->spill_mem_size)
         tmp = meta->spill_mem_size[device_i];
+      BUFFER_STORE (tmp, uint32_t);
+    }
+
+  if (flags & POCL_KERNEL_HAS_REQD_SUBG_SIZE)
+    {
+      uint32_t tmp = meta->reqd_sub_group_size;
       BUFFER_STORE (tmp, uint32_t);
     }
 
@@ -642,6 +655,11 @@ pocl_binary_deserialize_kernel_from_buffer (pocl_binary *b,
           BUFFER_READ (kernel->local_mem_size, uint32_t);
           BUFFER_READ (kernel->private_mem_size, uint32_t);
           BUFFER_READ (kernel->spill_mem_size, uint32_t);
+        }
+
+      if (kernel->flags & POCL_KERNEL_HAS_REQD_SUBG_SIZE)
+        {
+          BUFFER_READ (kernel->reqd_sub_group_size, uint32_t);
         }
 
       meta->arg_info = calloc (kernel->num_args, sizeof (struct pocl_argument_info));
@@ -947,6 +965,9 @@ pocl_binary_get_kernels_metadata (cl_program program, unsigned device_i)
                 program->associated_num_devices, sizeof (cl_ulong));
           km->spill_mem_size[device_i] = k.spill_mem_size;
         }
+
+      if (k.flags & POCL_KERNEL_HAS_REQD_SUBG_SIZE)
+        km->reqd_sub_group_size = k.reqd_sub_group_size;
 
       unsigned l;
       for (l = 0; l < OPENCL_MAX_DIMENSION; l++)
