@@ -814,6 +814,12 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
 }
 
 SharedCLContext::~SharedCLContext() {
+  // Drain the command queues to ensure any event callbacks have fired before
+  // the objects they reference get deleted
+  for (auto Queue : QueueIDMap) {
+    Queue.second->finish();
+  }
+
   for (auto &SVMRegion : SVMRegions) {
     POCL_MSG_PRINT_MEMORY("Freeing an SVM region starting at %p.\n",
                           SVMRegion.StartAddress);
