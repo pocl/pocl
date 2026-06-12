@@ -1883,7 +1883,23 @@ int SharedCLContext::buildOrLinkProgram(
     cl_int ArgErr = CL_SUCCESS;
 
     temp_kernel.total_local_size = 0;
-    temp_kernel.reqd_wg_size = {0, 0, 0};
+
+    size_t Size3[3] = {0, 0, 0};
+    ArgErr = kernels[i].getWorkGroupInfo(
+        program->devices[0], CL_KERNEL_COMPILE_WORK_GROUP_SIZE, &Size3);
+    assert(ArgErr == CL_SUCCESS);
+    temp_kernel.reqd_wg_size = {Size3[0], Size3[1], Size3[2]};
+
+    // FIXME: report accurete per-device values
+    size_t MaxWorkGroupSize = SIZE_MAX;
+    for (cl::Device &dev : program->devices) {
+      ArgErr = kernels[i].getWorkGroupInfo(
+          program->devices[0], CL_KERNEL_WORK_GROUP_SIZE, &Size3[0]);
+      assert(ArgErr == CL_SUCCESS);
+      if (MaxWorkGroupSize > Size3[0])
+        MaxWorkGroupSize = Size3[0];
+    }
+    temp_kernel.max_workgroup_size = MaxWorkGroupSize;
 
     std::string kernel_name =
         kernels[i].getInfo<CL_KERNEL_FUNCTION_NAME>(&ArgErr);
