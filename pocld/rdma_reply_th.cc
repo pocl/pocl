@@ -52,6 +52,8 @@ void RdmaReplyThread::pushReply(Reply *reply) {
   io_cond.notify_one();
 }
 
+// From reply_th.cc
+const char *pocld_reply_type_to_str(ReplyMessageType type);
 void RdmaReplyThread::rdmaWriterThread() {
   // TODO: have a bunch of these instead of waiting for all sends to complete
   // before handling the next reply
@@ -146,6 +148,7 @@ void RdmaReplyThread::rdmaWriterThread() {
       peer_notice.Body.event_id = reply->req->Body.event_id;
       peer_notice.Body.message_type = MessageType_NotifyEvent;
       virtualContext->broadcastToPeers(peer_notice);
+
       delete reply;
     } else {
       auto now = std::chrono::system_clock::now();

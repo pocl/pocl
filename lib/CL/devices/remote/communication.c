@@ -3353,6 +3353,7 @@ pocl_network_migrate_d2d (uint32_t cq_id, uint32_t mem_id, uint32_t size_id,
   req->m.migrate.source_did = source->remote_device_index;
   req->m.migrate.dest_peer_id = dest->server->peer_id;
   req->m.migrate.source_peer_id = source->server->peer_id;
+  req->m.migrate.last_write_id = node->command.migrate.last_write_id;
   req->m.migrate.is_image = mem_is_image;
   req->m.migrate.is_external = 0;
   req->m.migrate.size = size;

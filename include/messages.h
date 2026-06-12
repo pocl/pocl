@@ -398,6 +398,7 @@ extern "C"
   {
     POCL_ALIGNAS(8) // Meant for aligning the structure, not the members.
     uint64_t size;
+    uint64_t last_write_id;
     uint32_t source_pid;
     uint32_t source_did;
     uint32_t size_id;

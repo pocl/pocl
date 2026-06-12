@@ -49,6 +49,10 @@ public:
 
   virtual size_t numDevices() const = 0;
 
+  virtual unsigned platformID() const = 0;
+
+  virtual VirtualContextBase *parentVCtx() const = 0;
+
   virtual int writeKernelMeta(uint32_t ProgramID, std::vector<uint8_t> &Buffer,
                               size_t *Written) = 0;
 

@@ -33,7 +33,7 @@
 #include "reply_th.hh"
 #include "tracing.h"
 
-static const char *reply_to_str(ReplyMessageType type) {
+const char *pocld_reply_type_to_str(ReplyMessageType type) {
   switch (type) {
   case MessageType_ServerInfoReply:
     return "ServerInfoReply";
@@ -251,7 +251,7 @@ void ReplyQueueThread::writeThread() {
           "%s: SENDING MESSAGE, ID: %" PRIu64 " TYPE: %s SIZE: %" PRIuS
           " EXTRA: %" PRIuS " FAILED: %" PRIu32 "\n",
           ThreadIdentifier.c_str(), uint64_t(Completed->rep.msg_id),
-          reply_to_str(t), sizeof(ReplyMsg_t), Completed->extra_size,
+          pocld_reply_type_to_str(t), sizeof(ReplyMsg_t), Completed->extra_size,
           uint32_t(Completed->rep.failed));
 
       // WRITE REPLY
