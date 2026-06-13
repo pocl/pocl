@@ -114,9 +114,12 @@ static bool enableDebugLogs() {
 }
 
 // Returns the TargetMachine instance or zero if no triple is provided.
+// ForJIT selects a code model suitable for the in-process ORC/JITLink JIT (see
+// pocl_llvm_orc.cc); it only changes codegen on COFF targets.
 static TargetMachine *GetTargetMachine(const char* TTriple,
                                        const char* MCPU = "",
-                                       const char* Features = "") {
+                                       const char* Features = "",
+                                       bool ForJIT = false) {
 
   std::string Error;
 
@@ -128,14 +131,27 @@ static TargetMachine *GetTargetMachine(const char* TTriple,
     return nullptr;
   }
 
+  // JITLink's COFF/x86-64 backend does not synthesize far-call stubs (its ELF
+  // and Mach-O backends do). Under the small code model a kernel's +-2GB
+  // PC-relative call to a runtime helper mapped far from the JIT-allocated code
+  // overflows: the libgcc stack probe (___chkstk_ms) and msvcrt's mem* helpers
+  // both live in libraries outside that range. The large code model emits
+  // 64-bit indirect calls instead, so they resolve wherever they are. Hence the
+  // COFF JIT only; ELF/Mach-O and the linker-based paths are fine with small +
+  // PIC.
+  llvm::Triple TheTriple(TTriple);
+  CodeModel::Model CM = CodeModel::Small;
+  if (ForJIT && TheTriple.isOSBinFormatCOFF())
+    CM = CodeModel::Large;
+
   TargetMachine *TM = TheTarget->createTargetMachine(
 #if LLVM_MAJOR < 22
       TTriple,
 #else
-      Triple(TTriple),
+      TheTriple,
 #endif
       MCPU, Features, TargetOptions(),
-      Reloc::PIC_, CodeModel::Small,
+      Reloc::PIC_, CM,
       CodeGenOptLevel::Aggressive);
 
   assert(TM != NULL && "llvm target has no targetMachine constructor");
@@ -1222,7 +1238,7 @@ static TargetLibraryInfoImpl *initPassManagerForCodeGen(legacy::PassManager &PM,
  * Output native object file (<kernel>.so.o). */
 int pocl_llvm_codegen2(const char* TTriple, const char* MCPU,
                        const char *Features, cl_device_type DevType,
-                       pocl_lock_t *Lock, void *Modp, int EmitAsm,
+                       int ForJIT, pocl_lock_t *Lock, void *Modp, int EmitAsm,
                        int EmitObj, char **Output, uint64_t *OutputSize) {
 
   PoclCompilerMutexGuard LockHolder(Lock);
@@ -1232,7 +1248,8 @@ int pocl_llvm_codegen2(const char* TTriple, const char* MCPU,
   *Output = nullptr;
   std::unique_ptr<llvm::TargetLibraryInfoImpl> TLIIPtr;
 
-  std::unique_ptr<llvm::TargetMachine> TM(GetTargetMachine(TTriple, MCPU, Features));
+  std::unique_ptr<llvm::TargetMachine> TM(
+      GetTargetMachine(TTriple, MCPU, Features, ForJIT));
   llvm::TargetMachine *Target = TM.get();
 
   // First try direct object code generation from LLVM, if supported by the
@@ -1361,7 +1378,8 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program Program,
   PoclLLVMContextData *LLVMCtx = (PoclLLVMContextData *)Ctx->llvm_context_data;
 
   return pocl_llvm_codegen2 (Device->llvm_target_triplet, Device->llvm_cpu,
-                            Features, Device->type, &LLVMCtx->Lock,
+                            Features, Device->type,
+                            pocl_cpu_device_uses_jit (Device), &LLVMCtx->Lock,
                             Modp, EmitAsm, EmitObj, Output, OutputSize);
 }
 

@@ -67,6 +67,17 @@ CPU driver
 * Implemented experimental host CPU support for the `cl_khr_kernel_clock`
   extension on native x86 builds (may be disabled in conformance builds).
 
+* The CPU drivers can now load kernels in-process with LLVM's ORC JIT and the
+  JITLink object-linking layer, instead of linking each kernel into a shared
+  library through the Clang driver and loading it with ``dlopen()``. This drops
+  the run-time dependency on a host linker and the C startup files, which helps
+  when shipping PoCL to machines without a development environment. It is
+  controlled by the new ``-DHOST_CPU_ENABLE_JIT`` CMake option, on by default on
+  ELF and Mach-O hosts and on Windows x86-64 (MinGW).
+  Set ``POCL_CPU_JIT=0`` to fall back to the link-and-``dlopen()`` path at run
+  time (in-process through lld where compiled in, through the Clang driver
+  otherwise). See :ref:`cpu-jit`.
+
 ===================================
 Deprecation/feature removal notices
 ===================================

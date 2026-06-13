@@ -48,6 +48,7 @@
 #include "pocl_mlir.h"
 #endif
 
+#include "common.h"
 #include "common_driver.h"
 
 #define APPEND_TO_BUILD_LOG_RET(err, ...)                                     \
@@ -919,6 +920,45 @@ pocl_driver_supports_binary (cl_device_id device, size_t length,
 #endif
 }
 
+#ifdef ENABLE_LLVM
+/* Recursively links every JIT kernel object in 'path' whose shared library
+   variant is missing. An exported binary must carry the shared libraries: a
+   JIT device caches only the kernel objects, which an LLVM-less consumer --
+   the primary deployment target of poclbinaries -- cannot load or link.
+   Objects whose shared library exists are then skipped at serialization
+   (see pocl_binary.c). */
+static void
+link_jit_objects (cl_device_id device, const char *path)
+{
+  switch (pocl_get_file_type (path))
+    {
+    default:
+      return;
+    case POCL_FS_REGULAR:
+      {
+        char so_path[POCL_MAX_PATHNAME_LENGTH];
+        if (!pocl_cache_object_shlib_variant (so_path, path)
+            || pocl_exists (so_path))
+          return;
+        if (pocl_link_final_binary (device, path, so_path))
+          POCL_MSG_WARN ("Linking %s for the exported binary failed.\n",
+                         path);
+        return;
+      }
+    case POCL_FS_DIRECTORY:
+      {
+        pocl_dir_iter d;
+        if (pocl_dir_iterator (path, &d))
+          return;
+        while (pocl_dir_next_entry (d))
+          link_jit_objects (device, pocl_dir_iter_get_path (d));
+        pocl_release_dir_iterator (&d);
+        return;
+      }
+    }
+}
+#endif
+
 /* Build the dynamic WG sized parallel.bc and device specific code,
    for each kernel. This must be called *after* metadata has been setup  */
 int
@@ -1055,6 +1095,14 @@ pocl_driver_build_poclbinary (cl_program program, cl_uint device_i)
       POCL_UNLOCK_OBJ (program);
       return CL_INVALID_OPERATION;
     }
+
+#ifdef ENABLE_LLVM
+  {
+    char program_dir[POCL_MAX_PATHNAME_LENGTH];
+    pocl_cache_program_path (program_dir, program, device_i);
+    link_jit_objects (device, program_dir);
+  }
+#endif
 
   POCL_UNLOCK_OBJ (program);
   return CL_SUCCESS;

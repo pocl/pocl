@@ -1118,11 +1118,14 @@ int copyKernelFromBitcode(const char* Name, llvm::Module *ParallelBC,
     return -1;
   }
 
-#ifdef CPU_USE_LLD_LINK_WIN32
+#ifdef CPU_USE_LLD_LINK
   // create a global constant "int32 _fltused"
   // this is necessary if we're not linking against C runtime on Windows
-  auto TT = ParallelBC->getTargetTriple();
-  if ((TT.rfind("x86", 0) == 0) && (TT.find("windows") != std::string::npos)) {
+  // (the runtime check below keeps this Windows-only)
+  // NB: Module::getTargetTriple() returns a std::string up to LLVM 20 and a
+  // llvm::Triple from 21 on; constructing a Triple accepts both.
+  llvm::Triple TT(ParallelBC->getTargetTriple());
+  if (TT.isX86() && TT.isOSWindows()) {
     IntegerType *Int32Ty = IntegerType::getInt32Ty(ParallelBC->getContext());
     ConstantInt *Initializer = ConstantInt::get(Int32Ty, 0);
     GlobalVariable *FltUsed = new GlobalVariable(

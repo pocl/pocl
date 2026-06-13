@@ -185,19 +185,11 @@ if(CLANG_LINK_DIRS)
   list(REMOVE_DUPLICATES CLANG_LINK_DIRS)
 endif()
 
-# if enabled, CPU driver on Windows will use lld-link (invoked via library API)
-# to link final kernel object files, instead of the default Clang driver linking.
-set(CPU_USE_LLD_LINK_WIN32 OFF)
-# TODO does not yet work with MINGW; tested but the linked DLL is empty
-if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM AND STATIC_LLVM AND MSVC)
-  find_library(LIB_LLD_COFF NAMES "lldCOFF" HINTS "${LLVM_LIBDIR}")
-  find_library(LIB_LLD_MINGW NAMES "lldMinGW" HINTS "${LLVM_LIBDIR}")
-  find_library(LIB_LLD_COMMON NAMES "lldCommon" HINTS "${LLVM_LIBDIR}")
-  if(LIB_LLD_COFF AND LIB_LLD_MINGW AND LIB_LLD_COMMON)
-    message(STATUS "Using lld-link via library to link kernels for CPU devices")
-    set(CPU_USE_LLD_LINK_WIN32 ON)
-    list(APPEND LLVM_LINK_LIBRARIES ${LIB_LLD_COFF} ${LIB_LLD_MINGW} ${LIB_LLD_COMMON})
-  endif()
+# see cmake/SetupLLD.cmake for what CPU_USE_LLD_LINK enables
+set(POCL_LLD_FIND_MODE "library")
+include(SetupLLD)
+if(CPU_USE_LLD_LINK)
+  list(INSERT LLVM_LINK_LIBRARIES 0 ${POCL_LLD_LIBRARIES})
 endif()
 
 ####################################################################

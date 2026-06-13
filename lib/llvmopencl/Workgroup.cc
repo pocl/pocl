@@ -1355,9 +1355,12 @@ void WorkgroupImpl::createDefaultWorkgroupLauncher(llvm::Function *F) {
 
   WorkGroup->setLinkage(Function::ExternalLinkage);
   Triple TT(F->getParent()->getTargetTriple());
-  if (TT.getEnvironment() == llvm::Triple::MSVC) {
-    // dllexport is needed for exposing the symbol in the kernel module
-    // when MSVC-based toolchain is used.
+  if (TT.isOSWindows()) {
+    // A DLL only exposes dllexport'ed symbols in its export table, so without
+    // this GetProcAddress() cannot find the work-group function. This holds
+    // for any COFF link that doesn't auto-export (lld-link never does; MinGW
+    // linkers stop doing it as soon as one symbol is marked), so mark the
+    // function for MinGW triples too rather than relying on auto-export.
     WorkGroup->setDLLStorageClass(GlobalValue::DLLExportStorageClass);
   }
 

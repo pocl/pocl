@@ -1185,6 +1185,10 @@ struct _cl_device_id {
    * This pass adds checks of input operands to div/rem so that UB is
    * never triggered. */
   cl_bool run_sanitize_divrem_pass;
+  /* CL_TRUE for CPU host devices that load kernel objects in-process via the
+   * ORC/JITLink JIT; latched in pocl_cpu_init_common() (see
+   * pocl_cpu_device_uses_jit()). */
+  cl_bool uses_cpu_jit;
 
   /* If CL_TRUE, pocl_llvm_build_program will ignore pocl's OpenCL headers
    * that perform built-in renames during OpenCL C build and relies on
@@ -1427,6 +1431,22 @@ struct _cl_device_id {
 
   struct _cl_device_id *next;
 };
+
+/* Whether a CPU host device loads kernel objects in-process via the ORC/JITLink
+   JIT (HOST_CPU_ENABLE_JIT) rather than linking them into a shared library
+   (in-process via lld, or through the Clang driver) and dlopen()ing the
+   result. Latched for the device's lifetime in pocl_cpu_init_common(): a
+   device qualifies when it has no custom binary finalizer -- custom back-ends
+   set finalize_binary and keep the link path --, the POCL_CPU_JIT run-time
+   switch is left on, and the process-global JIT could be brought up. This is
+   the single gate that codegen (the kernel object's code model) and the
+   cached artifact's name (.o vs .so/.dll) consult; the loader accepts either
+   artifact and follows what it finds (see pocl_check_kernel_disk_cache()). */
+static inline int
+pocl_cpu_device_uses_jit (cl_device_id device)
+{
+  return device->uses_cpu_jit;
+}
 
 #define DEVICE_SVM_FINEGR(dev) (dev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_BUFFER \
                                               | CL_DEVICE_SVM_FINE_GRAIN_SYSTEM))

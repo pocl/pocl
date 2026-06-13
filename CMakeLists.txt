@@ -1120,6 +1120,36 @@ if(ENABLE_LLVM AND ENABLE_HOST_CPU_DEVICES AND (NOT ENABLE_CONFORMANCE) AND (LLV
   endif()
 endif()
 
+# Record the SONAME of the SLEEF library for the JIT to link against
+set(HOST_CPU_SLEEF_LIBRARY "")
+set(HOST_CPU_SLEEF_LIBRARY_FALLBACK "")
+if(ENABLE_HOST_CPU_VECTORIZE_SLEEF AND LIBSLEEF)
+  set(HOST_CPU_SLEEF_LIBRARY "${LIBSLEEF}")
+  if(CMAKE_OBJDUMP)
+    execute_process(
+      COMMAND "${CMAKE_OBJDUMP}" -p "${LIBSLEEF}"
+      OUTPUT_VARIABLE POCL_SLEEF_OBJDUMP_OUTPUT
+      ERROR_QUIET
+      RESULT_VARIABLE POCL_SLEEF_OBJDUMP_RESULT)
+    if(POCL_SLEEF_OBJDUMP_RESULT STREQUAL "0")
+      string(REGEX MATCH "SONAME[ \t]+([^ \r\n]+)"
+             POCL_SLEEF_SONAME_MATCH "${POCL_SLEEF_OBJDUMP_OUTPUT}")
+      if(POCL_SLEEF_SONAME_MATCH)
+        set(HOST_CPU_SLEEF_LIBRARY "${CMAKE_MATCH_1}")
+        set(HOST_CPU_SLEEF_LIBRARY_FALLBACK "${LIBSLEEF}")
+      endif()
+    endif()
+  endif()
+endif()
+
+# Record the paths to the SVML static libraries for the JIT to link against.
+set(HOST_CPU_SVML_LIBRARY "")
+set(HOST_CPU_IRC_LIBRARY "")
+if(ENABLE_HOST_CPU_VECTORIZE_SVML AND LIBSVML AND LIBIRC)
+  set(HOST_CPU_SVML_LIBRARY "${LIBSVML}")
+  set(HOST_CPU_IRC_LIBRARY "${LIBIRC}")
+endif()
+
 ######################################################################################
 ######################################################################################
 
@@ -1230,6 +1260,35 @@ find_package(Python3 3.8 COMPONENTS Interpreter)
 set(HOST_CPU_ENABLE_SPIRV OFF)
 if(ENABLE_HOST_CPU_DEVICES AND ENABLE_SPIRV AND (NOT MSVC) AND (HOST_DEVICE_ADDRESS_BITS MATCHES "64"))
   set(HOST_CPU_ENABLE_SPIRV ON)
+endif()
+
+# The JIT for CPU devices is supported on
+#   - non-Windows platforms whose architecture has a JITLink ELF/Mach-O
+#     backend (x86(-64), AArch64, ARM32, RISC-V, PPC64, LoongArch); s390x,
+#     MIPS and SPARC have none, so they keep the Clang+dlopen path;
+#   - Windows x86_64 (MinGW) via JITLink's COFF_x86_64 backend. Windows arm64
+#     has no COFF_aarch64 backend, and MSVC keeps its existing link paths
+#     (in-process lld-link, or the Clang driver).
+set(HOST_CPU_JIT_SUPPORTED OFF)
+if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM)
+  if((NOT WIN32) AND (CMAKE_SYSTEM_PROCESSOR MATCHES
+     "^(x86_64|amd64|AMD64|i[3-6]86|aarch64|arm64|arm.*|riscv32|riscv64|ppc64|ppc64le|powerpc64|powerpc64le|loongarch64)$"))
+    set(HOST_CPU_JIT_SUPPORTED ON)
+  elseif(MINGW
+         AND (CMAKE_SIZEOF_VOID_P EQUAL 8)
+         AND (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64|AMD64|amd64|x64)"))
+    # Windows x86_64 (MinGW): JITLink's COFF_x86_64 backend; no COFF_aarch64.
+    set(HOST_CPU_JIT_SUPPORTED ON)
+  endif()
+endif()
+
+option(HOST_CPU_ENABLE_JIT
+       "JIT CPU kernels via ORC/JITLink instead of Clang+dlopen."
+       ${HOST_CPU_JIT_SUPPORTED})
+if(HOST_CPU_ENABLE_JIT AND NOT HOST_CPU_JIT_SUPPORTED)
+  message(FATAL_ERROR "HOST_CPU_ENABLE_JIT was requested, but JITLink has no "
+          "backend for this platform "
+          "(${CMAKE_SYSTEM_NAME}/${CMAKE_SYSTEM_PROCESSOR}).")
 endif()
 
 ######################################################################################
@@ -2834,7 +2893,7 @@ if (ENABLE_LLVM)
   MESSAGE(STATUS "USE_LLVM_SPIRV_TARGET: ${USE_LLVM_SPIRV_TARGET}")
   if(ENABLE_HOST_CPU_DEVICES)
   MESSAGE(STATUS "CLANG_MARCH_FLAG: ${CLANG_MARCH_FLAG}")
-  MESSAGE(STATUS "CPU_USE_LLD_LINK_WIN32: ${CPU_USE_LLD_LINK_WIN32}")
+  MESSAGE(STATUS "CPU_USE_LLD_LINK: ${CPU_USE_LLD_LINK}")
   MESSAGE(STATUS "LLC_TRIPLE: ${LLC_TRIPLE}")
   MESSAGE(STATUS "LLC_HOST_CPU_AUTO: ${LLC_HOST_CPU_AUTO}")
   MESSAGE(STATUS "LLC_HOST_CPU: ${LLC_HOST_CPU}")
@@ -2848,6 +2907,7 @@ if (ENABLE_LLVM)
   MESSAGE(STATUS "ENABLE_HOST_CPU_VECTORIZE_LIBMVEC: ${ENABLE_HOST_CPU_VECTORIZE_LIBMVEC}")
   MESSAGE(STATUS "ENABLE_HOST_CPU_VECTORIZE_SVML: ${ENABLE_HOST_CPU_VECTORIZE_SVML}")
   MESSAGE(STATUS "ENABLE_HOST_CPU_VECTORIZE_BUILTINS: ${ENABLE_HOST_CPU_VECTORIZE_BUILTINS}")
+  MESSAGE(STATUS "HOST_CPU_ENABLE_JIT: ${HOST_CPU_ENABLE_JIT}")
   endif()
 endif()
 MESSAGE(STATUS "")

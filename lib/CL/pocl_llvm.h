@@ -212,6 +212,7 @@ extern "C" {
                          const char* MCPU,
                          const char *Features,
                          cl_device_type DevType,
+                         int ForJIT,
                          pocl_lock_t *Lock,
                          void *Modp, int EmitAsm,
                          int EmitObj, char **Output, uint64_t *OutputSize);
@@ -226,23 +227,24 @@ extern "C" {
 
   int pocl_invoke_clang (const char *TTriple, const char **Args);
 
-#ifdef CPU_USE_LLD_LINK_WIN32
+#ifdef CPU_USE_LLD_LINK
   /**
-   * Invoke LLVM's lld-link.exe linker through its C++ API. This has the
-   * advantage that we can bundle the linker library directly into libpocl,
-   * dropping a dependency on external executable. However, we need to figure
-   * out the link arguments without using Clang driver.
+   * Link a kernel object into a shared library in-process through lld's
+   * library API. This bundles the linker into libpocl, dropping the
+   * dependency on an external toolchain: nothing is exec'd and no startup
+   * files are needed. Symbols the kernel binary leaves undefined resolve
+   * when it is dlopen()ed, the same way the JIT resolves them.
    *
-   * @param Device the device triple
-   * @param InFile the input .obj file
-   * @param InFile the output .dll file
+   * @param Device the device whose target to link for
+   * @param InFile the input object file
+   * @param OutFile the output shared library
    *
    * @return 0 on success, error code otherwise.
    */
   POCL_EXPORT
-  int pocl_invoke_lld_link_win32 (cl_device_id Device,
-                                  const char *InFile,
-                                  const char *OutFile);
+  int pocl_invoke_lld_link (cl_device_id Device,
+                            const char *InFile,
+                            const char *OutFile);
 #endif
 
   /**
