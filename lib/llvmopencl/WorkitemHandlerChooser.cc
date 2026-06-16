@@ -109,12 +109,18 @@ WorkitemHandlerChooser::run(llvm::Function &F,
 }
 
 bool WorkitemHandlerResult::invalidate(
-    llvm::Function &F, const llvm::PreservedAnalyses PA,
-    llvm::AnalysisManager<llvm::Function>::Invalidator &Inv) {
-  // Check whether the analysis has been explicitly invalidated.
-  // Otherwise, it stays valid
-  auto PAC = PA.getChecker<WorkitemHandlerChooser>();
-  return !PAC.preservedWhenStateless();
+    llvm::Function &, const llvm::PreservedAnalyses,
+    llvm::AnalysisManager<llvm::Function>::Invalidator &) {
+  // The work-item handler is chosen once, up front (the pipeline requires this
+  // analysis before any kernel transformation runs), and the whole work-group
+  // pipeline commits to that one choice. Never invalidate it: later passes add
+  // *implicit* barriers -- e.g. ImplicitLoopBarriers, for the work-item-loops
+  // path -- which flip hasWorkgroupBarriers(). Recomputing the choice then can
+  // pick CBS for a kernel originally classified LOOPS; whether that happens
+  // depends on incidental analysis-cache invalidation, so the choice (and thus
+  // which handler runs, and whether SubCFGFormation aborts on an exit-less
+  // kernel) becomes environment-dependent. Keep the result stable.
+  return false;
 }
 
 REGISTER_NEW_FANALYSIS(PASS_NAME, PASS_CLASS, PASS_DESC);
