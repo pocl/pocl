@@ -255,24 +255,32 @@ set(POCL_LLD_FIND_MODE "cmake")
 include(SetupLLD)
 if(CPU_USE_LLD_LINK)
   list(INSERT LLVM_LIBS 0 ${POCL_LLD_LIBRARIES})
-  # lld's driver initializes *all* LLVM target backends (its LTO and generic
-  # object-linking entry points call InitializeAllTargets/AsmParsers/...), so the
-  # lld archives reference LLVMInitialize<T>* for every target LLVM was built with
-  # -- not just the targets pocl itself initializes (see InitializeLLVM()). Under
-  # STATIC_LLVM we link the LLVM component archives, so those extra targets must be
-  # on the link line too, or the link leaves the symbols undefined. ELF shared
-  # objects tolerate unresolved references (resolved at load time, if ever), but
-  # Mach-O rejects them outright, so the macOS build fails to link without this.
-  # Pull in every target's component archives that this LLVM provides; duplicates
-  # of the targets already listed above are removed.
-  foreach(_pocl_target IN LISTS LLVM_TARGETS_TO_BUILD)
-    foreach(_pocl_comp Info Desc CodeGen AsmParser Disassembler)
-      if(TARGET LLVM${_pocl_target}${_pocl_comp})
-        list(APPEND LLVM_LIBS LLVM${_pocl_target}${_pocl_comp})
-      endif()
+  if(STATIC_LLVM)
+    # lld's driver initializes *all* LLVM target backends (its LTO and generic
+    # object-linking entry points call InitializeAllTargets/AsmParsers/...), so the
+    # lld archives reference LLVMInitialize<T>* for every target LLVM was built with
+    # -- not just the targets pocl itself initializes (see InitializeLLVM()). Under
+    # STATIC_LLVM we link the LLVM component archives, so those extra targets must be
+    # on the link line too, or the link leaves the symbols undefined. ELF shared
+    # objects tolerate unresolved references (resolved at load time, if ever), but
+    # Mach-O rejects them outright, so the macOS build fails to link without this.
+    # Pull in every target's component archives that this LLVM provides; duplicates
+    # of the targets already listed above are removed.
+    #
+    # Only under STATIC_LLVM: a shared libLLVM already exports every backend, so
+    # those references resolve against it. Appending the static component archives
+    # on top of a shared libLLVM links two copies of LLVM's globals into libpocl,
+    # which aborts at startup ("Option ... registered more than once") -- seen on
+    # shared-libLLVM builds such as the RISC-V cross-build and Julia's LLVM_full_jll.
+    foreach(_pocl_target IN LISTS LLVM_TARGETS_TO_BUILD)
+      foreach(_pocl_comp Info Desc CodeGen AsmParser Disassembler)
+        if(TARGET LLVM${_pocl_target}${_pocl_comp})
+          list(APPEND LLVM_LIBS LLVM${_pocl_target}${_pocl_comp})
+        endif()
+      endforeach()
     endforeach()
-  endforeach()
-  list(REMOVE_DUPLICATES LLVM_LIBS)
+    list(REMOVE_DUPLICATES LLVM_LIBS)
+  endif()
 endif()
 
 set(POCL_CLANG_LINK_TARGETS ${CLANG_LIBS})
