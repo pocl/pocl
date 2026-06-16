@@ -268,13 +268,16 @@ message(STATUS "POCL_LLVM_LINK_TARGETS: ${POCL_LLVM_LINK_TARGETS}")
 set(LLVM_INSTALL_TOOLCHAIN_ONLY ON)
 
 if(LLVM_ENABLE_SHARED_LIBS OR STATIC_LLVM)
-  # neccesary hack. Unfortunately CMake targets for Clang components have each
-  # hardcoded "LLVM" Target in their INTERFACE_LINK_LIBRARIES, which is a problem
-  # if we want to link against Clang and LLVM components instead of libLLVM
-  # (e.g. for STATIC_LLVM=ON). Manually remove the LLVM dependency.
-  # POCL_CLANG_LINK_TARGETS has indirect dependencies -> remove
-  # LLVM from all Clang Targets (CLANG_EXPORTED_TARGETS)
-  foreach(CLANG_TARGET IN LISTS CLANG_EXPORTED_TARGETS)
+  # neccesary hack. Unfortunately CMake targets for Clang (and lld) components
+  # have each hardcoded "LLVM" Target in their INTERFACE_LINK_LIBRARIES, which is
+  # a problem if we want to link against the components instead of libLLVM
+  # (e.g. for STATIC_LLVM=ON): the "LLVM" dylib target then leaks onto the link
+  # line and ends up a DT_NEEDED on libLLVM, defeating the static link. Manually
+  # remove the LLVM dependency. POCL_CLANG_LINK_TARGETS / the lld libs have
+  # indirect dependencies -> remove LLVM from all Clang Targets
+  # (CLANG_EXPORTED_TARGETS) and lld Targets (LLD_EXPORTED_TARGETS). The lld
+  # archives are linked ahead of the LLVM components, which resolve their refs.
+  foreach(CLANG_TARGET IN LISTS CLANG_EXPORTED_TARGETS LLD_EXPORTED_TARGETS)
     if(TARGET ${CLANG_TARGET})
       #message(STATUS "removing LLVM dependency on ${CLANG_TARGET}")
       unset(IFACE_LIBS)
