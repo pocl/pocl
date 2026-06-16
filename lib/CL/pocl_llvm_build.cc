@@ -1239,9 +1239,11 @@ int pocl_invoke_lld_link(cl_device_id Device, const char *InFile,
 #endif
 
   // Carry over the extra link inputs HOST_LD_FLAGS passes by absolute path
-  // (the static vector-math libraries, SVML and its helpers). Driver flags
-  // and -l libraries are dropped: the driver's library search paths are not
-  // available, and their symbols resolve at dlopen time instead.
+  // (the vector-math libraries: libmvec, SLEEF, SVML and its helpers; see the
+  // DEFAULT_HOST_LD_FLAGS setup in CMakeLists.txt). Driver flags and bare -l
+  // libraries are dropped -- there are no library search paths here -- so those
+  // libraries must be referenced by absolute path to survive, or their symbols
+  // would be left unresolved (a bare -l library has nothing to resolve against).
   for (const char **Flag = Device->final_linkage_flags; Flag && *Flag; ++Flag)
     if ((*Flag)[0] == '/')
       LinkerArgs.push_back(*Flag);
