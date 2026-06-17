@@ -44,7 +44,8 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_for_with_var_iteration_count test_id_dependent_computation
   test_locals test_multi_level_loops_with_barriers
   test_simple_for_with_a_barrier test_structs_as_args test_vectors_as_args
-  test_barrier_before_return test_infinite_loop test_constant_array
+  test_barrier_before_return test_infinite_loop test_infinite_loop_with_barrier
+  test_constant_array
   test_undominated_variable test_setargs test_null_arg
   test_fors_with_var_iteration_counts test_issue_231 test_issue_445
   test_autolocals_in_constexprs test_issue_553 test_issue_577 test_issue_757
@@ -174,6 +175,8 @@ add_test_pocl(NAME "regression/barrier_just_before_return" WORKITEM_HANDLER "loo
 
 add_test_pocl(NAME "regression/infinite_loop" WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_infinite_loop")
 
+add_test_pocl(NAME "regression/infinite_loop_with_barrier" WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_infinite_loop_with_barrier")
+
 add_test_pocl(NAME "regression/undominated_variable_from_conditional_barrier_handling"
   WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_undominated_variable")
 
@@ -204,6 +207,7 @@ set_tests_properties(
   "regression/id-dependent_computation_before_kernel_exit_${VARIANT}"
   "regression/barrier_just_before_return_${VARIANT}"
   "regression/infinite_loop_${VARIANT}"
+  "regression/infinite_loop_with_barrier_${VARIANT}"
   "regression/undominated_variable_from_conditional_barrier_handling_${VARIANT}"
   "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_${VARIANT}"
   "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_${VARIANT}"
@@ -330,6 +334,8 @@ set_property(TEST
   "regression/test_flatten_barrier_subs_cbs"
   "regression/infinite_loop_loopvec"
   "regression/infinite_loop_cbs"
+  "regression/infinite_loop_with_barrier_loopvec"
+  "regression/infinite_loop_with_barrier_cbs"
   APPEND PROPERTY LABELS "mingw_fail")
 
 # Label tests that work with CUDA backend

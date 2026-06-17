@@ -1279,7 +1279,19 @@ llvm::Instruction *SubCFGFormation::getLocalIdInRegion(llvm::Instruction *Instr,
 /// CBS does not handle kernels without barriers.
 bool SubCFGFormation::canHandleKernel(llvm::Function &K,
                                       llvm::FunctionAnalysisManager &AM) {
-  return hasWorkgroupBarriers(K);
+  if (!hasWorkgroupBarriers(K))
+    return false;
+
+  // formSubCfgs() builds sub-CFGs between the entry barrier and the kernel's
+  // exit (0-successor) blocks. A kernel with no exit block, such as one with an
+  // infinite loop, gives it nothing to work with and trips the "No kernel
+  // exits!" abort. The work-item loops handler compiles these kernels (see
+  // regression/infinite_loop), so decline here and let the chooser fall back to
+  // it, as it already does for kernels without barriers.
+  for (llvm::BasicBlock &BB : K)
+    if (BB.getTerminator()->getNumSuccessors() == 0)
+      return true;
+  return false;
 }
 
 void moveAllocasToEntry(llvm::Function &F,
