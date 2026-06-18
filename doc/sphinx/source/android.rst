@@ -1,3 +1,4 @@
+.. _android-label:
 
 Android support
 ---------------------

@@ -361,7 +361,7 @@ pocl.
 - **POCL_REMOTE_XXX**
 
  These variables are used to configure different aspects of the remote driver
- and daemon. See :ref:`remote_label` for details.
+ and daemon. See :ref:`remote-label` for details.
 
   * **POCL_REMOTE_SEARCH_DOMAINS** -- To specify DNS domains for unicast-DNS-SD
                                    based discovery queries.
