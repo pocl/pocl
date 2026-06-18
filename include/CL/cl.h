@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008-2020 The Khronos Group Inc.
+ * Copyright (c) 2008-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,11 +142,11 @@ typedef struct _cl_image_desc {
     size_t                  image_slice_pitch;
     cl_uint                 num_mip_levels;
     cl_uint                 num_samples;
-#if defined(CL_VERSION_2_0) && __CL_HAS_ANON_STRUCT__
-    __CL_ANON_STRUCT__ union {
+#if defined(CL_VERSION_2_0) && __CL_HAS_ANON_UNION__
+    __CL_ANON_UNION__ union {
 #endif
       cl_mem                  buffer;
-#if defined(CL_VERSION_2_0) && __CL_HAS_ANON_STRUCT__
+#if defined(CL_VERSION_2_0) && __CL_HAS_ANON_UNION__
       cl_mem                  mem_object;
     };
 #endif

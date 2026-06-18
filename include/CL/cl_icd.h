@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2020 The Khronos Group Inc.
+ * Copyright (c) 2019-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,11 +44,11 @@ extern "C" {
 
 typedef struct _cl_icd_dispatch {
   /* OpenCL 1.0 */
-#if __CL_HAS_ANON_STRUCT__
-  __CL_ANON_STRUCT__ union {
+#if __CL_HAS_ANON_UNION__
+  __CL_ANON_UNION__ union {
 #endif
     clGetPlatformIDs_t *clGetPlatformIDs;
-#if __CL_HAS_ANON_STRUCT__
+#if __CL_HAS_ANON_UNION__
     /* Set to CL_ICD2_TAG_KHR for cl_khr_icd 2.0.0 */
     intptr_t clGetPlatformIDs_icd2_tag;
   };
@@ -83,11 +83,11 @@ typedef struct _cl_icd_dispatch {
   clRetainProgram_t *clRetainProgram;
   clReleaseProgram_t *clReleaseProgram;
   clBuildProgram_t *clBuildProgram;
-#if __CL_HAS_ANON_STRUCT__
-  __CL_ANON_STRUCT__ union {
+#if __CL_HAS_ANON_UNION__
+  __CL_ANON_UNION__ union {
 #endif
     clUnloadCompiler_t *clUnloadCompiler;
-#if __CL_HAS_ANON_STRUCT__
+#if __CL_HAS_ANON_UNION__
     /* Set to CL_ICD2_TAG_KHR for cl_khr_icd 2.0.0 */
     intptr_t clUnloadCompiler_icd2_tag;
   };
