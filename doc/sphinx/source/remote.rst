@@ -137,7 +137,7 @@ Known Bugs/Issues in OpenCL Implementations
 
 .. _tree-sitter grammar: https://github.com/lefp/tree-sitter-opencl.git
 
-.. _remote-how-to-build-label:
+.. _remote-how-to-build:
 
 How to Build
 -------------

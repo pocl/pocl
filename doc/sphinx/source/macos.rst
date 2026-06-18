@@ -94,7 +94,7 @@ For a standard build without the ICD loader
         export DYLD_LIBRARY_PATH=<path-to-installation-directory>/lib:$DYLD_LIBRARY_PATH
         clang <program-source>.c -lOpenCL
 
-        // Use PoCL's debugging functionality to ensure it runs through PoCL.
+        # Use PoCL's debugging functionality to ensure it runs through PoCL.
         POCL_DEBUG=all ./a.out
 
 For a build with the ICD loader
@@ -130,7 +130,7 @@ For a build with the ICD loader
         export LIBRARY_PATH=/opt/homebrew/opt/ocl-icd/lib:$LIBRARY_PATH
         clang <program-source>.c -lOpenCL
 
-        // Use PoCL's debugging functionality to ensure it runs through PoCL.
+        # Use PoCL's debugging functionality to ensure it runs through PoCL.
         POCL_DEBUG=all ./a.out
 
 
