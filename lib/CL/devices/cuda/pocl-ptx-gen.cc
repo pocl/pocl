@@ -666,7 +666,7 @@ int linkLibDevice(llvm::Module *Module, const char *LibDevicePath) {
   internalizeModule(*Module, PreserveKernel);
 
   // Run optimization passes to clean up unused functions etc.
-  populateModulePM(nullptr, Module, 3, 0);
+  populateModulePM(nullptr, Module, 3);
 
   return 0;
 }
