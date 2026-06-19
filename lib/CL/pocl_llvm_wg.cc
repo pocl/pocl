@@ -114,14 +114,19 @@ static bool enableDebugLogs() {
 }
 
 // Returns the TargetMachine instance or zero if no triple is provided.
-static TargetMachine *GetTargetMachine(const char* TTriple,
+static TargetMachine *GetTargetMachine(const char* TripleStr,
                                        const char* MCPU = "",
                                        const char* Features = "") {
 
   std::string Error;
 
-  const Target *TheTarget = TargetRegistry::lookupTarget(TTriple,
+#if LLVM_MAJOR < 22
+  const Target *TheTarget = TargetRegistry::lookupTarget(TripleStr,
                                                          Error);
+#else
+  const Target *TheTarget = TargetRegistry::lookupTarget(Triple(TripleStr),
+                                                         Error);
+#endif
 
   // OpenASIP targets are not in the registry
   if (!TheTarget) {
@@ -130,9 +135,9 @@ static TargetMachine *GetTargetMachine(const char* TTriple,
 
   TargetMachine *TM = TheTarget->createTargetMachine(
 #if LLVM_MAJOR < 22
-      TTriple,
+      TripleStr,
 #else
-      Triple(TTriple),
+      Triple(TripleStr),
 #endif
       MCPU, Features, TargetOptions(),
       Reloc::PIC_, CodeModel::Small,
@@ -161,12 +166,11 @@ class PoCLModulePassManager {
   llvm::LLVMContext Context; // for SI
   std::unique_ptr<PassBuilder> PassB;
   unsigned OptimizeLevel;
-  unsigned SizeLevel;
   bool Vectorize = false;
 
 public:
   PoCLModulePassManager() = default;
-  llvm::Error build(std::string PoclPipeline, unsigned OLevel, unsigned SLevel,
+  llvm::Error build(std::string PoclPipeline, unsigned OLevel,
                     bool EnableVectorizers,
 #ifndef PER_STAGE_TARGET_MACHINE
                     TargetMachine *TM,
@@ -176,7 +180,7 @@ public:
 };
 
 llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
-                                         unsigned OLevel, unsigned SLevel,
+                                         unsigned OLevel,
                                          bool EnableVectorizers,
 #ifndef PER_STAGE_TARGET_MACHINE
                                          TargetMachine *TM,
@@ -195,7 +199,6 @@ llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
   PTO.UnifiedLTO = false;
   PTO.SLPVectorization = PTO.LoopVectorization = Vectorize = EnableVectorizers;
   OptimizeLevel = OLevel;
-  SizeLevel = SLevel;
 
   PrintPassOpts.Verbose = false;
   PrintPassOpts.SkipAnalyses = true;
@@ -260,11 +263,7 @@ llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
   pocl::registerPassBuilderPasses(PB);
 
 #ifndef SEPARATE_OPTIMIZATION_FROM_POCL_PASSES
-  OptimizationLevel Opt;
-  if (SizeLevel > 0)
-    PoclPipeline += ",default<Os>";
-  else {
-    switch (OptimizeLevel) {
+  switch (OptimizeLevel) {
     case 0:
       PoclPipeline += ",default<O0>";
       break;
@@ -288,7 +287,7 @@ llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
 void PoCLModulePassManager::run(llvm::Module &Bitcode) {
   PM.run(Bitcode, MAM);
 #ifdef SEPARATE_OPTIMIZATION_FROM_POCL_PASSES
-  populateModulePM(nullptr, (void *)&Bitcode, OptimizeLevel, SizeLevel,
+  populateModulePM(nullptr, (void *)&Bitcode, OptimizeLevel,
                    Vectorize, Machine.get());
 #endif
 }
@@ -317,16 +316,16 @@ class TwoStagePoCLModulePassManager {
 public:
   TwoStagePoCLModulePassManager() = default;
   llvm::Error build(cl_device_id Dev, const std::string &Stage1Pipeline,
-                    unsigned Stage1OLevel, unsigned Stage1SLevel,
+                    unsigned Stage1OLevel,
                     const std::string &Stage2Pipeline,
-                    unsigned Stage2OLevel, unsigned Stage2SLevel);
+                    unsigned Stage2OLevel);
   void run(llvm::Module &Bitcode);
 };
 
 llvm::Error TwoStagePoCLModulePassManager::build(
     cl_device_id Dev, const std::string &Stage1Pipeline, unsigned Stage1OLevel,
-    unsigned Stage1SLevel, const std::string &Stage2Pipeline,
-    unsigned Stage2OLevel, unsigned Stage2SLevel) {
+    const std::string &Stage2Pipeline,
+    unsigned Stage2OLevel) {
 
   // Do not vectorize in the first round of (cleanup) optimizations to avoid
   // ending up with only vectorizing across the k-loops before the wi-loops have
@@ -339,7 +338,7 @@ llvm::Error TwoStagePoCLModulePassManager::build(
   TargetMachine *TMach = Machine.get();
 #endif
   llvm::Error E1 =
-      Stage1.build(Stage1Pipeline, Stage1OLevel, Stage1SLevel, Vectorize,
+      Stage1.build(Stage1Pipeline, Stage1OLevel, Vectorize,
 #ifndef PER_STAGE_TARGET_MACHINE
                    TMach,
 #endif
@@ -352,7 +351,7 @@ llvm::Error TwoStagePoCLModulePassManager::build(
   Vectorize = ((CurrentWgMethod == "loopvec" || CurrentWgMethod == "cbs") &&
                (!Dev->spmd));
 
-  return Stage2.build(Stage2Pipeline, Stage2OLevel, Stage2SLevel, Vectorize,
+  return Stage2.build(Stage2Pipeline, Stage2OLevel, Vectorize,
 #ifndef PER_STAGE_TARGET_MACHINE
                       TMach,
 #endif
@@ -648,7 +647,7 @@ static bool runKernelCompilerPasses(cl_device_id Device, llvm::Module &Mod,
   addStage2PassesToPipeline(Device, Passes2);
   std::string P2 = convertPassesToPipelineString(Passes2);
 
-  Error E = PM.build(Device, P1, Optimize ? 1 : 0, 0, P2, Optimize ? 3 : 0, 0);
+  Error E = PM.build(Device, P1, Optimize ? 1 : 0, P2, Optimize ? 3 : 0);
   if (E) {
     std::cerr << "LLVM: failed to create compilation pipeline";
     return false;
@@ -1366,7 +1365,7 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program Program,
 }
 
 void populateModulePM([[maybe_unused]] void *Passes, void *Module,
-                      unsigned OptL, unsigned SizeL, bool Vectorize,
+                      unsigned OptL, bool Vectorize,
                       TargetMachine *TM) {
 
   PipelineTuningOptions PTO;
@@ -1408,10 +1407,7 @@ void populateModulePM([[maybe_unused]] void *Passes, void *Module,
 
   // Opt constructior is private
   OptimizationLevel Opt;
-  if (SizeL > 0)
-    Opt = OptimizationLevel::Os;
-  else {
-    switch (OptL) {
+  switch (OptL) {
     case 0:
       Opt = OptimizationLevel::O0;
       break;
@@ -1425,7 +1421,6 @@ void populateModulePM([[maybe_unused]] void *Passes, void *Module,
     case 3:
       Opt = OptimizationLevel::O3;
       break;
-    }
   }
   ModulePassManager MPM;
   if (Opt == OptimizationLevel::O0)
