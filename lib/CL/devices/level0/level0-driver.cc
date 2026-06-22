@@ -1619,10 +1619,8 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
   ze_result_t Res = ZE_RESULT_SUCCESS;
   for (i = 0; i < Kernel->meta->num_args; ++i) {
     if (ARG_IS_LOCAL(Kernel->meta->arg_info[i])) {
-      assert(PoclArg[i].size > 0);
       Res = zeKernelSetArgumentValue(KernelH, i, PoclArg[i].size, NULL);
       LEVEL0_CHECK_ABORT(Res);
-
     } else if (Kernel->meta->arg_info[i].type == POCL_ARG_TYPE_POINTER) {
       assert(PoclArg[i].size == sizeof(void *));
 
@@ -3157,7 +3155,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     ClDev->features = OpenCL30Features.c_str();
     ClDev->supported_spirv_extensions = SPVExtensions.c_str();
 
-    pocl_setup_opencl_c_with_version(ClDev, CL_TRUE);
+    pocl_setup_opencl_c_with_version(ClDev);
     pocl_setup_features_with_version(ClDev);
     pocl_setup_extensions_with_version(ClDev);
     pocl_setup_ils_with_version(ClDev);

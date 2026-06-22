@@ -256,7 +256,7 @@ ERROR:
         {
           if (context->default_queues && context->default_queues[i])
             {
-              POname (clReleaseCommandQueue) (context->default_queues[i]);
+              PoCLReleaseCommandQueue (context->default_queues[i]);
             }
         }
       for (i = 0; i < NUM_OPENCL_IMAGE_TYPES; ++i)

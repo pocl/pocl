@@ -635,6 +635,11 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
       al = &(cmd->command.run.arguments[i]);
       if (ARG_IS_LOCAL (meta->arg_info[i]))
         {
+          if (al->size == 0) {
+            *(uint32_t *)write_pos = 0;
+            write_pos += 4;
+            continue;
+          }
           chunk_info_t* local_chunk = pocl_tce_malloc_local (d, al->size);
           if (local_chunk == NULL)
             POCL_ABORT ("Could not allocate memory for a local argument. Out of local mem?\n");

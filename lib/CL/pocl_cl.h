@@ -1558,10 +1558,13 @@ struct _pocl_data_sync_item {
   pocl_data_sync_item *next;
 };
 
+#define POCL_MAX_QUEUE_PROPS 6
+
 struct _cl_event;
 struct _cl_command_queue {
   POCL_ICD_OBJECT
   POCL_OBJECT;
+  int user_refcount;
   /* queries */
   cl_context context;
   cl_device_id device;
@@ -1578,7 +1581,7 @@ struct _cl_command_queue {
   /* The event of the last command pushed to the queue. */
   pocl_data_sync_item last_event;
 
-  cl_queue_properties queue_properties[10];
+  cl_queue_properties queue_properties[POCL_MAX_QUEUE_PROPS];
   unsigned num_queue_properties;
 
   cl_queue_priority_khr priority;

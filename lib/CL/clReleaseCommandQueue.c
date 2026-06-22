@@ -24,18 +24,29 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
 #include "utlist.h"
+#include "pocl_shared.h"
 
-CL_API_ENTRY cl_int CL_API_CALL
-POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
+static cl_int
+releaseCommandQueue (cl_command_queue command_queue, int user_ref)
 {
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
 
-  int new_refcount;
-
-  POname(clFlush)(command_queue);
   POCL_LOCK_OBJ (command_queue);
-  POCL_RELEASE_OBJECT_UNLOCKED (command_queue, new_refcount);
+  if (user_ref)
+    {
+      assert (command_queue->user_refcount > 0);
+      assert (command_queue->user_refcount <= command_queue->pocl_refcount);
+      --command_queue->user_refcount;
+      // OpenCL 3.1: relax the behavior so there is no implicit flush
+      // if the reference count is still nonzero after releasing
+      if (command_queue->user_refcount == 0
+          && command_queue->device->ops->flush)
+        command_queue->device->ops->flush (command_queue->device,
+                                           command_queue);
+    }
+  int new_refcount = --command_queue->pocl_refcount;
+
   POCL_MSG_PRINT_REFCOUNTS ("Release Command Queue %" PRId64
                             " (%p), Refcount: %d\n",
                             command_queue->id, command_queue, new_refcount);
@@ -58,7 +69,6 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
           POCL_LOCK_OBJ (context);
           DL_DELETE (context->command_queues, command_queue);
           POCL_UNLOCK_OBJ (context);
-
           POname (clReleaseContext) (context);
         }
 
@@ -76,6 +86,21 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
       VG_REFC_NONZERO (command_queue);
       POCL_UNLOCK_OBJ (command_queue);
     }
+
   return CL_SUCCESS;
+}
+
+/* internal libpocl release */
+cl_int
+PoCLReleaseCommandQueue (cl_command_queue command_queue)
+{
+  return releaseCommandQueue (command_queue, CL_FALSE);
+}
+
+CL_API_ENTRY cl_int CL_API_CALL
+POname (clReleaseCommandQueue) (cl_command_queue command_queue)
+  CL_API_SUFFIX__VERSION_1_0
+{
+  return releaseCommandQueue (command_queue, CL_TRUE);
 }
 POsym(clReleaseCommandQueue)

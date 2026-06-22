@@ -820,11 +820,9 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->run_program_scope_variables_pass = CL_FALSE;
   dev->generic_as_support = CL_TRUE;
 
-  pocl_setup_opencl_c_with_version (dev, CL_TRUE);
-  pocl_setup_features_with_version (dev);
-#else
-  pocl_setup_opencl_c_with_version (dev, CL_FALSE);
 #endif
+  pocl_setup_opencl_c_with_version (dev);
+  pocl_setup_features_with_version (dev);
 
   pocl_setup_extensions_with_version (dev);
 
@@ -2037,15 +2035,18 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                 size_t align = kdata->alignments[i];
                 if (align < 1)
                   align = 1;
+                if (size == 0)
+                  params[i] = NULL;
+                else {
+                  /* Pad offset to align memory */
+                  if (sharedMemBytes % align)
+                    sharedMemBytes += align - (sharedMemBytes % align);
 
-                /* Pad offset to align memory */
-                if (sharedMemBytes % align)
-                  sharedMemBytes += align - (sharedMemBytes % align);
+                  sharedMemOffsets[i] = sharedMemBytes;
+                  params[i] = sharedMemOffsets + i;
 
-                sharedMemOffsets[i] = sharedMemBytes;
-                params[i] = sharedMemOffsets + i;
-
-                sharedMemBytes += size;
+                  sharedMemBytes += size;
+                }
               }
             else if (arguments[i].is_raw_ptr == 1)
               {

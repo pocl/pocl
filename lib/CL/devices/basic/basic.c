@@ -293,8 +293,12 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
           else
             {
               arguments[i] = malloc (sizeof (void *));
-              *(void **)(arguments[i]) =
-                pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, al->size);
+              if (al->size == 0)
+                *(void **)(arguments[i]) = NULL;
+              else {
+                *(void **)(arguments[i]) =
+                  pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, al->size);
+              }
             }
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)

@@ -85,7 +85,7 @@ POname(clCreateCommandQueue)(cl_context context,
   }
 
   POCL_INIT_OBJECT (command_queue, context);
-
+  command_queue->user_refcount = 1;
   command_queue->context = context;
   command_queue->device = device;
   command_queue->properties = properties;

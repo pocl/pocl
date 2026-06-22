@@ -390,7 +390,7 @@ endif()
 
 option(ENABLE_EXTRA_VALIDITY_CHECKS "Enable extra checks on cl_* object validity" OFF)
 
-option(DEVELOPER_MODE "This will SIGNIFICANTLY reduce PoCL's performance, but speeds up its compilation for faster development-test cycles. Only turn on if you know what you're doing." OFF)
+option(DEVELOPER_MODE "Currently disables LTO and enables a few extra warnings." OFF)
 
 option(USE_POCL_MEMMANAGER "Enables custom memory manager. Except for special circumstances, this should be disabled." OFF)
 
@@ -405,6 +405,8 @@ option(ENABLE_EXAMPLES "Build examples. Defaults to ON" ON)
 option(ENABLE_RDMA "Enable usage of RDMA libraries for memory allocations. Requires libRDMAcm and libverbs" OFF)
 
 option(RENAME_POCL "Rename PoCL's OpenCL functions to PO<ocl_function>. Allows an user to call both PoCL and another OpenCL implementation." OFF)
+
+option(ENABLE_OPENCL_3_1 "Temporary option to enable OpenCL 3.1 support. Will be removed when 3.1 is made default" OFF)
 
 ##########################################################
 
@@ -1586,10 +1588,14 @@ if(NOT DEFINED INSTALL_OPENCL_HEADERS)
   option(INSTALL_OPENCL_HEADERS "Install POCL's OpenCL headers. (Ones from Khronos should be installed instead)" ${IOH})
 endif()
 
-#  force the use of PoCL's own 3.0 headers -> enables some additional tests
-message(STATUS "Using PoCL's OpenCL 3.0 headers")
-# PoCL's internal headers are OpenCL 3.0
-set(OPENCL_HEADER_VERSION 300)
+#  force the use of PoCL's own 3.1 headers -> enables some additional tests
+# PoCL's internal headers are OpenCL 3.1
+message(STATUS "Using PoCL's OpenCL 3.1 headers")
+if(ENABLE_OPENCL_3_1)
+  set(OPENCL_HEADER_VERSION 310)
+else()
+  set(OPENCL_HEADER_VERSION 300)
+endif()
 
 add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_0_APIS -DCL_USE_DEPRECATED_OPENCL_1_1_APIS
                 -DCL_USE_DEPRECATED_OPENCL_1_2_APIS -DCL_USE_DEPRECATED_OPENCL_2_0_APIS
@@ -1657,7 +1663,11 @@ endif()
 
 # set the host device OpenCL version (and OpenCL C version too)
 set(HOST_DEVICE_CL_VERSION_MAJOR 3)
-set(HOST_DEVICE_CL_VERSION_MINOR 0)
+if(ENABLE_OPENCL_3_1)
+  set(HOST_DEVICE_CL_VERSION_MINOR 1)
+else()
+  set(HOST_DEVICE_CL_VERSION_MINOR 0)
+endif()
 
 # Probe native host CPU support for cl_khr_kernel_clock
 include(CheckHostCpuKernelClock)

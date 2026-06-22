@@ -30,6 +30,26 @@ POname(clRetainCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VERS
                           CL_INVALID_COMMAND_QUEUE);
   POCL_RETURN_ERROR_COND ((*(command_queue->device->available) != CL_TRUE),
                           CL_DEVICE_NOT_AVAILABLE);
+
+  POCL_LOCK_OBJ (command_queue);
+  int refc = POCL_RETAIN_OBJECT_UNLOCKED (command_queue);
+  ++command_queue->user_refcount;
+  POCL_UNLOCK_OBJ (command_queue);
+
+  POCL_MSG_PRINT_REFCOUNTS ("Retain Command Queue %" PRId64
+                            " (%p), Refcount: %d\n",
+                            command_queue->id, command_queue, refc);
+  return CL_SUCCESS;
+}
+POsym (clRetainCommandQueue)
+
+  /* internal libpocl retain */
+  cl_int PoCLRetainCommandQueue (cl_command_queue command_queue)
+{
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) != CL_TRUE),
+                          CL_DEVICE_NOT_AVAILABLE);
   int refc;
   POCL_RETAIN_OBJECT_REFCOUNT (command_queue, refc);
   POCL_MSG_PRINT_REFCOUNTS ("Retain Command Queue %" PRId64
@@ -37,4 +57,3 @@ POname(clRetainCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VERS
                             command_queue->id, command_queue, refc);
   return CL_SUCCESS;
 }
-POsym(clRetainCommandQueue)

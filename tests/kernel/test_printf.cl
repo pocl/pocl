@@ -17,9 +17,11 @@ kernel void test_printf()
 
   printf("%i\n", INT_MIN);
   printf("%li\n", LONG_MIN);
+  printf("%zi\n", LONG_MIN);
 
   printf("%u\n", INT_MAX);
   printf("%lu\n", LONG_MAX);
+  printf("%zu\n", LONG_MAX);
 
   printf("%#o\n",100000000);
   printf("%o\n",100000000);

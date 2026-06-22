@@ -49,6 +49,23 @@
 #define CL_VERSION_2_0 200
 #endif
 
+#if (__OPENCL_C_VERSION__ > 209)
+#define CL_VERSION_2_1 210
+#endif
+
+#if (__OPENCL_C_VERSION__ > 219)
+#define CL_VERSION_2_2 220
+#endif
+
+#if (__OPENCL_C_VERSION__ > 299)
+#define CL_VERSION_3_0 300
+#endif
+
+#if (__OPENCL_C_VERSION__ > 309)
+#define CL_VERSION_3_1 310
+#endif
+
+
 #include "_enable_all_exts.h"
 
 #include "_builtin_renames.h"

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008-2023 The Khronos Group Inc.
+ * Copyright (c) 2008-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,10 +54,11 @@ extern "C" {
     "cl_loader_layers"
 
 
-#define CL_LOADER_LAYERS_EXTENSION_VERSION CL_MAKE_VERSION(1, 0, 0)
+#define CL_LOADER_LAYERS_EXTENSION_VERSION CL_MAKE_VERSION(1, 0, 1)
 
 typedef cl_uint             cl_layer_info;
 typedef cl_uint             cl_layer_api_version;
+typedef cl_properties       cl_layer_properties;
 
 /* cl_layer_info */
 #define CL_LAYER_API_VERSION                                0x4240
@@ -65,6 +66,7 @@ typedef cl_uint             cl_layer_api_version;
 
 /* Misc API enums */
 #define CL_LAYER_API_VERSION_100                            100
+#define CL_LAYER_PROPERTIES_LIST_END                        ((cl_layer_properties)0)
 
 
 typedef cl_int CL_API_CALL
@@ -87,6 +89,24 @@ clInitLayer_t(
 typedef clInitLayer_t *
 clInitLayer_fn ;
 
+typedef cl_int CL_API_CALL
+clInitLayerWithProperties_t(
+    cl_uint num_entries,
+    const cl_icd_dispatch* target_dispatch,
+    cl_uint* num_entries_ret,
+    const cl_icd_dispatch** layer_dispatch_ret,
+    const cl_layer_properties* properties);
+
+typedef clInitLayerWithProperties_t *
+clInitLayerWithProperties_fn ;
+
+typedef cl_int CL_API_CALL
+clDeinitLayer_t(
+    void );
+
+typedef clDeinitLayer_t *
+clDeinitLayer_fn ;
+
 /*
 ** The function pointer typedefs prefixed with "pfn_" are provided for
 ** compatibility with earlier versions of the headers.  New code is
@@ -99,6 +119,12 @@ pfn_clGetLayerInfo ;
 
 typedef clInitLayer_t *
 pfn_clInitLayer ;
+
+typedef clInitLayerWithProperties_t *
+pfn_clInitLayerWithProperties ;
+
+typedef clDeinitLayer_t *
+pfn_clDeinitLayer ;
 
 #if !defined(CL_NO_NON_ICD_DISPATCH_EXTENSION_PROTOTYPES)
 
@@ -115,6 +141,18 @@ clInitLayer(
     const cl_icd_dispatch* target_dispatch,
     cl_uint* num_entries_ret,
     const cl_icd_dispatch** layer_dispatch_ret) ;
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clInitLayerWithProperties(
+    cl_uint num_entries,
+    const cl_icd_dispatch* target_dispatch,
+    cl_uint* num_entries_ret,
+    const cl_icd_dispatch** layer_dispatch_ret,
+    const cl_layer_properties* properties) ;
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clDeinitLayer(
+    void ) ;
 
 #endif /* !defined(CL_NO_NON_ICD_DISPATCH_EXTENSION_PROTOTYPES) */
 

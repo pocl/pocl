@@ -458,7 +458,7 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
           | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT;
     }
 
-  pocl_setup_opencl_c_with_version (device, CL_TRUE);
+  pocl_setup_opencl_c_with_version (device);
   pocl_setup_features_with_version (device);
 
   pocl_setup_extensions_with_version (device);
@@ -675,25 +675,29 @@ pocl_setup_kernel_arg_array_with_locals (void **arguments,
 
   for (i = 0; i < meta->num_args; ++i)
     {
-      if (ARG_IS_LOCAL (meta->arg_info[i]))
+      if (!ARG_IS_LOCAL (meta->arg_info[i]))
+        continue;
+      size_t size = k->kernel_args[i].size;
+      if (size == 0) {
+          arguments[i] = &arguments2[i];
+          arguments2[i] = NULL;
+          continue;
+      }
+      if (!k->device->device_alloca_locals)
         {
-          size_t size = k->kernel_args[i].size;
-          if (!k->device->device_alloca_locals)
-            {
-              arguments[i] = &arguments2[i];
-              arguments2[i] = start;
-              start += size;
-              start = align_ptr (start);
-              assert ((size_t) (start - local_mem) <= local_mem_size);
-            }
-          else
-            {
-              /* Local buffers are allocated in the device side work-group
-                 launcher. Let's pass only the sizes of the local args in
-                 the arg buffer. */
-              assert (sizeof (size_t) == sizeof (void *));
-              arguments[i] = (void *)size;
-            }
+          arguments[i] = &arguments2[i];
+          arguments2[i] = start;
+          start += size;
+          start = align_ptr (start);
+          assert ((size_t) (start - local_mem) <= local_mem_size);
+        }
+      else
+        {
+          /* Local buffers are allocated in the device side work-group
+             launcher. Let's pass only the sizes of the local args in
+             the arg buffer. */
+          assert (sizeof (size_t) == sizeof (void *));
+          arguments[i] = (void *)size;
         }
     }
   if (k->device->device_alloca_locals)
