@@ -100,7 +100,7 @@ pocl_float_to_half (float value)
   v.si ^= sign;
   sign >>= shiftSign;
   s.si = mulN;
-  s.si = s.f * v.f;
+  s.f = s.f * v.f;
   v.si ^= (s.si ^ v.si) & -(minN > v.si);
   v.si ^= (infN ^ v.si) & -((infN > v.si) & (v.si > maxN));
   v.si ^= (nanN ^ v.si) & -((nanN > v.si) & (v.si > infN));
