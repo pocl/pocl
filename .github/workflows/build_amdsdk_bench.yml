@@ -89,7 +89,7 @@ jobs:
       # make sure to store with github.ref_name but always restore with 'main' branch,
       # this way we're always comparing to latest main
       - name: Download previous benchmark data
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
+        uses: actions/cache@2c8a9bd7457de244a408f35966fab2fb45fda9c8
         with:
           path: benchmark_cache
           key: amdsdk_bench-${{ runner.name }}-llvm-${{ matrix.llvm }}-${{ matrix.device }}-${{ github.ref_name }}-${{ github.run_id }}
