@@ -109,7 +109,6 @@ POCL_EXPORT bool getModuleBoolMetadata (const llvm::Module &mod,
 POCL_EXPORT void populateModulePM (void *Passes,
                                    void *Module,
                                    unsigned OptL,
-                                   unsigned SizeL,
                                    bool Vectorize = true,
                                    llvm::TargetMachine *TM = nullptr);
 
