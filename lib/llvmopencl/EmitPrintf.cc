@@ -399,7 +399,11 @@ static void processConstantStringArg(StringData *SD, IRBuilder<> &Builder,
                                      SmallVectorImpl<Value *> &WhatToStore) {
   std::string Str(SD->Str.str() + '\0');
 
+#if LLVM_MAJOR >= 23
+  DataExtractor Extractor(Str, /*IsLittleEndian=*/true);
+#else
   DataExtractor Extractor(Str, /*IsLittleEndian=*/true, 8);
+#endif
   DataExtractor::Cursor Offset(0);
   while (Offset && Offset.tell() < Str.size()) {
     const uint64_t ReadSize = 4;
