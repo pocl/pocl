@@ -262,9 +262,22 @@ extern pocl_obj_id_t last_object_id;
 #ifdef __APPLE__
 /* Note: OSX doesn't support aliases because it doesn't use ELF */
 
+#if defined(RENAME_POCL) && !defined(BUILD_ICD)
+/* Rename the OpenCL API entrypoints to PO<name>, so the (directly linkable)
+ * library can coexist with another OpenCL implementation in the same process.
+ * Apple has no ELF-style symbol aliases, so unlike the ELF path we cannot also
+ * export the unprefixed cl* names; only the PO-prefixed ones are provided.
+ * As on the ELF path, POdeclsym forward-declares the PO-prefixed entrypoints
+ * (so internal callers see a prototype) and POCL_EXPORT gives them default
+ * visibility so they are exported from the library. */
+#  define POname(name) PO##name
+#  define POdeclsym(name) POCL_EXPORT __typeof__ (name) PO##name;
+#  define POdeclsymExport(name) POdeclsym(name)
+#else
 #  define POname(name) name
 #  define POdeclsym(name)
 #  define POdeclsymExport(name)
+#endif
 #  define POsym(name)
 #  define POsymAlways(name)
 
