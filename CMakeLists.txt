@@ -1173,7 +1173,11 @@ if(UNIX)
   else()
     set(DEFAULT_HOST_LD_FLAGS "-shared -nostartfiles")
     if(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
-      set(DEFAULT_HOST_LD_FLAGS "${DEFAULT_HOST_LD_FLAGS} -lmvec")
+      # Reference libmvec by its resolved absolute path, like SLEEF/SVML below.
+      # The in-process lld link (CPU_USE_LLD_LINK) carries over only absolute-path
+      # link inputs, not bare -l flags (it has no library search paths); a dropped
+      # -lmvec leaves the kernel's vectorized math calls unresolved.
+      set(DEFAULT_HOST_LD_FLAGS "${DEFAULT_HOST_LD_FLAGS} ${LIBMVEC}")
     endif()
     if(ENABLE_HOST_CPU_VECTORIZE_SLEEF)
       set(DEFAULT_HOST_LD_FLAGS "${DEFAULT_HOST_LD_FLAGS} ${LIBSLEEF}")
@@ -2845,7 +2849,7 @@ if (ENABLE_LLVM)
   MESSAGE(STATUS "USE_LLVM_SPIRV_TARGET: ${USE_LLVM_SPIRV_TARGET}")
   if(ENABLE_HOST_CPU_DEVICES)
   MESSAGE(STATUS "CLANG_MARCH_FLAG: ${CLANG_MARCH_FLAG}")
-  MESSAGE(STATUS "CPU_USE_LLD_LINK_WIN32: ${CPU_USE_LLD_LINK_WIN32}")
+  MESSAGE(STATUS "CPU_USE_LLD_LINK: ${CPU_USE_LLD_LINK}")
   MESSAGE(STATUS "LLC_TRIPLE: ${LLC_TRIPLE}")
   MESSAGE(STATUS "LLC_HOST_CPU_AUTO: ${LLC_HOST_CPU_AUTO}")
   MESSAGE(STATUS "LLC_HOST_CPU: ${LLC_HOST_CPU}")

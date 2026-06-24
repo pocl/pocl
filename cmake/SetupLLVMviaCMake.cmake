@@ -244,16 +244,42 @@ else()
   set(LLVM_LINK_TYPE SHARED)
 endif()
 
-# if enabled, CPU driver on Windows will use lld-link (invoked via library API)
-# to link final kernel object files, instead of the default Clang driver linking.
-set(CPU_USE_LLD_LINK_WIN32 OFF)
-# TODO does not yet work with MINGW; tested but the linked DLL is empty
-if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM AND STATIC_LLVM AND MSVC)
-  find_package(LLD ${LLVM_VERSION} EXACT CONFIG HINTS "${LLD_CMAKE_DIR}" NO_DEFAULT_PATH)
-  if(lldCommon IN_LIST LLD_EXPORTED_TARGETS)
-    message(STATUS "Using lld-link via library to link kernels for CPU devices")
-    set(CPU_USE_LLD_LINK_WIN32 ON)
-    list(APPEND LLVM_LIBS lldCommon lldCOFF lldMinGW)
+# see cmake/SetupLLD.cmake for what CPU_USE_LLD_LINK enables
+if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM)
+  # No version requirement: find_package() rejects LLVM's prerelease version
+  # strings ("22.0.0git", "21.1.0-rc3") outright, and the NO_DEFAULT_PATH
+  # search of LLD_CMAKE_DIR already pins the LLD matching the found LLVM.
+  find_package(LLD CONFIG HINTS "${LLD_CMAKE_DIR}" NO_DEFAULT_PATH)
+endif()
+set(POCL_LLD_FIND_MODE "cmake")
+include(SetupLLD)
+if(CPU_USE_LLD_LINK)
+  list(INSERT LLVM_LIBS 0 ${POCL_LLD_LIBRARIES})
+  if(STATIC_LLVM)
+    # lld's driver initializes *all* LLVM target backends (its LTO and generic
+    # object-linking entry points call InitializeAllTargets/AsmParsers/...), so the
+    # lld archives reference LLVMInitialize<T>* for every target LLVM was built with
+    # -- not just the targets pocl itself initializes (see InitializeLLVM()). Under
+    # STATIC_LLVM we link the LLVM component archives, so those extra targets must be
+    # on the link line too, or the link leaves the symbols undefined. ELF shared
+    # objects tolerate unresolved references (resolved at load time, if ever), but
+    # Mach-O rejects them outright, so the macOS build fails to link without this.
+    # Pull in every target's component archives that this LLVM provides; duplicates
+    # of the targets already listed above are removed.
+    #
+    # Only under STATIC_LLVM: a shared libLLVM already exports every backend, so
+    # those references resolve against it. Appending the static component archives
+    # on top of a shared libLLVM links two copies of LLVM's globals into libpocl,
+    # which aborts at startup ("Option ... registered more than once") -- seen on
+    # shared-libLLVM builds such as the RISC-V cross-build and Julia's LLVM_full_jll.
+    foreach(_pocl_target IN LISTS LLVM_TARGETS_TO_BUILD)
+      foreach(_pocl_comp Info Desc CodeGen AsmParser Disassembler)
+        if(TARGET LLVM${_pocl_target}${_pocl_comp})
+          list(APPEND LLVM_LIBS LLVM${_pocl_target}${_pocl_comp})
+        endif()
+      endforeach()
+    endforeach()
+    list(REMOVE_DUPLICATES LLVM_LIBS)
   endif()
 endif()
 
@@ -268,13 +294,16 @@ message(STATUS "POCL_LLVM_LINK_TARGETS: ${POCL_LLVM_LINK_TARGETS}")
 set(LLVM_INSTALL_TOOLCHAIN_ONLY ON)
 
 if(LLVM_ENABLE_SHARED_LIBS OR STATIC_LLVM)
-  # neccesary hack. Unfortunately CMake targets for Clang components have each
-  # hardcoded "LLVM" Target in their INTERFACE_LINK_LIBRARIES, which is a problem
-  # if we want to link against Clang and LLVM components instead of libLLVM
-  # (e.g. for STATIC_LLVM=ON). Manually remove the LLVM dependency.
-  # POCL_CLANG_LINK_TARGETS has indirect dependencies -> remove
-  # LLVM from all Clang Targets (CLANG_EXPORTED_TARGETS)
-  foreach(CLANG_TARGET IN LISTS CLANG_EXPORTED_TARGETS)
+  # neccesary hack. Unfortunately CMake targets for Clang (and lld) components
+  # have each hardcoded "LLVM" Target in their INTERFACE_LINK_LIBRARIES, which is
+  # a problem if we want to link against the components instead of libLLVM
+  # (e.g. for STATIC_LLVM=ON): the "LLVM" dylib target then leaks onto the link
+  # line and ends up a DT_NEEDED on libLLVM, defeating the static link. Manually
+  # remove the LLVM dependency. POCL_CLANG_LINK_TARGETS / the lld libs have
+  # indirect dependencies -> remove LLVM from all Clang Targets
+  # (CLANG_EXPORTED_TARGETS) and lld Targets (LLD_EXPORTED_TARGETS). The lld
+  # archives are linked ahead of the LLVM components, which resolve their refs.
+  foreach(CLANG_TARGET IN LISTS CLANG_EXPORTED_TARGETS LLD_EXPORTED_TARGETS)
     if(TARGET ${CLANG_TARGET})
       #message(STATUS "removing LLVM dependency on ${CLANG_TARGET}")
       unset(IFACE_LIBS)

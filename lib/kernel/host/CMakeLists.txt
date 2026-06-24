@@ -753,7 +753,8 @@ install(FILES "${KERNEL_BC}"
 endforeach()
 
 
-if(CPU_USE_LLD_LINK_WIN32)
+# the runtime-free MSVC kernel link needs the bundled helper objects
+if(CPU_USE_LLD_LINK AND MSVC)
   set(LIBCHKSTK_OBJ "${CMAKE_CURRENT_BINARY_DIR}/libchkstk.obj")
   set(LIBCHKSTK_SRC "${CMAKE_CURRENT_SOURCE_DIR}/libchkstk.S")
   add_custom_command( OUTPUT "${LIBCHKSTK_OBJ}"

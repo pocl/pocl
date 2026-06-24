@@ -138,6 +138,15 @@ CPU driver
 
 * `SIGFPE` handler is now fixed to enable only on x86-64, not all x86
 
+* The CPU drivers now link kernel binaries in-process through lld's library
+  API when lld is available at build time, instead of invoking the Clang
+  driver. This drops the run-time dependency on a host toolchain (a linker to
+  exec, plus C startup files), so kernel compilation works on machines without
+  a development environment. Previously this was only done on Windows (MSVC);
+  it now covers ELF and Mach-O hosts as well. The Clang driver remains as a
+  fallback when the in-process link fails, and is still used when PoCL was
+  built without lld.
+
 ===================================
 Deprecation/feature removal notices
 ===================================

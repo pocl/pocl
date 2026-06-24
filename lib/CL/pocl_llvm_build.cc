@@ -41,8 +41,9 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include <clang/Frontend/TextDiagnosticBuffer.h>
 #include <clang/Frontend/TextDiagnosticPrinter.h>
 
-#ifdef CPU_USE_LLD_LINK_WIN32
+#ifdef CPU_USE_LLD_LINK
 #include <lld/Common/Driver.h>
+#include <mutex>
 #endif
 
 IGNORE_COMPILER_WARNING("-Wcomment")
@@ -71,6 +72,9 @@ POP_COMPILER_DIAGS
 #include "pocl_runtime_config.h"
 #include "pocl_file_util.h"
 #include "pocl_cache.h"
+#ifdef HAVE_DLFCN_H
+#include "pocl_dynlib.h"
+#endif
 #include "LLVMUtils.h"
 #include "pocl_util.h"
 
@@ -1180,13 +1184,26 @@ int pocl_invoke_clang(const char* TTriple, const char** Args) {
 
 }
 
-#ifdef CPU_USE_LLD_LINK_WIN32
+#ifdef CPU_USE_LLD_LINK
 
+#if defined(_WIN32)
 LLD_HAS_DRIVER(mingw)
 LLD_HAS_DRIVER(coff)
+#elif defined(__APPLE__)
+LLD_HAS_DRIVER(macho)
+#else
+LLD_HAS_DRIVER(elf)
+#endif
 
-int pocl_invoke_lld_link_win32(cl_device_id Device, const char *InFile,
-                               const char *OutFile) {
+int pocl_invoke_lld_link(cl_device_id Device, const char *InFile,
+                         const char *OutFile) {
+  POCL_MSG_PRINT_LLVM("Invoking lld through library API\n");
+
+  std::vector<const char *> LinkerArgs;
+  std::vector<lld::DriverDef> Drivers;
+  std::vector<std::string> ArgStorage;
+
+#if defined(_WIN32)
   std::string OutArg{"/out:"};
   OutArg.append(OutFile);
 
@@ -1204,10 +1221,11 @@ int pocl_invoke_lld_link_win32(cl_device_id Device, const char *InFile,
     LibraryRootDir = Temp;
   }
 
-  std::string ChkstkLibrary = LibraryRootDir + "/libchkstk.obj";
-  std::string StringLibrary = LibraryRootDir + "/libmemory.obj";
+  ArgStorage.push_back(OutArg);
+  ArgStorage.push_back(LibraryRootDir + "/libchkstk.obj");
+  ArgStorage.push_back(LibraryRootDir + "/libmemory.obj");
 
-  std::vector<const char *> LinkerArgs{
+  LinkerArgs = {
       "lld-link", "/dll", "/nologo",
 #if HOST_DEVICE_ADDRESS_BITS == 64
       "/machine:x64",
@@ -1223,10 +1241,50 @@ int pocl_invoke_lld_link_win32(cl_device_id Device, const char *InFile,
       //
       // instead, we avoid linking against C runtime lib completely.
       // this way we get standalone libpocl
-      "/nodefaultlib", "/noentry", "/noimplib", OutArg.c_str(), InFile,
-      ChkstkLibrary.c_str(), StringLibrary.c_str() };
+      "/nodefaultlib", "/noentry", "/noimplib", ArgStorage[0].c_str(), InFile,
+      ArgStorage[1].c_str(), ArgStorage[2].c_str()};
 
-  std::vector<lld::DriverDef> Drivers = {{lld::MinGW, &lld::mingw::link}, {lld::WinLink, &lld::coff::link}};
+  Drivers = {{lld::MinGW, &lld::mingw::link}, {lld::WinLink, &lld::coff::link}};
+#else
+  // The flags the Clang driver would pass to the linker are HOST_LD_FLAGS
+  // (-shared -nostartfiles and friends), expressed here in ld terms.
+  // Symbols the kernel binary leaves undefined resolve when it is
+  // dlopen()ed, so no C runtime or startup files are needed at link time.
+#ifdef __APPLE__
+  ArgStorage.push_back(
+      llvm::Triple(Device->llvm_target_triplet).getArchName().str());
+  LinkerArgs = {"ld64.lld", "-dylib", "-undefined", "dynamic_lookup",
+                "-arch",    ArgStorage[0].c_str(), "-o", OutFile,
+                InFile};
+  Drivers = {{lld::Darwin, &lld::macho::link}};
+#else
+  LinkerArgs = {"ld.lld", "--shared", "-o", OutFile, InFile};
+  Drivers = {{lld::Gnu, &lld::elf::link}};
+#endif
+
+  // Carry over the extra link inputs HOST_LD_FLAGS passes by absolute path
+  // (the vector-math libraries: libmvec, SLEEF, SVML and its helpers; see the
+  // DEFAULT_HOST_LD_FLAGS setup in CMakeLists.txt). Driver flags and bare -l
+  // libraries are dropped -- there are no library search paths here -- so those
+  // libraries must be referenced by absolute path to survive, or their symbols
+  // would be left unresolved (a bare -l library has nothing to resolve against).
+  for (const char **Flag = Device->final_linkage_flags; Flag && *Flag; ++Flag)
+    if ((*Flag)[0] == '/')
+      LinkerArgs.push_back(*Flag);
+
+#if defined(ENABLE_PRINTF_IMMEDIATE_FLUSH) && defined(HAVE_DLFCN_H)
+  // The kernel references pocl_flush_printf_buffer, which only libpocl
+  // provides; record the dependency like the Clang-driver link does.
+  const char *PoclLib = pocl_dynlib_pathname((void *)&pocl_invoke_clang);
+  if (PoclLib != nullptr)
+    LinkerArgs.push_back(PoclLib);
+#endif
+#endif
+
+  // lld is not re-entrant; serialize links here instead of relying on the
+  // callers' locking.
+  static std::mutex LLDMutex;
+  std::lock_guard<std::mutex> Guard(LLDMutex);
 
   lld::Result Res =
       lld::lldMain(LinkerArgs, llvm::outs(), llvm::errs(), Drivers);
