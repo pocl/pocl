@@ -35,10 +35,27 @@ POname(clSetEventCallback) (cl_event     event ,
     }
   else
     {
+      /* The event is already at or past the requested status, so fire the
+         callback synchronously. We have just dropped the event lock but still
+         pass the event to callback_function while holding no reference of our
+         own. The OpenCL spec requires that "all callbacks registered for an
+         event object must be called before the event object is destroyed", so
+         the implementation must keep the event alive until the callback has
+         run -- it cannot let a concurrent release free it mid-callback. Such a
+         release is possible: the callback itself may release the event (calling
+         a non-blocking API such as clReleaseEvent from a callback is allowed),
+         or another thread holding a reference (e.g. the command's completion on
+         a device worker) may release it at the same time. Retain across the
+         call and release after it returns, so the event lives for the full
+         duration of callback_function. This mirrors the asynchronous path,
+         where pocl_event_cb_push retains before queuing the callback and
+         process_event_cb releases after it runs. */
+      POCL_RETAIN_OBJECT_UNLOCKED (event);
       POCL_UNLOCK_OBJ (event);
-      cb_ptr->callback_function (event, cb_ptr->trigger_status, 
+      cb_ptr->callback_function (event, cb_ptr->trigger_status,
                                  cb_ptr->user_data);
       free (cb_ptr);
+      POname (clReleaseEvent) (event);
     }
   
 
