@@ -53,7 +53,7 @@ bool_type = {'char'  : 'char',
              'uint'  : 'int',
              'long'  : 'long',
              'ulong' : 'long',
-             'half'  : 'int',
+             'half'  : 'short',
              'float'  : 'int',
              'double' : 'long'}
 
@@ -467,3 +467,18 @@ for src in types:
     for size in vector_sizes:
       for mode in rounding_modes:
         generate_float_conversion(src, dst, size, mode, '')
+
+# Rounding conversions involving half (fp16)
+for src in types:
+  for dst in float16_types:
+    for size in vector_sizes:
+      for mode in rounding_modes:
+        generate_float_conversion(src, dst, size, mode, '')
+
+for src in float16_types:
+  for dst in int_types:
+    for size in vector_sizes:
+      for mode in rounding_modes:
+        for sat in saturation:
+          generate_float_conversion(src, dst, size, mode, sat)
+
