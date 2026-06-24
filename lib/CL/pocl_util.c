@@ -1664,6 +1664,37 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
   cl_command_queue cq = event->queue;
   POCL_LOCK_OBJ (cq);
   POCL_LOCK_OBJ (event);
+  /* Idempotency guard: an event can be driven to a terminal state twice,
+   * concurrently, from two different pocl_broadcast threads. This affects ANY
+   * command with more than one wait-list dependency, not just markers/barriers.
+   * Two interleavings produce it on a failing chain:
+   *
+   *   - Two dependencies finish in ERROR concurrently. Each pocl_broadcast
+   *     calls notify(), which takes the finished->status < CL_COMPLETE branch
+   *     and fails the waiter via pocl_update_event_finished -- twice.
+   *   - One dependency FAILS (failing the waiter) while another dependency's
+   *     COMPLETION drives the waiter terminal too (for a marker/barrier that is
+   *     completion-as-termination; for a regular command it can additionally
+   *     race the submit/execute path).
+   *
+   * These transitions are not mutually exclusive because pocl_broadcast tests
+   * the waiter's "still pending" gate (status == CL_QUEUED/SUBMITTED) BEFORE
+   * calling notify, and notify drops the event lock (a lock-order dance with
+   * the command queue) before the new status is written -- so a second
+   * broadcast can read the stale pre-terminal status and call in here on an
+   * event the first finisher is already terminating.
+   *
+   * OpenCL event state is monotonic: once terminal (CL_COMPLETE or a negative
+   * error) it never changes again, so a second finish is a no-op. The check is
+   * taken under the event lock, so exactly one caller finishes the event and
+   * the other returns cleanly. Bail under the locks we already hold
+   * (reverse-order unlock). */
+  if (event->status <= CL_COMPLETE)
+    {
+      POCL_UNLOCK_OBJ (event);
+      POCL_UNLOCK_OBJ (cq);
+      return;
+    }
   assert (event->status > CL_COMPLETE);
   if ((cq->properties & CL_QUEUE_PROFILING_ENABLE)
       && (cq->device->has_own_timer == 0))
