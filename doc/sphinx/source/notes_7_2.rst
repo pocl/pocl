@@ -14,7 +14,9 @@ Release highlights
   Conformance testing via OpenCL-CTS passed with both OpenCL C
   and SPIR-V compilation modes, for all of these devices.
 
-* Support for LLVM version 22
+* Support for LLVM version 22 with CUDA, LevelZero and CPU devices
+* Support for LLVM version 22 & 23 with CPU device
+
 
 ================
 CMake changes
@@ -151,7 +153,7 @@ CPU driver
 Deprecation/feature removal notices
 ===================================
 
-* Support for LLVM version 17 was removed, versions 18 to 22 are supported
+* Support for LLVM version 17 was removed, versions 18 to 23 are supported
 
 ===================================
 Experimental and work-in-progress
