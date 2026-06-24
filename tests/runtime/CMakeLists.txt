@@ -47,7 +47,8 @@ set(C_PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_cl_pocl_content_size test_cl_pocl_content_size_migration
   test_deviceside_enqueue test_command_buffer test_command_buffer_images
   test_command_buffer_multi_device test_queue_creation_with_hints
-  test_remote_discovery test_dbk_color_convert test_subgroup_queries)
+  test_remote_discovery test_dbk_color_convert test_subgroup_queries
+  test_image_normalized_conv)
 
 if(HAVE_ONNXRT)
   list(APPEND C_PROGRAMS_TO_BUILD test_dbk_onnx_inference)
@@ -120,6 +121,8 @@ add_test_pocl(NAME "runtime/clSetEventCallback"
               WORKITEM_HANDLER "loopvec")
 
 add_test(NAME "runtime/clGetSupportedImageFormats" COMMAND "test_clGetSupportedImageFormats")
+
+add_test(NAME "runtime/test_image_normalized_conv" COMMAND "test_image_normalized_conv")
 
 add_test_pocl(NAME "runtime/clCreateKernelsInProgram" COMMAND "test_clCreateKernelsInProgram" WORKITEM_HANDLER "loopvec")
 
@@ -245,6 +248,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clGetKernelArgInfo"
   "runtime/clCreateSubDevices"
   "runtime/test_subgroup_queries"
+  "runtime/test_image_normalized_conv"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
@@ -264,6 +268,7 @@ set_tests_properties(
   "runtime/test_device_address"
   "runtime/test_svm"
   "runtime/test_large_buf"
+  "runtime/test_image_normalized_conv"
   PROPERTIES SKIP_RETURN_CODE 77)
 
 if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)

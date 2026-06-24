@@ -25,6 +25,7 @@
 #include "assert.h"
 #include "pocl_cl.h"
 #include "pocl_cl_half_util.h"
+#include <math.h>
 
 cl_int pocl_opencl_image_type_to_index (cl_mem_object_type  image_type)
 {
@@ -369,6 +370,114 @@ convert_ushort_sat (cl_float x)
   return (cl_ushort)max (0, min (y, CL_USHRT_MAX));
 }
 
+static cl_char
+convert_char_sat_rte (cl_float x)
+{
+  cl_int y = (cl_int)rintf (x);
+  return (cl_char)max (CL_CHAR_MIN, min (y, CL_CHAR_MAX));
+}
+
+static cl_short
+convert_short_sat_rte (cl_float x)
+{
+  cl_int y = (cl_int)rintf (x);
+  return (cl_short)max (CL_SHRT_MIN, min (y, CL_SHRT_MAX));
+}
+
+static cl_uchar
+convert_uchar_sat_rte (cl_float x)
+{
+  cl_long y = (cl_long)rintf (x);
+  return (cl_uchar)max (0, min (y, CL_UCHAR_MAX));
+}
+
+static cl_ushort
+convert_ushort_sat_rte (cl_float x)
+{
+  cl_long y = (cl_long)rintf (x);
+  return (cl_ushort)max (0, min (y, CL_USHRT_MAX));
+}
+
+static cl_char2
+convert_char2_sat_rte (cl_float2 x)
+{
+  cl_char2 r;
+  unsigned i;
+  for (i = 0; i < 2; i++)
+    r.s[i] = convert_char_sat_rte (x.s[i]);
+  return r;
+}
+
+static cl_short2
+convert_short2_sat_rte (cl_float2 x)
+{
+  cl_short2 r;
+  unsigned i;
+  for (i = 0; i < 2; i++)
+    r.s[i] = convert_short_sat_rte (x.s[i]);
+  return r;
+}
+
+static cl_uchar2
+convert_uchar2_sat_rte (cl_float2 x)
+{
+  cl_uchar2 r;
+  unsigned i;
+  for (i = 0; i < 2; i++)
+    r.s[i] = convert_uchar_sat_rte (x.s[i]);
+  return r;
+}
+
+static cl_ushort2
+convert_ushort2_sat_rte (cl_float2 x)
+{
+  cl_ushort2 r;
+  unsigned i;
+  for (i = 0; i < 2; i++)
+    r.s[i] = convert_ushort_sat_rte (x.s[i]);
+  return r;
+}
+
+static cl_char4
+convert_char4_sat_rte (cl_float4 x)
+{
+  cl_char4 r;
+  unsigned i;
+  for (i = 0; i < 4; i++)
+    r.s[i] = convert_char_sat_rte (x.s[i]);
+  return r;
+}
+
+static cl_short4
+convert_short4_sat_rte (cl_float4 x)
+{
+  cl_short4 r;
+  unsigned i;
+  for (i = 0; i < 4; i++)
+    r.s[i] = convert_short_sat_rte (x.s[i]);
+  return r;
+}
+
+static cl_uchar4
+convert_uchar4_sat_rte (cl_float4 x)
+{
+  cl_uchar4 r;
+  unsigned i;
+  for (i = 0; i < 4; i++)
+    r.s[i] = convert_uchar_sat_rte (x.s[i]);
+  return r;
+}
+
+static cl_ushort4
+convert_ushort4_sat_rte (cl_float4 x)
+{
+  cl_ushort4 r;
+  unsigned i;
+  for (i = 0; i < 4; i++)
+    r.s[i] = convert_ushort_sat_rte (x.s[i]);
+  return r;
+}
+
 /****************************************************/
 
 cl_char4
@@ -546,7 +655,7 @@ write_float4_pixel (cl_float4 color, void *data, int type)
       unsigned i;
       for (i = 0; i < 4; i++)
         colorf.s[i] = color.s[i] * f127;
-      cl_char4 final_color = convert_char4_sat (colorf);
+      cl_char4 final_color = convert_char4_sat_rte (colorf);
       *((cl_char4 *)data) = final_color;
       return;
     }
@@ -556,7 +665,7 @@ write_float4_pixel (cl_float4 color, void *data, int type)
       unsigned i;
       for (i = 0; i < 4; i++)
         colorf.s[i] = color.s[i] * f32767;
-      cl_short4 final_color = convert_short4_sat (colorf);
+      cl_short4 final_color = convert_short4_sat_rte (colorf);
       *((cl_short4 *)data) = final_color;
       return;
     }
@@ -568,7 +677,7 @@ write_float4_pixel (cl_float4 color, void *data, int type)
       unsigned i;
       for (i = 0; i < 4; i++)
         colorf.s[i] = color.s[i] * f255;
-      cl_uchar4 final_color = convert_uchar4_sat (colorf);
+      cl_uchar4 final_color = convert_uchar4_sat_rte (colorf);
       *((cl_uchar4 *)data) = final_color;
       return;
     }
@@ -578,7 +687,7 @@ write_float4_pixel (cl_float4 color, void *data, int type)
       unsigned i;
       for (i = 0; i < 4; i++)
         colorf.s[i] = color.s[i] * f65535;
-      cl_ushort4 final_color = convert_ushort4_sat (colorf);
+      cl_ushort4 final_color = convert_ushort4_sat_rte (colorf);
       *((cl_ushort4 *)data) = final_color;
       return;
     }
@@ -616,7 +725,7 @@ write_float2_pixel (cl_float2 color, void *data, int type)
       cl_float2 colorf;
       for (i = 0; i < 2; i++)
         colorf.s[i] = color.s[i] * f127;
-      cl_char2 final_color = convert_char2_sat (colorf);
+      cl_char2 final_color = convert_char2_sat_rte (colorf);
       *((cl_char2 *)data) = final_color;
       return;
     }
@@ -625,7 +734,7 @@ write_float2_pixel (cl_float2 color, void *data, int type)
       cl_float2 colorf;
       for (i = 0; i < 2; i++)
         colorf.s[i] = color.s[i] * f32767;
-      cl_short2 final_color = convert_short2_sat (colorf);
+      cl_short2 final_color = convert_short2_sat_rte (colorf);
       *((cl_short2 *)data) = final_color;
       return;
     }
@@ -636,7 +745,7 @@ write_float2_pixel (cl_float2 color, void *data, int type)
       cl_float2 colorf;
       for (i = 0; i < 2; i++)
         colorf.s[i] = color.s[i] * f255;
-      cl_uchar2 final_color = convert_uchar2_sat (colorf);
+      cl_uchar2 final_color = convert_uchar2_sat_rte (colorf);
       *((cl_uchar2 *)data) = final_color;
       return;
     }
@@ -645,7 +754,7 @@ write_float2_pixel (cl_float2 color, void *data, int type)
       cl_float2 colorf;
       for (i = 0; i < 2; i++)
         colorf.s[i] = color.s[i] * f65535;
-      cl_ushort2 final_color = convert_ushort2_sat (colorf);
+      cl_ushort2 final_color = convert_ushort2_sat_rte (colorf);
       *((cl_ushort2 *)data) = final_color;
       return;
     }
@@ -677,14 +786,14 @@ write_float_pixel (cl_float color, void *data, int type)
     {
       /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
       cl_float colorf = color * f127;
-      cl_char final_color = convert_char_sat (colorf);
+      cl_char final_color = convert_char_sat_rte (colorf);
       *((cl_char *)data) = final_color;
       return;
     }
   if (type == CL_SNORM_INT16)
     {
       cl_float colorf = color * f32767;
-      cl_short final_color = convert_short_sat (colorf);
+      cl_short final_color = convert_short_sat_rte (colorf);
       *((cl_short *)data) = final_color;
       return;
     }
@@ -693,14 +802,14 @@ write_float_pixel (cl_float color, void *data, int type)
       /* <0, I*_MAX> to <0.0, 1.0> */
       /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
       cl_float colorf = color * f255;
-      cl_uchar final_color = convert_uchar_sat (colorf);
+      cl_uchar final_color = convert_uchar_sat_rte (colorf);
       *((cl_uchar *)data) = final_color;
       return;
     }
   if (type == CL_UNORM_INT16)
     {
       cl_float colorf = color * f65535;
-      cl_ushort final_color = convert_ushort_sat (colorf);
+      cl_ushort final_color = convert_ushort_sat_rte (colorf);
       *((cl_ushort *)data) = final_color;
       return;
     }
