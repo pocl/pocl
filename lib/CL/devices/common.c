@@ -97,6 +97,120 @@ size_t event_c;
  */
 
 #ifdef ENABLE_LLVM
+/* Links a kernel object into a shared library through the Clang driver
+   interface, which knows the correct toolchains for all of its targets. */
+static int
+link_with_clang_driver (cl_device_id device, const char *objfile,
+                        const char *out_module)
+{
+  const char *cmd_line[64]
+    = { pocl_get_path ("CLANG", CLANGCC), "-o", out_module, objfile };
+  unsigned last_arg_idx = 4;
+
+#ifdef _MSC_VER
+  /* NOTE: This intended for targets having 'msvc' triple component.
+   * These options, passed to MSVC's linker:
+   * - prevent *.exp and *.lib files to be generated and wasting disk
+   *   space.
+   * - suppress "Creating library *.lib and object *.exp" to be written
+   *   stdout which messes up regex checking on some internal tests.  */
+  cmd_line[last_arg_idx++] = "-Xlinker";
+  cmd_line[last_arg_idx++] = "-noexp";
+  cmd_line[last_arg_idx++] = "-Xlinker";
+  cmd_line[last_arg_idx++] = "-noimplib";
+#endif
+
+  /* ENABLE_PRINTF_IMMEDIATE_FLUSH results in "pocl_flush_printf_buffer"
+   * symbol referenced in the built kernel.so; however that function exists
+   * only on the host side, therefore link to libpocl.so which provides it
+   */
+#ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
+#ifdef HAVE_DLFCN_H
+  const char *fname = pocl_dynlib_pathname ((void *)pocl_cache_tempname);
+  assert (fname != NULL);
+  cmd_line[last_arg_idx++] = fname;
+#else
+#error ENABLE_PRINTF_IMMEDIATE_FLUSH requires HAVE_DLFCN_H
+#endif
+#endif
+  const char **last_arg = &cmd_line[last_arg_idx];
+  const char **device_ld_arg = device->final_linkage_flags;
+  while ((*last_arg++ = *device_ld_arg++))
+    {
+    }
+
+  return pocl_invoke_clang (device->llvm_target_triplet, cmd_line);
+}
+
+/* Links a compiled kernel object into the final shared library the dynamic
+   loader can pick up, through the device's custom finalization step if it
+   has one, in-process lld where compiled in, and the Clang driver otherwise.
+   The object file is left in place. */
+static int
+pocl_link_final_binary (cl_device_id device, const char *objfile,
+                        const char *final_binary_path)
+{
+  int error;
+
+  /* Temporary filename for kernel.so. Create it next to the final binary
+     to enable a potential customized finalization step to create multiple
+     files next to it. */
+  char tmp_module[POCL_MAX_PATHNAME_LENGTH];
+  if (pocl_mk_tempname (tmp_module, final_binary_path, SHARED_LIB_EXT, NULL))
+    {
+      POCL_MSG_PRINT_LLVM ("Creating temporary kernel.so file"
+                           " for %s FAILED\n",
+                           final_binary_path);
+      return -1;
+    }
+  else
+    POCL_MSG_PRINT_LLVM ("Temporary shared-lib file"
+                         " for %s is: %s\n",
+                         final_binary_path, tmp_module);
+
+  POCL_MSG_PRINT_LLVM ("Linking final module\n");
+
+  /* If the device has a custom linkage/binary generation step, call it
+     instead of the default Clang-driven linkage step. It's likely a
+     non-host target in that case. */
+  if (device->ops->finalize_binary != NULL)
+    {
+      error = device->ops->finalize_binary (device, tmp_module, objfile);
+    }
+  else
+    {
+      error = -1;
+#ifdef CPU_USE_LLD_LINK
+      /* Prefer linking in-process through lld: nothing is exec'd and no
+         startup files are involved, so kernel linking (and with it
+         poclbinary export) works in deployments without a host
+         toolchain. */
+      error = pocl_invoke_lld_link (device, objfile, tmp_module);
+      if (error)
+        POCL_MSG_WARN ("In-process lld link of %s failed;"
+                       " retrying with the Clang driver.\n",
+                       objfile);
+#endif
+      if (error)
+        error = link_with_clang_driver (device, objfile, tmp_module);
+    }
+  if (error)
+    {
+      POCL_MSG_PRINT_LLVM ("Linking kernel.so.o -> kernel.so has failed\n");
+      return error;
+    }
+
+  /* rename temporary kernel.so */
+  error = pocl_rename (tmp_module, final_binary_path);
+
+  if (error)
+    POCL_MSG_PRINT_LLVM (
+        "Renaming temporary kernel.so to final ('%s') has failed.\n",
+        final_binary_path);
+
+  return error;
+}
+
 static int
 llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
               cl_device_id device, _cl_command_node *command, int specialize)
@@ -105,7 +219,6 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   int error = 0;
   void *llvm_module = NULL;
 
-  char tmp_module[POCL_MAX_PATHNAME_LENGTH];
   char tmp_objfile[POCL_MAX_PATHNAME_LENGTH];
 
   char *objfile = NULL;
@@ -218,96 +331,9 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
                           tmp_objfile, (size_t)objfile_size);
     }
 
-  /* Temporary filename for kernel.so. Create it in the parallel.bc's
-     directory to enable a potential customized finalization step to
-     create multiple files next to it. */
-  char parallel_bc_dir[POCL_MAX_PATHNAME_LENGTH + 2];
-
-  pocl_cache_kernel_cachedir_path (parallel_bc_dir, program, device_i, kernel,
-                                   "", command, specialize);
-  strncat (parallel_bc_dir, "/parallel", POCL_MAX_PATHNAME_LENGTH);
-  parallel_bc_dir[POCL_MAX_PATHNAME_LENGTH - 1] = 0;
-
-  if (pocl_mk_tempname (tmp_module, parallel_bc_dir, SHARED_LIB_EXT, NULL))
-    {
-      POCL_MSG_PRINT_LLVM ("Creating temporary kernel.so file"
-                           " for kernel %s FAILED\n",
-                           kernel_name);
-      goto FINISH;
-    }
-  else
-    POCL_MSG_PRINT_LLVM ("Temporary shared-lib file"
-                         " for kernel %s is: %s\n",
-                         kernel_name, tmp_module);
-
-  POCL_MSG_PRINT_LLVM ("Linking final module\n");
-
-  /* If the device has a custom linkage/binary generation step, call it
-     instead of the default Clang-driven linkage step. It's likely a
-     non-host target in that case. */
-  if (device->ops->finalize_binary != NULL)
-    {
-      error = device->ops->finalize_binary (program->devices[device_i],
-                                            tmp_module, tmp_objfile);
-    }
-  else
-    {
-      /* Link through Clang driver interface which knows the correct toolchains
-         for all of its targets.  */
-      const char *cmd_line[64]
-        = { pocl_get_path ("CLANG", CLANGCC), "-o", tmp_module, tmp_objfile };
-      unsigned last_arg_idx = 4;
-
-#ifdef _MSC_VER
-      /* NOTE: This intended for targets having 'msvc' triple component.
-       * These options, passed to MSVC's linker:
-       * - prevent *.exp and *.lib files to be generated and wasting disk
-       *   space.
-       * - suppress "Creating library *.lib and object *.exp" to be written
-       *   stdout which messes up regex checking on some internal tests.  */
-      cmd_line[last_arg_idx++] = "-Xlinker";
-      cmd_line[last_arg_idx++] = "-noexp";
-      cmd_line[last_arg_idx++] = "-Xlinker";
-      cmd_line[last_arg_idx++] = "-noimplib";
-#endif
-
-      /* ENABLE_PRINTF_IMMEDIATE_FLUSH results in "pocl_flush_printf_buffer"
-       * symbol referenced in the built kernel.so; however that function exists
-       * only on the host side, therefore link to libpocl.so which provides it
-       */
-#ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
-#ifdef HAVE_DLFCN_H
-      const char *fname = pocl_dynlib_pathname ((void *)pocl_cache_tempname);
-      assert (fname != NULL);
-      cmd_line[last_arg_idx++] = fname;
-#else
-#error ENABLE_PRINTF_IMMEDIATE_FLUSH requires HAVE_DLFCN_H
-#endif
-#endif
-      const char **last_arg = &cmd_line[last_arg_idx];
-      const char **device_ld_arg = device->final_linkage_flags;
-      while ((*last_arg++ = *device_ld_arg++))
-        {
-        }
-
-      error = pocl_invoke_clang (device->llvm_target_triplet, cmd_line);
-    }
+  error = pocl_link_final_binary (device, tmp_objfile, final_binary_path);
   if (error)
-    {
-      POCL_MSG_PRINT_LLVM ("Linking kernel.so.o -> kernel.so has failed\n");
-      goto FINISH;
-    }
-
-  /* rename temporary kernel.so */
-  error = pocl_rename (tmp_module, final_binary_path);
-
-  if (error)
-    {
-      POCL_MSG_PRINT_LLVM (
-          "Renaming temporary kernel.so to final ('%s') has failed.\n",
-          final_binary_path);
-      goto FINISH;
-    }
+    goto FINISH;
 
   /* if LEAVE_COMPILER_FILES, rename temporary kernel.so.o, else delete it */
   if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))

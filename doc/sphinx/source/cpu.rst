@@ -58,3 +58,24 @@ It is strongly recommended to **NOT** create more TBB devices as the TBB device
 always uses all cores and has no subdevice support.
 
 The TBB driver can be tuned with at runtime with environment variables, see :ref:`pocl-env-variables`.
+
+.. _cpu-linking:
+
+========================
+Kernel linking
+========================
+
+A CPU driver turns each kernel into native code by generating a relocatable
+object, which it then links into a shared library that PoCL loads with
+``dlopen()``. Where lld is available at build time (``CPU_USE_LLD_LINK``),
+that link happens in-process through lld's library API: nothing is exec'd and
+no startup files are needed, since the kernel binary's undefined symbols
+resolve at ``dlopen()`` time. This keeps kernel compilation -- and with it
+poclbinary export -- working in deployments that ship no host toolchain at
+all. Should the in-process link fail, or when PoCL was built without lld, the
+object is handed to the Clang driver, which needs a toolchain present at run
+time: a linker to exec, plus the C startup files and default libraries.
+
+On Windows (MSVC) the in-process link also avoids the C runtime, linking
+against bundled helper objects instead, so kernel compilation needs no VS
+Build Tools at run time either.
