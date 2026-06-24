@@ -299,6 +299,9 @@ pocl_create_event (cl_event *event,
   (*event)->command_type = command_type;
   (*event)->id = POCL_ATOMIC_INC (event_id_counter);
   (*event)->status = CL_QUEUED;
+  /* Events may be recycled from the mem-manager free list without a memset,
+     so explicitly clear this flag here. */
+  (*event)->failed_dependency = 0;
 
   if (command_type == CL_COMMAND_USER)
     POCL_ATOMIC_INC (uevent_c);
@@ -359,17 +362,36 @@ pocl_create_event_sync (cl_event notifier_event, cl_event waiting_event)
         }
     }
 
-  /* If the notifier event is already complete (or failed),
-     don't create an event sync. This is fine since if the wait
-     event has no notifier events and gets submitted, it can start
-     right away.
+  /* If the notifier event is already complete, don't create an event sync.
+     This is fine since if the wait event has no notifier events and gets
+     submitted, it can start right away.
    */
-  if (notifier_event->status < 0 || notifier_event->status == CL_COMPLETE)
+  if (notifier_event->status == CL_COMPLETE)
     {
       POCL_MSG_PRINT_EVENTS (
         "notifier event %" PRIu64
         " already complete, not creating sync with event %" PRIu64 "\n",
         notifier_event->id, waiting_event->id);
+      goto FINISH;
+    }
+
+  /* If the notifier event is already in a failed (negative) status, we must
+     NOT run the waiting command: per the OpenCL spec a command whose wait-list
+     event has a negative status must be terminated with the error cascade.
+     We do not create a sync edge (the notifier has already broadcast and won't
+     do so again, so the normal broadcast->notify failure path can't fire), and
+     we cannot fail the waiting event inline because we hold the command-queue
+     lock here (would deadlock in pocl_update_event_finished). Instead we record
+     the broken dependency on the waiting event; the device submit path checks
+     this flag and fails the command via the error cascade. */
+  if (notifier_event->status < 0)
+    {
+      POCL_MSG_PRINT_EVENTS (
+        "notifier event %" PRIu64
+        " already failed, marking waiting event %" PRIu64
+        " as having a broken dependency\n",
+        notifier_event->id, waiting_event->id);
+      waiting_event->failed_dependency = 1;
       goto FINISH;
     }
 

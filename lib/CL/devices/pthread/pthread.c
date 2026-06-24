@@ -216,6 +216,17 @@ void
 pocl_pthread_submit (_cl_command_node *node, cl_command_queue cq)
 {
   node->state = POCL_COMMAND_READY;
+  /* If a wait-list dependency has failed, this command must not run: fail it via
+   * the error cascade. There is no point waiting for it to become otherwise
+   * ready first. pocl_update_event_failed takes the cq + event locks itself, so
+   * unlock the event we hold and return without unlocking again. */
+  if (node->sync.event.event->failed_dependency)
+    {
+      POCL_UNLOCK_OBJ (node->sync.event.event);
+      pocl_update_event_failed (CL_FAILED, NULL, 0, node->sync.event.event,
+                                NULL);
+      return;
+    }
   if (pocl_command_is_ready (node->sync.event.event))
     {
       pocl_update_event_submitted (node->sync.event.event);
@@ -256,7 +267,10 @@ pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
 {
   _cl_command_node *node = event->command;
 
-  if (finished->status < CL_COMPLETE)
+  /* Fail the command if the notifier finished failed, or if any wait-list
+   * dependency has already failed (recorded on the event). In either case the
+   * command MUST NOT execute, so there is no point checking readiness first. */
+  if (finished->status < CL_COMPLETE || event->failed_dependency)
     {
       /* Unlock the finished event in order to prevent a lock order violation
        * with the command queue that will be locked during
