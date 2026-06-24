@@ -83,3 +83,36 @@ double _CL_OVERLOADABLE dot(double16 a, double16 b)
   return dot(a.lo, b.lo) + dot(a.hi, b.hi);
 }
 #endif
+
+#ifdef cl_khr_fp16
+half _CL_OVERLOADABLE dot(half a, half b)
+{
+  return a * b;
+}
+
+half _CL_OVERLOADABLE dot(half2 a, half2 b)
+{
+  return a.lo * b.lo + a.hi * b.hi;
+}
+
+half _CL_OVERLOADABLE dot(half3 a, half3 b)
+{
+  return dot(a.s01, b.s01) + a.s2 * b.s2;
+}
+
+half _CL_OVERLOADABLE dot(half4 a, half4 b)
+{
+  return dot(a.lo, b.lo) + dot(a.hi, b.hi);
+}
+
+half _CL_OVERLOADABLE dot(half8 a, half8 b)
+{
+  return dot(a.lo, b.lo) + dot(a.hi, b.hi);
+}
+
+half _CL_OVERLOADABLE dot(half16 a, half16 b)
+{
+  return dot(a.lo, b.lo) + dot(a.hi, b.hi);
+}
+#endif
+

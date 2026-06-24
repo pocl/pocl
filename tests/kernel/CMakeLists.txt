@@ -64,6 +64,9 @@ add_test_pocl(NAME "kernel/test_min_max"
 add_test_pocl(NAME "kernel/test_length_distance"
               COMMAND "kernel" "test_length_distance")
 
+add_test_pocl(NAME "kernel/test_dot"
+              COMMAND "kernel" "test_dot")
+
 add_test_pocl(NAME "kernel/test_fmin_fmax_fma"
               COMMAND "kernel" "test_fmin_fmax_fma")
 
@@ -140,7 +143,7 @@ foreach(VARIANT ${VARIANTS})
     "kernel/test_convert_sat_regression_${VARIANT}"   "kernel/test_fabs_${VARIANT}"
     "kernel/test_rotate_${VARIANT}" "kernel/test_copy_signbit_${VARIANT}" "kernel/test_ilogb_${VARIANT}"
     "kernel/test_ldexp_${VARIANT}" "kernel/test_isnan_${VARIANT}" "kernel/test_short16_${VARIANT}"
-    "kernel/test_frexp_modf_${VARIANT}" ${ENABLE_CPU_TESTS}
+    "kernel/test_frexp_modf_${VARIANT}" "kernel/test_dot_${VARIANT}" ${ENABLE_CPU_TESTS}
     PROPERTIES
       COST 4.0
       PROCESSORS 1
