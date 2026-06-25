@@ -275,7 +275,7 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   dev->long_name = (char *)"memory mapped custom device";
   dev->short_name = "almaif";
   dev->vendor = "pocl";
-  dev->version = "1.2";
+  dev->version = "OpenCL 1.2 pocl";
   dev->extensions = "";
   dev->profile = "FULL_PROFILE";
 
