@@ -86,7 +86,6 @@ int pocl_almaif_compile_init(unsigned j, cl_device_id dev,
   dev->final_linkage_flags = NULL;
 
   d->compilationData->current_kernel = NULL;
-  SETUP_DEVICE_CL_VERSION(dev, 1, 2);
 
   d->Available = pocl_offline_compile ? CL_FALSE : CL_TRUE;
 
@@ -114,7 +113,7 @@ int pocl_almaif_compile_init(unsigned j, cl_device_id dev,
   SHA1_digest_t digest;
   pocl_almaif_openasip_device_hash(parameters.c_str(), dev->llvm_target_triplet,
                                    (char *)digest);
-  POCL_MSG_PRINT_ALMAIF("ALMAIF TCE DEVICE HASH=%s", (char *)digest);
+  POCL_MSG_PRINT_ALMAIF("ALMAIF TCE DEVICE HASH=%s\n", (char *)digest);
   adi->build_hash = strdup((char *)digest);
 
 #else
@@ -135,7 +134,7 @@ int pocl_almaif_compile_init(unsigned j, cl_device_id dev,
   dev->ops->build_poclbinary = pocl_driver_build_poclbinary;
   dev->ops->build_binary = pocl_almaif_build_binary;
 #ifdef ENABLE_COMPILER
-  dev->ops->compile_kernel = pocl_almaif_openasip_compile;
+  dev->ops->compile_kernel = pocl_almaif_compile_kernel;
   dev->ops->init_build = pocl_almaif_openasip_init_build;
   dev->ops->build_builtin = pocl_driver_build_opencl_builtins;
 #endif
@@ -192,6 +191,13 @@ int pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
   if (pocl_offline_compile) {
     return CL_SUCCESS;
   }
+
+  // clCreateKernel may not have happened yet, in which case kernel->data is
+  // NULL
+  if (kernel->data == NULL || kernel->data[cmd->program_device_i] == NULL) {
+    return CL_SUCCESS;
+  }
+
   almaif_kernel_data_t *kd =
       (almaif_kernel_data_t *)kernel->data[cmd->program_device_i];
 
