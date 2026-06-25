@@ -39,6 +39,41 @@ DEFINE_BODY_V (
             }
           return;
         }
+
+      /* ldexp vector-scalar */
+      res.v = ldexp (val.v, 4);
+      equal = true;
+      for (int n = 0; n < vecsize; ++n)
+        {
+          if (ISNAN (val.s[n]))
+            {
+              goodres.s[n] = NAN;
+            }
+          else if (val.s[n] == (stype)0)
+            {
+              goodres.s[n] = val.s[n];
+            }
+          else if (isinf (val.s[n]))
+            {
+              goodres.s[n] = val.s[n];
+            }
+          else
+            {
+              goodres.s[n] = val.s[n] * (stype) (16.0f);
+            }
+          equal = equal && ISEQ (res.s[n], goodres.s[n]);
+        }
+      if (!equal)
+        {
+          for (int n = 0; n < vecsize; ++n)
+            {
+              printf ("FAIL: ldexp_scalar type=%s val=%.17g res=%.17g "
+                      "good=%.17g\n",
+                      typename, val.s[n], res.s[n],
+                      goodres.s[n]);
+            }
+          return;
+        }
     }))
 
 
