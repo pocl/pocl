@@ -946,10 +946,19 @@ void scheduleNDRange(AlmaifData *data, _cl_command_node *cmd, size_t arg_size,
 
   pocl_context32 pc;
 
+  packet.grid_size_x = run->pc.local_size[0] * run->pc.num_groups[0];
+  packet.grid_size_y = run->pc.local_size[1] * run->pc.num_groups[1];
+  packet.grid_size_z = run->pc.local_size[2] * run->pc.num_groups[2];
+  POCL_MSG_PRINT_ALMAIF(
+      "almaif: NDRange kernel %s launched with %zu x %zu x %zu WGs (Total: "
+      "%zu), "
+      "WG size: %zu x %zu x %zu WIs (Total: %zu WIs/WG)\n",
+      k->name, run->pc.num_groups[0], run->pc.num_groups[1],
+      run->pc.num_groups[2],
+      run->pc.num_groups[0] * run->pc.num_groups[1] * run->pc.num_groups[2],
+      run->pc.local_size[0], run->pc.local_size[1], run->pc.local_size[2],
+      run->pc.local_size[0] * run->pc.local_size[1] * run->pc.local_size[2]);
   if (kernelID != -1) {
-    packet.grid_size_x = run->pc.local_size[0] * run->pc.num_groups[0];
-    packet.grid_size_y = run->pc.local_size[1] * run->pc.num_groups[1];
-    packet.grid_size_z = run->pc.local_size[2] * run->pc.num_groups[2];
     packet.kernel_object = kernelID;
   } else {
 
@@ -967,6 +976,7 @@ void scheduleNDRange(AlmaifData *data, _cl_command_node *cmd, size_t arg_size,
     pc.global_offset[1] = run->pc.global_offset[1];
     pc.global_offset[2] = run->pc.global_offset[2];
     pc.global_var_buffer = 0;
+    pc.execution_failed = 0;
 
     if (cmd->device->device_side_printf) {
       pc.printf_buffer = ((chunk_info_t *)data->PrintfBuffer)->start_address;

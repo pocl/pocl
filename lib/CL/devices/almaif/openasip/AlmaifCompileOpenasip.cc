@@ -674,6 +674,12 @@ void pocl_almaif_openasip_produce_standalone_program(AlmaifData *D,
       << run_cmd->pc.local_size[1] << ";\n"
       << "\tstandalone_packet.workgroup_size_z = " << std::hex << "(uint32_t)0x"
       << run_cmd->pc.local_size[2] << ";\n"
+      << "\tstandalone_packet.grid_size_x = " << std::hex << "(uint32_t)0x"
+      << run_cmd->pc.local_size[0] * run_cmd->pc.num_groups[0] << ";\n"
+      << "\tstandalone_packet.grid_size_y = " << std::hex << "(uint32_t)0x"
+      << run_cmd->pc.local_size[1] * run_cmd->pc.num_groups[1] << ";\n"
+      << "\tstandalone_packet.grid_size_z = " << std::hex << "(uint32_t)0x"
+      << run_cmd->pc.local_size[2] * run_cmd->pc.num_groups[2] << ";\n"
 
       << "\tstandalone_packet.reserved1 = (uint32_t)ctx_buffer"
       << ";\n"
