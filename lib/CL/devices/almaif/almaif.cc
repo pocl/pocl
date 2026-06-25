@@ -486,11 +486,11 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   chunk_info_t *chunk = NULL;
   chunk = pocl_alloc_buffer(D->Dev->AllocRegions, dev->printf_buffer_size);
   if (chunk == NULL) {
-    POCL_MSG_WARN("Almaif: Can't allocate %lu bytes for printf buffer\n",
+    POCL_MSG_WARN("Almaif: Can't allocate %lx bytes for printf buffer\n",
                   dev->printf_buffer_size);
     dev->device_side_printf = 0;
   } else {
-    POCL_MSG_PRINT_ALMAIF("Allocated printf buffer of size %lu from %lu\n",
+    POCL_MSG_PRINT_ALMAIF("Allocated printf buffer of size %lx from 0x%lx\n",
                           dev->printf_buffer_size, chunk->start_address);
     D->PrintfBuffer = chunk;
 
@@ -998,7 +998,7 @@ void scheduleNDRange(AlmaifData *data, _cl_command_node *cmd, size_t arg_size,
         (almaif_kernel_data_t *)run->kernel->data[cmd->program_device_i];
     packet.kernel_object = kd->kernel_address;
 
-    POCL_MSG_PRINT_ALMAIF("Kernel addresss=0x%" PRIu32 "\n", kd->kernel_address);
+    POCL_MSG_PRINT_ALMAIF("Kernel address=0x%" PRIx32 "\n", kd->kernel_address);
   }
 
   if (data->Dev->RelativeAddressing) {
