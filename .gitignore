@@ -91,6 +91,8 @@ cmake-build-*/
 
 # Visual Studio related files
 .vs
+.vscode
 
 # Cmake
 CMakeUserPresets.json
+CMakeFiles/*
