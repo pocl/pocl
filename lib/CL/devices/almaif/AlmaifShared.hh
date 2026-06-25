@@ -128,7 +128,7 @@ struct AQLQueueInfo {
 #define ALMAIF_CQ_WRITE (offsetof(AQLQueueInfo, write_index))
 #define ALMAIF_CQ_LENGTH (offsetof(AQLQueueInfo, size))
 
-#define ALMAIF_DRIVER_SLEEP 200
+#define ALMAIF_DRIVER_SLEEP 10000
 
 enum ALMAIF_DEVICE_TYPE : size_t {
   POCL_ALMAIFDEVICE_XRT = 0xA,
