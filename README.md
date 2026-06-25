@@ -57,8 +57,8 @@ is compiled with ENABLE_CONFORMANCE=ON setting.
 |     Driver  |   Maturity      |  CTS pass rate   |  Dev. OpenCL ver. | input SPIR-V   |
 |:------------|:---------------:|:----------------:|:-----------------:|:--------------:|
 | CPU/x86_64  |   very high     |   100%           |    3.0            |  1.4           |
-| CPU/ARM64   |   high          |   >95%           |    3.0            |  1.4           |
-| CPU/RISCV   |   high          |   >99%           |    3.0            |  1.4           |
+| CPU/RISCV   |   high          |   100%           |    3.0            |  1.4           |
+| CPU/ARM64   |   high          |   >99%           |    3.0            |  1.4           |
 | LevelZero   |   high          |   >99%           |    3.0            |  as LZ runtime |
 | CUDA        |   low           |                  |    3.0            |  1.2           |
 | OpenASIP    |   low           |                  |    1.2            |  none          |
@@ -226,11 +226,11 @@ supported by the device.
 
 | CPU device  |     LLVM 18     |      LLVM 19     |     LLVM 20     |     LLVM 21     |     LLVM 22     |
 |:------------|:---------------:|:----------------:|:---------------:|:---------------:|:---------------:|
-| [x86-64](https://github.com/pocl/pocl/actions/workflows/build_linux.yml) | :large_blue_diamond: | :green_circle: | :green_circle: | :large_orange_diamond: | :large_orange_diamond: |
+| [x86-64](https://github.com/pocl/pocl/actions/workflows/build_linux.yml) | :large_blue_diamond: | :green_circle: | :green_circle: | :large_orange_diamond: | :large_blue_diamond: |
 | [ARM64](https://github.com/pocl/pocl/actions/workflows/build_arm64.yml)  | :yellow_circle: | :yellow_circle: |  :yellow_circle: | :yellow_circle: | :green_circle: |
+| [RISCV64](https://github.com/pocl/pocl/actions/workflows/build_riscv64.yml)  | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :green_circle:  |
 | i686    | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
 | ARM32   | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
-| RISC-V  | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :green_circle:  |
 | PowerPC | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: | :yellow_circle: |
 
 | GPU device  |     LLVM 18     |      LLVM 19     |     LLVM 20     |     LLVM 21     |     LLVM 22     |
