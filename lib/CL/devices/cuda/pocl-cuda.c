@@ -2249,6 +2249,15 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
   cl_device_id dev = node->device;
   _cl_command_t *cmd = &node->command;
 
+  /* If a wait-list dependency has already failed, this command must not run:
+   * skip issuing any device work for it (its inputs may have been aborted), but
+   * still record the end event below so pocl_cuda_finalize_command can sync and
+   * clean up on valid CUDA handles. finalize_command honors failed_dependency
+   * and terminates the command via the error cascade. Unlike the other drivers
+   * CUDA does not call pocl_update_event_failed from submit: its finalize path
+   * already drives the failure, and bailing out here would leave the end event
+   * unrecorded (finalize would cuEventSynchronize on a garbage handle). */
+  if (!event->failed_dependency)
   switch (node->type)
     {
     case CL_COMMAND_READ_BUFFER:
@@ -2534,8 +2543,14 @@ pocl_cuda_finalize_command (cl_device_id device, cl_event event)
 
   /* Handle failed events */
 
+  /* Read the failed-dependency flag before pocl_update_event_running, which
+   * transitions the event to CL_RUNNING and so would mask a status that
+   * pocl_cuda_notify set to a negative value. A failed dependency means the
+   * command was not issued (see pocl_cuda_submit_node) and must be terminated. */
+  int failed_dependency = event->failed_dependency;
+
   pocl_update_event_running (event);
-  if (event->status < 0)
+  if (event->status < 0 || failed_dependency)
     POCL_UPDATE_EVENT_FAILED_MSG (CL_FAILED, event, "CUDA event failed");
   else
     POCL_UPDATE_EVENT_COMPLETE_MSG (event, "CUDA event");
