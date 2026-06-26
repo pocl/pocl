@@ -1132,16 +1132,6 @@ void fillUserHull(llvm::AllocaInst *Alloca,
   }
 }
 
-template <class PtrSet> struct PtrSetWrapper {
-  explicit PtrSetWrapper(PtrSet &PtrSetArg) : Set(PtrSetArg) {}
-  PtrSet &Set;
-  using iterator = typename PtrSet::iterator;
-  using value_type = typename PtrSet::value_type;
-  template <class IT, class ValueT> IT insert(IT, const ValueT &Value) {
-    return Set.insert(Value).first;
-  }
-};
-
 // checks if all uses of an alloca are in just a single subcfg (doesn't have to
 // be arrayified!).
 // TO CLEAN: merge with WorkitemLoopsImpl::shouldNotBeContextSaved().
@@ -1152,10 +1142,9 @@ bool isAllocaSubCfgInternal(llvm::AllocaInst *Alloca,
   {
     llvm::SmallVector<llvm::Instruction *, 32> Users;
     fillUserHull(Alloca, Users);
-    PtrSetWrapper<decltype(UserBlocks)> Wrapper{UserBlocks};
-    std::transform(Users.begin(), Users.end(),
-                   std::inserter(Wrapper, UserBlocks.end()),
-                   [](auto *I) { return I->getParent(); });
+    for (auto *I : Users) {
+      UserBlocks.insert(I->getParent());
+    }
   }
 
   for (auto &SubCfg : SubCfgs) {
