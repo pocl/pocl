@@ -109,7 +109,7 @@ ERROR:
   if (errcode_ret)
     *errcode_ret = errcode;
 
-  if (errcode == CL_SUCCESS)
+  if (errcode == CL_SUCCESS || errcode == CL_LINK_PROGRAM_FAILURE)
     {
       return program;
     }
