@@ -25,28 +25,26 @@
 #include "templates.h"
 
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && defined(cl_khr_fp16)
+#  define FRACT_LIMIT(stype) \
+          (sizeof(stype) == 2 ? 0x1.ffcp-1h : \
+           (sizeof(stype) == 4 ? 0x1.fffffep-1f : 0x1.fffffffffffffp-1))
+#elif defined(cl_khr_fp64)
+#  define FRACT_LIMIT(stype) \
+          (sizeof(stype) == 4 ? 0x1.fffffep-1f : 0x1.fffffffffffffp-1)
+#elif defined(cl_khr_fp16)
+#  define FRACT_LIMIT(stype) \
+          (sizeof(stype) == 2 ? 0x1.ffcp-1h : 0x1.fffffep-1f)
+#else
+#  define FRACT_LIMIT(stype) 0x1.fffffep-1f
+#endif
+
 DEFINE_EXPR_V_VPV (fract, ({
                      vtype fl = select ((vtype)floor (a), (vtype)NAN,
                                         (itype)isnan (a));
                      fl = select ((vtype)fl, (vtype)a, (itype)isinf (a));
                      *b = fl;
-                     vtype ret = fmin (a - floor (a),
-                                       (vtype) (sizeof (stype) == 4
-                                                    ? 0x1.fffffep-1f
-                                                    : 0x1.fffffffffffffp-1));
+                     vtype ret = fmin (a - floor (a), (vtype)FRACT_LIMIT(stype));
                      ret = select ((vtype)ret, (vtype)0.0, (itype)isinf (a));
                      select ((vtype)ret, (vtype) (NAN), (itype)isnan (a));
                    }))
-#else
-DEFINE_EXPR_V_VPV (fract, ({
-                     vtype fl = select ((vtype)floor (a), (vtype)NAN,
-                                        (itype)isnan (a));
-                     fl = select ((vtype)fl, (vtype)a, (itype)isinf (a));
-                     *b = fl;
-                     vtype ret = fmin (a - floor (a), (vtype)0x1.fffffep-1f);
-
-                     ret = select ((vtype)ret, (vtype)0.0f, (itype)isinf (a));
-                     select ((vtype)ret, (vtype) (NAN), (itype)isnan (a));
-                   }))
-#endif
