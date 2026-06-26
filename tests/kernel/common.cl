@@ -1186,6 +1186,30 @@ typedef constant char *string;
   __IF_FP64 (NAME##_double (); NAME##_double2 (); NAME##_double3 ();          \
              NAME##_double4 (); NAME##_double8 (); NAME##_double16 ();)
 
+#ifdef cl_khr_fp16
+#pragma OPENCL EXTENSION cl_khr_fp16 : enable
+
+#define DEFINE_BODY_V_FP16(NAME, EXPR) \
+  IMPLEMENT_BODY_V (NAME, EXPR, 1, half, half, int, int, int, int) \
+  IMPLEMENT_BODY_V (NAME, EXPR, 2, half2, half, int2, int, int2, int) \
+  IMPLEMENT_BODY_V (NAME, EXPR, 3, half3, half, int3, int, int3, int) \
+  IMPLEMENT_BODY_V (NAME, EXPR, 4, half4, half, int4, int, int4, int) \
+  IMPLEMENT_BODY_V (NAME, EXPR, 8, half8, half, int8, int, int8, int) \
+  IMPLEMENT_BODY_V (NAME, EXPR, 16, half16, half, int16, int, int16, int)
+
+#define CALL_FUNC_V_FP16(NAME) \
+  NAME##_half (); \
+  NAME##_half2 (); \
+  NAME##_half3 (); \
+  NAME##_half4 (); \
+  NAME##_half8 (); \
+  NAME##_half16 ();
+
+#else
+#define DEFINE_BODY_V_FP16(NAME, EXPR)
+#define CALL_FUNC_V_FP16(NAME)
+#endif
+
 
 #define IMPLEMENT_BODY_G(NAME, BODY, SIZE, GTYPE, SGTYPE, UGTYPE, SUGTYPE)  \
   void NAME##_##GTYPE()                                                     \
