@@ -1231,6 +1231,21 @@ int pocl_llvm_codegen2(const char* TTriple, const char* MCPU,
   *Output = nullptr;
   std::unique_ptr<llvm::TargetLibraryInfoImpl> TLIIPtr;
 
+  // Outline-atomics lowers integer atomicrmw to libgcc __aarch64_* helpers that
+  // are static-only (absent from any dlopen-able lib), so in-process-linked
+  // kernels leave them unresolved and the atomics silently no-op. Emit inline.
+  if (llvm::Triple(TTriple).isAArch64()) {
+    for (llvm::Function &F : *Input) {
+      llvm::Attribute A = F.getFnAttribute("target-features");
+      std::string TF = A.isValid() ? A.getValueAsString().str() : std::string();
+      // A trailing "-outline-atomics" wins: LLVM applies features left-to-right.
+      if (!TF.empty())
+        TF += ",";
+      TF += "-outline-atomics";
+      F.addFnAttr("target-features", TF);
+    }
+  }
+
   std::unique_ptr<llvm::TargetMachine> TM(GetTargetMachine(TTriple, MCPU, Features));
   llvm::TargetMachine *Target = TM.get();
 
