@@ -55,6 +55,7 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_workitem_func_outside_kernel test_program_scope_vars test_issue_1548
   test_issue_1525 test_issue_1608 test_issue_1826 test_builtin_regression
   test_mem_host_ptr_issue test_issue_1962 test_issue_2005
+  test_global_atomics
 )
 if(UNIX)
   list(APPEND PROGRAMS_TO_BUILD test_issue_2174)
@@ -85,6 +86,8 @@ endif()
 ######################################################################
 
 add_test_pocl(NAME "regression/test_issue_231" COMMAND "test_issue_231")
+
+add_test_pocl(NAME "regression/test_global_atomics" COMMAND "test_global_atomics")
 
 add_test_pocl(NAME "regression/test_issue_445" COMMAND "test_issue_445")
 
