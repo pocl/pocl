@@ -135,7 +135,7 @@ CL_EXT_DEFS="-D__ENDIAN_LITTLE__=1"
 # C11 atomic tests in SPIR-V mode. This is therefore a hack, but should
 # be fine because PoCL's Level0 and CPU drivers support gen. AS; atomic_order
 # features are optional, but again they are supported by both CPU and L0
-CL_EXTS="-Xclang -cl-ext=-all,+__opencl_c_generic_address_space,+__opencl_c_atomic_order_acq_rel,+__opencl_c_atomic_order_seq_cst,+__opencl_c_atomic_scope_device"
+CL_EXTS="-Xclang -cl-ext=-all,+__opencl_c_generic_address_space,+__opencl_c_atomic_order_acq_rel,+__opencl_c_atomic_order_seq_cst,+__opencl_c_atomic_scope_device,+__opencl_c_work_group_collective_functions"
 SPV_EXTS="+SPV_KHR_no_integer_wrap_decoration,+SPV_KHR_expect_assume,+SPV_INTEL_fp_fast_math_mode,+SPV_INTEL_unstructured_loop_controls,+SPV_INTEL_arbitrary_precision_integers,+SPV_INTEL_memory_access_aliasing,+SPV_INTEL_inline_assembly"
 MAX_SPV_VERSION="1.2"
 
