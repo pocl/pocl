@@ -41,7 +41,8 @@ set(C_PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clCreateKernelsInProgram test_clCreateKernel test_clGetKernelArgInfo
   test_version test_kernel_cache_includes test_event_cycle test_link_error
   test_read-copy-write-buffer test_buffer-image-copy test_clCreateSubDevices test_event_free
-  test_event_double_wait test_buffer_migration test_buffer_ping_pong
+  test_event_double_wait test_event_failed_dependency test_buffer_migration
+  test_buffer_ping_pong
   test_enqueue_kernel_from_binary test_user_event test_fill-buffer
   test_clSetMemObjectDestructorCallback test_dbk_jpeg
   test_cl_pocl_content_size test_cl_pocl_content_size_migration
@@ -131,6 +132,8 @@ add_test(NAME "runtime/clCreateSubDevices" COMMAND  "test_clCreateSubDevices")
 add_test_pocl(NAME "runtime/test_event_free" COMMAND  "test_event_free" WORKITEM_HANDLER "loopvec")
 
 add_test_pocl(NAME "runtime/test_event_double_wait" COMMAND  "test_event_double_wait" WORKITEM_HANDLER "loopvec")
+
+add_test_pocl(NAME "runtime/test_event_failed_dependency" COMMAND  "test_event_failed_dependency" WORKITEM_HANDLER "loopvec")
 
 add_test_pocl(NAME "runtime/test_enqueue_kernel_from_binary" COMMAND "test_enqueue_kernel_from_binary" WORKITEM_HANDLER "loopvec")
 
@@ -235,6 +238,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/test_read-copy-write-buffer" "runtime/test_buffer-image-copy"
   "runtime/clCreateKernel" "runtime/test_fill-buffer"
   "runtime/test_event_free" "runtime/test_event_double_wait"
+  "runtime/test_event_failed_dependency"
   "runtime/test_enqueue_kernel_from_binary" "runtime/test_user_event"
   "runtime/test_buffer_migration" "runtime/test_buffer_ping_pong"
   "runtime/clSetMemObjectDestructorCallback" "runtime/test_link_error"
@@ -473,6 +477,7 @@ set_property(TEST
   "runtime/test_event_cycle"
   "runtime/test_event_free"
   "runtime/test_event_double_wait"
+  "runtime/test_event_failed_dependency"
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
   "runtime/test_deviceside_enqueue"
@@ -522,6 +527,7 @@ set_property(TEST
   "runtime/clGetSupportedImageFormats"
   "runtime/test_event_cycle"
   "runtime/test_event_free"
+  "runtime/test_event_failed_dependency"
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
   "runtime/test_queue_creation_with_hints"
@@ -532,6 +538,7 @@ set_property(TEST
   "runtime/clGetEventInfo"
   "runtime/test_event_cycle"
   "runtime/test_event_free"
+  "runtime/test_event_failed_dependency"
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
   "runtime/test_queue_creation_with_hints"
@@ -556,6 +563,7 @@ set_property(TEST
   "runtime/test_read-copy-write-buffer" "runtime/test_buffer-image-copy"
   "runtime/test_fill-buffer"
   "runtime/test_event_free" "runtime/test_event_double_wait" "runtime/clCreateSubDevices"
+  "runtime/test_event_failed_dependency"
   "runtime/test_enqueue_kernel_from_binary" "runtime/test_user_event"
   "runtime/test_buffer_migration"
   "runtime/test_buffer_ping_pong"

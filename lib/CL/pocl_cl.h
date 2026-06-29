@@ -2150,6 +2150,28 @@ struct _cl_event {
 
   /* The execution status of the command this event is monitoring. */
   cl_int status;
+
+  /* Set to 1 when one of this command's wait-list dependencies has failed
+   * (finished with a negative status) and therefore this command must not run
+   * but must instead be terminated with the error cascade (OpenCL spec: a
+   * command whose wait-list event has a negative status is terminated and the
+   * error propagated). It is set in two situations the normal
+   * broadcast -> notify failure path cannot cover on its own:
+   *   - In pocl_create_event_sync, when the dependency is ALREADY failed at the
+   *     moment the sync edge would be wired. No edge is created (the notifier
+   *     has already broadcast and will not do so again), so without this flag
+   *     the waiter would be left ready with an empty wait_list and run.
+   *   - In pocl_broadcast, when a dependency finishes failed but the target is
+   *     transiently not in a failable state (e.g. a concurrent broadcast for a
+   *     different, completed dependency is mid-flight), so the immediate notify
+   *     cannot fail it.
+   * The device submit and notify paths check this flag and fail the command via
+   * pocl_update_event_failed. The flag (rather than an inline fail at the set
+   * sites) is required because both set sites hold locks (the command-queue lock
+   * in pocl_create_event_sync, the event lock in pocl_broadcast) under which
+   * failing the event inline would deadlock. */
+  cl_int failed_dependency;
+
   /* implicit event = an event for pocl's internal use, not visible to user */
   char implicit_event;
 

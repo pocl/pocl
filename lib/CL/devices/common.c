@@ -897,6 +897,20 @@ pocl_broadcast (cl_event brc_event)
             }
         }
 
+      /* If the notifier finished in a failed (negative) status, the target
+       * command must NOT run: per the OpenCL spec a command whose wait-list
+       * event has a negative status must be terminated with the error cascade.
+       * The device notify call below fails the target directly when it is in a
+       * failable state. But the target may transiently be in another state
+       * (e.g. a concurrent broadcast for a *different*, completed dependency is
+       * mid-flight and about to submit/push it), so also record the failed
+       * dependency on the target; the device submit/notify paths check the flag
+       * and fail the command rather than execute it on freed/aborted memory.
+       * We hold the target's event lock here, so this is safe against those
+       * readers. */
+      if (brc_event->status < 0)
+        target->event->failed_dependency = 1;
+
       if ((target->event->status == CL_SUBMITTED)
           || (target->event->status == CL_QUEUED))
         {

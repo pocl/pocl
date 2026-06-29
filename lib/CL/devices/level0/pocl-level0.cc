@@ -1537,6 +1537,16 @@ void pocl_level0_submit(_cl_command_node *Node, cl_command_queue Queue) {
   assert(Ev->data);
   PoclL0EventData *EvData = (PoclL0EventData *)Ev->data;
 
+  /* If a wait-list dependency has failed, this command must not run: fail it via
+   * the error cascade. There is no point waiting for it to become otherwise
+   * ready first. pocl_update_event_failed takes the cq + event locks itself, so
+   * unlock the event we hold and return without unlocking again. */
+  if (Ev->failed_dependency) {
+    POCL_UNLOCK_OBJ(Ev);
+    pocl_update_event_failed(CL_FAILED, nullptr, 0, Ev, nullptr);
+    return;
+  }
+
   if (pocl_level0_queue_supports_batching(Queue, Device)) {
     EvData->CanBeBatched = pocl_level0_can_event_be_batched(Ev);
     BatchType SubmitBatch;
@@ -1558,7 +1568,10 @@ void pocl_level0_notify(cl_device_id ClDev, cl_event Event, cl_event Finished) {
   _cl_command_node *Node = Event->command;
   Level0Device *Device = (Level0Device *)ClDev->data;
 
-  if (Finished->status < CL_COMPLETE) {
+  /* Fail the command if the notifier finished failed, or if any wait-list
+   * dependency has already failed (recorded on the event). In either case the
+   * command MUST NOT execute, so there is no point checking readiness first. */
+  if (Finished->status < CL_COMPLETE || Event->failed_dependency) {
     // remove the Event from unsubmitted list
     PoclL0QueueData *QD = (PoclL0QueueData *)Event->queue->data;
     QD->eraseEvent(Event);
