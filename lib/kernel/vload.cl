@@ -36,7 +36,7 @@
   TYPE##3 _CL_OVERLOADABLE vload3 (size_t offset, const MOD TYPE *p)          \
   {                                                                           \
     TYPE##3 retval;                                                           \
-    __builtin_memcpy_inline (&retval, &p[offset * 3], sizeof (TYPE##3));      \
+    __builtin_memcpy_inline (&retval, &p[offset * 3], sizeof (TYPE) * 3);      \
     return retval;                                                            \
   }                                                                           \
                                                                               \
