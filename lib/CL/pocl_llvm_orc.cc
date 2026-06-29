@@ -262,12 +262,26 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
      at configure time, matching codegen's veclib selection in pocl_llvm_wg.cc;
      expose that same one to the JIT so the symbols resolve. */
 #if defined(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
-  const char *VecMathLib = "libmvec.so.1";
-  if (!addLibrarySearchGenerator(VecMathLib))
+  /* The configured SONAME first (e.g. SLEEF's libsleefgnuabi.so.3 when LIBMVEC was pointed
+     at it, so we don't depend on a system libmvec), then the configure-time path, then the
+     plain glibc SONAME as a last resort. */
+  const char *Candidates[] = {
+#ifdef HOST_CPU_LIBMVEC_LIBRARY
+      HOST_CPU_LIBMVEC_LIBRARY,
+#endif
+#ifdef HOST_CPU_LIBMVEC_LIBRARY_FALLBACK
+      HOST_CPU_LIBMVEC_LIBRARY_FALLBACK,
+#endif
+      "libmvec.so.1",
+  };
+  bool VecMathLoaded = false;
+  for (const char *VecMathLib : Candidates)
+    if ((VecMathLoaded = addLibrarySearchGenerator(VecMathLib)))
+      break;
+  if (!VecMathLoaded)
     POCL_MSG_WARN(
-        "pocl_jit: could not load vector-math library '%s'; vectorized math "
-        "kernels may fail to resolve their symbols\n",
-        VecMathLib);
+        "pocl_jit: could not load the libmvec vector-math library; vectorized "
+        "math kernels may fail to resolve their symbols\n");
 #elif defined(ENABLE_HOST_CPU_VECTORIZE_SLEEF)
   /* The configured SONAME first, then the configure-time path, then the
      plain library name as a last resort. */

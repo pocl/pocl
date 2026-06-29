@@ -1144,6 +1144,32 @@ if(ENABLE_HOST_CPU_VECTORIZE_SLEEF AND LIBSLEEF)
   endif()
 endif()
 
+# Record the SONAME of the libmvec library for the JIT to dlopen at run time. LIBMVEC may be
+# the system libmvec (SONAME libmvec.so.1) or a libmvec-ABI-compatible replacement pointed at
+# via -DLIBMVEC=... (e.g. SLEEF's libsleefgnuabi.so); recording the SONAME lets the JIT resolve
+# the vectorized _ZGV* math symbols without relying on a system libmvec (absent on musl / old
+# glibc). Mirrors the SLEEF recording above.
+set(HOST_CPU_LIBMVEC_LIBRARY "")
+set(HOST_CPU_LIBMVEC_LIBRARY_FALLBACK "")
+if(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC AND LIBMVEC)
+  set(HOST_CPU_LIBMVEC_LIBRARY "${LIBMVEC}")
+  if(CMAKE_OBJDUMP)
+    execute_process(
+      COMMAND "${CMAKE_OBJDUMP}" -p "${LIBMVEC}"
+      OUTPUT_VARIABLE POCL_LIBMVEC_OBJDUMP_OUTPUT
+      ERROR_QUIET
+      RESULT_VARIABLE POCL_LIBMVEC_OBJDUMP_RESULT)
+    if(POCL_LIBMVEC_OBJDUMP_RESULT STREQUAL "0")
+      string(REGEX MATCH "SONAME[ \t]+([^ \r\n]+)"
+             POCL_LIBMVEC_SONAME_MATCH "${POCL_LIBMVEC_OBJDUMP_OUTPUT}")
+      if(POCL_LIBMVEC_SONAME_MATCH)
+        set(HOST_CPU_LIBMVEC_LIBRARY "${CMAKE_MATCH_1}")
+        set(HOST_CPU_LIBMVEC_LIBRARY_FALLBACK "${LIBMVEC}")
+      endif()
+    endif()
+  endif()
+endif()
+
 # Record the paths to the SVML static libraries for the JIT to link against.
 set(HOST_CPU_SVML_LIBRARY "")
 set(HOST_CPU_IRC_LIBRARY "")
