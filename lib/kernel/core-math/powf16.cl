@@ -308,40 +308,8 @@ Expected: -inf (half 0xfc00)
 Actual: inf (half 0x7c00) at index: 9
 */
 
-_CL_OVERLOADABLE half pown(half x, int y) {
-    float ret = pow(convert_float(x), y);
-    return convert_half(ret);
-}
-
-DEFINE_FP16_EXPR_V_VI(pown)
-/*
-
-ERROR: powr: nan ulp error at {-0x1.be8p-12 (0x8efa), 0x1.becp+12 (0x6efb)}
-Expected: nan  (half 0x7e00)
-Actual: 0x0p+0 (half 0x0000) at index: 0
-
-ERROR: powr: nan ulp error at {-0x1.728p+9 (0xe1ca), -0x1.4ap+14 (0xf528)}
-Expected: nan  (half 0x7e00)
-Actual: 0x0p+0 (half 0x0000) at index: 14
-
-ERROR: powr: nan ulp error at {-0x1.5dcp-10 (0x9577), -0x1.c84p+12 (0xef21)}
-Expected: nan  (half 0x7e00)
-Actual: inf (half 0x7c00) at index: 9
-
-ERROR: powr: nan ulp error at {-0x1.f24p+13 (0xf3c9), -0x1.e84p+10 (0xe7a1)}
-Expected: nan  (half 0x7e00)
-Actual: -0x0p+0 (half 0x8000) at index: 7
-
-*/
-
-_CL_OVERLOADABLE half powr(half x, half y) {
-    b16u16_u xx = { .f = x };
-    x = (xx.u == 0x8000) ? 0 : x;
-    half retval = pow(x, y);
-    retval = (xx.u > 0x8000) ? NAN : retval;
-    retval = isnan(x) ? NAN : retval;
-    retval = isnan(y) ? NAN : retval;
-    return retval;
-}
-
-DEFINE_FP16_EXPR_V_VV(powr)
+/* NOTE: pown(half) and powr(half) live in promotedf16.cl, not here. They have no
+   native FP16 builtin and are not provided by the vectorized generic pow.cl, so
+   they must be compiled in BOTH configurations -- whereas pow(half) above clashes
+   with the generic vectorized pow.cl when ENABLE_HOST_CPU_VECTORIZE_BUILTINS=ON,
+   so this file stays in the non-vectorized build only. */

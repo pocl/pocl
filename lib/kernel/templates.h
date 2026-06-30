@@ -2228,3 +2228,19 @@
   IMPLEMENT_FP16_EXPR_V_V (NAME, half4, BUILTIN (a))                          \
   IMPLEMENT_FP16_EXPR_V_V (NAME, half8, BUILTIN (a))                          \
   IMPLEMENT_FP16_EXPR_V_V (NAME, half16, BUILTIN (a))
+
+#define DEFINE_FP16_BUILTIN_V_VV(NAME, BUILTIN)                               \
+  IMPLEMENT_FP16_EXPR_V_VV (NAME, half, BUILTIN (a, b))                       \
+  IMPLEMENT_FP16_EXPR_V_VV (NAME, half2, BUILTIN (a, b))                      \
+  IMPLEMENT_FP16_EXPR_V_VV (NAME, half3, BUILTIN (a, b))                      \
+  IMPLEMENT_FP16_EXPR_V_VV (NAME, half4, BUILTIN (a, b))                      \
+  IMPLEMENT_FP16_EXPR_V_VV (NAME, half8, BUILTIN (a, b))                      \
+  IMPLEMENT_FP16_EXPR_V_VV (NAME, half16, BUILTIN (a, b))
+
+#define DEFINE_FP16_BUILTIN_V_VVV(NAME, BUILTIN)                              \
+  IMPLEMENT_FP16_EXPR_V_VVV (NAME, half, BUILTIN (a, b, c))                   \
+  IMPLEMENT_FP16_EXPR_V_VVV (NAME, half2, BUILTIN (a, b, c))                  \
+  IMPLEMENT_FP16_EXPR_V_VVV (NAME, half3, BUILTIN (a, b, c))                  \
+  IMPLEMENT_FP16_EXPR_V_VVV (NAME, half4, BUILTIN (a, b, c))                  \
+  IMPLEMENT_FP16_EXPR_V_VVV (NAME, half8, BUILTIN (a, b, c))                  \
+  IMPLEMENT_FP16_EXPR_V_VVV (NAME, half16, BUILTIN (a, b, c))

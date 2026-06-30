@@ -100,6 +100,9 @@ add_test_pocl(NAME "kernel/test_short16"
 add_test_pocl(NAME "kernel/test_frexp_modf"
               COMMAND "kernel" "test_frexp_modf")
 
+add_test_pocl(NAME "kernel/test_fp16_math_builtins"
+              COMMAND "kernel" "test_fp16_math_builtins")
+
 if(HOST_CPU_ENABLE_CL_KHR_KERNEL_CLOCK)
   add_test_pocl(NAME "kernel/test_kernel_clock"
                 COMMAND "kernel" "test_kernel_clock")
@@ -143,7 +146,8 @@ foreach(VARIANT ${VARIANTS})
     "kernel/test_convert_sat_regression_${VARIANT}"   "kernel/test_fabs_${VARIANT}"
     "kernel/test_rotate_${VARIANT}" "kernel/test_copy_signbit_${VARIANT}" "kernel/test_ilogb_${VARIANT}"
     "kernel/test_ldexp_${VARIANT}" "kernel/test_isnan_${VARIANT}" "kernel/test_short16_${VARIANT}"
-    "kernel/test_frexp_modf_${VARIANT}" "kernel/test_dot_${VARIANT}" ${ENABLE_CPU_TESTS}
+    "kernel/test_frexp_modf_${VARIANT}" "kernel/test_fp16_math_builtins_${VARIANT}"
+    "kernel/test_dot_${VARIANT}" ${ENABLE_CPU_TESTS}
     PROPERTIES
       COST 4.0
       PROCESSORS 1
@@ -252,6 +256,7 @@ if(NOT HOST_CPU_ENABLE_CL_KHR_FP16)
   foreach(VARIANT ${VARIANTS})
   set_tests_properties("kernel/test_printf_vectors_halfn_${VARIANT}"
     "kernel/test_shuffle_half_${VARIANT}" "kernel/test_halfs_${VARIANT}"
+    "kernel/test_fp16_math_builtins_${VARIANT}"
     PROPERTIES
       PROCESSORS 1
       COST 120
