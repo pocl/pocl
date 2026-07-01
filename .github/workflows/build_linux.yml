@@ -43,13 +43,14 @@ jobs:
         # TBB, OpenMP = CPU drivers with TBB/OpenMP support
         # cts_spirv = cts with SPIR-V
         # tier1 = includes CTS without SPIR-V
-        # chipstar 1.1 only supports LLVM up to 17
-        # chipstar 1.2 only supports LLVM up to 19
+        # chipstar 1.1 supports LLVM up to 17
+        # chipstar 1.2 supports LLVM up to 19
+        # chipstar 1.3 supports LLVM up to 22
         # asan, tsan, ubsan = sanitizers
         # openvx = OpenVX-CTS
         config: [cts_spirv, tier1]
         include:
-          - llvm: 19
+          - llvm: 22
             config: chipstar
           - llvm: 20
             config: openvx
@@ -116,7 +117,9 @@ jobs:
           elif [ "${{ matrix.config }}" == "chipstar" ]; then
             mkdir -p ${EXAMPLES_DIR}/build_chipstar_${{ matrix.llvm }}
             mkdir -p ${EXAMPLES_DIR}/source
-            runCMake -DENABLE_TESTSUITES=chipStar -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_chipstar_${{ matrix.llvm }}
+            runCMake -DWITH_LLVM_CONFIG=/opt/LLVM_${{ matrix.llvm }}_chipstar/bin/llvm-config \
+               -DENABLE_TESTSUITES=chipStar -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source \
+               -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_chipstar_${{ matrix.llvm }}
           elif [ "${{ matrix.config }}" == "openvx" ]; then
             mkdir -p ${EXAMPLES_DIR}/build_openvx
             mkdir -p ${EXAMPLES_DIR}/source
