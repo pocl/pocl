@@ -6,15 +6,17 @@ Release Notes for PoCL 7.2
 Release highlights
 ===========================
 
-* Conformance results were submitted for OpenCL 3.0 conformance with the
-  `CPU x86-64 (AVX512) <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_468>`_ ,
-  `CPU RISC-V RV64GC <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_469>`_ and
-  `CPU RISC-V RVA22+RVV1.0 <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_469>`_
-  devices, using OpenCL-CTS tag v2026-03-25-00.
-  Conformance testing via OpenCL-CTS passed with both OpenCL C
-  and SPIR-V compilation modes, for all of these devices.
+* Conformance results were submitted for OpenCL 3.0 conformance,
+  using OpenCL-CTS tag v2026-03-25-00, with the following devices:
 
-* Support for LLVM version 22
+  * `CPU x86-64 (AVX512) with OpenCL C and SPIR-V input <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_468>`_
+  * `CPU RISC-V RV64GC with OpenCL C input <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_469>`_
+  * `CPU RISC-V RV64GC with SPIR-V input <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_473>`_
+  * `CPU RISC-V RVA22+RVV1.0 with OpenCL C input <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_469>`_
+  * `CPU RISC-V RVA22+RVV1.0 with SPIR-V input <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_472>`_
+
+* Support for LLVM version 22 with CUDA, LevelZero and CPU devices
+* Support for LLVM version 23 with CPU device
 
 ================
 CMake changes
@@ -151,7 +153,7 @@ CPU driver
 Deprecation/feature removal notices
 ===================================
 
-* Support for LLVM version 17 was removed, versions 18 to 22 are supported
+* Support for LLVM version 17 was removed, versions 18 to 23 are supported
 
 ===================================
 Experimental and work-in-progress
