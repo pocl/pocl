@@ -123,11 +123,23 @@ static TargetMachine *GetTargetMachine(const char* TripleStr,
 
   std::string Error;
 
+  // Normalize the triple before handing it to codegen. A configure-time triple
+  // like "x86_64-w64-mingw32" (LLVM's own default target triple on MinGW, so
+  // what LLC_TRIPLE picks up from a cmake LLVM package) has an OS component
+  // ("mingw32") that llvm::Triple does not recognize, so it falls back to the
+  // ELF object format and the System V ABI -- yielding kernels the COFF/Win64
+  // host then calls with the wrong calling convention (a crash). clang and llc
+  // normalize the triple to "x86_64-w64-windows-gnu" (OS=Win32 => COFF) before
+  // codegen; do the same here so both the object format and the code-model
+  // decision below match the host ABI. A no-op for already-canonical triples.
+  std::string TripleNorm = llvm::Triple::normalize(TripleStr);
+  llvm::Triple TheTriple(TripleNorm);
+
 #if LLVM_MAJOR < 22
-  const Target *TheTarget = TargetRegistry::lookupTarget(TripleStr,
+  const Target *TheTarget = TargetRegistry::lookupTarget(TripleNorm,
                                                          Error);
 #else
-  const Target *TheTarget = TargetRegistry::lookupTarget(Triple(TripleStr),
+  const Target *TheTarget = TargetRegistry::lookupTarget(TheTriple,
                                                          Error);
 #endif
 
@@ -144,14 +156,13 @@ static TargetMachine *GetTargetMachine(const char* TripleStr,
   // 64-bit indirect calls instead, so they resolve wherever they are. Hence the
   // COFF JIT only; ELF/Mach-O and the linker-based paths are fine with small +
   // PIC.
-  llvm::Triple TheTriple(TripleStr);
   CodeModel::Model CM = CodeModel::Small;
   if (ForJIT && TheTriple.isOSBinFormatCOFF())
     CM = CodeModel::Large;
 
   TargetMachine *TM = TheTarget->createTargetMachine(
 #if LLVM_MAJOR < 22
-      TripleStr,
+      TripleNorm,
 #else
       TheTriple,
 #endif

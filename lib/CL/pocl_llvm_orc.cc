@@ -211,7 +211,11 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
 #endif
   );
 
-  JITTargetMachineBuilder JTMB{llvm::Triple(TripleStr ? TripleStr : "")};
+  /* Normalize the triple (e.g. "x86_64-w64-mingw32" -> "...-windows-gnu") so the
+     JIT's target machine and data layout use the COFF/Win64 form that matches the
+     kernel objects codegen emits; see GetTargetMachine() in pocl_llvm_wg.cc. */
+  JITTargetMachineBuilder JTMB{
+      llvm::Triple(llvm::Triple::normalize(TripleStr ? TripleStr : ""))};
   if (CPU && CPU[0])
     JTMB.setCPU(CPU);
   Builder.setJITTargetMachineBuilder(std::move(JTMB));
