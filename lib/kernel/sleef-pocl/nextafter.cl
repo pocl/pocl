@@ -183,3 +183,89 @@ _cl_nextafter (double16 x, double16 y)
 }
 
 #endif /* cl_khr_fp64 */
+
+#ifdef cl_khr_fp16
+
+_CL_OVERLOADABLE
+half
+_cl_nextafter (half x, half y)
+{
+  const short sign_bit = as_short((ushort)0x8000);
+  const short sign_bit_mask = 0x7fff;
+
+  short ix = as_short(x);
+  short ax = ix & sign_bit_mask;
+  short mx = sign_bit - ix;
+  mx = ix < (short)0 ? mx : ix;
+
+  short iy = as_short(y);
+  short ay = iy & sign_bit_mask;
+  short my = sign_bit - iy;
+  my = iy < (short)0 ? my : iy;
+
+  short t = mx + (mx < my ? 1 : -1);
+  short r = sign_bit - t;
+  r = t < (short)0 ? r : t;
+
+  if (t == 0 && ix < 0) {
+    r = sign_bit;
+  }
+
+  r = isnan(x) ? ix : r;
+  r = isnan(y) ? iy : r;
+  r = (((ax | ay) == (short)0) | (ix == iy)) ? iy : r;
+  return as_half(r);
+}
+
+_CL_OVERLOADABLE
+half2
+_cl_nextafter (half2 x, half2 y)
+{
+  half lo = _cl_nextafter (x.lo, y.lo);
+  half hi = _cl_nextafter (x.hi, y.hi);
+  return (half2) (lo, hi);
+}
+
+_CL_OVERLOADABLE
+half4 _cl_nextafter (half4, half4);
+
+_CL_OVERLOADABLE
+half3
+_cl_nextafter (half3 x, half3 y)
+{
+  half4 x_3to4 = (half4) (x, (half)0);
+  half4 y_3to4 = (half4) (y, (half)0);
+
+  half4 r = _cl_nextafter (x_3to4, y_3to4);
+  return r.xyz;
+}
+
+_CL_OVERLOADABLE
+half4
+_cl_nextafter (half4 x, half4 y)
+{
+  half2 lo = _cl_nextafter (x.lo, y.lo);
+  half2 hi = _cl_nextafter (x.hi, y.hi);
+  return (half4) (lo, hi);
+}
+
+_CL_OVERLOADABLE
+half8
+_cl_nextafter (half8 x, half8 y)
+{
+  half4 lo = _cl_nextafter (x.lo, y.lo);
+  half4 hi = _cl_nextafter (x.hi, y.hi);
+  return (half8) (lo, hi);
+}
+
+_CL_OVERLOADABLE
+half16
+_cl_nextafter (half16 x, half16 y)
+{
+  half8 lo = _cl_nextafter (x.lo, y.lo);
+  half8 hi = _cl_nextafter (x.hi, y.hi);
+  return (half16) (lo, hi);
+}
+
+#endif /* cl_khr_fp16 */
+
