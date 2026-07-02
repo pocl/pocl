@@ -74,3 +74,14 @@ IMPLEMENT_FP16_FREXP_AS (global)
 #ifdef __opencl_c_generic_address_space
 IMPLEMENT_FP16_FREXP_AS (generic)
 #endif
+
+/* Vector frexp: recurse through lo/hi halves down to the scalar overload above,
+   plus the local/global/generic exponent-pointer forms. This is the same
+   expansion the vectorized frexp.cl produces via DEFINE_BUILTIN_V_VPJ;
+   additionalf16.cl is the non-vectorized-only file, so the half vector
+   overloads (missing from libclc-pocl/frexp.cl) are supplied here. */
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half2, int2, int, int, lo, hi)
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half3, int3, int2, int, lo, s2)
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half4, int4, int2, int2, lo, hi)
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half8, int8, int4, int4, lo, hi)
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half16, int16, int8, int8, lo, hi)

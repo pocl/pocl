@@ -52,6 +52,7 @@ kernel void test_fp16_math_builtins ()
   int8 hvn = vn;
   half8 vip;
   int8 vquo;
+  int8 viexp;
 
   vsink = ceil (hvx);
   vsink = floor (hvx);
@@ -66,6 +67,7 @@ kernel void test_fp16_math_builtins ()
   vsink = maxmag (hvx, hvy);
   vsink = minmag (hvx, hvy);
   vsink = fmod (hvy, hvx);
+  vsink = frexp (hvx, &viexp);
   vsink = logb (hvx);
   visink = ilogb (hvx);
   vsink = ldexp (hvx, hvn);
