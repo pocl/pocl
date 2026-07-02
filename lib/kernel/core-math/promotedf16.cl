@@ -140,6 +140,11 @@ powr (half x, half y)
   x = (xu == (ushort)0x8000) ? (half)0 : x;       /* -0 -> +0 */
   half r = pow (x, y);
   r = (xu > (ushort)0x8000) ? (half)NAN : r;       /* x < 0 -> NaN */
+  /* pow() returns 1 for the indeterminate forms, but powr() must return NaN:
+     powr(1, +-inf), powr(+-0, +-0) and powr(+inf, +-0) are all NaN. */
+  r = (x == (half)1 && isinf (y)) ? (half)NAN : r;       /* 1^inf   */
+  r = (x == (half)0 && y == (half)0) ? (half)NAN : r;    /* 0^0     */
+  r = (isinf (x) && y == (half)0) ? (half)NAN : r;       /* inf^0   */
   r = isnan (x) ? (half)NAN : r;
   r = isnan (y) ? (half)NAN : r;
   return r;
