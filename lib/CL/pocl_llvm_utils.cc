@@ -80,11 +80,20 @@ using namespace llvm;
 
 llvm::Module *parseModuleIR(const char *path, llvm::LLVMContext *c) {
   SMDiagnostic Err;
-  return parseIRFile(path, Err, *c).release();
+  llvm::Module *M = parseIRFile(path, Err, *c).release();
+  if (M == nullptr) {
+    std::string Msg;
+    raw_string_ostream OS(Msg);
+    Err.print("pocl", OS);
+    POCL_MSG_ERR("parseModuleIR('%s') failed:\n%s\n", path, OS.str().c_str());
+  }
+  return M;
 }
 
 void parseModuleGVarSize(cl_program program, unsigned device_i,
                          llvm::Module *ProgramBC) {
+  if (ProgramBC == nullptr)
+    return;
 
   unsigned long TotalGVarBytes = 0;
   if (!getModuleIntMetadata(*ProgramBC, PoclGVarMDName, TotalGVarBytes))
