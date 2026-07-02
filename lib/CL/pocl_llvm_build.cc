@@ -1249,7 +1249,8 @@ int pocl_invoke_lld_link(cl_device_id Device, const char *InFile,
   // The flags the Clang driver would pass to the linker are HOST_LD_FLAGS
   // (-shared -nostartfiles and friends), expressed here in ld terms.
   // Symbols the kernel binary leaves undefined resolve when it is
-  // dlopen()ed, so no C runtime or startup files are needed at link time.
+  // dlopen()ed, the same way the JIT resolves them, so no C runtime or
+  // startup files are needed at link time.
 #ifdef __APPLE__
   ArgStorage.push_back(
       llvm::Triple(Device->llvm_target_triplet).getArchName().str());
@@ -1281,8 +1282,8 @@ int pocl_invoke_lld_link(cl_device_id Device, const char *InFile,
 #endif
 #endif
 
-  // lld is not re-entrant; serialize links here instead of relying on the
-  // callers' locking.
+  // lld is not re-entrant; the codegen lock does not cover all callers
+  // (poclbinary export links outside of it), so serialize here.
   static std::mutex LLDMutex;
   std::lock_guard<std::mutex> Guard(LLDMutex);
 

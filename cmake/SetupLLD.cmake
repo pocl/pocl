@@ -2,7 +2,8 @@
 # through lld's library API instead of invoking the Clang driver, which needs
 # no external toolchain (no linker to exec, no startup files). This keeps
 # kernel linking -- and with it poclbinary export -- working in deployments
-# that ship no host toolchain at all. On Windows (MSVC) the kernel
+# that ship no host toolchain at all (see also the JIT, which loads the
+# kernel objects without linking them). On Windows (MSVC) the kernel
 # binaries are additionally linked without the C runtime, against bundled
 # helper objects, so they need no VS Build Tools at run time either.
 #

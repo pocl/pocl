@@ -59,23 +59,75 @@ always uses all cores and has no subdevice support.
 
 The TBB driver can be tuned with at runtime with environment variables, see :ref:`pocl-env-variables`.
 
-.. _cpu-linking:
+.. _cpu-jit:
 
 ========================
-Kernel linking
+In-process kernel JIT
 ========================
 
 A CPU driver turns each kernel into native code by generating a relocatable
-object, which it then links into a shared library that PoCL loads with
-``dlopen()``. Where lld is available at build time (``CPU_USE_LLD_LINK``),
-that link happens in-process through lld's library API: nothing is exec'd and
-no startup files are needed, since the kernel binary's undefined symbols
-resolve at ``dlopen()`` time. This keeps kernel compilation -- and with it
-poclbinary export -- working in deployments that ship no host toolchain at
-all. Should the in-process link fail, or when PoCL was built without lld, the
-object is handed to the Clang driver, which needs a toolchain present at run
-time: a linker to exec, plus the C startup files and default libraries.
+object, which it then has to link and load. By default it does this in-process,
+with LLVM's ORC LLJIT and the JITLink object-linking layer. JITLink resolves the
+object's relocations and maps its code into executable memory, so it acts as
+both the linker and the loader. Nothing is exec'd and no shared library is
+written; the relocatable object from code generation is the cached artifact
+itself, stored with an ``.o`` suffix rather than ``.so`` or ``.dll``.
 
-On Windows (MSVC) the in-process link also avoids the C runtime, linking
-against bundled helper objects instead, so kernel compilation needs no VS
-Build Tools at run time either.
+The alternative is to link the object into a shared library that PoCL loads
+with ``dlopen()``. Where lld is available at build time (``CPU_USE_LLD_LINK``),
+that link also happens in-process through lld's library API: nothing is exec'd
+and no startup files are needed, since the kernel binary's undefined symbols
+resolve at ``dlopen()`` time the same way the JIT resolves them. Otherwise the
+object is handed to the Clang driver, which needs a host toolchain present at
+run time: a linker to exec, plus the C startup files and default libraries.
+
+With in-process lld both modes are thus self-contained; what sets the JIT
+apart is not needing the OS loader. The kernels it builds load without
+``dlopen()``, so it works with the cache on a ``noexec`` filesystem and in
+sandboxes; it resolves symbols against libpocl itself, so it works in
+statically linked deployments where a kernel library's references could not
+resolve dynamically; and its kernels can be unloaded, where ``dlopen()``\ ed
+ones accumulate for the lifetime of the process. The link path is the better
+fit where runtime code generation is forbidden but loading shared libraries is
+allowed.
+
+The symbols a kernel object refers to still have to come from somewhere. The
+JIT keeps the source model deliberately closed, with one ORC mechanism for each
+class of symbol the shared-library link path used to provide: process-visible C
+library and math symbols come from LLJIT's default process-symbol generator;
+libpocl and its private dependencies are searched through a generator on
+libpocl's own handle; the configure-time vector math library is exposed either
+as a dynamic-library generator (libmvec or SLEEF) or as static archive
+generators (SVML and ``libirc.a``); compiler runtime helpers such as FP16
+conversion routines come from the installed compiler-rt/libgcc archive; late
+calls to PoCL builtins are resolved from the selected kernel-library bitcode
+JITDylib; and hidden host ABI callbacks, such as the printf flush callback and
+the MinGW stack probe, are provided as absolute symbols.
+
+This mapping is the review guide for new unresolved symbols: first determine
+which codegen or ABI rule introduced the reference, then add it to the matching
+symbol class above. A symbol that does not fit one of these classes should be
+treated as a missing design explanation, not as an unrelated ad-hoc entry.
+
+The JIT is the default on every platform that supports it: ELF and Mach-O hosts,
+and Windows x86-64 (MinGW). It is unavailable on Windows arm64 (JITLink has no
+COFF_aarch64 backend) and on MSVC builds, which link through lld in-process
+(without the C runtime, against bundled helper objects). To turn the JIT off,
+build with ``-DHOST_CPU_ENABLE_JIT=OFF``, or set ``POCL_CPU_JIT=0`` for a single
+run (see :ref:`pocl-env-variables`); either one selects the link path.
+
+The JIT does not affect program binaries: a poclbinary exported through
+``clGetProgramInfo(CL_PROGRAM_BINARIES)`` contains the linked shared
+libraries (any kernel objects only the JIT could load are linked at export
+and not serialized), so binaries produced by a JIT-enabled PoCL remain
+loadable by builds without the JIT or without LLVM. The kernel cache is
+likewise shared between the modes: the loader accepts whichever artifact it
+finds, dlopening a shared library even when the JIT is on, and linking a
+cached kernel object on the spot when it is off.
+
+With in-process lld this holds even in deployments that ship no host
+toolchain at all. Should the export-time link fail anyway, the export falls
+back to serializing the kernel objects themselves; such a binary still loads
+on any consumer with the JIT enabled (it is JIT-loaded directly) or with LLVM
+available (it is linked on import), only a consumer without LLVM cannot use
+it.

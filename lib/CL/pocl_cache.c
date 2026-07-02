@@ -245,13 +245,18 @@ pocl_cache_work_group_function_path (char *parallel_bc_path,
                                    specialize);
 }
 
-/* Return the final binary path for the given work-group function.
-   If specialized is 1, find the WG function specialized for the
-   given command's properties, if 0, return the path to a generic version. */
+/* Return the final binary path for the given work-group function, naming
+   either the JIT-loadable relocatable object (OBJ_EXT) or the linked shared
+   library variant of the artifact; the distinct extensions keep the two from
+   colliding in the cache dir. If specialized is 1, find the WG function
+   specialized for the given command's properties, if 0, return the path to a
+   generic version. */
 void
-pocl_cache_final_binary_path (char *final_binary_path, cl_program program,
-                              unsigned device_i, cl_kernel kernel,
-                              _cl_command_node *command, int specialized)
+pocl_cache_final_binary_variant_path (char *final_binary_path,
+                                      cl_program program, unsigned device_i,
+                                      cl_kernel kernel,
+                                      _cl_command_node *command,
+                                      int specialized, int jit_object)
 {
   assert (kernel->name);
 
@@ -270,13 +275,12 @@ pocl_cache_final_binary_path (char *final_binary_path, cl_program program,
     {
       char file_name[POCL_MAX_FILENAME_LENGTH + 1];
       pocl_hash_clipped_name (kernel->name, &file_name[0]);
-      bytes_written = snprintf (final_binary_name, POCL_MAX_PATHNAME_LENGTH,
-#ifdef _WIN32
-                                "/%s.dll",
-#else
-                                "/%s.so",
-#endif
-                                file_name);
+      if (jit_object)
+        bytes_written = snprintf (final_binary_name, POCL_MAX_PATHNAME_LENGTH,
+                                  "/%s" OBJ_EXT, file_name);
+      else
+        bytes_written = snprintf (final_binary_name, POCL_MAX_PATHNAME_LENGTH,
+                                  "/%s" SHARED_LIB_EXT, file_name);
     }
 
   assert (bytes_written > 0 && bytes_written < POCL_MAX_PATHNAME_LENGTH);
@@ -284,6 +288,49 @@ pocl_cache_final_binary_path (char *final_binary_path, cl_program program,
   pocl_cache_kernel_cachedir_path (final_binary_path, program, device_i,
                                    kernel, final_binary_name, command,
                                    specialized);
+}
+
+/* If 'path' names a cached kernel object (the OBJ_EXT artifact variant of a
+   final binary; see pocl_cache_final_binary_variant_path()), write the path
+   of its shared-library sibling variant into 'so_path' and return 1. Returns
+   0 for other files, including leftover temporary objects of already-linked
+   libraries ("<kernel>.dll.o", kept by POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES
+   on platforms where OBJ_EXT doesn't embed SHARED_LIB_EXT). */
+int
+pocl_cache_object_shlib_variant (char *so_path, const char *path)
+{
+  size_t len = strlen (path);
+  size_t obj_ext_len = strlen (OBJ_EXT);
+  size_t so_ext_len = strlen (SHARED_LIB_EXT);
+  if (len <= obj_ext_len || strcmp (path + len - obj_ext_len, OBJ_EXT) != 0)
+    return 0;
+  size_t stem_len = len - obj_ext_len;
+  if (stem_len >= so_ext_len
+      && strcmp (path + stem_len - so_ext_len, SHARED_LIB_EXT) == 0)
+    return 0;
+  if (stem_len + so_ext_len >= POCL_MAX_PATHNAME_LENGTH)
+    return 0;
+  memcpy (so_path, path, stem_len);
+  strcpy (so_path + stem_len, SHARED_LIB_EXT);
+  return 1;
+}
+
+/* Return the path of the final binary a device generates for the given
+   work-group function: a JIT device produces the kernel object to load
+   in-process, the others a linked shared library (see
+   pocl_cpu_device_uses_jit()). Loaders should not assume the cache holds
+   this variant -- a poclbinary or a mode switch can leave only the other
+   one -- and should probe both (see pocl_check_kernel_disk_cache()). */
+void
+pocl_cache_final_binary_path (char *final_binary_path, cl_program program,
+                              unsigned device_i, cl_kernel kernel,
+                              _cl_command_node *command, int specialized)
+{
+  int jit_object
+    = pocl_cpu_device_uses_jit (kernel->program->devices[device_i]);
+  pocl_cache_final_binary_variant_path (final_binary_path, program, device_i,
+                                        kernel, command, specialized,
+                                        jit_object);
 }
 
 /******************************************************************************/
