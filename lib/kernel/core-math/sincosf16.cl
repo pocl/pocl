@@ -2099,4 +2099,10 @@ _CL_OVERLOADABLE half sincos(half x, generic half *cosval){
 }
 #endif
 
-/* DEFINE_FP16_EXPR_V_VPV(sincos) */
+/* Vector sincos: recurse through lo/hi halves down to the scalar overload
+   above, plus the local/global/generic cosval-pointer forms. */
+IMPLEMENT_BUILTIN_V_VPV (sincos, half2, half, half, lo, hi)
+IMPLEMENT_BUILTIN_V_VPV (sincos, half3, half2, half, lo, s2)
+IMPLEMENT_BUILTIN_V_VPV (sincos, half4, half2, half2, lo, hi)
+IMPLEMENT_BUILTIN_V_VPV (sincos, half8, half4, half4, lo, hi)
+IMPLEMENT_BUILTIN_V_VPV (sincos, half16, half8, half8, lo, hi)

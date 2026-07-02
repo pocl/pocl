@@ -249,4 +249,10 @@ _CL_OVERLOADABLE half lgamma (half xf16) {
 
 DEFINE_FP16_EXPR_V_V(lgamma)
 
-/* DEFINE_FP16_EXPR_V_VPI(lgamma) */
+/* Vector lgamma_r: recurse through lo/hi halves down to the scalar overload
+   above, plus the local/global/generic signp-pointer forms. */
+IMPLEMENT_BUILTIN_V_VPJ (lgamma_r, half2, int2, int, int, lo, hi)
+IMPLEMENT_BUILTIN_V_VPJ (lgamma_r, half3, int3, int2, int, lo, s2)
+IMPLEMENT_BUILTIN_V_VPJ (lgamma_r, half4, int4, int2, int2, lo, hi)
+IMPLEMENT_BUILTIN_V_VPJ (lgamma_r, half8, int8, int4, int4, lo, hi)
+IMPLEMENT_BUILTIN_V_VPJ (lgamma_r, half16, int16, int8, int8, lo, hi)
