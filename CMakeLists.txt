@@ -1130,11 +1130,20 @@ set(HOST_CPU_COMPILER_RT_LIBRARY_SOURCE "" CACHE FILEPATH "Compiler runtime arch
 if(HOST_CPU_ENABLE_JIT)
   set(POCL_COMPILER_RT_LIBRARY "${HOST_CPU_COMPILER_RT_LIBRARY_SOURCE}")
   if(NOT POCL_COMPILER_RT_LIBRARY)
+    # `-print-libgcc-file-name` is a GCC option; clang's answer may name a nonexistent archive
+    # (cross MinGW/clang). Fall back to `-print-file-name=libgcc.a` and require it to exist.
     execute_process(
       COMMAND "${CMAKE_C_COMPILER}" -print-libgcc-file-name
       OUTPUT_VARIABLE POCL_COMPILER_RT_LIBRARY
       OUTPUT_STRIP_TRAILING_WHITESPACE
       ERROR_QUIET)
+    if(NOT (POCL_COMPILER_RT_LIBRARY AND EXISTS "${POCL_COMPILER_RT_LIBRARY}"))
+      execute_process(
+        COMMAND "${CMAKE_C_COMPILER}" -print-file-name=libgcc.a
+        OUTPUT_VARIABLE POCL_COMPILER_RT_LIBRARY
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET)
+    endif()
   endif()
   if(POCL_COMPILER_RT_LIBRARY AND EXISTS "${POCL_COMPILER_RT_LIBRARY}")
     get_filename_component(POCL_COMPILER_RT_LIBRARY_NAME
@@ -1142,6 +1151,12 @@ if(HOST_CPU_ENABLE_JIT)
     install(FILES "${POCL_COMPILER_RT_LIBRARY}"
       DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR_REL}" COMPONENT "lib")
     set(HOST_CPU_COMPILER_RT_LIBRARY "${POCL_COMPILER_RT_LIBRARY_NAME}")
+  elseif(HOST_COMPILER_SUPPORTS_FLOAT16)
+    # Warn rather than silently ship a driver whose FP16 kernels can't JIT (__truncdfhf2).
+    message(WARNING
+      "Could not locate a compiler runtime archive (libgcc/compiler-rt) for the CPU JIT. "
+      "FP16 kernels that emit soft-float helpers such as __truncdfhf2 will fail to resolve "
+      "at run time. Point PoCL at one with -DHOST_CPU_COMPILER_RT_LIBRARY_SOURCE=<libgcc.a>.")
   endif()
 endif()
 
