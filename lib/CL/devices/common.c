@@ -1313,6 +1313,49 @@ fetch_dlhandle_cache_item (_cl_command_run *run_cmd, int specialize)
   return NULL;
 }
 
+#ifdef HOST_CPU_ENABLE_JIT
+/* Return the bitcode kernel library that was linked into the program IR before
+   CPU codegen. The JIT path usually only needs the final object, but LLVM's
+   native codegen can leave or introduce late calls to builtins such as FP16
+   vector math helpers. The shared-library link path can resolve those from the
+   same kernel library; make the selected .bc path available to ORC too. */
+static int
+get_jit_kernellib_path (char *path, cl_device_id device)
+{
+  char base[POCL_MAX_PATHNAME_LENGTH];
+
+#ifdef ENABLE_POCL_BUILDING
+  if (pocl_get_bool_option ("POCL_BUILDING", 0))
+    {
+      snprintf (base, POCL_MAX_PATHNAME_LENGTH, "%s/lib/kernel/%s", BUILDDIR,
+                device->kernellib_subdir);
+    }
+  else
+#endif
+    {
+      pocl_get_private_datadir (base);
+    }
+
+  snprintf (path, POCL_MAX_PATHNAME_LENGTH, "%s/%s.bc", base,
+            device->kernellib_name);
+  if (pocl_exists (path))
+    return 0;
+
+  if (device->kernellib_fallback_name)
+    {
+      snprintf (path, POCL_MAX_PATHNAME_LENGTH, "%s/%s.bc", base,
+                device->kernellib_fallback_name);
+      if (pocl_exists (path))
+        return 0;
+    }
+
+  POCL_MSG_WARN ("pocl_jit: cannot find kernel library bitcode for %s\n",
+                 device->long_name ? device->long_name : device->short_name);
+  path[0] = '\0';
+  return -1;
+}
+#endif
+
 /**
  * Checks if the kernel command has been built and loaded, and reuses
  * its handle. If not, checks if a built binary is found
@@ -1368,6 +1411,10 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 
   char module_fn[POCL_MAX_PATHNAME_LENGTH];
 
+#ifdef HOST_CPU_ENABLE_JIT
+  char kernellib_fn[POCL_MAX_PATHNAME_LENGTH] = { 0 };
+#endif
+
   int err = pocl_check_kernel_disk_cache (module_fn, command, specialize);
   if (err)
     {
@@ -1381,10 +1428,14 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
      probe_final_binary()). */
   ci->is_jit = final_binary_is_jit_object (module_fn);
 #ifdef HOST_CPU_ENABLE_JIT
+  if (ci->is_jit)
+    get_jit_kernellib_path (kernellib_fn, command->device);
+
   /* A JIT object is only produced or accepted when the device's JIT came up
      at init (see pocl_cpu_device_uses_jit()). */
   if (ci->is_jit)
-    ci->dlhandle = pocl_jit_load_object (module_fn, run_cmd->kernel->name);
+    ci->dlhandle = pocl_jit_load_object (module_fn, run_cmd->kernel->name,
+                                         kernellib_fn);
   else
 #endif
     ci->dlhandle = pocl_dynlib_open (module_fn, 0, 1);
@@ -1409,8 +1460,10 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
       if (err == 0)
         {
           ci->is_jit = 1;
+          get_jit_kernellib_path (kernellib_fn, command->device);
           ci->dlhandle
-            = pocl_jit_load_object (module_fn, run_cmd->kernel->name);
+            = pocl_jit_load_object (module_fn, run_cmd->kernel->name,
+                                    kernellib_fn);
         }
     }
 #endif

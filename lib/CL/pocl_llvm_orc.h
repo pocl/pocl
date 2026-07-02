@@ -50,7 +50,8 @@ int pocl_jit_initialize (const char *triple,
    handle (NULL on failure). Relocation and linking are deferred until the
    first pocl_jit_lookup() on the handle. 'uniq_name' is used only for
    diagnostics and need not be unique. */
-void *pocl_jit_load_object (const char *path, const char *uniq_name);
+void *pocl_jit_load_object (const char *path, const char *uniq_name,
+                            const char *kernellib_bc_path);
 
 /* Look up an (unmangled) symbol in a previously loaded object. Returns the
    executable address, or NULL on failure; the failure text is then available

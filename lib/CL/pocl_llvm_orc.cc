@@ -26,8 +26,10 @@
 
 #include "pocl_debug.h"
 #include "pocl_dynlib.h"
+#include "pocl_file_util.h"
 #include "pocl_llvm.h"
 #include "pocl_llvm_orc.h"
+#include "pocl_util.h"
 
 #include <llvm/ExecutionEngine/JITLink/JITLinkMemoryManager.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
@@ -37,8 +39,10 @@
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
 #include <llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h>
 #include <llvm/ExecutionEngine/Orc/Shared/ExecutorSymbolDef.h>
+#include <llvm/IRReader/IRReader.h>
 #include <llvm/Support/Error.h>
 #include <llvm/Support/MemoryBuffer.h>
+#include <llvm/Support/SourceMgr.h>
 #include <llvm/TargetParser/Triple.h>
 
 /* absoluteSymbols() moved from Core.h to its own header around LLVM 20. */
@@ -51,6 +55,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <unordered_map>
 
 using namespace llvm;
 using namespace llvm::orc;
@@ -94,11 +99,21 @@ uint64_t JDCounter = 0;
    pocl_jit_last_error() (a dlerror() analogue). Guarded by JITMutex. */
 std::string LastLookupError;
 
-/* Make a shared library's symbols (e.g. libmvec's _ZGVdN8v_expf) resolvable by
-   JIT'd kernels, by attaching a DynamicLibrarySearchGenerator to the
-   process-symbols JITDylib that every kernel JITDylib links against. On POSIX
-   the dlsym scope also covers the library's own dependencies. Returns false if
-   the library cannot be loaded, leaving the JIT usable. */
+/* Kernel-library bitcode modules loaded into the JIT. These JITDylibs are kept
+   alive for the process lifetime, like TheJIT itself, so later kernels using
+   the same CPU variant can reuse already parsed definitions. Guarded by
+   JITMutex. */
+std::unordered_map<std::string, JITDylib *> BuiltinJITDylibs;
+
+/* Make a dynamic library's symbols (e.g. libmvec's _ZGVdN8v_expf, or
+   libpocl's own dependency chain) resolvable by JIT'd kernels. Attaches a
+   DynamicLibrarySearchGenerator for the library to the process-symbols
+   JITDylib, which every kernel JITDylib links against (LLJIT links each
+   JITDylib it creates against the process-symbols JITDylib by default).
+   Lookups are then served from the library's own handle through the JIT's
+   generator chain; on POSIX that dlsym scope includes the library's
+   dependencies. Returns false (and leaves the JIT usable) if the library
+   cannot be loaded. */
 static bool addLibrarySearchGenerator(const char *Library) {
   if (!Library || !Library[0])
     return false;
@@ -140,15 +155,78 @@ static bool loadStaticArchive(const char *Path) {
   return true;
 }
 
-/* Define symbols that kernel objects reference but that live inside libpocl
-   rather than in a process library: PoCL's own host callbacks and, on Windows,
-   the libgcc/compiler-rt stack probe. Defining them as absolute symbols makes
-   resolution independent of libpocl's hidden dynamic-symbol visibility. They
-   are constant for the process, so define them once into the process-symbols
-   JITDylib that every kernel JITDylib links against. Everything else (libc,
-   libm, compiler-rt, msvcrt's mem* helpers) resolves through the JIT's default
-   process-symbol search, backed on POSIX by libpocl's own handle (see
-   pocl_jit_initialize). */
+/* Load an archive by absolute path, or by filename from PoCL's private data dir. */
+static bool loadPrivateStaticArchive(const char *Path) {
+  if (!Path || !Path[0])
+    return false;
+  if (pocl_exists(Path))
+    return loadStaticArchive(Path);
+
+  char PrivateDir[POCL_MAX_PATHNAME_LENGTH];
+  pocl_get_private_datadir(PrivateDir);
+  std::string FullPath = std::string(PrivateDir) + "/" + Path;
+  if (pocl_exists(FullPath.c_str()))
+    return loadStaticArchive(FullPath.c_str());
+
+  return loadStaticArchive(Path);
+}
+
+/* Make the selected PoCL kernel-library bitcode visible to a kernel JITDylib.
+   The final object normally contains already-specialized code, but LLVM native
+   codegen can leave late calls to helpers such as FP16 vector builtins. The
+   old shared-library final link could satisfy those calls from the kernel
+   library; adding the library IR module gives JITLink the same fallback. */
+static JITDylib *getOrLoadBuiltinJITDylib(const char *BitcodePath) {
+  if (!BitcodePath || !BitcodePath[0])
+    return nullptr;
+
+  std::string Path(BitcodePath);
+  auto It = BuiltinJITDylibs.find(Path);
+  if (It != BuiltinJITDylibs.end())
+    return It->second;
+
+  std::string Name = "pocl-kernellib#" + std::to_string(JDCounter++);
+  Expected<JITDylib &> JD = TheJIT->createJITDylib(std::move(Name));
+  if (!JD) {
+    POCL_MSG_ERR("pocl_jit: createJITDylib for kernel library '%s' failed: %s\n",
+                 BitcodePath, toString(JD.takeError()).c_str());
+    return nullptr;
+  }
+
+  auto Ctx = std::make_unique<LLVMContext>();
+  SMDiagnostic Diag;
+  std::unique_ptr<Module> M = parseIRFile(BitcodePath, Diag, *Ctx);
+  if (!M) {
+    POCL_MSG_ERR("pocl_jit: cannot parse kernel library '%s': %s\n",
+                 BitcodePath, Diag.getMessage().str().c_str());
+    if (Error Err = TheJIT->getExecutionSession().removeJITDylib(*JD))
+      consumeError(std::move(Err));
+    return nullptr;
+  }
+
+  M->setDataLayout(TheJIT->getDataLayout());
+  if (Error Err = TheJIT->addIRModule(
+          *JD, ThreadSafeModule(std::move(M), std::move(Ctx)))) {
+    POCL_MSG_ERR("pocl_jit: addIRModule('%s') failed: %s\n", BitcodePath,
+                 toString(std::move(Err)).c_str());
+    if (Error RmErr = TheJIT->getExecutionSession().removeJITDylib(*JD))
+      consumeError(std::move(RmErr));
+    return nullptr;
+  }
+
+  BuiltinJITDylibs.emplace(std::move(Path), &*JD);
+  return &*JD;
+}
+
+/* Inject symbols that kernel objects reference but that are linked into libpocl
+   rather than exported by a process library: PoCL's own host callbacks and, on
+   Windows, the libgcc/compiler-rt stack probe. Defining them as absolute
+   symbols makes resolution independent of libpocl's (deliberately hidden)
+   dynamic-symbol visibility. They are constant for the process, so this is done
+   once at init into the process-symbols JITDylib that every kernel JITDylib
+   links against. Everything else (libc/libm/compiler-rt and msvcrt's mem*
+   helpers) resolves via the JIT's default process-symbol search, backed up on
+   POSIX by a search of libpocl's own handle (see pocl_jit_initialize). */
 void defineHostSymbols(JITDylib &JD) {
   SymbolMap Syms;
 #ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
@@ -241,6 +319,14 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
   if (JITDylibSP PSJD = TheJIT->getProcessSymbolsJITDylib())
     defineHostSymbols(*PSJD);
 
+#ifdef HOST_CPU_COMPILER_RT_LIBRARY
+  if (!loadPrivateStaticArchive(HOST_CPU_COMPILER_RT_LIBRARY))
+    POCL_MSG_WARN(
+        "pocl_jit: could not load the compiler runtime archive '%s'; kernels "
+        "needing compiler-rt/libgcc helpers may fail to resolve symbols\n",
+        HOST_CPU_COMPILER_RT_LIBRARY);
+#endif
+
 #ifdef HAVE_DLFCN_H
   /* The JIT's default process-symbol search uses the global dlsym scope, which
      misses libpocl's private dependencies (libgcc_s for builtins like
@@ -325,7 +411,8 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
   return 0;
 }
 
-void *pocl_jit_load_object(const char *Path, const char *UniqName) {
+void *pocl_jit_load_object(const char *Path, const char *UniqName,
+                           const char *KernelLibraryBitcodePath) {
   std::lock_guard<std::mutex> Lock(JITMutex);
   if (!TheJIT) {
     POCL_MSG_ERR("pocl_jit: load_object called before initialize\n");
@@ -351,6 +438,10 @@ void *pocl_jit_load_object(const char *Path, const char *UniqName) {
                  toString(JD.takeError()).c_str());
     return nullptr;
   }
+
+  if (JITDylib *BuiltinJD =
+          getOrLoadBuiltinJITDylib(KernelLibraryBitcodePath))
+    JD->addToLinkOrder(*BuiltinJD);
 
   if (Error Err = TheJIT->addObjectFile(*JD, std::move(*Buf))) {
     POCL_MSG_ERR("pocl_jit: addObjectFile('%s') failed: %s\n", Path,

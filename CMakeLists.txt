@@ -1122,6 +1122,29 @@ if(ENABLE_LLVM AND ENABLE_HOST_CPU_DEVICES AND (NOT ENABLE_CONFORMANCE) AND (LLV
   endif()
 endif()
 
+# Record the compiler runtime archive for the JIT. The Clang-driver final link
+# used to add libgcc/compiler-rt implicitly; the in-process JIT needs the same
+# helper symbols (e.g. __truncdfhf2 for FP16 conversions) available through ORC.
+set(HOST_CPU_COMPILER_RT_LIBRARY "")
+set(HOST_CPU_COMPILER_RT_LIBRARY_SOURCE "" CACHE FILEPATH "Compiler runtime archive to install for CPU JIT kernels")
+if(HOST_CPU_ENABLE_JIT)
+  set(POCL_COMPILER_RT_LIBRARY "${HOST_CPU_COMPILER_RT_LIBRARY_SOURCE}")
+  if(NOT POCL_COMPILER_RT_LIBRARY)
+    execute_process(
+      COMMAND "${CMAKE_C_COMPILER}" -print-libgcc-file-name
+      OUTPUT_VARIABLE POCL_COMPILER_RT_LIBRARY
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_QUIET)
+  endif()
+  if(POCL_COMPILER_RT_LIBRARY AND EXISTS "${POCL_COMPILER_RT_LIBRARY}")
+    get_filename_component(POCL_COMPILER_RT_LIBRARY_NAME
+      "${POCL_COMPILER_RT_LIBRARY}" NAME)
+    install(FILES "${POCL_COMPILER_RT_LIBRARY}"
+      DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR_REL}" COMPONENT "lib")
+    set(HOST_CPU_COMPILER_RT_LIBRARY "${POCL_COMPILER_RT_LIBRARY_NAME}")
+  endif()
+endif()
+
 # Record the SONAME of the SLEEF library for the JIT to link against
 set(HOST_CPU_SLEEF_LIBRARY "")
 set(HOST_CPU_SLEEF_LIBRARY_FALLBACK "")
