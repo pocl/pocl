@@ -105,6 +105,36 @@ std::string LastLookupError;
    JITMutex. */
 std::unordered_map<std::string, JITDylib *> BuiltinJITDylibs;
 
+/* ORC symbol source model.
+
+   Kernel objects can only refer to symbols introduced by codegen, the linked
+   kernel library, or PoCL's host ABI. Keep each source class mapped to one
+   ORC mechanism, mirroring what the shared-library link path provided:
+
+   - Process/global scope: LLJIT's default process-symbol generator. This is
+     the JIT analogue of loader-visible process symbols.
+   - libpocl and its private dependency closure: DynamicLibrarySearchGenerator
+     on libpocl's own handle. This mirrors a kernel shared library's DT_NEEDED
+     edge to libpocl and, on POSIX, libpocl's dependencies such as libgcc_s or
+     libm when the ICD loader used RTLD_LOCAL.
+   - Configure-time vector math library: DynamicLibrarySearchGenerator for
+     shared veclibs (libmvec, SLEEF), or StaticLibraryDefinitionGenerator for
+     static SVML/libirc archives. These are the same absolute link inputs the
+     non-JIT final link receives.
+   - Compiler runtime helpers: StaticLibraryDefinitionGenerator for the
+     installed compiler-rt/libgcc archive. This replaces the Clang driver's
+     implicit runtime library link.
+   - PoCL kernel-library bitcode: a persistent IR JITDylib added to each
+     kernel's link order. This mirrors the IR-level kernel-library link and
+     catches late helper calls introduced by native codegen.
+   - Host ABI callbacks and platform helper symbols: absoluteSymbols in the
+     process-symbols JITDylib. This covers deliberately hidden libpocl entry
+     points such as the printf flush callback and MinGW's stack probe.
+
+   A new unresolved CPU-kernel symbol should fit one of these buckets; if it
+   does not, first identify which codegen or ABI rule introduced it and then
+   add the corresponding generator here rather than treating it as a one-off. */
+
 /* Make a dynamic library's symbols (e.g. libmvec's _ZGVdN8v_expf, or
    libpocl's own dependency chain) resolvable by JIT'd kernels. Attaches a
    DynamicLibrarySearchGenerator for the library to the process-symbols

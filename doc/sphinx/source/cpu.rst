@@ -91,13 +91,23 @@ ones accumulate for the lifetime of the process. The link path is the better
 fit where runtime code generation is forbidden but loading shared libraries is
 allowed.
 
-The symbols a kernel object refers to still have to come from somewhere. C
-library and math functions resolve against the running process, and PoCL
-supplies its own host callbacks, such as the printf flush, directly. The
-vector-math library chosen at configure time becomes available at startup: the
-shared ones (libmvec or SLEEF) load as dynamic libraries, while SVML, which
-ships only as static archives, is JIT-linked from ``libsvml.a`` and its
-``libirc.a`` helpers, pulling in only the members it references.
+The symbols a kernel object refers to still have to come from somewhere. The
+JIT keeps the source model deliberately closed, with one ORC mechanism for each
+class of symbol the shared-library link path used to provide: process-visible C
+library and math symbols come from LLJIT's default process-symbol generator;
+libpocl and its private dependencies are searched through a generator on
+libpocl's own handle; the configure-time vector math library is exposed either
+as a dynamic-library generator (libmvec or SLEEF) or as static archive
+generators (SVML and ``libirc.a``); compiler runtime helpers such as FP16
+conversion routines come from the installed compiler-rt/libgcc archive; late
+calls to PoCL builtins are resolved from the selected kernel-library bitcode
+JITDylib; and hidden host ABI callbacks, such as the printf flush callback and
+the MinGW stack probe, are provided as absolute symbols.
+
+This mapping is the review guide for new unresolved symbols: first determine
+which codegen or ABI rule introduced the reference, then add it to the matching
+symbol class above. A symbol that does not fit one of these classes should be
+treated as a missing design explanation, not as an unrelated ad-hoc entry.
 
 The JIT is the default on every platform that supports it: ELF and Mach-O hosts,
 and Windows x86-64 (MinGW). It is unavailable on Windows arm64 (JITLink has no
