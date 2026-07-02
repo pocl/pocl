@@ -798,7 +798,11 @@ int pocl_llvm_build_program(cl_program program,
 
     program->llvm_irs[device_i] = mod =
         parseModuleIR(program_bc_path, llvm_ctx->Context);
-    assert(mod);
+    if (mod == nullptr) {
+      POCL_MSG_ERR("pocl: failed to parse program.bc '%s' (corrupt or stale "
+                   "kernel-cache entry)\n", program_bc_path);
+      return CL_BUILD_ERROR;
+    }
     ++llvm_ctx->number_of_IRs;
 
     parseModuleGVarSize(program, device_i, mod);
