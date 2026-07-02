@@ -20,6 +20,7 @@ kernel void test_fp16_math_builtins ()
   half hip;
   int iexp;
   int quo;
+  half hcos;
 
   hsink = ceil (hx);
   hsink = floor (hx);
@@ -45,6 +46,7 @@ kernel void test_fp16_math_builtins ()
   hsink = remquo (hy, hx, &quo);
   isink = iexp + quo;
   hsink = powr (hy, hx);
+  hsink = sincos (hx, &hcos);
   hsink = nextafter (hx, hy);
 
   half8 hvx = vx;
@@ -53,6 +55,7 @@ kernel void test_fp16_math_builtins ()
   half8 vip;
   int8 vquo;
   int8 viexp;
+  half8 vcos;
 
   vsink = ceil (hvx);
   vsink = floor (hvx);
@@ -78,5 +81,6 @@ kernel void test_fp16_math_builtins ()
   vsink = remquo (hvy, hvx, &vquo);
   visink = vquo;
   vsink = powr (hvy, hvx);
+  vsink = sincos (hvx, &vcos);
   vsink = nextafter (hvx, hvy);
 }
