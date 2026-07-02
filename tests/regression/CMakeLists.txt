@@ -55,7 +55,7 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_workitem_func_outside_kernel test_program_scope_vars test_issue_1548
   test_issue_1525 test_issue_1608 test_issue_1826 test_builtin_regression
   test_mem_host_ptr_issue test_issue_1962 test_issue_2005
-  test_global_atomics
+  test_global_atomics test_large_stack_frame
 )
 if(UNIX)
   list(APPEND PROGRAMS_TO_BUILD test_issue_2174)
@@ -88,6 +88,8 @@ endif()
 add_test_pocl(NAME "regression/test_issue_231" COMMAND "test_issue_231")
 
 add_test_pocl(NAME "regression/test_global_atomics" COMMAND "test_global_atomics")
+add_cpu_jit_test("atomics" test_global_atomics)
+add_cpu_jit_test("stack_probe" test_large_stack_frame)
 
 add_test_pocl(NAME "regression/test_issue_445" COMMAND "test_issue_445")
 
@@ -111,6 +113,7 @@ add_test_pocl(NAME "regression/test_issue_1826" COMMAND "test_issue_1826")
 
 add_test_pocl(NAME "regression/test_builtin_regression"
   COMMAND "test_builtin_regression")
+add_cpu_jit_test("kernel_library" test_builtin_regression)
 
 
 add_test_pocl(NAME "regression/test_mem_host_ptr_issue"

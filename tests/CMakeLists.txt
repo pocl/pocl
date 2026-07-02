@@ -27,6 +27,34 @@ set_opencl_header_includes()
 
 add_test(NAME pocl_version_check COMMAND test_version)
 
+function(add_cpu_jit_test TEST_NAME TEST_TARGET)
+  if(NOT (ENABLE_HOST_CPU_DEVICES AND HOST_CPU_ENABLE_JIT))
+    return()
+  endif()
+
+  set(FULL_TEST_NAME "cpu_jit/${TEST_NAME}")
+  set(RUN_CMD "$<TARGET_FILE:${TEST_TARGET}>")
+  foreach(TEST_ARG ${ARGN})
+    set(RUN_CMD "${RUN_CMD}####${TEST_ARG}")
+  endforeach()
+
+  add_test(NAME "${FULL_TEST_NAME}"
+    COMMAND "${CMAKE_COMMAND}" "-Dtest_cmd=${RUN_CMD}"
+            "-P" "${CMAKE_SOURCE_DIR}/cmake/run_test.cmake")
+  set_tests_properties("${FULL_TEST_NAME}"
+    PROPERTIES
+      ENVIRONMENT "POCL_DEVICES=cpu;POCL_CPU_JIT=1;POCL_WORK_GROUP_METHOD=loopvec"
+      LABELS "cpu_jit"
+      PASS_REGULAR_EXPRESSION "OK"
+      FAIL_REGULAR_EXPRESSION "FAIL"
+      SKIP_RETURN_CODE 77
+      DEPENDS "pocl_version_check")
+  if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
+    set_tests_properties("${FULL_TEST_NAME}" PROPERTIES
+      SKIP_REGULAR_EXPRESSION "SKIP")
+  endif()
+endfunction()
+
 if(ENABLE_HOST_CPU_DEVICES)
     # If basic OpenCL device is not included, we assume the device is chosen using
     # the POCL_DEVICES env. Otherwise, use the basic dev to check that we are using
