@@ -1645,10 +1645,14 @@ endif()
 # LLVM <15 doesn't support _Float16;
 # LLVM 15 crashes on some code; LLVM 16 seems to work but fails with ldexp; LLVM 18 fails with isinf
 # CONFORMANCE=ON disables FP16 b/c PoCL support is incomplete
+# The host check is on the *build* machine, not the target -- so Yggdrasil's
+# Linux cross-builds already ship working FP16 in the macOS/Windows binaries.
+# Linux and MinGW are validated; FreeBSD is kept out (native _Float16 build
+# failure, see #1776).
 if((LLVM_VERSION_MAJOR GREATER_EQUAL 19)
    AND (NOT ENABLE_CONFORMANCE)
    AND (NOT I386)
-   AND (CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+   AND ((CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux") OR MINGW)
    AND CLANG_SUPPORTS_FLOAT16_ON_CPU
    AND HOST_COMPILER_SUPPORTS_FLOAT16)
   message(STATUS "CPU device support for cl_khr_fp16 enabled")
