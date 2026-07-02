@@ -74,6 +74,20 @@ extern "C" void pocl_flush_printf_buffer(char *buffer, uint32_t buffer_size);
    COFF JIT's large code model keeps it reachable; see GetTargetMachine() in
    pocl_llvm_wg.cc. */
 extern "C" void ___chkstk_ms(void);
+
+/* Same story for the FP16 soft-float conversion helpers codegen emits for
+   double/float <-> _Float16: defined in libgcc, exported by no DLL. Loading
+   libgcc.a into the JIT to supply them does NOT work here -- their COFF members
+   carry .pdata/.xdata SEH unwind whose IMAGE_REL_AMD64_ADDR32NB fixups JITLink
+   cannot relocate into the high-mapped kernel image ("out of range of Pointer32
+   fixup"). Hand kernels libpocl's own statically-linked copies as absolute
+   symbols instead, exactly like ___chkstk_ms. */
+extern "C" {
+void __truncsfhf2(void);
+void __truncdfhf2(void);
+void __extendhfsf2(void);
+void __extendhfdf2(void);
+}
 #endif
 
 namespace {
@@ -267,6 +281,18 @@ void defineHostSymbols(JITDylib &JD) {
 #ifdef __MINGW32__
   Syms[TheJIT->mangleAndIntern("___chkstk_ms")] = {
       ExecutorAddr::fromPtr(&___chkstk_ms),
+      JITSymbolFlags::Exported | JITSymbolFlags::Callable};
+  Syms[TheJIT->mangleAndIntern("__truncsfhf2")] = {
+      ExecutorAddr::fromPtr(&__truncsfhf2),
+      JITSymbolFlags::Exported | JITSymbolFlags::Callable};
+  Syms[TheJIT->mangleAndIntern("__truncdfhf2")] = {
+      ExecutorAddr::fromPtr(&__truncdfhf2),
+      JITSymbolFlags::Exported | JITSymbolFlags::Callable};
+  Syms[TheJIT->mangleAndIntern("__extendhfsf2")] = {
+      ExecutorAddr::fromPtr(&__extendhfsf2),
+      JITSymbolFlags::Exported | JITSymbolFlags::Callable};
+  Syms[TheJIT->mangleAndIntern("__extendhfdf2")] = {
+      ExecutorAddr::fromPtr(&__extendhfdf2),
       JITSymbolFlags::Exported | JITSymbolFlags::Callable};
 #endif
   if (Syms.empty())
