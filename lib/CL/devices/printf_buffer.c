@@ -118,11 +118,14 @@ DEFINE_PRINT_INTS (ulong, int64_t, uint64_t)
         memcpy (&val, vals, sizeof (FLOAT_TYPE));                             \
         vals = (char *)vals + sizeof (FLOAT_TYPE);                            \
         const char *other = NULL;                                             \
-        if (isnan (val))                                                      \
+        /* classify through double: exact for half/float, identity for double, \
+           and avoids a _Float16 isnan/isinf/signbit path that traps on some   \
+           runtimes (e.g. MinGW libgcc). */                                    \
+        if (isnan ((double)val))                                              \
           other = NANs[p->flags.uc];                                          \
-        if (isinf (val))                                                      \
+        if (isinf ((double)val))                                              \
           {                                                                   \
-            p->flags.sign = signbit (val) ? 1 : 0;                            \
+            p->flags.sign = signbit ((double)val) ? 1 : 0;                    \
             other = INFs[p->flags.uc];                                        \
           }                                                                   \
         if (other)                                                            \
