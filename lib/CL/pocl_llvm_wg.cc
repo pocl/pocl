@@ -1117,7 +1117,12 @@ int pocl_llvm_read_program_llvm_irs(cl_program program, unsigned device_i,
     assert(program_bc_path);
     M = parseModuleIR(program_bc_path, llvm_ctx->Context);
   }
-  assert(M);
+  if (M == nullptr) {
+    POCL_MSG_ERR("pocl: failed to parse program IR for device %u; the cached "
+                 "program.bc may be corrupt (try clearing the kernel cache)\n",
+                 device_i);
+    return CL_BUILD_ERROR;
+  }
   program->llvm_irs[device_i] = M;
   if (dev->run_program_scope_variables_pass)
     parseModuleGVarSize(program, device_i, M);
