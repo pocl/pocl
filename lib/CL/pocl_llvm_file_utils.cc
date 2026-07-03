@@ -68,6 +68,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Bitcode/BitcodeWriter.h>
 
 #include <llvm/Support/Errc.h>
+#include <llvm/Support/Process.h>
 
 POP_COMPILER_DIAGS
 
@@ -256,7 +257,10 @@ int pocl_read_file(const char *path, char **content, uint64_t *filesize) {
 
   } while (actually_read > 0);
 
-  ec = fs::closeFile(fh);
+  /* Close the fd, not the native handle: on Windows openFileForRead() hands back
+     an fd wrapping a HANDLE via _open_osfhandle(), and closeFile() would close the
+     HANDLE while leaking the fd table slot. */
+  ec = Process::SafelyCloseFileDescriptor(fd);
   if (ec) {
     POCL_MSG_ERR("failed to close file %s\n", path);
     goto EXIT_ERROR;
@@ -280,7 +284,6 @@ static int pocl_write_file2(
     bool append,      // append to file (dont truncate)
     bool dont_rename, // don't rename to final path (output to TmpPath)
     llvm::SmallVector<char, 512> &TmpPath, llvm::Twine TmpSuffix) {
-  fs::file_t fh;
   int FileDesc = 0;
   std::error_code ErrCode;
 
@@ -305,8 +308,6 @@ static int pocl_write_file2(
       return -1;
     }
   }
-  fh = fs::convertFDToNativeFile(FileDesc);
-
   llvm::raw_fd_ostream FDO{FileDesc, false};
   if (Mod) {
     WriteBitcodeToFile(*Mod, FDO);
@@ -330,10 +331,12 @@ static int pocl_write_file2(
     return -1;
   }
 #elif defined(_WIN32)
-  FlushFileBuffers(fh);
+  FlushFileBuffers(fs::convertFDToNativeFile(FileDesc));
 #endif
 
-  if (fs::closeFile(fh)) {
+  /* Close the fd, not the native handle (see pocl_read_file2): the raw_fd_ostream
+     above is non-owning, so on Windows closeFile() would leak the fd table slot. */
+  if (Process::SafelyCloseFileDescriptor(FileDesc)) {
     POCL_MSG_ERR("failed to close file WR %s\n", path);
     return -2;
   }
