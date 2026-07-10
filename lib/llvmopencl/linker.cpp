@@ -53,6 +53,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Verifier.h>
 #include <llvm/PassInfo.h>
 #include <llvm/PassRegistry.h>
+#include <llvm/Support/Error.h>
 #include <llvm/Transforms/IPO/AlwaysInliner.h>
 #include <llvm/Transforms/Utils/AMDGPUEmitPrintf.h>
 #include <llvm/Transforms/Utils/ValueMapper.h>
@@ -264,18 +265,35 @@ static void fixCallingConv(llvm::Module *Mod, std::string &Log) {
 
 using SmallFunctionSet = llvm::SmallSet<llvm::Function *, 8>;
 
+// The kernel library module is loaded lazily (see parseModuleIRLazy);
+// a function body must be materialized before it can be inspected or
+// cloned. Cheap no-op for eager modules and materialized functions.
+static bool materializeFunction(llvm::Function *F) {
+  if (llvm::Error Err = F->materialize()) {
+    POCL_MSG_ERR("linker: failed to materialize function %s: %s\n",
+                 F->getName().str().c_str(),
+                 llvm::toString(std::move(Err)).c_str());
+    return false;
+  }
+  return true;
+}
+
 // Find all functions in the calltree of F, including declarations.
 // Returns the list of Functions called in CalledFuncList,
 // in depth-first order (to make cloning simpler);
-// returns pointer to recursive function on error, nullptr on success
-static llvm::Function *
+// returns 0 on success, -1 on recursion, -2 on materialization failure.
+static int
 find_called_functions(llvm::Function *F,
                       llvm::SmallVector<llvm::Function *> &CalledFuncList,
-                      SmallFunctionSet &CallStack) {
+                      SmallFunctionSet &CallStack,
+                      llvm::Function *&RecursiveFn) {
   if (F->isDeclaration()) {
     DB_PRINT("it's a declaration, return\n");
-    return nullptr;
+    return 0;
   }
+
+  if (!materializeFunction(F))
+    return -2;
 
   CallStack.insert(F);
 
@@ -300,7 +318,8 @@ find_called_functions(llvm::Function *F,
 
     if (CallStack.contains(Callee)) {
       DB_PRINT("Recursion detected: %s\n", CName.c_str());
-      return Callee;
+      RecursiveFn = Callee;
+      return -1;
     }
     DB_PRINT("Function %s calls %s\n", FName.c_str(), CName.c_str());
 
@@ -311,8 +330,10 @@ find_called_functions(llvm::Function *F,
     } else {
       DB_PRINT("function %s not seen before, recursing into it\n",
                CName.c_str());
-      if (auto *R = find_called_functions(Callee, CalledFuncList, CallStack))
-        return R;
+      int Res =
+          find_called_functions(Callee, CalledFuncList, CallStack, RecursiveFn);
+      if (Res)
+        return Res;
       DB_PRINT("inserting %s into CalledList\n", CName.c_str());
       CalledFuncList.push_back(Callee);
     }
@@ -320,12 +341,12 @@ find_called_functions(llvm::Function *F,
 
   CallStack.erase(F);
 
-  return nullptr;
+  return 0;
 }
 
 // Copies one function from one module to another
 // does not inspect it for callgraphs
-static void CopyFunc(const llvm::StringRef Name, const llvm::Module *From,
+static bool CopyFunc(const llvm::StringRef Name, const llvm::Module *From,
                      llvm::Module *To, ValueToValueMapTy &VVMap) {
 
   llvm::Function *SrcFunc = From->getFunction(Name);
@@ -340,7 +361,7 @@ static void CopyFunc(const llvm::StringRef Name, const llvm::Module *From,
     DstFunc->copyAttributesFrom(SrcFunc);
   } else if (DstFunc->size() > 0) {
     // We have already encountered and copied this function.
-    return;
+    return true;
   }
   VVMap[SrcFunc] = DstFunc;
 
@@ -353,6 +374,10 @@ static void CopyFunc(const llvm::StringRef Name, const llvm::Module *From,
     ++DstArgI;
   }
   if (!SrcFunc->isDeclaration()) {
+    if (!materializeFunction(SrcFunc))
+      return false;
+    assert(!SrcFunc->isMaterializable());
+
     SmallVector<ReturnInst *, 8> RI; // Ignore returns cloned.
     DB_PRINT("  cloning %s\n", Name.data());
 
@@ -366,6 +391,7 @@ static void CopyFunc(const llvm::StringRef Name, const llvm::Module *From,
   } else {
     DB_PRINT("  found %s, but its a declaration, do nothing\n", Name.data());
   }
+  return true;
 }
 
 /* Copy function F and all the functions in its call graph
@@ -383,16 +409,22 @@ static int CopyFuncCallgraph(const llvm::StringRef FuncName,
   SmallFunctionSet CallStack;
   llvm::SmallVector<llvm::Function *> Callees;
   // error if recursion occurs
-  if (find_called_functions(RootFunc, Callees, CallStack))
+  llvm::Function *RecursiveFn = nullptr;
+  int Res = find_called_functions(RootFunc, Callees, CallStack, RecursiveFn);
+  if (Res == -1)
     return -2;
+  if (Res == -2)
+    return -3;
 
   DB_PRINT("copying function %s with callgraph\n", RootFunc->getName().data());
 
   // First copy the callees of func, then the function itself.
   for (auto F : Callees) {
-    CopyFunc(F->getName(), From, To, VVMap);
+    if (!CopyFunc(F->getName(), From, To, VVMap))
+      return -3;
   }
-  CopyFunc(FuncName, From, To, VVMap);
+  if (!CopyFunc(FuncName, From, To, VVMap))
+    return -3;
   assert(To->getFunction(FuncName) != nullptr);
 
   return 0;
@@ -776,7 +808,7 @@ static bool convertSpirvTargetExtTypes(llvm::Module &Mod, std::string &Log) {
  * to know the promotions used for arguments. This could also be implemented
  * by storing each argument's size in the printf buffer, but that's TBD
 */
-static void handleDeviceSidePrintf(
+static bool handleDeviceSidePrintf(
     llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
     ValueToValueMapTy &vvm, cl_device_id ClDev) {
 
@@ -820,10 +852,26 @@ static void handleDeviceSidePrintf(
 
     Function *PrintfAlloc = Lib->getFunction("pocl_printf_alloc_stub");
     assert(PrintfAlloc != nullptr);
-    CopyFuncCallgraph("pocl_printf_alloc_stub", Lib, Program, vvm);
-    CopyFuncCallgraph("pocl_printf_alloc", Lib, Program, vvm);
-    if (DeviceSupportsImmediateFlush)
-      CopyFuncCallgraph("pocl_flush_printf_buffer", Lib, Program, vvm);
+    int Res = CopyFuncCallgraph("pocl_printf_alloc_stub", Lib, Program, vvm);
+    if (Res <= -2) {
+      Log.append("Failed to copy device-side printf helper: "
+                 "'pocl_printf_alloc_stub'\n");
+      return false;
+    }
+    Res = CopyFuncCallgraph("pocl_printf_alloc", Lib, Program, vvm);
+    if (Res <= -2) {
+      Log.append("Failed to copy device-side printf helper: "
+                 "'pocl_printf_alloc'\n");
+      return false;
+    }
+    if (DeviceSupportsImmediateFlush) {
+      Res = CopyFuncCallgraph("pocl_flush_printf_buffer", Lib, Program, vvm);
+      if (Res <= -2) {
+        Log.append("Failed to copy device-side printf helper: "
+                   "'pocl_flush_printf_buffer'\n");
+        return false;
+      }
+    }
 
     std::set<CallInst *> Calls;
     for (auto U : CalledPrintf->users()) {
@@ -851,13 +899,15 @@ static void handleDeviceSidePrintf(
     if (CalledPrintf->getNumUses() == 0)
       CalledPrintf->eraseFromParent();
   }
+
+  return true;
 }
 
-static void replaceIntrinsics(llvm::Module *Program, const llvm::Module *Lib,
+static bool replaceIntrinsics(llvm::Module *Program, const llvm::Module *Lib,
                               ValueToValueMapTy &vvm, cl_device_id ClDev) {
   llvm_intrin_replace_fn IntrinRepl = ClDev->llvm_intrin_replace;
   if (IntrinRepl == nullptr)
-    return;
+    return true;
   std::map<Function *, Function *> EraseMap;
   llvm::Module::iterator FI, FE;
   StringRef LlvmIntrins("llvm.");
@@ -867,7 +917,9 @@ static void replaceIntrinsics(llvm::Module *Program, const llvm::Module *Lib,
         const char *ReplacementName =
             IntrinRepl(FI->getName().data(), FI->getName().size());
         if (ReplacementName) {
-          CopyFuncCallgraph(ReplacementName, Lib, Program, vvm);
+          int Res = CopyFuncCallgraph(ReplacementName, Lib, Program, vvm);
+          if (Res <= -2)
+            return false;
           Function *Repl = Program->getFunction(ReplacementName);
           assert(Repl);
           EraseMap[&*FI] = Repl;
@@ -883,13 +935,15 @@ static void replaceIntrinsics(llvm::Module *Program, const llvm::Module *Lib,
     Intrin->replaceAllUsesWith(Repl);
     Intrin->eraseFromParent();
   }
+
+  return true;
 }
 }
 
 using namespace pocl;
 
 int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
-         cl_device_id ClDev, bool StripAllDebugInfo) {
+         cl_device_id ClDev, bool StripAllDebugInfo, bool ErrorOnUnresolved) {
 
   assert(Program);
   assert(Lib);
@@ -935,14 +989,23 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
 
     SmallFunctionSet CallStack;
     llvm::SmallVector<llvm::Function *> Callees;
-    if (auto *R = find_called_functions(&*FI, Callees, CallStack)) {
+    llvm::Function *RecursiveFn = nullptr;
+    int Res = find_called_functions(&*FI, Callees, CallStack, RecursiveFn);
+    if (Res == -1) {
       Log.append("Recursion detected in function: '");
       std::string PrettyName = tryDemangleWithoutAddressSpaces(FName);
       Log.append(PrettyName.c_str());
       Log.append("'\n");
       Log.append("-> Infringing function: '");
-      PrettyName = tryDemangleWithoutAddressSpaces(R->getName().str());
+      PrettyName =
+          tryDemangleWithoutAddressSpaces(RecursiveFn->getName().str());
       Log.append(PrettyName.c_str());
+      Log.append("'\n");
+      return -1;
+    }
+    if (Res == -2) {
+      Log.append("Failed to materialize functions called from: '");
+      Log.append(FName);
       Log.append("'\n");
       return -1;
     }
@@ -979,51 +1042,60 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
       Log.append("'\n");
       return -1;
     }
+    if (Res == -3) {
+      Log.append("Failed to materialize kernel library function while "
+                 "copying: '");
+      Log.append(FName.str());
+      Log.append("'\n");
+      return -1;
+    }
   }
 
   convertAddrSpaceOperator(Program->getFunction("__to_local"), Log);
   convertAddrSpaceOperator(Program->getFunction("__to_private"), Log);
   convertAddrSpaceOperator(Program->getFunction("__to_global"), Log);
 
-  // check all function declarations in the program
-  // *after* we have linked functions from the library
-  DeclaredFunctions.clear();
-  for (auto &F : *Program) {
-    if (F.isDeclaration()) {
-      DB_PRINT("Post-link: %s is not defined\n", F.getName().data());
-      DeclaredFunctions.insert(F.getName());
-      continue;
-    }
-  }
-
-  bool FoundAllUndefined = true;
-  // this one is a handled with a special pocl LLVM pass
-  StringRef pocl_sampler_handler("__translate_sampler_initializer");
-
-  if (!modIsNvptx(Program)) {
-    for (auto &DeclIter : DeclaredFunctions) {
-      llvm::StringRef FName = DeclIter.getKey();
-      Function *F = Program->getFunction(FName);
-
-      if ((F == NULL) ||
-          (F->isDeclaration() &&
-           // A target might want to expose the C99 printf in
-           // case not supporting the OpenCL 1.2 printf.
-           F->getName() != "printf" && F->getName() != pocl_sampler_handler &&
-           !F->getName().starts_with("llvm.") &&
-           F->getName() != BARRIER_FUNCTION_NAME &&
-           F->getName() != "__pocl_local_mem_alloca" &&
-           F->getName() != "__pocl_work_group_alloca")) {
-        Log.append("Cannot find symbol ");
-        Log.append(FName.str());
-        Log.append(" in kernel library\n");
-        FoundAllUndefined = false;
+  if (ErrorOnUnresolved) {
+    // check all function declarations in the program
+    // *after* we have linked functions from the library
+    DeclaredFunctions.clear();
+    for (auto &F : *Program) {
+      if (F.isDeclaration()) {
+        DB_PRINT("Post-link: %s is not defined\n", F.getName().data());
+        DeclaredFunctions.insert(F.getName());
+        continue;
       }
     }
-  }
 
-  if (!FoundAllUndefined)
-    return -1;
+    bool FoundAllUndefined = true;
+    // this one is a handled with a special pocl LLVM pass
+    StringRef pocl_sampler_handler("__translate_sampler_initializer");
+
+    if (!modIsNvptx(Program)) {
+      for (auto &DeclIter : DeclaredFunctions) {
+        llvm::StringRef FName = DeclIter.getKey();
+        Function *F = Program->getFunction(FName);
+
+        if ((F == NULL) ||
+            (F->isDeclaration() &&
+             // A target might want to expose the C99 printf in
+             // case not supporting the OpenCL 1.2 printf.
+             F->getName() != "printf" && F->getName() != pocl_sampler_handler &&
+             !F->getName().starts_with("llvm.") &&
+             F->getName() != BARRIER_FUNCTION_NAME &&
+             F->getName() != "__pocl_local_mem_alloca" &&
+             F->getName() != "__pocl_work_group_alloca")) {
+          Log.append("Cannot find symbol ");
+          Log.append(FName.str());
+          Log.append(" in kernel library\n");
+          FoundAllUndefined = false;
+        }
+      }
+    }
+
+    if (!FoundAllUndefined)
+      return -1;
+  }
 
   shared_copy(Program, Lib, Log, vvm);
 
@@ -1034,10 +1106,17 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
 
   fixCallingConv(Program, Log);
 
-  if (ClDev->device_side_printf)
-    handleDeviceSidePrintf(Program, Lib, Log, vvm, ClDev);
+  if (ClDev->device_side_printf) {
+    if (!handleDeviceSidePrintf(Program, Lib, Log, vvm, ClDev)) {
+      Log.append("Failed to lower device-side printf\n");
+      return -1;
+    }
+  }
 
-  replaceIntrinsics(Program, Lib, vvm, ClDev);
+  if (!replaceIntrinsics(Program, Lib, vvm, ClDev)) {
+    Log.append("Failed to replace LLVM intrinsics\n");
+    return -1;
+  }
 
   // If we prefer to use compiler expansion of ID functions instead of the
   // software-defined ones (with switch...cases for dim), replace the functions
@@ -1279,4 +1358,3 @@ bool moveProgramScopeVarsOutOfProgramBc(llvm::LLVMContext *Context,
 }
 
 /* vim: set expandtab ts=2 : */
-

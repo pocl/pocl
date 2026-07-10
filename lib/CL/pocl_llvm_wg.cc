@@ -29,7 +29,10 @@
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/StringRef.h>
+#include <llvm/ADT/StringSet.h>
 #include <llvm/ADT/Twine.h>
+#include <llvm/IR/InstIterator.h>
+#include <llvm/IR/InstrTypes.h>
 #include <llvm/TargetParser/Triple.h>
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
@@ -49,6 +52,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Support/CodeGen.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Target/TargetOptions.h>
+#include <llvm/Transforms/IPO/Internalize.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 // legacy PassManager is needed for CodeGen, even if new PM is used for IR
 #include <llvm/IR/LegacyPassManager.h>
@@ -114,17 +118,32 @@ static bool enableDebugLogs() {
 }
 
 // Returns the TargetMachine instance or zero if no triple is provided.
+// ForJIT selects a code model suitable for the in-process ORC/JITLink JIT (see
+// pocl_llvm_orc.cc); it only changes codegen on COFF targets.
 static TargetMachine *GetTargetMachine(const char* TripleStr,
                                        const char* MCPU = "",
-                                       const char* Features = "") {
+                                       const char* Features = "",
+                                       bool ForJIT = false) {
 
   std::string Error;
 
+  // Normalize the triple before handing it to codegen. A configure-time triple
+  // like "x86_64-w64-mingw32" (LLVM's own default target triple on MinGW, so
+  // what LLC_TRIPLE picks up from a cmake LLVM package) has an OS component
+  // ("mingw32") that llvm::Triple does not recognize, so it falls back to the
+  // ELF object format and the System V ABI -- yielding kernels the COFF/Win64
+  // host then calls with the wrong calling convention (a crash). clang and llc
+  // normalize the triple to "x86_64-w64-windows-gnu" (OS=Win32 => COFF) before
+  // codegen; do the same here so both the object format and the code-model
+  // decision below match the host ABI. A no-op for already-canonical triples.
+  std::string TripleNorm = llvm::Triple::normalize(TripleStr);
+  llvm::Triple TheTriple(TripleNorm);
+
 #if LLVM_MAJOR < 22
-  const Target *TheTarget = TargetRegistry::lookupTarget(TripleStr,
+  const Target *TheTarget = TargetRegistry::lookupTarget(TripleNorm,
                                                          Error);
 #else
-  const Target *TheTarget = TargetRegistry::lookupTarget(Triple(TripleStr),
+  const Target *TheTarget = TargetRegistry::lookupTarget(TheTriple,
                                                          Error);
 #endif
 
@@ -133,14 +152,26 @@ static TargetMachine *GetTargetMachine(const char* TripleStr,
     return nullptr;
   }
 
+  // JITLink's COFF/x86-64 backend does not synthesize far-call stubs (its ELF
+  // and Mach-O backends do). Under the small code model a kernel's +-2GB
+  // PC-relative call to a runtime helper mapped far from the JIT-allocated code
+  // overflows: the libgcc stack probe (___chkstk_ms) and msvcrt's mem* helpers
+  // both live in libraries outside that range. The large code model emits
+  // 64-bit indirect calls instead, so they resolve wherever they are. Hence the
+  // COFF JIT only; ELF/Mach-O and the linker-based paths are fine with small +
+  // PIC.
+  CodeModel::Model CM = CodeModel::Small;
+  if (ForJIT && TheTriple.isOSBinFormatCOFF())
+    CM = CodeModel::Large;
+
   TargetMachine *TM = TheTarget->createTargetMachine(
 #if LLVM_MAJOR < 22
-      TripleStr,
+      TripleNorm,
 #else
-      Triple(TripleStr),
+      TheTriple,
 #endif
       MCPU, Features, TargetOptions(),
-      Reloc::PIC_, CodeModel::Small,
+      Reloc::PIC_, CM,
       CodeGenOptLevel::Aggressive);
 
   assert(TM != NULL && "llvm target has no targetMachine constructor");
@@ -945,6 +976,121 @@ pocl_llvm_run_pocl_passes(llvm::Module *Bitcode,
   return 0;
 }
 
+#ifdef HOST_CPU_ENABLE_JIT
+/* Whether the work-group module could still need symbols from the kernel
+   library: a referenced declaration the object would leave undefined, or a
+   direct call whose callee Function belongs to another module (the two cases
+   linkKernelLibraryForJIT() exists to fix). Modules without either are
+   already self-contained. Deciding this before touching the kernel library
+   keeps the fast path from loading the shared builtin module, selectively
+   linking it, and re-optimizing the result during the first kernel launch. */
+static bool workGroupModuleIsSelfContained(llvm::Module *ParallelBC) {
+  for (const llvm::GlobalVariable &GV : ParallelBC->globals())
+    if (GV.isDeclaration() && !GV.use_empty())
+      return false;
+  for (llvm::Function &F : *ParallelBC) {
+    if (F.isDeclaration() && !F.isIntrinsic() && !F.use_empty())
+      return false;
+    for (llvm::Instruction &I : llvm::instructions(F)) {
+      auto *CB = llvm::dyn_cast<llvm::CallBase>(&I);
+      if (CB == nullptr)
+        continue;
+      llvm::Function *Callee = CB->getCalledFunction();
+      if (Callee != nullptr && !Callee->isIntrinsic() &&
+          Callee->getParent() != ParallelBC)
+        return false;
+    }
+  }
+  return true;
+}
+
+/* Make an in-process JIT work-group object self-contained.
+
+   The JIT links each kernel object in isolation, so every builtin the kernel
+   references must be defined in the object. Two things leave them unresolved:
+
+   - A pocl pass can leave a call whose callee Function still belongs to the
+     program / kernel-library module (they share the LLVMContext). Such a
+     cross-module reference is absent from this module's symbol table.
+   - clBuildProgram's callgraph-selective link only copied the builtins the
+     program IR referenced at that point; e.g. FP16 vector math helpers
+     (_cl_sinDv4_Dh, ...) can still be referenced but undefined here.
+
+   The shared-library path resolves both at the final .so link. Do the
+   equivalent at IR time: localize the cross-module references, copy the
+   referenced builtin bodies from the device kernel library, then internalize
+   everything but the launcher(s) and run GlobalDCE so the object neither
+   leaves builtins undefined nor exports them. Mirrors the CUDA linkLibDevice
+   flow. */
+static int linkKernelLibraryForJIT(llvm::Module *ParallelBC,
+                                   cl_device_id Device,
+                                   PoclLLVMContextData *PoCLLLVMContext) {
+  if (workGroupModuleIsSelfContained(ParallelBC))
+    return 0;
+
+  llvm::Module *KernelLib = getKernelLibrary(Device, PoCLLLVMContext);
+  if (KernelLib == nullptr) {
+    POCL_MSG_ERR("pocl_jit: cannot load the kernel library to finalize the "
+                 "work-group object\n");
+    return -1;
+  }
+
+  // Rewrite calls whose callee still lives in another module to a local
+  // declaration of the same name, so the selective linker below -- which finds
+  // undefined symbols by walking this module's function list -- resolves them
+  // like any other builtin. Restricted to builtins the kernel library actually
+  // defines; anything else (libc/libm/compiler-rt) is left for the JIT to
+  // resolve from process symbols. That also covers pocl host callbacks such as
+  // pocl_flush_printf_buffer when ENABLE_PRINTF_IMMEDIATE_FLUSH is enabled:
+  // defineHostSymbols() provides it as an absolute ORC symbol, and the
+  // program-stage link inserts the declaration only after its unresolved-symbol
+  // check has already run.
+  for (llvm::Function &F : *ParallelBC) {
+    for (llvm::Instruction &I : llvm::instructions(F)) {
+      auto *CB = llvm::dyn_cast<llvm::CallBase>(&I);
+      if (CB == nullptr)
+        continue;
+      llvm::Function *Callee = CB->getCalledFunction();
+      if (Callee == nullptr || Callee->getParent() == ParallelBC ||
+          Callee->isIntrinsic())
+        continue;
+      llvm::Function *LibFunc = KernelLib->getFunction(Callee->getName());
+      if (LibFunc == nullptr || LibFunc->isDeclaration())
+        continue;
+      llvm::FunctionCallee Local = ParallelBC->getOrInsertFunction(
+          Callee->getName(), Callee->getFunctionType());
+      if (auto *LF = llvm::dyn_cast<llvm::Function>(Local.getCallee()))
+        LF->copyAttributesFrom(Callee);
+      CB->setCalledFunction(Local);
+    }
+  }
+
+  // The Workgroup pass leaves only the launcher(s) with external linkage, and
+  // the builtins the link is about to copy in arrive external too. Remember the
+  // current entry points so we can internalize the copied builtins afterwards.
+  llvm::StringSet<> EntryPoints;
+  for (llvm::Function &F : *ParallelBC)
+    if (!F.isDeclaration() && !F.hasLocalLinkage())
+      EntryPoints.insert(F.getName());
+
+  std::string Log;
+  if (link(ParallelBC, KernelLib, Log, Device, /*StripAllDebugInfo=*/true,
+           /*ErrorOnUnresolved=*/false)) {
+    POCL_MSG_ERR("pocl_jit: linking the kernel library into the work-group "
+                 "object failed:\n%s\n",
+                 Log.c_str());
+    return -1;
+  }
+
+  auto PreserveEntryPoints = [&EntryPoints](const llvm::GlobalValue &GV) {
+    return EntryPoints.contains(GV.getName());
+  };
+  internalizeModule(*ParallelBC, PreserveEntryPoints);
+  populateModulePM(nullptr, ParallelBC, /*OptL=*/3);
+  return 0;
+}
+#endif
+
 int pocl_llvm_generate_workgroup_function_nowrite(
     unsigned DeviceI, cl_device_id Device, cl_kernel Kernel,
     _cl_command_node *Command, void **Output, int Specialize) {
@@ -979,6 +1125,14 @@ int pocl_llvm_generate_workgroup_function_nowrite(
   int res = pocl_llvm_run_pocl_passes(ParallelBC, RunCommand, LLVMContext,
                                       PoCLLLVMContext, Program, Kernel, Device,
                                       Specialize);
+
+#ifdef HOST_CPU_ENABLE_JIT
+  // The JIT links each kernel object in isolation, so it must carry every
+  // builtin it references (see linkKernelLibraryForJIT). The shared-library
+  // path resolves those at the final link and is left untouched.
+  if (res == 0 && pocl_cpu_device_uses_jit(Device))
+    res = linkKernelLibraryForJIT(ParallelBC, Device, PoCLLLVMContext);
+#endif
 
   std::string FinalizerCommand =
       pocl_get_string_option("POCL_BITCODE_FINALIZER", "");
@@ -1226,7 +1380,7 @@ static TargetLibraryInfoImpl *initPassManagerForCodeGen(legacy::PassManager &PM,
  * Output native object file (<kernel>.so.o). */
 int pocl_llvm_codegen2(const char* TTriple, const char* MCPU,
                        const char *Features, cl_device_type DevType,
-                       pocl_lock_t *Lock, void *Modp, int EmitAsm,
+                       int ForJIT, pocl_lock_t *Lock, void *Modp, int EmitAsm,
                        int EmitObj, char **Output, uint64_t *OutputSize) {
 
   PoclCompilerMutexGuard LockHolder(Lock);
@@ -1251,7 +1405,8 @@ int pocl_llvm_codegen2(const char* TTriple, const char* MCPU,
     }
   }
 
-  std::unique_ptr<llvm::TargetMachine> TM(GetTargetMachine(TTriple, MCPU, Features));
+  std::unique_ptr<llvm::TargetMachine> TM(
+      GetTargetMachine(TTriple, MCPU, Features, ForJIT));
   llvm::TargetMachine *Target = TM.get();
 
   // First try direct object code generation from LLVM, if supported by the
@@ -1380,7 +1535,8 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program Program,
   PoclLLVMContextData *LLVMCtx = (PoclLLVMContextData *)Ctx->llvm_context_data;
 
   return pocl_llvm_codegen2 (Device->llvm_target_triplet, Device->llvm_cpu,
-                            Features, Device->type, &LLVMCtx->Lock,
+                            Features, Device->type,
+                            pocl_cpu_device_uses_jit (Device), &LLVMCtx->Lock,
                             Modp, EmitAsm, EmitObj, Output, OutputSize);
 }
 

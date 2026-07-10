@@ -149,6 +149,15 @@ CPU driver
   fallback when the in-process link fails, and is still used when PoCL was
   built without lld.
 
+* The CPU drivers can now load kernels in-process with LLVM's ORC JIT and the
+  JITLink object-linking layer, instead of linking each kernel into a shared
+  library and loading it with ``dlopen()``. This also drops the dependency on
+  the OS loader, so it works with the kernel cache on a ``noexec`` filesystem
+  and in statically linked deployments. It is controlled by the new
+  ``-DHOST_CPU_ENABLE_JIT`` CMake option, on by default on ELF and Mach-O
+  hosts and on Windows x86-64 (MinGW). Set ``POCL_CPU_JIT=0`` to fall back to
+  the link-and-``dlopen()`` path at run time. See :ref:`cpu-jit`.
+
 ===================================
 Deprecation/feature removal notices
 ===================================

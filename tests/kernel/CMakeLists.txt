@@ -63,6 +63,9 @@ add_test_pocl(NAME "kernel/test_min_max"
 
 add_test_pocl(NAME "kernel/test_length_distance"
               COMMAND "kernel" "test_length_distance")
+if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS)
+  add_cpu_jit_test("vector_math" kernel "test_length_distance")
+endif()
 
 add_test_pocl(NAME "kernel/test_dot"
               COMMAND "kernel" "test_dot")
@@ -110,6 +113,9 @@ endif()
 
 add_test_pocl(NAME "kernel/test_halfs"
               COMMAND "kernel" "test_halfs")
+if(HOST_CPU_ENABLE_CL_KHR_FP16)
+  add_cpu_jit_test("compiler_rt_fp16" kernel "test_halfs")
+endif()
 
 # convert_type_{4,8,16} + hadd/as_type/bitselect produce very large kernels
 # that can cause LLVM to spend extremely long time on optimization,
@@ -239,6 +245,9 @@ add_test_pocl(NAME "kernel/test_ucharn"
 add_test_pocl(NAME "kernel/test_printf"
               EXPECTED_OUTPUT "test_printf_expout.txt"
               COMMAND "kernel" "test_printf")
+if(ENABLE_PRINTF_IMMEDIATE_FLUSH)
+  add_cpu_jit_test("printf_flush" kernel "test_printf")
+endif()
 
 add_test_pocl(NAME "kernel/test_printf_vectors"
               EXPECTED_OUTPUT "test_printf_vectors_expout.txt"

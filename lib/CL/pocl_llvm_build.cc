@@ -166,9 +166,6 @@ static void get_build_log(cl_program program,
   appendToProgramBuildLog(program, device_i, log);
 }
 
-static llvm::Module *getKernelLibrary(cl_device_id device,
-                                      PoclLLVMContextData *llvm_ctx);
-
 /**
  * Runs various LLVM "passes" on the program.bc LLVM module;
  * the passes are not real LLVM passes, but perhaps it will make sense
@@ -204,7 +201,8 @@ static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
   if (Program->compiler_options)
     Opts.assign(Program->compiler_options);
   bool DebugRequested = (Opts.find("-g") != std::string::npos);
-  if (link(Mod, BuiltinLib, Log, Device, !DebugRequested))
+  if (link(Mod, BuiltinLib, Log, Device, !DebugRequested,
+           /*ErrorOnUnresolved=*/true))
     return true;
 
   raw_string_ostream OS(Log);
@@ -1067,11 +1065,13 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
 }
 
 /**
- * Return the OpenCL C built-in function library bitcode
- * for the given device.
+ * Return the OpenCL C built-in function library bitcode for the given device.
+ * The returned module is lazily loaded; callers must materialize functions
+ * before inspecting or cloning their bodies. Only access the module while
+ * holding the context Lock because materialization mutates it.
  */
-static llvm::Module *getKernelLibrary(cl_device_id device,
-                                      PoclLLVMContextData *llvm_ctx) {
+llvm::Module *getKernelLibrary(cl_device_id device,
+                               PoclLLVMContextData *llvm_ctx) {
   Triple triple(device->llvm_target_triplet);
   llvm::LLVMContext *llvmContext = llvm_ctx->Context;
   kernelLibraryMapTy *kernelLibraryMap = llvm_ctx->kernelLibraryMap;
@@ -1110,14 +1110,14 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
   if (pocl_exists(BuiltinLibrary.c_str())) {
     POCL_MSG_PRINT_LLVM("Using %s as the built-in lib.\n",
                         BuiltinLibrary.c_str());
-    BuiltinLibModule = parseModuleIR(BuiltinLibrary.c_str(), llvmContext);
+    BuiltinLibModule = parseModuleIRLazy(BuiltinLibrary.c_str(), llvmContext);
   } else {
     if (device->kernellib_fallback_name &&
         pocl_exists(BuiltinLibraryFallback.c_str())) {
       POCL_MSG_WARN("Using fallback %s as the built-in lib.\n",
                     BuiltinLibraryFallback.c_str());
       BuiltinLibModule =
-          parseModuleIR(BuiltinLibraryFallback.c_str(), llvmContext);
+          parseModuleIRLazy(BuiltinLibraryFallback.c_str(), llvmContext);
     } else
       POCL_MSG_ERR("Can't find either kernel library file %s or fallback %s.\n",
                    BuiltinLibrary.c_str(), BuiltinLibraryFallback.c_str());
@@ -1253,7 +1253,8 @@ int pocl_invoke_lld_link(cl_device_id Device, const char *InFile,
   // The flags the Clang driver would pass to the linker are HOST_LD_FLAGS
   // (-shared -nostartfiles and friends), expressed here in ld terms.
   // Symbols the kernel binary leaves undefined resolve when it is
-  // dlopen()ed, so no C runtime or startup files are needed at link time.
+  // dlopen()ed, the same way the JIT resolves them, so no C runtime or
+  // startup files are needed at link time.
 #ifdef __APPLE__
   ArgStorage.push_back(
       llvm::Triple(Device->llvm_target_triplet).getArchName().str());
@@ -1285,8 +1286,8 @@ int pocl_invoke_lld_link(cl_device_id Device, const char *InFile,
 #endif
 #endif
 
-  // lld is not re-entrant; serialize links here instead of relying on the
-  // callers' locking.
+  // lld is not re-entrant; the codegen lock does not cover all callers
+  // (poclbinary export links outside of it), so serialize here.
   static std::mutex LLDMutex;
   std::lock_guard<std::mutex> Guard(LLDMutex);
 

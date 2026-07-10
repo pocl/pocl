@@ -137,6 +137,16 @@ pocl.
  default cache directory will be used, which is ``$XDG_CACHE_HOME/pocl/kcache``
  (if set) or ``$HOME/.cache/pocl/kcache/`` on Unix-like systems.
 
+- **POCL_CPU_JIT**
+
+ Specific to the CPU drivers, and only effective when PoCL was built with
+ ``-DHOST_CPU_ENABLE_JIT=ON``. Set to 0 to link kernels into shared libraries
+ and ``dlopen()`` them (in-process through lld where compiled in, through the
+ Clang driver otherwise) rather than loading them with the in-process
+ ORC/JITLink loader. Read once at device initialization; defaults to 1. Use it
+ to work around a JIT-specific problem without rebuilding PoCL. See
+ :ref:`cpu-jit`.
+
 - **POCL_CPU_LOCAL_MEM_SIZE**
 
  Set the local memory size of the CPU devices (cpu, cpu-minimal, cpu-tbb) to the

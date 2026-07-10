@@ -39,10 +39,14 @@
  * this is faster than calling llvm::Linker and then
  * running DCE.
  *
- * log is used to report errors if we run into undefined symbols
+ * log is used to report errors if we run into undefined symbols.
+ *
+ * If ErrorOnUnresolved is false, declarations that lib does not define are
+ * left in place for a later resolution stage such as the dynamic linker or the
+ * ORC JIT process-symbol search.
  */
 int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
-         cl_device_id ClDev, bool StripAllDebugInfo);
+         cl_device_id ClDev, bool StripAllDebugInfo, bool ErrorOnUnresolved);
 
 int copyKernelFromBitcode(const char* Name, llvm::Module *ParallelBC,
                           const llvm::Module *Program,
