@@ -868,7 +868,7 @@ if(UNIX OR MINGW)
   include(CheckSymbolExists)
 
   # don't allow implicit function declarations
-  set(CMAKE_REQUIRED_FLAGS "-std=c99 ${FORBID_IMPLICIT_FUNCTIONS}")
+  string(JOIN " " CMAKE_REQUIRED_FLAGS "-std=c99" ${FORBID_IMPLICIT_FUNCTIONS})
   if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(CMAKE_REQUIRED_LIBRARIES "rt")
   endif ()
