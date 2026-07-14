@@ -37,13 +37,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - llvm: 22
+          - llvm: 21
             conformance: 0
             npu: 0
-          - llvm: 20
+          - llvm: 22
             conformance: 0
             npu: 1
-          - llvm: 21
+          - llvm: 23
             conformance: 1
             npu: 0
 

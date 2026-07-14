@@ -37,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [20, 22]
+        llvm: [22, 23]
         # basic = simplest pthread build with ENABLE_CONFORMANCE
         # devel = with devel options without ENABLE_CONFORMANCE
         # TBB, OpenMP = CPU drivers with TBB/OpenMP support
