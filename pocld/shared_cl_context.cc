@@ -1484,7 +1484,9 @@ int SharedCLContext::buildOrLinkProgram(
 
   // ROCm 6.4.4 segfaults when linking multiple programs together if they were
   // only compiled for a subset of devices in the context.
-  if (RocmPlatform)
+  // NVIDIA 595.71.05 silently fails kernel compilation when compiling for a
+  // subset of devices that does not include the first device in the context.
+  if (RocmPlatform || NvidiaPlatform)
     program->devices = CLDevices;
 
   if (options == nullptr)
