@@ -31,6 +31,8 @@ set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_issue_1711 test_issue_1794 test_issue_1747
      test_rematerialized_alloca_load_with_outside_pr_users
      test_peeled_wi_global_id
+     test_divergent_implicit_barrier_entry
+     test_uniform_implicit_barrier_entry
      test_usm_indirect_ptrs
 )
 foreach(PROG ${C_PROGRAMS_TO_BUILD})
@@ -156,6 +158,10 @@ add_test_pocl(NAME "regression/test_issue_1794b" COMMAND "test_issue_1794" "0" "
 add_test_pocl(NAME "regression/test_issue_1747" COMMAND "test_issue_1747" "0" "${CMAKE_CURRENT_SOURCE_DIR}/test_issue_1747.spv" LABELS ${SPIRV_LABELS})
 
 add_test_pocl(NAME "regression/peeled_wi_global_id" WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_peeled_wi_global_id" LABELS ${SPIRV_LABELS})
+
+add_test_pocl(NAME "regression/divergent_implicit_barrier_entry" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_divergent_implicit_barrier_entry")
+
+add_test_pocl(NAME "regression/uniform_implicit_barrier_entry" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_uniform_implicit_barrier_entry")
 
 add_test_pocl(NAME "regression/test_usm_indirect_ptrs" COMMAND "test_usm_indirect_ptrs")
 
