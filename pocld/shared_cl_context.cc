@@ -2067,7 +2067,7 @@ int SharedCLContext::createKernel(uint32_t kernel_id, uint32_t program_id,
 
   if (!found) {
     POCL_MSG_ERR("Invalid kernel name: %s\n", name);
-    return CL_INVALID_ARG_VALUE;
+    return CL_INVALID_KERNEL_NAME;
   }
 
   k->isFakeBuiltin = program->isFakeBuiltin;
