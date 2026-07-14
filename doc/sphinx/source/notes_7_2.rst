@@ -12,9 +12,8 @@ Release highlights
   * `CPU x86-64 (AVX512) with OpenCL C and SPIR-V input <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_468>`_
   * `CPU RISC-V RV64GC with OpenCL C input <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_469>`_
   * `CPU RISC-V RV64GC with SPIR-V input <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_473>`_
-  * `CPU RISC-V RVA22+RVV1.0 with OpenCL C input <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_469>`_
+  * `CPU RISC-V RVA22+RVV1.0 with OpenCL C input <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_470>`_
   * `CPU RISC-V RVA22+RVV1.0 with SPIR-V input <https://www.khronos.org/conformance/adopters/conformant-products/opencl#submission_472>`_
-
 * Support for LLVM version 22 with CUDA, LevelZero and CPU devices
 * Support for LLVM version 22 & 23 with CPU device
 
