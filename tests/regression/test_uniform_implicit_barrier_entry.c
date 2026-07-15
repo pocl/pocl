@@ -83,6 +83,11 @@ int main(void) {
   cl_device_id device;
   err = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, 1, &device, NULL);
   CHECK_ERROR(err);
+  if (!poclu_supports_extension(device, "cl_khr_subgroups")) {
+    puts("SKIP: The test requires cl_khr_subgroups");
+    free(platforms);
+    return 77;
+  }
   context = clCreateContext(NULL, 1, &device, NULL, NULL, &err);
   CHECK_ERROR(err);
   const cl_queue_properties properties[] = {0};
