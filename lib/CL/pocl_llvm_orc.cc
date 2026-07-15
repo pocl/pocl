@@ -31,14 +31,17 @@
 #include "pocl_llvm_orc.h"
 #include "pocl_util.h"
 
+#include <llvm/ADT/StringSet.h>
 #include <llvm/ExecutionEngine/JITLink/JITLinkMemoryManager.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
 #include <llvm/ExecutionEngine/Orc/Core.h>
 #include <llvm/ExecutionEngine/Orc/ExecutionUtils.h>
 #include <llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h>
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
+#include <llvm/ExecutionEngine/Orc/ObjectFileInterface.h>
 #include <llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h>
 #include <llvm/ExecutionEngine/Orc/Shared/ExecutorSymbolDef.h>
+#include <llvm/Object/Archive.h>
 #include <llvm/Support/Error.h>
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/TargetParser/Triple.h>
@@ -52,7 +55,9 @@
 #include <cstdlib>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <string>
+#include <vector>
 
 using namespace llvm;
 using namespace llvm::orc;
@@ -160,9 +165,9 @@ std::string LastLookupError;
      edge to libpocl and, on POSIX, libpocl's dependencies such as libgcc_s or
      libm when the ICD loader used RTLD_LOCAL.
    - Configure-time vector math library: DynamicLibrarySearchGenerator for
-     shared veclibs (libmvec, SLEEF), or StaticLibraryDefinitionGenerator for
-     static SVML/libirc archives. These are the same absolute link inputs the
-     non-JIT final link receives.
+     shared veclibs (libmvec, SLEEF), or a request-driven archive generator for
+     static SVML/libirc. These are the same absolute link inputs the non-JIT
+     final link receives.
    - Compiler runtime helpers: StaticLibraryDefinitionGenerator for the
      installed compiler-rt/libgcc archive. This replaces the Clang driver's
      implicit runtime library link.
@@ -242,6 +247,192 @@ static bool loadPrivateStaticArchive(const char *Path) {
     return loadStaticArchive(FullPath.c_str());
 
   return loadStaticArchive(Path);
+}
+
+/* Unlike StaticLibraryDefinitionGenerator, this does not build an archive-wide
+   symbol map at JIT initialization. SVML is only needed after vectorized
+   builtins introduce a __svml_* reference, so keep the archive paths until
+   that first lookup and then consult only the requested archive-index names. */
+class LazySVMLDefinitionGenerator : public DefinitionGenerator {
+  struct IndexedArchive {
+    std::string Path;
+    std::unique_ptr<MemoryBuffer> Buffer;
+    std::unique_ptr<object::Archive> Archive;
+    std::set<uint64_t> LoadedOffsets;
+  };
+
+  struct SelectedMember {
+    IndexedArchive *Source;
+    uint64_t Offset;
+    MemoryBufferRef Buffer;
+  };
+
+public:
+  LazySVMLDefinitionGenerator(ObjectLayer &Layer, StringRef IRCPath,
+                              StringRef SVMLPath, char GlobalPrefix)
+      : Layer(Layer), IRCPath(IRCPath), SVMLPath(SVMLPath),
+        GlobalPrefix(GlobalPrefix) {}
+
+  Error tryToGenerate(LookupState &, LookupKind K, JITDylib &JD,
+                      JITDylibLookupFlags,
+                      const SymbolLookupSet &Symbols) override {
+    if (K != LookupKind::Static)
+      return Error::success();
+
+    if (!Active) {
+      bool NeedsSVML = false;
+      for (const auto &[Name, _] : Symbols)
+        if (isSVMLName(*Name)) {
+          NeedsSVML = true;
+          break;
+        }
+      if (!NeedsSVML)
+        return Error::success();
+
+      /* Keep this before opening either archive: it is the deterministic test
+         that unrelated JIT lookups leave the provider untouched. */
+      if (getenv("POCL_FAULT_INJECT_JIT_SVML"))
+        return createStringError(
+            inconvertibleErrorCode(),
+            "injected SVML provider failure (POCL_FAULT_INJECT_JIT_SVML)");
+
+      if (Error Err = activate())
+        return Err;
+    }
+
+    StringSet<> Requested;
+    for (const auto &[Name, _] : Symbols)
+      Requested.insert(*Name);
+
+    std::vector<SelectedMember> Members;
+    if (Error Err = selectMembers(*IRC, Requested, Members))
+      return Err;
+    if (!Requested.empty())
+      if (Error Err = selectMembers(*SVML, Requested, Members))
+        return Err;
+
+    for (const SelectedMember &Member : Members)
+      if (Error Err = addMember(JD, Member))
+        return Err;
+
+    return Error::success();
+  }
+
+private:
+  bool isSVMLName(StringRef Name) const {
+    if (GlobalPrefix != '\0') {
+      if (Name.empty() || Name.front() != GlobalPrefix)
+        return false;
+      Name = Name.drop_front();
+    }
+    return Name.starts_with("__svml_");
+  }
+
+  static Error openArchive(std::unique_ptr<IndexedArchive> &Out,
+                           StringRef Path) {
+    ErrorOr<std::unique_ptr<MemoryBuffer>> Buffer = MemoryBuffer::getFile(
+        Path, /*IsText=*/false, /*RequiresNullTerminator=*/false);
+    if (!Buffer)
+      return createStringError(inconvertibleErrorCode(),
+                               "pocl_jit: could not open SVML archive '%s': %s",
+                               Path.str().c_str(),
+                               Buffer.getError().message().c_str());
+
+    Expected<std::unique_ptr<object::Archive>> Archive =
+        object::Archive::create((*Buffer)->getMemBufferRef());
+    if (!Archive)
+      return createStringError(
+          inconvertibleErrorCode(),
+          "pocl_jit: could not parse SVML archive '%s': %s", Path.str().c_str(),
+          toString(Archive.takeError()).c_str());
+    if (!(*Archive)->hasSymbolTable())
+      return createStringError(
+          inconvertibleErrorCode(),
+          "pocl_jit: SVML archive '%s' has no symbol table",
+          Path.str().c_str());
+
+    auto Indexed = std::make_unique<IndexedArchive>();
+    Indexed->Path = Path.str();
+    Indexed->Buffer = std::move(*Buffer);
+    Indexed->Archive = std::move(*Archive);
+    Out = std::move(Indexed);
+    return Error::success();
+  }
+
+  Error activate() {
+    if (Error Err = openArchive(IRC, IRCPath))
+      return Err;
+    if (Error Err = openArchive(SVML, SVMLPath))
+      return Err;
+    Active = true;
+    POCL_MSG_PRINT_LLVM("pocl_jit: activating lazy SVML archive provider\n");
+    return Error::success();
+  }
+
+  static Error selectMembers(IndexedArchive &Source, StringSet<> &Requested,
+                             std::vector<SelectedMember> &Members) {
+    std::set<uint64_t> SelectedOffsets;
+    for (const object::Archive::Symbol &Symbol : Source.Archive->symbols()) {
+      StringRef Name = Symbol.getName();
+      if (Requested.find(Name) == Requested.end())
+        continue;
+
+      Expected<object::Archive::Child> Child = Symbol.getMember();
+      if (!Child)
+        return Child.takeError();
+      uint64_t Offset = Child->getDataOffset();
+      Requested.erase(Name);
+      if (Source.LoadedOffsets.count(Offset) ||
+          !SelectedOffsets.insert(Offset).second)
+        continue;
+
+      Expected<MemoryBufferRef> Buffer = Child->getMemoryBufferRef();
+      if (!Buffer)
+        return Buffer.takeError();
+      Members.push_back({&Source, Offset, *Buffer});
+    }
+    return Error::success();
+  }
+
+  Error addMember(JITDylib &JD, const SelectedMember &Member) {
+    std::string Identifier =
+        (Member.Source->Path + "[" + std::to_string(Member.Offset) + "](" +
+         Member.Buffer.getBufferIdentifier().str() + ")");
+    std::unique_ptr<MemoryBuffer> Buffer =
+        MemoryBuffer::getMemBuffer(Member.Buffer.getBuffer(), Identifier,
+                                   /*RequiresNullTerminator=*/false);
+    auto Interface = getObjectFileInterface(Layer.getExecutionSession(),
+                                            Buffer->getMemBufferRef());
+    if (!Interface)
+      return Interface.takeError();
+    if (Error Err = Layer.add(JD, std::move(Buffer), std::move(*Interface)))
+      return Err;
+
+    Member.Source->LoadedOffsets.insert(Member.Offset);
+    POCL_MSG_PRINT_LLVM("pocl_jit: materializing SVML archive member %s\n",
+                        Identifier.c_str());
+    return Error::success();
+  }
+
+  ObjectLayer &Layer;
+  std::string IRCPath;
+  std::string SVMLPath;
+  char GlobalPrefix;
+  bool Active = false;
+  std::unique_ptr<IndexedArchive> IRC;
+  std::unique_ptr<IndexedArchive> SVML;
+};
+
+static bool addLazySVMLGenerator(const char *IRCPath, const char *SVMLPath) {
+  if (!IRCPath || !IRCPath[0] || !SVMLPath || !SVMLPath[0])
+    return false;
+  JITDylibSP PSJD = TheJIT->getProcessSymbolsJITDylib();
+  if (!PSJD)
+    return false;
+  PSJD->addGenerator(std::make_unique<LazySVMLDefinitionGenerator>(
+      TheJIT->getObjLinkingLayer(), IRCPath, SVMLPath,
+      TheJIT->getDataLayout().getGlobalPrefix()));
+  return true;
 }
 
 /* Inject symbols that kernel objects reference but that are linked into libpocl
@@ -431,19 +622,19 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
         "pocl_jit: could not load the SLEEF vector-math library; vectorized "
         "math kernels may fail to resolve their symbols\n");
 #elif defined(ENABLE_HOST_CPU_VECTORIZE_SVML)
-  /* libsvml members reference libirc helpers, so load both archives; either
-     generator resolves symbols for the other lazily as members materialize. */
-  bool VecMathLoaded = true;
-#ifdef HOST_CPU_IRC_LIBRARY
-  VecMathLoaded &= loadStaticArchive(HOST_CPU_IRC_LIBRARY);
-#endif
-#ifdef HOST_CPU_SVML_LIBRARY
-  VecMathLoaded &= loadStaticArchive(HOST_CPU_SVML_LIBRARY);
+  /* Do not index either archive here. Most cached kernels do not need SVML,
+     and the local generator opens both archives only after a __svml_* lookup.
+     Once active it also handles the non-SVML libirc helpers introduced by a
+     materialized libsvml member. */
+  bool VecMathLoaded = false;
+#if defined(HOST_CPU_IRC_LIBRARY) && defined(HOST_CPU_SVML_LIBRARY)
+  VecMathLoaded =
+      addLazySVMLGenerator(HOST_CPU_IRC_LIBRARY, HOST_CPU_SVML_LIBRARY);
 #endif
   if (!VecMathLoaded)
     POCL_MSG_WARN(
-        "pocl_jit: could not load the SVML static archives; vectorized math "
-        "kernels may fail to resolve their symbols\n");
+        "pocl_jit: could not configure the lazy SVML archive provider; "
+        "vectorized math kernels may fail to resolve their symbols\n");
 #endif
 
   return 0;

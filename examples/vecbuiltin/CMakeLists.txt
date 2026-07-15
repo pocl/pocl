@@ -41,6 +41,25 @@ add_symlink_to_built_opencl_dynlib("vecbuiltin")
 
 add_test_pocl(NAME "examples/vecbuiltin" COMMAND "vecbuiltin" LLVM_FILECHECK "vecbuiltin.fc" WORKITEM_HANDLER "loopvec")
 
+if(ENABLE_HOST_CPU_VECTORIZE_SVML)
+  add_test(NAME "cpu_jit/vecbuiltin_svml"
+    COMMAND "${CMAKE_COMMAND}" "-Dtest_cmd=$<TARGET_FILE:vecbuiltin>"
+            "-Dcache_dir=${CMAKE_CURRENT_BINARY_DIR}/jit-svml-cache"
+            "-P" "${CMAKE_SOURCE_DIR}/cmake/test_jit_svml_success.cmake")
+  set_tests_properties("cpu_jit/vecbuiltin_svml" PROPERTIES
+    ENVIRONMENT "POCL_DEVICES=cpu;POCL_CPU_JIT=1;POCL_WORK_GROUP_METHOD=loopvec;POCL_KERNEL_CACHE=1;POCL_DEBUG=llvm"
+    LABELS "cpu_jit"
+    DEPENDS "pocl_version_check")
+
+  add_test(NAME "cpu_jit/vecbuiltin_svml_fault"
+    COMMAND "${CMAKE_COMMAND}" "-Dtest_cmd=$<TARGET_FILE:vecbuiltin>"
+            "-P" "${CMAKE_SOURCE_DIR}/cmake/test_jit_svml_failure.cmake")
+  set_tests_properties("cpu_jit/vecbuiltin_svml_fault" PROPERTIES
+    ENVIRONMENT "POCL_DEVICES=cpu;POCL_CPU_JIT=1;POCL_WORK_GROUP_METHOD=loopvec;POCL_KERNEL_CACHE=0;POCL_FAULT_INJECT_JIT_SVML=1"
+    LABELS "cpu_jit"
+    DEPENDS "pocl_version_check")
+endif()
+
 set_tests_properties(
   "examples/vecbuiltin"
   PROPERTIES

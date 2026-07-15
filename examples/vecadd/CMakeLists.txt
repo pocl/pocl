@@ -33,6 +33,13 @@ add_test(NAME "examples/vecadd" COMMAND "vecadd")
 
 add_test(NAME "examples/vecadd_large_grid" COMMAND "vecadd" "128000" "128" "10000" "100" "1" "1")
 
+if(ENABLE_HOST_CPU_VECTORIZE_SVML)
+  # The SVML provider must remain dormant for an unrelated JIT kernel.
+  add_cpu_jit_test("vecadd_no_svml" vecadd)
+  set_tests_properties("cpu_jit/vecadd_no_svml" PROPERTIES
+    ENVIRONMENT "POCL_DEVICES=cpu;POCL_CPU_JIT=1;POCL_WORK_GROUP_METHOD=loopvec;POCL_KERNEL_CACHE=0;POCL_FAULT_INJECT_JIT_SVML=1")
+endif()
+
 set(PROPS)
 if(NOT ENABLE_ANYSAN)
   set(PROPS
