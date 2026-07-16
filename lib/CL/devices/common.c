@@ -51,6 +51,9 @@
 #include "pocl_cache.h"
 #include "pocl_debug.h"
 #include "pocl_dynlib.h"
+#ifdef HOST_CPU_ENABLE_JIT
+#include "pocl_llvm_orc.h"
+#endif
 #include "pocl_file_util.h"
 #include "pocl_image_util.h"
 #include "pocl_mem_management.h"
@@ -120,10 +123,9 @@ link_with_clang_driver (cl_device_id device, const char *objfile,
   cmd_line[last_arg_idx++] = "-noimplib";
 #endif
 
-  /* ENABLE_PRINTF_IMMEDIATE_FLUSH results in "pocl_flush_printf_buffer"
-   * symbol referenced in the built kernel.so; however that function exists
-   * only on the host side, therefore link to libpocl.so which provides it
-   */
+  /* ENABLE_PRINTF_IMMEDIATE_FLUSH references the host-side
+   * "pocl_flush_printf_buffer" symbol from the kernel shared library, so link
+   * to libpocl.so which provides it. */
 #ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
 #ifdef HAVE_DLFCN_H
   const char *fname = pocl_dynlib_pathname ((void *)pocl_cache_tempname);
@@ -142,23 +144,22 @@ link_with_clang_driver (cl_device_id device, const char *objfile,
   return pocl_invoke_clang (device->llvm_target_triplet, cmd_line);
 }
 
-/* Links a compiled kernel object into the final shared library the dynamic
-   loader can pick up, through the device's custom finalization step if it
-   has one, in-process lld where compiled in, and the Clang driver otherwise.
-   The object file is left in place. */
-static int
+/* Links a kernel object into the shared library used by the dynamic loader.
+   ORC/JITLink is the separate object-loader path; lld and Clang are final
+   linkers for the shared-library path. The object file is left in place. */
+int
 pocl_link_final_binary (cl_device_id device, const char *objfile,
                         const char *final_binary_path)
 {
   int error;
 
-  /* Temporary filename for kernel.so. Create it next to the final binary
+  /* Create the temporary shared library next to the final binary
      to enable a potential customized finalization step to create multiple
      files next to it. */
   char tmp_module[POCL_MAX_PATHNAME_LENGTH];
   if (pocl_mk_tempname (tmp_module, final_binary_path, SHARED_LIB_EXT, NULL))
     {
-      POCL_MSG_PRINT_LLVM ("Creating temporary kernel.so file"
+      POCL_MSG_PRINT_LLVM ("Creating temporary shared-library file"
                            " for %s FAILED\n",
                            final_binary_path);
       return -1;
@@ -196,16 +197,16 @@ pocl_link_final_binary (cl_device_id device, const char *objfile,
     }
   if (error)
     {
-      POCL_MSG_PRINT_LLVM ("Linking kernel.so.o -> kernel.so has failed\n");
+      POCL_MSG_PRINT_LLVM ("Linking kernel object to shared library failed\n");
       return error;
     }
 
-  /* rename temporary kernel.so */
+  /* rename temporary shared library */
   error = pocl_rename (tmp_module, final_binary_path);
 
   if (error)
     POCL_MSG_PRINT_LLVM (
-        "Renaming temporary kernel.so to final ('%s') has failed.\n",
+        "Renaming temporary shared library to final ('%s') failed.\n",
         final_binary_path);
 
   return error;
@@ -233,7 +234,7 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   pocl_cache_work_group_function_path (parallel_bc_path, program, device_i,
                                        kernel, command, specialize);
 
-  /* $/kernel.so */
+  /* Cached final artifact: OBJ_EXT under JIT, SHARED_LIB_EXT otherwise. */
   char final_binary_path[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_final_binary_path (final_binary_path, program, device_i, kernel,
                                 command, specialize);
@@ -317,7 +318,7 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   if (pocl_exists (final_binary_path))
     goto FINISH;
 
-  /* Write temporary kernel.so.o, required for the final linking step */
+  /* Write temporary kernel object, required for the final linking step. */
   error = pocl_cache_write_kernel_objfile (tmp_objfile, objfile, objfile_size);
   if (error)
     {
@@ -331,11 +332,24 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
                           tmp_objfile, (size_t)objfile_size);
     }
 
+  /* JIT devices load the kernel object in-process, so it is itself the final
+     artifact: no shared library, no external linker. Publish it under its
+     cached name and return. */
+  if (pocl_cpu_device_uses_jit (device))
+    {
+      error = pocl_rename (tmp_objfile, final_binary_path);
+      if (error)
+        POCL_MSG_PRINT_LLVM (
+          "Renaming temporary kernel object to final ('%s') failed.\n",
+          final_binary_path);
+      goto FINISH;
+    }
+
   error = pocl_link_final_binary (device, tmp_objfile, final_binary_path);
   if (error)
     goto FINISH;
 
-  /* if LEAVE_COMPILER_FILES, rename temporary kernel.so.o, else delete it */
+  /* If requested, keep the temporary kernel object next to the shared library. */
   if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
     {
       char objfile_path[POCL_MAX_PATHNAME_LENGTH];
@@ -344,14 +358,14 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
       error = pocl_rename (tmp_objfile, objfile_path);
       if (error)
         POCL_MSG_PRINT_LLVM (
-            "Renaming temporary kernel.so.o to final %s has failed.\n",
+            "Renaming temporary kernel object to final %s failed.\n",
             objfile_path);
     }
   else
     {
       error = pocl_remove (tmp_objfile);
       if (error)
-        POCL_MSG_PRINT_LLVM ("Removing temporary kernel.so.o has failed.\n");
+        POCL_MSG_PRINT_LLVM ("Removing temporary kernel object failed.\n");
     }
 
 FINISH:
@@ -992,8 +1006,8 @@ pocl_cmd_max_grid_dim_width (_cl_command_run *cmd)
 
 /* CPU driver stuff */
 
-typedef struct pocl_dlhandle_cache_item pocl_dlhandle_cache_item;
-struct pocl_dlhandle_cache_item
+typedef struct pocl_module_cache_item pocl_module_cache_item;
+struct pocl_module_cache_item
 {
   pocl_kernel_hash_t hash;
 
@@ -1007,70 +1021,86 @@ struct pocl_dlhandle_cache_item
   size_t max_grid_dim_width;
 
   void *wg;
-  void *dlhandle;
-  pocl_dlhandle_cache_item *next;
-  pocl_dlhandle_cache_item *prev;
+  void *module_handle;
+  /* If nonzero, module_handle is an ORC/JITLink handle. Otherwise it is a
+     native shared-library handle. */
+  int is_jit;
+  pocl_module_cache_item *next;
+  pocl_module_cache_item *prev;
   unsigned ref_count;
 };
 
-static pocl_dlhandle_cache_item *pocl_dlhandle_cache;
+static pocl_module_cache_item *pocl_module_cache;
 static pocl_lock_t pocl_llvm_codegen_lock;
-static pocl_lock_t pocl_dlhandle_lock;
-static int pocl_dlhandle_cache_initialized;
+static pocl_lock_t pocl_module_cache_lock;
+static int pocl_module_cache_initialized;
 
 /* only to be called in basic/pthread/<other cpu driver> init */
 void
 pocl_init_dlhandle_cache ()
 {
-  if (!pocl_dlhandle_cache_initialized)
+  if (!pocl_module_cache_initialized)
     {
       POCL_INIT_LOCK (pocl_llvm_codegen_lock);
-      POCL_INIT_LOCK (pocl_dlhandle_lock);
-      pocl_dlhandle_cache_initialized = 1;
-   }
+      POCL_INIT_LOCK (pocl_module_cache_lock);
+      pocl_module_cache_initialized = 1;
+    }
 }
 
 static unsigned handle_count = 0;
 #define MAX_CACHE_ITEMS 128
 
-/* must be called with pocl_dlhandle_lock LOCKED */
-static pocl_dlhandle_cache_item *
-get_new_dlhandle_cache_item ()
+/* Unloads a cache item's kernel module with the loader that loaded it. */
+static void
+release_module_handle (pocl_module_cache_item *ci)
 {
-  pocl_dlhandle_cache_item *ci = NULL;
-  const char *dl_error = NULL;
-
-  if (pocl_dlhandle_cache)
+#ifdef HOST_CPU_ENABLE_JIT
+  if (ci->is_jit)
     {
-      ci = pocl_dlhandle_cache->prev;
-      while (ci->ref_count > 0 && ci != pocl_dlhandle_cache)
+      pocl_jit_unload (ci->module_handle);
+      return;
+    }
+#endif
+  pocl_dynlib_close (ci->module_handle);
+}
+
+/* must be called with pocl_module_cache_lock LOCKED */
+static pocl_module_cache_item *
+get_new_module_cache_item ()
+{
+  pocl_module_cache_item *ci = NULL;
+
+  if (pocl_module_cache)
+    {
+      ci = pocl_module_cache->prev;
+      while (ci->ref_count > 0 && ci != pocl_module_cache)
         ci = ci->prev;
     }
 
-  if ((handle_count >= MAX_CACHE_ITEMS) && ci && (ci != pocl_dlhandle_cache))
+  if ((handle_count >= MAX_CACHE_ITEMS) && ci && (ci != pocl_module_cache))
     {
-      DL_DELETE (pocl_dlhandle_cache, ci);
-      pocl_dynlib_close (ci->dlhandle);
-      memset (ci, 0, sizeof (pocl_dlhandle_cache_item));
+      DL_DELETE (pocl_module_cache, ci);
+      release_module_handle (ci);
+      memset (ci, 0, sizeof (pocl_module_cache_item));
     }
   else
     {
       ++handle_count;
-      ci = (pocl_dlhandle_cache_item *)calloc (
-          1, sizeof (pocl_dlhandle_cache_item));
+      ci = (pocl_module_cache_item *)calloc (
+          1, sizeof (pocl_module_cache_item));
     }
 
   return ci;
 }
 
 void
-pocl_release_dlhandle_cache (void *dlhandle_cache_item)
+pocl_release_dlhandle_cache (void *module_cache_item)
 {
-  pocl_dlhandle_cache_item *tmp = NULL, *ci = dlhandle_cache_item;
+  pocl_module_cache_item *tmp = NULL, *ci = module_cache_item;
 
-  POCL_LOCK (pocl_dlhandle_lock);
+  POCL_LOCK (pocl_module_cache_lock);
   int found = CL_FALSE;
-  DL_FOREACH (pocl_dlhandle_cache, tmp)
+  DL_FOREACH (pocl_module_cache, tmp)
   {
     if (tmp == ci)
       {
@@ -1082,19 +1112,130 @@ pocl_release_dlhandle_cache (void *dlhandle_cache_item)
   assert (found == CL_TRUE);
   assert (ci->ref_count > 0);
   --ci->ref_count;
-  POCL_UNLOCK (pocl_dlhandle_lock);
+  POCL_UNLOCK (pocl_module_cache_lock);
 }
+
+/**
+ * Whether a final-binary path names a JIT-loadable kernel object rather than
+ * a shared library, going by the distinct artifact-variant extensions (see
+ * pocl_cache_final_binary_variant_path()).
+ */
+static int
+final_binary_is_jit_object (const char *path)
+{
+  size_t len = strlen (path);
+  size_t ext_len = strlen (OBJ_EXT);
+  return len > ext_len && strcmp (path + len - ext_len, OBJ_EXT) == 0;
+}
+
+static int
+probe_jit_object (char *module_fn, _cl_command_node *command, int specialized)
+{
+  cl_kernel k = command->command.run.kernel;
+  cl_program p = k->program;
+  unsigned dev_i = command->program_device_i;
+  pocl_cache_final_binary_variant_path (module_fn, p, dev_i, k, command,
+                                        specialized, 1);
+  return pocl_exists (module_fn);
+}
+
+static int
+probe_shared_library (char *module_fn, _cl_command_node *command,
+                      int specialized)
+{
+  cl_kernel k = command->command.run.kernel;
+  cl_program p = k->program;
+  unsigned dev_i = command->program_device_i;
+  pocl_cache_final_binary_variant_path (module_fn, p, dev_i, k, command,
+                                        specialized, 0);
+  if (pocl_exists (module_fn))
+    return 1;
+
+#ifdef ENABLE_LLVM
+  char obj_path[POCL_MAX_PATHNAME_LENGTH];
+  pocl_cache_final_binary_variant_path (obj_path, p, dev_i, k, command,
+                                        specialized, 1);
+  if (!pocl_exists (obj_path))
+    return 0;
+
+  POCL_LOCK (pocl_llvm_codegen_lock);
+  int error = pocl_link_final_binary (command->device, obj_path, module_fn);
+  POCL_UNLOCK (pocl_llvm_codegen_lock);
+  if (error == 0)
+    return 1;
+  POCL_MSG_WARN ("Linking the cached kernel object %s failed.\n", obj_path);
+#endif
+  return 0;
+}
+
+/* JIT mode only consumes OBJ_EXT. Shared-library mode consumes SHARED_LIB_EXT,
+   or links an OBJ_EXT fallback into SHARED_LIB_EXT when LLVM is available. */
+static int
+probe_final_binary (char *module_fn, _cl_command_node *command,
+                    int specialized)
+{
+  if (pocl_cpu_device_uses_jit (command->device))
+    return probe_jit_object (module_fn, command, specialized);
+  return probe_shared_library (module_fn, command, specialized);
+}
+
+#ifdef HOST_CPU_ENABLE_JIT
+/* A JIT cache hit is only a fast path. If loading or linking the object fails,
+   remove that object, regenerate it from IR, and retry the JIT load once. */
+static int
+regenerate_cached_jit_object (pocl_module_cache_item *ci, char *module_fn,
+                              _cl_command_node *command, int specialize)
+{
+#ifdef ENABLE_LLVM
+  _cl_command_run *run_cmd = &command->command.run;
+
+#ifndef ENABLE_MLIR
+  if (run_cmd->kernel->program->binaries[command->program_device_i] == NULL)
+    return -1;
+#endif
+
+  if (ci->module_handle != NULL)
+    {
+      release_module_handle (ci);
+      ci->module_handle = NULL;
+      ci->wg = NULL;
+    }
+
+  if (pocl_exists (module_fn) && pocl_remove (module_fn))
+    {
+      POCL_MSG_WARN ("Removing stale JIT kernel object \"%s\" failed.\n",
+                     module_fn);
+      return -1;
+    }
+
+  POCL_LOCK (pocl_llvm_codegen_lock);
+  int err = llvm_codegen (module_fn, command->program_device_i,
+                          run_cmd->kernel, command->device, command,
+                          specialize);
+  POCL_UNLOCK (pocl_llvm_codegen_lock);
+  if (err)
+    return err;
+
+  ci->is_jit = 1;
+  ci->module_handle = pocl_jit_load_object (module_fn, run_cmd->kernel->name);
+  return ci->module_handle == NULL ? -1 : 0;
+#else
+  return -1;
+#endif
+}
+#endif
 
 /**
  * Checks if a built binary is found in the disk for the given kernel command,
  * if not, builds the kernel, caches it, and returns the file name of the
  * end result.
  *
- * \param module_fn [out] The file name of the final binary.
+ * \param module_fn [out] The file name of the final binary; its extension
+ * tells the load method (see final_binary_is_jit_object()).
  * \param command The kernel run command.
  * \param specialized 1 if should check the per-command specialized one instead
  * of the generic one.
- * \returns The filename of the built binary in the disk.
+ * \returns CL_SUCCESS if module_fn names a loadable binary.
  */
 int
 pocl_check_kernel_disk_cache (char *module_fn,
@@ -1109,9 +1250,7 @@ pocl_check_kernel_disk_cache (char *module_fn,
   /* First try to find a static WG binary for the local size as they
      are always more efficient than the dynamic ones.  Also, in case
      of reqd_wg_size, there might not be a dynamic sized one at all.  */
-  pocl_cache_final_binary_path (module_fn, p, dev_i, k, command, specialized);
-
-  if (pocl_exists (module_fn))
+  if (probe_final_binary (module_fn, command, specialized))
     {
       POCL_MSG_PRINT_INFO ("Using a cached WG function: %s\n", module_fn);
       return CL_SUCCESS;
@@ -1153,14 +1292,11 @@ pocl_check_kernel_disk_cache (char *module_fn,
     {
       /* First try to find a specialized WG binary, if allowed by the
          command. */
-      if (!run_cmd->force_generic_wg_func)
-        pocl_cache_final_binary_path (module_fn, p, dev_i, k, command, 1);
-
-      if (run_cmd->force_generic_wg_func || !pocl_exists (module_fn))
+      if (run_cmd->force_generic_wg_func
+          || !probe_final_binary (module_fn, command, 1))
         {
           /* Then check for a dynamic (non-specialized) kernel. */
-          pocl_cache_final_binary_path (module_fn, p, dev_i, k, command, 0);
-          if (!pocl_exists (module_fn))
+          if (!probe_final_binary (module_fn, command, 0))
             {
               POCL_MSG_ERR ("Generic WG function binary does not exist.\n");
               return -1;
@@ -1176,16 +1312,13 @@ pocl_check_kernel_disk_cache (char *module_fn,
 }
 
 
-/* Look for a dlhandle in the dlhandle cache for the given kernel command.
-   If found, push the handle up in the cache to improve cache hit speed,
-   and return it. Otherwise return NULL. The caller should hold
-   pocl_dlhandle_lock. */
-static pocl_dlhandle_cache_item *
-fetch_dlhandle_cache_item (_cl_command_run *run_cmd, int specialize)
+/* Look for a loaded kernel module for the given kernel command. */
+static pocl_module_cache_item *
+fetch_module_cache_item (_cl_command_run *run_cmd, int specialize)
 {
-  pocl_dlhandle_cache_item *ci = NULL, *tmp = NULL;
+  pocl_module_cache_item *ci = NULL, *tmp = NULL;
   size_t max_grid_width = pocl_cmd_max_grid_dim_width (run_cmd);
-  DL_FOREACH_SAFE (pocl_dlhandle_cache, ci, tmp)
+  DL_FOREACH_SAFE (pocl_module_cache, ci, tmp)
   {
     if ((memcmp (ci->hash, run_cmd->hash, sizeof (pocl_kernel_hash_t)) == 0)
         && (ci->local_wgs[0] == run_cmd->pc.local_size[0])
@@ -1198,8 +1331,8 @@ fetch_dlhandle_cache_item (_cl_command_run *run_cmd, int specialize)
                 && run_cmd->pc.global_offset[2] == 0)))
       {
         /* move to the front of the line */
-        DL_DELETE (pocl_dlhandle_cache, ci);
-        DL_PREPEND (pocl_dlhandle_cache, ci);
+        DL_DELETE (pocl_module_cache, ci);
+        DL_PREPEND (pocl_module_cache, ci);
         run_cmd->wg = ci->wg;
         return ci;
       }
@@ -1220,7 +1353,7 @@ fetch_dlhandle_cache_item (_cl_command_run *run_cmd, int specialize)
  * This can be useful in case we're just pre-compiling kernels
  * (or compiling them for binaries), and not actually need them immediately.
  *
- * Returns: a dynlib handle cache item as void*; this needs to be given
+ * Returns: a module cache item as void*; this needs to be given
  * to pocl_release_dlhandle_cache(), if it was retained */
 void *
 pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
@@ -1228,7 +1361,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
                                   int specialize)
 {
   char *workgroup_string = NULL;
-  pocl_dlhandle_cache_item *ci = NULL;
+  pocl_module_cache_item *ci = NULL;
   _cl_command_run *run_cmd = &command->command.run;
 
   /* Brute force mechanism to test relying on generic work-group functions
@@ -1236,17 +1369,17 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   if (!pocl_get_bool_option("POCL_WORK_GROUP_SPECIALIZATION", 1))
     specialize = 0;
 
-  POCL_LOCK (pocl_dlhandle_lock);
-  ci = fetch_dlhandle_cache_item (run_cmd, specialize);
+  POCL_LOCK (pocl_module_cache_lock);
+  ci = fetch_module_cache_item (run_cmd, specialize);
   if (ci != NULL)
     {
       if (retain) ++ci->ref_count;
-      POCL_UNLOCK (pocl_dlhandle_lock);
+      POCL_UNLOCK (pocl_module_cache_lock);
       return ci;
     }
 
-  /* Not found, build a new kernel and cache its dlhandle. */
-  ci = get_new_dlhandle_cache_item ();
+  /* Not found, build and cache a new kernel module. */
+  ci = get_new_module_cache_item ();
   memcpy (ci->hash, run_cmd->hash, sizeof (pocl_kernel_hash_t));
   ci->local_wgs[0] = run_cmd->pc.local_size[0];
   ci->local_wgs[1] = run_cmd->pc.local_size[1];
@@ -1261,22 +1394,47 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   ci->max_grid_dim_width = max_grid_width;
 
   char module_fn[POCL_MAX_PATHNAME_LENGTH];
+
   int err = pocl_check_kernel_disk_cache (module_fn, command, specialize);
   if (err)
     {
       free (ci);
-      POCL_UNLOCK (pocl_dlhandle_lock);
+      POCL_UNLOCK (pocl_module_cache_lock);
       return NULL;
     }
 
-  ci->dlhandle = pocl_dynlib_open (module_fn, 0, 1);
-  if (ci->dlhandle == NULL)
+  /* The load method follows the found artifact: a JIT kernel object is loaded
+     in-process via ORC/JITLink, a shared library is dlopen()ed (see
+     probe_final_binary()). */
+  ci->is_jit = final_binary_is_jit_object (module_fn);
+#ifdef HOST_CPU_ENABLE_JIT
+  /* A JIT object is only produced or accepted when the device's JIT came up
+     at init (see pocl_cpu_device_uses_jit()). */
+  if (ci->is_jit)
+    ci->module_handle = pocl_jit_load_object (module_fn, run_cmd->kernel->name);
+  else
+#endif
+    ci->module_handle = pocl_dynlib_open (module_fn, 0, 1);
+
+#ifdef HOST_CPU_ENABLE_JIT
+  if (ci->module_handle == NULL && ci->is_jit)
     {
-      POCL_MSG_ERR ("pocl_dynlib_open(\"%s\") failed.\n"
-                    "note: this may be caused by missing symbols "
-                    " in the kernel binary\n.",
-                    module_fn);
-      POCL_UNLOCK (pocl_dlhandle_lock);
+      POCL_MSG_WARN ("loading cached JIT kernel object \"%s\" failed;"
+                     " regenerating it\n",
+                     module_fn);
+      regenerate_cached_jit_object (ci, module_fn, command, specialize);
+    }
+#endif
+
+  if (ci->module_handle == NULL)
+    {
+      POCL_MSG_ERR ("loading kernel binary \"%s\" failed.%s\n",
+                    module_fn,
+                    ci->is_jit
+                        ? ""
+                        : "\nnote: this may be caused by missing symbols"
+                          " in the kernel binary.");
+      POCL_UNLOCK (pocl_module_cache_lock);
       free (ci);
       return NULL;
     }
@@ -1286,32 +1444,74 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   snprintf (workgroup_string, workgroup_len, "_pocl_kernel_%s_workgroup",
             run_cmd->kernel->name);
 
-  ci->wg = pocl_dynlib_symbol_address (ci->dlhandle, workgroup_string);
-
-  if (ci->wg == NULL)
+#ifdef HOST_CPU_ENABLE_JIT
+  /* ORC mangles the unmangled name for the target (e.g. adds the leading
+     underscore on Mach-O), so the JIT path needs no separate fallback. */
+  if (ci->is_jit)
+    ci->wg = pocl_jit_lookup (ci->module_handle, workgroup_string);
+  else
+#endif
     {
-      // Older OSX dyld APIs need the name without the underscore.
-      snprintf (workgroup_string, workgroup_len, "pocl_kernel_%s_workgroup",
-                run_cmd->kernel->name);
-      ci->wg = pocl_dynlib_symbol_address (ci->dlhandle, workgroup_string);
-
+      ci->wg = pocl_dynlib_symbol_address (ci->module_handle, workgroup_string);
       if (ci->wg == NULL)
         {
-          POCL_MSG_ERR ("pocl_dynlib_symbol_address(\"%s\", \"%s\") failed.\n"
-                        "note: missing symbols in the kernel binary might be"
-                        " reported as 'file not found' errors.\n",
-                        module_fn, workgroup_string);
-          POCL_UNLOCK (pocl_dlhandle_lock);
-          free (ci);
-          free (workgroup_string);
-          return NULL;
+          // Older OSX dyld APIs need the name without the underscore.
+          snprintf (workgroup_string, workgroup_len,
+                    "pocl_kernel_%s_workgroup", run_cmd->kernel->name);
+          ci->wg
+            = pocl_dynlib_symbol_address (ci->module_handle, workgroup_string);
         }
     }
 
-  run_cmd->wg = ci->wg;
-  DL_PREPEND (pocl_dlhandle_cache, ci);
+  if (ci->wg == NULL)
+    {
+      int recovered = 0;
+#ifdef HOST_CPU_ENABLE_JIT
+      if (ci->is_jit)
+        {
+          /* The JIT links the object on first lookup, so its lookup error
+             carries the real diagnostic (unresolved symbols, relocation
+             problems). */
+          const char *jit_error = pocl_jit_last_error ();
+          POCL_MSG_WARN ("looking up \"%s\" in cached JIT kernel object"
+                         " \"%s\" failed: %s; regenerating it\n",
+                         workgroup_string, module_fn,
+                         jit_error != NULL ? jit_error : "unknown error");
+          if (regenerate_cached_jit_object (ci, module_fn, command,
+                                            specialize) == 0)
+            ci->wg = pocl_jit_lookup (ci->module_handle, workgroup_string);
+          recovered = ci->wg != NULL;
+          if (!recovered)
+            {
+              jit_error = pocl_jit_last_error ();
+              POCL_MSG_ERR ("regenerated JIT kernel object \"%s\" failed"
+                            " to load or resolve \"%s\": %s\n",
+                            module_fn, workgroup_string,
+                            jit_error != NULL ? jit_error : "unknown error");
+            }
+        }
+      else
+#endif
+        {
+          POCL_MSG_ERR ("looking up \"%s\" in kernel binary \"%s\" failed.\n"
+                        "note: missing symbols in the kernel binary might be"
+                        " reported as 'file not found' errors.\n",
+                        workgroup_string, module_fn);
+        }
+      if (recovered)
+        goto FOUND_WORKGROUP;
+      release_module_handle (ci);
+      POCL_UNLOCK (pocl_module_cache_lock);
+      free (ci);
+      free (workgroup_string);
+      return NULL;
+    }
 
-  POCL_UNLOCK (pocl_dlhandle_lock);
+FOUND_WORKGROUP:
+  run_cmd->wg = ci->wg;
+  DL_PREPEND (pocl_module_cache, ci);
+
+  POCL_UNLOCK (pocl_module_cache_lock);
   free (workgroup_string);
   return ci;
 }

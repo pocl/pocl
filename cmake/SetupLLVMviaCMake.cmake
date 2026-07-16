@@ -152,6 +152,16 @@ set(POCL_LLVM_COMPONENTS
   LLVMWindowsDriver
 )
 
+# CPU devices use ORC LLJIT + JITLink for the JIT
+if(ENABLE_HOST_CPU_DEVICES)
+  list(APPEND POCL_LLVM_COMPONENTS
+    LLVMOrcJIT
+    LLVMJITLink
+    LLVMOrcTargetProcess
+    LLVMOrcShared
+    LLVMRuntimeDyld)
+endif()
+
 if("X86" IN_LIST LLVM_TARGETS_TO_BUILD)
   list(APPEND POCL_LLVM_COMPONENTS
     LLVMX86CodeGen

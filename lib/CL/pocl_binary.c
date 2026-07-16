@@ -346,13 +346,25 @@ static unsigned char *
 recursively_serialize_path (const char *path, size_t basedir_offset,
                             unsigned char *buffer)
 {
-
   switch (pocl_get_file_type (path))
     {
     default:
       POCL_MSG_WARN ("Skipping non-file/-directory: '%s'\n", path);
       return buffer;
     case POCL_FS_REGULAR:
+      /* A kernel object (OBJ_EXT) whose shared library variant exists is a
+         private cache artifact: consumers dlopen the shared library, or JIT
+         an equivalent object from the program IR, so don't ship it (see
+         pocl_driver_build_poclbinary()). Without the shared library (the
+         export-time link failed, e.g. for lack of a toolchain) ship the
+         object as a fallback only JIT-enabled or linker-equipped consumers
+         can load. */
+      {
+        char so_path[POCL_MAX_PATHNAME_LENGTH];
+        if (pocl_cache_object_shlib_variant (so_path, path)
+            && pocl_exists (so_path))
+          return buffer;
+      }
       return serialize_file (path, basedir_offset, buffer);
     case POCL_FS_DIRECTORY:
       {

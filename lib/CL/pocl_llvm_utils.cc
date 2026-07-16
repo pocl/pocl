@@ -32,6 +32,8 @@ POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include <llvm/Support/TargetSelect.h>
+#include <llvm/Support/Error.h>
+#include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/Signals.h>
 #include <llvm/IR/Constants.h>
@@ -88,6 +90,32 @@ llvm::Module *parseModuleIR(const char *path, llvm::LLVMContext *c) {
     POCL_MSG_ERR("parseModuleIR('%s') failed:\n%s\n", path, OS.str().c_str());
   }
   return M;
+}
+
+/* Like parseModuleIR, but defers deserialization of function bodies
+ * (LLVM lazy bitcode loading). Only usable for .bc files; falls back
+ * to an eager parse otherwise. Callers must materialize() a function
+ * before inspecting or cloning its body. */
+llvm::Module *parseModuleIRLazy(const char *path, llvm::LLVMContext *c) {
+  auto BufOrErr = MemoryBuffer::getFile(path, /*IsText=*/false,
+                                        /*RequiresNullTerminator=*/false);
+  if (std::error_code EC = BufOrErr.getError()) {
+    POCL_MSG_ERR("parseModuleIRLazy('%s'): cannot read file: %s\n", path,
+                 EC.message().c_str());
+    return nullptr;
+  }
+
+  Expected<std::unique_ptr<llvm::Module>> ModOrErr =
+      getOwningLazyBitcodeModule(std::move(*BufOrErr), *c,
+                                 /*ShouldLazyLoadMetadata=*/false);
+  if (!ModOrErr) {
+    POCL_MSG_WARN("parseModuleIRLazy('%s'): lazy bitcode load failed (%s); "
+                  "falling back to an eager parse\n",
+                  path, toString(ModOrErr.takeError()).c_str());
+    return parseModuleIR(path, c);
+  }
+
+  return ModOrErr->release();
 }
 
 void parseModuleGVarSize(cl_program program, unsigned device_i,

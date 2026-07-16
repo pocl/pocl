@@ -1122,6 +1122,100 @@ if(ENABLE_LLVM AND ENABLE_HOST_CPU_DEVICES AND (NOT ENABLE_CONFORMANCE) AND (LLV
   endif()
 endif()
 
+# Record the compiler runtime archive for the JIT. The Clang-driver final link
+# used to add libgcc/compiler-rt implicitly; the in-process JIT needs the same
+# helper symbols (e.g. __truncdfhf2 for FP16 conversions) available through ORC.
+set(HOST_CPU_COMPILER_RT_LIBRARY "")
+set(HOST_CPU_COMPILER_RT_LIBRARY_SOURCE "" CACHE FILEPATH "Compiler runtime archive to install for CPU JIT kernels")
+if(HOST_CPU_ENABLE_JIT)
+  set(POCL_COMPILER_RT_LIBRARY "${HOST_CPU_COMPILER_RT_LIBRARY_SOURCE}")
+  if(NOT POCL_COMPILER_RT_LIBRARY)
+    # `-print-libgcc-file-name` is a GCC option; clang's answer may name a nonexistent archive
+    # (cross MinGW/clang). Fall back to `-print-file-name=libgcc.a` and require it to exist.
+    execute_process(
+      COMMAND "${CMAKE_C_COMPILER}" -print-libgcc-file-name
+      OUTPUT_VARIABLE POCL_COMPILER_RT_LIBRARY
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_QUIET)
+    if(NOT (POCL_COMPILER_RT_LIBRARY AND EXISTS "${POCL_COMPILER_RT_LIBRARY}"))
+      execute_process(
+        COMMAND "${CMAKE_C_COMPILER}" -print-file-name=libgcc.a
+        OUTPUT_VARIABLE POCL_COMPILER_RT_LIBRARY
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET)
+    endif()
+  endif()
+  if(POCL_COMPILER_RT_LIBRARY AND EXISTS "${POCL_COMPILER_RT_LIBRARY}")
+    get_filename_component(POCL_COMPILER_RT_LIBRARY_NAME
+      "${POCL_COMPILER_RT_LIBRARY}" NAME)
+    install(FILES "${POCL_COMPILER_RT_LIBRARY}"
+      DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR_REL}" COMPONENT "lib")
+    set(HOST_CPU_COMPILER_RT_LIBRARY "${POCL_COMPILER_RT_LIBRARY_NAME}")
+  elseif(HOST_COMPILER_SUPPORTS_FLOAT16)
+    # Warn rather than silently ship a driver whose FP16 kernels can't JIT (__truncdfhf2).
+    message(WARNING
+      "Could not locate a compiler runtime archive (libgcc/compiler-rt) for the CPU JIT. "
+      "FP16 kernels that emit soft-float helpers such as __truncdfhf2 will fail to resolve "
+      "at run time. Point PoCL at one with -DHOST_CPU_COMPILER_RT_LIBRARY_SOURCE=<libgcc.a>.")
+  endif()
+endif()
+
+# Record the SONAME of the SLEEF library for the JIT to link against
+set(HOST_CPU_SLEEF_LIBRARY "")
+set(HOST_CPU_SLEEF_LIBRARY_FALLBACK "")
+if(ENABLE_HOST_CPU_VECTORIZE_SLEEF AND LIBSLEEF)
+  set(HOST_CPU_SLEEF_LIBRARY "${LIBSLEEF}")
+  if(CMAKE_OBJDUMP)
+    execute_process(
+      COMMAND "${CMAKE_OBJDUMP}" -p "${LIBSLEEF}"
+      OUTPUT_VARIABLE POCL_SLEEF_OBJDUMP_OUTPUT
+      ERROR_QUIET
+      RESULT_VARIABLE POCL_SLEEF_OBJDUMP_RESULT)
+    if(POCL_SLEEF_OBJDUMP_RESULT STREQUAL "0")
+      string(REGEX MATCH "SONAME[ \t]+([^ \r\n]+)"
+             POCL_SLEEF_SONAME_MATCH "${POCL_SLEEF_OBJDUMP_OUTPUT}")
+      if(POCL_SLEEF_SONAME_MATCH)
+        set(HOST_CPU_SLEEF_LIBRARY "${CMAKE_MATCH_1}")
+        set(HOST_CPU_SLEEF_LIBRARY_FALLBACK "${LIBSLEEF}")
+      endif()
+    endif()
+  endif()
+endif()
+
+# Record the SONAME of the libmvec library for the JIT to dlopen at run time. LIBMVEC may be
+# the system libmvec (SONAME libmvec.so.1) or a libmvec-ABI-compatible replacement pointed at
+# via -DLIBMVEC=... (e.g. SLEEF's libsleefgnuabi.so); recording the SONAME lets the JIT resolve
+# the vectorized _ZGV* math symbols without relying on a system libmvec (absent on musl / old
+# glibc). Mirrors the SLEEF recording above.
+set(HOST_CPU_LIBMVEC_LIBRARY "")
+set(HOST_CPU_LIBMVEC_LIBRARY_FALLBACK "")
+if(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC AND LIBMVEC)
+  set(HOST_CPU_LIBMVEC_LIBRARY "${LIBMVEC}")
+  if(CMAKE_OBJDUMP)
+    execute_process(
+      COMMAND "${CMAKE_OBJDUMP}" -p "${LIBMVEC}"
+      OUTPUT_VARIABLE POCL_LIBMVEC_OBJDUMP_OUTPUT
+      ERROR_QUIET
+      RESULT_VARIABLE POCL_LIBMVEC_OBJDUMP_RESULT)
+    if(POCL_LIBMVEC_OBJDUMP_RESULT STREQUAL "0")
+      string(REGEX MATCH "SONAME[ \t]+([^ \r\n]+)"
+             POCL_LIBMVEC_SONAME_MATCH "${POCL_LIBMVEC_OBJDUMP_OUTPUT}")
+      if(POCL_LIBMVEC_SONAME_MATCH)
+        set(HOST_CPU_LIBMVEC_LIBRARY "${CMAKE_MATCH_1}")
+        set(HOST_CPU_LIBMVEC_LIBRARY_FALLBACK "${LIBMVEC}")
+      endif()
+    endif()
+  endif()
+endif()
+
+# Record the paths to the SVML static libraries for the JIT to link against.
+set(HOST_CPU_SVML_LIBRARY "")
+set(HOST_CPU_IRC_LIBRARY "")
+if(ENABLE_HOST_CPU_VECTORIZE_SVML AND LIBSVML AND LIBIRC)
+  set(HOST_CPU_SVML_LIBRARY "${LIBSVML}")
+  set(HOST_CPU_IRC_LIBRARY "${LIBIRC}")
+endif()
+
 ######################################################################################
 ######################################################################################
 
@@ -1236,6 +1330,35 @@ find_package(Python3 3.8 COMPONENTS Interpreter)
 set(HOST_CPU_ENABLE_SPIRV OFF)
 if(ENABLE_HOST_CPU_DEVICES AND ENABLE_SPIRV AND (NOT MSVC) AND (HOST_DEVICE_ADDRESS_BITS MATCHES "64"))
   set(HOST_CPU_ENABLE_SPIRV ON)
+endif()
+
+# The JIT for CPU devices is supported on
+#   - non-Windows platforms whose architecture has a JITLink ELF/Mach-O
+#     backend (x86(-64), AArch64, ARM32, RISC-V, PPC64, LoongArch); s390x,
+#     MIPS and SPARC have none, so they keep the Clang+dlopen path;
+#   - Windows x86_64 (MinGW) via JITLink's COFF_x86_64 backend. Windows arm64
+#     has no COFF_aarch64 backend, and MSVC keeps its existing link paths
+#     (in-process lld-link, or the Clang driver).
+set(HOST_CPU_JIT_SUPPORTED OFF)
+if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM)
+  if((NOT WIN32) AND (CMAKE_SYSTEM_PROCESSOR MATCHES
+     "^(x86_64|amd64|AMD64|i[3-6]86|aarch64|arm64|arm.*|riscv32|riscv64|ppc64|ppc64le|powerpc64|powerpc64le|loongarch64)$"))
+    set(HOST_CPU_JIT_SUPPORTED ON)
+  elseif(MINGW
+         AND (CMAKE_SIZEOF_VOID_P EQUAL 8)
+         AND (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64|AMD64|amd64|x64)"))
+    # Windows x86_64 (MinGW): JITLink's COFF_x86_64 backend; no COFF_aarch64.
+    set(HOST_CPU_JIT_SUPPORTED ON)
+  endif()
+endif()
+
+option(HOST_CPU_ENABLE_JIT
+       "JIT CPU kernels via ORC/JITLink instead of Clang+dlopen."
+       ${HOST_CPU_JIT_SUPPORTED})
+if(HOST_CPU_ENABLE_JIT AND NOT HOST_CPU_JIT_SUPPORTED)
+  message(FATAL_ERROR "HOST_CPU_ENABLE_JIT was requested, but JITLink has no "
+          "backend for this platform "
+          "(${CMAKE_SYSTEM_NAME}/${CMAKE_SYSTEM_PROCESSOR}).")
 endif()
 
 ######################################################################################
@@ -2861,6 +2984,7 @@ if (ENABLE_LLVM)
   MESSAGE(STATUS "ENABLE_HOST_CPU_VECTORIZE_LIBMVEC: ${ENABLE_HOST_CPU_VECTORIZE_LIBMVEC}")
   MESSAGE(STATUS "ENABLE_HOST_CPU_VECTORIZE_SVML: ${ENABLE_HOST_CPU_VECTORIZE_SVML}")
   MESSAGE(STATUS "ENABLE_HOST_CPU_VECTORIZE_BUILTINS: ${ENABLE_HOST_CPU_VECTORIZE_BUILTINS}")
+  MESSAGE(STATUS "HOST_CPU_ENABLE_JIT: ${HOST_CPU_ENABLE_JIT}")
   endif()
 endif()
 MESSAGE(STATUS "")

@@ -73,6 +73,7 @@ public:
 };
 
 llvm::Module *parseModuleIR (const char *path, llvm::LLVMContext *c);
+llvm::Module *parseModuleIRLazy (const char *path, llvm::LLVMContext *c);
 void parseModuleGVarSize (cl_program program, unsigned device_i,
                           llvm::Module *ProgramBC);
 void writeModuleIRtoString(const llvm::Module *mod, std::string& dest);
@@ -132,6 +133,14 @@ struct PoclLLVMContextData
   mlir::MLIRContext *MLIRContext;
 #endif
 };
+
+/* Return the device's OpenCL C built-in function library bitcode, parsed into
+ * the context's LLVMContext and cached in its kernelLibraryMap. The returned
+ * module is lazily loaded; materialize functions before inspecting or cloning
+ * their bodies, and only touch the module while holding the context Lock.
+ * Returns NULL if the library cannot be found. */
+llvm::Module *getKernelLibrary(cl_device_id device,
+                               PoclLLVMContextData *llvm_ctx);
 
 #ifdef __GNUC__
 #pragma GCC visibility pop
