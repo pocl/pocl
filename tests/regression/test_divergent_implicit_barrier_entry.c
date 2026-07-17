@@ -23,10 +23,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/*
+  Before the fix, ImplicitConditionalBarriers inserted the two barriers marked
+  below around the inner return check. Both are inside i < active_n, so inactive
+  work-items bypass them but still reach the second source barrier. After the
+  fix, the block after the return check does not dominate the source barrier,
+  and neither implicit barrier is inserted.
+*/
+
 #define CHECK_ERROR(err)                                                       \
   do {                                                                         \
     if ((err) != CL_SUCCESS) {                                                 \
-      fprintf(stderr, "OpenCL error %d at %s:%d\\n", (err), __FILE__,          \
+      fprintf(stderr, "OpenCL error %d at %s:%d\n", (err), __FILE__,           \
               __LINE__);                                                       \
       goto error;                                                              \
     }                                                                          \
@@ -41,7 +49,9 @@ static const char KernelSource[] =
     "  if (i == 0) temp = 0;\n"
     "  barrier(CLK_LOCAL_MEM_FENCE);\n"
     "  if (i < active_n) {\n"
+    "    /* pre-fix: implicit_barrier(); */\n"
     "    if (i >= logical_len) return;\n"
+    "    /* pre-fix: implicit_barrier(); */\n"
     "    if (input[i] < 0) temp = 1;\n"
     "  }\n"
     "  barrier(CLK_LOCAL_MEM_FENCE);\n"
@@ -98,7 +108,7 @@ int main(void) {
     if (log != NULL) {
       clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size,
                             log, NULL);
-      fprintf(stderr, "Build error:\\n%s\\n", log);
+      fprintf(stderr, "Build error:\n%s\n", log);
       free(log);
     }
     goto error;
@@ -124,7 +134,7 @@ int main(void) {
                                   sizeof(output), &output, 0, NULL, NULL));
 
   if (output != 0) {
-    fprintf(stderr, "output = %d, expected 0\\n", output);
+    fprintf(stderr, "output = %d, expected 0\n", output);
     goto error;
   }
   puts("OK");
