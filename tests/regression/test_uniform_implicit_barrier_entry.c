@@ -19,12 +19,13 @@
 // THE SOFTWARE.
 
 /*
-  The bounds check depends on the work-item id, but logical_len equals the
-  work-group size at launch, so every work-item reaches sub_group_shuffle.
-  The builtin is flattened before ImplicitConditionalBarriers and contains a
-  barrier. Its normal path dominates that barrier, so an implicit barrier is
-  legal even though VariableUniformityAnalysis cannot prove the condition
-  uniform.
+  Flattening sub_group_shuffle exposes a source barrier after the return check.
+  Both before and after the fix, ImplicitConditionalBarriers inserts the two
+  barriers marked below. The block after the check dominates the source barrier,
+  so the source barrier's all-or-none execution guarantee makes both insertions
+  legal. VariableUniformityAnalysis cannot prove this because the bounds check
+  depends on the work-item id. At launch, logical_len equals the work-group size,
+  so every work-item takes the normal path.
 */
 
 #include "pocl_opencl.h"
@@ -47,7 +48,9 @@ static const char KernelSource[] =
     "                          __global const int *input,\n"
     "                          uint logical_len) {\n"
     "  uint i = get_sub_group_local_id();\n"
+    "  /* implicit_barrier(); */\n"
     "  if (i >= logical_len) return;\n"
+    "  /* implicit_barrier(); */\n"
     "  uint j = get_sub_group_size() - i - 1;\n"
     "  out[i] = sub_group_shuffle(input[i], j);\n"
     "}\n";
