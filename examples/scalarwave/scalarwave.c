@@ -130,7 +130,12 @@ main(void)
   fseek(source_file, 0, SEEK_SET);
   
   char *source = (char*)malloc(source_size + 1);
-  fread(source, source_size, 1, source_file);
+  if (fread(source, source_size, 1, source_file) < 1)
+    {
+      free (source);
+      fclose (source_file);
+      return EXIT_FAILURE;
+    }
   source[source_size] = '\0';
   
   fclose(source_file);

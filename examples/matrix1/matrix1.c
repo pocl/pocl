@@ -255,7 +255,7 @@ main (int argc, char **argv)
           "USE_FMA %i \n"
           "EXPLICIT BINARY: %s \n",
           spirv, poclbin, use_locals, use_2d_reg_block, use_fma,
-          explicit_binary_path);
+          explicit_binary_path ? explicit_binary_path : "(none)");
 
   if (explicit_binary_path && ((spirv + poclbin) == 0))
     {
