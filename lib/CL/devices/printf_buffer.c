@@ -804,10 +804,15 @@ pocl_flush_printf_buffer (char *buffer, uint32_t buffer_size)
 
   if (p.printf_buffer_index > 0)
     {
+      /* Best-effort flush; ignore short writes / errors. */
 #ifdef _MSC_VER
-      write (_fileno (stdout), p.printf_buffer, p.printf_buffer_index);
+      if (write (_fileno (stdout), p.printf_buffer, p.printf_buffer_index) < 0)
+        {
+        }
 #else
-      write (STDOUT_FILENO, p.printf_buffer, p.printf_buffer_index);
+      if (write (STDOUT_FILENO, p.printf_buffer, p.printf_buffer_index) < 0)
+        {
+        }
 #endif
     }
 }

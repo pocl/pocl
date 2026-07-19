@@ -1458,7 +1458,12 @@ int main(int argc, char** argv)
   size_t const source1_size = ftell(source1_file);
   fseek(source1_file, 0, SEEK_SET);
   char *source1 = malloc (source1_size + 1);
-  fread(source1, source1_size, 1, source1_file);
+  if (fread(source1, source1_size, 1, source1_file) != 1)
+    {
+      free (source1);
+      fclose (source1_file);
+      return EXIT_FAILURE;
+    }
   source1[source1_size] = '\0';
   fclose(source1_file);
 
@@ -1468,7 +1473,12 @@ int main(int argc, char** argv)
   size_t const source2_size = ftell(source2_file);
   fseek(source2_file, 0, SEEK_SET);
   char *source2 = malloc (source2_size + 1);
-  fread(source2, source2_size, 1, source2_file);
+  if (fread(source2, source2_size, 1, source2_file) != 1)
+    {
+      free (source2);
+      fclose (source2_file);
+      return EXIT_FAILURE;
+    }
   source2[source2_size] = '\0';
   fclose(source2_file);
   

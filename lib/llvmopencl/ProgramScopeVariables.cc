@@ -144,7 +144,8 @@ static Value *expandConstant(Constant *C, IRBuilder<> &Builder,
       if (GVar->getAddressSpace() != DeviceGlobalAS) {
         GVarPtrWithOffset = Builder.CreateAddrSpaceCast(
             GVarPtrWithOffset,
-            PointerType::get(GVarBufferTy, GVar->getAddressSpace()));
+            PointerType::get(GVarBufferTy->getContext(),
+                             GVar->getAddressSpace()));
       }
       Instruction *I = cast<Instruction>(GVarPtrWithOffset);
       InsnCache[GVar] = I;
@@ -219,7 +220,8 @@ static void addGlobalVarInitInstr(GlobalVariable *OriginalGVarDef,
   if (OrigGVarPTy->getAddressSpace() != DeviceGlobalAS)
     GVarPtrWithOffset = Builder.CreateAddrSpaceCast(
         GVarPtrWithOffset,
-        PointerType::get(GVarBufferTy, OrigGVarPTy->getAddressSpace()));
+        PointerType::get(GVarBufferTy->getContext(),
+                         OrigGVarPTy->getAddressSpace()));
 
   // Initializers are constant expressions. If they have references to a global
   // variables we are going to replace with load instructions we need to rewrite
@@ -310,7 +312,7 @@ static Value *loadGVarFromBuffer(Instruction *GVarBuffer,
     // AScast from DeviceGlobalAS to use's AS
     if (GVarPTy->getAddressSpace() != DeviceGlobalAS)
       V = Builder.CreateAddrSpaceCast(
-          V, PointerType::get(GVar->getType(), GVarPTy->getAddressSpace()));
+          V, PointerType::get(GVar->getContext(), GVarPTy->getAddressSpace()));
   } else {
     SmallVector<Value *, 2> Indices{ConstantInt::get(I64Ty, 0),
                                     ConstantInt::get(I64Ty, Offset)};
@@ -329,7 +331,7 @@ static Value *loadGVarFromBuffer(Instruction *GVarBuffer,
     // AScast from DeviceGlobalAS to use's AS
     if (GVarPTy->getAddressSpace() != DeviceGlobalAS)
       V = Builder.CreateAddrSpaceCast(
-          V, PointerType::get(GVar->getType(), GVarPTy->getAddressSpace()));
+          V, PointerType::get(GVar->getContext(), GVarPTy->getAddressSpace()));
   }
 
 #ifdef POCL_DEBUG_PROGVARS
@@ -474,7 +476,7 @@ int runProgramScopeVariablesPass(
 
   Type *GVarBufferArrayTy = ArrayType::get(Type::getInt8Ty(Ctx), TotalGVarSize);
   PointerType *GVarBufferTy =
-      PointerType::get(GVarBufferArrayTy, DeviceGlobalAS);
+      PointerType::get(Ctx, DeviceGlobalAS);
   Program->getOrInsertGlobal(PoclGVarBufferName, GVarBufferTy);
 
   GlobalVariable *GVarBuffer = Program->getNamedGlobal(PoclGVarBufferName);

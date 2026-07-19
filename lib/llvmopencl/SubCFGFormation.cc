@@ -210,7 +210,8 @@ void copyDgbValues(llvm::Value *From, llvm::Value *To,
         *InsertBefore->getParent()->getParent()->getParent()};
     DbgBuilder.insertDbgValueIntrinsic(To, DbgValue->getVariable(),
                                        DbgValue->getExpression(),
-                                       DbgValue->getDebugLoc(), InsertBefore);
+                                       DbgValue->getDebugLoc(),
+                                       Inst2InsertPt(InsertBefore));
   }
 }
 
@@ -274,17 +275,19 @@ getLocalSizeValues(llvm::Function &F, llvm::ArrayRef<unsigned long> LocalSizes,
 
       if (I->getParent() != &F.getEntryBlock()) {
         // must be in entry block. move.
-// TODO for some reason, moveAfter(InsertionPoint) exists in the header, but
-// linking fails with undefined symbol
-//#if LLVM_MAJOR < 20
-          auto InsPt = F.getEntryBlock().getFirstNonPHI();
-//#else
-//          BasicBlock::iterator InsPt = F.getEntryBlock().getFirstInsertionPt();
-//#endif
+#if LLVM_MAJOR < 20
+        auto InsPt = F.getEntryBlock().getFirstNonPHI();
         if (F.getEntryBlock().size() == 1)
           I->moveBefore(InsPt);
         else
           I->moveAfter(InsPt);
+#else
+        auto InsPt = F.getEntryBlock().getFirstNonPHIIt();
+        if (F.getEntryBlock().size() == 1)
+          I->moveBefore(InsPt);
+        else
+          I->moveBefore(std::next(InsPt));
+#endif
       }
     } else
       LocalSize[D] = llvm::ConstantInt::get(
@@ -1395,7 +1398,8 @@ void SubCFGFormation::formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI,
   auto *IndVarT =
       getLoadForGlobalVariable(F, LocalIdGlobalNames[Dim - 1])->getType();
   llvm::Instruction *IndVar = Builder.CreateLoad(
-      IndVarT, llvm::UndefValue::get(llvm::PointerType::get(IndVarT, 0)));
+      IndVarT,
+      llvm::UndefValue::get(llvm::PointerType::get(F.getContext(), 0)));
   // kept for simple reenabling of more advanced uniformity analysis
 #if 0
   VecInfo.setPinnedShape(*IndVar, pocl::VectorShape::cont());
