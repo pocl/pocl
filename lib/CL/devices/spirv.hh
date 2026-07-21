@@ -1186,6 +1186,7 @@ enum class Op : unsigned {
   OpModuleProcessed = 330,
   OpExecutionModeId = 331,
   OpDecorateId = 332,
+  OpTypeUntypedPointerKHR = 4417,
   OpSubgroupBallotKHR = 4421,
   OpSubgroupFirstInvocationKHR = 4422,
   OpSubgroupAllKHR = 4428,
