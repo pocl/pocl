@@ -381,8 +381,9 @@ public:
   bool isName() const { return Opcode_ == spv::Op::OpName; }
   bool isDecoration() const { return Opcode_ == spv::Op::OpDecorate; }
   bool isType() const {
-    return ((int32_t)Opcode_ >= (int32_t)spv::Op::OpTypeVoid) &&
-           ((int32_t)Opcode_ <= (int32_t)spv::Op::OpTypeForwardPointer);
+    return (((int32_t)Opcode_ >= (int32_t)spv::Op::OpTypeVoid) &&
+            ((int32_t)Opcode_ <= (int32_t)spv::Op::OpTypeForwardPointer)) ||
+           (Opcode_ == spv::Op::OpTypeUntypedPointerKHR);
   }
   bool isConstant() const { return Opcode_ == spv::Op::OpConstant; }
   bool isBitcast() const { return Opcode_ == spv::Op::OpBitcast; }
@@ -556,6 +557,11 @@ public:
 
       } else
         return new SPIRVtypePointer(Word1_, Word2_, PointerSize, Word3_);
+    }
+
+    if (Opcode_ == spv::Op::OpTypeUntypedPointerKHR) {
+      return new SPIRVtypePointer(Word1_, Word2_, PointerSize,
+                                  0 /* no pointee type */);
     }
 
     return nullptr;
