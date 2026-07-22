@@ -1659,8 +1659,15 @@ int SharedCLContext::buildOrLinkProgram(
     plat_binaries.resize(DeviceList.size());
     for (size_t i = 0; i < DeviceList.size(); ++i) {
       uint64_t id = ((uint64_t)plat_id << 32) + DeviceList[i];
-      assert(InputBinaries.find(id) != InputBinaries.end());
-      plat_binaries[i] = InputBinaries[id];
+      auto Bin = InputBinaries.find(id);
+      assert(Bin != InputBinaries.end());
+      plat_binaries[i] = Bin->second;
+    }
+    // The number of binaries MUST match the number of devices, so when working
+    // around multi-device driver issues, copy a likely valid binary for the
+    // devices that didn't get one from the client.
+    for (size_t i = DeviceList.size(); i < program->devices.size(); ++i) {
+      plat_binaries.push_back(InputBinaries.begin()->second);
     }
 
     clProgramPtr pp(new cl::Program(ContextWithAllDevices, program->devices,
@@ -1732,19 +1739,29 @@ int SharedCLContext::buildOrLinkProgram(
   }
 
   if (!LinkOnly) {
+    const char *Options = opts.c_str();
+    // When building from a binary, options should be either NULL or exactly the
+    // same options in the same order as when the binary was originally built,
+    // else behaviour is implementation-defined and in practice not usable.
+    if (is_binary)
+      Options = nullptr;
+
     // build
     if (CompileOnly) {
-      err = p->compile(opts, program->devices, {}, {});
+      err = p->compile(Options, program->devices, {}, {});
     } else {
-      err = p->build(program->devices, opts.c_str());
+      err = p->build(program->devices, Options);
     }
   }
 
   // even if build failed, return build log
   auto buildInfo = p->getBuildInfo<CL_PROGRAM_BUILD_LOG>();
   if (buildInfo.size() > 0) {
-    size_t i = 0;
+    size_t i, j = 0;
     for (const auto &pair : buildInfo) {
+      for (i = 0; i < DeviceList.size(); ++i)
+        if (pair.first == CLDevices[DeviceList[i]])
+          break;
       if (i < DeviceList.size()) {
         // assert (pair.first() == program->devices[i]);
         uint64_t id = ((uint64_t)plat_id << 32) + DeviceList[i];
@@ -1753,11 +1770,12 @@ int SharedCLContext::buildOrLinkProgram(
         POCL_MSG_PRINT_GENERAL("Platform %u Device %" PRIu32 " Build log: \n%s",
                                plat_id, DeviceList[i], build_logs[id].c_str());
       } else {
-        POCL_MSG_PRINT_GENERAL("Platform %u Unknown Device %" PRIuS
-                               " Build log: \n%s",
-                               plat_id, i, pair.second.c_str());
+        POCL_MSG_PRINT_GENERAL(
+            "Platform %u Unknown Device %u: %s Build log: \n%s", plat_id,
+            (unsigned)j, pair.first.getInfo<CL_DEVICE_NAME>().c_str(),
+            pair.second.c_str());
       }
-      ++i;
+      ++j;
     }
   }
 
