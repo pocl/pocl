@@ -1242,12 +1242,6 @@ int pocl_remote_link_program (cl_program program, cl_uint device_i,
 
   char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
 
-  /* We are creating a new program out of the previously compiled programs,
-     there is no build dir for the linked program yet. */
-  create_build_hash (program, device, device_i);
-  pocl_cache_create_program_cachedir (program, device_i, NULL, 0,
-                                      program_bc_path);
-
   num_relevant_devices = setup_relevant_devices (
       program, device, build_indexes, build_logs, relevant_devices,
       relevant_platforms, binaries, binary_sizes, &total_binary_request_size);
@@ -1306,6 +1300,9 @@ int pocl_remote_link_program (cl_program program, cl_uint device_i,
         assert (program->binary_sizes[real_i] > 0);
         POCL_MSG_PRINT_REMOTE ("BINARY SIZE [%u]: %zu \n", real_i,
                                program->binary_sizes[real_i]);
+        create_build_hash (program, device, device_i);
+        pocl_cache_create_program_cachedir (program, device_i, NULL, 0,
+                                            program_bc_path);
 
         pocl_cache_program_bc_path (program_bc_path, program, real_i);
         err = pocl_cache_write_generic_objfile (
