@@ -3397,7 +3397,10 @@ int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
         cl::Buffer *b = nullptr;
         { FIND_BUFFER; }
         cl::CommandQueue *cq = &Queues[R->Body.cq_id];
-        std::vector<cl::Event> dependencies = std::move(Deps);
+        // Alias the correct values to the names that fillB expects. Note that
+        // this shadows the respective function parameters in this scope.
+        std::vector<cl::Event> Dependencies = std::move(Deps);
+        cl::Event &event = InternalEvent;
         switch (R->Body.m.fill_buffer.pattern_size) {
         case 1:
           fillB(cl_uchar);
