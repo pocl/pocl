@@ -133,6 +133,8 @@ private:
   void fixMultiRegionVariables(ParallelRegion *Region);
   void addContextSaveRestore(llvm::Instruction *instruction);
   void releaseParallelRegions();
+  void shareReplicatedLocalMemAllocas(
+      ParallelRegion &Region, llvm::ValueToValueMapTy &ReferenceMap);
 
   // Returns an instruction in the entry block which computes the
   // total size of work-items in the work-group. If it doesn't
@@ -451,6 +453,29 @@ void WorkitemLoopsImpl::releaseParallelRegions() {
   }
 }
 
+void WorkitemLoopsImpl::shareReplicatedLocalMemAllocas(
+    ParallelRegion &Region, ValueToValueMapTy &ReferenceMap) {
+  for (BasicBlock *BB : Region) {
+    for (Instruction &I : *BB) {
+      auto *Original = dyn_cast<CallInst>(&I);
+      if (Original == nullptr || Original->getCalledFunction() == nullptr ||
+          (Original->getCalledFunction() != LocalMemAllocaFuncDecl &&
+           Original->getCalledFunction() != WorkGroupAllocaFuncDecl))
+        continue;
+
+      auto *Replica = dyn_cast_or_null<CallInst>(ReferenceMap.lookup(Original));
+      if (Replica == nullptr || Replica == Original)
+        continue;
+
+      // Region replicas execute different work-items of the same work group.
+      // They must share local memory originating from the same allocation.
+      Replica->replaceAllUsesWith(Original);
+      ReferenceMap[Original] = Original;
+      Replica->eraseFromParent();
+    }
+  }
+}
+
 bool WorkitemLoopsImpl::processFunction(Function &F) {
 
   releaseParallelRegions();
@@ -545,6 +570,7 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
       LLVM_DEBUG(dbgs() << "Conditional region, peeling the first iteration\n");
 
       ParallelRegion *replica = PRegion->replicate(reference_map, ".peeled_wi");
+      shareReplicatedLocalMemAllocas(*PRegion, reference_map);
       replica->chainAfter(PRegion);
       replica->purge();
 
@@ -586,6 +612,7 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
         for (unsigned c = 1; c < UnrollCount; ++c) {
           ParallelRegion *UnrolledPR =
               PRegion->replicate(reference_map, ".unrolled_wi");
+          shareReplicatedLocalMemAllocas(*PRegion, reference_map);
           UnrolledPR->chainAfter(prev);
           prev = UnrolledPR;
           lastBB = UnrolledPR->exitBB();
