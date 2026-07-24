@@ -556,7 +556,7 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
         HOST_CPU_COMPILER_RT_LIBRARY);
 #endif
 
-#ifdef HAVE_DLFCN_H
+#if defined(HAVE_DLFCN_H) && defined(POCL_BUILD_SHARED_LIB)
   /* The JIT's default process-symbol search uses the global dlsym scope, which
      misses libpocl's private dependencies (libgcc_s for builtins like
      __aeabi_uldivmod or __extendhfsf2, libm before glibc 2.34) when an ICD

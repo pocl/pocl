@@ -25,6 +25,10 @@
 
 include_directories(AFTER "devices" ".")
 
+if(BUILD_SHARED_LIBS)
+  add_compile_definitions(POCL_BUILD_SHARED_LIB)
+endif()
+
 add_subdirectory("devices")
 
 ###############################################################################
