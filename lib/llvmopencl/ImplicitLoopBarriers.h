@@ -35,14 +35,13 @@
 
 namespace pocl {
 
-
-class ImplicitLoopBarriers : public llvm::PassInfoMixin<ImplicitLoopBarriers> {
+class ImplicitLoopBarriers
+    : public llvm::RequiredPassInfoMixin<ImplicitLoopBarriers> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Loop &L, llvm::LoopAnalysisManager &AM,
                               llvm::LoopStandardAnalysisResults &AR,
                               llvm::LPMUpdater &U);
-  static bool isRequired() { return true; }
 };
 
 } // namespace pocl

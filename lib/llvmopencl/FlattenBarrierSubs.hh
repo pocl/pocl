@@ -33,12 +33,11 @@
 
 namespace pocl {
 
-
-class FlattenBarrierSubs : public llvm::PassInfoMixin<FlattenBarrierSubs> {
+class FlattenBarrierSubs
+    : public llvm::RequiredPassInfoMixin<FlattenBarrierSubs> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
-  static bool isRequired() { return true; }
 };
 
 } // namespace pocl

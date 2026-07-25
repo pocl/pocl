@@ -144,13 +144,12 @@ private:
   llvm::BasicBlock *createUniformLoadBB(llvm::BasicBlock *OuterMostHeader);
 };
 
-class SubCFGFormation : public llvm::PassInfoMixin<SubCFGFormation>,
+class SubCFGFormation : public llvm::RequiredPassInfoMixin<SubCFGFormation>,
                         WorkitemHandler {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
-  static bool isRequired() { return true; }
 
   static bool canHandleKernel(llvm::Function &K,
                               llvm::FunctionAnalysisManager &AM);

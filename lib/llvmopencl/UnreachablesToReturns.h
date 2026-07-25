@@ -31,12 +31,11 @@
 namespace pocl {
 
 class ConvertUnreachablesToReturns
-    : public llvm::PassInfoMixin<ConvertUnreachablesToReturns> {
+    : public llvm::RequiredPassInfoMixin<ConvertUnreachablesToReturns> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
-  static bool isRequired() { return true; }
 };
 
 } // namespace pocl

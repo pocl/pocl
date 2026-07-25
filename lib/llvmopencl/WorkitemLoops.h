@@ -33,13 +33,11 @@
 
 namespace pocl {
 
-
-class WorkitemLoops : public llvm::PassInfoMixin<WorkitemLoops> {
+class WorkitemLoops : public llvm::RequiredPassInfoMixin<WorkitemLoops> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
-  static bool isRequired() { return true; }
 
   // Returns false in case the WG generator can or should not handle the given
   // kernel. It might refuse to handle trickiest of conditional barrier
@@ -47,7 +45,6 @@ public:
   static bool canHandleKernel(llvm::Function &K,
                               llvm::FunctionAnalysisManager &AM);
 };
-
 
 } // namespace pocl
 

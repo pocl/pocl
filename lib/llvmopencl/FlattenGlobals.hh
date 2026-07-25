@@ -34,14 +34,11 @@
 
 namespace pocl {
 
-
-class FlattenGlobals : public llvm::PassInfoMixin<FlattenGlobals> {
+class FlattenGlobals : public llvm::RequiredPassInfoMixin<FlattenGlobals> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
-  static bool isRequired() { return true; }
 };
-
 
 } // namespace pocl
 

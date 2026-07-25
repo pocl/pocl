@@ -33,11 +33,10 @@
 
 namespace pocl {
 
-class SVMOffset : public llvm::PassInfoMixin<SVMOffset> {
+class SVMOffset : public llvm::RequiredPassInfoMixin<SVMOffset> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
-  static bool isRequired() { return true; }
 };
 
 } // namespace pocl

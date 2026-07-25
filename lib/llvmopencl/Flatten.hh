@@ -34,11 +34,10 @@
 
 namespace pocl {
 
-class FlattenAll : public llvm::PassInfoMixin<FlattenAll> {
+class FlattenAll : public llvm::RequiredPassInfoMixin<FlattenAll> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
-  static bool isRequired() { return true; }
 };
 
 } // namespace pocl

@@ -60,23 +60,21 @@ void viewCFG(llvm::Function &F);
 // @return True in case the function was changed.
 bool chopBBs (llvm::Function &F, llvm::Pass &P);
 
-  class PoCLCFGPrinter : public llvm::PassInfoMixin<PoCLCFGPrinter> {
-  public:
-    explicit PoCLCFGPrinter(llvm::raw_ostream &OutS, llvm::StringRef Pref = "")
-        : OS(OutS) {
-      Prefix = Pref.str();
-      Prefix += "_";
-    }
-    static void registerWithPB(llvm::PassBuilder &B);
-    llvm::PreservedAnalyses run(llvm::Module &M,
-                                llvm::ModuleAnalysisManager &AM);
-    static bool isRequired() { return true; }
+class PoCLCFGPrinter : public llvm::RequiredPassInfoMixin<PoCLCFGPrinter> {
+public:
+  explicit PoCLCFGPrinter(llvm::raw_ostream &OutS, llvm::StringRef Pref = "")
+      : OS(OutS) {
+    Prefix = Pref.str();
+    Prefix += "_";
+  }
+  static void registerWithPB(llvm::PassBuilder &B);
+  llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
 
-  private:
-    std::string Prefix;
-    llvm::raw_ostream &OS;
-    void dumpModule(llvm::Module &M);
-  };
+private:
+  std::string Prefix;
+  llvm::raw_ostream &OS;
+  void dumpModule(llvm::Module &M);
+};
 };
 
 // Controls the debug output from BarrierTailReplication.cc.

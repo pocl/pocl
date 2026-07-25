@@ -32,11 +32,10 @@
 
 namespace pocl {
 
-class AutomaticLocals : public llvm::PassInfoMixin<AutomaticLocals> {
+class AutomaticLocals : public llvm::RequiredPassInfoMixin<AutomaticLocals> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
-  static bool isRequired() { return true; }
 };
 
 } // namespace pocl

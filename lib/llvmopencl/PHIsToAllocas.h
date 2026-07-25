@@ -31,12 +31,11 @@
 
 namespace pocl {
 
-class PHIsToAllocas : public llvm::PassInfoMixin<PHIsToAllocas> {
+class PHIsToAllocas : public llvm::RequiredPassInfoMixin<PHIsToAllocas> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
-  static bool isRequired() { return true; }
 };
 
 } // namespace pocl

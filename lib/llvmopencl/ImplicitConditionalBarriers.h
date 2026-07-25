@@ -66,14 +66,12 @@
 namespace pocl {
 
 class ImplicitConditionalBarriers
-    : public llvm::PassInfoMixin<ImplicitConditionalBarriers> {
+    : public llvm::RequiredPassInfoMixin<ImplicitConditionalBarriers> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
-  static bool isRequired() { return true; }
 };
-
 }
 
 #endif

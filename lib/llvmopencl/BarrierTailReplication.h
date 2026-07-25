@@ -34,12 +34,11 @@
 namespace pocl {
 
 class BarrierTailReplication
-    : public llvm::PassInfoMixin<BarrierTailReplication> {
+    : public llvm::RequiredPassInfoMixin<BarrierTailReplication> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
-  static bool isRequired() { return true; }
 };
 
 } // namespace pocl

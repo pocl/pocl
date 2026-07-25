@@ -34,11 +34,10 @@
 
 namespace pocl {
 
-class Workgroup : public llvm::PassInfoMixin<Workgroup> {
+class Workgroup : public llvm::RequiredPassInfoMixin<Workgroup> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
-  static bool isRequired() { return true; }
 };
 
 } // namespace pocl

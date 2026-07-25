@@ -31,11 +31,10 @@
 
 namespace pocl {
 
-class FixMinVecSize : public llvm::PassInfoMixin<FixMinVecSize> {
+class FixMinVecSize : public llvm::RequiredPassInfoMixin<FixMinVecSize> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
-  static bool isRequired() { return true; }
 };
 
 } // namespace pocl

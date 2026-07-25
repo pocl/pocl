@@ -38,12 +38,12 @@ namespace pocl {
 /// Canonical form means that the barriers are in their separate BB containing
 /// only the barrier and the terminator, with just one predecessor. This allows
 /// us to use those BBs as markers only, they will not be replicated.
-class CanonicalizeBarriers : public llvm::PassInfoMixin<CanonicalizeBarriers> {
+class CanonicalizeBarriers
+    : public llvm::RequiredPassInfoMixin<CanonicalizeBarriers> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
-  static bool isRequired() { return true; }
 };
 
 } // namespace pocl

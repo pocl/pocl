@@ -33,12 +33,12 @@
 
 namespace pocl {
 
-class SanitizeUBofDivRem : public llvm::PassInfoMixin<SanitizeUBofDivRem> {
+class SanitizeUBofDivRem
+    : public llvm::RequiredPassInfoMixin<SanitizeUBofDivRem> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
-  static bool isRequired() { return true; }
 };
 
 } // namespace pocl

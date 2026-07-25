@@ -31,14 +31,12 @@
 namespace pocl {
 
 class OptimizeWorkItemGVars
-    : public llvm::PassInfoMixin<OptimizeWorkItemGVars> {
+    : public llvm::RequiredPassInfoMixin<OptimizeWorkItemGVars> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
-  static bool isRequired() { return true; }
 };
-
 
 } // namespace pocl
 
