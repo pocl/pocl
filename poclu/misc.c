@@ -259,7 +259,12 @@ poclu_read_binfile (const char *filename, size_t *len)
     }
 
   fseek (file, 0, SEEK_SET);
-  fread (src, *len, 1, file);
+  if (fread (src, *len, 1, file) < 1)
+    {
+      free (src);
+      fclose (file);
+      return NULL;
+    }
   fclose (file);
 
   return src;

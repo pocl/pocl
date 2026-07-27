@@ -620,7 +620,7 @@ ParallelRegion::InjectPrintF
   /* generated with help from https://llvm.org/demo/index.cgi */
   Function* printfFunc = M->getFunction("printf");
   if (printfFunc == NULL) {
-    PointerType* PointerTy_4 = PointerType::get(IntegerType::get(M->getContext(), 8), 0);
+    PointerType* PointerTy_4 = PointerType::get(M->getContext(), 0);
  
     std::vector<Type*> FuncTy_6_args;
     FuncTy_6_args.push_back(PointerTy_4);
@@ -655,9 +655,10 @@ ParallelRegion::InjectPrintF
   const_ptr_8_indices.push_back(const_int64_9);
   const_ptr_8_indices.push_back(const_int64_9);
   assert (isa<Constant>(stringArg));
+  auto *StrGV = cast<GlobalVariable>(stringArg);
   Constant* const_ptr_8 =
     ConstantExpr::getGetElementPtr
-    (PointerType::getUnqual(Type::getInt8Ty(M->getContext())), cast<Constant>(stringArg), const_ptr_8_indices);
+    (StrGV->getValueType(), StrGV, const_ptr_8_indices);
 
   std::vector<Value*> args;
   args.push_back(const_ptr_8);

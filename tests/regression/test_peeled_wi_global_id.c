@@ -108,7 +108,12 @@ int main(int argc, char **argv) {
   size_t size = ftell(f);
   fseek(f, 0, SEEK_SET);
   unsigned char *binary = malloc(size);
-  fread(binary, 1, size, f);
+  if (fread(binary, 1, size, f) != size) {
+    printf("Failed to read SPIR-V\n");
+    free(binary);
+    fclose(f);
+    return 1;
+  }
   fclose(f);
 
   cl_program program = clCreateProgramWithIL(context, binary, size, &err);

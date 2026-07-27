@@ -283,23 +283,21 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
   SizeT = pocl::SizeT(&M);
 
   llvm::Type *Int32T = Type::getInt32Ty(*C);
-  llvm::Type *Int8T = Type::getInt8Ty(*C);
   PoclContextT = StructType::get(
       ArrayType::get(SizeT, 3),                   // NUM_GROUPS
       ArrayType::get(SizeT, 3),                   // GLOBAL_OFFSET
       ArrayType::get(SizeT, 3),                   // LOCAL_SIZE
-      PointerType::get(Int8T, DeviceGlobalASid),  // PRINTF_BUFFER
-      PointerType::get(Int32T, DeviceGlobalASid), // PRINTF_BUFFER_POSITION
-      Int32T,                                     // PRINTF_BUFFER_CAPACITY
-      PointerType::get(Int8T, DeviceGlobalASid),  // GLOBAL_VAR_BUFFER
-      Int32T,                                     // WORK_DIM
-      Int32T);                                    // EXECUTION_FAILED
+      PointerType::get(*C, DeviceGlobalASid),  // PRINTF_BUFFER
+      PointerType::get(*C, DeviceGlobalASid),  // PRINTF_BUFFER_POSITION
+      Int32T,                                  // PRINTF_BUFFER_CAPACITY
+      PointerType::get(*C, DeviceGlobalASid),  // GLOBAL_VAR_BUFFER
+      Int32T,                                  // WORK_DIM
+      Int32T);                                 // EXECUTION_FAILED
 
   LauncherFuncT = FunctionType::get(
       Type::getVoidTy(*C),
-      {PointerType::get(PointerType::get(Type::getInt8Ty(*C), 0),
-                        DeviceArgsASid),
-       PointerType::get(PoclContextT, DeviceContextASid), SizeT, SizeT, SizeT},
+      {PointerType::get(*C, DeviceArgsASid),
+       PointerType::get(*C, DeviceContextASid), SizeT, SizeT, SizeT},
       false);
 
   assert ((SizeTWidth == 64 || SizeTWidth == 32) &&
@@ -928,11 +926,11 @@ Function *WorkgroupImpl::createWrapper(Function *F,
     FuncParams.push_back(i->getType());
 
   if (!DeviceUsingArgBufferLauncher && DeviceIsSPMD) {
-    FuncParams.push_back(PointerType::get(PoclContextT, DeviceContextASid));
+    FuncParams.push_back(PointerType::get(C, DeviceContextASid));
     HiddenArgs = 1;
   } else {
     // pocl_context
-    FuncParams.push_back(PointerType::get(PoclContextT, DeviceContextASid));
+    FuncParams.push_back(PointerType::get(C, DeviceContextASid));
     // group_x
     FuncParams.push_back(SizeT);
     // group_y
@@ -1391,7 +1389,7 @@ void WorkgroupImpl::createDefaultWorkgroupLauncher(llvm::Function *F) {
     Type* I32Ty = Type::getInt32Ty(M->getContext());
 
     Type *I8Ty = Type::getInt8Ty(M->getContext());
-    Type *I8PtrTy = I8Ty->getPointerTo(0);
+    Type *I8PtrTy = PointerType::get(M->getContext(), 0);
     Value *GEP = Builder.CreateGEP(I8PtrTy, AI, ConstantInt::get(I32Ty, i));
     Value *Pointer = Builder.CreateLoad(I8PtrTy, GEP);
 
