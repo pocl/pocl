@@ -34,8 +34,6 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include "DebugHelpers.h"
 #include "ImplicitConditionalBarriers.h"
 #include "LLVMUtils.h"
-#include "VariableUniformityAnalysis.h"
-#include "VariableUniformityAnalysisResult.hh"
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
 POP_COMPILER_DIAGS
@@ -95,7 +93,6 @@ ImplicitConditionalBarriers::run(llvm::Function &F,
   llvm::LoopInfo &LI = FAM.getResult<LoopAnalysis>(F);
 
   PreservedAnalyses PAChanged = PreservedAnalyses::none();
-  PAChanged.preserve<VariableUniformityAnalysis>();
   PAChanged.preserve<WorkitemHandlerChooser>();
   PAChanged.preserve<LoopAnalysis>();
 
@@ -155,7 +152,12 @@ ImplicitConditionalBarriers::run(llvm::Function &F,
       if (Pred == BB) break; // Traced across a loop edge, skip this case.
     }
 
-    if (Barrier::hasOnlyBarrier(Pos)) continue;
+    if (Barrier::hasOnlyBarrier(Pos) || !DT.dominates(Pos, BB))
+      continue;
+
+    // Let the source barrier's all-or-none execution guarantee apply to the
+    // implicit barrier only when every path to the source crosses Pos.
+
     // Inject a barrier at the beginning of the BB and let the
     // CanonicalizeBarrier to clean it up (split to a separate BB).
 
