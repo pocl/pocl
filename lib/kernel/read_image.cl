@@ -180,9 +180,6 @@ get_float_pixel (void *data, size_t base_index, int type)
 
 /*************************************************************************/
 
-#define BORDER_COLOR (uint4)(0)
-#define BORDER_COLOR_F (float4)(0.0f)
-
 /* for use inside filter functions
  * no channel mapping
  * no pointers to img metadata */
@@ -213,6 +210,7 @@ pocl_read_pixel_fast_ui (size_t base_index, int order, int elem_size,
         color.x = ((ushort *)data)[base_index];
       else if (elem_size == 4)
         color.x = ((uint *)data)[base_index];
+      color.w = 1;
       return color;
     }
 
@@ -225,6 +223,7 @@ pocl_read_pixel_fast_ui (size_t base_index, int order, int elem_size,
         color.xy = convert_uint2(((ushort2 *)data)[base_index]);
       else if (elem_size == 4)
         color.xy = ((uint2 *)data)[base_index];
+      color.w = 1;
       return color;
     }
 
@@ -303,6 +302,7 @@ pocl_read_pixel_fast_i (size_t base_index, int order, int elem_size,
         color.x = ((short *)data)[base_index];
       else if (elem_size == 4)
         color.x = ((int *)data)[base_index];
+      color.w = 1;
       return color;
     }
 
@@ -315,6 +315,7 @@ pocl_read_pixel_fast_i (size_t base_index, int order, int elem_size,
         color.xy = convert_int2(((short2 *)data)[base_index]);
       else if (elem_size == 4)
         color.xy = ((int2 *)data)[base_index];
+      color.w = 1;
       return color;
     }
 
@@ -417,18 +418,23 @@ pocl_read_pixel (global dev_image_t *img, int4 coord)
       || ((height != 0) && (coord.y >= height || coord.y < 0))
       || ((depth != 0) && (coord.z >= depth || coord.z < 0)))
     {
-      /* if out of bounds, return BORDER COLOR:
-       * since pocl's basic/pthread device only
-       * supports CLK_A + CLK_{RGBA combos},
-       * the border color is always zeroes. */
+      /* if out of bounds, return BORDER COLOR */
+      int no_alpha = (order == CLK_R || order == CLK_RG || order == CLK_RGB
+                      || order == CLK_LUMINANCE);
       if ((channel_type == CLK_SIGNED_INT8) || (channel_type == CLK_SIGNED_INT16)
           || (channel_type == CLK_SIGNED_INT32)
           || (channel_type == CLK_UNSIGNED_INT8)
           || (channel_type == CLK_UNSIGNED_INT16)
           || (channel_type == CLK_UNSIGNED_INT32))
-        return BORDER_COLOR;
+        {
+          return no_alpha ? (uint4)(0, 0, 0, 1) : (uint4)(0);
+        }
       else
-        return as_uint4 (BORDER_COLOR_F);
+        {
+          float4 border_f = no_alpha ? (float4)(0.0f, 0.0f, 0.0f, 1.0f)
+                                     : (float4)(0.0f);
+          return as_uint4 (border_f);
+        }
     }
 
   size_t base_index
