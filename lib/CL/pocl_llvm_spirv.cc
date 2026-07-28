@@ -80,6 +80,24 @@ static const pocl_version_t MaxSPIRVLibSupportedVersion{1, 1};
 static const pocl_version_t MaxSPIRVLibSupportedVersion{1, 0};
 #endif
 
+/* SPIRV::SPIRVDbgError selects what the SPIR-V reader does with a module it
+ * cannot accept. It defaults to SPIRVDbgErrorHandlingKinds::Exit, so
+ * SPIRVErrorLog::checkError() calls std::exit() and takes the whole
+ * application down. readSpirv() reports failures through its return value and
+ * its error string, and every caller below acts on those, so select the
+ * non fatal behaviour instead.
+ *
+ * The declarations are repeated here because SPIRVDebug.h, which declares
+ * them, is not among the installed LLVMSPIRVLib headers. */
+namespace SPIRV {
+enum class SPIRVDbgErrorHandlingKinds { Abort, Exit, Ignore };
+extern SPIRVDbgErrorHandlingKinds SPIRVDbgError;
+} // namespace SPIRV
+
+static void poclMakeSPIRVReaderErrorsNonFatal() {
+  SPIRV::SPIRVDbgError = SPIRV::SPIRVDbgErrorHandlingKinds::Ignore;
+}
+
 #else // HAVE_LLVM_SPIRV_LIB
 static const pocl_version_t MaxSPIRVLibSupportedVersion{1, 5};
 #endif
@@ -266,6 +284,7 @@ int pocl_regen_spirv_binary(cl_program Program, cl_uint DeviceI) {
   char *Content = nullptr;
   uint64_t ContentSize = 0;
 
+  poclMakeSPIRVReaderErrorsNonFatal();
   if (!readSpirv(LLVMCtx, Opts, InputSS, Mod, Errors)) {
     POCL_MSG_ERR("LLVMSPIRVLib failed to read SPIR-V with errors:\n%s\n",
                  Errors.c_str());
@@ -576,6 +595,7 @@ static int convertBCorSPV(char *InputPath,
     Mod = nullptr;
 
     // TODO maybe use context from program ?
+    poclMakeSPIRVReaderErrorsNonFatal();
     if (!readSpirv(LLVMCtx, Opts, InputSS, Mod, Errors)) {
       BuildLog->append("LLVMSPIRVLib: Write failed with errors:\n");
       BuildLog->append(Errors.c_str());
