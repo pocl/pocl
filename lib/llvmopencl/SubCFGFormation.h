@@ -37,10 +37,10 @@
 #include <llvm/Pass.h>
 #include <llvm/Passes/PassBuilder.h>
 
-#include "config.h"
 #include "VariableUniformityAnalysis.h"
 #include "VariableUniformityAnalysisResult.hh"
 #include "WorkitemHandler.h"
+#include "config.h"
 
 namespace pocl {
 
@@ -148,10 +148,10 @@ private:
 class SubCFGFormation
 #if LLVM_MAJOR >= 23
     : public llvm::RequiredPassInfoMixin<SubCFGFormation>,
-                        WorkitemHandler {
+      WorkitemHandler {
 #else
     : public llvm::PassInfoMixin<SubCFGFormation>,
-                        WorkitemHandler {
+      WorkitemHandler {
 #endif
 public:
   static void registerWithPB(llvm::PassBuilder &B);
