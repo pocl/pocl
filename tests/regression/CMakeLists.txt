@@ -33,6 +33,7 @@ set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_peeled_wi_global_id
      test_divergent_implicit_barrier_entry
      test_uniform_implicit_barrier_entry
+     test_localmem_load_across_barrier
      test_usm_indirect_ptrs
 )
 foreach(PROG ${C_PROGRAMS_TO_BUILD})
@@ -159,6 +160,8 @@ add_test_pocl(NAME "regression/peeled_wi_global_id" WORKITEM_HANDLER "loopvec;cb
 add_test_pocl(NAME "regression/divergent_implicit_barrier_entry" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_divergent_implicit_barrier_entry")
 
 add_test_pocl(NAME "regression/uniform_implicit_barrier_entry" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_uniform_implicit_barrier_entry")
+
+add_test_pocl(NAME "regression/localmem_load_across_barrier" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_localmem_load_across_barrier")
 
 add_test_pocl(NAME "regression/test_usm_indirect_ptrs" COMMAND "test_usm_indirect_ptrs")
 
