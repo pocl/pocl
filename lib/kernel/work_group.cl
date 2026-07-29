@@ -27,6 +27,18 @@
 #undef min
 #undef max
 
+#ifdef cl_khr_fp16
+#  define __IF_FP16(x) x
+#else
+#  define __IF_FP16(x)
+#endif
+
+#ifdef cl_khr_fp64
+#  define __IF_FP64(x) x
+#else
+#  define __IF_FP64(x)
+#endif
+
 /* Align the stack temporary data by this multiple to facilitate easier
    vectorization. */
 #define ALIGN_ELEMENT_MULTIPLE 32
@@ -62,6 +74,9 @@ WORK_GROUP_SHUFFLE_T (uint)
 WORK_GROUP_SHUFFLE_T (long)
 WORK_GROUP_SHUFFLE_T (ulong)
 WORK_GROUP_SHUFFLE_T (float)
+#ifdef cl_khr_fp16
+WORK_GROUP_SHUFFLE_T (half)
+#endif
 #ifdef cl_khr_fp64
 WORK_GROUP_SHUFFLE_T (double)
 #endif
@@ -90,6 +105,9 @@ WORK_GROUP_BROADCAST_T (uint)
 WORK_GROUP_BROADCAST_T (long)
 WORK_GROUP_BROADCAST_T (ulong)
 WORK_GROUP_BROADCAST_T (float)
+#ifdef cl_khr_fp16
+WORK_GROUP_BROADCAST_T (half)
+#endif
 #ifdef cl_khr_fp64
 WORK_GROUP_BROADCAST_T (double)
 #endif
@@ -114,22 +132,14 @@ WORK_GROUP_BROADCAST_T (double)
     return temp_storage[0];                                                   \
   }
 
-#ifdef cl_khr_fp64
 #define WORK_GROUP_REDUCE_T(OPNAME, OPERATION)                                \
   WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, int)                               \
   WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, uint)                              \
   WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, long)                              \
   WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, ulong)                             \
   WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, float)                             \
-  WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, double)
-#else
-#define WORK_GROUP_REDUCE_T(OPNAME, OPERATION)                                \
-  WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, int)                               \
-  WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, uint)                              \
-  WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, long)                              \
-  WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, ulong)                             \
-  WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, float)
-#endif
+  __IF_FP16 (WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, half))                  \
+  __IF_FP64 (WORK_GROUP_REDUCE_OT (OPNAME, OPERATION, double))
 
 WORK_GROUP_REDUCE_T (add, a + b)
 WORK_GROUP_REDUCE_T (min, a > b ? b : a)
@@ -155,22 +165,14 @@ WORK_GROUP_REDUCE_T (max, a > b ? a : b)
     return data[get_local_linear_id ()];                                      \
   }
 
-#ifdef cl_khr_fp64
 #define WORK_GROUP_SCAN_INCLUSIVE_T(OPNAME, OPERATION)                        \
   WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, int)                       \
   WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, uint)                      \
   WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, long)                      \
   WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, ulong)                     \
   WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, float)                     \
-  WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, double)
-#else
-#define WORK_GROUP_SCAN_INCLUSIVE_T(OPNAME, OPERATION)                        \
-  WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, int)                       \
-  WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, uint)                      \
-  WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, long)                      \
-  WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, ulong)                     \
-  WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, float)
-#endif
+  __IF_FP16 (WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, half))          \
+  __IF_FP64 (WORK_GROUP_SCAN_INCLUSIVE_OT (OPNAME, OPERATION, double))
 
 WORK_GROUP_SCAN_INCLUSIVE_T (add, a + b)
 WORK_GROUP_SCAN_INCLUSIVE_T (min, a > b ? b : a)
@@ -215,6 +217,12 @@ WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, uint, 0)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, long, LONG_MIN)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, ulong, 0)
 WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, float, -INFINITY)
+
+#ifdef cl_khr_fp16
+WORK_GROUP_SCAN_EXCLUSIVE_OT (add, a + b, half, 0.0H)
+WORK_GROUP_SCAN_EXCLUSIVE_OT (min, a > b ? b : a, half, (half)(+INFINITY))
+WORK_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, half, (half)(-INFINITY))
+#endif
 
 #ifdef cl_khr_fp64
 WORK_GROUP_SCAN_EXCLUSIVE_OT (add, a + b, double, 0.0)
