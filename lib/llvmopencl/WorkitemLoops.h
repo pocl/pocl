@@ -33,11 +33,19 @@
 
 namespace pocl {
 
-class WorkitemLoops : public llvm::RequiredPassInfoMixin<WorkitemLoops> {
+class WorkitemLoops
+#if LLVM_MAJOR >= 23
+    : public llvm::RequiredPassInfoMixin<WorkitemLoops> {
+#else
+    : public llvm::PassInfoMixin<WorkitemLoops> {
+#endif
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
+#if LLVM_MAJOR < 23
+  static bool isRequired() { return true; }
+#endif
 
   // Returns false in case the WG generator can or should not handle the given
   // kernel. It might refuse to handle trickiest of conditional barrier

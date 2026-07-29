@@ -33,11 +33,19 @@
 
 namespace pocl {
 
-class IsolateRegions : public llvm::RequiredPassInfoMixin<IsolateRegions> {
+class IsolateRegions
+#if LLVM_MAJOR >= 23
+    : public llvm::RequiredPassInfoMixin<IsolateRegions> {
+#else
+    : public llvm::PassInfoMixin<IsolateRegions> {
+#endif
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
+#if LLVM_MAJOR < 23
+  static bool isRequired() { return true; }
+#endif
 };
 
 } // namespace pocl

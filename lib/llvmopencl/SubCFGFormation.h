@@ -37,6 +37,7 @@
 #include <llvm/Pass.h>
 #include <llvm/Passes/PassBuilder.h>
 
+#include "config.h"
 #include "VariableUniformityAnalysis.h"
 #include "VariableUniformityAnalysisResult.hh"
 #include "WorkitemHandler.h"
@@ -144,12 +145,21 @@ private:
   llvm::BasicBlock *createUniformLoadBB(llvm::BasicBlock *OuterMostHeader);
 };
 
-class SubCFGFormation : public llvm::RequiredPassInfoMixin<SubCFGFormation>,
+class SubCFGFormation
+#if LLVM_MAJOR >= 23
+    : public llvm::RequiredPassInfoMixin<SubCFGFormation>,
                         WorkitemHandler {
+#else
+    : public llvm::PassInfoMixin<SubCFGFormation>,
+                        WorkitemHandler {
+#endif
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
+#if LLVM_MAJOR < 23
+  static bool isRequired() { return true; }
+#endif
 
   static bool canHandleKernel(llvm::Function &K,
                               llvm::FunctionAnalysisManager &AM);

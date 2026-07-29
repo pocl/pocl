@@ -23,6 +23,8 @@
 #ifndef POCL_OPTIMIZE_WI_GVARS_H
 #define POCL_OPTIMIZE_WI_GVARS_H
 
+#include "config.h"
+
 #include <llvm/IR/Function.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Pass.h>
@@ -31,11 +33,18 @@
 namespace pocl {
 
 class OptimizeWorkItemGVars
+#if LLVM_MAJOR >= 23
     : public llvm::RequiredPassInfoMixin<OptimizeWorkItemGVars> {
+#else
+    : public llvm::PassInfoMixin<OptimizeWorkItemGVars> {
+#endif
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
+#if LLVM_MAJOR < 23
+  static bool isRequired() { return true; }
+#endif
 };
 
 } // namespace pocl

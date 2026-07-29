@@ -60,7 +60,12 @@ void viewCFG(llvm::Function &F);
 // @return True in case the function was changed.
 bool chopBBs (llvm::Function &F, llvm::Pass &P);
 
-class PoCLCFGPrinter : public llvm::RequiredPassInfoMixin<PoCLCFGPrinter> {
+class PoCLCFGPrinter
+#if LLVM_MAJOR >= 23
+    : public llvm::RequiredPassInfoMixin<PoCLCFGPrinter> {
+#else
+    : public llvm::PassInfoMixin<PoCLCFGPrinter> {
+#endif
 public:
   explicit PoCLCFGPrinter(llvm::raw_ostream &OutS, llvm::StringRef Pref = "")
       : OS(OutS) {
@@ -69,6 +74,9 @@ public:
   }
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
+#if LLVM_MAJOR < 23
+  static bool isRequired() { return true; }
+#endif
 
 private:
   std::string Prefix;

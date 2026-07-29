@@ -23,6 +23,8 @@
 #ifndef POCL_INLINE_KERNELS_H
 #define POCL_INLINE_KERNELS_H
 
+#include "config.h"
+
 #include <llvm/IR/Function.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Pass.h>
@@ -30,11 +32,19 @@
 
 namespace pocl {
 
-class InlineKernels : public llvm::RequiredPassInfoMixin<InlineKernels> {
+class InlineKernels
+#if LLVM_MAJOR >= 23
+    : public llvm::RequiredPassInfoMixin<InlineKernels> {
+#else
+    : public llvm::PassInfoMixin<InlineKernels> {
+#endif
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
+#if LLVM_MAJOR < 23
+  static bool isRequired() { return true; }
+#endif
 };
 
 } // namespace pocl

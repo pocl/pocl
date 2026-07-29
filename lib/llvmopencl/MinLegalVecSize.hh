@@ -24,6 +24,8 @@
 #ifndef POCL_MIN_VEC_SIZE_H
 #define POCL_MIN_VEC_SIZE_H
 
+#include "config.h"
+
 #include <llvm/IR/Module.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Pass.h>
@@ -31,10 +33,18 @@
 
 namespace pocl {
 
-class FixMinVecSize : public llvm::RequiredPassInfoMixin<FixMinVecSize> {
+class FixMinVecSize
+#if LLVM_MAJOR >= 23
+    : public llvm::RequiredPassInfoMixin<FixMinVecSize> {
+#else
+    : public llvm::PassInfoMixin<FixMinVecSize> {
+#endif
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
+#if LLVM_MAJOR < 23
+  static bool isRequired() { return true; }
+#endif
 };
 
 } // namespace pocl

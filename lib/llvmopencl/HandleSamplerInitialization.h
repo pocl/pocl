@@ -37,11 +37,18 @@ namespace pocl {
 // per-target handling of samplers.
 
 class HandleSamplerInitialization
+#if LLVM_MAJOR >= 23
     : public llvm::RequiredPassInfoMixin<HandleSamplerInitialization> {
+#else
+    : public llvm::PassInfoMixin<HandleSamplerInitialization> {
+#endif
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
+#if LLVM_MAJOR < 23
+  static bool isRequired() { return true; }
+#endif
 };
 
 } // namespace pocl
