@@ -110,9 +110,15 @@ static bool addInnerLoopBarrier(llvm::Loop &L,
 
   /* Check the branch condition predicate. If it is uniform, we know the loop 
      is  executed the same number of times for all WIs. */
+#if LLVM_MAJOR >= 23
+  llvm::CondBrInst *br = dyn_cast<llvm::CondBrInst>(brexit->getTerminator());  
+  if (br &&
+      VUA.isUniform(f, br->getCondition())) {
+#else
   llvm::BranchInst *br = dyn_cast<llvm::BranchInst>(brexit->getTerminator());  
   if (br && br->isConditional() &&
       VUA.isUniform(f, br->getCondition())) {
+#endif
 
     /* Add a barrier both to the beginning of the entry and to the very end
        to nicely isolate the parallel region. */
@@ -125,7 +131,11 @@ static bool addInnerLoopBarrier(llvm::Loop &L,
     return true;
   } else {
 #ifdef DEBUG_ILOOP_BARRIERS
+#if LLVM_MAJOR >= 23
+    if (br && !VUA.isUniform(f, br->getCondition())) {
+#else
     if (br && br->isConditional() && !VUA.isUniform(f, br->getCondition())) {
+#endif
       std::cerr << "### loop condition not uniform" << std::endl;
       br->getCondition()->dump();
     }

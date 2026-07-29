@@ -1279,7 +1279,11 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
 
 bool WorkitemLoopsImpl::shouldNotBeContextSaved(llvm::Instruction *Instr) {
 
+#if LLVM_MAJOR >= 23
+  if (isa<UncondBrInst>(Instr) || isa<CondBrInst>(Instr)) return true;
+#else
   if (isa<BranchInst>(Instr)) return true;
+#endif
 
   // The local memory allocation call is uniform, the same pointer to the
   // work-group shared memory area is returned to all work-items. It must

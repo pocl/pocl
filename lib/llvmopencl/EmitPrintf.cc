@@ -158,7 +158,11 @@ static Value *getStrlenWithNull(IRBuilder<> &Builder, Value *Str, unsigned Nativ
   Len = Builder.CreateAdd(Len, One);
 
   // Final join.
+#if LLVM_MAJOR >= 23
+  UncondBrInst::Create(Join, WhileDone);
+#else
   BranchInst::Create(Join, WhileDone);
+#endif
   Builder.SetInsertPoint(Join, Join->begin());
   auto LenPhi = Builder.CreatePHI(Len->getType(), 2);
   LenPhi->addIncoming(Len, WhileDone);
@@ -607,7 +611,11 @@ Value *pocl::emitPrintfCall(IRBuilder<> &Builder,
         Ctx, "argpush.block", Builder.GetInsertBlock()->getParent());
 
     // if the allocation returned null, jump to end BB
+#if LLVM_MAJOR >= 23
+    CondBrInst::Create(Cmp, ArgPush, End, LastBB);
+#else
     BranchInst::Create(ArgPush, End, Cmp, LastBB);
+#endif
 
     Builder.SetInsertPoint(ArgPush);
 
@@ -709,7 +717,11 @@ Value *pocl::emitPrintfCall(IRBuilder<> &Builder,
     }
 
     // End block, returns -1 on failure
+#if LLVM_MAJOR >= 23
+    UncondBrInst::Create(End, ArgPush);
+#else
     BranchInst::Create(End, ArgPush);
+#endif
     Builder.SetInsertPoint(End->getFirstInsertionPt());
     return Builder.CreateSExt(Builder.CreateNot(Cmp), Int32Ty, "printf_result");
   }
