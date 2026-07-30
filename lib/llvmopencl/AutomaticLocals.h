@@ -32,11 +32,18 @@
 
 namespace pocl {
 
-class AutomaticLocals : public llvm::PassInfoMixin<AutomaticLocals> {
+class AutomaticLocals
+#if LLVM_MAJOR >= 23
+    : public llvm::RequiredPassInfoMixin<AutomaticLocals> {
+#else
+    : public llvm::PassInfoMixin<AutomaticLocals> {
+#endif
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
+#if LLVM_MAJOR < 23
   static bool isRequired() { return true; }
+#endif
 };
 
 } // namespace pocl

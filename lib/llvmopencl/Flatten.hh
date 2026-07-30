@@ -34,11 +34,18 @@
 
 namespace pocl {
 
-class FlattenAll : public llvm::PassInfoMixin<FlattenAll> {
+class FlattenAll
+#if LLVM_MAJOR >= 23
+    : public llvm::RequiredPassInfoMixin<FlattenAll> {
+#else
+    : public llvm::PassInfoMixin<FlattenAll> {
+#endif
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
+#if LLVM_MAJOR < 23
   static bool isRequired() { return true; }
+#endif
 };
 
 } // namespace pocl

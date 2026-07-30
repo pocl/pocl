@@ -35,14 +35,20 @@
 
 namespace pocl {
 
-
-class ImplicitLoopBarriers : public llvm::PassInfoMixin<ImplicitLoopBarriers> {
+class ImplicitLoopBarriers
+#if LLVM_MAJOR >= 23
+    : public llvm::RequiredPassInfoMixin<ImplicitLoopBarriers> {
+#else
+    : public llvm::PassInfoMixin<ImplicitLoopBarriers> {
+#endif
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Loop &L, llvm::LoopAnalysisManager &AM,
                               llvm::LoopStandardAnalysisResults &AR,
                               llvm::LPMUpdater &U);
+#if LLVM_MAJOR < 23
   static bool isRequired() { return true; }
+#endif
 };
 
 } // namespace pocl

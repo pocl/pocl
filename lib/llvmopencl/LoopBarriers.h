@@ -35,13 +35,20 @@ namespace pocl {
 #include <llvm/Analysis/LoopAnalysisManager.h>
 #include <llvm/Transforms/Scalar/LoopPassManager.h>
 
-class LoopBarriers : public llvm::PassInfoMixin<LoopBarriers> {
+class LoopBarriers
+#if LLVM_MAJOR >= 23
+    : public llvm::RequiredPassInfoMixin<LoopBarriers> {
+#else
+    : public llvm::PassInfoMixin<LoopBarriers> {
+#endif
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Loop &L, llvm::LoopAnalysisManager &AM,
                               llvm::LoopStandardAnalysisResults &AR,
                               llvm::LPMUpdater &U);
+#if LLVM_MAJOR < 23
   static bool isRequired() { return true; }
+#endif
 };
 
 } // namespace pocl

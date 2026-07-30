@@ -33,14 +33,20 @@
 
 namespace pocl {
 
-class AllocasToEntry : public llvm::PassInfoMixin<AllocasToEntry> {
+class AllocasToEntry
+#if LLVM_MAJOR >= 23
+    : public llvm::RequiredPassInfoMixin<AllocasToEntry> {
+#else
+    : public llvm::PassInfoMixin<AllocasToEntry> {
+#endif
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
+#if LLVM_MAJOR < 23
   static bool isRequired() { return true; }
+#endif
 };
-
 
   } // namespace pocl
 

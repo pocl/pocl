@@ -34,12 +34,18 @@
 namespace pocl {
 
 class BarrierTailReplication
+#if LLVM_MAJOR >= 23
+    : public llvm::RequiredPassInfoMixin<BarrierTailReplication> {
+#else
     : public llvm::PassInfoMixin<BarrierTailReplication> {
+#endif
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
+#if LLVM_MAJOR < 23
   static bool isRequired() { return true; }
+#endif
 };
 
 } // namespace pocl
