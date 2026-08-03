@@ -153,7 +153,7 @@ if(STATIC_LLVM)
   endif()
   if(LLVM_VERSION_MAJOR GREATER_EQUAL 23)
     list(INSERT CLANG_LIBNAMES 10 clangScalableStaticAnalysisSourceTransformation clangScalableStaticAnalysisAnalyses
-         clangScalableStaticAnalysisCore clangDependencyScanning clangUnifiedSymbolResolution)
+         clangScalableStaticAnalysisCore clangDependencyScanning clangSerialization clangUnifiedSymbolResolution)
   endif()
 else()
   # For non-static builds, link against a single shared library
