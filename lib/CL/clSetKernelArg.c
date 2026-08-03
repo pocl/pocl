@@ -370,6 +370,11 @@ POname(clSetKernelArg)(cl_kernel kernel,
               !IS_CL_OBJECT_VALID ((const cl_mem)ptr_value),
               CL_INVALID_ARG_VALUE,
               "Arg %u is not a valid CL object\n", arg_index);
+          POCL_RETURN_ERROR_ON (
+              (pi->type == POCL_ARG_TYPE_IMAGE
+               && ((const cl_mem)ptr_value)->is_image == CL_FALSE),
+              CL_INVALID_MEM_OBJECT,
+              "Arg %u is not a valid Image object\n", arg_index);
         }
       else
         {
