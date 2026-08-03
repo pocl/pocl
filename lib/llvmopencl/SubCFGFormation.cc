@@ -208,10 +208,17 @@ void copyDgbValues(llvm::Value *From, llvm::Value *To,
     auto *DbgValue = DbgValues.back();
     llvm::DIBuilder DbgBuilder{
         *InsertBefore->getParent()->getParent()->getParent()};
+#if LLVM_MAJOR < 24
     DbgBuilder.insertDbgValueIntrinsic(To, DbgValue->getVariable(),
                                        DbgValue->getExpression(),
                                        DbgValue->getDebugLoc(),
                                        Inst2InsertPt(InsertBefore));
+#else
+    DbgBuilder.insertDbgValue(To, DbgValue->getVariable(),
+                              DbgValue->getExpression(),
+                              DbgValue->getDebugLoc(),
+                              Inst2InsertPt(InsertBefore));
+#endif
   }
 }
 

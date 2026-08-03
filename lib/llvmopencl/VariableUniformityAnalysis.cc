@@ -184,21 +184,35 @@ void VariableUniformityAnalysisResult::analyzeBBDivergence(
     return;
   }
 
+#if LLVM_MAJOR >= 23
+  UncondBrInst *UncondBr = dyn_cast<UncondBrInst>(Term);
+  CondBrInst *CondBr = dyn_cast<CondBrInst>(Term);
+#else
   llvm::BranchInst *BrInst = dyn_cast<llvm::BranchInst>(Term);
+#endif
   llvm::SwitchInst *SwInst = dyn_cast<llvm::SwitchInst>(Term);
 
+#if LLVM_MAJOR >= 23
+  if (UncondBr == nullptr && CondBr == nullptr && SwInst == nullptr) {
+#else
   if (BrInst == nullptr && SwInst == nullptr) {
+#endif
     // Can only handle branches and switches for now.
     return;
   }
 
   // The BBs that were found uniform.
-  std::vector<llvm::BasicBlock *> FoundUniforms;
+  std::vector<BasicBlock *> FoundUniforms;
 
   // Condition c)
+#if LLVM_MAJOR >= 23
+  if (UncondBr || (CondBr && isUniform(F, CondBr->getCondition())) ||
+      (SwInst && isUniform(F, SwInst->getCondition()))) {
+#else
   if ((BrInst && (!BrInst->isConditional() ||
                   isUniform(F, BrInst->getCondition()))) ||
       (SwInst && isUniform(F, SwInst->getCondition()))) {
+#endif
     // This is a branch with a uniform condition, propagate the uniformity
     // to the BB of interest.
     for (unsigned suc = 0, end = Term->getNumSuccessors(); suc < end; ++suc) {

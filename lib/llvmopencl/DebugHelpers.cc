@@ -134,7 +134,11 @@ static void printBasicBlock(
       } else if (isa<Barrier>(Instr)) {
         s << "BARRIER\\n";
         PreviousNonHighlighted = 0;
+#if LLVM_MAJOR >= 23
+      } else if (isa<UncondBrInst>(Instr) || isa<CondBrInst>(Instr)) {
+#else
       } else if (isa<BranchInst>(Instr)) {
+#endif
         s << "branch\\n";
         PreviousNonHighlighted = 0;
       } else if (isa<PHINode>(Instr)) {

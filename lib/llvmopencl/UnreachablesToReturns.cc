@@ -177,6 +177,28 @@ static void detachBBFromPredecessor(BasicBlock &BB,
     assert(Pred != nullptr);
     Instruction *I = Pred->getTerminator();
     assert(I != nullptr);
+#if LLVM_MAJOR >= 23
+    if (auto *BI = dyn_cast<UncondBrInst>(I)) {
+      LLVM_DEBUG(dbgs() << "The predecessor " << Pred->getName().str()
+                        << " is unconditionally branching to it\n");
+      LLVM_DEBUG(Pred->dump());
+      // The predecessor has an unconditional branch to the unreachable BB,
+      // remove that in a next call.
+      NewUnreachableBBs.insert(Pred);
+    } else if (auto *CBI = dyn_cast<CondBrInst>(I)) {
+      LLVM_DEBUG(
+          dbgs() << "The predecessor is conditionally branching to it\n");
+      LLVM_DEBUG(Pred->dump());
+
+      BasicBlock *Other = nullptr;
+      if (CBI->getSuccessor(0) == &BB)
+        Other = CBI->getSuccessor(1);
+      else
+        Other = CBI->getSuccessor(0);
+      UncondBrInst *NewBI = UncondBrInst::Create(Other);
+      Replacements.insert(std::make_pair(CBI, NewBI));
+    }
+#else
     if (BranchInst *BI = dyn_cast<BranchInst>(I)) {
       if (BI->isUnconditional()) {
         LLVM_DEBUG(dbgs() << "The predecessor " << Pred->getName().str()
@@ -198,7 +220,9 @@ static void detachBBFromPredecessor(BasicBlock &BB,
         BranchInst *NewBI = BranchInst::Create(Other);
         Replacements.insert(std::make_pair(BI, NewBI));
       }
-    } else if (SwitchInst *PredSwitch = dyn_cast<SwitchInst>(I)) {
+    }
+#endif
+    else if (SwitchInst *PredSwitch = dyn_cast<SwitchInst>(I)) {
       LLVM_DEBUG(dbgs() << "The predecessor is a switch case in "
                         << Pred->getName().str() << "\n");
       PredSwitches.push_back(PredSwitch);
