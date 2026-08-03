@@ -259,6 +259,7 @@ static bool fixMinVecSize(Module &M) {
 
 llvm::PreservedAnalyses FixMinVecSize::run(llvm::Module &M,
                                            llvm::ModuleAnalysisManager &AM) {
+  unifyLLVMFunctionAttributes(M, false);
   fixMinVecSize(M);
   return PreservedAnalyses::all();
 }
