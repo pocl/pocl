@@ -273,7 +273,7 @@ def generate_saturated_conversion(src, dst, size):
     # Conversion between same types
     print("  return x;")
 
-  elif src in float_types:
+  elif src in float_types or src in float16_types:
 
     # Conversion from float to int
     print("""  x = select(x, ({SRC}{N})(0), ({BOOL}{N})isnan(x));
@@ -316,8 +316,7 @@ def generate_saturated_conversion(src, dst, size):
 for src in types:
   for dst in int_types:
     for size in vector_sizes:
-      if size != '' or (src not in float16_types and dst not in float16_types):
-        generate_saturated_conversion(src, dst, size)
+      generate_saturated_conversion(src, dst, size)
 
 
 def generate_saturated_conversion_with_rounding(src, dst, size, mode):
@@ -359,8 +358,11 @@ for src in int_types:
 #
 
 dfli = [('double', 'long'), ('double', 'ulong'),
-                  ('float', 'long'), ('float', 'ulong'),
-                  ('float', 'int'), ('float', 'uint')]
+        ('float', 'long'), ('float', 'ulong'),
+        ('float', 'int'), ('float', 'uint'),
+        ('half', 'long'), ('half', 'ulong'),
+        ('half', 'int'), ('half', 'uint'),
+        ('half', 'short'), ('half', 'ushort')]
 
 rtn_ret_constants = {
                     ('double','long'): '0x1.fffffffffffffp+62',
@@ -369,13 +371,27 @@ rtn_ret_constants = {
                     ('float','ulong'): '0x1.fffffep+63f',
                     ('float','int'): '0x1.fffffep+30f',
                     ('float','uint'): '0x1.fffffep+31f',
+                    ('half','long'): '0x1.ffcp+15',
+                    ('half','ulong'): '0x1.ffcp+15',
+                    ('half','int'): '0x1.ffcp+15',
+                    ('half','uint'): '0x1.ffcp+15',
+                    ('half','short'): '0x1.ffcp+14',
+                    ('half','ushort'): '0x1.ffcp+15',
                   }
 
 rtn_thresholds = {
-                  'long': '0x7fffffffffffffffL',
-                  'ulong': '0xfffffffffffffffeUL',
-                  'int': '0x7ffffffc',
-                  'uint': '0xffffff80'
+                  ('double','long'): '0x7fffffffffffffffL',
+                  ('double','ulong'): '0xfffffffffffffffeUL',
+                  ('float','long'): '0x7fffffffffffffffL',
+                  ('float','ulong'): '0xfffffffffffffffeUL',
+                  ('float','int'): '0x7ffffffc',
+                  ('float','uint'): '0xffffff80U',
+                  ('half','long'): '65505L',
+                  ('half','ulong'): '65505UL',
+                  ('half','int'): '65505',
+                  ('half','uint'): '65505U',
+                  ('half','short'): '32753',
+                  ('half','ushort'): '65505U',
                  }
 
 def generate_float_conversion(src, dst, size, mode, sat):
@@ -409,6 +425,14 @@ def generate_float_conversion(src, dst, size, mode, sat):
       print("  {SRC}{N} y = convert_{SRC}{N}_sat(r);".format(SRC=src, N=size))
     else:
       print("  {SRC}{N} y = convert_{SRC}{N}(r);".format(SRC=src, N=size))
+    if src in int_types:
+      inf_cond_pos = "convert_{BOOL}{N}(r == ({DST}{N})INFINITY)".format(DST=dst, N=size, BOOL=bool_type[dst])
+      inf_cond_neg = "convert_{BOOL}{N}(r == ({DST}{N})-INFINITY)".format(DST=dst, N=size, BOOL=bool_type[dst])
+      inf_cond_any = "convert_{BOOL}{N}(isinf(r))".format(BOOL=bool_type[dst], N=size)
+    else:
+      inf_cond_pos = "convert_{BOOL}{N}(convert_{BOOL}{N}(r == ({DST}{N})INFINITY) & ~convert_{BOOL}{N}(isinf(x)))".format(DST=dst, N=size, BOOL=bool_type[dst])
+      inf_cond_neg = "convert_{BOOL}{N}(convert_{BOOL}{N}(r == ({DST}{N})-INFINITY) & ~convert_{BOOL}{N}(isinf(x)))".format(DST=dst, N=size, BOOL=bool_type[dst])
+      inf_cond_any = "convert_{BOOL}{N}(convert_{BOOL}{N}(isinf(r)) & ~convert_{BOOL}{N}(isinf(x)))".format(BOOL=bool_type[dst], N=size)
     if mode == '_rtz':
       if src in int_types:
         print("  {USRC}{N} abs_x = abs(x);".format(USRC=unsigned_type[src], N=size))
@@ -416,17 +440,21 @@ def generate_float_conversion(src, dst, size, mode, sat):
       else:
         print("  {SRC}{N} abs_x = fabs(x);".format(SRC=src, N=size))
         print("  {SRC}{N} abs_y = fabs(y);".format(SRC=src, N=size))
-      print("  {DST}{N} res = select(r, nextafter(r, sign(r) * ({DST}{N})-INFINITY), convert_{BOOL}{N}(abs_y > abs_x));"
-        .format(DST=dst, N=size, BOOL=bool_type[dst]))
+      cond = "convert_{BOOL}{N}(convert_{BOOL}{N}(abs_y > abs_x) | {INF_ANY})".format(BOOL=bool_type[dst], N=size, INF_ANY=inf_cond_any)
+      print("  {DST}{N} res = select(r, nextafter(r, sign(r) * ({DST}{N})-INFINITY), {COND});"
+            .format(DST=dst, N=size, COND=cond))
     if mode == '_rtp':
-      print("  {DST}{N} res = select(r, nextafter(r, ({DST}{N})INFINITY), convert_{BOOL}{N}(y < x));"
-        .format(DST=dst, N=size, BOOL=bool_type[dst]))
+      cond = "convert_{BOOL}{N}(convert_{BOOL}{N}(y < x) | {INF_NEG})".format(BOOL=bool_type[dst], N=size, INF_NEG=inf_cond_neg)
+      print("  {DST}{N} res = select(r, nextafter(r, ({DST}{N})INFINITY), {COND});"
+            .format(DST=dst, N=size, COND=cond))
     if mode == '_rtn':
-      print("  {DST}{N} res = select(r, nextafter(r, ({DST}{N})-INFINITY), convert_{BOOL}{N}(y > x));"
-        .format(DST=dst, N=size, BOOL=bool_type[dst]))
+      cond = "convert_{BOOL}{N}(convert_{BOOL}{N}(y > x) | {INF_POS})".format(BOOL=bool_type[dst], N=size, INF_POS=inf_cond_pos)
+      print("  {DST}{N} res = select(r, nextafter(r, ({DST}{N})-INFINITY), {COND});"
+            .format(DST=dst, N=size, COND=cond))
     if (dst, src) in dfli and mode in ['_rtn','_rtz']:
-      print("  return select(res, ({DST}{N})({RETVAL}), convert_{BOOL}{N}(x >= {THRESH}));"
-        .format(DST=dst, N=size, BOOL=bool_type[dst], RETVAL=rtn_ret_constants[(dst,src)], THRESH=rtn_thresholds[src]))
+      cond = "convert_{BOOL}{N}(x >= ({SRC}){THRESH})".format(BOOL=bool_type[dst], N=size, SRC=src, THRESH=rtn_thresholds[(dst,src)])
+      print("  return select(res, ({DST}{N})({RETVAL}), {COND});"
+            .format(DST=dst, N=size, RETVAL=rtn_ret_constants[(dst,src)], COND=cond))
     else:
       print("  return res;")
   # Footer
