@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm_version: [20]
+        llvm_version: [22]
         shared_libs: [ON, OFF]
         config: [cpu]
         enable_icd: [ON, OFF]
@@ -45,12 +45,12 @@ jobs:
             shared_libs: OFF
         include:
           - config: cpu
-            llvm_version: 19
+            llvm_version: 20
             enable_icd: OFF
             shared_libs: ON
           # builds an .exe installer
           - config: nsis
-            llvm_version: 20
+            llvm_version: 22
             enable_icd: ON
             shared_libs: ON
 
@@ -87,6 +87,9 @@ jobs:
       - name: Load Env vars
         id: load-env
         run: |
+          # this DLL exists also in C:/Windows/system32 ; this causes a problem
+          # for CMake when resolving runtime DLL dependencies, hence remove it
+          del %MAMBA_ROOT_PREFIX%\envs\pocl-deps\vcruntime140.dll
           cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
 
       - name: Check llvm
@@ -169,7 +172,9 @@ jobs:
 
       - name: Test packaging
         if: ${{ matrix.config == 'nsis' }}
-        run: cpack --config ${{ github.workspace }}\build-pocl\CPackConfig.cmake -G NSIS
+        run: |
+          cat ${{ github.workspace }}\build-pocl\CPackConfig.cmake
+          cpack --config ${{ github.workspace }}\build-pocl\CPackConfig.cmake -G NSIS
 
       - name: Upload install-dir Artifact
         if: ${{ matrix.config != 'nsis' }}

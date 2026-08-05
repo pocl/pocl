@@ -469,7 +469,13 @@ if(LLVM_LINK_DIRS AND (NOT LLVM_LINK_DIRS STREQUAL LLVM_LIBDIR))
   target_link_directories("${POCL_LIBRARY_NAME}" PRIVATE ${LLVM_LINK_DIRS})
 endif()
 
+# related to install(RUNTIME_DEPENDENCY_SET ...)
+if(POLICY CMP0207)
+  cmake_policy(SET CMP0207 NEW)
+endif()
+
 install(TARGETS "${POCL_LIBRARY_NAME}"
+        RUNTIME_DEPENDENCY_SET libpocl_deps
         ARCHIVE DESTINATION ${POCL_INSTALL_STATIC_LIBDIR_REL}
         COMPONENT "dev"
         LIBRARY DESTINATION ${POCL_INSTALL_PUBLIC_LIBDIR_REL}
@@ -477,6 +483,31 @@ install(TARGETS "${POCL_LIBRARY_NAME}"
         RUNTIME DESTINATION ${POCL_INSTALL_PUBLIC_LIBDIR_REL}
         COMPONENT "lib"
 )
+
+# when building LLVM on Windows using micromamba environment,
+# the resulting pocl.dll might have transitional dependencies
+# through libLLVM.dll like e.g. libxml2.dll (listed in LLVM_SYSLIBS)
+#
+# This will instruct CMake to recursively resolve & install
+# them into the same directory as pocl.dll, while ignoring
+# MSVC libraries & DLLs found in system directories.
+if(MSVC)
+  list(APPEND pre_excludes
+       "api-ms-.*"
+       "ext-ms-.*"
+       "vcruntime.*")
+  list(APPEND post_excludes
+       "[Cc]:/[Ww]indows/[Ss]ystem32/.*")
+  install(RUNTIME_DEPENDENCY_SET libpocl_deps
+          PRE_EXCLUDE_REGEXES ${pre_excludes}
+          POST_EXCLUDE_REGEXES ${post_excludes}
+          # at least when using micromamba, all dependencies
+          # are in the same directory as libLLVM.dll
+          DIRECTORIES ${LLVM_LIBDIR} ${LLVM_BINDIR}
+          # Destination directories for the resolved external libraries
+          LIBRARY DESTINATION ${POCL_INSTALL_PUBLIC_LIBDIR_REL}
+          RUNTIME DESTINATION ${POCL_INSTALL_PUBLIC_LIBDIR_REL})
+endif()
 
 if (ENABLE_MLIR)
   set_property(TARGET "${POCL_LIBRARY_NAME}" APPEND PROPERTY
