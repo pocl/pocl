@@ -9,4 +9,7 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
-
+    groups:
+      codeql-dependencies:
+        applies-to: "version-updates"
+        patterns: "github/codeql-action/*"
