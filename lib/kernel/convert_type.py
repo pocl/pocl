@@ -82,15 +82,6 @@ limit_max = {'char'  : 'CHAR_MAX',
              'long'  : 'LONG_MAX',
              'ulong' : 'ULONG_MAX'}
 
-limit_max_float = {'char'  : '(0x1p+7f)',
-             'uchar' : '(0x1p+8f)',
-             'short' : '(0x1p+15f)',
-             'ushort': '(0x1p+16f)',
-             'int'   : '(0x1p+31f)',
-             'uint'  : '(0x1p+32f)',
-             'long'  : '(0x1p+63f)',
-             'ulong' : '(0x1p+64f)'}
-
 limit_min = {'char'  : 'CHAR_MIN',
              'uchar' : '0',
              'short' : 'SHRT_MIN',
@@ -99,15 +90,6 @@ limit_min = {'char'  : 'CHAR_MIN',
              'uint'  : '0',
              'long'  : 'LONG_MIN',
              'ulong' : '0'}
-
-limit_min_float = {'char'  : '(-0x1p+7f)',
-             'uchar' : '0.0f',
-             'short' : '(-0x1p+15f)',
-             'ushort': '0.0f',
-             'int'   : '(-0x1p+31f)',
-             'uint'  : '0.0f',
-             'long'  : '(-0x1p+63f)',
-             'ulong' : '0.0f'}
 
 fits_in_float = { 'char', 'uchar', 'short', 'ushort' }
 fits_in_double = { 'char', 'uchar', 'short', 'ushort', 'int', 'uint', 'float' }
@@ -296,11 +278,10 @@ def generate_saturated_conversion(src, dst, size):
     # Conversion from float to int
     print("""  x = select(x, ({SRC}{N})(0), ({BOOL}{N})isnan(x));
   {DST}{N} y = convert_{DST}{N}(x);
-  y = select(y, ({DST}{N}){DST_MIN}, {BP}(x < ({SRC}{N}){DST_MIN_FLT}){BS});
-  y = select(y, ({DST}{N}){DST_MAX}, {BP}(x >= ({SRC}{N}){DST_MAX_FLT}){BS});
+  y = select(y, ({DST}{N}){DST_MIN}, {BP}(x < ({SRC}{N}){DST_MIN}){BS});
+  y = select(y, ({DST}{N}){DST_MAX}, {BP}(x >= ({SRC}{N}){DST_MAX}){BS});
   return y;""".format(SRC=src, DST=dst, N=size, BOOL=bool_type[src],
       DST_MIN=limit_min[dst], DST_MAX=limit_max[dst],
-      DST_MIN_FLT=limit_min_float[dst], DST_MAX_FLT=limit_max_float[dst],
       BP=bool_prefix, BS=bool_suffix))
 
   else:

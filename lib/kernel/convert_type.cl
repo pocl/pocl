@@ -30009,8 +30009,8 @@ char convert_char_sat(float x)
 {
   x = select(x, (float)(0), (int)isnan(x));
   char y = convert_char(x);
-  y = select(y, (char)CHAR_MIN, convert_char(x < (float)(-0x1p+7f)));
-  y = select(y, (char)CHAR_MAX, convert_char(x >= (float)(0x1p+7f)));
+  y = select(y, (char)CHAR_MIN, convert_char(x < (float)CHAR_MIN));
+  y = select(y, (char)CHAR_MAX, convert_char(x >= (float)CHAR_MAX));
   return y;
 }
 
@@ -30019,8 +30019,8 @@ char2 convert_char2_sat(float2 x)
 {
   x = select(x, (float2)(0), (int2)isnan(x));
   char2 y = convert_char2(x);
-  y = select(y, (char2)CHAR_MIN, convert_char2(x < (float2)(-0x1p+7f)));
-  y = select(y, (char2)CHAR_MAX, convert_char2(x >= (float2)(0x1p+7f)));
+  y = select(y, (char2)CHAR_MIN, convert_char2(x < (float2)CHAR_MIN));
+  y = select(y, (char2)CHAR_MAX, convert_char2(x >= (float2)CHAR_MAX));
   return y;
 }
 
@@ -30029,8 +30029,8 @@ char3 convert_char3_sat(float3 x)
 {
   x = select(x, (float3)(0), (int3)isnan(x));
   char3 y = convert_char3(x);
-  y = select(y, (char3)CHAR_MIN, convert_char3(x < (float3)(-0x1p+7f)));
-  y = select(y, (char3)CHAR_MAX, convert_char3(x >= (float3)(0x1p+7f)));
+  y = select(y, (char3)CHAR_MIN, convert_char3(x < (float3)CHAR_MIN));
+  y = select(y, (char3)CHAR_MAX, convert_char3(x >= (float3)CHAR_MAX));
   return y;
 }
 
@@ -30039,8 +30039,8 @@ char4 convert_char4_sat(float4 x)
 {
   x = select(x, (float4)(0), (int4)isnan(x));
   char4 y = convert_char4(x);
-  y = select(y, (char4)CHAR_MIN, convert_char4(x < (float4)(-0x1p+7f)));
-  y = select(y, (char4)CHAR_MAX, convert_char4(x >= (float4)(0x1p+7f)));
+  y = select(y, (char4)CHAR_MIN, convert_char4(x < (float4)CHAR_MIN));
+  y = select(y, (char4)CHAR_MAX, convert_char4(x >= (float4)CHAR_MAX));
   return y;
 }
 
@@ -30049,8 +30049,8 @@ char8 convert_char8_sat(float8 x)
 {
   x = select(x, (float8)(0), (int8)isnan(x));
   char8 y = convert_char8(x);
-  y = select(y, (char8)CHAR_MIN, convert_char8(x < (float8)(-0x1p+7f)));
-  y = select(y, (char8)CHAR_MAX, convert_char8(x >= (float8)(0x1p+7f)));
+  y = select(y, (char8)CHAR_MIN, convert_char8(x < (float8)CHAR_MIN));
+  y = select(y, (char8)CHAR_MAX, convert_char8(x >= (float8)CHAR_MAX));
   return y;
 }
 
@@ -30059,8 +30059,8 @@ char16 convert_char16_sat(float16 x)
 {
   x = select(x, (float16)(0), (int16)isnan(x));
   char16 y = convert_char16(x);
-  y = select(y, (char16)CHAR_MIN, convert_char16(x < (float16)(-0x1p+7f)));
-  y = select(y, (char16)CHAR_MAX, convert_char16(x >= (float16)(0x1p+7f)));
+  y = select(y, (char16)CHAR_MIN, convert_char16(x < (float16)CHAR_MIN));
+  y = select(y, (char16)CHAR_MAX, convert_char16(x >= (float16)CHAR_MAX));
   return y;
 }
 
@@ -30069,8 +30069,8 @@ uchar convert_uchar_sat(float x)
 {
   x = select(x, (float)(0), (int)isnan(x));
   uchar y = convert_uchar(x);
-  y = select(y, (uchar)0, as_uchar(convert_char(x < (float)0.0f)));
-  y = select(y, (uchar)UCHAR_MAX, as_uchar(convert_char(x >= (float)(0x1p+8f))));
+  y = select(y, (uchar)0, as_uchar(convert_char(x < (float)0)));
+  y = select(y, (uchar)UCHAR_MAX, as_uchar(convert_char(x >= (float)UCHAR_MAX)));
   return y;
 }
 
@@ -30079,8 +30079,8 @@ uchar2 convert_uchar2_sat(float2 x)
 {
   x = select(x, (float2)(0), (int2)isnan(x));
   uchar2 y = convert_uchar2(x);
-  y = select(y, (uchar2)0, as_uchar2(convert_char2(x < (float2)0.0f)));
-  y = select(y, (uchar2)UCHAR_MAX, as_uchar2(convert_char2(x >= (float2)(0x1p+8f))));
+  y = select(y, (uchar2)0, as_uchar2(convert_char2(x < (float2)0)));
+  y = select(y, (uchar2)UCHAR_MAX, as_uchar2(convert_char2(x >= (float2)UCHAR_MAX)));
   return y;
 }
 
@@ -30089,8 +30089,8 @@ uchar3 convert_uchar3_sat(float3 x)
 {
   x = select(x, (float3)(0), (int3)isnan(x));
   uchar3 y = convert_uchar3(x);
-  y = select(y, (uchar3)0, as_uchar3(convert_char3(x < (float3)0.0f)));
-  y = select(y, (uchar3)UCHAR_MAX, as_uchar3(convert_char3(x >= (float3)(0x1p+8f))));
+  y = select(y, (uchar3)0, as_uchar3(convert_char3(x < (float3)0)));
+  y = select(y, (uchar3)UCHAR_MAX, as_uchar3(convert_char3(x >= (float3)UCHAR_MAX)));
   return y;
 }
 
@@ -30099,8 +30099,8 @@ uchar4 convert_uchar4_sat(float4 x)
 {
   x = select(x, (float4)(0), (int4)isnan(x));
   uchar4 y = convert_uchar4(x);
-  y = select(y, (uchar4)0, as_uchar4(convert_char4(x < (float4)0.0f)));
-  y = select(y, (uchar4)UCHAR_MAX, as_uchar4(convert_char4(x >= (float4)(0x1p+8f))));
+  y = select(y, (uchar4)0, as_uchar4(convert_char4(x < (float4)0)));
+  y = select(y, (uchar4)UCHAR_MAX, as_uchar4(convert_char4(x >= (float4)UCHAR_MAX)));
   return y;
 }
 
@@ -30109,8 +30109,8 @@ uchar8 convert_uchar8_sat(float8 x)
 {
   x = select(x, (float8)(0), (int8)isnan(x));
   uchar8 y = convert_uchar8(x);
-  y = select(y, (uchar8)0, as_uchar8(convert_char8(x < (float8)0.0f)));
-  y = select(y, (uchar8)UCHAR_MAX, as_uchar8(convert_char8(x >= (float8)(0x1p+8f))));
+  y = select(y, (uchar8)0, as_uchar8(convert_char8(x < (float8)0)));
+  y = select(y, (uchar8)UCHAR_MAX, as_uchar8(convert_char8(x >= (float8)UCHAR_MAX)));
   return y;
 }
 
@@ -30119,8 +30119,8 @@ uchar16 convert_uchar16_sat(float16 x)
 {
   x = select(x, (float16)(0), (int16)isnan(x));
   uchar16 y = convert_uchar16(x);
-  y = select(y, (uchar16)0, as_uchar16(convert_char16(x < (float16)0.0f)));
-  y = select(y, (uchar16)UCHAR_MAX, as_uchar16(convert_char16(x >= (float16)(0x1p+8f))));
+  y = select(y, (uchar16)0, as_uchar16(convert_char16(x < (float16)0)));
+  y = select(y, (uchar16)UCHAR_MAX, as_uchar16(convert_char16(x >= (float16)UCHAR_MAX)));
   return y;
 }
 
@@ -30129,8 +30129,8 @@ short convert_short_sat(float x)
 {
   x = select(x, (float)(0), (int)isnan(x));
   short y = convert_short(x);
-  y = select(y, (short)SHRT_MIN, convert_short(x < (float)(-0x1p+15f)));
-  y = select(y, (short)SHRT_MAX, convert_short(x >= (float)(0x1p+15f)));
+  y = select(y, (short)SHRT_MIN, convert_short(x < (float)SHRT_MIN));
+  y = select(y, (short)SHRT_MAX, convert_short(x >= (float)SHRT_MAX));
   return y;
 }
 
@@ -30139,8 +30139,8 @@ short2 convert_short2_sat(float2 x)
 {
   x = select(x, (float2)(0), (int2)isnan(x));
   short2 y = convert_short2(x);
-  y = select(y, (short2)SHRT_MIN, convert_short2(x < (float2)(-0x1p+15f)));
-  y = select(y, (short2)SHRT_MAX, convert_short2(x >= (float2)(0x1p+15f)));
+  y = select(y, (short2)SHRT_MIN, convert_short2(x < (float2)SHRT_MIN));
+  y = select(y, (short2)SHRT_MAX, convert_short2(x >= (float2)SHRT_MAX));
   return y;
 }
 
@@ -30149,8 +30149,8 @@ short3 convert_short3_sat(float3 x)
 {
   x = select(x, (float3)(0), (int3)isnan(x));
   short3 y = convert_short3(x);
-  y = select(y, (short3)SHRT_MIN, convert_short3(x < (float3)(-0x1p+15f)));
-  y = select(y, (short3)SHRT_MAX, convert_short3(x >= (float3)(0x1p+15f)));
+  y = select(y, (short3)SHRT_MIN, convert_short3(x < (float3)SHRT_MIN));
+  y = select(y, (short3)SHRT_MAX, convert_short3(x >= (float3)SHRT_MAX));
   return y;
 }
 
@@ -30159,8 +30159,8 @@ short4 convert_short4_sat(float4 x)
 {
   x = select(x, (float4)(0), (int4)isnan(x));
   short4 y = convert_short4(x);
-  y = select(y, (short4)SHRT_MIN, convert_short4(x < (float4)(-0x1p+15f)));
-  y = select(y, (short4)SHRT_MAX, convert_short4(x >= (float4)(0x1p+15f)));
+  y = select(y, (short4)SHRT_MIN, convert_short4(x < (float4)SHRT_MIN));
+  y = select(y, (short4)SHRT_MAX, convert_short4(x >= (float4)SHRT_MAX));
   return y;
 }
 
@@ -30169,8 +30169,8 @@ short8 convert_short8_sat(float8 x)
 {
   x = select(x, (float8)(0), (int8)isnan(x));
   short8 y = convert_short8(x);
-  y = select(y, (short8)SHRT_MIN, convert_short8(x < (float8)(-0x1p+15f)));
-  y = select(y, (short8)SHRT_MAX, convert_short8(x >= (float8)(0x1p+15f)));
+  y = select(y, (short8)SHRT_MIN, convert_short8(x < (float8)SHRT_MIN));
+  y = select(y, (short8)SHRT_MAX, convert_short8(x >= (float8)SHRT_MAX));
   return y;
 }
 
@@ -30179,8 +30179,8 @@ short16 convert_short16_sat(float16 x)
 {
   x = select(x, (float16)(0), (int16)isnan(x));
   short16 y = convert_short16(x);
-  y = select(y, (short16)SHRT_MIN, convert_short16(x < (float16)(-0x1p+15f)));
-  y = select(y, (short16)SHRT_MAX, convert_short16(x >= (float16)(0x1p+15f)));
+  y = select(y, (short16)SHRT_MIN, convert_short16(x < (float16)SHRT_MIN));
+  y = select(y, (short16)SHRT_MAX, convert_short16(x >= (float16)SHRT_MAX));
   return y;
 }
 
@@ -30189,8 +30189,8 @@ ushort convert_ushort_sat(float x)
 {
   x = select(x, (float)(0), (int)isnan(x));
   ushort y = convert_ushort(x);
-  y = select(y, (ushort)0, as_ushort(convert_short(x < (float)0.0f)));
-  y = select(y, (ushort)USHRT_MAX, as_ushort(convert_short(x >= (float)(0x1p+16f))));
+  y = select(y, (ushort)0, as_ushort(convert_short(x < (float)0)));
+  y = select(y, (ushort)USHRT_MAX, as_ushort(convert_short(x >= (float)USHRT_MAX)));
   return y;
 }
 
@@ -30199,8 +30199,8 @@ ushort2 convert_ushort2_sat(float2 x)
 {
   x = select(x, (float2)(0), (int2)isnan(x));
   ushort2 y = convert_ushort2(x);
-  y = select(y, (ushort2)0, as_ushort2(convert_short2(x < (float2)0.0f)));
-  y = select(y, (ushort2)USHRT_MAX, as_ushort2(convert_short2(x >= (float2)(0x1p+16f))));
+  y = select(y, (ushort2)0, as_ushort2(convert_short2(x < (float2)0)));
+  y = select(y, (ushort2)USHRT_MAX, as_ushort2(convert_short2(x >= (float2)USHRT_MAX)));
   return y;
 }
 
@@ -30209,8 +30209,8 @@ ushort3 convert_ushort3_sat(float3 x)
 {
   x = select(x, (float3)(0), (int3)isnan(x));
   ushort3 y = convert_ushort3(x);
-  y = select(y, (ushort3)0, as_ushort3(convert_short3(x < (float3)0.0f)));
-  y = select(y, (ushort3)USHRT_MAX, as_ushort3(convert_short3(x >= (float3)(0x1p+16f))));
+  y = select(y, (ushort3)0, as_ushort3(convert_short3(x < (float3)0)));
+  y = select(y, (ushort3)USHRT_MAX, as_ushort3(convert_short3(x >= (float3)USHRT_MAX)));
   return y;
 }
 
@@ -30219,8 +30219,8 @@ ushort4 convert_ushort4_sat(float4 x)
 {
   x = select(x, (float4)(0), (int4)isnan(x));
   ushort4 y = convert_ushort4(x);
-  y = select(y, (ushort4)0, as_ushort4(convert_short4(x < (float4)0.0f)));
-  y = select(y, (ushort4)USHRT_MAX, as_ushort4(convert_short4(x >= (float4)(0x1p+16f))));
+  y = select(y, (ushort4)0, as_ushort4(convert_short4(x < (float4)0)));
+  y = select(y, (ushort4)USHRT_MAX, as_ushort4(convert_short4(x >= (float4)USHRT_MAX)));
   return y;
 }
 
@@ -30229,8 +30229,8 @@ ushort8 convert_ushort8_sat(float8 x)
 {
   x = select(x, (float8)(0), (int8)isnan(x));
   ushort8 y = convert_ushort8(x);
-  y = select(y, (ushort8)0, as_ushort8(convert_short8(x < (float8)0.0f)));
-  y = select(y, (ushort8)USHRT_MAX, as_ushort8(convert_short8(x >= (float8)(0x1p+16f))));
+  y = select(y, (ushort8)0, as_ushort8(convert_short8(x < (float8)0)));
+  y = select(y, (ushort8)USHRT_MAX, as_ushort8(convert_short8(x >= (float8)USHRT_MAX)));
   return y;
 }
 
@@ -30239,8 +30239,8 @@ ushort16 convert_ushort16_sat(float16 x)
 {
   x = select(x, (float16)(0), (int16)isnan(x));
   ushort16 y = convert_ushort16(x);
-  y = select(y, (ushort16)0, as_ushort16(convert_short16(x < (float16)0.0f)));
-  y = select(y, (ushort16)USHRT_MAX, as_ushort16(convert_short16(x >= (float16)(0x1p+16f))));
+  y = select(y, (ushort16)0, as_ushort16(convert_short16(x < (float16)0)));
+  y = select(y, (ushort16)USHRT_MAX, as_ushort16(convert_short16(x >= (float16)USHRT_MAX)));
   return y;
 }
 
@@ -30249,8 +30249,8 @@ int convert_int_sat(float x)
 {
   x = select(x, (float)(0), (int)isnan(x));
   int y = convert_int(x);
-  y = select(y, (int)INT_MIN, convert_int(x < (float)(-0x1p+31f)));
-  y = select(y, (int)INT_MAX, convert_int(x >= (float)(0x1p+31f)));
+  y = select(y, (int)INT_MIN, convert_int(x < (float)INT_MIN));
+  y = select(y, (int)INT_MAX, convert_int(x >= (float)INT_MAX));
   return y;
 }
 
@@ -30259,8 +30259,8 @@ int2 convert_int2_sat(float2 x)
 {
   x = select(x, (float2)(0), (int2)isnan(x));
   int2 y = convert_int2(x);
-  y = select(y, (int2)INT_MIN, convert_int2(x < (float2)(-0x1p+31f)));
-  y = select(y, (int2)INT_MAX, convert_int2(x >= (float2)(0x1p+31f)));
+  y = select(y, (int2)INT_MIN, convert_int2(x < (float2)INT_MIN));
+  y = select(y, (int2)INT_MAX, convert_int2(x >= (float2)INT_MAX));
   return y;
 }
 
@@ -30269,8 +30269,8 @@ int3 convert_int3_sat(float3 x)
 {
   x = select(x, (float3)(0), (int3)isnan(x));
   int3 y = convert_int3(x);
-  y = select(y, (int3)INT_MIN, convert_int3(x < (float3)(-0x1p+31f)));
-  y = select(y, (int3)INT_MAX, convert_int3(x >= (float3)(0x1p+31f)));
+  y = select(y, (int3)INT_MIN, convert_int3(x < (float3)INT_MIN));
+  y = select(y, (int3)INT_MAX, convert_int3(x >= (float3)INT_MAX));
   return y;
 }
 
@@ -30279,8 +30279,8 @@ int4 convert_int4_sat(float4 x)
 {
   x = select(x, (float4)(0), (int4)isnan(x));
   int4 y = convert_int4(x);
-  y = select(y, (int4)INT_MIN, convert_int4(x < (float4)(-0x1p+31f)));
-  y = select(y, (int4)INT_MAX, convert_int4(x >= (float4)(0x1p+31f)));
+  y = select(y, (int4)INT_MIN, convert_int4(x < (float4)INT_MIN));
+  y = select(y, (int4)INT_MAX, convert_int4(x >= (float4)INT_MAX));
   return y;
 }
 
@@ -30289,8 +30289,8 @@ int8 convert_int8_sat(float8 x)
 {
   x = select(x, (float8)(0), (int8)isnan(x));
   int8 y = convert_int8(x);
-  y = select(y, (int8)INT_MIN, convert_int8(x < (float8)(-0x1p+31f)));
-  y = select(y, (int8)INT_MAX, convert_int8(x >= (float8)(0x1p+31f)));
+  y = select(y, (int8)INT_MIN, convert_int8(x < (float8)INT_MIN));
+  y = select(y, (int8)INT_MAX, convert_int8(x >= (float8)INT_MAX));
   return y;
 }
 
@@ -30299,8 +30299,8 @@ int16 convert_int16_sat(float16 x)
 {
   x = select(x, (float16)(0), (int16)isnan(x));
   int16 y = convert_int16(x);
-  y = select(y, (int16)INT_MIN, convert_int16(x < (float16)(-0x1p+31f)));
-  y = select(y, (int16)INT_MAX, convert_int16(x >= (float16)(0x1p+31f)));
+  y = select(y, (int16)INT_MIN, convert_int16(x < (float16)INT_MIN));
+  y = select(y, (int16)INT_MAX, convert_int16(x >= (float16)INT_MAX));
   return y;
 }
 
@@ -30309,8 +30309,8 @@ uint convert_uint_sat(float x)
 {
   x = select(x, (float)(0), (int)isnan(x));
   uint y = convert_uint(x);
-  y = select(y, (uint)0, as_uint(convert_int(x < (float)0.0f)));
-  y = select(y, (uint)UINT_MAX, as_uint(convert_int(x >= (float)(0x1p+32f))));
+  y = select(y, (uint)0, as_uint(convert_int(x < (float)0)));
+  y = select(y, (uint)UINT_MAX, as_uint(convert_int(x >= (float)UINT_MAX)));
   return y;
 }
 
@@ -30319,8 +30319,8 @@ uint2 convert_uint2_sat(float2 x)
 {
   x = select(x, (float2)(0), (int2)isnan(x));
   uint2 y = convert_uint2(x);
-  y = select(y, (uint2)0, as_uint2(convert_int2(x < (float2)0.0f)));
-  y = select(y, (uint2)UINT_MAX, as_uint2(convert_int2(x >= (float2)(0x1p+32f))));
+  y = select(y, (uint2)0, as_uint2(convert_int2(x < (float2)0)));
+  y = select(y, (uint2)UINT_MAX, as_uint2(convert_int2(x >= (float2)UINT_MAX)));
   return y;
 }
 
@@ -30329,8 +30329,8 @@ uint3 convert_uint3_sat(float3 x)
 {
   x = select(x, (float3)(0), (int3)isnan(x));
   uint3 y = convert_uint3(x);
-  y = select(y, (uint3)0, as_uint3(convert_int3(x < (float3)0.0f)));
-  y = select(y, (uint3)UINT_MAX, as_uint3(convert_int3(x >= (float3)(0x1p+32f))));
+  y = select(y, (uint3)0, as_uint3(convert_int3(x < (float3)0)));
+  y = select(y, (uint3)UINT_MAX, as_uint3(convert_int3(x >= (float3)UINT_MAX)));
   return y;
 }
 
@@ -30339,8 +30339,8 @@ uint4 convert_uint4_sat(float4 x)
 {
   x = select(x, (float4)(0), (int4)isnan(x));
   uint4 y = convert_uint4(x);
-  y = select(y, (uint4)0, as_uint4(convert_int4(x < (float4)0.0f)));
-  y = select(y, (uint4)UINT_MAX, as_uint4(convert_int4(x >= (float4)(0x1p+32f))));
+  y = select(y, (uint4)0, as_uint4(convert_int4(x < (float4)0)));
+  y = select(y, (uint4)UINT_MAX, as_uint4(convert_int4(x >= (float4)UINT_MAX)));
   return y;
 }
 
@@ -30349,8 +30349,8 @@ uint8 convert_uint8_sat(float8 x)
 {
   x = select(x, (float8)(0), (int8)isnan(x));
   uint8 y = convert_uint8(x);
-  y = select(y, (uint8)0, as_uint8(convert_int8(x < (float8)0.0f)));
-  y = select(y, (uint8)UINT_MAX, as_uint8(convert_int8(x >= (float8)(0x1p+32f))));
+  y = select(y, (uint8)0, as_uint8(convert_int8(x < (float8)0)));
+  y = select(y, (uint8)UINT_MAX, as_uint8(convert_int8(x >= (float8)UINT_MAX)));
   return y;
 }
 
@@ -30359,8 +30359,8 @@ uint16 convert_uint16_sat(float16 x)
 {
   x = select(x, (float16)(0), (int16)isnan(x));
   uint16 y = convert_uint16(x);
-  y = select(y, (uint16)0, as_uint16(convert_int16(x < (float16)0.0f)));
-  y = select(y, (uint16)UINT_MAX, as_uint16(convert_int16(x >= (float16)(0x1p+32f))));
+  y = select(y, (uint16)0, as_uint16(convert_int16(x < (float16)0)));
+  y = select(y, (uint16)UINT_MAX, as_uint16(convert_int16(x >= (float16)UINT_MAX)));
   return y;
 }
 
@@ -30370,8 +30370,8 @@ long convert_long_sat(float x)
 {
   x = select(x, (float)(0), (int)isnan(x));
   long y = convert_long(x);
-  y = select(y, (long)LONG_MIN, convert_long(x < (float)(-0x1p+63f)));
-  y = select(y, (long)LONG_MAX, convert_long(x >= (float)(0x1p+63f)));
+  y = select(y, (long)LONG_MIN, convert_long(x < (float)LONG_MIN));
+  y = select(y, (long)LONG_MAX, convert_long(x >= (float)LONG_MAX));
   return y;
 }
 #endif
@@ -30382,8 +30382,8 @@ long2 convert_long2_sat(float2 x)
 {
   x = select(x, (float2)(0), (int2)isnan(x));
   long2 y = convert_long2(x);
-  y = select(y, (long2)LONG_MIN, convert_long2(x < (float2)(-0x1p+63f)));
-  y = select(y, (long2)LONG_MAX, convert_long2(x >= (float2)(0x1p+63f)));
+  y = select(y, (long2)LONG_MIN, convert_long2(x < (float2)LONG_MIN));
+  y = select(y, (long2)LONG_MAX, convert_long2(x >= (float2)LONG_MAX));
   return y;
 }
 #endif
@@ -30394,8 +30394,8 @@ long3 convert_long3_sat(float3 x)
 {
   x = select(x, (float3)(0), (int3)isnan(x));
   long3 y = convert_long3(x);
-  y = select(y, (long3)LONG_MIN, convert_long3(x < (float3)(-0x1p+63f)));
-  y = select(y, (long3)LONG_MAX, convert_long3(x >= (float3)(0x1p+63f)));
+  y = select(y, (long3)LONG_MIN, convert_long3(x < (float3)LONG_MIN));
+  y = select(y, (long3)LONG_MAX, convert_long3(x >= (float3)LONG_MAX));
   return y;
 }
 #endif
@@ -30406,8 +30406,8 @@ long4 convert_long4_sat(float4 x)
 {
   x = select(x, (float4)(0), (int4)isnan(x));
   long4 y = convert_long4(x);
-  y = select(y, (long4)LONG_MIN, convert_long4(x < (float4)(-0x1p+63f)));
-  y = select(y, (long4)LONG_MAX, convert_long4(x >= (float4)(0x1p+63f)));
+  y = select(y, (long4)LONG_MIN, convert_long4(x < (float4)LONG_MIN));
+  y = select(y, (long4)LONG_MAX, convert_long4(x >= (float4)LONG_MAX));
   return y;
 }
 #endif
@@ -30418,8 +30418,8 @@ long8 convert_long8_sat(float8 x)
 {
   x = select(x, (float8)(0), (int8)isnan(x));
   long8 y = convert_long8(x);
-  y = select(y, (long8)LONG_MIN, convert_long8(x < (float8)(-0x1p+63f)));
-  y = select(y, (long8)LONG_MAX, convert_long8(x >= (float8)(0x1p+63f)));
+  y = select(y, (long8)LONG_MIN, convert_long8(x < (float8)LONG_MIN));
+  y = select(y, (long8)LONG_MAX, convert_long8(x >= (float8)LONG_MAX));
   return y;
 }
 #endif
@@ -30430,8 +30430,8 @@ long16 convert_long16_sat(float16 x)
 {
   x = select(x, (float16)(0), (int16)isnan(x));
   long16 y = convert_long16(x);
-  y = select(y, (long16)LONG_MIN, convert_long16(x < (float16)(-0x1p+63f)));
-  y = select(y, (long16)LONG_MAX, convert_long16(x >= (float16)(0x1p+63f)));
+  y = select(y, (long16)LONG_MIN, convert_long16(x < (float16)LONG_MIN));
+  y = select(y, (long16)LONG_MAX, convert_long16(x >= (float16)LONG_MAX));
   return y;
 }
 #endif
@@ -30442,8 +30442,8 @@ ulong convert_ulong_sat(float x)
 {
   x = select(x, (float)(0), (int)isnan(x));
   ulong y = convert_ulong(x);
-  y = select(y, (ulong)0, as_ulong(convert_long(x < (float)0.0f)));
-  y = select(y, (ulong)ULONG_MAX, as_ulong(convert_long(x >= (float)(0x1p+64f))));
+  y = select(y, (ulong)0, as_ulong(convert_long(x < (float)0)));
+  y = select(y, (ulong)ULONG_MAX, as_ulong(convert_long(x >= (float)ULONG_MAX)));
   return y;
 }
 #endif
@@ -30454,8 +30454,8 @@ ulong2 convert_ulong2_sat(float2 x)
 {
   x = select(x, (float2)(0), (int2)isnan(x));
   ulong2 y = convert_ulong2(x);
-  y = select(y, (ulong2)0, as_ulong2(convert_long2(x < (float2)0.0f)));
-  y = select(y, (ulong2)ULONG_MAX, as_ulong2(convert_long2(x >= (float2)(0x1p+64f))));
+  y = select(y, (ulong2)0, as_ulong2(convert_long2(x < (float2)0)));
+  y = select(y, (ulong2)ULONG_MAX, as_ulong2(convert_long2(x >= (float2)ULONG_MAX)));
   return y;
 }
 #endif
@@ -30466,8 +30466,8 @@ ulong3 convert_ulong3_sat(float3 x)
 {
   x = select(x, (float3)(0), (int3)isnan(x));
   ulong3 y = convert_ulong3(x);
-  y = select(y, (ulong3)0, as_ulong3(convert_long3(x < (float3)0.0f)));
-  y = select(y, (ulong3)ULONG_MAX, as_ulong3(convert_long3(x >= (float3)(0x1p+64f))));
+  y = select(y, (ulong3)0, as_ulong3(convert_long3(x < (float3)0)));
+  y = select(y, (ulong3)ULONG_MAX, as_ulong3(convert_long3(x >= (float3)ULONG_MAX)));
   return y;
 }
 #endif
@@ -30478,8 +30478,8 @@ ulong4 convert_ulong4_sat(float4 x)
 {
   x = select(x, (float4)(0), (int4)isnan(x));
   ulong4 y = convert_ulong4(x);
-  y = select(y, (ulong4)0, as_ulong4(convert_long4(x < (float4)0.0f)));
-  y = select(y, (ulong4)ULONG_MAX, as_ulong4(convert_long4(x >= (float4)(0x1p+64f))));
+  y = select(y, (ulong4)0, as_ulong4(convert_long4(x < (float4)0)));
+  y = select(y, (ulong4)ULONG_MAX, as_ulong4(convert_long4(x >= (float4)ULONG_MAX)));
   return y;
 }
 #endif
@@ -30490,8 +30490,8 @@ ulong8 convert_ulong8_sat(float8 x)
 {
   x = select(x, (float8)(0), (int8)isnan(x));
   ulong8 y = convert_ulong8(x);
-  y = select(y, (ulong8)0, as_ulong8(convert_long8(x < (float8)0.0f)));
-  y = select(y, (ulong8)ULONG_MAX, as_ulong8(convert_long8(x >= (float8)(0x1p+64f))));
+  y = select(y, (ulong8)0, as_ulong8(convert_long8(x < (float8)0)));
+  y = select(y, (ulong8)ULONG_MAX, as_ulong8(convert_long8(x >= (float8)ULONG_MAX)));
   return y;
 }
 #endif
@@ -30502,8 +30502,8 @@ ulong16 convert_ulong16_sat(float16 x)
 {
   x = select(x, (float16)(0), (int16)isnan(x));
   ulong16 y = convert_ulong16(x);
-  y = select(y, (ulong16)0, as_ulong16(convert_long16(x < (float16)0.0f)));
-  y = select(y, (ulong16)ULONG_MAX, as_ulong16(convert_long16(x >= (float16)(0x1p+64f))));
+  y = select(y, (ulong16)0, as_ulong16(convert_long16(x < (float16)0)));
+  y = select(y, (ulong16)ULONG_MAX, as_ulong16(convert_long16(x >= (float16)ULONG_MAX)));
   return y;
 }
 #endif
@@ -30514,8 +30514,8 @@ char convert_char_sat(double x)
 {
   x = select(x, (double)(0), (long)isnan(x));
   char y = convert_char(x);
-  y = select(y, (char)CHAR_MIN, convert_char(x < (double)(-0x1p+7f)));
-  y = select(y, (char)CHAR_MAX, convert_char(x >= (double)(0x1p+7f)));
+  y = select(y, (char)CHAR_MIN, convert_char(x < (double)CHAR_MIN));
+  y = select(y, (char)CHAR_MAX, convert_char(x >= (double)CHAR_MAX));
   return y;
 }
 #endif
@@ -30526,8 +30526,8 @@ char2 convert_char2_sat(double2 x)
 {
   x = select(x, (double2)(0), (long2)isnan(x));
   char2 y = convert_char2(x);
-  y = select(y, (char2)CHAR_MIN, convert_char2(x < (double2)(-0x1p+7f)));
-  y = select(y, (char2)CHAR_MAX, convert_char2(x >= (double2)(0x1p+7f)));
+  y = select(y, (char2)CHAR_MIN, convert_char2(x < (double2)CHAR_MIN));
+  y = select(y, (char2)CHAR_MAX, convert_char2(x >= (double2)CHAR_MAX));
   return y;
 }
 #endif
@@ -30538,8 +30538,8 @@ char3 convert_char3_sat(double3 x)
 {
   x = select(x, (double3)(0), (long3)isnan(x));
   char3 y = convert_char3(x);
-  y = select(y, (char3)CHAR_MIN, convert_char3(x < (double3)(-0x1p+7f)));
-  y = select(y, (char3)CHAR_MAX, convert_char3(x >= (double3)(0x1p+7f)));
+  y = select(y, (char3)CHAR_MIN, convert_char3(x < (double3)CHAR_MIN));
+  y = select(y, (char3)CHAR_MAX, convert_char3(x >= (double3)CHAR_MAX));
   return y;
 }
 #endif
@@ -30550,8 +30550,8 @@ char4 convert_char4_sat(double4 x)
 {
   x = select(x, (double4)(0), (long4)isnan(x));
   char4 y = convert_char4(x);
-  y = select(y, (char4)CHAR_MIN, convert_char4(x < (double4)(-0x1p+7f)));
-  y = select(y, (char4)CHAR_MAX, convert_char4(x >= (double4)(0x1p+7f)));
+  y = select(y, (char4)CHAR_MIN, convert_char4(x < (double4)CHAR_MIN));
+  y = select(y, (char4)CHAR_MAX, convert_char4(x >= (double4)CHAR_MAX));
   return y;
 }
 #endif
@@ -30562,8 +30562,8 @@ char8 convert_char8_sat(double8 x)
 {
   x = select(x, (double8)(0), (long8)isnan(x));
   char8 y = convert_char8(x);
-  y = select(y, (char8)CHAR_MIN, convert_char8(x < (double8)(-0x1p+7f)));
-  y = select(y, (char8)CHAR_MAX, convert_char8(x >= (double8)(0x1p+7f)));
+  y = select(y, (char8)CHAR_MIN, convert_char8(x < (double8)CHAR_MIN));
+  y = select(y, (char8)CHAR_MAX, convert_char8(x >= (double8)CHAR_MAX));
   return y;
 }
 #endif
@@ -30574,8 +30574,8 @@ char16 convert_char16_sat(double16 x)
 {
   x = select(x, (double16)(0), (long16)isnan(x));
   char16 y = convert_char16(x);
-  y = select(y, (char16)CHAR_MIN, convert_char16(x < (double16)(-0x1p+7f)));
-  y = select(y, (char16)CHAR_MAX, convert_char16(x >= (double16)(0x1p+7f)));
+  y = select(y, (char16)CHAR_MIN, convert_char16(x < (double16)CHAR_MIN));
+  y = select(y, (char16)CHAR_MAX, convert_char16(x >= (double16)CHAR_MAX));
   return y;
 }
 #endif
@@ -30586,8 +30586,8 @@ uchar convert_uchar_sat(double x)
 {
   x = select(x, (double)(0), (long)isnan(x));
   uchar y = convert_uchar(x);
-  y = select(y, (uchar)0, as_uchar(convert_char(x < (double)0.0f)));
-  y = select(y, (uchar)UCHAR_MAX, as_uchar(convert_char(x >= (double)(0x1p+8f))));
+  y = select(y, (uchar)0, as_uchar(convert_char(x < (double)0)));
+  y = select(y, (uchar)UCHAR_MAX, as_uchar(convert_char(x >= (double)UCHAR_MAX)));
   return y;
 }
 #endif
@@ -30598,8 +30598,8 @@ uchar2 convert_uchar2_sat(double2 x)
 {
   x = select(x, (double2)(0), (long2)isnan(x));
   uchar2 y = convert_uchar2(x);
-  y = select(y, (uchar2)0, as_uchar2(convert_char2(x < (double2)0.0f)));
-  y = select(y, (uchar2)UCHAR_MAX, as_uchar2(convert_char2(x >= (double2)(0x1p+8f))));
+  y = select(y, (uchar2)0, as_uchar2(convert_char2(x < (double2)0)));
+  y = select(y, (uchar2)UCHAR_MAX, as_uchar2(convert_char2(x >= (double2)UCHAR_MAX)));
   return y;
 }
 #endif
@@ -30610,8 +30610,8 @@ uchar3 convert_uchar3_sat(double3 x)
 {
   x = select(x, (double3)(0), (long3)isnan(x));
   uchar3 y = convert_uchar3(x);
-  y = select(y, (uchar3)0, as_uchar3(convert_char3(x < (double3)0.0f)));
-  y = select(y, (uchar3)UCHAR_MAX, as_uchar3(convert_char3(x >= (double3)(0x1p+8f))));
+  y = select(y, (uchar3)0, as_uchar3(convert_char3(x < (double3)0)));
+  y = select(y, (uchar3)UCHAR_MAX, as_uchar3(convert_char3(x >= (double3)UCHAR_MAX)));
   return y;
 }
 #endif
@@ -30622,8 +30622,8 @@ uchar4 convert_uchar4_sat(double4 x)
 {
   x = select(x, (double4)(0), (long4)isnan(x));
   uchar4 y = convert_uchar4(x);
-  y = select(y, (uchar4)0, as_uchar4(convert_char4(x < (double4)0.0f)));
-  y = select(y, (uchar4)UCHAR_MAX, as_uchar4(convert_char4(x >= (double4)(0x1p+8f))));
+  y = select(y, (uchar4)0, as_uchar4(convert_char4(x < (double4)0)));
+  y = select(y, (uchar4)UCHAR_MAX, as_uchar4(convert_char4(x >= (double4)UCHAR_MAX)));
   return y;
 }
 #endif
@@ -30634,8 +30634,8 @@ uchar8 convert_uchar8_sat(double8 x)
 {
   x = select(x, (double8)(0), (long8)isnan(x));
   uchar8 y = convert_uchar8(x);
-  y = select(y, (uchar8)0, as_uchar8(convert_char8(x < (double8)0.0f)));
-  y = select(y, (uchar8)UCHAR_MAX, as_uchar8(convert_char8(x >= (double8)(0x1p+8f))));
+  y = select(y, (uchar8)0, as_uchar8(convert_char8(x < (double8)0)));
+  y = select(y, (uchar8)UCHAR_MAX, as_uchar8(convert_char8(x >= (double8)UCHAR_MAX)));
   return y;
 }
 #endif
@@ -30646,8 +30646,8 @@ uchar16 convert_uchar16_sat(double16 x)
 {
   x = select(x, (double16)(0), (long16)isnan(x));
   uchar16 y = convert_uchar16(x);
-  y = select(y, (uchar16)0, as_uchar16(convert_char16(x < (double16)0.0f)));
-  y = select(y, (uchar16)UCHAR_MAX, as_uchar16(convert_char16(x >= (double16)(0x1p+8f))));
+  y = select(y, (uchar16)0, as_uchar16(convert_char16(x < (double16)0)));
+  y = select(y, (uchar16)UCHAR_MAX, as_uchar16(convert_char16(x >= (double16)UCHAR_MAX)));
   return y;
 }
 #endif
@@ -30658,8 +30658,8 @@ short convert_short_sat(double x)
 {
   x = select(x, (double)(0), (long)isnan(x));
   short y = convert_short(x);
-  y = select(y, (short)SHRT_MIN, convert_short(x < (double)(-0x1p+15f)));
-  y = select(y, (short)SHRT_MAX, convert_short(x >= (double)(0x1p+15f)));
+  y = select(y, (short)SHRT_MIN, convert_short(x < (double)SHRT_MIN));
+  y = select(y, (short)SHRT_MAX, convert_short(x >= (double)SHRT_MAX));
   return y;
 }
 #endif
@@ -30670,8 +30670,8 @@ short2 convert_short2_sat(double2 x)
 {
   x = select(x, (double2)(0), (long2)isnan(x));
   short2 y = convert_short2(x);
-  y = select(y, (short2)SHRT_MIN, convert_short2(x < (double2)(-0x1p+15f)));
-  y = select(y, (short2)SHRT_MAX, convert_short2(x >= (double2)(0x1p+15f)));
+  y = select(y, (short2)SHRT_MIN, convert_short2(x < (double2)SHRT_MIN));
+  y = select(y, (short2)SHRT_MAX, convert_short2(x >= (double2)SHRT_MAX));
   return y;
 }
 #endif
@@ -30682,8 +30682,8 @@ short3 convert_short3_sat(double3 x)
 {
   x = select(x, (double3)(0), (long3)isnan(x));
   short3 y = convert_short3(x);
-  y = select(y, (short3)SHRT_MIN, convert_short3(x < (double3)(-0x1p+15f)));
-  y = select(y, (short3)SHRT_MAX, convert_short3(x >= (double3)(0x1p+15f)));
+  y = select(y, (short3)SHRT_MIN, convert_short3(x < (double3)SHRT_MIN));
+  y = select(y, (short3)SHRT_MAX, convert_short3(x >= (double3)SHRT_MAX));
   return y;
 }
 #endif
@@ -30694,8 +30694,8 @@ short4 convert_short4_sat(double4 x)
 {
   x = select(x, (double4)(0), (long4)isnan(x));
   short4 y = convert_short4(x);
-  y = select(y, (short4)SHRT_MIN, convert_short4(x < (double4)(-0x1p+15f)));
-  y = select(y, (short4)SHRT_MAX, convert_short4(x >= (double4)(0x1p+15f)));
+  y = select(y, (short4)SHRT_MIN, convert_short4(x < (double4)SHRT_MIN));
+  y = select(y, (short4)SHRT_MAX, convert_short4(x >= (double4)SHRT_MAX));
   return y;
 }
 #endif
@@ -30706,8 +30706,8 @@ short8 convert_short8_sat(double8 x)
 {
   x = select(x, (double8)(0), (long8)isnan(x));
   short8 y = convert_short8(x);
-  y = select(y, (short8)SHRT_MIN, convert_short8(x < (double8)(-0x1p+15f)));
-  y = select(y, (short8)SHRT_MAX, convert_short8(x >= (double8)(0x1p+15f)));
+  y = select(y, (short8)SHRT_MIN, convert_short8(x < (double8)SHRT_MIN));
+  y = select(y, (short8)SHRT_MAX, convert_short8(x >= (double8)SHRT_MAX));
   return y;
 }
 #endif
@@ -30718,8 +30718,8 @@ short16 convert_short16_sat(double16 x)
 {
   x = select(x, (double16)(0), (long16)isnan(x));
   short16 y = convert_short16(x);
-  y = select(y, (short16)SHRT_MIN, convert_short16(x < (double16)(-0x1p+15f)));
-  y = select(y, (short16)SHRT_MAX, convert_short16(x >= (double16)(0x1p+15f)));
+  y = select(y, (short16)SHRT_MIN, convert_short16(x < (double16)SHRT_MIN));
+  y = select(y, (short16)SHRT_MAX, convert_short16(x >= (double16)SHRT_MAX));
   return y;
 }
 #endif
@@ -30730,8 +30730,8 @@ ushort convert_ushort_sat(double x)
 {
   x = select(x, (double)(0), (long)isnan(x));
   ushort y = convert_ushort(x);
-  y = select(y, (ushort)0, as_ushort(convert_short(x < (double)0.0f)));
-  y = select(y, (ushort)USHRT_MAX, as_ushort(convert_short(x >= (double)(0x1p+16f))));
+  y = select(y, (ushort)0, as_ushort(convert_short(x < (double)0)));
+  y = select(y, (ushort)USHRT_MAX, as_ushort(convert_short(x >= (double)USHRT_MAX)));
   return y;
 }
 #endif
@@ -30742,8 +30742,8 @@ ushort2 convert_ushort2_sat(double2 x)
 {
   x = select(x, (double2)(0), (long2)isnan(x));
   ushort2 y = convert_ushort2(x);
-  y = select(y, (ushort2)0, as_ushort2(convert_short2(x < (double2)0.0f)));
-  y = select(y, (ushort2)USHRT_MAX, as_ushort2(convert_short2(x >= (double2)(0x1p+16f))));
+  y = select(y, (ushort2)0, as_ushort2(convert_short2(x < (double2)0)));
+  y = select(y, (ushort2)USHRT_MAX, as_ushort2(convert_short2(x >= (double2)USHRT_MAX)));
   return y;
 }
 #endif
@@ -30754,8 +30754,8 @@ ushort3 convert_ushort3_sat(double3 x)
 {
   x = select(x, (double3)(0), (long3)isnan(x));
   ushort3 y = convert_ushort3(x);
-  y = select(y, (ushort3)0, as_ushort3(convert_short3(x < (double3)0.0f)));
-  y = select(y, (ushort3)USHRT_MAX, as_ushort3(convert_short3(x >= (double3)(0x1p+16f))));
+  y = select(y, (ushort3)0, as_ushort3(convert_short3(x < (double3)0)));
+  y = select(y, (ushort3)USHRT_MAX, as_ushort3(convert_short3(x >= (double3)USHRT_MAX)));
   return y;
 }
 #endif
@@ -30766,8 +30766,8 @@ ushort4 convert_ushort4_sat(double4 x)
 {
   x = select(x, (double4)(0), (long4)isnan(x));
   ushort4 y = convert_ushort4(x);
-  y = select(y, (ushort4)0, as_ushort4(convert_short4(x < (double4)0.0f)));
-  y = select(y, (ushort4)USHRT_MAX, as_ushort4(convert_short4(x >= (double4)(0x1p+16f))));
+  y = select(y, (ushort4)0, as_ushort4(convert_short4(x < (double4)0)));
+  y = select(y, (ushort4)USHRT_MAX, as_ushort4(convert_short4(x >= (double4)USHRT_MAX)));
   return y;
 }
 #endif
@@ -30778,8 +30778,8 @@ ushort8 convert_ushort8_sat(double8 x)
 {
   x = select(x, (double8)(0), (long8)isnan(x));
   ushort8 y = convert_ushort8(x);
-  y = select(y, (ushort8)0, as_ushort8(convert_short8(x < (double8)0.0f)));
-  y = select(y, (ushort8)USHRT_MAX, as_ushort8(convert_short8(x >= (double8)(0x1p+16f))));
+  y = select(y, (ushort8)0, as_ushort8(convert_short8(x < (double8)0)));
+  y = select(y, (ushort8)USHRT_MAX, as_ushort8(convert_short8(x >= (double8)USHRT_MAX)));
   return y;
 }
 #endif
@@ -30790,8 +30790,8 @@ ushort16 convert_ushort16_sat(double16 x)
 {
   x = select(x, (double16)(0), (long16)isnan(x));
   ushort16 y = convert_ushort16(x);
-  y = select(y, (ushort16)0, as_ushort16(convert_short16(x < (double16)0.0f)));
-  y = select(y, (ushort16)USHRT_MAX, as_ushort16(convert_short16(x >= (double16)(0x1p+16f))));
+  y = select(y, (ushort16)0, as_ushort16(convert_short16(x < (double16)0)));
+  y = select(y, (ushort16)USHRT_MAX, as_ushort16(convert_short16(x >= (double16)USHRT_MAX)));
   return y;
 }
 #endif
@@ -30802,8 +30802,8 @@ int convert_int_sat(double x)
 {
   x = select(x, (double)(0), (long)isnan(x));
   int y = convert_int(x);
-  y = select(y, (int)INT_MIN, convert_int(x < (double)(-0x1p+31f)));
-  y = select(y, (int)INT_MAX, convert_int(x >= (double)(0x1p+31f)));
+  y = select(y, (int)INT_MIN, convert_int(x < (double)INT_MIN));
+  y = select(y, (int)INT_MAX, convert_int(x >= (double)INT_MAX));
   return y;
 }
 #endif
@@ -30814,8 +30814,8 @@ int2 convert_int2_sat(double2 x)
 {
   x = select(x, (double2)(0), (long2)isnan(x));
   int2 y = convert_int2(x);
-  y = select(y, (int2)INT_MIN, convert_int2(x < (double2)(-0x1p+31f)));
-  y = select(y, (int2)INT_MAX, convert_int2(x >= (double2)(0x1p+31f)));
+  y = select(y, (int2)INT_MIN, convert_int2(x < (double2)INT_MIN));
+  y = select(y, (int2)INT_MAX, convert_int2(x >= (double2)INT_MAX));
   return y;
 }
 #endif
@@ -30826,8 +30826,8 @@ int3 convert_int3_sat(double3 x)
 {
   x = select(x, (double3)(0), (long3)isnan(x));
   int3 y = convert_int3(x);
-  y = select(y, (int3)INT_MIN, convert_int3(x < (double3)(-0x1p+31f)));
-  y = select(y, (int3)INT_MAX, convert_int3(x >= (double3)(0x1p+31f)));
+  y = select(y, (int3)INT_MIN, convert_int3(x < (double3)INT_MIN));
+  y = select(y, (int3)INT_MAX, convert_int3(x >= (double3)INT_MAX));
   return y;
 }
 #endif
@@ -30838,8 +30838,8 @@ int4 convert_int4_sat(double4 x)
 {
   x = select(x, (double4)(0), (long4)isnan(x));
   int4 y = convert_int4(x);
-  y = select(y, (int4)INT_MIN, convert_int4(x < (double4)(-0x1p+31f)));
-  y = select(y, (int4)INT_MAX, convert_int4(x >= (double4)(0x1p+31f)));
+  y = select(y, (int4)INT_MIN, convert_int4(x < (double4)INT_MIN));
+  y = select(y, (int4)INT_MAX, convert_int4(x >= (double4)INT_MAX));
   return y;
 }
 #endif
@@ -30850,8 +30850,8 @@ int8 convert_int8_sat(double8 x)
 {
   x = select(x, (double8)(0), (long8)isnan(x));
   int8 y = convert_int8(x);
-  y = select(y, (int8)INT_MIN, convert_int8(x < (double8)(-0x1p+31f)));
-  y = select(y, (int8)INT_MAX, convert_int8(x >= (double8)(0x1p+31f)));
+  y = select(y, (int8)INT_MIN, convert_int8(x < (double8)INT_MIN));
+  y = select(y, (int8)INT_MAX, convert_int8(x >= (double8)INT_MAX));
   return y;
 }
 #endif
@@ -30862,8 +30862,8 @@ int16 convert_int16_sat(double16 x)
 {
   x = select(x, (double16)(0), (long16)isnan(x));
   int16 y = convert_int16(x);
-  y = select(y, (int16)INT_MIN, convert_int16(x < (double16)(-0x1p+31f)));
-  y = select(y, (int16)INT_MAX, convert_int16(x >= (double16)(0x1p+31f)));
+  y = select(y, (int16)INT_MIN, convert_int16(x < (double16)INT_MIN));
+  y = select(y, (int16)INT_MAX, convert_int16(x >= (double16)INT_MAX));
   return y;
 }
 #endif
@@ -30874,8 +30874,8 @@ uint convert_uint_sat(double x)
 {
   x = select(x, (double)(0), (long)isnan(x));
   uint y = convert_uint(x);
-  y = select(y, (uint)0, as_uint(convert_int(x < (double)0.0f)));
-  y = select(y, (uint)UINT_MAX, as_uint(convert_int(x >= (double)(0x1p+32f))));
+  y = select(y, (uint)0, as_uint(convert_int(x < (double)0)));
+  y = select(y, (uint)UINT_MAX, as_uint(convert_int(x >= (double)UINT_MAX)));
   return y;
 }
 #endif
@@ -30886,8 +30886,8 @@ uint2 convert_uint2_sat(double2 x)
 {
   x = select(x, (double2)(0), (long2)isnan(x));
   uint2 y = convert_uint2(x);
-  y = select(y, (uint2)0, as_uint2(convert_int2(x < (double2)0.0f)));
-  y = select(y, (uint2)UINT_MAX, as_uint2(convert_int2(x >= (double2)(0x1p+32f))));
+  y = select(y, (uint2)0, as_uint2(convert_int2(x < (double2)0)));
+  y = select(y, (uint2)UINT_MAX, as_uint2(convert_int2(x >= (double2)UINT_MAX)));
   return y;
 }
 #endif
@@ -30898,8 +30898,8 @@ uint3 convert_uint3_sat(double3 x)
 {
   x = select(x, (double3)(0), (long3)isnan(x));
   uint3 y = convert_uint3(x);
-  y = select(y, (uint3)0, as_uint3(convert_int3(x < (double3)0.0f)));
-  y = select(y, (uint3)UINT_MAX, as_uint3(convert_int3(x >= (double3)(0x1p+32f))));
+  y = select(y, (uint3)0, as_uint3(convert_int3(x < (double3)0)));
+  y = select(y, (uint3)UINT_MAX, as_uint3(convert_int3(x >= (double3)UINT_MAX)));
   return y;
 }
 #endif
@@ -30910,8 +30910,8 @@ uint4 convert_uint4_sat(double4 x)
 {
   x = select(x, (double4)(0), (long4)isnan(x));
   uint4 y = convert_uint4(x);
-  y = select(y, (uint4)0, as_uint4(convert_int4(x < (double4)0.0f)));
-  y = select(y, (uint4)UINT_MAX, as_uint4(convert_int4(x >= (double4)(0x1p+32f))));
+  y = select(y, (uint4)0, as_uint4(convert_int4(x < (double4)0)));
+  y = select(y, (uint4)UINT_MAX, as_uint4(convert_int4(x >= (double4)UINT_MAX)));
   return y;
 }
 #endif
@@ -30922,8 +30922,8 @@ uint8 convert_uint8_sat(double8 x)
 {
   x = select(x, (double8)(0), (long8)isnan(x));
   uint8 y = convert_uint8(x);
-  y = select(y, (uint8)0, as_uint8(convert_int8(x < (double8)0.0f)));
-  y = select(y, (uint8)UINT_MAX, as_uint8(convert_int8(x >= (double8)(0x1p+32f))));
+  y = select(y, (uint8)0, as_uint8(convert_int8(x < (double8)0)));
+  y = select(y, (uint8)UINT_MAX, as_uint8(convert_int8(x >= (double8)UINT_MAX)));
   return y;
 }
 #endif
@@ -30934,8 +30934,8 @@ uint16 convert_uint16_sat(double16 x)
 {
   x = select(x, (double16)(0), (long16)isnan(x));
   uint16 y = convert_uint16(x);
-  y = select(y, (uint16)0, as_uint16(convert_int16(x < (double16)0.0f)));
-  y = select(y, (uint16)UINT_MAX, as_uint16(convert_int16(x >= (double16)(0x1p+32f))));
+  y = select(y, (uint16)0, as_uint16(convert_int16(x < (double16)0)));
+  y = select(y, (uint16)UINT_MAX, as_uint16(convert_int16(x >= (double16)UINT_MAX)));
   return y;
 }
 #endif
@@ -30946,8 +30946,8 @@ long convert_long_sat(double x)
 {
   x = select(x, (double)(0), (long)isnan(x));
   long y = convert_long(x);
-  y = select(y, (long)LONG_MIN, convert_long(x < (double)(-0x1p+63f)));
-  y = select(y, (long)LONG_MAX, convert_long(x >= (double)(0x1p+63f)));
+  y = select(y, (long)LONG_MIN, convert_long(x < (double)LONG_MIN));
+  y = select(y, (long)LONG_MAX, convert_long(x >= (double)LONG_MAX));
   return y;
 }
 #endif
@@ -30958,8 +30958,8 @@ long2 convert_long2_sat(double2 x)
 {
   x = select(x, (double2)(0), (long2)isnan(x));
   long2 y = convert_long2(x);
-  y = select(y, (long2)LONG_MIN, convert_long2(x < (double2)(-0x1p+63f)));
-  y = select(y, (long2)LONG_MAX, convert_long2(x >= (double2)(0x1p+63f)));
+  y = select(y, (long2)LONG_MIN, convert_long2(x < (double2)LONG_MIN));
+  y = select(y, (long2)LONG_MAX, convert_long2(x >= (double2)LONG_MAX));
   return y;
 }
 #endif
@@ -30970,8 +30970,8 @@ long3 convert_long3_sat(double3 x)
 {
   x = select(x, (double3)(0), (long3)isnan(x));
   long3 y = convert_long3(x);
-  y = select(y, (long3)LONG_MIN, convert_long3(x < (double3)(-0x1p+63f)));
-  y = select(y, (long3)LONG_MAX, convert_long3(x >= (double3)(0x1p+63f)));
+  y = select(y, (long3)LONG_MIN, convert_long3(x < (double3)LONG_MIN));
+  y = select(y, (long3)LONG_MAX, convert_long3(x >= (double3)LONG_MAX));
   return y;
 }
 #endif
@@ -30982,8 +30982,8 @@ long4 convert_long4_sat(double4 x)
 {
   x = select(x, (double4)(0), (long4)isnan(x));
   long4 y = convert_long4(x);
-  y = select(y, (long4)LONG_MIN, convert_long4(x < (double4)(-0x1p+63f)));
-  y = select(y, (long4)LONG_MAX, convert_long4(x >= (double4)(0x1p+63f)));
+  y = select(y, (long4)LONG_MIN, convert_long4(x < (double4)LONG_MIN));
+  y = select(y, (long4)LONG_MAX, convert_long4(x >= (double4)LONG_MAX));
   return y;
 }
 #endif
@@ -30994,8 +30994,8 @@ long8 convert_long8_sat(double8 x)
 {
   x = select(x, (double8)(0), (long8)isnan(x));
   long8 y = convert_long8(x);
-  y = select(y, (long8)LONG_MIN, convert_long8(x < (double8)(-0x1p+63f)));
-  y = select(y, (long8)LONG_MAX, convert_long8(x >= (double8)(0x1p+63f)));
+  y = select(y, (long8)LONG_MIN, convert_long8(x < (double8)LONG_MIN));
+  y = select(y, (long8)LONG_MAX, convert_long8(x >= (double8)LONG_MAX));
   return y;
 }
 #endif
@@ -31006,8 +31006,8 @@ long16 convert_long16_sat(double16 x)
 {
   x = select(x, (double16)(0), (long16)isnan(x));
   long16 y = convert_long16(x);
-  y = select(y, (long16)LONG_MIN, convert_long16(x < (double16)(-0x1p+63f)));
-  y = select(y, (long16)LONG_MAX, convert_long16(x >= (double16)(0x1p+63f)));
+  y = select(y, (long16)LONG_MIN, convert_long16(x < (double16)LONG_MIN));
+  y = select(y, (long16)LONG_MAX, convert_long16(x >= (double16)LONG_MAX));
   return y;
 }
 #endif
@@ -31018,8 +31018,8 @@ ulong convert_ulong_sat(double x)
 {
   x = select(x, (double)(0), (long)isnan(x));
   ulong y = convert_ulong(x);
-  y = select(y, (ulong)0, as_ulong(convert_long(x < (double)0.0f)));
-  y = select(y, (ulong)ULONG_MAX, as_ulong(convert_long(x >= (double)(0x1p+64f))));
+  y = select(y, (ulong)0, as_ulong(convert_long(x < (double)0)));
+  y = select(y, (ulong)ULONG_MAX, as_ulong(convert_long(x >= (double)ULONG_MAX)));
   return y;
 }
 #endif
@@ -31030,8 +31030,8 @@ ulong2 convert_ulong2_sat(double2 x)
 {
   x = select(x, (double2)(0), (long2)isnan(x));
   ulong2 y = convert_ulong2(x);
-  y = select(y, (ulong2)0, as_ulong2(convert_long2(x < (double2)0.0f)));
-  y = select(y, (ulong2)ULONG_MAX, as_ulong2(convert_long2(x >= (double2)(0x1p+64f))));
+  y = select(y, (ulong2)0, as_ulong2(convert_long2(x < (double2)0)));
+  y = select(y, (ulong2)ULONG_MAX, as_ulong2(convert_long2(x >= (double2)ULONG_MAX)));
   return y;
 }
 #endif
@@ -31042,8 +31042,8 @@ ulong3 convert_ulong3_sat(double3 x)
 {
   x = select(x, (double3)(0), (long3)isnan(x));
   ulong3 y = convert_ulong3(x);
-  y = select(y, (ulong3)0, as_ulong3(convert_long3(x < (double3)0.0f)));
-  y = select(y, (ulong3)ULONG_MAX, as_ulong3(convert_long3(x >= (double3)(0x1p+64f))));
+  y = select(y, (ulong3)0, as_ulong3(convert_long3(x < (double3)0)));
+  y = select(y, (ulong3)ULONG_MAX, as_ulong3(convert_long3(x >= (double3)ULONG_MAX)));
   return y;
 }
 #endif
@@ -31054,8 +31054,8 @@ ulong4 convert_ulong4_sat(double4 x)
 {
   x = select(x, (double4)(0), (long4)isnan(x));
   ulong4 y = convert_ulong4(x);
-  y = select(y, (ulong4)0, as_ulong4(convert_long4(x < (double4)0.0f)));
-  y = select(y, (ulong4)ULONG_MAX, as_ulong4(convert_long4(x >= (double4)(0x1p+64f))));
+  y = select(y, (ulong4)0, as_ulong4(convert_long4(x < (double4)0)));
+  y = select(y, (ulong4)ULONG_MAX, as_ulong4(convert_long4(x >= (double4)ULONG_MAX)));
   return y;
 }
 #endif
@@ -31066,8 +31066,8 @@ ulong8 convert_ulong8_sat(double8 x)
 {
   x = select(x, (double8)(0), (long8)isnan(x));
   ulong8 y = convert_ulong8(x);
-  y = select(y, (ulong8)0, as_ulong8(convert_long8(x < (double8)0.0f)));
-  y = select(y, (ulong8)ULONG_MAX, as_ulong8(convert_long8(x >= (double8)(0x1p+64f))));
+  y = select(y, (ulong8)0, as_ulong8(convert_long8(x < (double8)0)));
+  y = select(y, (ulong8)ULONG_MAX, as_ulong8(convert_long8(x >= (double8)ULONG_MAX)));
   return y;
 }
 #endif
@@ -31078,8 +31078,8 @@ ulong16 convert_ulong16_sat(double16 x)
 {
   x = select(x, (double16)(0), (long16)isnan(x));
   ulong16 y = convert_ulong16(x);
-  y = select(y, (ulong16)0, as_ulong16(convert_long16(x < (double16)0.0f)));
-  y = select(y, (ulong16)ULONG_MAX, as_ulong16(convert_long16(x >= (double16)(0x1p+64f))));
+  y = select(y, (ulong16)0, as_ulong16(convert_long16(x < (double16)0)));
+  y = select(y, (ulong16)ULONG_MAX, as_ulong16(convert_long16(x >= (double16)ULONG_MAX)));
   return y;
 }
 #endif
