@@ -103,12 +103,6 @@ OpenASIP (ttasim) driver
 CPU driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* The atomic operations on floats (`cl_ext_float_atomic`) are now
-  disabled when `-DENABLE_CONFORMANCE=ON`.
-  When `-DENABLE_CONFORMANCE=OFF`, `cl_ext_float_atomic` is enabled.
-  This is due to issues in OpenCL-CTS that prevent passing the testsuite
-  when `cl_ext_float_atomic` is enabled.
-
 * Implemented new extensions: `cl_khr_extended_bit_ops`, `cl_khr_device_uuid`,
   `cl_khr_suggested_local_work_size`, `cl_khr_integer_dot_product`
 
