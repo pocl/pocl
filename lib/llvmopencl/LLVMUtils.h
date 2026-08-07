@@ -110,6 +110,8 @@ void eraseFunctionAndCallers(llvm::Function *Function);
 
 bool isAutomaticLocal(llvm::Function *F, llvm::GlobalVariable &Var);
 
+void unifyLLVMFunctionAttributes(llvm::Module &M, bool TouchAlwaysInline);
+
 /// Returns true if the function is a compiler-expandable work-item function
 /// all call of which in the Module are compiler-expandable.
 ///

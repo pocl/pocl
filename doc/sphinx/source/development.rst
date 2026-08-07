@@ -4,8 +4,8 @@ Information for PoCL developers
 Testsuite
 ----------
 
-Before changes are committed to the upstream PoCL, the code must pass the Main
-Test Matrix Github workflow.
+Before changes are committed to the upstream PoCL, the code must pass the
+Github Actions workflows.
 
 Under the 'examples' directory there are directories for
 external OpenCL application projects which are used as test suites for
@@ -177,10 +177,8 @@ LLVM is used to detect the CPU variant to be used as target. This
 can be overridden by passing -DLLC_HOST_CPU=... to CMake. See the
 documentation for LLC_HOST_CPU build option.
 
-Cross-compilation where 'build' is different from 'host' has not been
-tested.
-Cross-compilation where 'host' is a different architecture from 'target'
-has not been tested for CPU devices.
+Cross-compilation where Target and Host CPUs are different,
+is supported. Check out the 'Cross-compiling PoCL' section of install.rst
 
 Writing Documentation
 ---------------------
@@ -246,8 +244,7 @@ driver as the primary GPU test platform.
 
 The latest LLVM release is given priority when testing, and we cannot
 guarantee older LLVM versions keep working over PoCL releases due to
-the constantly changing library API. Currently we maintain support
-for the LLVM version 14 and newer.
+the constantly changing library API.
 
 If you would like get your favourite OpenCL-using project's test
 suite included in the tier-1 suite, please send a pull request that
@@ -300,15 +297,12 @@ A checklist and hints for testing and making a release successfully:
 
 * Create a new release on Github. Mark it as pre-release. This should
   create both a tarball and a git tag. Sign the package with a GPG
-  key.
+  key. If attaching additional binaries, also sign them with GPG key.
 
 * Upload the package and the key also to portablecl.org/downloads via SFTP.
 
 * Request for testers in Twitter and/or mailing list. Point the testers to
-  send their test reports to you privately or by adding them to the wiki.
-  A good way is to create a wiki page for the release schedule and a test
-  log. See https://github.com/pocl/pocl/wiki/pocl-0.10-release-testing for
-  an example.
+  send their test reports to you privately or creating a Github issue.
 
 * To publish a release, create a new release on Github without checking
   the pre-release checkbox. Upload tar ball simiarly as prereleases.

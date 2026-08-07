@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm_version: [20]
+        llvm_version: [22]
         shared_libs: [ON, OFF]
         config: [cpu]
         enable_icd: [ON, OFF]
@@ -45,12 +45,12 @@ jobs:
             shared_libs: OFF
         include:
           - config: cpu
-            llvm_version: 19
+            llvm_version: 21
             enable_icd: OFF
             shared_libs: ON
           # builds an .exe installer
           - config: nsis
-            llvm_version: 20
+            llvm_version: 22
             enable_icd: ON
             shared_libs: ON
 
