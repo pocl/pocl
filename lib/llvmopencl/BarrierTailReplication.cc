@@ -102,7 +102,11 @@ bool BarrierTailReplicationImpl::runOnFunction(Function &F) {
 
   bool changed = ProcessFunction(F);
 
+#if LLVM_MAJOR >= 24
+  LI.verify();
+#else
   LI.verify(DT);
+#endif
   /* The created tails might contain PHI nodes with operands
      referring to the non-predecessor (split point) BB.
      These must be cleaned to avoid breakage later on.
