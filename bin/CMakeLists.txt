@@ -39,12 +39,28 @@ if(ENABLE_SPIRV)
   harden(spirv_fix_atomic_compare_exchange)
   target_link_libraries(spirv_fix_atomic_compare_exchange poclu ${OPENCL_LIBS})
   target_include_directories(spirv_fix_atomic_compare_exchange PRIVATE "${SPVSRC}")
+  # Installed executables need rpath to find the PoCL library.
+  # CMAKE_INSTALL_RPATH_USE_LINK_PATH handles external dependencies like LLVM,
+  # but the PoCL library is linked from the build tree, so its install
+  # location must be added explicitly.
+  if(NOT STATIC_LLVM)
+    set_target_properties(spirv_fix_atomic_compare_exchange PROPERTIES
+      INSTALL_RPATH "${POCL_INSTALL_PUBLIC_LIBDIR}")
+  endif()
 endif()
 
 if(ENABLE_POCLCC)
   add_executable(poclcc poclcc.c)
   harden(poclcc)
   target_link_libraries(poclcc poclu ${OPENCL_LIBS})
+  # Installed executables need rpath to find the PoCL library.
+  # CMAKE_INSTALL_RPATH_USE_LINK_PATH handles external dependencies like LLVM,
+  # but the PoCL library is linked from the build tree, so its install
+  # location must be added explicitly.
+  if(NOT STATIC_LLVM)
+    set_target_properties(poclcc PROPERTIES
+      INSTALL_RPATH "${POCL_INSTALL_PUBLIC_LIBDIR}")
+  endif()
 
   install(TARGETS "poclcc" RUNTIME
           DESTINATION "${POCL_INSTALL_PUBLIC_BINDIR_REL}" COMPONENT "poclcc")
