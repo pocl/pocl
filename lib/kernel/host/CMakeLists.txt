@@ -345,18 +345,16 @@ if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS) # implies CONFORMANCE=OFF
     )
 endif()  # ENABLE_HOST_CPU_VECTORIZE_BUILTINS
 
-
 # add conformant versions of FP16 builtins from CORE-Math library
 if(HOST_CPU_ENABLE_CL_KHR_FP16)
   # if VECTORIZE_BUILTINS=ON, add only those FP16 functions for which we don't have LLVM builtins
   # (= not present in the list above)
   if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS) # implies CONFORMANCE=OFF
     foreach(FILE IN ITEMS
-        acospif16.cl  atan2f16.cl    hypotf16.cl     log2p1f16.cl    tgammaf16.cl
-        acoshf16.cl   atan2pif16.cl  exp10m1f16.cl   lgammaf16.cl    sinpif16.cl
+        acospif16.cl  hypotf16.cl    log2p1f16.cl    acoshf16.cl     exp10m1f16.cl
         atanhf16.cl   cospif16.cl    exp2m1f16.cl    log10p1f16.cl   asinhf16.cl
-        atanpif16.cl  erfcf16.cl     log1pf16.cl     sincosf16.cl    asinpif16.cl
-        cbrtf16.cl    erff16.cl      expm1f16.cl     tanpif16.cl
+        atanpif16.cl  log1pf16.cl     sincosf16.cl    asinpif16.cl
+        cbrtf16.cl    expm1f16.cl     tanpif16.cl     sinpif16.cl
         # FP16 ops with no native FP16 builtin and no SLEEF FP16 path: not
         # covered by the vectorized generic builtins above, so needed here too.
         promotedf16.cl)
@@ -365,12 +363,12 @@ if(HOST_CPU_ENABLE_CL_KHR_FP16)
   else()
     # VECTORIZE_BUILTINS=OFF, add all available CORE-math functions
     foreach(FILE IN ITEMS
-        acosf16.cl    atan2f16.cl    exp10f16.cl     hypotf16.cl    log2p1f16.cl   sinhf16.cl    tgammaf16.cl
-        acoshf16.cl   atan2pif16.cl  cosf16.cl       exp10m1f16.cl  lgammaf16.cl   logf16.cl     sinpif16.cl
-        acospif16.cl  atanf16.cl     coshf16.cl      exp2f16.cl     log10f16.cl    powf16.cl
+        acosf16.cl    exp10f16.cl     hypotf16.cl    log2p1f16.cl   sinhf16.cl
+        acoshf16.cl   cosf16.cl       exp10m1f16.cl  logf16.cl      sinpif16.cl
+        acospif16.cl  atanf16.cl     coshf16.cl      exp2f16.cl     log10f16.cl
         asinf16.cl    atanhf16.cl    cospif16.cl     exp2m1f16.cl   log10p1f16.cl  tanf16.cl
-        asinhf16.cl   atanpif16.cl   erfcf16.cl      expf16.cl      log1pf16.cl    sincosf16.cl  tanhf16.cl
-        asinpif16.cl  cbrtf16.cl     erff16.cl       expm1f16.cl    log2f16.cl     sinf16.cl     tanpif16.cl
+        asinhf16.cl   atanpif16.cl   expf16.cl      log1pf16.cl    sincosf16.cl  tanhf16.cl
+        asinpif16.cl  cbrtf16.cl     expm1f16.cl    log2f16.cl     sinf16.cl     tanpif16.cl
         additionalf16.cl  promotedf16.cl)
       list(APPEND SOURCES_WITH_SLEEF "core-math/${FILE}")
     endforeach()
@@ -452,6 +450,12 @@ set(KERNEL_CL_FLAGS
       "-DENABLE_CONFORMANCE=$<BOOL:${ENABLE_CONFORMANCE}>"
       "-DENABLE_SLEEF=1"
       ${KERNEL_CL_FLAGS})
+
+# this is necessary to avoid thousands of warnings printed
+# when compiling CORE-math library without doubles
+if(NOT HOST_CPU_ENABLE_CL_KHR_FP64)
+  list(APPEND KERNEL_CL_FLAGS "-cl-single-precision-constant")
+endif()
 
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1657502
 # this *likely* shouldn't be a problem for PoCL, but needs testing
