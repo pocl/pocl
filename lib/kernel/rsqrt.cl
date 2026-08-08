@@ -24,10 +24,9 @@
 
 #include "templates.h"
 
-/* rsqrt the expression depends on sqrt builtin */
-#if !__has_builtin(__builtin_sqrtf16)
+/* disable the fp16 version of rsqrt. It doesn't have enough precision to pass
+ * the CTS math test */
 #undef __IF_FP16
 #define __IF_FP16(X)
-#endif
 
 DEFINE_EXPR_V_V(rsqrt, (stype)1/sqrt(a))
