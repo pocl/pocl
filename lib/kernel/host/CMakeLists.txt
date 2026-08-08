@@ -41,6 +41,7 @@ ctz.cl
 convert_type.cl
 copysign.cl
 cross.cl
+degrees.cl
 distance.cl
 dot.cl
 fast_distance.cl
@@ -120,6 +121,7 @@ pocl_run_all_wgs.c
 popcount.cl
 prefetch.cl
 printf.c
+radians.cl
 read_image.cl
 rhadd.cl
 rotate.cl
@@ -165,8 +167,6 @@ libclc-pocl/acosh.cl
 libclc-pocl/asinh.cl
 libclc-pocl/atanh.cl
 libclc-pocl/ep_log.cl
-libclc-pocl/radians.cl
-libclc-pocl/degrees.cl
 libclc-pocl/log2.cl
 libclc-pocl/logb.cl
 # currently unused

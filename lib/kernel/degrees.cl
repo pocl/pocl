@@ -24,5 +24,10 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_V_V(degrees,
-                a * TYPED_CONST(stype, 180/M_PI_H, 180/M_PI_F, 180/M_PI))
+#define DEGREE_LITERAL_F 0x1.ca5dc2p+5F
+#define DEGREE_LITERAL_D 0x1.ca5dc1a63c1f8p+5
+#define DEGREE_LITERAL_H (half)0x1.ca5dc1a63c1f8p+5
+
+DEFINE_EXPR_V_V (
+  degrees,
+  a *TYPED_CONST (stype, DEGREE_LITERAL_H, DEGREE_LITERAL_F, DEGREE_LITERAL_D))
