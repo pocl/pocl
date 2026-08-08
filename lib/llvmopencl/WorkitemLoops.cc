@@ -30,6 +30,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/ADT/Statistic.h>
 #include <llvm/Analysis/LoopInfo.h>
 #include <llvm/Analysis/PostDominators.h>
+#include <llvm/Analysis/ValueTracking.h>
 #include <llvm/IR/DataLayout.h>
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/IRBuilder.h>
@@ -56,6 +57,9 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 POP_COMPILER_DIAGS
 
+#include "pocl_llvm_api.h"
+
+#include <algorithm>
 #include <array>
 #include <iostream>
 #include <map>
@@ -937,6 +941,31 @@ llvm::AllocaInst *WorkitemLoopsImpl::getContextArray(llvm::Instruction *Inst,
              Inst, &*(Entry.getFirstInsertionPt()), CArrayName, PaddingAdded);
 }
 
+static bool isRematerializableLoad(const LoadInst *Load) {
+  if (!Load->isSimple())
+    return false;
+
+  const llvm::Value *Obj = getUnderlyingObject(Load->getPointerOperand());
+
+  // readonly alone does not exclude writes through an alias.
+  if (const auto *Arg = dyn_cast<Argument>(Obj))
+    return Arg->onlyReadsMemory() && Arg->hasNoAliasAttr();
+
+  if (const auto *GV = dyn_cast<GlobalVariable>(Obj)) {
+    if (GV->isConstant())
+      return true;
+    // These are updated by the work-item loops and must be read in the target
+    // region. The program-scope variable buffer is ordinary writable memory.
+    llvm::StringRef Name = GV->getName();
+    return Name != PoclGVarBufferName &&
+           std::find(WorkgroupVariablesVector.begin(),
+                     WorkgroupVariablesVector.end(),
+                     Name.str()) != WorkgroupVariablesVector.end();
+  }
+
+  return false;
+}
+
 /// Tries to rematerialize the given value-defining instruction.
 ///
 /// Rematerialization in this context means recomputing the value produced
@@ -1029,6 +1058,14 @@ llvm::Value *WorkitemLoopsImpl::tryToRematerialize(
   // and refer to the original.
   if (Inst->getParent() == &K->getEntryBlock())
     return Inst;
+
+  // A rematerialized load may observe writes between the original definition
+  // and its use in a later parallel region.
+  if (Inst->mayReadFromMemory()) {
+    const auto *Load = dyn_cast<LoadInst>(Inst);
+    if (Load == nullptr || !isRematerializableLoad(Load))
+      UNABLE_TO_REMAT("reads mutable memory");
+  }
 
   llvm::Instruction *Copy = CanDoIt == nullptr ? Inst->clone() : nullptr;
   if (Copy != nullptr) {

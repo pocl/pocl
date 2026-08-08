@@ -15,7 +15,8 @@ using namespace std;
 
 const char *SOURCE = R"RAW(
 
-__kernel void test(__global long *output, __global long *input)
+__kernel void test(__global long *restrict output,
+                   __global long *restrict input)
 {
     size_t i = get_global_id(0) * 16;
 

@@ -69,6 +69,10 @@ private:
   typedef std::set<llvm::BasicBlock *> BasicBlockSet;
   typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
   typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
+  // Share a tail among edges from the same parallel region.
+  typedef std::map<std::pair<llvm::BasicBlock *, llvm::BasicBlock *>,
+                   llvm::BasicBlock *>
+      ReplicaMap;
 
   llvm::DominatorTree &DT;
   llvm::LoopInfo &LI;
@@ -77,7 +81,9 @@ private:
   bool FindBarriersDFS(llvm::BasicBlock *BB, BasicBlockSet &ProcessedBBs);
   bool ReplicateJoinedSubgraphs(llvm::BasicBlock *Dominator,
                                 llvm::BasicBlock *SubgraphEntry,
-                                BasicBlockSet &ProcessedBBs);
+                                llvm::BasicBlock *RegionEntryBarrier,
+                                BasicBlockSet &ProcessedBBs,
+                                ReplicaMap &Replicas);
 
   llvm::BasicBlock *ReplicateSubgraph(llvm::BasicBlock *Entry,
                                       llvm::Function *F);
@@ -161,7 +167,8 @@ bool BarrierTailReplicationImpl::FindBarriersDFS(BasicBlock *BB,
     std::cerr << "### block " << BB->getName().str() << " has a barrier, RJS" << std::endl;
 #endif
     BasicBlockSet processed_bbs_rjs;
-    changed = ReplicateJoinedSubgraphs(BB, BB, processed_bbs_rjs);
+    ReplicaMap Replicas;
+    changed = ReplicateJoinedSubgraphs(BB, BB, BB, processed_bbs_rjs, Replicas);
   }
 
   auto t = BB->getTerminator();
@@ -176,8 +183,13 @@ bool BarrierTailReplicationImpl::FindBarriersDFS(BasicBlock *BB,
 // Only replicate those parts of the subgraph that are not
 // dominated by a (barrier) basic block, to avoid excesive
 // (and confusing) code replication.
-bool BarrierTailReplicationImpl::ReplicateJoinedSubgraphs(BasicBlock *Dominator, BasicBlock *SubgraphEntry,
-    BasicBlockSet &ProcessedBBs) {
+// Edges from the same parallel region to the same join point must share a
+// replica. Otherwise they become separate region exits and WorkitemLoops may
+// purge paths selected by work-item-varying branches.
+bool BarrierTailReplicationImpl::ReplicateJoinedSubgraphs(
+    BasicBlock *Dominator, BasicBlock *SubgraphEntry,
+    BasicBlock *RegionEntryBarrier, BasicBlockSet &ProcessedBBs,
+    ReplicaMap &Replicas) {
   bool changed = false;
 
   assert(DT.dominates(Dominator, SubgraphEntry));
@@ -215,14 +227,21 @@ bool BarrierTailReplicationImpl::ReplicateJoinedSubgraphs(BasicBlock *Dominator,
         std::cerr << "### " << Dominator->getName().str() << " dominates "
                   << b->getName().str() << std::endl;
 #endif
-        changed |= ReplicateJoinedSubgraphs(Dominator, b, ProcessedBBs);
+        // Crossing a barrier starts a new parallel region; the tails joined
+        // from beyond it must not be shared with the ones joined from here.
+        BasicBlock *SuccRegion =
+            blockHasBarrier(b) ? b : RegionEntryBarrier;
+        changed |= ReplicateJoinedSubgraphs(Dominator, b, SuccRegion,
+                                            ProcessedBBs, Replicas);
     } else {
 #ifdef DEBUG_BARRIER_REPL
         std::cerr << "### " << Dominator->getName().str() << " does not dominate "
                   << b->getName().str() << " replicating " << std::endl;
 #endif
-        BasicBlock *replicated_subgraph_entry =
-          ReplicateSubgraph(b, f);
+        BasicBlock *&replicated_subgraph_entry =
+            Replicas[std::make_pair(RegionEntryBarrier, b)];
+        if (replicated_subgraph_entry == nullptr)
+          replicated_subgraph_entry = ReplicateSubgraph(b, f);
         t->setSuccessor(i, replicated_subgraph_entry);
         changed = true;
     }
