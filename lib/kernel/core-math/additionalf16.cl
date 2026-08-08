@@ -34,6 +34,7 @@ DEFINE_FP16_BUILTIN_V_V (trunc, __builtin_elementwise_trunc)
 DEFINE_FP16_BUILTIN_V_V (rint, __builtin_elementwise_rint)
 DEFINE_FP16_BUILTIN_V_V (round, __builtin_elementwise_round)
 DEFINE_FP16_BUILTIN_V_V (fabs, __builtin_elementwise_abs)
+DEFINE_FP16_BUILTIN_V_VV (pow, __builtin_elementwise_pow)
 
 /* __builtin_elementwise_max/min lower to @llvm.maxnum/minnum, matching the
    OpenCL fmax/fmin NaN-quieting semantics. */

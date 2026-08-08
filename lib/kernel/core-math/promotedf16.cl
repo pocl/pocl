@@ -29,6 +29,34 @@ float _CL_OVERLOADABLE _cl_remquo (float, float, private int *);
 half _CL_OVERLOADABLE logb (half a) { return (half)logb ((float)a); }
 DEFINE_FP16_EXPR_V_V (logb)
 
+/* erf, erfc : half -> half */
+half _CL_OVERLOADABLE
+erf (half a)
+{
+  return (half)erf ((float)a);
+}
+DEFINE_FP16_EXPR_V_V (erf)
+half _CL_OVERLOADABLE
+erfc (half a)
+{
+  return (half)erfc ((float)a);
+}
+DEFINE_FP16_EXPR_V_V (erfc)
+
+/* lgamma, tgamma : half -> half */
+half _CL_OVERLOADABLE
+lgamma (half a)
+{
+  return (half)lgamma ((float)a);
+}
+DEFINE_FP16_EXPR_V_V (lgamma)
+half _CL_OVERLOADABLE
+tgamma (half a)
+{
+  return (half)tgamma ((float)a);
+}
+DEFINE_FP16_EXPR_V_V (tgamma)
+
 /* ilogb : half -> int (scalar), halfN -> intN (vector) */
 int _CL_OVERLOADABLE ilogb (half a) { return ilogb ((float)a); }
 #define IMPLEMENT_FP16_ILOGB(ITYPE, HTYPE, NAMEN)                            \
@@ -56,6 +84,61 @@ DEFINE_FP16_EXPR_V_VI (pown)
 /* remainder : (half, half) -> half */
 half _CL_OVERLOADABLE remainder (half a, half b) { return (half)remainder ((float)a, (float)b); }
 DEFINE_FP16_EXPR_V_VV (remainder)
+
+/* atan2pi / atan2 : (half, half) -> half */
+half _CL_OVERLOADABLE
+atan2pi (half a, half b)
+{
+  return (half)atan2pi ((float)a, (float)b);
+}
+DEFINE_FP16_EXPR_V_VV (atan2pi)
+half _CL_OVERLOADABLE
+atan2 (half a, half b)
+{
+  return (half)atan2 ((float)a, (float)b);
+}
+DEFINE_FP16_EXPR_V_VV (atan2)
+
+/*********************************************************************************/
+
+/* lgamma_r : (halfN, address-space intN*) -> halfN */
+#define IMPLEMENT_FP16_LGAMMAR_AS(AS)                                         \
+  half _CL_OVERLOADABLE _cl_lgamma_r (half x, AS int *iptr)                   \
+  {                                                                           \
+    int signp;                                                                \
+    float r = _cl_lgamma_r ((float)convert_float (x), (private int *)&signp); \
+    *iptr = signp;                                                            \
+    return convert_half (r);                                                  \
+  }
+
+IF_GEN_AS (IMPLEMENT_FP16_LGAMMAR_AS (generic))
+// IMPLEMENT_FP16_LGAMMAR_AS (private)
+IMPLEMENT_FP16_LGAMMAR_AS (local)
+IMPLEMENT_FP16_LGAMMAR_AS (global)
+
+#define IMPLEMENT_FP16_LGAMMAR_VECTOR(N, AS)                                  \
+  half##N _CL_OVERLOADABLE lgamma_r (half##N x, AS int##N *iptr)              \
+  {                                                                           \
+    int##N signp;                                                             \
+    float##N fres = _cl_lgamma_r ((float##N)convert_float##N (x), &signp);    \
+    half##N r = convert_half##N (fres);                                       \
+    *iptr = signp;                                                            \
+    return r;                                                                 \
+  }
+
+#define IMPLEMENT_FP16_LGAMMAR_VECTOR_N(N)                                    \
+  IMPLEMENT_FP16_LGAMMAR_VECTOR (N, private)                                  \
+  IMPLEMENT_FP16_LGAMMAR_VECTOR (N, local)                                    \
+  IMPLEMENT_FP16_LGAMMAR_VECTOR (N, global)                                   \
+  IF_GEN_AS (IMPLEMENT_FP16_LGAMMAR_VECTOR (N, generic))
+
+IMPLEMENT_FP16_LGAMMAR_VECTOR_N (2)
+IMPLEMENT_FP16_LGAMMAR_VECTOR_N (3)
+IMPLEMENT_FP16_LGAMMAR_VECTOR_N (4)
+IMPLEMENT_FP16_LGAMMAR_VECTOR_N (8)
+IMPLEMENT_FP16_LGAMMAR_VECTOR_N (16)
+
+/*********************************************************************************/
 
 /* modf : (halfN, address-space halfN*) -> halfN */
 half _CL_OVERLOADABLE
