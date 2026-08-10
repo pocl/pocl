@@ -119,17 +119,69 @@ endif()
 #        Early versions provided FP16 builtins in a different ABI. A workaround is
 #        to use a small code snippet to check the ABI if you cannot make sure of it.
 
-if(NOT DEFINED CLANG_SUPPORTS_FLOAT16_ON_CPU)
-  set(CLANG_SUPPORTS_FLOAT16_ON_CPU 0)
-  message(STATUS "Checking Device-side (Clang/LLVM) support for _Float16 type")
-    custom_try_compile_clang_silent("_Float16 callfp16(_Float16 a) { return a * 1.8f16; };" "_Float16 x=callfp16((_Float16)argc);"
-    RESV --target=${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${SELECTED_HOST_CPU})
-  if(RESV EQUAL 0)
-    message(STATUS "Clang supports _Float16 type on CPU")
-    set(CLANG_SUPPORTS_FLOAT16_ON_CPU 1)
+# use Clang to find RT library location. RT_TYPE may be "compiler-rt" or "libgcc"
+function(find_clang_rtlib_location RT_TYPE)
+  execute_process(
+    COMMAND ${HOST_CLANG} "--print-libgcc-file-name" "--rtlib=${RT_TYPE}"
+    OUTPUT_VARIABLE CLANG_RTLIB_LOCATION
+    RESULT_VARIABLE CLANG_RES
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  # Clang may report a file that doesn't exist -> test also existence
+  if((CLANG_RES EQUAL 0) AND (EXISTS ${CLANG_RTLIB_LOCATION}))
+    message(STATUS "_Float16 links with --rtlib=${RT_TYPE}, using ${CLANG_RTLIB_LOCATION}")
+    set(CLANG_NEEDS_RTLIB ON PARENT_SCOPE)
+    set(CLANG_SUPPORTS_FLOAT16_ON_CPU ON PARENT_SCOPE)
+    set(CLANG_RTLIB_LOCATION ${CLANG_RTLIB_LOCATION} PARENT_SCOPE)
   else()
-    message(STATUS "Clang doesn't support _Float16 type on CPU")
+    message(STATUS "_Float16 doesn't link with --rtlib=${RT_TYPE}")
+    unset(CLANG_RTLIB_LOCATION)
   endif()
+endfunction()
+
+if(NOT DEFINED CLANG_SUPPORTS_FLOAT16_ON_CPU)
+  set(CLANG_SUPPORTS_FLOAT16_ON_CPU OFF)
+  set(CLANG_NEEDS_RTLIB OFF)
+  message(STATUS "Checking Device-side (Clang/LLVM) support for _Float16 type")
+  custom_try_compile_clang_silent(
+   "_Float16 callfp16(_Float16 a) { return a * 1.8f16; };"
+   "_Float16 x=callfp16((_Float16)argc);"
+    RESV_COMP --target=${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${SELECTED_HOST_CPU})
+
+  if(RESV_COMP EQUAL 0)
+    message(STATUS "_Float16 compiles, checking for linker flags")
+    set(SRC "_Float16 callfp16(_Float16 a) { return a * 1.8f16; }; \
+        int main(char **argv, int argc) { _Float16 x=callfp16((_Float16)argc); return 0; }" )
+
+    custom_try_link_clang("#include <float.h>" "${SRC}" RESV_LINK_NO_RT)
+    custom_try_link_clang("#include <float.h>" "${SRC}" RESV_LINK_LLVM_RT "--rtlib=compiler-rt")
+    custom_try_link_clang("#include <float.h>" "${SRC}" RESV_LINK_GCC_RT "--rtlib=libgcc")
+
+    if(RESV_LINK_NO_RT EQUAL 0)
+      message(STATUS "_Float16 links without any extra linker flags")
+      set(CLANG_SUPPORTS_FLOAT16_ON_CPU ON)
+    else()
+      if(RESV_LINK_LLVM_RT)
+        find_clang_rtlib_location("compiler-rt")
+      endif()
+      if((NOT CLANG_SUPPORTS_FLOAT16_ON_CPU) AND RESV_LINK_GCC_RT)
+        find_clang_rtlib_location("libgcc")
+      endif()
+      if(NOT CLANG_SUPPORTS_FLOAT16_ON_CPU)
+        message(WARNING "Cannot find linker flags to link _Float16, disabling FP16 support")
+      endif()
+    endif()
+  endif()
+
+endif()
+
+if(CLANG_SUPPORTS_FLOAT16_ON_CPU)
+  message(STATUS "Clang supports _Float16 type on target CPU")
+  set(CLANG_NEEDS_RTLIB ON CACHE INTERNAL "")
+  set(CLANG_SUPPORTS_FLOAT16_ON_CPU ON CACHE INTERNAL "")
+  set(CLANG_RTLIB_LOCATION ${CLANG_RTLIB_LOCATION} CACHE INTERNAL "")
+else()
+  message(STATUS "Clang doesn't support _Float16 type on target CPU")
 endif()
 
 ####################################################################
