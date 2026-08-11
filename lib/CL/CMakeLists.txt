@@ -267,10 +267,6 @@ if(BUILD_SHARED_LIBS AND MSVC)
 endif()
 harden("pocl_cache")
 
-if(OCL_ICD_INCLUDE_DIRS)
-  target_include_directories("pocl_cache" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
-endif()
-
 if (ENABLE_LLVM)
   # this is required, because we're compiling the C++ files of this directory
   # with LLVM-provided flags, which usually contain their own setting of
@@ -325,10 +321,6 @@ if (ENABLE_LLVM)
   endif()
 
   target_include_directories(lib_cl_llvm PRIVATE "${CMAKE_SOURCE_DIR}/lib/llvmopencl")
-
-  if(OCL_ICD_INCLUDE_DIRS)
-    target_include_directories(lib_cl_llvm SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
-  endif()
 
   if(ENABLE_SPIRV AND HAVE_LLVM_SPIRV_LIB)
     target_include_directories(lib_cl_llvm PRIVATE ${LLVM_SPIRV_INCLUDEDIR})
