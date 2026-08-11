@@ -26,10 +26,6 @@
 add_library("pocl-devices-topology" OBJECT pocl_topology.c pocl_topology.h)
 harden("pocl-devices-topology")
 
-if(OCL_ICD_INCLUDE_DIRS)
-  target_include_directories("pocl-devices-topology" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
-endif()
-
 if(ENABLE_HWLOC)
   if(TARGET PkgConfig::HWLOC)
     target_link_libraries("pocl-devices-topology" PRIVATE PkgConfig::HWLOC)

@@ -25,6 +25,10 @@
 #include <string.h>
 #include "pocl_cl.h"
 
+#ifndef CL_VERSION_3_0
+#error OpenCL version must be at least 3.0
+#endif
+
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
 #endif
@@ -160,7 +164,6 @@ struct _cl_icd_dispatch pocl_dispatch = {
   NULL, /* &clUnknown120 */
   NULL, /* &clUnknown121 */
   NULL, /* &clUnknown122 */
-#if (OCL_ICD_IDENTIFIED_FUNCTIONS > 110)
   &POname (clCreateCommandQueueWithProperties),
   &POname (clCreatePipe),
   &POname (clGetPipeInfo),
@@ -187,46 +190,8 @@ struct _cl_icd_dispatch pocl_dispatch = {
   &POname (clCreateBufferWithProperties),
   &POname (clCreateImageWithProperties),
   &POname (clSetContextDestructorCallback),
-  NULL, /* &clUnknown149 */
-  NULL, /* &clUnknown150 */
-  NULL, /* &clUnknown151 */
-  NULL, /* &clUnknown152 */
-  NULL, /* &clUnknown153 */
-  NULL, /* &clUnknown154 */
-  NULL, /* &clUnknown155 */
-  NULL, /* &clUnknown156 */
-  NULL, /* &clUnknown157 */
-  NULL, /* &clUnknown158 */
-  NULL, /* &clUnknown159 */
-  NULL, /* &clUnknown160 */
-  NULL, /* &clUnknown161 */
-  NULL, /* &clUnknown162 */
-  NULL, /* &clUnknown163 */
-  NULL, /* &clUnknown164 */
-  NULL, /* &clUnknown165 */
-#endif
-#if (OCL_ICD_IDENTIFIED_FUNCTIONS > 127)
-  NULL, /* &clUnknown166 */
-  NULL, /* &clUnknown167 */
-  NULL, /* &clUnknown168 */
-  NULL, /* &clUnknown169 */
-  NULL, /* &clUnknown170 */
-  NULL, /* &clUnknown171 */
-  NULL, /* &clUnknown172 */
-  NULL, /* &clUnknown173 */
-  NULL, /* &clUnknown174 */
-  NULL, /* &clUnknown175 */
-  NULL, /* &clUnknown176 */
-  NULL, /* &clUnknown177 */
-#endif
-#if (OCL_ICD_IDENTIFIED_FUNCTIONS > 129)
-  NULL, /* &clUnknown178 */
-  NULL, /* &clUnknown179 */
-#endif
-#if (OCL_ICD_IDENTIFIED_FUNCTIONS > 132)
-  NULL, /* &clUnknown180 */
-  NULL, /* &clUnknown181 */
-  NULL, /* &clUnknown182 */
+#ifdef CL_VERSION_3_1
+  &POname (clGetKernelSuggestedLocalWorkSizeKHR),
 #endif
 };
 
