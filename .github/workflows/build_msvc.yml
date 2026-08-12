@@ -65,7 +65,7 @@ jobs:
         with:
           arch: x64
 
-      - uses: mamba-org/setup-micromamba@ce51e99f4bb8a82ab7158c4dc59ef4634c59c4f9
+      - uses: mamba-org/setup-micromamba@f457c30a868e4760d3a6fcea5f25dc655b8edf39
         with:
           # temporary workaround, see:
           #  https://github.com/mamba-org/setup-micromamba/issues/306
