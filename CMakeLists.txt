@@ -1578,7 +1578,12 @@ if(NOT DEFINED DEFAULT_ENABLE_ICD)
   # Need to avoid finding the Apple OpenCL framework
   set(CMAKE_FIND_FRAMEWORK NEVER CACHE STRING "Find frameworks on macOS")
 
-  if(NOT OCL_ICD_LIBRARIES)
+  if (NOT OCL_ICD_FOUND)
+    find_path(OCL_ICD_INCLUDE_DIRS
+      NAMES
+        ocl_icd.h
+    )
+  elseif(NOT OCL_ICD_LIBRARIES)
     # OCL_ICD_LIBRARIES is set to empty because of a bug in ocl-icd.pc
     unset(OCL_ICD_LIBRARIES CACHE)
   endif()
@@ -1591,7 +1596,7 @@ if(NOT DEFINED DEFAULT_ENABLE_ICD)
       ${OCL_ICD_LIBDIR}
   )
 
-  if(OCL_ICD_LIBRARIES)
+  if(OCL_ICD_INCLUDE_DIRS AND OCL_ICD_LIBRARIES)
     set(OCL_ICD_FOUND 1)
   endif()
 
