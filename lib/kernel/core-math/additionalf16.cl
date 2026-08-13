@@ -34,7 +34,17 @@ DEFINE_FP16_BUILTIN_V_V (trunc, __builtin_elementwise_trunc)
 DEFINE_FP16_BUILTIN_V_V (rint, __builtin_elementwise_rint)
 DEFINE_FP16_BUILTIN_V_V (round, __builtin_elementwise_round)
 DEFINE_FP16_BUILTIN_V_V (fabs, __builtin_elementwise_abs)
+
+#ifndef __riscv
 DEFINE_FP16_BUILTIN_V_VV (pow, __builtin_elementwise_pow)
+#else
+half _CL_OVERLOADABLE
+pow (half a, half b)
+{
+  return (half)pow ((float)a, (float)b);
+}
+DEFINE_FP16_EXPR_V_VV (pow)
+#endif
 
 /*
   llvm.minimumnum and llvm.maximumnum: Return the other argument if one is NaN.
