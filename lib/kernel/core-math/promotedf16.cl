@@ -25,23 +25,30 @@ float _CL_OVERLOADABLE _cl_remquo (float, float, private int *);
  * (The half overload below renames to `_cl_logb(half)`; the `logb((float)a)`
  * call resolves by overload to `_cl_logb(float)`, so there is no recursion.) */
 
-/* logb : half -> half */
+/* erf, erfc, cbrt, logb : half -> half */
 half _CL_OVERLOADABLE logb (half a) { return (half)logb ((float)a); }
 DEFINE_FP16_EXPR_V_V (logb)
 
-/* erf, erfc : half -> half */
 half _CL_OVERLOADABLE
 erf (half a)
 {
   return (half)erf ((float)a);
 }
 DEFINE_FP16_EXPR_V_V (erf)
+
 half _CL_OVERLOADABLE
 erfc (half a)
 {
   return (half)erfc ((float)a);
 }
 DEFINE_FP16_EXPR_V_V (erfc)
+
+half _CL_OVERLOADABLE
+cbrt (half a)
+{
+  return (half)cbrt ((float)a);
+}
+DEFINE_FP16_EXPR_V_V (cbrt)
 
 /* lgamma, tgamma : half -> half */
 half _CL_OVERLOADABLE

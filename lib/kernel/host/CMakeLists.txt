@@ -354,7 +354,7 @@ if(HOST_CPU_ENABLE_CL_KHR_FP16)
         acospif16.cl  hypotf16.cl    log2p1f16.cl    acoshf16.cl     exp10m1f16.cl
         atanhf16.cl   cospif16.cl    exp2m1f16.cl    log10p1f16.cl   asinhf16.cl
         atanpif16.cl  log1pf16.cl     sincosf16.cl    asinpif16.cl   rsqrtf16.cl
-        cbrtf16.cl    expm1f16.cl     tanpif16.cl     sinpif16.cl
+        expm1f16.cl     tanpif16.cl     sinpif16.cl
         # FP16 ops with no native FP16 builtin and no SLEEF FP16 path: not
         # covered by the vectorized generic builtins above, so needed here too.
         promotedf16.cl)
@@ -368,7 +368,7 @@ if(HOST_CPU_ENABLE_CL_KHR_FP16)
         acospif16.cl  atanf16.cl     coshf16.cl      exp2f16.cl     log10f16.cl    rsqrtf16.cl
         asinf16.cl    atanhf16.cl    cospif16.cl     exp2m1f16.cl   log10p1f16.cl  tanf16.cl
         asinhf16.cl   atanpif16.cl   expf16.cl      log1pf16.cl    sincosf16.cl  tanhf16.cl
-        asinpif16.cl  cbrtf16.cl     expm1f16.cl    log2f16.cl     sinf16.cl     tanpif16.cl
+        asinpif16.cl  expm1f16.cl    log2f16.cl     sinf16.cl     tanpif16.cl
         additionalf16.cl  promotedf16.cl)
       list(APPEND SOURCES_WITH_SLEEF "core-math/${FILE}")
     endforeach()
