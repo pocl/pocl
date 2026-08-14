@@ -358,7 +358,7 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
     }
   }
 
-  if (!DeviceUsingArgBufferLauncher && DeviceIsSPMD) {
+  if (DeviceIsSPMD) {
     regenerate_kernel_metadata(M, KernelsMap);
   }
 

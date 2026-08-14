@@ -119,7 +119,7 @@ void AlmaIFDevice::discoverDeviceParameters() {
                         (void *)CQStart, (void *)ImemStart, (void *)DmemStart);
   POCL_MSG_PRINT_ALMAIF("CQSize=%u ImemSize=%u DmemSize=%u\n", CQSize, ImemSize,
                         DmemSize);
-  POCL_MSG_PRINT_ALMAIF("ControlMemory->PhysAddress=%zu\n",
+  POCL_MSG_PRINT_ALMAIF("ControlMemory->PhysAddress=%zx\n",
                         ControlMemory->PhysAddress());
   AllocRegions = (memory_region_t *)calloc(1, sizeof(memory_region_t));
   pocl_init_mem_region(AllocRegions,
@@ -181,7 +181,7 @@ void AlmaIFDevice::loadProgramToDevice(almaif_kernel_data_s *KernelData,
   InstructionMemory->CopyToMMAP(InstructionMemory->PhysAddress(),
                                 KernelData->imem_img,
                                 KernelData->imem_img_size);
-  POCL_MSG_PRINT_ALMAIF("IMEM image written: %zu / %zu B\n",
+  POCL_MSG_PRINT_ALMAIF("IMEM image written: %zx / %zu B\n",
                         InstructionMemory->PhysAddress(),
                         KernelData->imem_img_size);
 
@@ -203,7 +203,12 @@ void AlmaIFDevice::prereadImages(const std::string &KernelCacheDir,
     size = (size_t)temp;
     assert(res == 0);
     assert(size > 0);
-    assert(size < InstructionMemory->Size());
+    if (size > InstructionMemory->Size()) {
+      POCL_ABORT(
+          "ALMAIF: program image (0x%zx) too large to fit inside instruction "
+          "memory (0x%zx)!\n",
+          size, InstructionMemory->Size());
+    }
     KernelData->imem_img = content;
     KernelData->imem_img_size = size;
     content = NULL;
@@ -294,8 +299,9 @@ void AlmaIFDevice::readDataFromDevice(char *__restrict__ const Dst,
                                       size_t Size, size_t Offset) {
 
   chunk_info_t *chunk = (chunk_info_t *)SrcMemId->mem_ptr;
-  POCL_MSG_PRINT_ALMAIF("Reading data with chunk start %zu, and offset %zu\n",
-                        chunk->start_address, Offset);
+  POCL_MSG_PRINT_ALMAIF(
+      "Reading data with chunk start 0x%zx, and offset 0x%zx\n",
+      chunk->start_address, Offset);
   size_t Src = chunk->start_address + Offset;
   if (DataMemory->isInRange(Src)) {
     POCL_MSG_PRINT_ALMAIF("almaif: Copying %zu bytes from 0x%zx\n", Size, Src);
@@ -305,9 +311,9 @@ void AlmaIFDevice::readDataFromDevice(char *__restrict__ const Dst,
                           Size, Src);
     ExternalMemory->CopyFromMMAP(Dst, Src, Size);
   } else {
-    POCL_ABORT(
-        "Attempt to read data from outside the device memories. Address=%zu\n",
-        Src);
+    POCL_ABORT("Attempt to read data from outside the device memories. "
+               "Address=0x%zx\n",
+               Src);
   }
 }
 

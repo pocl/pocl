@@ -108,11 +108,11 @@ typedef uint8_t uchar;
 typedef uint16_t ushort;
 typedef uint32_t uint;
 
-#ifdef cl_khr_int64
+#if defined(cl_khr_int64) && defined(__UINT64_TYPE__)
 #if __APPLE__
 typedef unsigned long ulong;
 #else
-typedef uint64_t ulong;
+typedef __UINT64_TYPE__ ulong;
 #endif
 #else
 typedef uint32_t ulong;

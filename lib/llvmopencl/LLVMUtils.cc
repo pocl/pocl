@@ -157,31 +157,39 @@ regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels)
   NamedMDNode *WGSizes = M.getNamedMetadata("opencl.kernel_wg_size_info");
   if (WGSizes != NULL && WGSizes->getNumOperands() > 0)
     {
-      for (std::size_t mni = 0; mni < WGSizes->getNumOperands(); ++mni)
-        {
-          MDNode *wgsizeMD = dyn_cast<MDNode>(WGSizes->getOperand(mni));
-          for (FunctionMapping::const_iterator i = kernels.begin(),
-                 e = kernels.end(); i != e; ++i)
-            {
-              Function *OldKernel = (*i).first;
-              Function *NewKernel = (*i).second;
-              Function *FuncFromMD;
-              FuncFromMD = dyn_cast<Function>(
-                dyn_cast<ValueAsMetadata>(wgsizeMD->getOperand(0))->getValue());
-              if (OldKernel == NewKernel || wgsizeMD->getNumOperands() == 0 ||
-                  FuncFromMD != OldKernel)
-                continue;
-              // found a wg size metadata that points to the old kernel, copy its
-              // operands except the first one to a new MDNode
-              SmallVector<Metadata*, 8> operands;
-              operands.push_back(llvm::ValueAsMetadata::get(NewKernel));
-              for (unsigned opr = 1; opr < wgsizeMD->getNumOperands(); ++opr) {
-                  operands.push_back(wgsizeMD->getOperand(opr));
-              }
-              MDNode *new_wg_md = MDNode::get(M.getContext(), operands);
-              WGSizes->addOperand(new_wg_md);
-            }
+    // metadata might contain references to deleted functions,
+    // which will be cleared as well
+    SmallVector<MDNode *, 8> ValidNodes;
+    for (std::size_t mni = 0; mni < WGSizes->getNumOperands(); ++mni) {
+      MDNode *wgsizeMD = dyn_cast<MDNode>(WGSizes->getOperand(mni));
+      for (FunctionMapping::const_iterator i = kernels.begin(),
+                                           e = kernels.end();
+           i != e; ++i) {
+        Function *OldKernel = (*i).first;
+        Function *NewKernel = (*i).second;
+        Function *FuncFromMD = nullptr;
+        if (wgsizeMD->getNumOperands() > 0) {
+          if (auto *VAM = dyn_cast_or_null<ValueAsMetadata>(
+                  wgsizeMD->getOperand(0).get()))
+            FuncFromMD = dyn_cast<Function>(VAM->getValue());
         }
+        if (OldKernel == NewKernel || wgsizeMD->getNumOperands() == 0 ||
+            FuncFromMD != OldKernel)
+          continue;
+        // found a wg size metadata that points to the old kernel, copy its
+        // operands except the first one to a new MDNode
+        SmallVector<Metadata *, 8> operands;
+        operands.push_back(llvm::ValueAsMetadata::get(NewKernel));
+        for (unsigned opr = 1; opr < wgsizeMD->getNumOperands(); ++opr) {
+          operands.push_back(wgsizeMD->getOperand(opr));
+        }
+        MDNode *new_wg_md = MDNode::get(M.getContext(), operands);
+        ValidNodes.push_back(new_wg_md);
+      }
+    }
+    WGSizes->clearOperands();
+    for (auto *N : ValidNodes)
+      WGSizes->addOperand(N);
     }
 
   // reproduce the opencl.kernels metadata, if it exists
