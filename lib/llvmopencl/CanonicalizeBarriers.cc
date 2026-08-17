@@ -29,6 +29,9 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/Twine.h>
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
+#include <llvm/ADT/SmallPtrSet.h>
+#include <llvm/ADT/SmallVector.h>
+#include <llvm/IR/CFG.h>
 #include <llvm/IR/Dominators.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Module.h>
@@ -59,6 +62,34 @@ static bool canonicalizeBarriers(Function &F, WorkitemHandlerType Handler);
 static bool processFunction(Function &F, WorkitemHandlerType Handler);
 
 using InstructionSet = std::set<llvm::Instruction *>;
+
+// Check whether two successors can reach a common block without crossing a
+// barrier. A shared barrier endpoint counts; other paths may lead elsewhere.
+//
+// Kernel::createParallelRegionBefore can collect both successors in one region
+// but designates only one as its entry. Moving the branch into a common
+// post-barrier block prevents outside edges to non-entry blocks.
+static bool successorsReconverge(llvm::Instruction *T) {
+  llvm::SmallPtrSet<llvm::BasicBlock *, 16> Reached;
+  for (unsigned Succ = 0, Num = T->getNumSuccessors(); Succ < Num; ++Succ) {
+    llvm::SmallPtrSet<llvm::BasicBlock *, 16> Visited;
+    llvm::SmallVector<llvm::BasicBlock *, 16> WorkList{T->getSuccessor(Succ)};
+    while (!WorkList.empty()) {
+      llvm::BasicBlock *BB = WorkList.pop_back_val();
+      if (!Visited.insert(BB).second)
+        continue;
+      // Include barrier blocks in the search, but do not cross them.
+      if (Reached.count(BB))
+        return true;
+      if (Barrier::hasBarrier(BB))
+        continue;
+      for (llvm::BasicBlock *SuccBB : successors(BB))
+        WorkList.push_back(SuccBB);
+    }
+    Reached.insert(Visited.begin(), Visited.end());
+  }
+  return false;
+}
 
 static bool canonicalizeBarriers(Function &F, WorkitemHandlerType Handler) {
   bool changed = false;
@@ -145,15 +176,16 @@ static bool processFunction(Function &F, WorkitemHandlerType Handler) {
     // Split post barrier first cause it does not make the barrier
     // to belong to another basic block.
     Instruction *t = b->getTerminator();
-    // if ((t->getNumSuccessors() > 1) ||
-    //     (t->getPrevNode() != *i)) {
-    // Change: barriers with several successors are all right
-    // they just start several parallel regions. Simplifies
-    // loop handling.
+    // Keep separate entries for disjoint conditional-barrier regions. If the
+    // successor searches overlap, move the branch into a common entry block.
+    // CBS requires this split for every multi-successor barrier.
+
+    const bool MustSplitSuccessors =
+        t->getNumSuccessors() > 1 &&
+        (Handler == WorkitemHandlerType::CBS || successorsReconverge(t));
 
     const bool HasNonBranchInstructionsAfterBarrier =
-        t->getPrevNode() != *i ||
-        (Handler == WorkitemHandlerType::CBS && t->getNumSuccessors() > 1);
+        t->getPrevNode() != *i || MustSplitSuccessors;
 
     if (HasNonBranchInstructionsAfterBarrier) {
       BasicBlock *new_b = SplitBlock(b, (*i)->getNextNode());
