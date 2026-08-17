@@ -28,7 +28,7 @@ set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_program_from_binary_with_local_1_1_1
      test_assign_loop_variable_to_privvar_makes_it_local_2
      test_llvm_segfault_issue_889
-     test_issue_1711 test_issue_1794 test_issue_1747
+     test_issue_1711 test_issue_1794 test_issue_1747 test_issue_1958
      test_rematerialized_alloca_load_with_outside_pr_users
      test_peeled_wi_global_id
      test_multi_exit_barrier_region
@@ -159,6 +159,8 @@ add_test_pocl(NAME "regression/test_issue_1794a" COMMAND "test_issue_1794" "0" "
 add_test_pocl(NAME "regression/test_issue_1794b" COMMAND "test_issue_1794" "0" "${CMAKE_CURRENT_SOURCE_DIR}/test_issue_1794b.spv" LABELS ${SPIRV_LABELS})
 
 add_test_pocl(NAME "regression/test_issue_1747" COMMAND "test_issue_1747" "0" "${CMAKE_CURRENT_SOURCE_DIR}/test_issue_1747.spv" LABELS ${SPIRV_LABELS})
+
+add_test_pocl(NAME "regression/test_issue_1958" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_issue_1958" LABELS ${SPIRV_LABELS})
 
 add_test_pocl(NAME "regression/peeled_wi_global_id" WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_peeled_wi_global_id" LABELS ${SPIRV_LABELS})
 
