@@ -79,9 +79,27 @@ endif()
 
 if(HAVE_LLVM_SPIRV_LIB)
   message(STATUS "LLVMSPIRV library found: ${LLVM_SPIRV_INCLUDEDIR} | ${LLVM_SPIRV_LIB}")
+
+  # TranslatorOpts::setErrorHandlingKind() lets the SPIR-V reader report a
+  # module it cannot accept through its return value. Without it the reader
+  # calls std::exit() and takes the calling application down.
+  if(NOT DEFINED LLVM_SPIRV_LIB_HAS_ERROR_HANDLING)
+    file(READ "${LLVM_SPIRV_INCLUDEDIR}/LLVMSPIRVOpts.h" LLVMSPIRVOPTS_CONTENT)
+    if(LLVMSPIRVOPTS_CONTENT MATCHES "setErrorHandlingKind")
+      message(STATUS "libLLVMSPIRV supports selecting the reader's error handling")
+      set(LLVM_SPIRV_LIB_HAS_ERROR_HANDLING 1 CACHE BOOL "libLLVMSPIRV has TranslatorOpts::setErrorHandlingKind")
+    else()
+      message(STATUS "libLLVMSPIRV is too old to select the reader's error handling; "
+                     "it will terminate the process on a module it cannot accept")
+      set(LLVM_SPIRV_LIB_HAS_ERROR_HANDLING 0 CACHE BOOL "libLLVMSPIRV has TranslatorOpts::setErrorHandlingKind")
+    endif()
+  endif()
 else()
   message(STATUS "LLVMSPIRV library NOT found: ${LLVM_SPIRV_INCLUDEDIR} | ${LLVM_SPIRV_LIB}")
 endif()
+
+set_expr(HAVE_LLVM_SPIRV_LIB_ERROR_HANDLING
+  HAVE_LLVM_SPIRV_LIB AND LLVM_SPIRV_LIB_HAS_ERROR_HANDLING)
 
 set_expr(HAVE_SPIRV_LINK TARGET_SPIRV_LINK)
 set_expr(HAVE_LLVM_SPIRV TARGET_LLVM_SPIRV)
