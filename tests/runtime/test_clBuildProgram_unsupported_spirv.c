@@ -34,6 +34,7 @@
 #include <CL/cl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* The module is a SPIR-V 1.4 kernel that calls through a function pointer, so
    it declares OpCapability FunctionPointersINTEL and OpExtension
@@ -112,7 +113,7 @@ main (int argc, char **argv)
   err = clGetProgramBuildInfo (program, dev, CL_PROGRAM_BUILD_LOG, 0, NULL,
                                &log_size);
   CHECK_OPENCL_ERROR_IN ("clGetProgramBuildInfo size");
-  if (log_size > 1)
+  TEST_ASSERT (log_size > 1);
     {
       char *log = (char *)malloc (log_size + 1);
       TEST_ASSERT (log != NULL);
@@ -121,6 +122,9 @@ main (int argc, char **argv)
       CHECK_OPENCL_ERROR_IN ("clGetProgramBuildInfo");
       log[log_size] = 0;
       printf ("build log: %s\n", log);
+      /* The log must say why the build failed, not just that it did. Match on
+         PoCL's own wording rather than the reader's, which is free to change */
+      TEST_ASSERT (strstr (log, "LLVMSPIRVLib") != NULL);
       free (log);
     }
 

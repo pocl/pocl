@@ -274,8 +274,12 @@ int pocl_regen_spirv_binary(cl_program Program, cl_uint DeviceI) {
   uint64_t ContentSize = 0;
 
   if (!readSpirv(LLVMCtx, Opts, InputSS, Mod, Errors)) {
-    POCL_MSG_ERR("LLVMSPIRVLib failed to read SPIR-V with errors:\n%s\n",
-                 Errors.c_str());
+    /* The reason belongs in the build log, which is where an application that
+     * gets CL_BUILD_PROGRAM_FAILURE goes looking for it. */
+    std::string Log("LLVMSPIRVLib failed to read SPIR-V with errors:\n");
+    Log.append(Errors);
+    Log.append("\n");
+    appendToProgramBuildLog(Program, DeviceI, Log);
     return CL_INVALID_BINARY;
   }
   std::string OutputBC;
