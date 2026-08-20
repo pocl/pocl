@@ -344,9 +344,26 @@ pocl_tensor_dim_size (const cl_tensor_desc_exp *tensor, int dim)
 {
   if (dim < 0)
     dim = (int)tensor->rank + dim;
-  assert (dim >= 0 && "dimension exceeds tensor's rank!");
   assert ((cl_uint)dim < tensor->rank && "dimension exceeds tensor's rank!");
   return tensor->shape[dim];
+}
+
+/**
+ * Same as pocl_tensor_dim_size() but 'or_value' is returned if the 'dim' index
+ * is out of bounds.
+ */
+POCL_EXPORT
+size_t
+pocl_tensor_dim_size_or (const cl_tensor_desc_exp *tensor,
+                         int dim,
+                         size_t or_value)
+{
+  if (dim < 0)
+    dim = (int)tensor->rank + dim;
+
+  if ((cl_uint)dim < tensor->rank)
+    return tensor->shape[dim];
+  return or_value;
 }
 
 int
