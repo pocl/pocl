@@ -2431,6 +2431,7 @@ if(ENABLE_CUDA)
     set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_subgroups")
     #set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_subgroup_ballot \
     #  cl_khr_subgroup_shuffle cl_intel_subgroups cl_intel_required_subgroup_size")
+    set(CUDA_DEVICE_FEATURES_30 "${CUDA_DEVICE_FEATURES_30} __opencl_c_images")
   endif()
 
   if(CUDA_DEVICE_EXTENSIONS MATCHES "cl_khr_subgroup")
