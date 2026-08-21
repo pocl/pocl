@@ -356,6 +356,12 @@ public:
                         const sizet_vec3 &global,
                         const sizet_vec3 *local = nullptr) override;
 
+  virtual int barrier(uint64_t ev_id, uint32_t cq_id, EventTiming_t &evt,
+                      uint32_t waitlist_size, uint64_t *waitlist) override;
+
+  virtual int marker(uint64_t ev_id, uint32_t cq_id, EventTiming_t &evt,
+                     uint32_t waitlist_size, uint64_t *waitlist) override;
+
   virtual int runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
                                uint32_t CmdBufId, uint32_t NumQueues,
                                uint32_t *QueueIds, uint32_t waitlist_size,
@@ -3320,6 +3326,35 @@ int SharedCLContext::runKernel(
     return err;
   }
 
+  return err;
+}
+
+/***************************************************************************/
+
+int SharedCLContext::barrier(uint64_t ev_id, uint32_t cq_id, EventTiming_t &evt,
+                             uint32_t waitlist_size, uint64_t *waitlist) {
+  std::vector<cl::Event> Dependencies;
+  Dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
+  cl::CommandQueue *cq = nullptr;
+  {
+    FIND_QUEUE;
+  }
+
+  EVENT_TIMING("barrier",
+               cq->enqueueBarrierWithWaitList(&Dependencies, &event));
+  return err;
+}
+
+int SharedCLContext::marker(uint64_t ev_id, uint32_t cq_id, EventTiming_t &evt,
+                            uint32_t waitlist_size, uint64_t *waitlist) {
+  std::vector<cl::Event> Dependencies;
+  Dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
+  cl::CommandQueue *cq = nullptr;
+  {
+    FIND_QUEUE;
+  }
+
+  EVENT_TIMING("marker", cq->enqueueMarkerWithWaitList(&Dependencies, &event));
   return err;
 }
 

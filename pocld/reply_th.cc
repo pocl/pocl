@@ -103,6 +103,10 @@ static const char *reply_to_str(ReplyMessageType type) {
 
   case MessageType_RunKernelReply:
     return "RunKernelReply";
+  case MessageType_BarrierReply:
+    return "BarrierReply";
+  case MessageType_MarkerReply:
+    return "MarkerReply";
   case MessageType_RunCommandBufferReply:
     return "RunCommandBufferReply";
 

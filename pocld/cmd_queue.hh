@@ -76,6 +76,10 @@ private:
 
   void RunKernel(uint32_t queue_id, Request *req, Reply *rep);
 
+  void Barrier(uint32_t queue_id, Request *req, Reply *rep);
+
+  void Marker(uint32_t queue_id, Request *req, Reply *rep);
+
   void RunCommandBuffer(uint32_t queue_id, Request *req, Reply *rep);
 
   /******************/
