@@ -1467,15 +1467,10 @@ int SharedCLContext::buildOrLinkProgram(
   std::vector<cl::Kernel> prebuilt_kernels;
   SPIRVParser::OpenCLFunctionInfoMap KernelInfoMap;
 
-  bool AlwaysBuildAll = DeviceList.empty();
-  for (auto i : DeviceList) {
-    std::string vendor = CLDevices[i].getInfo<CL_DEVICE_VENDOR>();
-    std::string device_version = CLDevices[i].getInfo<CL_DEVICE_VERSION>();
-    if (vendor.find("NVIDIA") != std::string::npos &&
-        !(device_version.find("PoCL") != std::string::npos &&
-          device_version.find("CUDA") != std::string::npos))
-      AlwaysBuildAll = true;
-  }
+  std::vector<cl::Platform> Platforms;
+  cl::Platform::get(&Platforms);
+  bool NvidiaPlatform = std::string(Platforms.at(plat_id).getInfo<CL_PLATFORM_NAME>()) == std::string("NVIDIA CUDA");
+  bool RocmPlatform = std::string(Platforms.at(plat_id).getInfo<CL_PLATFORM_NAME>()) == std::string("AMD Accelerated Parallel Processing");
 
   POCL_MSG_PRINT_INFO("P %u Building Program %" PRIu32 "\n", plat_id,
                       program_id);
@@ -1487,18 +1482,43 @@ int SharedCLContext::buildOrLinkProgram(
     program->devices[i] = CLDevices[DeviceList[i]];
   }
 
+  // ROCm 6.4.4 segfaults when linking multiple programs together if they were
+  // only compiled for a subset of devices in the context.
+  // NVIDIA 595.71.05 silently fails kernel compilation when compiling for a
+  // subset of devices that does not include the first device in the context.
+  if (RocmPlatform || NvidiaPlatform)
+    program->devices = CLDevices;
+
   if (options == nullptr)
     options = "";
 
   std::string opts(options);
 
-  /* Kernel argument information is only available when building
-     from sources, but some implementations seem to return metadata
-     also for binaries/SPIR-V.
+  // Kernel argument information is only available when building
+  // from sources, but some implementations seem to return metadata
+  // also for binaries/SPIR-V.
+  //
+  // https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/clGetKernelArgInfo.html
+  //
+  // ROCm errors if this is passed to clLinkProgram but NVIDIA and PoCL will
+  // strip out argument info if it is only given to clCompileProgram and not
+  // clLinkProgram.
+  if (!(RocmPlatform && LinkOnly)) {
+    opts += " -cl-kernel-arg-info";
+  }
 
-     https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/
-     clGetKernelArgInfo.html*/
-  opts += " -cl-kernel-arg-info";
+  // HACK: pocl_build.c/process_options() replaces -cl-denorms-are-zero with a
+  // clang-specific option that is not valid to pass to OpenCL functions.
+  // Revert the change here to avoid problems with drivers that don't use clang
+  // to compile kernels.
+  {
+    const char *FdenormalStr = "-fdenormal-fp-math=positive-zero";
+    auto FdenormalPos = opts.find(FdenormalStr);
+    if (FdenormalPos != opts.npos) {
+      opts.replace(FdenormalPos, FdenormalPos + ::strlen(FdenormalStr),
+                   "-cl-denorms-are-zero");
+    }
+  }
 
   if (LinkOnly) {
     // Collect the previously built programs from the server-side cache and link
@@ -1639,8 +1659,15 @@ int SharedCLContext::buildOrLinkProgram(
     plat_binaries.resize(DeviceList.size());
     for (size_t i = 0; i < DeviceList.size(); ++i) {
       uint64_t id = ((uint64_t)plat_id << 32) + DeviceList[i];
-      assert(InputBinaries.find(id) != InputBinaries.end());
-      plat_binaries[i] = InputBinaries[id];
+      auto Bin = InputBinaries.find(id);
+      assert(Bin != InputBinaries.end());
+      plat_binaries[i] = Bin->second;
+    }
+    // The number of binaries MUST match the number of devices, so when working
+    // around multi-device driver issues, copy a likely valid binary for the
+    // devices that didn't get one from the client.
+    for (size_t i = DeviceList.size(); i < program->devices.size(); ++i) {
+      plat_binaries.push_back(InputBinaries.begin()->second);
     }
 
     clProgramPtr pp(new cl::Program(ContextWithAllDevices, program->devices,
@@ -1712,25 +1739,29 @@ int SharedCLContext::buildOrLinkProgram(
   }
 
   if (!LinkOnly) {
+    const char *Options = opts.c_str();
+    // When building from a binary, options should be either NULL or exactly the
+    // same options in the same order as when the binary was originally built,
+    // else behaviour is implementation-defined and in practice not usable.
+    if (is_binary)
+      Options = nullptr;
+
     // build
-    if (AlwaysBuildAll) {
-      // XXX: hacky workaround for wonky behaviour with certain drivers
-      // when compiling a program for only a subset of the context's devices
-      err = CompileOnly ? p->compile(opts.c_str()) : p->build(opts.c_str());
+    if (CompileOnly) {
+      err = p->compile(Options, program->devices, {}, {});
     } else {
-      if (CompileOnly) {
-        err = p->compile(opts, program->devices, {}, {});
-      } else {
-        err = p->build(program->devices, opts.c_str());
-      }
+      err = p->build(program->devices, Options);
     }
   }
 
   // even if build failed, return build log
   auto buildInfo = p->getBuildInfo<CL_PROGRAM_BUILD_LOG>();
   if (buildInfo.size() > 0) {
-    size_t i = 0;
+    size_t i, j = 0;
     for (const auto &pair : buildInfo) {
+      for (i = 0; i < DeviceList.size(); ++i)
+        if (pair.first == CLDevices[DeviceList[i]])
+          break;
       if (i < DeviceList.size()) {
         // assert (pair.first() == program->devices[i]);
         uint64_t id = ((uint64_t)plat_id << 32) + DeviceList[i];
@@ -1739,11 +1770,12 @@ int SharedCLContext::buildOrLinkProgram(
         POCL_MSG_PRINT_GENERAL("Platform %u Device %" PRIu32 " Build log: \n%s",
                                plat_id, DeviceList[i], build_logs[id].c_str());
       } else {
-        POCL_MSG_PRINT_GENERAL("Platform %u Unknown Device %" PRIuS
-                               " Build log: \n%s",
-                               plat_id, i, pair.second.c_str());
+        POCL_MSG_PRINT_GENERAL(
+            "Platform %u Unknown Device %u: %s Build log: \n%s", plat_id,
+            (unsigned)j, pair.first.getInfo<CL_DEVICE_NAME>().c_str(),
+            pair.second.c_str());
       }
-      ++i;
+      ++j;
     }
   }
 
@@ -1823,7 +1855,20 @@ int SharedCLContext::buildOrLinkProgram(
         uint64_t id = ((uint64_t)plat_id << 32) + DeviceList[i];
         POCL_MSG_PRINT_GENERAL("Writing binary for Dev ID: %u / %" PRIu32 " \n",
                                plat_id, DeviceList[i]);
-        output_binaries[id] = std::move(binaries[j]);
+        if (NvidiaPlatform) {
+          if (binaries[j].empty()) {
+            for (size_t n = 0; n < binaries.size(); ++n) {
+              if (!binaries[n].empty()) {
+                output_binaries[id] = binaries[n];
+                break;
+              }
+            }
+          } else {
+            output_binaries[id] = binaries[j];
+          }
+        } else {
+          output_binaries[id] = std::move(binaries[j]);
+        }
       }
     }
   }
@@ -2040,7 +2085,7 @@ int SharedCLContext::createKernel(uint32_t kernel_id, uint32_t program_id,
 
   if (!found) {
     POCL_MSG_ERR("Invalid kernel name: %s\n", name);
-    return CL_INVALID_ARG_VALUE;
+    return CL_INVALID_KERNEL_NAME;
   }
 
   k->isFakeBuiltin = program->isFakeBuiltin;
@@ -3352,7 +3397,10 @@ int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
         cl::Buffer *b = nullptr;
         { FIND_BUFFER; }
         cl::CommandQueue *cq = &Queues[R->Body.cq_id];
-        std::vector<cl::Event> dependencies = std::move(Deps);
+        // Alias the correct values to the names that fillB expects. Note that
+        // this shadows the respective function parameters in this scope.
+        std::vector<cl::Event> Dependencies = std::move(Deps);
+        cl::Event &event = InternalEvent;
         switch (R->Body.m.fill_buffer.pattern_size) {
         case 1:
           fillB(cl_uchar);
