@@ -38,8 +38,10 @@ class VirtualContextBase {
 public:
   virtual ~VirtualContextBase() {}
 
-  virtual void replaceConnections(std::shared_ptr<Connection> Command,
-                                  std::shared_ptr<Connection> Stream) = 0;
+  virtual void setConnection(std::shared_ptr<Connection> Conn, bool IsFast,
+                             bool IsReplyChannel) = 0;
+
+  virtual void connectionLost() = 0;
 
   virtual void nonQueuedPush(Request *req) = 0;
 
@@ -60,6 +62,8 @@ public:
   virtual void unknownRequest(Request *req) = 0;
 
   virtual int run() = 0;
+
+  virtual int queuedRun() = 0;
 
   virtual SharedContextBase *getDefaultContext() = 0;
 };

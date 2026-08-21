@@ -89,27 +89,46 @@ public:
    * poll(2) is invoked, putting the thread to sleep until something happens.
    *
    * Once poll returns, two things happen: if there are new connection requests
-   * on the client listener sockets, they are accepted. Once both fds of the
-   * (command, stream) pairs have been obtained, the client handshake is
-   * performed and the fds are associated with a new or existing client context
-   * based on the handshake.
+   * on the client listener sockets, they are accepted.
    *
    * After the special case of the listener sockets, if there are further events
    * in the poll result, the respective fds are handed to Result::read for
    * reading a piece of the next command sent over that socket. Similar to the
    * pollfd list, the function keeps a list of in-flight Requests for this
-   * purpose. If there are any read errors or poll results indicating that a
-   * socket was closed, the corresponding fd is pushed into a list for cleanup.
+   * purpose. Once a valid handshake or request for a new session has been
+   * received, the fd is handed off to the respective VirtualCLContext.
    *
    * Finally, the function goes over the "dead" fds list, closes them and
    * removes the fd and its in-flight Request.
    */
   void readAllClientSocketsThread();
 
-  /** Block until the main I/O thread exits. */
+  /**
+   * \brief Push Ctx to the deleter thread to be destroyed
+   *
+   * Properly deinitializing a VirtualCLContext can take a bit of time, so that
+   * process is delegated to a separate thread in order to not block the socket
+   * polling thread.
+   */
+  void releaseContextDeferred(VirtualContextBase *Ctx) {
+    std::unique_lock<std::mutex> L(ContextDeleterMtx);
+    ContextDeleteQueue.push_back(Ctx);
+    ContextDeleterCond.notify_one();
+  }
+
+  /**
+   * Main loop for the thread in charge of deleting VirtualCLContexts
+   */
+  void contextDeleterThread();
+
+  /** Block until the main I/O and context deleter threads exit. */
   void waitForExit() {
     if (ClientPoller.joinable())
       ClientPoller.join();
+    if (ContextDeleter.joinable()) {
+      ContextDeleterCond.notify_one();
+      ContextDeleter.join();
+    }
   }
 
   /* returns nullptr on error */
@@ -121,18 +140,18 @@ private:
   /** Port numbers that the server is listening on */
   struct ServerPorts ListenPorts;
   std::vector<std::shared_ptr<Connection>> OpenClientConnections;
-  /** Hacky helper for keeping track of which context is associated with the
-   * socket at a given index so the contexts can be dropped when the socket
-   * disconnects if reconnecting is not allowed. */
-  std::vector<VirtualContextBase *> SocketContexts;
   size_t NumListenFds;
   std::mutex SessionListMtx;
   std::unordered_map<uint64_t, VirtualContextBase *> ClientSessions;
   std::unordered_map<uint64_t, std::array<uint8_t, AUTHKEY_LENGTH>> SessionKeys;
+  std::thread ContextDeleter;
+  std::mutex ContextDeleterMtx;
+  std::condition_variable ContextDeleterCond;
+  std::vector<VirtualContextBase *> ContextDeleteQueue;
   std::atomic_uint64_t LastSessionId;
   std::thread ClientPoller;
-  peer_listener_data_t peer_listener_data;
-  std::thread peer_listener_th;
+  peer_listener_data_t PeerListenerData;
+  std::thread PeerListenerThread;
 #ifdef ENABLE_REMOTE_ADVERTISEMENT_AVAHI
   AvahiAdvertise *avahiAdvertiseP;
 #endif

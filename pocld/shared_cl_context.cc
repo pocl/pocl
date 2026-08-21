@@ -147,7 +147,7 @@ class SharedCLContext final : public SharedContextBase {
 
   std::mutex MainMutex;
   // threads
-  std::unordered_map<uint32_t, CommandQueueUPtr> QueueThreadMap;
+  std::unordered_map<uint32_t, CommandQueueUPtr> QueueMap;
 
   ReplyQueueThread *slow, *fast;
 
@@ -667,7 +667,7 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
   for (size_t i = 0; i < CLDevices.size(); ++i) {
     QueueIDMap[DEFAULT_QUE_ID + i] = clCommandQueuePtr(new cl::CommandQueue(
         ContextWithAllDevices, CLDevices[i])); // TODO QUEUE_PROPERTIES
-    QueueThreadMap[DEFAULT_QUE_ID + i] =
+    QueueMap[DEFAULT_QUE_ID + i] =
         CommandQueueUPtr(new CommandQueue(this, (DEFAULT_QUE_ID + i), i, s, f));
   }
 
@@ -887,7 +887,7 @@ void SharedCLContext::queuedPush(Request *req) {
     std::unique_lock<std::mutex> lock(MainMutex);
     // TODO reply fail
     assert(QueueIDMap.find(cq_id) != QueueIDMap.end());
-    CommandQueue *cq = QueueThreadMap[cq_id].get();
+    CommandQueue *cq = QueueMap[cq_id].get();
     assert(cq != nullptr);
     cq->push(req);
   }
@@ -913,7 +913,8 @@ void SharedCLContext::notifyEvent(uint64_t id, cl_int status) {
     POCL_MSG_PRINT_EVENTS(
         "no event %" PRIu64 " found, creating new user event\n", id);
   }
-  for (auto &q : QueueThreadMap) {
+  lock.unlock();
+  for (auto &q : QueueMap) {
     q.second->notify();
   }
 }
@@ -1302,7 +1303,7 @@ int SharedCLContext::createQueue(uint32_t queue_id, uint32_t dev_id) {
   {
     std::unique_lock<std::mutex> lock(MainMutex);
     QueueIDMap[queue_id] = p;
-    QueueThreadMap[queue_id] = std::move(que);
+    QueueMap[queue_id] = std::move(que);
   }
   POCL_MSG_PRINT_INFO("P %u Create Queue %" PRIu32 "\n", plat_id, queue_id);
   return 0;
@@ -1311,11 +1312,11 @@ int SharedCLContext::createQueue(uint32_t queue_id, uint32_t dev_id) {
 int SharedCLContext::freeQueue(uint32_t queue_id) {
   {
     std::unique_lock<std::mutex> lock(MainMutex);
-    if (QueueThreadMap.find(queue_id) == QueueThreadMap.end()) {
+    if (QueueMap.find(queue_id) == QueueMap.end()) {
       POCL_MSG_ERR("P %u Free Queue %" PRIu32 "\n", plat_id, queue_id);
       return CL_INVALID_COMMAND_QUEUE;
     }
-    QueueThreadMap.erase(queue_id);
+    QueueMap.erase(queue_id);
     QueueIDMap.erase(queue_id);
   }
   POCL_MSG_PRINT_INFO("P %u Free Queue %" PRIu32 "\n", plat_id, queue_id);

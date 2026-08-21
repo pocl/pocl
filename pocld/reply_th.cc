@@ -128,6 +128,17 @@ ReplyQueueThread::ReplyQueueThread(
 
 ReplyQueueThread::~ReplyQueueThread() {
   eh->requestExit(ThreadIdentifier.c_str(), 0);
+
+  {
+    std::unique_lock<std::mutex> Lock(IOMutex);
+    IONotifier.notify_one();
+  }
+
+  {
+    std::unique_lock<std::mutex> Lock(ConnectionGuard);
+    ConnectionNotifier.notify_one();
+  }
+
   IOThread.join();
 }
 
@@ -135,11 +146,8 @@ void ReplyQueueThread::pushReply(Reply *reply) {
   if (eh->exit_requested())
     return;
 
-  {
-    std::unique_lock<std::mutex> Lock(io_mutex);
-    IOInflight.push_back(reply);
-  }
-
+  std::unique_lock<std::mutex> Lock(IOMutex);
+  IOInflight.push_back(reply);
   IONotifier.notify_one();
 }
 
@@ -153,13 +161,27 @@ void ReplyQueueThread::setConnection(
 void ReplyQueueThread::writeThread() {
   size_t i = 0;
   while (1) {
-  RETRY:
     if (eh->exit_requested())
-      return;
+      break;
 
-    std::unique_lock<std::mutex> InflightLock(io_mutex);
+    {
+      std::unique_lock<std::mutex> ConnectionLock(ConnectionGuard);
+      if (Conn.get() == nullptr) {
+        ConnectionNotifier.wait(ConnectionLock);
+        continue;
+      }
+    }
+
+    std::unique_lock<std::mutex> InflightLock(IOMutex);
     if ((IOInflight.size() > 0)) {
       Reply *reply = IOInflight[i];
+      if (!reply) {
+        if (i != IOInflight.size() - 1) {
+          std::swap(IOInflight[i], IOInflight[IOInflight.size() - 1]);
+        }
+        IOInflight.pop_back();
+        continue;
+      }
       InflightLock.unlock();
 
       cl_int Status =
@@ -240,18 +262,23 @@ void ReplyQueueThread::writeThread() {
             uint32_t(reply->rep.failed));
 
         // WRITE REPLY
-        CHECK_WRITE_RETRY(Conn->writeFull(&reply->rep, sizeof(ReplyMsg_t)),
-                          ThreadIdentifier.c_str());
+        if (Conn->writeFull(&reply->rep, sizeof(ReplyMsg_t)) < 0) {
+          Conn.reset();
+          virtualContext->connectionLost();
+          continue;
+        }
 
         // TODO: handle reconnecting & resending when RDMA is used
         if (reply->extra_size > 0 && !reply->extra_data.empty()) {
           POCL_MSG_PRINT_INFO("%s: WRITING EXTRA: %" PRIuS " \n",
                               ThreadIdentifier.c_str(), reply->extra_size);
-          CHECK_WRITE_RETRY(
-              Conn->writeFull(reply->extra_data.data(), reply->extra_size),
-              ThreadIdentifier.c_str());
+          if (Conn->writeFull(reply->extra_data.data(), reply->extra_size) <
+              0) {
+            Conn.reset();
+            virtualContext->connectionLost();
+            continue;
+          }
         }
-
         ConnectionLock.unlock();
 
         POCL_MSG_PRINT_GENERAL("%s: MESSAGE FULLY WRITTEN, ID: %" PRIu64 "\n",
@@ -288,11 +315,9 @@ void ReplyQueueThread::writeThread() {
         // InflightLock is dropped after this
       }
     } else {
-      auto now = std::chrono::system_clock::now();
-      std::chrono::duration<unsigned long> d(3);
-      now += d;
-      i = 0;
-      IONotifier.wait_until(InflightLock, now);
+      IONotifier.wait(InflightLock);
     }
   }
+
+  POCL_MSG_PRINT_GENERAL("%s: Terminating\n", ThreadIdentifier.c_str());
 }
