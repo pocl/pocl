@@ -59,6 +59,7 @@ typedef pthread_t pocl_thread_t;
 #define POCL_ATOMIC_INC(x) __atomic_add_fetch (&x, 1, __ATOMIC_SEQ_CST)
 #define POCL_ATOMIC_DEC(x) __atomic_sub_fetch (&x, 1, __ATOMIC_SEQ_CST)
 #define POCL_ATOMIC_LOAD(x) __atomic_load_n (&x, __ATOMIC_SEQ_CST)
+#define POCL_ATOMIC_LOAD_PTR(x) __atomic_load_n (x, __ATOMIC_SEQ_CST)
 #define POCL_ATOMIC_STORE(x, val) __atomic_store_n (&x, val, __ATOMIC_SEQ_CST)
 #define POCL_ATOMIC_CAS(ptr, oldval, newval)                                  \
   __sync_val_compare_and_swap (ptr, oldval, newval)
@@ -69,6 +70,7 @@ typedef pthread_t pocl_thread_t;
 #define POCL_ATOMIC_INC(x) InterlockedIncrement64 ((volatile LONG64 *)&x)
 #define POCL_ATOMIC_DEC(x) InterlockedDecrement64 ((volatile LONG64 *)&x)
 #define POCL_ATOMIC_LOAD(x) InterlockedOr64 ((volatile LONG64 *)&x, 0)
+#define POCL_ATOMIC_LOAD_PTR(x) InterlockedOr64 ((volatile LONG64 *)x, 0)
 #define POCL_ATOMIC_STORE(x, val)                                             \
   InterlockedExchange64 ((volatile LONG64 *)&x, val)
 #define POCL_ATOMIC_CAS(ptr, oldval, newval)                                  \
