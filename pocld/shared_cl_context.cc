@@ -2173,6 +2173,7 @@ int SharedCLContext::createCommandBuffer(
         dependencies.push_back(syncpoints.at(idx));
       }
 
+      // TODO: deduplicate this with runCommandBuffer
       switch (R->Body.message_type) {
       case MessageType_FillBuffer: {
         uint32_t buffer_id = R->Body.obj_id;
@@ -2360,10 +2361,10 @@ int SharedCLContext::createCommandBuffer(
             {}, *k, offset,
             (dim == 2 ? global2 : (dim < 2 ? global1 : global3)),
             ((R->Body.m.run_kernel.has_local)
-                 ? cl::NullRange
-                 : cl::NDRange(R->Body.m.run_kernel.local.x,
+                 ? cl::NDRange(R->Body.m.run_kernel.local.x,
                                R->Body.m.run_kernel.local.y,
-                               R->Body.m.run_kernel.local.z)),
+                               R->Body.m.run_kernel.local.z)
+                 : cl::NullRange),
             &dependencies, &syncpoint, nullptr, &Queues[R->Body.cq_id]);
       } break;
       case MessageType_Barrier: {
@@ -2666,12 +2667,14 @@ int SharedCLContext::createBuffer(BufferId_t BufferID, size_t Size,
   Flags = Flags & (cl_bitfield)(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY |
                                 CL_MEM_READ_ONLY);
 
-  if (ParentID == 0) {
+#ifdef ENABLE_RDMA
+  if (clientUsesRdma() && ParentID == 0) {
     // When RDMA is used, VirtualClContext passes in a pointer from clSVMAlloc
     Flags = Flags | (cl_bitfield)(HostPtr ? CL_MEM_USE_HOST_PTR
                                           : CL_MEM_ALLOC_HOST_PTR);
     // Note: Sub-buffer creation cannot have the HOST_PTR flags set.
   }
+#endif
 
   cl_int Err;
   clBufferPtr Buf;
@@ -3383,10 +3386,10 @@ int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
                  CmdBuf.enqueueCommandBuffer(Queues, &Dependencies, &event));
     return err;
   } else {
-    const CommandBuffer::Emulated *CmdBuf =
-        std::get_if<CommandBuffer::Emulated>(&Cb->Buffer);
+    const CommandBuffer::Emulated &CmdBuf =
+        std::get<CommandBuffer::Emulated>(Cb->Buffer);
     std::vector<cl::Event> Syncpoints;
-    for (Request *R : CmdBuf->Cmds) {
+    for (Request *R : CmdBuf.Cmds) {
       EventTiming_t evt;
       // Copy buffer-level dependencies to all commands
       std::vector<cl::Event> Deps = Dependencies;
@@ -3574,10 +3577,10 @@ int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
         err = Queues[R->Body.cq_id].enqueueNDRangeKernel(
             *k, offset, (dim == 2 ? global2 : (dim < 2 ? global1 : global3)),
             ((R->Body.m.run_kernel.has_local)
-                 ? cl::NullRange
-                 : cl::NDRange(R->Body.m.run_kernel.local.x,
+                 ? cl::NDRange(R->Body.m.run_kernel.local.x,
                                R->Body.m.run_kernel.local.y,
-                               R->Body.m.run_kernel.local.z)),
+                               R->Body.m.run_kernel.local.z)
+                 : cl::NullRange),
             &Deps, &event);
       } break;
       case MessageType_Barrier: {
