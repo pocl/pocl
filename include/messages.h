@@ -398,6 +398,7 @@ extern "C"
   {
     POCL_ALIGNAS(8) // Meant for aligning the structure, not the members.
     uint64_t size;
+    uint64_t last_write_id;
     uint32_t source_pid;
     uint32_t source_did;
     uint32_t size_id;
@@ -712,6 +713,9 @@ extern "C"
     uint32_t did;
     uint32_t client_did;
     uint32_t waitlist_size;
+    /* Set to 1 for commands whose completion does not need to be broadcast to
+     * other remotes. */
+    uint32_t skip_peer_notify;
 
     uint32_t message_type;
     uint64_t obj_id;

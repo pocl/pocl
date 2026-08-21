@@ -500,7 +500,12 @@ int VirtualCLContext::queuedRun() {
         delete NewEvent;
       }
       if (NewRequest) {
-        SharedContextList[NewRequest->Body.pid]->queuedPush(NewRequest);
+        if (NewRequest->Body.message_type == MessageType_MigrateD2D)
+          // Migrations may need to be retargeted to a different context than
+          // indicated by NewRequest->Body.pid
+          MigrateD2D(NewRequest);
+        else
+          SharedContextList[NewRequest->Body.pid]->queuedPush(NewRequest);
       }
     } else {
       auto now = std::chrono::system_clock::now();
@@ -636,10 +641,6 @@ int VirtualCLContext::run() {
 
       case MessageType_FreeImage:
         FreeImage(request, reply);
-        break;
-
-      case MessageType_MigrateD2D:
-        MigrateD2D(request);
         break;
 
       case MessageType_Shutdown:
@@ -1171,90 +1172,43 @@ void VirtualCLContext::MigrateD2D(Request *req) {
   MigrateD2DMsg_t &m = req->Body.m.migrate;
   RequestMsg_t &r = req->Body;
   EventTiming_t evt{};
-  uint32_t mem_obj_id = r.obj_id;
-  uint32_t size_buffer_id = m.size_id;
-  uint32_t def_queue_id = DEFAULT_QUE_ID + m.source_did;
-  int err;
-  char *storage = nullptr;
 
-  if (m.source_pid == r.pid && m.source_peer_id == peer_id &&
-      m.dest_peer_id == peer_id) {
+  bool SamePlatform = m.source_pid == r.pid && m.source_peer_id == peer_id &&
+                      m.dest_peer_id == peer_id;
+  req->IsMigrationExportRequired = (!SamePlatform) &&
+                                   m.source_peer_id == peer_id &&
+                                   (!req->IsMigrationExportDone);
+
+  if (SamePlatform) {
     POCL_MSG_PRINT_GENERAL("migration within 1 platform\n");
-    SharedContextList[r.pid]->queuedPush(req);
-  } else {
-    r.m.migrate.is_external = 1;
+    SharedContextList[m.source_pid]->queuedPush(req);
+
+  } else if (req->IsMigrationExportRequired) {
     POCL_MSG_PRINT_GENERAL(
         "migration between 2 different platforms, SIZE: %" PRIu64
         "  QID: %" PRIu32 " DID: %" PRIu32 " CONTENT SIZE BUFFER: %" PRIu32
         "\n",
         uint64_t(m.size), uint32_t(r.cq_id), uint32_t(r.did),
-        uint32_t(size_buffer_id));
-    assert(m.size);
+        uint32_t(m.size_id));
 
-    // totally made up, but we immediately delete the event from EventMap
-    uint64_t fake_ev_id = r.msg_id + (1UL << 50);
+    SharedContextList[m.source_pid]->queuedPush(req);
 
-    if (m.source_peer_id == peer_id) {
-      POCL_MSG_PRINT_GENERAL(
-          "MigrateD2D: %s READ on PID: %" PRIu32 ", DID: %" PRIu32
-          ", SRC EV ID: %" PRIu64 ", DST EV ID: %" PRIu64 "\n",
-          (m.is_image == 0 ? "Buffer" : "Image"), uint32_t(m.source_pid),
-          uint32_t(m.source_did), fake_ev_id, uint64_t(r.msg_id));
-#ifdef ENABLE_RDMA
-      req->ExtraData.clear();
-#ifndef RDMA_USE_SVM
-      // No SVM, we have actual shadow buffers. Write data to shadow buffer but
-      // do not pass it along as extra_data, rdma thread will fetch the
-      // appropriate registration data
-      storage = getRdmaShadowPtr(mem_obj_id);
-#endif
-#else
-      // No RDMA, no persistent shadow buffers
-      req->ExtraData.resize(m.size);
-      storage = (char *)(req->ExtraData.data());
-#endif
+  } else if (m.dest_peer_id == peer_id) {
+    // Request has the buffer contents and we can import it to the destination.
+    SharedContextList[r.pid]->queuedPush(req);
 
-#ifndef RDMA_USE_SVM
-      SharedContextBase *src = SharedContextList[m.source_pid];
-      std::vector<cl::Event> NoDependencies;
-      cl::Event TmpEvent;
-      if (m.is_image == 0) {
-        uint64_t content_size;
-        // TODO we should probably wait for events in DST SharedCLcontext
-        // before launching readBuffer in SRC SharedCLcontext
-        // enqueue a read buffer in the *source* context ...
-        err = src->readBuffer(fake_ev_id, def_queue_id, mem_obj_id, 0,
-                              size_buffer_id, m.size, 0, storage, &content_size,
-                              evt, NoDependencies, TmpEvent);
-        m.size = content_size;
-      } else {
-        sizet_vec3 origin = {0, 0, 0};
-        sizet_vec3 region = {m.width, m.height, m.depth};
-
-        // TODO we should probably wait for events in DST SharedCLcontext
-        // before launching readBuffer in SRC SharedCLcontext
-        // enqueue a read buffer in the *source* context ...
-        err = src->readImageRect(fake_ev_id, def_queue_id, mem_obj_id, origin,
-                                 region, storage, m.size, evt, NoDependencies,
-                                 TmpEvent);
-      }
-      // TODO error handling
-      assert(err == 0);
-      // .... and wait for it here.
-      TmpEvent.wait();
-#endif
+    // The same memobj may be migrated from here to other peers without
+    // another write. In that case the migration would have the previous write
+    // event as a dependency, and this node not knowing about that event would
+    // cause a deadlock. To avoid that, register a user event on the
+    // destination peer in S2S migrations. The source peer will always either
+    // have a native event from the previous write, or a user event registered
+    // in a previous migration. Uninitialized memobjects may not have a write.
+    if (m.source_peer_id != peer_id && m.last_write_id) {
+      notifyEvent(m.last_write_id, CL_SUCCESS);
     }
-
-    /* Write extra_size after possible content size has been read, just before
-     * pushing the request on */
-    req->ExtraDataSize = m.size;
-
-    // .... and now we can push the writeBuffer to the queue
-    if (m.dest_peer_id == peer_id) {
-      SharedContextList[r.pid]->queuedPush(req);
-    } else {
-      peers->pushRequest(req, m.dest_peer_id);
-    }
+  } else {
+    peers->pushRequest(req, m.dest_peer_id);
   }
 }
 
@@ -1317,4 +1271,3 @@ VirtualContextBase *createVirtualContext(PoclDaemon *d,
   vctx->init(d, conns, session, params);
   return vctx;
 }
-

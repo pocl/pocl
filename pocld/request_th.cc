@@ -146,12 +146,12 @@ void RequestQueueThread::readThread() {
     case MessageType_BuildProgramWithDefinedBuiltins:
     case MessageType_LinkProgram:
     case MessageType_FreeProgram:
-    case MessageType_MigrateD2D:
     case MessageType_RdmaBufferRegistration:
     case MessageType_Shutdown: {
       VirtualContext->nonQueuedPush(IncomingRequest);
       break;
     }
+    case MessageType_MigrateD2D:
     case MessageType_ReadBuffer:
     case MessageType_WriteBuffer:
     case MessageType_CopyBuffer:

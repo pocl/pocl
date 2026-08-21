@@ -912,9 +912,37 @@ pocl_remote_reader_pthread (void *aa)
       int fd = connection->fd;
       if (fd < 0)
         {
+          int reconnected;
         TRY_RECONNECT:
-          connection->fd = -1;
-          break;
+          reconnected = pocl_remote_reconnect_socket (remote, connection);
+          if (reconnected != CL_SUCCESS)
+            {
+              if (connection->reconnect_attempts
+                  >= POCL_REMOTE_RECONNECT_MAX_ATTEMPTS)
+                {
+                  network_command *cmd = NULL, *tmp = NULL;
+                  POCL_LOCK (inflight->mutex);
+                  /* Each command in the inflight queue of the failed server
+                   * has to be handled and marked as failed to prevent
+                   * deadlock. */
+                  DL_FOREACH_SAFE (inflight->queue, cmd, tmp)
+                    {
+                      DL_DELETE (inflight->queue, cmd);
+                      finish_running_cmd (remote, cmd, NETCMD_FAILED);
+                    }
+                  POCL_UNLOCK (inflight->mutex);
+
+#if defined(ENABLE_REMOTE_DISCOVERY_AVAHI)                                    \
+  || defined(ENABLE_REMOTE_DISCOVERY_DHT)                                     \
+  || defined(ENABLE_REMOTE_DISCOVERY_ANDROID)
+                  POCL_LOCK (connection->discovery_reconnect_guard.mutex);
+                  POCL_WAIT_COND (connection->discovery_reconnect_guard.cond,
+                                  connection->discovery_reconnect_guard.mutex);
+                  POCL_UNLOCK (connection->discovery_reconnect_guard.mutex);
+#endif
+                }
+              continue;
+            }
         }
 
       /* READ MSG */
@@ -1305,8 +1333,39 @@ pocl_remote_writer_pthread (void *aa)
           if (0)
             {
             /* This is only hit if there is an error from CHECK_WRITE */
+            int reconnected;
             TRY_RECONNECT:
-              return NULL;
+              reconnected = pocl_remote_reconnect_socket (remote, connection);
+              if (reconnected != CL_SUCCESS)
+                {
+                  if (connection->reconnect_attempts
+                      >= POCL_REMOTE_RECONNECT_MAX_ATTEMPTS)
+                    {
+                      network_command *cmd = NULL, *tmp = NULL;
+                      POCL_LOCK (this->mutex);
+                      /* Each command in the inflight queue of the failed
+                       * server has to be handled and marked as failed to
+                       * prevent deadlock. */
+                      DL_FOREACH_SAFE (this->queue, cmd, tmp)
+                        {
+                          DL_DELETE (this->queue, cmd);
+                          finish_running_cmd (remote, cmd, NETCMD_FAILED);
+                        }
+                      POCL_UNLOCK (this->mutex);
+
+#if defined(ENABLE_REMOTE_DISCOVERY_AVAHI)                                    \
+  || defined(ENABLE_REMOTE_DISCOVERY_DHT)                                     \
+  || defined(ENABLE_REMOTE_DISCOVERY_ANDROID)
+                      POCL_LOCK (connection->discovery_reconnect_guard.mutex);
+                      POCL_WAIT_COND (
+                        connection->discovery_reconnect_guard.cond,
+                        connection->discovery_reconnect_guard.mutex);
+                      POCL_UNLOCK (
+                        connection->discovery_reconnect_guard.mutex);
+#endif
+                    }
+                  continue;
+                }
             }
 
           /* WRITE DATA */
@@ -3347,11 +3406,14 @@ pocl_network_migrate_d2d (uint32_t cq_id, uint32_t mem_id, uint32_t size_id,
 
   ID_REQUEST (MigrateD2D, mem_id);
   req->cq_id = cq_id;
+  /* Migrations can generate unexpected cross-platform dependencies */
+  req->skip_peer_notify = 0;
 
   req->m.migrate.source_pid = source->remote_platform_index;
   req->m.migrate.source_did = source->remote_device_index;
   req->m.migrate.dest_peer_id = dest->server->peer_id;
   req->m.migrate.source_peer_id = source->server->peer_id;
+  req->m.migrate.last_write_id = node->command.migrate.last_write_id;
   req->m.migrate.is_image = mem_is_image;
   req->m.migrate.is_external = 0;
   req->m.migrate.size = size;
@@ -3381,6 +3443,7 @@ pocl_network_read (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (ReadBuffer, mem_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
   req->m.read.src_offset = offset;
   req->m.read.size = size;
   req->m.read.content_size_id = size_id;
@@ -3412,6 +3475,7 @@ pocl_network_write (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (WriteBuffer, mem_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
   req->m.write.dst_offset = offset;
   req->m.write.size = size;
 
@@ -3455,6 +3519,7 @@ pocl_network_copy (uint32_t cq_id, remote_device_data_t *ddata,
 
   REQUEST (CopyBuffer);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
   req->m.copy.src_buffer_id = src_id;
   req->m.copy.dst_buffer_id = dst_id;
   req->m.copy.size_buffer_id = content_size_id;
@@ -3487,6 +3552,7 @@ pocl_network_read_rect (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (ReadBufferRect, src_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   req->m.read_rect.buffer_origin.x = buffer_origin[0];
   req->m.read_rect.buffer_origin.y = buffer_origin[1];
@@ -3527,6 +3593,7 @@ pocl_network_write_rect (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (WriteBufferRect, dst_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   req->m.write_rect.buffer_origin.x = buffer_origin[0];
   req->m.write_rect.buffer_origin.y = buffer_origin[1];
@@ -3577,6 +3644,7 @@ pocl_network_copy_rect (
 
   REQUEST (CopyBufferRect);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   req->m.copy_rect.src_buffer_id = src_id;
   req->m.copy_rect.dst_buffer_id = dst_id;
@@ -3618,6 +3686,7 @@ pocl_network_fill_buffer (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (FillBuffer, mem_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
   req->m.fill_buffer.dst_offset = offset;
   req->m.fill_buffer.size = size;
   req->m.fill_buffer.pattern_size = pattern_size;
@@ -3653,6 +3722,7 @@ pocl_network_run_kernel (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (RunKernel, kernel_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
   req->m.run_kernel.global = global;
   req->m.run_kernel.local = local;
   req->m.run_kernel.offset = offset;
@@ -3714,6 +3784,7 @@ pocl_network_barrier_or_marker (uint32_t cq_id,
   if (node->type == CL_COMMAND_BARRIER)
     req->message_type = MessageType_Barrier;
   req->cq_id = node->sync.event.event->queue->id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   SEND_REQ_FAST;
 
@@ -3732,6 +3803,7 @@ pocl_network_run_command_buffer (remote_device_data_t *ddata,
 
   ID_REQUEST (RunCommandBuffer, node->command.replay.buffer->id);
   req->cq_id = node->sync.event.event->queue->id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   TP_COMMAND_BUFFER (req->msg_id, node->sync.event.event->id,
                      node->command.run_cmdbuf.id, node->sync.event.event->id);
@@ -3756,6 +3828,7 @@ pocl_network_copy_image_rect (uint32_t cq_id, remote_device_data_t *ddata,
 
   REQUEST (CopyImage2Image);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
   req->m.copy_img2img.src_image_id = src_remote_id;
   req->m.copy_img2img.dst_image_id = dst_remote_id;
 
@@ -3792,6 +3865,7 @@ pocl_network_copy_buf2img (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (CopyBuffer2Image, dst_remote_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   req->m.copy_buf2img.origin.x = origin[0];
   req->m.copy_buf2img.origin.y = origin[1];
@@ -3826,6 +3900,7 @@ pocl_network_write_image_rect (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (WriteImageRect, dst_remote_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   req->m.write_image_rect.origin.x = origin[0];
   req->m.write_image_rect.origin.y = origin[1];
@@ -3873,6 +3948,7 @@ pocl_network_copy_img2buf (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (CopyImage2Buffer, src_remote_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   req->m.copy_img2buf.origin.x = origin[0];
   req->m.copy_img2buf.origin.y = origin[1];
@@ -3906,6 +3982,7 @@ pocl_network_read_image_rect (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (ReadImageRect, src_remote_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   /* REPLY */
   netcmd->rep_extra_data = p;
@@ -3942,6 +4019,7 @@ pocl_network_fill_image (uint32_t cq_id, remote_device_data_t *ddata,
 
   ID_REQUEST (FillImageRect, image_id);
   req->cq_id = cq_id;
+  req->skip_peer_notify = node->sync.event.event->implicit_event;
 
   req->m.fill_image.origin.x = origin[0];
   req->m.fill_image.origin.y = origin[1];

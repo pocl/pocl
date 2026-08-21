@@ -23,7 +23,6 @@
    IN THE SOFTWARE.
 */
 
-#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <mutex>
@@ -103,11 +102,19 @@ void CommandQueue::notify(EventWithId Event) {
 }
 
 bool CommandQueue::ReadyToRun(Request *Req) {
+  std::string DepString = "";
+  for (uint64_t &ID : Req->ClientWaitlist) {
+    if (!DepString.empty())
+      DepString.push_back(',');
+    DepString.append(std::to_string(ID));
+  }
+
   bool Ready = (Req->LocalWaitlist.size() == Req->Body.waitlist_size);
-  POCL_MSG_PRINT_EVENTS("Event %lu %s ready to run with %lu/%lu dependencies\n",
-                        (unsigned long)Req->Body.event_id, Ready ? "is" : "not",
-                        (unsigned long)Req->LocalWaitlist.size(),
-                        (unsigned long)Req->ClientWaitlist.size());
+  POCL_MSG_PRINT_EVENTS(
+      "Event %lu %s ready to run with %lu/%lu dependencies [%s]\n",
+      (unsigned long)Req->Body.event_id, Ready ? "is" : "not",
+      (unsigned long)Req->LocalWaitlist.size(),
+      (unsigned long)Req->ClientWaitlist.size(), DepString.c_str());
   return Ready;
 }
 
@@ -120,6 +127,18 @@ public:
   static void Submit(cl_event, cl_int, void *user_data) {
     ReplyHelper *tmp = (ReplyHelper *)user_data;
     tmp->Queue->pushReply(tmp->Cmd);
+    delete tmp;
+  }
+};
+
+class QueuedPushHelper {
+public:
+  QueuedPushHelper() = delete;
+  VirtualContextBase *TopLevel;
+  Request *Cmd;
+  static void Push(cl_event, cl_int, void *user_data) {
+    QueuedPushHelper *tmp = (QueuedPushHelper *)user_data;
+    tmp->TopLevel->queuedPush(tmp->Cmd);
     delete tmp;
   }
 };
@@ -143,12 +162,13 @@ void CommandQueue::RunCommand(Request *request) {
                          " |||||||||| REQ QID %" PRIu32 " DID %" PRIu32 " \n",
                          queue_id, dev_id, uint32_t(request->Body.cq_id),
                          uint32_t(request->Body.did));
-  assert(queue_id == request->Body.cq_id);
-  if (request->Body.message_type == MessageType_MigrateD2D)
+  if (request->Body.message_type == MessageType_MigrateD2D) {
     assert(dev_id == request->Body.did ||
            dev_id == request->Body.m.migrate.source_did);
-  else
+  } else {
+    assert(queue_id == request->Body.cq_id);
     assert(dev_id == request->Body.did);
+  }
 
   // PROCESSS REQUEST, then PUSH REPLY to WRITE Q
   switch (request->Body.message_type) {
@@ -241,6 +261,21 @@ void CommandQueue::RunCommand(Request *request) {
     assert(false && "unknown message type");
   }
 
+  // IsMigrationExportDone is only set by the export phase and unset again by
+  // the import phase to indicate whether the Request needs to be reissued for
+  // the next phase or a reply should be sent to the client.
+  if (request->Body.message_type == MessageType_MigrateD2D &&
+      request->IsMigrationExportDone) {
+    // "Leak" the request so we can scrap the Reply and resubmit the Request
+    void *_ = reply->req.release();
+    QueuedPushHelper *tmp =
+        new QueuedPushHelper{backend->parentVCtx(), request};
+    reply->event.setCallback(CL_COMPLETE, QueuedPushHelper::Push, tmp);
+    delete reply;
+    // TODO: handle failed exports
+    return;
+  }
+
   ReplyQueueThread *rqt = (slow ? write_slow : write_fast);
   if (reply->event()) {
     ReplyHelper *tmp = new ReplyHelper{rqt, reply};
@@ -258,7 +293,7 @@ void CommandQueue::RunCommand(Request *request) {
 
 void CommandQueue::MigrateMemObj(uint32_t queue_id, Request *req, Reply *rep) {
   MigrateD2DMsg_t &m = req->Body.m.migrate;
-  EventTiming_t evt_timing{};
+  EventTiming_t EvtTiming{};
 
   if (m.source_pid == req->Body.pid && m.source_peer_id == m.dest_peer_id) {
     // direct migration within single platform
@@ -266,56 +301,107 @@ void CommandQueue::MigrateMemObj(uint32_t queue_id, Request *req, Reply *rep) {
     // req->Body.obj_id, m.size, CL_RUNNING);
     // direct mig within 1 platform
     RETURN_IF_ERR_CODE(backend->migrateMemObject(
-        req->Body.event_id, queue_id, req->Body.obj_id, m.is_image, evt_timing,
+        req->Body.event_id, queue_id, req->Body.obj_id, m.is_image, EvtTiming,
         req->LocalWaitlist, rep->event));
     // TP_WRITE_BUFFER(req->Body.msg_id, req->Body.client_did, queue_id,
     // req->Body.obj_id, m.size, CL_FINISHED);
-  }
+  } else {
 #ifndef RDMA_USE_SVM
-  // with RDMA the P2P write is already done by now
-  else {
-    // after data is read
-    assert(m.is_external);
     void *host_ptr;
 #ifdef ENABLE_RDMA
     host_ptr = backend->getRdmaShadowPtr(req->Body.obj_id);
     req->ExtraDataSize = m.size;
 #else
+    if (req->IsMigrationExportRequired)
+      req->ExtraData.resize(m.size);
+
     assert(req->ExtraData.size() >= req->ExtraDataSize);
     host_ptr = req->ExtraData.data();
 #endif
-    // finish the migration by import
-    if (m.is_image) {
-      sizet_vec3 origin = {0, 0, 0};
-      sizet_vec3 region = {m.width, m.height, m.depth};
 
-      TP_WRITE_IMAGE_RECT(req->Body.msg_id, req->Body.client_did, queue_id,
-                          req->Body.obj_id, m.width, m.height, m.depth,
-                          CL_RUNNING);
-      RETURN_IF_ERR_CODE(backend->writeImageRect(
-          req->Body.event_id, queue_id, req->Body.obj_id, origin, region,
-          host_ptr, req->ExtraDataSize, evt_timing, req->LocalWaitlist,
-          rep->event));
-      TP_WRITE_IMAGE_RECT(req->Body.msg_id, req->Body.client_did, queue_id,
-                          req->Body.obj_id, m.width, m.height, m.depth,
-                          CL_FINISHED);
-    } else {
-      TP_WRITE_BUFFER(req->Body.msg_id, req->Body.client_did, queue_id,
-                      req->Body.obj_id, m.size, CL_RUNNING);
-      RETURN_IF_ERR_CODE(backend->writeBuffer(
-          req->Body.event_id, queue_id, req->Body.obj_id, 0, m.size, 0,
-          host_ptr, evt_timing, req->LocalWaitlist, rep->event));
-      TP_WRITE_BUFFER(req->Body.msg_id, req->Body.client_did, queue_id,
-                      req->Body.obj_id, m.size, CL_FINISHED);
-    }
-  }
+    if (req->IsMigrationExportRequired) {
+      // begin export buffer data
+
+      m.is_external = 1;
+      req->IsMigrationExportDone = true;
+      uint32_t DefaultQueueID = DEFAULT_QUE_ID + m.source_did;
+      // The export event is registered locally as the canonical "migration"
+      // event so additional migrations from this platform can be enqueued
+      // immediately without waiting for the completion notification from the
+      // destination.
+      uint64_t ExportEventID = req->Body.event_id;
+      if (m.is_image) {
+        sizet_vec3 origin = {0, 0, 0};
+        sizet_vec3 region = {m.width, m.height, m.depth};
+
+        TP_READ_IMAGE_RECT(req->Body.msg_id, req->Body.client_did, def_queue_id,
+                           req->Body.obj_id, m.width, m.height, m.depth,
+                           CL_RUNNING);
+        RETURN_IF_ERR_CODE(backend->readImageRect(
+            ExportEventID, DefaultQueueID, req->Body.obj_id, origin, region,
+            host_ptr, m.size, EvtTiming, req->LocalWaitlist, rep->event));
+        TP_READ_IMAGE_RECT(req->Body.msg_id, req->Body.client_did, def_queue_id,
+                           req->Body.obj_id, m.width, m.height, m.depth,
+                           CL_FINISHED);
+      } else {
+        uint64_t content_size;
+
+        TP_READ_BUFFER(req->Body.msg_id, req->Body.client_did, def_queue_id,
+                       req->Body.obj_id, m.size, CL_RUNNING);
+        RETURN_IF_ERR_CODE(backend->readBuffer(
+            ExportEventID, DefaultQueueID, req->Body.obj_id, 0, m.size_id,
+            m.size, 0, host_ptr, &content_size, EvtTiming, req->LocalWaitlist,
+            rep->event));
+        TP_READ_BUFFER(req->Body.msg_id, req->Body.client_did, def_queue_id,
+                       req->Body.obj_id, m.size, CL_FINISHED);
+
+        assert(content_size <= m.size);
+        m.size = content_size;
 #ifdef ENABLE_RDMA
-  // unset size from the request, since the request's extra_data is not used
-  req->ExtraDataSize = 0;
+        // RDMA does not use the Request's ExtraData
+        req->ExtraDataSize = 0;
+        req->ExtraData.clear();
+#else
+        req->ExtraDataSize = content_size;
+        req->ExtraData.resize(content_size);
 #endif
-#endif
+      }
 
-  replyOK(rep, evt_timing, MessageType_MigrateD2DReply);
+      // end export buffer data
+    } else {
+      // begin import buffer data
+
+      req->IsMigrationExportDone = false;
+      if (m.is_image) {
+        sizet_vec3 origin = {0, 0, 0};
+        sizet_vec3 region = {m.width, m.height, m.depth};
+
+        TP_WRITE_IMAGE_RECT(req->Body.msg_id, req->Body.client_did, queue_id,
+                            req->Body.obj_id, m.width, m.height, m.depth,
+                            CL_RUNNING);
+        RETURN_IF_ERR_CODE(backend->writeImageRect(
+            req->Body.event_id, queue_id, req->Body.obj_id, origin, region,
+            host_ptr, req->ExtraDataSize, EvtTiming, req->LocalWaitlist,
+            rep->event));
+        TP_WRITE_IMAGE_RECT(req->Body.msg_id, req->Body.client_did, queue_id,
+                            req->Body.obj_id, m.width, m.height, m.depth,
+                            CL_FINISHED);
+      } else {
+        TP_WRITE_BUFFER(req->Body.msg_id, req->Body.client_did, queue_id,
+                        req->Body.obj_id, m.size, CL_RUNNING);
+        RETURN_IF_ERR_CODE(backend->writeBuffer(
+            req->Body.event_id, queue_id, req->Body.obj_id, 0, m.size, 0,
+            host_ptr, EvtTiming, req->LocalWaitlist, rep->event));
+        TP_WRITE_BUFFER(req->Body.msg_id, req->Body.client_did, queue_id,
+                        req->Body.obj_id, m.size, CL_FINISHED);
+      }
+
+      // end import buffer data
+    }
+#endif
+  }
+
+  replyOK(rep, EvtTiming, MessageType_MigrateD2DReply);
 }
 
 void CommandQueue::ReadBuffer(uint32_t queue_id, Request *req, Reply *rep) {

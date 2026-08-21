@@ -134,12 +134,12 @@ void RdmaRequestThread::rdmaReaderThread() {
     case MessageType_BuildProgramWithBuiltins:
     case MessageType_LinkProgram:
     case MessageType_FreeProgram:
-    case MessageType_MigrateD2D:
     case MessageType_RdmaBufferRegistration:
     case MessageType_Shutdown: {
       virtualContext->nonQueuedPush(request);
       break;
     }
+    case MessageType_MigrateD2D:
     case MessageType_ReadBuffer:
     case MessageType_WriteBuffer:
     case MessageType_CopyBuffer:

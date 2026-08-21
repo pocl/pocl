@@ -103,6 +103,13 @@ public:
   /// socket. Set at the very end of the read() function.
   bool IsFullyRead = false;
 
+  /// Used to direct Request to the destination context after reading buffer
+  /// contents from the Source context
+  bool IsMigrationExportDone = false;
+
+  /// Used to signal to the receiving context that it is the migration source
+  bool IsMigrationExportRequired = false;
+
   /// Incrementally reads the request from given Connection. Returns true on
   /// success and false if an error occurs while reading. Call repeatedly until
   /// `fully_read` gets set to true.
