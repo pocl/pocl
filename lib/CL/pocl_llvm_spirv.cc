@@ -215,6 +215,13 @@ SPIRV::TranslatorOpts setupTranslOpts(const std::string &SupportedSPVExts,
   }
 
   SPIRV::TranslatorOpts Opts(TargetVersionEnum, EnabledExts);
+#ifdef HAVE_LLVM_SPIRV_LIB_ERROR_HANDLING
+  /* A module the translator cannot accept must not take the calling
+   * application down. Every caller below reads the failure back from the
+   * return value and the error string, so keep the error out of
+   * SPIRVErrorLog::checkError()'s std::exit() path. */
+  Opts.setErrorHandlingKind(SPIRV::SPIRVDbgErrorHandlingKinds::Ignore);
+#endif
   return Opts;
 }
 #endif
@@ -267,8 +274,12 @@ int pocl_regen_spirv_binary(cl_program Program, cl_uint DeviceI) {
   uint64_t ContentSize = 0;
 
   if (!readSpirv(LLVMCtx, Opts, InputSS, Mod, Errors)) {
-    POCL_MSG_ERR("LLVMSPIRVLib failed to read SPIR-V with errors:\n%s\n",
-                 Errors.c_str());
+    /* The reason belongs in the build log, which is where an application that
+     * gets CL_BUILD_PROGRAM_FAILURE goes looking for it. */
+    std::string Log("LLVMSPIRVLib failed to read SPIR-V with errors:\n");
+    Log.append(Errors);
+    Log.append("\n");
+    appendToProgramBuildLog(Program, DeviceI, Log);
     return CL_INVALID_BINARY;
   }
   std::string OutputBC;
@@ -295,7 +306,15 @@ int pocl_get_program_spec_constants(cl_program program, char *spirv_path,
   std::string InputS((const char *)spirv_content, spirv_len);
   std::stringstream InputSS(InputS);
   std::vector<llvm::SpecConstInfoTy> SpecConstInfoVec;
+#ifdef HAVE_LLVM_SPIRV_LIB_ERROR_HANDLING
+  /* Options carried only for the non fatal error handling; the partial decode
+   * getSpecConstInfo() does is otherwise unaffected by them. */
+  SPIRV::TranslatorOpts Opts;
+  Opts.setErrorHandlingKind(SPIRV::SPIRVDbgErrorHandlingKinds::Ignore);
+  if (!llvm::getSpecConstInfo(InputSS, Opts, SpecConstInfoVec))
+#else
   if (!llvm::getSpecConstInfo(InputSS, SpecConstInfoVec))
+#endif
     return CL_INVALID_BINARY;
 
   size_t NumConst = SpecConstInfoVec.size();

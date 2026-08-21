@@ -76,6 +76,10 @@ llvm::Module *parseModuleIR (const char *path, llvm::LLVMContext *c);
 llvm::Module *parseModuleIRLazy (const char *path, llvm::LLVMContext *c);
 void parseModuleGVarSize (cl_program program, unsigned device_i,
                           llvm::Module *ProgramBC);
+/* Append s to the device's build log, the one clGetProgramBuildInfo returns
+ * for CL_PROGRAM_BUILD_LOG, and to the build log in the program's cache dir. */
+void appendToProgramBuildLog (cl_program program, unsigned device_i,
+                              std::string &s);
 void writeModuleIRtoString(const llvm::Module *mod, std::string& dest);
 llvm::Module *parseModuleIRMem (const char *input_stream, size_t size,
                                 llvm::LLVMContext *c);

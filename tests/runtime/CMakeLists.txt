@@ -51,6 +51,10 @@ set(C_PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_remote_discovery test_dbk_color_convert test_subgroup_queries
   test_image_normalized_conv)
 
+if(HAVE_LLVM_SPIRV_LIB_ERROR_HANDLING)
+  list(APPEND C_PROGRAMS_TO_BUILD test_clBuildProgram_unsupported_spirv)
+endif()
+
 if(HAVE_ONNXRT)
   list(APPEND C_PROGRAMS_TO_BUILD test_dbk_onnx_inference)
 endif()
@@ -92,6 +96,15 @@ add_test_pocl(NAME "runtime/clBuildProgram"
               WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
               COMMAND "test_clBuildProgram"
               WORKITEM_HANDLER "loopvec")
+
+if(HAVE_LLVM_SPIRV_LIB_ERROR_HANDLING)
+  # A SPIR-V module the reader rejects must produce a build error, not kill the
+  # host process.
+  add_test_pocl(NAME "runtime/clBuildProgram_unsupported_spirv"
+                COMMAND "test_clBuildProgram_unsupported_spirv"
+                "${CMAKE_CURRENT_SOURCE_DIR}/test_clBuildProgram_unsupported_spirv.spv"
+                WORKITEM_HANDLER "loopvec")
+endif()
 
 add_test_pocl(NAME "runtime/test_kernel_cache_includes"
               WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
