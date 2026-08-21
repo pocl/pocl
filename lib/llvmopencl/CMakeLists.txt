@@ -97,7 +97,3 @@ pocl_build_clang_llvm_object(llvmpasses ${LLVMPASSES_SOURCES})
 
 target_include_directories(llvmpasses PRIVATE "${CMAKE_SOURCE_DIR}/lib/CL")
 target_include_directories(llvmpasses PRIVATE "${CMAKE_SOURCE_DIR}/lib/CL/devices")
-
-if(OCL_ICD_INCLUDE_DIRS)
-  target_include_directories("llvmpasses" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
-endif()
