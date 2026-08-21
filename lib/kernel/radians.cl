@@ -24,5 +24,10 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_V_V(radians,
-                a * TYPED_CONST(stype, M_PI_H/180, M_PI_F/180, M_PI/180))
+#define RADIAN_LITERAL_F 0x1.1df46ap-6F
+#define RADIAN_LITERAL_D 0x1.1df46a2529d39p-6
+#define RADIAN_LITERAL_H (half)0x1.1df46a2529d39p-6
+
+DEFINE_EXPR_V_V (
+  radians,
+  a *TYPED_CONST (stype, RADIAN_LITERAL_H, RADIAN_LITERAL_F, RADIAN_LITERAL_D))
