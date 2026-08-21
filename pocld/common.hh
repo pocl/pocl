@@ -406,11 +406,6 @@ public:
   }
 };
 
-struct EventPair {
-  cl::Event native;
-  cl::UserEvent user;
-};
-
 std::string hexdigits(std::string, uint8_t);
 
 /// Type for the buffer allocation identifier, a running number starting from

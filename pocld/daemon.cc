@@ -1013,6 +1013,12 @@ void PoclDaemon::readAllClientSocketsThread() {
   OpenClientConnections.clear();
 }
 
+void PoclDaemon::releaseContextDeferred(VirtualContextBase *Ctx) {
+  std::unique_lock<std::mutex> L(ContextDeleterMtx);
+  ContextDeleteQueue.push_back(Ctx);
+  ContextDeleterCond.notify_one();
+}
+
 void PoclDaemon::contextDeleterThread() {
   std::unique_lock<std::mutex> L(ContextDeleterMtx);
   while (1) {

@@ -104,11 +104,11 @@ void Peer::writerThread() {
     CHECK_WRITE(Conn->writeFull(&msg_size, sizeof(uint32_t)), "PHW");
     CHECK_WRITE(Conn->writeFull(&r->Body, msg_size), "PHW");
 
-    assert(r->Waitlist.size() == r->Body.waitlist_size);
+    assert(r->ClientWaitlist.size() == r->Body.waitlist_size);
     if (r->Body.waitlist_size > 0) {
       POCL_MSG_PRINT_GENERAL("PHW: WRITING WAIT LIST: %" PRIu32 "\n",
                              r->Body.waitlist_size);
-      CHECK_WRITE(Conn->writeFull(r->Waitlist.data(),
+      CHECK_WRITE(Conn->writeFull(r->ClientWaitlist.data(),
                                   r->Body.waitlist_size * sizeof(uint64_t)),
                   "PHW");
     }
