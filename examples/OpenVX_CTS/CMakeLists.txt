@@ -73,7 +73,7 @@ endif()
 if(CUSTOM_OPENVX_CTS_GIT_TAG)
   set(OPENVX_CTS_GIT_TAG "${CUSTOM_OPENVX_CTS_GIT_TAG}")
 else()
-  set(OPENVX_CTS_GIT_TAG "openvx_1.3")
+  set(OPENVX_CTS_GIT_TAG "openvx_1.3.2")
 endif()
 
 set(ROCM_ROOT "/opt/rocm")
@@ -99,8 +99,12 @@ ExternalProject_Add(
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 add_dependencies(prepare_examples ${TS_NAME})
 
+# The only excluded tests are the ORB-scale Gaussian pyramid cases with
+# VX_BORDER_UNDEFINED: MIVisionX's Graph/Immediate implementations produce
+# incorrect results there (its own CPU Reference model passes), so this is a
+# known upstream MIVisionX bug, not a PoCL issue. All other vision tests pass.
 add_test(NAME "${TS_NAME}"
-         COMMAND "${TS_BUILDDIR}/bin/vx_test_conformance" "--filter=*:-Graph.GraphState:-SmokeTestBase.vxRelease*:-SmokeTestBase.vxLoadKernels:-SmokeTestBase.vxUnloadKernels:-Array.vxCreateArray/?/array/VX_TYPE*:-vxConvertDepth.BitExact*:-GaussianPyramid.GraphProcessing/?/randomInput/VX_BORDER_UNDEFINED*:-GaussianPyramid.ImmediateProcessing/*/VX_BORDER_UNDEFINED*:-GaussianPyramid.GraphProcessing/37/lena/VX_BORDER_UNDEFINED*"
+         COMMAND "${TS_BUILDDIR}/bin/vx_test_conformance" "--filter=*:-GaussianPyramid.GraphProcessing/*VX_BORDER_UNDEFINED*VX_SCALE_PYRAMID_ORB:-GaussianPyramid.ImmediateProcessing/*VX_BORDER_UNDEFINED*VX_SCALE_PYRAMID_ORB"
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
 # Unit_hipMemset_SetMemoryWithOffset require CL_DEVICE_MAX_MEM_ALLOC_SIZE of >= 1GB,
