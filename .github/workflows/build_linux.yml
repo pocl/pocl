@@ -80,6 +80,39 @@ jobs:
         run: |
           cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
 
+      # Build MIVisionX (the OpenVX implementation the CTS links against) from
+      # the latest develop with the OpenCL backend, instead of relying on the
+      # MIVisionX version preinstalled in /opt/rocm on the runner. This keeps the
+      # tested implementation current, so fixes merged upstream are exercised and
+      # the conformance filter reflects only genuinely-open MIVisionX defects.
+      - name: Build MIVisionX (develop, OpenCL backend)
+        id: build_mivisionx
+        if: ${{ matrix.config == 'openvx' }}
+        timeout-minutes: 90
+        run: |
+          MIVISIONX_SRC=${EXAMPLES_DIR}/MIVisionX
+          MIVISIONX_ROOT=${EXAMPLES_DIR}/mivisionx-install
+          rm -rf "${MIVISIONX_ROOT}"
+          if [ ! -d "${MIVISIONX_SRC}/.git" ]; then
+            rm -rf "${MIVISIONX_SRC}"
+            git clone --depth 1 -b develop https://github.com/ROCm/MIVisionX.git "${MIVISIONX_SRC}"
+          else
+            git -C "${MIVISIONX_SRC}" fetch --depth 1 origin develop
+            git -C "${MIVISIONX_SRC}" reset --hard FETCH_HEAD
+          fi
+          echo "MIVisionX develop HEAD: $(git -C "${MIVISIONX_SRC}" rev-parse --short HEAD)"
+          rm -rf "${MIVISIONX_SRC}/build-ocl"
+          cmake -G Ninja -B "${MIVISIONX_SRC}/build-ocl" -S "${MIVISIONX_SRC}" \
+            -DCMAKE_BUILD_TYPE=Release -DBACKEND=OPENCL \
+            -DCMAKE_INSTALL_PREFIX="${MIVISIONX_ROOT}"
+          cmake --build "${MIVISIONX_SRC}/build-ocl" --target openvx vxu -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh)
+          # Default install covers both the runtime libs and the public headers
+          # (openvx/vxu are COMPONENT dev, installed when no --component is given).
+          cmake --install "${MIVISIONX_SRC}/build-ocl"
+          test -f "${MIVISIONX_ROOT}/lib/libopenvx.so" || { echo "MIVisionX build did not produce libopenvx.so"; exit 1; }
+          test -d "${MIVISIONX_ROOT}/include/mivisionx" || { echo "MIVisionX headers missing"; exit 1; }
+          echo "MIVISIONX_ROOT=${MIVISIONX_ROOT}" >> $GITHUB_ENV
+
       - name: CMake
         id: cmake
         run: |
@@ -123,7 +156,7 @@ jobs:
           elif [ "${{ matrix.config }}" == "openvx" ]; then
             mkdir -p ${EXAMPLES_DIR}/build_openvx
             mkdir -p ${EXAMPLES_DIR}/source
-            runCMake -DENABLE_TESTSUITES=OpenVX_CTS -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_openvx
+            runCMake -DENABLE_TESTSUITES=OpenVX_CTS -DCUSTOM_MIVISIONX_ROOT=${MIVISIONX_ROOT} -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_openvx
           elif [ "${{ matrix.config }}" == "asan" ]; then
             export BUILD_FLAGS="-O1 -ggdb -fno-omit-frame-pointer -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
             runCMake -DENABLE_ASAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DDEVELOPER_MODE=ON -DWITH_LLVM_CONFIG=/opt/LLVM_21_ASAN/bin/llvm-config -DENABLE_SPIRV=0

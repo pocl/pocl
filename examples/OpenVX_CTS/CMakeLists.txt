@@ -48,8 +48,19 @@ if(NOT EXISTS /opt/rocm)
   return()
 endif()
 
-if((NOT EXISTS /opt/rocm/include/mivisionx) OR (NOT EXISTS /opt/rocm/lib/libopenvx.so))
-  message(STATUS "Disabling ${TS_NAME}, can't find MIVisionX")
+# MIVisionX provides the OpenVX implementation the CTS links against. By default
+# it is taken from the ROCm install at /opt/rocm, but CUSTOM_MIVISIONX_ROOT lets
+# CI (or a developer) point at a self-built MIVisionX -- e.g. the latest develop
+# built with the OpenCL backend -- so the tested implementation is not tied to
+# whatever MIVisionX version happens to be preinstalled on the runner.
+if(CUSTOM_MIVISIONX_ROOT)
+  set(MIVISIONX_ROOT "${CUSTOM_MIVISIONX_ROOT}")
+else()
+  set(MIVISIONX_ROOT "/opt/rocm")
+endif()
+
+if((NOT EXISTS ${MIVISIONX_ROOT}/include/mivisionx) OR (NOT EXISTS ${MIVISIONX_ROOT}/lib/libopenvx.so))
+  message(STATUS "Disabling ${TS_NAME}, can't find MIVisionX in ${MIVISIONX_ROOT}")
   return()
 endif()
 
@@ -76,8 +87,6 @@ else()
   set(OPENVX_CTS_GIT_TAG "openvx_1.3.2")
 endif()
 
-set(ROCM_ROOT "/opt/rocm")
-
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
@@ -88,8 +97,8 @@ ExternalProject_Add(
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DOPENVX_CONFORMANCE_VISION=ON
     -DCMAKE_BUILD_TYPE=Release
-    -DOPENVX_INCLUDES=${ROCM_ROOT}/include/mivisionx
-    "-DOPENVX_LIBRARIES=${ROCM_ROOT}/lib/libopenvx.so$<SEMICOLON>${ROCM_ROOT}/lib/libvxu.so$<SEMICOLON>pthread$<SEMICOLON>dl$<SEMICOLON>m$<SEMICOLON>rt"
+    -DOPENVX_INCLUDES=${MIVISIONX_ROOT}/include/mivisionx
+    "-DOPENVX_LIBRARIES=${MIVISIONX_ROOT}/lib/libopenvx.so$<SEMICOLON>${MIVISIONX_ROOT}/lib/libvxu.so$<SEMICOLON>pthread$<SEMICOLON>dl$<SEMICOLON>m$<SEMICOLON>rt"
     "-DCMAKE_CXX_COMPILER_PATH=${CLANGXX_18}"
     "-DCMAKE_C_COMPILER_PATH=${CLANG_18}"
     "${TS_BASEDIR}/src/${TS_NAME}"
@@ -119,5 +128,5 @@ add_test(NAME "${TS_NAME}"
 # so PoCL CPU device memory must be >= 4GB
 set_tests_properties(${TS_NAME}
   PROPERTIES
-  ENVIRONMENT "AGO_DEFAULT_TARGET=GPU;LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH}$<SEMICOLON>${TS_BUILDDIR}/lib;VX_TEST_DATA_PATH=${TS_SRCDIR}/test_data;POCL_CPU_MAX_CU_COUNT=2;POCL_MEMORY_LIMIT=6"
+  ENVIRONMENT "AGO_DEFAULT_TARGET=GPU;LD_LIBRARY_PATH=${MIVISIONX_ROOT}/lib$<SEMICOLON>$ENV{LD_LIBRARY_PATH}$<SEMICOLON>${TS_BUILDDIR}/lib;VX_TEST_DATA_PATH=${TS_SRCDIR}/test_data;POCL_CPU_MAX_CU_COUNT=2;POCL_MEMORY_LIMIT=6"
   LABELS "${TS_NAME};openvx")
