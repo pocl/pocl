@@ -100,9 +100,17 @@ set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 add_dependencies(prepare_examples ${TS_NAME})
 
 # The only excluded tests are the ORB-scale Gaussian pyramid cases with
-# VX_BORDER_UNDEFINED: MIVisionX's Graph/Immediate implementations produce
-# incorrect results there (its own CPU Reference model passes), so this is a
-# known upstream MIVisionX bug, not a PoCL issue. All other vision tests pass.
+# VX_BORDER_UNDEFINED. MIVisionX's OpenCL Graph/Immediate implementations
+# produce incorrect results there on non-AMD OpenCL devices (its own CPU
+# Reference model passes, and the tests pass on native AMD hardware), so this
+# is a known upstream MIVisionX bug in the non-AMD OpenCL path, not a PoCL
+# issue. All other vision tests pass.
+#
+# ROCm/MIVisionX#1750 (merged) fixed one contributing bug in this path (the
+# amd_bytealign software emulation). A second, independent defect in the ORB
+# GaussianPyramid OpenCL kernel remains, so these cases still fail on PoCL and
+# the filter is retained. Once the remaining upstream fix lands and is
+# verified here, this exclusion can be dropped for full vision conformance.
 add_test(NAME "${TS_NAME}"
          COMMAND "${TS_BUILDDIR}/bin/vx_test_conformance" "--filter=*:-GaussianPyramid.GraphProcessing/*VX_BORDER_UNDEFINED*VX_SCALE_PYRAMID_ORB:-GaussianPyramid.ImmediateProcessing/*VX_BORDER_UNDEFINED*VX_SCALE_PYRAMID_ORB"
          WORKING_DIRECTORY "${TS_BUILDDIR}")
