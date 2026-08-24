@@ -106,9 +106,11 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release -DBACKEND=OPENCL \
             -DCMAKE_INSTALL_PREFIX="${MIVISIONX_ROOT}"
           cmake --build "${MIVISIONX_SRC}/build-ocl" --target openvx vxu -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh)
-          # Default install covers both the runtime libs and the public headers
-          # (openvx/vxu are COMPONENT dev, installed when no --component is given).
-          cmake --install "${MIVISIONX_SRC}/build-ocl"
+          # Install only the amd_openvx/openvx subproject (libopenvx, libvxu and
+          # the public headers). A whole-project install fails because it also
+          # tries to install utilities (e.g. runvx) that we intentionally did not
+          # build -- the CTS only needs the OpenVX libraries and headers.
+          cmake --install "${MIVISIONX_SRC}/build-ocl/amd_openvx/openvx"
           test -f "${MIVISIONX_ROOT}/lib/libopenvx.so" || { echo "MIVisionX build did not produce libopenvx.so"; exit 1; }
           test -d "${MIVISIONX_ROOT}/include/mivisionx" || { echo "MIVisionX headers missing"; exit 1; }
           echo "MIVISIONX_ROOT=${MIVISIONX_ROOT}" >> $GITHUB_ENV
