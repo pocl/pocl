@@ -80,27 +80,29 @@ jobs:
         run: |
           cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
 
-      # Build MIVisionX (the OpenVX implementation the CTS links against) from
-      # the latest develop with the OpenCL backend, instead of relying on the
-      # MIVisionX version preinstalled in /opt/rocm on the runner. This keeps the
-      # tested implementation current, so fixes merged upstream are exercised and
-      # the conformance filter reflects only genuinely-open MIVisionX defects.
-      - name: Build MIVisionX (develop, OpenCL backend)
+      # Build MIVisionX (the OpenVX implementation the CTS links against) with the
+      # OpenCL backend, instead of relying on the MIVisionX version preinstalled
+      # in /opt/rocm on the runner (which can lag upstream). A dedicated, tested
+      # branch (pocl-VX) is used rather than develop so the pinned implementation
+      # is stable and the conformance filter reflects only genuinely-open
+      # MIVisionX defects rather than transient develop breakage.
+      - name: Build MIVisionX (pocl-VX branch, OpenCL backend)
         id: build_mivisionx
         if: ${{ matrix.config == 'openvx' }}
         timeout-minutes: 90
         run: |
+          MIVISIONX_BRANCH=pocl-VX
           MIVISIONX_SRC=${EXAMPLES_DIR}/MIVisionX
           MIVISIONX_ROOT=${EXAMPLES_DIR}/mivisionx-install
           rm -rf "${MIVISIONX_ROOT}"
           if [ ! -d "${MIVISIONX_SRC}/.git" ]; then
             rm -rf "${MIVISIONX_SRC}"
-            git clone --depth 1 -b develop https://github.com/ROCm/MIVisionX.git "${MIVISIONX_SRC}"
+            git clone --depth 1 -b "${MIVISIONX_BRANCH}" https://github.com/ROCm/MIVisionX.git "${MIVISIONX_SRC}"
           else
-            git -C "${MIVISIONX_SRC}" fetch --depth 1 origin develop
+            git -C "${MIVISIONX_SRC}" fetch --depth 1 origin "${MIVISIONX_BRANCH}"
             git -C "${MIVISIONX_SRC}" reset --hard FETCH_HEAD
           fi
-          echo "MIVisionX develop HEAD: $(git -C "${MIVISIONX_SRC}" rev-parse --short HEAD)"
+          echo "MIVisionX ${MIVISIONX_BRANCH} HEAD: $(git -C "${MIVISIONX_SRC}" rev-parse --short HEAD)"
           rm -rf "${MIVISIONX_SRC}/build-ocl"
           cmake -G Ninja -B "${MIVISIONX_SRC}/build-ocl" -S "${MIVISIONX_SRC}" \
             -DCMAKE_BUILD_TYPE=Release -DBACKEND=OPENCL \
