@@ -71,7 +71,7 @@ Building PoCL with CUDA support
 CUDA backend status
 -------------------
 
-(last updated: 2017-06-02)
+(last updated: 2026-08-25)
 
 The CUDA backend currently passes 73 tests from PoCL's internal testsuite, and
 is capable of running various real OpenCL codes.
@@ -81,6 +81,10 @@ codes using Codeplay's ComputeCpp implementation on NVIDIA GPUs.
 Since it uses CUDA under-the-hood, this backend also works with all of the
 NVIDIA CUDA profiling and debugging tools, many of which don't work with
 NVIDIA's own OpenCL implementation.
+
+When built with the ``ENABLE_CUDA_IMAGES`` option, the CUDA backend exposes
+support for OpenCL images. However this support is currently limited to images
+of type ``IMAGE1D_BUFFER``.
 
 Conformance status
 ~~~~~~~~~~~~~~~~~~
