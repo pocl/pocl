@@ -27,3 +27,9 @@ CUDA driver
 
 * Initial bits for images support. Currently only the `IMAGE1D_BUFFER` image
   type is supported.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Remote driver
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Barriers and markers are now handled server-side.
