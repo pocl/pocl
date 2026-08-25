@@ -448,6 +448,12 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_cl_khr_command_buffer_mutable"
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_cl_khr_semaphore"
          COMMAND "${TS_BUILDDIR}/extensions/cl_khr_semaphore/test_cl_khr_semaphore" ${EXTRA_ARGS})
 
+add_test(NAME "${TS_NAME}${TS_SUFFIX}_cl_ext_buffer_device_address"
+         COMMAND "${TS_BUILDDIR}/extensions/cl_ext_buffer_device_address/test_cl_ext_buffer_device_address" ${EXTRA_ARGS})
+
+add_test(NAME "${TS_NAME}${TS_SUFFIX}_cl_khr_kernel_clock"
+         COMMAND "${TS_BUILDDIR}/extensions/cl_khr_kernel_clock/test_cl_khr_kernel_clock" ${EXTRA_ARGS})
+
 set(OCL_30_TESTS_FULL
     "${TS_NAME}${TS_SUFFIX}_api"
     "${TS_NAME}${TS_SUFFIX}_basic"
@@ -1229,6 +1235,7 @@ ${TS_BUILDDIR}/thread_dimensions
 ${TS_BUILDDIR}/vectors
 ${TS_BUILDDIR}/vulkan
 ${TS_BUILDDIR}/workgroups
+${TS_BUILDDIR}/extensions/cl_ext_buffer_device_address
 ${TS_BUILDDIR}/extensions/cl_ext_cxx_for_opencl
 ${TS_BUILDDIR}/extensions/cl_khr_command_buffer
 ${TS_BUILDDIR}/extensions/cl_khr_command_buffer/cl_khr_command_buffer_mutable_dispatch
