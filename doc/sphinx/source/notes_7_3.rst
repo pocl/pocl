@@ -46,6 +46,8 @@ Remote driver
   in the client's submit queue and pocld's reply queue.
 * Fixed some issues where one of the client-server sockets would abruptly
   disconnect for no obvious reason.
+* Server-to-server completion notifications are elided when possible to reduce
+  overhead in setups with a large number of servers in the same context
 * Server-to-server buffer migrations are now properly asynchronous
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
