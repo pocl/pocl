@@ -2431,6 +2431,10 @@ if(ENABLE_CUDA)
     set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_subgroups")
     #set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_subgroup_ballot \
     #  cl_khr_subgroup_shuffle cl_intel_subgroups cl_intel_required_subgroup_size")
+  endif()
+
+  option(ENABLE_CUDA_IMAGES "experimental (and unfinished) image support" OFF)
+  if(ENABLE_CUDA_IMAGES)
     set(CUDA_DEVICE_FEATURES_30 "${CUDA_DEVICE_FEATURES_30} __opencl_c_images")
   endif()
 

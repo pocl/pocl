@@ -558,8 +558,12 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
                                     ",+SPV_EXT_shader_atomic_float_add";
 #endif
 
-  /* TODO: Get images working */
+  /* TODO: Implement image formats other than IMAGE1D_BUFFER */
+#ifdef ENABLE_CUDA_IMAGES
   dev->image_support = CL_TRUE;
+#else
+  dev->image_support = CL_FALSE;
+#endif
 
   dev->autolocals_to_args
       = POCL_AUTOLOCALS_TO_ARGS_ONLY_IF_DYNAMIC_LOCALS_PRESENT;

@@ -154,6 +154,8 @@
 
 #define CUDA_DEVICE_FEATURES_30 "@CUDA_DEVICE_FEATURES_30@"
 
+#cmakedefine ENABLE_CUDA_IMAGES
+
 #endif
 
 #if defined(ENABLE_HOST_CPU_DEVICES)
