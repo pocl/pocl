@@ -558,8 +558,12 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
                                     ",+SPV_EXT_shader_atomic_float_add";
 #endif
 
-  /* TODO: Get images working */
+  /* TODO: Implement image formats other than IMAGE1D_BUFFER */
+#ifdef ENABLE_CUDA_IMAGES
+  dev->image_support = CL_TRUE;
+#else
   dev->image_support = CL_FALSE;
+#endif
 
   dev->autolocals_to_args
       = POCL_AUTOLOCALS_TO_ARGS_ONLY_IF_DYNAMIC_LOCALS_PRESENT;
@@ -1078,6 +1082,12 @@ pocl_cuda_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
           mem->latest_version = 1;
           p->version = 1;
         }
+    }
+  else if (mem->is_image && mem->type != CL_MEM_OBJECT_IMAGE1D_BUFFER)
+    {
+      POCL_MSG_ERR ("This PoCL-CUDA only supports images of type "
+                    "CL_MEM_OBJECT_IMAGE1D_BUFFER!\n");
+      return CL_OUT_OF_RESOURCES;
     }
   else
     {
@@ -2109,6 +2119,49 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
             break;
           }
         case POCL_ARG_TYPE_IMAGE:
+          {
+            if (arguments[i].value)
+              {
+                cl_mem mem = *(void **)arguments[i].value;
+                dev_image_t tmp = {
+                  mem->device_ptrs[device->global_mem_id].mem_ptr,
+                  mem->image_width,
+                  mem->image_height,
+                  mem->image_depth,
+                  mem->image_array_size,
+                  mem->image_row_pitch,
+                  mem->image_slice_pitch,
+                  mem->num_mip_levels,
+                  mem->num_samples,
+                  mem->image_channel_order,
+                  mem->image_channel_data_type,
+                  mem->image_channels,
+                  mem->image_elem_size,
+                };
+
+                if (mem->type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
+                  {
+                    /* On ARM with USE_HOST_PTR, perform explicit copy to
+                     * device */
+                    if ((mem->flags & CL_MEM_USE_HOST_PTR)
+                        && !((pocl_cuda_device_data_t *)device->data)
+                              ->supports_cu_mem_host_register)
+                      {
+                        cuMemcpyHtoD (*(CUdeviceptr *)(params[i]),
+                                      mem->mem_host_ptr, mem->size);
+                        cuStreamSynchronize (0);
+                      }
+                  }
+                else
+                  {
+                    POCL_ABORT ("Unsupported image type for CUDA\n");
+                  }
+
+                dev_image_t *arg_img = malloc (sizeof (dev_image_t));
+                memcpy (arg_img, &tmp, sizeof (dev_image_t));
+                params[i] = arg_img;
+              }
+          }
         case POCL_ARG_TYPE_SAMPLER:
         case POCL_ARG_TYPE_PIPE:
           POCL_ABORT ("Unhandled argument type for CUDA\n");
@@ -2163,6 +2216,18 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                            pc.num_groups[2], pc.local_size[0],
                            pc.local_size[1], pc.local_size[2], sharedMemBytes,
                            stream, params, NULL);
+
+  for (i = 0; i < meta->num_args; i++)
+    {
+      pocl_argument_type type = meta->arg_info[i].type;
+      if (type == POCL_ARG_TYPE_IMAGE)
+        {
+          if (arguments[i].value)
+            {
+              POCL_MEM_FREE (params[i]);
+            }
+        }
+    }
   CUDA_CHECK_ABORT (result, "cuLaunchKernel");
 }
 
@@ -2964,6 +3029,7 @@ pocl_cuda_get_subgroup_info_ext (cl_device_id dev,
                                  void *param_value,
                                  size_t *param_value_size_ret)
 {
+  cl_int errcode = CL_SUCCESS;
   pocl_cuda_device_data_t *ddata = (pocl_cuda_device_data_t *)dev->data;
   size_t sg_size = ddata->warp_size;
 
@@ -2988,7 +3054,7 @@ pocl_cuda_get_subgroup_info_ext (cl_device_id dev,
       }
     case CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT:
       {
-        POCL_RETURN_ERROR_ON ((input_value == NULL), CL_INVALID_VALUE,
+        POCL_GOTO_ERROR_ON ((input_value == NULL), CL_INVALID_VALUE,
                               "SG size wish not given.");
         size_t n_wish = *(size_t *)input_value;
 
@@ -3009,7 +3075,10 @@ pocl_cuda_get_subgroup_info_ext (cl_device_id dev,
           }
       }
     default:
-      POCL_RETURN_ERROR_ON (1, CL_INVALID_VALUE, "Unknown param_name: %u\n",
+      POCL_GOTO_ERROR_ON (1, CL_INVALID_VALUE, "Unknown param_name: %u\n",
                             param_name);
     }
+
+ERROR:
+  return errcode;
 }
