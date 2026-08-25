@@ -48,8 +48,19 @@ if(NOT EXISTS /opt/rocm)
   return()
 endif()
 
-if((NOT EXISTS /opt/rocm/include/mivisionx) OR (NOT EXISTS /opt/rocm/lib/libopenvx.so))
-  message(STATUS "Disabling ${TS_NAME}, can't find MIVisionX")
+# MIVisionX provides the OpenVX implementation the CTS links against. By default
+# it is taken from the ROCm install at /opt/rocm, but CUSTOM_MIVISIONX_ROOT lets
+# CI (or a developer) point at a self-built MIVisionX -- e.g. the latest develop
+# built with the OpenCL backend -- so the tested implementation is not tied to
+# whatever MIVisionX version happens to be preinstalled on the runner.
+if(CUSTOM_MIVISIONX_ROOT)
+  set(MIVISIONX_ROOT "${CUSTOM_MIVISIONX_ROOT}")
+else()
+  set(MIVISIONX_ROOT "/opt/rocm")
+endif()
+
+if((NOT EXISTS ${MIVISIONX_ROOT}/include/mivisionx) OR (NOT EXISTS ${MIVISIONX_ROOT}/lib/libopenvx.so))
+  message(STATUS "Disabling ${TS_NAME}, can't find MIVisionX in ${MIVISIONX_ROOT}")
   return()
 endif()
 
@@ -73,10 +84,8 @@ endif()
 if(CUSTOM_OPENVX_CTS_GIT_TAG)
   set(OPENVX_CTS_GIT_TAG "${CUSTOM_OPENVX_CTS_GIT_TAG}")
 else()
-  set(OPENVX_CTS_GIT_TAG "openvx_1.3")
+  set(OPENVX_CTS_GIT_TAG "openvx_1.3.2")
 endif()
-
-set(ROCM_ROOT "/opt/rocm")
 
 ExternalProject_Add(
   ${TS_NAME}
@@ -88,8 +97,15 @@ ExternalProject_Add(
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DOPENVX_CONFORMANCE_VISION=ON
     -DCMAKE_BUILD_TYPE=Release
-    -DOPENVX_INCLUDES=${ROCM_ROOT}/include/mivisionx
-    "-DOPENVX_LIBRARIES=${ROCM_ROOT}/lib/libopenvx.so$<SEMICOLON>${ROCM_ROOT}/lib/libvxu.so$<SEMICOLON>pthread$<SEMICOLON>dl$<SEMICOLON>m$<SEMICOLON>rt"
+    # Build the CTS harness at -O2, not its default -O3. Clang at -O3
+    # miscompiles the conformance harness (observed as spurious
+    # Array.vxCreateArray failures), so pin -O2 explicitly via the
+    # per-config flags. This matches MIVisionX's own conformance CI, which
+    # pins the same level for the same reason.
+    "-DCMAKE_C_FLAGS_RELEASE=-O2 -DNDEBUG"
+    "-DCMAKE_CXX_FLAGS_RELEASE=-O2 -DNDEBUG"
+    -DOPENVX_INCLUDES=${MIVISIONX_ROOT}/include/mivisionx
+    "-DOPENVX_LIBRARIES=${MIVISIONX_ROOT}/lib/libopenvx.so$<SEMICOLON>${MIVISIONX_ROOT}/lib/libvxu.so$<SEMICOLON>pthread$<SEMICOLON>dl$<SEMICOLON>m$<SEMICOLON>rt"
     "-DCMAKE_CXX_COMPILER_PATH=${CLANGXX_18}"
     "-DCMAKE_C_COMPILER_PATH=${CLANG_18}"
     "${TS_BASEDIR}/src/${TS_NAME}"
@@ -99,13 +115,25 @@ ExternalProject_Add(
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 add_dependencies(prepare_examples ${TS_NAME})
 
+# The only excluded tests are the ORB-scale Gaussian pyramid cases with
+# VX_BORDER_UNDEFINED. MIVisionX's OpenCL Graph/Immediate implementations
+# produce incorrect results there on non-AMD OpenCL devices (its own CPU
+# Reference model passes, and the tests pass on native AMD hardware), so this
+# is a known upstream MIVisionX bug in the non-AMD OpenCL path, not a PoCL
+# issue. All other vision tests pass.
+#
+# ROCm/MIVisionX#1750 (merged) fixed one contributing bug in this path (the
+# amd_bytealign software emulation). A second, independent defect in the ORB
+# GaussianPyramid OpenCL kernel remains, so these cases still fail on PoCL and
+# the filter is retained. Once the remaining upstream fix lands and is
+# verified here, this exclusion can be dropped for full vision conformance.
 add_test(NAME "${TS_NAME}"
-         COMMAND "${TS_BUILDDIR}/bin/vx_test_conformance" "--filter=*:-Graph.GraphState:-SmokeTestBase.vxRelease*:-SmokeTestBase.vxLoadKernels:-SmokeTestBase.vxUnloadKernels:-Array.vxCreateArray/?/array/VX_TYPE*:-vxConvertDepth.BitExact*:-GaussianPyramid.GraphProcessing/?/randomInput/VX_BORDER_UNDEFINED*:-GaussianPyramid.ImmediateProcessing/*/VX_BORDER_UNDEFINED*:-GaussianPyramid.GraphProcessing/37/lena/VX_BORDER_UNDEFINED*"
+         COMMAND "${TS_BUILDDIR}/bin/vx_test_conformance" "--filter=*:-GaussianPyramid.GraphProcessing/*VX_BORDER_UNDEFINED*VX_SCALE_PYRAMID_ORB:-GaussianPyramid.ImmediateProcessing/*VX_BORDER_UNDEFINED*VX_SCALE_PYRAMID_ORB"
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
 # Unit_hipMemset_SetMemoryWithOffset require CL_DEVICE_MAX_MEM_ALLOC_SIZE of >= 1GB,
 # so PoCL CPU device memory must be >= 4GB
 set_tests_properties(${TS_NAME}
   PROPERTIES
-  ENVIRONMENT "AGO_DEFAULT_TARGET=GPU;LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH}$<SEMICOLON>${TS_BUILDDIR}/lib;VX_TEST_DATA_PATH=${TS_SRCDIR}/test_data;POCL_CPU_MAX_CU_COUNT=2;POCL_MEMORY_LIMIT=6"
+  ENVIRONMENT "AGO_DEFAULT_TARGET=GPU;LD_LIBRARY_PATH=${MIVISIONX_ROOT}/lib:$ENV{LD_LIBRARY_PATH}:${TS_BUILDDIR}/lib;VX_TEST_DATA_PATH=${TS_SRCDIR}/test_data;POCL_CPU_MAX_CU_COUNT=2;POCL_MEMORY_LIMIT=6"
   LABELS "${TS_NAME};openvx")
