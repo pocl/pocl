@@ -49,6 +49,9 @@ Remote driver
 * Server-to-server completion notifications are elided when possible to reduce
   overhead in setups with a large number of servers in the same context
 * Server-to-server buffer migrations are now properly asynchronous
+* Fixes for compiling kernels for multiple devices
+* Fixed fetching program binaries and recreating programs from previously built
+  binaries
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 OpenASIP (ttasim) driver
