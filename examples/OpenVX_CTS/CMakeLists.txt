@@ -97,6 +97,13 @@ ExternalProject_Add(
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DOPENVX_CONFORMANCE_VISION=ON
     -DCMAKE_BUILD_TYPE=Release
+    # Build the CTS harness at -O2, not its default -O3. Clang at -O3
+    # miscompiles the conformance harness (observed as spurious
+    # Array.vxCreateArray failures), so pin -O2 explicitly via the
+    # per-config flags. This matches MIVisionX's own conformance CI, which
+    # pins the same level for the same reason.
+    "-DCMAKE_C_FLAGS_RELEASE=-O2 -DNDEBUG"
+    "-DCMAKE_CXX_FLAGS_RELEASE=-O2 -DNDEBUG"
     -DOPENVX_INCLUDES=${MIVISIONX_ROOT}/include/mivisionx
     "-DOPENVX_LIBRARIES=${MIVISIONX_ROOT}/lib/libopenvx.so$<SEMICOLON>${MIVISIONX_ROOT}/lib/libvxu.so$<SEMICOLON>pthread$<SEMICOLON>dl$<SEMICOLON>m$<SEMICOLON>rt"
     "-DCMAKE_CXX_COMPILER_PATH=${CLANGXX_18}"
@@ -128,5 +135,5 @@ add_test(NAME "${TS_NAME}"
 # so PoCL CPU device memory must be >= 4GB
 set_tests_properties(${TS_NAME}
   PROPERTIES
-  ENVIRONMENT "AGO_DEFAULT_TARGET=GPU;LD_LIBRARY_PATH=${MIVISIONX_ROOT}/lib$<SEMICOLON>$ENV{LD_LIBRARY_PATH}$<SEMICOLON>${TS_BUILDDIR}/lib;VX_TEST_DATA_PATH=${TS_SRCDIR}/test_data;POCL_CPU_MAX_CU_COUNT=2;POCL_MEMORY_LIMIT=6"
+  ENVIRONMENT "AGO_DEFAULT_TARGET=GPU;LD_LIBRARY_PATH=${MIVISIONX_ROOT}/lib:$ENV{LD_LIBRARY_PATH}:${TS_BUILDDIR}/lib;VX_TEST_DATA_PATH=${TS_SRCDIR}/test_data;POCL_CPU_MAX_CU_COUNT=2;POCL_MEMORY_LIMIT=6"
   LABELS "${TS_NAME};openvx")
