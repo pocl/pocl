@@ -55,8 +55,9 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                         CL_INVALID_COMMAND_QUEUE);
 
-  POCL_GOTO_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
-                        CL_DEVICE_NOT_AVAILABLE);
+  POCL_GOTO_ERROR_COND (
+    (POCL_ATOMIC_LOAD_PTR (command_queue->device->available) == CL_FALSE),
+    CL_DEVICE_NOT_AVAILABLE);
 
   POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (image)), CL_INVALID_MEM_OBJECT);
 

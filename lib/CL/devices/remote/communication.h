@@ -263,6 +263,7 @@ typedef struct remote_server_data_s
   uint32_t num_devices;
   uint32_t *platform_devices;
   pocl_remote_timing_t *profiling_data;
+  ALIGN_CACHE (pocl_lock_t profiling_lock);
 
   /* network handling threads / ids */
   network_queue *slow_read_queue;

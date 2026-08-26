@@ -1224,58 +1224,57 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
   std::string prof = clientDevice.getInfo<CL_DEVICE_PROFILE>();
   i.full_profile = (prof == "FULL_PROFILE");
 
-  /* ########### images */
-
-  i.image_support = clientDevice.getInfo<CL_DEVICE_IMAGE_SUPPORT>();
-
-  if (i.image_support == CL_FALSE) {
-    POCL_MSG_PRINT_GENERAL("P %u Get Device %" PRIu32 " NO IMAGES\n", plat_id,
-                           device_id);
-    return 0;
-  }
-
-  i.image2d_max_height = clientDevice.getInfo<CL_DEVICE_IMAGE2D_MAX_HEIGHT>();
-  i.image2d_max_width = clientDevice.getInfo<CL_DEVICE_IMAGE2D_MAX_WIDTH>();
-  i.image3d_max_height = clientDevice.getInfo<CL_DEVICE_IMAGE3D_MAX_HEIGHT>();
-  i.image3d_max_width = clientDevice.getInfo<CL_DEVICE_IMAGE3D_MAX_WIDTH>();
-  i.image3d_max_depth = clientDevice.getInfo<CL_DEVICE_IMAGE3D_MAX_DEPTH>();
-
-  i.image_max_buffer_size =
-      clientDevice.getInfo<CL_DEVICE_IMAGE_MAX_BUFFER_SIZE>();
-  i.image_max_array_size =
-      clientDevice.getInfo<CL_DEVICE_IMAGE_MAX_ARRAY_SIZE>();
   i.max_num_sub_groups = clientDevice.getInfo<CL_DEVICE_MAX_NUM_SUB_GROUPS>();
 
   // Use the C API since deprecated and not available in the C++ one.
   clGetDeviceInfo(clientDevice.get(), CL_DEVICE_HOST_UNIFIED_MEMORY,
                   sizeof(cl_bool), &i.host_unified_memory, nullptr);
 
-  /*******************************************************************/
+  /* ########### images */
 
-  std::vector<cl::ImageFormat> formats{};
-  std::vector<cl::Device> temp_vect{clientDevice};
-  cl::Context temp_context(temp_vect);
+  i.image_support = clientDevice.getInfo<CL_DEVICE_IMAGE_SUPPORT>();
 
-  temp_context.getSupportedImageFormats(CL_MEM_READ_ONLY, CL_MEM_OBJECT_IMAGE1D,
-                                        &formats);
-  appendImageFormats(i, 0, CL_MEM_OBJECT_IMAGE1D, formats);
+  if (i.image_support == CL_TRUE) {
+    i.image2d_max_height = clientDevice.getInfo<CL_DEVICE_IMAGE2D_MAX_HEIGHT>();
+    i.image2d_max_width = clientDevice.getInfo<CL_DEVICE_IMAGE2D_MAX_WIDTH>();
+    i.image3d_max_height = clientDevice.getInfo<CL_DEVICE_IMAGE3D_MAX_HEIGHT>();
+    i.image3d_max_width = clientDevice.getInfo<CL_DEVICE_IMAGE3D_MAX_WIDTH>();
+    i.image3d_max_depth = clientDevice.getInfo<CL_DEVICE_IMAGE3D_MAX_DEPTH>();
 
-  temp_context.getSupportedImageFormats(CL_MEM_READ_ONLY,
-                                        CL_MEM_OBJECT_IMAGE1D_ARRAY, &formats);
-  appendImageFormats(i, 1, CL_MEM_OBJECT_IMAGE1D_ARRAY, formats);
+    i.image_max_buffer_size =
+        clientDevice.getInfo<CL_DEVICE_IMAGE_MAX_BUFFER_SIZE>();
+    i.image_max_array_size =
+        clientDevice.getInfo<CL_DEVICE_IMAGE_MAX_ARRAY_SIZE>();
 
-  temp_context.getSupportedImageFormats(CL_MEM_READ_ONLY, CL_MEM_OBJECT_IMAGE2D,
-                                        &formats);
-  appendImageFormats(i, 2, CL_MEM_OBJECT_IMAGE2D, formats);
+    /*******************************************************************/
 
-  temp_context.getSupportedImageFormats(CL_MEM_READ_ONLY,
-                                        CL_MEM_OBJECT_IMAGE2D_ARRAY, &formats);
-  appendImageFormats(i, 3, CL_MEM_OBJECT_IMAGE2D_ARRAY, formats);
+    std::vector<cl::ImageFormat> formats{};
+    std::vector<cl::Device> temp_vect{clientDevice};
+    cl::Context temp_context(temp_vect);
 
-  temp_context.getSupportedImageFormats(CL_MEM_READ_ONLY, CL_MEM_OBJECT_IMAGE3D,
-                                        &formats);
-  appendImageFormats(i, 4, CL_MEM_OBJECT_IMAGE3D, formats);
+    temp_context.getSupportedImageFormats(CL_MEM_READ_ONLY,
+                                          CL_MEM_OBJECT_IMAGE1D, &formats);
+    appendImageFormats(i, 0, CL_MEM_OBJECT_IMAGE1D, formats);
 
+    temp_context.getSupportedImageFormats(
+        CL_MEM_READ_ONLY, CL_MEM_OBJECT_IMAGE1D_ARRAY, &formats);
+    appendImageFormats(i, 1, CL_MEM_OBJECT_IMAGE1D_ARRAY, formats);
+
+    temp_context.getSupportedImageFormats(CL_MEM_READ_ONLY,
+                                          CL_MEM_OBJECT_IMAGE2D, &formats);
+    appendImageFormats(i, 2, CL_MEM_OBJECT_IMAGE2D, formats);
+
+    temp_context.getSupportedImageFormats(
+        CL_MEM_READ_ONLY, CL_MEM_OBJECT_IMAGE2D_ARRAY, &formats);
+    appendImageFormats(i, 3, CL_MEM_OBJECT_IMAGE2D_ARRAY, formats);
+
+    temp_context.getSupportedImageFormats(CL_MEM_READ_ONLY,
+                                          CL_MEM_OBJECT_IMAGE3D, &formats);
+    appendImageFormats(i, 4, CL_MEM_OBJECT_IMAGE3D, formats);
+  } else {
+    POCL_MSG_PRINT_GENERAL("P %u Get Device %" PRIu32 " NO IMAGES\n", plat_id,
+                           device_id);
+  }
   return 0;
 }
 

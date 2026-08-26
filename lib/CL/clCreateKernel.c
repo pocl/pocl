@@ -112,7 +112,8 @@ POname(clCreateKernel)(cl_program program,
   for (i = 0; i < program->num_devices; ++i)
     {
       cl_device_id device = program->devices[i];
-      if (device->ops->create_kernel && *(device->available) == CL_TRUE)
+      if (device->ops->create_kernel
+          && POCL_ATOMIC_LOAD_PTR (device->available) == CL_TRUE)
         {
           POCL_LOCK_OBJ (program);
           int r = device->ops->create_kernel (device, program, kernel, i);

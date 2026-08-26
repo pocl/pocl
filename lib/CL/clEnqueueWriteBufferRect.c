@@ -44,8 +44,9 @@ pocl_validate_write_buffer_rect (cl_command_queue command_queue,
   POCL_RETURN_ERROR_COND ((host_origin == NULL), CL_INVALID_VALUE);
   POCL_RETURN_ERROR_COND ((region == NULL), CL_INVALID_VALUE);
 
-  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
-                          CL_DEVICE_NOT_AVAILABLE);
+  POCL_RETURN_ERROR_COND (
+    (POCL_ATOMIC_LOAD_PTR (command_queue->device->available) == CL_FALSE),
+    CL_DEVICE_NOT_AVAILABLE);
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (buffer)),
                           CL_INVALID_MEM_OBJECT);

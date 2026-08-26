@@ -42,8 +42,9 @@ CL_API_ENTRY cl_int CL_API_CALL POname (clEnqueueAcquireGLObjects) (
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
-  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
-                          CL_DEVICE_NOT_AVAILABLE);
+  POCL_RETURN_ERROR_COND (
+    (POCL_ATOMIC_LOAD_PTR (command_queue->device->available) == CL_FALSE),
+    CL_DEVICE_NOT_AVAILABLE);
 
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
                                         event_wait_list);
