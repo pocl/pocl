@@ -67,10 +67,6 @@ jobs:
 
       - uses: mamba-org/setup-micromamba@f457c30a868e4760d3a6fcea5f25dc655b8edf39
         with:
-          # temporary workaround, see:
-          #  https://github.com/mamba-org/setup-micromamba/issues/306
-          #  https://github.com/mamba-org/micromamba-releases/issues/97
-          micromamba-version: '2.6.0-0'
           environment-name: pocl-deps
           init-shell: >-
             cmd.exe
@@ -87,6 +83,11 @@ jobs:
       - name: Load Env vars
         id: load-env
         run: |
+          # in CI environment, this DLL also exists in C:/Windows/system32 ;
+          # this causes a problem for CMake's DLL dependency resolution,
+          # since it has two identically named DLLs, and can't decide
+          # how to resolve ambiguity; hence remove it
+          del %MAMBA_ROOT_PREFIX%\envs\pocl-deps\vcruntime140.dll
           cat ${{ github.workspace }}/.github/variables.txt >> $GITHUB_ENV
 
       - name: Check llvm
@@ -169,7 +170,9 @@ jobs:
 
       - name: Test packaging
         if: ${{ matrix.config == 'nsis' }}
-        run: cpack --config ${{ github.workspace }}\build-pocl\CPackConfig.cmake -G NSIS
+        run: |
+          cat ${{ github.workspace }}\build-pocl\CPackConfig.cmake
+          cpack --config ${{ github.workspace }}\build-pocl\CPackConfig.cmake -G NSIS
 
       - name: Upload install-dir Artifact
         if: ${{ matrix.config != 'nsis' }}
