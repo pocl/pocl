@@ -10,10 +10,10 @@
 // is able to handle these.
 //
 // for LOOPVEC handler, we delete regions which can reach an unreachable inst
-// but cannot reach the function's return. Branches from live blocks into the
-// deleted region are made unconditional (to the live branch), and switch cases
-// leading to it are removed. This preserves the PoCL 6.0 behavior that commit
-// 89bc42187 sought to restore.
+// but can reach neither the function's return nor a loop with side effects.
+// Branches from live blocks into the deleted region are made unconditional (to
+// the live branch), and switch cases leading to it are removed. This preserves
+// the PoCL 6.0 behavior that commit 89bc42187 sought to restore.
 //
 // Note that neither handling is recursive. Therefore all non-kernel functions
 // that have an unreachable inst, must be inlined before this Pass is run.
@@ -44,6 +44,7 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/Twine.h>
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
+#include <llvm/ADT/SCCIterator.h>
 #include <llvm/ADT/SmallPtrSet.h>
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/Constants.h>
@@ -158,6 +159,11 @@ static bool convertUnreachablesToReturns(Function &F) {
 // blocks would sever such a loop's exit edge and leave behind an infinite
 // loop that never reaches the parallel region exit, breaking WorkitemLoops
 // (issue #1958), so delete the doomed blocks wholesale.
+//
+// Loops with side effects are exempt: an intentional infinite loop such as
+// `while (1) { if (c) abort(); write_pipe(...); }` never reaches a return
+// either, but deleting it would discard observable behavior. Only the
+// unreachable-bound path out of such a loop is removed, as before.
 static bool deleteBlocksWithUnreachable(Function &F) {
 
   SmallBBSet UnreachableBBs;
@@ -170,7 +176,9 @@ static bool deleteBlocksWithUnreachable(Function &F) {
   if (UnreachableBBs.empty())
     return false;
 
-  // Collect the live blocks, i.e. those that can reach a return.
+  // Collect the live blocks, i.e. those that can reach a return or a loop
+  // with side effects. A loop without side effects (like the string-length
+  // loop mentioned above) is not observable and remains deletable.
   SmallBBSet LiveBBs;
   SmallVector<BasicBlock *, 16> WorkList;
   for (BasicBlock &BB : F) {
@@ -178,6 +186,29 @@ static bool deleteBlocksWithUnreachable(Function &F) {
       LiveBBs.insert(&BB);
       WorkList.push_back(&BB);
     }
+  }
+  for (scc_iterator<Function *> I = scc_begin(&F), E = scc_end(&F); I != E;
+       ++I) {
+    if (!I.hasCycle())
+      continue;
+    bool HasSideEffects = false;
+    for (BasicBlock *BB : *I) {
+      for (Instruction &Inst : *BB) {
+        if (!Inst.isTerminator() && Inst.mayHaveSideEffects()) {
+          HasSideEffects = true;
+          break;
+        }
+      }
+      if (HasSideEffects)
+        break;
+    }
+    if (!HasSideEffects)
+      continue;
+    LLVM_DEBUG(dbgs() << "Keeping loop with side effects, header: "
+                      << (*I).front()->getName().str() << "\n");
+    for (BasicBlock *BB : *I)
+      if (LiveBBs.insert(BB).second)
+        WorkList.push_back(BB);
   }
   while (!WorkList.empty()) {
     BasicBlock *BB = WorkList.pop_back_val();
@@ -206,7 +237,8 @@ static bool deleteBlocksWithUnreachable(Function &F) {
 
   // Retarget terminators of live blocks to only branch to live blocks. Note
   // that an edge from a doomed block to a live block cannot exist, and that
-  // a live block always has at least one live successor.
+  // a live block always has at least one live successor (blocks of a kept
+  // loop have a successor within that loop).
   for (BasicBlock &BB : F) {
     if (!LiveBBs.count(&BB))
       continue;
