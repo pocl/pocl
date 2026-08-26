@@ -824,6 +824,8 @@ finish_running_cmd (remote_server_data_t *server,
         case CL_COMMAND_NDRANGE_KERNEL:
         case CL_COMMAND_TASK:
         case CL_COMMAND_NATIVE_KERNEL:
+        case CL_COMMAND_MARKER:
+        case CL_COMMAND_BARRIER:
           e->time_queue = running_cmd->reply.server_read_end_timestamp_ns;
           e->time_submit = e->time_queue + ocl_in_host_queue;
           e->time_start = e->time_submit + ocl_in_dev_queue;
@@ -1748,6 +1750,8 @@ request_to_str (enum RequestMessageType type)
       return "MigrateD2D";
     case MessageType_Barrier:
       return "Barrier";
+    case MessageType_Marker:
+      return "Marker";
 
     case MessageType_ReadBuffer:
       return "ReadBuffer";
@@ -3760,6 +3764,27 @@ pocl_network_run_kernel (uint32_t cq_id, remote_device_data_t *ddata,
 
   TP_NDRANGE_KERNEL (req->msg_id, ddata->local_did, cq_id,
                      node->sync.event.event->id, kernel_id, kernel->name);
+
+  SEND_REQ_FAST;
+
+  return 0;
+}
+
+cl_int
+pocl_network_barrier_or_marker (uint32_t cq_id,
+                                remote_device_data_t *ddata,
+                                network_command_callback cb,
+                                void *arg,
+                                _cl_command_node *node)
+{
+  REMOTE_SERV_DATA2;
+
+  CREATE_ASYNC_NETCMD;
+
+  REQUEST (Marker);
+  if (node->type == CL_COMMAND_BARRIER)
+    req->message_type = MessageType_Barrier;
+  req->cq_id = node->sync.event.event->queue->id;
 
   SEND_REQ_FAST;
 

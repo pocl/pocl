@@ -141,6 +141,14 @@ void CommandQueue::RunCommand(Request *request) {
     RunKernel(queue_id, request, reply);
     break;
 
+  case MessageType_Barrier:
+    Barrier(queue_id, request, reply);
+    break;
+
+  case MessageType_Marker:
+    Marker(queue_id, request, reply);
+    break;
+
   case MessageType_RunCommandBuffer:
     RunCommandBuffer(queue_id, request, reply);
     break;
@@ -462,6 +470,32 @@ void CommandQueue::RunKernel(uint32_t queue_id, Request *req, Reply *rep) {
                     CL_FINISHED);
 
   replyOK(rep, evt_timing, MessageType_RunKernelReply);
+}
+
+void CommandQueue::Barrier(uint32_t queue_id, Request *req, Reply *rep) {
+  RunKernelMsg_t &m = req->Body.m.run_kernel;
+  EventTiming_t evt_timing{};
+
+  TP_BARRIER(req->Body.msg_id, req->Body.client_did, queue_id, CL_RUNNING);
+  RETURN_IF_ERR_CODE(backend->barrier(req->Body.event_id, queue_id, evt_timing,
+                                      req->Body.waitlist_size,
+                                      req->Waitlist.data()));
+  TP_BARRIER(req->Body.msg_id, req->Body.client_did, queue_id, CL_FINISHED);
+
+  replyOK(rep, evt_timing, MessageType_BarrierReply);
+}
+
+void CommandQueue::Marker(uint32_t queue_id, Request *req, Reply *rep) {
+  RunKernelMsg_t &m = req->Body.m.run_kernel;
+  EventTiming_t evt_timing{};
+
+  TP_MARKER(req->Body.msg_id, req->Body.client_did, queue_id, CL_RUNNING);
+  RETURN_IF_ERR_CODE(backend->marker(req->Body.event_id, queue_id, evt_timing,
+                                     req->Body.waitlist_size,
+                                     req->Waitlist.data()));
+  TP_MARKER(req->Body.msg_id, req->Body.client_did, queue_id, CL_FINISHED);
+
+  replyOK(rep, evt_timing, MessageType_MarkerReply);
 }
 
 void CommandQueue::RunCommandBuffer(uint32_t queue_id, Request *req,

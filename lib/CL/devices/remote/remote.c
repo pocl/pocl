@@ -1713,6 +1713,7 @@ remote_finish_command (void *arg, _cl_command_node *node,
       break;
     }
 
+  node->state = POCL_COMMAND_READY;
   POCL_LOCK (d->wq_lock);
   DL_APPEND (d->finished_list, node);
   POCL_SIGNAL_COND (d->wakeup_cond);
@@ -2747,6 +2748,32 @@ pocl_remote_async_fill_image (void *data, _cl_command_node *node,
   return r;
 }
 
+cl_int
+pocl_remote_async_barrier_or_marker (void *data, _cl_command_node *node)
+{
+  char *kind = NULL;
+  switch (node->type)
+    {
+    case CL_COMMAND_BARRIER:
+      kind = "BARRIER";
+      break;
+    case CL_COMMAND_MARKER:
+      kind = "MARKER";
+      break;
+    default:
+      return 1;
+    }
+  POCL_MSG_PRINT_REMOTE ("REMOTE %s EID: %lu\n", kind,
+                         (unsigned long)(node->sync.event.event->id));
+
+  uint32_t queue_id = (uint32_t)node->sync.event.event->queue->id;
+
+  int r = pocl_network_barrier_or_marker (queue_id, data,
+                                          remote_finish_command, data, node);
+
+  return r;
+}
+
 static void
 remote_start_command (remote_device_data_t *d, _cl_command_node *node)
 {
@@ -3013,7 +3040,9 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
 
     case CL_COMMAND_MARKER:
     case CL_COMMAND_BARRIER:
-      goto EARLY_FINISH;
+      if (pocl_remote_async_barrier_or_marker (d, node) > 0)
+        goto EARLY_FINISH;
+      return;
 
     case CL_COMMAND_COMMAND_BUFFER_KHR:
       pocl_remote_async_run_command_buffer (d, node);
