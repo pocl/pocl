@@ -2310,9 +2310,25 @@ EXPORT CONST vdouble xfabs(vdouble x) { return vabs_vd_vd(x); }
 
 EXPORT CONST vdouble xcopysign(vdouble x, vdouble y) { return vcopysign_vd_vd_vd(x, y); }
 
-EXPORT CONST vdouble xfmax(vdouble x, vdouble y) { return vmaxnum_vd_vd_vd(x, y); }
+EXPORT CONST vdouble xfmax(vdouble x, vdouble y) {
+// on ARM, vmaxnum_vf_vf_vf = fmaxnm handles QNAN correctly, but returns SNan
+#if defined(__ARM_NEON) || defined(__aarch64__)
+  vdouble max = vsel_vd_vo_vd_vd(vgt_vo_vd_vd(x, y), x, y);
+  return vsel_vd_vo_vd_vd(vneq_vo_vd_vd(y, y), x, max);
+#else
+  return vmaxnum_vd_vd_vd(x, y);
+#endif
+}
 
-EXPORT CONST vdouble xfmin(vdouble x, vdouble y) { return vminnum_vd_vd_vd(x, y); }
+EXPORT CONST vdouble xfmin(vdouble x, vdouble y) {
+// on ARM, vminnum_vf_vf_vf = fminnm handles QNAN correctly, but returns SNan
+#if defined(__ARM_NEON) || defined(__aarch64__)
+  vdouble min = vsel_vd_vo_vd_vd(vlt_vo_vd_vd(x, y), x, y);
+  return vsel_vd_vo_vd_vd(vneq_vo_vd_vd(y, y), x, min);
+#else
+  return vminnum_vd_vd_vd(x, y);
+#endif
+}
 
 EXPORT CONST vdouble xfdim(vdouble x, vdouble y) {
   vdouble ret = vsub_vd_vd_vd(x, y);
@@ -2445,7 +2461,7 @@ EXPORT CONST vmask xexpfrexp(vdouble x) {
 
 EXPORT CONST vdouble xfma(vdouble x, vdouble y, vdouble z) {
 #ifdef ENABLE_FMA_DP
-  return vmla_vd_vd_vd_vd(x, y, z);
+  return vfma_vd_vd_vd_vd(x, y, z);
 #else
   vdouble h2 = vadd_vd_vd_vd(vmul_vd_vd_vd(x, y), z), q = vcast_vd_d(1);
   vopmask o = vlt_vo_vd_vd(vabs_vd_vd(h2), vcast_vd_d(1e-300));

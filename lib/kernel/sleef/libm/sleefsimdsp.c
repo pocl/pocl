@@ -1762,9 +1762,25 @@ EXPORT CONST vfloat xfabsf(vfloat x) { return vabs_vf_vf(x); }
 
 EXPORT CONST vfloat xcopysignf(vfloat x, vfloat y) { return vcopysign_vf_vf_vf(x, y); }
 
-EXPORT CONST vfloat xfmaxf(vfloat x, vfloat y) { return vmaxnum_vf_vf_vf(x, y); }
+EXPORT CONST vfloat xfmaxf(vfloat x, vfloat y) {
+// on ARM, vmaxnum_vf_vf_vf = fmaxnm handles QNAN correctly, but returns SNan
+#if defined(__ARM_NEON) || defined(__aarch64__)
+  vfloat max = vsel_vf_vo_vf_vf(vgt_vo_vf_vf(x, y), x, y);
+  return vsel_vf_vo_vf_vf(vneq_vo_vf_vf(y, y), x, max);
+#else
+  return vmaxnum_vf_vf_vf(x, y);
+#endif
+}
 
-EXPORT CONST vfloat xfminf(vfloat x, vfloat y) { return vminnum_vf_vf_vf(x, y); }
+EXPORT CONST vfloat xfminf(vfloat x, vfloat y) {
+// on ARM, vminnum_vf_vf_vf = fminnm handles QNAN correctly, but returns SNan
+#if defined(__ARM_NEON) || defined(__aarch64__)
+  vfloat min = vsel_vf_vo_vf_vf(vlt_vo_vf_vf(x, y), x, y);
+  return vsel_vf_vo_vf_vf(vneq_vo_vf_vf(y, y), x, min);
+#else
+  return vminnum_vf_vf_vf(x, y);
+#endif
+}
 
 EXPORT CONST vfloat xfdimf(vfloat x, vfloat y) {
   vfloat ret = vsub_vf_vf_vf(x, y);
@@ -1810,7 +1826,7 @@ EXPORT CONST vfloat xrintf(vfloat d) {
 
 EXPORT CONST vfloat xfmaf(vfloat x, vfloat y, vfloat z) {
 #ifdef ENABLE_FMA_SP
-  return vmla_vf_vf_vf_vf(x, y, z);
+  return vfma_vf_vf_vf_vf(x, y, z);
 #else
   vfloat h2 = vadd_vf_vf_vf(vmul_vf_vf_vf(x, y), z), q = vcast_vf_f(1);
   vopmask o = vlt_vo_vf_vf(vabs_vf_vf(h2), vcast_vf_f(1e-38f));

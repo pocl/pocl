@@ -35,10 +35,36 @@ DEFINE_FP16_BUILTIN_V_V (rint, __builtin_elementwise_rint)
 DEFINE_FP16_BUILTIN_V_V (round, __builtin_elementwise_round)
 DEFINE_FP16_BUILTIN_V_V (fabs, __builtin_elementwise_abs)
 
-/* __builtin_elementwise_max/min lower to @llvm.maxnum/minnum, matching the
-   OpenCL fmax/fmin NaN-quieting semantics. */
+#ifndef __riscv
+DEFINE_FP16_BUILTIN_V_VV (pow, __builtin_elementwise_pow)
+#else
+half _CL_OVERLOADABLE
+pow (half a, half b)
+{
+  return (half)pow ((float)a, (float)b);
+}
+DEFINE_FP16_EXPR_V_VV (pow)
+#endif
+
+/*
+  llvm.minimumnum and llvm.maximumnum: Return the other argument if one is NaN.
+  llvm.minnum and llvm.maxnum: For quiet NaNs behaves like
+  minimumnum/maximumnum. For signaling NaNs, non-deterministically returns NaN
+  or the other operand.
+
+  OpenCL CTS test requires that fmax/fmin returns the other argument for both
+  Quiet and Signalling NaNs. Therefore the non-deterministic behaviour of
+  minnum/maxnum is not always suitable; it is failing on ARM64
+*/
+#if __has_builtin(__builtin_elementwise_maximumnum)                           \
+  && __has_builtin(__builtin_elementwise_minimumnum)                          \
+  && (defined(__arm__) || defined(__aarch64__))
+DEFINE_FP16_BUILTIN_V_VV (fmax, __builtin_elementwise_maximumnum)
+DEFINE_FP16_BUILTIN_V_VV (fmin, __builtin_elementwise_minimumnum)
+#else
 DEFINE_FP16_BUILTIN_V_VV (fmax, __builtin_elementwise_max)
 DEFINE_FP16_BUILTIN_V_VV (fmin, __builtin_elementwise_min)
+#endif
 DEFINE_FP16_BUILTIN_V_VVV (fma, __builtin_elementwise_fma)
 
 /* fdim(x, y) = (x > y) ? x - y : +0, returning NaN if either input is NaN.

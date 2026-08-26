@@ -6,6 +6,10 @@ Release Notes for PoCL 7.3
 Release highlights
 ===========================
 
+* TBD: Conformance results were submitted for OpenCL 3.0 conformance,
+* TBD: Support for LLVM version XX with CUDA, LevelZero and CPU devices
+* TBD: Support for LLVM version 24 with CPU device
+
 ================
 CMake changes
 ================
@@ -16,6 +20,8 @@ CMake changes
 ==========================
 Runtime fixes & features
 ==========================
+
+* TBD: OpenCL-CTS updated to upstream tag v20XX-YY-ZZ-00 and fixed related bugs:
 
 ===========================
 Driver-specific features
@@ -33,3 +39,25 @@ Remote driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * Barriers and markers are now handled server-side.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+OpenASIP (ttasim) driver
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+CPU driver
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* FP16 support is now complete and enabled by default on Linux.
+  Note that this support has a few requirements:
+   - host compiler must support _Float16 (GCC since 12)
+   - sufficiently new LLVM which supports _Float16 (since LLVM 19)
+   - x86_64, RISC-V 64 or ARM 64
+
+===================================
+Deprecation/feature removal notices
+===================================
+
+===================================
+Experimental and work-in-progress
+===================================

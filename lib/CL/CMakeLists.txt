@@ -306,6 +306,11 @@ if (ENABLE_LLVM)
     pocl_build_clang_llvm_object(lib_cl_mlir ${MLIR_API_SOURCES})
     target_include_directories(lib_cl_mlir PRIVATE "${CMAKE_SOURCE_DIR}/lib/mliropencl/include")
     target_include_directories(lib_cl_mlir PRIVATE "${CMAKE_BINARY_DIR}/lib/mliropencl/include")
+    # necessary to generate .inc headers before attempting to build MLIR sources
+    # pocl_mlir_utils.cc:48:
+    # include/pocl/Dialect/Dialect.hh:31:10: fatal error:
+    # pocl/Dialect/PoclOpsDialect.h.inc: No such file or directory
+    add_dependencies(lib_cl_mlir PoclDialect)
 
     if(LLVM_PACKAGE_VERSION)
       list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:obj.mlirpasses>")

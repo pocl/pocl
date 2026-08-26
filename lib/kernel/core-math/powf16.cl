@@ -294,20 +294,6 @@ _CL_OVERLOADABLE half pow(half x, half y) {
 
 DEFINE_FP16_EXPR_V_VV(pow)
 
-/*
-ERROR: pown: inf ulp error at {-0x1.5bcp-9 (0x996f), -1999335705}
-Expected: -inf (half 0xfc00)
-Actual: inf (half 0x7c00) at index: 4
-
-ERROR: pown: inf ulp error at {-0x1.fbcp+12 (0xefef), 1657969807}
-Expected: -inf (half 0xfc00)
-Actual: inf (half 0x7c00) at index: 9
-
-ERROR: pown: inf ulp error at {-0x1.f88p+8 (0xdfe2), 958472645}
-Expected: -inf (half 0xfc00)
-Actual: inf (half 0x7c00) at index: 9
-*/
-
 /* NOTE: pown(half) and powr(half) live in promotedf16.cl, not here. They have no
    native FP16 builtin and are not provided by the vectorized generic pow.cl, so
    they must be compiled in BOTH configurations -- whereas pow(half) above clashes
