@@ -9,12 +9,11 @@
 // to create illegal code (barriers are only partially taken), however the CBS
 // is able to handle these.
 //
-// for LOOPVEC handler, we find all basicblocks which have an unreachable inst,
-// and "disconnect" them from their predecessor basicblocks. If the predecessor
-// has an unconditional jump, it is also deleted. If it has a conditional jump,
-// it's made unconditional (to the other branch). This matches the behavior
-// of prior versions of PoCL (6.0) where the optimization similarly deleted
-// these blocks.
+// for LOOPVEC handler, we delete regions which can reach an unreachable inst
+// but can reach neither the function's return nor a loop with side effects.
+// Branches from live blocks into the deleted region are made unconditional (to
+// the live branch), and switch cases leading to it are removed. This preserves
+// the PoCL 6.0 behavior that commit 89bc42187 sought to restore.
 //
 // Note that neither handling is recursive. Therefore all non-kernel functions
 // that have an unreachable inst, must be inlined before this Pass is run.
@@ -45,6 +44,7 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/Twine.h>
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
+#include <llvm/ADT/SCCIterator.h>
 #include <llvm/ADT/SmallPtrSet.h>
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/Constants.h>
@@ -150,188 +150,160 @@ static bool convertUnreachablesToReturns(Function &F) {
   return true;
 }
 
-// Fix predecessor BBs of BB which has an unreachable terminator inst
-// to ignore the BB.
+// Delete regions which lead only to an unreachable instruction.
 //
-// If the predecessor has an unconditional branch, replaces the branch with
-// UnreachableInst and adds the BB to \p NewUnreachableBBs. If the predecessor
-// has a conditional branch, makes it unconditional. The function should
-// be called until NewUnreachableBBs is empty.
-static void detachBBFromPredecessor(BasicBlock &BB,
-                                    SmallBBSet &NewUnreachableBBs) {
-  if (BB.hasNPredecessors(0))
-    return; // Already handled.
-
-  LLVM_DEBUG(
-      dbgs() << "Detaching a BB that has an unreachable or leads to one:\n");
-  LLVM_DEBUG(BB.dump());
-
-  // To avoid invalidating the predecessors iterator,
-  // store replacement instructions and replace after the loop
-  SmallMapVector<Instruction *, Instruction *, 8> Replacements;
-
-  // If the BB is in a switch case, these are the switch instructions to fix.
-  std::vector<SwitchInst *> PredSwitches;
-
-  for (BasicBlock *Pred : predecessors(&BB)) {
-    assert(Pred != nullptr);
-    Instruction *I = Pred->getTerminator();
-    assert(I != nullptr);
-#if LLVM_MAJOR >= 23
-    if (auto *BI = dyn_cast<UncondBrInst>(I)) {
-      LLVM_DEBUG(dbgs() << "The predecessor " << Pred->getName().str()
-                        << " is unconditionally branching to it\n");
-      LLVM_DEBUG(Pred->dump());
-      // The predecessor has an unconditional branch to the unreachable BB,
-      // remove that in a next call.
-      NewUnreachableBBs.insert(Pred);
-    } else if (auto *CBI = dyn_cast<CondBrInst>(I)) {
-      LLVM_DEBUG(
-          dbgs() << "The predecessor is conditionally branching to it\n");
-      LLVM_DEBUG(Pred->dump());
-
-      BasicBlock *Other = nullptr;
-      if (CBI->getSuccessor(0) == &BB)
-        Other = CBI->getSuccessor(1);
-      else
-        Other = CBI->getSuccessor(0);
-      UncondBrInst *NewBI = UncondBrInst::Create(Other);
-      Replacements.insert(std::make_pair(CBI, NewBI));
-    }
-#else
-    if (BranchInst *BI = dyn_cast<BranchInst>(I)) {
-      if (BI->isUnconditional()) {
-        LLVM_DEBUG(dbgs() << "The predecessor " << Pred->getName().str()
-                          << " is unconditionally branching to it\n");
-        LLVM_DEBUG(Pred->dump());
-        // The predecessor has an unconditional branch to the unreachable BB,
-        // remove that in a next call.
-        NewUnreachableBBs.insert(Pred);
-      } else {
-        LLVM_DEBUG(
-            dbgs() << "The predecessor is conditionally branching to it\n");
-        LLVM_DEBUG(Pred->dump());
-
-        BasicBlock *Other = nullptr;
-        if (BI->getSuccessor(0) == &BB)
-          Other = BI->getSuccessor(1);
-        else
-          Other = BI->getSuccessor(0);
-        BranchInst *NewBI = BranchInst::Create(Other);
-        Replacements.insert(std::make_pair(BI, NewBI));
-      }
-    }
-#endif
-    else if (SwitchInst *PredSwitch = dyn_cast<SwitchInst>(I)) {
-      LLVM_DEBUG(dbgs() << "The predecessor is a switch case in "
-                        << Pred->getName().str() << "\n");
-      PredSwitches.push_back(PredSwitch);
-    } else {
-      LLVM_DEBUG(dbgs() << "Unhandled BB Terminator: \n");
-      LLVM_DEBUG(I->dump());
-      assert(0 && "Error: unexpected BB terminator\n");
-    }
-  }
-
-  for (auto [OldI, NewI] : Replacements) {
-    ReplaceInstWithInst(OldI, NewI);
-  }
-
-  for (SwitchInst *PredSwitch : PredSwitches) {
-    // New default BB in case the unreachable block is a default BB.
-    BasicBlock *NewDefaultBB = nullptr;
-
-    // The case value we could convert to a new default if that's the case.
-    ConstantInt *RobbedCaseValue = nullptr;
-    for (SwitchInst::CaseIt C = PredSwitch->cases().begin();
-         C != PredSwitch->cases().end();) {
-      if (C->getCaseSuccessor() == &BB) {
-        PredSwitch->removeCase(C++);
-        // RemoveCase invalidates all iterators and might reorder the cases,
-        // let's just restart.
-        C = PredSwitch->cases().begin();
-        continue;
-      }
-      NewDefaultBB = C->getCaseSuccessor();
-      RobbedCaseValue = C->getCaseValue();
-      C++;
-    }
-    SwitchInst::CaseIt Default = PredSwitch->case_default();
-    if (Default->getCaseSuccessor() == &BB) {
-      if (NewDefaultBB != nullptr) {
-        PredSwitch->setDefaultDest(NewDefaultBB);
-        // Now we can remove the original case which also branched to this one
-        // since it will be covered by the default. This will by coincidence
-        // fix the Phi in a block where the switch...case has multiple branches
-        // to. If we didn't do this, there would be one too few phi conditions.
-        PredSwitch->removeCase(PredSwitch->findCaseValue(RobbedCaseValue));
-      }
-      if (NewDefaultBB == nullptr || PredSwitch->getNumCases() == 0) {
-        LLVM_DEBUG(
-            dbgs()
-            << "A switch case with only a default which goes to unreachable\n");
-        NewUnreachableBBs.insert(PredSwitch->getParent());
-      }
-    }
-    LLVM_DEBUG(dbgs() << "switch case modified:\n");
-    LLVM_DEBUG(PredSwitch->getParent()->dump());
-  }
-}
-
+// These "doomed" blocks either end in an unreachable inst, or can only make
+// progress towards one -- possibly iterating forever in a loop whose sole
+// exit leads to an unreachable, e.g. the string-length loop of an inlined
+// printf-then-abort sequence. Merely detaching the unreachable-terminated
+// blocks would sever such a loop's exit edge and leave behind an infinite
+// loop that never reaches the parallel region exit, breaking WorkitemLoops
+// (issue #1958), so delete the doomed blocks wholesale.
+//
+// Loops with side effects are exempt: an intentional infinite loop such as
+// `while (1) { if (c) abort(); write_pipe(...); }` never reaches a return
+// either, but deleting it would discard observable behavior. Only the
+// unreachable-bound path out of such a loop is removed, as before.
 static bool deleteBlocksWithUnreachable(Function &F) {
 
   SmallBBSet UnreachableBBs;
-
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-    BasicBlock &BB = *I;
+  for (BasicBlock &BB : F) {
     assert(BB.getTerminator());
-    if (isa<UnreachableInst>(BB.getTerminator())) {
-      LLVM_DEBUG(dbgs() << "UNREACHABLE found, deleting BB\n");
-      LLVM_DEBUG(BB.dump());
+    if (isa<UnreachableInst>(BB.getTerminator()))
       UnreachableBBs.insert(&BB);
-    }
   }
 
   if (UnreachableBBs.empty())
     return false;
 
-  // Check BB predecessors recursively, and disconnect them
-  // from blocks which contain an unreachable.
-  SmallBBSet HandledUnreachableBBs;
-  while (!UnreachableBBs.empty()) {
-    BasicBlock *BB = *UnreachableBBs.begin();
-    detachBBFromPredecessor(*BB, UnreachableBBs);
-    UnreachableBBs.erase(BB);
-    HandledUnreachableBBs.insert(BB);
-  }
-
-  while (!HandledUnreachableBBs.empty()) {
-
-    auto CandidateBB = HandledUnreachableBBs.begin();
-
-    // We have to delete the "chains" bottom up to avoid having basic blocks
-    // that refer to the values produced by the predecessors in the stem.
-    while (!isa<UnreachableInst>((*CandidateBB)->getTerminator()))
-      ++CandidateBB;
-    assert(CandidateBB != HandledUnreachableBBs.end());
-    BasicBlock *BB = *CandidateBB;
-
-    LLVM_DEBUG(dbgs() << "Deleting BB: \n");
-    LLVM_DEBUG(BB->dump());
-
-    // The deleted BB can have multiple predecessors.
-    SmallMapVector<Instruction *, Instruction *, 8> Replacements;
-    for (BasicBlock *Pred : predecessors(BB))
-      Replacements.insert(std::make_pair(
-          Pred->getTerminator(), new UnreachableInst(Pred->getContext())));
-
-    for (auto [OldI, NewI] : Replacements) {
-      ReplaceInstWithInst(OldI, NewI);
+  // Collect the live blocks, i.e. those that can reach a return or a loop
+  // with side effects. A loop without side effects (like the string-length
+  // loop mentioned above) is not observable and remains deletable.
+  SmallBBSet LiveBBs;
+  SmallVector<BasicBlock *, 16> WorkList;
+  for (BasicBlock &BB : F) {
+    if (isa<ReturnInst>(BB.getTerminator())) {
+      LiveBBs.insert(&BB);
+      WorkList.push_back(&BB);
     }
-
-    BB->eraseFromParent();
-    HandledUnreachableBBs.erase(BB);
   }
+  for (scc_iterator<Function *> I = scc_begin(&F), E = scc_end(&F); I != E;
+       ++I) {
+    if (!I.hasCycle())
+      continue;
+    bool HasSideEffects = false;
+    for (BasicBlock *BB : *I) {
+      for (Instruction &Inst : *BB) {
+        if (!Inst.isTerminator() && Inst.mayHaveSideEffects()) {
+          HasSideEffects = true;
+          break;
+        }
+      }
+      if (HasSideEffects)
+        break;
+    }
+    if (!HasSideEffects)
+      continue;
+    LLVM_DEBUG(dbgs() << "Keeping loop with side effects, header: "
+                      << (*I).front()->getName().str() << "\n");
+    for (BasicBlock *BB : *I)
+      if (LiveBBs.insert(BB).second)
+        WorkList.push_back(BB);
+  }
+  while (!WorkList.empty()) {
+    BasicBlock *BB = WorkList.pop_back_val();
+    for (BasicBlock *Pred : predecessors(BB))
+      if (LiveBBs.insert(Pred).second)
+        WorkList.push_back(Pred);
+  }
+
+  // A non-returning region is not necessarily doomed: an intentional infinite
+  // loop need not lead to an unreachable instruction. Walk backwards from the
+  // unreachables and restrict deletion to the intersection of both sets.
+  SmallBBSet DoomedBBs = UnreachableBBs;
+  WorkList.assign(UnreachableBBs.begin(), UnreachableBBs.end());
+  while (!WorkList.empty()) {
+    BasicBlock *BB = WorkList.pop_back_val();
+    for (BasicBlock *Pred : predecessors(BB))
+      if (!LiveBBs.count(Pred) && DoomedBBs.insert(Pred).second)
+        WorkList.push_back(Pred);
+  }
+
+  // If not even the entry block can reach a return, deleting the doomed
+  // blocks would delete the whole function body. Convert the unreachables
+  // to returns instead.
+  if (DoomedBBs.count(&F.getEntryBlock()))
+    return convertUnreachablesToReturns(F);
+
+  // Retarget terminators of live blocks to only branch to live blocks. Note
+  // that an edge from a doomed block to a live block cannot exist, and that
+  // a live block always has at least one live successor (blocks of a kept
+  // loop have a successor within that loop).
+  for (BasicBlock &BB : F) {
+    if (!LiveBBs.count(&BB))
+      continue;
+
+    Instruction *TI = BB.getTerminator();
+    bool HasDoomedSuccessor = false;
+    for (BasicBlock *Succ : successors(&BB))
+      HasDoomedSuccessor |= DoomedBBs.count(Succ);
+    if (!HasDoomedSuccessor)
+      continue;
+
+    LLVM_DEBUG(dbgs() << "Detaching doomed successors of:\n");
+    LLVM_DEBUG(BB.dump());
+
+#if LLVM_MAJOR >= 23
+    if (auto *CBI = dyn_cast<CondBrInst>(TI)) {
+      BasicBlock *Live = !DoomedBBs.count(CBI->getSuccessor(0))
+                             ? CBI->getSuccessor(0)
+                             : CBI->getSuccessor(1);
+      assert(!DoomedBBs.count(Live));
+      ReplaceInstWithInst(TI, UncondBrInst::Create(Live));
+    }
+#else
+    if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
+      assert(BI->isConditional());
+      BasicBlock *Live = !DoomedBBs.count(BI->getSuccessor(0))
+                             ? BI->getSuccessor(0)
+                             : BI->getSuccessor(1);
+      assert(!DoomedBBs.count(Live));
+      ReplaceInstWithInst(TI, BranchInst::Create(Live));
+    }
+#endif
+    else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
+      // Remove the cases leading to doomed blocks. RemoveCase invalidates
+      // all iterators and might reorder the cases, so restart after each
+      // removal.
+      bool Removed = true;
+      while (Removed) {
+        Removed = false;
+        for (SwitchInst::CaseIt C = SI->case_begin(); C != SI->case_end();
+             ++C) {
+          if (DoomedBBs.count(C->getCaseSuccessor())) {
+            SI->removeCase(C);
+            Removed = true;
+            break;
+          }
+        }
+      }
+      if (DoomedBBs.count(SI->getDefaultDest())) {
+        // Make one of the remaining cases the new default. Removing the
+        // repurposed case keeps the number of edges to its successor, and
+        // thus the successor's phi incoming counts, unchanged.
+        assert(SI->getNumCases() > 0);
+        SI->setDefaultDest(SI->case_begin()->getCaseSuccessor());
+        SI->removeCase(SI->case_begin());
+      }
+    } else {
+      LLVM_DEBUG(dbgs() << "Unhandled BB Terminator: \n");
+      LLVM_DEBUG(TI->dump());
+      assert(0 && "Error: unexpected BB terminator\n");
+    }
+  }
+
+  // The doomed blocks are now unreachable from the entry.
+  EliminateUnreachableBlocks(F);
   return true;
 }
 
