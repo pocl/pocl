@@ -1242,12 +1242,6 @@ int pocl_remote_link_program (cl_program program, cl_uint device_i,
 
   char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
 
-  /* We are creating a new program out of the previously compiled programs,
-     there is no build dir for the linked program yet. */
-  create_build_hash (program, device, device_i);
-  pocl_cache_create_program_cachedir (program, device_i, NULL, 0,
-                                      program_bc_path);
-
   num_relevant_devices = setup_relevant_devices (
       program, device, build_indexes, build_logs, relevant_devices,
       relevant_platforms, binaries, binary_sizes, &total_binary_request_size);
@@ -1306,6 +1300,9 @@ int pocl_remote_link_program (cl_program program, cl_uint device_i,
         assert (program->binary_sizes[real_i] > 0);
         POCL_MSG_PRINT_REMOTE ("BINARY SIZE [%u]: %zu \n", real_i,
                                program->binary_sizes[real_i]);
+        create_build_hash (program, device, device_i);
+        pocl_cache_create_program_cachedir (program, device_i, NULL, 0,
+                                            program_bc_path);
 
         pocl_cache_program_bc_path (program_bc_path, program, real_i);
         err = pocl_cache_write_generic_objfile (
@@ -1531,6 +1528,19 @@ remote_push_command (_cl_command_node *node)
   POCL_UNLOCK (d->wq_lock);
 }
 
+static int
+remote_command_is_ready (cl_event event)
+{
+  struct event_node *e;
+  LL_FOREACH(event->wait_list, e)
+  {
+    if (e->event->queue->device->ops->submit != &pocl_remote_submit) {
+      return CL_FALSE;
+    }
+  }
+  return CL_TRUE;
+}
+
 void
 pocl_remote_submit (_cl_command_node *node, cl_command_queue cq)
 {
@@ -1544,7 +1554,7 @@ pocl_remote_submit (_cl_command_node *node, cl_command_queue cq)
   e->data = (void *)e_d;
 
   node->state = POCL_COMMAND_READY;
-  if (pocl_command_is_ready (node->sync.event.event))
+  if (remote_command_is_ready (node->sync.event.event))
     {
       pocl_update_event_submitted (node->sync.event.event);
       remote_push_command (node);
@@ -1623,17 +1633,24 @@ pocl_remote_notify (cl_device_id device, cl_event event, cl_event finished)
       return;
     }
 
-  if (pocl_command_is_ready (node->sync.event.event))
+  /* Remote commands are held in queue until all non-remote events are
+   * finished, but remote dependencies may trigger notifications after
+   * submission. In that case no further action is needed, as remote events
+   * are signaled between servers in a P2P fashion. */
+  if (event->status == CL_QUEUED)
     {
-      assert (event->status == CL_QUEUED);
-      pocl_update_event_submitted (event);
-      remote_push_command (node);
-    }
-  else
-    {
-      POCL_MSG_PRINT_EVENTS (
-          "remote: sync event %lu is not ready for the notified event %lu\n",
-          node->sync.event.event->id, event->id);
+      if (remote_command_is_ready (node->sync.event.event))
+        {
+          pocl_update_event_submitted (event);
+          remote_push_command (node);
+        }
+      else
+        {
+          POCL_MSG_PRINT_EVENTS (
+            "remote: notify target event %lu still has unfinished non-remote "
+            "dependencies, can't submit\n",
+            event->id);
+        }
     }
 
   return;
@@ -1983,7 +2000,7 @@ copy_deferred_command (char *buf,
       break;
     case CL_COMMAND_NDRANGE_KERNEL:
       {
-        int requires_kernarg_update;
+        int requires_kernarg_update = 0;
         cl_kernel kernel = node->command.run.kernel;
         kernel_data_t *kd
           = (kernel_data_t *)(kernel->data[node->program_device_i]);
@@ -2008,6 +2025,11 @@ copy_deferred_command (char *buf,
         req.m.run_kernel.has_new_args
           = 1; //(uint8_t)node->command.run.requires_kernarg_update;
 
+        // Update kernel args from command node
+        cl_device_id queue_dev = cmdbuf->queues[node->queue_idx]->device;
+        prepare_kernel_args (queue_dev, kernel, kd,
+                             node->command.run.arguments,
+                             &requires_kernarg_update);
         req.m.run_kernel.args_num = kernel_md->num_args;
         req.m.run_kernel.pod_arg_size = kd->pod_total_size;
         extra_size = (kernel_md->num_args * sizeof (uint64_t))
@@ -2015,12 +2037,6 @@ copy_deferred_command (char *buf,
         extra_size2 = kd->pod_total_size;
         if (buf)
           {
-            // Update kernel args from command node
-            cl_device_id queue_dev = cmdbuf->queues[node->queue_idx]->device;
-            prepare_kernel_args (queue_dev, kernel, kd,
-                                 node->command.run.arguments,
-                                 &requires_kernarg_update);
-
             extra_data = malloc (extra_size);
             unsigned char *ptr_is_svm_pos
               = (unsigned char *)extra_data
@@ -2109,9 +2125,10 @@ pocl_remote_create_finalized_command_buffer (cl_device_id device,
       payload_cursor += cmd_size;
     }
 
+  assert (num_commands == cmdbuf->num_syncpoints);
   r = pocl_network_create_command_buffer (
-    device->data, cmdbuf->id, cmdbuf->num_syncpoints, commands_offset,
-    commands_size, cmdbuf->num_queues, queues_offset, payload);
+    device->data, cmdbuf->id, num_commands, commands_offset, commands_size,
+    cmdbuf->num_queues, queues_offset, payload);
   POCL_MEM_FREE (payload);
   return r;
 }
@@ -3183,7 +3200,7 @@ pocl_remote_get_device_info_ext (cl_device_id device,
       {
         remote_device_data_t *dev_data = (remote_device_data_t *)device->data;
         remote_server_data_t *server = dev_data->server;
-        POCL_RETURN_GETINFO (unsigned, server->fast_port);
+        POCL_RETURN_GETINFO (unsigned, server->client_port);
       }
     }
 

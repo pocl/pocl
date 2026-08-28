@@ -22,13 +22,17 @@
    IN THE SOFTWARE.
 */
 
+#include <atomic>
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
 #include <memory>
+#include <queue>
 #include <unordered_set>
+#include <vector>
 
 #include "CL/cl_ext.h"
+#include "CL/opencl.hpp"
 #include "common.hh"
 #include "request.hh"
 
@@ -47,6 +51,7 @@
 #include "traffic_monitor.hh"
 
 #include "messages.h"
+#include "pocl_runtime_config.h"
 
 SharedContextBase *createSharedCLContext(cl::Platform *platform, size_t pid,
                                          VirtualContextBase *v,
@@ -95,6 +100,9 @@ public:
 class VirtualCLContext : public VirtualContextBase {
   PoclDaemon *Daemon;
   ExitHelper ExitSignal;
+  std::atomic<int> DeleteRequested;
+  RequestQueueThreadUPtr ReadSlow;
+  RequestQueueThreadUPtr ReadFast;
   ReplyQueueThreadUPtr WriteSlow;
   ReplyQueueThreadUPtr WriteFast;
 #ifdef ENABLE_RDMA
@@ -114,7 +122,13 @@ class VirtualCLContext : public VirtualContextBase {
   std::thread MainThread;
   std::condition_variable MainCond;
   std::mutex MainMutex;
-  std::deque<Request *> MainQueue;
+  std::queue<Request *> MainQueue;
+
+  std::thread QueuedThread;
+  std::condition_variable QueuedCond;
+  std::mutex QueuedMutex;
+  std::queue<Request *> QueuedQueue;
+  std::queue<std::pair<uint64_t, uint32_t> *> EventQueue;
 
 #ifdef ENABLE_RDMA
   std::shared_ptr<RdmaConnection> client_rdma;
@@ -145,16 +159,25 @@ public:
   VirtualCLContext() = default;
 
   ~VirtualCLContext() {
+    POCL_MSG_PRINT_GENERAL("VCTX: ~VirtualCLContext\n");
     // stop threads
     assert(ExitSignal.exit_requested());
     MainCond.notify_one();
     if (MainThread.joinable())
       MainThread.join();
-    POCL_MSG_PRINT_GENERAL("VCTX: DEST\n");
+    QueuedCond.notify_one();
+    if (QueuedThread.joinable())
+      QueuedThread.join();
 
-    // Wake up IO threads in case they were waiting for a connection
-    WriteFast->setConnection(nullptr);
-    WriteSlow->setConnection(nullptr);
+    // Wake up IO threads so they can exit
+    ReadFast->setConnection(nullptr);
+    ReadFast.reset();
+    ReadSlow->setConnection(nullptr);
+    ReadSlow.reset();
+    WriteFast->pushReply(nullptr);
+    WriteFast.reset();
+    WriteSlow->pushReply(nullptr);
+    WriteSlow.reset();
 
     // make sure no shared context tries to broadcast stuff
     std::unique_lock<std::mutex> Lock(MainMutex);
@@ -169,8 +192,10 @@ public:
   virtual size_t init(PoclDaemon *d, ClientConnections_t conns,
                       uint64_t session, CreateOrAttachSessionMsg_t &params);
 
-  virtual void replaceConnections(std::shared_ptr<Connection> Command,
-                                  std::shared_ptr<Connection> Stream) override;
+  virtual void setConnection(std::shared_ptr<Connection> Conn, bool IsFast,
+                             bool IsReplyChannel) override;
+
+  virtual void connectionLost() override;
 
   virtual void nonQueuedPush(Request *req) override;
 
@@ -193,6 +218,8 @@ public:
   virtual void unknownRequest(Request *req) override;
 
   virtual int run() override;
+
+  virtual int queuedRun() override;
 
   virtual SharedContextBase *getDefaultContext() override {
     return SharedContextList.empty() ? nullptr : SharedContextList[0];
@@ -254,6 +281,7 @@ size_t VirtualCLContext::init(PoclDaemon *d, ClientConnections_t conns,
   current_printf_position = 0;
   TotalDevices = 0;
   peer_id = params.peer_id;
+  DeleteRequested = 0;
 #ifdef ENABLE_RDMA
   client_uses_rdma = params.use_rdma;
   if (client_uses_rdma) {
@@ -263,10 +291,6 @@ size_t VirtualCLContext::init(PoclDaemon *d, ClientConnections_t conns,
 
   std::string id_string = std::to_string(session);
   netstat.reset(new TrafficMonitor(&ExitSignal, id_string));
-  if (conns.low_latency.get())
-    conns.low_latency->setMeter(netstat);
-  if (conns.bulk_throughput.get())
-    conns.bulk_throughput->setMeter(netstat);
 
 #ifdef ENABLE_RDMA
   if (client_uses_rdma) {
@@ -278,16 +302,17 @@ size_t VirtualCLContext::init(PoclDaemon *d, ClientConnections_t conns,
                             &client_mem_regions, &client_regions_mutex));
   }
 #endif
-  WriteSlow = ReplyQueueThreadUPtr(
-      new ReplyQueueThread(conns.bulk_throughput, this, &ExitSignal, "WT_S"));
-  WriteFast = ReplyQueueThreadUPtr(
-      new ReplyQueueThread(conns.low_latency, this, &ExitSignal, "WT_F"));
+  WriteSlow.reset(new ReplyQueueThread({}, this, &ExitSignal, "WT_S"));
+  WriteFast.reset(new ReplyQueueThread({}, this, &ExitSignal, "WT_F"));
+  ReadSlow.reset(new RequestQueueThread({}, this, &ExitSignal, "RT_S"));
+  ReadFast.reset(new RequestQueueThread({}, this, &ExitSignal, "RT_F"));
 
   peers = PeerHandlerUPtr(new PeerHandler(peer_id, conns.incoming_peer_mutex,
                                           conns.incoming_peer_queue, this,
                                           &ExitSignal, netstat));
   initPlatforms();
   MainThread = std::move(std::thread(&VirtualCLContext::run, this));
+  QueuedThread = std::move(std::thread(&VirtualCLContext::queuedRun, this));
 
   POCL_MSG_PRINT_INFO("Created shared contexts for %" PRIuS
                       " platforms / %" PRIuS " devices\n",
@@ -296,16 +321,28 @@ size_t VirtualCLContext::init(PoclDaemon *d, ClientConnections_t conns,
   return TotalDevices;
 }
 
-void VirtualCLContext::replaceConnections(
-    std::shared_ptr<Connection> Latency,
-    std::shared_ptr<Connection> Throughput) {
-  if (Latency.get()) {
-    Latency->setMeter(netstat);
-    WriteFast->setConnection(Latency);
+void VirtualCLContext::setConnection(std::shared_ptr<Connection> NewConnection,
+                                     bool IsFast, bool IsReplyChannel) {
+  NewConnection->setMeter(netstat);
+  if (IsFast) {
+    if (IsReplyChannel)
+      WriteFast->setConnection(NewConnection);
+    else
+      ReadFast->setConnection(NewConnection);
+  } else {
+    if (IsReplyChannel)
+      WriteSlow->setConnection(NewConnection);
+    else
+      ReadSlow->setConnection(NewConnection);
   }
-  if (Throughput.get()) {
-    Throughput->setMeter(netstat);
-    WriteSlow->setConnection(Throughput);
+}
+
+void VirtualCLContext::connectionLost() {
+  int zero = 0;
+  if (!pocl_get_bool_option("POCLD_ALLOW_CLIENT_RECONNECT", 0) &&
+      DeleteRequested.compare_exchange_strong(zero, 1)) {
+    ExitSignal.requestExit("Connection lost", 1);
+    Daemon->releaseContextDeferred(this);
   }
 }
 
@@ -344,7 +381,7 @@ void VirtualCLContext::nonQueuedPush(Request *req) {
                          uint64_t(req->Body.msg_id));
 
   std::unique_lock<std::mutex> Lock(MainMutex);
-  MainQueue.push_back(req);
+  MainQueue.push(req);
   MainCond.notify_one();
 }
 
@@ -356,12 +393,15 @@ void VirtualCLContext::queuedPush(Request *req) {
   POCL_MSG_PRINT_GENERAL(
       "VCTX QUEUED PUSH (msg: %" PRIu64 ", event: %" PRIu64 ")\n",
       uint64_t(req->Body.msg_id), uint64_t(req->Body.event_id));
-  SharedContextList[req->Body.pid]->queuedPush(req);
+
+  std::unique_lock<std::mutex> Lock(QueuedMutex);
+  QueuedQueue.push(req);
+  QueuedCond.notify_one();
 }
 
 void VirtualCLContext::notifyEvent(uint64_t event_id, cl_int status) {
-  POCL_MSG_PRINT_EVENTS("Updating event %" PRIu64 " status to %d\n", event_id,
-                        status);
+  POCL_MSG_PRINT_EVENTS("Notifying event %" PRIu64 " with status %d\n",
+                        event_id, status);
   for (auto ctx : SharedContextList) {
     ctx->notifyEvent(event_id, status);
   }
@@ -429,6 +469,53 @@ int VirtualCLContext::checkPlatformDeviceValidity(Request *req) {
 /****************************************************************************************************************/
 /****************************************************************************************************************/
 
+int VirtualCLContext::queuedRun() {
+  Reply *reply;
+  while (1) {
+
+    if (ExitSignal.exit_requested()) {
+      auto e = ExitSignal.status();
+      POCL_MSG_PRINT_GENERAL("VCTX: exit req, status: %d\n", e);
+      return e;
+    }
+
+    std::pair<uint64_t, uint32_t> *NewEvent = nullptr;
+    Request *NewRequest = nullptr;
+    std::unique_lock<std::mutex> Lock(QueuedMutex);
+    if (EventQueue.size() > 0) {
+      NewEvent = EventQueue.front();
+      EventQueue.pop();
+    }
+    if (QueuedQueue.size() > 0) {
+      NewRequest = QueuedQueue.front();
+      QueuedQueue.pop();
+    }
+
+    if (NewEvent || NewRequest) {
+      Lock.unlock();
+      if (NewEvent) {
+        for (auto ctx : SharedContextList) {
+          ctx->notifyEvent(NewEvent->first, NewEvent->second);
+        }
+        delete NewEvent;
+      }
+      if (NewRequest) {
+        if (NewRequest->Body.message_type == MessageType_MigrateD2D)
+          // Migrations may need to be retargeted to a different context than
+          // indicated by NewRequest->Body.pid
+          MigrateD2D(NewRequest);
+        else
+          SharedContextList[NewRequest->Body.pid]->queuedPush(NewRequest);
+      }
+    } else {
+      auto now = std::chrono::system_clock::now();
+      std::chrono::duration<unsigned long> d(3);
+      now += d;
+      QueuedCond.wait_until(Lock, now);
+    }
+  }
+}
+
 int VirtualCLContext::run() {
   Reply *reply;
   while (1) {
@@ -442,7 +529,7 @@ int VirtualCLContext::run() {
     std::unique_lock<std::mutex> Lock(MainMutex);
     if (MainQueue.size() > 0) {
       Request *request = MainQueue.front();
-      MainQueue.pop_front();
+      MainQueue.pop();
       Lock.unlock();
 
       reply = nullptr;
@@ -554,10 +641,6 @@ int VirtualCLContext::run() {
 
       case MessageType_FreeImage:
         FreeImage(request, reply);
-        break;
-
-      case MessageType_MigrateD2D:
-        MigrateD2D(request);
         break;
 
       case MessageType_Shutdown:
@@ -1089,87 +1172,43 @@ void VirtualCLContext::MigrateD2D(Request *req) {
   MigrateD2DMsg_t &m = req->Body.m.migrate;
   RequestMsg_t &r = req->Body;
   EventTiming_t evt{};
-  uint32_t mem_obj_id = r.obj_id;
-  uint32_t size_buffer_id = m.size_id;
-  uint32_t def_queue_id = DEFAULT_QUE_ID + m.source_did;
-  int err;
-  char *storage = nullptr;
 
-  if (m.source_pid == r.pid && m.source_peer_id == peer_id &&
-      m.dest_peer_id == peer_id) {
+  bool SamePlatform = m.source_pid == r.pid && m.source_peer_id == peer_id &&
+                      m.dest_peer_id == peer_id;
+  req->IsMigrationExportRequired = (!SamePlatform) &&
+                                   m.source_peer_id == peer_id &&
+                                   (!req->IsMigrationExportDone);
+
+  if (SamePlatform) {
     POCL_MSG_PRINT_GENERAL("migration within 1 platform\n");
-    SharedContextList[r.pid]->queuedPush(req);
-  } else {
-    r.m.migrate.is_external = 1;
+    SharedContextList[m.source_pid]->queuedPush(req);
+
+  } else if (req->IsMigrationExportRequired) {
     POCL_MSG_PRINT_GENERAL(
         "migration between 2 different platforms, SIZE: %" PRIu64
         "  QID: %" PRIu32 " DID: %" PRIu32 " CONTENT SIZE BUFFER: %" PRIu32
         "\n",
         uint64_t(m.size), uint32_t(r.cq_id), uint32_t(r.did),
-        uint32_t(size_buffer_id));
-    assert(m.size);
+        uint32_t(m.size_id));
 
-    // totally made up, but we immediately delete the event from EventMap
-    uint64_t fake_ev_id = r.msg_id + (1UL << 50);
+    SharedContextList[m.source_pid]->queuedPush(req);
 
-    if (m.source_peer_id == peer_id) {
-      POCL_MSG_PRINT_GENERAL(
-          "MigrateD2D: %s READ on PID: %" PRIu32 ", DID: %" PRIu32
-          ", SRC EV ID: %" PRIu64 ", DST EV ID: %" PRIu64 "\n",
-          (m.is_image == 0 ? "Buffer" : "Image"), uint32_t(m.source_pid),
-          uint32_t(m.source_did), fake_ev_id, uint64_t(r.msg_id));
-#ifdef ENABLE_RDMA
-      req->ExtraData.clear();
-#ifndef RDMA_USE_SVM
-      // No SVM, we have actual shadow buffers. Write data to shadow buffer but
-      // do not pass it along as extra_data, rdma thread will fetch the
-      // appropriate registration data
-      storage = getRdmaShadowPtr(mem_obj_id);
-#endif
-#else
-      // No RDMA, no persistent shadow buffers
-      req->ExtraData.resize(m.size);
-      storage = (char *)(req->ExtraData.data());
-#endif
+  } else if (m.dest_peer_id == peer_id) {
+    // Request has the buffer contents and we can import it to the destination.
+    SharedContextList[r.pid]->queuedPush(req);
 
-#ifndef RDMA_USE_SVM
-      SharedContextBase *src = SharedContextList[m.source_pid];
-      if (m.is_image == 0) {
-        uint64_t content_size;
-        // TODO we should probably wait for events in DST SharedCLcontext
-        // before launching readBuffer in SRC SharedCLcontext
-        // enqueue a read buffer in the *source* context ...
-        err = src->readBuffer(fake_ev_id, def_queue_id, mem_obj_id, 0,
-                              size_buffer_id, m.size, 0, storage, &content_size,
-                              evt, 0, nullptr);
-        m.size = content_size;
-      } else {
-        sizet_vec3 origin = {0, 0, 0};
-        sizet_vec3 region = {m.width, m.height, m.depth};
-
-        // TODO we should probably wait for events in DST SharedCLcontext
-        // before launching readBuffer in SRC SharedCLcontext
-        // enqueue a read buffer in the *source* context ...
-        err = src->readImageRect(fake_ev_id, def_queue_id, mem_obj_id, origin,
-                                 region, storage, m.size, evt, 0, nullptr);
-      }
-      // TODO error handling
-      assert(err == 0);
-      // .... and wait for it here.
-      src->waitAndDeleteEvent(fake_ev_id);
-#endif
+    // The same memobj may be migrated from here to other peers without
+    // another write. In that case the migration would have the previous write
+    // event as a dependency, and this node not knowing about that event would
+    // cause a deadlock. To avoid that, register a user event on the
+    // destination peer in S2S migrations. The source peer will always either
+    // have a native event from the previous write, or a user event registered
+    // in a previous migration. Uninitialized memobjects may not have a write.
+    if (m.source_peer_id != peer_id && m.last_write_id) {
+      notifyEvent(m.last_write_id, CL_SUCCESS);
     }
-
-    /* Write extra_size after possible content size has been read, just before
-     * pushing the request on */
-    req->ExtraDataSize = m.size;
-
-    // .... and now we can push the writeBuffer to the queue
-    if (m.dest_peer_id == peer_id) {
-      SharedContextList[r.pid]->queuedPush(req);
-    } else {
-      peers->pushRequest(req, m.dest_peer_id);
-    }
+  } else {
+    peers->pushRequest(req, m.dest_peer_id);
   }
 }
 
@@ -1232,4 +1271,3 @@ VirtualContextBase *createVirtualContext(PoclDaemon *d,
   vctx->init(d, conns, session, params);
   return vctx;
 }
-

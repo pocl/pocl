@@ -35,9 +35,6 @@
 #include <unistd.h>
 #include <variant>
 
-#include "CL/cl.h"
-#include "CL/cl_ext.h"
-#include "CL/cl_platform.h"
 #include "CL/opencl.hpp"
 #include "bufalloc.h"
 #include "cmd_queue.hh"
@@ -54,16 +51,14 @@
 #include "virtual_cl_context.hh"
 
 #define EVENT_TIMING_PRE                                                       \
-  cl::Event event{};                                                           \
   int err = 0;
 
 #define EVENT_TIMING_POST(msg)                                                 \
-  {                                                                            \
+  if (ev_id != 0) {                                                            \
     std::unique_lock<std::mutex> lock(EventmapMutex);                          \
-    auto map_result = Eventmap.insert({ev_id, {event, cl::UserEvent()}});      \
+    auto map_result = Eventmap.insert({ev_id, event});                         \
     if (!map_result.second) {                                                  \
-      assert(!map_result.first->second.native.get());                          \
-      map_result.first->second.native = event;                                 \
+      assert(!map_result.first->second());                                     \
     }                                                                          \
   }                                                                            \
   if (err == CL_SUCCESS)                                                       \
@@ -143,11 +138,11 @@ class SharedCLContext final : public SharedContextBase {
   std::mutex BufferMapMutex;
 
   std::mutex EventmapMutex;
-  std::unordered_map<uint64_t, EventPair> Eventmap;
+  std::unordered_map<uint64_t, cl::Event> Eventmap;
 
   std::mutex MainMutex;
   // threads
-  std::unordered_map<uint32_t, CommandQueueUPtr> QueueThreadMap;
+  std::unordered_map<uint32_t, CommandQueueUPtr> QueueMap;
 
   ReplyQueueThread *slow, *fast;
 
@@ -206,20 +201,20 @@ public:
     return ContextWithAllDevices;
   }
 
+  virtual unsigned platformID() const override { return plat_id; }
+
+  virtual VirtualContextBase *parentVCtx() const override { return ParentCtx; }
+
   virtual size_t numDevices() const override { return CLDevices.size(); }
 
   virtual void queuedPush(Request *req) override;
 
   virtual void notifyEvent(uint64_t id, cl_int status) override;
 
-  virtual bool isCommandReceived(uint64_t id) override;
+  virtual bool alreadyProcessed(uint64_t id) override;
 
   virtual int writeKernelMeta(uint32_t ProgramId, std::vector<uint8_t> &Buffer,
                               size_t *Written) override;
-
-  virtual EventPair getEventPairForId(uint64_t event_id) override;
-
-  virtual int waitAndDeleteEvent(uint64_t event_id) override;
 
   virtual std::vector<cl::Event> remapWaitlist(size_t num_events, uint64_t *ids,
                                                uint64_t dep) override;
@@ -293,8 +288,9 @@ public:
 
   virtual int migrateMemObject(uint64_t ev_id, uint32_t cq_id,
                                uint32_t mem_obj_id, unsigned is_image,
-                               EventTiming_t &evt, uint32_t waitlist_size,
-                               uint64_t *waitlist) override;
+                               EventTiming_t &evt,
+                               std::vector<cl::Event> &Dependencies,
+                               cl::Event &event) override;
 
   /**********************************************************************/
   /**********************************************************************/
@@ -303,35 +299,39 @@ public:
   virtual int readBuffer(uint64_t ev_id, uint32_t cq_id, uint64_t buffer_id,
                          int is_svm, uint32_t size_id, size_t size,
                          size_t offset, void *host_ptr, uint64_t *content_size,
-                         EventTiming_t &evt, uint32_t waitlist_size,
-                         uint64_t *waitlist) override;
+                         EventTiming_t &evt,
+                         std::vector<cl::Event> &Dependencies,
+                         cl::Event &event) override;
 
   virtual int writeBuffer(uint64_t ev_id, uint32_t cq_id, uint64_t buffer_id,
                           int is_svm, size_t size, size_t offset,
                           void *host_ptr, EventTiming_t &evt,
-                          uint32_t waitlist_size, uint64_t *waitlist) override;
+                          std::vector<cl::Event> &Dependencies,
+                          cl::Event &event) override;
 
   virtual int copyBuffer(uint64_t ev_id, uint32_t cq_id, uint32_t src_buffer_id,
                          uint32_t dst_buffer_id,
                          uint32_t content_size_buffer_id, size_t size,
                          size_t src_offset, size_t dst_offset,
-                         EventTiming_t &evt, uint32_t waitlist_size,
-                         uint64_t *waitlist) override;
+                         EventTiming_t &evt,
+                         std::vector<cl::Event> &Dependencies,
+                         cl::Event &event) override;
 
   virtual int readBufferRect(uint64_t ev_id, uint32_t cq_id, uint32_t buffer_id,
                              sizet_vec3 &buffer_origin, sizet_vec3 &region,
                              size_t buffer_row_pitch, size_t buffer_slice_pitch,
                              void *host_ptr, size_t host_bytes,
-                             EventTiming_t &evt, uint32_t waitlist_size,
-                             uint64_t *waitlist) override;
+                             EventTiming_t &evt,
+                             std::vector<cl::Event> &Dependencies,
+                             cl::Event &event) override;
 
   virtual int writeBufferRect(uint64_t ev_id, uint32_t cq_id,
                               uint32_t buffer_id, sizet_vec3 &buffer_origin,
                               sizet_vec3 &region, size_t buffer_row_pitch,
                               size_t buffer_slice_pitch, void *host_ptr,
                               size_t host_bytes, EventTiming_t &evt,
-                              uint32_t waitlist_size,
-                              uint64_t *waitlist) override;
+                              std::vector<cl::Event> &Dependencies,
+                              cl::Event &event) override;
 
   virtual int copyBufferRect(uint64_t ev_id, uint32_t cq_id,
                              uint32_t dst_buffer_id, uint32_t src_buffer_id,
@@ -339,33 +339,37 @@ public:
                              sizet_vec3 &region, size_t dst_row_pitch,
                              size_t dst_slice_pitch, size_t src_row_pitch,
                              size_t src_slice_pitch, EventTiming_t &evt,
-                             uint32_t waitlist_size,
-                             uint64_t *waitlist) override;
+                             std::vector<cl::Event> &Dependencies,
+                             cl::Event &event) override;
 
   virtual int fillBuffer(uint64_t ev_id, uint32_t cq_id, uint32_t buffer_id,
                          size_t offset, size_t size, void *pattern,
                          size_t pattern_size, EventTiming_t &evt,
-                         uint32_t waitlist_size, uint64_t *waitlist) override;
+                         std::vector<cl::Event> &Dependencies,
+                         cl::Event &event) override;
 
   virtual int runKernel(uint64_t ev_id, uint32_t cq_id, uint32_t device_id,
                         uint16_t has_new_args, size_t arg_count, uint64_t *args,
                         unsigned char *is_svm_ptr, size_t pod_size,
                         char *pod_buf, EventTiming_t &evt, uint32_t kernel_id,
-                        uint32_t waitlist_size, uint64_t *waitlist,
+                        std::vector<cl::Event> &Dependencies, cl::Event &event,
                         unsigned dim, const sizet_vec3 &offset,
                         const sizet_vec3 &global,
                         const sizet_vec3 *local = nullptr) override;
 
   virtual int barrier(uint64_t ev_id, uint32_t cq_id, EventTiming_t &evt,
-                      uint32_t waitlist_size, uint64_t *waitlist) override;
+                      std::vector<cl::Event> &Dependencies,
+                      cl::Event &event) override;
 
   virtual int marker(uint64_t ev_id, uint32_t cq_id, EventTiming_t &evt,
-                     uint32_t waitlist_size, uint64_t *waitlist) override;
+                     std::vector<cl::Event> &Dependencies,
+                     cl::Event &event) override;
 
   virtual int runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
                                uint32_t CmdBufId, uint32_t NumQueues,
-                               uint32_t *QueueIds, uint32_t waitlist_size,
-                               uint64_t *waitlist) override;
+                               uint32_t *QueueIds,
+                               std::vector<cl::Event> &Dependencies,
+                               cl::Event &event) override;
 
   /**********************************************************************/
   /**********************************************************************/
@@ -374,40 +378,43 @@ public:
   virtual int fillImage(uint64_t ev_id, uint32_t cq_id, uint32_t image_id,
                         sizet_vec3 &origin, sizet_vec3 &region,
                         void *fill_color, EventTiming_t &evt,
-                        uint32_t waitlist_size, uint64_t *waitlist) override;
+                        std::vector<cl::Event> &Dependencies,
+                        cl::Event &event) override;
 
   virtual int copyImage2Buffer(uint64_t ev_id, uint32_t cq_id,
                                uint32_t image_id, uint32_t dst_buf_id,
                                sizet_vec3 &origin, sizet_vec3 &region,
                                size_t offset, EventTiming_t &evt,
-                               uint32_t waitlist_size,
-                               uint64_t *waitlist) override;
+                               std::vector<cl::Event> &Dependencies,
+                               cl::Event &event) override;
 
   virtual int copyBuffer2Image(uint64_t ev_id, uint32_t cq_id,
                                uint32_t image_id, uint32_t src_buf_id,
                                sizet_vec3 &origin, sizet_vec3 &region,
                                size_t offset, EventTiming_t &evt,
-                               uint32_t waitlist_size,
-                               uint64_t *waitlist) override;
+                               std::vector<cl::Event> &Dependencies,
+                               cl::Event &event) override;
 
   virtual int copyImage2Image(uint64_t ev_id, uint32_t cq_id,
                               uint32_t dst_image_id, uint32_t src_image_id,
                               sizet_vec3 &dst_origin, sizet_vec3 &src_origin,
                               sizet_vec3 &region, EventTiming_t &evt,
-                              uint32_t waitlist_size,
-                              uint64_t *waitlist) override;
+                              std::vector<cl::Event> &Dependencies,
+                              cl::Event &event) override;
 
   virtual int readImageRect(uint64_t ev_id, uint32_t cq_id, uint32_t image_id,
                             sizet_vec3 &origin, sizet_vec3 &region,
                             void *host_ptr, size_t host_bytes,
-                            EventTiming_t &evt, uint32_t waitlist_size,
-                            uint64_t *waitlist) override;
+                            EventTiming_t &evt,
+                            std::vector<cl::Event> &Dependencies,
+                            cl::Event &event) override;
 
   virtual int writeImageRect(uint64_t ev_id, uint32_t cq_id, uint32_t image_id,
                              sizet_vec3 &origin, sizet_vec3 &region,
                              void *host_ptr, size_t host_bytes,
-                             EventTiming_t &evt, uint32_t waitlist_size,
-                             uint64_t *waitlist) override;
+                             EventTiming_t &evt,
+                             std::vector<cl::Event> &Dependencies,
+                             cl::Event &event) override;
 
 private:
   cl::Buffer *findBuffer(uint32_t id);
@@ -607,17 +614,9 @@ SharedCLContext::remapWaitlist(size_t num_events, uint64_t *ids, uint64_t dep) {
   for (size_t i = 0; i < num_events; ++i) {
     auto e = Eventmap.find(ids[i]);
     if (e != Eventmap.end()) {
-      POCL_MSG_PRINT_EVENTS("%" PRIu64 " depends on %s event %" PRIu64 "\n",
-                            dep, e->second.native.get() ? "native" : "user",
+      POCL_MSG_PRINT_EVENTS("%" PRIu64 " depends on event %" PRIu64 "\n", dep,
                             ids[i]);
-      v.push_back(e->second.native.get() ? e->second.native : e->second.user);
-    } else {
-      POCL_MSG_PRINT_EVENTS("Creating placeholder user event for %" PRIu64
-                            "'s dependency on %" PRIu64 "\n",
-                            dep, ids[i]);
-      cl::UserEvent u(ContextWithAllDevices);
-      Eventmap.insert({ids[i], {cl::Event(), u}});
-      v.push_back(u);
+      v.push_back(e->second);
     }
   }
 
@@ -667,7 +666,7 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
   for (size_t i = 0; i < CLDevices.size(); ++i) {
     QueueIDMap[DEFAULT_QUE_ID + i] = clCommandQueuePtr(new cl::CommandQueue(
         ContextWithAllDevices, CLDevices[i])); // TODO QUEUE_PROPERTIES
-    QueueThreadMap[DEFAULT_QUE_ID + i] =
+    QueueMap[DEFAULT_QUE_ID + i] =
         CommandQueueUPtr(new CommandQueue(this, (DEFAULT_QUE_ID + i), i, s, f));
   }
 
@@ -819,6 +818,12 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
 }
 
 SharedCLContext::~SharedCLContext() {
+  // Drain the command queues to ensure any event callbacks have fired before
+  // the objects they reference get deleted
+  for (auto Queue : QueueIDMap) {
+    Queue.second->finish();
+  }
+
   for (auto &SVMRegion : SVMRegions) {
     POCL_MSG_PRINT_MEMORY("Freeing an SVM region starting at %p.\n",
                           SVMRegion.StartAddress);
@@ -827,41 +832,6 @@ SharedCLContext::~SharedCLContext() {
     delete SVMRegion.Allocations;
   }
   SVMRegions.clear();
-}
-
-EventPair SharedCLContext::getEventPairForId(uint64_t event_id) {
-  std::unique_lock<std::mutex> lock(EventmapMutex);
-  auto e = Eventmap.find(event_id);
-  if (e != Eventmap.end()) {
-    return e->second;
-  } else {
-    EventPair p{cl::Event(), cl::UserEvent(ContextWithAllDevices)};
-    Eventmap.insert({event_id, p});
-    return p;
-  }
-}
-
-int SharedCLContext::waitAndDeleteEvent(uint64_t event_id) {
-  std::unique_lock<std::mutex> lock(EventmapMutex);
-  auto e = Eventmap.find(event_id);
-  if (e != Eventmap.end()) {
-    cl::Event ev = e->second.native;
-    lock.unlock();
-    int r = ev.wait();
-    lock.lock();
-    auto e = Eventmap.find(event_id);
-    if (e != Eventmap.end()) {
-      Eventmap.erase(e);
-    }
-    return r;
-  } else {
-    // this is used for the fake event in MigrateD2D so don't bother adding user
-    // events here
-    POCL_MSG_ERR("WaitAndDeleteEvent: no CL event exists for event %" PRIu64
-                 "\n",
-                 event_id);
-    return CL_INVALID_EVENT;
-  }
 }
 
 /****************************************************************************************************************/
@@ -873,12 +843,13 @@ void SharedCLContext::queuedPush(Request *req) {
     req->Body.cq_id += req->Body.did;
   }
 
-  if (isCommandReceived(req->Body.event_id)) {
-    delete req;
-    return;
-  }
-
   uint32_t cq_id = req->Body.cq_id;
+
+  // Override cq_id when exporting buffer contents
+  if (req->Body.message_type == MessageType_MigrateD2D &&
+      req->IsMigrationExportRequired) {
+    cq_id = DEFAULT_QUE_ID + req->Body.m.migrate.source_did;
+  }
   POCL_MSG_PRINT_GENERAL("SHCTX %u QUEUED PUSH QID %" PRIu32 " DID %" PRIu32
                          "\n",
                          plat_id, cq_id, uint32_t(req->Body.did));
@@ -887,48 +858,36 @@ void SharedCLContext::queuedPush(Request *req) {
     std::unique_lock<std::mutex> lock(MainMutex);
     // TODO reply fail
     assert(QueueIDMap.find(cq_id) != QueueIDMap.end());
-    CommandQueue *cq = QueueThreadMap[cq_id].get();
+    CommandQueue *cq = QueueMap[cq_id].get();
     assert(cq != nullptr);
     cq->push(req);
   }
 }
 
 void SharedCLContext::notifyEvent(uint64_t id, cl_int status) {
-  std::unique_lock<std::mutex> lock(EventmapMutex);
-  auto e = Eventmap.find(id);
-  if (e != Eventmap.end()) {
-    if (e->second.user.get()) {
-      assert(e->second.user.getInfo<CL_EVENT_COMMAND_EXECUTION_STATUS>() >
-             CL_COMPLETE);
-      e->second.user.setStatus(status);
-      POCL_MSG_PRINT_EVENTS("%" PRIu64 ": updating existing user event\n", id);
-    } else {
-      POCL_MSG_PRINT_EVENTS(
-          "%" PRIu64 ": only native event exists, doing nothing\n", id);
-    }
-  } else {
+  cl::Event Evt;
+  {
+    std::unique_lock<std::mutex> Lock(EventmapMutex);
     cl::UserEvent u(ContextWithAllDevices);
     u.setStatus(status);
-    Eventmap.insert({id, {cl::Event(), u}});
-    POCL_MSG_PRINT_EVENTS(
-        "no event %" PRIu64 " found, creating new user event\n", id);
+    auto Res = Eventmap.insert({id, u});
+    if (Res.second) {
+      POCL_MSG_PRINT_EVENTS("Created user event for %" PRIu64 "\n", id);
+    } else {
+      POCL_MSG_PRINT_EVENTS("Event %" PRIu64 " was already registered\n", id);
+    }
+    Evt = Res.first->second;
   }
-  for (auto &q : QueueThreadMap) {
-    q.second->notify();
+
+  // Go through pending commands and unblock any that depend on this event
+  for (auto &q : QueueMap) {
+    q.second->notify({id, Evt});
   }
 }
 
-bool SharedCLContext::isCommandReceived(uint64_t id) {
+bool SharedCLContext::alreadyProcessed(uint64_t id) {
   std::unique_lock<std::mutex> lock(EventmapMutex);
-  auto e = Eventmap.find(id);
-  if (e != Eventmap.end()) {
-    if (e->second.native.get() ||
-        (e->second.user.get() &&
-         e->second.user.getInfo<CL_EVENT_COMMAND_EXECUTION_STATUS>() ==
-             CL_COMPLETE))
-      return true;
-  }
-  return false;
+  return Eventmap.find(id) != Eventmap.end();
 }
 
 /****************************************************************************************************************/
@@ -1302,7 +1261,7 @@ int SharedCLContext::createQueue(uint32_t queue_id, uint32_t dev_id) {
   {
     std::unique_lock<std::mutex> lock(MainMutex);
     QueueIDMap[queue_id] = p;
-    QueueThreadMap[queue_id] = std::move(que);
+    QueueMap[queue_id] = std::move(que);
   }
   POCL_MSG_PRINT_INFO("P %u Create Queue %" PRIu32 "\n", plat_id, queue_id);
   return 0;
@@ -1311,11 +1270,11 @@ int SharedCLContext::createQueue(uint32_t queue_id, uint32_t dev_id) {
 int SharedCLContext::freeQueue(uint32_t queue_id) {
   {
     std::unique_lock<std::mutex> lock(MainMutex);
-    if (QueueThreadMap.find(queue_id) == QueueThreadMap.end()) {
+    if (QueueMap.find(queue_id) == QueueMap.end()) {
       POCL_MSG_ERR("P %u Free Queue %" PRIu32 "\n", plat_id, queue_id);
       return CL_INVALID_COMMAND_QUEUE;
     }
-    QueueThreadMap.erase(queue_id);
+    QueueMap.erase(queue_id);
     QueueIDMap.erase(queue_id);
   }
   POCL_MSG_PRINT_INFO("P %u Free Queue %" PRIu32 "\n", plat_id, queue_id);
@@ -1508,15 +1467,10 @@ int SharedCLContext::buildOrLinkProgram(
   std::vector<cl::Kernel> prebuilt_kernels;
   SPIRVParser::OpenCLFunctionInfoMap KernelInfoMap;
 
-  bool AlwaysBuildAll = DeviceList.empty();
-  for (auto i : DeviceList) {
-    std::string vendor = CLDevices[i].getInfo<CL_DEVICE_VENDOR>();
-    std::string device_version = CLDevices[i].getInfo<CL_DEVICE_VERSION>();
-    if (vendor.find("NVIDIA") != std::string::npos &&
-        !(device_version.find("PoCL") != std::string::npos &&
-          device_version.find("CUDA") != std::string::npos))
-      AlwaysBuildAll = true;
-  }
+  std::vector<cl::Platform> Platforms;
+  cl::Platform::get(&Platforms);
+  bool NvidiaPlatform = std::string(Platforms.at(plat_id).getInfo<CL_PLATFORM_NAME>()) == std::string("NVIDIA CUDA");
+  bool RocmPlatform = std::string(Platforms.at(plat_id).getInfo<CL_PLATFORM_NAME>()) == std::string("AMD Accelerated Parallel Processing");
 
   POCL_MSG_PRINT_INFO("P %u Building Program %" PRIu32 "\n", plat_id,
                       program_id);
@@ -1528,18 +1482,43 @@ int SharedCLContext::buildOrLinkProgram(
     program->devices[i] = CLDevices[DeviceList[i]];
   }
 
+  // ROCm 6.4.4 segfaults when linking multiple programs together if they were
+  // only compiled for a subset of devices in the context.
+  // NVIDIA 595.71.05 silently fails kernel compilation when compiling for a
+  // subset of devices that does not include the first device in the context.
+  if (RocmPlatform || NvidiaPlatform)
+    program->devices = CLDevices;
+
   if (options == nullptr)
     options = "";
 
   std::string opts(options);
 
-  /* Kernel argument information is only available when building
-     from sources, but some implementations seem to return metadata
-     also for binaries/SPIR-V.
+  // Kernel argument information is only available when building
+  // from sources, but some implementations seem to return metadata
+  // also for binaries/SPIR-V.
+  //
+  // https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/clGetKernelArgInfo.html
+  //
+  // ROCm errors if this is passed to clLinkProgram but NVIDIA and PoCL will
+  // strip out argument info if it is only given to clCompileProgram and not
+  // clLinkProgram.
+  if (!(RocmPlatform && LinkOnly)) {
+    opts += " -cl-kernel-arg-info";
+  }
 
-     https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/
-     clGetKernelArgInfo.html*/
-  opts += " -cl-kernel-arg-info";
+  // HACK: pocl_build.c/process_options() replaces -cl-denorms-are-zero with a
+  // clang-specific option that is not valid to pass to OpenCL functions.
+  // Revert the change here to avoid problems with drivers that don't use clang
+  // to compile kernels.
+  {
+    const char *FdenormalStr = "-fdenormal-fp-math=positive-zero";
+    auto FdenormalPos = opts.find(FdenormalStr);
+    if (FdenormalPos != opts.npos) {
+      opts.replace(FdenormalPos, FdenormalPos + ::strlen(FdenormalStr),
+                   "-cl-denorms-are-zero");
+    }
+  }
 
   if (LinkOnly) {
     // Collect the previously built programs from the server-side cache and link
@@ -1680,8 +1659,15 @@ int SharedCLContext::buildOrLinkProgram(
     plat_binaries.resize(DeviceList.size());
     for (size_t i = 0; i < DeviceList.size(); ++i) {
       uint64_t id = ((uint64_t)plat_id << 32) + DeviceList[i];
-      assert(InputBinaries.find(id) != InputBinaries.end());
-      plat_binaries[i] = InputBinaries[id];
+      auto Bin = InputBinaries.find(id);
+      assert(Bin != InputBinaries.end());
+      plat_binaries[i] = Bin->second;
+    }
+    // The number of binaries MUST match the number of devices, so when working
+    // around multi-device driver issues, copy a likely valid binary for the
+    // devices that didn't get one from the client.
+    for (size_t i = DeviceList.size(); i < program->devices.size(); ++i) {
+      plat_binaries.push_back(InputBinaries.begin()->second);
     }
 
     clProgramPtr pp(new cl::Program(ContextWithAllDevices, program->devices,
@@ -1753,25 +1739,29 @@ int SharedCLContext::buildOrLinkProgram(
   }
 
   if (!LinkOnly) {
+    const char *Options = opts.c_str();
+    // When building from a binary, options should be either NULL or exactly the
+    // same options in the same order as when the binary was originally built,
+    // else behaviour is implementation-defined and in practice not usable.
+    if (is_binary)
+      Options = nullptr;
+
     // build
-    if (AlwaysBuildAll) {
-      // XXX: hacky workaround for wonky behaviour with certain drivers
-      // when compiling a program for only a subset of the context's devices
-      err = CompileOnly ? p->compile(opts.c_str()) : p->build(opts.c_str());
+    if (CompileOnly) {
+      err = p->compile(Options, program->devices, {}, {});
     } else {
-      if (CompileOnly) {
-        err = p->compile(opts, program->devices, {}, {});
-      } else {
-        err = p->build(program->devices, opts.c_str());
-      }
+      err = p->build(program->devices, Options);
     }
   }
 
   // even if build failed, return build log
   auto buildInfo = p->getBuildInfo<CL_PROGRAM_BUILD_LOG>();
   if (buildInfo.size() > 0) {
-    size_t i = 0;
+    size_t i, j = 0;
     for (const auto &pair : buildInfo) {
+      for (i = 0; i < DeviceList.size(); ++i)
+        if (pair.first == CLDevices[DeviceList[i]])
+          break;
       if (i < DeviceList.size()) {
         // assert (pair.first() == program->devices[i]);
         uint64_t id = ((uint64_t)plat_id << 32) + DeviceList[i];
@@ -1780,11 +1770,12 @@ int SharedCLContext::buildOrLinkProgram(
         POCL_MSG_PRINT_GENERAL("Platform %u Device %" PRIu32 " Build log: \n%s",
                                plat_id, DeviceList[i], build_logs[id].c_str());
       } else {
-        POCL_MSG_PRINT_GENERAL("Platform %u Unknown Device %" PRIuS
-                               " Build log: \n%s",
-                               plat_id, i, pair.second.c_str());
+        POCL_MSG_PRINT_GENERAL(
+            "Platform %u Unknown Device %u: %s Build log: \n%s", plat_id,
+            (unsigned)j, pair.first.getInfo<CL_DEVICE_NAME>().c_str(),
+            pair.second.c_str());
       }
-      ++i;
+      ++j;
     }
   }
 
@@ -1864,7 +1855,20 @@ int SharedCLContext::buildOrLinkProgram(
         uint64_t id = ((uint64_t)plat_id << 32) + DeviceList[i];
         POCL_MSG_PRINT_GENERAL("Writing binary for Dev ID: %u / %" PRIu32 " \n",
                                plat_id, DeviceList[i]);
-        output_binaries[id] = std::move(binaries[j]);
+        if (NvidiaPlatform) {
+          if (binaries[j].empty()) {
+            for (size_t n = 0; n < binaries.size(); ++n) {
+              if (!binaries[n].empty()) {
+                output_binaries[id] = binaries[n];
+                break;
+              }
+            }
+          } else {
+            output_binaries[id] = binaries[j];
+          }
+        } else {
+          output_binaries[id] = std::move(binaries[j]);
+        }
       }
     }
   }
@@ -2081,7 +2085,7 @@ int SharedCLContext::createKernel(uint32_t kernel_id, uint32_t program_id,
 
   if (!found) {
     POCL_MSG_ERR("Invalid kernel name: %s\n", name);
-    return CL_INVALID_ARG_VALUE;
+    return CL_INVALID_KERNEL_NAME;
   }
 
   k->isFakeBuiltin = program->isFakeBuiltin;
@@ -2168,10 +2172,11 @@ int SharedCLContext::createCommandBuffer(
       dependencies.clear();
       if (dependencies.capacity() < R->Body.waitlist_size)
         dependencies.reserve(R->Body.waitlist_size);
-      for (uint64_t idx : R->Waitlist) {
+      for (uint64_t idx : R->ClientWaitlist) {
         dependencies.push_back(syncpoints.at(idx));
       }
 
+      // TODO: deduplicate this with runCommandBuffer
       switch (R->Body.message_type) {
       case MessageType_FillBuffer: {
         uint32_t buffer_id = R->Body.obj_id;
@@ -2359,10 +2364,10 @@ int SharedCLContext::createCommandBuffer(
             {}, *k, offset,
             (dim == 2 ? global2 : (dim < 2 ? global1 : global3)),
             ((R->Body.m.run_kernel.has_local)
-                 ? cl::NullRange
-                 : cl::NDRange(R->Body.m.run_kernel.local.x,
+                 ? cl::NDRange(R->Body.m.run_kernel.local.x,
                                R->Body.m.run_kernel.local.y,
-                               R->Body.m.run_kernel.local.z)),
+                               R->Body.m.run_kernel.local.z)
+                 : cl::NullRange),
             &dependencies, &syncpoint, nullptr, &Queues[R->Body.cq_id]);
       } break;
       case MessageType_Barrier: {
@@ -2665,12 +2670,14 @@ int SharedCLContext::createBuffer(BufferId_t BufferID, size_t Size,
   Flags = Flags & (cl_bitfield)(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY |
                                 CL_MEM_READ_ONLY);
 
-  if (ParentID == 0) {
+#ifdef ENABLE_RDMA
+  if (clientUsesRdma() && ParentID == 0) {
     // When RDMA is used, VirtualClContext passes in a pointer from clSVMAlloc
     Flags = Flags | (cl_bitfield)(HostPtr ? CL_MEM_USE_HOST_PTR
                                           : CL_MEM_ALLOC_HOST_PTR);
     // Note: Sub-buffer creation cannot have the HOST_PTR flags set.
   }
+#endif
 
   cl_int Err;
   clBufferPtr Buf;
@@ -2791,15 +2798,14 @@ int SharedCLContext::freeBuffer(BufferId_t BufferId, bool IsSVMFree) {
 int SharedCLContext::migrateMemObject(uint64_t ev_id, uint32_t cq_id,
                                       uint32_t mem_obj_id, unsigned is_image,
                                       EventTiming_t &evt,
-                                      uint32_t waitlist_size,
-                                      uint64_t *waitlist) {
+                                      std::vector<cl::Event> &Dependencies,
+                                      cl::Event &event) {
   cl::Buffer *b = nullptr;
   cl::Image *img = nullptr;
   cl::CommandQueue *cq = nullptr;
   std::vector<cl::Memory> vec{};
   POCL_MSG_PRINT_GENERAL("P %u Migrating %" PRIu32 " within Context\n", plat_id,
                          mem_obj_id);
-  std::vector<cl::Event> dependencies;
   {
     FIND_QUEUE;
     if (!is_image) {
@@ -2812,14 +2818,13 @@ int SharedCLContext::migrateMemObject(uint64_t ev_id, uint32_t cq_id,
       vec.push_back(*img);
     }
   }
-  dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
   unsigned refcount = vec[0].getInfo<CL_MEM_REFERENCE_COUNT>();
   POCL_MSG_PRINT_GENERAL("memobj before migration: %u \n", refcount);
 
   //  EVENT_TIMING("migrateBuffer", cq->enqueueMigrateMemObjects(vec, 0,
   //  nullptr, &event));
   EVENT_TIMING_PRE;
-  err = cq->enqueueMigrateMemObjects(vec, 0, &dependencies, &event);
+  err = cq->enqueueMigrateMemObjects(vec, 0, &Dependencies, &event);
   refcount = vec[0].getInfo<CL_MEM_REFERENCE_COUNT>();
   POCL_MSG_PRINT_GENERAL("memobj after migration: %u \n", refcount);
   EVENT_TIMING_POST("migrateBuffer");
@@ -2830,15 +2835,14 @@ int SharedCLContext::readBuffer(uint64_t ev_id, uint32_t cq_id,
                                 uint32_t content_size_buffer_id, size_t size,
                                 size_t offset, void *host_ptr,
                                 uint64_t *out_size, EventTiming_t &evt,
-                                uint32_t waitlist_size, uint64_t *waitlist) {
+                                std::vector<cl::Event> &Dependencies,
+                                cl::Event &event) {
 
   cl::Buffer *b = nullptr;
   cl::CommandQueue *cq = nullptr;
-  std::vector<cl::Event> dependencies;
   {
     FIND_QUEUE;
   }
-  dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
 
   if (!is_svm) {
     {
@@ -2867,7 +2871,7 @@ int SharedCLContext::readBuffer(uint64_t ev_id, uint32_t cq_id,
       *out_size = size;
     EVENT_TIMING("readBuffer",
                  cq->enqueueReadBuffer(*b, CL_FALSE, offset, size, host_ptr,
-                                       &dependencies, &event));
+                                       &Dependencies, &event));
   } else {
     void *svm_ptr = (void *)buffer_id;
     cl_int Err = clEnqueueSVMMap(cq->get(), CL_TRUE, CL_MAP_WRITE, svm_ptr,
@@ -2889,22 +2893,21 @@ int SharedCLContext::readBuffer(uint64_t ev_id, uint32_t cq_id,
     }
 
     EVENT_TIMING("readBuffer (SVM)",
-                 cq->enqueueUnmapSVM(svm_ptr, &dependencies, &event));
+                 cq->enqueueUnmapSVM(svm_ptr, &Dependencies, &event));
   }
 }
 
 int SharedCLContext::writeBuffer(uint64_t ev_id, uint32_t cq_id,
                                  uint64_t buffer_id, int is_svm, size_t size,
                                  size_t offset, void *host_ptr,
-                                 EventTiming_t &evt, uint32_t waitlist_size,
-                                 uint64_t *waitlist) {
+                                 EventTiming_t &evt,
+                                 std::vector<cl::Event> &Dependencies,
+                                 cl::Event &event) {
 
   cl::CommandQueue *cq = nullptr;
-  std::vector<cl::Event> dependencies;
   {
     FIND_QUEUE;
   }
-  dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
 
   if (!is_svm) {
 
@@ -2925,7 +2928,7 @@ int SharedCLContext::writeBuffer(uint64_t ev_id, uint32_t cq_id,
 #if 1
     EVENT_TIMING("writeBuffer",
                  cq->enqueueWriteBuffer(*b, CL_TRUE, offset, size, host_ptr,
-                                        &dependencies, &event));
+                                        &Dependencies, &event));
 #endif
 
     // cq->finish();
@@ -2964,7 +2967,7 @@ int SharedCLContext::writeBuffer(uint64_t ev_id, uint32_t cq_id,
     }
 
     EVENT_TIMING("writeBuffer (SVM)",
-                 cq->enqueueUnmapSVM(device_svm_ptr, &dependencies, &event));
+                 cq->enqueueUnmapSVM(device_svm_ptr, &Dependencies, &event));
   }
   return 0;
 }
@@ -2973,12 +2976,12 @@ int SharedCLContext::copyBuffer(uint64_t ev_id, uint32_t cq_id,
                                 uint32_t src_buffer_id, uint32_t dst_buffer_id,
                                 uint32_t content_size_buffer_id, size_t size,
                                 size_t src_offset, size_t dst_offset,
-                                EventTiming_t &evt, uint32_t waitlist_size,
-                                uint64_t *waitlist) {
+                                EventTiming_t &evt,
+                                std::vector<cl::Event> &Dependencies,
+                                cl::Event &event) {
   cl::Buffer *src = nullptr;
   cl::Buffer *dst = nullptr;
   cl::CommandQueue *cq = nullptr;
-  std::vector<cl::Event> dependencies;
   {
     FIND_QUEUE;
     FIND_BUFFER2(src);
@@ -3001,59 +3004,58 @@ int SharedCLContext::copyBuffer(uint64_t ev_id, uint32_t cq_id,
       size = content_bytes - src_offset;
   }
 
-  dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
   if (size != 0) {
     EVENT_TIMING("copyBuffer",
                  cq->enqueueCopyBuffer(*src, *dst, src_offset, dst_offset, size,
-                                       &dependencies, &event));
+                                       &Dependencies, &event));
   } else {
     // Zero sized copy is not allowed, just use a marker as a stand-in for event
     // sync purposes
     EVENT_TIMING("copyBuffer",
-                 cq->enqueueMarkerWithWaitList(&dependencies, &event));
+                 cq->enqueueMarkerWithWaitList(&Dependencies, &event));
   }
 }
 
-int SharedCLContext::readBufferRect(
-    uint64_t ev_id, uint32_t cq_id, uint32_t buffer_id,
-    sizet_vec3 &buffer_origin, sizet_vec3 &region, size_t buffer_row_pitch,
-    size_t buffer_slice_pitch, void *host_ptr, size_t host_bytes,
-    EventTiming_t &evt, uint32_t waitlist_size, uint64_t *waitlist) {
+int SharedCLContext::readBufferRect(uint64_t ev_id, uint32_t cq_id,
+                                    uint32_t buffer_id,
+                                    sizet_vec3 &buffer_origin,
+                                    sizet_vec3 &region, size_t buffer_row_pitch,
+                                    size_t buffer_slice_pitch, void *host_ptr,
+                                    size_t host_bytes, EventTiming_t &evt,
+                                    std::vector<cl::Event> &Dependencies,
+                                    cl::Event &event) {
   cl::Buffer *b = nullptr;
   cl::CommandQueue *cq = nullptr;
-  std::vector<cl::Event> dependencies;
   {
     FIND_QUEUE;
     FIND_BUFFER;
   }
-  dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
 
   EVENT_TIMING("readBufferRect",
                cq->enqueueReadBufferRect(*b, CL_FALSE, buffer_origin,
                                          zero_origin, region, buffer_row_pitch,
                                          buffer_slice_pitch, 0, 0, host_ptr,
-                                         &dependencies, &event));
+                                         &Dependencies, &event));
 }
 
 int SharedCLContext::writeBufferRect(
     uint64_t ev_id, uint32_t cq_id, uint32_t buffer_id,
     sizet_vec3 &buffer_origin, sizet_vec3 &region, size_t buffer_row_pitch,
     size_t buffer_slice_pitch, void *host_ptr, size_t host_bytes,
-    EventTiming_t &evt, uint32_t waitlist_size, uint64_t *waitlist) {
+    EventTiming_t &evt, std::vector<cl::Event> &Dependencies,
+    cl::Event &event) {
   cl::Buffer *b = nullptr;
   cl::CommandQueue *cq = nullptr;
-  std::vector<cl::Event> dependencies;
   {
     FIND_QUEUE;
     FIND_BUFFER;
   }
-  dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
 
   EVENT_TIMING("writeBufferRect",
                cq->enqueueWriteBufferRect(*b, CL_FALSE, buffer_origin,
                                           zero_origin, region, buffer_row_pitch,
                                           buffer_slice_pitch, 0, 0, host_ptr,
-                                          &dependencies, &event));
+                                          &Dependencies, &event));
 }
 
 int SharedCLContext::copyBufferRect(
@@ -3061,17 +3063,15 @@ int SharedCLContext::copyBufferRect(
     uint32_t src_buffer_id, sizet_vec3 &dst_origin, sizet_vec3 &src_origin,
     sizet_vec3 &region, size_t dst_row_pitch, size_t dst_slice_pitch,
     size_t src_row_pitch, size_t src_slice_pitch, EventTiming_t &evt,
-    uint32_t waitlist_size, uint64_t *waitlist) {
+    std::vector<cl::Event> &Dependencies, cl::Event &event) {
   cl::Buffer *src = nullptr;
   cl::Buffer *dst = nullptr;
   cl::CommandQueue *cq = nullptr;
-  std::vector<cl::Event> dependencies;
   {
     FIND_QUEUE;
     FIND_BUFFER2(src);
     FIND_BUFFER2(dst);
   }
-  dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
 
   EVENT_TIMING("copyBufferRect",
                cq->enqueueCopyBufferRect(*src, *dst, src_origin, dst_origin,
@@ -3084,23 +3084,22 @@ int SharedCLContext::copyBufferRect(
   {                                                                            \
     type *patt = reinterpret_cast<type *>(pattern);                            \
     err =                                                                      \
-        cq->enqueueFillBuffer(*b, *patt, offset, size, &dependencies, &event); \
+        cq->enqueueFillBuffer(*b, *patt, offset, size, &Dependencies, &event); \
     break;                                                                     \
   }
 
 int SharedCLContext::fillBuffer(uint64_t ev_id, uint32_t cq_id,
                                 uint32_t buffer_id, size_t offset, size_t size,
                                 void *pattern, size_t pattern_size,
-                                EventTiming_t &evt, uint32_t waitlist_size,
-                                uint64_t *waitlist) {
+                                EventTiming_t &evt,
+                                std::vector<cl::Event> &Dependencies,
+                                cl::Event &event) {
   cl::Buffer *b = nullptr;
   cl::CommandQueue *cq = nullptr;
-  std::vector<cl::Event> dependencies;
   {
     FIND_QUEUE;
     FIND_BUFFER;
   }
-  dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
 
   EVENT_TIMING_PRE;
 
@@ -3254,19 +3253,16 @@ int SharedCLContext::runKernel(
     uint64_t ev_id, uint32_t cq_id, uint32_t device_id, uint16_t has_new_args,
     size_t arg_count, uint64_t *args, unsigned char *is_svm_ptr,
     size_t pod_size, char *pod_buf, EventTiming_t &evt, uint32_t kernel_id,
-    uint32_t waitlist_size, uint64_t *waitlist, unsigned dim,
+    std::vector<cl::Event> &Dependencies, cl::Event &event, unsigned dim,
     const sizet_vec3 &offset, const sizet_vec3 &global,
     const sizet_vec3 *local) {
   cl::Kernel *k = nullptr;
   clKernelStruct *kernel = nullptr;
   cl::CommandQueue *cq = nullptr;
-  std::vector<cl::Event> dependencies;
   {
     FIND_QUEUE;
     FIND_KERNEL;
   }
-
-  dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
 
   EVENT_TIMING_PRE;
   cl::NDRange o(offset[0], offset[1], offset[2]);
@@ -3300,13 +3296,13 @@ int SharedCLContext::runKernel(
         ((local == nullptr)
              ? cl::NullRange
              : cl::NDRange((*local)[0], (*local)[1], (*local)[2])),
-        &dependencies, &event);
+        &Dependencies, &event);
   }
   {
     std::unique_lock<std::mutex> lock(EventmapMutex);
-    auto map_result = Eventmap.insert({ev_id, {event, cl::UserEvent()}});
+    auto map_result = Eventmap.insert({ev_id, event});
     if (!map_result.second) {
-      map_result.first->second.native = event;
+      assert(map_result.first->second());
     }
   }
 
@@ -3331,9 +3327,8 @@ int SharedCLContext::runKernel(
 /***************************************************************************/
 
 int SharedCLContext::barrier(uint64_t ev_id, uint32_t cq_id, EventTiming_t &evt,
-                             uint32_t waitlist_size, uint64_t *waitlist) {
-  std::vector<cl::Event> Dependencies;
-  Dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
+                             std::vector<cl::Event> &Dependencies,
+                             cl::Event &event) {
   cl::CommandQueue *cq = nullptr;
   {
     FIND_QUEUE;
@@ -3345,9 +3340,8 @@ int SharedCLContext::barrier(uint64_t ev_id, uint32_t cq_id, EventTiming_t &evt,
 }
 
 int SharedCLContext::marker(uint64_t ev_id, uint32_t cq_id, EventTiming_t &evt,
-                            uint32_t waitlist_size, uint64_t *waitlist) {
-  std::vector<cl::Event> Dependencies;
-  Dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
+                            std::vector<cl::Event> &Dependencies,
+                            cl::Event &event) {
   cl::CommandQueue *cq = nullptr;
   {
     FIND_QUEUE;
@@ -3362,13 +3356,11 @@ int SharedCLContext::marker(uint64_t ev_id, uint32_t cq_id, EventTiming_t &evt,
 int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
                                       uint32_t CmdBufId, uint32_t NumQueues,
                                       uint32_t *QueueIds,
-                                      uint32_t waitlist_size,
-                                      uint64_t *waitlist) {
-  std::vector<cl::Event> Dependencies;
+                                      std::vector<cl::Event> &Dependencies,
+                                      cl::Event &event) {
   std::vector<cl::CommandQueue> Queues;
   CommandBuffer *Cb = nullptr;
   { FIND_COMMAND_BUFFER; }
-  Dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
   Queues.reserve(NumQueues);
   for (uint32_t i = 0; i < NumQueues; ++i) {
     uint32_t cq_id = QueueIds[i];
@@ -3382,17 +3374,17 @@ int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
                  CmdBuf.enqueueCommandBuffer(Queues, &Dependencies, &event));
     return err;
   } else {
-    const CommandBuffer::Emulated *CmdBuf =
-        std::get_if<CommandBuffer::Emulated>(&Cb->Buffer);
+    const CommandBuffer::Emulated &CmdBuf =
+        std::get<CommandBuffer::Emulated>(Cb->Buffer);
     std::vector<cl::Event> Syncpoints;
-    for (Request *R : CmdBuf->Cmds) {
+    for (Request *R : CmdBuf.Cmds) {
       EventTiming_t evt;
       // Copy buffer-level dependencies to all commands
       std::vector<cl::Event> Deps = Dependencies;
       cl_int err = CL_SUCCESS;
-      cl::Event event;
+      cl::Event InternalEvent;
       // Append syncpoint events to dependencies
-      for (uint64_t DepId : R->Waitlist)
+      for (uint64_t DepId : R->ClientWaitlist)
         // valid syncpoints start from 1
         Deps.push_back(Syncpoints.at(DepId - 1));
 
@@ -3405,7 +3397,10 @@ int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
         cl::Buffer *b = nullptr;
         { FIND_BUFFER; }
         cl::CommandQueue *cq = &Queues[R->Body.cq_id];
-        std::vector<cl::Event> dependencies = std::move(Deps);
+        // Alias the correct values to the names that fillB expects. Note that
+        // this shadows the respective function parameters in this scope.
+        std::vector<cl::Event> Dependencies = std::move(Deps);
+        cl::Event &event = InternalEvent;
         switch (R->Body.m.fill_buffer.pattern_size) {
         case 1:
           fillB(cl_uchar);
@@ -3444,8 +3439,8 @@ int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
                                    R->Body.m.fill_image.region.z};
         cl::Image *img = nullptr;
         { FIND_IMAGE; }
-        err = Queues[R->Body.cq_id].enqueueFillImage(*img, fillColor, origin,
-                                                     region, &Deps, &event);
+        err = Queues[R->Body.cq_id].enqueueFillImage(
+            *img, fillColor, origin, region, &Deps, &InternalEvent);
       } break;
       case MessageType_CopyBuffer: {
         uint32_t src_buffer_id = R->Body.m.copy.src_buffer_id;
@@ -3458,7 +3453,7 @@ int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
         }
         err = Queues[R->Body.cq_id].enqueueCopyBuffer(
             *src, *dst, R->Body.m.copy.src_offset, R->Body.m.copy.dst_offset,
-            R->Body.m.copy.size, &Deps, &event);
+            R->Body.m.copy.size, &Deps, &InternalEvent);
       } break;
       case MessageType_CopyBufferRect: {
         uint32_t src_buffer_id = R->Body.m.copy_rect.src_buffer_id;
@@ -3483,7 +3478,7 @@ int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
             R->Body.m.copy_rect.src_row_pitch,
             R->Body.m.copy_rect.src_slice_pitch,
             R->Body.m.copy_rect.dst_row_pitch,
-            R->Body.m.copy_rect.dst_slice_pitch, &Deps, &event);
+            R->Body.m.copy_rect.dst_slice_pitch, &Deps, &InternalEvent);
       } break;
       case MessageType_CopyBuffer2Image: {
         uint32_t buffer_id = R->Body.m.copy_buf2img.src_buf_id;
@@ -3502,7 +3497,7 @@ int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
         }
         err = Queues[R->Body.cq_id].enqueueCopyBufferToImage(
             *b, *img, R->Body.m.copy_buf2img.src_offset, dst_origin, region,
-            &Deps, &event);
+            &Deps, &InternalEvent);
       } break;
       case MessageType_CopyImage2Buffer: {
         uint32_t buffer_id = R->Body.m.copy_img2buf.dst_buf_id;
@@ -3521,7 +3516,7 @@ int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
         }
         err = Queues[R->Body.cq_id].enqueueCopyImageToBuffer(
             *img, *b, src_origin, region, R->Body.m.copy_img2buf.dst_offset,
-            &Deps, &event);
+            &Deps, &InternalEvent);
       } break;
       case MessageType_CopyImage2Image: {
         uint32_t src_image_id = R->Body.m.copy_img2img.src_image_id;
@@ -3542,7 +3537,7 @@ int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
           FIND_IMAGE2(dst);
         }
         err = Queues[R->Body.cq_id].enqueueCopyImage(
-            *src, *dst, src_origin, dst_origin, region, &Deps, &event);
+            *src, *dst, src_origin, dst_origin, region, &Deps, &InternalEvent);
       } break;
       case MessageType_RunKernel: {
         cl::NDRange offset(R->Body.m.run_kernel.offset.x,
@@ -3573,14 +3568,14 @@ int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
         err = Queues[R->Body.cq_id].enqueueNDRangeKernel(
             *k, offset, (dim == 2 ? global2 : (dim < 2 ? global1 : global3)),
             ((R->Body.m.run_kernel.has_local)
-                 ? cl::NullRange
-                 : cl::NDRange(R->Body.m.run_kernel.local.x,
+                 ? cl::NDRange(R->Body.m.run_kernel.local.x,
                                R->Body.m.run_kernel.local.y,
-                               R->Body.m.run_kernel.local.z)),
-            &Deps, &event);
+                               R->Body.m.run_kernel.local.z)
+                 : cl::NullRange),
+            &Deps, &InternalEvent);
       } break;
       case MessageType_Barrier: {
-        Queues[R->Body.cq_id].enqueueBarrierWithWaitList(&Deps, &event);
+        Queues[R->Body.cq_id].enqueueBarrierWithWaitList(&Deps, &InternalEvent);
       } break;
       // TODO: Read/Write and SVM commands (PoCL extensions)
       default:
@@ -3591,7 +3586,7 @@ int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
       if (err != CL_SUCCESS)
         return err;
 
-      Syncpoints.push_back(event);
+      Syncpoints.push_back(InternalEvent);
     }
 
     Dependencies.insert(Dependencies.end(), Syncpoints.begin(),
@@ -3608,21 +3603,20 @@ int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
 int SharedCLContext::fillImage(uint64_t ev_id, uint32_t cq_id,
                                uint32_t image_id, sizet_vec3 &origin,
                                sizet_vec3 &region, void *fill_color,
-                               EventTiming_t &evt, uint32_t waitlist_size,
-                               uint64_t *waitlist) {
+                               EventTiming_t &evt,
+                               std::vector<cl::Event> &Dependencies,
+                               cl::Event &event) {
   cl::Image *img = nullptr;
   cl::CommandQueue *cq = nullptr;
-  std::vector<cl::Event> dependencies;
   {
     FIND_QUEUE;
     FIND_IMAGE;
   }
-  dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
 
   cl_uint4 fillColor = *(cl_uint4 *)fill_color;
   EVENT_TIMING("fillImage",
                cq->enqueueFillImage(*img, fillColor, origin, region,
-                                    &dependencies, &event));
+                                    &Dependencies, &event));
 }
 
 // readImage2Buffer(request.id, m.dst_buf_id, origin, region)
@@ -3630,23 +3624,21 @@ int SharedCLContext::copyImage2Buffer(uint64_t ev_id, uint32_t cq_id,
                                       uint32_t image_id, uint32_t buffer_id,
                                       sizet_vec3 &origin, sizet_vec3 &region,
                                       size_t offset, EventTiming_t &evt,
-                                      uint32_t waitlist_size,
-                                      uint64_t *waitlist) {
+                                      std::vector<cl::Event> &Dependencies,
+                                      cl::Event &event) {
 
   cl::Buffer *b = nullptr;
   cl::Image *img = nullptr;
   cl::CommandQueue *cq = nullptr;
-  std::vector<cl::Event> dependencies;
   {
     FIND_QUEUE;
     FIND_IMAGE;
     FIND_BUFFER;
   }
-  dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
 
   EVENT_TIMING("copyImage2Buffer",
                cq->enqueueCopyImageToBuffer(*img, *b, origin, region, offset,
-                                            &dependencies, &event));
+                                            &Dependencies, &event));
 }
 
 // writeBuffer2Image(request.id, m.src_buf_id, origin, region)
@@ -3654,65 +3646,58 @@ int SharedCLContext::copyBuffer2Image(uint64_t ev_id, uint32_t cq_id,
                                       uint32_t image_id, uint32_t buffer_id,
                                       sizet_vec3 &origin, sizet_vec3 &region,
                                       size_t offset, EventTiming_t &evt,
-                                      uint32_t waitlist_size,
-                                      uint64_t *waitlist) {
+                                      std::vector<cl::Event> &Dependencies,
+                                      cl::Event &event) {
   cl::Buffer *b = nullptr;
   cl::Image *img = nullptr;
   cl::CommandQueue *cq = nullptr;
-  std::vector<cl::Event> dependencies;
   {
     FIND_QUEUE;
     FIND_IMAGE;
     FIND_BUFFER;
   }
-  dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
 
   EVENT_TIMING("copyBuffer2Image",
                cq->enqueueCopyBufferToImage(*b, *img, offset, origin, region,
-                                            &dependencies, &event));
+                                            &Dependencies, &event));
 }
 
-int SharedCLContext::copyImage2Image(uint64_t ev_id, uint32_t cq_id,
-                                     uint32_t dst_image_id,
-                                     uint32_t src_image_id,
-                                     sizet_vec3 &dst_origin,
-                                     sizet_vec3 &src_origin, sizet_vec3 &region,
-                                     EventTiming_t &evt, uint32_t waitlist_size,
-                                     uint64_t *waitlist) {
+int SharedCLContext::copyImage2Image(
+    uint64_t ev_id, uint32_t cq_id, uint32_t dst_image_id,
+    uint32_t src_image_id, sizet_vec3 &dst_origin, sizet_vec3 &src_origin,
+    sizet_vec3 &region, EventTiming_t &evt,
+    std::vector<cl::Event> &Dependencies, cl::Event &event) {
 
   cl::Image *src = nullptr;
   cl::Image *dst = nullptr;
   cl::CommandQueue *cq = nullptr;
-  std::vector<cl::Event> dependencies;
   {
     FIND_QUEUE;
     FIND_IMAGE2(src);
     FIND_IMAGE2(dst);
   }
-  dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
 
   EVENT_TIMING("copyImage2Image",
                cq->enqueueCopyImage(*src, *dst, src_origin, dst_origin, region,
-                                    &dependencies, &event));
+                                    &Dependencies, &event));
 }
 
 int SharedCLContext::readImageRect(uint64_t ev_id, uint32_t cq_id,
                                    uint32_t image_id, sizet_vec3 &origin,
                                    sizet_vec3 &region, void *host_ptr,
                                    size_t host_bytes, EventTiming_t &evt,
-                                   uint32_t waitlist_size, uint64_t *waitlist) {
+                                   std::vector<cl::Event> &Dependencies,
+                                   cl::Event &event) {
   cl::Image *img = nullptr;
   cl::CommandQueue *cq = nullptr;
-  std::vector<cl::Event> dependencies;
   {
     FIND_QUEUE;
     FIND_IMAGE;
   }
-  dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
 
   EVENT_TIMING("readImageRect",
                cq->enqueueReadImage(*img, CL_FALSE, origin, region, 0, 0,
-                                    host_ptr, &dependencies,
+                                    host_ptr, &Dependencies,
                                     &event)); // TODO row pitch / slice pitch
 }
 
@@ -3720,20 +3705,18 @@ int SharedCLContext::writeImageRect(uint64_t ev_id, uint32_t cq_id,
                                     uint32_t image_id, sizet_vec3 &origin,
                                     sizet_vec3 &region, void *host_ptr,
                                     size_t host_bytes, EventTiming_t &evt,
-                                    uint32_t waitlist_size,
-                                    uint64_t *waitlist) {
+                                    std::vector<cl::Event> &Dependencies,
+                                    cl::Event &event) {
   cl::Image *img = nullptr;
   cl::CommandQueue *cq = nullptr;
-  std::vector<cl::Event> dependencies;
   {
     FIND_QUEUE;
     FIND_IMAGE;
   }
-  dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
 
   EVENT_TIMING("writeImageRect",
                cq->enqueueWriteImage(*img, CL_FALSE, origin, region, 0, 0,
-                                     host_ptr, &dependencies,
+                                     host_ptr, &Dependencies,
                                      &event)); // TODO row pitch / slice pitch
 }
 

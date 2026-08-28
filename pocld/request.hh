@@ -28,6 +28,8 @@
 #include <cstring>
 #include <vector>
 
+#include <CL/opencl.hpp>
+
 #include "connection.hh"
 #include "messages.h"
 
@@ -67,9 +69,11 @@ public:
   size_t BodyBytesRead = 0;
 
   /// List of event ids that must complete before this Request can be processed
-  std::vector<uint64_t> Waitlist;
+  std::vector<uint64_t> ClientWaitlist;
   /// Tracker for how many bytes of the waitlist have been read
   size_t WaitlistBytesRead = 0;
+  /// Local dependency events, filled in by CommandQueue
+  std::vector<cl::Event> LocalWaitlist;
 
   /// Auxiliary data required for the Request (buffer contents, program binaries
   /// etc)
@@ -98,6 +102,13 @@ public:
   /// Flag indicating that the request has been fully read from the network
   /// socket. Set at the very end of the read() function.
   bool IsFullyRead = false;
+
+  /// Used to direct Request to the destination context after reading buffer
+  /// contents from the Source context
+  bool IsMigrationExportDone = false;
+
+  /// Used to signal to the receiving context that it is the migration source
+  bool IsMigrationExportRequired = false;
 
   /// Incrementally reads the request from given Connection. Returns true on
   /// success and false if an error occurs while reading. Call repeatedly until

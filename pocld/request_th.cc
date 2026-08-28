@@ -28,6 +28,7 @@
 #include <poll.h>
 #include <sys/socket.h>
 
+#include "CL/opencl.hpp"
 #include "common.hh"
 #include "messages.h"
 #include "request_th.hh"
@@ -41,7 +42,7 @@
 RequestQueueThread::RequestQueueThread(std::shared_ptr<Connection> Conn,
                                        VirtualContextBase *c, ExitHelper *e,
                                        const char *id_str)
-    : InboundConnection(Conn), virtualContext(c), eh(e),
+    : InboundConnection(Conn), VirtualContext(c), eh(e),
       ThreadIdentifier(id_str) {
   IOThread = std::thread{&RequestQueueThread::readThread, this};
 }
@@ -67,12 +68,13 @@ void RequestQueueThread::readThread() {
 
   while (1) {
     if (eh->exit_requested())
-      return;
+      break;
 
     std::unique_lock<std::mutex> l(ConnectionGuard);
-
-    if (InboundConnection.get() == nullptr)
+    if (InboundConnection.get() == nullptr) {
       ConnectionNotifier.wait(l);
+      continue;
+    }
 
     pfd.fd = InboundConnection->pollableFd();
     /* HACK: Timeout after 1s so peer request threads don't get stuck when the
@@ -90,26 +92,29 @@ void RequestQueueThread::readThread() {
         // system is out of memory. Can't really recover from either case at
         // runtime so let's just bail.
         eh->requestExit("Fatal error during poll(2) in RequestQueueThread", e);
-        return;
+        VirtualContext->connectionLost();
+        break;
       }
     }
     if (pfd.revents & (POLLERR | POLLNVAL | POLLHUP | POLLRDHUP)) {
       InboundConnection.reset();
+      VirtualContext->connectionLost();
       continue;
     }
     if (!(pfd.revents & POLLIN))
       continue;
 
-    Request *IncomingRequest = new(std::nothrow) Request();
+    Request *IncomingRequest = new (std::nothrow) Request();
     if (IncomingRequest == nullptr) {
       eh->requestExit("Out of host memory in in RequestQueueThread", ENOMEM);
-      return;
+      break;
     }
     while (!IncomingRequest->IsFullyRead) {
       if (!IncomingRequest->read(InboundConnection.get())) {
         delete IncomingRequest;
         IncomingRequest = nullptr;
         InboundConnection.reset();
+        VirtualContext->connectionLost();
         continue;
       }
     }
@@ -117,6 +122,7 @@ void RequestQueueThread::readThread() {
     l.unlock();
 
     switch (IncomingRequest->Body.message_type) {
+    case MessageType_ServerInfo:
     case MessageType_ConnectPeer:
     case MessageType_DeviceInfo:
     case MessageType_CreateBuffer:
@@ -127,6 +133,8 @@ void RequestQueueThread::readThread() {
     case MessageType_FreeSampler:
     case MessageType_CreateImage:
     case MessageType_FreeImage:
+    case MessageType_CreateCommandBuffer:
+    case MessageType_FreeCommandBuffer:
     case MessageType_CreateKernel:
     case MessageType_FreeKernel:
     case MessageType_BuildProgramFromSource:
@@ -134,15 +142,16 @@ void RequestQueueThread::readThread() {
     case MessageType_BuildProgramFromSPIRV:
     case MessageType_CompileProgramFromSource:
     case MessageType_CompileProgramFromSPIRV:
-    case MessageType_LinkProgram:
     case MessageType_BuildProgramWithBuiltins:
+    case MessageType_BuildProgramWithDefinedBuiltins:
+    case MessageType_LinkProgram:
     case MessageType_FreeProgram:
-    case MessageType_MigrateD2D:
     case MessageType_RdmaBufferRegistration:
     case MessageType_Shutdown: {
-      virtualContext->nonQueuedPush(IncomingRequest);
+      VirtualContext->nonQueuedPush(IncomingRequest);
       break;
     }
+    case MessageType_MigrateD2D:
     case MessageType_ReadBuffer:
     case MessageType_WriteBuffer:
     case MessageType_CopyBuffer:
@@ -156,24 +165,27 @@ void RequestQueueThread::readThread() {
     case MessageType_ReadImageRect:
     case MessageType_WriteImageRect:
     case MessageType_FillImageRect:
-    case MessageType_RunKernel: {
-      virtualContext->queuedPush(IncomingRequest);
+    case MessageType_RunKernel:
+    case MessageType_Barrier:
+    case MessageType_Marker:
+    case MessageType_RunCommandBuffer: {
+      VirtualContext->queuedPush(IncomingRequest);
       break;
     }
     case MessageType_NotifyEvent: {
       // TODO: this message should probably contain an actual status... (see
       // also rdma thread)
-      virtualContext->notifyEvent(IncomingRequest->Body.event_id, CL_COMPLETE);
+      VirtualContext->notifyEvent(IncomingRequest->Body.event_id, CL_COMPLETE);
       delete IncomingRequest;
       break;
     }
 
     default: {
-      virtualContext->unknownRequest(IncomingRequest);
+      VirtualContext->unknownRequest(IncomingRequest);
       break;
     }
     }
-
-    // TODO reply fail
   }
+
+  POCL_MSG_PRINT_GENERAL("%s: Terminating\n", ThreadIdentifier.c_str());
 }

@@ -23,6 +23,8 @@
    IN THE SOFTWARE.
 */
 
+#include <mutex>
+
 #include "common.hh"
 
 #ifndef POCL_REMOTE_CMD_QUEUE_HH
@@ -34,6 +36,7 @@
 
 class ReplyQueueThread;
 class SharedContextBase;
+typedef std::pair<uint64_t, cl::Event> EventWithId;
 
 class CommandQueue {
   SharedContextBase *backend;
@@ -41,7 +44,8 @@ class CommandQueue {
   uint32_t queue_id;
   uint32_t dev_id;
   ReplyQueueThread *write_slow, *write_fast;
-  std::vector<Request *> pending;
+  std::mutex PendingMutex;
+  std::vector<Request *> Pending;
 
 public:
   CommandQueue(SharedContextBase *b, uint32_t queue_id, uint32_t did,
@@ -51,10 +55,10 @@ public:
 
   void push(Request *request);
 
-  void notify();
+  void notify(EventWithId Event);
 
 private:
-  bool TryRun(Request *request);
+  bool ReadyToRun(Request *request);
 
   void RunCommand(Request *request);
 

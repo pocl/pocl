@@ -57,6 +57,7 @@ POname (clFinalizeCommandBufferKHR) (cl_command_buffer_khr command_buffer)
         continue;
 
       int errcode = CL_SUCCESS;
+      // Make sure to match the logic in clReleaseCommandBufferKHR.c
       if ((!command_buffer->is_multi_device)
           && (*q)->device->ops->create_finalized_command_buffer)
         errcode = (*q)->device->ops->create_finalized_command_buffer (

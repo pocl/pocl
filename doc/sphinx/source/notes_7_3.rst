@@ -39,6 +39,19 @@ Remote driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * Barriers and markers are now handled server-side.
+* Various server-side command buffer implementation fixes
+* Remote now always advertises `cl_khr_command_buffer` even if the server-side
+  OpenCL driver does not (pocld provides server-side emulation in that case).
+* Remote command handling has been reworked to avoid blocking remote commands
+  in the client's submit queue and pocld's reply queue.
+* Fixed some issues where one of the client-server sockets would abruptly
+  disconnect for no obvious reason.
+* Server-to-server completion notifications are elided when possible to reduce
+  overhead in setups with a large number of servers in the same context
+* Server-to-server buffer migrations are now properly asynchronous
+* Fixes for compiling kernels for multiple devices
+* Fixed fetching program binaries and recreating programs from previously built
+  binaries
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 OpenASIP (ttasim) driver

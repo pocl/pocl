@@ -96,6 +96,8 @@ const char *request_to_str(RequestMessageType type) {
 
   case MessageType_MigrateD2D:
     return "MigrateD2D";
+  case MessageType_Marker:
+    return "Marker";
   case MessageType_Barrier:
     return "Barrier";
 
@@ -280,13 +282,13 @@ template <class T> bool RequestReadImpl(Request *Req, T *Source) {
 
   /*****************************/
   if (Body->waitlist_size > 0) {
-    Req->Waitlist.resize(Body->waitlist_size);
+    Req->ClientWaitlist.resize(Body->waitlist_size);
     POCL_MSG_PRINT_GENERAL("READING WAIT LIST FOR ID: %" PRIu64 " = %" PRIuS
                            "/%" PRIu32 "\n",
                            uint64_t(Body->msg_id), Req->WaitlistBytesRead,
                            Req->Body.waitlist_size);
     RETURN_UNLESS_DONE(Source->readReentrant(
-        Req->Waitlist.data(), Req->Body.waitlist_size * sizeof(uint64_t),
+        Req->ClientWaitlist.data(), Req->Body.waitlist_size * sizeof(uint64_t),
         &Req->WaitlistBytesRead));
   }
   /*****************************/
