@@ -1,0 +1,147 @@
+digraph D {
+  fontname="Helvetica,Arial,sans-serif";
+  fontcolor=black;
+  size="8.0";
+  pad="0.0";
+  ratio="compress";
+  node [fontname="Helvetica,Arial,sans-serif",color=black,fillcolor=white,shape=box]
+  edge [fontname="Helvetica,Arial,sans-serif"]
+
+  subgraph cluster_inputs {
+    fontcolor=black;
+    node [style=filled];
+    label = "Application-facing interfaces, languages and formats";
+
+    SYCL;
+// WiP: OpenVX;
+    HIP;
+    CUDA;
+    Python;
+    ONNX;
+  }
+
+  subgraph cluster_tools {
+    fontcolor=black;
+    label = "Toolchains and middlewares";
+    node [style=filled]
+    DPCPP [label="oneAPI DPC++"];
+    TVM [label="Apache TVM"];
+    PyOpenCL [label="PyOpenCL"];
+    CHIPSPV [label="CHIP-SPV"];
+  }
+
+  SYCL -> DPCPP;
+  ONNX -> TVM;
+  Python -> PyOpenCL;
+  CUDA -> CHIPSPV;
+  HIP -> CHIPSPV;
+
+  subgraph cluster_open_portability {
+    label = "OpenCL 3.0 required features";
+
+    OpenCLC [label="OpenCL C"];
+    CoarseSVM [label="Coarse Grained SVM"];
+  }
+
+  subgraph cluster_khronos_ext {
+    label = "Khronos OpenCL extensions";
+    cl_khr_subgroups [label="Subgroups"];
+    cl_khr_subgroup_ballot [label="SG Ballot"];
+    cl_khr_expect_assume [label="Expect/Assume"];
+    cl_khr_spirv_linkonce_odr [label="LinkonceODR"];
+    cl_khr_work_group_uniform_arithmetic [label="WG Uniform Arith."];
+  }
+
+  subgraph cluster_opencl_optional {
+    label = "OpenCL 3.0 optional features";
+    GenericAS [label="Generic Address Space"];
+    SPV [label="SPIR-V"];
+    WGCollective [label="Work-group Collective Functions"];
+  }
+
+  subgraph cluster_intel_ext {
+    label = "Intel OpenCL extensions";
+//    node [fontsize=8,shape=none,margin=0];
+//    cl_intel_sub_group_shuffle;
+//    cl_intel_sub_group_shuffle_xor;
+    cl_intel_unified_shared_memory [label="Unified Shared Memory"];
+    cl_intel_required_subgroup_size [label="Reqd Subgroup Size"];
+  }
+
+  DPCPP -> SPV;
+  DPCPP -> GenericAS;
+  DPCPP -> cl_intel_unified_shared_memory [style=dashed,label=optional];
+  DPCPP -> cl_khr_subgroups;
+  DPCPP -> CoarseSVM;
+  DPCPP -> WGCollective;
+  DPCPP -> cl_khr_expect_assume [label="optional"];
+  DPCPP -> cl_khr_spirv_linkonce_odr [label="optional"];
+  DPCPP -> cl_khr_work_group_uniform_arithmetic [label="optional"];
+
+  CHIPSPV -> cl_khr_subgroups;
+  CHIPSPV -> cl_khr_subgroup_ballot;
+  CHIPSPV -> GenericAS;
+// cl_khr_subgroups could be used to replace them, but Intel CPU doesn't advertise
+// them.
+//  CHIPSPV -> cl_intel_sub_group_shuffle [style=dashed,label="or khr_subgroups"];
+//  CHIPSPV -> cl_intel_sub_group_shuffle_xor [style=dashed,label="or khr_subgroups"]
+  CHIPSPV -> SPV;
+  CHIPSPV -> CoarseSVM;
+  CHIPSPV -> cl_intel_required_subgroup_size;
+//  CHIPSPV -> cl_intel_sub_group_shuffle [style=dashed,label=optional];
+//  CHIPSPV -> cl_intel_sub_group_shuffle_xor [style=dashed,label=optional];
+
+  PyOpenCL -> OpenCLC;
+
+  TVM -> OpenCLC;
+
+  subgraph cluster_PoCL {
+    label = "Portable Computing Language Drivers"
+    PoCLCPU [label="CPU drivers"];
+    PoCLLevel0 [label="Level0"];
+    PoCLCUDA [label="CUDA"];
+    PoCLVulkan [label="Vulkan"];
+    PoCLAlmaIF [label="AlmaIF"];
+  }
+
+  CoarseSVM -> PoCLCPU;
+
+  OpenCLC -> PoCLCPU;
+  OpenCLC -> PoCLLevel0;
+  OpenCLC -> PoCLCUDA;
+  OpenCLC -> PoCLVulkan;
+  OpenCLC -> PoCLAlmaIF;
+
+  SPV -> PoCLCPU;
+  SPV -> PoCLLevel0;
+
+  cl_khr_subgroups -> PoCLCPU;
+  cl_intel_required_subgroup_size -> PoCLCPU [style=dashed,label="mostly"];
+  cl_khr_subgroup_ballot -> PoCLCPU [style=dashed,label="for uniform"];
+
+  cl_intel_unified_shared_memory -> PoCLLevel0;
+
+
+  subgraph cluster_if {
+    label = "Low level interfacing";
+    libLevel0 [label="Level Zero Library"];
+    libVulkan [label="Vulkan Library"];
+    clspv [label="clspv"];
+    libCUDA [label="PTX and CUDA C Library"];
+    XilinxFPGALibs [label="Xilinx FPGA Tools"];
+    IntelFPGALibs [label="Intel FPGA Tools"];
+    LLVM [label="Clang and LLVM"];
+    OpenASIP [label="OpenASIP tools"]
+    Pthread [label="POSIX threads"];
+  }
+
+  PoCLVulkan->libVulkan;
+  PoCLVulkan->clspv;
+  PoCLLevel0->libLevel0;
+  PoCLCUDA->libCUDA;
+  PoCLCPU->LLVM;
+  PoCLCPU->Pthread;
+  PoCLAlmaIF->XilinxFPGALibs;
+  PoCLAlmaIF->IntelFPGALibs;
+  PoCLAlmaIF->OpenASIP;
+}
