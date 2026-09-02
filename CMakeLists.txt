@@ -1932,7 +1932,7 @@ if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_kernel_clock")
   )
 endif()
 
-set(HOST_DEVICE_SPV_EXTENSIONS "+SPV_KHR_no_integer_wrap_decoration,+SPV_KHR_linkonce_odr,+SPV_KHR_expect_assume,+SPV_INTEL_fp_fast_math_mode,+SPV_INTEL_unstructured_loop_controls,+SPV_INTEL_arbitrary_precision_integers,+SPV_INTEL_memory_access_aliasing,+SPV_INTEL_inline_assembly,+SPV_KHR_integer_dot_product")
+set(HOST_DEVICE_SPV_EXTENSIONS "+SPV_KHR_no_integer_wrap_decoration,+SPV_KHR_linkonce_odr,+SPV_KHR_expect_assume,+SPV_INTEL_fp_fast_math_mode,+SPV_INTEL_unstructured_loop_controls,+SPV_INTEL_arbitrary_precision_integers,+SPV_INTEL_memory_access_aliasing,+SPV_INTEL_inline_assembly,+SPV_KHR_integer_dot_product,+SPV_KHR_untyped_pointers")
 if(HOST_DEVICE_EXTENSIONS MATCHES "cl_ext_float_atomics")
   set(HOST_DEVICE_FEATURES "${HOST_DEVICE_FEATURES} __opencl_c_ext_fp32_global_atomic_add __opencl_c_ext_fp32_local_atomic_add __opencl_c_ext_fp32_global_atomic_min_max __opencl_c_ext_fp32_local_atomic_min_max")
   set(HOST_DEVICE_SPV_EXTENSIONS "${HOST_DEVICE_SPV_EXTENSIONS},+SPV_EXT_shader_atomic_float_add,+SPV_EXT_shader_atomic_float_min_max")
