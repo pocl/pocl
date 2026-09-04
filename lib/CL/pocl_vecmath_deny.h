@@ -20,9 +20,14 @@ static const char *const PoclVecMathDenyLibmvec[] = {
 
 /* SLEEF GNU-ABI build used through the libmvec table. Measured: SLEEF
    3.5.1, x86-64 AVX2, LLVM 22.1.8, 2026-09-04. double pow: pow(-DBL_MAX, 1)
-   returns -inf (SLEEF issue #600, fixed in SLEEF 3.8). Nothing else. */
+   returns -inf (SLEEF issue #600, fixed in SLEEF 3.8). Nothing else.
+   HOST_CPU_VECMATH_SLEEF_VERSION_NUM is 0 when the version is unknown. */
 static const char *const PoclVecMathDenySleef[] = {
+#if HOST_CPU_VECMATH_SLEEF_VERSION_NUM < 30800
     "pow", "llvm.pow.f64",
+#endif
+    /* keep the array non-empty on any version */
+    "__pocl_vecmath_none",
 };
 
 #endif
