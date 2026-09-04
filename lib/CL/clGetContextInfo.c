@@ -43,11 +43,14 @@ POname(clGetContextInfo)(cl_context context,
       cl_uint refcount = context->pocl_refcount;
       POCL_RETURN_GETINFO(cl_uint, refcount);
     }
+  /* Report the devices the context was created with, sub-devices
+   * included. context->devices holds the deduplicated root devices PoCL
+   * uses internally and is not what the application passed in. */
   case CL_CONTEXT_DEVICES:
-    value_size = context->num_devices * sizeof(cl_device_id);
-    POCL_RETURN_GETINFO_SIZE(value_size, context->devices);
+    value_size = context->num_create_devices * sizeof(cl_device_id);
+    POCL_RETURN_GETINFO_SIZE(value_size, context->create_devices);
   case CL_CONTEXT_NUM_DEVICES:
-    POCL_RETURN_GETINFO(cl_uint, context->num_devices);
+    POCL_RETURN_GETINFO(cl_uint, context->num_create_devices);
   case CL_CONTEXT_PROPERTIES:
     if (context->properties)
       {
