@@ -437,6 +437,15 @@ pocl.
               For more information, please see lttng documentation:
               http://lttng.org/docs/#doc-tracing-your-own-user-application
 
+- **POCL_VECMATH_DENY**, **POCL_VECMATH_ALLOW**
+
+ Comma-separated lists of scalar function names as LLVM sees them (for
+ example ``logf,llvm.log.f32``) removed from, or added back to, the vector
+ math library table the CPU device hands to LLVM, on top of the built-in
+ per-library deny list. A denied function keeps its scalar implementation.
+ Only meaningful for builds with ``ENABLE_HOST_CPU_VECTORIZE_*``; intended
+ for measuring a library, not for production use.
+
 - **POCL_VECTORIZER_REMARKS**
 
  When set to 1, prints out remarks produced by the loop vectorizer of LLVM

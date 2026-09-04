@@ -16,6 +16,9 @@ CMake changes
 
 * Added an `ENABLE_CUDA_IMAGES` option. Note that image support in the CUDA
   driver is still experimental and very incomplete.
+* `ENABLE_HOST_CPU_VECTORIZE_LIBMVEC` and `ENABLE_HOST_CPU_VECTORIZE_SLEEF`
+  can now be combined with `ENABLE_CONFORMANCE` (default OFF there, opt-in).
+  `ENABLE_HOST_CPU_VECTORIZE_SVML` still cannot.
 
 ==========================
 Runtime fixes & features
@@ -60,6 +63,25 @@ OpenASIP (ttasim) driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 CPU driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Vectorized math libraries (libmvec, SLEEF) are now filtered per function:
+  builtins whose library implementation was measured to exceed the OpenCL C
+  ULP bounds keep their scalar implementation (`pocl_vecmath_deny.h`,
+  generated from one list in CMake). This fixes the default non-conformance
+  build failing the CTS `math_brute_force` test for float `log` at vector
+  width 1 (glibc libmvec) and double `pow` near the overflow threshold
+  (SLEEF older than 3.8). `POCL_VECMATH_DENY` / `POCL_VECMATH_ALLOW` override
+  the list for measurements.
+* The Clang-builtin swap in the CPU kernel library now follows the selected
+  vector library: only builtins with a vector implementation are swapped,
+  the rest keep their SLEEF or libclc sources. `pown` is no longer swapped
+  (it went through `powi`: hundreds of ULP over the bound in the CTS,
+  millions in a wider sweep).
+* On x86-64 with glibc 2.35 or newer the whole libmvec function set is
+  used (26 functions instead of the 6 in LLVM's table). The 20 added
+  functions run at the memory-bandwidth floor in scalar-typed kernels,
+  from 2 to 10 ns per element before. AVX-512 variants are only used on
+  hosts with AVX-512.
 
 * FP16 support is now complete and enabled by default on Linux.
   Note that this support has a few requirements:
