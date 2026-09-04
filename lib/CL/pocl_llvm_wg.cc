@@ -1448,6 +1448,15 @@ static void addExtendedLibmvecX86Rows(std::vector<VecDesc> &Table) {
       {"sinh", "sinh", 1, 235},   {"tanh", "tanh", 1, 235},
   };
   unsigned Glibc = runtimeGlibcVersion();
+  /* The AVX-512 (_ZGVe, 16 x float / 8 x double) variants are AVX-512 code
+   * inside glibc, and a row for them makes the loop vectorizer choose that
+   * width even on a CPU without AVX-512 (the call would then SIGILL). The
+   * CPU device compiles for the host, so ask the host. */
+  bool HaveAVX512 = false;
+#if defined(__x86_64__) && defined(__GLIBC__)
+  __builtin_cpu_init();
+  HaveAVX512 = __builtin_cpu_supports("avx512f");
+#endif
   struct Variant { char Isa; unsigned VFf; unsigned VFd; bool OnlyE; };
   static const Variant Variants[] = {{'b', 4, 2, false}, {'d', 8, 4, false}, {'e', 16, 8, true}};
   for (const Fn &F : Fns) {
@@ -1457,6 +1466,8 @@ static void addExtendedLibmvecX86Rows(std::vector<VecDesc> &Table) {
     for (const Variant &V : Variants) {
       /* LLVM's table already has b and d rows for the first six */
       if (F.MinGlibc == 0 && !V.OnlyE)
+        continue;
+      if (V.OnlyE && !HaveAVX512)
         continue;
       for (int Dbl = 0; Dbl < 2; ++Dbl) {
         unsigned VF = Dbl ? V.VFd : V.VFf;
