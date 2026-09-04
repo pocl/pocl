@@ -1122,16 +1122,19 @@ pocl_cpu_get_ptr (struct pocl_argument *arg, unsigned global_mem_id)
 }
 
 void
-pocl_reset_indirect_ptrs (cl_kernel kernel, void **ptrs, size_t n)
+pocl_reset_indirect_ptrs (cl_kernel kernel, cl_kernel_exec_info param_name,
+                          void **ptrs, size_t n)
 {
   if (kernel->indirect_raw_ptrs != NULL)
     {
       struct _pocl_ptr_list_node *n, *tmp;
       DL_FOREACH_SAFE (kernel->indirect_raw_ptrs, n, tmp)
         {
+          if (n->param_name != param_name)
+            continue;
+          DL_DELETE (kernel->indirect_raw_ptrs, n);
           free (n);
         }
-      kernel->indirect_raw_ptrs = NULL;
     }
 
   for (size_t i = 0; i < n; ++i)
@@ -1153,6 +1156,7 @@ pocl_reset_indirect_ptrs (cl_kernel kernel, void **ptrs, size_t n)
       struct _pocl_ptr_list_node *node
         = malloc (sizeof (struct _pocl_ptr_list_node));
       node->ptr = ptr;
+      node->param_name = param_name;
 
       DL_APPEND (kernel->indirect_raw_ptrs, node);
       POCL_MSG_PRINT_MEMORY ("Set an indirect SVM/USM ptr %p\n", node->ptr);
