@@ -1343,6 +1343,108 @@ void pocl_llvm_free_llvm_irs(cl_program program, unsigned device_i) {
   }
 }
 
+#ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
+#include "pocl_vecmath_deny.h"
+
+/* Split a comma-separated environment value into names. */
+static void splitNames(const char *Value, llvm::StringSet<> &Out) {
+  if (Value == nullptr)
+    return;
+  llvm::StringRef S(Value);
+  while (!S.empty()) {
+    auto Parts = S.split(',');
+    llvm::StringRef Name = Parts.first.trim();
+    if (!Name.empty())
+      Out.insert(Name);
+    S = Parts.second;
+  }
+}
+
+/* Build a TargetLibraryInfoImpl with the vector library's function table
+ * minus the functions that are denied for this library (compiled-in
+ * table, see pocl_vecmath_deny.h) plus POCL_VECMATH_DENY, minus
+ * POCL_VECMATH_ALLOW. Denied functions keep their scalar implementation.
+ *
+ * The tables come from LLVM's own VecFuncs.def, included with its default
+ * TLI_DEFINE_VECFUNC so the initializer shape matches this LLVM version.
+ * Only the library/arch combinations LLVM itself supports are covered;
+ * anything else falls back to the unfiltered createTLII. */
+static TargetLibraryInfoImpl *
+createFilteredTLII(const llvm::Triple &TT, llvm::driver::VectorLibrary VecLib) {
+  std::vector<VecDesc> Table;
+  const char *const *Deny = nullptr;
+  size_t NumDeny = 0;
+
+  switch (VecLib) {
+  case llvm::driver::VectorLibrary::LIBMVEC: {
+    if (TT.getArch() == llvm::Triple::x86_64) {
+      const VecDesc Funcs[] = {
+#define TLI_DEFINE_LIBMVEC_X86_VECFUNCS
+#include "llvm/Analysis/VecFuncs.def"
+      };
+      Table.assign(std::begin(Funcs), std::end(Funcs));
+    }
+    /* On x86 PoCL may point the libmvec table at SLEEF's GNU-ABI build
+     * (-DLIBMVEC=libsleefgnuabi.so); the deny list depends on which
+     * library actually answers. */
+#ifdef HOST_CPU_LIBMVEC_LIBRARY
+    if (llvm::StringRef(HOST_CPU_LIBMVEC_LIBRARY).contains("sleef")) {
+      Deny = PoclVecMathDenySleef;
+      NumDeny = std::size(PoclVecMathDenySleef);
+    } else
+#endif
+    {
+      Deny = PoclVecMathDenyLibmvec;
+      NumDeny = std::size(PoclVecMathDenyLibmvec);
+    }
+    break;
+  }
+  case llvm::driver::VectorLibrary::SLEEF: {
+    if (TT.isAArch64()) {
+      const VecDesc Funcs[] = {
+#define TLI_DEFINE_SLEEFGNUABI_VF2_VECFUNCS
+#include "llvm/Analysis/VecFuncs.def"
+#define TLI_DEFINE_SLEEFGNUABI_VF4_VECFUNCS
+#include "llvm/Analysis/VecFuncs.def"
+#define TLI_DEFINE_SLEEFGNUABI_SCALABLE_VECFUNCS
+#include "llvm/Analysis/VecFuncs.def"
+      };
+      Table.assign(std::begin(Funcs), std::end(Funcs));
+    }
+    Deny = PoclVecMathDenySleef;
+    NumDeny = std::size(PoclVecMathDenySleef);
+    break;
+  }
+  default:
+    break;
+  }
+
+  if (Table.empty())
+    return llvm::driver::createTLII(TT, VecLib);
+
+  llvm::StringSet<> DenySet, AllowSet;
+  for (size_t i = 0; i < NumDeny; ++i)
+    DenySet.insert(Deny[i]);
+  splitNames(pocl_get_string_option("POCL_VECMATH_DENY", nullptr), DenySet);
+  splitNames(pocl_get_string_option("POCL_VECMATH_ALLOW", nullptr), AllowSet);
+
+  std::vector<VecDesc> Kept;
+  Kept.reserve(Table.size());
+  for (const VecDesc &D : Table) {
+    llvm::StringRef Name = D.getScalarFnName();
+    if (DenySet.contains(Name) && !AllowSet.contains(Name)) {
+      POCL_MSG_PRINT_LLVM("vecmath: not vectorizing %s\n", Name.str().c_str());
+      continue;
+    }
+    Kept.push_back(D);
+  }
+
+  auto *TLII = new TargetLibraryInfoImpl(TT);
+  TLII->addVectorizableFunctions(Kept);
+  return TLII;
+}
+#endif
+
 static TargetLibraryInfoImpl *initPassManagerForCodeGen(legacy::PassManager &PM,
                                                         const char* TTriple,
                                                         cl_device_type DevType) {
@@ -1353,16 +1455,15 @@ static TargetLibraryInfoImpl *initPassManagerForCodeGen(legacy::PassManager &PM,
 
 #ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
   if (DevType == CL_DEVICE_TYPE_CPU) {
-    TLII =
-        llvm::driver::createTLII(DevTriple,
+    TLII = createFilteredTLII(DevTriple,
 #ifdef ENABLE_HOST_CPU_VECTORIZE_LIBMVEC
-                                 driver::VectorLibrary::LIBMVEC);
+                              driver::VectorLibrary::LIBMVEC);
 #endif
 #ifdef ENABLE_HOST_CPU_VECTORIZE_SLEEF
-                                 driver::VectorLibrary::SLEEF);
+                              driver::VectorLibrary::SLEEF);
 #endif
 #ifdef ENABLE_HOST_CPU_VECTORIZE_SVML
-                                 driver::VectorLibrary::SVML);
+                              driver::VectorLibrary::SVML);
 #endif
     TLIPass = new TargetLibraryInfoWrapperPass(*TLII);
   } else
