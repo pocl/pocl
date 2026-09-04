@@ -1306,9 +1306,12 @@ endif()
 # and for the kernel-library swap.
 #  *_ENTRIES: LLVM scalar names (libm and intrinsic) for the TLI filter
 #  *_FUNCS:   OpenCL builtin names excluded from the Clang-builtin swap
-set(POCL_VECMATH_DENY_LIBMVEC_ENTRIES "logf;llvm.log.f32")
+set(POCL_VECMATH_DENY_LIBMVEC_ENTRIES "logf;llvm.log.f32;cbrtf")
+# log is also kept off the Clang-builtin swap: scalar logf is slower than the
+# SLEEF source. cbrt stays swapped: only float is denied (scalar glibc cbrtf
+# is still faster than the SLEEF source) and double cbrt vectorizes fine.
 set(POCL_VECMATH_DENY_LIBMVEC_FUNCS "log")
-set(POCL_VECMATH_DENY_LIBMVEC_NOTE "glibc 2.39, x86-64 AVX2, LLVM 22.1.8, 2026-09-04: float log 3.009 ULP vs 3 (CTS width 1 confirms)")
+set(POCL_VECMATH_DENY_LIBMVEC_NOTE "glibc 2.39, x86-64 AVX2, LLVM 22.1.8, 2026-09-04: float log 3.009 ULP vs 3 (CTS width 1 confirms); float cbrt 2.73 ULP vs 2")
 set(POCL_VECMATH_DENY_SLEEF_ENTRIES "")
 set(POCL_VECMATH_DENY_SLEEF_FUNCS "")
 set(POCL_VECMATH_DENY_SLEEF_NOTE "SLEEF ${HOST_CPU_VECMATH_SLEEF_VERSION_NUM}: nothing measured over the bound")
