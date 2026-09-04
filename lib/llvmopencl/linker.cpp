@@ -1056,6 +1056,63 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
   convertAddrSpaceOperator(Program->getFunction("__to_private"), Log);
   convertAddrSpaceOperator(Program->getFunction("__to_global"), Log);
 
+#ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
+  // libm functions the kernel library maps to Clang builtins that have no
+  // LLVM intrinsic. They stay as declarations here; the loop vectorizer
+  // turns them into vector-library calls and the remainder resolves
+  // against libm when the work-group function is loaded. This is the
+  // union of what VECMATH_SWAP_TRANSCENDENTAL in lib/kernel/host/
+  // CMakeLists.txt can contain (float and double names); keep in sync.
+  static const llvm::StringSet<> LibmDecls = {
+      "cbrtf",  "cbrt",  "erff",   "erf",   "erfcf",  "erfc",
+      "expm1f", "expm1", "log1pf", "log1p", "hypotf", "hypot",
+      "acoshf", "acosh", "asinhf", "asinh", "atanhf", "atanh",
+      "acosf",  "acos",  "asinf",  "asin",  "atanf",  "atan",
+      "atan2f", "atan2", "coshf",  "cosh",  "sinhf",  "sinh",
+      "tanhf",  "tanh",  "exp10f", "exp10", "exp2f",  "exp2",
+      "log2f",  "log2",  "log10f", "log10"};
+#define POCL_IS_LIBM_DECL(N) LibmDecls.contains(N)
+
+  // Kernels are compiled with -fno-builtin and the kernel library with
+  // -ffreestanding, so every function carries "no-builtins" and every
+  // call 'nobuiltin'. TargetLibraryInfo then disables all library
+  // knowledge for the function, and the vectorizer cannot map the libm
+  // calls above to their vector-library variants. Move the restriction
+  // from the function to the individual call sites: every call keeps
+  // 'nobuiltin' except the accepted libm calls, which become 'builtin'.
+  // Only for CPU devices, whose JIT resolves libm and libc symbols: with
+  // the function attribute gone, TLI-driven passes may also form libc
+  // calls (memset, memcpy) inside a kernel. Done on every link path,
+  // including the lazily linked JIT one (ErrorOnUnresolved false).
+  if (ClDev->type == CL_DEVICE_TYPE_CPU) {
+    for (auto &F : *Program) {
+      if (F.isDeclaration())
+        continue;
+      bool NoBuiltinsFn = F.hasFnAttribute("no-builtins");
+      for (auto &BB : F) {
+        for (auto &I : BB) {
+          auto *CB = dyn_cast<CallBase>(&I);
+          if (!CB)
+            continue;
+          Function *Callee = CB->getCalledFunction();
+          if (CB->hasFnAttr("no-builtins"))
+            CB->removeFnAttr("no-builtins");
+          if (Callee && LibmDecls.contains(Callee->getName())) {
+            CB->removeFnAttr(Attribute::NoBuiltin);
+            CB->addFnAttr(Attribute::Builtin);
+          } else if (NoBuiltinsFn && !(Callee && Callee->isIntrinsic())) {
+            CB->addFnAttr(Attribute::NoBuiltin);
+          }
+        }
+      }
+      if (NoBuiltinsFn)
+        F.removeFnAttr("no-builtins");
+    }
+  }
+#else
+#define POCL_IS_LIBM_DECL(N) false
+#endif
+
   if (ErrorOnUnresolved) {
     // check all function declarations in the program
     // *after* we have linked functions from the library
@@ -1071,24 +1128,6 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
     bool FoundAllUndefined = true;
     // this one is a handled with a special pocl LLVM pass
     StringRef pocl_sampler_handler("__translate_sampler_initializer");
-
-#ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
-    // libm functions the kernel library maps to Clang builtins that have no
-    // LLVM intrinsic. They stay as declarations here; the loop vectorizer
-    // turns them into vector-library calls and the remainder resolves
-    // against libm when the work-group function is loaded.
-    static const llvm::StringSet<> LibmDecls = {
-        "cbrtf",  "cbrt",  "erff",   "erf",   "erfcf",  "erfc",
-        "expm1f", "expm1", "log1pf", "log1p", "hypotf", "hypot",
-        "acoshf", "acosh", "asinhf", "asinh", "atanhf", "atanh",
-        "acosf",  "acos",  "asinf",  "asin",  "atanf",  "atan",
-        "atan2f", "atan2", "coshf",  "cosh",  "sinhf",  "sinh",
-        "tanhf",  "tanh",  "exp10f", "exp10", "exp2f",  "exp2",
-        "log2f",  "log2",  "log10f", "log10"};
-#define POCL_IS_LIBM_DECL(N) LibmDecls.contains(N)
-#else
-#define POCL_IS_LIBM_DECL(N) false
-#endif
 
     if (!modIsNvptx(Program)) {
       for (auto &DeclIter : DeclaredFunctions) {
@@ -1116,6 +1155,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
     if (!FoundAllUndefined)
       return -1;
   }
+#undef POCL_IS_LIBM_DECL
 
   shared_copy(Program, Lib, Log, vvm);
 
