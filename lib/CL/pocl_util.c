@@ -1726,6 +1726,42 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
     event->time_end = pocl_gettimemono_ns ();
 
   struct pocl_device_ops *ops = cq->device->ops;
+
+  /* Retire this command-buffer submission BEFORE publishing the terminal
+   * status. pocl_pthread_wait_event tests `event->status > CL_COMPLETE` before
+   * waiting on its condition variable, so a thread entering clWaitForEvents
+   * between the status write and the retire never waits at all, and its next
+   * clEnqueueCommandBufferKHR is rejected by pocl_cmdbuf_is_ready. Waiting on
+   * the completion event and re-enqueueing is conformant: in the 0.9.6 state
+   * machine pocl advertises, a buffer is Pending "until completion, at which
+   * point it moves back to the Executable state", and completion is exactly
+   * what the application waited for.
+   *
+   * Only the bookkeeping moves up; clReleaseCommandBufferKHR stays below. The
+   * two take DIFFERENT locks, and keeping them apart is required:
+   *
+   *   - command_buffer->mutex (the buffer's internal state) is a leaf: no event
+   *     or queue lock is taken under it (cf. pocl_cmdbuf_record_command,
+   *     pocl_check_syncpoint_wait_list, clEnqueueCommandBufferKHR), so taking
+   *     it under the event lock adds no lock-order edge -- and holding that
+   *     event lock is what orders the retire against the `event->status` write.
+   *   - clReleaseCommandBufferKHR takes the buffer's OBJECT lock and, on the
+   *     last reference, calls PoCLReleaseCommandQueue(), whose first statement
+   *     is POCL_LOCK_OBJ (command_queue) -- the queue lock this function is
+   *     still holding (cq == event->queue). Those are non-recursive, so hoisting
+   *     the release up here would deadlock, not merely widen a critical
+   *     section. */
+  if (event->reset_command_buffer)
+    {
+      assert (event->command_buffer);
+      POCL_LOCK (event->command_buffer->mutex);
+      assert (event->command_buffer->pending > 0);
+      event->command_buffer->pending -= 1;
+      if (event->command_buffer->pending == 0)
+        event->command_buffer->state = CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR;
+      POCL_UNLOCK (event->command_buffer->mutex);
+    }
+
   event->status = status;
   if (cq->device->ops->update_event)
     ops->update_event (cq->device, event);
@@ -1783,15 +1819,15 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
     pocl_free_event_node (node);
   }
 
-  /* NOTE this must be called before we call broadcast, see above */
+  /* NOTE this must be called before we call broadcast, see above.
+   * The retire moved earlier (see the `event->status` write for why the
+   * bookkeeping went and this did not); here we only drop the reference
+   * clEnqueueCommandBufferKHR took, which on the last one re-enters
+   * POCL_LOCK_OBJ on this event's queue -- so it stays out here, with the
+   * event and queue locks released. */
   if (event->reset_command_buffer)
   {
     assert (command_buffer);
-    POCL_LOCK (command_buffer->mutex);
-    command_buffer->pending -= 1;
-    if (command_buffer->pending == 0)
-        command_buffer->state = CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR;
-    POCL_UNLOCK (command_buffer->mutex);
     POname (clReleaseCommandBufferKHR) (command_buffer);
   }
 

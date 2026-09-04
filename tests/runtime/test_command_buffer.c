@@ -247,6 +247,37 @@ main (int _argc, char **_argv)
       CHECK_CL_ERROR (clReleaseEvent (command_buf_event));
     }
 
+  /* REGRESSION: sustained replay. Waiting on the completion event before
+     re-enqueueing means the previous submission is in CL_COMPLETE, so this is
+     NOT simultaneous use ("submitted ... without a prerequisite on all the
+     previous submissions ... which are not in the CL_COMPLETE state") and every
+     iteration must succeed.
+
+     The host work between enqueue and wait is load-bearing. Without it the
+     application is already blocked in clWaitForEvents when the buffer
+     completes and is woken from notify_event_finished, which runs after the
+     command-buffer is retired. With it, the application can arrive at
+     clWaitForEvents after the event is already CL_COMPLETE -- and pocl used to
+     retire only after publishing that status, so the wait returned immediately
+     and the next enqueue failed CL_INVALID_OPERATION at a random iteration. */
+  for (unsigned rep = 0; rep < 2000; ++rep)
+    {
+      cl_event replay_event;
+      cl_int replay_err = ext.clEnqueueCommandBufferKHR (
+        0, NULL, command_buffer, 0, NULL, &replay_event);
+      if (replay_err != CL_SUCCESS)
+        {
+          printf ("replay %u failed: %i\n", rep, replay_err);
+          TEST_ASSERT (replay_err == CL_SUCCESS);
+        }
+      volatile long sink = 0;
+      for (long z = 0; z < 20000; ++z)
+        sink += z;
+      (void)sink;
+      CHECK_CL_ERROR (clWaitForEvents (1, &replay_event));
+      CHECK_CL_ERROR (clReleaseEvent (replay_event));
+    }
+
   CHECK_CL_ERROR (ext.clReleaseCommandBufferKHR (command_buffer));
   CHECK_CL_ERROR (clReleaseCommandQueue (command_queue));
 
