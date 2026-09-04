@@ -1784,6 +1784,25 @@ void populateModulePM([[maybe_unused]] void *Passes, void *Module,
 
   PassBuilder PB(TM, PTO, std::nullopt, &PIC);
 
+#ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
+  /* This is the pipeline that runs the standard optimizations (and the
+   * loop vectorizer) on CPU work-group functions. Give it the filtered
+   * vector-library table so libm calls can be vectorized into their
+   * vector variants; registering first makes the default registration in
+   * registerFunctionAnalyses() a no-op. Only for host CPU targets. */
+  std::unique_ptr<TargetLibraryInfoImpl> VecTLII;
+  if (TM && (TM->getTargetTriple().getArch() == llvm::Triple::x86_64 ||
+             TM->getTargetTriple().isAArch64())) {
+    VecTLII.reset(createFilteredTLII(TM->getTargetTriple(), poclVectorLibrary()));
+    TargetLibraryInfoImpl *TLIIRaw = VecTLII.get();
+    FAM.registerPass([=] { return TargetLibraryAnalysis(*TLIIRaw); });
+    PB.registerAnalysisRegistrationCallback(
+        [TLIIRaw](::llvm::FunctionAnalysisManager &F) {
+          F.registerPass([=] { return TargetLibraryAnalysis(*TLIIRaw); });
+        });
+  }
+#endif
+
   // Register all the basic analyses with the managers.
   PB.registerModuleAnalyses(MAM);
   PB.registerCGSCCAnalyses(CGAM);
