@@ -2014,6 +2014,8 @@ typedef struct _pocl_ptr_list_node pocl_ptr_list;
 struct _pocl_ptr_list_node
 {
   void *ptr;
+  /* The clSetKernelExecInfo() parameter that registered this pointer. */
+  cl_kernel_exec_info param_name;
   struct _pocl_ptr_list_node *prev, *next;
 };
 

@@ -34,6 +34,7 @@ set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_divergent_implicit_barrier_entry
      test_uniform_implicit_barrier_entry
      test_localmem_load_across_barrier
+     test_indirect_ptrs
      test_usm_indirect_ptrs
 )
 foreach(PROG ${C_PROGRAMS_TO_BUILD})
@@ -42,6 +43,8 @@ foreach(PROG ${C_PROGRAMS_TO_BUILD})
   add_symlink_to_built_opencl_dynlib("${PROG}")
 endforeach()
 
+target_include_directories(test_indirect_ptrs
+  PRIVATE $<TARGET_PROPERTY:${POCL_LIBRARY_NAME},INCLUDE_DIRECTORIES>)
 
 set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_for_with_var_iteration_count test_id_dependent_computation
@@ -162,6 +165,8 @@ add_test_pocl(NAME "regression/divergent_implicit_barrier_entry" WORKITEM_HANDLE
 add_test_pocl(NAME "regression/uniform_implicit_barrier_entry" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_uniform_implicit_barrier_entry")
 
 add_test_pocl(NAME "regression/localmem_load_across_barrier" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_localmem_load_across_barrier")
+
+add_test_pocl(NAME "regression/test_indirect_ptrs" COMMAND "test_indirect_ptrs")
 
 add_test_pocl(NAME "regression/test_usm_indirect_ptrs" COMMAND "test_usm_indirect_ptrs")
 
