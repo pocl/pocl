@@ -1113,13 +1113,28 @@ if(ENABLE_CONFORMANCE AND (NOT ENABLE_SLEEF))
   message(FATAL_ERROR "conformance needs enabled SLEEF")
 endif()
 
-# CONFORMANCE + VECTORIZE_BUILTINS is disabled b/c we cannot guarantee ULP of the vectorized functions
+# Vectorized math libraries. Functions measured to exceed the OpenCL ULP
+# bounds for a given library are kept scalar by the deny lists in
+# lib/CL/pocl_vecmath_deny.h, so libmvec and SLEEF may be used with
+# ENABLE_CONFORMANCE as well; there they are opt-in (default OFF) until a
+# full CTS run with them is on record. SVML is closed and unmeasured, so it
+# stays incompatible with ENABLE_CONFORMANCE.
 set(ENABLE_HOST_CPU_VECTORIZE_BUILTINS OFF)
-if(ENABLE_LLVM AND ENABLE_HOST_CPU_DEVICES AND (NOT ENABLE_CONFORMANCE) AND (LLVM_VERSION_MAJOR GREATER_EQUAL 19))
+if(ENABLE_LLVM AND ENABLE_HOST_CPU_DEVICES AND (LLVM_VERSION_MAJOR GREATER_EQUAL 19))
+  if(ENABLE_CONFORMANCE)
+    set(_VECMATH_DEFAULT_SLEEF OFF)
+    set(_VECMATH_DEFAULT_LIBMVEC OFF)
+  else()
+    set(_VECMATH_DEFAULT_SLEEF ${HAVE_SLEEF})
+    set(_VECMATH_DEFAULT_LIBMVEC ${HAVE_LIBMVEC})
+  endif()
   # these are experimental options and may change in future
-  option(ENABLE_HOST_CPU_VECTORIZE_SLEEF "vectorize builtins with SLEEF (ARM only)" ${HAVE_SLEEF})
-  option(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC "vectorize builtins with LIBMVEC" ${HAVE_LIBMVEC})
+  option(ENABLE_HOST_CPU_VECTORIZE_SLEEF "vectorize builtins with SLEEF (ARM only)" ${_VECMATH_DEFAULT_SLEEF})
+  option(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC "vectorize builtins with LIBMVEC" ${_VECMATH_DEFAULT_LIBMVEC})
   option(ENABLE_HOST_CPU_VECTORIZE_SVML "vectorize builtins with SVML" ${HAVE_LIBSVML})
+  if(ENABLE_CONFORMANCE AND ENABLE_HOST_CPU_VECTORIZE_SVML)
+    message(FATAL_ERROR "ENABLE_HOST_CPU_VECTORIZE_SVML has no ULP deny list and cannot be combined with ENABLE_CONFORMANCE")
+  endif()
 
   if(ENABLE_HOST_CPU_VECTORIZE_SLEEF
      OR ENABLE_HOST_CPU_VECTORIZE_LIBMVEC

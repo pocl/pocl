@@ -262,7 +262,7 @@ list(APPEND SOURCES_WITH_SLEEF "host/addrspace_operators.ll" "host/addrspace_ope
 #    only trades SLEEF's inline, vectorizable bitcode for a scalar libm call
 #    with different numerics (and, for pown, an llvm.powi expansion that is far
 #    outside the ULP bound), so those stay on the SLEEF/libclc sources.
-if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS) # implies CONFORMANCE=OFF
+if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS)
   set(VECMATH_SWAP_EXACT ceil fabs fdim fma fmax fmin floor fmod frexp
       isfinite isinf isnan isnormal ldexp rint round sqrt trunc)
   # Transcendentals with vector-library rows (LLVM 18-23 VecFuncs.def):
@@ -297,7 +297,7 @@ if(HOST_CPU_ENABLE_CL_KHR_FP16)
       asinhf16.cl   atanpif16.cl   expf16.cl      log1pf16.cl    sincosf16.cl  tanhf16.cl
       asinpif16.cl  expm1f16.cl    log2f16.cl     sinf16.cl     tanpif16.cl
       additionalf16.cl  promotedf16.cl)
-  if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS) # implies CONFORMANCE=OFF
+  if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS)
     # The swapped generic builtins provide FP16 overloads where Clang has a
     # native FP16 builtin, so drop the CORE-Math file for each swapped
     # transcendental. additionalf16.cl overlaps with the swapped exact
