@@ -99,12 +99,17 @@ atan2pi (half a, half b)
   return (half)atan2pi ((float)a, (float)b);
 }
 DEFINE_FP16_EXPR_V_VV (atan2pi)
+/* When atan2 is swapped to the Clang builtin (vectorized math builds),
+   the generic atan2.cl already defines the half overloads via
+   __builtin_atan2f16, so skip these to avoid a duplicate definition. */
+#ifndef POCL_VECMATH_SWAP_atan2
 half _CL_OVERLOADABLE
 atan2 (half a, half b)
 {
   return (half)atan2 ((float)a, (float)b);
 }
 DEFINE_FP16_EXPR_V_VV (atan2)
+#endif
 
 /*********************************************************************************/
 

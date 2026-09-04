@@ -439,6 +439,12 @@ set(DEVICE_C_FLAGS "-DPOCL_DEVICE_ADDRESS_BITS=${HOST_DEVICE_ADDRESS_BITS}")
 set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${HOST_DEVICE_VERSION_3DIGIT} -DPOCL_DEVICE_ADDRESS_BITS=${HOST_DEVICE_ADDRESS_BITS}")
 set(DEVICE_CL_FLAGS "${DEVICE_CL_FLAGS} ${HOST_DEVICE_EXTENSION_DEFINES}")
 separate_arguments(DEVICE_CL_FLAGS)
+# Tell the kernel library sources which builtins are swapped to Clang
+# builtins, so sources providing fallback overloads (core-math/promotedf16.cl)
+# can skip the ones the generic version now defines.
+foreach(F IN LISTS VECMATH_SWAP_TRANSCENDENTAL)
+  list(APPEND DEVICE_CL_FLAGS "-DPOCL_VECMATH_SWAP_${F}")
+endforeach()
 separate_arguments(DEVICE_C_FLAGS)
 
 function(x86_distro_variant_to_flags VARIANT OUT_LLC_FLAGS OUT_CLANG_FLAGS)
