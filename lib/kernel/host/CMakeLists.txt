@@ -265,19 +265,41 @@ list(APPEND SOURCES_WITH_SLEEF "host/addrspace_operators.ll" "host/addrspace_ope
 if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS)
   set(VECMATH_SWAP_EXACT ceil fabs fdim fma fmax fmin floor fmod frexp
       isfinite isinf isnan isnormal ldexp rint round sqrt trunc)
-  # Transcendentals with vector-library rows (LLVM 18-23 VecFuncs.def):
-  #  libmvec / SLEEF-gnuabi on x86-64: sin cos tan exp log pow
-  #  SVML: the above plus exp2 log2 log10 (sqrt is exact, already swapped)
+  # Transcendentals with vector-library rows:
+  #  libmvec / SLEEF-gnuabi on x86-64: sin cos tan exp log pow (LLVM's table),
+  #    plus, for glibc >= 2.35, the rows PoCL adds itself (pocl_llvm_wg.cc)
+  #  SVML: LLVM's table adds exp2 log2 log10
   #  libmvec / SLEEF on AArch64: a much wider set
   set(VECMATH_SWAP_TRANSCENDENTAL sin cos tan exp log pow)
   if(ENABLE_HOST_CPU_VECTORIZE_SVML)
     list(APPEND VECMATH_SWAP_TRANSCENDENTAL exp2 log2 log10)
   endif()
+  # (the extended rows exist only for x86-64 glibc, lib/CL/pocl_llvm_wg.cc)
+  if(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC AND X86_64 AND (HOST_CPU_GLIBC_VERSION_NUM GREATER_EQUAL 235))
+    list(APPEND VECMATH_SWAP_TRANSCENDENTAL acos acosh asin asinh atan atan2 atanh
+         cbrt cosh erf erfc exp10 exp2 expm1 hypot log10 log1p log2 sinh tanh)
+  endif()
   if(ARM64 OR (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64"))
     list(APPEND VECMATH_SWAP_TRANSCENDENTAL acos asin atan cosh sinh tanh
          exp2 exp10 log2 log10)
   endif()
+  # A function denied for the library in use is not swapped: a scalar libm
+  # call would be slower than the SLEEF/libclc source it replaces.
+  if(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC AND LIBMVEC_IS_SLEEF)
+    set(_VECMATH_DENIED ${POCL_VECMATH_DENY_SLEEF_FUNCS})
+  elseif(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
+    set(_VECMATH_DENIED ${POCL_VECMATH_DENY_LIBMVEC_FUNCS})
+  elseif(ENABLE_HOST_CPU_VECTORIZE_SLEEF)
+    set(_VECMATH_DENIED ${POCL_VECMATH_DENY_SLEEF_FUNCS})
+  else()
+    set(_VECMATH_DENIED "")
+  endif()
+  foreach(F IN LISTS _VECMATH_DENIED)
+    list(REMOVE_ITEM VECMATH_SWAP_TRANSCENDENTAL ${F})
+  endforeach()
+  list(REMOVE_DUPLICATES VECMATH_SWAP_TRANSCENDENTAL)
   set(VECMATH_SWAP ${VECMATH_SWAP_EXACT} ${VECMATH_SWAP_TRANSCENDENTAL})
+  message(STATUS "CPU kernel library: Clang-builtin swap for ${VECMATH_SWAP_TRANSCENDENTAL}")
 
   foreach(F IN LISTS VECMATH_SWAP)
     list(REMOVE_ITEM SOURCES_WITH_SLEEF "libclc-pocl/${F}.cl" "sleef-pocl/${F}.cl")
@@ -303,9 +325,16 @@ if(HOST_CPU_ENABLE_CL_KHR_FP16)
     # transcendental. additionalf16.cl overlaps with the swapped exact
     # operations (ldexp, ilogb, ...) and is dropped too. promotedf16.cl
     # covers what neither provides (pown and friends) and stays.
+    # Clang has native FP16 builtins for these (checked against Clang 22);
+    # the generic source only defines the half overload when
+    # __builtin_<f>f16 exists, so only these lose their CORE-Math file.
+    set(VECMATH_F16_BUILTIN sin cos tan exp log pow acos asin atan atan2 cosh
+        exp10 exp2 log10 log2 sinh tanh)
     set(COREMATH_F16 ${COREMATH_F16_ALL})
     foreach(F IN LISTS VECMATH_SWAP_TRANSCENDENTAL)
-      list(REMOVE_ITEM COREMATH_F16 "${F}f16.cl")
+      if(F IN_LIST VECMATH_F16_BUILTIN)
+        list(REMOVE_ITEM COREMATH_F16 "${F}f16.cl")
+      endif()
     endforeach()
     list(REMOVE_ITEM COREMATH_F16 additionalf16.cl)
   else()

@@ -28,6 +28,8 @@
 
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <deque>
+#include <cstdio>
 #include <llvm/ADT/StringRef.h>
 #include <llvm/ADT/StringSet.h>
 #include <llvm/ADT/Twine.h>
@@ -1345,6 +1347,9 @@ void pocl_llvm_free_llvm_irs(cl_program program, unsigned device_i) {
 
 #ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
 #include "pocl_vecmath_deny.h"
+#ifdef __GLIBC__
+#include <gnu/libc-version.h>
+#endif
 
 /* Split a comma-separated environment value into names. */
 static void splitNames(const char *Value, llvm::StringSet<> &Out) {
@@ -1360,15 +1365,91 @@ static void splitNames(const char *Value, llvm::StringSet<> &Out) {
   }
 }
 
+static VecDesc makeVecDesc(const char *Scalar, std::string Vector, unsigned VF,
+                           std::string Prefix) {
+  /* The strings must outlive the TLII; keep them in a static pool. */
+  static std::deque<std::string> Pool;
+  Pool.push_back(std::move(Vector));
+  llvm::StringRef V = Pool.back();
+  Pool.push_back(std::move(Prefix));
+  llvm::StringRef P = Pool.back();
+#if LLVM_MAJOR >= 20
+  return VecDesc(Scalar, V, ElementCount::getFixed(VF), false, P, std::nullopt);
+#else
+  return VecDesc(Scalar, V, ElementCount::getFixed(VF), false, P);
+#endif
+}
+
+/* Runtime glibc version as MAJOR*100+MINOR, or 0 when not glibc. */
+static unsigned runtimeGlibcVersion() {
+#ifdef __GLIBC__
+  const char *V = gnu_get_libc_version();
+  unsigned Major = 0, Minor = 0;
+  if (V && sscanf(V, "%u.%u", &Major, &Minor) == 2)
+    return Major * 100 + Minor;
+#endif
+  return 0;
+}
+
+/* Rows for the x86-64 libmvec functions beyond LLVM's own VecFuncs.def table.
+ * glibc >= 2.35 exports vector versions of most of libm under the GNU vector
+ * ABI names; LLVM (up to 23) lists only sin cos tan exp log pow, and no
+ * AVX-512 (_ZGVe) variants even for those. Rows are added for the SSE (b),
+ * AVX2 (d) and AVX-512 (e) variants; the loop vectorizer only uses a row
+ * whose vectorization factor it chose, so rows for absent ISAs are inert. */
+static void addExtendedLibmvecX86Rows(std::vector<VecDesc> &Table) {
+  struct Fn { const char *Name; const char *Intrinsic; unsigned Args; unsigned MinGlibc; };
+  static const Fn Fns[] = {
+      /* in LLVM's table too, but without AVX-512 rows */
+      {"sin", "sin", 1, 0},     {"cos", "cos", 1, 0},     {"tan", nullptr, 1, 0},
+      {"exp", "exp", 1, 0},     {"log", "log", 1, 0},     {"pow", "pow", 2, 0},
+      /* glibc 2.35+ */
+      {"acos", "acos", 1, 235},   {"acosh", nullptr, 1, 235}, {"asin", "asin", 1, 235},
+      {"asinh", nullptr, 1, 235}, {"atan", "atan", 1, 235},   {"atan2", "atan2", 2, 235},
+      {"atanh", nullptr, 1, 235}, {"cbrt", nullptr, 1, 235},  {"cosh", "cosh", 1, 235},
+      {"erf", nullptr, 1, 235},   {"erfc", nullptr, 1, 235},  {"exp10", "exp10", 1, 235},
+      {"exp2", "exp2", 1, 235},   {"expm1", nullptr, 1, 235}, {"hypot", nullptr, 2, 235},
+      {"log10", "log10", 1, 235}, {"log1p", nullptr, 1, 235}, {"log2", "log2", 1, 235},
+      {"sinh", "sinh", 1, 235},   {"tanh", "tanh", 1, 235},
+  };
+  unsigned Glibc = runtimeGlibcVersion();
+  struct Variant { char Isa; unsigned VFf; unsigned VFd; bool OnlyE; };
+  static const Variant Variants[] = {{'b', 4, 2, false}, {'d', 8, 4, false}, {'e', 16, 8, true}};
+  for (const Fn &F : Fns) {
+    if (F.MinGlibc && Glibc < F.MinGlibc)
+      continue;
+    std::string Params(F.Args, 'v');
+    for (const Variant &V : Variants) {
+      /* LLVM's table already has b and d rows for the first six */
+      if (F.MinGlibc == 0 && !V.OnlyE)
+        continue;
+      for (int Dbl = 0; Dbl < 2; ++Dbl) {
+        unsigned VF = Dbl ? V.VFd : V.VFf;
+        std::string Scalar = std::string(F.Name) + (Dbl ? "" : "f");
+        std::string Vector = std::string("_ZGV") + V.Isa + "N" + std::to_string(VF) + Params + "_" + Scalar;
+        std::string Prefix = "_ZGV_LLVM_N" + std::to_string(VF) + Params;
+        static std::deque<std::string> Names;
+        Names.push_back(Scalar);
+        Table.push_back(makeVecDesc(Names.back().c_str(), Vector, VF, Prefix));
+        if (F.Intrinsic) {
+          Names.push_back(std::string("llvm.") + F.Intrinsic + (Dbl ? ".f64" : ".f32"));
+          Table.push_back(makeVecDesc(Names.back().c_str(), Vector, VF, Prefix));
+        }
+      }
+    }
+  }
+}
+
 /* Build a TargetLibraryInfoImpl with the vector library's function table
  * minus the functions that are denied for this library (compiled-in
  * table, see pocl_vecmath_deny.h) plus POCL_VECMATH_DENY, minus
  * POCL_VECMATH_ALLOW. Denied functions keep their scalar implementation.
  *
  * The tables come from LLVM's own VecFuncs.def, included with its default
- * TLI_DEFINE_VECFUNC so the initializer shape matches this LLVM version.
- * Only the library/arch combinations LLVM itself supports are covered;
- * anything else falls back to the unfiltered createTLII. */
+ * TLI_DEFINE_VECFUNC so the initializer shape matches this LLVM version,
+ * plus PoCL's extended x86 libmvec rows. Only the library/arch
+ * combinations LLVM itself supports are covered; anything else falls back
+ * to the unfiltered createTLII. */
 static TargetLibraryInfoImpl *
 createFilteredTLII(const llvm::Triple &TT, llvm::driver::VectorLibrary VecLib) {
   std::vector<VecDesc> Table;
@@ -1386,7 +1467,7 @@ createFilteredTLII(const llvm::Triple &TT, llvm::driver::VectorLibrary VecLib) {
     }
     /* On x86 PoCL may point the libmvec table at SLEEF's GNU-ABI build
      * (-DLIBMVEC=libsleefgnuabi.so); the deny list depends on which
-     * library actually answers. */
+     * library actually answers, and the extended rows only exist in glibc. */
 #ifdef HOST_CPU_LIBMVEC_LIBRARY
     if (llvm::StringRef(HOST_CPU_LIBMVEC_LIBRARY).contains("sleef")) {
       Deny = PoclVecMathDenySleef;
@@ -1394,6 +1475,8 @@ createFilteredTLII(const llvm::Triple &TT, llvm::driver::VectorLibrary VecLib) {
     } else
 #endif
     {
+      if (TT.getArch() == llvm::Triple::x86_64)
+        addExtendedLibmvecX86Rows(Table);
       Deny = PoclVecMathDenyLibmvec;
       NumDeny = std::size(PoclVecMathDenyLibmvec);
     }
