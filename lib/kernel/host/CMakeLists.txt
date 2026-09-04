@@ -263,7 +263,6 @@ if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS) # implies CONFORMANCE=OFF
     libclc-pocl/isnormal.cl
     libclc-pocl/log2.cl
     libclc-pocl/pow.cl
-    libclc-pocl/pown.cl
     libclc-pocl/fmod.cl
     libclc-pocl/rint.cl
     libclc-pocl/sin.cl
@@ -329,7 +328,6 @@ if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS) # implies CONFORMANCE=OFF
     log2.cl
 
     pow.cl
-    pown.cl
 
     rint.cl
     round.cl
