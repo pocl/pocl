@@ -62,6 +62,7 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_issue_1525 test_issue_1608 test_issue_1826 test_builtin_regression
   test_mem_host_ptr_issue test_issue_1962 test_issue_2005
   test_global_atomics test_large_stack_frame
+  test_trig_lane_mix
 )
 if(UNIX)
   list(APPEND PROGRAMS_TO_BUILD test_issue_2174)
@@ -116,6 +117,8 @@ add_test_pocl(NAME "regression/test_issue_1525" LABELS "mingw_fail;win_fail"
 add_test_pocl(NAME "regression/test_issue_1608" COMMAND "test_issue_1608")
 
 add_test_pocl(NAME "regression/test_issue_1826" COMMAND "test_issue_1826")
+
+add_test_pocl(NAME "regression/test_trig_lane_mix" COMMAND "test_trig_lane_mix")
 
 add_test_pocl(NAME "regression/test_builtin_regression"
   COMMAND "test_builtin_regression")
