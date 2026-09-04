@@ -28,6 +28,7 @@
    kernel lib which is so big, that it takes seconds to clone it,  even on
    top-of-the line current processors. */
 
+#include "config.h"
 #include <iostream>
 #include <set>
 
@@ -1071,6 +1072,24 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
     // this one is a handled with a special pocl LLVM pass
     StringRef pocl_sampler_handler("__translate_sampler_initializer");
 
+#ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
+    // libm functions the kernel library maps to Clang builtins that have no
+    // LLVM intrinsic. They stay as declarations here; the loop vectorizer
+    // turns them into vector-library calls and the remainder resolves
+    // against libm when the work-group function is loaded.
+    static const llvm::StringSet<> LibmDecls = {
+        "cbrtf",  "cbrt",  "erff",   "erf",   "erfcf",  "erfc",
+        "expm1f", "expm1", "log1pf", "log1p", "hypotf", "hypot",
+        "acoshf", "acosh", "asinhf", "asinh", "atanhf", "atanh",
+        "acosf",  "acos",  "asinf",  "asin",  "atanf",  "atan",
+        "atan2f", "atan2", "coshf",  "cosh",  "sinhf",  "sinh",
+        "tanhf",  "tanh",  "exp10f", "exp10", "exp2f",  "exp2",
+        "log2f",  "log2",  "log10f", "log10"};
+#define POCL_IS_LIBM_DECL(N) LibmDecls.contains(N)
+#else
+#define POCL_IS_LIBM_DECL(N) false
+#endif
+
     if (!modIsNvptx(Program)) {
       for (auto &DeclIter : DeclaredFunctions) {
         llvm::StringRef FName = DeclIter.getKey();
@@ -1084,7 +1103,8 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
              !F->getName().starts_with("llvm.") &&
              F->getName() != BARRIER_FUNCTION_NAME &&
              F->getName() != "__pocl_local_mem_alloca" &&
-             F->getName() != "__pocl_work_group_alloca")) {
+             F->getName() != "__pocl_work_group_alloca" &&
+             !POCL_IS_LIBM_DECL(F->getName()))) {
           Log.append("Cannot find symbol ");
           Log.append(FName.str());
           Log.append(" in kernel library\n");

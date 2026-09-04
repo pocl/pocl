@@ -119,6 +119,24 @@ static bool enableDebugLogs() {
   return Enable;
 }
 
+#ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
+static TargetLibraryInfoImpl *
+createFilteredTLII(const llvm::Triple &TT, llvm::driver::VectorLibrary VecLib);
+
+/* The vector library selected at configure time. */
+static llvm::driver::VectorLibrary poclVectorLibrary() {
+#if defined(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
+  return llvm::driver::VectorLibrary::LIBMVEC;
+#elif defined(ENABLE_HOST_CPU_VECTORIZE_SLEEF)
+  return llvm::driver::VectorLibrary::SLEEF;
+#elif defined(ENABLE_HOST_CPU_VECTORIZE_SVML)
+  return llvm::driver::VectorLibrary::SVML;
+#else
+  return llvm::driver::VectorLibrary::NoLibrary;
+#endif
+}
+#endif
+
 // Returns the TargetMachine instance or zero if no triple is provided.
 // ForJIT selects a code model suitable for the in-process ORC/JITLink JIT (see
 // pocl_llvm_orc.cc); it only changes codegen on COFF targets.
@@ -283,6 +301,23 @@ llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
       });
 
   PoclPipeline = "function(require<targetir>),function(require<targetlibinfo>)," + PoclPipeline;
+#endif
+
+#ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
+  /* Give the IR pipeline the same filtered vector-library table the codegen
+   * uses, so the loop vectorizer can vectorize plain libm calls (those
+   * without an LLVM intrinsic, e.g. cbrtf, erff) into their vector variants.
+   * Registering here first makes the default registration below a no-op. */
+  if (Dev->type == CL_DEVICE_TYPE_CPU) {
+    TLII.reset(createFilteredTLII(llvm::Triple(Dev->llvm_target_triplet),
+                                  poclVectorLibrary()));
+    TargetLibraryInfoImpl *TLIIRaw = TLII.get();
+    FAM.registerPass([=] { return TargetLibraryAnalysis(*TLIIRaw); });
+    PB.registerAnalysisRegistrationCallback(
+        [TLIIRaw](::llvm::FunctionAnalysisManager &F) {
+          F.registerPass([=] { return TargetLibraryAnalysis(*TLIIRaw); });
+        });
+  }
 #endif
 
   pocl::registerFunctionAnalyses(PB);
@@ -1538,16 +1573,7 @@ static TargetLibraryInfoImpl *initPassManagerForCodeGen(legacy::PassManager &PM,
 
 #ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
   if (DevType == CL_DEVICE_TYPE_CPU) {
-    TLII = createFilteredTLII(DevTriple,
-#ifdef ENABLE_HOST_CPU_VECTORIZE_LIBMVEC
-                              driver::VectorLibrary::LIBMVEC);
-#endif
-#ifdef ENABLE_HOST_CPU_VECTORIZE_SLEEF
-                              driver::VectorLibrary::SLEEF);
-#endif
-#ifdef ENABLE_HOST_CPU_VECTORIZE_SVML
-                              driver::VectorLibrary::SVML);
-#endif
+    TLII = createFilteredTLII(DevTriple, poclVectorLibrary());
     TLIPass = new TargetLibraryInfoWrapperPass(*TLII);
   } else
 #endif
