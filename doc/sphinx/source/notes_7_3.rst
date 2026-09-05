@@ -69,8 +69,8 @@ CPU driver
   ULP bounds keep their scalar implementation (`pocl_vecmath_deny.h`,
   generated from one list in CMake). This fixes the default non-conformance
   build failing the CTS `math_brute_force` test for float `log` at vector
-  width 1 (glibc libmvec) and double `pow` near the overflow threshold
-  (SLEEF older than 3.8). `POCL_VECMATH_DENY` / `POCL_VECMATH_ALLOW` override
+  width 1 and double `exp` at one argument (glibc libmvec), and double
+  `pow` near the overflow threshold (SLEEF older than 3.8). `POCL_VECMATH_DENY` / `POCL_VECMATH_ALLOW` override
   the list for measurements.
 * The Clang-builtin swap in the CPU kernel library now follows the selected
   vector library: only builtins with a vector implementation are swapped,

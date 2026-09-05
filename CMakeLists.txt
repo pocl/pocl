@@ -1306,7 +1306,7 @@ endif()
 # and for the kernel-library swap.
 #  *_ENTRIES: LLVM scalar names (libm and intrinsic) for the TLI filter
 #  *_FUNCS:   OpenCL builtin names excluded from the Clang-builtin swap
-set(POCL_VECMATH_DENY_LIBMVEC_ENTRIES "logf;llvm.log.f32;cbrtf;cbrt")
+set(POCL_VECMATH_DENY_LIBMVEC_ENTRIES "logf;llvm.log.f32;cbrtf;cbrt;exp;llvm.exp.f64")
 # A swapped builtin reaches the vector library only when the work-item loop
 # vectorizes; kernels on explicit vector types (float3 and friends) do not,
 # and call the scalar libm function instead, so that one must be within the
@@ -1315,8 +1315,8 @@ set(POCL_VECMATH_DENY_LIBMVEC_ENTRIES "logf;llvm.log.f32;cbrtf;cbrt")
 # inside the work-item loop stops the loop vectorizer for the whole kernel
 # ("call instruction cannot be vectorized"), which is worse than the inlined
 # SLEEF source.
-set(POCL_VECMATH_DENY_LIBMVEC_FUNCS "log;cbrt")
-set(POCL_VECMATH_DENY_LIBMVEC_NOTE "glibc 2.39, x86-64 AVX2, LLVM 22.1.8, 2026-09-04: float log 3.009 ULP vs 3 (CTS width 1 confirms); float cbrt 2.73 ULP vs 2 in the vector variants; double cbrt 2.88 ULP vs 2 in scalar glibc cbrt, the fallback for kernels on explicit vector types (CTS double3)")
+set(POCL_VECMATH_DENY_LIBMVEC_FUNCS "log;cbrt;exp")
+set(POCL_VECMATH_DENY_LIBMVEC_NOTE "glibc 2.39, x86-64 AVX2, LLVM 22.1.8, 2026-09-04: float log 3.009 ULP vs 3 (CTS width 1 confirms); float cbrt 2.73 ULP vs 2 in the vector variants; double cbrt 2.88 ULP vs 2 in scalar glibc cbrt, the fallback for kernels on explicit vector types (CTS double3); double exp 3.0077 ULP vs 3 at -0x1.31000000000d0p-6 in both vector variants (_ZGVbN2v_exp, _ZGVdN4v_exp; scalar glibc exp is 0.0077 there), found by the full CTS math test 2026-09-05, not by the sampled sweeps")
 set(POCL_VECMATH_DENY_SLEEF_ENTRIES "")
 set(POCL_VECMATH_DENY_SLEEF_FUNCS "")
 set(POCL_VECMATH_DENY_SLEEF_NOTE "SLEEF ${HOST_CPU_VECMATH_SLEEF_VERSION_NUM}: nothing measured over the bound")
