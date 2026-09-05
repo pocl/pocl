@@ -28,6 +28,7 @@
 
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <algorithm>
 #include <deque>
 #include <cstdio>
 #include <llvm/ADT/StringRef.h>
@@ -49,6 +50,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/PassInfo.h>
 #include <llvm/PassRegistry.h>
 #include <llvm/Support/CommandLine.h>
+#include <llvm/Support/Path.h>
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Linker/Linker.h>
 #include <llvm/Support/CodeGen.h>
@@ -1402,7 +1404,9 @@ static void splitNames(const char *Value, llvm::StringSet<> &Out) {
 
 static VecDesc makeVecDesc(const char *Scalar, std::string Vector, unsigned VF,
                            std::string Prefix) {
-  /* The strings must outlive the TLII; keep them in a static pool. */
+  /* The strings must outlive every TLII built from them. The pool is only
+   * filled while the extended table is built, which happens once per
+   * process (see addExtendedLibmvecX86Rows). */
   static std::deque<std::string> Pool;
   Pool.push_back(std::move(Vector));
   llvm::StringRef V = Pool.back();
@@ -1426,17 +1430,39 @@ static unsigned runtimeGlibcVersion() {
   return 0;
 }
 
+/* Does the host have AVX-512? The AVX-512 (_ZGVe, 16 x float / 8 x double)
+ * libmvec variants are AVX-512 code inside glibc, and a table row for them
+ * makes the loop vectorizer choose that width even on a CPU without AVX-512
+ * (the call would then SIGILL). The CPU device compiles for the host, so
+ * ask the host, once. */
+static bool hostHasAVX512() {
+  static const bool Have = [] {
+#if defined(__x86_64__) && defined(__GLIBC__)
+    __builtin_cpu_init();
+    return (bool)__builtin_cpu_supports("avx512f");
+#else
+    return false;
+#endif
+  }();
+  return Have;
+}
+
 /* Rows for the x86-64 libmvec functions beyond LLVM's own VecFuncs.def table.
  * glibc >= 2.35 exports vector versions of most of libm under the GNU vector
  * ABI names; LLVM (up to 23) lists only sin cos tan exp log pow, and no
  * AVX-512 (_ZGVe) variants even for those. Rows are added for the SSE (b),
  * AVX2 (d) and AVX-512 (e) variants; the loop vectorizer only uses a row
- * whose vectorization factor it chose, so rows for absent ISAs are inert. */
-static void addExtendedLibmvecX86Rows(std::vector<VecDesc> &Table) {
+ * whose vectorization factor it chose, so rows for absent ISAs are inert.
+ * Base is LLVM's table for this library and architecture; only the
+ * (name, VF) pairs it lacks are produced (LLVM 23 already has acosh asinh
+ * atanh cbrt erf erfc expm1 log1p). */
+static std::vector<VecDesc>
+buildExtendedLibmvecX86Rows(const std::vector<VecDesc> &Base) {
   struct Fn { const char *Name; const char *Intrinsic; unsigned Args; unsigned MinGlibc; };
   static const Fn Fns[] = {
-      /* in LLVM's table too, but without AVX-512 rows */
-      {"sin", "sin", 1, 0},     {"cos", "cos", 1, 0},     {"tan", nullptr, 1, 0},
+      /* in LLVM's table too, but without AVX-512 rows; llvm.tan exists
+       * since LLVM 19 */
+      {"sin", "sin", 1, 0},     {"cos", "cos", 1, 0},     {"tan", "tan", 1, 0},
       {"exp", "exp", 1, 0},     {"log", "log", 1, 0},     {"pow", "pow", 2, 0},
       /* glibc 2.35+ */
       {"acos", "acos", 1, 235},   {"acosh", nullptr, 1, 235}, {"asin", "asin", 1, 235},
@@ -1448,17 +1474,25 @@ static void addExtendedLibmvecX86Rows(std::vector<VecDesc> &Table) {
       {"sinh", "sinh", 1, 235},   {"tanh", "tanh", 1, 235},
   };
   unsigned Glibc = runtimeGlibcVersion();
-  /* The AVX-512 (_ZGVe, 16 x float / 8 x double) variants are AVX-512 code
-   * inside glibc, and a row for them makes the loop vectorizer choose that
-   * width even on a CPU without AVX-512 (the call would then SIGILL). The
-   * CPU device compiles for the host, so ask the host. */
-  bool HaveAVX512 = false;
-#if defined(__x86_64__) && defined(__GLIBC__)
-  __builtin_cpu_init();
-  HaveAVX512 = __builtin_cpu_supports("avx512f");
-#endif
+  bool HaveAVX512 = hostHasAVX512();
   struct Variant { char Isa; unsigned VFf; unsigned VFd; bool OnlyE; };
   static const Variant Variants[] = {{'b', 4, 2, false}, {'d', 8, 4, false}, {'e', 16, 8, true}};
+  std::vector<VecDesc> Out;
+  llvm::StringSet<> Have;
+  for (const VecDesc &D : Base)
+    Have.insert(std::string(D.getScalarFnName()) + ":" +
+                std::to_string(D.getVectorizationFactor().getKnownMinValue()));
+  /* Scalar names must outlive the TLIIs too; filled once, like the pool. */
+  static std::deque<std::string> Names;
+  auto AddRow = [&](const std::string &ScalarName, const std::string &Vector,
+                    unsigned VF, const std::string &Prefix) {
+    std::string Key = ScalarName + ":" + std::to_string(VF);
+    if (Have.contains(Key))
+      return;
+    Have.insert(Key);
+    Names.push_back(ScalarName);
+    Out.push_back(makeVecDesc(Names.back().c_str(), Vector, VF, Prefix));
+  };
   for (const Fn &F : Fns) {
     if (F.MinGlibc && Glibc < F.MinGlibc)
       continue;
@@ -1474,16 +1508,22 @@ static void addExtendedLibmvecX86Rows(std::vector<VecDesc> &Table) {
         std::string Scalar = std::string(F.Name) + (Dbl ? "" : "f");
         std::string Vector = std::string("_ZGV") + V.Isa + "N" + std::to_string(VF) + Params + "_" + Scalar;
         std::string Prefix = "_ZGV_LLVM_N" + std::to_string(VF) + Params;
-        static std::deque<std::string> Names;
-        Names.push_back(Scalar);
-        Table.push_back(makeVecDesc(Names.back().c_str(), Vector, VF, Prefix));
-        if (F.Intrinsic) {
-          Names.push_back(std::string("llvm.") + F.Intrinsic + (Dbl ? ".f64" : ".f32"));
-          Table.push_back(makeVecDesc(Names.back().c_str(), Vector, VF, Prefix));
-        }
+        AddRow(Scalar, Vector, VF, Prefix);
+        if (F.Intrinsic)
+          AddRow(std::string("llvm.") + F.Intrinsic + (Dbl ? ".f64" : ".f32"), Vector, VF, Prefix);
       }
     }
   }
+  return Out;
+}
+
+/* Append the extended rows to Table. createFilteredTLII runs for every
+ * kernel compile, from several threads; the rows depend only on process
+ * constants (glibc version, host CPU, LLVM's table), so they are built once
+ * by a thread-safe function-local static and copied from there. */
+static void addExtendedLibmvecX86Rows(std::vector<VecDesc> &Table) {
+  static const std::vector<VecDesc> Rows = buildExtendedLibmvecX86Rows(Table);
+  Table.insert(Table.end(), Rows.begin(), Rows.end());
 }
 
 /* Build a TargetLibraryInfoImpl with the vector library's function table
@@ -1515,7 +1555,7 @@ createFilteredTLII(const llvm::Triple &TT, llvm::driver::VectorLibrary VecLib) {
      * (-DLIBMVEC=libsleefgnuabi.so); the deny list depends on which
      * library actually answers, and the extended rows only exist in glibc. */
 #ifdef HOST_CPU_LIBMVEC_LIBRARY
-    if (llvm::StringRef(HOST_CPU_LIBMVEC_LIBRARY).contains("sleef")) {
+    if (llvm::sys::path::filename(HOST_CPU_LIBMVEC_LIBRARY).contains("sleef")) {
       Deny = PoclVecMathDenySleef;
       NumDeny = std::size(PoclVecMathDenySleef);
     } else
@@ -1526,6 +1566,14 @@ createFilteredTLII(const llvm::Triple &TT, llvm::driver::VectorLibrary VecLib) {
       Deny = PoclVecMathDenyLibmvec;
       NumDeny = std::size(PoclVecMathDenyLibmvec);
     }
+    /* No AVX-512 row of any origin on a host without AVX-512 (see
+     * hostHasAVX512); LLVM's own table may grow such rows. */
+    if (TT.getArch() == llvm::Triple::x86_64 && !hostHasAVX512())
+      Table.erase(std::remove_if(Table.begin(), Table.end(),
+                                 [](const VecDesc &D) {
+                                   return D.getVectorFnName().starts_with("_ZGVe");
+                                 }),
+                  Table.end());
     break;
   }
   case llvm::driver::VectorLibrary::SLEEF: {
