@@ -223,11 +223,31 @@ IMPLEMENT_FP16_REMQUO_VECTOR (half4, int4, int2, int2, lo, hi)
 IMPLEMENT_FP16_REMQUO_VECTOR (half8, int8, int4, int4, lo, hi)
 IMPLEMENT_FP16_REMQUO_VECTOR (half16, int16, int8, int8, lo, hi)
 
+/* pow : (half, half) -> half. The generic pow.cl defines the half overloads
+   via __builtin_powf16 whenever pow is swapped to the Clang builtin. It is not
+   swapped in the non-vectorized build, nor in a vectorized build whose vector
+   library denies pow (SLEEF < 3.8: double pow), where pow stays on the libclc
+   source, which has no half overloads. Define them here in those cases, as for
+   atan2 above. (Relocated from additionalf16.cl, which is compiled only in the
+   non-vectorized build.) */
+#ifndef POCL_VECMATH_SWAP_pow
+#ifndef __riscv
+DEFINE_FP16_BUILTIN_V_VV (pow, __builtin_elementwise_pow)
+#else
+half _CL_OVERLOADABLE
+pow (half a, half b)
+{
+  return (half)pow ((float)a, (float)b);
+}
+DEFINE_FP16_EXPR_V_VV (pow)
+#endif
+#endif
+
 /* powr : (half, half) -> half. powr(x,y) = pow(x,y) for x >= 0, NaN for x < 0.
-   Built on the half `pow` builtin -- which is available in both configurations
-   (CORE-Math powf16.cl when vectorization is off, the generic vectorized pow.cl
-   when it is on) -- so this works in both. (Relocated from powf16.cl, which is
-   compiled only in the non-vectorized build.) */
+   Built on the half `pow` overload, which is available in every configuration
+   (defined just above, or by the generic pow.cl when pow is swapped), so this
+   works in all of them. (Relocated from powf16.cl, which is compiled only in
+   the non-vectorized build.) */
 half _CL_OVERLOADABLE
 powr (half x, half y)
 {

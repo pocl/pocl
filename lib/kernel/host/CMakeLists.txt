@@ -324,7 +324,9 @@ if(HOST_CPU_ENABLE_CL_KHR_FP16)
     # native FP16 builtin, so drop the CORE-Math file for each swapped
     # transcendental. additionalf16.cl overlaps with the swapped exact
     # operations (ldexp, ilogb, ...) and is dropped too. promotedf16.cl
-    # covers what neither provides (pown and friends) and stays.
+    # covers what neither provides (pown and friends, and the half overloads
+    # of a transcendental the vector library denies, such as pow on SLEEF <
+    # 3.8) and stays.
     # Clang has native FP16 builtins for these (checked against Clang 22);
     # the generic source only defines the half overload when
     # __builtin_<f>f16 exists, so only these lose their CORE-Math file.

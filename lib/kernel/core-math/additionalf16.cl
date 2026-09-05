@@ -14,7 +14,10 @@
  * Functions without a native FP16 builtin (logb, ilogb, ldexp, rootn, pown,
  * remainder, nextafter, powr, modf, remquo) are in promotedf16.cl. That file is
  * compiled in both configurations because the vectorized generic path does not
- * cover those overloads either. (sincos and lgamma_r half are provided by
+ * cover those overloads either. pow is there too: a vector library can deny
+ * pow (SLEEF < 3.8, double), which keeps it on the libclc source and out of
+ * the generic swap, so its half overloads must come from a file that is
+ * compiled in both configurations. (sincos and lgamma_r half are provided by
  * core-math/sincosf16.cl and lgammaf16.cl.) */
 
 #undef isfinite
@@ -34,17 +37,6 @@ DEFINE_FP16_BUILTIN_V_V (trunc, __builtin_elementwise_trunc)
 DEFINE_FP16_BUILTIN_V_V (rint, __builtin_elementwise_rint)
 DEFINE_FP16_BUILTIN_V_V (round, __builtin_elementwise_round)
 DEFINE_FP16_BUILTIN_V_V (fabs, __builtin_elementwise_abs)
-
-#ifndef __riscv
-DEFINE_FP16_BUILTIN_V_VV (pow, __builtin_elementwise_pow)
-#else
-half _CL_OVERLOADABLE
-pow (half a, half b)
-{
-  return (half)pow ((float)a, (float)b);
-}
-DEFINE_FP16_EXPR_V_VV (pow)
-#endif
 
 /*
   llvm.minimumnum and llvm.maximumnum: Return the other argument if one is NaN.
