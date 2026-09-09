@@ -249,130 +249,102 @@ endif()
 
 list(APPEND SOURCES_WITH_SLEEF "host/addrspace_operators.ll" "host/addrspace_operators_spir.ll")
 
-# if ENABLE_HOST_CPU_VECTORIZE_BUILTINS is enabled, use Clang/LLVM builtins
-# this makes vectorization of (some) OpenCL builtins possible,
-# while also making FP16 versions available (if FP16 is available)
-if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS) # implies CONFORMANCE=OFF
-  list(REMOVE_ITEM SOURCES_WITH_SLEEF
-    libclc-pocl/cos.cl
-    libclc-pocl/cosh.cl
-    libclc-pocl/frexp.cl
-    libclc-pocl/isinf.cl
-    libclc-pocl/isnan.cl
-    libclc-pocl/isfinite.cl
-    libclc-pocl/isnormal.cl
-    libclc-pocl/log2.cl
-    libclc-pocl/pow.cl
-    libclc-pocl/pown.cl
-    libclc-pocl/fmod.cl
-    libclc-pocl/rint.cl
-    libclc-pocl/sin.cl
-    libclc-pocl/sinh.cl
-    libclc-pocl/tan.cl
-    libclc-pocl/tanh.cl
+# If ENABLE_HOST_CPU_VECTORIZE_BUILTINS is enabled, replace selected builtins
+# with versions that call Clang/LLVM builtins, so that LLVM sees intrinsics it
+# can vectorize (and map to the vector math library at codegen), and so that
+# FP16 versions come from the same source where a native FP16 builtin exists.
+#
+# Two groups are swapped:
+#  * exact operations that lower to native LLVM intrinsics regardless of any
+#    library (fabs, floor, fma, ...): always a win;
+#  * transcendental functions that have a row in the selected vector library's
+#    table in LLVM's VecFuncs.def. Swapping a transcendental without such a row
+#    only trades SLEEF's inline, vectorizable bitcode for a scalar libm call
+#    with different numerics (and, for pown, an llvm.powi expansion that is far
+#    outside the ULP bound), so those stay on the SLEEF/libclc sources.
+if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS)
+  set(VECMATH_SWAP_EXACT ceil fabs fdim fma fmax fmin floor fmod frexp
+      isfinite isinf isnan isnormal ldexp rint round sqrt trunc)
+  # Transcendentals with vector-library rows:
+  #  libmvec / SLEEF-gnuabi on x86-64: sin cos tan exp log pow (LLVM's table),
+  #    plus, for glibc >= 2.35, the rows PoCL adds itself (pocl_llvm_wg.cc)
+  #  SVML: LLVM's table adds exp2 log2 log10
+  #  libmvec / SLEEF on AArch64: a much wider set
+  set(VECMATH_SWAP_TRANSCENDENTAL sin cos tan exp log pow)
+  if(ENABLE_HOST_CPU_VECTORIZE_SVML)
+    list(APPEND VECMATH_SWAP_TRANSCENDENTAL exp2 log2 log10)
+  endif()
+  # (the extended rows exist only for x86-64 glibc, lib/CL/pocl_llvm_wg.cc)
+  if(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC AND X86_64 AND (HOST_CPU_GLIBC_VERSION_NUM GREATER_EQUAL 235))
+    list(APPEND VECMATH_SWAP_TRANSCENDENTAL acos acosh asin asinh atan atan2 atanh
+         cbrt cosh erf erfc exp10 exp2 expm1 hypot log10 log1p log2 sinh tanh)
+  endif()
+  if(ARM64 OR (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64"))
+    list(APPEND VECMATH_SWAP_TRANSCENDENTAL acos asin atan cosh sinh tanh
+         exp2 exp10 log2 log10)
+  endif()
+  # A function denied for the library in use is not swapped: a scalar libm
+  # call would be slower than the SLEEF/libclc source it replaces.
+  if(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC AND LIBMVEC_IS_SLEEF)
+    set(_VECMATH_DENIED ${POCL_VECMATH_DENY_SLEEF_FUNCS})
+  elseif(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
+    set(_VECMATH_DENIED ${POCL_VECMATH_DENY_LIBMVEC_FUNCS})
+  elseif(ENABLE_HOST_CPU_VECTORIZE_SLEEF)
+    set(_VECMATH_DENIED ${POCL_VECMATH_DENY_SLEEF_FUNCS})
+  else()
+    set(_VECMATH_DENIED "")
+  endif()
+  foreach(F IN LISTS _VECMATH_DENIED)
+    list(REMOVE_ITEM VECMATH_SWAP_TRANSCENDENTAL ${F})
+  endforeach()
+  list(REMOVE_DUPLICATES VECMATH_SWAP_TRANSCENDENTAL)
+  set(VECMATH_SWAP ${VECMATH_SWAP_EXACT} ${VECMATH_SWAP_TRANSCENDENTAL})
+  message(STATUS "CPU kernel library: Clang-builtin swap for ${VECMATH_SWAP_TRANSCENDENTAL}")
 
-    sleef-pocl/acos.cl
-    sleef-pocl/asin.cl
-    sleef-pocl/atan.cl
-    sleef-pocl/ceil.cl
-    sleef-pocl/exp.cl
-    sleef-pocl/exp10.cl
-    sleef-pocl/exp2.cl
-    sleef-pocl/fabs.cl
-    sleef-pocl/fdim.cl
-    sleef-pocl/floor.cl
-    sleef-pocl/fma.cl
-    sleef-pocl/fmax.cl
-    sleef-pocl/fmin.cl
-    sleef-pocl/log10.cl
-    sleef-pocl/log.cl
-    sleef-pocl/ldexp.cl
-    sleef-pocl/rint.cl
-    sleef-pocl/round.cl
-    sleef-pocl/sqrt.cl
-    sleef-pocl/trunc.cl
-
-    libclc-pocl/pocl_fma.cl
-    sleef-pocl/scalars.cl
-    )
-
-  list(APPEND SOURCES_WITH_SLEEF
-    acos.cl
-    asin.cl
-    atan.cl
-
-    ceil.cl
-    cos.cl
-    cosh.cl
-
-    exp.cl
-    exp2.cl
-    exp10.cl
-
-    fabs.cl
-    fmod.cl
-    fdim.cl
-    fma.cl
-    fmax.cl
-    fmin.cl
-    floor.cl
-    frexp.cl
-
-    isfinite.cl
-    isinf.cl
-    isnan.cl
-    isnormal.cl
-
-    ldexp.cl
-    log.cl
-    log10.cl
-    log2.cl
-
-    pow.cl
-    pown.cl
-
-    rint.cl
-    round.cl
-
-    sin.cl
-    sinh.cl
-    sqrt.cl
-
-    tan.cl
-    tanh.cl
-
-    trunc.cl
-    )
+  foreach(F IN LISTS VECMATH_SWAP)
+    list(REMOVE_ITEM SOURCES_WITH_SLEEF "libclc-pocl/${F}.cl" "sleef-pocl/${F}.cl")
+    list(APPEND SOURCES_WITH_SLEEF "${F}.cl")
+  endforeach()
+  # Helpers that conflict with the generic versions of the swapped builtins.
+  list(REMOVE_ITEM SOURCES_WITH_SLEEF libclc-pocl/pocl_fma.cl sleef-pocl/scalars.cl)
 endif()  # ENABLE_HOST_CPU_VECTORIZE_BUILTINS
 
 # add conformant versions of FP16 builtins from CORE-Math library
 if(HOST_CPU_ENABLE_CL_KHR_FP16)
-  # if VECTORIZE_BUILTINS=ON, add only those FP16 functions for which we don't have LLVM builtins
-  # (= not present in the list above)
-  if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS) # implies CONFORMANCE=OFF
-    foreach(FILE IN ITEMS
-        acospif16.cl  hypotf16.cl    log2p1f16.cl    acoshf16.cl     exp10m1f16.cl
-        atanhf16.cl   cospif16.cl    exp2m1f16.cl    log10p1f16.cl   asinhf16.cl
-        atanpif16.cl  log1pf16.cl     sincosf16.cl    asinpif16.cl   rsqrtf16.cl
-        expm1f16.cl     tanpif16.cl     sinpif16.cl
-        # FP16 ops with no native FP16 builtin and no SLEEF FP16 path: not
-        # covered by the vectorized generic builtins above, so needed here too.
-        promotedf16.cl)
-      list(APPEND SOURCES_WITH_SLEEF "core-math/${FILE}")
+  set(COREMATH_F16_ALL
+      acosf16.cl    exp10f16.cl     hypotf16.cl    log2p1f16.cl   sinhf16.cl
+      acoshf16.cl   cosf16.cl       exp10m1f16.cl  logf16.cl      sinpif16.cl
+      acospif16.cl  atanf16.cl     coshf16.cl      exp2f16.cl     log10f16.cl    rsqrtf16.cl
+      asinf16.cl    atanhf16.cl    cospif16.cl     exp2m1f16.cl   log10p1f16.cl  tanf16.cl
+      asinhf16.cl   atanpif16.cl   expf16.cl      log1pf16.cl    sincosf16.cl  tanhf16.cl
+      asinpif16.cl  expm1f16.cl    log2f16.cl     sinf16.cl     tanpif16.cl
+      additionalf16.cl  promotedf16.cl)
+  if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS)
+    # The swapped generic builtins provide FP16 overloads where Clang has a
+    # native FP16 builtin, so drop the CORE-Math file for each swapped
+    # transcendental. additionalf16.cl overlaps with the swapped exact
+    # operations (ldexp, ilogb, ...) and is dropped too. promotedf16.cl
+    # covers what neither provides (pown and friends, and the half overloads
+    # of a transcendental the vector library denies, such as pow on SLEEF <
+    # 3.8) and stays.
+    # Clang has native FP16 builtins for these (checked against Clang 22);
+    # the generic source only defines the half overload when
+    # __builtin_<f>f16 exists, so only these lose their CORE-Math file.
+    set(VECMATH_F16_BUILTIN sin cos tan exp log pow acos asin atan atan2 cosh
+        exp10 exp2 log10 log2 sinh tanh)
+    set(COREMATH_F16 ${COREMATH_F16_ALL})
+    foreach(F IN LISTS VECMATH_SWAP_TRANSCENDENTAL)
+      if(F IN_LIST VECMATH_F16_BUILTIN)
+        list(REMOVE_ITEM COREMATH_F16 "${F}f16.cl")
+      endif()
     endforeach()
+    list(REMOVE_ITEM COREMATH_F16 additionalf16.cl)
   else()
-    # VECTORIZE_BUILTINS=OFF, add all available CORE-math functions
-    foreach(FILE IN ITEMS
-        acosf16.cl    exp10f16.cl     hypotf16.cl    log2p1f16.cl   sinhf16.cl
-        acoshf16.cl   cosf16.cl       exp10m1f16.cl  logf16.cl      sinpif16.cl
-        acospif16.cl  atanf16.cl     coshf16.cl      exp2f16.cl     log10f16.cl    rsqrtf16.cl
-        asinf16.cl    atanhf16.cl    cospif16.cl     exp2m1f16.cl   log10p1f16.cl  tanf16.cl
-        asinhf16.cl   atanpif16.cl   expf16.cl      log1pf16.cl    sincosf16.cl  tanhf16.cl
-        asinpif16.cl  expm1f16.cl    log2f16.cl     sinf16.cl     tanpif16.cl
-        additionalf16.cl  promotedf16.cl)
-      list(APPEND SOURCES_WITH_SLEEF "core-math/${FILE}")
-    endforeach()
+    set(COREMATH_F16 ${COREMATH_F16_ALL})
   endif()
+  foreach(FILE IN LISTS COREMATH_F16)
+    list(APPEND SOURCES_WITH_SLEEF "core-math/${FILE}")
+  endforeach()
 endif()
 
 if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_subgroup")
@@ -469,6 +441,12 @@ set(DEVICE_C_FLAGS "-DPOCL_DEVICE_ADDRESS_BITS=${HOST_DEVICE_ADDRESS_BITS}")
 set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${HOST_DEVICE_VERSION_3DIGIT} -DPOCL_DEVICE_ADDRESS_BITS=${HOST_DEVICE_ADDRESS_BITS}")
 set(DEVICE_CL_FLAGS "${DEVICE_CL_FLAGS} ${HOST_DEVICE_EXTENSION_DEFINES}")
 separate_arguments(DEVICE_CL_FLAGS)
+# Tell the kernel library sources which builtins are swapped to Clang
+# builtins, so sources providing fallback overloads (core-math/promotedf16.cl)
+# can skip the ones the generic version now defines.
+foreach(F IN LISTS VECMATH_SWAP_TRANSCENDENTAL)
+  list(APPEND DEVICE_CL_FLAGS "-DPOCL_VECMATH_SWAP_${F}")
+endforeach()
 separate_arguments(DEVICE_C_FLAGS)
 
 function(x86_distro_variant_to_flags VARIANT OUT_LLC_FLAGS OUT_CLANG_FLAGS)

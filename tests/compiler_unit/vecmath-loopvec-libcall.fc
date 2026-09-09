@@ -1,0 +1,2 @@
+CHECK: @_pocl_kernel_loopvec_libcall_workgroup
+CHECK: call <{{[0-9]+}} x float> @_ZGV{{[a-z]}}N{{[0-9]+}}v_sinf(

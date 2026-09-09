@@ -1113,13 +1113,28 @@ if(ENABLE_CONFORMANCE AND (NOT ENABLE_SLEEF))
   message(FATAL_ERROR "conformance needs enabled SLEEF")
 endif()
 
-# CONFORMANCE + VECTORIZE_BUILTINS is disabled b/c we cannot guarantee ULP of the vectorized functions
+# Vectorized math libraries. Functions measured to exceed the OpenCL ULP
+# bounds for a given library are kept scalar by the deny lists in
+# the generated pocl_vecmath_deny.h, so libmvec and SLEEF may be used with
+# ENABLE_CONFORMANCE as well; there they are opt-in (default OFF) until a
+# full CTS run with them is on record. SVML is closed and unmeasured, so it
+# stays incompatible with ENABLE_CONFORMANCE.
 set(ENABLE_HOST_CPU_VECTORIZE_BUILTINS OFF)
-if(ENABLE_LLVM AND ENABLE_HOST_CPU_DEVICES AND (NOT ENABLE_CONFORMANCE) AND (LLVM_VERSION_MAJOR GREATER_EQUAL 19))
+if(ENABLE_LLVM AND ENABLE_HOST_CPU_DEVICES AND (LLVM_VERSION_MAJOR GREATER_EQUAL 19))
+  if(ENABLE_CONFORMANCE)
+    set(_VECMATH_DEFAULT_SLEEF OFF)
+    set(_VECMATH_DEFAULT_LIBMVEC OFF)
+  else()
+    set(_VECMATH_DEFAULT_SLEEF ${HAVE_SLEEF})
+    set(_VECMATH_DEFAULT_LIBMVEC ${HAVE_LIBMVEC})
+  endif()
   # these are experimental options and may change in future
-  option(ENABLE_HOST_CPU_VECTORIZE_SLEEF "vectorize builtins with SLEEF (ARM only)" ${HAVE_SLEEF})
-  option(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC "vectorize builtins with LIBMVEC" ${HAVE_LIBMVEC})
+  option(ENABLE_HOST_CPU_VECTORIZE_SLEEF "vectorize builtins with SLEEF (ARM only)" ${_VECMATH_DEFAULT_SLEEF})
+  option(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC "vectorize builtins with LIBMVEC" ${_VECMATH_DEFAULT_LIBMVEC})
   option(ENABLE_HOST_CPU_VECTORIZE_SVML "vectorize builtins with SVML" ${HAVE_LIBSVML})
+  if(ENABLE_CONFORMANCE AND ENABLE_HOST_CPU_VECTORIZE_SVML)
+    message(FATAL_ERROR "ENABLE_HOST_CPU_VECTORIZE_SVML has no ULP deny list and cannot be combined with ENABLE_CONFORMANCE")
+  endif()
 
   if(ENABLE_HOST_CPU_VECTORIZE_SLEEF
      OR ENABLE_HOST_CPU_VECTORIZE_LIBMVEC
@@ -1214,6 +1229,111 @@ if(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC AND LIBMVEC)
     endif()
   endif()
 endif()
+
+# Is the libmvec-ABI library SLEEF's gnuabi build rather than glibc? Decided
+# on the file name, not the whole path (a prefix such as /opt/sleef-tools
+# must not count).
+set(LIBMVEC_IS_SLEEF OFF)
+if(LIBMVEC)
+  get_filename_component(_libmvec_name "${LIBMVEC}" NAME)
+  if(_libmvec_name MATCHES "sleef")
+    set(LIBMVEC_IS_SLEEF ON)
+  endif()
+endif()
+
+# Version of the SLEEF library behind the vector math table, so that deny
+# lists in the generated pocl_vecmath_deny.h can be conditional on it (e.g.
+# the pow overflow bug fixed in SLEEF 3.8). 0 means unknown, treated
+# conservatively.
+set(HOST_CPU_VECMATH_SLEEF_VERSION_NUM 0)
+set(_POCL_SLEEF_FOR_VECMATH "")
+if(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC AND LIBMVEC AND LIBMVEC_IS_SLEEF)
+  set(_POCL_SLEEF_FOR_VECMATH "${LIBMVEC}")
+elseif(ENABLE_HOST_CPU_VECTORIZE_SLEEF AND LIBSLEEF)
+  set(_POCL_SLEEF_FOR_VECMATH "${LIBSLEEF}")
+endif()
+if(_POCL_SLEEF_FOR_VECMATH)
+  # Look next to the library first, so a SLEEF in its own prefix reports
+  # its own version.
+  get_filename_component(_sleef_libdir "${_POCL_SLEEF_FOR_VECMATH}" DIRECTORY)
+  find_path(SLEEF_INCLUDE_DIR sleef.h HINTS "${_sleef_libdir}/../include")
+  if(SLEEF_INCLUDE_DIR)
+    file(STRINGS "${SLEEF_INCLUDE_DIR}/sleef.h" _sleef_ver_lines
+         REGEX "^#define SLEEF_VERSION_(MAJOR|MINOR|PATCHLEVEL) ")
+    set(_maj 0)
+    set(_min 0)
+    set(_pat 0)
+    foreach(_l IN LISTS _sleef_ver_lines)
+      if(_l MATCHES "MAJOR ([0-9]+)")
+        set(_maj ${CMAKE_MATCH_1})
+      elseif(_l MATCHES "MINOR ([0-9]+)")
+        set(_min ${CMAKE_MATCH_1})
+      elseif(_l MATCHES "PATCHLEVEL ([0-9]+)")
+        set(_pat ${CMAKE_MATCH_1})
+      endif()
+    endforeach()
+    math(EXPR HOST_CPU_VECMATH_SLEEF_VERSION_NUM "${_maj} * 10000 + ${_min} * 100 + ${_pat}")
+    message(STATUS "SLEEF version for vector math: ${_maj}.${_min}.${_pat} (${HOST_CPU_VECMATH_SLEEF_VERSION_NUM})")
+  else()
+    message(STATUS "SLEEF version for vector math: unknown (sleef.h not found), deny lists stay conservative")
+  endif()
+endif()
+
+# glibc version, for the extended libmvec table (glibc >= 2.35 exports vector
+# versions of most of libm; LLVM's VecFuncs.def only lists six of them).
+set(HOST_CPU_GLIBC_VERSION_NUM 0)
+if(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC AND LIBMVEC AND NOT LIBMVEC_IS_SLEEF)
+  # Ask the target C compiler's headers (works for cross builds and does
+  # not depend on any distribution's ldd banner).
+  file(WRITE "${CMAKE_BINARY_DIR}/pocl_glibc_probe.c"
+       "#include <features.h>\n#ifdef __GLIBC__\nPOCL_GLIBC __GLIBC__ __GLIBC_MINOR__\n#endif\n")
+  separate_arguments(_probe_flags NATIVE_COMMAND "${CMAKE_C_FLAGS}")
+  if(CMAKE_SYSROOT)
+    list(APPEND _probe_flags "--sysroot=${CMAKE_SYSROOT}")
+  endif()
+  execute_process(COMMAND ${CMAKE_C_COMPILER} ${_probe_flags} -E -P "${CMAKE_BINARY_DIR}/pocl_glibc_probe.c"
+                  OUTPUT_VARIABLE _glibc_out ERROR_QUIET RESULT_VARIABLE _glibc_rc)
+  if(_glibc_rc EQUAL 0 AND _glibc_out MATCHES "POCL_GLIBC ([0-9]+) ([0-9]+)")
+    math(EXPR HOST_CPU_GLIBC_VERSION_NUM "${CMAKE_MATCH_1} * 100 + ${CMAKE_MATCH_2}")
+    message(STATUS "glibc for vector math: ${CMAKE_MATCH_1}.${CMAKE_MATCH_2} (${HOST_CPU_GLIBC_VERSION_NUM})")
+  else()
+    message(STATUS "glibc for vector math: not detected; libmvec table limited to LLVM's own rows")
+  endif()
+endif()
+
+# Per-function deny lists (measured ULP over the OpenCL bound), one source of
+# truth for the generated pocl_vecmath_deny.h (from lib/CL/pocl_vecmath_deny.h.in)
+# and for the kernel-library swap.
+#  *_ENTRIES: LLVM scalar names (libm and intrinsic) for the TLI filter
+#  *_FUNCS:   OpenCL builtin names excluded from the Clang-builtin swap
+set(POCL_VECMATH_DENY_LIBMVEC_ENTRIES "logf;llvm.log.f32;cbrtf;cbrt;exp;llvm.exp.f64;log1pf;log1p")
+# A swapped builtin reaches the vector library only when the work-item loop
+# vectorizes; kernels on explicit vector types (float3 and friends) do not,
+# and call the scalar libm function instead, so that one must be within the
+# bound as well. A denied function must also leave the swap: the swap covers
+# every precision of the name, and a scalar libm call with no vector mapping
+# inside the work-item loop stops the loop vectorizer for the whole kernel
+# ("call instruction cannot be vectorized"), which is worse than the inlined
+# SLEEF source.
+set(POCL_VECMATH_DENY_LIBMVEC_FUNCS "log;cbrt;exp;log1p")
+set(POCL_VECMATH_DENY_LIBMVEC_NOTE "glibc 2.39, x86-64 AVX2, LLVM 22.1.8, 2026-09-04: float log 3.009 ULP vs 3 (CTS width 1 confirms); float cbrt 2.73 ULP vs 2 in the vector variants; double cbrt 2.88 ULP vs 2 in scalar glibc cbrt, the fallback for kernels on explicit vector types (CTS double3); double exp 3.0077 ULP vs 3 at -0x1.31000000000d0p-6 in both vector variants (_ZGVbN2v_exp, _ZGVdN4v_exp; scalar glibc exp is 0.0077 there), found by the full CTS math test 2026-09-05, not by the sampled sweeps; log1p over its 2 ULP bound in both precisions in the full CTS test 2026-09-05: float 2.004 ULP at 0x1.55a146p-2 (width 4), double 2.524 ULP at 0x1.0000000000201p-11")
+set(POCL_VECMATH_DENY_SLEEF_ENTRIES "")
+set(POCL_VECMATH_DENY_SLEEF_FUNCS "")
+set(POCL_VECMATH_DENY_SLEEF_NOTE "SLEEF ${HOST_CPU_VECMATH_SLEEF_VERSION_NUM}: nothing measured over the bound")
+if(HOST_CPU_VECMATH_SLEEF_VERSION_NUM LESS 30800)
+  set(POCL_VECMATH_DENY_SLEEF_ENTRIES "pow;llvm.pow.f64")
+  set(POCL_VECMATH_DENY_SLEEF_FUNCS "pow")
+  set(POCL_VECMATH_DENY_SLEEF_NOTE "SLEEF < 3.8 (have ${HOST_CPU_VECMATH_SLEEF_VERSION_NUM}, 0 = unknown): double pow(-DBL_MAX, 1) returns -inf, SLEEF issue #600, fixed in 3.8")
+endif()
+foreach(LIB LIBMVEC SLEEF)
+  set(_c "")
+  foreach(E IN LISTS POCL_VECMATH_DENY_${LIB}_ENTRIES)
+    string(APPEND _c "    \"${E}\",\n")
+  endforeach()
+  set(POCL_VECMATH_DENY_${LIB}_C "${_c}")
+endforeach()
+configure_file("${CMAKE_SOURCE_DIR}/lib/CL/pocl_vecmath_deny.h.in"
+               "${CMAKE_BINARY_DIR}/pocl_vecmath_deny.h" @ONLY)
 
 # Record the paths to the SVML static libraries for the JIT to link against.
 set(HOST_CPU_SVML_LIBRARY "")
