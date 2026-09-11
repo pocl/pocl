@@ -106,13 +106,16 @@ pocl_buffer_migration_info *
 pocl_convert_to_subbuffer_migrations (pocl_buffer_migration_info *buffer_usage,
                                       cl_int *err);
 
-/* Sets the indirect_raw_ptrs of the kernel to the given list array
- * of pointers.
+/* Sets the indirect_raw_ptrs of the kernel for the given
+ * clSetKernelExecInfo() parameter (CL_KERNEL_EXEC_INFO_SVM_PTRS or
+ * CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL) to the given list array of pointers.
  *
- * Clears up the possible previously set pointers.
+ * Clears up the pointers previously set with the same parameter; the SVM and
+ * USM pointer lists are independent of each other.
  */
 void
-pocl_reset_indirect_ptrs (cl_kernel kernel, void **ptrs, size_t n);
+pocl_reset_indirect_ptrs (cl_kernel kernel, cl_kernel_exec_info param_name,
+                          void **ptrs, size_t n);
 
 /* Increments a buffer's reference counter. */
 #define POCL_RETAIN_BUFFER_UNLOCKED(__OBJ__)                                  \
