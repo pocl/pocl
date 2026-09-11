@@ -212,13 +212,13 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_allocations"
          COMMAND "${TS_BUILDDIR}/allocations/test_allocations" ${EXTRA_ARGS})
 
 set(TEST_THREADS ${HOST_CPU_CORECOUNT})
-if(HOST_CPU_CORECOUNT LESS 4)
+if(HOST_CPU_CORECOUNT LESS 2)
+  set(TEST_THREADS 2)
+endif()
+if(HOST_CPU_CORECOUNT GREATER 4)
   set(TEST_THREADS 4)
 endif()
-if(HOST_CPU_CORECOUNT GREATER 8)
-  set(TEST_THREADS 8)
-endif()
-set(PAR_ARG "--num-worker-threads" ${TEST_THREADS})
+set(PAR_ARG "--num-threadpool-threads" ${TEST_THREADS})
 
 if(TS_SUFFIX STREQUAL "_spirv")
   # min_max_parameter_size...
@@ -393,7 +393,7 @@ unset(CTS_MATH_TESTS_FULL)
 foreach(MATH_FUNC ${MATH_FUNC_LIST})
   list(APPEND CTS_MATH_TESTS_FULL "${TS_NAME}${TS_SUFFIX}_math_full_${MATH_FUNC}")
   add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_full_${MATH_FUNC}"
-           COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS} --num-worker-threads 1 ${MATH_FUNC})
+           COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS} ${PAR_ARG} ${MATH_FUNC})
 endforeach()
 
 #***************************************************************************
@@ -989,7 +989,7 @@ unset(CTS_MATH_TESTS_MICRO)
 foreach(MATH_FUNC ${MATH_FUNC_LIST})
   list(APPEND CTS_MATH_TESTS_MICRO "${TS_NAME}${TS_SUFFIX}_math_micro_${MATH_FUNC}")
   add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_${MATH_FUNC}"
-           COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS} --num-worker-threads 4 -4 -w ${MATH_FUNC})
+           COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS} ${PAR_ARG} -4 -w ${MATH_FUNC}) # width 4, wimpy on
 endforeach()
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_events_micro"
