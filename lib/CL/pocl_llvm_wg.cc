@@ -37,6 +37,7 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/IR/InstIterator.h>
 #include <llvm/IR/InstrTypes.h>
 #include <llvm/TargetParser/Triple.h>
+#include <llvm/TargetParser/X86TargetParser.h>
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Support/Casting.h>
@@ -123,7 +124,8 @@ static bool enableDebugLogs() {
 
 #ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
 static TargetLibraryInfoImpl *
-createFilteredTLII(const llvm::Triple &TT, llvm::driver::VectorLibrary VecLib);
+createFilteredTLII(const llvm::Triple &TT, llvm::driver::VectorLibrary VecLib,
+                   const char *TargetCPU);
 
 /* The vector library selected at configure time. */
 static llvm::driver::VectorLibrary poclVectorLibrary() {
@@ -312,7 +314,8 @@ llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
    * Registering here first makes the default registration below a no-op. */
   if (Dev->type == CL_DEVICE_TYPE_CPU) {
     TLII.reset(createFilteredTLII(llvm::Triple(Dev->llvm_target_triplet),
-                                  poclVectorLibrary()));
+                                  poclVectorLibrary(),
+                                  Dev->llvm_cpu));
     TargetLibraryInfoImpl *TLIIRaw = TLII.get();
     FAM.registerPass([=] { return TargetLibraryAnalysis(*TLIIRaw); });
     PB.registerAnalysisRegistrationCallback(
@@ -1430,21 +1433,26 @@ static unsigned runtimeGlibcVersion() {
   return 0;
 }
 
-/* Does the host have AVX-512? The AVX-512 (_ZGVe, 16 x float / 8 x double)
- * libmvec variants are AVX-512 code inside glibc, and a table row for them
- * makes the loop vectorizer choose that width even on a CPU without AVX-512
- * (the call would then SIGILL). The CPU device compiles for the host, so
- * ask the host, once. */
-static bool hostHasAVX512() {
-  static const bool Have = [] {
-#if defined(__x86_64__) && defined(__GLIBC__)
-    __builtin_cpu_init();
-    return (bool)__builtin_cpu_supports("avx512f");
-#else
+/* Does the compilation target have a given x86 feature?
+ *
+ * A libmvec row wider than the target can execute is not merely unused: it
+ * makes the loop vectorizer choose that width, and the emitted call then
+ * disagrees with the generated code about the ABI. An _ZGVe (AVX-512) row on
+ * a target without AVX-512 SIGILLs inside glibc; an _ZGVd (AVX2) row on an
+ * SSE-only target is worse than that, because the call is legal on an AVX2
+ * *host* and merely reads its argument from a YMM register the SSE code
+ * never wrote -- silently wrong results instead of a fault.
+ *
+ * So this has to ask the compilation target, not the host. The two differ
+ * whenever KERNELLIB_HOST_CPU_VARIANTS=distro selects a variant narrower
+ * than the machine it runs on (device->llvm_cpu comes from
+ * pocl_get_distro_cpu_name(variant)), which is how distributions build. */
+static bool targetCPUHasFeature(const char *TargetCPU, llvm::StringRef Feat) {
+  if (!TargetCPU || !*TargetCPU)
     return false;
-#endif
-  }();
-  return Have;
+  llvm::SmallVector<llvm::StringRef, 64> Features;
+  llvm::X86::getFeaturesForCPU(TargetCPU, Features, /* NeedPlus */ false);
+  return llvm::is_contained(Features, Feat);
 }
 
 /* Rows for the x86-64 libmvec functions beyond LLVM's own VecFuncs.def table.
@@ -1474,7 +1482,10 @@ buildExtendedLibmvecX86Rows(const std::vector<VecDesc> &Base) {
       {"sinh", "sinh", 1, 235},   {"tanh", "tanh", 1, 235},
   };
   unsigned Glibc = runtimeGlibcVersion();
-  bool HaveAVX512 = hostHasAVX512();
+  /* Every ISA variant glibc exports is emitted here unconditionally; rows the
+   * compilation target cannot execute are dropped later, per target, in
+   * createFilteredTLII. This table is built once per process and shared by
+   * every device, so it must not bake in one target's capabilities. */
   struct Variant { char Isa; unsigned VFf; unsigned VFd; bool OnlyE; };
   static const Variant Variants[] = {{'b', 4, 2, false}, {'d', 8, 4, false}, {'e', 16, 8, true}};
   std::vector<VecDesc> Out;
@@ -1500,8 +1511,6 @@ buildExtendedLibmvecX86Rows(const std::vector<VecDesc> &Base) {
     for (const Variant &V : Variants) {
       /* LLVM's table already has b and d rows for the first six */
       if (F.MinGlibc == 0 && !V.OnlyE)
-        continue;
-      if (V.OnlyE && !HaveAVX512)
         continue;
       for (int Dbl = 0; Dbl < 2; ++Dbl) {
         unsigned VF = Dbl ? V.VFd : V.VFf;
@@ -1537,7 +1546,8 @@ static void addExtendedLibmvecX86Rows(std::vector<VecDesc> &Table) {
  * combinations LLVM itself supports are covered; anything else falls back
  * to the unfiltered createTLII. */
 static TargetLibraryInfoImpl *
-createFilteredTLII(const llvm::Triple &TT, llvm::driver::VectorLibrary VecLib) {
+createFilteredTLII(const llvm::Triple &TT, llvm::driver::VectorLibrary VecLib,
+                   const char *TargetCPU) {
   std::vector<VecDesc> Table;
   const char *const *Deny = nullptr;
   size_t NumDeny = 0;
@@ -1566,14 +1576,36 @@ createFilteredTLII(const llvm::Triple &TT, llvm::driver::VectorLibrary VecLib) {
       Deny = PoclVecMathDenyLibmvec;
       NumDeny = std::size(PoclVecMathDenyLibmvec);
     }
-    /* No AVX-512 row of any origin on a host without AVX-512 (see
-     * hostHasAVX512); LLVM's own table may grow such rows. */
-    if (TT.getArch() == llvm::Triple::x86_64 && !hostHasAVX512())
-      Table.erase(std::remove_if(Table.begin(), Table.end(),
-                                 [](const VecDesc &D) {
-                                   return D.getVectorFnName().starts_with("_ZGVe");
-                                 }),
-                  Table.end());
+    /* Drop every row the compilation target cannot execute, of any origin
+     * (LLVM's own table may grow such rows too). The glibc x86 vector ABI
+     * encodes the required ISA in the symbol's class letter, so one rule
+     * per rung covers the whole ladder:
+     *
+     *   _ZGVb  SSE2      128-bit   always available on x86-64
+     *   _ZGVc  AVX       256-bit   needs avx
+     *   _ZGVd  AVX2      256-bit   needs avx2
+     *   _ZGVe  AVX-512   512-bit   needs avx512f
+     *
+     * See targetCPUHasFeature for why this must be the target and not the
+     * host. */
+    if (TT.getArch() == llvm::Triple::x86_64) {
+      llvm::SmallVector<llvm::StringRef, 3> DropPrefixes;
+      if (!targetCPUHasFeature(TargetCPU, "avx512f"))
+        DropPrefixes.push_back("_ZGVe");
+      if (!targetCPUHasFeature(TargetCPU, "avx2"))
+        DropPrefixes.push_back("_ZGVd");
+      if (!targetCPUHasFeature(TargetCPU, "avx"))
+        DropPrefixes.push_back("_ZGVc");
+      if (!DropPrefixes.empty())
+        Table.erase(std::remove_if(Table.begin(), Table.end(),
+                                   [&DropPrefixes](const VecDesc &D) {
+                                     for (llvm::StringRef P : DropPrefixes)
+                                       if (D.getVectorFnName().starts_with(P))
+                                         return true;
+                                     return false;
+                                   }),
+                    Table.end());
+    }
     break;
   }
   case llvm::driver::VectorLibrary::SLEEF: {
@@ -1624,6 +1656,7 @@ createFilteredTLII(const llvm::Triple &TT, llvm::driver::VectorLibrary VecLib) {
 
 static TargetLibraryInfoImpl *initPassManagerForCodeGen(legacy::PassManager &PM,
                                                         const char* TTriple,
+                                                        const char* MCPU,
                                                         cl_device_type DevType) {
   assert(TTriple);
   llvm::Triple DevTriple(TTriple);
@@ -1632,7 +1665,7 @@ static TargetLibraryInfoImpl *initPassManagerForCodeGen(legacy::PassManager &PM,
 
 #ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
   if (DevType == CL_DEVICE_TYPE_CPU) {
-    TLII = createFilteredTLII(DevTriple, poclVectorLibrary());
+    TLII = createFilteredTLII(DevTriple, poclVectorLibrary(), MCPU);
     TLIPass = new TargetLibraryInfoWrapperPass(*TLII);
   } else
 #endif
@@ -1690,7 +1723,7 @@ int pocl_llvm_codegen2(const char* TTriple, const char* MCPU,
 
   if (EmitObj) {
     legacy::PassManager PMObj;
-    TLIIPtr.reset(initPassManagerForCodeGen(PMObj, TTriple, DevType));
+    TLIIPtr.reset(initPassManagerForCodeGen(PMObj, TTriple, MCPU, DevType));
 
     cannotEmitFile = Target->addPassesToEmitFile(PMObj, SOS, nullptr,
                                                  llvm::CodeGenFileType::
@@ -1724,7 +1757,7 @@ int pocl_llvm_codegen2(const char* TTriple, const char* MCPU,
 
   if (EmitAsm) {
     legacy::PassManager PMAsm;
-    TLIIPtr.reset(initPassManagerForCodeGen(PMAsm, TTriple, DevType));
+    TLIIPtr.reset(initPassManagerForCodeGen(PMAsm, TTriple, MCPU, DevType));
 
     POCL_MSG_PRINT_LLVM("Generating assembly text.\n");
 
@@ -1852,7 +1885,11 @@ void populateModulePM([[maybe_unused]] void *Passes, void *Module,
   std::unique_ptr<TargetLibraryInfoImpl> VecTLII;
   if (TM && (TM->getTargetTriple().getArch() == llvm::Triple::x86_64 ||
              TM->getTargetTriple().isAArch64())) {
-    VecTLII.reset(createFilteredTLII(TM->getTargetTriple(), poclVectorLibrary()));
+    {
+      std::string TMCPU = TM->getTargetCPU().str();
+      VecTLII.reset(createFilteredTLII(TM->getTargetTriple(),
+                                       poclVectorLibrary(), TMCPU.c_str()));
+    }
     TargetLibraryInfoImpl *TLIIRaw = VecTLII.get();
     FAM.registerPass([=] { return TargetLibraryAnalysis(*TLIIRaw); });
     PB.registerAnalysisRegistrationCallback(
