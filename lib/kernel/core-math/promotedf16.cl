@@ -2,6 +2,7 @@
 
 float _CL_OVERLOADABLE _cl_modf (float, private float *);
 float _CL_OVERLOADABLE _cl_remquo (float, float, private int *);
+float _CL_OVERLOADABLE _cl_frexp (float, private int *);
 
 /* FP16 overloads for math builtins without a native FP16 path -- neither a
    Clang/LLVM FP16 builtin nor a SLEEF FP16 routine. Unlike additionalf16.cl
@@ -163,7 +164,14 @@ IMPLEMENT_FP16_LGAMMAR_VECTOR_N (16)
  * Promoting through float is exact in both directions: half -> float is
  * lossless, the resulting mantissa has at most 11 significant bits so it
  * converts back exactly, and a subnormal half becomes a normal float, so the
- * exponent is right there too. */
+ * exponent is right there too.
+ *
+ * The float overload is forward-declared above, as for modf and remquo:
+ * opencl-c.h declares both frexp(float, int *) and frexp(half, int *) in the
+ * generic address space, so a call passing a private int * matches neither
+ * exactly and is ambiguous. Not __builtin_frexpf either -- that reintroduces
+ * llvm.frexp, which is the intrinsic this whole change exists to avoid; the
+ * libclc float implementation is integer bit manipulation. */
 half _CL_OVERLOADABLE
 frexp (half x, private int *e) { return (half)frexp ((float)x, e); }
 #define IMPLEMENT_FP16_FREXP_AS(AS)                                           \
