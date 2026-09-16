@@ -267,15 +267,17 @@ if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS)
       isfinite isinf isnan isnormal ldexp rint round sqrt trunc)
   # Transcendentals with vector-library rows:
   #  libmvec / SLEEF-gnuabi on x86-64: sin cos tan exp log pow (LLVM's table),
-  #    plus, for glibc >= 2.35, the rows PoCL adds itself (pocl_llvm_wg.cc)
+  #    plus the rows PoCL adds itself (pocl_llvm_wg.cc): glibc >= 2.35, SLEEF any
   #  SVML: LLVM's table adds exp2 log2 log10
   #  libmvec / SLEEF on AArch64: a much wider set
   set(VECMATH_SWAP_TRANSCENDENTAL sin cos tan exp log pow)
   if(ENABLE_HOST_CPU_VECTORIZE_SVML)
     list(APPEND VECMATH_SWAP_TRANSCENDENTAL exp2 log2 log10)
   endif()
-  # (the extended rows exist only for x86-64 glibc, lib/CL/pocl_llvm_wg.cc)
-  if(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC AND X86_64 AND (HOST_CPU_GLIBC_VERSION_NUM GREATER_EQUAL 235))
+  # The extended rows (lib/CL/pocl_llvm_wg.cc) exist for x86-64 glibc >= 2.35
+  # and for SLEEF's GNU-ABI build in every version (checked: 3.5.1, 3.9.0).
+  if(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC AND X86_64
+     AND (LIBMVEC_IS_SLEEF OR (HOST_CPU_GLIBC_VERSION_NUM GREATER_EQUAL 235)))
     list(APPEND VECMATH_SWAP_TRANSCENDENTAL acos acosh asin asinh atan atan2 atanh
          cbrt cosh erf erfc exp10 exp2 expm1 hypot log10 log1p log2 sinh tanh)
   endif()
