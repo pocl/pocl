@@ -1317,13 +1317,29 @@ set(POCL_VECMATH_DENY_LIBMVEC_ENTRIES "logf;llvm.log.f32;cbrtf;cbrt;exp;llvm.exp
 # SLEEF source.
 set(POCL_VECMATH_DENY_LIBMVEC_FUNCS "log;cbrt;exp;log1p")
 set(POCL_VECMATH_DENY_LIBMVEC_NOTE "glibc 2.39, x86-64 AVX2, LLVM 22.1.8, 2026-09-04: float log 3.009 ULP vs 3 (CTS width 1 confirms); float cbrt 2.73 ULP vs 2 in the vector variants; double cbrt 2.88 ULP vs 2 in scalar glibc cbrt, the fallback for kernels on explicit vector types (CTS double3); double exp 3.0077 ULP vs 3 at -0x1.31000000000d0p-6 in both vector variants (_ZGVbN2v_exp, _ZGVdN4v_exp; scalar glibc exp is 0.0077 there), found by the full CTS math test 2026-09-05, not by the sampled sweeps; log1p over its 2 ULP bound in both precisions in the full CTS test 2026-09-05: float 2.004 ULP at 0x1.55a146p-2 (width 4), double 2.524 ULP at 0x1.0000000000201p-11")
-set(POCL_VECMATH_DENY_SLEEF_ENTRIES "")
-set(POCL_VECMATH_DENY_SLEEF_FUNCS "")
-set(POCL_VECMATH_DENY_SLEEF_NOTE "SLEEF ${HOST_CPU_VECMATH_SLEEF_VERSION_NUM}: nothing measured over the bound")
+# SLEEF GNU-ABI, measured 2026-09-16 on 3.5.1 (Ubuntu noble) and 3.9.0, x86-64
+# znver3, LLVM 22.1.8: full ULP sweep, 25 functions x 2 precisions x widths
+# 1,2,3,4,8, plus direct calls into the vector entry points at the range
+# edges (openpocl/docs/sleef-deny-list.md).
+#  asinh: both precisions return inf past sqrt(MAX) -- |x| > 1.34e154 double,
+#         > 1.84e19 float -- in every version measured (x^2 overflows in
+#         log(x + sqrt(x^2 + 1))); true value is ~355 / ~44 there.
+#  cbrt:  double 2.336 ULP vs 2 at 8.78e-14 on explicit 3-wide types, where
+#         the fallback is scalar glibc cbrt, as for libmvec above.
+set(POCL_VECMATH_DENY_SLEEF_ENTRIES "asinhf;asinh;cbrtf;cbrt")
+set(POCL_VECMATH_DENY_SLEEF_FUNCS "asinh;cbrt")
+set(POCL_VECMATH_DENY_SLEEF_NOTE "SLEEF ${HOST_CPU_VECMATH_SLEEF_VERSION_NUM} (0 = unknown), 2026-09-16: asinh returns inf for |x| > sqrt(MAX) in both precisions (3.5.1 and 3.9.0); double cbrt 2.336 ULP vs 2 at 8.78e-14 on 3-wide types (scalar glibc fallback)")
+if(HOST_CPU_VECMATH_SLEEF_VERSION_NUM LESS 30900)
+  # log1p returns inf for x > ~1e307 (double) / ~3e38 (float) in 3.5.1; correct
+  # in 3.9.0. No version in between measured, so the gate is 3.9.0.
+  set(POCL_VECMATH_DENY_SLEEF_ENTRIES "${POCL_VECMATH_DENY_SLEEF_ENTRIES};log1pf;log1p")
+  set(POCL_VECMATH_DENY_SLEEF_FUNCS "${POCL_VECMATH_DENY_SLEEF_FUNCS};log1p")
+  set(POCL_VECMATH_DENY_SLEEF_NOTE "${POCL_VECMATH_DENY_SLEEF_NOTE}; log1p returns inf near MAX below 3.9.0 (3.5.1 measured, 3.9.0 correct)")
+endif()
 if(HOST_CPU_VECMATH_SLEEF_VERSION_NUM LESS 30800)
-  set(POCL_VECMATH_DENY_SLEEF_ENTRIES "pow;llvm.pow.f64")
-  set(POCL_VECMATH_DENY_SLEEF_FUNCS "pow")
-  set(POCL_VECMATH_DENY_SLEEF_NOTE "SLEEF < 3.8 (have ${HOST_CPU_VECMATH_SLEEF_VERSION_NUM}, 0 = unknown): double pow(-DBL_MAX, 1) returns -inf, SLEEF issue #600, fixed in 3.8")
+  set(POCL_VECMATH_DENY_SLEEF_ENTRIES "${POCL_VECMATH_DENY_SLEEF_ENTRIES};pow;llvm.pow.f64")
+  set(POCL_VECMATH_DENY_SLEEF_FUNCS "${POCL_VECMATH_DENY_SLEEF_FUNCS};pow")
+  set(POCL_VECMATH_DENY_SLEEF_NOTE "${POCL_VECMATH_DENY_SLEEF_NOTE}; double pow(-DBL_MAX, 1) returns -inf below 3.8, SLEEF issue #600 (3.5.1 reproduced, 3.9.0 correct)")
 endif()
 foreach(LIB LIBMVEC SLEEF)
   set(_c "")
