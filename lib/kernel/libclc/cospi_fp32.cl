@@ -66,6 +66,12 @@ _CL_OVERLOADABLE vtype cospi(vtype x)
     v2type t = __pocl_sincosf_piby4(a * M_PI_F);
     itype jr = s ^ as_itype(e ? t.hi : t.lo);
 
+    // cospi(n + 0.5) is +0.0 for every integral n. The s term carries a
+    // sign derived from the parity of the integral part, which is right
+    // for the non-zero results and wrong for an exact zero: cospi(0.5)
+    // and cospi(2.5) came out -0.0.
+    jr = (r == (vtype)0.5) ? (itype)0 : jr;
+
     ir = (ix < (itype)0x4b000000) ? jr : ir;
 
     return as_vtype(ir);
