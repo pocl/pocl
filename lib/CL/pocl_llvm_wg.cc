@@ -1465,7 +1465,7 @@ static bool targetCPUHasFeature(const char *TargetCPU, llvm::StringRef Feat) {
  * (name, VF) pairs it lacks are produced (LLVM 23 already has acosh asinh
  * atanh cbrt erf erfc expm1 log1p). */
 static std::vector<VecDesc>
-buildExtendedLibmvecX86Rows(const std::vector<VecDesc> &Base) {
+buildExtendedLibmvecX86Rows(const std::vector<VecDesc> &Base, bool LibIsSleef) {
   struct Fn { const char *Name; const char *Intrinsic; unsigned Args; unsigned MinGlibc; };
   static const Fn Fns[] = {
       /* in LLVM's table too, but without AVX-512 rows; llvm.tan exists
@@ -1481,7 +1481,10 @@ buildExtendedLibmvecX86Rows(const std::vector<VecDesc> &Base) {
       {"log10", "log10", 1, 235}, {"log1p", nullptr, 1, 235}, {"log2", "log2", 1, 235},
       {"sinh", "sinh", 1, 235},   {"tanh", "tanh", 1, 235},
   };
-  unsigned Glibc = runtimeGlibcVersion();
+  /* SLEEF's GNU-ABI build exports every function below in every ISA class
+   * (checked against 3.5.1 and 3.9.0), so the glibc version gate does not
+   * apply to it. */
+  unsigned Glibc = LibIsSleef ? 9999 : runtimeGlibcVersion();
   /* Every ISA variant glibc exports is emitted here unconditionally; rows the
    * compilation target cannot execute are dropped later, per target, in
    * createFilteredTLII. This table is built once per process and shared by
@@ -1530,8 +1533,8 @@ buildExtendedLibmvecX86Rows(const std::vector<VecDesc> &Base) {
  * kernel compile, from several threads; the rows depend only on process
  * constants (glibc version, host CPU, LLVM's table), so they are built once
  * by a thread-safe function-local static and copied from there. */
-static void addExtendedLibmvecX86Rows(std::vector<VecDesc> &Table) {
-  static const std::vector<VecDesc> Rows = buildExtendedLibmvecX86Rows(Table);
+static void addExtendedLibmvecX86Rows(std::vector<VecDesc> &Table, bool LibIsSleef) {
+  static const std::vector<VecDesc> Rows = buildExtendedLibmvecX86Rows(Table, LibIsSleef);
   Table.insert(Table.end(), Rows.begin(), Rows.end());
 }
 
@@ -1563,16 +1566,19 @@ createFilteredTLII(const llvm::Triple &TT, llvm::driver::VectorLibrary VecLib,
     }
     /* On x86 PoCL may point the libmvec table at SLEEF's GNU-ABI build
      * (-DLIBMVEC=libsleefgnuabi.so); the deny list depends on which
-     * library actually answers, and the extended rows only exist in glibc. */
+     * library actually answers. Both libraries export the extended rows
+     * (SLEEF in every version, glibc from 2.35). */
+    bool LibIsSleef = false;
 #ifdef HOST_CPU_LIBMVEC_LIBRARY
-    if (llvm::sys::path::filename(HOST_CPU_LIBMVEC_LIBRARY).contains("sleef")) {
+    LibIsSleef =
+        llvm::sys::path::filename(HOST_CPU_LIBMVEC_LIBRARY).contains("sleef");
+#endif
+    if (TT.getArch() == llvm::Triple::x86_64)
+      addExtendedLibmvecX86Rows(Table, LibIsSleef);
+    if (LibIsSleef) {
       Deny = PoclVecMathDenySleef;
       NumDeny = std::size(PoclVecMathDenySleef);
-    } else
-#endif
-    {
-      if (TT.getArch() == llvm::Triple::x86_64)
-        addExtendedLibmvecX86Rows(Table);
+    } else {
       Deny = PoclVecMathDenyLibmvec;
       NumDeny = std::size(PoclVecMathDenyLibmvec);
     }
