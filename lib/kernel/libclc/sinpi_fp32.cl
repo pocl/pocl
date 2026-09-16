@@ -64,6 +64,12 @@ _CL_OVERLOADABLE vtype sinpi(vtype x)
     v2type t = __pocl_sincosf_piby4(a * M_PI_F);
     itype jr = xodd ^ as_itype(e ? t.hi : t.lo);
 
+    // sinpi(n) for integral n is zero with the sign of x. The xodd term
+    // above also folds in the parity of n, which is correct for the
+    // non-zero results but flips the sign of an exact zero: sinpi(1.0)
+    // came out -0.0 where it must be +0.0.
+    jr = (r == (vtype)0.0) ? xsgn : jr;
+
     ir = (ix < (itype)0x4b000000) ? jr : ir;
 
     return as_vtype(ir);
