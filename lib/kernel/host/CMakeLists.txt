@@ -263,7 +263,16 @@ list(APPEND SOURCES_WITH_SLEEF "host/addrspace_operators.ll" "host/addrspace_ope
 #    with different numerics (and, for pown, an llvm.powi expansion that is far
 #    outside the ULP bound), so those stay on the SLEEF/libclc sources.
 if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS)
-  set(VECMATH_SWAP_EXACT ceil fabs fdim fma fmax fmin floor fmod frexp
+  # frexp is deliberately absent: llvm.frexp on vectors is miscompiled on
+  # x86 whenever its <N x i32> exponent result needs widening, which is
+  # every work-group width on an SSE2-only target. The mantissa stays
+  # correct and the exponent comes back as the mantissa's bit pattern, so
+  # the OpenCL CTS math_brute_force frexp fp64 test fails at
+  # LLC_HOST_CPU=x86-64 while passing natively. LLVM main asserts on the
+  # same input. See llvm/llvm-project#224127. Keeping frexp on the libclc
+  # source costs nothing: no vector library provides it, and libclc's
+  # version is integer bit manipulation that vectorizes on its own.
+  set(VECMATH_SWAP_EXACT ceil fabs fdim fma fmax fmin floor fmod
       isfinite isinf isnan isnormal ldexp rint round sqrt trunc)
   # Transcendentals with vector-library rows:
   #  libmvec / SLEEF-gnuabi on x86-64: sin cos tan exp log pow (LLVM's table),
