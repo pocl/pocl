@@ -152,6 +152,34 @@ IMPLEMENT_FP16_LGAMMAR_VECTOR_N (16)
 
 /*********************************************************************************/
 
+/* frexp : (halfN, address-space intN*) -> halfN
+ *
+ * Here because frexp is not in the builtin swap: llvm.frexp is miscompiled on
+ * vectors (llvm/llvm-project#224127), so frexp stays on libclc-pocl/frexp.cl,
+ * which has no half overloads. additionalf16.cl used to supply them but is
+ * compiled only when the swap is off, and this file is compiled in both
+ * configurations.
+ *
+ * Promoting through float is exact in both directions: half -> float is
+ * lossless, the resulting mantissa has at most 11 significant bits so it
+ * converts back exactly, and a subnormal half becomes a normal float, so the
+ * exponent is right there too. */
+half _CL_OVERLOADABLE
+frexp (half x, private int *e) { return (half)frexp ((float)x, e); }
+#define IMPLEMENT_FP16_FREXP_AS(AS)                                           \
+  half _CL_OVERLOADABLE frexp (half x, AS int *e)                             \
+  { int t; half r = frexp (x, &t); *e = t; return r; }
+IMPLEMENT_FP16_FREXP_AS (local)
+IMPLEMENT_FP16_FREXP_AS (global)
+#ifdef __opencl_c_generic_address_space
+IMPLEMENT_FP16_FREXP_AS (generic)
+#endif
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half2, int2, int, int, lo, hi)
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half3, int3, int2, int, lo, s2)
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half4, int4, int2, int2, lo, hi)
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half8, int8, int4, int4, lo, hi)
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half16, int16, int8, int8, lo, hi)
+
 /* modf : (halfN, address-space halfN*) -> halfN */
 half _CL_OVERLOADABLE
 modf (half x, private half *iptr)
