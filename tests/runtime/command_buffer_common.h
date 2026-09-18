@@ -47,6 +47,7 @@ struct cmdbuf_ext
   clEnqueueCommandBufferKHR_fn clEnqueueCommandBufferKHR;
   clReleaseCommandBufferKHR_fn clReleaseCommandBufferKHR;
   clGetCommandBufferInfoKHR_fn clGetCommandBufferInfoKHR;
+  clRemapCommandBufferKHR_fn clRemapCommandBufferKHR;
 };
 
 /* Resolve the entry points for `platform`. Returns 0, or 77 (the ctest skip
@@ -77,6 +78,7 @@ cmdbuf_load_ext (cl_platform_id platform, struct cmdbuf_ext *ext)
   CMDBUF_GET (clEnqueueCommandBufferKHR);
   CMDBUF_GET (clReleaseCommandBufferKHR);
   CMDBUF_GET (clGetCommandBufferInfoKHR);
+  CMDBUF_GET (clRemapCommandBufferKHR);
   return 0;
 
 #undef CMDBUF_GET

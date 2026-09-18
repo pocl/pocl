@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "command_buffer_common.h"
 #include "poclu.h"
 
 #define STR(x) #x
@@ -34,20 +35,7 @@ main (int _argc, char **_argv)
 {
 #if defined(cl_khr_command_buffer_multi_device)                               \
   && cl_khr_command_buffer_multi_device == 1
-  struct
-  {
-    clCreateCommandBufferKHR_fn clCreateCommandBufferKHR;
-    clCommandCopyBufferKHR_fn clCommandCopyBufferKHR;
-    clCommandCopyBufferRectKHR_fn clCommandCopyBufferRectKHR;
-    clCommandFillBufferKHR_fn clCommandFillBufferKHR;
-    clCommandNDRangeKernelKHR_fn clCommandNDRangeKernelKHR;
-    clCommandBarrierWithWaitListKHR_fn clCommandBarrierWithWaitListKHR;
-    clFinalizeCommandBufferKHR_fn clFinalizeCommandBufferKHR;
-    clEnqueueCommandBufferKHR_fn clEnqueueCommandBufferKHR;
-    clReleaseCommandBufferKHR_fn clReleaseCommandBufferKHR;
-    clGetCommandBufferInfoKHR_fn clGetCommandBufferInfoKHR;
-    clRemapCommandBufferKHR_fn clRemapCommandBufferKHR;
-  } ext;
+  struct cmdbuf_ext ext;
 
   cl_platform_id platform = NULL;
   cl_context context = NULL;
@@ -143,29 +131,9 @@ main (int _argc, char **_argv)
         }
     }
 
-  ext.clCreateCommandBufferKHR = clGetExtensionFunctionAddressForPlatform (
-    platform, "clCreateCommandBufferKHR");
-  ext.clCommandCopyBufferKHR = clGetExtensionFunctionAddressForPlatform (
-    platform, "clCommandCopyBufferKHR");
-  ext.clCommandCopyBufferRectKHR = clGetExtensionFunctionAddressForPlatform (
-    platform, "clCommandCopyBufferRectKHR");
-  ext.clCommandFillBufferKHR = clGetExtensionFunctionAddressForPlatform (
-    platform, "clCommandFillBufferKHR");
-  ext.clCommandNDRangeKernelKHR = clGetExtensionFunctionAddressForPlatform (
-    platform, "clCommandNDRangeKernelKHR");
-  ext.clCommandBarrierWithWaitListKHR
-    = clGetExtensionFunctionAddressForPlatform (
-      platform, "clCommandBarrierWithWaitListKHR");
-  ext.clFinalizeCommandBufferKHR = clGetExtensionFunctionAddressForPlatform (
-    platform, "clFinalizeCommandBufferKHR");
-  ext.clEnqueueCommandBufferKHR = clGetExtensionFunctionAddressForPlatform (
-    platform, "clEnqueueCommandBufferKHR");
-  ext.clReleaseCommandBufferKHR = clGetExtensionFunctionAddressForPlatform (
-    platform, "clReleaseCommandBufferKHR");
-  ext.clGetCommandBufferInfoKHR = clGetExtensionFunctionAddressForPlatform (
-    platform, "clGetCommandBufferInfoKHR");
-  ext.clRemapCommandBufferKHR = clGetExtensionFunctionAddressForPlatform (
-    platform, "clRemapCommandBufferKHR");
+  int skip = cmdbuf_load_ext (platform, &ext);
+  if (skip != 0)
+    return skip;
 
   cl_int error;
 
