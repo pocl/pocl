@@ -167,6 +167,35 @@ append_to_build_log (cl_program program, unsigned device_i, const char *format,
     }                                                                         \
   while (0)
 
+/* Whole-token membership in a space-separated option list.
+
+   strstr() alone matches any substring, so a proper prefix of a listed
+   option passes validation and is forwarded to Clang verbatim: "-cl-mad"
+   is a substring of "-cl-mad-enable", "-cl-denorms" of
+   "-cl-denorms-are-zero", "-cl-single" of "-cl-single-precision-constant".
+   Clang then rejects them, so the caller sees CL_BUILD_PROGRAM_FAILURE
+   where OpenCL requires CL_INVALID_BUILD_OPTIONS for an invalid build
+   option. */
+static int
+pocl_option_listed (const char *list, const char *token)
+{
+  size_t len = strlen (token);
+  const char *p = list;
+
+  if (len == 0)
+    return 0;
+
+  while ((p = strstr (p, token)) != NULL)
+    {
+      int at_start = (p == list) || (p[-1] == ' ');
+      int at_end = (p[len] == ' ') || (p[len] == '\0');
+      if (at_start && at_end)
+        return 1;
+      ++p;
+    }
+  return 0;
+}
+
 /* options must be non-NULL.
  * modded_options[size] + link_options are preallocated outputs
  */
@@ -219,7 +248,7 @@ process_options (const char *options, char *modded_options, char *link_options,
       if (strncmp (token, "-cl", 3) == 0 || strncmp (token, "-w", 2) == 0
           || strncmp (token, "-Werror", 7) == 0)
         {
-          if (strstr (cl_program_link_options, token))
+          if (pocl_option_listed (cl_program_link_options, token))
             {
               /* when linking, only a subset of -cl* options are valid,
                * and only with -enable-link-options */
@@ -246,7 +275,7 @@ process_options (const char *options, char *modded_options, char *link_options,
                 }
             }
 
-          if (strstr (cl_parameters, token))
+          if (pocl_option_listed (cl_parameters, token))
             {
               /* the LLVM API call pushes the parameters directly to the
                  frontend without using -Xclang */
@@ -264,7 +293,7 @@ process_options (const char *options, char *modded_options, char *link_options,
                 *cl_c_version = CL_MAKE_VERSION (major, minor, 0);
             }
             }
-          else if (strstr (cl_parameters_not_yet_supported_by_clang, token))
+          else if (pocl_option_listed (cl_parameters_not_yet_supported_by_clang, token))
             {
               APPEND_TO_OPTION_BUILD_LOG (
                   "This build option is not yet supported by clang: %s\n",
