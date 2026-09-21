@@ -166,7 +166,12 @@ typedef unsigned char uchar;
 #if !(defined(_SYS_TYPES_H) && defined(__USE_MISC))
 /* glibc, when including sys/types.h, typedefs these. */
 
+#ifdef _WIN64
+/* LLP64: "long" is 32b on Windows, but ulong must be 64b. */
+typedef unsigned long long int ulong;
+#else
 typedef unsigned long int ulong;
+#endif
 typedef unsigned short int ushort;
 typedef unsigned int uint;
 
