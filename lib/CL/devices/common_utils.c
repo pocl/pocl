@@ -285,7 +285,11 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
 #endif
 
   char kernellib[POCL_MAX_PATHNAME_LENGTH] = "kernel-";
-  char kernellib_fallback[POCL_MAX_PATHNAME_LENGTH];
+  /* Not every branch below sets a fallback: a forced-CPU build has exactly
+     one kernel library and so has no fallback at all. Start empty and let
+     the strdup below decide, rather than duplicating whatever happened to
+     be on the stack. */
+  char kernellib_fallback[POCL_MAX_PATHNAME_LENGTH] = "";
   strcat(kernellib, device->llvm_target_triplet);
   strcat(kernellib, "-");
 
@@ -303,7 +307,8 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
            POCL_MAX_PATHNAME_LENGTH - strlen (kernellib)
              - strlen (OCL_KERNEL_TARGET_CPU));
 #endif
-  device->kernellib_fallback_name = strdup(kernellib_fallback);
+  device->kernellib_fallback_name
+    = kernellib_fallback[0] ? strdup (kernellib_fallback) : NULL;
   device->kernellib_name = strdup(kernellib);
   if (device->kernellib_subdir == NULL)
     device->kernellib_subdir = "host";
