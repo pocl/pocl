@@ -99,5 +99,10 @@ _CL_OVERLOADABLE vtype atanpi(vtype x) {
     vtype z = isnan(x) ? x : (vtype)0.5;
     z = (v <= (vtype)0x1.0p+56) ? r : z;
     z = (v < (vtype)0x1.0p-26) ? vp : z;
-    return x == v ? z : -z;
+    // atanpi is odd, so the sign comes from x -- but x == fabs(x) is
+    // true for -0.0, so that test returned +0.0 for atanpi(-0.0). Take
+    // the sign bitwise instead, as atanpi_fp32.cl already does. z is
+    // non-negative here except for NaN, where it is x and keeps its own
+    // sign under the OR.
+    return as_vtype((as_itype(x) & (itype)SIGNBIT_DP64) | as_itype(z));
 }

@@ -74,6 +74,13 @@ _CL_OVERLOADABLE vtype tanpi(vtype x) {
   __pocl_tan_piby4 (api, (vtype)0.0, &lo, &hi);
   itype jr = s ^ as_itype (e != (itype)0 ? hi : lo);
 
+  // tanpi(n) for integral n is zero whose sign is the sign of x flipped
+  // by the parity of n -- which is exactly xodd, and exactly what the
+  // 2^52/2^23-and-above paths above already return. The interval logic
+  // leaves s == xsgn here instead, so tanpi(1.0) came out +0.0 where it
+  // must be -0.0.
+  jr = (r == (vtype)0.0) ? xodd : jr;
+
   itype si = xodd | (itype)0x7ff0000000000000LL;
   jr = (r == (vtype)0.5) ? si : jr;
 
