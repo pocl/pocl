@@ -2020,7 +2020,7 @@ pocl_init_default_device_infos (cl_device_id dev,
   else
     {
       dev->num_builtin_kernels = 0;
-      dev->builtin_kernel_list = "";
+      dev->builtin_kernel_list = strdup ("");
       dev->builtin_kernels_with_version = NULL;
     }
 
