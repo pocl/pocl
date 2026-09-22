@@ -36,7 +36,9 @@ static const char *pocl_version
         POCL_PLATFORM_VERSION_MINOR) " PoCL " POCL_VERSION_FULL
 
 #if defined(_WIN32)
-   #if defined(_WIN64)
+#if defined(__aarch64__) || defined(_M_ARM64)
+                                     "  Windows ARM64"
+#elif defined(_WIN64)
                                      "  Windows x86-64"
 #else
                                      "  Windows x86"
