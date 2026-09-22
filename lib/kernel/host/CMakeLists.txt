@@ -263,6 +263,7 @@ if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS) # implies CONFORMANCE=OFF
     libclc-pocl/isnormal.cl
     libclc-pocl/log2.cl
     libclc-pocl/pow.cl
+    libclc-pocl/pown.cl
     libclc-pocl/fmod.cl
     libclc-pocl/rint.cl
     libclc-pocl/sin.cl
@@ -328,6 +329,9 @@ if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS) # implies CONFORMANCE=OFF
     log2.cl
 
     pow.cl
+    # float from libclc (accuracy), double from the builtin (llvm#224127)
+    libclc-pocl/pown_fp32_only.cl
+    pown_fp64_builtin.cl
 
     rint.cl
     round.cl

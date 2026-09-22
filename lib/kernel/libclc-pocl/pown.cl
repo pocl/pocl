@@ -274,7 +274,7 @@
 #undef HAVE_FMA32
 
 
-#ifdef cl_khr_fp64
+#if defined(cl_khr_fp64) && !defined(POCL_POWN_FP32_ONLY)
 
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
