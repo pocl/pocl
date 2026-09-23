@@ -454,7 +454,14 @@ endif()
 
 harden("${POCL_LIBRARY_NAME}")
 
-if((UNIX OR MINGW) AND (NOT APPLE))
+if(MINGW)
+  # lld's MinGW driver has no --exclude-libs.
+  include(CheckCXXSourceCompiles)
+  set(CMAKE_REQUIRED_LINK_OPTIONS "LINKER:--exclude-libs,ALL")
+  check_cxx_source_compiles("int main() { return 0; }" HAVE_LINKER_EXCLUDE_LIBS)
+  unset(CMAKE_REQUIRED_LINK_OPTIONS)
+endif()
+if((UNIX AND NOT APPLE) OR (MINGW AND HAVE_LINKER_EXCLUDE_LIBS))
   target_link_options("${POCL_LIBRARY_NAME}" PRIVATE "LINKER:--exclude-libs,ALL")
 endif()
 if(MINGW)

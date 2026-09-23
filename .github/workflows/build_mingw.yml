@@ -26,15 +26,16 @@ concurrency:
 
 jobs:
   mingw_test_matrix:
-    name: LLVM MSYS2 - CPU - shared libs:${{ matrix.shared_libs }}
-    runs-on: windows-latest
+    name: ${{ matrix.msystem }} - CPU - shared libs:${{ matrix.shared_libs }}
+    runs-on: ${{ matrix.msystem == 'CLANGARM64' && 'windows-11-arm' || 'windows-latest' }}
     defaults:
       run:
         shell: msys2 {0}
     strategy:
       fail-fast: false
       matrix:
-        shared_libs: [ON, OFF]
+        shared_libs: ['ON', 'OFF']
+        msystem: [MINGW64, UCRT64, CLANG64, CLANGARM64]
 
     steps:
       - name: Checkout PoCL
@@ -43,42 +44,33 @@ jobs:
       - name: Setup MSYS2
         uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2.32.0
         with:
-          msystem: MINGW64
+          msystem: ${{ matrix.msystem }}
           update: true
-          install: >-
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-ninja
-            mingw-w64-x86_64-hwloc
-            mingw-w64-x86_64-pkgconf
-            mingw-w64-x86_64-clang
-            mingw-w64-x86_64-clang-libs
-            mingw-w64-x86_64-clang-tools-extra
-            mingw-w64-x86_64-llvm
-            mingw-w64-x86_64-llvm-libs
-            mingw-w64-x86_64-llvm-tools
-
-      - name: Setup Build Environment
-        run: |
-          # Convert the Windows workspace path to an MSYS2 compatible one
-          WORKSPACE=$(cygpath -u "${{ github.workspace }}")
-          echo "WORKSPACE=${WORKSPACE}" >> $GITHUB_ENV
+          pacboy: >-
+            cc:p
+            cmake:p
+            hwloc:p
+            libjpeg-turbo:p
+            clang:p
+            clang-tools-extra:p
+            llvm:p
+            spirv-llvm-translator:p
+            python:p
 
       - name: Load Env vars
-        id: load-env
-        run: |
-          cat ${{ env.WORKSPACE }}/.github/variables.txt >> $GITHUB_ENV
+        run: cat .github/variables.txt >> "$GITHUB_ENV"
 
       - name: Configure PoCL
         run: |
-          BUILD_FLAGS="-O2 -march=x86-64-v2 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
-          cmake -S ${{ env.WORKSPACE }} -B ${{ env.WORKSPACE }}/build-pocl \
+          BUILD_FLAGS="-O2 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+          cmake -S . -B build-pocl \
             -DCMAKE_BUILD_TYPE=Release \
             "-DCMAKE_C_FLAGS_RELEASE=${BUILD_FLAGS}"  "-DCMAKE_CXX_FLAGS_RELEASE=${BUILD_FLAGS}" \
-            -DCMAKE_INSTALL_PREFIX=${{ env.WORKSPACE }}/install-pocl \
+            -DCMAKE_INSTALL_PREFIX="$PWD/install-pocl" \
             -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }} \
             -DENABLE_ICD=OFF \
-            -DLLC_HOST_CPU=haswell \
+            -DENABLE_SPIRV=ON \
+            -DKERNELLIB_HOST_CPU_VARIANTS=distro \
             -DENABLE_LLVM_FILECHECKS=0 \
             -DENABLE_LOADABLE_DRIVERS=${{ matrix.shared_libs }} \
             -G "Ninja"
@@ -86,25 +78,20 @@ jobs:
         #      and PoCL's tests do not support Khronos' ICD loader
 
       - name: Build PoCL
-        run: |
-          cmake --build ${{ env.WORKSPACE }}/build-pocl --target install
+        run: cmake --build build-pocl --target install
 
       - name: Run Tests
         env:
           POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         timeout-minutes: 120
-        run: |
-          rm -rf ${{ env.POCL_CACHE_DIR }}
-          mkdir -p ${{ env.POCL_CACHE_DIR }}
-          cd ${{ env.WORKSPACE }}/build-pocl
-          export PATH=${{ env.WORKSPACE }}/install-llvm/bin:$PATH
-          ${{ env.WORKSPACE }}/tools/scripts/run_cpu_tests mingw $CTEST_FLAGS -j$(nproc)
+        working-directory: build-pocl
+        run: ../tools/scripts/run_cpu_tests $CTEST_FLAGS -j$(nproc)
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: 'PoCL-MinGW-x86_64-LLVM_MSYS2-shared_${{ matrix.shared_libs }}-${{ github.sha }}'
-          path: 'D:/a/pocl/pocl/install-pocl'
+          name: 'PoCL-${{ matrix.msystem }}-LLVM_MSYS2-shared_${{ matrix.shared_libs }}-${{ github.sha }}'
+          path: '${{ github.workspace }}/install-pocl'
           if-no-files-found: error
           compression-level: 4
           archive: true

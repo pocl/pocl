@@ -67,10 +67,19 @@ if(NOT DEFINED LLC_HOST_CPU_AUTO)
 endif()
 
 if((LLC_HOST_CPU_AUTO MATCHES "unknown") AND (NOT LLC_HOST_CPU))
-  message(FATAL_ERROR "LLVM could not recognize your CPU model automatically. Please run CMake with -DLLC_HOST_CPU=<cpu> (you can find valid names with: llc -mcpu=help)")
-else()
-  set(LLC_HOST_CPU_AUTO "${LLC_HOST_CPU_AUTO}" CACHE INTERNAL "Autodetected CPU")
+  # Only a "native" kernel library variant needs the real CPU name; distro
+  # variants pick the CPU at runtime.
+  if((NOT DEFINED KERNELLIB_HOST_CPU_VARIANTS) OR (KERNELLIB_HOST_CPU_VARIANTS MATCHES "native"))
+    message(FATAL_ERROR "LLVM could not recognize your CPU model automatically. Please run CMake with -DLLC_HOST_CPU=<cpu> (you can find valid names with: llc -mcpu=help)")
+  endif()
+  if(X86)
+    set(LLC_HOST_CPU_AUTO "x86-64")
+  else()
+    set(LLC_HOST_CPU_AUTO "generic")
+  endif()
+  message(WARNING "LLVM could not recognize your CPU model automatically, using ${LLC_HOST_CPU_AUTO}")
 endif()
+set(LLC_HOST_CPU_AUTO "${LLC_HOST_CPU_AUTO}" CACHE INTERNAL "Autodetected CPU")
 
 if(DEFINED LLC_HOST_CPU)
   if(NOT LLC_HOST_CPU STREQUAL LLC_HOST_CPU_AUTO)

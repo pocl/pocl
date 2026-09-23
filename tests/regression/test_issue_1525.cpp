@@ -74,8 +74,8 @@ int main(int, char **) {
   auto Kernel = TestKernel(Program, "test");
 
   unsigned SIZE = 16 * 1024 + 1;
-  cl::Buffer InBuffer(CL_MEM_READ_ONLY, SIZE*sizeof(long));
-  cl::Buffer OutBuffer(CL_MEM_WRITE_ONLY, SIZE*sizeof(long));
+  cl::Buffer InBuffer(CL_MEM_READ_ONLY, SIZE*sizeof(cl_long));
+  cl::Buffer OutBuffer(CL_MEM_WRITE_ONLY, SIZE*sizeof(cl_long));
   try {
     Kernel(cl::EnqueueArgs(Queue, cl::NDRange(2048), cl::NDRange(2048)), OutBuffer, InBuffer);
     Queue.finish();
