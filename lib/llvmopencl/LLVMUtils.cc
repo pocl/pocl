@@ -933,9 +933,10 @@ void unifyLLVMFunctionAttributes(llvm::Module &M, bool TouchAlwaysInline) {
       F.addFnAttr("target-features", TargetFeatures);
     // Under -cl-fast-relaxed-math the x86 backend lowers vector float
     // division to rcpps plus one Newton-Raphson step. With FMA the result
-    // is within 1 ulp; without it (x86-64 baseline, the target distributions
-    // build for) the refinement rounds twice and the CTS measures 3 ulp
-    // against the 2.5 ulp relaxed bound (math_brute_force divide, fp32 rlx).
+    // is within 1 ulp; without it (the x86-64 baseline, and every distro
+    // kernel-library variant below avx2) the refinement rounds twice and the
+    // CTS measures 3 ulp against the 2.5 ulp relaxed bound (math_brute_force
+    // divide and reciprocal, fp32 rlx).
     // C fast-math promises nothing there; OpenCL relaxed math does. Keep
     // the estimates only where they meet the bound.
     //
