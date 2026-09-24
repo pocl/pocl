@@ -28,12 +28,16 @@
 
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <algorithm>
+#include <deque>
+#include <cstdio>
 #include <llvm/ADT/StringRef.h>
 #include <llvm/ADT/StringSet.h>
 #include <llvm/ADT/Twine.h>
 #include <llvm/IR/InstIterator.h>
 #include <llvm/IR/InstrTypes.h>
 #include <llvm/TargetParser/Triple.h>
+#include <llvm/TargetParser/X86TargetParser.h>
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Support/Casting.h>
@@ -47,6 +51,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/PassInfo.h>
 #include <llvm/PassRegistry.h>
 #include <llvm/Support/CommandLine.h>
+#include <llvm/Support/Path.h>
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Linker/Linker.h>
 #include <llvm/Support/CodeGen.h>
@@ -116,6 +121,25 @@ static bool enableDebugLogs() {
   Enable |= pocl_is_option_set("POCL_DEBUG_LLVM_OPTS");
   return Enable;
 }
+
+#ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
+static TargetLibraryInfoImpl *
+createFilteredTLII(const llvm::Triple &TT, llvm::driver::VectorLibrary VecLib,
+                   const char *TargetCPU);
+
+/* The vector library selected at configure time. */
+static llvm::driver::VectorLibrary poclVectorLibrary() {
+#if defined(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
+  return llvm::driver::VectorLibrary::LIBMVEC;
+#elif defined(ENABLE_HOST_CPU_VECTORIZE_SLEEF)
+  return llvm::driver::VectorLibrary::SLEEF;
+#elif defined(ENABLE_HOST_CPU_VECTORIZE_SVML)
+  return llvm::driver::VectorLibrary::SVML;
+#else
+  return llvm::driver::VectorLibrary::NoLibrary;
+#endif
+}
+#endif
 
 // Returns the TargetMachine instance or zero if no triple is provided.
 // ForJIT selects a code model suitable for the in-process ORC/JITLink JIT (see
@@ -281,6 +305,24 @@ llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
       });
 
   PoclPipeline = "function(require<targetir>),function(require<targetlibinfo>)," + PoclPipeline;
+#endif
+
+#ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
+  /* Give the IR pipeline the same filtered vector-library table the codegen
+   * uses, so the loop vectorizer can vectorize plain libm calls (those
+   * without an LLVM intrinsic, e.g. cbrtf, erff) into their vector variants.
+   * Registering here first makes the default registration below a no-op. */
+  if (Dev->type == CL_DEVICE_TYPE_CPU) {
+    TLII.reset(createFilteredTLII(llvm::Triple(Dev->llvm_target_triplet),
+                                  poclVectorLibrary(),
+                                  Dev->llvm_cpu));
+    TargetLibraryInfoImpl *TLIIRaw = TLII.get();
+    FAM.registerPass([=] { return TargetLibraryAnalysis(*TLIIRaw); });
+    PB.registerAnalysisRegistrationCallback(
+        [TLIIRaw](::llvm::FunctionAnalysisManager &F) {
+          F.registerPass([=] { return TargetLibraryAnalysis(*TLIIRaw); });
+        });
+  }
 #endif
 
   pocl::registerFunctionAnalyses(PB);
@@ -1343,8 +1385,284 @@ void pocl_llvm_free_llvm_irs(cl_program program, unsigned device_i) {
   }
 }
 
+#ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
+#include "pocl_vecmath_deny.h"
+#ifdef __GLIBC__
+#include <gnu/libc-version.h>
+#endif
+
+/* Split a comma-separated environment value into names. */
+static void splitNames(const char *Value, llvm::StringSet<> &Out) {
+  if (Value == nullptr)
+    return;
+  llvm::StringRef S(Value);
+  while (!S.empty()) {
+    auto Parts = S.split(',');
+    llvm::StringRef Name = Parts.first.trim();
+    if (!Name.empty())
+      Out.insert(Name);
+    S = Parts.second;
+  }
+}
+
+static VecDesc makeVecDesc(const char *Scalar, std::string Vector, unsigned VF,
+                           std::string Prefix) {
+  /* The strings must outlive every TLII built from them. The pool is only
+   * filled while the extended table is built, which happens once per
+   * process (see addExtendedLibmvecX86Rows). */
+  static std::deque<std::string> Pool;
+  Pool.push_back(std::move(Vector));
+  llvm::StringRef V = Pool.back();
+  Pool.push_back(std::move(Prefix));
+  llvm::StringRef P = Pool.back();
+#if LLVM_MAJOR >= 20
+  return VecDesc(Scalar, V, ElementCount::getFixed(VF), false, P, std::nullopt);
+#else
+  return VecDesc(Scalar, V, ElementCount::getFixed(VF), false, P);
+#endif
+}
+
+/* Runtime glibc version as MAJOR*100+MINOR, or 0 when not glibc. */
+static unsigned runtimeGlibcVersion() {
+#ifdef __GLIBC__
+  const char *V = gnu_get_libc_version();
+  unsigned Major = 0, Minor = 0;
+  if (V && sscanf(V, "%u.%u", &Major, &Minor) == 2)
+    return Major * 100 + Minor;
+#endif
+  return 0;
+}
+
+/* Does the compilation target have a given x86 feature?
+ *
+ * A libmvec row wider than the target can execute is not merely unused: it
+ * makes the loop vectorizer choose that width, and the emitted call then
+ * disagrees with the generated code about the ABI. An _ZGVe (AVX-512) row on
+ * a target without AVX-512 SIGILLs inside glibc; an _ZGVd (AVX2) row on an
+ * SSE-only target is worse than that, because the call is legal on an AVX2
+ * *host* and merely reads its argument from a YMM register the SSE code
+ * never wrote -- silently wrong results instead of a fault.
+ *
+ * So this has to ask the compilation target, not the host. The two differ
+ * whenever KERNELLIB_HOST_CPU_VARIANTS=distro selects a variant narrower
+ * than the machine it runs on (device->llvm_cpu comes from
+ * pocl_get_distro_cpu_name(variant)), which is how distributions build. */
+static bool targetCPUHasFeature(const char *TargetCPU, llvm::StringRef Feat) {
+  if (!TargetCPU || !*TargetCPU)
+    return false;
+  llvm::SmallVector<llvm::StringRef, 64> Features;
+  llvm::X86::getFeaturesForCPU(TargetCPU, Features, /* NeedPlus */ false);
+  return llvm::is_contained(Features, Feat);
+}
+
+/* Rows for the x86-64 libmvec functions beyond LLVM's own VecFuncs.def table.
+ * glibc >= 2.35 exports vector versions of most of libm under the GNU vector
+ * ABI names; LLVM (up to 23) lists only sin cos tan exp log pow, and no
+ * AVX-512 (_ZGVe) variants even for those. Rows are added for the SSE (b),
+ * AVX2 (d) and AVX-512 (e) variants; the loop vectorizer only uses a row
+ * whose vectorization factor it chose, so rows for absent ISAs are inert.
+ * Base is LLVM's table for this library and architecture; only the
+ * (name, VF) pairs it lacks are produced (LLVM 23 already has acosh asinh
+ * atanh cbrt erf erfc expm1 log1p). */
+static std::vector<VecDesc>
+buildExtendedLibmvecX86Rows(const std::vector<VecDesc> &Base, bool LibIsSleef) {
+  struct Fn { const char *Name; const char *Intrinsic; unsigned Args; unsigned MinGlibc; };
+  static const Fn Fns[] = {
+      /* in LLVM's table too, but without AVX-512 rows; llvm.tan exists
+       * since LLVM 19 */
+      {"sin", "sin", 1, 0},     {"cos", "cos", 1, 0},     {"tan", "tan", 1, 0},
+      {"exp", "exp", 1, 0},     {"log", "log", 1, 0},     {"pow", "pow", 2, 0},
+      /* glibc 2.35+ */
+      {"acos", "acos", 1, 235},   {"acosh", nullptr, 1, 235}, {"asin", "asin", 1, 235},
+      {"asinh", nullptr, 1, 235}, {"atan", "atan", 1, 235},   {"atan2", "atan2", 2, 235},
+      {"atanh", nullptr, 1, 235}, {"cbrt", nullptr, 1, 235},  {"cosh", "cosh", 1, 235},
+      {"erf", nullptr, 1, 235},   {"erfc", nullptr, 1, 235},  {"exp10", "exp10", 1, 235},
+      {"exp2", "exp2", 1, 235},   {"expm1", nullptr, 1, 235}, {"hypot", nullptr, 2, 235},
+      {"log10", "log10", 1, 235}, {"log1p", nullptr, 1, 235}, {"log2", "log2", 1, 235},
+      {"sinh", "sinh", 1, 235},   {"tanh", "tanh", 1, 235},
+  };
+  /* SLEEF's GNU-ABI build exports every function below in every ISA class
+   * (checked against 3.5.1 and 3.9.0), so the glibc version gate does not
+   * apply to it. */
+  unsigned Glibc = LibIsSleef ? 9999 : runtimeGlibcVersion();
+  /* Every ISA variant glibc exports is emitted here unconditionally; rows the
+   * compilation target cannot execute are dropped later, per target, in
+   * createFilteredTLII. This table is built once per process and shared by
+   * every device, so it must not bake in one target's capabilities. */
+  struct Variant { char Isa; unsigned VFf; unsigned VFd; bool OnlyE; };
+  static const Variant Variants[] = {{'b', 4, 2, false}, {'d', 8, 4, false}, {'e', 16, 8, true}};
+  std::vector<VecDesc> Out;
+  llvm::StringSet<> Have;
+  for (const VecDesc &D : Base)
+    Have.insert(std::string(D.getScalarFnName()) + ":" +
+                std::to_string(D.getVectorizationFactor().getKnownMinValue()));
+  /* Scalar names must outlive the TLIIs too; filled once, like the pool. */
+  static std::deque<std::string> Names;
+  auto AddRow = [&](const std::string &ScalarName, const std::string &Vector,
+                    unsigned VF, const std::string &Prefix) {
+    std::string Key = ScalarName + ":" + std::to_string(VF);
+    if (Have.contains(Key))
+      return;
+    Have.insert(Key);
+    Names.push_back(ScalarName);
+    Out.push_back(makeVecDesc(Names.back().c_str(), Vector, VF, Prefix));
+  };
+  for (const Fn &F : Fns) {
+    if (F.MinGlibc && Glibc < F.MinGlibc)
+      continue;
+    std::string Params(F.Args, 'v');
+    for (const Variant &V : Variants) {
+      /* LLVM's table already has b and d rows for the first six */
+      if (F.MinGlibc == 0 && !V.OnlyE)
+        continue;
+      for (int Dbl = 0; Dbl < 2; ++Dbl) {
+        unsigned VF = Dbl ? V.VFd : V.VFf;
+        std::string Scalar = std::string(F.Name) + (Dbl ? "" : "f");
+        std::string Vector = std::string("_ZGV") + V.Isa + "N" + std::to_string(VF) + Params + "_" + Scalar;
+        std::string Prefix = "_ZGV_LLVM_N" + std::to_string(VF) + Params;
+        AddRow(Scalar, Vector, VF, Prefix);
+        if (F.Intrinsic)
+          AddRow(std::string("llvm.") + F.Intrinsic + (Dbl ? ".f64" : ".f32"), Vector, VF, Prefix);
+      }
+    }
+  }
+  return Out;
+}
+
+/* Append the extended rows to Table. createFilteredTLII runs for every
+ * kernel compile, from several threads; the rows depend only on process
+ * constants (glibc version, host CPU, LLVM's table), so they are built once
+ * by a thread-safe function-local static and copied from there. */
+static void addExtendedLibmvecX86Rows(std::vector<VecDesc> &Table, bool LibIsSleef) {
+  static const std::vector<VecDesc> Rows = buildExtendedLibmvecX86Rows(Table, LibIsSleef);
+  Table.insert(Table.end(), Rows.begin(), Rows.end());
+}
+
+/* Build a TargetLibraryInfoImpl with the vector library's function table
+ * minus the functions that are denied for this library (compiled-in
+ * table, see pocl_vecmath_deny.h) plus POCL_VECMATH_DENY, minus
+ * POCL_VECMATH_ALLOW. Denied functions keep their scalar implementation.
+ *
+ * The tables come from LLVM's own VecFuncs.def, included with its default
+ * TLI_DEFINE_VECFUNC so the initializer shape matches this LLVM version,
+ * plus PoCL's extended x86 libmvec rows. Only the library/arch
+ * combinations LLVM itself supports are covered; anything else falls back
+ * to the unfiltered createTLII. */
+static TargetLibraryInfoImpl *
+createFilteredTLII(const llvm::Triple &TT, llvm::driver::VectorLibrary VecLib,
+                   const char *TargetCPU) {
+  std::vector<VecDesc> Table;
+  const char *const *Deny = nullptr;
+  size_t NumDeny = 0;
+
+  switch (VecLib) {
+  case llvm::driver::VectorLibrary::LIBMVEC: {
+    if (TT.getArch() == llvm::Triple::x86_64) {
+      const VecDesc Funcs[] = {
+#define TLI_DEFINE_LIBMVEC_X86_VECFUNCS
+#include "llvm/Analysis/VecFuncs.def"
+      };
+      Table.assign(std::begin(Funcs), std::end(Funcs));
+    }
+    /* On x86 PoCL may point the libmvec table at SLEEF's GNU-ABI build
+     * (-DLIBMVEC=libsleefgnuabi.so); the deny list depends on which
+     * library actually answers. Both libraries export the extended rows
+     * (SLEEF in every version, glibc from 2.35). */
+    bool LibIsSleef = false;
+#ifdef HOST_CPU_LIBMVEC_LIBRARY
+    LibIsSleef =
+        llvm::sys::path::filename(HOST_CPU_LIBMVEC_LIBRARY).contains("sleef");
+#endif
+    if (TT.getArch() == llvm::Triple::x86_64)
+      addExtendedLibmvecX86Rows(Table, LibIsSleef);
+    if (LibIsSleef) {
+      Deny = PoclVecMathDenySleef;
+      NumDeny = std::size(PoclVecMathDenySleef);
+    } else {
+      Deny = PoclVecMathDenyLibmvec;
+      NumDeny = std::size(PoclVecMathDenyLibmvec);
+    }
+    /* Drop every row the compilation target cannot execute, of any origin
+     * (LLVM's own table may grow such rows too). The glibc x86 vector ABI
+     * encodes the required ISA in the symbol's class letter, so one rule
+     * per rung covers the whole ladder:
+     *
+     *   _ZGVb  SSE2      128-bit   always available on x86-64
+     *   _ZGVc  AVX       256-bit   needs avx
+     *   _ZGVd  AVX2      256-bit   needs avx2
+     *   _ZGVe  AVX-512   512-bit   needs avx512f
+     *
+     * See targetCPUHasFeature for why this must be the target and not the
+     * host. */
+    if (TT.getArch() == llvm::Triple::x86_64) {
+      llvm::SmallVector<llvm::StringRef, 3> DropPrefixes;
+      if (!targetCPUHasFeature(TargetCPU, "avx512f"))
+        DropPrefixes.push_back("_ZGVe");
+      if (!targetCPUHasFeature(TargetCPU, "avx2"))
+        DropPrefixes.push_back("_ZGVd");
+      if (!targetCPUHasFeature(TargetCPU, "avx"))
+        DropPrefixes.push_back("_ZGVc");
+      if (!DropPrefixes.empty())
+        Table.erase(std::remove_if(Table.begin(), Table.end(),
+                                   [&DropPrefixes](const VecDesc &D) {
+                                     for (llvm::StringRef P : DropPrefixes)
+                                       if (D.getVectorFnName().starts_with(P))
+                                         return true;
+                                     return false;
+                                   }),
+                    Table.end());
+    }
+    break;
+  }
+  case llvm::driver::VectorLibrary::SLEEF: {
+    if (TT.isAArch64()) {
+      const VecDesc Funcs[] = {
+#define TLI_DEFINE_SLEEFGNUABI_VF2_VECFUNCS
+#include "llvm/Analysis/VecFuncs.def"
+#define TLI_DEFINE_SLEEFGNUABI_VF4_VECFUNCS
+#include "llvm/Analysis/VecFuncs.def"
+#define TLI_DEFINE_SLEEFGNUABI_SCALABLE_VECFUNCS
+#include "llvm/Analysis/VecFuncs.def"
+      };
+      Table.assign(std::begin(Funcs), std::end(Funcs));
+    }
+    Deny = PoclVecMathDenySleef;
+    NumDeny = std::size(PoclVecMathDenySleef);
+    break;
+  }
+  default:
+    break;
+  }
+
+  if (Table.empty())
+    return llvm::driver::createTLII(TT, VecLib);
+
+  llvm::StringSet<> DenySet, AllowSet;
+  for (size_t i = 0; i < NumDeny; ++i)
+    DenySet.insert(Deny[i]);
+  splitNames(pocl_get_string_option("POCL_VECMATH_DENY", nullptr), DenySet);
+  splitNames(pocl_get_string_option("POCL_VECMATH_ALLOW", nullptr), AllowSet);
+
+  std::vector<VecDesc> Kept;
+  Kept.reserve(Table.size());
+  for (const VecDesc &D : Table) {
+    llvm::StringRef Name = D.getScalarFnName();
+    if (DenySet.contains(Name) && !AllowSet.contains(Name)) {
+      POCL_MSG_PRINT_LLVM("vecmath: not vectorizing %s\n", Name.str().c_str());
+      continue;
+    }
+    Kept.push_back(D);
+  }
+
+  auto *TLII = new TargetLibraryInfoImpl(TT);
+  TLII->addVectorizableFunctions(Kept);
+  return TLII;
+}
+#endif
+
 static TargetLibraryInfoImpl *initPassManagerForCodeGen(legacy::PassManager &PM,
                                                         const char* TTriple,
+                                                        const char* MCPU,
                                                         cl_device_type DevType) {
   assert(TTriple);
   llvm::Triple DevTriple(TTriple);
@@ -1353,17 +1671,7 @@ static TargetLibraryInfoImpl *initPassManagerForCodeGen(legacy::PassManager &PM,
 
 #ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
   if (DevType == CL_DEVICE_TYPE_CPU) {
-    TLII =
-        llvm::driver::createTLII(DevTriple,
-#ifdef ENABLE_HOST_CPU_VECTORIZE_LIBMVEC
-                                 driver::VectorLibrary::LIBMVEC);
-#endif
-#ifdef ENABLE_HOST_CPU_VECTORIZE_SLEEF
-                                 driver::VectorLibrary::SLEEF);
-#endif
-#ifdef ENABLE_HOST_CPU_VECTORIZE_SVML
-                                 driver::VectorLibrary::SVML);
-#endif
+    TLII = createFilteredTLII(DevTriple, poclVectorLibrary(), MCPU);
     TLIPass = new TargetLibraryInfoWrapperPass(*TLII);
   } else
 #endif
@@ -1421,7 +1729,7 @@ int pocl_llvm_codegen2(const char* TTriple, const char* MCPU,
 
   if (EmitObj) {
     legacy::PassManager PMObj;
-    TLIIPtr.reset(initPassManagerForCodeGen(PMObj, TTriple, DevType));
+    TLIIPtr.reset(initPassManagerForCodeGen(PMObj, TTriple, MCPU, DevType));
 
     cannotEmitFile = Target->addPassesToEmitFile(PMObj, SOS, nullptr,
                                                  llvm::CodeGenFileType::
@@ -1455,7 +1763,7 @@ int pocl_llvm_codegen2(const char* TTriple, const char* MCPU,
 
   if (EmitAsm) {
     legacy::PassManager PMAsm;
-    TLIIPtr.reset(initPassManagerForCodeGen(PMAsm, TTriple, DevType));
+    TLIIPtr.reset(initPassManagerForCodeGen(PMAsm, TTriple, MCPU, DevType));
 
     POCL_MSG_PRINT_LLVM("Generating assembly text.\n");
 
@@ -1573,6 +1881,29 @@ void populateModulePM([[maybe_unused]] void *Passes, void *Module,
   SI->registerCallbacks(PIC, &MAM);
 
   PassBuilder PB(TM, PTO, std::nullopt, &PIC);
+
+#ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
+  /* This is the pipeline that runs the standard optimizations (and the
+   * loop vectorizer) on CPU work-group functions. Give it the filtered
+   * vector-library table so libm calls can be vectorized into their
+   * vector variants; registering first makes the default registration in
+   * registerFunctionAnalyses() a no-op. Only for host CPU targets. */
+  std::unique_ptr<TargetLibraryInfoImpl> VecTLII;
+  if (TM && (TM->getTargetTriple().getArch() == llvm::Triple::x86_64 ||
+             TM->getTargetTriple().isAArch64())) {
+    {
+      std::string TMCPU = TM->getTargetCPU().str();
+      VecTLII.reset(createFilteredTLII(TM->getTargetTriple(),
+                                       poclVectorLibrary(), TMCPU.c_str()));
+    }
+    TargetLibraryInfoImpl *TLIIRaw = VecTLII.get();
+    FAM.registerPass([=] { return TargetLibraryAnalysis(*TLIIRaw); });
+    PB.registerAnalysisRegistrationCallback(
+        [TLIIRaw](::llvm::FunctionAnalysisManager &F) {
+          F.registerPass([=] { return TargetLibraryAnalysis(*TLIIRaw); });
+        });
+  }
+#endif
 
   // Register all the basic analyses with the managers.
   PB.registerModuleAnalyses(MAM);

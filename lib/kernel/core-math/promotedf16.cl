@@ -2,6 +2,7 @@
 
 float _CL_OVERLOADABLE _cl_modf (float, private float *);
 float _CL_OVERLOADABLE _cl_remquo (float, float, private int *);
+float _CL_OVERLOADABLE _cl_frexp (float, private int *);
 
 /* FP16 overloads for math builtins without a native FP16 path -- neither a
    Clang/LLVM FP16 builtin nor a SLEEF FP16 routine. Unlike additionalf16.cl
@@ -99,12 +100,17 @@ atan2pi (half a, half b)
   return (half)atan2pi ((float)a, (float)b);
 }
 DEFINE_FP16_EXPR_V_VV (atan2pi)
+/* When atan2 is swapped to the Clang builtin (vectorized math builds),
+   the generic atan2.cl already defines the half overloads via
+   __builtin_atan2f16, so skip these to avoid a duplicate definition. */
+#ifndef POCL_VECMATH_SWAP_atan2
 half _CL_OVERLOADABLE
 atan2 (half a, half b)
 {
   return (half)atan2 ((float)a, (float)b);
 }
 DEFINE_FP16_EXPR_V_VV (atan2)
+#endif
 
 /*********************************************************************************/
 
@@ -146,6 +152,41 @@ IMPLEMENT_FP16_LGAMMAR_VECTOR_N (8)
 IMPLEMENT_FP16_LGAMMAR_VECTOR_N (16)
 
 /*********************************************************************************/
+
+/* frexp : (halfN, address-space intN*) -> halfN
+ *
+ * Here because frexp is not in the builtin swap: llvm.frexp is miscompiled on
+ * vectors (llvm/llvm-project#224127), so frexp stays on libclc-pocl/frexp.cl,
+ * which has no half overloads. additionalf16.cl used to supply them but is
+ * compiled only when the swap is off, and this file is compiled in both
+ * configurations.
+ *
+ * Promoting through float is exact in both directions: half -> float is
+ * lossless, the resulting mantissa has at most 11 significant bits so it
+ * converts back exactly, and a subnormal half becomes a normal float, so the
+ * exponent is right there too.
+ *
+ * The float overload is forward-declared above, as for modf and remquo:
+ * opencl-c.h declares both frexp(float, int *) and frexp(half, int *) in the
+ * generic address space, so a call passing a private int * matches neither
+ * exactly and is ambiguous. Not __builtin_frexpf either -- that reintroduces
+ * llvm.frexp, which is the intrinsic this whole change exists to avoid; the
+ * libclc float implementation is integer bit manipulation. */
+half _CL_OVERLOADABLE
+frexp (half x, private int *e) { return (half)frexp ((float)x, e); }
+#define IMPLEMENT_FP16_FREXP_AS(AS)                                           \
+  half _CL_OVERLOADABLE frexp (half x, AS int *e)                             \
+  { int t; half r = frexp (x, &t); *e = t; return r; }
+IMPLEMENT_FP16_FREXP_AS (local)
+IMPLEMENT_FP16_FREXP_AS (global)
+#ifdef __opencl_c_generic_address_space
+IMPLEMENT_FP16_FREXP_AS (generic)
+#endif
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half2, int2, int, int, lo, hi)
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half3, int3, int2, int, lo, s2)
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half4, int4, int2, int2, lo, hi)
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half8, int8, int4, int4, lo, hi)
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half16, int16, int8, int8, lo, hi)
 
 /* modf : (halfN, address-space halfN*) -> halfN */
 half _CL_OVERLOADABLE
@@ -218,11 +259,31 @@ IMPLEMENT_FP16_REMQUO_VECTOR (half4, int4, int2, int2, lo, hi)
 IMPLEMENT_FP16_REMQUO_VECTOR (half8, int8, int4, int4, lo, hi)
 IMPLEMENT_FP16_REMQUO_VECTOR (half16, int16, int8, int8, lo, hi)
 
+/* pow : (half, half) -> half. The generic pow.cl defines the half overloads
+   via __builtin_powf16 whenever pow is swapped to the Clang builtin. It is not
+   swapped in the non-vectorized build, nor in a vectorized build whose vector
+   library denies pow (SLEEF < 3.8: double pow), where pow stays on the libclc
+   source, which has no half overloads. Define them here in those cases, as for
+   atan2 above. (Relocated from additionalf16.cl, which is compiled only in the
+   non-vectorized build.) */
+#ifndef POCL_VECMATH_SWAP_pow
+#ifndef __riscv
+DEFINE_FP16_BUILTIN_V_VV (pow, __builtin_elementwise_pow)
+#else
+half _CL_OVERLOADABLE
+pow (half a, half b)
+{
+  return (half)pow ((float)a, (float)b);
+}
+DEFINE_FP16_EXPR_V_VV (pow)
+#endif
+#endif
+
 /* powr : (half, half) -> half. powr(x,y) = pow(x,y) for x >= 0, NaN for x < 0.
-   Built on the half `pow` builtin -- which is available in both configurations
-   (CORE-Math powf16.cl when vectorization is off, the generic vectorized pow.cl
-   when it is on) -- so this works in both. (Relocated from powf16.cl, which is
-   compiled only in the non-vectorized build.) */
+   Built on the half `pow` overload, which is available in every configuration
+   (defined just above, or by the generic pow.cl when pow is swapped), so this
+   works in all of them. (Relocated from powf16.cl, which is compiled only in
+   the non-vectorized build.) */
 half _CL_OVERLOADABLE
 powr (half x, half y)
 {

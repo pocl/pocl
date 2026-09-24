@@ -17,7 +17,11 @@ Conformance related CMake options
 
     * read-write images are disabled (some 1D/2D image array tests fail)
     * the list of supported image formats is much smaller
-    * SLEEF is always enforced for the builtin library
+    * the builtin library is built from the SLEEF sources; the vector math
+      libraries (``ENABLE_HOST_CPU_VECTORIZE_LIBMVEC``, ``_SLEEF``) default to
+      OFF and are opt-in, with functions measured over the OpenCL ULP bounds
+      kept scalar by their deny lists; ``ENABLE_HOST_CPU_VECTORIZE_SVML`` is
+      refused
     * cl_khr_fp16 is disabled
     * cl_khr_subgroup_{ballot,shuffle} are disabled
     * cl_intel_subgroups,cl_intel_required_subgroup_size are disabled

@@ -1,0 +1,4 @@
+CHECK: @_pocl_kernel_deny_env_workgroup
+CHECK-NOT: @_ZGV{{[a-z]}}N{{[0-9]+}}v_sinf(
+CHECK: call {{.*}}@llvm.sin.{{v[0-9]+f32|f32}}(
+CHECK-NOT: @_ZGV{{[a-z]}}N{{[0-9]+}}v_sinf(

@@ -69,3 +69,11 @@ add_llvm_check(SPIRV_NAME issue-1872-switch-to-a-bb-with-unreachable)
 add_llvm_check(SPIRV_NAME switch-to-unreachable-with-a-phi-in-dest)
 add_llvm_check(OPENCLC_NAME force-vector-width ENVIRONMENT "POCL_VECTORIZER_FORCE_VECTOR_WIDTH=4")
 add_llvm_check(OPENCLC_NAME prefer-vector-width ENVIRONMENT "POCL_VECTORIZER_PREFER_VECTOR_WIDTH=512")
+
+# Vector math library calls. The checks name libmvec-ABI entry points
+# (_ZGV<isa>N<lanes>v_<f>), so they need glibc libmvec or SLEEF's gnuabi
+# build selected as the vector math library.
+if(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
+  add_llvm_check(OPENCLC_NAME vecmath-loopvec-libcall)
+  add_llvm_check(OPENCLC_NAME vecmath-deny-env ENVIRONMENT "POCL_VECMATH_DENY=sinf,llvm.sin.f32")
+endif()

@@ -14,7 +14,10 @@
  * Functions without a native FP16 builtin (logb, ilogb, ldexp, rootn, pown,
  * remainder, nextafter, powr, modf, remquo) are in promotedf16.cl. That file is
  * compiled in both configurations because the vectorized generic path does not
- * cover those overloads either. (sincos and lgamma_r half are provided by
+ * cover those overloads either. pow is there too: a vector library can deny
+ * pow (SLEEF < 3.8, double), which keeps it on the libclc source and out of
+ * the generic swap, so its half overloads must come from a file that is
+ * compiled in both configurations. (sincos and lgamma_r half are provided by
  * core-math/sincosf16.cl and lgammaf16.cl.) */
 
 #undef isfinite
@@ -34,17 +37,6 @@ DEFINE_FP16_BUILTIN_V_V (trunc, __builtin_elementwise_trunc)
 DEFINE_FP16_BUILTIN_V_V (rint, __builtin_elementwise_rint)
 DEFINE_FP16_BUILTIN_V_V (round, __builtin_elementwise_round)
 DEFINE_FP16_BUILTIN_V_V (fabs, __builtin_elementwise_abs)
-
-#ifndef __riscv
-DEFINE_FP16_BUILTIN_V_VV (pow, __builtin_elementwise_pow)
-#else
-half _CL_OVERLOADABLE
-pow (half a, half b)
-{
-  return (half)pow ((float)a, (float)b);
-}
-DEFINE_FP16_EXPR_V_VV (pow)
-#endif
 
 /*
   llvm.minimumnum and llvm.maximumnum: Return the other argument if one is NaN.
@@ -85,29 +77,10 @@ IMPLEMENT_FP16_FDIM (half4)
 IMPLEMENT_FP16_FDIM (half8)
 IMPLEMENT_FP16_FDIM (half16)
 
-/* fmod -> @llvm.frem and frexp -> @llvm.frexp are single LLVM intrinsics (no
-   libm libcall), so they belong with the Clang-builtin-backed overloads. */
+/* fmod -> @llvm.frem is a single LLVM intrinsic (no libm libcall), so it
+   belongs with the Clang-builtin-backed overloads. frexp used to be here for
+   the same reason; it moved to promotedf16.cl when frexp left the builtin
+   swap, because that file is compiled in both configurations. */
 half _CL_OVERLOADABLE fmod (half a, half b) { return (half)__builtin_fmodf ((float)a, (float)b); }
 DEFINE_FP16_EXPR_V_VV (fmod)
 
-half _CL_OVERLOADABLE
-frexp (half x, private int *e) { return (half)__builtin_frexpf ((float)x, e); }
-#define IMPLEMENT_FP16_FREXP_AS(AS)                                          \
-  half _CL_OVERLOADABLE frexp (half x, AS int *e)                            \
-  { int t; half r = frexp (x, &t); *e = t; return r; }
-IMPLEMENT_FP16_FREXP_AS (local)
-IMPLEMENT_FP16_FREXP_AS (global)
-#ifdef __opencl_c_generic_address_space
-IMPLEMENT_FP16_FREXP_AS (generic)
-#endif
-
-/* Vector frexp: recurse through lo/hi halves down to the scalar overload above,
-   plus the local/global/generic exponent-pointer forms. This is the same
-   expansion the vectorized frexp.cl produces via DEFINE_BUILTIN_V_VPJ;
-   additionalf16.cl is the non-vectorized-only file, so the half vector
-   overloads (missing from libclc-pocl/frexp.cl) are supplied here. */
-IMPLEMENT_BUILTIN_V_VPJ (frexp, half2, int2, int, int, lo, hi)
-IMPLEMENT_BUILTIN_V_VPJ (frexp, half3, int3, int2, int, lo, s2)
-IMPLEMENT_BUILTIN_V_VPJ (frexp, half4, int4, int2, int2, lo, hi)
-IMPLEMENT_BUILTIN_V_VPJ (frexp, half8, int8, int4, int4, lo, hi)
-IMPLEMENT_BUILTIN_V_VPJ (frexp, half16, int16, int8, int8, lo, hi)
