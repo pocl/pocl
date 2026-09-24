@@ -137,7 +137,11 @@ add_test_pocl(NAME "regression/test_issue_2005" COMMAND "test_issue_2005")
 
 if(UNIX)
   add_test_pocl(NAME "regression/test_issue_2174" COMMAND "test_issue_2174")
-  add_test_pocl(NAME "regression/test_signal_handlers" COMMAND "test_signal_handlers")
+  # libxsmm_init(), called during device initialization, installs its own
+  # SIGSEGV and SIGABRT handlers.
+  if(NOT HAVE_LIBXSMM)
+    add_test_pocl(NAME "regression/test_signal_handlers" COMMAND "test_signal_handlers")
+  endif()
 endif()
 
 add_test_pocl(NAME "regression/test_workitem_func_outside_kernel" COMMAND "test_workitem_func_outside_kernel")
