@@ -86,10 +86,12 @@ main ()
   cl_context context;
   cl_device_id device;
   cl_command_queue queue;
+  install_host_handlers ();
+
   cl_int err = poclu_get_any_device (&context, &device, &queue);
   CHECK_ERROR (err);
-
-  install_host_handlers ();
+  if (check_host_handlers ("device initialization") != EXIT_SUCCESS)
+    return EXIT_FAILURE;
 
   const char *source = "#define VALUE 42\n"
                        "__kernel void k (__global int *out) {\n"
