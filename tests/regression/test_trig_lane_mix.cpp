@@ -2,8 +2,8 @@
    per-lane results. A lane holding a tiny value must not be affected by
    another lane holding a large one (>= 2^23), which selects the
    large-argument reduction path. Check every lane of a mixed vector, and
-   the scalar kernel, against a double-precision reference within the
-   OpenCL bound (sin and cos 4 ulp, tan 5 ulp). The scalar and vector paths
+   the scalar kernel, against precomputed references within the OpenCL
+   bound (sin and cos 4 ulp, tan 5 ulp). The scalar and vector paths
    are not compared with each other: they may legitimately differ by an ulp
    (on LLVM 20 and 21, cos(1e-5f) is 1.0 from one and 0x1.fffffep-1 from the
    other). The bug this guards against was off by millions of ulp.
@@ -49,6 +49,20 @@ int main() {
 
   /* 8 lanes: tiny values mixed with large ones */
   const float lanes[8] = {FLT_MIN, 1e8f, 1e-10f, INFINITY, 1e-5f, 1e20f, 0.1f, 3e7f};
+  /* sin, cos and tan of each lane's float value, from 300-bit arithmetic
+     (mpmath), rounded to double. Precomputed rather than taken from the
+     host's libm: MinGW's double sin and cos of 1e20f are off by millions of
+     ulp, which would fail a correct result. */
+  static const double ref[8][3] = {
+    {1.1754943508222875e-38, 1.0, 1.1754943508222875e-38},
+    {0.931639027109726, -0.3633850893556905, -2.5637789067283774},
+    {1.000000013351432e-10, 1.0, 1.000000013351432e-10},
+    {NAN, NAN, NAN},
+    {9.999999747212084e-06, 0.99999999995, 9.999999747712085e-06},
+    {0.6565766778545903, 0.7542592830701055, 0.870492007976472},
+    {0.0998334181294999, 0.9950041651292624, 0.10033467359056773},
+    {0.9641302978985832, -0.2654294043130664, -3.632341715846294},
+  };
   const size_t N = 8;
   std::vector<float> in(lanes, lanes + N), vs(N), vc(N), vt(N);
   cl::Buffer inBuf(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, N * sizeof(float), in.data());
@@ -70,9 +84,8 @@ int main() {
   for (int v = 0; v < 3; ++v) {
     run(kernels[v], global[v], vs, vc, vt);
     for (size_t i = 0; i < N; ++i) {
-      double x = in[i];
-      double es = ulp_error(vs[i], std::sin(x)), ec = ulp_error(vc[i], std::cos(x)),
-             et = ulp_error(vt[i], std::tan(x));
+      double es = ulp_error(vs[i], ref[i][0]), ec = ulp_error(vc[i], ref[i][1]),
+             et = ulp_error(vt[i], ref[i][2]);
       if (es > 4 || ec > 4 || et > 5) {
         printf("%s lane %zu (x=%a): sin %a (%.3g ulp), cos %a (%.3g ulp), tan %a (%.3g ulp)\n",
                kernels[v], i, in[i], vs[i], es, vc[i], ec, vt[i], et);
