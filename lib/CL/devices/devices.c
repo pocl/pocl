@@ -458,10 +458,6 @@ pocl_uninit_devices ()
     }
 
 FINISH:
-#ifdef ENABLE_SIGFPE_HANDLER
-  pocl_destroy_sigfpe_handler ();
-#endif
-
   devices_active = 0;
   POCL_UNLOCK (pocl_init_lock);
 
