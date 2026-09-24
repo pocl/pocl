@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "command_buffer_common.h"
 #include "poclu.h"
 
 #define STR(x) #x
@@ -33,19 +34,7 @@ int
 main (int _argc, char **_argv)
 {
 #if defined(cl_khr_command_buffer) && cl_khr_command_buffer == 1
-  struct
-  {
-    clCreateCommandBufferKHR_fn clCreateCommandBufferKHR;
-    clCommandCopyBufferKHR_fn clCommandCopyBufferKHR;
-    clCommandCopyBufferRectKHR_fn clCommandCopyBufferRectKHR;
-    clCommandFillBufferKHR_fn clCommandFillBufferKHR;
-    clCommandNDRangeKernelKHR_fn clCommandNDRangeKernelKHR;
-    clCommandBarrierWithWaitListKHR_fn clCommandBarrierWithWaitListKHR;
-    clFinalizeCommandBufferKHR_fn clFinalizeCommandBufferKHR;
-    clEnqueueCommandBufferKHR_fn clEnqueueCommandBufferKHR;
-    clReleaseCommandBufferKHR_fn clReleaseCommandBufferKHR;
-    clGetCommandBufferInfoKHR_fn clGetCommandBufferInfoKHR;
-  } ext;
+  struct cmdbuf_ext ext;
 
   cl_platform_id platform;
   CHECK_CL_ERROR (clGetPlatformIDs (1, &platform, NULL));
@@ -53,33 +42,9 @@ main (int _argc, char **_argv)
   CHECK_CL_ERROR (
       clGetDeviceIDs (platform, CL_DEVICE_TYPE_ALL, 1, &device, NULL));
 
-  ext.clCreateCommandBufferKHR = clGetExtensionFunctionAddressForPlatform (
-      platform, "clCreateCommandBufferKHR");
-  if (ext.clCreateCommandBufferKHR == NULL)
-    {
-      printf ("Command buffers are not supported, skipping test\n");
-      return 77;
-    }
-
-  ext.clCommandCopyBufferKHR = clGetExtensionFunctionAddressForPlatform (
-      platform, "clCommandCopyBufferKHR");
-  ext.clCommandCopyBufferRectKHR = clGetExtensionFunctionAddressForPlatform (
-      platform, "clCommandCopyBufferRectKHR");
-  ext.clCommandFillBufferKHR = clGetExtensionFunctionAddressForPlatform (
-      platform, "clCommandFillBufferKHR");
-  ext.clCommandNDRangeKernelKHR = clGetExtensionFunctionAddressForPlatform (
-      platform, "clCommandNDRangeKernelKHR");
-  ext.clCommandBarrierWithWaitListKHR
-      = clGetExtensionFunctionAddressForPlatform (
-          platform, "clCommandBarrierWithWaitListKHR");
-  ext.clFinalizeCommandBufferKHR = clGetExtensionFunctionAddressForPlatform (
-      platform, "clFinalizeCommandBufferKHR");
-  ext.clEnqueueCommandBufferKHR = clGetExtensionFunctionAddressForPlatform (
-      platform, "clEnqueueCommandBufferKHR");
-  ext.clReleaseCommandBufferKHR = clGetExtensionFunctionAddressForPlatform (
-      platform, "clReleaseCommandBufferKHR");
-  ext.clGetCommandBufferInfoKHR = clGetExtensionFunctionAddressForPlatform (
-      platform, "clGetCommandBufferInfoKHR");
+  int skip = cmdbuf_load_ext (platform, &ext);
+  if (skip != 0)
+    return skip;
 
   cl_int error;
   cl_context context = clCreateContext (NULL, 1, &device, NULL, NULL, &error);
