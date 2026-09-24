@@ -1095,66 +1095,52 @@ check_copy_overlap(const size_t src_offset[3],
                    const size_t region[3],
                    const size_t row_pitch, const size_t slice_pitch)
 {
-  const size_t src_min[] = {src_offset[0], src_offset[1], src_offset[2]};
-  const size_t src_max[] = {src_offset[0] + region[0],
-                            src_offset[1] + region[1],
-                            src_offset[2] + region[2]};
-  const size_t dst_min[] = {dst_offset[0], dst_offset[1], dst_offset[2]};
-  const size_t dst_max[] = {dst_offset[0] + region[0],
-                            dst_offset[1] + region[1],
-                            dst_offset[2] + region[2]};
-  int overlap = 1;
-  unsigned i;
-  for (i=0; i != 3; ++i)
+  /* The algorithm of the current OpenCL specification's appendix, "Checking
+     for Memory Copy Overlap". The version previously here was the older
+     appendix code, which both reported overlap for disjoint regions (e.g.
+     OpenCL-CTS test_basic bufferreadwriterect) and missed some real
+     overlaps. The caller has already resolved zero pitches. */
+  const size_t slice_size = (region[1] - 1) * row_pitch + region[0];
+  const size_t block_size = (region[2] - 1) * slice_pitch + slice_size;
+  const size_t src_start
+      = src_offset[2] * slice_pitch + src_offset[1] * row_pitch + src_offset[0];
+  const size_t src_end = src_start + block_size;
+  const size_t dst_start
+      = dst_offset[2] * slice_pitch + dst_offset[1] * row_pitch + dst_offset[0];
+  const size_t dst_end = dst_start + block_size;
+
+  /* No overlap if dst ends before src starts or src ends before dst starts. */
+  if ((dst_end <= src_start) || (src_end <= dst_start))
+    return 0;
+
+  /* No overlap if region[0] for dst or src fits in the gap between
+     region[0] and row_pitch. */
   {
-    overlap = overlap && (src_min[i] < dst_max[i])
-                      && (src_max[i] > dst_min[i]);
+    const size_t src_dx = src_offset[0] % row_pitch;
+    const size_t dst_dx = dst_offset[0] % row_pitch;
+    if (((dst_dx >= src_dx + region[0])
+         && (dst_dx + region[0] <= src_dx + row_pitch))
+        || ((src_dx >= dst_dx + region[0])
+            && (src_dx + region[0] <= dst_dx + row_pitch)))
+      return 0;
   }
 
-  size_t dst_start =  dst_offset[2] * slice_pitch +
-                      dst_offset[1] * row_pitch + dst_offset[0];
-  size_t dst_end = dst_start + (region[2] * slice_pitch +
-                                region[1] * row_pitch + region[0]);
-  size_t src_start =  src_offset[2] * slice_pitch +
-                      src_offset[1] * row_pitch + src_offset[0];
-  size_t src_end = src_start + (region[2] * slice_pitch +
-                                region[1] * row_pitch + region[0]);
-
-  if (!overlap)
+  /* No overlap if region[1] for dst or src fits in the gap between
+     region[1] and slice_pitch. */
   {
-    size_t delta_src_x = (src_offset[0] + region[0] > row_pitch) ?
-                          src_offset[0] + region[0] - row_pitch : 0;
-    size_t delta_dst_x = (dst_offset[0] + region[0] > row_pitch) ?
-                          dst_offset[0] + region[0] - row_pitch : 0;
-    if ( (delta_src_x > 0 && delta_src_x > dst_offset[0]) ||
-          (delta_dst_x > 0 && delta_dst_x > src_offset[0]) )
-      {
-        if ( (src_start <= dst_start && dst_start < src_end) ||
-          (dst_start <= src_start && src_start < dst_end) )
-          overlap = 1;
-      }
-
-    if (region[2] > 1)
-    {
-      size_t src_height = slice_pitch / row_pitch;
-      size_t dst_height = slice_pitch / row_pitch;
-
-      size_t delta_src_y = (src_offset[1] + region[1] > src_height) ?
-                            src_offset[1] + region[1] - src_height : 0;
-      size_t delta_dst_y = (dst_offset[1] + region[1] > dst_height) ?
-                            dst_offset[1] + region[1] - dst_height : 0;
-
-      if ( (delta_src_y > 0 && delta_src_y > dst_offset[1]) ||
-            (delta_dst_y > 0 && delta_dst_y > src_offset[1]) )
-      {
-        if ( (src_start <= dst_start && dst_start < src_end) ||
-              (dst_start <= src_start && src_start < dst_end) )
-              overlap = 1;
-      }
-    }
+    const size_t src_dy
+        = (src_offset[1] * row_pitch + src_offset[0]) % slice_pitch;
+    const size_t dst_dy
+        = (dst_offset[1] * row_pitch + dst_offset[0]) % slice_pitch;
+    if (((dst_dy >= src_dy + slice_size)
+         && (dst_dy + slice_size <= src_dy + slice_pitch))
+        || ((src_dy >= dst_dy + slice_size)
+            && (src_dy + slice_size <= dst_dy + slice_pitch)))
+      return 0;
   }
 
-  return overlap;
+  /* Otherwise src and dst overlap. */
+  return 1;
 }
 
 /* For a subdevice parameter, return the actual device it belongs to. */
