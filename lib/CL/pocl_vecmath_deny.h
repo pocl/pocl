@@ -12,10 +12,13 @@
 #ifndef POCL_VECMATH_DENY_H
 #define POCL_VECMATH_DENY_H
 
-/* glibc libmvec. Measured: glibc 2.39, x86-64 AVX2, LLVM 22.1.8,
-   2026-09-04. float log: 3.009 ULP vs 3 ULP bound (CTS width 1 confirms). */
+/* glibc libmvec. Measured: glibc 2.39, x86-64 AVX2, LLVM 22.1.8.
+   float log: 3.009 ULP vs 3 ULP bound (2026-09-04, CTS width 1 confirms).
+   double exp: 3.006 ULP vs 3 ULP bound (2026-09-24, CTS math_exp fp64, at
+   -0x1.e8000000001c2p-9). */
 static const char *const PoclVecMathDenyLibmvec[] = {
     "logf", "llvm.log.f32",
+    "exp", "llvm.exp.f64",
 };
 
 /* SLEEF GNU-ABI build used through the libmvec table. Measured: SLEEF
