@@ -40,6 +40,7 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include <clang/Frontend/FrontendActions.h>
 #include <clang/Frontend/TextDiagnosticBuffer.h>
 #include <clang/Frontend/TextDiagnosticPrinter.h>
+#include <clang/Frontend/Utils.h>
 
 #ifdef CPU_USE_LLD_LINK
 #include <lld/Common/Driver.h>
@@ -103,6 +104,26 @@ POP_COMPILER_DIAGS
 #include <cassert>
 #endif
 
+
+// Like clang::PrintPreprocessedAction, but printing into a string instead of
+// an output file. Clang's output files are removed on signal, which makes LLVM
+// install process-wide handlers for SIGSEGV etc., replacing the host's.
+class PrintPreprocessedToStringAction : public clang::PreprocessorFrontendAction {
+  std::string &Output;
+
+public:
+  PrintPreprocessedToStringAction(std::string &Output) : Output(Output) {}
+
+protected:
+  void ExecuteAction() override {
+    clang::CompilerInstance &CI = getCompilerInstance();
+    llvm::raw_string_ostream OS(Output);
+    clang::DoPrintPreprocessedInput(CI.getPreprocessor(), &OS,
+                                    CI.getPreprocessorOutputOpts());
+  }
+
+  bool hasPCHSupport() const override { return true; }
+};
 
 // Unlink input sources
 static inline int
@@ -297,9 +318,7 @@ int pocl_llvm_build_program(cl_program program,
                             const char **header_include_names,
                             int linking_program)
 {
-  char tempfile[POCL_MAX_PATHNAME_LENGTH];
   char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
-  tempfile[0] = 0;
   llvm::Module *mod = nullptr;
   char temp_include_dir[POCL_MAX_PATHNAME_LENGTH];
   std::string user_options(program->compiler_options ? program->compiler_options
@@ -733,28 +752,16 @@ int pocl_llvm_build_program(cl_program program,
   poo.ShowMacros = 1;
   poo.RewriteIncludes = 0;
 
-  error = pocl_cache_tempname(tempfile, ".preproc.cl", NULL);
-  assert(error == 0);
-  fe.OutputFile.assign((const char *)tempfile);
-
-  bool success = true;
-  clang::PrintPreprocessedAction Preprocess;
-  success = CI.ExecuteAction(Preprocess);
-  char *PreprocessedOut = nullptr;
-  uint64_t PreprocessedSize = 0;
-
-  if (success) {
-    pocl_read_file(tempfile, &PreprocessedOut, &PreprocessedSize);
-  }
-  /* always remove preprocessed output - the sources are in different files */
-  pocl_remove(tempfile);
+  std::string PreprocessedOut;
+  PrintPreprocessedToStringAction Preprocess(PreprocessedOut);
+  bool success = CI.ExecuteAction(Preprocess);
 
   if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0) {
     if (num_input_headers > 0)
       pocl_rm_rf(temp_include_dir);
   }
 
-  if (PreprocessedOut == nullptr) {
+  if (!success) {
     pocl_cache_create_program_cachedir(program, device_i, program->source,
                                        strlen(program->source),
                                        program_bc_path);
@@ -763,10 +770,8 @@ int pocl_llvm_build_program(cl_program program,
     return CL_BUILD_PROGRAM_FAILURE;
   }
 
-  pocl_cache_create_program_cachedir(program, device_i, PreprocessedOut,
-                                     static_cast<size_t>(PreprocessedSize), program_bc_path);
-
-  POCL_MEM_FREE(PreprocessedOut);
+  pocl_cache_create_program_cachedir(program, device_i, PreprocessedOut.data(),
+                                     PreprocessedOut.size(), program_bc_path);
 
   unlink_source(fe);
 
