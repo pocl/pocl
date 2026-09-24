@@ -231,27 +231,13 @@ sigfpe_signal_handler (int signo, siginfo_t *si, void *data)
 
 #endif
 
-static char signal_empty_file[POCL_MAX_PATHNAME_LENGTH];
-
 void
 pocl_install_sigfpe_handler ()
 {
 #ifdef __x86_64__
-
-#ifdef ENABLE_LLVM
-  /* This is required to force LLVM to register its signal
-   * handlers, before pocl registers its own SIGFPE handler.
-   * LLVM otherwise calls this via
-   *    pocl_llvm_build_program ->
-   *    clang::PrintPreprocessedAction ->
-   *    CreateOutputFile -> RemoveFileOnSignal
-   * Registering our handlers before LLVM creates its sigaltstack
-   * leads to interesting crashes & bugs later.
-   */
-  pocl_cache_tempname (signal_empty_file, NULL, NULL);
-  pocl_llvm_remove_file_on_signal_create (signal_empty_file);
-#endif
-
+  /* Don't make LLVM register its signal handlers here: they replace the
+   * host application's process-wide handlers (e.g. the SIGSEGV handler that
+   * Julia uses for GC safepoints), and reset to SIG_DFL on delivery. */
   POCL_MSG_PRINT_GENERAL ("Installing SIGFPE handler...\n");
 
   sigfpe_action.sa_flags = SA_RESTART | SA_SIGINFO;
@@ -261,13 +247,5 @@ pocl_install_sigfpe_handler ()
 #else
   // this should be handled by CMake
   assert (0 && "this code path should not be possible");
-#endif
-}
-
-void
-pocl_destroy_sigfpe_handler ()
-{
-#ifdef ENABLE_LLVM
-  pocl_llvm_remove_file_on_signal_destroy (signal_empty_file);
 #endif
 }

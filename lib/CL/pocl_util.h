@@ -55,7 +55,6 @@ float byteswap_float (float word, char should_swap);
 
 #ifdef ENABLE_SIGFPE_HANDLER
 void pocl_install_sigfpe_handler ();
-void pocl_destroy_sigfpe_handler ();
 POCL_EXPORT
 void pocl_ignore_sigfpe_for_thread (pocl_thread_t thr);
 #endif
