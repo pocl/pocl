@@ -84,7 +84,7 @@ static const char *BuildFlagsTemplate =
     R"RAW( --outputs_layouts="convert:OUTPUT_LAYOUT")RAW"
     R"RAW( --config NPU_PLATFORM="3720" PERFORMANCE_HINT="LATENCY")RAW";
 
-bool instantiateTemplateCONVERT(const void *KernelAttrs,
+bool instantiateTemplateCONVERT(cl_dbk_id_exp DbkId, const void *KernelAttrs,
                                 std::string &ModelXMLInstance,
                                 std::vector<uint8_t> &ModelBinary,
                                 std::string &BuildFlagsInstance) {

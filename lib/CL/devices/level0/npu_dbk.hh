@@ -23,9 +23,15 @@
 
 #include "pocl_cl.h"
 
+#include <map>
+#include <string>
 #include <vector>
 
 typedef std::map<const char *, std::string> ReplaceMapT;
+
+namespace pocl {
+std::string toOpenvinoOpType(cl_dbk_id_exp);
+}
 
 void replaceAllStringsInMap(std::string &Buffer, ReplaceMapT RepMap);
 
@@ -35,24 +41,34 @@ const char *dtype2elemtype(cl_tensor_datatype_exp dtype);
 
 const char *layout2str(const cl_tensor_desc_exp &tensor);
 
-bool instantiateTemplateMATMUL(const void *KernelAttrs,
+bool instantiateTemplateMATMUL(cl_dbk_id_exp DbkId, const void *KernelAttrs,
                                std::string &ModelXMLInstance,
                                std::vector<uint8_t> &ModelBinary,
                                std::string &BuildFlagsInstance);
 
-bool instantiateTemplateGEMM(const void *KernelAttrs,
+bool instantiateTemplateGEMM(cl_dbk_id_exp DbkId, const void *KernelAttrs,
                              std::string &ModelXMLInstance,
                              std::vector<uint8_t> &ModelBinary,
                              std::string &BuildFlagsInstance);
 
-bool instantiateTemplateCONVERT(const void *KernelAttrs,
+bool instantiateTemplateCONVERT(cl_dbk_id_exp DbkId, const void *KernelAttrs,
                                 std::string &ModelXMLInstance,
                                 std::vector<uint8_t> &ModelBinary,
                                 std::string &BuildFlagsInstance);
 
-bool instantiateTemplateSET_ROWS(const void *KernelAttrs,
+bool instantiateTemplateSET_ROWS(cl_dbk_id_exp DbkId, const void *KernelAttrs,
                                  std::string &ModelXMLInstance,
                                  std::vector<uint8_t> &ModelBinary,
                                  std::string &BuildFlagsInstance);
+
+bool instantiateTemplateBINOP(cl_dbk_id_exp DbkId, const void *KernelAttrs,
+                              std::string &ModelXMLInstance,
+                              std::vector<uint8_t> &ModelBinary,
+                              std::string &BuildFlagsInstance);
+
+bool instantiateTemplateRMSNORM(cl_dbk_id_exp DbkId, const void *KernelAttrs,
+                                std::string &ModelXMLInstance,
+                                std::vector<uint8_t> &ModelBinary,
+                                std::string &BuildFlagsInstance);
 
 #endif // NPU_DBK_HH

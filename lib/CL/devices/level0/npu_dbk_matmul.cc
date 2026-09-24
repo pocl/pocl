@@ -205,7 +205,7 @@ const char *MATMUL_T_U_V_XML_Template = R"(
 const char *MATMUL_Flags_Template =
     R"RAW(--inputs_precisions="x1:INPUT_A_PREC x2:INPUT_B_PREC" --inputs_layouts="x1:INPUT_LAYOUT x2:INPUT_LAYOUT" --outputs_precisions="model/dot/MatMul:OUTPUT_PREC" --outputs_layouts="model/dot/MatMul:OUTPUT_LAYOUT" --config   NPU_PLATFORM="3720" PERFORMANCE_HINT="LATENCY")RAW";
 
-bool instantiateTemplateMATMUL(const void *KernelAttrs,
+bool instantiateTemplateMATMUL(cl_dbk_id_exp DbkId, const void *KernelAttrs,
                                std::string &ModelXMLInstance,
                                std::vector<uint8_t> &ModelBinary,
                                std::string &BuildFlagsInstance) {
@@ -258,4 +258,3 @@ bool instantiateTemplateMATMUL(const void *KernelAttrs,
   replaceAllStringsInMap(BuildFlagsInstance, ReplaceMap);
   return true;
 }
-

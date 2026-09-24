@@ -51,6 +51,11 @@ POCL_EXPORT
 size_t pocl_tensor_dim_size (const cl_tensor_desc_exp *tensor, int dim);
 
 POCL_EXPORT
+size_t pocl_tensor_dim_size_or (const cl_tensor_desc_exp *tensor,
+                                int dim,
+                                size_t or_value);
+
+POCL_EXPORT
 int pocl_tensor_type_is_int (cl_tensor_datatype_exp dtype);
 
 POCL_EXPORT
