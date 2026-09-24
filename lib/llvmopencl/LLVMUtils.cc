@@ -33,6 +33,10 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Metadata.h>
 #include <llvm/IR/Module.h>
 #include <llvm/ADT/SmallSet.h>
+#include <llvm/ADT/SmallVector.h>
+#include <llvm/ADT/STLExtras.h>
+#include <llvm/ADT/StringRef.h>
+#include <llvm/TargetParser/Triple.h>
 
 // include all passes & analysis
 #include "AllocasToEntry.h"
@@ -853,6 +857,18 @@ bool removeMetadataFromClangStubs(llvm::Module *Program) {
   return true;
 }
 
+/* Whole-token membership in an LLVM "target-features" string.
+
+   The attribute is a comma-separated list, e.g.
+   "+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87". A substring search is not
+   enough: bdver1 (Bulldozer) lists "+fma4" and no "+fma", so strstr-style
+   matching reads an FMA4-only target as having FMA3. */
+static bool hasTargetFeature(llvm::StringRef Features, llvm::StringRef Feat) {
+  llvm::SmallVector<llvm::StringRef, 64> Tokens;
+  Features.split(Tokens, ',', /* MaxSplit */ -1, /* KeepEmpty */ false);
+  return llvm::is_contained(Tokens, Feat);
+}
+
 void unifyLLVMFunctionAttributes(llvm::Module &M, bool TouchAlwaysInline) {
   // Unify some attributes among all functions; this is necessary because
   // -O0 compiled builtin library has many attributes setup differently than
@@ -870,6 +886,17 @@ void unifyLLVMFunctionAttributes(llvm::Module &M, bool TouchAlwaysInline) {
           F.getFnAttribute("target-features").getValueAsString().str();
     }
   }
+
+  /* The reciprocal-estimate override below is about the x86 backend's
+     rcpps lowering and about an x86 feature name, so it must not be
+     applied anywhere else. */
+#if LLVM_MAJOR < 21
+  const llvm::Triple TT(M.getTargetTriple());
+#else
+  const llvm::Triple &TT = M.getTargetTriple();
+#endif
+  const bool IsX86 =
+      TT.getArch() == llvm::Triple::x86 || TT.getArch() == llvm::Triple::x86_64;
 
   for (Function &F : M.functions()) {
     if (F.isDeclaration())
@@ -904,6 +931,21 @@ void unifyLLVMFunctionAttributes(llvm::Module &M, bool TouchAlwaysInline) {
       F.addFnAttr("target-cpu", TargetCPU);
     if (!TargetFeatures.empty())
       F.addFnAttr("target-features", TargetFeatures);
+    // Under -cl-fast-relaxed-math the x86 backend lowers vector float
+    // division to rcpps plus one Newton-Raphson step. With FMA the result
+    // is within 1 ulp; without it (the x86-64 baseline, and every distro
+    // kernel-library variant below avx2) the refinement rounds twice and the
+    // CTS measures 3 ulp against the 2.5 ulp relaxed bound (math_brute_force
+    // divide and reciprocal, fp32 rlx).
+    // C fast-math promises nothing there; OpenCL relaxed math does. Keep
+    // the estimates only where they meet the bound.
+    //
+    // x86 only, and by whole token. "fma" is an x86 feature name: RISC-V
+    // carries FMA in the F and D extensions and AArch64 in fp-armv8, so
+    // neither spells it "fma" and testing the feature string on those
+    // targets would disable reciprocal estimates on all of them.
+    if (IsX86 && !hasTargetFeature(TargetFeatures, "+fma"))
+      F.addFnAttr("reciprocal-estimates", "none");
 
     // the following settings are not necessary for inlining,
     // but should improve optimization
