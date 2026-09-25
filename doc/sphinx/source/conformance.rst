@@ -17,6 +17,8 @@ Conformance related CMake options
 
     * read-write images are disabled (some 1D/2D image array tests fail)
     * the list of supported image formats is much smaller
+    * device partitioning is disabled: the CPU device reports no partition
+      properties, so it can't be split into sub-devices
     * SLEEF is always enforced for the builtin library
     * cl_khr_subgroups is disabled, and with it the ``__opencl_c_subgroups``
       feature, so applications that require sub-groups do not see the device
