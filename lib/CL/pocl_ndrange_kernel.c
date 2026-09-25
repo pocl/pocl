@@ -108,10 +108,9 @@ pocl_kernel_calc_wg_size (cl_device_id dev, cl_kernel kernel,
   max_local_z
       = work_dim > 2 ? dev->max_work_item_sizes[2] : 1;
   max_group_size = dev->max_work_group_size;
-  if (kernel->meta->max_workgroup_size
-      && kernel->meta->max_workgroup_size[device_i])
+  if (kernel->meta->devices[device_i].max_workgroup_size > 0)
     {
-      max_group_size = kernel->meta->max_workgroup_size[device_i];
+      max_group_size = kernel->meta->devices[device_i].max_workgroup_size;
     }
 
   if (local_work_size != NULL)

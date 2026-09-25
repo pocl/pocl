@@ -502,6 +502,11 @@ setup_kernel_metadata (cl_program program)
   assert (program->num_kernels == 0);
   int setup_successful = 0;
 
+  program->kernel_meta = (pocl_kernel_metadata_t *)calloc (
+    program->num_kernels, sizeof (pocl_kernel_metadata_t));
+  program->kernel_meta->devices = (pocl_kernel_device_metadata_t *)calloc (
+    program->associated_num_devices, sizeof (pocl_kernel_device_metadata_t));
+
   /* Get the kernel metadata, either from pocl binaries or device drivers */
   for (device_i = 0; device_i < program->num_devices; device_i++)
     {
@@ -512,8 +517,6 @@ setup_kernel_metadata (cl_program program)
               = pocl_binary_get_kernel_count (program, device_i);
           if (program->num_kernels)
             {
-              program->kernel_meta = (pocl_kernel_metadata_t *)calloc (
-                  program->num_kernels, sizeof (pocl_kernel_metadata_t));
               pocl_binary_get_kernels_metadata (program, device_i);
             }
           setup_successful = 1;

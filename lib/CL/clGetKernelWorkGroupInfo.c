@@ -70,6 +70,7 @@ POname(clGetKernelWorkGroupInfo)
     CL_DEVICE_NOT_AVAILABLE);
   /************************************************************************/
 
+  pocl_kernel_device_metadata_t *device_meta = &kernel->meta->devices[dev_i];
   switch (param_name)
     {
     case CL_KERNEL_GLOBAL_WORK_SIZE:
@@ -84,10 +85,8 @@ POname(clGetKernelWorkGroupInfo)
       }
     case CL_KERNEL_WORK_GROUP_SIZE:
       {
-        if (kernel->meta->max_workgroup_size
-            && kernel->meta->max_workgroup_size[dev_i])
-          POCL_RETURN_GETINFO (size_t,
-                               kernel->meta->max_workgroup_size[dev_i]);
+        if (device_meta->max_workgroup_size > 0)
+          POCL_RETURN_GETINFO (size_t, device_meta->max_workgroup_size);
         else // fallback to device's CL_DEVICE_MAX_WORK_GROUP_SIZE
           return POname (clGetDeviceInfo) (
               device, CL_DEVICE_MAX_WORK_GROUP_SIZE, param_value_size,
@@ -103,9 +102,8 @@ POname(clGetKernelWorkGroupInfo)
     }
     case CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:
       {
-        if (kernel->meta->preferred_wg_multiple)
-          POCL_RETURN_GETINFO (size_t,
-                               kernel->meta->preferred_wg_multiple[dev_i]);
+        if (device_meta->preferred_wg_multiple > 0)
+          POCL_RETURN_GETINFO (size_t, device_meta->preferred_wg_multiple);
         else // fallback to device's preferred WG size multiple
           POCL_RETURN_GETINFO (size_t, device->preferred_wg_size_multiple);
       }
@@ -113,8 +111,8 @@ POname(clGetKernelWorkGroupInfo)
     {
       cl_ulong total_local_size = 0;
       /* add the static local_mem argument sizes */
-      if (kernel->meta->local_mem_size)
-        total_local_size = kernel->meta->local_mem_size[dev_i];
+      if (device_meta->local_mem_size > 0)
+        total_local_size = device_meta->local_mem_size;
       /* add the dynamically set local_mem argument sizes */
       for (unsigned i = 0; i < kernel->meta->num_args; ++i)
         {
@@ -130,17 +128,11 @@ POname(clGetKernelWorkGroupInfo)
     }
     case CL_KERNEL_PRIVATE_MEM_SIZE:
       {
-        if (kernel->meta->private_mem_size)
-          POCL_RETURN_GETINFO (size_t, kernel->meta->private_mem_size[dev_i]);
-        else
-          POCL_RETURN_GETINFO (cl_ulong, 0);
+        POCL_RETURN_GETINFO (size_t, device_meta->private_mem_size);
       }
     case CL_KERNEL_SPILL_MEM_SIZE_INTEL:
       {
-        if (kernel->meta->spill_mem_size)
-          POCL_RETURN_GETINFO (size_t, kernel->meta->spill_mem_size[dev_i]);
-        else
-          POCL_RETURN_GETINFO (cl_ulong, 0);
+        POCL_RETURN_GETINFO (size_t, device_meta->spill_mem_size);
       }
     default:
       return CL_INVALID_VALUE;

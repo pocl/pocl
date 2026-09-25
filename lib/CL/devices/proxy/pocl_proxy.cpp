@@ -854,8 +854,6 @@ static int get_kernel_metadata(pocl_kernel_metadata_t *meta,
   size_t size;
 
   // device-specific
-  assert(meta->data == NULL);
-  meta->data = (void **)calloc(num_devices, sizeof(void *));
   meta->has_arg_metadata = (-1);
 
   err = clGetKernelInfo(kernel, CL_KERNEL_FUNCTION_NAME, 0, NULL, &size);
@@ -1523,7 +1521,7 @@ pocl_proxy_setup_metadata (cl_device_id device, cl_program program,
         (d->backend->supports_il && program->program_il_size > 0)))
     return 0;
 
-  assert(program->kernel_meta == NULL);
+  assert(program->kernel_meta && program->kernel_meta->devices);
   POCL_MSG_PRINT_PROXY("Setting up Kernel metadata\n");
 
   int err = clCreateKernelsInProgram(proxy_prog, 0, NULL, &num_kernels);
@@ -1535,12 +1533,10 @@ pocl_proxy_setup_metadata (cl_device_id device, cl_program program,
   program->num_kernels = num_kernels;
   if (num_kernels < 1) {
     POCL_MSG_WARN("Program has zero kernels.\n");
-    program->kernel_meta = NULL;
     return 0;
   }
 
-  pocl_kernel_metadata_t *p = (pocl_kernel_metadata_t *)calloc(
-      num_kernels, sizeof(pocl_kernel_metadata_t));
+  pocl_kernel_metadata_t *p = program->kernel_meta;
   cl_kernel *kernels = (cl_kernel *)alloca(num_kernels * sizeof(cl_kernel));
   assert(p);
   err = clCreateKernelsInProgram(proxy_prog, num_kernels, kernels, NULL);

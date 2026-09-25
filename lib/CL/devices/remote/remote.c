@@ -1371,13 +1371,12 @@ pocl_remote_setup_metadata (cl_device_id device, cl_program program,
   if (pd->kernel_meta_bytes)
     {
       size_t num_kernels = 0;
-      pocl_kernel_metadata_t *kernel_meta = NULL;
+      pocl_kernel_metadata_t *kernel_meta = program->kernel_meta;
       int err = pocl_network_setup_metadata (pd->kernel_meta_bytes,
                                              pd->kernel_meta_size, program,
-                                             &num_kernels, &kernel_meta);
+                                             &num_kernels, program_device_i);
       assert (err == CL_SUCCESS);
       program->num_kernels = num_kernels;
-      program->kernel_meta = kernel_meta;
       return 1;
     }
   else

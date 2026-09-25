@@ -1053,9 +1053,6 @@ static int pocl_level0_setup_spirv_metadata(cl_device_id Device,
     return 1;
   }
 
-  Program->kernel_meta = (pocl_kernel_metadata_t *)calloc(
-      Program->num_kernels, sizeof(pocl_kernel_metadata_t));
-
 // TODO: currently all metadata is gotten from LLVM instead of the SPIR-V parser
 //  and therefore unnecessary. In the future the LLVM dependency could be
 //  dropped in favor of the SPIR-V parser, see comment:
