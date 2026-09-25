@@ -474,6 +474,22 @@ pocl_address_mode (global dev_image_t *img, int4 input_coord,
 
 /*************************************************************************/
 
+/* The border color of CLK_ADDRESS_CLAMP is (0,0,0,0) for channel orders with
+ * alpha and (0,0,0,1) for those without (pocl_read_pixel above). The linear
+ * filters below skip out-of-range texels, which adds (0,0,0,0) for every
+ * order. The color channels are right either way, since the border adds zero
+ * to them; the alpha of an order without alpha is not. Every in-range texel
+ * of such an order has alpha 1, and so does its border, so the filtered
+ * alpha is exactly 1 whichever texels were in range. */
+_CL_READNONE static float4
+pocl_linear_border_alpha (float4 sum, int order)
+{
+  if (order == CLK_R || order == CLK_RG || order == CLK_RGB
+      || order == CLK_LUMINANCE)
+    sum.w = 1.0f;
+  return sum;
+}
+
 _CL_READONLY static float4
 read_pixel_linear_3d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
                             int width, int height, int depth, int channel_type,
@@ -610,7 +626,7 @@ read_pixel_linear_3d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
       base_index -= (ijk1.z * slice_pitch);
     }
 
-  return sum;
+  return pocl_linear_border_alpha (sum, order);
 }
 
 /* TODO: float * convert_flaot(UINT32) is imprecise, so reading from images
@@ -987,7 +1003,7 @@ read_pixel_linear_2d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
       base_index -= (ijk1.y * row_pitch);
     }
 
-  return sum;
+  return pocl_linear_border_alpha (sum, order);
 }
 
 /* TODO: float * convert_flaot(UINT32) is imprecise, so reading from images
@@ -1186,7 +1202,7 @@ read_pixel_linear_1d_float (float4 abc, float4 one_m, int ijk0, int ijk1,
       base_index -= ijk1;
     }
 
-  return sum;
+  return pocl_linear_border_alpha (sum, order);
 }
 
 /* TODO: float * convert_flaot(UINT32) is imprecise, so reading from images
