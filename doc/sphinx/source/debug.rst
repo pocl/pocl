@@ -287,13 +287,23 @@ Setup:
 
   * This will result in ``lib/CL/libOpenCL.so``. Rebuild your application
     with the correct ``-fsanitize=X`` flag and link it to ``lib/CL/libOpenCL.so``.
+    Use the same compiler that built PoCL.
+
+  * With Clang, ``libOpenCL.so`` does not link a sanitizer runtime itself;
+    it uses the one Clang links into the application. Every program that
+    links against it must therefore be built with ``-fsanitize=X`` too.
 
 Example:
 
-  Building an "example.c" with the ASan::
+  Building an "example.c" with the ASan, using GCC::
 
         gcc -O0 -ggdb -fsanitize=address -fno-omit-frame-pointer -pthread -o example.o -c example.c
         gcc -fsanitize=address -o example example.o -lasan -Wl,-rpath,<pocl-build-dir>/lib/CL <pocl-build-dir>/lib/CL/libOpenCL.so
+
+  using Clang (just drop ``-lasan``)::
+
+        clang -O0 -ggdb -fsanitize=address -fno-omit-frame-pointer -pthread -o example.o -c example.c
+        clang -fsanitize=address -o example example.o -Wl,-rpath,<pocl-build-dir>/lib/CL <pocl-build-dir>/lib/CL/libOpenCL.so
 
 Output:
 

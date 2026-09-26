@@ -97,6 +97,18 @@ else()
   message(WARNING "SPIRV disabled/not found, or spirv-tools not found - disabling SPIRV tests in CTS")
 endif()
 
+# Clang must pass the sanitizer flags directly
+if(SANITIZER_OPTIONS AND CMAKE_C_COMPILER_ID STREQUAL "Clang")
+  set(CTS_SANITIZER_ARGS
+    "-DCMAKE_C_FLAGS=${SANITIZER_FLAGS_STR}"
+    "-DCMAKE_CXX_FLAGS=${SANITIZER_FLAGS_STR}"
+    "-DCMAKE_EXE_LINKER_FLAGS=${SANITIZER_EXE_LINKER_FLAGS_STR}")
+else()
+  set(CTS_SANITIZER_ARGS
+    "-DENABLE_ASAN=${ENABLE_ASAN}"
+    "-DENABLE_TSAN=${ENABLE_TSAN}")
+endif()
+
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
@@ -111,8 +123,7 @@ ExternalProject_Add(
     -DSPIRV_INCLUDE_DIR=/usr
     ${CTS_OPENCL_LIBDIR}
     ${CTS_OPENCL_LIBRARY}
-    -DENABLE_ASAN=${ENABLE_ASAN}
-    -DENABLE_TSAN=${ENABLE_TSAN}
+    ${CTS_SANITIZER_ARGS}
     "${TS_BASEDIR}/src/${TS_NAME}"
   INSTALL_COMMAND ""
 )
