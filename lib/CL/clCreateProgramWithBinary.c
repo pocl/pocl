@@ -30,6 +30,36 @@
 #include "pocl_util.h"
 #include <string.h>
 
+/* The caller's binaries, lengths and binary_status are indexed by the
+ * caller's device list. The program has one slot per distinct root device, in
+ * the order pocl_unique_device_list leaves them, so a slot must find its
+ * entries by device, not by position: [sub1, sub2, other] reduces to
+ * [other, root]. */
+static unsigned
+caller_index (const cl_device_id *caller_devs, cl_uint caller_num,
+              cl_device_id root)
+{
+  unsigned j;
+  for (j = 0; j < caller_num; ++j)
+    if (pocl_real_dev (caller_devs[j]) == root)
+      return j;
+  assert (0 && "every root comes from the caller's list");
+  return 0;
+}
+
+/* Every entry of the caller's list that reduces to root gets its status. */
+static void
+set_binary_status (cl_int *binary_status, const cl_device_id *caller_devs,
+                   cl_uint caller_num, cl_device_id root, cl_int status)
+{
+  unsigned j;
+  if (binary_status == NULL)
+    return;
+  for (j = 0; j < caller_num; ++j)
+    if (pocl_real_dev (caller_devs[j]) == root)
+      binary_status[j] = status;
+}
+
 /** Creates either a program with binaries, or an empty program.
  *
  * The latter is useful for clLinkProgram() which needs an empty program to put
@@ -78,7 +108,10 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
         "device %s specified multiple times\n", context->devices[i]->long_name);
     }
 
-  // convert subdevices to devices and remove duplicates
+  // convert subdevices to devices and remove duplicates; the caller's list
+  // still indexes binaries[], lengths[] and binary_status[]
+  const cl_device_id *caller_devs = device_list;
+  cl_uint caller_num = num_devices;
   cl_uint real_num_devices = 0;
   unique_devlist = pocl_unique_device_list(device_list, num_devices, &real_num_devices);
   num_devices = real_num_devices;
@@ -157,14 +190,18 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
 
   for (i = 0; i < num_devices; ++i)
     {
-      /* Poclcc binary */
-      if (pocl_binary_check_binary(device_list[i], binaries[i]))
-        {
-          program->pocl_binary_sizes[i] = lengths[i];
-          program->pocl_binaries[i] = (unsigned char*) malloc (lengths[i]);
-          memcpy (program->pocl_binaries[i], binaries[i], lengths[i]);
+      unsigned src = caller_index (caller_devs, caller_num, device_list[i]);
+      const unsigned char *binary = binaries[src];
+      size_t length = lengths[src];
 
-          pocl_binary_set_program_buildhash (program, i, binaries[i]);
+      /* Poclcc binary */
+      if (pocl_binary_check_binary (device_list[i], binary))
+        {
+          program->pocl_binary_sizes[i] = length;
+          program->pocl_binaries[i] = (unsigned char *)malloc (length);
+          memcpy (program->pocl_binaries[i], binary, length);
+
+          pocl_binary_set_program_buildhash (program, i, binary);
           int error = pocl_cache_create_program_cachedir
             (program, i, NULL, 0, program_bc_path);
           POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
@@ -182,28 +219,29 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
               program->binary_sizes[i] = (size_t)size;
             }
 
-          if (binary_status != NULL)
-            binary_status[i] = CL_SUCCESS;
+          set_binary_status (binary_status, caller_devs, caller_num,
+                             device_list[i], CL_SUCCESS);
         }
       /* check if the driver supports that binary */
       else
         {
           cl_device_id device = program->associated_devices[i];
           if (device->ops->supports_binary
-              && device->ops->supports_binary (device, lengths[i],
-                                               (const char *)binaries[i]))
+              && device->ops->supports_binary (device, length,
+                                               (const char *)binary))
             {
-              program->binary_sizes[i] = lengths[i];
-              program->binaries[i] = (unsigned char *)malloc (lengths[i]);
-              memcpy (program->binaries[i], binaries[i], lengths[i]);
-              if (binary_status != NULL)
-                binary_status[i] = CL_SUCCESS;
+              program->binary_sizes[i] = length;
+              program->binaries[i] = (unsigned char *)malloc (length);
+              memcpy (program->binaries[i], binary, length);
+              set_binary_status (binary_status, caller_devs, caller_num,
+                                 device_list[i], CL_SUCCESS);
             }
           else
             {
-              POCL_MSG_WARN ("Could not recognize binary for device %i\n", i);
-              if (binary_status != NULL)
-                binary_status[i] = CL_INVALID_BINARY;
+              POCL_MSG_WARN ("Could not recognize binary for device %u\n",
+                             src);
+              set_binary_status (binary_status, caller_devs, caller_num,
+                                 device_list[i], CL_INVALID_BINARY);
               errcode = CL_INVALID_BINARY;
               goto ERROR;
             }
