@@ -379,7 +379,7 @@ harden("libpocl_unlinked_objs")
 set(POCL_PRIVATE_LINK_LIST)
 
 # this must come 1st
-if(SANITIZER_OPTIONS)
+if(SANITIZER_LIBS)
   set(POCL_PRIVATE_LINK_LIST ${SANITIZER_LIBS})
 endif()
 

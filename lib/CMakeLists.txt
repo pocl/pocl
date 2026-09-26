@@ -88,7 +88,7 @@ else()
 endif()
 
 
-if(SANITIZER_OPTIONS)
+if(SANITIZER_LIBS)
   list(INSERT OPENCL_LIBS 0 ${SANITIZER_LIBS})
 endif()
 
