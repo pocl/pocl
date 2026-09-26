@@ -701,19 +701,14 @@ pocl_create_command_full (_cl_command_node **cmd,
         dev, NULL, final_event, mi->buffer,
         &mi->buffer->device_ptrs[dev->global_mem_id], mi->read_only,
         command_type, mig_flags, migration_size, &prev_migr_event);
-
-      /* Hold the last updater events of the parent buffers so we can refer
-         to the event in potential implicit sub-buffer migrations. */
-      if (mi->buffer->parent == NULL && mi->buffer->sub_buffers != NULL
-          && mi->buffer->last_updater != NULL)
-        POname (clRetainEvent) (mi->buffer->last_updater);
       ++i;
     }
 
     LL_FOREACH (buffer_usage, mi)
       {
-        /* The last events of the parent buffers can be now released as the
-           sub-buffer references to the events should hold them alive. */
+        /* Drop the last updater of parent buffers that have sub-buffers.
+           last_updater owns one reference to the event (see the per-buffer
+           retain above), so clearing it must also release that reference. */
         if (mi->buffer->parent == NULL && mi->buffer->sub_buffers != NULL
             && mi->buffer->last_updater != NULL)
           {

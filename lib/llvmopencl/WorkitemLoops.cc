@@ -63,6 +63,7 @@ POP_COMPILER_DIAGS
 #include <array>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <sstream>
 #include <vector>
 
@@ -546,6 +547,8 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
 
     llvm::ValueToValueMapTy reference_map;
     ParallelRegion *PRegion = (*PRI);
+    // Owns the peeled or unrolled copies of PRegion.
+    std::vector<std::unique_ptr<ParallelRegion>> Replicas;
 
     LLVM_DEBUG(dbgs() << "Handling region:\n");
     LLVM_DEBUG(PRegion->dumpNames());
@@ -573,7 +576,8 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
     if (PeelFirst) {
       LLVM_DEBUG(dbgs() << "Conditional region, peeling the first iteration\n");
 
-      ParallelRegion *replica = PRegion->replicate(reference_map, ".peeled_wi");
+      Replicas.emplace_back(PRegion->replicate(reference_map, ".peeled_wi"));
+      ParallelRegion *replica = Replicas.back().get();
       shareReplicatedLocalMemAllocas(*PRegion, reference_map);
       replica->chainAfter(PRegion);
       replica->purge();
@@ -614,8 +618,9 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
         PRegion->SetExitBB(lastBB);
 
         for (unsigned c = 1; c < UnrollCount; ++c) {
-          ParallelRegion *UnrolledPR =
-              PRegion->replicate(reference_map, ".unrolled_wi");
+          Replicas.emplace_back(
+              PRegion->replicate(reference_map, ".unrolled_wi"));
+          ParallelRegion *UnrolledPR = Replicas.back().get();
           shareReplicatedLocalMemAllocas(*PRegion, reference_map);
           UnrolledPR->chainAfter(prev);
           prev = UnrolledPR;
