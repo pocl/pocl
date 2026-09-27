@@ -101,8 +101,11 @@ static bool convertUnreachablesToReturns(Function &F) {
       LLVM_DEBUG(dbgs() << "UNREACHABLE found: replacing Inst in "
                         << F.getName().str() << "\n");
       // this can happen when inlining functions which have unreachable Inst
-      // we end up with a BB with 0 predecessors and a single unreachable
-      if (BB.hasNPredecessors(0))
+      // we end up with a BB with 0 predecessors and a single unreachable.
+      // The entry block has no predecessors either, but deleting it would
+      // turn the function into a declaration (e.g. when the whole kernel is
+      // known to be unreachable), so convert it to a return instead.
+      if (BB.hasNPredecessors(0) && &BB != &F.getEntryBlock())
         PendingDeletableBBs.push_back(&BB);
       else
         PendingUnreachableInst.push_back(UI);
