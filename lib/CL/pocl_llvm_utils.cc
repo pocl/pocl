@@ -602,6 +602,14 @@ void InitializeLLVM() {
     LLVMInitializeRISCVAsmParser();
 #endif
 
+#ifdef __loongarch__
+    LLVMInitializeLoongArchTargetInfo();
+    LLVMInitializeLoongArchTarget();
+    LLVMInitializeLoongArchTargetMC();
+    LLVMInitializeLoongArchAsmPrinter();
+    LLVMInitializeLoongArchAsmParser();
+#endif
+
 #endif // ENABLE_HOST_CPU_DEVICES
 
 #ifdef BUILD_CUDA
