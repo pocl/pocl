@@ -188,7 +188,7 @@ supported by the device.
    * both the host & device compilers support the required type (_Float16)
      and can emulate / execute operations on the type
    * Note: GCC only supports _Float16 since version 12
-   * LLVM >= 19, ENABLE_CONFORMANCE=OFF, Linux, CpuArch != i386
+   * LLVM >= 19, Linux or MinGW, and an x86-64, riscv64 or aarch64 target
 5. The `cl_khr_fp64` extension is enabled by default on all CPU architectures,
    unless explicitly disabled.
 6. The `cl_khr_extended_bit_ops` is only supported with LLVM 20+.
