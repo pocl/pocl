@@ -182,6 +182,15 @@ if("RISCV" IN_LIST LLVM_TARGETS_TO_BUILD)
     LLVMRISCVInfo)
 endif()
 
+if("LoongArch" IN_LIST LLVM_TARGETS_TO_BUILD)
+  list(APPEND POCL_LLVM_COMPONENTS
+    LLVMLoongArchCodeGen
+    LLVMLoongArchAsmParser
+    LLVMLoongArchDisassembler
+    LLVMLoongArchDesc
+    LLVMLoongArchInfo)
+endif()
+
 if("AArch64" IN_LIST LLVM_TARGETS_TO_BUILD)
   list(APPEND POCL_LLVM_COMPONENTS
     LLVMAArch64CodeGen
