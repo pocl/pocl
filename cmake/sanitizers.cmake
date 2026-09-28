@@ -4,11 +4,22 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
   option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
   option(ENABLE_UBSAN "Enable UBSanitizer" OFF)
   option(ENABLE_LSAN "Enable LeakSanitizer" OFF)
-elseif(ENABLE_ASAN OR ENABLE_TSAN OR ENABLE_UBSAN OR ENABLE_LSAN)
-  message(FATAL_ERROR "Sanitizers require GCC or Clang as the host compiler")
 endif()
 
+# Unfortunately the way CMake tests work, if they're given
+# a pass/fail expression, they don't check for exit status.
+# This was causing some false negatives with ASan (test was
+# returning with 1, but CMake reported it as pass because
+# the pass expression was present in output).
 if(ENABLE_ASAN OR ENABLE_TSAN OR ENABLE_UBSAN OR ENABLE_LSAN)
+  set(ENABLE_ANYSAN 1)
+endif()
+
+if(ENABLE_ANYSAN)
+  if(NOT (CMAKE_C_COMPILER_ID STREQUAL "GNU"
+          OR CMAKE_C_COMPILER_ID STREQUAL "Clang"))
+    message(FATAL_ERROR "Sanitizers require GCC or Clang as the host compiler")
+  endif()
   if(NOT CMAKE_C_COMPILER_ID STREQUAL CMAKE_CXX_COMPILER_ID)
     message(FATAL_ERROR "Sanitizers need the same C and C++ compiler, got "
                         "${CMAKE_C_COMPILER_ID} and ${CMAKE_CXX_COMPILER_ID}")
@@ -40,25 +51,17 @@ endif()
 
 if(ENABLE_UBSAN)
   list(APPEND SANITIZER_OPTIONS "-fsanitize=undefined")
-  if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+  # Clang's -fsanitize=function incorrectly crashes at kernel launch. GCC does not
+  # have the flag so nothing occurs
+  check_c_compiler_flag("-fno-sanitize=function" HAVE_FNO_SANITIZE_FUNCTION)
+  if(HAVE_FNO_SANITIZE_FUNCTION)
     list(APPEND SANITIZER_OPTIONS "-fno-sanitize=function")
   endif()
 endif()
 
 if(SANITIZER_OPTIONS)
-  add_link_options(${SANITIZER_OPTIONS})
-  string(JOIN " " SANITIZER_EXE_LINKER_FLAGS_STR ${SANITIZER_OPTIONS})
   list(APPEND SANITIZER_OPTIONS "-fno-omit-frame-pointer")
   add_compile_options(${SANITIZER_OPTIONS})
+  add_link_options(${SANITIZER_OPTIONS})
   string(JOIN " " SANITIZER_FLAGS_STR ${SANITIZER_OPTIONS})
-endif()
-
-
-# Unfortunately the way CMake tests work, if they're given
-# a pass/fail expression, they don't check for exit status.
-# This was causing some false negatives with ASan (test was
-# returning with 1, but CMake reported it as pass because
-# the pass expression was present in output).
-if(ENABLE_ASAN OR ENABLE_TSAN OR ENABLE_UBSAN OR ENABLE_LSAN)
-  set(ENABLE_ANYSAN 1)
 endif()
