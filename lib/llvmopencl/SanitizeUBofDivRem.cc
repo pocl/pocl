@@ -120,8 +120,11 @@ static bool sanitizeUBofDivRem(llvm::Function &F) {
       Value *Dividend = BinI->getOperand(0);
       Value *Divisor = BinI->getOperand(1);
       if (Dividend == Divisor) {
-        Value *One = ConstantInt::get(BinI->getType(), 0);
-        BinI->replaceAllUsesWith(One);
+        // x / x == 1 and x % x == 0; the result for x == 0 is unspecified.
+        bool IsDiv = BinI->getOpcode() == Instruction::SDiv ||
+                     BinI->getOpcode() == Instruction::UDiv;
+        Value *Result = ConstantInt::get(BinI->getType(), IsDiv ? 1 : 0);
+        BinI->replaceAllUsesWith(Result);
         BinI->eraseFromParent();
         Changed = true;
         continue;
