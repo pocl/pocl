@@ -142,6 +142,14 @@ if(UNIX)
   # SIGSEGV and SIGABRT handlers.
   if(NOT HAVE_LIBXSMM)
     add_test_pocl(NAME "regression/test_signal_handlers" COMMAND "test_signal_handlers")
+    # The basic driver runs kernels on the application's thread.
+    if(BUILD_BASIC)
+      add_test_pocl(NAME "regression/test_signal_handlers_basic" COMMAND "test_signal_handlers")
+      foreach(VARIANT loopvec cbs)
+        set_tests_properties("regression/test_signal_handlers_basic_${VARIANT}" PROPERTIES
+          ENVIRONMENT "POCL_WORK_GROUP_METHOD=${VARIANT};POCL_DEVICES=basic")
+      endforeach()
+    endif()
   endif()
 endif()
 

@@ -314,10 +314,10 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
     device->kernellib_subdir = "host";
   device->llvm_abi = pocl_get_llvm_cpu_abi ();
 
-#ifndef ENABLE_SIGFPE_HANDLER
+  /* x86 traps on integer division by zero and INT_MIN / -1, which must not
+     happen in OpenCL: sanitize the operands so the division can't trap. */
   if (strstr (OCL_KERNEL_TARGET, "x86") != NULL)
     device->run_sanitize_divrem_pass = CL_TRUE;
-#endif
 
 #endif
 
