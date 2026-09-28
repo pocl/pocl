@@ -668,17 +668,17 @@ void InitializeLLVM() {
         O = opts["pass-remarks-missed"];
         assert(O && "could not find LLVM option 'pass-remarks-missed'");
         O->addOccurrence(1, StringRef("pass-remarks-missed"),
-                         StringRef("loop-vectorize"), false);
+                         StringRef("loop-vectorize"));
 
         O = opts["pass-remarks-analysis"];
         assert(O && "could not find LLVM option 'pass-remarks-analysis'");
         O->addOccurrence(1, StringRef("pass-remarks-analysis"),
-                         StringRef("loop-vectorize"), false);
+                         StringRef("loop-vectorize"));
 
         O = opts["pass-remarks"];
         assert(O && "could not find LLVM option 'pass-remarks'");
         O->addOccurrence(1, StringRef("pass-remarks"),
-                         StringRef("loop-vectorize"), false);
+                         StringRef("loop-vectorize"));
       }
 
       // Force the loop vectorizer to use the same width for all loops.
@@ -687,13 +687,13 @@ void InitializeLLVM() {
         O = opts["force-vector-width"];
         assert(O && "could not find LLVM option 'force-vector-width'");
         O->addOccurrence(1, StringRef("force-vector-width"),
-                         StringRef(std::to_string(VecWidth)), false);
+                         StringRef(std::to_string(VecWidth)));
       }
     }
     if (pocl_get_bool_option("POCL_DEBUG_LLVM_PASSES", 0) == 1) {
       O = opts["debug"];
       assert(O && "could not find LLVM option 'debug'");
-      O->addOccurrence(1, StringRef("debug"), StringRef("true"), false);
+      O->addOccurrence(1, StringRef("debug"), StringRef("true"));
 #if 0
       O = opts["debug-only"];
       assert(O && "could not find LLVM option 'debug'");
