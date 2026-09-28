@@ -295,15 +295,10 @@ Setup:
 
 Example:
 
-  Building an "example.c" with the ASan, using GCC::
+  Building an "example.c" with the ASan, using GCC (or Clang)::
 
         gcc -O0 -ggdb -fsanitize=address -fno-omit-frame-pointer -pthread -o example.o -c example.c
-        gcc -fsanitize=address -o example example.o -lasan -Wl,-rpath,<pocl-build-dir>/lib/CL <pocl-build-dir>/lib/CL/libOpenCL.so
-
-  using Clang (just drop ``-lasan``)::
-
-        clang -O0 -ggdb -fsanitize=address -fno-omit-frame-pointer -pthread -o example.o -c example.c
-        clang -fsanitize=address -o example example.o -Wl,-rpath,<pocl-build-dir>/lib/CL <pocl-build-dir>/lib/CL/libOpenCL.so
+        gcc -fsanitize=address -o example example.o -Wl,-rpath,<pocl-build-dir>/lib/CL <pocl-build-dir>/lib/CL/libOpenCL.so
 
 Output:
 

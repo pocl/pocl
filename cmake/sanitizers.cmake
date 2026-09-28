@@ -21,11 +21,9 @@ endif()
 
 
 set(SANITIZER_OPTIONS "")
-set(SANITIZER_LIBS "")
 
 if(ENABLE_ASAN)
   list(APPEND SANITIZER_OPTIONS "-fsanitize=address" "-fsanitize-recover=address")
-  list(APPEND SANITIZER_LIBS "asan")
 endif()
 
 if(ENABLE_LSAN)
@@ -33,35 +31,23 @@ if(ENABLE_LSAN)
     message(STATUS "LeakSanitizer is part of AddressSanitizer")
   else()
     list(APPEND SANITIZER_OPTIONS "-fsanitize=leak")
-    list(APPEND SANITIZER_LIBS "lsan")
   endif()
 endif()
 
 if(ENABLE_TSAN)
   list(APPEND SANITIZER_OPTIONS "-fsanitize=thread")
-  list(APPEND SANITIZER_LIBS "tsan")
 endif()
 
 if(ENABLE_UBSAN)
   list(APPEND SANITIZER_OPTIONS "-fsanitize=undefined")
-  list(APPEND SANITIZER_LIBS "ubsan")
   if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
     list(APPEND SANITIZER_OPTIONS "-fno-sanitize=function")
   endif()
 endif()
 
 if(SANITIZER_OPTIONS)
-  if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
-    # SANITIZER_LIBS are GCC's runtime libraries. Clang links its own
-    # runtime into executables when -fsanitize= is given at link time.
-    set(SANITIZER_LIBS "")
-    add_link_options(${SANITIZER_OPTIONS})
-    string(JOIN " " SANITIZER_EXE_LINKER_FLAGS_STR ${SANITIZER_OPTIONS})
-  else()
-    list(TRANSFORM SANITIZER_LIBS PREPEND "-l"
-         OUTPUT_VARIABLE SANITIZER_LIB_FLAGS)
-    string(JOIN " " SANITIZER_EXE_LINKER_FLAGS_STR ${SANITIZER_LIB_FLAGS})
-  endif()
+  add_link_options(${SANITIZER_OPTIONS})
+  string(JOIN " " SANITIZER_EXE_LINKER_FLAGS_STR ${SANITIZER_OPTIONS})
   list(APPEND SANITIZER_OPTIONS "-fno-omit-frame-pointer")
   add_compile_options(${SANITIZER_OPTIONS})
   string(JOIN " " SANITIZER_FLAGS_STR ${SANITIZER_OPTIONS})

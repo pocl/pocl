@@ -34,9 +34,6 @@ function(add_unit_test MAIN_SOURCE)
 
   target_link_libraries(${BASENAME}
     PRIVATE ${POCL_LIBRARY_NAME} ${POCLU_LINK_OPTIONS})
-  if(SANITIZER_LIBS)
-    target_link_libraries(${BASENAME} PRIVATE ${SANITIZER_LIBS})
-  endif()
 
   target_include_directories(${BASENAME}
     PRIVATE $<TARGET_PROPERTY:${POCL_LIBRARY_NAME},INCLUDE_DIRECTORIES>)
