@@ -184,7 +184,6 @@ if(SANITIZER_OPTIONS)
   if(ENABLE_ICD)
     message(FATAL_ERROR "Sanitizers don't work with ICD")
   endif()
-  list(INSERT P_LINK_LIST 0 ${SANITIZER_LIBS})
 endif()
 
 ############################################

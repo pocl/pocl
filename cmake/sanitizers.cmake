@@ -1,62 +1,10 @@
-# currently only works with gcc as host compiler
-if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
-  if (CMAKE_C_COMPILER_VERSION VERSION_GREATER "4.7.99")
-    option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
-    option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
-  else()
-    set(ENABLE_ASAN OFF CACHE INTERNAL "Enable AddressSanitizer")
-    set(ENABLE_TSAN OFF CACHE INTERNAL "Enable ThreadSanitizer")
-  endif()
-
-  if (CMAKE_C_COMPILER_VERSION VERSION_GREATER "4.8.99")
-    option(ENABLE_UBSAN "Enable UBSanitizer" OFF)
-  else()
-    set(ENABLE_UBSAN OFF CACHE INTERNAL "Enable UBSanitizer")
-  endif()
-
-  if (CMAKE_C_COMPILER_VERSION VERSION_GREATER "5.0.99")
-    option(ENABLE_LSAN "Enable LeakSanitizer" OFF)
-  else()
-    set(ENABLE_LSAN OFF CACHE INTERNAL "Enable LeakSanitizer")
-  endif()
-
-else()
-  set(ENABLE_ASAN OFF CACHE INTERNAL "Enable AddressSanitizer")
-  set(ENABLE_TSAN OFF CACHE INTERNAL "Enable ThreadSanitizer")
+# Sanitizers work with GCC and Clang as the host compiler.
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
+  option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
+  option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
+  option(ENABLE_UBSAN "Enable UBSanitizer" OFF)
+  option(ENABLE_LSAN "Enable LeakSanitizer" OFF)
 endif()
-
-
-set(SANITIZER_OPTIONS "")
-
-if(ENABLE_ASAN)
-  if("${CMAKE_C_COMPILER_VERSION}" VERSION_LESS "6.0.0")
-    list(APPEND SANITIZER_OPTIONS "-fsanitize=address")
-  else()
-    list(APPEND SANITIZER_OPTIONS "-fsanitize=address" "-fsanitize-recover=address")
-  endif()
-  list(APPEND SANITIZER_LIBS "asan")
-endif()
-
-if(ENABLE_LSAN)
-  list(APPEND SANITIZER_OPTIONS "-fsanitize=leak")
-  list(APPEND SANITIZER_LIBS "lsan")
-endif()
-
-if(ENABLE_TSAN)
-  list(APPEND SANITIZER_OPTIONS "-fsanitize=thread")
-  list(APPEND SANITIZER_LIBS "tsan")
-endif()
-
-if(ENABLE_UBSAN)
-  list(APPEND SANITIZER_OPTIONS "-fsanitize=undefined")
-  list(APPEND SANITIZER_LIBS "ubsan")
-endif()
-
-if(SANITIZER_OPTIONS)
-  list(APPEND SANITIZER_OPTIONS "-fno-omit-frame-pointer")
-  add_compile_options(${SANITIZER_OPTIONS})
-endif()
-
 
 # Unfortunately the way CMake tests work, if they're given
 # a pass/fail expression, they don't check for exit status.
@@ -65,4 +13,55 @@ endif()
 # the pass expression was present in output).
 if(ENABLE_ASAN OR ENABLE_TSAN OR ENABLE_UBSAN OR ENABLE_LSAN)
   set(ENABLE_ANYSAN 1)
+endif()
+
+if(ENABLE_ANYSAN)
+  if(NOT (CMAKE_C_COMPILER_ID STREQUAL "GNU"
+          OR CMAKE_C_COMPILER_ID STREQUAL "Clang"))
+    message(FATAL_ERROR "Sanitizers require GCC or Clang as the host compiler")
+  endif()
+  if(NOT CMAKE_C_COMPILER_ID STREQUAL CMAKE_CXX_COMPILER_ID)
+    message(FATAL_ERROR "Sanitizers need the same C and C++ compiler, got "
+                        "${CMAKE_C_COMPILER_ID} and ${CMAKE_CXX_COMPILER_ID}")
+  endif()
+  if(ENABLE_TSAN AND (ENABLE_ASAN OR ENABLE_LSAN))
+    message(FATAL_ERROR "ThreadSanitizer cannot be combined with "
+                        "AddressSanitizer or LeakSanitizer")
+  endif()
+endif()
+
+
+set(SANITIZER_OPTIONS "")
+
+if(ENABLE_ASAN)
+  list(APPEND SANITIZER_OPTIONS "-fsanitize=address" "-fsanitize-recover=address")
+endif()
+
+if(ENABLE_LSAN)
+  if(ENABLE_ASAN)
+    message(STATUS "LeakSanitizer is part of AddressSanitizer")
+  else()
+    list(APPEND SANITIZER_OPTIONS "-fsanitize=leak")
+  endif()
+endif()
+
+if(ENABLE_TSAN)
+  list(APPEND SANITIZER_OPTIONS "-fsanitize=thread")
+endif()
+
+if(ENABLE_UBSAN)
+  list(APPEND SANITIZER_OPTIONS "-fsanitize=undefined")
+  # Clang's -fsanitize=function incorrectly crashes at kernel launch. GCC does not
+  # have the flag so nothing occurs
+  check_c_compiler_flag("-fno-sanitize=function" HAVE_FNO_SANITIZE_FUNCTION)
+  if(HAVE_FNO_SANITIZE_FUNCTION)
+    list(APPEND SANITIZER_OPTIONS "-fno-sanitize=function")
+  endif()
+endif()
+
+if(SANITIZER_OPTIONS)
+  list(APPEND SANITIZER_OPTIONS "-fno-omit-frame-pointer")
+  add_compile_options(${SANITIZER_OPTIONS})
+  add_link_options(${SANITIZER_OPTIONS})
+  string(JOIN " " SANITIZER_FLAGS_STR ${SANITIZER_OPTIONS})
 endif()

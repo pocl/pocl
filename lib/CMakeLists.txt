@@ -88,10 +88,6 @@ else()
 endif()
 
 
-if(SANITIZER_OPTIONS)
-  list(INSERT OPENCL_LIBS 0 ${SANITIZER_LIBS})
-endif()
-
 set(OPENCL_CFLAGS "")
 
 set(OPENCL_CFLAGS_STR "${OPENCL_CFLAGS}")

@@ -97,6 +97,15 @@ else()
   message(WARNING "SPIRV disabled/not found, or spirv-tools not found - disabling SPIRV tests in CTS")
 endif()
 
+# UPSTREAM_CMAKE_ARGS selects PoCL's compiler, so passing the same
+# sanitizer flags makes the CTS link the same sanitizer runtime as PoCL.
+if(SANITIZER_OPTIONS)
+  set(CTS_SANITIZER_ARGS
+    "-DCMAKE_C_FLAGS=${SANITIZER_FLAGS_STR}"
+    "-DCMAKE_CXX_FLAGS=${SANITIZER_FLAGS_STR}"
+    "-DCMAKE_EXE_LINKER_FLAGS=${SANITIZER_FLAGS_STR}")
+endif()
+
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
@@ -111,8 +120,7 @@ ExternalProject_Add(
     -DSPIRV_INCLUDE_DIR=/usr
     ${CTS_OPENCL_LIBDIR}
     ${CTS_OPENCL_LIBRARY}
-    -DENABLE_ASAN=${ENABLE_ASAN}
-    -DENABLE_TSAN=${ENABLE_TSAN}
+    ${CTS_SANITIZER_ARGS}
     "${TS_BASEDIR}/src/${TS_NAME}"
   INSTALL_COMMAND ""
 )
