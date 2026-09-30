@@ -84,49 +84,18 @@ extern "C" void ___chkstk_ms(void);
    cannot relocate into the high-mapped kernel image ("out of range of Pointer32
    fixup"). Hand kernels libpocl's own statically-linked copies instead.
 
-   But mingw's libgcc uses the legacy soft-float ABI for these: the half is
-   carried in a GPR as an unsigned short, whereas LLVM's codegen calls them with
-   the _Float16 ABI, passing/returning the half in the low 16 bits of an XMM
-   register. Handing kernels libgcc's symbols directly therefore moves the half
-   through the wrong register -- e.g. `fptrunc double to half` (emitted for the
-   FP16 pow/atan2 builtins, which round a double result) reads a stale XMM0 and
-   returns garbage. Wrap libgcc's routines in the _Float16 ABI and inject the
-   wrappers. On f16c CPUs the half<->float pair is done in hardware, so only the
-   double conversions strictly need this, but wrap all four for CPUs without
-   f16c. (The Windows JIT build uses the Clang toolchain, which supports
-   _Float16.) */
-/* libgcc's routines, reached under private names via asm labels so we can give
-   them their real (integer-GPR) prototypes without clashing with the compiler's
-   builtin declarations. */
-extern "C" {
-unsigned short poclLibgccTruncSFHF2(float) __asm__("__truncsfhf2");
-unsigned short poclLibgccTruncDFHF2(double) __asm__("__truncdfhf2");
-float poclLibgccExtendHFSF2(unsigned short) __asm__("__extendhfsf2");
-double poclLibgccExtendHFDF2(unsigned short) __asm__("__extendhfdf2");
-}
-
-static _Float16 poclTruncSFHF2(float A) {
-  unsigned short H = poclLibgccTruncSFHF2(A);
-  _Float16 R;
-  __builtin_memcpy(&R, &H, sizeof R);
-  return R;
-}
-static _Float16 poclTruncDFHF2(double A) {
-  unsigned short H = poclLibgccTruncDFHF2(A);
-  _Float16 R;
-  __builtin_memcpy(&R, &H, sizeof R);
-  return R;
-}
-static float poclExtendHFSF2(_Float16 A) {
-  unsigned short H;
-  __builtin_memcpy(&H, &A, sizeof H);
-  return poclLibgccExtendHFSF2(H);
-}
-static double poclExtendHFDF2(_Float16 A) {
-  unsigned short H;
-  __builtin_memcpy(&H, &A, sizeof H);
-  return poclLibgccExtendHFDF2(H);
-}
+   Both libgcc (GCC >= 12) and compiler-rt implement these with the _Float16
+   ABI that LLVM's codegen expects, passing and returning the half in the low
+   16 bits of XMM0. Rather than declaring the runtime's internal symbols
+   ourselves, let the compiler that built libpocl emit the calls: the thunks
+   below are plain conversions, which lower to calls into that runtime (or to
+   F16C instructions, where libpocl itself is built with them). On f16c CPUs
+   kernels only ever need the double conversions, but without f16c the float
+   ones are used too. */
+static _Float16 poclTruncSFHF2(float A) { return (_Float16)A; }
+static _Float16 poclTruncDFHF2(double A) { return (_Float16)A; }
+static float poclExtendHFSF2(_Float16 A) { return (float)A; }
+static double poclExtendHFDF2(_Float16 A) { return (double)A; }
 #endif
 
 namespace {
