@@ -52,6 +52,10 @@ POname(clSVMFree)(cl_context context,
   pocl_raw_ptr *item
     = pocl_raw_ptr_set_lookup_with_vm_ptr (context->raw_ptrs, svm_pointer);
   pocl_raw_ptr_set_remove (context->raw_ptrs, item);
+  /* The shadow may outlive this call; its range is free for reuse now. */
+  if (item && item->shadow_cl_mem)
+    pocl_raw_ptr_set_erase_all_by_shadow_mem (context->raw_ptrs,
+                                              item->shadow_cl_mem);
   POCL_UNLOCK_OBJ (context);
 
   if (item == NULL)
