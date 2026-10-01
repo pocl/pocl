@@ -178,7 +178,8 @@ POname (clIcdGetFunctionAddressForPlatformKHR) (cl_platform_id platform,
   POCL_GET_FUNCTION_ADDRESS (clEnqueueSVMMigrateMem);
   POCL_GET_FUNCTION_ADDRESS (clGetDeviceAndHostTimer);
   POCL_GET_FUNCTION_ADDRESS (clGetHostTimer);
-  POCL_GET_FUNCTION_ADDRESS (clGetKernelSubGroupInfo);
+  POCL_GET_FUNCTION_ADDRESS_IF_NAME (clGetKernelSubGroupInfoKHR,
+                                     clGetKernelSubGroupInfo);
   POCL_GET_FUNCTION_ADDRESS (clSetDefaultDeviceCommandQueue);
   POCL_GET_FUNCTION_ADDRESS (clSetProgramReleaseCallback);
   POCL_GET_FUNCTION_ADDRESS (clSetProgramSpecializationConstant);
