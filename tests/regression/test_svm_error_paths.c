@@ -50,6 +50,19 @@ main (void)
   if (buf)
     CHECK_CL_ERROR (clReleaseMemObject (buf));
 
+  /* A wait-list event from another context must fail the enqueue. */
+  static char host[SIZE];
+  cl_context other = clCreateContext (NULL, 1, &device, NULL, NULL, &err);
+  CHECK_CL_ERROR (err);
+  cl_event foreign = clCreateUserEvent (other, &err);
+  CHECK_CL_ERROR (err);
+  cl_event ev = NULL;
+  TEST_ASSERT (clEnqueueSVMMemcpy (queue, CL_FALSE, svm, host, SIZE, 1,
+                                   &foreign, &ev)
+               == CL_INVALID_CONTEXT);
+  CHECK_CL_ERROR (clReleaseEvent (foreign));
+  CHECK_CL_ERROR (clReleaseContext (other));
+
   clSVMFree (context, svm);
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   CHECK_CL_ERROR (clReleaseContext (context));
