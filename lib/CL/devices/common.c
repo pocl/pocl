@@ -741,20 +741,7 @@ pocl_exec_command (_cl_command_node *node)
            cmd->svm_free.data);
       else
         for (i = 0; i < cmd->svm_free.num_svm_pointers; i++)
-          {
-            void *ptr = cmd->svm_free.svm_pointers[i];
-            POCL_LOCK_OBJ (event->context);
-            pocl_raw_ptr *item = pocl_raw_ptr_set_lookup_with_vm_ptr (
-              event->context->raw_ptrs, ptr);
-            cl_mem shadow_mem = item->shadow_cl_mem;
-            assert (item);
-            pocl_raw_ptr_set_erase (event->context->raw_ptrs, item);
-            POCL_UNLOCK_OBJ (event->context);
-            POname (clReleaseContext) (event->context);
-            if (shadow_mem)
-              POname (clReleaseMemObject) (shadow_mem);
-            dev->ops->svm_free (dev, ptr);
-          }
+          POname (clSVMFree) (event->context, cmd->svm_free.svm_pointers[i]);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Free              ");
       break;
 
