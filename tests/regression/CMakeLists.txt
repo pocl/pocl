@@ -66,7 +66,7 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_workitem_func_outside_kernel test_program_scope_vars test_issue_1548
   test_issue_1525 test_issue_1608 test_issue_1826 test_builtin_regression
   test_mem_host_ptr_issue test_issue_1962 test_issue_2005
-  test_global_atomics test_large_stack_frame
+  test_global_atomics test_large_stack_frame test_linear_filter_border
 )
 if(UNIX)
   list(APPEND PROGRAMS_TO_BUILD test_issue_2174)
@@ -111,6 +111,8 @@ add_test_pocl(NAME "regression/test_issue_577" COMMAND "test_issue_577")
 add_test_pocl(NAME "regression/test_issue_757" COMMAND "test_issue_757")
 
 add_test_pocl(NAME "regression/test_issue_1435" COMMAND "test_issue_1435")
+
+add_test_pocl(NAME "regression/test_linear_filter_border" COMMAND "test_linear_filter_border")
 
 # fails on windows/MinGW with "access violation"
 add_test_pocl(NAME "regression/test_issue_1525" LABELS "mingw_fail;win_fail"
