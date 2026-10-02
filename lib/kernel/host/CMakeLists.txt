@@ -249,6 +249,14 @@ endif()
 
 list(APPEND SOURCES_WITH_SLEEF "host/addrspace_operators.ll" "host/addrspace_operators_spir.ll")
 
+# tgamma from CORE-math, correctly rounded, instead of SLEEF's, which misses
+# OpenCL's 16 ULP bound at results near the bottom of the range (#2325). The
+# float version computes in double, so both need the device's fp64.
+if(HOST_CPU_ENABLE_CL_KHR_FP64)
+  list(REMOVE_ITEM SOURCES_WITH_SLEEF sleef-pocl/tgamma.cl)
+  list(APPEND SOURCES_WITH_SLEEF core-math/tgammaf.cl core-math/tgamma.cl)
+endif()
+
 # if ENABLE_HOST_CPU_VECTORIZE_BUILTINS is enabled, use Clang/LLVM builtins
 # this makes vectorization of (some) OpenCL builtins possible,
 # while also making FP16 versions available (if FP16 is available)
