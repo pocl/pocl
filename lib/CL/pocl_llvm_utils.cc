@@ -467,16 +467,6 @@ void cpu_setup_vector_widths(cl_device_id dev) {
   }
 }
 
-int pocl_llvm_remove_file_on_signal_create(const char *file) {
-  return llvm::sys::RemoveFileOnSignal(
-            StringRef(file)) ? 0 : -1;
-}
-
-int pocl_llvm_remove_file_on_signal_destroy(const char *file) {
-  llvm::sys::RunInterruptHandlers();
-  return 0;
-}
-
 /*
  * Use one global LLVMContext across all LLVM bitcodes. This is because
  * we want to cache the bitcode IR libraries and reuse them when linking
