@@ -30,12 +30,25 @@ POname(clSetProgramSpecializationConstant)
                                    size_t      spec_size,
                                    const void* spec_value) CL_API_SUFFIX__VERSION_2_2
 {
-  /* if SPIR-V is disabled, return early */
-#if defined(ENABLE_CONFORMANCE) && !defined(ENABLE_SPIRV)
-  return CL_INVALID_OPERATION;
-#endif
-
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (program)), CL_INVALID_PROGRAM);
+
+  /* CL_INVALID_OPERATION if no device associated with program supports IL
+   * (was previously only returned by conformance builds without SPIR-V). */
+  {
+    cl_uint i;
+    int any_il = 0;
+    for (i = 0; i < program->associated_num_devices; ++i)
+      {
+        const char *il = program->associated_devices[i]->supported_spir_v_versions;
+        if (il != NULL && il[0] != '\0')
+          {
+            any_il = 1;
+            break;
+          }
+      }
+    POCL_RETURN_ERROR_ON ((!any_il), CL_INVALID_OPERATION,
+                          "No device associated with the program supports IL\n");
+  }
 
   assert (program->num_devices != 0);
 
