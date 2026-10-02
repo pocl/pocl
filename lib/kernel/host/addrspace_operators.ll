@@ -1,5 +1,3 @@
-target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
-
 define dso_local i32 @_Z9get_fencePU9CLgenericv(ptr  %address) local_unnamed_addr #0 {
   ret i32 3
 }
