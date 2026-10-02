@@ -136,9 +136,6 @@ pthread_scheduler_init (cl_device_id device)
       POCL_CREATE_THREAD (scheduler.thread_pool[i].thread,
                           pocl_pthread_driver_thread,
                           (void *)&scheduler.thread_pool[i]);
-#ifdef ENABLE_SIGFPE_HANDLER
-      pocl_ignore_sigfpe_for_thread (scheduler.thread_pool[i].thread);
-#endif
     }
 
   POCL_WAIT_BARRIER (scheduler.init_barrier);

@@ -53,12 +53,6 @@ uint32_t pocl_byteswap_uint32_t (uint32_t word, char should_swap);
 float byteswap_float (float word, char should_swap);
 
 
-#ifdef ENABLE_SIGFPE_HANDLER
-void pocl_install_sigfpe_handler ();
-POCL_EXPORT
-void pocl_ignore_sigfpe_for_thread (pocl_thread_t thr);
-#endif
-
 #ifdef ENABLE_SIGUSR2_HANDLER
 void pocl_install_sigusr2_handler ();
 #endif
