@@ -437,6 +437,12 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
 #endif
 
 #if defined(__aarch64__) || defined(_M_ARM64)
+#if defined(ENABLE_CONFORMANCE) || defined(HOST_CPU_ENABLE_DENORMS)
+  /* AArch64 keeps float denormals in scalar and Advanced SIMD code alike, and
+   * pocl_set_ftz () does not flush them here, so kernels produce them. Without
+   * this the CTS assumes flush-to-zero and contractions fails. */
+  device->single_fp_config |= CL_FP_DENORM;
+#endif
   /* FDIV and FSQRT are correctly rounded, scalar and Advanced SIMD alike, and
    * float division and the kernel library's sqrt compile to them. Measured on
    * a Neoverse N1 with LLVM 19, conformance and default builds: fp32 x/y on
