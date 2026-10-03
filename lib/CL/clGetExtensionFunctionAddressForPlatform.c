@@ -67,6 +67,9 @@ CL_API_SUFFIX__VERSION_1_2
   if (strcmp (func_name, "clSetContentSizeBufferPoCL") == 0)
     return (void *)&POname (clSetContentSizeBufferPoCL);
 
+  if (strcmp (func_name, "clSetCPUMaxComputeUnitsPOCL") == 0)
+    return (void *)&POname (clSetCPUMaxComputeUnitsPOCL);
+
   if (strcmp (func_name, "clGetPlatformInfo") == 0)
     return (void *)&POname(clGetPlatformInfo);
 

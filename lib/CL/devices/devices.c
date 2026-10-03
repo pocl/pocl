@@ -246,7 +246,32 @@ static uint64_t dev_index;
 /* after calling drivers uninit, we may have to re-init the devices. */
 static unsigned devices_active = 0;
 
+/* set by clSetCPUMaxComputeUnitsPOCL. frozen once initialization starts,
+ * even if it fails, so that devices never see different values. */
+static unsigned cpu_max_compute_units = 0;
+static unsigned cpu_max_compute_units_frozen = 0;
+
 extern pocl_lock_t pocl_init_lock;
+
+cl_int
+pocl_set_cpu_max_compute_units (unsigned count)
+{
+  cl_int errcode = CL_SUCCESS;
+  POCL_LOCK (pocl_init_lock);
+  /* the CPU drivers size their thread pools when they are initialized */
+  if (cpu_max_compute_units_frozen)
+    errcode = CL_INVALID_OPERATION;
+  else
+    cpu_max_compute_units = count;
+  POCL_UNLOCK (pocl_init_lock);
+  return errcode;
+}
+
+unsigned
+pocl_get_cpu_max_compute_units (void)
+{
+  return cpu_max_compute_units;
+}
 
 #ifdef ENABLE_LOADABLE_DRIVERS
 
@@ -638,6 +663,7 @@ pocl_init_devices (cl_platform_id platform)
 
   POCL_LOCK (pocl_init_lock);
   init_in_progress = 1;
+  cpu_max_compute_units_frozen = 1;
 
   if (first_init_done)
     {

@@ -50,6 +50,21 @@ cl_int pocl_init_devices (cl_platform_id platform);
 cl_int pocl_uninit_devices ();
 
 /**
+ * \brief Override the number of compute units of the CPU devices
+ * \param count the number of compute units, or 0 to use the environment
+ * \return CL_INVALID_OPERATION if the initialization of the devices has
+ * already started
+ */
+cl_int pocl_set_cpu_max_compute_units (unsigned count);
+
+/**
+ * \brief Get the override set by pocl_set_cpu_max_compute_units
+ * \return the number of compute units, or 0 if not overridden.
+ * Only call it during device initialization, with pocl_init_lock held.
+ */
+unsigned pocl_get_cpu_max_compute_units (void);
+
+/**
  * \brief Get the count of devices for a specific type
  * \param device_type the device type for which we want the count of devices
  * \return the count of devices for this type

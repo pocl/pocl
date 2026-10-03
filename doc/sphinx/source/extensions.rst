@@ -27,6 +27,21 @@ e.g. when the data is compressed and its exact
 length is not known ahead of time.
 
 
+cl_pocl_cpu_compute_units
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This extension lets an application choose how many compute units
+(worker threads) each of the CPU devices gets, with
+``clSetCPUMaxComputeUnitsPOCL(platform, num_compute_units)``.
+It has the same effect as **POCL_CPU_MAX_CU_COUNT**, and takes precedence
+over it, but doesn't require changing the process environment.
+
+The function must be called before the devices are initialized, i.e., before
+the first ``clGetDeviceIDs`` or ``clCreateContext*`` call; afterwards it
+returns ``CL_INVALID_OPERATION``. Retrieve it with
+``clGetExtensionFunctionAddressForPlatform``.
+
+
 cl_khr_command_buffer
 ~~~~~~~~~~~~~~~~~~~~~~~
 

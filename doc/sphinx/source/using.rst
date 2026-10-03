@@ -157,6 +157,8 @@ pocl.
  The maximum number of threads created for work group execution in the
  'cpu' device driver. The default is to determine this from the number of
  hardware threads available in the CPU.
+ Applications can also set this with the ``cl_pocl_cpu_compute_units``
+ extension, which takes precedence.
 
 - **POCL_CPU_VENDOR_ID_OVERRIDE**
 
