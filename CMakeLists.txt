@@ -1865,12 +1865,20 @@ if(NOT ENABLE_CONFORMANCE)
       cl_exp_defined_builtin_kernels")
   endif()
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} \
-cl_khr_subgroups cl_khr_subgroup_ballot cl_khr_subgroup_shuffle \
+cl_khr_subgroup_ballot cl_khr_subgroup_shuffle \
 cl_intel_subgroups cl_intel_subgroups_short cl_intel_subgroups_char cl_intel_required_subgroup_size cl_exp_tensor")
   # read-write images are still partially broken
   # program-scope variables work on OpenCL C input, but breaks with SPIR-V input (llvm-spirv bugs)
-  set(HOST_DEVICE_FEATURES  "${HOST_DEVICE_FEATURES} __opencl_c_subgroups __opencl_c_read_write_images")
+  set(HOST_DEVICE_FEATURES  "${HOST_DEVICE_FEATURES} __opencl_c_read_write_images")
 endif()
+
+# cl_khr_subgroups is feature-complete (see below), so it is advertised in
+# conformance builds too; __opencl_c_subgroups follows from it further down.
+# It was held back only because OpenCL-CTS test_subgroups assumed sub-groups
+# of at most 128 work-items, which PoCL's whole-local-X sub-groups exceed
+# (KhronosGroup/OpenCL-CTS#1621; PoCL's CTS fork carries a workaround, and
+# KhronosGroup/OpenCL-CTS#2822 fixes the test upstream).
+set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroups")
 
 # Extensions that are considered feature-complete (preferably CTS-tested).
 #
@@ -1897,10 +1905,6 @@ endif()
 # * cl_khr_fp16: only implemented for part of builtin library functions.
 #   Those with either 1) expression implementation, or 2) Clang builtin
 #   implementation.
-#
-# * cl_khr_subgroup: still need some patches to OpenCL-CTS, which are
-#   not upstreamed. Removing this extension from conformance-enabled build
-#   is required for PoCL CPU device pass the official upstream OpenCL-CTS.
 
 if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_subgroup")
   set(HOST_DEVICE_FEATURES "${HOST_DEVICE_FEATURES} __opencl_c_subgroups")
