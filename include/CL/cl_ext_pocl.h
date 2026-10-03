@@ -61,6 +61,28 @@ typedef CL_API_ENTRY cl_int
 
 #endif
 
+/* cl_pocl_cpu_compute_units: choose how many compute units (worker threads)
+ * each of PoCL's CPU devices gets, instead of reading it from the environment
+ * (POCL_CPU_MAX_CU_COUNT etc). Must be called before the devices are
+ * initialized, i.e., before the first clGetDeviceIDs or clCreateContext*;
+ * returns CL_INVALID_OPERATION afterwards. */
+
+#ifndef cl_pocl_cpu_compute_units
+
+#define cl_pocl_cpu_compute_units 1
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clSetCPUMaxComputeUnitsPOCL(
+    cl_platform_id    platform,
+    cl_uint           num_compute_units) CL_API_SUFFIX__VERSION_1_2;
+
+typedef CL_API_ENTRY cl_int
+(CL_API_CALL *clSetCPUMaxComputeUnitsPOCL_fn)(
+    cl_platform_id    platform,
+    cl_uint           num_compute_units) CL_API_SUFFIX__VERSION_1_2;
+
+#endif
+
 #define CL_DEVICE_REMOTE_TRAFFIC_STATS_POCL 0x4501
 
 #define CL_DEVICE_REMOTE_SERVER_IP_POCL 0x4503

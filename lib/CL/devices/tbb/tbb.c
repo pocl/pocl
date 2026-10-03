@@ -122,7 +122,9 @@ cl_int pocl_tbb_init(unsigned j, cl_device_id device, const char *parameters) {
    * The setup in that code does not take into account NUMA nodes.
    * TBD unify behaviour between drivers (make pthread NUMA aware?).
    */
-  int max_threads = pocl_get_int_option ("POCL_CPU_MAX_CU_COUNT", -1);
+  int max_threads = (int)pocl_get_cpu_max_compute_units ();
+  if (max_threads <= 0)
+    max_threads = pocl_get_int_option ("POCL_CPU_MAX_CU_COUNT", -1);
   if (max_threads <= 0)
     max_threads = pocl_get_int_option ("POCL_MAX_COMPUTE_UNITS", -1);
   if (max_threads <= 0)

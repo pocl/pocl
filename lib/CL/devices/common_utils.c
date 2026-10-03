@@ -32,6 +32,7 @@
 #include "common.h"
 #include "common_utils.h"
 #include "cpuinfo.h"
+#include "devices.h"
 #include "pocl_builtin_kernels.h"
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
@@ -555,8 +556,12 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
   int fallback = (device->max_compute_units == 0) ? FALLBACK_MAX_THREAD_COUNT
                                                   : device->max_compute_units;
 
+  /* set through clSetCPUMaxComputeUnitsPOCL, which takes precedence over
+   * all the env variables */
+  int max_threads = (int)pocl_get_cpu_max_compute_units ();
   /* old env variable */
-  int max_threads = pocl_get_int_option ("POCL_MAX_PTHREAD_COUNT", 0);
+  if (max_threads <= 0)
+    max_threads = pocl_get_int_option ("POCL_MAX_PTHREAD_COUNT", 0);
   if (max_threads <= 0)
     max_threads = pocl_get_int_option ("POCL_CPU_MAX_CU_COUNT", 0);
   if (max_threads <= 0)

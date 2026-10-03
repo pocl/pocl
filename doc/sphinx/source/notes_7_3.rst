@@ -22,6 +22,9 @@ Runtime fixes & features
 ==========================
 
 * TBD: OpenCL-CTS updated to upstream tag v20XX-YY-ZZ-00 and fixed related bugs:
+* New `cl_pocl_cpu_compute_units` platform extension: applications that embed
+  PoCL can choose the number of CPU worker threads with
+  `clSetCPUMaxComputeUnitsPOCL`, instead of setting `POCL_CPU_MAX_CU_COUNT`.
 
 ===========================
 Driver-specific features
