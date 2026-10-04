@@ -228,16 +228,33 @@ endif()
 
 #*********************************************************************
 
+# The kernel compiler (the PoCL LLVM passes and the work-group function
+# generation) shapes the cached kernel binaries as much as the kernel library
+# does, so hash its sources too. Otherwise two builds of the same PoCL version
+# that differ only in kernel compiler patches (and, with SOURCE_DATE_EPOCH set,
+# share the same POCL_BUILD_TIMESTAMP) reuse each other's cached binaries.
+file(GLOB KERNEL_COMPILER_SOURCES CONFIGURE_DEPENDS
+  "${CMAKE_SOURCE_DIR}/lib/llvmopencl/*.cc"
+  "${CMAKE_SOURCE_DIR}/lib/llvmopencl/*.cpp"
+  "${CMAKE_SOURCE_DIR}/lib/llvmopencl/*.h"
+  "${CMAKE_SOURCE_DIR}/lib/llvmopencl/*.hh"
+  "${CMAKE_SOURCE_DIR}/lib/CL/pocl_llvm_*.cc"
+  "${CMAKE_SOURCE_DIR}/lib/CL/pocl_llvm_*.h")
+list(SORT KERNEL_COMPILER_SOURCES)
+
 # "Escape" a list before passing to an external command
 string(REPLACE ";" "****" KERNEL_BC_LIST_ESCAPED "${KERNEL_BC_LIST}")
+string(REPLACE ";" "****" KERNEL_COMPILER_SOURCES_ESCAPED
+       "${KERNEL_COMPILER_SOURCES}")
 
 add_custom_command( OUTPUT "${CMAKE_BINARY_DIR}/kernellib_hash.h"
   COMMAND "${CMAKE_COMMAND}"
       -DKERNEL_BC_LIST_ESCAPED='${KERNEL_BC_LIST_ESCAPED}'
+      -DKERNEL_COMPILER_SOURCES_ESCAPED='${KERNEL_COMPILER_SOURCES_ESCAPED}'
       -DINCLUDEDIR='${CMAKE_SOURCE_DIR}/include'
       -DOUTPUT='${CMAKE_BINARY_DIR}/kernellib_hash.h'
       -P "${CMAKE_SOURCE_DIR}/cmake/kernellib_hash.cmake"
-  DEPENDS ${KERNEL_BC_LIST}
+  DEPENDS ${KERNEL_BC_LIST} ${KERNEL_COMPILER_SOURCES}
       "${CMAKE_SOURCE_DIR}/include/_kernel.h"
       "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
       "${CMAKE_SOURCE_DIR}/include/pocl_types.h"
