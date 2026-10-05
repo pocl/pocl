@@ -66,11 +66,14 @@ struct pool_thread_data
   /* printf buffer*/
   void *printf_buffer;
   size_t thread_stack_size;
+  /* signaled to wake up this thread. Together with 'sleeping', protected
+   * by wq_lock_fast. */
+  pocl_cond_t wake;
+  int sleeping;
 };
 
 typedef struct scheduler_data_
 {
-  POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) pocl_cond_t wake_pool;
   POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) pocl_lock_t wq_lock_fast;
   POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) _cl_command_node *work_queue;
 
@@ -104,17 +107,20 @@ pthread_scheduler_init (cl_device_id device)
 #endif
   POCL_INIT_LOCK (scheduler.wq_lock_fast);
 
-  POCL_INIT_COND (scheduler.wake_pool);
-
-  POCL_LOCK (scheduler.wq_lock_fast);
-  VG_ASSOC_COND_VAR (scheduler.wake_pool, scheduler.wq_lock_fast);
-  POCL_UNLOCK (scheduler.wq_lock_fast);
-
   scheduler.thread_pool = pocl_aligned_malloc (
       HOST_CPU_CACHELINE_SIZE,
       num_worker_threads * sizeof (struct pool_thread_data));
   memset (scheduler.thread_pool, 0,
           num_worker_threads * sizeof (struct pool_thread_data));
+
+  POCL_LOCK (scheduler.wq_lock_fast);
+  for (i = 0; i < num_worker_threads; ++i)
+    {
+      POCL_INIT_COND (scheduler.thread_pool[i].wake);
+      VG_ASSOC_COND_VAR (scheduler.thread_pool[i].wake,
+                         scheduler.wq_lock_fast);
+    }
+  POCL_UNLOCK (scheduler.wq_lock_fast);
 
   scheduler.num_threads = num_worker_threads;
   assert (num_worker_threads > 0);
@@ -167,28 +173,55 @@ pthread_scheduler_uninit ()
 
   POCL_LOCK (scheduler.wq_lock_fast);
   scheduler.thread_pool_shutdown_requested = 1;
-  POCL_BROADCAST_COND (scheduler.wake_pool);
+  for (i = 0; i < scheduler.num_threads; ++i)
+    POCL_SIGNAL_COND (scheduler.thread_pool[i].wake);
   POCL_UNLOCK (scheduler.wq_lock_fast);
 
   for (i = 0; i < scheduler.num_threads; ++i)
     {
       POCL_JOIN_THREAD (scheduler.thread_pool[i].thread);
+      POCL_DESTROY_COND (scheduler.thread_pool[i].wake);
     }
   scheduler.thread_pool_shutdown_requested = 0;
   pocl_aligned_free (scheduler.thread_pool);
 
   POCL_DESTROY_LOCK (scheduler.wq_lock_fast);
-  POCL_DESTROY_COND (scheduler.wake_pool);
   POCL_DESTROY_BARRIER (scheduler.init_barrier);
 }
 
-/* push_command and push_kernel MUST use broadcast and wake up all threads,
-   because commands can be for subdevices (= not all threads) */
+/* Wakes up to N sleeping threads among those that run commands for DEVICE,
+   i.e., the threads of its CUs if it's a subdevice. Waking all threads would
+   make every command pay for the whole pool, which dominates the launch
+   time of small kernels. Threads that are awake check the queues before
+   going to sleep, so they don't need to be woken. Must be called with
+   wq_lock_fast held. */
+static void
+wake_threads (cl_device_id device, size_t n)
+{
+  unsigned start = 0, end = scheduler.num_threads;
+  if (device->parent_device)
+    {
+      start = device->core_start;
+      end = min (start + device->core_count, scheduler.num_threads);
+    }
+
+  for (unsigned i = start; i < end && n > 0; ++i)
+    {
+      struct pool_thread_data *td = &scheduler.thread_pool[i];
+      if (td->sleeping)
+        {
+          td->sleeping = 0;
+          POCL_SIGNAL_COND (td->wake);
+          --n;
+        }
+    }
+}
+
 void pthread_scheduler_push_command (_cl_command_node *cmd)
 {
   POCL_LOCK (scheduler.wq_lock_fast);
   DL_APPEND (scheduler.work_queue, cmd);
-  POCL_BROADCAST_COND (scheduler.wake_pool);
+  wake_threads (cmd->device, 1);
   POCL_UNLOCK (scheduler.wq_lock_fast);
 }
 
@@ -198,7 +231,9 @@ pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
 {
   POCL_LOCK (scheduler.wq_lock_fast);
   DL_APPEND (scheduler.kernel_queue, run_cmd);
-  POCL_BROADCAST_COND (scheduler.wake_pool);
+  /* every thread runs at least one WG, and the thread pushing the kernel
+   * (which can run it) picks it up itself */
+  wake_threads (run_cmd->device, run_cmd->remaining_wgs - 1);
   POCL_UNLOCK (scheduler.wq_lock_fast);
 }
 
@@ -278,9 +313,12 @@ work_group_scheduler (kernel_run_command *k,
   unsigned start_index;
   unsigned end_index;
   int last_wgs = 0;
+  /* only the CUs of a subdevice run its kernels */
+  unsigned num_threads = k->device->parent_device ? k->device->core_count
+                                                  : thread_data->num_threads;
 
   if (!get_wg_index_range (k, &start_index, &end_index, &last_wgs,
-                           thread_data->num_threads))
+                           num_threads))
     return;
 
   assert (end_index >= start_index);
@@ -328,7 +366,7 @@ work_group_scheduler (kernel_run_command *k,
         }
     }
   while (get_wg_index_range (k, &start_index, &end_index, &last_wgs,
-                             thread_data->num_threads));
+                             num_threads));
 
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
   pocl_write_printf_buffer ((char *)pc.printf_buffer, position);
@@ -679,7 +717,9 @@ RETRY:
   /* if neither a command nor a kernel was available, sleep */
   if ((cmd == NULL) && (run_cmd == NULL) && (do_exit == 0))
     {
-      POCL_WAIT_COND (scheduler.wake_pool, scheduler.wq_lock_fast);
+      td->sleeping = 1;
+      POCL_WAIT_COND (td->wake, scheduler.wq_lock_fast);
+      td->sleeping = 0;
       goto RETRY;
     }
 
