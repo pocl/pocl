@@ -66,10 +66,12 @@ struct pool_thread_data
   /* printf buffer*/
   void *printf_buffer;
   size_t thread_stack_size;
-  /* signaled to wake up this thread. Together with 'sleeping', protected
-   * by wq_lock_fast. */
+  /* signaled to wake up this thread, waited on with wq_lock_fast held */
   pocl_cond_t wake;
-  int sleeping;
+  /* set while waiting for 'wake'; only set with wq_lock_fast held, cleared
+   * atomically by the thread that signals 'wake'. 64-bit for the Windows
+   * atomics. */
+  int64_t sleeping;
 };
 
 typedef struct scheduler_data_
@@ -189,28 +191,36 @@ pthread_scheduler_uninit ()
   POCL_DESTROY_BARRIER (scheduler.init_barrier);
 }
 
-/* Wakes up to N sleeping threads among those that run commands for DEVICE,
-   i.e., the threads of its CUs if it's a subdevice. Waking all threads would
-   make every command pay for the whole pool, which dominates the launch
-   time of small kernels. Threads that are awake check the queues before
-   going to sleep, so they don't need to be woken. Must be called with
-   wq_lock_fast held. */
+/* The threads [*START, *END) that run commands for DEVICE, i.e., the
+   threads of its CUs if it's a subdevice. */
 static void
-wake_threads (cl_device_id device, size_t n)
+device_threads (cl_device_id device, unsigned *start, unsigned *end)
 {
-  unsigned start = 0, end = scheduler.num_threads;
+  *start = 0;
+  *end = scheduler.num_threads;
   if (device->parent_device)
     {
-      start = device->core_start;
-      end = min (start + device->core_count, scheduler.num_threads);
+      *start = device->core_start;
+      *end = min (*start + device->core_count, scheduler.num_threads);
     }
+}
 
+/* Wakes up to N sleeping threads among the threads [START, END). Waking
+   all threads would make every command pay for the whole pool, which
+   dominates the launch time of small kernels. Threads that are awake check the queues before
+   going to sleep, so they don't need to be woken.
+
+   Call this after queueing the work and releasing wq_lock_fast, so that the
+   woken threads don't have to wait for it. A thread that missed the work
+   went to sleep while the lock was held, i.e., it is already waiting. */
+static void
+wake_threads (unsigned start, unsigned end, size_t n)
+{
   for (unsigned i = start; i < end && n > 0; ++i)
     {
       struct pool_thread_data *td = &scheduler.thread_pool[i];
-      if (td->sleeping)
+      if (POCL_ATOMIC_CAS (&td->sleeping, 1, 0) == 1)
         {
-          td->sleeping = 0;
           POCL_SIGNAL_COND (td->wake);
           --n;
         }
@@ -219,22 +229,29 @@ wake_threads (cl_device_id device, size_t n)
 
 void pthread_scheduler_push_command (_cl_command_node *cmd)
 {
+  /* once the lock is released, the command can run and complete, and its
+   * (sub)device can be released */
+  unsigned start, end;
+  device_threads (cmd->device, &start, &end);
   POCL_LOCK (scheduler.wq_lock_fast);
   DL_APPEND (scheduler.work_queue, cmd);
-  wake_threads (cmd->device, 1);
   POCL_UNLOCK (scheduler.wq_lock_fast);
+  wake_threads (start, end, 1);
 }
 
 #ifndef ENABLE_HOST_CPU_DEVICES_OPENMP
 static void
 pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
 {
-  POCL_LOCK (scheduler.wq_lock_fast);
-  DL_APPEND (scheduler.kernel_queue, run_cmd);
   /* every thread runs at least one WG, and the thread pushing the kernel
    * (which can run it) picks it up itself */
-  wake_threads (run_cmd->device, run_cmd->remaining_wgs - 1);
+  unsigned start, end;
+  device_threads (run_cmd->device, &start, &end);
+  size_t num_threads = run_cmd->remaining_wgs - 1;
+  POCL_LOCK (scheduler.wq_lock_fast);
+  DL_APPEND (scheduler.kernel_queue, run_cmd);
   POCL_UNLOCK (scheduler.wq_lock_fast);
+  wake_threads (start, end, num_threads);
 }
 
 /* Maximum and minimum chunk sizes for get_wg_index_range().
@@ -717,9 +734,9 @@ RETRY:
   /* if neither a command nor a kernel was available, sleep */
   if ((cmd == NULL) && (run_cmd == NULL) && (do_exit == 0))
     {
-      td->sleeping = 1;
+      POCL_ATOMIC_STORE (td->sleeping, 1);
       POCL_WAIT_COND (td->wake, scheduler.wq_lock_fast);
-      td->sleeping = 0;
+      POCL_ATOMIC_STORE (td->sleeping, 0);
       goto RETRY;
     }
 
