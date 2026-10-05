@@ -66,6 +66,9 @@ CPU driver
    - host compiler must support _Float16 (GCC since 12)
    - sufficiently new LLVM which supports _Float16 (since LLVM 19)
    - x86_64, RISC-V 64 or ARM 64
+* The pthread driver now only wakes up as many worker threads as a command
+  can use, and only those of the subdevice it targets. This reduces the launch
+  latency of small kernels, especially on subdevices.
 
 ===================================
 Deprecation/feature removal notices
