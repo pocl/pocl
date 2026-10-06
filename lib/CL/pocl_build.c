@@ -170,13 +170,7 @@ append_to_build_log (cl_program program, unsigned device_i, const char *format,
 /* Returns true if the 'token' fully matches a string in the space-separated
    'list'.
 
-   strstr() alone matches any substring, so a proper prefix of a listed
-   option passes validation and is forwarded to Clang verbatim: "-cl-mad"
-   is a substring of "-cl-mad-enable", "-cl-denorms" of
-   "-cl-denorms-are-zero", "-cl-single" of "-cl-single-precision-constant".
-   Clang then rejects them, so the caller sees CL_BUILD_PROGRAM_FAILURE
-   where OpenCL requires CL_INVALID_BUILD_OPTIONS for an invalid build
-   option. */
+   strstr() alone matches any substring and gives false-positive matches. */
 static int
 pocl_option_listed (const char *list, const char *token)
 {
