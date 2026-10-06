@@ -5,7 +5,9 @@ test_kernel (void)
   unsigned local_id = get_local_id (0);
 
   printf ("LOCAL_ID=%d before if\n", local_id);
-  if (get_local_size(0) < 100)
+  /* uniform, but unknown at compile time, unlike the local size of a
+     specialized work-group function */
+  if (get_num_groups(0) < 100)
   {
       printf ("LOCAL_ID=%d inside if\n", local_id);
       barrier(CLK_LOCAL_MEM_FENCE);
