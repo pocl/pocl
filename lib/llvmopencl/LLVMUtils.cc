@@ -62,6 +62,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "SanitizeUBofDivRem.h"
 #include "SubCFGFormation.h"
 #include "UnreachablesToReturns.h"
+#include "UnrollBarrierLoops.h"
 #include "VariableUniformityAnalysis.h"
 #include "WorkItemAliasAnalysis.h"
 #include "Workgroup.h"
@@ -726,6 +727,7 @@ void registerPassBuilderPasses(llvm::PassBuilder &PB) {
   PHIsToAllocas::registerWithPB(PB);
   RemoveBarrierCalls::registerWithPB(PB);
   SubCFGFormation::registerWithPB(PB);
+  UnrollBarrierLoops::registerWithPB(PB);
   Workgroup::registerWithPB(PB);
   WorkitemLoops::registerWithPB(PB);
   PoCLCFGPrinter::registerWithPB(PB);
