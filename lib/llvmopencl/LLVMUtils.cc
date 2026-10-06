@@ -257,6 +257,15 @@ recursivelyFindCalledFunctions(llvm::SmallSet<llvm::Function *, 12> &FSet,
   }
 }
 
+llvm::ConstantInt *getRequiredSubgroupSize(const llvm::Function &F) {
+  MDNode *SGSizeMD = F.getMetadata("intel_reqd_sub_group_size");
+  if (SGSizeMD == nullptr)
+    return nullptr;
+  ConstantAsMetadata *ConstMD =
+      cast<ConstantAsMetadata>(SGSizeMD->getOperand(0));
+  return cast<ConstantInt>(ConstMD->getValue());
+}
+
 bool isGVarUsedByFunction(llvm::GlobalVariable *GVar, llvm::Function *F) {
   std::vector<Use *> Uses = findInstructionUses(GVar);
   // we must recursively search for each function called by F, because
