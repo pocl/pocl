@@ -1,0 +1,4 @@
+Both functions keep the request, and the 16-1-1 one a b-loop with a static
+context array.
+CHECK-COUNT-3: {{ex_phi.pocl_context.* = alloca \[|!"llvm.loop.unroll.count", i32 3}}
+CHECK-NOT: {{ex_phi.pocl_context.* = alloca \[|!"llvm.loop.unroll.count"}}
