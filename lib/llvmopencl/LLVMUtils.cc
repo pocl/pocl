@@ -261,6 +261,27 @@ recursivelyFindCalledFunctions(llvm::SmallSet<llvm::Function *, 12> &FSet,
   }
 }
 
+WGSpecialization getWGSpecialization(const llvm::Module &M) {
+  WGSpecialization WGS;
+  getModuleBoolMetadata(M, "WGDynamicLocalSize", WGS.DynamicLocalSize);
+  getModuleIntMetadata(M, "WGLocalSizeX", WGS.LocalSize[0]);
+  getModuleIntMetadata(M, "WGLocalSizeY", WGS.LocalSize[1]);
+  getModuleIntMetadata(M, "WGLocalSizeZ", WGS.LocalSize[2]);
+  getModuleBoolMetadata(M, "WGAssumeZeroGlobalOffset", WGS.ZeroGlobalOffset);
+  if (WGS.LocalSize[0] == 0 || WGS.LocalSize[1] == 0 || WGS.LocalSize[2] == 0)
+    WGS.DynamicLocalSize = true;
+  return WGS;
+}
+
+uint64_t getConstantSubgroupSize(const llvm::Function &F) {
+  if (MDNode *SGSizeMD = F.getMetadata("intel_reqd_sub_group_size")) {
+    auto *ConstMD = cast<ConstantAsMetadata>(SGSizeMD->getOperand(0));
+    return cast<ConstantInt>(ConstMD->getValue())->getZExtValue();
+  }
+  WGSpecialization WGS = getWGSpecialization(*F.getParent());
+  return WGS.DynamicLocalSize ? 0 : WGS.LocalSize[0];
+}
+
 bool isGVarUsedByFunction(llvm::GlobalVariable *GVar, llvm::Function *F) {
   std::vector<Use *> Uses = findInstructionUses(GVar);
   // we must recursively search for each function called by F, because
