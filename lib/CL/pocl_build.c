@@ -167,7 +167,8 @@ append_to_build_log (cl_program program, unsigned device_i, const char *format,
     }                                                                         \
   while (0)
 
-/* Whole-token membership in a space-separated option list.
+/* Returns true if the 'token' fully matches a string in the space-separated
+   'list'.
 
    strstr() alone matches any substring, so a proper prefix of a listed
    option passes validation and is forwarded to Clang verbatim: "-cl-mad"
