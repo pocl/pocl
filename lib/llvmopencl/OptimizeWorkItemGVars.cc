@@ -74,6 +74,7 @@ using namespace llvm;
 // - the local size, if the work-group function is specialized for it. All
 //   work-groups have that size, as non-uniform work-groups are unsupported.
 //   A dimension of size 1 also has local id 0.
+// - the global offset, if it is specialized for a zero offset.
 // - the sub-group size, from intel_reqd_sub_group_size, or else the local
 //   size X (see Workgroup.cc).
 static bool foldWorkItemValues(Function &F) {
@@ -85,9 +86,10 @@ static bool foldWorkItemValues(Function &F) {
   if (SPMD)
     return false;
 
-  bool DynamicLocalSize = true;
+  bool DynamicLocalSize = true, ZeroGlobalOffset = false;
   unsigned long LocalSize[3] = {0, 0, 0};
   getModuleBoolMetadata(*M, "WGDynamicLocalSize", DynamicLocalSize);
+  getModuleBoolMetadata(*M, "WGAssumeZeroGlobalOffset", ZeroGlobalOffset);
   getModuleIntMetadata(*M, "WGLocalSizeX", LocalSize[0]);
   getModuleIntMetadata(*M, "WGLocalSizeY", LocalSize[1]);
   getModuleIntMetadata(*M, "WGLocalSizeZ", LocalSize[2]);
@@ -109,6 +111,11 @@ static bool foldWorkItemValues(Function &F) {
     foldLoads("_local_size_x", LocalSize[0]);
     foldLoads("_local_size_y", LocalSize[1]);
     foldLoads("_local_size_z", LocalSize[2]);
+  }
+  if (ZeroGlobalOffset) {
+    foldLoads("_global_offset_x", 0);
+    foldLoads("_global_offset_y", 0);
+    foldLoads("_global_offset_z", 0);
   }
 
   uint64_t SubgroupSize = 0;
@@ -137,6 +144,8 @@ static bool foldWorkItemValues(Function &F) {
         Replacements.push_back({Call, Dim < 3 ? LocalSize[Dim] : 1});
       else if (StaticLocalSize && Name == LID_BUILTIN_NAME &&
                (Dim >= 3 || LocalSize[Dim] == 1))
+        Replacements.push_back({Call, 0});
+      else if (ZeroGlobalOffset && Name == GOFF_BUILTIN_NAME)
         Replacements.push_back({Call, 0});
     }
   }
