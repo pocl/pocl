@@ -1,0 +1,4 @@
+The 16-1-1 function keeps a b-loop, whose iteration variable lives in a static
+context array. The generic function's context arrays are dynamic.
+CHECK-COUNT-1: {{ex_phi.pocl_context.* = alloca \[}}
+CHECK-NOT: {{ex_phi.pocl_context.* = alloca \[}}
