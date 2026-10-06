@@ -1,0 +1,3 @@
+CHECK-LABEL: 16-1-1/parallel.bc
+CHECK-NOT: {{loopbarrier|latchbarrier}}
+CHECK: !llvm.module.flags

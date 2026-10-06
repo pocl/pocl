@@ -540,13 +540,19 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
 // add the second part of the PoCL passes (after 1st, up to 2nd optimization in old PM)
 // for old PM, also adds optimizations; for new PM it's handled separately
 static void addStage2PassesToPipeline(cl_device_id Dev,
-                                      std::vector<std::string> &Passes) {
+                                      std::vector<std::string> &Passes,
+                                      bool Optimize) {
 
   // NOTE: if you add a new PoCL pass here,
   // don't forget to register it in registerPassBuilderPasses
   if (!Dev->spmd) {
     addPass(Passes, "simplifycfg");
     addPass(Passes, "loop-simplify");
+
+    // after the stage 1 optimizations folded the trip counts, and before the
+    // barrier passes turn the loops into b-loops
+    if (Optimize)
+      addPass(Passes, "unroll-barrier-loops");
 
     // ...we have to call UTR again here because some optimizations in LLVM
     // might generate UIs.
@@ -675,7 +681,7 @@ static bool runKernelCompilerPasses(cl_device_id Device, llvm::Module &Mod,
   addStage1PassesToPipeline(Device, Passes1);
   std::string P1 = convertPassesToPipelineString(Passes1);
   std::vector<std::string> Passes2;
-  addStage2PassesToPipeline(Device, Passes2);
+  addStage2PassesToPipeline(Device, Passes2, Optimize);
   std::string P2 = convertPassesToPipelineString(Passes2);
 
   Error E = PM.build(Device, P1, Optimize ? 1 : 0, P2, Optimize ? 3 : 0);
