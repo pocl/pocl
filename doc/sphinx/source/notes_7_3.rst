@@ -23,6 +23,10 @@ Runtime fixes & features
 
 * TBD: OpenCL-CTS updated to upstream tag v20XX-YY-ZZ-00 and fixed related bugs:
 
+* Rectangular buffer copies (`clEnqueueCopyBufferRect`) now detect overlap with
+  the current specification's algorithm; the older one missed some real
+  overlaps and reported false ones.
+
 ===========================
 Driver-specific features
 ===========================
@@ -69,6 +73,12 @@ CPU driver
 * The pthread driver now only wakes up as many worker threads as a command
   can use, and only those of the subdevice it targets. This reduces the launch
   latency of small kernels, especially on subdevices.
+
+* `sinpi`, `cospi`, `tanpi` and `atanpi` now return correctly signed exact
+  zeros (found by the CTS `math_edge_cases` test).
+
+* Fixed use of an uninitialised kernel-library fallback name when
+  `LLC_HOST_CPU` is set.
 
 ===================================
 Deprecation/feature removal notices
