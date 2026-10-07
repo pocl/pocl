@@ -313,9 +313,17 @@ inline static void translate_wg_index_to_3d_index (kernel_run_command *k,
   index_3d[0] = (index % xy_slice) % row_size;
 }
 
+/* Runs the work-groups of K that are left, with the given local memory and
+   printf buffer. If K is in the kernel queue (QUEUED), other threads run it
+   too: the work-groups are claimed in chunks sized for NUM_THREADS runners,
+   and K leaves the queue once its last chunk has been claimed. Otherwise the
+   calling thread runs them all. */
 static void
-work_group_scheduler (kernel_run_command *k,
-                      struct pool_thread_data *thread_data)
+run_work_groups (kernel_run_command *k,
+                 void *local_mem,
+                 void *printf_buffer,
+                 int queued,
+                 unsigned num_threads)
 {
   pocl_kernel_metadata_t *meta = k->kernel->meta;
 
@@ -327,23 +335,31 @@ work_group_scheduler (kernel_run_command *k,
   unsigned start_index;
   unsigned end_index;
   int last_wgs = 0;
-  /* only the CUs of a subdevice run its kernels */
-  unsigned num_threads = k->device->parent_device ? k->device->core_count
-                                                  : thread_data->num_threads;
 
-  if (!get_wg_index_range (k, &start_index, &end_index, &last_wgs,
-                           num_threads))
-    return;
+  if (queued)
+    {
+      if (!get_wg_index_range (k, &start_index, &end_index, &last_wgs,
+                               num_threads))
+        return;
+    }
+  else
+    {
+      start_index = 0;
+      end_index = k->remaining_wgs - 1;
+      k->remaining_wgs = 0;
+    }
 
   assert (end_index >= start_index);
 
-  pocl_setup_kernel_arg_array_with_locals (
-      (void **)arguments, (void **)arguments2, k, thread_data->local_mem,
-      scheduler.local_mem_size);
+  /* On failure, the work-groups are still claimed so that K completes. */
+  int setup_failed = pocl_setup_kernel_arg_array_with_locals (
+                       (void **)arguments, (void **)arguments2, k, local_mem,
+                       scheduler.local_mem_size)
+                     != CL_SUCCESS;
   memcpy (&pc, &k->pc, sizeof (struct pocl_context));
 
   // capacity and position already set up
-  pc.printf_buffer = thread_data->printf_buffer;
+  pc.printf_buffer = printf_buffer;
   uint32_t position = 0;
   pc.printf_buffer_position = &position;
   assert (pc.printf_buffer != NULL);
@@ -354,7 +370,7 @@ work_group_scheduler (kernel_run_command *k,
 
   unsigned slice_size = k->pc.num_groups[0] * k->pc.num_groups[1];
   unsigned row_size = k->pc.num_groups[0];
-  unsigned execution_failed = 0;
+  unsigned execution_failed = setup_failed;
   do
     {
       if (last_wgs)
@@ -364,7 +380,7 @@ work_group_scheduler (kernel_run_command *k,
           POCL_UNLOCK (scheduler.wq_lock_fast);
         }
 
-      for (i = start_index; i <= end_index; ++i)
+      for (i = start_index; !setup_failed && i <= end_index; ++i)
         {
           size_t gids[3];
           translate_wg_index_to_3d_index (k, i, gids,
@@ -379,8 +395,9 @@ work_group_scheduler (kernel_run_command *k,
           execution_failed |= pc.execution_failed;
         }
     }
-  while (get_wg_index_range (k, &start_index, &end_index, &last_wgs,
-                             num_threads));
+  while (queued
+         && get_wg_index_range (k, &start_index, &end_index, &last_wgs,
+                                num_threads));
 
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
   pocl_write_printf_buffer ((char *)pc.printf_buffer, position);
@@ -390,6 +407,17 @@ work_group_scheduler (kernel_run_command *k,
                                           (void **)arguments2, k);
 
   POCL_ATOMIC_OR (k->execution_failed, execution_failed);
+}
+
+static void
+work_group_scheduler (kernel_run_command *k,
+                      struct pool_thread_data *thread_data)
+{
+  /* only the CUs of a subdevice run its kernels */
+  unsigned num_threads = k->device->parent_device ? k->device->core_count
+                                                  : thread_data->num_threads;
+  run_work_groups (k, thread_data->local_mem, thread_data->printf_buffer, 1,
+                   num_threads);
 }
 
 #else /* OPENMP enabled scheduler */
@@ -456,8 +484,7 @@ work_group_scheduler (kernel_run_command *k,
 #endif
 
 static void
-finalize_kernel_command (struct pool_thread_data *thread_data,
-                         kernel_run_command *k)
+finalize_kernel_command (kernel_run_command *k)
 {
 #ifdef DEBUG_MT
   printf("### kernel %s finished\n", k->cmd->command.run.kernel->name);
@@ -545,10 +572,23 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
 
   pocl_update_event_running (cmd->sync.event.event);
 
-#ifndef ENABLE_HOST_CPU_DEVICES_OPENMP
-  pthread_scheduler_push_kernel (run_cmd);
-#endif
   return run_cmd;
+}
+
+static void
+run_builtin_kernel (_cl_command_node *cmd)
+{
+  cl_kernel kernel = cmd->command.run.kernel;
+  cl_program program = kernel->program;
+  pocl_kernel_metadata_t *meta = kernel->meta;
+  assert (meta->builtin_kernel_id != 0);
+  pocl_update_event_running (cmd->sync.event.event);
+
+  pocl_cpu_execute_dbk (program, kernel, meta, cmd->program_device_i,
+                        cmd->command.run.arguments);
+
+  POCL_UPDATE_EVENT_COMPLETE_MSG (cmd->sync.event.event,
+                                  "Builtin Kernel        ");
 }
 
 /*
@@ -675,7 +715,7 @@ RETRY:
       if ((--run_cmd->ref_count) == 0)
         {
           POCL_UNLOCK (scheduler.wq_lock_fast);
-          finalize_kernel_command (td, run_cmd);
+          finalize_kernel_command (run_cmd);
           POCL_LOCK (scheduler.wq_lock_fast);
         }
     }
@@ -689,21 +729,8 @@ RETRY:
 
       if (cmd->type == CL_COMMAND_NDRANGE_KERNEL)
         {
-          cl_kernel kernel = cmd->command.run.kernel;
-          cl_program program = kernel->program;
-          pocl_kernel_metadata_t *meta = kernel->meta;
-          cl_uint dev_i = cmd->program_device_i;
-          if (program->builtin_kernel_attributes)
-            {
-              assert (meta->builtin_kernel_id != 0);
-              pocl_update_event_running (cmd->sync.event.event);
-
-              pocl_cpu_execute_dbk (program, kernel, meta, dev_i,
-                                    cmd->command.run.arguments);
-
-              POCL_UPDATE_EVENT_COMPLETE_MSG (cmd->sync.event.event,
-                                              "Builtin Kernel        ");
-            }
+          if (cmd->command.run.kernel->program->builtin_kernel_attributes)
+            run_builtin_kernel (cmd);
           else
             {
 #ifdef ENABLE_HOST_CPU_DEVICES_OPENMP
@@ -711,11 +738,14 @@ RETRY:
               if (run_cmd)
                 {
                   work_group_scheduler (run_cmd, td);
-                  finalize_kernel_command (td, run_cmd);
+                  finalize_kernel_command (run_cmd);
                   run_cmd = NULL;
                 }
 #else
-              pocl_pthread_prepare_kernel (cmd->device->data, cmd);
+              kernel_run_command *k
+                = pocl_pthread_prepare_kernel (cmd->device->data, cmd);
+              if (k)
+                pthread_scheduler_push_kernel (k);
 #endif
             }
         }
