@@ -245,6 +245,16 @@ extern "C" {
 #endif
 
   /**
+   * Loads the vector-math library (libmvec or SLEEF) that vectorized math
+   * calls in CPU kernels resolve against, and returns the path it was loaded
+   * from (with HAVE_DLINFO, otherwise the name it was loaded by), or NULL if
+   * none is configured or it cannot be loaded. The library stays loaded, so
+   * kernel binaries linked against it find it by its SONAME.
+   */
+  POCL_EXPORT
+  const char *pocl_host_veclib_path (void);
+
+  /**
    * \brief converts LLVM IR with "spir64-unknown-unknown" triple to SPIR-V
    *
    * For both Input and Output, either the Path or the Content&Size
