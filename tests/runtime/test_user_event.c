@@ -83,7 +83,7 @@ int main()
     }
 
   // clEnqueueWaitForEvents must hold back later commands until the user
-  // event completes, and reject an empty event list
+  // event completes, and reject an empty or invalid event list
   user_evt = clCreateUserEvent (context, &err);
   CHECK_OPENCL_ERROR_IN ("clCreateUserEvent");
 
@@ -91,6 +91,9 @@ int main()
   TEST_ASSERT (err == CL_INVALID_VALUE);
   err = clEnqueueWaitForEvents (queue, 1, NULL);
   TEST_ASSERT (err == CL_INVALID_VALUE);
+  cl_event invalid_evt = NULL;
+  err = clEnqueueWaitForEvents (queue, 1, &invalid_evt);
+  TEST_ASSERT (err == CL_INVALID_EVENT);
 
   cl_event marker_evt = NULL;
   CHECK_CL_ERROR (clEnqueueWaitForEvents (queue, 1, &user_evt));
