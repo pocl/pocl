@@ -61,6 +61,17 @@ DEFINE_FP16_EXPR_V_VV (pow)
   && (defined(__arm__) || defined(__aarch64__))
 DEFINE_FP16_BUILTIN_V_VV (fmax, __builtin_elementwise_maximumnum)
 DEFINE_FP16_BUILTIN_V_VV (fmin, __builtin_elementwise_minimumnum)
+#elif defined(__arm__) || defined(__aarch64__)
+/* Clang before 22 (LLVM 18 to 21) has neither builtin, so select the other
+   argument of a NaN explicitly, as minimumnum/maximumnum do. */
+#define _CL_FP16_FMAX_NUM(a, b)                                               \
+  (_cl_isnan (a) ? (b)                                                        \
+                 : (_cl_isnan (b) ? (a) : __builtin_elementwise_max ((a), (b))))
+#define _CL_FP16_FMIN_NUM(a, b)                                               \
+  (_cl_isnan (a) ? (b)                                                        \
+                 : (_cl_isnan (b) ? (a) : __builtin_elementwise_min ((a), (b))))
+DEFINE_FP16_BUILTIN_V_VV (fmax, _CL_FP16_FMAX_NUM)
+DEFINE_FP16_BUILTIN_V_VV (fmin, _CL_FP16_FMIN_NUM)
 #else
 DEFINE_FP16_BUILTIN_V_VV (fmax, __builtin_elementwise_max)
 DEFINE_FP16_BUILTIN_V_VV (fmin, __builtin_elementwise_min)
