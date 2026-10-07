@@ -35,7 +35,9 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_RETURN_ERROR_COND ((num_events == 0 || event_list == NULL),
                           CL_INVALID_VALUE);
 
-  return POname (clEnqueueBarrierWithWaitList) (command_queue, num_events,
-                                                event_list, NULL);
+  cl_int errcode = POname (clEnqueueBarrierWithWaitList) (
+    command_queue, num_events, event_list, NULL);
+  /* This API reports invalid events as CL_INVALID_EVENT. */
+  return errcode == CL_INVALID_EVENT_WAIT_LIST ? CL_INVALID_EVENT : errcode;
 }
 POsym(clEnqueueWaitForEvents)
