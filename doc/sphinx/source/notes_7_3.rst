@@ -22,6 +22,8 @@ Runtime fixes & features
 ==========================
 
 * TBD: OpenCL-CTS updated to upstream tag v20XX-YY-ZZ-00 and fixed related bugs:
+* Implemented the deprecated `clEnqueueWaitForEvents`, which used to return
+  `CL_INVALID_OPERATION`.
 
 ===========================
 Driver-specific features
