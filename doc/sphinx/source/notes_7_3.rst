@@ -69,6 +69,9 @@ CPU driver
 * The pthread driver now only wakes up as many worker threads as a command
   can use, and only those of the subdevice it targets. This reduces the launch
   latency of small kernels, especially on subdevices.
+* Kernel binaries now link against the vector-math library (libmvec or SLEEF)
+  found at run time instead of its configure-time path, so kernels link in
+  relocated installations too.
 
 ===================================
 Deprecation/feature removal notices
