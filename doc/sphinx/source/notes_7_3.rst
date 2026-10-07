@@ -29,6 +29,10 @@ Runtime fixes & features
   the current specification's algorithm; the older one missed some real
   overlaps and reported false ones.
 
+* `clGetProgramInfo` now returns `CL_PROGRAM_BINARY_SIZES` and
+  `CL_PROGRAM_BINARIES` for programs that have not been built, instead of
+  `CL_INVALID_PROGRAM`.
+
 ===========================
 Driver-specific features
 ===========================

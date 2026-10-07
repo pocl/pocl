@@ -69,6 +69,28 @@ main(void){
 				      &kernel_size, &err);
   CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
+  /* A program that hasn't been built has no binaries. */
+  size_t unbuilt_sizes[MAX_BINARIES];
+  err = clGetProgramInfo (program, CL_PROGRAM_BINARY_SIZES,
+                          sizeof (unbuilt_sizes), unbuilt_sizes,
+                          &num_bytes_copied);
+  CHECK_OPENCL_ERROR_IN ("clGetProgramInfo");
+  for (i = 0; i < num_bytes_copied / sizeof (size_t); ++i)
+    TEST_ASSERT (unbuilt_sizes[i] == 0);
+
+  /* Without a binary to copy, the caller's pointers are left alone. */
+  unsigned char sentinel;
+  unsigned char *unbuilt_pointers[MAX_BINARIES];
+  for (i = 0; i < num_bytes_copied / sizeof (size_t); ++i)
+    unbuilt_pointers[i] = &sentinel;
+  err = clGetProgramInfo (program, CL_PROGRAM_BINARIES,
+                          num_bytes_copied / sizeof (size_t)
+                            * sizeof (unsigned char *),
+                          unbuilt_pointers, NULL);
+  CHECK_OPENCL_ERROR_IN ("clGetProgramInfo");
+  for (i = 0; i < num_bytes_copied / sizeof (size_t); ++i)
+    TEST_ASSERT (unbuilt_pointers[i] == &sentinel);
+
   err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
   CHECK_OPENCL_ERROR_IN("clBuildProgram");
   
@@ -127,6 +149,37 @@ main(void){
          break;
       }
   }
+
+  /* A program created from binaries returns them before it is built. */
+  size_t unbuilt_binary_sizes[MAX_BINARIES];
+  unsigned char *unbuilt_binaries[MAX_BINARIES];
+  err = clGetProgramInfo (program_with_binary, CL_PROGRAM_BINARY_SIZES,
+                          num * sizeof (size_t), unbuilt_binary_sizes, NULL);
+  CHECK_OPENCL_ERROR_IN ("clGetProgramInfo");
+  /* The specification leaves NULL entries undefined; pocl skips them. */
+  for (i = 0; i < num; ++i)
+    unbuilt_binaries[i] = NULL;
+  err = clGetProgramInfo (program_with_binary, CL_PROGRAM_BINARIES,
+                          num * sizeof (unsigned char *), unbuilt_binaries,
+                          NULL);
+  CHECK_OPENCL_ERROR_IN ("clGetProgramInfo");
+  for (i = 0; i < num; ++i)
+    {
+      TEST_ASSERT (unbuilt_binaries[i] == NULL);
+      TEST_ASSERT (unbuilt_binary_sizes[i] == binary_sizes[i]);
+      unbuilt_binaries[i] = (unsigned char *)malloc (binary_sizes[i]);
+    }
+  err = clGetProgramInfo (program_with_binary, CL_PROGRAM_BINARIES,
+                          num * sizeof (unsigned char *), unbuilt_binaries,
+                          NULL);
+  CHECK_OPENCL_ERROR_IN ("clGetProgramInfo");
+  for (i = 0; i < num; ++i)
+    {
+      TEST_ASSERT (memcmp (unbuilt_binaries[i], binaries[i], binary_sizes[i])
+                   == 0);
+      free (unbuilt_binaries[i]);
+    }
+
   err = clReleaseProgram(program_with_binary);
   CHECK_OPENCL_ERROR_IN("clReleaseProgram");
 
