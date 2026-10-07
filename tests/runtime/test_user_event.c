@@ -82,6 +82,33 @@ int main()
       CHECK_CL_ERROR (clReleaseEvent (user_evt));
     }
 
+  // clEnqueueWaitForEvents must hold back later commands until the user
+  // event completes, and reject an empty event list
+  user_evt = clCreateUserEvent (context, &err);
+  CHECK_OPENCL_ERROR_IN ("clCreateUserEvent");
+
+  err = clEnqueueWaitForEvents (queue, 0, &user_evt);
+  TEST_ASSERT (err == CL_INVALID_VALUE);
+  err = clEnqueueWaitForEvents (queue, 1, NULL);
+  TEST_ASSERT (err == CL_INVALID_VALUE);
+
+  cl_event marker_evt = NULL;
+  CHECK_CL_ERROR (clEnqueueWaitForEvents (queue, 1, &user_evt));
+  CHECK_CL_ERROR (clEnqueueMarkerWithWaitList (queue, 0, NULL, &marker_evt));
+  CHECK_CL_ERROR (clFlush (queue));
+
+  cl_int marker_status;
+  CHECK_CL_ERROR (
+    clGetEventInfo (marker_evt, CL_EVENT_COMMAND_EXECUTION_STATUS,
+                    sizeof (marker_status), &marker_status, NULL));
+  TEST_ASSERT (marker_status != CL_COMPLETE);
+
+  CHECK_CL_ERROR (clSetUserEventStatus (user_evt, CL_COMPLETE));
+  CHECK_CL_ERROR (clWaitForEvents (1, &marker_evt));
+
+  CHECK_CL_ERROR (clReleaseEvent (marker_evt));
+  CHECK_CL_ERROR (clReleaseEvent (user_evt));
+
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   CHECK_CL_ERROR (clReleaseContext (context));
   CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
