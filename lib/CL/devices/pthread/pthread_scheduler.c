@@ -50,6 +50,47 @@
 
 static void* pocl_pthread_driver_thread (void *p);
 
+#ifdef PTHREAD_LOCAL_EXEC
+#ifdef __x86_64__
+#include <xmmintrin.h>
+#else
+#include <fenv.h>
+#endif
+
+/* What an application thread needs to execute a kernel: the scratch memory of
+   a worker thread, and a stack. */
+typedef struct local_exec
+{
+  struct local_exec *next;
+  void *local_mem;
+  void *printf_buffer;
+  pocl_private_stack stack;
+} local_exec;
+
+/* The size the worker threads try to get, see pocl_pthread_driver_thread. */
+#define LOCAL_EXEC_MIN_STACK_SIZE (8 * 1024 * 1024)
+
+/* Kernels executed by application threads get a stack at least as large as
+   the worker threads', which are created with the default attributes: then
+   the work-group size limit derived from work_group_stack_size, if any,
+   applies to both alike. */
+static size_t
+local_exec_stack_size ()
+{
+  size_t size = 0;
+  pthread_attr_t attr;
+  if (pthread_attr_init (&attr) == 0)
+    {
+      if (pthread_attr_getstacksize (&attr, &size) != 0)
+        size = 0;
+      pthread_attr_destroy (&attr);
+    }
+  return max (size, (size_t)LOCAL_EXEC_MIN_STACK_SIZE);
+}
+
+static void free_local_exec (local_exec *le);
+#endif
+
 struct pool_thread_data
 {
   POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) pocl_thread_t thread;
@@ -92,6 +133,13 @@ typedef struct scheduler_data_
 #endif
 
   POCL_ALIGNAS(HOST_CPU_CACHELINE_SIZE) pocl_barrier_t init_barrier;
+
+#ifdef PTHREAD_LOCAL_EXEC
+  /* Unused local_exec contexts, shared by all application threads. */
+  POCL_ALIGNAS (HOST_CPU_CACHELINE_SIZE) pocl_lock_t local_exec_lock;
+  local_exec *local_exec_pool;
+  size_t local_exec_stack_size;
+#endif
 } scheduler_data;
 
 static scheduler_data scheduler;
@@ -108,6 +156,10 @@ pthread_scheduler_init (cl_device_id device)
   size_t num_worker_threads = device->max_compute_units;
 #endif
   POCL_INIT_LOCK (scheduler.wq_lock_fast);
+#ifdef PTHREAD_LOCAL_EXEC
+  POCL_INIT_LOCK (scheduler.local_exec_lock);
+  scheduler.local_exec_pool = NULL;
+#endif
 
   scheduler.thread_pool = pocl_aligned_malloc (
       HOST_CPU_CACHELINE_SIZE,
@@ -162,6 +214,10 @@ pthread_scheduler_init (cl_device_id device)
   device->work_group_stack_size = min_thread_stack_size;
 #endif
 
+#ifdef PTHREAD_LOCAL_EXEC
+  scheduler.local_exec_stack_size = local_exec_stack_size ();
+#endif
+
   return CL_SUCCESS;
 }
 
@@ -183,6 +239,16 @@ pthread_scheduler_uninit ()
     }
   scheduler.thread_pool_shutdown_requested = 0;
   pocl_aligned_free (scheduler.thread_pool);
+
+#ifdef PTHREAD_LOCAL_EXEC
+  local_exec *le;
+  while ((le = scheduler.local_exec_pool) != NULL)
+    {
+      scheduler.local_exec_pool = le->next;
+      free_local_exec (le);
+    }
+  POCL_DESTROY_LOCK (scheduler.local_exec_lock);
+#endif
 
   POCL_DESTROY_LOCK (scheduler.wq_lock_fast);
   POCL_DESTROY_BARRIER (scheduler.init_barrier);
@@ -576,17 +642,19 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
 }
 
 static void
-run_builtin_kernel (_cl_command_node *cmd)
+execute_builtin_kernel (_cl_command_node *cmd)
 {
   cl_kernel kernel = cmd->command.run.kernel;
-  cl_program program = kernel->program;
-  pocl_kernel_metadata_t *meta = kernel->meta;
-  assert (meta->builtin_kernel_id != 0);
+  assert (kernel->meta->builtin_kernel_id != 0);
+  pocl_cpu_execute_dbk (kernel->program, kernel, kernel->meta,
+                        cmd->program_device_i, cmd->command.run.arguments);
+}
+
+static void
+run_builtin_kernel (_cl_command_node *cmd)
+{
   pocl_update_event_running (cmd->sync.event.event);
-
-  pocl_cpu_execute_dbk (program, kernel, meta, cmd->program_device_i,
-                        cmd->command.run.arguments);
-
+  execute_builtin_kernel (cmd);
   POCL_UPDATE_EVENT_COMPLETE_MSG (cmd->sync.event.event,
                                   "Builtin Kernel        ");
 }
@@ -835,3 +903,168 @@ pocl_pthread_driver_thread (void *p)
         }
     }
 }
+
+#ifdef PTHREAD_LOCAL_EXEC
+
+static void
+free_local_exec (local_exec *le)
+{
+  pocl_aligned_free (le->local_mem);
+  pocl_aligned_free (le->printf_buffer);
+  pocl_private_stack_free (&le->stack);
+  free (le);
+}
+
+static local_exec *
+new_local_exec ()
+{
+  local_exec *le = calloc (1, sizeof (local_exec));
+  if (le == NULL)
+    return NULL;
+  le->local_mem
+    = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, scheduler.local_mem_size);
+  le->printf_buffer
+    = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, scheduler.printf_buf_size);
+  if (le->local_mem == NULL || le->printf_buffer == NULL
+      || pocl_private_stack_alloc (&le->stack, scheduler.local_exec_stack_size)
+           != 0)
+    {
+      free_local_exec (le);
+      return NULL;
+    }
+  return le;
+}
+
+cl_int
+pthread_scheduler_reserve_local_exec (cl_device_id device, void **reservation)
+{
+  POCL_LOCK (scheduler.local_exec_lock);
+  local_exec *le = scheduler.local_exec_pool;
+  if (le != NULL)
+    scheduler.local_exec_pool = le->next;
+  POCL_UNLOCK (scheduler.local_exec_lock);
+
+  /* One context per thread executing a kernel at the same time, including
+     the threads still waiting for the dependencies of theirs. */
+  if (le == NULL)
+    {
+      le = new_local_exec ();
+      if (le == NULL)
+        return CL_OUT_OF_HOST_MEMORY;
+    }
+
+  *reservation = le;
+  return CL_SUCCESS;
+}
+
+void
+pthread_scheduler_release_local_exec (cl_device_id device, void *reservation)
+{
+  local_exec *le = (local_exec *)reservation;
+  POCL_LOCK (scheduler.local_exec_lock);
+  le->next = scheduler.local_exec_pool;
+  scheduler.local_exec_pool = le;
+  POCL_UNLOCK (scheduler.local_exec_lock);
+}
+
+/* The floating-point environment of an application thread. On x86-64 that is
+   the SSE control and status register and the x87 control word, but not the
+   x87 exception flags: kernels don't use the x87 unit, and saving and
+   restoring its whole environment would take longer than the rest of a small
+   launch. */
+typedef struct fp_env
+{
+#ifdef __x86_64__
+  unsigned mxcsr;
+  unsigned short x87_control;
+#else
+  fenv_t env;
+#endif
+} fp_env;
+
+/* Saves the floating-point environment and sets the default one: rounding to
+   nearest, exceptions masked, and no flushing to zero, which
+   pocl_cpu_setup_rm_and_ftz then sets as the program asks. */
+static void
+enter_default_fp_env (fp_env *saved)
+{
+#ifdef __x86_64__
+  saved->mxcsr = _mm_getcsr ();
+  __asm__ volatile ("fnstcw %0" : "=m"(saved->x87_control));
+  const unsigned short default_x87_control = 0x37f;
+  _mm_setcsr (0x1f80);
+  __asm__ volatile ("fldcw %0" : : "m"(default_x87_control));
+#else
+  fegetenv (&saved->env);
+  fesetenv (FE_DFL_ENV);
+#endif
+}
+
+static void
+restore_fp_env (const fp_env *saved)
+{
+#ifdef __x86_64__
+  _mm_setcsr (saved->mxcsr);
+  __asm__ volatile ("fldcw %0" : : "m"(saved->x87_control));
+#else
+  fesetenv (&saved->env);
+#endif
+}
+
+typedef struct local_kernel_run
+{
+  _cl_command_node *cmd;
+  local_exec *le;
+  kernel_run_command *k;
+} local_kernel_run;
+
+/* Everything that may run kernel code, including the program-scope variable
+   initializer that preparing the kernel can run. */
+static void
+run_kernel_on_private_stack (void *p)
+{
+  local_kernel_run *run = (local_kernel_run *)p;
+  if (run->cmd->command.run.kernel->program->builtin_kernel_attributes)
+    {
+      execute_builtin_kernel (run->cmd);
+      return;
+    }
+  run->k = pocl_pthread_prepare_kernel (run->cmd->device->data, run->cmd);
+  if (run->k != NULL)
+    run_work_groups (run->k, run->le->local_mem, run->le->printf_buffer, 0, 1);
+}
+
+void
+pthread_scheduler_exec_local (_cl_command_node *cmd, void *reservation)
+{
+  if (cmd->type != CL_COMMAND_NDRANGE_KERNEL)
+    {
+      pocl_exec_command (cmd);
+      return;
+    }
+
+  assert (reservation != NULL);
+  int builtin
+    = cmd->command.run.kernel->program->builtin_kernel_attributes != NULL;
+  if (builtin)
+    pocl_update_event_running (cmd->sync.event.event);
+
+  /* The kernel runs with default rounding and masked exceptions, and the
+     application gets its own environment back, whatever the kernel does to
+     it. */
+  local_kernel_run run = { cmd, (local_exec *)reservation, NULL };
+  fp_env saved_fp_env;
+  enter_default_fp_env (&saved_fp_env);
+  pocl_run_on_private_stack (&run.le->stack, run_kernel_on_private_stack,
+                             &run);
+  restore_fp_env (&saved_fp_env);
+
+  /* This completes the command, after which CMD may be gone. */
+  if (builtin)
+    POCL_UPDATE_EVENT_COMPLETE_MSG (cmd->sync.event.event,
+                                    "Builtin Kernel        ");
+  else if (run.k != NULL)
+    finalize_kernel_command (run.k);
+}
+
+#endif

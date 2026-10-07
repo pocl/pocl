@@ -209,6 +209,9 @@ typedef struct
   struct pocl_argument *arguments;
   /* Can be used to store/cache arbitrary device-specific data. */
   void *device_data;
+  /* The device_ops->reserve_local_exec reservation, for commands on a
+     CL_QUEUE_THREAD_LOCAL_EXEC_ENABLE_INTEL queue. */
+  void *local_exec;
   /* If set to 1, disallow any work-group function specialization. */
   int force_generic_wg_func;
   /* If set to 1, disallow "small grid" WG function specialization. */

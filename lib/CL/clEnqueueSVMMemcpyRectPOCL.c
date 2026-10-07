@@ -175,7 +175,7 @@ POname (clEnqueueSVMMemcpyRectPOCL) (cl_command_queue command_queue,
   pocl_command_enqueue (command_queue, cmd);
 
   if (blocking)
-    POname (clFinish) (command_queue);
+    pocl_finish_blocking_command (command_queue);
 
   return CL_SUCCESS;
 }

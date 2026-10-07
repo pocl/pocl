@@ -147,7 +147,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
 
   if (blocking_map)
     {
-      POname (clFinish) (command_queue);
+      pocl_finish_blocking_command (command_queue);
     }
 
   if (errcode_ret)

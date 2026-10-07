@@ -27,6 +27,15 @@
 
 #include "common_utils.h"
 #include "pocl_cl.h"
+#include "private_stack.h"
+
+/* cl_intel_exec_by_local_thread: commands can be executed by the thread that
+   enqueues them. Kernels then run on a private stack; with OpenMP, the
+   work-groups are run by the OpenMP threads instead. */
+#if defined(POCL_HAVE_PRIVATE_STACK)                                          \
+  && !defined(ENABLE_HOST_CPU_DEVICES_OPENMP)
+#define PTHREAD_LOCAL_EXEC 1
+#endif
 
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
@@ -41,6 +50,19 @@ void pthread_scheduler_uninit ();
 
 /* Gives ready-to-execute command for scheduler */
 void pthread_scheduler_push_command (_cl_command_node *cmd);
+
+#ifdef PTHREAD_LOCAL_EXEC
+/* Reserves the resources for executing an NDRange command on the calling
+   thread. */
+cl_int pthread_scheduler_reserve_local_exec (cl_device_id device,
+                                             void **reservation);
+void pthread_scheduler_release_local_exec (cl_device_id device,
+                                           void *reservation);
+
+/* Executes CMD, whose dependencies are complete, on the calling thread.
+   RESERVATION is the command's reservation, if it is an NDRange command. */
+void pthread_scheduler_exec_local (_cl_command_node *cmd, void *reservation);
+#endif
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

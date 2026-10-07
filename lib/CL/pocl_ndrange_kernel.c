@@ -613,10 +613,27 @@ pocl_ndrange_kernel_common (cl_command_buffer_khr command_buffer,
   POCL_RETURN_ERROR_ON (errcode != CL_SUCCESS, errcode,
                         "Error calculating wg size\n");
 
+  /* The enqueuing thread will execute the command. Reserve what it needs
+     before anything is created, so that the enqueue fails without side
+     effects if that isn't possible. */
+  void *local_exec = NULL;
+  if (command_buffer == NULL
+      && (command_queue->properties & CL_QUEUE_THREAD_LOCAL_EXEC_ENABLE_INTEL))
+    {
+      errcode = realdev->ops->reserve_local_exec (realdev, &local_exec);
+      POCL_RETURN_ERROR_ON (errcode != CL_SUCCESS, errcode,
+                            "Cannot execute the kernel on this thread\n");
+    }
+
   errcode = pocl_kernel_collect_mem_objs (realdev,
       command_queue->context, kernel, src_arguments, &buf_migrations);
-  POCL_RETURN_ERROR_ON (errcode != CL_SUCCESS, errcode,
-                        "Error collecting mem objects for kernel arguments\n");
+  if (errcode != CL_SUCCESS)
+    {
+      if (local_exec)
+        realdev->ops->release_local_exec (realdev, local_exec);
+      POCL_RETURN_ERROR (
+        errcode, "Error collecting mem objects for kernel arguments\n");
+    }
 
   if (command_buffer == NULL)
     {
@@ -631,8 +648,12 @@ pocl_ndrange_kernel_common (cl_command_buffer_khr command_buffer,
         num_items_in_wait_list, sync_point_wait_list, buf_migrations);
     }
 
-  POCL_RETURN_ERROR_ON (errcode != CL_SUCCESS, errcode,
-                        "Error constructing command struct\n");
+  if (errcode != CL_SUCCESS)
+    {
+      if (local_exec)
+        realdev->ops->release_local_exec (realdev, local_exec);
+      POCL_RETURN_ERROR (errcode, "Error constructing command struct\n");
+    }
 
   _cl_command_node *c = *cmd_ptr;
   c->program_device_i = program_dev_i;
@@ -650,6 +671,7 @@ pocl_ndrange_kernel_common (cl_command_buffer_khr command_buffer,
   c->command.run.pc.global_offset[0] = offset[0];
   c->command.run.pc.global_offset[1] = offset[1];
   c->command.run.pc.global_offset[2] = offset[2];
+  c->command.run.local_exec = local_exec;
 
   errcode = POname (clRetainKernel) (kernel);
   if (errcode != CL_SUCCESS)
@@ -662,6 +684,8 @@ pocl_ndrange_kernel_common (cl_command_buffer_khr command_buffer,
   return CL_SUCCESS;
 
 ERROR:
+  if (local_exec)
+    realdev->ops->release_local_exec (realdev, local_exec);
   pocl_ndrange_node_cleanup (*cmd_ptr);
   pocl_mem_manager_free_command (*cmd_ptr);
 

@@ -197,7 +197,7 @@ CL_API_SUFFIX__VERSION_1_0
 
   if (blocking_map)
     {
-      POname(clFinish) (command_queue);
+      pocl_finish_blocking_command (command_queue);
     }
   if (errcode_ret)
     *errcode_ret = errcode;

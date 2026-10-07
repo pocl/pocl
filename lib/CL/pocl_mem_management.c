@@ -719,6 +719,14 @@ pocl_create_migration_commands (cl_device_id dev,
         }
     }
 
+  /* A command on a CL_QUEUE_THREAD_LOCAL_EXEC_ENABLE_INTEL queue is executed
+     by the enqueuing thread, and so are the migrations to its device. */
+  cl_command_queue user_cq = user_cmd->queue;
+  if (user_cq != NULL
+      && (user_cq->properties & CL_QUEUE_THREAD_LOCAL_EXEC_ENABLE_INTEL)
+      && pocl_real_dev (user_cq->device) == dev)
+    dev_cq = user_cq;
+
   assert (dev);
   assert (dev_cq);
   /* ex_dev can be NULL, or non-NULL != dev */

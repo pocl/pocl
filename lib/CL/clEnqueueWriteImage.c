@@ -178,7 +178,7 @@ POname (clEnqueueWriteImage) (cl_command_queue command_queue,
   pocl_command_enqueue (command_queue, cmd);
 
   if (blocking_write)
-    errcode = POname(clFinish) (command_queue);
+    errcode = pocl_finish_blocking_command (command_queue);
 
   return errcode;
 }

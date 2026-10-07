@@ -56,6 +56,10 @@ if(HAVE_ONNXRT)
   list(APPEND C_PROGRAMS_TO_BUILD test_dbk_onnx_inference)
 endif()
 
+if(UNIX)
+  list(APPEND C_PROGRAMS_TO_BUILD test_exec_by_local_thread)
+endif()
+
 set(CXX_PROGRAMS_TO_BUILD test_device_address test_svm test_large_buf
   test_subbuffers test_compile_n_link test_dbk_matmul test_tensor_view
   test_dbk_convert test_dbk_set_rows)
@@ -193,6 +197,22 @@ endif()
 
 add_test(NAME "runtime/test_queue_creation_with_hints" COMMAND "test_queue_creation_with_hints")
 set_property(TEST "runtime/test_queue_creation_with_hints" PROPERTY SKIP_RETURN_CODE 77)
+
+if(UNIX)
+  target_link_libraries(test_exec_by_local_thread ${PTHREAD_LIBRARY})
+  add_test(NAME "runtime/test_exec_by_local_thread"
+           COMMAND "test_exec_by_local_thread")
+  set_tests_properties("runtime/test_exec_by_local_thread"
+    PROPERTIES SKIP_RETURN_CODE 77 DEPENDS "pocl_version_check")
+  # The sanitizers' allocators abort when they run out of address space.
+  if(NOT (ENABLE_ASAN OR ENABLE_TSAN OR ENABLE_LSAN))
+    # Run first in its own process, before anything can be reused.
+    add_test(NAME "runtime/test_exec_by_local_thread_oom"
+             COMMAND "test_exec_by_local_thread" "oom")
+    set_tests_properties("runtime/test_exec_by_local_thread_oom"
+      PROPERTIES SKIP_RETURN_CODE 77 DEPENDS "pocl_version_check")
+  endif()
+endif()
 
 if(HAVE_LIBXSMM)
   add_test(NAME "runtime/test_dbk_matmul" COMMAND test_dbk_matmul)
