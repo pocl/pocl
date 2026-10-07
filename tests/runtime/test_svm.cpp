@@ -900,6 +900,88 @@ int TestSSVM(cl::Platform Platform) {
     return EXIT_SUCCESS;
 }
 
+int TestSSVMFill(cl::Platform Platform) {
+
+  bool AllOK = true;
+
+  try {
+    std::vector<cl::Device> Devices;
+    Platform.getDevices(CL_DEVICE_TYPE_ALL, &Devices);
+
+    // A context of only this device: in a mixed context, SVM pointers are
+    // validated against the context's SVM allocation device, which might
+    // not support fine-grained system SVM.
+    cl::Device Device;
+    for (cl::Device &Dev : Devices) {
+      if (Dev.getInfo<CL_DEVICE_SVM_CAPABILITIES>() &
+          CL_DEVICE_SVM_FINE_GRAIN_SYSTEM) {
+        Device = Dev;
+        break;
+      }
+    }
+
+    if (Device() == nullptr) {
+      std::cout << "No devices with fine grain system SVM capabilities found."
+                << std::endl;
+      return 77;
+    }
+
+    cl::Context Context(Device);
+    cl::CommandQueue Queue(Context, Device, 0);
+
+    std::vector<int> SSVMBuf(N_ELEMENTS, -1);
+
+    // Fill all but the first and last elements. The fill waits on a user
+    // event and the pattern is overwritten before it runs, so it must be
+    // copied at enqueue time.
+    int Pattern = 42;
+    cl::UserEvent Gate(Context);
+    cl_event GateEvent = Gate.get();
+    cl_event FillEvent = nullptr;
+    CHECK_CL_ERROR(::clEnqueueSVMMemFill(
+        Queue.get(), &SSVMBuf[1], &Pattern, sizeof(int),
+        (N_ELEMENTS - 2) * sizeof(int), 1, &GateEvent, &FillEvent));
+    Pattern = 0;
+    Gate.setStatus(CL_COMPLETE);
+    CHECK_CL_ERROR(::clWaitForEvents(1, &FillEvent));
+
+    cl_command_type FillType = 0;
+    CHECK_CL_ERROR(::clGetEventInfo(FillEvent, CL_EVENT_COMMAND_TYPE,
+                                    sizeof(FillType), &FillType, nullptr));
+    ::clReleaseEvent(FillEvent);
+    if (FillType != CL_COMMAND_SVM_MEMFILL) {
+      AllOK = false;
+      std::cerr << "SVM fill event has command type " << std::hex << FillType
+                << std::dec << std::endl;
+    }
+
+    for (int i = 0; i < N_ELEMENTS; ++i) {
+      int Expected = (i == 0 || i == N_ELEMENTS - 1) ? -1 : 42;
+      if (SSVMBuf[i] != Expected) {
+        AllOK = false;
+        std::cerr << "SSVMBuf[" << i << "] expected to be " << Expected
+                  << " but got " << SSVMBuf[i] << std::endl;
+      }
+    }
+
+    if (::clEnqueueSVMMemFill(Queue.get(), SSVMBuf.data(), nullptr, sizeof(int),
+                              sizeof(int), 0, nullptr,
+                              nullptr) != CL_INVALID_VALUE) {
+      AllOK = false;
+      std::cerr << "SVM fill with a NULL pattern was not rejected" << std::endl;
+    }
+  } catch (cl::Error &err) {
+    std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
+              << std::endl;
+    AllOK = false;
+  }
+
+  if (!AllOK)
+    return EXIT_FAILURE;
+  else
+    return EXIT_SUCCESS;
+}
+
 int main() {
 
   std::vector<cl::Platform> PlatformList;
@@ -924,6 +1006,10 @@ int main() {
 
   std::cout << "TestSSVM: ";
   if (TestSSVM(PlatformList[0]) == EXIT_FAILURE)
+    return EXIT_FAILURE;
+
+  std::cout << "TestSSVMFill: ";
+  if (TestSSVMFill(PlatformList[0]) == EXIT_FAILURE)
     return EXIT_FAILURE;
 
   std::cout << "TestMultiDevice_CGSVM: ";
