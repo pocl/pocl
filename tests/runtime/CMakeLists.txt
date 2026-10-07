@@ -148,6 +148,10 @@ add_test_pocl(NAME "runtime/test_event_failed_dependency" COMMAND  "test_event_f
 add_test_pocl(NAME "runtime/test_enqueue_kernel_from_binary" COMMAND "test_enqueue_kernel_from_binary" WORKITEM_HANDLER "loopvec")
 
 add_test_pocl(NAME "runtime/test_user_event" COMMAND  "test_user_event" WORKITEM_HANDLER "loopvec")
+# Without queue threads, the CUDA driver aborts on commands that wait on
+# user events.
+set_property(TEST "runtime/test_user_event"
+  APPEND PROPERTY ENVIRONMENT "POCL_CUDA_DISABLE_QUEUE_THREADS=0")
 
 add_test(NAME "runtime/test_buffer_migration" COMMAND "test_buffer_migration")
 
