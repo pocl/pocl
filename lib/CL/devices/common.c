@@ -1023,6 +1023,7 @@ static pocl_module_cache_item *pocl_module_cache;
 static pocl_lock_t pocl_llvm_codegen_lock;
 static pocl_lock_t pocl_module_cache_lock;
 static int pocl_module_cache_initialized;
+static int pocl_work_group_specialization = 1;
 
 /* only to be called in basic/pthread/<other cpu driver> init */
 void
@@ -1032,6 +1033,10 @@ pocl_init_dlhandle_cache ()
     {
       POCL_INIT_LOCK (pocl_llvm_codegen_lock);
       POCL_INIT_LOCK (pocl_module_cache_lock);
+      /* Brute force mechanism to test relying on generic work-group
+         functions only. */
+      pocl_work_group_specialization
+        = pocl_get_bool_option ("POCL_WORK_GROUP_SPECIALIZATION", 1);
       pocl_module_cache_initialized = 1;
     }
 }
@@ -1353,9 +1358,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   pocl_module_cache_item *ci = NULL;
   _cl_command_run *run_cmd = &command->command.run;
 
-  /* Brute force mechanism to test relying on generic work-group functions
-     only. */
-  if (!pocl_get_bool_option("POCL_WORK_GROUP_SPECIALIZATION", 1))
+  if (!pocl_work_group_specialization)
     specialize = 0;
 
   POCL_LOCK (pocl_module_cache_lock);
