@@ -1534,9 +1534,12 @@ remote_command_is_ready (cl_event event)
   struct event_node *e;
   LL_FOREACH(event->wait_list, e)
   {
-    if (e->event->queue->device->ops->submit != &pocl_remote_submit) {
-      return CL_FALSE;
-    }
+    /* User events have no queue. */
+    if (e->event->queue == NULL
+        || e->event->queue->device->ops->submit != &pocl_remote_submit)
+      {
+        return CL_FALSE;
+      }
   }
   return CL_TRUE;
 }
