@@ -2117,6 +2117,7 @@ static const cl_name_version OPENCL_EXTENSIONS[]
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_split_work_group_barrier" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_subgroup_local_block_io" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_spirv_subgroups" },
+      { CL_MAKE_VERSION (0, 0, 0), "cl_intel_exec_by_local_thread" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_spirv_no_integer_wrap_decoration" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_spirv_linkonce_odr" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_spirv_queries" },

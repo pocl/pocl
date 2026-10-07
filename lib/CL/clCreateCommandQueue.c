@@ -46,8 +46,9 @@ POname(clCreateCommandQueue)(cl_context context,
 
   /* validate flags */
   cl_command_queue_properties all_properties
-      = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE
-        | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT | CL_QUEUE_HIDDEN;
+    = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE
+      | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT | CL_QUEUE_HIDDEN
+      | CL_QUEUE_THREAD_LOCAL_EXEC_ENABLE_INTEL;
 
   POCL_GOTO_ERROR_ON ((properties & (~all_properties)), CL_INVALID_VALUE,
                       "Unknown properties requested\n");

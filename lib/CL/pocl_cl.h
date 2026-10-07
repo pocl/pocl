@@ -881,6 +881,15 @@ struct pocl_device_ops {
   int (*init_queue) (cl_device_id device, cl_command_queue queue);
   int (*free_queue) (cl_device_id device, cl_command_queue queue);
 
+  /** Required for CL_QUEUE_THREAD_LOCAL_EXEC_ENABLE_INTEL: reserves what the
+   * enqueuing thread needs to execute an NDRange command, before the command
+   * is created, so that a failure can be returned from the enqueue call
+   * without side effects. The reservation is stored in the command's
+   * run.local_exec, which submit takes over; release_local_exec returns one
+   * that wasn't handed to submit. */
+  cl_int (*reserve_local_exec) (cl_device_id device, void **reservation);
+  void (*release_local_exec) (cl_device_id device, void *reservation);
+
   /** Optional: If the driver needs to use per-context resources,
    * it should use these callbacks for management. */
   int (*init_context) (cl_device_id device, cl_context context);

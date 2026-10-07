@@ -38,11 +38,10 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
   cl_uint queue_size = 0;
   int queue_props_set = 0, queue_size_set = 0;
   int queue_priority_set = 0, queue_throttle_set = 0;
-  const cl_command_queue_properties valid_prop_flags =
-      (CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE
-       | CL_QUEUE_PROFILING_ENABLE
-       | CL_QUEUE_ON_DEVICE
-       | CL_QUEUE_ON_DEVICE_DEFAULT);
+  const cl_command_queue_properties valid_prop_flags
+    = (CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE
+       | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT
+       | CL_QUEUE_THREAD_LOCAL_EXEC_ENABLE_INTEL);
 
   POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
 
