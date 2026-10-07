@@ -65,6 +65,8 @@ pocl_svm_memfill_common (cl_command_buffer_khr command_buffer,
 
   POCL_RETURN_ERROR_COND((svm_ptr == NULL), CL_INVALID_VALUE);
 
+  POCL_RETURN_ERROR_COND ((pattern == NULL), CL_INVALID_VALUE);
+
   POCL_RETURN_ERROR_COND((pattern_size == 0), CL_INVALID_VALUE);
 
   POCL_RETURN_ERROR_COND((pattern_size > 128), CL_INVALID_VALUE);
@@ -88,6 +90,52 @@ pocl_svm_memfill_common (cl_command_buffer_khr command_buffer,
      code. */
 
   pocl_raw_ptr *dst_svm_ptr = pocl_find_raw_ptr_with_vm_ptr (context, svm_ptr);
+
+  if (dst_svm_ptr == NULL)
+    {
+      /* Not allocated by PoCL, so there is no shadow buffer: the device fills
+         the memory directly. pocl_svm_check_pointer only accepts such
+         pointers on devices with fine-grained system SVM. The spec is
+         ambiguous about other devices, but the reading in
+         https://github.com/KhronosGroup/OpenCL-Docs/issues/1415 is that
+         passing them a system allocation is undefined behavior. */
+      if (command_buffer)
+        {
+          POCL_RETURN_ERROR (CL_INVALID_OPERATION,
+                             "system SVM memfill "
+                             "command buffering unimplemented");
+        }
+
+      errcode = pocl_check_event_wait_list (
+        command_queue, num_items_in_wait_list, event_wait_list);
+      if (errcode != CL_SUCCESS)
+        return errcode;
+
+      void *cmd_pattern = pocl_aligned_malloc (pattern_size, pattern_size);
+      POCL_RETURN_ERROR_COND ((cmd_pattern == NULL), CL_OUT_OF_HOST_MEMORY);
+      memcpy (cmd_pattern, pattern, pattern_size);
+
+      /* The pattern is only freed for CL_COMMAND_SVM_MEMFILL nodes, so use
+         that type for clEnqueueMemFillINTEL too and report the caller's
+         command type through the event. */
+      errcode = pocl_create_command (
+        cmd, command_queue, CL_COMMAND_SVM_MEMFILL, event,
+        num_items_in_wait_list, event_wait_list, NULL);
+      if (errcode != CL_SUCCESS)
+        {
+          pocl_aligned_free (cmd_pattern);
+          return errcode;
+        }
+
+      _cl_command_node *c = *cmd;
+      c->command.svm_fill.svm_ptr = svm_ptr;
+      c->command.svm_fill.size = size;
+      c->command.svm_fill.pattern = cmd_pattern;
+      c->command.svm_fill.pattern_size = pattern_size;
+      c->sync.event.event->command_type = command_type;
+
+      return CL_SUCCESS;
+    }
 
   size_t offset = (char *)svm_ptr - (char *)dst_svm_ptr->vm_ptr;
   if (command_buffer)
@@ -117,9 +165,19 @@ POname (clEnqueueSVMMemFill) (cl_command_queue command_queue, void *svm_ptr,
                               const cl_event *event_wait_list,
                               cl_event *event) CL_API_SUFFIX__VERSION_2_0
 {
-  return pocl_svm_memfill_common (NULL, command_queue, CL_COMMAND_SVM_MEMFILL,
-                                  svm_ptr, size, pattern, pattern_size,
-                                  num_events_in_wait_list, event_wait_list,
-                                  event, NULL, NULL, NULL);
+  cl_int errcode;
+  _cl_command_node *cmd = NULL;
+
+  errcode = pocl_svm_memfill_common (
+    NULL, command_queue, CL_COMMAND_SVM_MEMFILL, svm_ptr, size, pattern,
+    pattern_size, num_events_in_wait_list, event_wait_list, event, NULL, NULL,
+    &cmd);
+  if (errcode != CL_SUCCESS)
+    return errcode;
+
+  if (cmd != NULL)
+    pocl_command_enqueue (command_queue, cmd);
+
+  return CL_SUCCESS;
 }
 POsym(clEnqueueSVMMemFill)
