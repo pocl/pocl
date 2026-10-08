@@ -53,9 +53,12 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Verifier.h>
 #include <llvm/PassInfo.h>
 #include <llvm/PassRegistry.h>
+#include <llvm/Passes/PassBuilder.h>
 #include <llvm/Support/Error.h>
 #include <llvm/Transforms/IPO/AlwaysInliner.h>
+#include <llvm/Transforms/Scalar/SROA.h>
 #include <llvm/Transforms/Utils/AMDGPUEmitPrintf.h>
+#include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/Transforms/Utils/ValueMapper.h>
 
 #include "pocl_cl.h"
@@ -432,9 +435,6 @@ static int CopyFuncCallgraph(const llvm::StringRef FuncName,
 
 /* Estimates the size of stack frame used by a function and all functions
  * it calls. Since OpenCL forbids recursion, we can error out if it happens.
- * The estimate should be the worst-case, since the code at this point
- * is not optimized at all, and the optimization should move some
- * variables to registers.
  */
 static size_t estimateFunctionStackSize(llvm::Function *Func,
                                         const llvm::Module *Mod,
@@ -1130,25 +1130,9 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
     }
   }
 
-  std::vector<Function *> CallChain;
-  ValueToSizeTMapTy FuncStackSizeMap;
   for (auto &F : *Program) {
-    if (F.isDeclaration())
-      continue;
-    if (!F.hasName()) {
+    if (!F.isDeclaration() && !F.hasName())
       F.setName("__anonymous_function");
-    }
-    if (isKernelToProcess(F)) {
-      size_t EstStackSize =
-          estimateFunctionStackSize(&F, Program, CallChain, FuncStackSizeMap);
-      DB_PRINT("Kernel %s Estimated stack size: %zu \n", F.getName().data(),
-               EstStackSize);
-      if (EstStackSize > 0) {
-        std::string MetadataKey = F.getName().str();
-        MetadataKey.append(".meta.est.stack.size");
-        setModuleIntMetadata(Program, MetadataKey.c_str(), EstStackSize);
-      }
-    }
   }
 
   // remove unused globals that were copied
@@ -1162,6 +1146,49 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
   }
 
   return 0;
+}
+
+void estimateKernelStackSizes(llvm::Module *Program, bool Optimized) {
+  // The kernel library is built at -O0, so the linked program carries
+  // allocas for every local variable of the builtins, which the kernel
+  // compiler's optimizations remove again. Estimate on a copy that went
+  // through SROA instead, keeping the allocas that survive optimization
+  // (e.g. dynamically indexed private arrays). Without optimization
+  // (-cl-opt-disable), keep counting all of them.
+  std::unique_ptr<llvm::Module> Clone;
+  llvm::Module *Mod = Program;
+  if (Optimized) {
+    Clone = llvm::CloneModule(*Program);
+    Mod = Clone.get();
+
+    llvm::PassBuilder PB;
+    llvm::FunctionAnalysisManager FAM;
+    PB.registerFunctionAnalyses(FAM);
+    llvm::FunctionPassManager FPM;
+    FPM.addPass(llvm::SROAPass(llvm::SROAOptions::ModifyCFG));
+    for (llvm::Function &F : *Mod) {
+      if (F.isDeclaration())
+        continue;
+      F.removeFnAttr(llvm::Attribute::OptimizeNone);
+      FPM.run(F, FAM);
+    }
+  }
+
+  std::vector<Function *> CallChain;
+  ValueToSizeTMapTy FuncStackSizeMap;
+  for (auto &F : *Mod) {
+    if (F.isDeclaration() || !isKernelToProcess(F))
+      continue;
+    size_t EstStackSize =
+        estimateFunctionStackSize(&F, Mod, CallChain, FuncStackSizeMap);
+    DB_PRINT("Kernel %s Estimated stack size: %zu \n", F.getName().data(),
+             EstStackSize);
+    if (EstStackSize > 0) {
+      std::string MetadataKey = F.getName().str();
+      MetadataKey.append(".meta.est.stack.size");
+      setModuleIntMetadata(Program, MetadataKey.c_str(), EstStackSize);
+    }
+  }
 }
 
 int copyKernelFromBitcode(const char* Name, llvm::Module *ParallelBC,
