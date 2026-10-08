@@ -27,6 +27,8 @@
 
 #include "pocl_export.h"
 
+#include <stddef.h>
+
 typedef struct _pocl_barrier_t *pocl_barrier_t;
 typedef struct _pocl_lock_t *pocl_lock_t;
 typedef struct _pocl_cond_t *pocl_cond_t;
@@ -58,7 +60,7 @@ typedef struct _pocl_thread_t *pocl_thread_t;
 #error Need atomic_inc() builtin for this compiler
 #endif
 
-#define POCL_GET_THREAD_STACK_SIZE() 0
+#define POCL_GET_THREAD_STACK_SIZE() pocl_get_thread_stack_size()
 
 #ifdef __cplusplus
 extern "C" {
@@ -88,10 +90,18 @@ void pocl_cond_timedwait(pocl_cond_t C, pocl_lock_t L, unsigned long msec);
 
 POCL_EXPORT
 void pocl_thread_create(pocl_thread_t *T, void *(*F)(void *), void *Arg);
+/* Create a thread with a stack of at least MinStackSize bytes. Only
+   implemented on Windows; elsewhere, threads get the default stack. */
+POCL_EXPORT
+void pocl_thread_create_with_stack_size(pocl_thread_t *T, void *(*F)(void *),
+                                        void *Arg, size_t MinStackSize);
 POCL_EXPORT
 pocl_thread_t pocl_thread_self();
 POCL_EXPORT
 void pocl_thread_join(pocl_thread_t T);
+/* The calling thread's stack size, or 0 if unknown. */
+POCL_EXPORT
+size_t pocl_get_thread_stack_size();
 
 POCL_EXPORT
 void pocl_barrier_init(pocl_barrier_t *B, unsigned long N);
@@ -120,9 +130,8 @@ void pocl_barrier_destroy(pocl_barrier_t *B);
 #define POCL_TIMEDWAIT_COND(c, m, t) pocl_cond_timedwait(c, m, t)
 
 #define POCL_CREATE_THREAD(thr, func, arg) pocl_thread_create(&thr, func, arg)
-// std::thread can't set the stack size; threads get the platform default.
 #define POCL_CREATE_THREAD_WITH_STACK_SIZE(thr, func, arg, size)               \
-  pocl_thread_create(&thr, func, arg)
+  pocl_thread_create_with_stack_size(&thr, func, arg, size)
 #define POCL_JOIN_THREAD(thr) pocl_thread_join(thr)
 #define POCL_THREAD_SELF() pocl_thread_self()
 

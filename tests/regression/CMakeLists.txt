@@ -195,8 +195,7 @@ add_test_pocl(NAME "regression/test_usm_indirect_ptrs" COMMAND "test_usm_indirec
 
 add_test_pocl(NAME "regression/test_usm_free_realloc" COMMAND "test_usm_free_realloc" WORKITEM_HANDLER "loopvec")
 
-# Windows worker threads (std::thread) still get the default stack size
-add_test_pocl(NAME "regression/test_large_private_workgroup" LABELS "mingw_fail;win_fail"
+add_test_pocl(NAME "regression/test_large_private_workgroup"
   COMMAND "test_large_private_workgroup")
 
 add_test_pocl(NAME "regression/test_issue_893" COMMAND "test_issue_893")

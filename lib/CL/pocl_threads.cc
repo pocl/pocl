@@ -22,18 +22,29 @@
    IN THE SOFTWARE.
 */
 
+#include "pocl_debug.h"
 #include "pocl_threads_cpp.hh"
 
 #include <atomic>
+#include <cerrno>
 #include <chrono>
 #include <condition_variable>
+#include <cstring>
 #include <mutex>
 #include <thread>
-#include <map>
 
 // #define DEBUG_THREADS
 #ifdef DEBUG_THREADS
 #include <iostream>
+#endif
+
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#define WIN32_LEAN_AND_MEAN
+#include <process.h>
+#include <windows.h>
 #endif
 
 struct _pocl_barrier_t {
@@ -61,14 +72,21 @@ struct _pocl_cond_t {
 };
 
 struct _pocl_thread_t {
+#ifdef _WIN32
+  HANDLE Handle;
+#else
   std::thread T;
+#endif
+  void *(*Func)(void *);
+  void *Arg;
 };
+
+static thread_local pocl_thread_t PoclThreadSelf = nullptr;
 
 static _pocl_lock_t pocl_init_lock_m;
 // extern "C" is needed because MSVC mangles global variables.
 extern "C" pocl_lock_t pocl_init_lock = &pocl_init_lock_m;
 
-static std::map<std::thread::id, pocl_thread_t> PoclThreadMap;
 
 void pocl_mutex_lock(pocl_lock_t L) {
   L->lock.lock();
@@ -156,28 +174,82 @@ void pocl_cond_timedwait(pocl_cond_t C, pocl_lock_t L, unsigned long msec) {
   UL.release();
 }
 
+static void runThread(pocl_thread_t T) {
+  PoclThreadSelf = T;
+  T->Func(T->Arg);
+}
+
+#ifdef _WIN32
+static unsigned __stdcall runThreadWin32(void *T) {
+  runThread((pocl_thread_t)T);
+  return 0;
+}
+
+// The stack reservation of threads created with the default size, as
+// recorded in the executable.
+static size_t defaultStackReserve() {
+  const char *Image = (const char *)GetModuleHandleW(nullptr);
+  auto *Dos = (const IMAGE_DOS_HEADER *)Image;
+  auto *Nt = (const IMAGE_NT_HEADERS *)(Image + Dos->e_lfanew);
+  return Nt->OptionalHeader.SizeOfStackReserve;
+}
+#endif
+
 void pocl_thread_create(pocl_thread_t *T, void *(*F)(void *), void *Arg) {
-  pocl_thread_t ThrPtr = new _pocl_thread_t;
-  //assert (NT);
-  ThrPtr->T = std::thread(F, Arg);
-  *T = ThrPtr;
-  PoclThreadMap.insert(std::make_pair(ThrPtr->T.get_id(), ThrPtr));
+  pocl_thread_create_with_stack_size(T, F, Arg, 0);
+}
+
+void pocl_thread_create_with_stack_size(pocl_thread_t *T, void *(*F)(void *),
+                                        void *Arg, size_t MinStackSize) {
+  pocl_thread_t Thr = new _pocl_thread_t;
+  Thr->Func = F;
+  Thr->Arg = Arg;
+  *T = Thr;
+#ifdef _WIN32
+  // Only reserve the address space, like POSIX threads do; without the flag,
+  // the size would be committed up front.
+  unsigned StackSize = 0;
+  unsigned Flags = 0;
+  if (MinStackSize > defaultStackReserve()) {
+    StackSize = (unsigned)MinStackSize;
+    Flags = STACK_SIZE_PARAM_IS_A_RESERVATION;
+  }
+  Thr->Handle = (HANDLE)_beginthreadex(nullptr, StackSize, runThreadWin32, Thr,
+                                       Flags, nullptr);
+  if (Thr->Handle == 0)
+    POCL_ABORT("_beginthreadex failed: %s\n", strerror(errno));
+#else
+  // std::thread can't set the stack size; threads get the platform default.
+  Thr->T = std::thread(runThread, Thr);
+#endif
 }
 
 void pocl_thread_join(pocl_thread_t T) {
-  // assert (T);
+#ifdef _WIN32
+  if (WaitForSingleObject(T->Handle, INFINITE) != WAIT_OBJECT_0)
+    POCL_ABORT("WaitForSingleObject failed: %lu\n", GetLastError());
+  CloseHandle(T->Handle);
+#else
   T->T.join();
+#endif
   delete T;
-  PoclThreadMap.erase(T->T.get_id());
 }
 
+pocl_thread_t pocl_thread_self() { return PoclThreadSelf; }
 
-pocl_thread_t pocl_thread_self() {
-  auto It = PoclThreadMap.find(std::this_thread::get_id());
-  if (It == PoclThreadMap.end())
-    return nullptr;
-  else
-    return It->second;
+size_t pocl_get_thread_stack_size() {
+#ifdef _WIN32
+  // The stack spans from the base of the reservation a local lives in to the
+  // top recorded in the thread information block. (GetCurrentThreadStackLimits
+  // needs Windows 8 headers, which not all toolchains target.)
+  MEMORY_BASIC_INFORMATION Info;
+  if (VirtualQuery(&Info, &Info, sizeof(Info)) == 0)
+    return 0;
+  const NT_TIB *Tib = (const NT_TIB *)NtCurrentTeb();
+  return (const char *)Tib->StackBase - (const char *)Info.AllocationBase;
+#else
+  return 0;
+#endif
 }
 
 void _pocl_barrier_t::wait() {
