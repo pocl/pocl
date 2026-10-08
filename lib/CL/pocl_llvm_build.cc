@@ -205,6 +205,11 @@ static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
            /*ErrorOnUnresolved=*/true))
     return true;
 
+  if (Device->work_group_stack_size > 0) {
+    bool Optimized = (Opts.find("-cl-opt-disable") == std::string::npos);
+    estimateKernelStackSizes(Mod, Optimized);
+  }
+
   raw_string_ostream OS(Log);
   bool BrokenDebugInfo = false;
   if (pocl_get_bool_option("POCL_LLVM_VERIFY", LLVM_VERIFY_MODULE_DEFAULT)) {
