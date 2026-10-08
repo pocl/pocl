@@ -10,7 +10,7 @@
 #
 # output is LLVM IR text format.
 #
-# Usage: python3 generate_spir_wrapper.py [-q] [-g] [-t <target>] [-r <register_size>] OUTPUT
+# Usage: python3 generate_spir_wrapper.py [-q] [-g] [-m] [-t <target>] [-r <register_size>] OUTPUT
 # ... place the file in the target-specific lib/kernel subdirectory.
 #
 # Notes for CPU SPIR wrapper:
@@ -23,6 +23,9 @@
 #    even if the mangled names are the same, because the calling conv
 #    is different for SPIR and some LLVM pass will remove the calls
 #    with mismatched calling conv.
+# 4) the above applies to the System V and AArch64/RISC-V ABIs. On x86-64 MinGW,
+#    clang passes and returns all vectors directly (the backend lowers the large
+#    ones itself), so the wrappers must not do any of this; see --mingw.
 #
 # Notes for CUDA SPIR wrapper:
 # 1) mangling is not required for CUDA
@@ -55,12 +58,20 @@ parser.add_argument('-g', '--generic-as',
 	action='store_true',
 	help="generate also Generic AS wrappers")
 
+parser.add_argument('-m', '--mingw',
+	dest='mingw',
+	action='store_true',
+	help="target the x86-64 MinGW ABI (cpu_x86 only): pass vectors directly")
+
 parser.add_argument('--fp16',
 	dest='fp16',
 	action='store_true',
 	help="generate also FP16 wrappers")
 
 args = parser.parse_args()
+
+if args.mingw and args.target != 'cpu_x86':
+	parser.error('--mingw is only supported for the cpu_x86 target')
 
 # function prefix used by PoCL's kernel library
 POCL_LIB_PREFIX = "_cl_"
@@ -79,6 +90,8 @@ X86_CALLING_ABI = (args.target == 'cpu_x86')
 ARM_CALLING_ABI = (args.target == 'cpu_arm')
 RISCV64_CALLING_ABI = (args.target == 'cpu_riscv')
 SPIR_CALLING_ABI = (args.target == 'cuda')
+# the x86-64 MinGW ABI needs no argument rewriting, same as SPIR
+PLAIN_VECTOR_ABI = SPIR_CALLING_ABI or args.mingw
 
 # size of the largest CPU (SIMD) register. Values larger than this
 # will be passed with byval/sret
@@ -719,8 +732,8 @@ def replace_arg_type(argtype, replacement):
 
 # coerce vector type arguments (leave other types alone)
 def coerce_llvm_vector_type(type):
-	# only for ARM & X86 & RISCV, not SPIR
-	if SPIR_CALLING_ABI:
+	# only for ARM & X86 & RISCV, not SPIR or MinGW
+	if PLAIN_VECTOR_ABI:
 		return type
 	if type in COERCE_VECTOR_MAP:
 		return COERCE_VECTOR_MAP[type]
@@ -729,8 +742,8 @@ def coerce_llvm_vector_type(type):
 
 # get arg type for types larger than cpu reg size
 def byval_llvm_vector_type(type):
-	# only for ARM & X86 & RISCV, not SPIR
-	if SPIR_CALLING_ABI:
+	# only for ARM & X86 & RISCV, not SPIR or MinGW
+	if PLAIN_VECTOR_ABI:
 		return type
 	if type not in BYVAL_VECTOR_MAP:
 		return type
