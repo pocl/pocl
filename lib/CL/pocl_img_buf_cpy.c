@@ -52,14 +52,14 @@ pocl_validate_rect_copy (cl_command_queue command_queue,
                          size_t mod_src_origin[3],
                          size_t mod_dst_origin[3])
 {
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (src)), CL_INVALID_MEM_OBJECT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (dst)), CL_INVALID_MEM_OBJECT);
+
   POCL_RETURN_ERROR_ON (
       ((command_queue->context != src->context)
        || (command_queue->context != dst->context)),
       CL_INVALID_CONTEXT,
       "src, dst and command_queue are not from the same context\n");
-
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (src)), CL_INVALID_MEM_OBJECT);
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (dst)), CL_INVALID_MEM_OBJECT);
   POCL_RETURN_ERROR_COND((src_origin == NULL), CL_INVALID_VALUE);
   POCL_RETURN_ERROR_COND((dst_origin == NULL), CL_INVALID_VALUE);
   POCL_RETURN_ERROR_COND((region == NULL), CL_INVALID_VALUE);
