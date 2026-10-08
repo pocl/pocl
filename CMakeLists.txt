@@ -1867,10 +1867,10 @@ if(NOT ENABLE_CONFORMANCE)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} \
 cl_khr_subgroups cl_khr_subgroup_ballot cl_khr_subgroup_shuffle \
 cl_intel_subgroups cl_intel_subgroups_short cl_intel_subgroups_char cl_intel_required_subgroup_size cl_exp_tensor")
-  # read-write images are still partially broken
   # program-scope variables work on OpenCL C input, but breaks with SPIR-V input (llvm-spirv bugs)
-  set(HOST_DEVICE_FEATURES  "${HOST_DEVICE_FEATURES} __opencl_c_subgroups __opencl_c_read_write_images")
+  set(HOST_DEVICE_FEATURES  "${HOST_DEVICE_FEATURES} __opencl_c_subgroups")
 endif()
+set(HOST_DEVICE_FEATURES  "${HOST_DEVICE_FEATURES} __opencl_c_read_write_images")
 
 # Extensions that are considered feature-complete (preferably CTS-tested).
 #
