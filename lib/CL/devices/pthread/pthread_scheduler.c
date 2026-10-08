@@ -66,10 +66,12 @@ struct pool_thread_data
   /* printf buffer*/
   void *printf_buffer;
   size_t thread_stack_size;
-  /* signaled to wake up this thread, waited on with wq_lock_fast held */
+  /* signaled to wake up this thread, with wake_lock held */
+  pocl_lock_t wake_lock;
   pocl_cond_t wake;
-  /* set while waiting for 'wake'; only set with wq_lock_fast held, cleared
-   * atomically by the thread that signals 'wake'. 64-bit for the Windows
+  /* set when this thread goes to sleep, with wq_lock_fast held; cleared
+   * atomically by the thread that wakes it up, which then signals 'wake'.
+   * The thread sleeps for as long as it is set. 64-bit for the Windows
    * atomics. */
   int64_t sleeping;
 };
@@ -118,9 +120,10 @@ pthread_scheduler_init (cl_device_id device)
   POCL_LOCK (scheduler.wq_lock_fast);
   for (i = 0; i < num_worker_threads; ++i)
     {
+      POCL_INIT_LOCK (scheduler.thread_pool[i].wake_lock);
       POCL_INIT_COND (scheduler.thread_pool[i].wake);
       VG_ASSOC_COND_VAR (scheduler.thread_pool[i].wake,
-                         scheduler.wq_lock_fast);
+                         scheduler.thread_pool[i].wake_lock);
     }
   POCL_UNLOCK (scheduler.wq_lock_fast);
 
@@ -168,6 +171,8 @@ pthread_scheduler_init (cl_device_id device)
   return CL_SUCCESS;
 }
 
+static void wake_threads (unsigned start, unsigned end, size_t n);
+
 void
 pthread_scheduler_uninit ()
 {
@@ -175,14 +180,14 @@ pthread_scheduler_uninit ()
 
   POCL_LOCK (scheduler.wq_lock_fast);
   scheduler.thread_pool_shutdown_requested = 1;
-  for (i = 0; i < scheduler.num_threads; ++i)
-    POCL_SIGNAL_COND (scheduler.thread_pool[i].wake);
   POCL_UNLOCK (scheduler.wq_lock_fast);
+  wake_threads (0, scheduler.num_threads, scheduler.num_threads);
 
   for (i = 0; i < scheduler.num_threads; ++i)
     {
       POCL_JOIN_THREAD (scheduler.thread_pool[i].thread);
       POCL_DESTROY_COND (scheduler.thread_pool[i].wake);
+      POCL_DESTROY_LOCK (scheduler.thread_pool[i].wake_lock);
     }
   scheduler.thread_pool_shutdown_requested = 0;
   pocl_aligned_free (scheduler.thread_pool);
@@ -207,12 +212,15 @@ device_threads (cl_device_id device, unsigned *start, unsigned *end)
 
 /* Wakes up to N sleeping threads among the threads [START, END). Waking
    all threads would make every command pay for the whole pool, which
-   dominates the launch time of small kernels. Threads that are awake check the queues before
-   going to sleep, so they don't need to be woken.
+   dominates the launch time of small kernels. Threads that are awake check
+   the queues before going to sleep, so they don't need to be woken.
 
    Call this after queueing the work and releasing wq_lock_fast, so that the
    woken threads don't have to wait for it. A thread that missed the work
-   went to sleep while the lock was held, i.e., it is already waiting. */
+   marked itself as sleeping while the lock was held, so it is found here,
+   but it may not be waiting on its condition variable yet. Signaling it
+   under its wake_lock, after clearing its flag, makes sure that it either
+   sees the flag cleared or receives the signal. */
 static void
 wake_threads (unsigned start, unsigned end, size_t n)
 {
@@ -221,7 +229,9 @@ wake_threads (unsigned start, unsigned end, size_t n)
       struct pool_thread_data *td = &scheduler.thread_pool[i];
       if (POCL_ATOMIC_CAS (&td->sleeping, 1, 0) == 1)
         {
+          POCL_LOCK (td->wake_lock);
           POCL_SIGNAL_COND (td->wake);
+          POCL_UNLOCK (td->wake_lock);
           --n;
         }
     }
@@ -735,8 +745,12 @@ RETRY:
   if ((cmd == NULL) && (run_cmd == NULL) && (do_exit == 0))
     {
       POCL_ATOMIC_STORE (td->sleeping, 1);
-      POCL_WAIT_COND (td->wake, scheduler.wq_lock_fast);
-      POCL_ATOMIC_STORE (td->sleeping, 0);
+      POCL_UNLOCK (scheduler.wq_lock_fast);
+      POCL_LOCK (td->wake_lock);
+      while (POCL_ATOMIC_LOAD (td->sleeping))
+        POCL_WAIT_COND (td->wake, td->wake_lock);
+      POCL_UNLOCK (td->wake_lock);
+      POCL_LOCK (scheduler.wq_lock_fast);
       goto RETRY;
     }
 
