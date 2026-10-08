@@ -277,6 +277,11 @@ function(generate_cpu_spir_wrapper ARCH SUBDIR SIZE OUTPUT)
     set(EXTRA_OPT "--fp16" "-g")
   endif()
 
+  # clang passes vectors directly on x86-64 MinGW, unlike System V (and MSVC)
+  if(ARCH STREQUAL "cpu_x86" AND LLC_TRIPLE MATCHES "-windows-gnu")
+    list(APPEND EXTRA_OPT "--mingw")
+  endif()
+
   add_custom_command( OUTPUT "${FNAME}"
       DEPENDS "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py"
       COMMAND "${HOST_PYTHON3}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" ${EXTRA_OPT} "-t" "${ARCH}" "-r" "${SIZE}" "${FNAME}"
