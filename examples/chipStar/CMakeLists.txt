@@ -174,9 +174,12 @@ add_test(NAME "${TS_NAME}"
 
 # Unit_hipMemset_SetMemoryWithOffset require CL_DEVICE_MAX_MEM_ALLOC_SIZE of >= 1GB,
 # so PoCL CPU device memory must be >= 4GB
+# An empty CHIP_MODULE_CACHE_DIR disables chipStar's program binary cache in
+# ~/.cache/chipStar, which outlives the build: it would test binaries built by
+# an earlier PoCL, and chipStar aborts on those that PoCL rejects.
 set_tests_properties(${TS_NAME}
   PROPERTIES
   PROCESSORS ${HOST_CPU_CORECOUNT}
-  ENVIRONMENT "POCL_CPU_MAX_CU_COUNT=1;POCL_MEMORY_LIMIT=6;CHIP_LOGLEVEL=err;CHIP_SKIP_UNINIT=1"
+  ENVIRONMENT "POCL_CPU_MAX_CU_COUNT=1;POCL_MEMORY_LIMIT=6;CHIP_LOGLEVEL=err;CHIP_SKIP_UNINIT=1;CHIP_MODULE_CACHE_DIR="
   PASS_REGULAR_EXPRESSION "100% tests passed, 0 tests failed out of"
   LABELS "chipStar")
