@@ -50,15 +50,22 @@ static void get_binary_sizes(cl_program program, size_t *sizes)
           continue;
         }
 
-      if (program->associated_devices[assoc_i]->ops->build_poclbinary)
-        program->associated_devices[assoc_i]->ops->build_poclbinary (program,
-                                                                     dev_i);
+      /* Exporting a poclbinary needs the kernel metadata, so a program
+         that isn't built returns its binaries as they were given. */
+      if (program->build_status == CL_BUILD_SUCCESS)
+        {
+          if (program->associated_devices[assoc_i]->ops->build_poclbinary)
+            program->associated_devices[assoc_i]->ops->build_poclbinary (
+              program, dev_i);
 
-      if (!program->pocl_binaries[dev_i] && program->binaries[dev_i])
-        pocl_binary_sizeof_binary (program, dev_i);
+          if (!program->pocl_binaries[dev_i] && program->binaries[dev_i])
+            pocl_binary_sizeof_binary (program, dev_i);
+        }
 
       if (program->pocl_binaries[dev_i])
         sizes[assoc_i] = program->pocl_binary_sizes[dev_i];
+      else if (program->binaries[dev_i])
+        sizes[assoc_i] = program->binary_sizes[dev_i];
       else
         sizes[assoc_i] = 0;
     }
@@ -79,29 +86,33 @@ static void get_binaries(cl_program program, unsigned char **binaries)
               break;
             }
         }
-      if (!program_device)
-        {
-          binaries[assoc_i] = NULL;
-          continue;
-        }
+      /* The entries belong to the caller: only write into them when there
+         is a binary to copy. The specification leaves NULL entries
+         undefined; skip them rather than crash. */
+      if (!program_device || binaries[assoc_i] == NULL)
+        continue;
 
-      if (program->associated_devices[assoc_i]->ops->build_poclbinary)
-        program->associated_devices[assoc_i]->ops->build_poclbinary (program,
-                                                                     dev_i);
-
-      if (!program->pocl_binaries[dev_i] && program->binaries[dev_i])
+      if (program->build_status == CL_BUILD_SUCCESS)
         {
-          pocl_binary_serialize (program, dev_i, &res);
-          if (program->pocl_binary_sizes[dev_i])
-            assert (program->pocl_binary_sizes[dev_i] == res);
-          program->pocl_binary_sizes[dev_i] = res;
+          if (program->associated_devices[assoc_i]->ops->build_poclbinary)
+            program->associated_devices[assoc_i]->ops->build_poclbinary (
+              program, dev_i);
+
+          if (!program->pocl_binaries[dev_i] && program->binaries[dev_i])
+            {
+              pocl_binary_serialize (program, dev_i, &res);
+              if (program->pocl_binary_sizes[dev_i])
+                assert (program->pocl_binary_sizes[dev_i] == res);
+              program->pocl_binary_sizes[dev_i] = res;
+            }
         }
 
       if (program->pocl_binaries[dev_i])
         memcpy (binaries[assoc_i], program->pocl_binaries[dev_i],
                 program->pocl_binary_sizes[dev_i]);
-      else
-        binaries[assoc_i] = NULL;
+      else if (program->binaries[dev_i])
+        memcpy (binaries[assoc_i], program->binaries[dev_i],
+                program->binary_sizes[dev_i]);
     }
 }
 
@@ -136,8 +147,6 @@ POname(clGetProgramInfo)(cl_program program,
 
   case CL_PROGRAM_BINARY_SIZES:
     {
-      POCL_RETURN_ERROR_COND(program->build_status != CL_BUILD_SUCCESS,
-                             CL_INVALID_PROGRAM);
       size_t const value_size
           = sizeof (size_t) * program->associated_num_devices;
       POCL_RETURN_GETINFO_INNER (
@@ -146,8 +155,6 @@ POname(clGetProgramInfo)(cl_program program,
 
   case CL_PROGRAM_BINARIES:
     {
-      POCL_RETURN_ERROR_COND(program->build_status != CL_BUILD_SUCCESS,
-                             CL_INVALID_PROGRAM);
       size_t const value_size
           = sizeof (unsigned char *) * program->associated_num_devices;
       POCL_RETURN_GETINFO_INNER (
