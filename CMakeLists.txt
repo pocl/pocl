@@ -948,6 +948,10 @@ if(UNIX OR MINGW)
                       "dlfcn.h"
                       HAVE_DLADDR)
 
+  CHECK_SYMBOL_EXISTS("dlinfo"
+                      "dlfcn.h;link.h"
+                      HAVE_DLINFO)
+
   unset(CMAKE_REQUIRED_DEFINITIONS)
   unset(CMAKE_REQUIRED_LIBRARIES)
 
@@ -996,6 +1000,7 @@ else()
   set(HAVE_VFORK 0)
   set(HAVE_UTIME 0)
   set(HAVE_DLADDR 0)
+  set(HAVE_DLINFO 0)
   set(HAVE_VALGRIND 0)
   unset(HAVE_LINUX_VSOCK_H)
 endif()
@@ -1167,7 +1172,7 @@ if(HOST_CPU_ENABLE_JIT)
   endif()
 endif()
 
-# Record the SONAME of the SLEEF library for the JIT to link against
+# Record the SONAME of the SLEEF library to load at run time
 set(HOST_CPU_SLEEF_LIBRARY "")
 set(HOST_CPU_SLEEF_LIBRARY_FALLBACK "")
 if(ENABLE_HOST_CPU_VECTORIZE_SLEEF AND LIBSLEEF)
@@ -1189,9 +1194,9 @@ if(ENABLE_HOST_CPU_VECTORIZE_SLEEF AND LIBSLEEF)
   endif()
 endif()
 
-# Record the SONAME of the libmvec library for the JIT to dlopen at run time. LIBMVEC may be
+# Record the SONAME of the libmvec library to load at run time. LIBMVEC may be
 # the system libmvec (SONAME libmvec.so.1) or a libmvec-ABI-compatible replacement pointed at
-# via -DLIBMVEC=... (e.g. SLEEF's libsleefgnuabi.so); recording the SONAME lets the JIT resolve
+# via -DLIBMVEC=... (e.g. SLEEF's libsleefgnuabi.so); recording the SONAME lets kernels resolve
 # the vectorized _ZGV* math symbols without relying on a system libmvec (absent on musl / old
 # glibc). Mirrors the SLEEF recording above.
 set(HOST_CPU_LIBMVEC_LIBRARY "")
@@ -1273,14 +1278,13 @@ if(UNIX)
     set(DEFAULT_HOST_LD_FLAGS "-L/system/lib/ -shared -ldl -lc /system/lib/crtbegin_so.o /system/lib/crtend_so.o")
   else()
     set(DEFAULT_HOST_LD_FLAGS "-shared -nostartfiles")
-    if(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
-      # Reference libmvec by its resolved absolute path, like SLEEF/SVML below.
-      # The in-process lld link (CPU_USE_LLD_LINK) carries over only absolute-path
-      # link inputs, not bare -l flags (it has no library search paths); a dropped
-      # -lmvec leaves the kernel's vectorized math calls unresolved.
+    # With dlinfo(), libmvec and SLEEF are added at run time instead
+    # (pocl_host_veclib_path), as the configure-time path may not exist in a
+    # relocated install.
+    if(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC AND NOT HAVE_DLINFO)
       set(DEFAULT_HOST_LD_FLAGS "${DEFAULT_HOST_LD_FLAGS} ${LIBMVEC}")
     endif()
-    if(ENABLE_HOST_CPU_VECTORIZE_SLEEF)
+    if(ENABLE_HOST_CPU_VECTORIZE_SLEEF AND NOT HAVE_DLINFO)
       set(DEFAULT_HOST_LD_FLAGS "${DEFAULT_HOST_LD_FLAGS} ${LIBSLEEF}")
     endif()
     if(ENABLE_HOST_CPU_VECTORIZE_SVML)

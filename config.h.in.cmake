@@ -82,6 +82,8 @@
 
 #cmakedefine HAVE_DLFCN_H
 
+#cmakedefine HAVE_DLINFO
+
 #cmakedefine HAVE_FORK
 
 #cmakedefine HAVE_VFORK
