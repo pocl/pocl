@@ -202,6 +202,11 @@ int pocl_driver_free_program (cl_device_id device,
                               cl_program program,
                               unsigned program_device_i);
 POCL_EXPORT
+int pocl_driver_count_kernels (cl_device_id device,
+                               cl_program program,
+                               unsigned program_device_i,
+                               size_t *count);
+POCL_EXPORT
 int pocl_driver_setup_metadata (cl_device_id device,
                                 cl_program program,
                                 unsigned program_device_i);

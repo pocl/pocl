@@ -856,6 +856,30 @@ pocl_driver_free_program (cl_device_id device, cl_program program,
 }
 
 int
+pocl_driver_count_kernels (cl_device_id device,
+                           cl_program program,
+                           unsigned program_device_i,
+                           size_t *count)
+{
+  if (program->num_builtin_kernels > 0)
+    {
+      *count = program->num_builtin_kernels;
+      return 1;
+    }
+#ifdef ENABLE_LLVM
+#ifdef ENABLE_MLIR
+  *count = poclMlirGetKernelCount (program, program_device_i);
+  return 1;
+#else
+  *count = pocl_llvm_get_kernel_count (program, program_device_i);
+  return 1;
+#endif
+#else
+  return 0;
+#endif
+}
+
+int
 pocl_driver_setup_metadata (cl_device_id device, cl_program program,
                             unsigned program_device_i)
 {
@@ -864,25 +888,15 @@ pocl_driver_setup_metadata (cl_device_id device, cl_program program,
 
 #ifdef ENABLE_LLVM
 #ifdef ENABLE_MLIR
-  unsigned num_kernels = poclMlirGetKernelCount (program, program_device_i);
-  if (num_kernels)
+  if (program->num_kernels)
     {
-      program->num_kernels = num_kernels;
-      program->kernel_meta = (pocl_kernel_metadata_t *)calloc (
-        program->num_kernels, sizeof (pocl_kernel_metadata_t));
       poclMlirGetKernelsMetadata (program, program_device_i);
     }
   return 1;
 #else
-  unsigned num_kernels
-      = pocl_llvm_get_kernel_count (program, program_device_i);
-
   /* TODO zero kernels in program case */
-  if (num_kernels)
+  if (program->num_kernels)
     {
-      program->num_kernels = num_kernels;
-      program->kernel_meta
-          = calloc (program->num_kernels, sizeof (pocl_kernel_metadata_t));
       pocl_llvm_get_kernels_metadata (program, program_device_i);
     }
   return 1;
