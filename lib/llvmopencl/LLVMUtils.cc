@@ -860,9 +860,8 @@ bool removeMetadataFromClangStubs(llvm::Module *Program) {
 /* Whole-token membership in an LLVM "target-features" string.
 
    The attribute is a comma-separated list, e.g.
-   "+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87". A substring search is not
-   enough: bdver1 (Bulldozer) lists "+fma4" and no "+fma", so strstr-style
-   matching reads an FMA4-only target as having FMA3. */
+   "+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87". A substring search would find
+   "+fma" inside "+fma4", or inside any later feature named the same way. */
 static bool hasTargetFeature(llvm::StringRef Features, llvm::StringRef Feat) {
   llvm::SmallVector<llvm::StringRef, 64> Tokens;
   Features.split(Tokens, ',', /* MaxSplit */ -1, /* KeepEmpty */ false);
@@ -940,11 +939,15 @@ void unifyLLVMFunctionAttributes(llvm::Module &M, bool TouchAlwaysInline) {
     // C fast-math promises nothing there; OpenCL relaxed math does. Keep
     // the estimates only where they meet the bound.
     //
+    // FMA3 or FMA4: the backend fuses the refinement with either
+    // (vfnmadd213ps, or vfnmaddps on FMA4-only bdver1).
+    //
     // x86 only, and by whole token. "fma" is an x86 feature name: RISC-V
     // carries FMA in the F and D extensions and AArch64 in fp-armv8, so
     // neither spells it "fma" and testing the feature string on those
     // targets would disable reciprocal estimates on all of them.
-    if (IsX86 && !hasTargetFeature(TargetFeatures, "+fma"))
+    if (IsX86 && !hasTargetFeature(TargetFeatures, "+fma") &&
+        !hasTargetFeature(TargetFeatures, "+fma4"))
       F.addFnAttr("reciprocal-estimates", "none");
 
     // the following settings are not necessary for inlining,
