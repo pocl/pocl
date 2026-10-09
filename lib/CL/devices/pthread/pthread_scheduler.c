@@ -85,6 +85,13 @@ typedef struct scheduler_data_
 
   int thread_pool_shutdown_requested;
   int worker_out_of_memory;
+  /* workers currently parked on their per-thread wake cond. Incremented by
+   * the worker under wq_lock_fast just before waiting; decremented either
+   * by the waker that CAS-claims the worker, or by the worker itself when
+   * it wakes unclaimed (spurious wakeup / shutdown signal). Lets
+   * wake_threads skip the per-thread CAS scan entirely when nobody is
+   * parked (the steady state of launch-dense workloads). */
+  int64_t sleeping_workers;
 
   struct pool_thread_data *thread_pool;
 #ifndef ENABLE_HOST_CPU_DEVICES_OPENMP
@@ -108,6 +115,7 @@ pthread_scheduler_init (cl_device_id device)
   size_t num_worker_threads = device->max_compute_units;
 #endif
   POCL_INIT_LOCK (scheduler.wq_lock_fast);
+  scheduler.sleeping_workers = 0;
 
   scheduler.thread_pool = pocl_aligned_malloc (
       HOST_CPU_CACHELINE_SIZE,
@@ -216,11 +224,20 @@ device_threads (cl_device_id device, unsigned *start, unsigned *end)
 static void
 wake_threads (unsigned start, unsigned end, size_t n)
 {
+  /* nobody parked: skip the whole per-thread CAS scan (a launch-dense
+   * steady state would otherwise pay num_threads failed atomic RMWs per
+   * push). The counter is incremented under wq_lock_fast before the worker
+   * releases it in the cond wait, so a load after our own lock/append/
+   * unlock can never miss a just-parked worker. */
+  if (__atomic_load_n (&scheduler.sleeping_workers, __ATOMIC_ACQUIRE) <= 0)
+    return;
   for (unsigned i = start; i < end && n > 0; ++i)
     {
       struct pool_thread_data *td = &scheduler.thread_pool[i];
       if (POCL_ATOMIC_CAS (&td->sleeping, 1, 0) == 1)
         {
+          __atomic_fetch_sub (&scheduler.sleeping_workers, 1,
+                              __ATOMIC_ACQ_REL);
           POCL_SIGNAL_COND (td->wake);
           --n;
         }
@@ -240,6 +257,13 @@ void pthread_scheduler_push_command (_cl_command_node *cmd)
 }
 
 #ifndef ENABLE_HOST_CPU_DEVICES_OPENMP
+/* kernel pushes wake only a small vanguard; a worker whose grab leaves
+ * the pool non-empty chain-wakes one more (work_group_scheduler), so
+ * the wake syscalls spread across workers (off the pusher's critical
+ * path) and the awake count ramps with the grid's real parallelism
+ * instead of storming the whole pool on every launch. */
+#define POCL_PTHREAD_VANGUARD_WAKES 1
+
 static void
 pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
 {
@@ -247,11 +271,10 @@ pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
    * (which can run it) picks it up itself */
   unsigned start, end;
   device_threads (run_cmd->device, &start, &end);
-  size_t num_threads = run_cmd->remaining_wgs - 1;
   POCL_LOCK (scheduler.wq_lock_fast);
   DL_APPEND (scheduler.kernel_queue, run_cmd);
   POCL_UNLOCK (scheduler.wq_lock_fast);
-  wake_threads (start, end, num_threads);
+  wake_threads (start, end, POCL_PTHREAD_VANGUARD_WAKES);
 }
 
 /* Maximum and minimum chunk sizes for get_wg_index_range().
@@ -365,6 +388,13 @@ work_group_scheduler (kernel_run_command *k,
           POCL_LOCK (scheduler.wq_lock_fast);
           DL_DELETE (scheduler.kernel_queue, k);
           POCL_UNLOCK (scheduler.wq_lock_fast);
+        }
+      else
+        {
+          /* our grab left WGs in the pool: pull in one more worker */
+          unsigned ws, we;
+          device_threads (k->device, &ws, &we);
+          wake_threads (ws, we, 1);
         }
 
       for (i = start_index; i <= end_index; ++i)
@@ -735,8 +765,15 @@ RETRY:
   if ((cmd == NULL) && (run_cmd == NULL) && (do_exit == 0))
     {
       POCL_ATOMIC_STORE (td->sleeping, 1);
+      /* under wq_lock_fast, hence visible to any waker that appended work
+       * after our queue check: its post-unlock counter load must see us */
+      __atomic_fetch_add (&scheduler.sleeping_workers, 1, __ATOMIC_ACQ_REL);
       POCL_WAIT_COND (td->wake, scheduler.wq_lock_fast);
-      POCL_ATOMIC_STORE (td->sleeping, 0);
+      /* a CAS-claiming waker already accounted our park; if we wake with
+       * the flag still set (spurious wakeup / shutdown signal), account
+       * it ourselves */
+      if (POCL_ATOMIC_CAS (&td->sleeping, 1, 0) == 1)
+        __atomic_fetch_sub (&scheduler.sleeping_workers, 1, __ATOMIC_ACQ_REL);
       goto RETRY;
     }
 
