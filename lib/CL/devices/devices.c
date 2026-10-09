@@ -677,9 +677,6 @@ pocl_init_devices (cl_platform_id platform)
     sleep (delay);
 #endif
 
-#ifdef ENABLE_SIGFPE_HANDLER
-  pocl_install_sigfpe_handler ();
-#endif
 #ifdef ENABLE_SIGUSR2_HANDLER
   if (pocl_get_bool_option ("POCL_SIGUSR2_HANDLER", 0))
     {

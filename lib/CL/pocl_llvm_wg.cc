@@ -497,6 +497,8 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
   // don't forget to register it in registerPassBuilderPasses
   addPass(Passes, "fix-min-legal-vec-size", PassType::Module);
   addPass(Passes, "inline-kernels");
+  // Sanitize integer div/rem before optimizing: LLVM treats division by zero
+  // as UB, and can e.g. remove a later check of the divisor against zero.
   if (Dev->run_sanitize_divrem_pass)
     addPass(Passes, "sanitize-ub-of-div-rem");
 
