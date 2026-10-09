@@ -81,7 +81,7 @@ POname(clEnqueueSVMMap) (cl_command_queue command_queue,
     }
 
   if (blocking_map == CL_TRUE)
-    return POname(clFinish)(command_queue);
+    return pocl_finish_blocking_command (command_queue);
   else
     return CL_SUCCESS;
 

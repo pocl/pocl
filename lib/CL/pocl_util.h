@@ -131,6 +131,11 @@ cl_int pocl_create_command_migrate (
 void pocl_command_enqueue (cl_command_queue command_queue,
                           _cl_command_node *node);
 
+/* Waits for the command a blocking enqueue call has enqueued. A command on a
+   CL_QUEUE_THREAD_LOCAL_EXEC_ENABLE_INTEL queue is complete by then, and
+   waiting for the queue would also wait for other threads' commands. */
+cl_int pocl_finish_blocking_command (cl_command_queue command_queue);
+
 POCL_EXPORT
 int pocl_alloc_or_retain_mem_host_ptr (cl_mem mem);
 
