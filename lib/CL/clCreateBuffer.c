@@ -252,6 +252,7 @@ pocl_create_memobject (cl_context context,
 
               if (!inserted) {
                   POCL_MEM_FREE (item);
+                  errcode = CL_OUT_OF_RESOURCES;
                   goto ERROR;
               }
 
