@@ -79,7 +79,8 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   pocl_buffer_migration_info *migr_infos = NULL, *mig = NULL, *tmp = NULL;
   char *rdonly = (char *)alloca (num_mem_objects);
   cl_mem *ml = (cl_mem *)alloca (num_mem_objects * sizeof (cl_mem));
-  memcpy (ml, mem_list, num_mem_objects * sizeof (cl_mem));
+  if (num_mem_objects > 0)
+    memcpy (ml, mem_list, num_mem_objects * sizeof (cl_mem));
 
   for (i = 0; i < num_mem_objects; i++)
     {
