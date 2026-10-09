@@ -23,12 +23,28 @@
 */
 
 #include "templates.h"
+#include "fma_half.h"
 
 #if !__has_builtin(__builtin_fmaf16)
 #undef __IF_FP16
 #define __IF_FP16(X)
 #endif
 
+#ifdef POCL_FMA_HALF_THROUGH_DOUBLE
+/* the half overloads from fma_half.h, not __builtin_fmaf16 */
+#pragma push_macro("__IF_FP16")
+#undef __IF_FP16
+#define __IF_FP16(X)
 DEFINE_BUILTIN_V_VVV(fma)
+#pragma pop_macro("__IF_FP16")
+half _CL_OVERLOADABLE
+fma (half a, half b, half c)
+{
+  return _cl_fma_half (a, b, c);
+}
+DEFINE_FP16_EXPR_V_VVV (fma)
+#else
+DEFINE_BUILTIN_V_VVV(fma)
+#endif
 
 DEFINE_EXPR_V_VVV(pocl_fma, fma(a,b,c))
