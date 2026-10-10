@@ -451,6 +451,15 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
 
 #endif
 
+#if defined(__aarch64__) || defined(_M_ARM64)
+#if defined(ENABLE_CONFORMANCE) || defined(HOST_CPU_ENABLE_DENORMS)
+  /* AArch64 keeps float denormals in scalar and Advanced SIMD code alike, and
+   * pocl_set_ftz () does not flush them here, so kernels produce them. Without
+   * this the CTS assumes flush-to-zero and contractions fails. */
+  device->single_fp_config |= CL_FP_DENORM;
+#endif
+#endif
+
   if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_fp64") == NULL)
     device->double_fp_config = 0;
 
