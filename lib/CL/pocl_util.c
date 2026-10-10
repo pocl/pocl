@@ -1143,6 +1143,70 @@ check_copy_overlap(const size_t src_offset[3],
   return 1;
 }
 
+/* Whether a rectangular copy between two different sub-buffers of the same
+   parent overlaps. Offsets are each sub-buffer's origin in the parent; the
+   caller has already resolved zero pitches. With equal pitches, the
+   sub-buffer offset folds into origin[0] and the appendix algorithm above is
+   exact. With different pitches it doesn't apply; each side is then
+   region[1] * region[2] rows of region[0] bytes, and the pitch rules make
+   each side's rows, in (z, y) order, increasing and disjoint, so one merge
+   over the two sorted row lists decides overlap exactly. */
+int
+pocl_check_subbuffer_copy_overlap (size_t src_base, const size_t src_origin[3],
+                                   size_t src_row_pitch,
+                                   size_t src_slice_pitch, size_t dst_base,
+                                   const size_t dst_origin[3],
+                                   size_t dst_row_pitch,
+                                   size_t dst_slice_pitch,
+                                   const size_t region[3])
+{
+  if (src_row_pitch == dst_row_pitch && src_slice_pitch == dst_slice_pitch)
+    {
+      const size_t s[3] = { src_origin[0] + src_base, src_origin[1], src_origin[2] };
+      const size_t d[3] = { dst_origin[0] + dst_base, dst_origin[1], dst_origin[2] };
+      return check_copy_overlap (s, d, region, src_row_pitch, src_slice_pitch);
+    }
+
+  const size_t w = region[0];
+  const size_t s0 = src_base + src_origin[2] * src_slice_pitch
+                    + src_origin[1] * src_row_pitch + src_origin[0];
+  const size_t d0 = dst_base + dst_origin[2] * dst_slice_pitch
+                    + dst_origin[1] * dst_row_pitch + dst_origin[0];
+  const size_t s_end = s0 + (region[2] - 1) * src_slice_pitch
+                       + (region[1] - 1) * src_row_pitch + w;
+  const size_t d_end = d0 + (region[2] - 1) * dst_slice_pitch
+                       + (region[1] - 1) * dst_row_pitch + w;
+  if (d_end <= s0 || s_end <= d0)
+    return 0;
+
+  size_t sy = 0, sz = 0, dy = 0, dz = 0;
+  for (;;)
+    {
+      size_t a = s0 + sz * src_slice_pitch + sy * src_row_pitch;
+      size_t b = d0 + dz * dst_slice_pitch + dy * dst_row_pitch;
+      if (a + w <= b)
+        {
+          if (++sy == region[1])
+            {
+              sy = 0;
+              if (++sz == region[2])
+                return 0;
+            }
+        }
+      else if (b + w <= a)
+        {
+          if (++dy == region[1])
+            {
+              dy = 0;
+              if (++dz == region[2])
+                return 0;
+            }
+        }
+      else
+        return 1;
+    }
+}
+
 /* For a subdevice parameter, return the actual device it belongs to. */
 cl_device_id
 pocl_real_dev (const cl_device_id dev)

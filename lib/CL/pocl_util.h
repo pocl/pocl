@@ -188,6 +188,15 @@ check_copy_overlap(const size_t src_offset[3],
                    const size_t region[3],
                    const size_t row_pitch, const size_t slice_pitch);
 
+int pocl_check_subbuffer_copy_overlap (size_t src_base,
+                                       const size_t src_origin[3],
+                                       size_t src_row_pitch,
+                                       size_t src_slice_pitch, size_t dst_base,
+                                       const size_t dst_origin[3],
+                                       size_t dst_row_pitch,
+                                       size_t dst_slice_pitch,
+                                       const size_t region[3]);
+
 /**
  * Push a command into ready list if all previous events are completed or
  * in pending_list if the command still has pending dependencies
