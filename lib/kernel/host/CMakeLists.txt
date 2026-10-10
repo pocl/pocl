@@ -329,7 +329,6 @@ if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS) # implies CONFORMANCE=OFF
     log2.cl
 
     pow.cl
-    pown.cl
 
     rint.cl
     round.cl
@@ -343,6 +342,15 @@ if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS) # implies CONFORMANCE=OFF
 
     trunc.cl
     )
+
+  if(ENABLE_HOST_CPU_VECTORIZE_SVML)
+    list(APPEND SOURCES_WITH_SLEEF pown.cl)
+  else()
+    # float from libclc (accuracy), double from the builtin (llvm#224127)
+    list(APPEND SOURCES_WITH_SLEEF
+      libclc-pocl/pown_fp32_only.cl
+      pown_fp64_builtin.cl)
+  endif()
 endif()  # ENABLE_HOST_CPU_VECTORIZE_BUILTINS
 
 # add conformant versions of FP16 builtins from CORE-Math library
