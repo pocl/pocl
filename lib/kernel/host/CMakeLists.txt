@@ -249,6 +249,22 @@ endif()
 
 list(APPEND SOURCES_WITH_SLEEF "host/addrspace_operators.ll" "host/addrspace_operators_spir.ll")
 
+# tgamma from CORE-math, correctly rounded, instead of SLEEF's, which misses
+# OpenCL's 16 ULP bound at results near the bottom of the range (#2325).
+if(HOST_CPU_ENABLE_CL_KHR_FP64)
+  list(REMOVE_ITEM SOURCES_WITH_SLEEF sleef-pocl/tgamma.cl)
+  list(APPEND SOURCES_WITH_SLEEF core-math/tgammaf.cl core-math/tgamma.cl)
+elseif(HOST_CPU_SUPPORTS_DOUBLE)
+  # The device has no fp64 (RISC-V conformance builds), but the CPU computes
+  # in double, which is all the float version needs: that one file is built
+  # with fp64 enabled and double constants kept double.
+  list(REMOVE_ITEM SOURCES_WITH_SLEEF sleef-pocl/tgamma.cl)
+  list(APPEND SOURCES_WITH_SLEEF core-math/tgammaf.cl)
+  set_source_files_properties("${CMAKE_SOURCE_DIR}/lib/kernel/core-math/tgammaf.cl"
+    PROPERTIES POCL_CL_FLAGS "-Xclang;-cl-ext=+cl_khr_fp64,+__opencl_c_fp64"
+               POCL_CL_FLAGS_DROP "-cl-single-precision-constant")
+endif()
+
 # if ENABLE_HOST_CPU_VECTORIZE_BUILTINS is enabled, use Clang/LLVM builtins
 # this makes vectorization of (some) OpenCL builtins possible,
 # while also making FP16 versions available (if FP16 is available)
