@@ -41,6 +41,9 @@ test_kernel (void)
    latch block which decrements the iteration variable. The first path
    skips the last if, the second executes it. This confuses the
    barrier tail replication.
+
+   The loop needs more iterations than UnrollBarrierLoops fully unrolls,
+   otherwise it doesn't reach the barrier tail replication.
 */
 
   for (i = 16; i > 0; i--) {

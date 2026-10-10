@@ -152,8 +152,6 @@ private:
                                    LLVMContextRef Ctx, LLVMValueRef F,
                                    unsigned ParamIndex, std::string Name);
 
-  llvm::Value *getRequiredSubgroupSize(llvm::Function &F);
-
   llvm::Module *M;
   llvm::LLVMContext *C;
 
@@ -1220,7 +1218,11 @@ void WorkgroupImpl::privatizeContext(Function *F) {
           Builder, {"_num_groups_x", "_num_groups_y", "_num_groups_z"},
           PC_NUM_GROUPS));
 
-  // Initialize the SG size global and privatize it.
+  // Initialize the SG size global and privatize it. The subgroup size is
+  // currently defined for the CPU implementations via the
+  // intel_reqd_subgroup_size metadata or the local dimension x size (the
+  // default). OptimizeWorkItemGVars already replaced the loads if the size is
+  // known at compile time.
   if (M->getGlobalVariable("_pocl_sub_group_size") != nullptr) {
     Value *SGSize = getRequiredSubgroupSize(*F);
     if (SGSize == nullptr) {
@@ -1793,21 +1795,6 @@ void WorkgroupImpl::createGridLauncher(Function *KernFunc, Function *WGFunc,
     LLVMSetExternallyInitialized(GridLauncherGlobal, false);
     LLVMSetInitializer(GridLauncherGlobal, Launcher);
   }
-}
-
-// The subgroup size is currently defined for the CPU implementations
-// via the intel_reqd_subgroup_size metadata or the local dimension
-// x size (the default).
-llvm::Value *WorkgroupImpl::getRequiredSubgroupSize(llvm::Function &F) {
-
-  if (MDNode *SGSizeMD = F.getMetadata("intel_reqd_sub_group_size")) {
-    // Use the constant from the metadata.
-    ConstantAsMetadata *ConstMD =
-        cast<ConstantAsMetadata>(SGSizeMD->getOperand(0));
-    ConstantInt *Const = cast<ConstantInt>(ConstMD->getValue());
-    return Const;
-  }
-  return nullptr;
 }
 
 llvm::PreservedAnalyses Workgroup::run(llvm::Module &M,

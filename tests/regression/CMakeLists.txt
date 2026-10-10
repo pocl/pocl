@@ -38,6 +38,7 @@ set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_uniform_implicit_barrier_entry
      test_localmem_load_across_barrier
      test_replicated_wi_subgroup_alloca
+     test_unrolled_barrier_loops
      test_indirect_ptrs
      test_usm_indirect_ptrs
      test_usm_free_realloc
@@ -196,6 +197,10 @@ add_test_pocl(NAME "regression/localmem_load_across_barrier" WORKITEM_HANDLER "l
 add_test_pocl(NAME "regression/replicated_wi_subgroup_alloca" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_replicated_wi_subgroup_alloca")
 set_tests_properties("regression/replicated_wi_subgroup_alloca_loops" PROPERTIES ENVIRONMENT "POCL_WORK_GROUP_METHOD=loops;POCL_WILOOPS_MAX_UNROLL_COUNT=4")
 set_tests_properties("regression/replicated_wi_subgroup_alloca_loopvec" PROPERTIES ENVIRONMENT "POCL_WORK_GROUP_METHOD=loopvec;POCL_WILOOPS_MAX_UNROLL_COUNT=4")
+
+add_test_pocl(NAME "regression/unrolled_barrier_loops" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_unrolled_barrier_loops")
+add_test_pocl(NAME "regression/unrolled_barrier_loops_dynamic" WORKITEM_HANDLER "loopvec" COMMAND "test_unrolled_barrier_loops")
+set_tests_properties("regression/unrolled_barrier_loops_dynamic" PROPERTIES ENVIRONMENT "POCL_WORK_GROUP_METHOD=loopvec;POCL_WORK_GROUP_SPECIALIZATION=0")
 
 add_test_pocl(NAME "regression/test_indirect_ptrs" COMMAND "test_indirect_ptrs")
 
