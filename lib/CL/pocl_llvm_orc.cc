@@ -46,6 +46,10 @@
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/TargetParser/Triple.h>
 
+#ifdef __MINGW32__
+#include <CL/cl_half.h>
+#endif
+
 /* absoluteSymbols() moved from Core.h to its own header around LLVM 20. */
 #if __has_include(<llvm/ExecutionEngine/Orc/AbsoluteSymbols.h>)
 #include <llvm/ExecutionEngine/Orc/AbsoluteSymbols.h>
@@ -53,6 +57,7 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -82,50 +87,41 @@ extern "C" void ___chkstk_ms(void);
    libgcc.a into the JIT to supply them does NOT work here -- their COFF members
    carry .pdata/.xdata SEH unwind whose IMAGE_REL_AMD64_ADDR32NB fixups JITLink
    cannot relocate into the high-mapped kernel image ("out of range of Pointer32
-   fixup"). Hand kernels libpocl's own statically-linked copies instead.
+   fixup"). Hand kernels implementations from libpocl instead.
 
-   But mingw's libgcc uses the legacy soft-float ABI for these: the half is
-   carried in a GPR as an unsigned short, whereas LLVM's codegen calls them with
-   the _Float16 ABI, passing/returning the half in the low 16 bits of an XMM
-   register. Handing kernels libgcc's symbols directly therefore moves the half
-   through the wrong register -- e.g. `fptrunc double to half` (emitted for the
-   FP16 pow/atan2 builtins, which round a double result) reads a stale XMM0 and
-   returns garbage. Wrap libgcc's routines in the _Float16 ABI and inject the
-   wrappers. On f16c CPUs the half<->float pair is done in hardware, so only the
-   double conversions strictly need this, but wrap all four for CPUs without
-   f16c. (The Windows JIT build uses the Clang toolchain, which supports
-   _Float16.) */
-/* libgcc's routines, reached under private names via asm labels so we can give
-   them their real (integer-GPR) prototypes without clashing with the compiler's
-   builtin declarations. */
-extern "C" {
-unsigned short poclLibgccTruncSFHF2(float) __asm__("__truncsfhf2");
-unsigned short poclLibgccTruncDFHF2(double) __asm__("__truncdfhf2");
-float poclLibgccExtendHFSF2(unsigned short) __asm__("__extendhfsf2");
-double poclLibgccExtendHFDF2(unsigned short) __asm__("__extendhfdf2");
-}
-
-static _Float16 poclTruncSFHF2(float A) {
-  unsigned short H = poclLibgccTruncSFHF2(A);
-  _Float16 R;
-  __builtin_memcpy(&R, &H, sizeof R);
+   These can't simply forward to the copies libpocl links in, because the
+   half-precision ABI on Windows x64 depends on the toolchain. LLVM and
+   compiler-rt pass and return the half in the low 16 bits of XMM0, as does
+   GCC since version 16. Older GCC and its libgcc pass it as an unsigned short
+   in a GPR, and that includes the GCC 13 libgcc that BinaryBuilder builds link
+   in. So convert in software with the Khronos cl_half.h routines, which match
+   F16C bit-for-bit, and declare the halves as floats carrying the half's bits:
+   a float always travels in XMM0, whatever the compiler's _Float16 ABI. The
+   carrier is only ever copied as bits, never used in arithmetic. On f16c CPUs
+   kernels only ever need the double conversions, but without f16c the float
+   ones are used too. */
+static float poclHalfInXMM(cl_half H) {
+  uint32_t Bits = H;
+  float R;
+  memcpy(&R, &Bits, sizeof R);
   return R;
 }
-static _Float16 poclTruncDFHF2(double A) {
-  unsigned short H = poclLibgccTruncDFHF2(A);
-  _Float16 R;
-  __builtin_memcpy(&R, &H, sizeof R);
-  return R;
+static cl_half poclHalfFromXMM(float A) {
+  uint32_t Bits;
+  memcpy(&Bits, &A, sizeof Bits);
+  return (cl_half)Bits;
 }
-static float poclExtendHFSF2(_Float16 A) {
-  unsigned short H;
-  __builtin_memcpy(&H, &A, sizeof H);
-  return poclLibgccExtendHFSF2(H);
+static float poclTruncSFHF2(float A) {
+  return poclHalfInXMM(cl_half_from_float(A, CL_HALF_RTE));
 }
-static double poclExtendHFDF2(_Float16 A) {
-  unsigned short H;
-  __builtin_memcpy(&H, &A, sizeof H);
-  return poclLibgccExtendHFDF2(H);
+static float poclTruncDFHF2(double A) {
+  return poclHalfInXMM(cl_half_from_double(A, CL_HALF_RTE));
+}
+static float poclExtendHFSF2(float A) {
+  return cl_half_to_float(poclHalfFromXMM(A));
+}
+static double poclExtendHFDF2(float A) {
+  return cl_half_to_float(poclHalfFromXMM(A));
 }
 #endif
 
