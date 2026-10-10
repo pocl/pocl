@@ -50,7 +50,12 @@ endif()
 # fallback search for LLVMConfig.cmake of supported versions in descending order
 if(NOT LLVM_CONFIG_BIN AND NOT LLVM_PACKAGE_VERSION)
   if(NOT MSVC)
-  find_package(LLVM 23.0.0...<23.2 CONFIG)
+  # LLVMConfigVersion.cmake accepts only the major.minor of a range's lower
+  # end, so a release (X.1.y) and a main-branch build (X.0.0) need a call each
+  find_package(LLVM 23.1.0...<23.2 CONFIG)
+  if(NOT LLVM_FOUND)
+    find_package(LLVM 23.0.0...<23.1 CONFIG)
+  endif()
 
   if(NOT LLVM_FOUND)
     find_package(LLVM 22.1.0...<22.2 CONFIG)
