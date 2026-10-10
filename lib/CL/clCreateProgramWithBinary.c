@@ -46,6 +46,9 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
   unsigned i,j;
   int errcode = CL_SUCCESS;
   cl_device_id *unique_devlist = NULL;
+  /* the caller's list, before sub-devices are collapsed to their roots */
+  const cl_device_id *create_list = device_list;
+  cl_uint num_create = num_devices;
 
   POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
 
@@ -143,6 +146,16 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
   program->context = context;
   program->associated_num_devices = num_devices;
   program->associated_devices = unique_devlist;
+  program->create_devices
+      = (cl_device_id *)malloc (num_create * sizeof (cl_device_id));
+  if (program->create_devices == NULL)
+    {
+      errcode = CL_OUT_OF_HOST_MEMORY;
+      goto ERROR;
+    }
+  memcpy (program->create_devices, create_list,
+          num_create * sizeof (cl_device_id));
+  program->num_create_devices = num_create;
   program->num_devices = num_devices;
   program->devices = unique_devlist;
   program->build_status = CL_BUILD_NONE;
@@ -238,6 +251,7 @@ ERROR:
       POCL_MEM_FREE (program->gvar_storage);
       POCL_MEM_FREE (program->build_log);
       POCL_MEM_FREE (program->build_hash);
+      POCL_MEM_FREE (program->create_devices);
       POCL_MEM_FREE (program);
     }
   POCL_MEM_FREE(unique_devlist);

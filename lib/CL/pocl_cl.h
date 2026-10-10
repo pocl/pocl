@@ -1961,6 +1961,12 @@ struct _cl_program {
    * this is setup once, at clCreateProgramWith{Source,Binaries,...} time */
   cl_device_id *associated_devices;
   cl_uint associated_num_devices;
+  /* The devices the application associated the program with, sub-devices
+   * included and in the application's order: what CL_PROGRAM_DEVICES and
+   * the per-device program queries report. associated_devices holds their
+   * deduplicated root devices, which is what PoCL builds for. */
+  cl_device_id *create_devices;
+  cl_uint num_create_devices;
   /* list of devices for which we actually did build the program.
    * this changes on every rebuild to device arguments given to clBuildProgram
    */
