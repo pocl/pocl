@@ -254,31 +254,24 @@ pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
   wake_threads (start, end, num_threads);
 }
 
-/* Chunk sizing for get_wg_index_range(). The chunk scales with the grid
- * instead of having a fixed floor: ceil(remaining/SPREAD) spreads one launch
- * over ~SPREAD grabs, so grids <= SPREAD are dealt one WG at a time. Skewed
- * kernels whose real work sits in a few low-index WGs (e.g. ep concentrates
- * it in WG 0..31, the rest exit early on an i>=count guard) then spread
- * across threads even when only 2-4 WGs carry real work; huge uniform grids
- * hit the MAX cap to bound k->lock traffic. Same adaptive granularity as
- * the spert driver's POCL_SPERT_SPREAD scheme.
+/* Maximum and minimum chunk sizes for get_wg_index_range().
+ * Each pthread driver's thread fetches work from a kernel's WG pool in
+ * chunks, this determines the limits (scaled up by # of threads).
  *
  * The grab itself is a single atomic fetch_add on wgs_dealt — no mutex.
  * A contended pthread mutex falls back to futex syscalls, which dominated
  * profiles on launch-dense uniform grids (be: 900 WGs/frame x chunk 2 =
- * 450 grabs/frame, mutex_lock was 34% of samples).
- *
- * (A progressive triangular 1,2,3,... schedule was measured and rejected:
- * it healed be's lock churn (Run 2.14→1.25s) but regressed ep (4.5→5.74s)
- * as growing grabs swallow the tail of ep's skewed head into one worker.) */
+ * 450 grabs/frame, mutex_lock was 34% of samples). */
 #define POCL_PTHREAD_MAX_WGS 256
-#define POCL_PTHREAD_SPREAD 512
+#define POCL_PTHREAD_MIN_WGS 32
 
 static int
 get_wg_index_range (kernel_run_command *k, unsigned *start_index,
                     unsigned *end_index, int *last_wgs, unsigned num_threads)
 {
-  (void)num_threads;
+  const unsigned scaled_max_wgs = POCL_PTHREAD_MAX_WGS * num_threads;
+  const unsigned scaled_min_wgs = POCL_PTHREAD_MIN_WGS * num_threads;
+
   /* remaining_wgs is never decremented by the lock-free grab path, so it
    * still holds the launch's total WG count set at prepare time */
   const size_t total = k->remaining_wgs;
@@ -289,9 +282,25 @@ get_wg_index_range (kernel_run_command *k, unsigned *start_index,
   if (remaining == 0)
     return 0;
 
-  const unsigned scaled = 1 + (unsigned)(remaining - 1) / POCL_PTHREAD_SPREAD;
-  unsigned max_wgs = min ((unsigned)POCL_PTHREAD_MAX_WGS, scaled);
+  unsigned limit;
+  /* If the work is comprised of huge number of WGs of small WIs,
+   * then get_wg_index_range() becomes a problem on manycore CPUs
+   * because of the grab traffic.
+   *
+   * If we have enough workgroups, scale up the requests linearly by
+   * num_threads, otherwise fallback to smaller workgroups.
+   */
+  if (remaining <= (size_t)scaled_max_wgs * num_threads)
+    limit = scaled_min_wgs;
+  else
+    limit = scaled_max_wgs;
+
+  // divide two integers rounding up, i.e. ceil(remaining/num_threads)
+  const unsigned wgs_per_thread
+      = (1 + (unsigned)(remaining - 1) / num_threads);
+  unsigned max_wgs = min (limit, wgs_per_thread);
   max_wgs = min (max_wgs, (unsigned)remaining);
+  assert (max_wgs > 0);
 
   /* claim [start, start+max_wgs) atomically; a racer that overshoots the end
    * (pool just drained by others) gets nothing and reports 0. wgs_dealt may
