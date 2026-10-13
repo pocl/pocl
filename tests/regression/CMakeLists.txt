@@ -35,6 +35,7 @@ set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_peeled_wi_global_id
      test_multi_exit_barrier_region
      test_barrier_divergent_skip
+     test_barrier_early_exit
      test_divergent_implicit_barrier_entry
      test_uniform_implicit_barrier_entry
      test_localmem_load_across_barrier
@@ -197,6 +198,8 @@ add_test_pocl(NAME "regression/peeled_wi_global_id" WORKITEM_HANDLER "loopvec;cb
 add_test_pocl(NAME "regression/multi_exit_barrier_region" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_multi_exit_barrier_region" LABELS ${SPIRV_LABELS})
 
 add_test_pocl(NAME "regression/barrier_divergent_skip" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_barrier_divergent_skip" LABELS ${SPIRV_LABELS})
+
+add_test_pocl(NAME "regression/barrier_early_exit" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_barrier_early_exit")
 
 add_test_pocl(NAME "regression/divergent_implicit_barrier_entry" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_divergent_implicit_barrier_entry")
 
