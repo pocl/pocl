@@ -82,9 +82,9 @@ static void fixSignedDivRem(IRBuilder<> &Builder, BinaryOperator *BinI,
   Value *Condition1 = Builder.CreateCmp(CmpInst::Predicate::ICMP_EQ, Divisor,
                                         ConstantInt::getSigned(T, -1));
   // smallest negative value representable in given integer bit width
-  int64_t IntMin = (int64_t)1 << (T->getScalarSizeInBits() - 1);
+  APInt IntMin = APInt::getSignedMinValue(T->getScalarSizeInBits());
   Value *Condition2 = Builder.CreateCmp(CmpInst::Predicate::ICMP_EQ, Dividend,
-                                        ConstantInt::getSigned(T, IntMin));
+                                        ConstantInt::get(T, IntMin));
   Value *BothConds = Builder.CreateAnd(Condition1, Condition2);
   Value *ConditionZExt = Builder.CreateZExt(BothConds, Dividend->getType());
   Value *FixedDividend = Builder.CreateAdd(Dividend, ConditionZExt);
