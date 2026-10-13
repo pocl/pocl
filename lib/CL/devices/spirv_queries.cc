@@ -247,6 +247,13 @@ void pocl_setup_spirv_queries(cl_device_id dev) {
     }
   }
 
+  if (dev->supported_spirv_extensions &&
+      strstr(dev->supported_spirv_extensions, "SPV_KHR_float_controls2")) {
+    SpirvExtensions.push_back("SPV_KHR_float_controls2");
+    SpirvCapabilities.push_back(
+        static_cast<cl_uint>(spv::Capability::FloatControls2));
+  }
+
   if (strstr(dev->extensions, "cl_intel_spirv_subgroups")) {
     SpirvExtensions.push_back("SPV_INTEL_subgroups");
     SpirvCapabilities.push_back(
