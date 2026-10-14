@@ -88,6 +88,11 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
 
   ops->init_queue = pocl_pthread_init_queue;
   ops->free_queue = pocl_pthread_free_queue;
+
+#ifdef PTHREAD_LOCAL_EXEC
+  ops->reserve_local_exec = pthread_scheduler_reserve_local_exec;
+  ops->release_local_exec = pthread_scheduler_release_local_exec;
+#endif
 }
 
 unsigned int
@@ -151,6 +156,13 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   device->partition_type = NULL;
 #endif
 
+#ifdef PTHREAD_LOCAL_EXEC
+  device->on_host_queue_props |= CL_QUEUE_THREAD_LOCAL_EXEC_ENABLE_INTEL;
+  device->extensions = HOST_DEVICE_EXTENSIONS " cl_intel_exec_by_local_thread";
+  free ((void *)device->extensions_with_version);
+  pocl_setup_extensions_with_version (device);
+#endif
+
   if (!scheduler_initialized)
     {
       ret = pthread_scheduler_init (device);
@@ -212,10 +224,56 @@ pocl_pthread_run (void *data, _cl_command_node *cmd)
   /* not used: this device will not be told when or what to run */
 }
 
+#ifdef PTHREAD_LOCAL_EXEC
+/* Submits a command of a CL_QUEUE_THREAD_LOCAL_EXEC_ENABLE_INTEL queue: the
+   calling thread waits for its dependencies and then executes it. The command
+   stays with this thread throughout; notify only wakes it up. */
+static void
+pocl_pthread_submit_local (_cl_command_node *node)
+{
+  cl_event event = node->sync.event.event;
+  cl_device_id node_device = node->device;
+  event_data *e_d = (event_data *)event->data;
+
+  /* Once the command is complete, it and its event can be gone. */
+  void *reservation = NULL;
+  if (node->type == CL_COMMAND_NDRANGE_KERNEL)
+    {
+      reservation = node->command.run.local_exec;
+      node->command.run.local_exec = NULL;
+    }
+
+  while (!pocl_command_is_ready (event) && !event->failed_dependency)
+    POCL_WAIT_COND (e_d->event_cond, event->pocl_lock);
+
+  if (event->failed_dependency)
+    {
+      POCL_UNLOCK_OBJ (event);
+      pocl_update_event_failed (CL_FAILED, NULL, 0, event, NULL);
+    }
+  else
+    {
+      pocl_update_event_submitted (event);
+      POCL_UNLOCK_OBJ (event);
+      pthread_scheduler_exec_local (node, reservation);
+    }
+
+  if (reservation != NULL)
+    pthread_scheduler_release_local_exec (node_device, reservation);
+}
+#endif
+
 void
 pocl_pthread_submit (_cl_command_node *node, cl_command_queue cq)
 {
   node->state = POCL_COMMAND_READY;
+#ifdef PTHREAD_LOCAL_EXEC
+  if (cq->properties & CL_QUEUE_THREAD_LOCAL_EXEC_ENABLE_INTEL)
+    {
+      pocl_pthread_submit_local (node);
+      return;
+    }
+#endif
   /* If a wait-list dependency has failed, this command must not run: fail it via
    * the error cascade. There is no point waiting for it to become otherwise
    * ready first. pocl_update_event_failed takes the cq + event locks itself, so
@@ -266,6 +324,19 @@ void
 pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
 {
   _cl_command_node *node = event->command;
+
+#ifdef PTHREAD_LOCAL_EXEC
+  if (event->queue->properties & CL_QUEUE_THREAD_LOCAL_EXEC_ENABLE_INTEL)
+    {
+      /* Wake up the thread waiting in pocl_pthread_submit_local, if it is
+         waiting yet; the event data is created before that. */
+      event_data *e_d = (event_data *)event->data;
+      if (e_d != NULL
+          && (pocl_command_is_ready (event) || event->failed_dependency))
+        POCL_BROADCAST_COND (e_d->event_cond);
+      return;
+    }
+#endif
 
   /* Fail the command if the notifier finished failed, or if any wait-list
    * dependency has already failed (recorded on the event). In either case the

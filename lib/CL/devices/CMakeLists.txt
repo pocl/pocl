@@ -203,7 +203,8 @@ if(ENABLE_HOST_CPU_DEVICES)
     endif()
   endif()
   add_subdirectory(cpu_dbk)
-  list(APPEND POCL_DEVICES_SOURCES common_utils.h common_utils.c)
+  list(APPEND POCL_DEVICES_SOURCES common_utils.h common_utils.c
+       private_stack.h private_stack.c)
 endif()
 
 if(ENABLE_SIGUSR2_HANDLER)

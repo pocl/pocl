@@ -820,6 +820,14 @@ void pocl_command_enqueue (cl_command_queue command_queue,
   /* node->sync.event.event is unlocked by device_ops->submit */
 }
 
+cl_int
+pocl_finish_blocking_command (cl_command_queue command_queue)
+{
+  if (command_queue->properties & CL_QUEUE_THREAD_LOCAL_EXEC_ENABLE_INTEL)
+    return CL_SUCCESS;
+  return POname (clFinish) (command_queue);
+}
+
 int
 pocl_alloc_or_retain_mem_host_ptr (cl_mem mem)
 {

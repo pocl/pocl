@@ -1023,6 +1023,7 @@ static pocl_module_cache_item *pocl_module_cache;
 static pocl_lock_t pocl_llvm_codegen_lock;
 static pocl_lock_t pocl_module_cache_lock;
 static int pocl_module_cache_initialized;
+static int pocl_work_group_specialization = 1;
 
 /* only to be called in basic/pthread/<other cpu driver> init */
 void
@@ -1032,6 +1033,10 @@ pocl_init_dlhandle_cache ()
     {
       POCL_INIT_LOCK (pocl_llvm_codegen_lock);
       POCL_INIT_LOCK (pocl_module_cache_lock);
+      /* Brute force mechanism to test relying on generic work-group
+         functions only. */
+      pocl_work_group_specialization
+        = pocl_get_bool_option ("POCL_WORK_GROUP_SPECIALIZATION", 1);
       pocl_module_cache_initialized = 1;
     }
 }
@@ -1353,9 +1358,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   pocl_module_cache_item *ci = NULL;
   _cl_command_run *run_cmd = &command->command.run;
 
-  /* Brute force mechanism to test relying on generic work-group functions
-     only. */
-  if (!pocl_get_bool_option("POCL_WORK_GROUP_SPECIALIZATION", 1))
+  if (!pocl_work_group_specialization)
     specialize = 0;
 
   POCL_LOCK (pocl_module_cache_lock);
@@ -2117,6 +2120,7 @@ static const cl_name_version OPENCL_EXTENSIONS[]
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_split_work_group_barrier" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_subgroup_local_block_io" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_intel_spirv_subgroups" },
+      { CL_MAKE_VERSION (0, 0, 0), "cl_intel_exec_by_local_thread" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_spirv_no_integer_wrap_decoration" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_spirv_linkonce_odr" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_spirv_queries" },

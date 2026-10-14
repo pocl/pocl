@@ -83,6 +83,10 @@ CPU driver
 * The pthread driver now only wakes up as many worker threads as a command
   can use, and only those of the subdevice it targets. This reduces the launch
   latency of small kernels, especially on subdevices.
+* The pthread driver supports `cl_intel_exec_by_local_thread` on x86-64 and
+  AArch64 (except on Windows): commands enqueued on a command queue created
+  with `CL_QUEUE_THREAD_LOCAL_EXEC_ENABLE_INTEL` are executed by the enqueuing
+  thread, which avoids the hand-off to a worker thread for small kernels.
 
 * `sinpi`, `cospi`, `tanpi` and `atanpi` now return correctly signed exact
   zeros (found by the CTS `math_edge_cases` test).
