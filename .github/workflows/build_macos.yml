@@ -134,7 +134,7 @@ jobs:
           tar -C /tmp -cavf /tmp/pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: 'PoCL-MacOSX-${{ matrix.config }}-LLVM_${{ matrix.llvm }}-${{ github.sha }}'
           path: '/tmp/pocl_${{ matrix.config }}_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst'
