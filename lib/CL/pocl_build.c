@@ -264,16 +264,20 @@ process_options (const char *options, char *modded_options, char *link_options,
                 {
                   *flush_denorms = 1;
                 }
-              if (strstr (token, "-cl-fp32-correctly-rounded-divide-sqrt"))
-                {
-                  *requires_correctly_rounded_sqrt_div = 1;
-                }
             }
 
           if (pocl_option_listed (cl_parameters, token))
             {
               /* the LLVM API call pushes the parameters directly to the
                  frontend without using -Xclang */
+
+              /* clBuildProgram and clCompileProgram must fail for a device
+                 without CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT; the devices are
+                 checked in compile_and_link_program () */
+              if (compiling
+                  && strcmp (token, "-cl-fp32-correctly-rounded-divide-sqrt")
+                       == 0)
+                *requires_correctly_rounded_sqrt_div = 1;
 
             // LLVM 11 has removed "-cl-denorms-are-zero" option
             // https://reviews.llvm.org/D69878

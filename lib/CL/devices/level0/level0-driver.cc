@@ -2423,6 +2423,9 @@ static cl_device_fp_config convertZeFPFlags(ze_device_fp_flags_t FPFlags) {
   if ((FPFlags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT) != 0u) {
     FPConfig |= CL_FP_SOFT_FLOAT;
   }
+  if ((FPFlags & ZE_DEVICE_FP_FLAG_ROUNDED_DIVIDE_SQRT) != 0u) {
+    FPConfig |= CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT;
+  }
   return FPConfig;
 }
 
