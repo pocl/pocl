@@ -30,6 +30,12 @@ kernel void test_printf_vectors_halfn()
   printf ("\nhalf VECTORS\n\n");
   ushort2 u2 = (ushort2)(0x7C00, 0x7E00);
   printf("half2  %v2hf\n", (as_half2(u2)));
+  /* min/max subnormal, min normal, max finite */
+  ushort4 u4 = (ushort4)(0x0001, 0x03FF, 0x0400, 0x7BFF);
+  printf("half4  %v4he\n", (as_half4(u4)));
+  /* -0, -inf, negative NaN, -min subnormal */
+  u4 = (ushort4)(0x8000, 0xFC00, 0xFE00, 0x8001);
+  printf("half4  %v4hg\n", (as_half4(u4)));
   printf("half2  %v2hf\n", (half2)(10.112, 20.222));
   printf("half3  %v3hf\n", (half3)(10.113, 20.223, 30.333));
   printf("half4  %v4hf\n", (half4)(10.114, 20.224, 30.334, 40.444));
