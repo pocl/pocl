@@ -1199,6 +1199,14 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
     Uses.push_back(User);
   }
 
+  // An alloca without any store of a defined value (e.g. one that is only
+  // read, or that only receives undef values from a broken-down PHI) has no
+  // initializer to rematerialize, so save and restore it instead.
+  if (RematCandidate && isa<AllocaInst>(Def) && InitializerStore == nullptr) {
+    RematCandidate = false;
+    LLVM_DEBUG(dbgs() << "No initializer store to rematerialize.\n");
+  }
+
   if (RematCandidate && isa<AllocaInst>(Def)) {
     bool CanRemat = true;
     int Depth = 0;
