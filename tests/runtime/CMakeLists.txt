@@ -56,6 +56,10 @@ if(HAVE_ONNXRT)
   list(APPEND C_PROGRAMS_TO_BUILD test_dbk_onnx_inference)
 endif()
 
+if(ENABLE_HOST_CPU_DEVICES AND NOT ENABLE_HOST_CPU_DEVICES_OPENMP)
+  list(APPEND C_PROGRAMS_TO_BUILD test_worker_wakeup)
+endif()
+
 set(CXX_PROGRAMS_TO_BUILD test_device_address test_svm test_large_buf
   test_subbuffers test_compile_n_link test_dbk_matmul test_tensor_view
   test_dbk_convert test_dbk_set_rows)
@@ -125,6 +129,18 @@ add_test_pocl(NAME "runtime/clCreateKernel" COMMAND "test_clCreateKernel" WORKIT
 add_test_pocl(NAME "runtime/clGetKernelArgInfo" COMMAND "test_clGetKernelArgInfo" WORKITEM_HANDLER "loopvec")
 
 add_test_pocl(NAME "runtime/test_subgroup_queries" COMMAND "test_subgroup_queries" WORKITEM_HANDLER "loopvec")
+
+if(ENABLE_HOST_CPU_DEVICES AND NOT ENABLE_HOST_CPU_DEVICES_OPENMP)
+  # relies on the pthread scheduler running one work-group per compute unit
+  # concurrently, which other tests running in parallel can get in the way of
+  add_test_pocl(NAME "runtime/test_worker_wakeup" COMMAND "test_worker_wakeup" WORKITEM_HANDLER "loopvec")
+  set_property(TEST "runtime/test_worker_wakeup"
+               APPEND PROPERTY ENVIRONMENT "POCL_DEVICES=cpu")
+  set_tests_properties("runtime/test_worker_wakeup"
+    PROPERTIES
+      RUN_SERIAL TRUE
+      DEPENDS "pocl_version_check")
+endif()
 
 add_test_pocl(NAME "runtime/clSetEventCallback"
               COMMAND "test_clSetEventCallback"
