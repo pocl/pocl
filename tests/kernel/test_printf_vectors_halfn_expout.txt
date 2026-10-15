@@ -3,6 +3,8 @@ Running test test_printf_vectors_halfn...
 half VECTORS
 
 half2  inf,nan
+half4  5.960464e-08,6.097555e-05,6.103516e-05,6.550400e+04
+half4  -0,-inf,nan,-5.96046e-08
 half2  10.109375,20.218750
 half3  10.109375,20.218750,30.328125
 half4  10.117188,20.218750,30.328125,40.437500
