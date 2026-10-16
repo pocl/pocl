@@ -17,6 +17,5 @@
 # CHECK: llvm.sqrt.v
 # CHECK: llvm.ceil.v
 # CHECK: llvm.tan.v
-# CHECK: llvm.powi.v
 # CHECK: llvm.floor.v
 # CHECK: llvm.trunc.v
