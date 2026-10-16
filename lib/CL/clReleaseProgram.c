@@ -79,6 +79,8 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
         POCL_MEM_FREE(program->devices);
       if (program->associated_devices != program->context->devices)
         POCL_MEM_FREE (program->associated_devices);
+      if (program->create_devices != program->context->create_devices)
+        POCL_MEM_FREE (program->create_devices);
 
       POCL_MEM_FREE(program->source);
 

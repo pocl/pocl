@@ -190,10 +190,21 @@ POname(clCreateContext)(const cl_context_properties * properties,
   if (errcode)
     goto ERROR;
 
+  /* The devices as the application passed them, sub-devices included and in
+   * its order, for CL_CONTEXT_DEVICES. Duplicates are ignored, as the
+   * specification says for clCreateContext. */
   context->create_devices = calloc(num_devices, sizeof(cl_device_id));
   POCL_GOTO_ERROR_COND ((context->create_devices == NULL), CL_OUT_OF_HOST_MEMORY);
-  memcpy(context->create_devices, devices, num_devices * sizeof(cl_device_id));
-  context->num_create_devices = num_devices;
+  context->num_create_devices = 0;
+  for (i = 0; i < num_devices; ++i)
+    {
+      unsigned j;
+      for (j = 0; j < context->num_create_devices; ++j)
+        if (context->create_devices[j] == devices[i])
+          break;
+      if (j == context->num_create_devices)
+        context->create_devices[context->num_create_devices++] = devices[i];
+    }
 
   context->devices = pocl_unique_device_list(devices, num_devices,
                                              &context->num_devices);
