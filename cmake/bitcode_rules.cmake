@@ -117,11 +117,24 @@ function(compile_cl_to_bc FILENAME SUBDIR BC_FILE_LIST EXTRA_CONFIG)
         "-I" "${CMAKE_SOURCE_DIR}/lib/kernel/libclc")
     endif()
 
+    # a source can add its own flags (the POCL_CL_FLAGS property) and drop
+    # some of KERNEL_CL_FLAGS (POCL_CL_FLAGS_DROP), set by the caller with
+    # set_source_files_properties on its full path
+    set(FILE_KERNEL_CL_FLAGS ${KERNEL_CL_FLAGS})
+    get_source_file_property(DROP_CL_FLAGS "${FULL_F_PATH}" POCL_CL_FLAGS_DROP)
+    if(DROP_CL_FLAGS)
+      list(REMOVE_ITEM FILE_KERNEL_CL_FLAGS ${DROP_CL_FLAGS})
+    endif()
+    get_source_file_property(FILE_CL_FLAGS "${FULL_F_PATH}" POCL_CL_FLAGS)
+    if(NOT FILE_CL_FLAGS)
+      set(FILE_CL_FLAGS "")
+    endif()
+
     add_custom_command( OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
           ${DEPENDLIST}
         COMMAND "${HOST_CLANG}" ${CLANG_FLAGS}
-        ${KERNEL_CL_FLAGS} ${DEVICE_CL_FLAGS}
+        ${FILE_KERNEL_CL_FLAGS} ${DEVICE_CL_FLAGS} ${FILE_CL_FLAGS}
         "-o" "${BC_FILE}" "-O0" "-c" "${FULL_F_PATH}"
         ${INCLUDELIST}
         COMMENT "Building CL to LLVM bitcode ${BC_FILE}"
