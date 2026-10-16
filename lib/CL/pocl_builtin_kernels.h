@@ -39,6 +39,12 @@ extern "C"
   void pocl_init_builtin_kernel_metadata ();
 
   POCL_EXPORT
+  int pocl_count_builtin_kernels (cl_device_id device,
+                                  cl_program program,
+                                  unsigned program_device_i,
+                                  size_t *count);
+
+  POCL_EXPORT
   int pocl_setup_builtin_metadata (cl_device_id device,
                                    cl_program program,
                                    unsigned program_device_i);
