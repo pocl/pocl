@@ -76,7 +76,17 @@ DEFINE_FP16_BUILTIN_V_VV (fmin, _CL_FP16_FMIN_NUM)
 DEFINE_FP16_BUILTIN_V_VV (fmax, __builtin_elementwise_max)
 DEFINE_FP16_BUILTIN_V_VV (fmin, __builtin_elementwise_min)
 #endif
+#include "../fma_half.h"
+#ifdef POCL_FMA_HALF_THROUGH_DOUBLE
+half _CL_OVERLOADABLE
+fma (half a, half b, half c)
+{
+  return _cl_fma_half (a, b, c);
+}
+DEFINE_FP16_EXPR_V_VVV (fma)
+#else
 DEFINE_FP16_BUILTIN_V_VVV (fma, __builtin_elementwise_fma)
+#endif
 
 /* fdim(x, y) = (x > y) ? x - y : +0, returning NaN if either input is NaN.
    No single builtin exists; build it from fmax (defined above), keeping the
