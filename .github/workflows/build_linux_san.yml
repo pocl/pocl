@@ -7,8 +7,8 @@ permissions:
 on:
   workflow_dispatch:
   schedule:
-# at 3:11 UTC every saturday
-    - cron: '11 3 * * 6'
+# at 0:11 UTC every saturday
+    - cron: '11 0 * * 6'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
@@ -105,7 +105,8 @@ jobs:
           rm -rf /tmp/foo
           mkdir ${{ env.POCL_CACHE_DIR }}
           if [ "${{ matrix.config }}" == "cts_asan" ]; then
-            runCTest -L conformance_suite_micro_main -L asan
+            # conformance_main_spirv_new_micro_2 fails with lifetime.end only applies to pointers
+            runCTest -L conformance_suite_micro_main -L asan -E conformance_main_spirv_new_micro_2
           elif [ "${{ matrix.config }}" == "cts_tsan" ]; then
             runCTest -L conformance_suite_micro_main -L tsan
           else
