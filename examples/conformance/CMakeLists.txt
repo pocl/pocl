@@ -85,7 +85,7 @@ if(CUSTOM_CTS_GIT_TAG)
   set(CTS_GIT_TAG "${CUSTOM_CTS_GIT_TAG}")
 else()
   # Use PoCL's fork which has pending fixes.
-  set(CTS_GIT_TAG "v2026.06.02")
+  set(CTS_GIT_TAG "v2026.11.04")
 endif()
 
 set(TS_BUILDDIR "${TS_BUILDDIR}/test_conformance")
@@ -238,7 +238,7 @@ endif()
 
 if(ENABLE_LEVEL0)
   # same as main test minus null_required_work_group_size
-  set(SUBTESTS binary_create binary_get bool_type buffer_properties_queries clone_kernel consistency_2d_image_from_buffer
+  set(SUBTESTS binary_create binary_get bool_type buffer_properties_queries consistency_2d_image_from_buffer
     consistency_3d_image_writes consistency_depth_images consistency_device_and_host_timer
     consistency_device_enqueue consistency_il_programs consistency_memory_model consistency_non_uniform_work_group
     consistency_pipes consistency_prog_ctor_dtor consistency_progvar consistency_read_write_images
@@ -761,7 +761,8 @@ function(add_cts_micro_tests CTS_LABEL TS_SUFFIX)
 set(EXTRA_ARGS ${ARGN})
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_api_micro_ocl_30"
-         COMMAND "${TS_BUILDDIR}/api/test_api" ${EXTRA_ARGS} buffer_properties_queries   clone_kernel
+         COMMAND "${TS_BUILDDIR}/api/test_api" ${EXTRA_ARGS} buffer_properties_queries clone_kernel_with_different_args
+         clone_kernel_with_buf_image_kernels clone_kernel_with_exec_info clone_kernel_with_no_args clone_kernel_with_svm_ptrs
          consistency_2d_image_from_buffer   consistency_3d_image_writes   consistency_depth_images
          consistency_device_and_host_timer   consistency_device_enqueue   consistency_il_programs
          consistency_memory_model   consistency_non_uniform_work_group   consistency_pipes
