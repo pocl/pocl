@@ -39,6 +39,7 @@ set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_usm_indirect_ptrs
      test_usm_free_realloc
      test_sanitize_divrem
+     test_tall_grid
 )
 foreach(PROG ${C_PROGRAMS_TO_BUILD})
   add_executable("${PROG}" "${PROG}.c")
@@ -166,6 +167,8 @@ add_test_pocl(NAME "regression/test_issue_1747" COMMAND "test_issue_1747" "0" "$
 add_test_pocl(NAME "regression/peeled_wi_global_id" WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_peeled_wi_global_id" LABELS ${SPIRV_LABELS})
 
 add_test_pocl(NAME "regression/divergent_implicit_barrier_entry" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_divergent_implicit_barrier_entry")
+
+add_test_pocl(NAME "regression/tall_grid" COMMAND "test_tall_grid")
 
 add_test_pocl(NAME "regression/uniform_implicit_barrier_entry" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_uniform_implicit_barrier_entry")
 
