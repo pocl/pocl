@@ -44,6 +44,7 @@ set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_usm_indirect_ptrs
      test_usm_free_realloc
      test_sanitize_divrem
+     test_tall_grid
 )
 if(UNIX)
   list(APPEND C_PROGRAMS_TO_BUILD test_signal_handlers)
@@ -204,6 +205,8 @@ add_test_pocl(NAME "regression/multi_exit_barrier_region" WORKITEM_HANDLER "loop
 add_test_pocl(NAME "regression/spirv_intel_subgroups" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_spirv_intel_subgroups" LABELS ${SPIRV_LABELS})
 
 add_test_pocl(NAME "regression/divergent_implicit_barrier_entry" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_divergent_implicit_barrier_entry")
+
+add_test_pocl(NAME "regression/tall_grid" COMMAND "test_tall_grid")
 
 add_test_pocl(NAME "regression/uniform_implicit_barrier_entry" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_uniform_implicit_barrier_entry")
 
