@@ -983,13 +983,16 @@ pocl_fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg)
 }
 
 /* Returns the width of the widest dimension in the grid of the given
-   run command. */
+   run command, counted from the origin: the small-grid work-group functions
+   assume that both the group counts and the global offsets are bounded. */
 size_t
 pocl_cmd_max_grid_dim_width (_cl_command_run *cmd)
 {
-  return max (max (cmd->pc.local_size[0] * cmd->pc.num_groups[0],
-                   cmd->pc.local_size[1] * cmd->pc.num_groups[1]),
-              cmd->pc.local_size[2] * cmd->pc.local_size[2]);
+  size_t width = 0;
+  for (unsigned d = 0; d < 3; ++d)
+    width = max (width, cmd->pc.global_offset[d]
+                          + cmd->pc.local_size[d] * cmd->pc.num_groups[d]);
+  return width;
 }
 
 
