@@ -148,6 +148,28 @@ kernel void reader( global float2* dest, float2 ptr_write_val ) {
 
 )raw";
 
+/* Initializers must run even if the program binaries are queried (which
+   compiles the initializer kernel) before the first launch, and again after
+   the program is rebuilt. */
+static char programFiveSourceCode[] = R"raw(
+
+global int initVar = 42;
+global int initArr[4] = { 1, 2, 3, 4 };
+
+kernel void read_init (global int *out) {
+  out[0] = initVar;
+  for (int i = 0; i < 4; ++i)
+    out[1 + i] = initArr[i];
+}
+
+kernel void clobber_init () {
+  initVar = -1;
+  for (int i = 0; i < 4; ++i)
+    initArr[i] = -1;
+}
+
+)raw";
+
 int
 main(void)
 {
@@ -445,6 +467,60 @@ main(void)
 
         std::cout << "TEST_GVAR_PTR matching res: " << matching_res << "\n";
         errors += (matching_res != 8 ? 1 : 0);
+
+        cl::Program::Sources sources5({programFiveSourceCode});
+        cl::Program program5(context, sources5);
+        program5.build(devices, "-cl-std=CL3.0");
+        program5.getInfo<CL_PROGRAM_BINARIES>();
+
+        cl::Buffer outBuffer5 = cl::Buffer(
+            context, CL_MEM_READ_WRITE, 5 * sizeof(cl_int), nullptr);
+        const cl_int initExpected[5] = { 42, 1, 2, 3, 4 };
+
+        for (int build = 0; build < 2; ++build) {
+          if (build > 0)
+            program5.build(devices, "-cl-std=CL3.0");
+
+          cl::Kernel read_init(program5, "read_init");
+          cl::Kernel clobber_init(program5, "clobber_init");
+          read_init.setArg(0, outBuffer5);
+          queue.enqueueNDRangeKernel(
+              read_init,
+              cl::NullRange,
+              cl::NDRange(1),
+              cl::NullRange);
+
+          cl_int initOut[5] = { 0 };
+          queue.enqueueReadBuffer(
+              outBuffer5,
+              CL_TRUE, // block
+              0,
+              sizeof(initOut),
+              (void*) &initOut[0]);
+
+          matching_res = 0;
+          for (unsigned i = 0; i < 5; ++i) {
+            if (initOut[i] == initExpected[i]) {
+              ++matching_res;
+            } else {
+              std::cout << "FAIL at " << i << " build " << build
+                        << " expected: " << initExpected[i]
+                        << " got: " << initOut[i] << "\n";
+            }
+          }
+
+          std::cout << "TEST_GVAR_INIT build " << build
+                    << " matching res: " << matching_res << "\n";
+          errors += (matching_res != 5 ? 1 : 0);
+
+          /* The rebuild must start from the initializers again. */
+          queue.enqueueNDRangeKernel(
+              clobber_init,
+              cl::NullRange,
+              cl::NDRange(1),
+              cl::NullRange);
+          queue.finish();
+        }
 
     }
     catch (cl::Error &err) {

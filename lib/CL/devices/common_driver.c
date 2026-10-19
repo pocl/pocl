@@ -1204,6 +1204,65 @@ pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i)
 #endif
 }
 
+#ifdef ENABLE_HOST_CPU_DEVICES
+/* Compiles the hidden initialization kernel and, with a callback, runs it on
+   STORAGE. */
+static int
+compile_gvar_init_kernel (cl_program program,
+                          cl_uint dev_i,
+                          cl_device_id device,
+                          void *storage,
+                          gvar_init_callback_t callback)
+{
+  pocl_kernel_metadata_t fake_meta;
+  memset (&fake_meta, 0, sizeof (fake_meta));
+  pocl_kernel_hash_t fake_build_hash;
+
+  SHA1_CTX hash_ctx;
+  pocl_SHA1_Init (&hash_ctx);
+  pocl_SHA1_Update (&hash_ctx, (uint8_t *)program->build_hash[dev_i],
+                    sizeof (SHA1_digest_t));
+  pocl_SHA1_Update (&hash_ctx, (uint8_t *)POCL_GVAR_INIT_KERNEL_NAME,
+                    strlen (POCL_GVAR_INIT_KERNEL_NAME));
+  pocl_SHA1_Final (&hash_ctx, fake_build_hash);
+
+  fake_meta.build_hash = &fake_build_hash;
+
+  struct _cl_kernel fake_kernel;
+  memset (&fake_kernel, 0, sizeof (fake_kernel));
+  fake_kernel.meta = &fake_meta;
+  fake_kernel.name = POCL_GVAR_INIT_KERNEL_NAME;
+  fake_kernel.context = program->context;
+  fake_kernel.program = program;
+
+  _cl_command_node fake_cmd;
+  memset (&fake_cmd, 0, sizeof (_cl_command_node));
+  fake_cmd.program_device_i = dev_i;
+  fake_cmd.device = device;
+  fake_cmd.type = CL_COMMAND_NDRANGE_KERNEL;
+  fake_cmd.command.run.kernel = &fake_kernel;
+  fake_cmd.command.run.hash = fake_meta.build_hash;
+  fake_cmd.command.run.pc.local_size[0] = 1;
+  fake_cmd.command.run.pc.local_size[1] = 1;
+  fake_cmd.command.run.pc.local_size[2] = 1;
+  fake_cmd.command.run.pc.work_dim = 3;
+  fake_cmd.command.run.pc.num_groups[0] = 1;
+  fake_cmd.command.run.pc.num_groups[1] = 1;
+  fake_cmd.command.run.pc.num_groups[2] = 1;
+  fake_cmd.command.run.pc.global_offset[0] = 0;
+  fake_cmd.command.run.pc.global_offset[1] = 0;
+  fake_cmd.command.run.pc.global_offset[2] = 0;
+  fake_cmd.command.run.pc.global_var_buffer = storage;
+
+  if (device->ops->compile_kernel (&fake_cmd, &fake_kernel, device, 0) != 0)
+    return CL_INVALID_OPERATION;
+
+  if (callback)
+    callback (program, dev_i, &fake_cmd);
+  return CL_SUCCESS;
+}
+#endif
+
 /**
 * \brief  Since the ProgramScopeVariables pass creates a hidden kernel
 * for variable initialization, we need to compile (and run) that kernel
@@ -1213,9 +1272,12 @@ pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i)
 * as arguments.
 *
 * Can be used either to compile the hidden initialization kernel for
-* a poclbinary, or to compile & run program-scope initialization before
-* kernel execution. Should work with all devices that use PoCL's LLVM
-* compilation.
+* a poclbinary (callback NULL; the storage is left alone), or to compile & run
+* program-scope initialization before kernel execution. The latter allocates
+* the storage and runs the initializer once per device under the program
+* lock, and only publishes the storage once it is initialized, so that
+* concurrent launches never see uninitialized variables. Should work with all
+* devices that use PoCL's LLVM compilation.
 *
 * \param [in] program the cl_program used
 * \param [in] device the device used
@@ -1229,64 +1291,34 @@ pocl_driver_build_gvar_init_kernel (cl_program program,
                                     gvar_init_callback_t callback)
 {
 #ifdef ENABLE_HOST_CPU_DEVICES
-  if (device->run_program_scope_variables_pass == CL_FALSE)
+  if (device->run_program_scope_variables_pass == CL_FALSE
+      || program->global_var_total_size[dev_i] == 0)
     return CL_SUCCESS;
 
-  if (program->global_var_total_size[dev_i] > 0 && program->gvar_storage[dev_i] == NULL)
+  if (callback == NULL)
+    return compile_gvar_init_kernel (program, dev_i, device, NULL, NULL);
+
+  int err = CL_SUCCESS;
+  POCL_LOCK_OBJ (program);
+  if (program->gvar_storage[dev_i] == NULL)
     {
-      program->gvar_storage[dev_i] = pocl_aligned_malloc (
-          MAX_EXTENDED_ALIGNMENT, program->global_var_total_size[dev_i]);
-
-      pocl_kernel_metadata_t fake_meta;
-      memset (&fake_meta, 0, sizeof (fake_meta));
-      pocl_kernel_hash_t fake_build_hash;
-
-      SHA1_CTX hash_ctx;
-      pocl_SHA1_Init (&hash_ctx);
-      pocl_SHA1_Update (&hash_ctx, (uint8_t *)program->build_hash[dev_i],
-                        sizeof (SHA1_digest_t));
-      pocl_SHA1_Update (&hash_ctx, (uint8_t *)POCL_GVAR_INIT_KERNEL_NAME,
-                        strlen (POCL_GVAR_INIT_KERNEL_NAME));
-      pocl_SHA1_Final (&hash_ctx, fake_build_hash);
-
-      fake_meta.build_hash = &fake_build_hash;
-
-      struct _cl_kernel fake_kernel;
-      memset (&fake_kernel, 0, sizeof (fake_kernel));
-      fake_kernel.meta = &fake_meta;
-      fake_kernel.name = POCL_GVAR_INIT_KERNEL_NAME;
-      fake_kernel.context = program->context;
-      fake_kernel.program = program;
-
-      _cl_command_node fake_cmd;
-      memset (&fake_cmd, 0, sizeof (_cl_command_node));
-      fake_cmd.program_device_i = dev_i;
-      fake_cmd.device = device;
-      fake_cmd.type = CL_COMMAND_NDRANGE_KERNEL;
-      fake_cmd.command.run.kernel = &fake_kernel;
-      fake_cmd.command.run.hash = fake_meta.build_hash;
-      fake_cmd.command.run.pc.local_size[0] = 1;
-      fake_cmd.command.run.pc.local_size[1] = 1;
-      fake_cmd.command.run.pc.local_size[2] = 1;
-      fake_cmd.command.run.pc.work_dim = 3;
-      fake_cmd.command.run.pc.num_groups[0] = 1;
-      fake_cmd.command.run.pc.num_groups[1] = 1;
-      fake_cmd.command.run.pc.num_groups[2] = 1;
-      fake_cmd.command.run.pc.global_offset[0] = 0;
-      fake_cmd.command.run.pc.global_offset[1] = 0;
-      fake_cmd.command.run.pc.global_offset[2] = 0;
-      fake_cmd.command.run.pc.global_var_buffer = program->gvar_storage[dev_i];
-
-      if (device->ops->compile_kernel (&fake_cmd, &fake_kernel, device, 0)
-          != 0)
-        return CL_INVALID_OPERATION;
-
-      if (callback) {
-        callback (program, dev_i, &fake_cmd);
-      }
+      void *storage = pocl_aligned_malloc (
+        MAX_EXTENDED_ALIGNMENT, program->global_var_total_size[dev_i]);
+      if (storage == NULL)
+        err = CL_OUT_OF_HOST_MEMORY;
+      else
+        err = compile_gvar_init_kernel (program, dev_i, device, storage,
+                                        callback);
+      if (err == CL_SUCCESS)
+        program->gvar_storage[dev_i] = storage;
+      else
+        pocl_aligned_free (storage);
     }
-#endif
+  POCL_UNLOCK_OBJ (program);
+  return err;
+#else
   return CL_SUCCESS;
+#endif
 }
 
 
