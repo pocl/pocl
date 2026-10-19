@@ -166,8 +166,8 @@ std::string LastLookupError;
      libm when the ICD loader used RTLD_LOCAL.
    - Configure-time vector math library: DynamicLibrarySearchGenerator for
      shared veclibs (libmvec, SLEEF), or a request-driven archive generator for
-     static SVML/libirc. These are the same absolute link inputs the non-JIT
-     final link receives.
+     static SVML/libirc. These are the same libraries the non-JIT final link
+     receives.
    - Compiler runtime helpers: StaticLibraryDefinitionGenerator for the
      installed compiler-rt/libgcc archive. This replaces the Clang driver's
      implicit runtime library link.
@@ -580,47 +580,9 @@ int pocl_jit_initialize(const char *TripleStr, const char *CPU) {
      library's symbols (e.g. _ZGVdN8v_expf, __svml_expf8). The library is chosen
      at configure time, matching codegen's veclib selection in pocl_llvm_wg.cc;
      expose that same one to the JIT so the symbols resolve. */
-#if defined(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
-  /* The configured SONAME first (e.g. SLEEF's libsleefgnuabi.so.3 when LIBMVEC was pointed
-     at it, so we don't depend on a system libmvec), then the configure-time path, then the
-     plain glibc SONAME as a last resort. */
-  const char *Candidates[] = {
-#ifdef HOST_CPU_LIBMVEC_LIBRARY
-      HOST_CPU_LIBMVEC_LIBRARY,
-#endif
-#ifdef HOST_CPU_LIBMVEC_LIBRARY_FALLBACK
-      HOST_CPU_LIBMVEC_LIBRARY_FALLBACK,
-#endif
-      "libmvec.so.1",
-  };
-  bool VecMathLoaded = false;
-  for (const char *VecMathLib : Candidates)
-    if ((VecMathLoaded = addLibrarySearchGenerator(VecMathLib)))
-      break;
-  if (!VecMathLoaded)
-    POCL_MSG_WARN(
-        "pocl_jit: could not load the libmvec vector-math library; vectorized "
-        "math kernels may fail to resolve their symbols\n");
-#elif defined(ENABLE_HOST_CPU_VECTORIZE_SLEEF)
-  /* The configured SONAME first, then the configure-time path, then the
-     plain library name as a last resort. */
-  const char *Candidates[] = {
-#ifdef HOST_CPU_SLEEF_LIBRARY
-      HOST_CPU_SLEEF_LIBRARY,
-#endif
-#ifdef HOST_CPU_SLEEF_LIBRARY_FALLBACK
-      HOST_CPU_SLEEF_LIBRARY_FALLBACK,
-#endif
-      "libsleef.so",
-  };
-  bool VecMathLoaded = false;
-  for (const char *VecMathLib : Candidates)
-    if ((VecMathLoaded = addLibrarySearchGenerator(VecMathLib)))
-      break;
-  if (!VecMathLoaded)
-    POCL_MSG_WARN(
-        "pocl_jit: could not load the SLEEF vector-math library; vectorized "
-        "math kernels may fail to resolve their symbols\n");
+#if defined(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC) ||                              \
+    defined(ENABLE_HOST_CPU_VECTORIZE_SLEEF)
+  addLibrarySearchGenerator(pocl_host_veclib_path());
 #elif defined(ENABLE_HOST_CPU_VECTORIZE_SVML)
   /* Do not index either archive here. Most cached kernels do not need SVML,
      and the local generator opens both archives only after a __svml_* lookup.

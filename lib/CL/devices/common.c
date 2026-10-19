@@ -135,6 +135,11 @@ link_with_clang_driver (cl_device_id device, const char *objfile,
 #error ENABLE_PRINTF_IMMEDIATE_FLUSH requires HAVE_DLFCN_H
 #endif
 #endif
+#ifdef HAVE_DLINFO
+  const char *veclib = pocl_host_veclib_path ();
+  if (veclib != NULL)
+    cmd_line[last_arg_idx++] = veclib;
+#endif
   const char **last_arg = &cmd_line[last_arg_idx];
   const char **device_ld_arg = device->final_linkage_flags;
   while ((*last_arg++ = *device_ld_arg++))
