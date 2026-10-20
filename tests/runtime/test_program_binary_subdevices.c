@@ -78,14 +78,25 @@ binary_for (cl_context ctx, const char *src, cl_device_id want,
   for (cl_uint i = 0; i < n; i++)
     b[i] = malloc (sz[i] ? sz[i] : 1);
   CHECK (clGetProgramInfo (p, CL_PROGRAM_BINARIES, n * sizeof *b, b, NULL));
+  unsigned char *r = NULL;
   for (cl_uint i = 0; i < n; i++)
-    if (d[i] == want || d[i] == alt)
+    if (!r && (d[i] == want || d[i] == alt))
       {
         *len = sz[i];
-        return b[i];
+        r = b[i];
       }
-  printf ("FAIL: device not in CL_PROGRAM_DEVICES\n");
-  exit (1);
+    else
+      free (b[i]);
+  free (b);
+  free (sz);
+  free (d);
+  CHECK (clReleaseProgram (p));
+  if (!r)
+    {
+      printf ("FAIL: device not in CL_PROGRAM_DEVICES\n");
+      exit (1);
+    }
+  return r;
 }
 
 /* Create a program from bins for devs; every status must be written and
@@ -190,6 +201,8 @@ main (void)
   int bad = trial ("[other, sub1, sub2]", ctx, ctl, cbins, clens, cwant);
   bad |= trial ("[sub1, sub2, other]", ctx, shift, sbins, slens, swant);
 
+  free (bsub);
+  free (bother);
   CHECK (clReleaseContext (ctx));
   CHECK (clReleaseDevice (sub[0]));
   CHECK (clReleaseDevice (sub[1]));
