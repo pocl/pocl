@@ -1937,6 +1937,12 @@ endif()
 if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_extended_bit_ops")
   set(HOST_DEVICE_SPV_EXTENSIONS "${HOST_DEVICE_SPV_EXTENSIONS},+SPV_KHR_bit_instructions")
 endif()
+# SPV_KHR_float_controls2 carries per-instruction fast-math flags, such as
+# AllowContract, that the base FPFastMathMode cannot express. The translator
+# reads it since version 23.
+if(LLVM_VERSION_MAJOR GREATER_EQUAL 23)
+  set(HOST_DEVICE_SPV_EXTENSIONS "${HOST_DEVICE_SPV_EXTENSIONS},+SPV_KHR_float_controls2")
+endif()
 # The SPIR-V side of cl_intel_subgroups: shuffles (also of vectors) and buffer block
 # reads/writes. cl_intel_spirv_subgroups is not advertised, as it also requires the
 # image block reads/writes.
