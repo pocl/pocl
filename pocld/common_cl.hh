@@ -41,9 +41,24 @@ typedef std::unique_ptr<cl::Kernel> clKernelPtr;
 typedef std::vector<PoclRemoteArgType> clKernelArgTypeVector;
 typedef std::unique_ptr<clKernelArgTypeVector> clKernelArgTypeVectorPtr;
 
+/* Mirroring pocl_device_kernel_metadata_t */
+typedef struct clKernelDeviceMetadata {
+  /* Subgroups */
+  uint64_t MaxSubgroups;
+  uint64_t CompileSubgroups;
+
+  /* Workgroups */
+  uint64_t MaxWorkGroupSize;
+  uint64_t PreferredWgMultiple;
+  uint64_t LocalMemSize;
+  uint64_t PrivateMemSize;
+  uint64_t SpillMemSize;
+} clKernelDeviceMetadata;
+
 typedef struct clKernelMetadata {
   KernelMetaInfo_t meta;
   std::vector<ArgumentInfo_t> arg_meta;
+  std::vector<clKernelDeviceMetadata> DeviceMeta;
 } clKernelMetadata;
 
 typedef std::vector<void *> clFakeKernelPtrArgs;

@@ -844,20 +844,10 @@ else()
 
 endif()
 
-# SIGFPE and SIGUSR2
+# SIGUSR2
 if(UNIX AND (CMAKE_SYSTEM_NAME MATCHES "Linux"))
-  # this is now handled by a LLVM pass
-  if(ENABLE_HOST_CPU_DEVICES AND X86_64 AND
-     (NOT ENABLE_HOST_CPU_DEVICES_OPENMP) AND
-     (NOT ENABLE_TBB_DEVICE))
-    set(DEFAULT_SIGFPE ON)
-  else()
-    set(DEFAULT_SIGFPE OFF)
-  endif()
-  option(ENABLE_SIGFPE_HANDLER "enable SIGFPE signal handler" ${DEFAULT_SIGFPE})
   option(ENABLE_SIGUSR2_HANDLER "enable SIGUSR2 signal handler" ON)
 else()
-  set(ENABLE_SIGFPE_HANDLER OFF CACHE INTERNAL "enable SIGFPE signal handler" FORCE)
   set(ENABLE_SIGUSR2_HANDLER OFF CACHE INTERNAL "enable SIGUSR2 signal handler" FORCE)
 endif()
 
@@ -1867,10 +1857,10 @@ if(NOT ENABLE_CONFORMANCE)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} \
 cl_khr_subgroups cl_khr_subgroup_ballot cl_khr_subgroup_shuffle \
 cl_intel_subgroups cl_intel_subgroups_short cl_intel_subgroups_char cl_intel_required_subgroup_size cl_exp_tensor")
-  # read-write images are still partially broken
   # program-scope variables work on OpenCL C input, but breaks with SPIR-V input (llvm-spirv bugs)
-  set(HOST_DEVICE_FEATURES  "${HOST_DEVICE_FEATURES} __opencl_c_subgroups __opencl_c_read_write_images")
+  set(HOST_DEVICE_FEATURES  "${HOST_DEVICE_FEATURES} __opencl_c_subgroups")
 endif()
+set(HOST_DEVICE_FEATURES  "${HOST_DEVICE_FEATURES} __opencl_c_read_write_images")
 
 # Extensions that are considered feature-complete (preferably CTS-tested).
 #
@@ -1889,7 +1879,10 @@ endif()
 # * cl_khr_subgroup_ballot: sub_group_ballot() works for uniform calls, the rest
 #   are unimplemented.
 #
-# * cl_intel_subgroups: The block reads/writes are unimplemented.
+# * cl_intel_subgroups: The image block reads/writes are unimplemented. The
+#   shuffles are implemented with work-group barriers, so unlike what the spec
+#   requires, they only work in control flow that is uniform across the
+#   work-group.
 #
 # * cl_intel_required_subgroup_size: CL_​KERNEL_​SPILL_​MEM_​SIZE_​INTEL and
 #   CL_​KERNEL_​COMPILE_​SUB_​GROUP_​SIZE_​INTEL are yet to implement.
@@ -1949,6 +1942,12 @@ endif()
 # reads it since version 23.
 if(LLVM_VERSION_MAJOR GREATER_EQUAL 23)
   set(HOST_DEVICE_SPV_EXTENSIONS "${HOST_DEVICE_SPV_EXTENSIONS},+SPV_KHR_float_controls2")
+endif()
+# The SPIR-V side of cl_intel_subgroups: shuffles (also of vectors) and buffer block
+# reads/writes. cl_intel_spirv_subgroups is not advertised, as it also requires the
+# image block reads/writes.
+if(HOST_DEVICE_EXTENSIONS MATCHES "cl_intel_subgroups")
+  set(HOST_DEVICE_SPV_EXTENSIONS "${HOST_DEVICE_SPV_EXTENSIONS},+SPV_INTEL_subgroups")
 endif()
 
 # don't include cl_khr_int64 in HOST_DEVICE_EXTENSIONS list, because
@@ -3089,7 +3088,6 @@ MESSAGE(STATUS "ENABLE_RDMA: ${ENABLE_RDMA}")
 MESSAGE(STATUS "ENABLE_CL_GET_GL_CONTEXT: ${ENABLE_CL_GET_GL_CONTEXT}")
 MESSAGE(STATUS "ENABLE_OPENGL_INTEROP: ${ENABLE_OPENGL_INTEROP}")
 MESSAGE(STATUS "ENABLE_EGL_INTEROP: ${ENABLE_EGL_INTEROP}")
-MESSAGE(STATUS "ENABLE_SIGFPE_HANDLER: ${ENABLE_SIGFPE_HANDLER}")
 MESSAGE(STATUS "ENABLE_SIGUSR2_HANDLER: ${ENABLE_SIGUSR2_HANDLER}")
 MESSAGE(STATUS "ENABLE_SLEEF: ${ENABLE_SLEEF}")
 MESSAGE(STATUS "ENABLE_SPIRV: ${ENABLE_SPIRV}")

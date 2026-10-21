@@ -72,7 +72,6 @@ int poclMlirGetKernelsMetadata(cl_program Program, unsigned DeviceI) {
     if (FuncOp->hasAttr(mlir::gpu::GPUDialect::getKernelFuncAttrName())) {
       pocl_kernel_metadata_t *Meta = &Program->kernel_meta[KernelCount];
 
-      Meta->data = (void **)calloc(Program->num_devices, sizeof(void *));
       Meta->num_args = FuncOp.getFunctionBody().getNumArguments();
       Meta->name = strdup(FuncOp.getName().str().c_str());
       Meta->num_locals = 0;

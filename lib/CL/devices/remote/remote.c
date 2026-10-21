@@ -360,6 +360,7 @@ pocl_remote_init_device_ops (struct pocl_device_ops *ops)
   ops->build_builtin = pocl_remote_build_builtin;
   ops->build_defined_builtin = pocl_remote_build_defined_builtin;
   ops->free_program = pocl_remote_free_program;
+  ops->count_kernels = pocl_remote_count_kernels;
   ops->setup_metadata = pocl_remote_setup_metadata;
   ops->supports_binary = pocl_remote_supports_binary;
   ops->supports_dbk = pocl_remote_supports_dbk;
@@ -1357,6 +1358,36 @@ pocl_remote_supports_dbk (cl_device_id device,
 }
 
 int
+pocl_remote_count_kernels (cl_device_id device,
+                           cl_program program,
+                           unsigned program_device_i,
+                           size_t *count)
+{
+  if (program->data == NULL)
+    return 0;
+
+  if (program->data[program_device_i] == NULL)
+    return 0;
+
+  if (program->num_builtin_kernels > 0)
+    {
+      *count = program->num_builtin_kernels;
+      return 1;
+    }
+
+  program_data_t *pd = program->data[program_device_i];
+  if (pd->kernel_meta_size > sizeof (uint32_t))
+    {
+      uint32_t tmp;
+      memcpy (&tmp, pd->kernel_meta_bytes, sizeof (tmp));
+      *count = tmp;
+      return 1;
+    }
+
+  return 0;
+}
+
+int
 pocl_remote_setup_metadata (cl_device_id device, cl_program program,
                             unsigned program_device_i)
 {
@@ -1371,13 +1402,12 @@ pocl_remote_setup_metadata (cl_device_id device, cl_program program,
   if (pd->kernel_meta_bytes)
     {
       size_t num_kernels = 0;
-      pocl_kernel_metadata_t *kernel_meta = NULL;
+      pocl_kernel_metadata_t *kernel_meta = program->kernel_meta;
       int err = pocl_network_setup_metadata (pd->kernel_meta_bytes,
                                              pd->kernel_meta_size, program,
-                                             &num_kernels, &kernel_meta);
+                                             &num_kernels, program_device_i);
       assert (err == CL_SUCCESS);
       program->num_kernels = num_kernels;
-      program->kernel_meta = kernel_meta;
       return 1;
     }
   else

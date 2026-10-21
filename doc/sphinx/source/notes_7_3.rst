@@ -16,6 +16,10 @@ CMake changes
 
 * Added an `ENABLE_CUDA_IMAGES` option. Note that image support in the CUDA
   driver is still experimental and very incomplete.
+* Removed the `ENABLE_SIGFPE_HANDLER` option and the SIGFPE handler, which
+  replaced the host application's handler. CPU devices on x86 now always avoid
+  integer division exceptions with an LLVM pass. Program binaries built for
+  CPU devices by earlier versions have to be rebuilt.
 
 ==========================
 Runtime fixes & features
@@ -28,6 +32,10 @@ Runtime fixes & features
 * Rectangular buffer copies (`clEnqueueCopyBufferRect`) now detect overlap with
   the current specification's algorithm; the older one missed some real
   overlaps and reported false ones.
+
+* `clGetProgramInfo` now returns `CL_PROGRAM_BINARY_SIZES` and
+  `CL_PROGRAM_BINARIES` for programs that have not been built, instead of
+  `CL_INVALID_PROGRAM`.
 
 ===========================
 Driver-specific features

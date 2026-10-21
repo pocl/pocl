@@ -112,6 +112,8 @@ int main(void) {
                                      CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR |
                                          CL_MEM_ALLOC_HOST_PTR,
                                      INPUT_BUFFER_SIZE, (void *)&Inputs[0]);
+    // CL_MEM_COPY_HOST_PTR copies the input, so Inputs can be released
+    delete[] Inputs;
 
     cl::Buffer OutBuffer =
         cl::Buffer(Context, CL_MEM_WRITE_ONLY, OUTPUT_BUFFER_SIZE);

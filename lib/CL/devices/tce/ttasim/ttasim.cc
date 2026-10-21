@@ -106,6 +106,7 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->link_program = pocl_driver_link_program;
   ops->build_binary = pocl_driver_build_binary;
   ops->free_program = pocl_driver_free_program;
+  ops->count_kernels = pocl_driver_count_kernels;
   ops->setup_metadata = pocl_driver_setup_metadata;
   ops->supports_binary = pocl_driver_supports_binary;
   ops->build_poclbinary = pocl_driver_build_poclbinary;

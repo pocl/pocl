@@ -39,6 +39,7 @@ set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_uniform_implicit_barrier_entry
      test_localmem_load_across_barrier
      test_replicated_wi_subgroup_alloca
+     test_spirv_intel_subgroups
      test_indirect_ptrs
      test_usm_indirect_ptrs
      test_usm_free_realloc
@@ -71,7 +72,7 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_workitem_func_outside_kernel test_program_scope_vars test_issue_1548
   test_issue_1525 test_issue_1608 test_issue_1826 test_builtin_regression
   test_mem_host_ptr_issue test_issue_1962 test_issue_2005
-  test_global_atomics test_large_stack_frame test_linear_filter_border
+  test_global_atomics test_large_stack_frame test_linear_filter_border test_rect_copy_null
 )
 if(UNIX)
   list(APPEND PROGRAMS_TO_BUILD test_issue_2174)
@@ -119,6 +120,8 @@ add_test_pocl(NAME "regression/test_issue_1435" COMMAND "test_issue_1435")
 
 add_test_pocl(NAME "regression/test_linear_filter_border" COMMAND "test_linear_filter_border")
 
+add_test_pocl(NAME "regression/test_rect_copy_null" COMMAND "test_rect_copy_null")
+
 # fails on windows/MinGW with "access violation"
 add_test_pocl(NAME "regression/test_issue_1525" LABELS "mingw_fail;win_fail"
   COMMAND "test_issue_1525"
@@ -147,6 +150,14 @@ if(UNIX)
   # SIGSEGV and SIGABRT handlers.
   if(NOT HAVE_LIBXSMM)
     add_test_pocl(NAME "regression/test_signal_handlers" COMMAND "test_signal_handlers")
+    # The basic driver runs kernels on the application's thread.
+    if(BUILD_BASIC)
+      add_test_pocl(NAME "regression/test_signal_handlers_basic" COMMAND "test_signal_handlers")
+      foreach(VARIANT loopvec cbs)
+        set_tests_properties("regression/test_signal_handlers_basic_${VARIANT}" PROPERTIES
+          ENVIRONMENT "POCL_WORK_GROUP_METHOD=${VARIANT};POCL_DEVICES=basic")
+      endforeach()
+    endif()
   endif()
 endif()
 
@@ -189,6 +200,8 @@ add_test_pocl(NAME "regression/unreachable_in_infinite_loop" WORKITEM_HANDLER "l
 add_test_pocl(NAME "regression/peeled_wi_global_id" WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_peeled_wi_global_id" LABELS ${SPIRV_LABELS})
 
 add_test_pocl(NAME "regression/multi_exit_barrier_region" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_multi_exit_barrier_region" LABELS ${SPIRV_LABELS})
+
+add_test_pocl(NAME "regression/spirv_intel_subgroups" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_spirv_intel_subgroups" LABELS ${SPIRV_LABELS})
 
 add_test_pocl(NAME "regression/divergent_implicit_barrier_entry" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_divergent_implicit_barrier_entry")
 

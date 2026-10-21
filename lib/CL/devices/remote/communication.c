@@ -2774,9 +2774,11 @@ pocl_network_free_buffer (remote_device_data_t *ddata, uint64_t mem_id,
   assert ((size_t)(buf - buffer) <= (size_t)nc.reply.data_size)
 
 cl_int
-pocl_network_setup_metadata (char *buffer, size_t total_size,
-                             cl_program program, size_t *num_kernels,
-                             pocl_kernel_metadata_t **kernel_meta)
+pocl_network_setup_metadata (char *buffer,
+                             size_t total_size,
+                             cl_program program,
+                             size_t *num_kernels,
+                             size_t device_i)
 {
   POCL_MSG_PRINT_REMOTE ("Setting up Kernel metadata\n");
 
@@ -2785,12 +2787,9 @@ pocl_network_setup_metadata (char *buffer, size_t total_size,
   uint32_t nk;
   READ_BYTES_SIZE (nk, total_size);
   assert (nk < 1000000);
-  pocl_kernel_metadata_t *p = NULL;
+  pocl_kernel_metadata_t *p = program->kernel_meta;
 
   *num_kernels = nk;
-  p = calloc (*num_kernels, sizeof (pocl_kernel_metadata_t));
-  assert (p);
-  *kernel_meta = p;
 
   POCL_MSG_PRINT_REMOTE ("Num kernels: %zu\n", *num_kernels);
 
@@ -2801,21 +2800,23 @@ pocl_network_setup_metadata (char *buffer, size_t total_size,
       KernelMetaInfo_t temp_kernel;
       READ_BYTES_SIZE (temp_kernel, total_size);
       {
-        p[i].attributes = strdup (temp_kernel.attributes);
-        p[i].name = strdup (temp_kernel.name);
+        if (!p[i].attributes)
+          p[i].attributes = strdup (temp_kernel.attributes);
+        if (!p[i].name)
+          p[i].name = strdup (temp_kernel.name);
         p[i].num_args = temp_kernel.num_args;
 
         /* because have to return total local size */
         p[i].num_locals = 1;
-        p[i].local_sizes = calloc (1, sizeof (size_t));
+        if (!p[i].local_sizes)
+          p[i].local_sizes = calloc (1, sizeof (size_t));
         p[i].local_sizes[0] = temp_kernel.total_local_size;
-        p[i].data = calloc (program->num_devices, sizeof (void *));
         p[i].has_arg_metadata = (-1);
         p[i].reqd_wg_size[0] = temp_kernel.reqd_wg_size.x;
         p[i].reqd_wg_size[1] = temp_kernel.reqd_wg_size.y;
         p[i].reqd_wg_size[2] = temp_kernel.reqd_wg_size.z;
-
-        p[i].arg_info = calloc (p[i].num_args, sizeof (pocl_argument_info));
+        if (!p[i].arg_info)
+          p[i].arg_info = calloc (p[i].num_args, sizeof (pocl_argument_info));
       }
 
       uint32_t num_a;
@@ -2829,7 +2830,8 @@ pocl_network_setup_metadata (char *buffer, size_t total_size,
           {
             p[i].arg_info[j].access_qualifier = temp_arg.access_qualifier;
             p[i].arg_info[j].address_qualifier = temp_arg.address_qualifier;
-            p[i].arg_info[j].name = strdup (temp_arg.name);
+            if (!p[i].arg_info[j].name)
+              p[i].arg_info[j].name = strdup (temp_arg.name);
 
             pocl_argument_type t = POCL_ARG_TYPE_NONE;
             switch (temp_arg.type)
@@ -2853,11 +2855,33 @@ pocl_network_setup_metadata (char *buffer, size_t total_size,
               }
             p[i].arg_info[j].type = t;
 
-            p[i].arg_info[j].type_name = strdup (temp_arg.type_name);
+            if (!p[i].arg_info[j].type_name)
+              p[i].arg_info[j].type_name = strdup (temp_arg.type_name);
             p[i].arg_info[j].type_qualifier = temp_arg.type_qualifier;
             /* TODO: there's no way to get this from OpenCL API currently. */
             p[i].arg_info[j].type_size = 0;
           }
+        }
+
+      remote_device_data_t *d = program->devices[device_i]->data;
+      uint32_t num_devices;
+      READ_BYTES_SIZE (num_devices, total_size);
+      for (j = 0; j < num_devices; ++j)
+        {
+          pocl_kernel_device_metadata_t temp_dev;
+          memset (&temp_dev, 0, sizeof (temp_dev));
+
+          READ_BYTES_SIZE (temp_dev.max_subgroups, total_size);
+          READ_BYTES_SIZE (temp_dev.compile_subgroups, total_size);
+
+          READ_BYTES_SIZE (temp_dev.max_workgroup_size, total_size);
+          READ_BYTES_SIZE (temp_dev.preferred_wg_multiple, total_size);
+          READ_BYTES_SIZE (temp_dev.local_mem_size, total_size);
+          READ_BYTES_SIZE (temp_dev.private_mem_size, total_size);
+          READ_BYTES_SIZE (temp_dev.spill_mem_size, total_size);
+
+          if (j == d->remote_device_index)
+            p[i].devices[device_i] = temp_dev;
         }
     }
 

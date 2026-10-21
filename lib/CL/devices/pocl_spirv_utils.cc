@@ -32,26 +32,11 @@ void mapToPoCLMetadata(OCLFuncInfo *funcInfo, const std::string& kernelName,
                        size_t numDevices,
                        pocl_kernel_metadata_t *kernelMetadata) {
 
-  kernelMetadata->data = (void **)calloc(numDevices, sizeof(void *));
   kernelMetadata->num_args = funcInfo->ArgTypeInfo.size();
   kernelMetadata->name = strdup(kernelName.c_str());
 
   kernelMetadata->num_locals = 0;
   kernelMetadata->local_sizes = nullptr;
-
-  kernelMetadata->max_subgroups = (size_t *)calloc(numDevices, sizeof(size_t));
-  kernelMetadata->compile_subgroups =
-      (size_t *)calloc(numDevices, sizeof(size_t));
-  kernelMetadata->max_workgroup_size =
-      (size_t *)calloc(numDevices, sizeof(size_t));
-  kernelMetadata->preferred_wg_multiple =
-      (size_t *)calloc(numDevices, sizeof(size_t));
-  kernelMetadata->local_mem_size =
-      (cl_ulong *)calloc(numDevices, sizeof(cl_ulong));
-  kernelMetadata->private_mem_size =
-      (cl_ulong *)calloc(numDevices, sizeof(cl_ulong));
-  kernelMetadata->spill_mem_size =
-      (cl_ulong *)calloc(numDevices, sizeof(cl_ulong));
 
   // ARGUMENTS
   if (kernelMetadata->num_args < 1)
