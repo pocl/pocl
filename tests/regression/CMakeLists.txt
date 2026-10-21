@@ -38,6 +38,7 @@ set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_uniform_implicit_barrier_entry
      test_localmem_load_across_barrier
      test_replicated_wi_subgroup_alloca
+     test_spirv_intel_subgroups
      test_indirect_ptrs
      test_usm_indirect_ptrs
      test_usm_free_realloc
@@ -194,6 +195,8 @@ add_test_pocl(NAME "regression/unreachable_in_infinite_loop" WORKITEM_HANDLER "l
 add_test_pocl(NAME "regression/peeled_wi_global_id" WORKITEM_HANDLER "loopvec;cbs;" COMMAND "test_peeled_wi_global_id" LABELS ${SPIRV_LABELS})
 
 add_test_pocl(NAME "regression/multi_exit_barrier_region" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_multi_exit_barrier_region" LABELS ${SPIRV_LABELS})
+
+add_test_pocl(NAME "regression/spirv_intel_subgroups" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_spirv_intel_subgroups" LABELS ${SPIRV_LABELS})
 
 add_test_pocl(NAME "regression/divergent_implicit_barrier_entry" WORKITEM_HANDLER "loops;loopvec;cbs;" COMMAND "test_divergent_implicit_barrier_entry")
 
