@@ -368,6 +368,9 @@ static inline cl_float cl_half_to_float(cl_half h)
   } f32;
 
   // Extract sign bit
+  // pocl: the `sign << 31` below is cast to uint32_t, since shifting the
+  // promoted int into its sign bit is undefined. KhronosGroup/OpenCL-Headers
+  // still has the uncast shift; keep the casts when syncing this header.
   uint16_t sign = h >> 15;
 
   // Extract FP16 exponent and mantissa
@@ -388,13 +391,13 @@ static inline cl_float cl_half_to_float(cl_half h)
       // NaN -> propagate mantissa and silence it
       uint32_t f_mant = h_mant << (CL_FLT_MANT_DIG - CL_HALF_MANT_DIG);
       f_mant |= 0x400000;
-      f32.i = (sign << 31) | 0x7F800000 | f_mant;
+      f32.i = ((uint32_t)sign << 31) | 0x7F800000 | f_mant;
       return f32.f;
     }
     else
     {
       // Infinity -> zero mantissa
-      f32.i = (sign << 31) | 0x7F800000;
+      f32.i = ((uint32_t)sign << 31) | 0x7F800000;
       return f32.f;
     }
   }
@@ -423,7 +426,7 @@ static inline cl_float cl_half_to_float(cl_half h)
     }
   }
 
-  f32.i = (sign << 31) | (f_exp << 23) | (h_mant << 13);
+  f32.i = ((uint32_t)sign << 31) | (f_exp << 23) | (h_mant << 13);
   return f32.f;
 }
 
