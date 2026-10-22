@@ -50,6 +50,8 @@
 #include "pocl_binary.h"
 #include "pocl_shared.h"
 
+extern int pocl_offline_compile;
+
 #define REQUIRES_CR_SQRT_DIV_ERR                                              \
   "-cl-fp32-correctly-rounded-divide-sqrt build option "                      \
   "was specified, but CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT "                   \
@@ -845,8 +847,9 @@ compile_and_link_program(int compile_program,
   for (i = 0; i < program->num_devices; ++i)
     {
       cl_device_id dev = program->devices[i];
-      POCL_GOTO_ERROR_COND ((*dev->available == CL_FALSE),
-                            CL_DEVICE_NOT_AVAILABLE);
+      POCL_GOTO_ERROR_COND (
+        (!pocl_offline_compile && (*dev->available == CL_FALSE)),
+        CL_DEVICE_NOT_AVAILABLE);
       for (cl_uint j = 0; j < program->associated_num_devices; ++j)
         if (program->associated_devices[j] == dev)
           ++num_found;
