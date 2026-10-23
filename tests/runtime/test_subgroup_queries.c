@@ -52,6 +52,10 @@ static const size_t LOCAL_SIZES[][3] = {
 #define NUM_LOCAL_SIZES (sizeof (LOCAL_SIZES) / sizeof (LOCAL_SIZES[0]))
 #define MAX_LOCAL_SIZE 64
 
+/* cl_khr_subgroups' entry point, looked up by name when the device offers
+   the extension */
+static clGetKernelSubGroupInfoKHR_t *get_info_khr = NULL;
+
 static int
 check_variant (cl_context ctx, cl_device_id dev, cl_command_queue queue,
                int with_attr)
@@ -116,6 +120,14 @@ check_variant (cl_context ctx, cl_device_id dev, cl_command_queue queue,
         sizeof (size_t) * 3, ls, sizeof (host_count), &host_count, NULL));
 
       TEST_ASSERT (host_max > 0);
+      if (get_info_khr != NULL)
+        {
+          size_t khr_max = 0;
+          CHECK_CL_ERROR (get_info_khr (
+            kernel, dev, CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE,
+            sizeof (size_t) * 3, ls, sizeof (khr_max), &khr_max, NULL));
+          TEST_ASSERT (khr_max == host_max);
+        }
       if (with_attr)
         TEST_ASSERT (host_max == REQD_SG_SIZE);
       /* the count must include a possibly smaller trailing sub-group */
@@ -175,12 +187,24 @@ main (int argc, char **argv)
       return 77;
     }
 
-  CHECK_CL_ERROR (check_variant (ctx, dev, queue, 0));
-
-  /* only test intel_reqd_sub_group_size where supported */
   char extensions[4096];
   CHECK_CL_ERROR (clGetDeviceInfo (dev, CL_DEVICE_EXTENSIONS,
                                    sizeof (extensions), extensions, NULL));
+
+  /* An application reaches clGetKernelSubGroupInfoKHR by name; without an
+     ICD loader, clGetExtensionFunctionAddressForPlatform must return it. */
+  if (strstr (extensions, "cl_khr_subgroups") != NULL)
+    {
+      get_info_khr
+        = (clGetKernelSubGroupInfoKHR_t *)
+          clGetExtensionFunctionAddressForPlatform (
+            platform, "clGetKernelSubGroupInfoKHR");
+      TEST_ASSERT (get_info_khr != NULL);
+    }
+
+  CHECK_CL_ERROR (check_variant (ctx, dev, queue, 0));
+
+  /* only test intel_reqd_sub_group_size where supported */
   if (strstr (extensions, "cl_intel_required_subgroup_size") != NULL)
     CHECK_CL_ERROR (check_variant (ctx, dev, queue, 1));
 
