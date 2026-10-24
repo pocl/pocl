@@ -2193,6 +2193,22 @@
   IMPLEMENT_FP16_EXPR_V_V (NAME, half8, NAME1_8 (NAME))                       \
   IMPLEMENT_FP16_EXPR_V_V (NAME, half16, NAME1_16 (NAME))
 
+/* the same for CORE-math routines that replace a float or double builtin:
+   the vector variants call the scalar one per element */
+#define DEFINE_FP32_EXPR_V_V(NAME)                                            \
+  IMPLEMENT_FP16_EXPR_V_V (NAME, float2, NAME1_2 (NAME))                      \
+  IMPLEMENT_FP16_EXPR_V_V (NAME, float3, NAME1_3 (NAME))                      \
+  IMPLEMENT_FP16_EXPR_V_V (NAME, float4, NAME1_4 (NAME))                      \
+  IMPLEMENT_FP16_EXPR_V_V (NAME, float8, NAME1_8 (NAME))                      \
+  IMPLEMENT_FP16_EXPR_V_V (NAME, float16, NAME1_16 (NAME))
+
+#define DEFINE_FP64_EXPR_V_V(NAME)                                            \
+  IMPLEMENT_FP16_EXPR_V_V (NAME, double2, NAME1_2 (NAME))                     \
+  IMPLEMENT_FP16_EXPR_V_V (NAME, double3, NAME1_3 (NAME))                     \
+  IMPLEMENT_FP16_EXPR_V_V (NAME, double4, NAME1_4 (NAME))                     \
+  IMPLEMENT_FP16_EXPR_V_V (NAME, double8, NAME1_8 (NAME))                     \
+  IMPLEMENT_FP16_EXPR_V_V (NAME, double16, NAME1_16 (NAME))
+
 #define IMPLEMENT_FP16_EXPR_V_VI(NAME, RETTYPE, INTTYPE, EXPR)                \
   RETTYPE _CL_OVERLOADABLE NAME (RETTYPE a, INTTYPE b)                        \
   {                                                                           \
