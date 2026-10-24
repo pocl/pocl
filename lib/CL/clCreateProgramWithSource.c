@@ -98,6 +98,8 @@ POname(clCreateProgramWithSource)(cl_context context,
   program->context = context;
   program->associated_num_devices = context->num_devices;
   program->associated_devices = context->devices;
+  program->num_create_devices = context->num_create_devices;
+  program->create_devices = context->create_devices;
   program->num_devices = 0;
   program->devices = 0;
 

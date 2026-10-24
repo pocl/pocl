@@ -83,17 +83,27 @@ POname(clCreateSubDevices)(cl_device_id in_device,
     * differently */
    if (properties[0] == CL_DEVICE_PARTITION_EQUALLY)
      {
-       /* error out if the number of CUs per device is 0 or bigger than the
-        * number of CUs of in_device */
+       /* error out if the number of CUs per device is 0 (invalid value) or
+        * bigger than the number of CUs of in_device (partition count) */
+       POCL_GOTO_ERROR_COND ((properties[1] == 0), CL_INVALID_VALUE);
        POCL_GOTO_ERROR_COND (
-           (properties[1] == 0
-            || (cl_uint)properties[1] > in_device->max_compute_units),
-           CL_INVALID_VALUE);
+           ((cl_uint)properties[1] > in_device->max_compute_units),
+           CL_INVALID_DEVICE_PARTITION_COUNT);
        // error out if properties isn't zero-terminated
        POCL_GOTO_ERROR_COND (properties[2] != 0, CL_INVALID_VALUE);
 
        count_devices = in_device->max_compute_units / properties[1];
        num_props = 3; // partition type, CUs per device, terminating 0
+
+       /* Asking for sub-devices with all of in_device's compute units
+        * would yield a single sub-device identical to in_device: the
+        * partition name is supported but in_device cannot be further
+        * partitioned that way (CTS api negative_device). */
+       POCL_GOTO_ERROR_ON (
+           ((cl_uint)properties[1] == in_device->max_compute_units),
+           CL_DEVICE_PARTITION_FAILED,
+           "Device %s cannot be further partitioned equally by %u CUs\n",
+           in_device->short_name, (unsigned)properties[1]);
      }
    else if (properties[0] == CL_DEVICE_PARTITION_BY_COUNTS)
      {
