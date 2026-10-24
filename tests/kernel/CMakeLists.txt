@@ -115,6 +115,13 @@ add_test_pocl(NAME "kernel/test_halfs"
               COMMAND "kernel" "test_halfs")
 if(HOST_CPU_ENABLE_CL_KHR_FP16)
   add_cpu_jit_test("compiler_rt_fp16" kernel "test_halfs")
+  # without F16C, the half <-> float conversions also need the runtime routines
+  if(ENABLE_HOST_CPU_DEVICES AND HOST_CPU_ENABLE_JIT
+     AND X86 AND KERNELLIB_HOST_DISTRO_VARIANTS)
+    add_cpu_jit_test("compiler_rt_fp16_sse2" kernel "test_halfs")
+    set_property(TEST "cpu_jit/compiler_rt_fp16_sse2" APPEND PROPERTY
+                 ENVIRONMENT "POCL_KERNELLIB_NAME=sse2")
+  endif()
 endif()
 
 # convert_type_{4,8,16} + hadd/as_type/bitselect produce very large kernels
