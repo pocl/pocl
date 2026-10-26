@@ -155,7 +155,7 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
     }
 
   // TODO this is likely very wrong
-  if (event != NULL)
+  if (errcode == CL_SUCCESS && event != NULL)
     (*event)->command_type = command_type;
 
   return errcode;
