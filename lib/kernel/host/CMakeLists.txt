@@ -27,6 +27,7 @@
 set(SOURCES_WITH_SLEEF abs.cl
 abs_diff.cl
 add_sat.cl
+addrspace_operators.ll
 all.cl
 any.cl
 as_type.cl
