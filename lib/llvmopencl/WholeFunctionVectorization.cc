@@ -23,6 +23,7 @@
 // THE SOFTWARE.
 
 #include "CompilerWarnings.h"
+#include "llvm/Support/FileSystem.h"
 #include <deque>
 #include <llvm/ADT/APInt.h>
 #include <llvm/ADT/PostOrderIterator.h>
@@ -88,6 +89,28 @@ namespace pocl {
 
 using namespace llvm;
 
+static int modulesPrinted = 0;
+static void printModule(llvm::Module &Mod, const std::string &filename) {
+  for (Function &F : Mod) {
+    if (F.isDeclaration()) {
+      continue;
+    }
+
+    std::error_code EC;
+    std::string Filename = filename + std::to_string(modulesPrinted++) + ".dot";
+
+    llvm::errs() << "Writing " << Filename << "\n";
+    raw_fd_ostream File(Filename, EC, sys::fs::OF_Text);
+    if (EC) {
+      errs() << "Failed to open " << Filename << ": "
+             << EC.message() << "\n";
+      return;
+    }
+    Mod.print(File, nullptr);
+    return;
+  }
+}
+
 class WholeFunctionVectorizationImpl : public pocl::WorkitemHandler {
 public:
   WholeFunctionVectorizationImpl(llvm::DominatorTree &DT, llvm::LoopInfo &LI,
@@ -101,6 +124,7 @@ private:
     llvm::Instruction *valueOutput = nullptr;
     std::vector<llvm::Instruction *> arrayOutput;
     std::vector<llvm::Instruction *> children;
+    bool isContiguous = false;
   };
 
   using BasicBlockVector = std::vector<llvm::BasicBlock *>;
@@ -145,6 +169,8 @@ private:
   std::set<llvm::BasicBlock *> loopBranches;
 
   bool processFunction(llvm::Function &F);
+
+  bool forceInlineAllCalls(Function &F);
 
   bool markLoop(Loop *L);
   Constant *createConstantMask(IRBuilder<> &Builder, int N);
@@ -211,6 +237,10 @@ bool WholeFunctionVectorizationImpl::runOnFunction(Function &Func) {
       M->getOrInsertGlobal(LID_G_NAME_VECTORIZED, VectorST));
 
   bool Changed = false;
+
+  // Changed |= forceInlineAllCalls(Func);
+
+  // printModule(*M, "wfv_inlined");
   
   for (Loop *L : LI.getLoopsInPreorder()) {
     Changed |= markLoop(L);
@@ -236,6 +266,49 @@ bool WholeFunctionVectorizationImpl::runOnFunction(Function &Func) {
 
   return Changed;
 }
+
+bool WholeFunctionVectorizationImpl::forceInlineAllCalls(Function &F) {
+    bool Changed = false;
+    bool Progress = true;
+
+    while (Progress) {
+        Progress = false;
+
+        for (BasicBlock &BB : F) {
+            for (Instruction &I : BB) {
+                auto *CB = dyn_cast<CallBase>(&I);
+                if (!CB)
+                    continue;
+
+                Function *Callee = CB->getCalledFunction();
+
+                // Skip indirect calls, declarations, and recursive calls.
+                if (!Callee || Callee->isDeclaration() || Callee == &F)
+                    continue;
+
+                // InlineFunction supports CallInst and InvokeInst,
+                // but not CallBrInst.
+                if (!isa<CallInst>(CB) && !isa<InvokeInst>(CB))
+                    continue;
+
+                InlineFunctionInfo IFI;
+                InlineResult Result = InlineFunction(*CB, IFI);
+
+                if (Result.isSuccess()) {
+                    Changed = true;
+                    Progress = true;
+                    break; // Iterator invalidated; restart traversal.
+                }
+            }
+
+            if (Progress)
+                break;
+        }
+    }
+
+    return Changed;
+}
+
 
 Constant *WholeFunctionVectorizationImpl::createConstantMask(IRBuilder<> &Builder,
                                                        int N) {
@@ -368,17 +441,15 @@ void WholeFunctionVectorizationImpl::branchReplace(llvm::BranchInst *br) {
       // For loop predicates in the pregion_for_cond blocks, any false means that all future mask values must
       // also be false.
       if (blockHasTag(br->getParent(), "pregion_for_cond")) {
-        Value *newLoopPredicate =
-            constructLoopPredicatePrefix(Builder, condInst);
+        // Value *newLoopPredicate =
+        //     constructLoopPredicatePrefix(Builder, condInst);
         cast<PHINode>(BlockMasks[br->getSuccessor(0)])
-            ->addIncoming(newLoopPredicate, BB);
-        Value *newBrCond = Builder.CreateOrReduce(newLoopPredicate);
-
-        Value *maskAllTrue = Builder.CreateAndReduce(BlockMasks[BB]);
-        Value *finalCond = Builder.CreateAnd(newBrCond, maskAllTrue);
-        br->setCondition(finalCond);
+            ->addIncoming(condInst, BB);
+        Value *newBrCond = Builder.CreateOrReduce(condInst);
+        br->setCondition(newBrCond);
       } else {
         Value *newMask = Builder.CreateAnd(BlockMasks[BB], condInst);
+        // Value *newMask = constructLoopPredicatePrefix(Builder, condInst);
         cast<PHINode>(BlockMasks[br->getSuccessor(0)])
             ->addIncoming(newMask, BB);
         Value *newBrCond = Builder.CreateOrReduce(newMask);
@@ -1056,7 +1127,6 @@ void WholeFunctionVectorizationImpl::transformControlFlow() {
 
     // If the true branch has no blocks, then the branch block should point directly to the falsePhiNodes instead
     if (trueBBMergePreds.empty()) {
-      // llvm::errs() << "true branch has no blocks, rerouting to false branch\n";
       trueBBMergePreds.insert(br->getParent());
       trueBB = falseBB;
     }
@@ -1106,6 +1176,9 @@ void WholeFunctionVectorizationImpl::applyMasks() {
   }
 
   for (Instruction *I : queue) {
+    // If a store instruction is not dependent on the vectorized global/local id,
+    // then we don't mask it, but we still need to check if it should be executed
+    // at all (i.e, when the mask has any true values).
     if (auto *SI = dyn_cast<StoreInst>(I)) {
       BasicBlock *BB = SI->getParent();
       if (auto *M = BB->getTerminator()->getMetadata("myrole")) {
