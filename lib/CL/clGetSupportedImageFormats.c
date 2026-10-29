@@ -44,15 +44,6 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_RETURN_ERROR_ON ((idx < 0), CL_INVALID_VALUE,
                         "invalid image type\n");
 
-#ifdef ENABLE_CONFORMANCE
-  if (flags & CL_MEM_KERNEL_READ_AND_WRITE)
-    {
-      if (num_image_formats != NULL)
-        *num_image_formats = 0;
-      return CL_SUCCESS;
-    }
-#endif
-
   if (image_formats != NULL)
     {
       if (num_entries > context->num_image_formats[idx])

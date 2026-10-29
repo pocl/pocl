@@ -1857,10 +1857,10 @@ if(NOT ENABLE_CONFORMANCE)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} \
 cl_khr_subgroups cl_khr_subgroup_ballot cl_khr_subgroup_shuffle \
 cl_intel_subgroups cl_intel_subgroups_short cl_intel_subgroups_char cl_intel_required_subgroup_size cl_exp_tensor")
-  # read-write images are still partially broken
   # program-scope variables work on OpenCL C input, but breaks with SPIR-V input (llvm-spirv bugs)
-  set(HOST_DEVICE_FEATURES  "${HOST_DEVICE_FEATURES} __opencl_c_subgroups __opencl_c_read_write_images")
+  set(HOST_DEVICE_FEATURES  "${HOST_DEVICE_FEATURES} __opencl_c_subgroups")
 endif()
+set(HOST_DEVICE_FEATURES  "${HOST_DEVICE_FEATURES} __opencl_c_read_write_images")
 
 # Extensions that are considered feature-complete (preferably CTS-tested).
 #
@@ -1879,7 +1879,10 @@ endif()
 # * cl_khr_subgroup_ballot: sub_group_ballot() works for uniform calls, the rest
 #   are unimplemented.
 #
-# * cl_intel_subgroups: The block reads/writes are unimplemented.
+# * cl_intel_subgroups: The image block reads/writes are unimplemented. The
+#   shuffles are implemented with work-group barriers, so unlike what the spec
+#   requires, they only work in control flow that is uniform across the
+#   work-group.
 #
 # * cl_intel_required_subgroup_size: CL_​KERNEL_​SPILL_​MEM_​SIZE_​INTEL and
 #   CL_​KERNEL_​COMPILE_​SUB_​GROUP_​SIZE_​INTEL are yet to implement.
@@ -1933,6 +1936,18 @@ if(HOST_DEVICE_EXTENSIONS MATCHES "cl_ext_float_atomics")
 endif()
 if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_extended_bit_ops")
   set(HOST_DEVICE_SPV_EXTENSIONS "${HOST_DEVICE_SPV_EXTENSIONS},+SPV_KHR_bit_instructions")
+endif()
+# SPV_KHR_float_controls2 carries per-instruction fast-math flags, such as
+# AllowContract, that the base FPFastMathMode cannot express. The translator
+# reads it since version 23.
+if(LLVM_VERSION_MAJOR GREATER_EQUAL 23)
+  set(HOST_DEVICE_SPV_EXTENSIONS "${HOST_DEVICE_SPV_EXTENSIONS},+SPV_KHR_float_controls2")
+endif()
+# The SPIR-V side of cl_intel_subgroups: shuffles (also of vectors) and buffer block
+# reads/writes. cl_intel_spirv_subgroups is not advertised, as it also requires the
+# image block reads/writes.
+if(HOST_DEVICE_EXTENSIONS MATCHES "cl_intel_subgroups")
+  set(HOST_DEVICE_SPV_EXTENSIONS "${HOST_DEVICE_SPV_EXTENSIONS},+SPV_INTEL_subgroups")
 endif()
 
 # don't include cl_khr_int64 in HOST_DEVICE_EXTENSIONS list, because
