@@ -328,6 +328,35 @@ int main(void) {
       return EXIT_FAILURE;
     }
 
+    // Two device-address buffers over the same host memory. Where the device
+    // address is the host pointer, the second one cannot get an address of its
+    // own; creating it must then fail with an error instead of returning NULL
+    // with CL_SUCCESS.
+    cl_int AliasedHost[BUF_SIZE] = {0};
+    cl_int Err = CL_SUCCESS;
+    cl_mem First = clCreateBuffer(
+        Context.get(),
+        CL_MEM_READ_WRITE | CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT |
+            CL_MEM_USE_HOST_PTR,
+        sizeof(AliasedHost), AliasedHost, &Err);
+    if (First == nullptr || Err != CL_SUCCESS) {
+      std::cerr << "Creating a device-address buffer failed: " << Err << "\n";
+      return EXIT_FAILURE;
+    }
+    cl_mem Second = clCreateBuffer(
+        Context.get(),
+        CL_MEM_READ_WRITE | CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT |
+            CL_MEM_USE_HOST_PTR,
+        sizeof(AliasedHost), AliasedHost, &Err);
+    if ((Second == nullptr) != (Err != CL_SUCCESS)) {
+      std::cerr << "clCreateBuffer returned " << Second << " with error "
+                << Err << "\n";
+      return EXIT_FAILURE;
+    }
+    if (Second != nullptr)
+      clReleaseMemObject(Second);
+    clReleaseMemObject(First);
+
   } catch (cl::Error &err) {
     std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
               << std::endl;
