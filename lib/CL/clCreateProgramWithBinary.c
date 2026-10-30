@@ -36,26 +36,24 @@
  * entries by device, not by position: [sub1, sub2, other] reduces to
  * [other, root]. */
 static unsigned
-caller_index (const cl_device_id *caller_devs, cl_uint caller_num,
-              cl_device_id root)
+find_index_for_root_device (const cl_device_id *caller_devs,
+                            cl_uint caller_num, cl_device_id root)
 {
-  unsigned j;
-  for (j = 0; j < caller_num; ++j)
+  for (unsigned j = 0; j < caller_num; ++j)
     if (pocl_real_dev (caller_devs[j]) == root)
       return j;
   assert (0 && "every root comes from the caller's list");
   return 0;
 }
 
-/* Every entry of the caller's list that reduces to root gets its status. */
+/* Set binary status to 'status' for devices matching to or sub-divided from 'root' device. */
 static void
 set_binary_status (cl_int *binary_status, const cl_device_id *caller_devs,
                    cl_uint caller_num, cl_device_id root, cl_int status)
 {
-  unsigned j;
   if (binary_status == NULL)
     return;
-  for (j = 0; j < caller_num; ++j)
+  for (unsigned j = 0; j < caller_num; ++j)
     if (pocl_real_dev (caller_devs[j]) == root)
       binary_status[j] = status;
 }
@@ -110,8 +108,8 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
 
   // convert subdevices to devices and remove duplicates; the caller's list
   // still indexes binaries[], lengths[] and binary_status[]
-  const cl_device_id *caller_devs = device_list;
-  cl_uint caller_num = num_devices;
+  const cl_device_id *original_device_list = device_list;
+  cl_uint original_num_devices = num_devices;
   cl_uint real_num_devices = 0;
   unique_devlist = pocl_unique_device_list(device_list, num_devices, &real_num_devices);
   num_devices = real_num_devices;
@@ -190,7 +188,9 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
 
   for (i = 0; i < num_devices; ++i)
     {
-      unsigned src = caller_index (caller_devs, caller_num, device_list[i]);
+      unsigned src = find_index_for_root_device (original_device_list,
+                                                 original_num_devices,
+                                                 device_list[i]);
       const unsigned char *binary = binaries[src];
       size_t length = lengths[src];
 
@@ -219,8 +219,9 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
               program->binary_sizes[i] = (size_t)size;
             }
 
-          set_binary_status (binary_status, caller_devs, caller_num,
-                             device_list[i], CL_SUCCESS);
+          set_binary_status (binary_status, original_device_list,
+                             original_num_devices, device_list[i],
+                             CL_SUCCESS);
         }
       /* check if the driver supports that binary */
       else
@@ -233,15 +234,17 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
               program->binary_sizes[i] = length;
               program->binaries[i] = (unsigned char *)malloc (length);
               memcpy (program->binaries[i], binary, length);
-              set_binary_status (binary_status, caller_devs, caller_num,
-                                 device_list[i], CL_SUCCESS);
+              set_binary_status (binary_status, original_device_list,
+                                 original_num_devices, device_list[i],
+                                 CL_SUCCESS);
             }
           else
             {
               POCL_MSG_WARN ("Could not recognize binary for device %u\n",
                              src);
-              set_binary_status (binary_status, caller_devs, caller_num,
-                                 device_list[i], CL_INVALID_BINARY);
+              set_binary_status (binary_status, original_device_list,
+                                 original_num_devices, device_list[i],
+                                 CL_INVALID_BINARY);
               errcode = CL_INVALID_BINARY;
               goto ERROR;
             }
