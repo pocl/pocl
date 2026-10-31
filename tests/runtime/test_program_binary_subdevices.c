@@ -201,6 +201,27 @@ main (void)
   int bad = trial ("[other, sub1, sub2]", ctx, ctl, cbins, clens, cwant);
   bad |= trial ("[sub1, sub2, other]", ctx, shift, sbins, slens, swant);
 
+  /* Two sub-devices of one root given different binaries: the program keeps
+     one binary per root device, so it must refuse rather than run sub1's
+     binary on sub2. */
+  size_t lsub9;
+  unsigned char *bsub9 = binary_for (ctx, SRC9, sub[0], root, &lsub9);
+  unsigned char *dbins[3] = { bsub, bsub9, bother };
+  size_t dlens[3] = { lsub, lsub9, lother };
+  cl_int dst[3] = { UNWRITTEN, UNWRITTEN, UNWRITTEN };
+  cl_program dp = clCreateProgramWithBinary (
+      ctx, 3, shift, dlens, (const unsigned char **)dbins, dst, &e);
+  printf ("[sub1, sub2, other] with different binaries for sub1 and sub2: "
+          "error %d, binary_status {%d, %d, %d}",
+          e, dst[0], dst[1], dst[2]);
+  int dbad = (e != CL_INVALID_BINARY || dp != NULL
+              || dst[0] != CL_INVALID_BINARY || dst[1] != CL_INVALID_BINARY);
+  printf (" -> %s\n", dbad ? "WRONG" : "ok");
+  if (dp != NULL)
+    CHECK (clReleaseProgram (dp));
+  bad |= dbad;
+  free (bsub9);
+
   free (bsub);
   free (bother);
   CHECK (clReleaseContext (ctx));
