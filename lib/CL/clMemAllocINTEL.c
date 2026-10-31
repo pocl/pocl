@@ -172,7 +172,8 @@ pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
       POCL_UNLOCK_OBJ (context);
       device->ops->usm_free (device, ptr);
       POCL_MSG_ERR ("Failed to allocate memory a shadow cl_mem object.\n");
-      return NULL;
+      ptr = NULL;
+      goto ERROR;
     }
 
   item->shadow_cl_mem = clmem_shadow;
