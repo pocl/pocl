@@ -61,6 +61,14 @@ add_test_pocl(NAME "workgroup/cond_barriers_in_for"
               EXPECTED_OUTPUT "cond_barriers_in_for_2_4_1_1.stdout"
               COMMAND "run_kernel" "cond_barriers_in_for.cl" 2 4 1 1)
 
+add_test_pocl(NAME "workgroup/cond_barrier_unit_local_x"
+              EXPECTED_OUTPUT "cond_barrier_unit_local_x_1_1_1_1.stdout"
+              COMMAND "run_kernel" "cond_barrier_unit_local_x.cl" 1 1 1 1)
+
+add_test_pocl(NAME "workgroup/cond_barrier_unit_local_x_2d"
+              EXPECTED_OUTPUT "cond_barrier_unit_local_x_1_1_2_1.stdout"
+              COMMAND "run_kernel" "cond_barrier_unit_local_x.cl" 1 1 2 1)
+
 add_test_pocl(NAME "workgroup/cond_barrier_in_var_for"
               EXPECTED_OUTPUT "cond_barrier_in_var_for_2_4_1_1.stdout"
               COMMAND "run_kernel" "cond_barrier_in_var_for.cl" 2 4 1 1
@@ -78,6 +86,8 @@ foreach(VARIANT ${VARIANTS})
     "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier_${VARIANT}"
     "workgroup/for_with_divergent_return_${VARIANT}"
     "workgroup/cond_barriers_in_for_${VARIANT}"
+    "workgroup/cond_barrier_unit_local_x_${VARIANT}"
+    "workgroup/cond_barrier_unit_local_x_2d_${VARIANT}"
     PROPERTIES
       COST 2.0
       PROCESSORS 1
