@@ -82,18 +82,12 @@ jobs:
         run: |
           cd ${{ github.workspace }}/build/examples/conformance && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) conformance
 
-      - name: Get CMake version
-        id: cmake_version
-        run: echo "version=$(cmake --version | head -n 1)" >> $GITHUB_OUTPUT
-        shell: bash
-
-      - name: Cache CTest timings
-        id: cache_ctest
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      - name: Restore cached CTest timings
+        id: restore_ctest_cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ${{ github.workspace }}/build/Testing/Temporary/CTestCostData.txt
-          key: ctest-cache-${{ steps.cmake_version.outputs.version }}-${{ runner.name }}-${{ matrix.config }}-${{ github.run_id }}
-          restore-keys: ctest-cache-${{ steps.cmake_version.outputs.version }}-${{ runner.name }}-${{ matrix.config }}
+          key: ctest-cache-${{ runner.name }}-${{ matrix.config }}-llvm-${{ matrix.llvm }}
 
       - name: Run Tests
         env:
@@ -117,3 +111,11 @@ jobs:
           else
             echo "Unknown configuration" && exit 1
           fi
+
+      - name: Save cached CTest timings
+        id: save_ctest_cache
+        if: always() && steps.restore_ctest_cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ${{ github.workspace }}/build/Testing/Temporary/CTestCostData.txt
+          key: ctest-cache-${{ runner.name }}-${{ matrix.config }}-llvm-${{ matrix.llvm }}-${{ github.run_id }}
