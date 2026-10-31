@@ -5,6 +5,14 @@ volatile global half a = INFINITY;
 volatile global half b = 1.0h;
 volatile global half8 va = (half8)(INFINITY);
 volatile global half8 vb = (half8)(1.0h);
+/* runtime operands for the half <-> float/double conversions, which lower to
+   the __truncsfhf2 & co. runtime routines on CPUs without F16C */
+volatile global float cf = -2.75f;
+volatile global ushort ch = 0xc180; /* -2.75h */
+#endif
+#if defined(cl_khr_fp16) && defined(cl_khr_fp64)
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+volatile global double cd = 0.1;
 #endif
 
 kernel
@@ -60,6 +68,28 @@ void test_halfs() {
       printf("FAIL: convert_char4_sat_rte(half4) got %d %d %d %d\n", c4.x, c4.y, c4.z, c4.w);
     }
   }
+
+  // Conversions of runtime values; compare bit patterns where possible, so a
+  // broken extension cannot mask a broken truncation
+  {
+    ushort bits = as_ushort((half)cf);
+    if (bits != 0xc180)
+      printf("FAIL: (half)%f got 0x%04x, expected 0xc180\n", cf, bits);
+    float f = (float)as_half(ch);
+    if (f != -2.75f)
+      printf("FAIL: (float)as_half(0x%04x) got %f\n", ch, f);
+  }
+#ifdef cl_khr_fp64
+  {
+    // 0.1 is inexact in half: rounds to 0x2e66
+    ushort bits = as_ushort((half)cd);
+    if (bits != 0x2e66)
+      printf("FAIL: (half)%f got 0x%04x, expected 0x2e66\n", cd, bits);
+    double d = (double)as_half(ch);
+    if (d != -2.75)
+      printf("FAIL: (double)as_half(0x%04x) got %f\n", ch, d);
+  }
+#endif
 #endif
 }
 
