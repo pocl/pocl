@@ -37,7 +37,8 @@ set(C_PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clSetEventCallback test_clEnqueueNativeKernel test_clBuildProgram
   test_clCreateKernelsInProgram test_clCreateKernel test_clGetKernelArgInfo
   test_version test_kernel_cache_includes test_event_cycle test_link_error
-  test_read-copy-write-buffer test_buffer-image-copy test_clCreateSubDevices test_event_free
+  test_read-copy-write-buffer test_buffer-image-copy test_clCreateSubDevices
+  test_program_binary_subdevices test_event_free
   test_event_double_wait test_event_failed_dependency test_buffer_migration
   test_buffer_ping_pong
   test_enqueue_kernel_from_binary test_user_event test_fill-buffer
@@ -138,6 +139,12 @@ add_test(NAME "runtime/test_image_normalized_conv" COMMAND "test_image_normalize
 add_test_pocl(NAME "runtime/clCreateKernelsInProgram" COMMAND "test_clCreateKernelsInProgram" WORKITEM_HANDLER "loopvec")
 
 add_test(NAME "runtime/clCreateSubDevices" COMMAND  "test_clCreateSubDevices")
+
+# two root devices, one of them partitionable; skips (77) where there aren't
+add_test(NAME "runtime/test_program_binary_subdevices" COMMAND "test_program_binary_subdevices")
+set_tests_properties("runtime/test_program_binary_subdevices" PROPERTIES
+  ENVIRONMENT "POCL_DEVICES=pthread basic"
+  SKIP_RETURN_CODE 77)
 
 add_test_pocl(NAME "runtime/test_event_free" COMMAND  "test_event_free" WORKITEM_HANDLER "loopvec")
 
