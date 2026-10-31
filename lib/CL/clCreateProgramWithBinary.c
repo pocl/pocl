@@ -131,6 +131,29 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
           device_list[i]->long_name);
     }
 
+  /* The program keeps one binary per root device, so entries that reduce to
+     the same root must carry the same binary: a different one could not be
+     kept, and kernels on its device would run the other's. */
+  if (binaries != NULL && lengths != NULL)
+    for (i = 0; i < original_num_devices; ++i)
+      for (j = i + 1; j < original_num_devices; ++j)
+        {
+          if (pocl_real_dev (original_device_list[i])
+                  != pocl_real_dev (original_device_list[j])
+              || binaries[i] == NULL || binaries[j] == NULL)
+            continue;
+          if (lengths[i] == lengths[j]
+              && (binaries[i] == binaries[j]
+                  || memcmp (binaries[i], binaries[j], lengths[i]) == 0))
+            continue;
+          if (binary_status != NULL)
+            binary_status[i] = binary_status[j] = CL_INVALID_BINARY;
+          POCL_GOTO_ERROR_ON (1, CL_INVALID_BINARY,
+                              "devices %u and %u share a root device but "
+                              "were given different binaries\n",
+                              i, j);
+        }
+
   if ((program = (cl_program) calloc (1, sizeof (struct _cl_program))) == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
