@@ -25,7 +25,9 @@
 #include "CompilerWarnings.h"
 #include "llvm/Support/FileSystem.h"
 #include <deque>
-#include <llvm/ADT/APInt.h>
+#include <cstdint>
+#include <llvm/IR/GetElementPtrTypeIterator.h>
+#include <llvm/Support/MathExtras.h>
 #include <llvm/ADT/PostOrderIterator.h>
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/IR/CFG.h>
@@ -70,6 +72,7 @@ POP_COMPILER_DIAGS
 
 #include <array>
 #include <map>
+#include <optional>
 #include <vector>
 
 #define DEBUG_TYPE "WIL"
@@ -124,7 +127,9 @@ private:
     llvm::Instruction *valueOutput = nullptr;
     std::vector<llvm::Instruction *> arrayOutput;
     std::vector<llvm::Instruction *> children;
-    bool isContiguous = false;
+    // Signed difference between adjacent lanes; pointer strides are in bytes.
+    // No value means the stride is unknown or does not fit in int64_t.
+    std::optional<int64_t> stride;
   };
 
   using BasicBlockVector = std::vector<llvm::BasicBlock *>;
@@ -153,6 +158,14 @@ private:
 
   std::map<llvm::Instruction *, GraphNode> InstGraph;
 
+  // Computed on the original CFG. Missing/new blocks conservatively need masks.
+  std::map<llvm::BasicBlock *, bool> RequiresMask;
+  void analyzeMaskRequirements();
+  bool requiresMask(BasicBlock *BB) const {
+    auto It = RequiresMask.find(BB);
+    return It == RequiresMask.end() || It->second;
+  }
+
   // Associates a basic block with its execution mask
   std::map<llvm::BasicBlock *, llvm::Value *> BlockMasks;
 
@@ -177,6 +190,8 @@ private:
 
   Value *createVectorScalarAdd(IRBuilder<> &builder, Value *Vec, Value *Scalar);
 
+  std::optional<int64_t> getStride(Value *V);
+  std::optional<int64_t> computeStride(Instruction *I);
   void vectorizeInstruction(llvm::Instruction *I);
   void branchReplace(llvm::BranchInst *I);
   void vectorizedReplace(llvm::Instruction *I);
@@ -236,6 +251,8 @@ bool WholeFunctionVectorizationImpl::runOnFunction(Function &Func) {
   VectorizedLocalIdVar = cast<GlobalVariable>(
       M->getOrInsertGlobal(LID_G_NAME_VECTORIZED, VectorST));
 
+  analyzeMaskRequirements();
+
   bool Changed = false;
 
   // Changed |= forceInlineAllCalls(Func);
@@ -265,6 +282,75 @@ bool WholeFunctionVectorizationImpl::runOnFunction(Function &Func) {
   Changed |= privatizeContext();
 
   return Changed;
+}
+
+// Only work-item loops with full gangs may omit masks. Ordinary loops and
+// blocks outside work-item loops retain masking, regardless of their CFG.
+void WholeFunctionVectorizationImpl::analyzeMaskRequirements() {
+  const unsigned long LocalSizes[] = {WGLocalSizeX, WGLocalSizeY, WGLocalSizeZ};
+  const bool FullGangs = !WGDynamicLocalSize &&
+                        LocalSizes[VectorizationDim] != 0 &&
+                        LocalSizes[VectorizationDim] % GangSize == 0;
+  RequiresMask.clear();
+  for (BasicBlock &BB : *F)
+    RequiresMask[&BB] = true;
+  if (!FullGangs)
+    return;
+
+  SmallPtrSet<Loop *, 16> WorkItemLoops;
+  for (Loop *L : LI.getLoopsInPreorder()) {
+    SmallVector<BasicBlock *, 4> Exiting;
+    L->getExitingBlocks(Exiting);
+    for (BasicBlock *BB : Exiting)
+      if (blockHasTag(BB, "pregion_for_cond")) {
+        WorkItemLoops.insert(L);
+        break;
+      }
+  }
+
+  for (BasicBlock &BB : *F) {
+    Loop *L = LI.getLoopFor(&BB);
+    if (!L || !WorkItemLoops.count(L) || !DT.isReachableFromEntry(&BB))
+      continue;
+    // An ordinary enclosing subloop may itself have a partial execution mask.
+    bool OrdinaryAncestor = false;
+    for (Loop *Parent = L->getParentLoop(); Parent;
+         Parent = Parent->getParentLoop())
+      OrdinaryAncestor |= !WorkItemLoops.count(Parent);
+    if (!OrdinaryAncestor)
+      RequiresMask[&BB] = false;
+  }
+
+  // Mask both arms of contained branches, including their nested loops, up to
+  // reconvergence. Afterwards the enclosing work-item loop is fully active
+  // again: work-item loops are assumed never to exit early. Apply this also
+  // to enclosing branches so a conditionally entered work-item loop stays masked.
+  for (BasicBlock &BB : *F) {
+    Instruction *Term = BB.getTerminator();
+    if (Term->getNumSuccessors() < 2 || !DT.isReachableFromEntry(&BB))
+      continue;
+    Loop *L = LI.getLoopFor(&BB);
+    if (L && WorkItemLoops.count(L) &&
+        blockHasTag(&BB, "pregion_for_cond"))
+      continue;
+
+    BasicBlock *Merge = Term->getSuccessor(0);
+    for (unsigned I = 1; I < Term->getNumSuccessors() && Merge; ++I)
+      Merge = PDT.findNearestCommonDominator(Merge, Term->getSuccessor(I));
+
+    SmallVector<BasicBlock *, 16> Worklist;
+    SmallPtrSet<BasicBlock *, 32> Visited;
+    for (BasicBlock *Succ : successors(&BB))
+      Worklist.push_back(Succ);
+    while (!Worklist.empty()) {
+      BasicBlock *Current = Worklist.pop_back_val();
+      if (Current == Merge || !Visited.insert(Current).second)
+        continue;
+      RequiresMask[Current] = true;
+      for (BasicBlock *Succ : successors(Current))
+        Worklist.push_back(Succ);
+    }
+  }
 }
 
 bool WholeFunctionVectorizationImpl::forceInlineAllCalls(Function &F) {
@@ -377,6 +463,125 @@ void WholeFunctionVectorizationImpl::traverseInstructionTree(
   }
 }
 
+// Values outside the dependency graph are splatted by vectorizedReplace.
+std::optional<int64_t> WholeFunctionVectorizationImpl::getStride(Value *V) {
+  if (auto *I = dyn_cast<Instruction>(V)) {
+    auto It = InstGraph.find(I);
+    if (It != InstGraph.end())
+      return It->second.stride;
+  }
+  if (V->getType()->isIntegerTy())
+    return 0;
+  if (V->getType()->isPointerTy())
+    return 0;
+  return std::nullopt;
+}
+
+std::optional<int64_t>
+WholeFunctionVectorizationImpl::computeStride(Instruction *I) {
+  if (auto *GEP = dyn_cast<GetElementPtrInst>(I)) {
+    auto Stride = getStride(GEP->getPointerOperand());
+    if (!Stride)
+      return std::nullopt;
+    for (auto Index = gep_type_begin(GEP), End = gep_type_end(GEP);
+         Index != End; ++Index) {
+      // Structure indices are constant and contribute no lane difference.
+      if (Index.isStruct())
+        continue;
+      auto IndexStride = getStride(Index.getOperand());
+      if (!IndexStride)
+        return std::nullopt;
+      if (*IndexStride == 0)
+        continue;
+      TypeSize ElementSize =
+          M->getDataLayout().getTypeAllocSize(Index.getIndexedType());
+      if (ElementSize.isScalable() || ElementSize.getFixedValue() > INT64_MAX)
+        return std::nullopt;
+      int64_t Offset;
+      if (MulOverflow(*IndexStride,
+                      static_cast<int64_t>(ElementSize.getFixedValue()), Offset) ||
+          AddOverflow(*Stride, Offset, *Stride))
+        return std::nullopt;
+    }
+    return Stride;
+  }
+
+  if (!I->getType()->isIntegerTy())
+    return std::nullopt;
+
+  if (auto *Cast = dyn_cast<CastInst>(I)) {
+    auto Stride = getStride(Cast->getOperand(0));
+    if (!Stride)
+      return std::nullopt;
+    // Casts might change strides at the bounds. Only propagate definitely unchanged values.
+    if (*Stride == 0 && (Cast->getOpcode() == Instruction::Trunc ||
+                         Cast->getOpcode() == Instruction::SExt ||
+                         Cast->getOpcode() == Instruction::ZExt))
+      return 0;
+    return std::nullopt;
+  }
+
+  auto *Binary = dyn_cast<BinaryOperator>(I);
+  if (!Binary)
+    return std::nullopt;
+  auto L = getStride(Binary->getOperand(0));
+  auto R = getStride(Binary->getOperand(1));
+  if (!L || !R)
+    return std::nullopt;
+  int64_t Result;
+  auto Scale = [&](int64_t Stride, ConstantInt *C) -> std::optional<int64_t> {
+    // LLVM constants may be wider than our signed stride representation.
+    if (!C->getValue().isSignedIntN(64) ||
+        MulOverflow(Stride, C->getSExtValue(), Result))
+      return std::nullopt;
+    return Result;
+  };
+  switch (Binary->getOpcode()) {
+  case Instruction::Add:
+    if (!AddOverflow(*L, *R, Result))
+      return Result;
+    break;
+  case Instruction::Sub:
+    if (!SubOverflow(*L, *R, Result))
+      return Result;
+    break;
+  case Instruction::Mul:
+    if (auto *C = dyn_cast<ConstantInt>(Binary->getOperand(1)))
+      return Scale(*L, C);
+    if (auto *C = dyn_cast<ConstantInt>(Binary->getOperand(0)))
+      return Scale(*R, C);
+    break;
+  case Instruction::Shl:
+    if (auto *C = dyn_cast<ConstantInt>(Binary->getOperand(1)))
+      if (C->getValue().isIntN(64)) {
+        uint64_t Shift = C->getZExtValue();
+        if (Shift < 63 && Shift < I->getType()->getIntegerBitWidth() &&
+            !MulOverflow(*L, int64_t(1) << Shift, Result))
+          return Result;
+      }
+    break;
+  case Instruction::LShr:
+  case Instruction::AShr:
+    if (auto *C = dyn_cast<ConstantInt>(Binary->getOperand(1)))
+      if (C->getValue().isIntN(64)) {
+        uint64_t Shift = C->getZExtValue();
+        if (Shift < 63 && Shift < I->getType()->getIntegerBitWidth()) {
+          int64_t Divisor = int64_t(1) << Shift;
+          // Exact division preserves the lane difference independently of
+          // discarded low bits. In particular, shl 32 followed by shr 32
+          // restores the original stride. As with other integer arithmetic,
+          // this describes lanes that do not cross a wrapping boundary.
+          if (*L % Divisor == 0)
+            return *L / Divisor;
+        }
+      }
+    break;
+  default:
+    break;
+  }
+  return std::nullopt;
+}
+
 void WholeFunctionVectorizationImpl::vectorizeInstruction(llvm::Instruction *I) {
   // Handle branches
   if (BranchInst *br = dyn_cast<BranchInst>(I)) {
@@ -432,10 +637,20 @@ void WholeFunctionVectorizationImpl::branchReplace(llvm::BranchInst *br) {
     condInst = InstGraph[condInst].valueOutput;
     IRBuilder<> Builder(condInst->getParent());
 
-    // TODO: fix this. in the case of for_cond blocks, maintaining the masks in
-    // this way is massively overkill if we switch equality comps to geq.
-    // Even in other cases, we don't need nearly as much overhead. Just zero out all masks
-    // after the first false.
+    if (!requiresMask(BB) && blockHasTag(BB, "pregion_for_cond") &&
+        loopBranches.count(BB)) {
+      Builder.SetInsertPoint(br);
+      // Full gangs make every lane agree on the work-item loop condition.
+      // Keep the mask PHI plumbing for contained branches, but bypass the
+      // predicate mask updates and reductions for this loop backedge.
+      Value *FullMask = Constant::getAllOnesValue(condInst->getType());
+      cast<PHINode>(BlockMasks[br->getSuccessor(0)])
+          ->addIncoming(FullMask, BB);
+      br->setCondition(Builder.CreateExtractElement(
+          condInst, Builder.getInt32(0), "workitem.loop.condition"));
+      return;
+    }
+
     if (loopBranches.count(br->getParent()) > 0) {
       Builder.SetInsertPoint(br);
       // For loop predicates in the pregion_for_cond blocks, any false means that all future mask values must
@@ -559,14 +774,44 @@ void WholeFunctionVectorizationImpl::vectorizedReplace(llvm::Instruction *I) {
     splat(0);
 
     auto *load = cast<LoadInst>(I);
-    auto *newLoad = Builder.CreateMaskedGather(
-        vectorizedType(),
-        newOperands[0],
-        load->getAlign(),
-        nullptr,
-        PoisonValue::get(vectorizedType()));
+    const DataLayout &DL = M->getDataLayout();
+    auto PointerStride = getStride(load->getPointerOperand());
+    TypeSize ElementBytes = DL.getTypeStoreSize(load->getType());
+    TypeSize ElementBits = DL.getTypeSizeInBits(load->getType());
+    // Vector elements must have the same spacing as the scalar accesses.
+    // Exclude sub-byte types (e.g. i1), whose vector layout packs elements.
+    bool Contiguous = load->isSimple() && PointerStride &&
+                      !ElementBytes.isScalable() && !ElementBits.isScalable() &&
+                      ElementBits.getFixedValue() % 8 == 0 &&
+                      ElementBytes.getFixedValue() <= INT64_MAX &&
+                      *PointerStride ==
+                          static_cast<int64_t>(ElementBytes.getFixedValue());
 
-    maskedCalls[newLoad] = 2;
+    CallInst *newLoad;
+    if (Contiguous) {
+      Value *Base = Builder.CreateExtractElement(
+          newOperands[0], Builder.getInt32(0), "wide.load.base");
+      // applyMasks supplies the final block mask after control-flow changes.
+      Value *Mask = Constant::getAllOnesValue(
+          VectorType::get(Builder.getInt1Ty(), GangSize, false));
+      if (!requiresMask(I->getParent())) {
+        newInst = Builder.CreateAlignedLoad(
+            vectorizedType(), Base, load->getAlign());
+        markedForDeletion.insert(I);
+        InstGraph[I].valueOutput = newInst;
+        return;
+      }
+      newLoad = Builder.CreateMaskedLoad(
+          vectorizedType(), Base, load->getAlign(), Mask,
+          PoisonValue::get(vectorizedType()));
+    } else {
+      newLoad = Builder.CreateMaskedGather(
+          vectorizedType(), newOperands[0], load->getAlign(), nullptr,
+          PoisonValue::get(vectorizedType()));
+    }
+
+    if (requiresMask(I->getParent()))
+      maskedCalls[newLoad] = 2;
     newInst = newLoad;
   } else if (I->getOpcode() == Instruction::Store) {
     splat(0);
@@ -574,13 +819,42 @@ void WholeFunctionVectorizationImpl::vectorizedReplace(llvm::Instruction *I) {
 
     auto *store = cast<StoreInst>(I);
 
-    auto *newStore = Builder.CreateMaskedScatter(
-        newOperands[0],
-        newOperands[1],
-        store->getAlign(),
-        nullptr);
+    const DataLayout &DL = M->getDataLayout();
+    auto PointerStride = getStride(store->getPointerOperand());
+    Type *ElementType = store->getValueOperand()->getType();
+    TypeSize ElementBytes = DL.getTypeStoreSize(ElementType);
+    TypeSize ElementBits = DL.getTypeSizeInBits(ElementType);
+    // Match the scalar spacing to the vector layout, as for wide loads.
+    bool Contiguous = store->isSimple() && PointerStride &&
+                      !ElementBytes.isScalable() && !ElementBits.isScalable() &&
+                      ElementBits.getFixedValue() % 8 == 0 &&
+                      ElementBytes.getFixedValue() <= INT64_MAX &&
+                      *PointerStride ==
+                          static_cast<int64_t>(ElementBytes.getFixedValue());
 
-    maskedCalls[newStore] = 3;
+    CallInst *newStore;
+    if (Contiguous) {
+      Value *Base = Builder.CreateExtractElement(
+          newOperands[1], Builder.getInt32(0), "wide.store.base");
+      // applyMasks supplies the final block mask after control-flow changes.
+      Value *Mask = Constant::getAllOnesValue(
+          VectorType::get(Builder.getInt1Ty(), GangSize, false));
+      if (!requiresMask(I->getParent())) {
+        newInst = Builder.CreateAlignedStore(
+            newOperands[0], Base, store->getAlign());
+        markedForDeletion.insert(I);
+        InstGraph[I].valueOutput = newInst;
+        return;
+      }
+      newStore = Builder.CreateMaskedStore(
+          newOperands[0], Base, store->getAlign(), Mask);
+    } else {
+      newStore = Builder.CreateMaskedScatter(
+          newOperands[0], newOperands[1], store->getAlign(), nullptr);
+    }
+
+    if (requiresMask(I->getParent()))
+      maskedCalls[newStore] = 3;
     newInst = newStore;
   } else if (I->getOpcode() == Instruction::Select) {
     splat(0);
@@ -899,6 +1173,7 @@ void WholeFunctionVectorizationImpl::transformIdLoads() {
     Instruction *globalLoad =
         Builder.CreateLoad(VectorST, VectorizedLocalIdVar);
     InstGraph[LoadInst].valueOutput = globalLoad;
+    InstGraph[LoadInst].stride = 1;
     AllVectorizableLoads.insert(LoadInst);
     traverseInstructionTree(LoadInst, visited);
   }
@@ -909,9 +1184,15 @@ void WholeFunctionVectorizationImpl::transformIdLoads() {
     Instruction *globalLoad =
         Builder.CreateLoad(VectorST, VectorizedGlobalIdVar);
     InstGraph[LoadInst].valueOutput = globalLoad;
+    InstGraph[LoadInst].stride = 1;
     AllVectorizableLoads.insert(LoadInst);
     traverseInstructionTree(LoadInst, visited);
   }
+
+  // Include terminal users and cyclic dependencies before querying operands:
+  // an unprocessed graph node must be unknown, never mistaken for a splat.
+  for (Instruction *I : visited)
+    InstGraph.try_emplace(I);
 
   DenseMap<Instruction *, int> in_degree;
   for (Instruction *I : visited)
@@ -944,6 +1225,7 @@ void WholeFunctionVectorizationImpl::transformIdLoads() {
   for (Instruction *I : TopoOrder) {
     // Don't try to vectorize the initial loads from the global/local IDs.
     if (AllVectorizableLoads.count(I) == 0) {
+      InstGraph[I].stride = computeStride(I);
       vectorizeInstruction(I);
     }
   }
@@ -1181,6 +1463,8 @@ void WholeFunctionVectorizationImpl::applyMasks() {
     // at all (i.e, when the mask has any true values).
     if (auto *SI = dyn_cast<StoreInst>(I)) {
       BasicBlock *BB = SI->getParent();
+      if (!requiresMask(BB))
+        continue;
       if (auto *M = BB->getTerminator()->getMetadata("myrole")) {
         // auto *S = dyn_cast<MDString>(M->getOperand(0));
         // if (S && (S->getString() == "pregion_for_inc" ||

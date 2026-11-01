@@ -537,7 +537,10 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
 
     // NEW PM requires WIH & VUA analyses here,
     // but they should not be invalidated by previous passes
-    addPass(Passes, "implicit-loop-barriers", PassType::Loop);
+    if (!pocl_get_bool_option("POCL_ENABLE_WFV", false)) {
+      addPass(Passes, "implicit-loop-barriers", PassType::Loop);
+    }
+
 
     // implicit-cond-barriers handles barriers inside conditional
     // basic blocks (basically if...elses). It tries to minimize the
