@@ -4017,6 +4017,30 @@ void simplecpp::preprocess(simplecpp::TokenList &output, const simplecpp::TokenL
                 }
             } else if (ifstates.top() == True && rawtok->str() == PRAGMA && rawtok->next && rawtok->next->str() == ONCE && sameline(rawtok,rawtok->next)) {
                 pragmaOnce.insert(rawtokens.file(rawtok->location));
+            } else if (ifstates.top() == True &&
+                       rawtok->str() != DEFINE && rawtok->str() != INCLUDE &&
+                       rawtok->str() != IF && rawtok->str() != IFDEF && rawtok->str() != IFNDEF &&
+                       rawtok->str() != ELIF && rawtok->str() != ELIFDEF && rawtok->str() != ELIFNDEF &&
+                       rawtok->str() != ELSE && rawtok->str() != ENDIF &&
+                       rawtok->str() != UNDEF && rawtok->str() != ERROR && rawtok->str() != WARNING &&
+                       rawtok->str() != HAS_INCLUDE &&
+                       rawtok->str() != PRAGMA) {
+                // PoCL fork: emit unknown directives (e.g. "#pragma OPENCL EXTENSION")
+                // unchanged instead of silently dropping them, so the preprocessed
+                // output can be compiled by another compiler.
+                output.push_back(new Token('#' + rawtok->str(), rawtok->location));
+                for (const Token *tok = rawtok->next; tok && sameline(rawtok, tok); tok = tok->next) {
+                    if (!tok->comment)
+                        output.push_back(new Token(tok->str(), tok->location));
+                }
+            } else if (ifstates.top() == True && rawtok->str() == PRAGMA &&
+                       rawtok->next && rawtok->next->str() != ONCE && sameline(rawtok,rawtok->next)) {
+                // PoCL fork: pass through #pragmas other than "#pragma once"
+                output.push_back(new Token('#' + rawtok->str(), rawtok->location));
+                for (const Token *tok = rawtok->next; tok && sameline(rawtok, tok); tok = tok->next) {
+                    if (!tok->comment)
+                        output.push_back(new Token(tok->str(), tok->location));
+                }
             }
             if (ifstates.top() != True && rawtok->nextcond)
                 rawtok = rawtok->nextcond->previous;
