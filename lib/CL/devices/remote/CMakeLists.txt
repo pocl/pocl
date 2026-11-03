@@ -27,6 +27,13 @@ set(POCL_REMOTE_CLIENT_SOURCES
     remote.h remote.c communication.h communication.c
       ../../pocl_networking.h ../../pocl_networking.c)
 
+if(ENABLE_REMOTE_PROGRAM_PREPROCESSING)
+  list(APPEND POCL_REMOTE_CLIENT_SOURCES
+      preprocess.h preprocess.cc
+      "${CMAKE_SOURCE_DIR}/thirdparty/simplecpp/simplecpp.h"
+      "${CMAKE_SOURCE_DIR}/thirdparty/simplecpp/simplecpp.cpp")
+endif()
+
 if(ENABLE_RDMA)
     list(APPEND POCL_REMOTE_CLIENT_SOURCES ../../pocl_rdma.h ../../pocl_rdma.c)
 endif()
@@ -51,3 +58,8 @@ endif()
 
 add_pocl_device_library("pocl-devices-remote" ${POCL_REMOTE_CLIENT_SOURCES})
 target_link_libraries("pocl-devices-remote" PRIVATE ${LIBS})
+
+if(ENABLE_REMOTE_PROGRAM_PREPROCESSING)
+  target_include_directories("pocl-devices-remote"
+      PRIVATE "${CMAKE_SOURCE_DIR}/thirdparty/simplecpp")
+endif()
