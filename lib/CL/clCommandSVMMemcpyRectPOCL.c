@@ -48,7 +48,7 @@ POname (clCommandSVMMemcpyRectPOCL) (
     command_buffer, &command_queue, mutable_handle);
   if (errcode != CL_SUCCESS)
     return errcode;
-  SETUP_MUTABLE_HANDLE;
+  SETUP_COMMAND_HANDLE;
 
   errcode = pocl_svm_memcpy_rect_common (
     command_buffer, command_queue, dst_ptr, src_ptr, dst_origin, src_origin,

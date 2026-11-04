@@ -40,7 +40,7 @@ POname (clCommandFillImageKHR) (
     command_buffer, &command_queue, mutable_handle);
   if (errcode != CL_SUCCESS)
     return errcode;
-  SETUP_MUTABLE_HANDLE;
+  SETUP_COMMAND_HANDLE;
 
   errcode = pocl_fill_image_common (
     command_buffer, command_queue, image, fill_color, origin, region,

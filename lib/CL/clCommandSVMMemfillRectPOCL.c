@@ -46,7 +46,7 @@ POname (clCommandSVMMemfillRectPOCL) (
     command_buffer, &command_queue, mutable_handle);
   if (errcode != CL_SUCCESS)
     return errcode;
-  SETUP_MUTABLE_HANDLE;
+  SETUP_COMMAND_HANDLE;
 
   errcode = pocl_svm_memfill_rect_common (
     command_buffer, command_queue, svm_ptr, origin, region, row_pitch,

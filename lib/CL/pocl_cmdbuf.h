@@ -80,4 +80,10 @@ pocl_cmdbuf_validate_common_handles (cl_command_buffer_khr command_buffer,
   if (mutable_handle == NULL)                                                 \
     mutable_handle = &cmd_temp;
 
+/* Only ND-range kernel commands return a mutable handle. */
+#define SETUP_COMMAND_HANDLE                                                  \
+  POCL_RETURN_ERROR_COND ((mutable_handle != NULL), CL_INVALID_VALUE);        \
+  _cl_command_node *cmd_temp = NULL;                                          \
+  mutable_handle = &cmd_temp;
+
 #endif

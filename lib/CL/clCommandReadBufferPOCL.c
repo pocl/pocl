@@ -43,7 +43,7 @@ POname (clCommandReadBufferPOCL) (
     command_buffer, &command_queue, mutable_handle);
   if (errcode != CL_SUCCESS)
     return errcode;
-  SETUP_MUTABLE_HANDLE;
+  SETUP_COMMAND_HANDLE;
 
   errcode = pocl_read_buffer_common (
     command_buffer, command_queue, buffer, offset, size, ptr,

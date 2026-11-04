@@ -41,7 +41,7 @@ POname (clCommandSVMMemFillKHR) (
     command_buffer, &command_queue, mutable_handle);
   if (errcode != CL_SUCCESS)
     return errcode;
-  SETUP_MUTABLE_HANDLE;
+  SETUP_COMMAND_HANDLE;
 
   return pocl_svm_memfill_common (
     command_buffer, command_queue, CL_COMMAND_SVM_MEMFILL, svm_ptr, size,
