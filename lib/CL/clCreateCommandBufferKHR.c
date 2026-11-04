@@ -28,6 +28,38 @@
 
 #include <CL/cl_ext.h>
 
+/* Whether dev reports device-side synchronization with the devices of all
+ * queues. */
+static int
+can_sync_device_side (cl_device_id dev,
+                      cl_uint num_queues,
+                      const cl_command_queue *queues)
+{
+  cl_uint num_sync = 0;
+  if (POname (clGetDeviceInfo) (dev,
+                                CL_DEVICE_COMMAND_BUFFER_NUM_SYNC_DEVICES_KHR,
+                                sizeof (num_sync), &num_sync, NULL)
+        != CL_SUCCESS
+      || num_sync == 0)
+    return 0;
+  cl_device_id *sync = alloca (num_sync * sizeof (cl_device_id));
+  if (POname (clGetDeviceInfo) (dev, CL_DEVICE_COMMAND_BUFFER_SYNC_DEVICES_KHR,
+                                num_sync * sizeof (cl_device_id), sync, NULL)
+      != CL_SUCCESS)
+    return 0;
+
+  for (cl_uint i = 0; i < num_queues; ++i)
+    {
+      cl_device_id root = pocl_real_dev (queues[i]->device);
+      int listed = 0;
+      for (cl_uint j = 0; j < num_sync; ++j)
+        listed |= (sync[j] == root);
+      if (!listed)
+        return 0;
+    }
+  return 1;
+}
+
 CL_API_ENTRY cl_command_buffer_khr CL_API_CALL
 POname (clCreateCommandBufferKHR) (
     cl_uint num_queues, const cl_command_queue *queues,
@@ -83,6 +115,7 @@ POname (clCreateCommandBufferKHR) (
   cl_command_buffer_properties_khr *seen_keys = NULL;
   cl_bool property_mutable = 0;
   cl_bool property_simultaneous = 0;
+  cl_bool property_device_side_sync = 0;
   cl_bool property_assert_no_more_wgs = 0;
   if (properties != NULL)
     {
@@ -127,6 +160,9 @@ POname (clCreateCommandBufferKHR) (
               /* some devices support mutable cmd buffers */
               property_mutable = (val & CL_COMMAND_BUFFER_MUTABLE_KHR) > 0;
               val &= ~CL_COMMAND_BUFFER_MUTABLE_KHR;
+              property_device_side_sync
+                = (val & CL_COMMAND_BUFFER_DEVICE_SIDE_SYNC_KHR) > 0;
+              val &= ~CL_COMMAND_BUFFER_DEVICE_SIDE_SYNC_KHR;
 
               /* Any flag bits not handled above are invalid */
               POCL_GOTO_ERROR_ON (
@@ -176,6 +212,26 @@ POname (clCreateCommandBufferKHR) (
             "CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR requested but queue %u / "
             "device %s does not support it\n",
             i, queues[i]->device->short_name);
+        }
+    }
+
+  if (property_device_side_sync)
+    {
+      for (unsigned i = 0; i < num_queues; ++i)
+        {
+          cl_device_id dev = queues[i]->device;
+          POCL_GOTO_ERROR_ON (
+            (strstr (dev->extensions, "cl_khr_command_buffer_multi_device")
+             == NULL),
+            CL_INVALID_VALUE,
+            "CL_COMMAND_BUFFER_DEVICE_SIDE_SYNC_KHR requires "
+            "cl_khr_command_buffer_multi_device\n");
+          POCL_GOTO_ERROR_ON (
+            !can_sync_device_side (dev, num_queues, queues),
+            CL_INCOMPATIBLE_COMMAND_QUEUE_KHR,
+            "CL_COMMAND_BUFFER_DEVICE_SIDE_SYNC_KHR requested but device %s "
+            "cannot synchronize device-side with all the queues' devices\n",
+            dev->short_name);
         }
     }
 
