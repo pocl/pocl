@@ -36,10 +36,21 @@ else()
   message(STATUS "Did NOT find spirv-link!")
 endif()
 
-# Search for the LLVMSPIRV library. First try to find it in the LLVM's include directories.
+# Search for the LLVMSPIRV library. First try explicit user-provided paths,
+# then the LLVM include and library directories. LLVM_SPIRV_ROOT is useful
+# when the translator is installed separately from LLVM.
+set(LLVM_SPIRV_ROOT "" CACHE PATH "Prefix of a separately installed SPIR-V LLVM translator")
+if(LLVM_SPIRV_ROOT)
+  set(_LLVM_SPIRV_INCLUDE_HINT "${LLVM_SPIRV_ROOT}/include")
+  set(_LLVM_SPIRV_LIBRARY_HINTS "${LLVM_SPIRV_ROOT}/lib" "${LLVM_SPIRV_ROOT}/lib64")
+endif()
 find_path(LLVM_SPIRV_INCLUDEDIR "LLVMSPIRVLib.h"
-  PATHS "${LLVM_INCLUDE_DIRS}" NO_DEFAULT_PATH PATH_SUFFIXES "LLVMSPIRVLib")
-find_library(LLVM_SPIRV_LIB "LLVMSPIRVLib" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
+  HINTS ${_LLVM_SPIRV_INCLUDE_HINT}
+  PATHS ${LLVM_INCLUDE_DIRS}
+  NO_DEFAULT_PATH PATH_SUFFIXES "LLVMSPIRVLib")
+find_library(LLVM_SPIRV_LIB "LLVMSPIRVLib"
+  HINTS ${_LLVM_SPIRV_LIBRARY_HINTS}
+  PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
 
 # fallback to searching for unversioned translator library & headers;
 # however if we found a version-matching llvm-spirv executable, prefer that
