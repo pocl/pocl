@@ -52,6 +52,10 @@ Runtime fixes & features
 * The event returned by `clEnqueueCommandBufferKHR` now reports
   `CL_COMMAND_COMMAND_BUFFER_KHR` as its command type on all devices, instead
   of `CL_COMMAND_MARKER` on devices without native command buffers.
+* `CL_COMMAND_BUFFER_DEVICE_SIDE_SYNC_KHR` is now accepted by
+  `clCreateCommandBufferKHR` when all the devices of the queues can
+  synchronize device-side; CPU devices report themselves in
+  `CL_DEVICE_COMMAND_BUFFER_SYNC_DEVICES_KHR`.
 
 ===========================
 Driver-specific features
