@@ -30,9 +30,9 @@ jobs:
         # cts_asan = CTS build with AddressSanitizer
         # cts_tsan = CTS build with ThreadSanitizer
         include:
-          - llvm: 21
+          - llvm: 23
             config: cts_tsan
-          - llvm: 21
+          - llvm: 23
             config: cts_asan
 
     steps:
@@ -60,11 +60,11 @@ jobs:
           if [ "${{ matrix.config }}" == "cts_asan" ]; then
             mkdir -p ${EXAMPLES_DIR}/build_cts_asan
             mkdir -p ${EXAMPLES_DIR}/source
-            runCMake -DENABLE_ICD=0 -DENABLE_ASAN=1 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_cts_asan -DWITH_LLVM_CONFIG=/opt/LLVM_21_ASAN/bin/llvm-config
+            runCMake -DENABLE_ICD=0 -DENABLE_SPIRV=0 -DENABLE_ASAN=1 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_cts_asan -DWITH_LLVM_CONFIG=/opt/LLVM_${{ matrix.llvm }}_ASAN/bin/llvm-config
           elif [ "${{ matrix.config }}" == "cts_tsan" ]; then
             mkdir -p ${EXAMPLES_DIR}/build_cts_tsan
             mkdir -p ${EXAMPLES_DIR}/source
-            runCMake -DENABLE_ICD=0 -DENABLE_TSAN=1 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_cts_tsan -DWITH_LLVM_CONFIG=/opt/LLVM_21_TSAN/bin/llvm-config
+            runCMake -DENABLE_ICD=0 -DENABLE_SPIRV=0 -DENABLE_TSAN=1 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_cts_tsan -DWITH_LLVM_CONFIG=/opt/LLVM_${{ matrix.llvm }}_TSAN/bin/llvm-config
           else
             echo "Unknown configuration" && exit 1
           fi
