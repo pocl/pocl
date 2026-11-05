@@ -37,6 +37,15 @@ Runtime fixes & features
   `CL_PROGRAM_BINARIES` for programs that have not been built, instead of
   `CL_INVALID_PROGRAM`.
 
+* `cl_khr_command_buffer` has been updated to version 1.0.0, together with
+  `cl_khr_command_buffer_multi_device` 0.9.2 and
+  `cl_khr_command_buffer_mutable_dispatch` 0.9.4. A command buffer can be
+  enqueued again while a previous submission is in flight, there is no longer
+  a pending state, and `CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR` now requires
+  `cl_khr_command_buffer_mutable_dispatch`. Substitute queues passed to
+  `clEnqueueCommandBufferKHR` only need to target the same device, and
+  commands recorded with an in-order queue stay ordered on any queue.
+
 ===========================
 Driver-specific features
 ===========================

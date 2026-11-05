@@ -45,6 +45,7 @@ set(C_PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clSetMemObjectDestructorCallback test_dbk_jpeg
   test_cl_pocl_content_size test_cl_pocl_content_size_migration
   test_deviceside_enqueue test_command_buffer test_command_buffer_images
+  test_command_buffer_in_order
   test_command_buffer_multi_device test_queue_creation_with_hints
   test_remote_discovery test_dbk_color_convert test_subgroup_queries
   test_image_normalized_conv)
@@ -174,6 +175,8 @@ add_test(NAME "runtime/test_command_buffer" COMMAND "test_command_buffer")
 
 add_test(NAME "runtime/test_command_buffer_images" COMMAND "test_command_buffer_images")
 
+add_test(NAME "runtime/test_command_buffer_in_order" COMMAND "test_command_buffer_in_order")
+
 add_test(NAME "runtime/test_command_buffer_multi_device" COMMAND "test_command_buffer_multi_device")
 
 add_test(NAME "runtime/test_device_address" COMMAND "test_device_address")
@@ -265,6 +268,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clSetMemObjectDestructorCallback" "runtime/test_link_error"
   "runtime/test_cl_pocl_content_size" "runtime/test_deviceside_enqueue"
   "runtime/test_command_buffer" "runtime/test_command_buffer_images"
+  "runtime/test_command_buffer_in_order"
   "runtime/test_command_buffer_multi_device"
   "runtime/test_device_address" "runtime/test_svm"
   "runtime/test_device_address" "runtime/test_svm"
@@ -289,6 +293,7 @@ set_tests_properties(
   "runtime/clEnqueueNativeKernel"
   "runtime/test_command_buffer"
   "runtime/test_command_buffer_images"
+  "runtime/test_command_buffer_in_order"
   "runtime/test_command_buffer_multi_device"
   "runtime/test_device_address"
   "runtime/test_svm"
@@ -353,6 +358,8 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_command_buffer")
   add_test(NAME "remote/test_command_buffer_images"
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_command_buffer_images")
+  add_test(NAME "remote/test_command_buffer_in_order"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_command_buffer_in_order")
   add_test(NAME "remote/test_command_buffer_multi_device"
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_multi.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_command_buffer_multi_device")
   add_test(NAME "remote/test_device_address"
@@ -374,6 +381,7 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
     "remote/clEnqueueNativeKernel"
     "remote/test_command_buffer"
     "remote/test_command_buffer_images"
+    "remote/test_command_buffer_in_order"
     "remote/test_command_buffer_multi_device"
     "remote/test_device_address"
     "remote/test_svm"
@@ -399,6 +407,7 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
     "remote/test_cl_pocl_content_size_migration_remote_remote"
     "remote/test_deviceside_enqueue"
     "remote/test_command_buffer" "remote/test_command_buffer_images"
+    "remote/test_command_buffer_in_order"
     "remote/test_command_buffer_multi_device"
     "remote/test_device_address" "remote/test_svm"
     "remote/test_queue_creation_with_hints"

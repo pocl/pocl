@@ -82,6 +82,7 @@ POname (clCreateCommandBufferKHR) (
   cl_uint num_properties = 0;
   cl_command_buffer_properties_khr *seen_keys = NULL;
   cl_bool property_mutable = 0;
+  cl_bool property_simultaneous = 0;
   cl_bool property_assert_no_more_wgs = 0;
   if (properties != NULL)
     {
@@ -120,7 +121,8 @@ POname (clCreateCommandBufferKHR) (
           switch (*key)
             {
             case CL_COMMAND_BUFFER_FLAGS_KHR:
-              /* Simultaneous use is always supported, no action needed */
+              property_simultaneous
+                = (val & CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR) > 0;
               val &= ~CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR;
               /* some devices support mutable cmd buffers */
               property_mutable = (val & CL_COMMAND_BUFFER_MUTABLE_KHR) > 0;
@@ -163,27 +165,18 @@ POname (clCreateCommandBufferKHR) (
         }
     }
 
-  for (unsigned i = 0; i < num_queues; ++i)
+  if (property_simultaneous)
     {
-      if (queues[i]->device->cmdbuf_supported_properties)
-        POCL_GOTO_ERROR_ON (
-          ((queues[i]->device->cmdbuf_supported_properties
-            & queues[i]->properties)
-           != queues[i]->properties),
-          CL_INCOMPATIBLE_COMMAND_QUEUE_KHR,
-          "properties of command-queue"
-          " does contain queue properties not supported by CL_DEVI"
-          "CE_COMMAND_BUFFER_SUPPORTED_QUEUE_PROPERTIES_KHR\n");
-
-      if (queues[i]->device->cmdbuf_required_properties)
-        POCL_GOTO_ERROR_ON (
-          ((queues[i]->device->cmdbuf_required_properties
-            & queues[i]->properties)
-           != queues[i]->device->cmdbuf_required_properties),
-          CL_INCOMPATIBLE_COMMAND_QUEUE_KHR,
-          "properties of command-queue"
-          " does not contain properties required by CL_DEVI"
-          "CE_COMMAND_BUFFER_REQUIRED_QUEUE_PROPERTIES_KHR\n");
+      for (unsigned i = 0; i < num_queues; ++i)
+        {
+          POCL_GOTO_ERROR_ON (
+            !(queues[i]->device->cmdbuf_capabilities
+              & CL_COMMAND_BUFFER_CAPABILITY_SIMULTANEOUS_USE_KHR),
+            CL_INVALID_PROPERTY,
+            "CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR requested but queue %u / "
+            "device %s does not support it\n",
+            i, queues[i]->device->short_name);
+        }
     }
 
   cmdbuf = calloc (1, sizeof (struct _cl_command_buffer_khr));
@@ -201,6 +194,13 @@ POname (clCreateCommandBufferKHR) (
   cmdbuf->assert_no_more_wgs = property_assert_no_more_wgs;
   cmdbuf->queues
       = (cl_command_queue *)calloc (num_queues, sizeof (cl_command_queue));
+  cmdbuf->last_sync_points
+    = (cl_sync_point_khr *)calloc (num_queues, sizeof (cl_sync_point_khr));
+  if (cmdbuf->queues == NULL || cmdbuf->last_sync_points == NULL)
+    {
+      errcode = CL_OUT_OF_HOST_MEMORY;
+      goto ERROR;
+    }
   memcpy (cmdbuf->queues, queues, num_queues * sizeof (cl_command_queue));
   cmdbuf->num_properties = num_properties;
   cmdbuf->data = (void **)calloc (ref_ctx->num_devices, sizeof (void *));
@@ -230,6 +230,7 @@ ERROR:
   if (cmdbuf)
     {
       POCL_MEM_FREE (cmdbuf->queues);
+      POCL_MEM_FREE (cmdbuf->last_sync_points);
       POCL_MEM_FREE (cmdbuf->properties);
     }
   POCL_MEM_FREE (cmdbuf);

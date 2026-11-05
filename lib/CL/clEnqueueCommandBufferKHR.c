@@ -77,24 +77,36 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
           POCL_RETURN_ERROR_COND ((queues[i]->context == NULL),
                                   CL_INVALID_COMMAND_QUEUE);
 
-          /* check queue compatibility with parameters at matching [i] in
-           * command buffer. A compatible command-queue is defined as a
-           * command-queue with identical properties targeting the same device
-           * and in the same OpenCL context.
-           */
           POCL_RETURN_ERROR_COND ((queues[i]->context != ref_ctx),
                                   CL_INVALID_CONTEXT);
 
+          /* A substitute queue must target the device of the queue it
+           * replaces; its properties may differ. */
           POCL_RETURN_ERROR_COND (
-              (queues[i]->device != command_buffer->queues[i]->device),
-              CL_INCOMPATIBLE_COMMAND_QUEUE_KHR);
-
-          POCL_RETURN_ERROR_COND (
-              (queues[i]->properties != command_buffer->queues[i]->properties),
-              CL_INCOMPATIBLE_COMMAND_QUEUE_KHR);
+            (queues[i]->device != command_buffer->queues[i]->device),
+            CL_INVALID_DEVICE);
         }
       used_queues = queues;
       num_used_queues = num_queues;
+    }
+
+  for (unsigned i = 0; i < num_used_queues; ++i)
+    {
+      cl_device_id dev = used_queues[i]->device;
+      cl_command_queue_properties props = used_queues[i]->properties;
+      if (dev->cmdbuf_supported_properties)
+        POCL_RETURN_ERROR_ON (
+          ((props & ~dev->cmdbuf_supported_properties) != 0),
+          CL_INCOMPATIBLE_COMMAND_QUEUE_KHR,
+          "queue %u has properties not in "
+          "CL_DEVICE_COMMAND_BUFFER_SUPPORTED_QUEUE_PROPERTIES_KHR\n",
+          i);
+      POCL_RETURN_ERROR_ON (
+        ((dev->cmdbuf_required_properties & ~props) != 0),
+        CL_INCOMPATIBLE_COMMAND_QUEUE_KHR,
+        "queue %u lacks properties in "
+        "CL_DEVICE_COMMAND_BUFFER_REQUIRED_QUEUE_PROPERTIES_KHR\n",
+        i);
     }
 
   errcode = pocl_check_event_wait_list (
@@ -102,15 +114,8 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  POCL_LOCK (command_buffer->mutex);
-  int is_ready = pocl_cmdbuf_is_ready (command_buffer);
-  if (is_ready)
-    {
-      command_buffer->state = CL_COMMAND_BUFFER_STATE_FINALIZED_KHR;
-      command_buffer->pending += 1;
-    }
-  POCL_UNLOCK (command_buffer->mutex);
-  POCL_RETURN_ERROR_COND ((!is_ready), CL_INVALID_OPERATION);
+  POCL_RETURN_ERROR_COND ((!pocl_cmdbuf_is_ready (command_buffer)),
+                          CL_INVALID_OPERATION);
 
   int runs_natively
     = (!command_buffer->is_multi_device)
@@ -136,7 +141,7 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
           return errcode;
         }
 
-      final_ev->reset_command_buffer = CL_TRUE;
+      final_ev->release_command_buffer = CL_TRUE;
       final_ev->command_buffer = command_buffer;
       node->command.replay.buffer = command_buffer;
 
@@ -230,18 +235,16 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
           return errcode;
         }
 
-      /* Overwrite profiling data availability flag if any queue in the buffer
-       * does not provide it */
-      for (unsigned i = 0; i < command_buffer->num_queues; ++i)
+      /* Overwrite profiling data availability flag if any queue the buffer
+       * runs on does not provide it */
+      for (unsigned i = 0; i < num_used_queues; ++i)
         {
           node->sync.event.event->profiling_available
-            &= (command_buffer->queues[i]->properties
-                & CL_QUEUE_PROFILING_ENABLE)
-                 ? 1
-                 : 0;
+            &= (used_queues[i]->properties & CL_QUEUE_PROFILING_ENABLE) ? 1
+                                                                        : 0;
         }
 
-      final_ev->reset_command_buffer = CL_TRUE;
+      final_ev->release_command_buffer = CL_TRUE;
       final_ev->command_buffer = command_buffer;
 
       if (event_p != NULL)
