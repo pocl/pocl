@@ -314,6 +314,8 @@ option(ENABLE_REMOTE_SERVER "Build the 'pocld' server daemon for the remote driv
 
 option(ENABLE_REMOTE_CLIENT "Build the client library of the remote driver" OFF)
 
+option(ENABLE_REMOTE_PROGRAM_PREPROCESSING "Preprocess program sources on the client side (resolve #includes using the client's files) when building programs with the remote driver. Requires the vendored simplecpp library (thirdparty/simplecpp)" ON)
+
 option(POCL_ICD_ABSOLUTE_PATH "Use absolute path in pocl.icd" ON)
 
 option(ENABLE_POCL_BUILDING "When OFF, env var POCL_BUILDING has no effect. Defaults to ON" ON)
@@ -3080,6 +3082,7 @@ MESSAGE(STATUS "ENABLE_PROXY_DEVICE: ${ENABLE_PROXY_DEVICE}")
 MESSAGE(STATUS "ENABLE_PROXY_DEVICE_INTEROP: ${ENABLE_PROXY_DEVICE_INTEROP}")
 MESSAGE(STATUS "ENABLE_REMOTE_SERVER: ${ENABLE_REMOTE_SERVER}")
 MESSAGE(STATUS "ENABLE_REMOTE_CLIENT: ${ENABLE_REMOTE_CLIENT}")
+MESSAGE(STATUS "ENABLE_REMOTE_PROGRAM_PREPROCESSING: ${ENABLE_REMOTE_PROGRAM_PREPROCESSING}")
 if (ENABLE_REMOTE_SERVER OR  ENABLE_REMOTE_CLIENT)
   MESSAGE(STATUS "HAVE_LINUX_VSOCK_H: ${HAVE_LINUX_VSOCK_H}")
 endif ()
