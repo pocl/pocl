@@ -2,6 +2,7 @@
 
 float _CL_OVERLOADABLE _cl_modf (float, private float *);
 float _CL_OVERLOADABLE _cl_remquo (float, float, private int *);
+float _CL_OVERLOADABLE _cl_frexp (float, private int *);
 
 /* FP16 overloads for math builtins without a native FP16 path -- neither a
    Clang/LLVM FP16 builtin nor a SLEEF FP16 routine. Unlike additionalf16.cl
@@ -146,6 +147,30 @@ IMPLEMENT_FP16_LGAMMAR_VECTOR_N (8)
 IMPLEMENT_FP16_LGAMMAR_VECTOR_N (16)
 
 /*********************************************************************************/
+
+/* frexp : (halfN, address-space intN*) -> halfN
+ *
+ * Promotes to pocl's own float frexp (libclc bit manipulation), not
+ * __builtin_frexpf: that lowers to llvm.frexp, which is miscompiled on vectors
+ * on x86 below AVX2 (llvm/llvm-project#224127) and otherwise becomes one libm
+ * call per lane. Promoting through float is exact: the mantissa has at most
+ * 11 significant bits, and a subnormal half is a normal float. */
+half _CL_OVERLOADABLE
+frexp (half x, private int *e)
+{
+  return (half)frexp ((float)x, e);
+}
+#define IMPLEMENT_FP16_FREXP_AS(AS)                                          \
+  half _CL_OVERLOADABLE frexp (half x, AS int *e)                            \
+  { int t; half r = frexp (x, &t); *e = t; return r; }
+IMPLEMENT_FP16_FREXP_AS (local)
+IMPLEMENT_FP16_FREXP_AS (global)
+IF_GEN_AS (IMPLEMENT_FP16_FREXP_AS (generic))
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half2, int2, int, int, lo, hi)
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half3, int3, int2, int, lo, s2)
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half4, int4, int2, int2, lo, hi)
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half8, int8, int4, int4, lo, hi)
+IMPLEMENT_BUILTIN_V_VPJ (frexp, half16, int16, int8, int8, lo, hi)
 
 /* modf : (halfN, address-space halfN*) -> halfN */
 half _CL_OVERLOADABLE
