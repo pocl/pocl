@@ -19,6 +19,8 @@ test_kernel (global int *output)
 
   scratch[local_id] = global_id;
 
+  // keep the b-loop, which UnrollBarrierLoops would unroll
+  #pragma nounroll
   for (int i = 0; i < 2; i++)
     {
       if (group_id > 0)
