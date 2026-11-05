@@ -183,7 +183,7 @@ private:
   std::map<llvm::Instruction *, unsigned> TempInstructionIds;
   size_t TempInstructionIndex;
   // An alloca in the kernel which stores the first iteration to execute
-  // in the inner (dimension 0) loop. This is set to 1 in an peeled iteration
+  // in the innermost generated loop. This is set to 1 in an peeled iteration
   // to skip the 0, 0, 0 iteration in the loops.
   llvm::Value *LocalIdXFirstVar;
 };
@@ -354,8 +354,8 @@ WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
     builder.CreateStore(builder.CreateAdd(GlobalIdOrigin, LocalIdXFirstVal),
                         GlobalId);
 
-    // Then reset the initializer to 0 since we want to execute the first WI
-    // from the X dimension for the next Y and Z iterations.
+    // Then reset the initializer to 0 so the next outer-loop iterations start
+    // from the first WI.
     builder.CreateStore(ConstantInt::get(ST, 0), LocalIdXFirstVar);
 
     if (WGDynamicLocalSize) {
@@ -564,7 +564,9 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
        region is inside a loop and the exit block is in the path
        towards the loop exit (and the function exit).
     */
-    bool PeelFirst = RegionEntryCounts[PRegion->entryBB()] > 1;
+    bool PeelFirst = RegionEntryCounts[PRegion->entryBB()] > 1 &&
+                     (WGDynamicLocalSize ||
+                      WGLocalSizeX * WGLocalSizeY * WGLocalSizeZ > 1);
     PeeledRegion[PRegion] = PeelFirst;
 
     std::pair<llvm::BasicBlock *, llvm::BasicBlock *> l;
@@ -662,22 +664,26 @@ bool WorkitemLoopsImpl::processFunction(Function &F) {
                            gv);
 
     } else {
+      // The innermost loop that exists skips the peeled WI.
+      bool PeelPending = PeelFirst;
       if (WGLocalSizeX > 1) {
-        l = createLoopAround(*PRegion, l.first, l.second, PeelFirst, 0,
+        l = createLoopAround(*PRegion, l.first, l.second, PeelPending, 0,
                              !Unrolled);
+        PeelPending = false;
       } else {
         // Ensure the global id for a 1-size dimension is initialized.
         getGlobalIdOrigin(0);
       }
 
       if (WGLocalSizeY > 1) {
-        l = createLoopAround(*PRegion, l.first, l.second, false, 1);
+        l = createLoopAround(*PRegion, l.first, l.second, PeelPending, 1);
+        PeelPending = false;
       } else {
         getGlobalIdOrigin(1);
       }
 
       if (WGLocalSizeZ > 1) {
-        l = createLoopAround(*PRegion, l.first, l.second, false, 2);
+        l = createLoopAround(*PRegion, l.first, l.second, PeelPending, 2);
       } else {
         getGlobalIdOrigin(2);
       }
@@ -1119,7 +1125,7 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
     ParallelRegion *PRegion = regionOfBlock(User->getParent());
     // If this region is peeled to figure out the barrier entry,
     // we should disable rematerialization as it doesn't data flow
-    // analyze the local_id_x access, which is set to 1 after the
+    // analyze the local id access, which starts at 1 after the
     // peeled work-item.
     if (PRegion != nullptr && RegionEntryCounts[PRegion->entryBB()] > 1)
       RematCandidate = false;
