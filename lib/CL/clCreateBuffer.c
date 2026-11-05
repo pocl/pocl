@@ -216,8 +216,8 @@ pocl_create_memobject (cl_context context,
                                   "Out of device memory?");
 
               pocl_raw_ptr *item = calloc (1, sizeof (pocl_raw_ptr));
-              POCL_RETURN_ERROR_ON ((item == NULL), NULL,
-                                    "out of host memory\n");
+              POCL_GOTO_ERROR_ON ((item == NULL), CL_OUT_OF_HOST_MEMORY,
+                                  "out of host memory\n");
 
 	      size_t mem_size = size;
 	      if (strcmp(dev->ops->device_name, "remote") == 0)
@@ -252,6 +252,7 @@ pocl_create_memobject (cl_context context,
 
               if (!inserted) {
                   POCL_MEM_FREE (item);
+                  errcode = CL_OUT_OF_RESOURCES;
                   goto ERROR;
               }
 
@@ -281,6 +282,14 @@ pocl_create_memobject (cl_context context,
 ERROR:
   if (mem)
   {
+    /* drop the device addresses registered for other devices */
+    if (mem->has_device_address)
+      {
+        POCL_LOCK_OBJ (context);
+        pocl_raw_ptr_set_erase_all_by_shadow_mem (context->raw_ptrs, mem);
+        POCL_UNLOCK_OBJ (context);
+      }
+
     if (mem->device_ptrs)
     {
       for (i = 0; i < context->num_devices; ++i)
