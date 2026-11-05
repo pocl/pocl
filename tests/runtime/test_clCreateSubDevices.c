@@ -58,6 +58,38 @@ int test_context(cl_context ctx, const char *prog_src, int mul,
   prog = clCreateProgramWithSource(ctx, 1, &prog_src, NULL, &err);
   CHECK_OPENCL_ERROR_IN("create program");
 
+  /* The context and the program report the devices the context was created
+   * with, sub-devices included and duplicates ignored, not the root devices
+   * PoCL uses internally. */
+  cl_uint nuniq = 0;
+  for (i = 0; i < ndevs; ++i)
+    {
+      cl_int j;
+      for (j = 0; j < i && devs[j] != devs[i]; ++j)
+        ;
+      nuniq += (j == i);
+    }
+  cl_uint nctx = 0, nprog = 0;
+  CHECK_CL_ERROR (clGetContextInfo (ctx, CL_CONTEXT_NUM_DEVICES,
+                                    sizeof (nctx), &nctx, NULL));
+  CHECK_CL_ERROR (clGetProgramInfo (prog, CL_PROGRAM_NUM_DEVICES,
+                                    sizeof (nprog), &nprog, NULL));
+  TEST_ASSERT (nctx == nuniq);
+  TEST_ASSERT (nprog == nuniq);
+  cl_device_id *pdevs = malloc (nprog * sizeof (cl_device_id));
+  TEST_ASSERT (pdevs);
+  CHECK_CL_ERROR (clGetProgramInfo (prog, CL_PROGRAM_DEVICES,
+                                    nprog * sizeof (cl_device_id), pdevs,
+                                    NULL));
+  for (cl_uint p = 0; p < nprog; ++p)
+    {
+      cl_int j;
+      for (j = 0; j < ndevs && devs[j] != pdevs[p]; ++j)
+        ;
+      TEST_ASSERT (j < ndevs);
+    }
+  free (pdevs);
+
   CHECK_CL_ERROR(clBuildProgram(prog, 0, NULL, NULL, NULL, NULL));
 
   krn = clCreateKernel(prog, "setidx", &err);

@@ -66,8 +66,15 @@ CL_API_SUFFIX__VERSION_1_2
           "clLinkProgram called for !library && !compiled_obj\n");
     }
 
+  /* the caller's devices, sub-devices included, for CL_PROGRAM_DEVICES;
+   * create_program_skeleton collapses them to root devices itself */
+  const cl_device_id *create_list = device_list;
+  cl_uint num_create = num_devices;
+
   if (num_devices == 0)
     {
+      create_list = context->create_devices;
+      num_create = context->num_create_devices;
       num_devices = context->num_devices;
       device_list = context->devices;
     }
@@ -82,7 +89,7 @@ CL_API_SUFFIX__VERSION_1_2
       device_list = unique_devlist;
     }
 
-  program = create_program_skeleton (context, num_devices, device_list,
+  program = create_program_skeleton (context, num_create, create_list,
                                      NULL, NULL, NULL, &errcode, 1);
   if (errcode != CL_SUCCESS)
     goto PFN_NOTIFY;
