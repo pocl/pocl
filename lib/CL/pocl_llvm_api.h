@@ -108,14 +108,26 @@ POCL_EXPORT bool getModuleBoolMetadata (const llvm::Module &mod,
  * Module - optional. If non-NULL, it must be a pointer to Module.
  * The constructed PassManager instance will run the passes on the Module.
  * OptL - optimize for speed (0 to 3 are valid)
- * SizeL - optimize for size
  * Vectorize - whether to invoke the vectorizer (only used for legacy PM)
+ * SizeL - optimize for size at OptL 2 (1 is -Os, 2 is -Oz); with LLVM 23+,
+ *   the optsize/minsize function attributes do that instead
  */
 POCL_EXPORT void populateModulePM (void *Passes,
                                    void *Module,
                                    unsigned OptL,
                                    bool Vectorize = true,
-                                   llvm::TargetMachine *TM = nullptr);
+                                   llvm::TargetMachine *TM = nullptr,
+                                   unsigned SizeL = 0);
+
+/**
+ * Runs the -O<OptL> module pipeline (-Os/-Oz with SizeL 1/2) that Clang runs
+ * on the front-end output, without automatic unrolling and vectorization,
+ * using the device's target machine. TrackAssignments runs Clang's
+ * assignment tracking for the debug info first.
+ */
+void optimizeFrontendModule (llvm::Module &Mod, cl_device_id Dev,
+                             unsigned OptL, unsigned SizeL,
+                             bool TrackAssignments);
 
 extern std::string CurrentWgMethod;
 

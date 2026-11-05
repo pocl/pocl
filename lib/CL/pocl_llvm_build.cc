@@ -734,13 +734,15 @@ int pocl_llvm_build_program(cl_program program,
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
   cg.EmitOpenCLArgMetadata = true;
   cg.StackRealignment = true;
-  if (!device->spmd) {
-    // Let the vectorizer or another optimization pass unroll the loops,
-    // in case it sees beneficial.
-    cg.UnrollLoops = false;
-    // Lets leave vectorization to later compilation phase
-    cg.VectorizeLoop = false;
-    cg.VectorizeSLP = false;
+  // Unrolling and vectorization are left to the kernel compiler, so for
+  // non-SPMD devices we run Clang's optimization pipeline ourselves with them
+  // disabled. Clang's -fno-unroll-loops would also mark every loop without a
+  // pragma as llvm.loop.unroll.disable, which would make them
+  // indistinguishable from '#pragma nounroll'.
+  bool OptimizeFrontendOutput = !device->spmd && cg.OptimizationLevel > 0;
+  if (OptimizeFrontendOutput) {
+    cg.UnrollLoops = true;
+    cg.DisableLLVMPasses = true;
   }
   cg.VerifyModule = true;
 
@@ -836,6 +838,18 @@ int pocl_llvm_build_program(cl_program program,
     return CL_BUILD_PROGRAM_FAILURE;
   else
     ++llvm_ctx->number_of_IRs;
+
+  if (OptimizeFrontendOutput) {
+    // Clang's conditions for assignment tracking at -O1 and up
+    using ATMode = CodeGenOptions::AssignmentTrackingOpts;
+    bool TrackAssignments =
+        cg.getAssignmentTrackingMode() == ATMode::Forced ||
+        (cg.getAssignmentTrackingMode() == ATMode::Enabled &&
+         !cg.PrepareForThinLTO && !cg.PrepareForLTO &&
+         cg.getDebuggerTuning() != llvm::DebuggerKind::LLDB);
+    optimizeFrontendModule(*mod, device, cg.OptimizationLevel,
+                           cg.OptimizeSize, TrackAssignments);
+  }
 
   if (mod->getModuleFlag("PIC Level") == nullptr)
     mod->setPICLevel(PICLevel::BigPIC);
