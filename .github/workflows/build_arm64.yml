@@ -38,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [22]
+        llvm: [23]
         config: [basic]
 
     steps:
