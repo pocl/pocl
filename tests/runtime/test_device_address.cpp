@@ -328,6 +328,25 @@ int main(void) {
       return EXIT_FAILURE;
     }
 
+    // A buffer on an SVM pointer must report the SVM pointer as its address.
+    if (SuitableDevices[0].getInfo<CL_DEVICE_SVM_CAPABILITIES>() != 0) {
+      void *SVM = clSVMAlloc(Context(), CL_MEM_READ_WRITE,
+                             BUF_SIZE * sizeof(cl_int), 0);
+      cl_mem_properties Props[] = {CL_MEM_DEVICE_PRIVATE_ADDRESS_EXT, CL_TRUE,
+                                   0};
+      cl_int Err;
+      cl::Buffer SVMBuf(clCreateBufferWithProperties(
+          Context(), Props, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
+          BUF_SIZE * sizeof(cl_int), SVM, &Err));
+      if (Err != CL_SUCCESS || SVMBuf() == nullptr ||
+          getDeviceAddressFromHost(SVMBuf) != SVM) {
+        std::cerr << "Buffer on an SVM pointer must have it as its address\n";
+        return EXIT_FAILURE;
+      }
+      SVMBuf = cl::Buffer();
+      clSVMFree(Context(), SVM);
+    }
+
   } catch (cl::Error &err) {
     std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
               << std::endl;
