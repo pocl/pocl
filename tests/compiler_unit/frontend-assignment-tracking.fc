@@ -1,0 +1,2 @@
+CHECK: {{#dbg_assign|llvm.dbg.assign}}
+CHECK: !"debug-info-assignment-tracking", i1 true
