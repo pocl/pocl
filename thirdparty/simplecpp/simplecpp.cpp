@@ -100,6 +100,7 @@ static const simplecpp::TokenString ELIFDEF("elifdef");
 static const simplecpp::TokenString ELIFNDEF("elifndef");
 static const simplecpp::TokenString ENDIF("endif");
 
+static const simplecpp::TokenString LINE("line");
 static const simplecpp::TokenString PRAGMA("pragma");
 static const simplecpp::TokenString ONCE("once");
 
@@ -4024,7 +4025,8 @@ void simplecpp::preprocess(simplecpp::TokenList &output, const simplecpp::TokenL
                        rawtok->str() != ELSE && rawtok->str() != ENDIF &&
                        rawtok->str() != UNDEF && rawtok->str() != ERROR && rawtok->str() != WARNING &&
                        rawtok->str() != HAS_INCLUDE &&
-                       rawtok->str() != PRAGMA) {
+                       rawtok->str() != PRAGMA &&
+                       rawtok->str() != LINE) {
                 // PoCL fork: emit unknown directives (e.g. "#pragma OPENCL EXTENSION")
                 // unchanged instead of silently dropping them, so the preprocessed
                 // output can be compiled by another compiler.

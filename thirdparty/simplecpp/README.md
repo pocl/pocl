@@ -12,3 +12,7 @@ PoCL modifications:
   silently dropped. PoCL needs the preprocessed source to be compilable by
   a different compiler on the remote server, so e.g.
   "#pragma OPENCL EXTENSION cl_khr_fp64 : enable" must survive.
+
+- the passthrough does not apply to #line: simplecpp already writes its
+  own `#line <n> "<file>"` markers when stringifying the output, so
+  passing an input #line through would emit the marker twice.
