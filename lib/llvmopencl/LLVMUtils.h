@@ -128,6 +128,10 @@ bool isCompilerExpandableWIFunctionCall(const llvm::CallInst &Call);
 POCL_EXPORT
 bool isGVarUsedByFunction(llvm::GlobalVariable *GVar, llvm::Function *F);
 
+/// Returns the sub-group size required by the intel_reqd_sub_group_size
+/// metadata of \param F, or nullptr if it has none.
+llvm::ConstantInt *getRequiredSubgroupSize(const llvm::Function &F);
+
 // Checks if the given argument of Func is a local buffer.
 bool isLocalMemFunctionArg(llvm::Function *Func, unsigned ArgIndex);
 

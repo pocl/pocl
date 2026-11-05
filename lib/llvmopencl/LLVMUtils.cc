@@ -62,6 +62,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "SanitizeUBofDivRem.h"
 #include "SubCFGFormation.h"
 #include "UnreachablesToReturns.h"
+#include "UnrollBarrierLoops.h"
 #include "VariableUniformityAnalysis.h"
 #include "WorkItemAliasAnalysis.h"
 #include "Workgroup.h"
@@ -259,6 +260,15 @@ recursivelyFindCalledFunctions(llvm::SmallSet<llvm::Function *, 12> &FSet,
       recursivelyFindCalledFunctions(FSet, Callee);
     }
   }
+}
+
+llvm::ConstantInt *getRequiredSubgroupSize(const llvm::Function &F) {
+  MDNode *SGSizeMD = F.getMetadata("intel_reqd_sub_group_size");
+  if (SGSizeMD == nullptr)
+    return nullptr;
+  ConstantAsMetadata *ConstMD =
+      cast<ConstantAsMetadata>(SGSizeMD->getOperand(0));
+  return cast<ConstantInt>(ConstMD->getValue());
 }
 
 bool isGVarUsedByFunction(llvm::GlobalVariable *GVar, llvm::Function *F) {
@@ -705,6 +715,7 @@ void registerPassBuilderPasses(llvm::PassBuilder &PB) {
   PHIsToAllocas::registerWithPB(PB);
   RemoveBarrierCalls::registerWithPB(PB);
   SubCFGFormation::registerWithPB(PB);
+  UnrollBarrierLoops::registerWithPB(PB);
   Workgroup::registerWithPB(PB);
   WorkitemLoops::registerWithPB(PB);
   PoCLCFGPrinter::registerWithPB(PB);
