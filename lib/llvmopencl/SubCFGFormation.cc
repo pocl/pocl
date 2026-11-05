@@ -1120,26 +1120,85 @@ void purgeLifetime(SubCFG &Cfg) {
     I->eraseFromParent();
 }
 
-// fills \a Hull with all transitive users of \a Alloca
-void fillUserHull(llvm::AllocaInst *Alloca,
+// looks through GEPs and bitcasts to find the alloca \a V points into
+static llvm::AllocaInst *getAllocaFromGEP(llvm::Value *V) {
+  if (auto *GEP = llvm::dyn_cast<llvm::GetElementPtrInst>(V))
+    return getAllocaFromGEP(GEP->getPointerOperand());
+  if (auto *BC = llvm::dyn_cast<llvm::BitCastInst>(V))
+    return getAllocaFromGEP(BC->getOperand(0));
+  return llvm::dyn_cast<llvm::AllocaInst>(V);
+}
+
+// fills \a Hull with all transitive users of \a Alloca outside the entry
+// block, following its address when it is stored into another alloca.
+// Returns true if the address escapes where its uses can't be followed, e.g.
+// into an integer, a call that may capture it, or memory that is not an
+// alloca.
+// Based on https://github.com/AdaptiveCpp/AdaptiveCpp/pull/1763.
+bool fillUserHull(llvm::AllocaInst *Alloca,
                   llvm::SmallVectorImpl<llvm::Instruction *> &Hull) {
+  // What a visited value carries: the address of Alloca, or the address of an
+  // alloca the former is stored in. Other values (e.g. loaded from Alloca)
+  // are only followed to their users.
+  enum : unsigned { Addr = 1, SlotAddr = 2 };
+  llvm::DenseMap<llvm::Instruction *, unsigned> Carries;
   llvm::SmallVector<llvm::Instruction *, 8> WL;
-  std::transform(Alloca->user_begin(), Alloca->user_end(),
-                 std::back_inserter(WL),
-                 [](auto *U) { return llvm::cast<llvm::Instruction>(U); });
-  llvm::SmallPtrSet<llvm::Instruction *, 32> AlreadySeen;
+  auto Visit = [&](llvm::Instruction *I, unsigned Kind) {
+    auto [It, New] = Carries.try_emplace(I, Kind);
+    if (New && !I->getParent()->isEntryBlock())
+      Hull.push_back(I);
+    if (New || (It->second | Kind) != It->second) {
+      It->second |= Kind;
+      WL.push_back(I);
+    }
+  };
+  Visit(Alloca, Addr);
   while (!WL.empty()) {
     auto *I = WL.pop_back_val();
-    AlreadySeen.insert(I);
-    Hull.push_back(I);
-    for (auto *U : I->users()) {
-      if (auto *UI = llvm::dyn_cast<llvm::Instruction>(U)) {
-        if (AlreadySeen.find(UI) == AlreadySeen.end())
-          if (UI->mayReadOrWriteMemory() || UI->getType()->isPointerTy())
-            WL.push_back(UI);
+    unsigned Kind = Carries[I];
+    for (auto &U : I->uses()) {
+      auto *UI = llvm::dyn_cast<llvm::Instruction>(U.getUser());
+      if (UI == nullptr)
+        continue;
+      if (Kind != 0) {
+        if (auto *SI = llvm::dyn_cast<llvm::StoreInst>(UI);
+            SI != nullptr && U.getOperandNo() == 0) {
+          // The address is stored, e.g. into the context array that carries
+          // a pointer phi across a barrier: the loads from that alloca, which
+          // may be in other sub-CFGs, yield the address again.
+          auto *StoredTo = getAllocaFromGEP(SI->getPointerOperand());
+          if (StoredTo == nullptr || (Kind & SlotAddr) != 0)
+            return true;
+          Visit(StoredTo, SlotAddr);
+        } else if (auto *CB = llvm::dyn_cast<llvm::CallBase>(UI)) {
+          // A call may read a stored address even if it doesn't capture the
+          // pointer to it.
+          if (Kind != Addr || !CB->isDataOperand(&U) ||
+              !CB->doesNotCapture(U.getOperandNo()))
+            return true;
+        } else {
+          // Other users may only access memory through the address, compare
+          // it or derive another pointer from it: e.g. ptrtoint, insertvalue
+          // or atomics on a stored address lose track of it.
+          bool IsAtomic =
+              llvm::isa<llvm::AtomicRMWInst, llvm::AtomicCmpXchgInst>(UI);
+          bool Followed =
+              llvm::isa<llvm::LoadInst, llvm::StoreInst, llvm::ICmpInst>(UI) ||
+              (IsAtomic && U.getOperandNo() == 0 && Kind == Addr) ||
+              (!IsAtomic && UI->getType()->isPtrOrPtrVectorTy());
+          if (!Followed)
+            return true;
+        }
       }
+      if (auto *LI = llvm::dyn_cast<llvm::LoadInst>(UI))
+        Visit(LI, (Kind & SlotAddr) != 0 ? Addr : 0);
+      else if (UI->getType()->isPtrOrPtrVectorTy())
+        Visit(UI, llvm::isa<llvm::CallBase>(UI) ? 0 : Kind);
+      else if (UI->mayReadOrWriteMemory())
+        Visit(UI, 0);
     }
   }
+  return false;
 }
 
 // checks if all uses of an alloca are in just a single subcfg (doesn't have to
@@ -1151,7 +1210,8 @@ bool isAllocaSubCfgInternal(llvm::AllocaInst *Alloca,
   llvm::SmallPtrSet<llvm::BasicBlock *, 16> UserBlocks;
   {
     llvm::SmallVector<llvm::Instruction *, 32> Users;
-    fillUserHull(Alloca, Users);
+    if (fillUserHull(Alloca, Users))
+      return false;
     for (auto *I : Users) {
       UserBlocks.insert(I->getParent());
     }
