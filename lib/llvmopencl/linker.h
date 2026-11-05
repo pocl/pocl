@@ -48,6 +48,15 @@
 int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
          cl_device_id ClDev, bool StripAllDebugInfo, bool ErrorOnUnresolved);
 
+/**
+ * Estimates the stack size each kernel in the linked program needs per
+ * work-item, and records it as "<kernel>.meta.est.stack.size" module metadata.
+ *
+ * Optimized tells whether the kernel compiler will optimize the program; if
+ * so, the estimate discounts allocas that SROA promotes to registers.
+ */
+void estimateKernelStackSizes(llvm::Module *Program, bool Optimized);
+
 int copyKernelFromBitcode(const char* Name, llvm::Module *ParallelBC,
                           const llvm::Module *Program,
                           const char **DevAuxFuncs);
