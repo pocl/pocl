@@ -20,8 +20,6 @@ Conformance related CMake options
     * device partitioning is disabled: the CPU device reports no partition
       properties, so it can't be split into sub-devices
     * SLEEF is always enforced for the builtin library
-    * cl_khr_subgroups is disabled, and with it the ``__opencl_c_subgroups``
-      feature, so applications that require sub-groups do not see the device
     * cl_khr_subgroup_{ballot,shuffle} are disabled
     * cl_intel_subgroups, cl_intel_subgroups_short, cl_intel_subgroups_char
       and cl_intel_required_subgroup_size are disabled
@@ -48,7 +46,7 @@ Supported 3.0 features:
   * 3D Image Writes
   * SPIR-V
   * Program Scope Global Variables
-  * Subgroups (only when ENABLE_CONFORMANCE is OFF)
+  * Subgroups
   * Generic Address Space
 
 Unsupported 3.0 features:
