@@ -43,6 +43,8 @@ test_kernel (void)
    barrier tail replication.
 */
 
+  // keep the b-loop, which UnrollBarrierLoops could unroll
+  #pragma nounroll
   for (i = 16; i > 0; i--) {
       barrier(CLK_LOCAL_MEM_FENCE);
       printf ("gid_x %u after barrier at iteration %d\n", gid_x, i);
