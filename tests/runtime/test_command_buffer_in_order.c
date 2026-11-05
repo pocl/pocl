@@ -62,10 +62,10 @@ int main(int _argc, char **_argv) {
   const char *code =
       STR(kernel void slow_write_one(global int *out, int iters) {
         size_t i = get_global_id(0);
-        int acc = (int)i;
+        uint acc = (uint)i;
         for (int k = 0; k < iters; ++k)
-          acc = acc * 1103515245 + 12345;
-        out[i] = (acc == 42) ? 3 : 1;
+          acc = acc * 1103515245u + 12345u;
+        out[i] = (acc == 42u) ? 3 : 1;
       });
   const size_t length = strlen(code);
 
