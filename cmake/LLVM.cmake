@@ -196,11 +196,11 @@ endif()
 # since the some of the tools are needed on the Target machine,
 # and some are needed on the Host to build the lib/kernel library.
 #
-# find the Host binaries using LLVM_CONFIG_LOCATION,
+# find the Host binaries using LLVM_CONFIG_LOCATION when cross-compiling,
 # and the Target binaries using LLVM_BINDIR
 
 # find the Host programs first
-if(LLVM_CONFIG_LOCATION)
+if(CMAKE_CROSSCOMPILING AND LLVM_CONFIG_LOCATION)
   set(SEARCH_LOCATION ${LLVM_CONFIG_LOCATION})
 else()
   set(SEARCH_LOCATION ${LLVM_BINDIR})
