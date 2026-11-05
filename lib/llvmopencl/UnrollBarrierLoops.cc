@@ -1,4 +1,4 @@
-// UnrollBarrierLoops fully unrolls requested loops with barriers.
+// UnrollBarrierLoops fully unrolls short or requested loops with barriers.
 //
 // Copyright (c) 2026 PoCL developers
 //
@@ -28,6 +28,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/ADT/SetVector.h>
 #include <llvm/ADT/SmallPtrSet.h>
 #include <llvm/Analysis/AssumptionCache.h>
+#include <llvm/Analysis/CodeMetrics.h>
 #include <llvm/Analysis/LoopInfo.h>
 #include <llvm/Analysis/OptimizationRemarkEmitter.h>
 #include <llvm/Analysis/ScalarEvolution.h>
@@ -48,7 +49,7 @@ POP_COMPILER_DIAGS
 
 #define PASS_NAME "unroll-barrier-loops"
 #define PASS_CLASS pocl::UnrollBarrierLoops
-#define PASS_DESC "Fully unroll requested loops with barriers"
+#define PASS_DESC "Fully unroll short or requested loops with barriers"
 
 namespace pocl {
 
@@ -67,23 +68,31 @@ using namespace llvm;
 // the user's barriers, with the per-iteration values constant in each copy.
 // LLVM's unroller can't do this, as pocl.barrier is noduplicate, and often the
 // trip count only became a constant when the stage 1 optimizations folded the
-// local or sub-group size. This pass fully unrolls loops that carry an unroll
-// request ('#pragma unroll', opencl_unroll_hint, or SPIR-V's Unroll loop
-// control) and have a constant trip count. A partial request leaves the
-// per-iteration values variable, so it is left to LLVM's unroller in stage 2,
-// which applies it once the barriers are gone.
+// local or sub-group size. This pass fully unrolls loops that have a constant
+// trip count and either carry an unroll request ('#pragma unroll',
+// opencl_unroll_hint, or SPIR-V's Unroll loop control) or would be fully
+// unrolled by LLVM if not for the barrier. '#pragma nounroll' is honored. A
+// partial request leaves the per-iteration values variable, so it is left to
+// LLVM's unroller in stage 2, which applies it once the barriers are gone.
+// Loops are only considered when innermost to begin with, so an outer loop
+// isn't unrolled after its inner loops were.
 
 // LLVM's default -pragma-unroll-threshold
 static constexpr unsigned MaxUnrolledSize = 16 * 1024;
 
 // Returns the trip count of L if it should be fully unrolled, or 0.
-static unsigned getUnrollCount(Loop &L, ScalarEvolution &SE) {
+static unsigned getUnrollCount(Loop &L, ScalarEvolution &SE,
+                               const TargetTransformInfo &TTI,
+                               AssumptionCache &AC,
+                               OptimizationRemarkEmitter &ORE) {
   if (!L.isInnermost() || !L.isLoopSimplifyForm() ||
       L.getExitingBlock() == nullptr || !Barrier::isLoopWithBarrier(L))
     return 0;
 
-  if (hasUnrollTransformation(&L) != TM_ForcedByUser)
+  TransformationMode Mode = hasUnrollTransformation(&L);
+  if (Mode & TM_Disable)
     return 0;
+  bool Forced = Mode == TM_ForcedByUser;
 
   unsigned TripCount = SE.getSmallConstantTripCount(&L);
   if (TripCount == 0)
@@ -93,6 +102,10 @@ static unsigned getUnrollCount(Loop &L, ScalarEvolution &SE) {
       getOptionalIntLoopAttribute(&L, "llvm.loop.unroll.count");
   if (Count && *Count > 0 && unsigned(*Count) < TripCount)
     return 0;
+
+  SmallPtrSet<const Value *, 32> EphValues;
+  if (!Forced)
+    CodeMetrics::collectEphemeralValues(&L, &AC, EphValues);
 
   unsigned Size = 0;
   for (BasicBlock *BB : L.blocks()) {
@@ -106,9 +119,28 @@ static unsigned getUnrollCount(Loop &L, ScalarEvolution &SE) {
           return 0;
       if (!I.isDebugOrPseudoInst())
         ++Size;
+      // UnrollCostEstimator can't size a loop with an invalid cost
+      if (!Forced && !EphValues.contains(&I) &&
+          !TTI.getInstructionCost(&I, TargetTransformInfo::TCK_CodeSize)
+               .isValid())
+        return 0;
     }
   }
-  if (uint64_t(Size) * TripCount > MaxUnrolledSize)
+
+  if (Forced)
+    return uint64_t(Size) * TripCount > MaxUnrolledSize ? 0 : TripCount;
+
+  // The static full unroll size check of LoopUnrollPass (shouldFullUnroll),
+  // without the bonus for the simplifications of the unrolled body. OptLevel
+  // 3 because the pass runs in stage 2's O3 pipeline. UCE.canUnroll() would
+  // reject the loop for its noduplicate barrier.
+  TargetTransformInfo::UnrollingPreferences UP = gatherUnrollingPreferences(
+      &L, SE, TTI, /*BFI=*/nullptr, /*PSI=*/nullptr, ORE, /*OptLevel=*/3,
+      std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt,
+      std::nullopt);
+  UnrollCostEstimator UCE(&L, TTI, EphValues, UP.BEInsns);
+  if (TripCount > UP.FullUnrollMaxCount ||
+      UCE.getUnrolledLoopSize(UP, TripCount) >= UP.Threshold)
     return 0;
 
   return TripCount;
@@ -120,10 +152,13 @@ static LoopsToUnroll findLoopsToUnroll(Function &F,
                                        FunctionAnalysisManager &FAM) {
   LoopInfo &LI = FAM.getResult<LoopAnalysis>(F);
   ScalarEvolution &SE = FAM.getResult<ScalarEvolutionAnalysis>(F);
+  AssumptionCache &AC = FAM.getResult<AssumptionAnalysis>(F);
+  TargetTransformInfo &TTI = FAM.getResult<TargetIRAnalysis>(F);
+  OptimizationRemarkEmitter ORE(&F);
 
   LoopsToUnroll Loops;
   for (Loop *L : LI.getLoopsInPreorder())
-    if (unsigned Count = getUnrollCount(*L, SE))
+    if (unsigned Count = getUnrollCount(*L, SE, TTI, AC, ORE))
       Loops.push_back({L, Count});
   return Loops;
 }
