@@ -1,0 +1,6 @@
+CHECK-DAG: [[IC1:![0-9]+]] = !{!"llvm.loop.interleave.count", i32 1}
+CHECK-DAG: [[IC2:![0-9]+]] = !{!"llvm.loop.interleave.count", i32 2}
+CHECK-DAG: [[NOUNROLL:![0-9]+]] = !{!"llvm.loop.unroll.disable"}
+CHECK-DAG: = distinct !{![[#]], [[IC1]]}
+CHECK-DAG: = distinct !{![[#]], [[IC2]]}
+CHECK-DAG: = distinct !{![[#]], [[NOUNROLL]]}

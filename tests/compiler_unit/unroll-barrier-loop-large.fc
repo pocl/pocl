@@ -1,0 +1,2 @@
+CHECK: @_pocl_kernel_rotate_local_workgroup
+CHECK: loopbarrier
