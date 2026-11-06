@@ -302,7 +302,9 @@ pocl.
 
   if enabled, some drivers (CUDA, CPU, Level0) use an extra step of
   verification of LLVM modules at certain stages (program.bc always,
-  kernel bitcode (parallel.bc) only with some drivers).
+  kernel bitcode (parallel.bc) only with some drivers). CPU drivers also
+  check that every function calling a work-group barrier has been inlined
+  into the kernel.
   Defaults to 1 if CMAKE_BUILD_TYPE=Debug and 0 otherwise.
 
 - **POCL_MAX_WORK_GROUP_SIZE**
