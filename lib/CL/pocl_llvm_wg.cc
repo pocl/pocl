@@ -63,6 +63,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Transforms/Scalar/LoopPassManager.h>
 #include <llvm/Frontend/Driver/CodeGenOptions.h>
 
+#include "Barrier.h"
 #include "LLVMUtils.h"
 POP_COMPILER_DIAGS
 
@@ -354,7 +355,8 @@ public:
                     unsigned Stage1OLevel,
                     const std::string &Stage2Pipeline,
                     unsigned Stage2OLevel);
-  void run(llvm::Module &Bitcode);
+  void runStage1(llvm::Module &Bitcode) { Stage1.run(Bitcode); }
+  void runStage2(llvm::Module &Bitcode) { Stage2.run(Bitcode); }
 };
 
 llvm::Error TwoStagePoCLModulePassManager::build(
@@ -391,11 +393,6 @@ llvm::Error TwoStagePoCLModulePassManager::build(
                       TMach,
 #endif
                       Dev);
-}
-
-void TwoStagePoCLModulePassManager::run(llvm::Module &Bitcode) {
-  Stage1.run(Bitcode);
-  Stage2.run(Bitcode);
 }
 
 
@@ -690,7 +687,27 @@ static bool runKernelCompilerPasses(cl_device_id Device, llvm::Module &Mod,
     return false;
   }
 
-  PM.run(Mod);
+  PM.runStage1(Mod);
+
+  // The work-group passes only handle barriers in the kernel itself, so the
+  // first stage must have inlined every function that reaches one. A barrier
+  // left in a called function would be dropped, and the kernel would run
+  // without it.
+  if (llvm::Function *BarrierFn = Mod.getFunction(BARRIER_FUNCTION_NAME)) {
+    for (llvm::User *B : BarrierFn->users()) {
+      llvm::Function *F = llvm::cast<llvm::Instruction>(B)->getFunction();
+      for (llvm::User *U : F->users()) {
+        if (llvm::isa<llvm::CallBase>(U)) {
+          POCL_MSG_ERR("failed to inline %s, which calls a work-group "
+                       "barrier\n",
+                       F->getName().str().c_str());
+          return false;
+        }
+      }
+    }
+  }
+
+  PM.runStage2(Mod);
   return true;
 }
 
@@ -968,7 +985,7 @@ pocl_llvm_run_pocl_passes(llvm::Module *Bitcode,
   llvm::TimePassesIsEnabled = true;
 #endif
   POCL_MEASURE_START(llvm_workgroup_ir_func_gen);
-  runKernelCompilerPasses(Device, *Bitcode, Optimize);
+  bool Success = runKernelCompilerPasses(Device, *Bitcode, Optimize);
   POCL_MEASURE_FINISH(llvm_workgroup_ir_func_gen);
 #ifdef DUMP_LLVM_PASS_TIMINGS
   llvm::reportAndResetTimings();
@@ -979,7 +996,7 @@ pocl_llvm_run_pocl_passes(llvm::Module *Bitcode,
     std::cerr << getDiagString(PoclCtx);
   }
 
-  return 0;
+  return Success ? 0 : -1;
 }
 
 #ifdef HOST_CPU_ENABLE_JIT
