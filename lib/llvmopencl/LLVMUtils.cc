@@ -546,6 +546,22 @@ bool hasWorkgroupBarriers(const llvm::Function &F) {
   return false;
 }
 
+const llvm::Function *findCalledFunctionWithBarrier(const llvm::Module &M) {
+  const llvm::Function *BarrierFn = M.getFunction(BARRIER_FUNCTION_NAME);
+  if (BarrierFn == nullptr)
+    return nullptr;
+  for (const llvm::User *B : BarrierFn->users()) {
+    const auto *I = llvm::dyn_cast<llvm::Instruction>(B);
+    if (I == nullptr)
+      continue;
+    const llvm::Function *F = I->getFunction();
+    for (const llvm::User *U : F->users())
+      if (llvm::isa<llvm::CallBase>(U))
+        return F;
+  }
+  return nullptr;
+}
+
 // walks through a Module's global variables,
 // determines which ones are OpenCL program-scope variables
 // and checks all of those have definitions
