@@ -110,7 +110,7 @@ The instruction memory can be used to configure the accelerator. PoCL looks for
 In case of compiled kernels, PoCL will overwrite this region with the new program.
 The command queue memory is used to store an AQL Queue, as defined by the `HSA Runtime Programmer’s
 Reference Manual <http://www.hsafoundation.com/standards/>`_, the write and read
-indexes of which are exposed in a 64B header at the beginnig of the region.
+indexes of which are exposed in a 64B header at the beginning of the region.
 The size of the queue is such that it uses all of the region remaining after the header.
 Finally, the buffer memory is used to store data and argument buffers as well as
 completion signals for the kernels.
@@ -190,7 +190,7 @@ with a separate 'make bitstreams' command. This generates the bitstreams to
 build/examples/accel/bitstreams and build/examples/accel/hls/bitstreams directories. 
 Once bitstreams have been built, build PoCL on the PYNQ-Z1 device.
 (You don't need to set ENABLE_TCE or VIVADO/VITIS_HLS_PATH).
-Copy the bistreams directories (and in case of TTA, also the firmware_imgs
+Copy the bitstreams directories (and in case of TTA, also the firmware_imgs
 directory and example0_*.poclbins)
 to their correct PoCL build directories on PYNQ.
 Finally, run ``../tools/scripts/run_almaif_tests`` to run the test program
@@ -259,7 +259,7 @@ That project generates a directory-based database with a json-based metadata.
 The database contains the bitstreams and firmware-files necessary to implement
 the set of built-in kernels defined in the json-file.
 
-The bistream database device will report all the built-in kernel implementations it can
+The bitstream database device will report all the built-in kernel implementations it can
 find from the database in clGetDeviceInfo's CL_DEVICE_BUILT_IN_KERNELS-query.
 The bitstream database device ("0xF") will automatically fetch bitstream from the database
 and reconfigure the FPGA when user enqueues a built-in kernel for execution.

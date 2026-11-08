@@ -144,7 +144,7 @@ with a few exceptions; these are marked Unsupported in the table.
 
 ### OpenCL C features
 
-Some of these have prequisites (e.g. for __opencl_c_ext_fp64_local_atomic_add
+Some of these have prerequisites (e.g. for __opencl_c_ext_fp64_local_atomic_add
 requires cl_khr_fp64 & cl_ext_float_atomics), these must be additionally
 supported by the device.
 
@@ -313,7 +313,7 @@ To install the CPU driver
 
 Note that this installs an ICD loader from KhronosGroup and the builtin
 OpenCL implementation will be invisible when your application is linked
-to this loader. To make both pocl and the builtin OpenCL implementaiton
+to this loader. To make both pocl and the builtin OpenCL implementation
 visible, do
 
     mamba install pocl ocl_icd_wrapper_apple
