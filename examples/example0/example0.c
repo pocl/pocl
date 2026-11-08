@@ -90,6 +90,7 @@ main (int argc, char **argv)
                            info_buf, NULL);
   CHECK_OPENCL_ERROR_IN ("clGetPlatformInfo");
   printf ("Platform version: %s\n", info_buf);
+  free (info_buf);
 
   spirv = (argc > 1 && argv[1][0] == 'v');
   poclbin = (argc > 1 && argv[1][0] == 'b');

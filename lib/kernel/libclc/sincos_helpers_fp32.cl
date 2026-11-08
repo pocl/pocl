@@ -247,11 +247,21 @@ _CL_OVERLOADABLE itype __pocl_argReductionLargeS(vtype *r, vtype *rr, vtype x)
 
 _CL_OVERLOADABLE itype __pocl_argReductionS(vtype *r, vtype *rr, vtype x)
 {
-    itype retval = __pocl_argReductionSmallS(r, rr, x);
+    vtype rs, rrs;
+    itype retval = __pocl_argReductionSmallS(&rs, &rrs, x);
     itype cond = (x >= (vtype)0x1.0p+23f);
     if (SV_ANY(cond)) {
-        retval = __pocl_argReductionLargeS(r, rr, x);
+        /* The large-argument reduction is only valid for the lanes that
+         * need it. Select per lane instead of overwriting every lane;
+         * the large path returns garbage for tiny inputs. */
+        vtype rl, rrl;
+        itype retl = __pocl_argReductionLargeS(&rl, &rrl, x);
+        retval = cond ? retl : retval;
+        rs = cond ? rl : rs;
+        rrs = cond ? rrl : rrs;
     }
+    *r = rs;
+    *rr = rrs;
     return retval;
 }
 

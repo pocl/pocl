@@ -263,6 +263,7 @@ void pocl_level0_init_device_ops(struct pocl_device_ops *Ops) {
   Ops->build_binary = pocl_level0_build_binary;
   Ops->link_program = pocl_level0_link_program;
   Ops->free_program = pocl_level0_free_program;
+  Ops->count_kernels = pocl_level0_count_kernels;
   Ops->setup_metadata = pocl_level0_setup_metadata;
   Ops->supports_binary = pocl_level0_supports_binary;
   Ops->build_poclbinary = pocl_level0_build_poclbinary;
@@ -1053,9 +1054,6 @@ static int pocl_level0_setup_spirv_metadata(cl_device_id Device,
     return 1;
   }
 
-  Program->kernel_meta = (pocl_kernel_metadata_t *)calloc(
-      Program->num_kernels, sizeof(pocl_kernel_metadata_t));
-
 // TODO: currently all metadata is gotten from LLVM instead of the SPIR-V parser
 //  and therefore unnecessary. In the future the LLVM dependency could be
 //  dropped in favor of the SPIR-V parser, see comment:
@@ -1309,6 +1307,23 @@ int pocl_level0_supports_dbk(cl_device_id device, cl_dbk_id_exp kernel_id,
                        "The LevelZero driver must be compiled with enabled "
                        "NPU to support tensor DBKs\n");
 #endif
+}
+int pocl_level0_count_kernels(cl_device_id Dev, cl_program Program,
+                              unsigned ProgramDeviceI, size_t *Count) {
+  if (Program->num_builtin_kernels) {
+    *Count = Program->num_builtin_kernels;
+    return 1;
+  }
+
+  if (Program->llvm_irs[ProgramDeviceI] != nullptr) {
+    return pocl_driver_count_kernels(Dev, Program, ProgramDeviceI, Count);
+  }
+
+  if (Program->program_il[ProgramDeviceI] && Program->program_il_size) {
+    // TODO: handle once spirv metadata setup is no longer a no-op
+  }
+
+  return 0;
 }
 
 int pocl_level0_setup_metadata(cl_device_id Dev, cl_program Program,

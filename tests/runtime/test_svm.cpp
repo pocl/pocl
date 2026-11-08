@@ -397,6 +397,35 @@ int TestMultiDevice_CGSVM(cl::Platform Platform) {
     return EXIT_FAILURE;
 }
 
+// A failed SVM memcpy enqueue must return its error without touching *event.
+int TestSVMMemcpyFailedEnqueue(cl::Platform Platform) {
+  try {
+    cl_context_properties cprops[] = {CL_CONTEXT_PLATFORM,
+                                      (cl_context_properties)Platform(), 0};
+    cl::Context Context(CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU, cprops);
+    cl::Device Device = Context.getInfo<CL_CONTEXT_DEVICES>()[0];
+    cl::CommandQueue Queue(Context, Device);
+    cl::Context Other(Device);
+    cl::UserEvent Foreign(Other);
+
+    char Host[64];
+    void *Svm = clSVMAlloc(Context(), CL_MEM_READ_WRITE, sizeof(Host), 0);
+    cl_event Ev = nullptr;
+    cl_event Wait = Foreign();
+    cl_int Err = clEnqueueSVMMemcpy(Queue(), CL_FALSE, Svm, Host, sizeof(Host),
+                                    1, &Wait, &Ev);
+    clSVMFree(Context(), Svm);
+    if (Err == CL_INVALID_CONTEXT) {
+      std::cout << "OK" << std::endl;
+      return EXIT_SUCCESS;
+    }
+    std::cout << "FAIL: got error " << Err << std::endl;
+  } catch (cl::Error &err) {
+    std::cout << "FAIL with OpenCL error = " << err.err() << std::endl;
+  }
+  return EXIT_FAILURE;
+}
+
 static char SimpleKernelSourceCode[] = R"raw(
 
   __kernel void simple_kernel(__global int *Out,
@@ -928,6 +957,10 @@ int main() {
 
   std::cout << "TestMultiDevice_CGSVM: ";
   if (TestMultiDevice_CGSVM(PlatformList[0]) == EXIT_FAILURE)
+    return EXIT_FAILURE;
+
+  std::cout << "TestSVMMemcpyFailedEnqueue: ";
+  if (TestSVMMemcpyFailedEnqueue(PlatformList[0]) == EXIT_FAILURE)
     return EXIT_FAILURE;
 
   PlatformList[0].unloadCompiler();

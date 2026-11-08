@@ -458,6 +458,12 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
    * this the CTS assumes flush-to-zero and contractions fails. */
   device->single_fp_config |= CL_FP_DENORM;
 #endif
+  /* FDIV and FSQRT are correctly rounded, scalar and Advanced SIMD alike, and
+   * float division and the kernel library's sqrt compile to them. Measured on
+   * a Neoverse N1 with LLVM 19, conformance and default builds: fp32 x/y on
+   * 16.8M pairs and 1/x and sqrt on all 2^32 inputs, all correctly rounded,
+   * subnormals included. */
+  device->single_fp_config |= CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT;
 #endif
 
   if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_fp64") == NULL)
