@@ -1226,7 +1226,11 @@ void SubCFGFormation::arrayifyAllocas(
 
     for (auto &SubCfg : SubCfgs) {
 
+#if LLVM_MAJOR >= 24
+      auto Before = SubCfg.getLoadBB()->getFirstNonPHIOrLifetime();
+#else
       auto Before = SubCfg.getLoadBB()->getFirstNonPHIOrDbgOrLifetime();
+#endif
 #if LLVM_MAJOR < 20
       auto GEP = createContextArrayGEP(Alloca, Before, PaddingAdded);
 #else

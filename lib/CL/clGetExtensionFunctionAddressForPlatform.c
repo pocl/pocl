@@ -73,6 +73,12 @@ CL_API_SUFFIX__VERSION_1_2
   if (strcmp (func_name, "clCreateProgramWithILKHR") == 0)
     return (void *)&POname(clCreateProgramWithIL);
 
+  /* cl_khr_subgroups. Without an ICD loader this is the only way to reach
+     it; loaders answer the name themselves or through
+     clIcdGetFunctionAddressForPlatformKHR. */
+  if (strcmp (func_name, "clGetKernelSubGroupInfoKHR") == 0)
+    return (void *)&POname (clGetKernelSubGroupInfo);
+
   /* cl_khr_command_buffer */
   if (strcmp (func_name, "clCreateCommandBufferKHR") == 0)
     return (void *)&POname (clCreateCommandBufferKHR);

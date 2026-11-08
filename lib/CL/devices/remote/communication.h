@@ -389,9 +389,11 @@ cl_int pocl_network_free_kernel (remote_device_data_t *ddata,
                                  kernel_data_t *kernel, uint32_t kernel_id,
                                  uint32_t program_id);
 
-cl_int pocl_network_setup_metadata (char *buffer, size_t total_size,
-                                    cl_program program, size_t *num_kernels,
-                                    pocl_kernel_metadata_t **kernel_meta);
+cl_int pocl_network_setup_metadata (char *buffer,
+                                    size_t total_size,
+                                    cl_program program,
+                                    size_t *num_kernels,
+                                    size_t device_i);
 
 cl_int pocl_network_build_or_link_program (remote_device_data_t *ddata,
                                            const void *payload,

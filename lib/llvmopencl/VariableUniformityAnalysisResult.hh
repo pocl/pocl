@@ -35,6 +35,8 @@ template <typename, typename...> class AnalysisManager;
 
 #include <map>
 
+#include <llvm/IR/ValueHandle.h>
+
 namespace pocl {
 class VariableUniformityAnalysisResult {
 
@@ -58,8 +60,17 @@ public:
 
 private:
   bool isUniformityAnalyzed(llvm::Function *F, llvm::Value *V) const;
+  const bool *lookupUniformity(llvm::Function *F, llvm::Value *V) const;
 
-  using UniformityIndex = std::map<llvm::Value *, bool>;
+  // The result is not invalidated when later passes transform the function,
+  // so the cache outlives values those passes delete. Each entry keeps a
+  // handle to its value, so that a new value allocated at the address of a
+  // deleted one doesn't inherit its uniformity.
+  struct UniformityEntry {
+    llvm::WeakVH Handle;
+    bool IsUniform;
+  };
+  using UniformityIndex = std::map<llvm::Value *, UniformityEntry>;
   using UniformityCache = std::map<llvm::Function *, UniformityIndex>;
   mutable UniformityCache uniformityCache_;
 };
