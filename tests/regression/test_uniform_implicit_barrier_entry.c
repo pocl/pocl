@@ -86,8 +86,9 @@ int main(void) {
   cl_device_id device;
   err = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, 1, &device, NULL);
   CHECK_ERROR(err);
-  if (!poclu_supports_extension(device, "cl_khr_subgroups")) {
-    puts("SKIP: The test requires cl_khr_subgroups");
+  if (!poclu_supports_extension(device, "cl_khr_subgroups")
+      || !poclu_supports_extension(device, "cl_khr_subgroup_shuffle")) {
+    puts("SKIP: The test requires cl_khr_subgroups and cl_khr_subgroup_shuffle");
     free(platforms);
     return 77;
   }
