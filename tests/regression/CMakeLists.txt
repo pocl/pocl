@@ -43,6 +43,7 @@ set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_indirect_ptrs
      test_usm_indirect_ptrs
      test_usm_free_realloc
+     test_large_private_workgroup
      test_sanitize_divrem
      test_cr_divide_sqrt_option
      test_tall_grid
@@ -226,6 +227,7 @@ add_test_pocl(NAME "regression/test_usm_indirect_ptrs" COMMAND "test_usm_indirec
 
 add_test_pocl(NAME "regression/test_usm_free_realloc" COMMAND "test_usm_free_realloc" WORKITEM_HANDLER "loopvec")
 
+add_test_pocl(NAME "regression/test_large_private_workgroup" COMMAND "test_large_private_workgroup")
 add_test_pocl(NAME "regression/test_sanitize_divrem" COMMAND "test_sanitize_divrem" LABELS ${SPIRV_LABELS})
 
 # Builds only; the CUDA and Vulkan devices lack CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT.
