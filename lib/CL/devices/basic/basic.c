@@ -115,6 +115,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->link_program = pocl_driver_link_program;
   ops->build_binary = pocl_driver_build_binary;
   ops->free_program = pocl_basic_free_program;
+  ops->count_kernels = pocl_driver_count_kernels;
   ops->setup_metadata = pocl_driver_setup_metadata;
   ops->supports_binary = pocl_driver_supports_binary;
   ops->build_poclbinary = pocl_driver_build_poclbinary;
@@ -500,7 +501,7 @@ static void
 basic_command_scheduler (pocl_basic_data_t *d)
 {
   _cl_command_node *node;
-  
+
   /* execute commands from ready list */
   while ((node = d->ready_list))
     {
@@ -655,6 +656,7 @@ pocl_basic_free_program (cl_device_id device, cl_program program,
   pocl_driver_free_program (device, program, dev_i);
   program->global_var_total_size[dev_i] = 0;
   pocl_aligned_free (program->gvar_storage[dev_i]);
+  program->gvar_storage[dev_i] = NULL;
   return 0;
 }
 /*********************** IMAGES ********************************/

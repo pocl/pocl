@@ -29,6 +29,7 @@
    top-of-the line current processors. */
 
 #include <iostream>
+#include <list>
 #include <set>
 
 #include "CompilerWarnings.h"

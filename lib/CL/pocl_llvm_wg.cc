@@ -244,7 +244,11 @@ llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
   // Take a look at the PassBuilder constructor parameters for more
   // customization, e.g. specifying a TargetMachine or various debugging
   // options.
+#if LLVM_MAJOR >= 24
+  PassB.reset(new PassBuilder(Context, TM, PTO, std::nullopt, &PIC));
+#else
   PassB.reset(new PassBuilder(TM, PTO, std::nullopt, &PIC));
+#endif
   PassBuilder &PB = *PassB.get();
 
 #if 0
@@ -497,6 +501,8 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
   // don't forget to register it in registerPassBuilderPasses
   addPass(Passes, "fix-min-legal-vec-size", PassType::Module);
   addPass(Passes, "inline-kernels");
+  // Sanitize integer div/rem before optimizing: LLVM treats division by zero
+  // as UB, and can e.g. remove a later check of the divisor against zero.
   if (Dev->run_sanitize_divrem_pass)
     addPass(Passes, "sanitize-ub-of-div-rem");
 
@@ -1572,7 +1578,11 @@ void populateModulePM([[maybe_unused]] void *Passes, void *Module,
                                         PrintPassOpts));
   SI->registerCallbacks(PIC, &MAM);
 
+#if LLVM_MAJOR >= 24
+  PassBuilder PB(Context, TM, PTO, std::nullopt, &PIC);
+#else
   PassBuilder PB(TM, PTO, std::nullopt, &PIC);
+#endif
 
   // Register all the basic analyses with the managers.
   PB.registerModuleAnalyses(MAM);

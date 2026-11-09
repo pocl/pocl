@@ -113,12 +113,10 @@
          | POCL_HAS_KERNEL_ARG_NAME),                                         \
     .reqd_wg_size = { 0, 0, 0 }, .wg_size_hint = { 0, 0, 0 },                 \
     .vectypehint = { 0 }, .total_argument_storage_size = 0,                   \
-    .max_subgroups = NULL, .compile_subgroups = NULL,                         \
-    .max_workgroup_size = NULL,                                               \
-    .preferred_wg_multiple = NULL, .local_mem_size = NULL,                    \
-    .private_mem_size = NULL, .spill_mem_size = NULL, .build_hash = NULL,     \
-    .builtin_kernel_id = ID, .builtin_kernel_attrs = NULL,                    \
-    .builtin_max_global_work = {{ 0, 0, 0 }}, .data = NULL                    \
+    .build_hash = NULL, .builtin_kernel_id = ID,                              \
+    .builtin_kernel_attrs = NULL,                                             \
+    .builtin_max_global_work                                                  \
+      = { { 0, 0, 0 } }                                                       \
   }
 
 // BIKD for non-DBK
@@ -477,14 +475,26 @@ pocl_clone_builtin_kernel_metadata (cl_device_id dev,
                                     pocl_kernel_metadata_t *target,
                                     pocl_argument_info *extra)
 {
+  pocl_kernel_device_metadata_t *device_meta = target->devices;
+
+  POCL_MEM_FREE (target->attributes);
+  POCL_MEM_FREE (target->name);
+  for (unsigned j = 0; target->arg_info && j < target->num_args; ++j)
+    {
+      POCL_MEM_FREE (target->arg_info[j].name);
+      POCL_MEM_FREE (target->arg_info[j].type_name);
+    }
+  POCL_MEM_FREE (target->arg_info);
+  POCL_MEM_FREE (target->local_sizes);
+  POCL_MEM_FREE (target->build_hash);
 
   memcpy (target, (pocl_kernel_metadata_t *)source,
           sizeof (pocl_kernel_metadata_t));
+  /* per-device metadata from other devices needs to be retained */
+  target->devices = device_meta;
   target->name = strdup (source->name);
   target->arg_info = (struct pocl_argument_info *)calloc (
     source->num_args, sizeof (struct pocl_argument_info));
-  memset (target->arg_info, 0,
-          sizeof (struct pocl_argument_info) * source->num_args);
   for (unsigned Arg = 0; Arg < source->num_args; ++Arg)
     {
       pocl_argument_info *SrcArg = &source->arg_info[Arg];
@@ -651,6 +661,19 @@ pocl_clone_builtin_kernel_metadata_by_id (cl_device_id dev,
 }
 
 int
+pocl_count_builtin_kernels (cl_device_id device,
+                            cl_program program,
+                            unsigned program_device_i,
+                            size_t *count)
+{
+  if (program->builtin_kernel_names == NULL)
+    return 0;
+
+  *count = program->num_builtin_kernels;
+  return 1;
+}
+
+int
 pocl_setup_builtin_metadata (cl_device_id device,
                              cl_program program,
                              unsigned program_device_i)
@@ -661,9 +684,6 @@ pocl_setup_builtin_metadata (cl_device_id device,
   program->num_kernels = program->num_builtin_kernels;
   if (program->num_kernels)
     {
-      program->kernel_meta = (pocl_kernel_metadata_t *)calloc (
-        program->num_kernels, sizeof (pocl_kernel_metadata_t));
-
       for (size_t i = 0; i < program->num_kernels; ++i)
         {
           if (program->builtin_kernel_attributes)
@@ -679,8 +699,6 @@ pocl_setup_builtin_metadata (cl_device_id device,
                 device, program->builtin_kernel_names[i],
                 &program->kernel_meta[i]);
             }
-          program->kernel_meta[i].data
-            = (void **)calloc (program->num_devices, sizeof (void *));
         }
     }
 

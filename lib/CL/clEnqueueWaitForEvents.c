@@ -30,20 +30,14 @@ POname(clEnqueueWaitForEvents)(cl_command_queue  command_queue,
                        const cl_event *  event_list) 
 CL_API_SUFFIX__VERSION_1_0
 {
-  cl_int errcode;
+  /* Unlike clEnqueueBarrierWithWaitList, an empty list is an error rather
+     than a wait for all previously enqueued commands. */
+  POCL_RETURN_ERROR_COND ((num_events == 0 || event_list == NULL),
+                          CL_INVALID_VALUE);
 
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
-                          CL_INVALID_COMMAND_QUEUE);
-
-  POCL_RETURN_ERROR_COND (
-    (POCL_ATOMIC_LOAD_PTR (command_queue->device->available) == CL_FALSE),
-    CL_DEVICE_NOT_AVAILABLE);
-
-  errcode = pocl_check_event_wait_list (command_queue, num_events, event_list);
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
-  POCL_RETURN_ERROR (CL_INVALID_OPERATION,
-                     "clEnqueueWaitForEvents is not implemented\n");
+  cl_int errcode = POname (clEnqueueBarrierWithWaitList) (
+    command_queue, num_events, event_list, NULL);
+  /* This API reports invalid events as CL_INVALID_EVENT. */
+  return errcode == CL_INVALID_EVENT_WAIT_LIST ? CL_INVALID_EVENT : errcode;
 }
 POsym(clEnqueueWaitForEvents)

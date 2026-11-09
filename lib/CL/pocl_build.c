@@ -50,6 +50,8 @@
 #include "pocl_binary.h"
 #include "pocl_shared.h"
 
+extern int pocl_offline_compile;
+
 #define REQUIRES_CR_SQRT_DIV_ERR                                              \
   "-cl-fp32-correctly-rounded-divide-sqrt build option "                      \
   "was specified, but CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT "                   \
@@ -167,6 +169,30 @@ append_to_build_log (cl_program program, unsigned device_i, const char *format,
     }                                                                         \
   while (0)
 
+/* Returns true if the 'token' fully matches a string in the space-separated
+   'list'.
+
+   strstr() alone matches any substring and gives false-positive matches. */
+static int
+pocl_option_listed (const char *list, const char *token)
+{
+  size_t len = strlen (token);
+  const char *p = list;
+
+  if (len == 0)
+    return 0;
+
+  while ((p = strstr (p, token)) != NULL)
+    {
+      int at_start = (p == list) || (p[-1] == ' ');
+      int at_end = (p[len] == ' ') || (p[len] == '\0');
+      if (at_start && at_end)
+        return 1;
+      ++p;
+    }
+  return 0;
+}
+
 /* options must be non-NULL.
  * modded_options[size] + link_options are preallocated outputs
  */
@@ -219,7 +245,7 @@ process_options (const char *options, char *modded_options, char *link_options,
       if (strncmp (token, "-cl", 3) == 0 || strncmp (token, "-w", 2) == 0
           || strncmp (token, "-Werror", 7) == 0)
         {
-          if (strstr (cl_program_link_options, token))
+          if (pocl_option_listed (cl_program_link_options, token))
             {
               /* when linking, only a subset of -cl* options are valid,
                * and only with -enable-link-options */
@@ -240,16 +266,20 @@ process_options (const char *options, char *modded_options, char *link_options,
                 {
                   *flush_denorms = 1;
                 }
-              if (strstr (token, "-cl-fp32-correctly-rounded-divide-sqrt"))
-                {
-                  *requires_correctly_rounded_sqrt_div = 1;
-                }
             }
 
-          if (strstr (cl_parameters, token))
+          if (pocl_option_listed (cl_parameters, token))
             {
               /* the LLVM API call pushes the parameters directly to the
                  frontend without using -Xclang */
+
+              /* clBuildProgram and clCompileProgram must fail for a device
+                 without CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT; the devices are
+                 checked in compile_and_link_program () */
+              if (compiling
+                  && strcmp (token, "-cl-fp32-correctly-rounded-divide-sqrt")
+                       == 0)
+                *requires_correctly_rounded_sqrt_div = 1;
 
             // LLVM 11 has removed "-cl-denorms-are-zero" option
             // https://reviews.llvm.org/D69878
@@ -264,7 +294,7 @@ process_options (const char *options, char *modded_options, char *link_options,
                 *cl_c_version = CL_MAKE_VERSION (major, minor, 0);
             }
             }
-          else if (strstr (cl_parameters_not_yet_supported_by_clang, token))
+          else if (pocl_option_listed (cl_parameters_not_yet_supported_by_clang, token))
             {
               APPEND_TO_OPTION_BUILD_LOG (
                   "This build option is not yet supported by clang: %s\n",
@@ -498,22 +528,64 @@ setup_kernel_metadata (cl_program program)
 {
   size_t i, j;
   cl_uint device_i;
-  assert (program->kernel_meta == NULL);
-  assert (program->num_kernels == 0);
-  int setup_successful = 0;
+  int setup_successful;
 
+  if (program->num_kernels == 0)
+    {
+      int setup_successful = 0;
+      /* Determine how many kernels we need to allocate metadata storage for */
+      for (device_i = 0; device_i < program->num_devices; device_i++)
+        {
+          cl_device_id device = program->devices[device_i];
+          if (program->pocl_binaries[device_i])
+            {
+              program->num_kernels
+                = pocl_binary_get_kernel_count (program, device_i);
+              setup_successful = 1;
+              break;
+            }
+          else
+            {
+              if (device->ops->count_kernels
+                  && device->ops->count_kernels (device, program, device_i,
+                                                 &program->num_kernels))
+                {
+                  setup_successful = 1;
+                  break;
+                }
+            }
+        }
+      POCL_RETURN_ERROR_ON (
+        (setup_successful == 0), CL_INVALID_BINARY,
+        "Could not determine number of kernels in program\n");
+    }
+
+  if (program->kernel_meta == NULL)
+    {
+      program->kernel_meta = (pocl_kernel_metadata_t *)calloc (
+        program->num_kernels, sizeof (pocl_kernel_metadata_t));
+      POCL_RETURN_ERROR_COND ((!program->kernel_meta), CL_OUT_OF_HOST_MEMORY);
+      for (i = 0; i < program->num_kernels; ++i)
+        {
+          program->kernel_meta[i].devices
+            = (pocl_kernel_device_metadata_t *)calloc (
+              program->associated_num_devices,
+              sizeof (pocl_kernel_device_metadata_t));
+          POCL_RETURN_ERROR_COND ((!program->kernel_meta[i].devices),
+                                  CL_OUT_OF_HOST_MEMORY);
+        }
+    }
+
+  /* Reset status flag for reuse */
+  setup_successful = 0;
   /* Get the kernel metadata, either from pocl binaries or device drivers */
   for (device_i = 0; device_i < program->num_devices; device_i++)
     {
       cl_device_id device = program->devices[device_i];
       if (program->pocl_binaries[device_i])
         {
-          program->num_kernels
-              = pocl_binary_get_kernel_count (program, device_i);
           if (program->num_kernels)
             {
-              program->kernel_meta = (pocl_kernel_metadata_t *)calloc (
-                  program->num_kernels, sizeof (pocl_kernel_metadata_t));
               pocl_binary_get_kernels_metadata (program, device_i);
             }
           setup_successful = 1;
@@ -779,8 +851,9 @@ compile_and_link_program(int compile_program,
   for (i = 0; i < program->num_devices; ++i)
     {
       cl_device_id dev = program->devices[i];
-      POCL_GOTO_ERROR_COND ((*dev->available == CL_FALSE),
-                            CL_DEVICE_NOT_AVAILABLE);
+      POCL_GOTO_ERROR_COND (
+        (!pocl_offline_compile && (*dev->available == CL_FALSE)),
+        CL_DEVICE_NOT_AVAILABLE);
       for (cl_uint j = 0; j < program->associated_num_devices; ++j)
         if (program->associated_devices[j] == dev)
           ++num_found;

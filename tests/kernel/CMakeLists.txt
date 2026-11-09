@@ -52,6 +52,12 @@ add_test_pocl(NAME "kernel/test_convert_type_8"
 add_test_pocl(NAME "kernel/test_convert_type_16"
               COMMAND "kernel" "test_convert_type_16")
 
+add_test_pocl(NAME "kernel/test_abs"
+              COMMAND "kernel" "test_abs")
+
+add_test_pocl(NAME "kernel/test_abs_diff"
+              COMMAND "kernel" "test_abs_diff")
+
 add_test_pocl(NAME "kernel/test_bitselect"
               COMMAND "kernel" "test_bitselect")
 
@@ -128,6 +134,7 @@ foreach(VARIANT ${VARIANTS})
     "kernel/test_convert_type_1_${VARIANT}" "kernel/test_convert_type_2_${VARIANT}" "kernel/test_convert_type_4_${VARIANT}"
     "kernel/test_convert_type_8_${VARIANT}" "kernel/test_convert_type_16_${VARIANT}"
     "kernel/test_hadd_${VARIANT}" "kernel/test_rotate_${VARIANT}"
+    "kernel/test_abs_${VARIANT}" "kernel/test_abs_diff_${VARIANT}"
     PROPERTIES
       COST 40.0
       PROCESSORS 1

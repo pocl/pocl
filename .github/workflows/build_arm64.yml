@@ -38,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [22]
+        llvm: [23]
         config: [basic]
 
     steps:
@@ -57,7 +57,7 @@ jobs:
             BUILD_FLAGS="-O2 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
             cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
-            -DWITH_LLVM_CONFIG=/opt/LLVM_${{ matrix.llvm }}0/bin/llvm-config  -DENABLE_LLVM_FILECHECKS=0 \
+            -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }}  -DENABLE_LLVM_FILECHECKS=0 \
             "$@" -B $BUILD_DIR ${{ github.workspace }}
           }
 
@@ -86,7 +86,7 @@ jobs:
           tar -C /tmp -cavf /tmp/pocl_arm64_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst pocl_arm64_llvm_${{ matrix.llvm }}_${{ github.sha }}
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: "PoCL-ARM64-LLVM_${{ matrix.llvm }}-${{ github.sha }}"
           path: "/tmp/pocl_arm64_llvm_${{ matrix.llvm }}_${{ github.sha }}.tar.zst"

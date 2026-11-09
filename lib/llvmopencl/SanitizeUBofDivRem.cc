@@ -82,9 +82,9 @@ static void fixSignedDivRem(IRBuilder<> &Builder, BinaryOperator *BinI,
   Value *Condition1 = Builder.CreateCmp(CmpInst::Predicate::ICMP_EQ, Divisor,
                                         ConstantInt::getSigned(T, -1));
   // smallest negative value representable in given integer bit width
-  int64_t IntMin = (int64_t)1 << (T->getScalarSizeInBits() - 1);
+  APInt IntMin = APInt::getSignedMinValue(T->getScalarSizeInBits());
   Value *Condition2 = Builder.CreateCmp(CmpInst::Predicate::ICMP_EQ, Dividend,
-                                        ConstantInt::getSigned(T, IntMin));
+                                        ConstantInt::get(T, IntMin));
   Value *BothConds = Builder.CreateAnd(Condition1, Condition2);
   Value *ConditionZExt = Builder.CreateZExt(BothConds, Dividend->getType());
   Value *FixedDividend = Builder.CreateAdd(Dividend, ConditionZExt);
@@ -120,8 +120,11 @@ static bool sanitizeUBofDivRem(llvm::Function &F) {
       Value *Dividend = BinI->getOperand(0);
       Value *Divisor = BinI->getOperand(1);
       if (Dividend == Divisor) {
-        Value *One = ConstantInt::get(BinI->getType(), 0);
-        BinI->replaceAllUsesWith(One);
+        // x / x == 1 and x % x == 0; the result for x == 0 is unspecified.
+        bool IsDiv = BinI->getOpcode() == Instruction::SDiv ||
+                     BinI->getOpcode() == Instruction::UDiv;
+        Value *Result = ConstantInt::get(BinI->getType(), IsDiv ? 1 : 0);
+        BinI->replaceAllUsesWith(Result);
         BinI->eraseFromParent();
         Changed = true;
         continue;

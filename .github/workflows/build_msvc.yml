@@ -176,7 +176,7 @@ jobs:
 
       - name: Upload install-dir Artifact
         if: ${{ matrix.config != 'nsis' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: 'PoCL-MSVC-x86_64-LLVM_${{ matrix.llvm_version }}-ICD_${{ matrix.enable_icd }}-Shared_${{ matrix.shared_libs }}-${{ github.sha }}'
           path: '${{  github.workspace }}/install-pocl/'
@@ -186,7 +186,7 @@ jobs:
 
       - name: Upload NSIS installer Artifact
         if: ${{ matrix.config == 'nsis' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           # NOTE: if archive is false, the uploaded file's name is used as artifact name
           #name: 'PoCL-MSVC-NSIS-x86_64-LLVM_${{ matrix.llvm_version }}-ICD_${{ matrix.enable_icd }}-Shared_${{ matrix.shared_libs }}-${{ github.sha }}'

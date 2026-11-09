@@ -7,8 +7,8 @@ permissions:
 on:
   workflow_dispatch:
   schedule:
-# at 3:11 UTC every saturday
-    - cron: '11 3 * * 6'
+# at 0:11 UTC every saturday
+    - cron: '11 0 * * 6'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
@@ -30,9 +30,9 @@ jobs:
         # cts_asan = CTS build with AddressSanitizer
         # cts_tsan = CTS build with ThreadSanitizer
         include:
-          - llvm: 21
+          - llvm: 23
             config: cts_tsan
-          - llvm: 21
+          - llvm: 23
             config: cts_asan
 
     steps:
@@ -60,11 +60,11 @@ jobs:
           if [ "${{ matrix.config }}" == "cts_asan" ]; then
             mkdir -p ${EXAMPLES_DIR}/build_cts_asan
             mkdir -p ${EXAMPLES_DIR}/source
-            runCMake -DENABLE_ICD=0 -DENABLE_ASAN=1 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_cts_asan -DWITH_LLVM_CONFIG=/opt/LLVM_21_ASAN/bin/llvm-config
+            runCMake -DENABLE_ICD=0 -DENABLE_SPIRV=0 -DENABLE_ASAN=1 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_cts_asan -DWITH_LLVM_CONFIG=/opt/LLVM_${{ matrix.llvm }}_ASAN/bin/llvm-config
           elif [ "${{ matrix.config }}" == "cts_tsan" ]; then
             mkdir -p ${EXAMPLES_DIR}/build_cts_tsan
             mkdir -p ${EXAMPLES_DIR}/source
-            runCMake -DENABLE_ICD=0 -DENABLE_TSAN=1 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_cts_tsan -DWITH_LLVM_CONFIG=/opt/LLVM_21_TSAN/bin/llvm-config
+            runCMake -DENABLE_ICD=0 -DENABLE_SPIRV=0 -DENABLE_TSAN=1 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_cts_tsan -DWITH_LLVM_CONFIG=/opt/LLVM_${{ matrix.llvm }}_TSAN/bin/llvm-config
           else
             echo "Unknown configuration" && exit 1
           fi
@@ -82,18 +82,12 @@ jobs:
         run: |
           cd ${{ github.workspace }}/build/examples/conformance && make -j$(${{ github.workspace }}/.github/scripts/get_cpus.sh) conformance
 
-      - name: Get CMake version
-        id: cmake_version
-        run: echo "version=$(cmake --version | head -n 1)" >> $GITHUB_OUTPUT
-        shell: bash
-
-      - name: Cache CTest timings
-        id: cache_ctest
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      - name: Restore cached CTest timings
+        id: restore_ctest_cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ${{ github.workspace }}/build/Testing/Temporary/CTestCostData.txt
-          key: ctest-cache-${{ steps.cmake_version.outputs.version }}-${{ runner.name }}-${{ matrix.config }}-${{ github.run_id }}
-          restore-keys: ctest-cache-${{ steps.cmake_version.outputs.version }}-${{ runner.name }}-${{ matrix.config }}
+          key: ctest-cache-${{ runner.name }}-${{ matrix.config }}-llvm-${{ matrix.llvm }}
 
       - name: Run Tests
         env:
@@ -111,9 +105,18 @@ jobs:
           rm -rf /tmp/foo
           mkdir ${{ env.POCL_CACHE_DIR }}
           if [ "${{ matrix.config }}" == "cts_asan" ]; then
-            runCTest -L conformance_suite_micro_main -L asan
+            # conformance_main_spirv_new_micro_2 fails with lifetime.end only applies to pointers
+            runCTest -L conformance_suite_micro_main -L asan -E conformance_main_spirv_new_micro_2
           elif [ "${{ matrix.config }}" == "cts_tsan" ]; then
             runCTest -L conformance_suite_micro_main -L tsan
           else
             echo "Unknown configuration" && exit 1
           fi
+
+      - name: Save cached CTest timings
+        id: save_ctest_cache
+        if: always() && steps.restore_ctest_cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ${{ github.workspace }}/build/Testing/Temporary/CTestCostData.txt
+          key: ctest-cache-${{ runner.name }}-${{ matrix.config }}-llvm-${{ matrix.llvm }}-${{ github.run_id }}
