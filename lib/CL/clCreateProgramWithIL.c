@@ -82,17 +82,18 @@ CL_API_SUFFIX__VERSION_2_1
    * right now, we create only for devices
    * which have supports_binary() callback
    * and fail if there's no such device in context. */
-  unsigned num = context->num_devices;
+  unsigned num = context->num_create_devices;
   unsigned num_devices_with_spir = 0;
   cl_device_id *devices_with_spir
       = (cl_device_id *)alloca (num * sizeof (cl_device_id));
 
   for (unsigned i = 0; i < num; ++i)
     {
-      cl_device_id dev = context->devices[i];
-      if (dev->ops->supports_binary == NULL)
+      cl_device_id dev = context->create_devices[i];
+      cl_device_id real = pocl_real_dev (dev);
+      if (real->ops->supports_binary == NULL)
         continue;
-      if (dev->ops->supports_binary (dev, length, il))
+      if (real->ops->supports_binary (real, length, il))
         {
           devices_with_spir[num_devices_with_spir++] = dev;
         }
