@@ -29,12 +29,17 @@ get_filename_component(CLANG_CMAKE_DIR "${LLVM_CMAKE_DIR}" DIRECTORY)
 # CLANG_CMAKE_DIR will contain LLVM_INSTALL_PREFIX/lib/cmake/clang
 set(LLD_CMAKE_DIR "${CLANG_CMAKE_DIR}/lld")
 set(CLANG_CMAKE_DIR "${CLANG_CMAKE_DIR}/clang")
+set(POCL_CLANG_CMAKE_DIR "${CLANG_CMAKE_DIR}" CACHE PATH
+    "Directory containing ClangConfig.cmake (defaults to the LLVM installation)")
+set(POCL_CLANG_BIN_DIR "${LLVM_TOOLS_BINARY_DIR}" CACHE PATH
+    "Directory containing Clang host tools (defaults to the LLVM tools directory)")
 
 message(STATUS "LLVM CMAKE dir: ${LLVM_CMAKE_DIR}")
-message(STATUS "CLANG CMAKE dir: ${CLANG_CMAKE_DIR}")
+message(STATUS "CLANG CMAKE dir: ${POCL_CLANG_CMAKE_DIR}")
+message(STATUS "CLANG BIN dir: ${POCL_CLANG_BIN_DIR}")
 message(STATUS "LLD CMAKE dir: ${LLD_CMAKE_DIR}")
 
-find_package(Clang CONFIG REQUIRED HINTS "${CLANG_CMAKE_DIR}")
+find_package(Clang CONFIG REQUIRED HINTS "${POCL_CLANG_CMAKE_DIR}" NO_DEFAULT_PATH)
 list(APPEND CMAKE_MODULE_PATH "${LLD_CMAKE_DIR}" "${Clang_DIR}" "${LLVM_CMAKE_DIR}" )
 list(REMOVE_DUPLICATES CMAKE_MODULE_PATH)
 
