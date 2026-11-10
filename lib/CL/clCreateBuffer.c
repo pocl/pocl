@@ -202,6 +202,10 @@ pocl_create_memobject (cl_context context,
         "Trying driver allocation for cl_ext_buffer_device_address\n");
       unsigned i;
       void *ptr = NULL;
+      pocl_raw_ptr *svm
+        = mem->mem_host_ptr_is_svm
+            ? pocl_find_raw_ptr_with_vm_ptr (context, host_ptr)
+            : NULL;
       for (i = 0; i < context->num_devices; ++i)
         {
           cl_device_id dev = context->devices[i];
@@ -214,6 +218,13 @@ pocl_create_memobject (cl_context context,
               ptr = mem->device_ptrs[dev->global_mem_id].mem_ptr;
               POCL_GOTO_ERROR_ON (err != CL_SUCCESS, CL_OUT_OF_RESOURCES,
                                   "Out of device memory?");
+
+              /* The SVM allocation's shadow buffer registered this range. */
+              if (svm && svm->shadow_cl_mem)
+                {
+                  mem->device_ptrs[dev->global_mem_id].device_addr = host_ptr;
+                  continue;
+                }
 
               pocl_raw_ptr *item = calloc (1, sizeof (pocl_raw_ptr));
               POCL_RETURN_ERROR_ON ((item == NULL), NULL,
