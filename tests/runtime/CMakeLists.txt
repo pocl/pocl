@@ -47,7 +47,7 @@ set(C_PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_deviceside_enqueue test_command_buffer test_command_buffer_images
   test_command_buffer_multi_device test_queue_creation_with_hints
   test_remote_discovery test_dbk_color_convert test_subgroup_queries
-  test_image_normalized_conv)
+  test_image_normalized_conv test_remote_program_include)
 
 if(HAVE_LLVM_SPIRV_LIB_ERROR_HANDLING)
   list(APPEND C_PROGRAMS_TO_BUILD test_clBuildProgram_unsupported_spirv)
@@ -377,6 +377,10 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_multi.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_svm")
   add_test(NAME "remote/test_queue_creation_with_hints"
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_queue_creation_with_hints")
+  if(ENABLE_REMOTE_PROGRAM_PREPROCESSING)
+    add_test(NAME "remote/test_remote_program_include"
+             COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_remote_program_include")
+  endif()
 
   set_tests_properties(
     "remote/clCreateSubDevices"
