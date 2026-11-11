@@ -196,18 +196,22 @@ endif()
 # since the some of the tools are needed on the Target machine,
 # and some are needed on the Host to build the lib/kernel library.
 #
-# find the Host binaries using LLVM_CONFIG_LOCATION,
+# find the Host binaries using LLVM_CONFIG_LOCATION when cross-compiling,
 # and the Target binaries using LLVM_BINDIR
 
 # find the Host programs first
-if(LLVM_CONFIG_LOCATION)
+if(CMAKE_CROSSCOMPILING AND LLVM_CONFIG_LOCATION)
   set(SEARCH_LOCATION ${LLVM_CONFIG_LOCATION})
 else()
   set(SEARCH_LOCATION ${LLVM_BINDIR})
 endif()
 message(STATUS "Searching for Host LLVM binaries in ${SEARCH_LOCATION}")
-find_llvm_program_or_die(HOST_CLANG     "clang"    "${SEARCH_LOCATION}"  "Host clang binary")
-find_llvm_program_or_die(HOST_CLANGXX   "clang++"  "${SEARCH_LOCATION}"  "Host clang++ binary")
+set(CLANG_SEARCH_LOCATION "${SEARCH_LOCATION}")
+if(LLVM_PACKAGE_VERSION AND NOT CMAKE_CROSSCOMPILING)
+  set(CLANG_SEARCH_LOCATION "${POCL_CLANG_BIN_DIR}")
+endif()
+find_llvm_program_or_die(HOST_CLANG     "clang"    "${CLANG_SEARCH_LOCATION}"  "Host clang binary")
+find_llvm_program_or_die(HOST_CLANGXX   "clang++"  "${CLANG_SEARCH_LOCATION}"  "Host clang++ binary")
 find_llvm_program_or_die(HOST_LLVM_OPT  "opt"      "${SEARCH_LOCATION}"  "Host LLVM optimizer")
 find_llvm_program_or_die(HOST_LLVM_LLC  "llc"      "${SEARCH_LOCATION}"  "Host LLVM static compiler")
 find_llvm_program_or_die(HOST_LLVM_AS   "llvm-as"  "${SEARCH_LOCATION}"  "Host LLVM assembler")

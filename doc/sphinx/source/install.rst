@@ -142,6 +142,19 @@ use ";" as separator (you'll have to escape it for bash).
   If CMAKE_CROSSCOMPILING is true, PoCL assumes LLVM_DIR points
   to the Target LLVM and WITH_LLVM_CONFIG points to Host LLVM.
 
+- ``-DClang_DIR=<path-to-clang-cmake-dir>``
+  Directory containing ``ClangConfig.cmake``. By default PoCL looks for
+  Clang next to the selected LLVM CMake package. Set this when Clang's CMake
+  package is installed separately. Discovery is restricted to this explicit
+  directory (or the default LLVM-relative directory); CMake will not select
+  an unrelated Clang package from its default search paths.
+
+- ``-DPOCL_CLANG_BIN_DIR=<path-to-clang-bin-dir>``
+  Directory containing the native ``clang`` and ``clang++`` tools. By default
+  PoCL searches LLVM's tools directory. Set this when the Clang tools are
+  installed separately from LLVM. This setting applies to native builds;
+  cross-compilation continues to find host tools from ``WITH_LLVM_CONFIG``.
+
 - ``-DSTATIC_LLVM`` pocl uses ``llvm-config --libs`` to get list of LLVM libraries
   it should link to. With this flag enabled, it additionally passes ``--link-static``
   to ``llvm-config``; otherwise it passes ``--link-shared``. Default is OFF (=shared).
@@ -154,6 +167,11 @@ use ";" as separator (you'll have to escape it for bash).
   given, PoCL will try to autodetect a llvm-spirv binary with suitable version.
   Note that PoCL will also try to detect LLVMSPIRVLib library, and if found, it
   will take precedence over llvm-spirv binary.
+
+- ``-DLLVM_SPIRV_ROOT=<path-to-translator-prefix>``
+  Prefix of a separately installed SPIRV-LLVM-Translator. PoCL searches its
+  ``include`` and ``lib``/``lib64`` directories for the translator headers and
+  library.
 
 - ``-DENABLE_ICD`` By default pocl's buildsystem will try to find an ICD
   and build pocl as a dynamic library named "libpocl". This option is useful
