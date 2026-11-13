@@ -47,6 +47,7 @@ set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_sanitize_divrem
      test_cr_divide_sqrt_option
      test_tall_grid
+     test_stack_estimate_builtins
 )
 if(UNIX)
   list(APPEND C_PROGRAMS_TO_BUILD test_signal_handlers)
@@ -233,6 +234,9 @@ add_test_pocl(NAME "regression/test_sanitize_divrem" COMMAND "test_sanitize_divr
 # Builds only; the CUDA and Vulkan devices lack CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT.
 add_test_pocl(NAME "regression/test_cr_divide_sqrt_option" COMMAND "test_cr_divide_sqrt_option"
   WORKITEM_HANDLER "loopvec" LABELS "cuda;vulkan;level0")
+
+add_test_pocl(NAME "regression/test_stack_estimate_builtins"
+  COMMAND "test_stack_estimate_builtins" WORKITEM_HANDLER "loopvec")
 
 add_test_pocl(NAME "regression/test_issue_893" COMMAND "test_issue_893")
 
