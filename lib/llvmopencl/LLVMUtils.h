@@ -144,6 +144,10 @@ void setFuncArgAddressSpaceMD(llvm::Function *Func, unsigned ArgIndex,
 
 bool hasWorkgroupBarriers(const llvm::Function &F);
 
+// Returns a function that contains a work-group barrier and is still called
+// from somewhere in the module, or nullptr if there is none.
+const llvm::Function *findCalledFunctionWithBarrier(const llvm::Module &M);
+
 POCL_EXPORT
 bool areAllGvarsDefined(llvm::Module *Program, std::string &log,
                         std::set<llvm::GlobalVariable *> &GVarSet,
