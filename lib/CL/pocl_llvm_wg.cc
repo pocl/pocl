@@ -50,6 +50,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Linker/Linker.h>
 #include <llvm/Support/CodeGen.h>
+#include <llvm/MC/MCSubtargetInfo.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Target/TargetOptions.h>
 #include <llvm/Transforms/IPO/Internalize.h>
@@ -179,6 +180,63 @@ static TargetMachine *GetTargetMachine(const char* TripleStr,
   return TM;
 }
 
+/* The library info for the device, with the vector math library that CPU
+   codegen maps vectorized builtin calls to (if one was configured). Returns
+   nullptr when no vector math library applies. */
+static TargetLibraryInfoImpl *
+createVecLibTLII([[maybe_unused]] llvm::Triple DevTriple,
+                 [[maybe_unused]] cl_device_type DevType) {
+#ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
+  if (DevType == CL_DEVICE_TYPE_CPU)
+    return llvm::driver::createTLII(DevTriple,
+#ifdef ENABLE_HOST_CPU_VECTORIZE_LIBMVEC
+                                    driver::VectorLibrary::LIBMVEC);
+#endif
+#ifdef ENABLE_HOST_CPU_VECTORIZE_SLEEF
+                                    driver::VectorLibrary::SLEEF);
+#endif
+#ifdef ENABLE_HOST_CPU_VECTORIZE_SVML
+                                    driver::VectorLibrary::SVML);
+#endif
+#endif
+  return nullptr;
+}
+
+/* The library info for the optimization pipeline, where the loop vectorizer
+   needs it to cost vector math calls. LoopVectorize trusts LLVM's vector
+   library tables: it checks neither the ISA a variant needs nor whether the
+   library exports it. It calls libmvec's AVX2 variants from SSE and AVX
+   targets, SVML's AVX-512 ones from AVX2 targets, and SVE variants that SLEEF
+   builds without SVE lack. So only hand it the table when the device CPU can
+   call every variant the vectorizer may pick; otherwise only codegen maps
+   vector intrinsics to the library. libmvec is only allowed on x86: LLVM's
+   AArch64 libmvec table has variants (two-lane float) that SLEEF's gnuabi
+   build, a common stand-in, doesn't export. */
+static TargetLibraryInfoImpl *
+createOptVecLibTLII([[maybe_unused]] TargetMachine *TM,
+                    [[maybe_unused]] cl_device_type DevType) {
+#ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
+  if (TM == nullptr)
+    return nullptr;
+#if LLVM_MAJOR >= 23
+  const MCSubtargetInfo &STI = TM->getMCSubtargetInfo();
+#else
+  const MCSubtargetInfo &STI = *TM->getMCSubtargetInfo();
+#endif
+  const llvm::Triple &T = TM->getTargetTriple();
+  bool Callable = false;
+#if defined(ENABLE_HOST_CPU_VECTORIZE_LIBMVEC)
+  Callable = T.isX86() && STI.checkFeatures("+avx2");
+#elif defined(ENABLE_HOST_CPU_VECTORIZE_SLEEF)
+  Callable = T.isAArch64() && !STI.checkFeatures("+sve");
+#elif defined(ENABLE_HOST_CPU_VECTORIZE_SVML)
+  Callable = T.isX86() && STI.checkFeatures("+avx512f");
+#endif
+  if (Callable)
+    return createVecLibTLII(T, DevType);
+#endif
+  return nullptr;
+}
 
 class PoCLModulePassManager {
   // Create the analysis managers.
@@ -250,6 +308,12 @@ llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
   PassB.reset(new PassBuilder(TM, PTO, std::nullopt, &PIC));
 #endif
   PassBuilder &PB = *PassB.get();
+
+  // Without this, the loop vectorizer costs vector math builtins as
+  // scalarized calls, and only codegen maps them to the vector library.
+  TLII.reset(createOptVecLibTLII(TM, Dev->type));
+  if (TLII)
+    FAM.registerPass([this] { return TargetLibraryAnalysis(*TLII); });
 
 #if 0
   // Add LibraryInfo.
@@ -323,7 +387,7 @@ void PoCLModulePassManager::run(llvm::Module &Bitcode) {
   PM.run(Bitcode, MAM);
 #ifdef SEPARATE_OPTIMIZATION_FROM_POCL_PASSES
   populateModulePM(nullptr, (void *)&Bitcode, OptimizeLevel,
-                   Vectorize, Machine.get());
+                   Vectorize, Machine.get(), TLII.get());
 #endif
 }
 
@@ -1354,30 +1418,11 @@ static TargetLibraryInfoImpl *initPassManagerForCodeGen(legacy::PassManager &PM,
                                                         cl_device_type DevType) {
   assert(TTriple);
   llvm::Triple DevTriple(TTriple);
-  llvm::TargetLibraryInfoWrapperPass *TLIPass = nullptr;
-  TargetLibraryInfoImpl *TLII = nullptr;
-
-#ifdef ENABLE_HOST_CPU_VECTORIZE_BUILTINS
-  if (DevType == CL_DEVICE_TYPE_CPU) {
-    TLII =
-        llvm::driver::createTLII(DevTriple,
-#ifdef ENABLE_HOST_CPU_VECTORIZE_LIBMVEC
-                                 driver::VectorLibrary::LIBMVEC);
-#endif
-#ifdef ENABLE_HOST_CPU_VECTORIZE_SLEEF
-                                 driver::VectorLibrary::SLEEF);
-#endif
-#ifdef ENABLE_HOST_CPU_VECTORIZE_SVML
-                                 driver::VectorLibrary::SVML);
-#endif
-    TLIPass = new TargetLibraryInfoWrapperPass(*TLII);
-  } else
-#endif
-  {
-    TLIPass = new TargetLibraryInfoWrapperPass(DevTriple);
-  }
-
-  PM.add(TLIPass);
+  TargetLibraryInfoImpl *TLII = createVecLibTLII(DevTriple, DevType);
+  if (TLII)
+    PM.add(new TargetLibraryInfoWrapperPass(*TLII));
+  else
+    PM.add(new TargetLibraryInfoWrapperPass(DevTriple));
   return TLII;
 }
 
@@ -1548,7 +1593,7 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program Program,
 
 void populateModulePM([[maybe_unused]] void *Passes, void *Module,
                       unsigned OptL, bool Vectorize,
-                      TargetMachine *TM) {
+                      TargetMachine *TM, TargetLibraryInfoImpl *TLII) {
 
   PipelineTuningOptions PTO;
 
@@ -1583,6 +1628,11 @@ void populateModulePM([[maybe_unused]] void *Passes, void *Module,
 #else
   PassBuilder PB(TM, PTO, std::nullopt, &PIC);
 #endif
+
+  // Registered first, so that registerFunctionAnalyses doesn't add the
+  // default (vector library-less) one.
+  if (TLII)
+    FAM.registerPass([TLII] { return TargetLibraryAnalysis(*TLII); });
 
   // Register all the basic analyses with the managers.
   PB.registerModuleAnalyses(MAM);

@@ -32,6 +32,10 @@
 #include <llvm/Support/raw_os_ostream.h>
 #include <llvm/Target/TargetMachine.h>
 
+namespace llvm {
+class TargetLibraryInfoImpl;
+}
+
 #ifdef ENABLE_MLIR
 #include <mlir/IR/MLIRContext.h>
 #endif
@@ -110,12 +114,15 @@ POCL_EXPORT bool getModuleBoolMetadata (const llvm::Module &mod,
  * OptL - optimize for speed (0 to 3 are valid)
  * SizeL - optimize for size
  * Vectorize - whether to invoke the vectorizer (only used for legacy PM)
+ * TLII - optional library info, e.g. with the vector math library the loop
+ *   vectorizer may use
  */
 POCL_EXPORT void populateModulePM (void *Passes,
                                    void *Module,
                                    unsigned OptL,
                                    bool Vectorize = true,
-                                   llvm::TargetMachine *TM = nullptr);
+                                   llvm::TargetMachine *TM = nullptr,
+                                   llvm::TargetLibraryInfoImpl *TLII = nullptr);
 
 extern std::string CurrentWgMethod;
 
