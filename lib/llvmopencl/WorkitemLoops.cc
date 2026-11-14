@@ -1278,11 +1278,10 @@ void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Def) {
       LLVM_DEBUG(RematerializedValue->dump());
 
       if (isa<AllocaInst>(Def)) {
-        if (StoreInst *Store = dyn_cast<StoreInst>(UserI)) {
-          // The original store could be left intact, but then we'd need to
-          // figure out the materialization-ability beforehand.
-          Store->setOperand(0, RematerializedValue);
-        } else if (UserI->isLifetimeStartOrEnd()) {
+        // The users are those of values loaded from the alloca, not of the
+        // alloca itself, so a store here may use the loaded value as its
+        // address rather than as the value to store.
+        if (UserI->isLifetimeStartOrEnd()) {
           // We can leave the original lifetime marker for the alloca as is.
         } else {
           // We can get rid of the alloca load altogether and use the
