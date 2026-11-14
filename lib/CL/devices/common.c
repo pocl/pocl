@@ -2129,9 +2129,9 @@ static const cl_name_version OPENCL_EXTENSIONS[]
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_device_uuid" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_khr_kernel_clock" },
 
-      { CL_MAKE_VERSION (0, 9, 6), "cl_khr_command_buffer" },
-      { CL_MAKE_VERSION (0, 9, 1), "cl_khr_command_buffer_multi_device" },
-      { CL_MAKE_VERSION (0, 9, 3), "cl_khr_command_buffer_mutable_dispatch" },
+      { CL_MAKE_VERSION (1, 0, 0), "cl_khr_command_buffer" },
+      { CL_MAKE_VERSION (0, 9, 2), "cl_khr_command_buffer_multi_device" },
+      { CL_MAKE_VERSION (0, 9, 4), "cl_khr_command_buffer_mutable_dispatch" },
       { CL_MAKE_VERSION (1, 0, 0), "cl_ext_float_atomics" },
       { CL_MAKE_VERSION (1, 0, 2), "cl_ext_buffer_device_address" },
       { CL_MAKE_VERSION (0, 9, 0), "cl_pocl_svm_rect" },

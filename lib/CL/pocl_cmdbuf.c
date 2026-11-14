@@ -111,6 +111,26 @@ pocl_cmdbuf_record_command (cl_command_buffer_khr command_buffer,
       POCL_UNLOCK (command_buffer->mutex);
       return CL_INVALID_OPERATION;
     }
+
+  /* An in-order queue orders the commands recorded with it. */
+  cl_command_queue q = command_buffer->queues[cmd->queue_idx];
+  cl_sync_point_khr prev = command_buffer->last_sync_points[cmd->queue_idx];
+  if (prev != 0 && !(q->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE))
+    {
+      cl_uint n = cmd->sync.syncpoint.num_sync_points_in_wait_list;
+      cl_sync_point_khr *wait_list
+        = realloc (cmd->sync.syncpoint.sync_point_wait_list,
+                   sizeof (cl_sync_point_khr) * (n + 1));
+      if (wait_list == NULL)
+        {
+          POCL_UNLOCK (command_buffer->mutex);
+          return CL_OUT_OF_HOST_MEMORY;
+        }
+      wait_list[n] = prev;
+      cmd->sync.syncpoint.sync_point_wait_list = wait_list;
+      cmd->sync.syncpoint.num_sync_points_in_wait_list = n + 1;
+    }
+
   pocl_buffer_migration_info *mi;
   LL_FOREACH (cmd->migr_infos, mi)
     {
@@ -125,6 +145,8 @@ pocl_cmdbuf_record_command (cl_command_buffer_khr command_buffer,
   LL_APPEND (command_buffer->cmds, cmd);
 
   command_buffer->num_syncpoints++;
+  command_buffer->last_sync_points[cmd->queue_idx]
+    = command_buffer->num_syncpoints;
   if (sync_point != NULL)
     *sync_point = command_buffer->num_syncpoints;
   cmd->cmd_buffer = command_buffer;
@@ -243,21 +265,9 @@ pocl_cmdbuf_validate_common_handles (cl_command_buffer_khr command_buffer,
 
 /**
  * Check if command buffer is ready to be enqueued or mutated
- *
- * The command buffer must either be in executable state,
- * or it can be in a pending state, if the cmd buf was created with the
- * simultaneous-flag
- *
  */
 int
 pocl_cmdbuf_is_ready (cl_command_buffer_khr command_buffer)
 {
-  cl_command_buffer_flags_khr flags
-    = (cl_command_buffer_flags_khr)pocl_cmdbuf_get_property (
-      command_buffer, CL_COMMAND_BUFFER_FLAGS_KHR);
-  int is_ready
-    = command_buffer->state == CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR
-      || (command_buffer->state == CL_COMMAND_BUFFER_STATE_FINALIZED_KHR
-          && flags & CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR);
-  return is_ready;
+  return command_buffer->state == CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR;
 }

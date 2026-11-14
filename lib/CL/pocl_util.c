@@ -1834,16 +1834,11 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
   }
 
   /* NOTE this must be called before we call broadcast, see above */
-  if (event->reset_command_buffer)
-  {
-    assert (command_buffer);
-    POCL_LOCK (command_buffer->mutex);
-    command_buffer->pending -= 1;
-    if (command_buffer->pending == 0)
-        command_buffer->state = CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR;
-    POCL_UNLOCK (command_buffer->mutex);
-    POname (clReleaseCommandBufferKHR) (command_buffer);
-  }
+  if (event->release_command_buffer)
+    {
+      assert (command_buffer);
+      POname (clReleaseCommandBufferKHR) (command_buffer);
+    }
 
   ops->broadcast (event);
 
