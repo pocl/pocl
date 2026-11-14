@@ -40,6 +40,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/MC/TargetRegistry.h>
 #include <llvm/Analysis/TargetLibraryInfo.h>
 #include <llvm/Analysis/TargetTransformInfo.h>
+#include <llvm/IR/DebugInfo.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/PassTimingInfo.h>
@@ -54,10 +55,13 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Target/TargetOptions.h>
 #include <llvm/Transforms/IPO/Internalize.h>
 #include <llvm/Transforms/Utils/Cloning.h>
+#include <llvm/Transforms/Utils/LoopUtils.h>
 // legacy PassManager is needed for CodeGen, even if new PM is used for IR
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/Analysis/CGSCCPassManager.h>
 #include <llvm/Analysis/LoopAnalysisManager.h>
+#include <llvm/Analysis/LoopInfo.h>
+#include <llvm/IR/Dominators.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Passes/StandardInstrumentations.h>
 #include <llvm/Transforms/Scalar/LoopPassManager.h>
@@ -1555,7 +1559,7 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program Program,
 
 void populateModulePM([[maybe_unused]] void *Passes, void *Module,
                       unsigned OptL, bool Vectorize,
-                      TargetMachine *TM) {
+                      TargetMachine *TM, unsigned SizeL) {
 
   PipelineTuningOptions PTO;
 
@@ -1608,7 +1612,15 @@ void populateModulePM([[maybe_unused]] void *Passes, void *Module,
       Opt = OptimizationLevel::O1;
       break;
     case 2:
+#if LLVM_MAJOR < 23
+      Opt = SizeL == 0   ? OptimizationLevel::O2
+            : SizeL == 1 ? OptimizationLevel::Os
+                         : OptimizationLevel::Oz;
+#else
+      // the size levels are only function attributes since LLVM 23
+      (void)SizeL;
       Opt = OptimizationLevel::O2;
+#endif
       break;
     default:
     case 3:
@@ -1623,6 +1635,44 @@ void populateModulePM([[maybe_unused]] void *Passes, void *Module,
   if (Module) {
     llvm::Module *Mod = (llvm::Module *)Module;
     MPM.run(*Mod, MAM);
+  }
+}
+
+void optimizeFrontendModule(llvm::Module &Mod, cl_device_id Dev,
+                            unsigned OptL, unsigned SizeL,
+                            bool TrackAssignments) {
+  // Clang adds this pass at the start of its pipeline.
+  if (TrackAssignments) {
+    ModuleAnalysisManager MAM;
+    AssignmentTrackingPass().run(Mod, MAM);
+  }
+
+  // Clang creates a target machine for the module's triple and CPU, which
+  // provides the TTI and the target's pipeline callbacks.
+  std::unique_ptr<TargetMachine> TM(
+      GetTargetMachine(Dev->llvm_target_triplet, Dev->llvm_cpu));
+  populateModulePM(nullptr, &Mod, OptL, /*Vectorize=*/false, TM.get(), SizeL);
+
+  // The loop vectorizer only interleaves the kernel's own loops when asked,
+  // as with the llvm.loop.unroll.disable that -fno-unroll-loops put on them.
+  for (Function &F : Mod) {
+    if (F.isDeclaration())
+      continue;
+    DominatorTree DT(F);
+    LoopInfo LI(DT);
+    for (Loop *L : LI.getLoopsInPreorder()) {
+      bool HasHint = false;
+      if (MDNode *LoopID = L->getLoopID())
+        for (const MDOperand &Op : drop_begin(LoopID->operands()))
+          if (auto *Node = dyn_cast<MDNode>(Op))
+            if (auto *Name = dyn_cast_or_null<MDString>(
+                    Node->getNumOperands() ? Node->getOperand(0).get()
+                                           : nullptr))
+              HasHint |= Name->getString().starts_with("llvm.loop.unroll.") ||
+                         Name->getString() == "llvm.loop.interleave.count";
+      if (!HasHint)
+        addStringMetadataToLoop(L, "llvm.loop.interleave.count", 1);
+    }
   }
 }
 

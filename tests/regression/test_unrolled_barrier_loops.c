@@ -24,11 +24,23 @@
   before the barrier passes when the size is known at compile time, from
   intel_reqd_sub_group_size or from the local size X of a work-group function
   specialized for it, and so is a tree reduction over the local size. A loop
+<<<<<<< HEAD
   bounded by a kernel argument stays a b-loop despite the request, and so does
   a rotation by a constant without one. Requested loops next to each other
   or inside a runtime loop are unrolled as well, and a partial request is
   honored if its count divides the trip count. All of them must give the
   same results.
+||||||| parent of 0b94e195d (Fully unroll short loops with barriers by default)
+  bounded by a kernel argument stays a b-loop despite the request, and so does
+  a rotation by a constant without one. Requested loops next to each other
+  or inside a runtime loop are unrolled as well. All of them must give the
+  same results.
+=======
+  bounded by a kernel argument stays a b-loop despite the request. A short
+  rotation by a constant is unrolled without one. Requested loops next to
+  each other or inside a runtime loop are unrolled as well. All of them must
+  give the same results.
+>>>>>>> 0b94e195d (Fully unroll short loops with barriers by default)
 */
 
 #include "pocl_opencl.h"

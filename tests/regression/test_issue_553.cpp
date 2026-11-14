@@ -32,6 +32,8 @@ __kernel void pocltest(int xarg1, int xarg2) {
   arg2 = xarg2; // XXXX
   for (outer = 0; outer < outerend; outer++) // XXXX
   {
+    // keep the b-loop, which UnrollBarrierLoops would unroll
+    #pragma nounroll
     for (inner = 0; inner < innerend; inner++) // XXXX
     {
       //barrier(CLK_LOCAL_MEM_FENCE);
