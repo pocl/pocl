@@ -1,0 +1,5 @@
+The 16-1-1 function consumes the request and keeps a b-loop, whose iteration
+variable lives in a static context array. The generic function keeps the
+request. So there is one static context array and one request in total.
+CHECK-COUNT-2: {{ex_phi.pocl_context.* = alloca \[|!"llvm.loop.unroll.count", i32 2}}
+CHECK-NOT: {{ex_phi.pocl_context.* = alloca \[|!"llvm.loop.unroll.count"}}

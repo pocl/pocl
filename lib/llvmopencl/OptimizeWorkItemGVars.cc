@@ -44,10 +44,12 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/Instructions.h>
 
+#include "KernelCompilerUtils.h"
 #include "LLVMUtils.h"
 #include "OptimizeWorkItemGVars.h"
 #include "VariableUniformityAnalysis.h"
 #include "WorkitemHandlerChooser.h"
+#include "pocl_llvm_api.h"
 POP_COMPILER_DIAGS
 
 #include <iostream>
@@ -63,6 +65,84 @@ POP_COMPILER_DIAGS
 namespace pocl {
 
 using namespace llvm;
+
+// Replace the work-item values that are known at compile time with constants.
+// Workgroup and the work-item handlers would only do so after the barrier
+// passes, which then see the loops bounded by them (e.g. a tree reduction over
+// the local size, or the butterflies of sub-group shuffles) as loops of unknown
+// trip count. The values are known:
+// - the local size, if the work-group function is specialized for it. All
+//   work-groups have that size, as non-uniform work-groups are unsupported.
+//   A dimension of size 1 also has local id 0.
+// - the global offset, if it is specialized for a zero offset.
+// - the sub-group size, if getConstantSubgroupSize knows it.
+static bool foldWorkItemValues(Function &F) {
+  Module *M = F.getParent();
+
+  // SPMD devices don't use the work-group functions these are specialized for
+  bool SPMD = false;
+  getModuleBoolMetadata(*M, "device_is_spmd", SPMD);
+  if (SPMD)
+    return false;
+
+  WGSpecialization WGS = getWGSpecialization(*M);
+  bool StaticLocalSize = !WGS.DynamicLocalSize;
+
+  std::vector<std::pair<Instruction *, uint64_t>> Replacements;
+  auto foldLoads = [&](const char *Name, uint64_t Value) {
+    GlobalVariable *GVar = M->getGlobalVariable(Name);
+    if (GVar == nullptr)
+      return;
+    for (User *U : GVar->users())
+      if (auto *LI = dyn_cast<LoadInst>(U))
+        if (LI->getFunction() == &F)
+          Replacements.push_back({LI, Value});
+  };
+
+  if (StaticLocalSize) {
+    foldLoads("_local_size_x", WGS.LocalSize[0]);
+    foldLoads("_local_size_y", WGS.LocalSize[1]);
+    foldLoads("_local_size_z", WGS.LocalSize[2]);
+  }
+  if (WGS.ZeroGlobalOffset) {
+    foldLoads("_global_offset_x", 0);
+    foldLoads("_global_offset_y", 0);
+    foldLoads("_global_offset_z", 0);
+  }
+
+  if (uint64_t SubgroupSize = getConstantSubgroupSize(F))
+    foldLoads("_pocl_sub_group_size", SubgroupSize);
+
+  // the work-item functions with a constant dimension, which the work-item
+  // handlers otherwise expand
+  for (BasicBlock &BB : F) {
+    for (Instruction &I : BB) {
+      auto *Call = dyn_cast<CallInst>(&I);
+      if (Call == nullptr || Call->getCalledFunction() == nullptr ||
+          Call->arg_size() != 1)
+        continue;
+      auto *DimArg = dyn_cast<ConstantInt>(Call->getArgOperand(0));
+      if (DimArg == nullptr)
+        continue;
+      uint64_t Dim = DimArg->getZExtValue();
+      StringRef Name = Call->getCalledFunction()->getName();
+      if (StaticLocalSize &&
+          (Name == LS_BUILTIN_NAME || Name == ENQUEUE_LS_BUILTIN_NAME))
+        Replacements.push_back({Call, Dim < 3 ? WGS.LocalSize[Dim] : 1});
+      else if (StaticLocalSize && Name == LID_BUILTIN_NAME &&
+               (Dim >= 3 || WGS.LocalSize[Dim] == 1))
+        Replacements.push_back({Call, 0});
+      else if (WGS.ZeroGlobalOffset && Name == GOFF_BUILTIN_NAME)
+        Replacements.push_back({Call, 0});
+    }
+  }
+
+  for (auto [I, Value] : Replacements) {
+    I->replaceAllUsesWith(ConstantInt::get(I->getType(), Value));
+    I->eraseFromParent();
+  }
+  return !Replacements.empty();
+}
 
 static bool optimizeWorkItemGVars(Function &F) {
 
@@ -119,7 +199,9 @@ OptimizeWorkItemGVars::run(llvm::Function &F,
   if (!isKernelToProcess(F))
     return PreservedAnalyses::all();
 
-  return optimizeWorkItemGVars(F) ? PAChanged : PreservedAnalyses::all();
+  bool Changed = foldWorkItemValues(F);
+  Changed |= optimizeWorkItemGVars(F);
+  return Changed ? PAChanged : PreservedAnalyses::all();
 }
 
 REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);

@@ -152,8 +152,6 @@ private:
                                    LLVMContextRef Ctx, LLVMValueRef F,
                                    unsigned ParamIndex, std::string Name);
 
-  llvm::Value *getRequiredSubgroupSize(llvm::Function &F);
-
   llvm::Module *M;
   llvm::LLVMContext *C;
 
@@ -257,12 +255,12 @@ bool WorkgroupImpl::runOnModule(Module &M, llvm::FunctionAnalysisManager &FAM) {
 
   getModuleStringMetadata(M, "KernelName", KernelName);
   getModuleIntMetadata(M, "WGMaxGridDimWidth", WGMaxGridDimWidth);
-  getModuleIntMetadata(M, "WGLocalSizeX", WGLocalSizeX);
-  getModuleIntMetadata(M, "WGLocalSizeY", WGLocalSizeY);
-  getModuleIntMetadata(M, "WGLocalSizeZ", WGLocalSizeZ);
-  getModuleBoolMetadata(M, "WGDynamicLocalSize", WGDynamicLocalSize);
-  getModuleBoolMetadata(M, "WGAssumeZeroGlobalOffset",
-                        WGAssumeZeroGlobalOffset);
+  WGSpecialization WGS = getWGSpecialization(M);
+  WGDynamicLocalSize = WGS.DynamicLocalSize;
+  WGLocalSizeX = WGS.LocalSize[0];
+  WGLocalSizeY = WGS.LocalSize[1];
+  WGLocalSizeZ = WGS.LocalSize[2];
+  WGAssumeZeroGlobalOffset = WGS.ZeroGlobalOffset;
 
   getModuleIntMetadata(M, "device_global_as_id", DeviceGlobalASid);
   getModuleIntMetadata(M, "device_local_as_id", DeviceLocalASid);
@@ -1220,15 +1218,17 @@ void WorkgroupImpl::privatizeContext(Function *F) {
           Builder, {"_num_groups_x", "_num_groups_y", "_num_groups_z"},
           PC_NUM_GROUPS));
 
-  // Initialize the SG size global and privatize it.
+  // Initialize the SG size global and privatize it. OptimizeWorkItemGVars
+  // already replaced the loads if the size is known at compile time.
   if (M->getGlobalVariable("_pocl_sub_group_size") != nullptr) {
-    Value *SGSize = getRequiredSubgroupSize(*F);
-    if (SGSize == nullptr) {
+    Value *SGSize = nullptr;
+    if (uint64_t Size = getConstantSubgroupSize(*F)) {
+      SGSize = ConstantInt::get(LocalSizeAllocas[0]->getAllocatedType(), Size);
+    } else {
       Builder.SetInsertPoint(LocalSizeXStore->getNextNode());
       SGSize = Builder.CreateLoad(LocalSizeAllocas[0]->getAllocatedType(),
                                   LocalSizeAllocas[0]);
     }
-    assert(SGSize != nullptr);
     privatizeGlobalLoads(F, Builder, {"_pocl_sub_group_size"}, {SGSize});
   }
 
@@ -1793,21 +1793,6 @@ void WorkgroupImpl::createGridLauncher(Function *KernFunc, Function *WGFunc,
     LLVMSetExternallyInitialized(GridLauncherGlobal, false);
     LLVMSetInitializer(GridLauncherGlobal, Launcher);
   }
-}
-
-// The subgroup size is currently defined for the CPU implementations
-// via the intel_reqd_subgroup_size metadata or the local dimension
-// x size (the default).
-llvm::Value *WorkgroupImpl::getRequiredSubgroupSize(llvm::Function &F) {
-
-  if (MDNode *SGSizeMD = F.getMetadata("intel_reqd_sub_group_size")) {
-    // Use the constant from the metadata.
-    ConstantAsMetadata *ConstMD =
-        cast<ConstantAsMetadata>(SGSizeMD->getOperand(0));
-    ConstantInt *Const = cast<ConstantInt>(ConstMD->getValue());
-    return Const;
-  }
-  return nullptr;
 }
 
 llvm::PreservedAnalyses Workgroup::run(llvm::Module &M,

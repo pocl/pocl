@@ -62,6 +62,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "SanitizeUBofDivRem.h"
 #include "SubCFGFormation.h"
 #include "UnreachablesToReturns.h"
+#include "UnrollBarrierLoops.h"
 #include "VariableUniformityAnalysis.h"
 #include "WorkItemAliasAnalysis.h"
 #include "Workgroup.h"
@@ -259,6 +260,27 @@ recursivelyFindCalledFunctions(llvm::SmallSet<llvm::Function *, 12> &FSet,
       recursivelyFindCalledFunctions(FSet, Callee);
     }
   }
+}
+
+WGSpecialization getWGSpecialization(const llvm::Module &M) {
+  WGSpecialization WGS;
+  getModuleBoolMetadata(M, "WGDynamicLocalSize", WGS.DynamicLocalSize);
+  getModuleIntMetadata(M, "WGLocalSizeX", WGS.LocalSize[0]);
+  getModuleIntMetadata(M, "WGLocalSizeY", WGS.LocalSize[1]);
+  getModuleIntMetadata(M, "WGLocalSizeZ", WGS.LocalSize[2]);
+  getModuleBoolMetadata(M, "WGAssumeZeroGlobalOffset", WGS.ZeroGlobalOffset);
+  if (WGS.LocalSize[0] == 0 || WGS.LocalSize[1] == 0 || WGS.LocalSize[2] == 0)
+    WGS.DynamicLocalSize = true;
+  return WGS;
+}
+
+uint64_t getConstantSubgroupSize(const llvm::Function &F) {
+  if (MDNode *SGSizeMD = F.getMetadata("intel_reqd_sub_group_size")) {
+    auto *ConstMD = cast<ConstantAsMetadata>(SGSizeMD->getOperand(0));
+    return cast<ConstantInt>(ConstMD->getValue())->getZExtValue();
+  }
+  WGSpecialization WGS = getWGSpecialization(*F.getParent());
+  return WGS.DynamicLocalSize ? 0 : WGS.LocalSize[0];
 }
 
 bool isGVarUsedByFunction(llvm::GlobalVariable *GVar, llvm::Function *F) {
@@ -705,6 +727,7 @@ void registerPassBuilderPasses(llvm::PassBuilder &PB) {
   PHIsToAllocas::registerWithPB(PB);
   RemoveBarrierCalls::registerWithPB(PB);
   SubCFGFormation::registerWithPB(PB);
+  UnrollBarrierLoops::registerWithPB(PB);
   Workgroup::registerWithPB(PB);
   WorkitemLoops::registerWithPB(PB);
   PoCLCFGPrinter::registerWithPB(PB);
