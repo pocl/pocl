@@ -47,6 +47,7 @@ set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_sanitize_divrem
      test_cr_divide_sqrt_option
      test_tall_grid
+     test_frexp_kernellib
 )
 if(UNIX)
   list(APPEND C_PROGRAMS_TO_BUILD test_signal_handlers)
@@ -233,6 +234,15 @@ add_test_pocl(NAME "regression/test_sanitize_divrem" COMMAND "test_sanitize_divr
 # Builds only; the CUDA and Vulkan devices lack CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT.
 add_test_pocl(NAME "regression/test_cr_divide_sqrt_option" COMMAND "test_cr_divide_sqrt_option"
   WORKITEM_HANDLER "loopvec" LABELS "cuda;vulkan;level0")
+
+add_test_pocl(NAME "regression/frexp_kernellib" WORKITEM_HANDLER "loopvec" COMMAND "test_frexp_kernellib")
+# the sub-AVX2 kernel library variants, where llvm.frexp used to be miscompiled
+if(X86 AND KERNELLIB_HOST_DISTRO_VARIANTS)
+  foreach(KERNELLIB sse2 avx)
+    add_test_pocl(NAME "regression/frexp_kernellib_${KERNELLIB}" WORKITEM_HANDLER "loopvec"
+      COMMAND "test_frexp_kernellib" ${KERNELLIB})
+  endforeach()
+endif()
 
 add_test_pocl(NAME "regression/test_issue_893" COMMAND "test_issue_893")
 
