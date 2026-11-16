@@ -1663,15 +1663,17 @@ struct _cl_command_buffer_khr
   cl_uint num_properties;
   cl_command_buffer_properties_khr *properties;
 
-  /** recording / ready / pending (executing) / invalid */
+  /** recording / executable */
   cl_command_buffer_state_khr state;
-  /** Number of currently in-flight instances of this command buffer */
-  cl_uint pending;
 
   /** Number of currently allocated sync points in this command buffer.
    * Used for generating the next sync point id and for validating sync point
    * wait lists when recording commands. */
   cl_uint num_syncpoints;
+
+  /** Sync point of the last command recorded with each queue (0 if none).
+   * Commands recorded with an in-order queue depend on it. */
+  cl_sync_point_khr *last_sync_points;
 
   _cl_command_node *cmds;
   cl_bool is_mutable;
@@ -2228,8 +2230,8 @@ struct _cl_event {
    * profiling is enabled on all queues of the cmdbuffer */
   char profiling_available;
 
-  /* reset command buffer when the event is finished */
-  char reset_command_buffer;
+  /* release command_buffer when the event is finished */
+  char release_command_buffer;
   cl_command_buffer_khr command_buffer;
 
   _cl_event *next;

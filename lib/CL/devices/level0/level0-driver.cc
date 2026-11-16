@@ -3039,7 +3039,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   if (prefersZeQueues()) {
     Extensions.append(" cl_khr_command_buffer");
     ClDev->cmdbuf_capabilities =
-        CL_COMMAND_BUFFER_CAPABILITY_SIMULTANEOUS_USE_KHR |
         CL_COMMAND_BUFFER_CAPABILITY_KERNEL_PRINTF_KHR;
     //| CL_COMMAND_BUFFER_CAPABILITY_MULTIPLE_QUEUE_KHR;
     ClDev->cmdbuf_required_properties = 0;
