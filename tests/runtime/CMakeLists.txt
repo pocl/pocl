@@ -612,3 +612,11 @@ set_property(TEST
   "runtime/test_subbuffers"
   "runtime/test_queue_creation_with_hints"
   APPEND PROPERTY LABELS "level0")
+
+add_metal_label_to_directory_tests(
+  # images
+  "runtime/clGetKernelArgInfo" "runtime/test_command_buffer_images"
+  # SVM
+  "runtime/test_svm"
+  # 64-bit atomics
+  "runtime/test_large_buf")

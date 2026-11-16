@@ -24,11 +24,17 @@ DEFINE_BODY_V (
           else
             {
               // We round down to "correct" for inaccuracies in log2
-              // We divide by 2 since log2 is wrong for large inputs
-              igoodres.s[n]
-                  = 1
-                    + rint (floor (0.999999f
-                                   * log2 (0.5 * fabs (val.s[n]))));
+              // We divide by 2 since log2 is wrong for large inputs (but
+              // not small ones, which would become denormals, which a
+              // device may flush to zero)
+              if (fabs (val.s[n]) >= (stype)1)
+                igoodres.s[n]
+                    = 1
+                      + rint (floor (0.999999f
+                                     * log2 (0.5 * fabs (val.s[n]))));
+              else
+                igoodres.s[n]
+                    = rint (floor (0.999999f * log2 (fabs (val.s[n]))));
             }
           equal = equal && ires.s[n] == igoodres.s[n];
         }

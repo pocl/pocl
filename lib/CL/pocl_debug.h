@@ -105,6 +105,7 @@ extern "C" {
 #define POCL_DEBUG_FLAG_STREAM 0x10000
 
 #define POCL_DEBUG_FLAG_VULKAN 0x80000
+#define POCL_DEBUG_FLAG_METAL 0x100000
 
 #define POCL_DEBUG_FLAG_WARNING  0x8000000000UL
 #define POCL_DEBUG_FLAG_ERROR   0x10000000000UL
@@ -283,6 +284,10 @@ POCL_EXPORT
   POCL_MSG_PRINT_INFO_F (VULKAN, errcode, __VA_ARGS__)
 #define POCL_MSG_PRINT_VULKAN(...)                                            \
   POCL_MSG_PRINT_INFO_F (VULKAN, "", __VA_ARGS__)
+#define POCL_MSG_PRINT_METAL2(errcode, ...)                                   \
+  POCL_MSG_PRINT_INFO_F (METAL, errcode, __VA_ARGS__)
+#define POCL_MSG_PRINT_METAL(...)                                             \
+  POCL_MSG_PRINT_INFO_F (METAL, "", __VA_ARGS__)
 #define POCL_MSG_PRINT_REMOTE2(errcode, ...)                                  \
   POCL_MSG_PRINT_INFO_F (REMOTE, errcode, __VA_ARGS__)
 #define POCL_MSG_PRINT_REMOTE(...)                                            \
@@ -393,6 +398,16 @@ POCL_EXPORT
     }                                                                         \
   while (0)
 #define POCL_MSG_PRINT_CUDA2(...)                                             \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_METAL2(...)                                            \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_METAL(...)                                             \
   do                                                                          \
     {                                                                         \
     }                                                                         \
