@@ -237,8 +237,10 @@ struct cuda_ptx_version_pair_s
 /* Maps CUDA driver version to PTX version the driver supports at most
  * (there doesn't seem to be a way to query supported PTX versions). */
 const struct cuda_ptx_version_pair_s cuda_ptx_version_map[] = {
-  /* Based on [PTX ISA v8.5 - 12. Release Notes]. For simplicity,
-     minor CUDA versions are (mostly) skipped for now. */
+  /* Based on [PTX ISA v9.0 - 13. Release Notes]. For simplicity,
+     minor CUDA versions are (mostly) skipped for now, except where
+     an SM version needs them (SM 10.0 and later). */
+  { 13000, 90 }, { 12090, 88 }, { 12080, 87 }, { 12070, 86 },
   { 12000, 80 }, { 11000, 70 }, { 10000, 63 }, { 9000, 60 }, { 8000, 50 },
   { 7000, 42 },  { 6000, 40 },  { 5000, 31 },  { 4010, 30 }, { 4000, 23 },
   { 3000, 20 },  { 2000, 12 },  { 1000, 10 },  { 0, 0 } /* Sentinel. */
@@ -256,8 +258,19 @@ get_valid_ptx_version_range (unsigned cuda_version, unsigned sm_version,
      target the given SM version. */
   unsigned min_ptx = 0;
 
-  /* Based on [PTX ISA v8.5 - 12. Release Notes]. */
-  if (sm_version >= 89)
+  /* Based on [PTX ISA v9.0 - 13. Release Notes]. Not monotonic beyond
+     SM 10.0: SM 11.0 (formerly SM 10.1) needs a newer PTX than SM 12.x. */
+  if (sm_version >= 121)
+    min_ptx = 88;
+  else if (sm_version >= 120)
+    min_ptx = 87;
+  else if (sm_version >= 110)
+    min_ptx = 90;
+  else if (sm_version >= 103)
+    min_ptx = 88;
+  else if (sm_version >= 100)
+    min_ptx = 86;
+  else if (sm_version >= 89)
     min_ptx = 78;
   else if (sm_version >= 87)
     min_ptx = 74;
@@ -349,7 +362,10 @@ choose_sm_ptx_version_combo (unsigned cuda_version, cl_device_id dev,
 
   unsigned min_ptx = 0, max_ptx = 0;
   get_valid_ptx_version_range (cuda_version, selected_sm, &min_ptx, &max_ptx);
-  unsigned selected_ptx = max_ptx; // Default.
+  /* PTX 8.0 where the SM allows it: what the driver supports at most may
+     exceed what LLVM emits (CUDA 12.7 and later), and targets that worked
+     with the CUDA 12.0 entry of the table keep what they got. */
+  unsigned selected_ptx = (max_ptx > 80 && min_ptx <= 80) ? 80 : max_ptx;
 
   /* If we can emit PTX within version range [6.0, 6.3] for the
      selected SM, do so. This allows us to emit support subgroup
