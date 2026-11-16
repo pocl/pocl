@@ -52,6 +52,10 @@
 #include "communication.h"
 #include "messages.h"
 
+#ifdef ENABLE_REMOTE_PROGRAM_PREPROCESSING
+#include "preprocess.h"
+#endif
+
 #if defined(ENABLE_REMOTE_DISCOVERY_AVAHI)                                    \
   || defined(ENABLE_REMOTE_DISCOVERY_DHT)                                     \
   || defined(ENABLE_REMOTE_DISCOVERY_ANDROID)
@@ -909,12 +913,42 @@ pocl_remote_build_source (cl_program program, cl_uint device_i,
   char *kernel_meta_bytes = NULL;
   size_t kernel_meta_size = 0;
 
+  /* The remote server rarely has the same source files (or even a filesystem
+     from the same machine) as the client, so resolve the #includes and expand
+     the macros on the client side before sending the source over. */
+  const char *source = program->source;
+  size_t source_size = strlen (source);
+#ifdef ENABLE_REMOTE_PROGRAM_PREPROCESSING
+  char *preprocessed_source = NULL, *preprocess_err = NULL;
+  if (pocl_remote_preprocess_source (
+          program, device, num_input_headers, input_headers,
+          header_include_names, &preprocessed_source, &preprocess_err))
+    {
+      if (preprocess_err)
+        {
+          snprintf (program->main_build_log, MAIN_PROGRAM_LOG_SIZE,
+                    "client-side preprocessing failed:\n%s", preprocess_err);
+          free (preprocess_err);
+        }
+      return CL_BUILD_PROGRAM_FAILURE;
+    }
+  if (preprocessed_source)
+    {
+      source = preprocessed_source;
+      source_size = strlen (source);
+    }
+#endif
+
   err = pocl_network_build_or_link_program (
-    d, program->source, strlen (program->source), CL_FALSE, CL_FALSE, CL_FALSE,
+    d, source, source_size, CL_FALSE, CL_FALSE, CL_FALSE,
     CL_FALSE, prog_id, program->compiler_options, &kernel_meta_bytes,
     &kernel_meta_size, relevant_devices, relevant_platforms,
     num_relevant_devices, build_logs, binaries, binary_sizes,
     d->svm_region_offset, !link_program, 0);
+
+#ifdef ENABLE_REMOTE_PROGRAM_PREPROCESSING
+  free (preprocessed_source);
+#endif
 
   setup_build_logs (program, num_relevant_devices, build_indexes, build_logs);
 
