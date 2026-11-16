@@ -110,9 +110,14 @@ make_kernel_bc(KERNEL_BC_SM30_PTX60_63 "${LLVM_TARGET}-sm30-ptx60-63"
   "cuda/subgroup_ballot.cl"
   "cuda/subgroup_legacy.cl")
 
+# Clang 18 and 19 accept the .sync intrinsics only with a PTX version
+# enabled as a target feature (the triple alone implies an older PTX).
+set(CLANG_FLAGS_NOPTX ${CLANG_FLAGS})
+list(APPEND CLANG_FLAGS "-Xclang" "-target-feature" "-Xclang" "+ptx64")
 make_kernel_bc(KERNEL_BC_SM70_PTX64 "${LLVM_TARGET}-sm70-ptx64"
  "sm70-ptx64-BCs" 0 0 0 ${KERNEL_SOURCES}
  "cuda/subgroup_sync.cl")
+set(CLANG_FLAGS ${CLANG_FLAGS_NOPTX})
 
 # just debug
 #message(STATUS "${LLVM_TARGET} Kernel BC: ${KERNEL_BC_SM30_PTX60_63}")
