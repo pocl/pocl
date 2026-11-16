@@ -48,6 +48,7 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #endif
 
 IGNORE_COMPILER_WARNING("-Wcomment")
+#include <llvm/ADT/StringExtras.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
@@ -1069,6 +1070,34 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
   return CL_SUCCESS;
 }
 
+#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
+/* Prevent builtin attributes from overriding the kernel's CPU/features during
+   unification. Retarget the per-device cache; lazy bodies need not be loaded. */
+static bool retargetHostKernelLibrary(llvm::Module &M, cl_device_id Device) {
+  if (!Device->llvm_cpu || !Device->kernellib_subdir ||
+      strcmp(Device->kernellib_subdir, "host") != 0)
+    return true;
+
+  clang::CompilerInstance CI;
+  CI.createDiagnostics();
+  auto &Opts = CI.getTargetOpts();
+  Opts.Triple = Device->llvm_target_triplet;
+  Opts.CPU = Device->llvm_cpu;
+  if (Device->llvm_abi)
+    Opts.ABI = Device->llvm_abi;
+  if (!CI.createTarget())
+    return false;
+
+  const std::string Features = llvm::join(Opts.Features, ",");
+  for (llvm::Function &F : M) {
+    F.addFnAttr("target-cpu", Device->llvm_cpu);
+    F.addFnAttr("target-features", Features);
+    F.removeFnAttr("tune-cpu");
+  }
+  return true;
+}
+#endif
+
 /**
  * Return the OpenCL C built-in function library bitcode for the given device.
  * The returned module is lazily loaded; callers must materialize functions
@@ -1127,6 +1156,15 @@ llvm::Module *getKernelLibrary(cl_device_id device,
       POCL_MSG_ERR("Can't find either kernel library file %s or fallback %s.\n",
                    BuiltinLibrary.c_str(), BuiltinLibraryFallback.c_str());
   }
+#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
+  if (BuiltinLibModule &&
+      !retargetHostKernelLibrary(*BuiltinLibModule, device)) {
+    POCL_MSG_ERR("Cannot retarget the host kernel library for CPU %s\n",
+                 device->llvm_cpu);
+    delete BuiltinLibModule;
+    return nullptr;
+  }
+#endif
   if (BuiltinLibModule)
     kernelLibraryMap->insert(std::make_pair(device, BuiltinLibModule));
 

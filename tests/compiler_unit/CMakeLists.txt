@@ -69,3 +69,28 @@ add_llvm_check(SPIRV_NAME issue-1872-switch-to-a-bb-with-unreachable)
 add_llvm_check(SPIRV_NAME switch-to-unreachable-with-a-phi-in-dest)
 add_llvm_check(OPENCLC_NAME force-vector-width ENVIRONMENT "POCL_VECTORIZER_FORCE_VECTOR_WIDTH=4")
 add_llvm_check(OPENCLC_NAME prefer-vector-width ENVIRONMENT "POCL_VECTORIZER_PREFER_VECTOR_WIDTH=512")
+
+if(X86_64 AND KERNELLIB_HOST_DISTRO_VARIANTS)
+  add_llvm_check(OPENCLC_NAME distro-cpu
+    ENVIRONMENT "POCL_LLVM_CPU_NAME=core2")
+  add_test_pocl(NAME "kernel_compiler_unit_tests/distro-cpu-sse2"
+    COMMAND "poclcc" -o distro-cpu-sse2.out
+      "${CMAKE_CURRENT_SOURCE_DIR}/distro-cpu.cl"
+    WORKITEM_HANDLER "loopvec"
+    LLVM_FILECHECK "distro-cpu.fc"
+    ONLY_FILECHECK 1
+    ENVIRONMENT "POCL_LLVM_CPU_NAME=core2")
+  if(ENABLE_LLVM_FILECHECKS)
+    set_property(TEST "kernel_compiler_unit_tests/distro-cpu-sse2_llvm-ir-checks"
+      APPEND PROPERTY ENVIRONMENT "POCL_KERNELLIB_NAME=sse2")
+  endif()
+  if(ENABLE_SPIRV)
+    add_test_pocl(NAME "kernel_compiler_unit_tests/distro-cpu-spirv"
+      COMMAND "poclcc" -s -o distro-cpu-spirv.out
+        "${CMAKE_CURRENT_SOURCE_DIR}/distro-cpu.spirv"
+      WORKITEM_HANDLER "loopvec"
+      LLVM_FILECHECK "distro-cpu.fc"
+      ONLY_FILECHECK 1
+      ENVIRONMENT "POCL_LLVM_CPU_NAME=core2")
+  endif()
+endif()

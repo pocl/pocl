@@ -872,8 +872,9 @@ pocl_cpu_build_hash (cl_device_id device)
   char *res = calloc(1000, sizeof(char));
   /* "divrem": kernels no longer rely on a SIGFPE handler to survive integer
      division by zero, so reject binaries built when they did. */
-  snprintf (res, 1000, "cpu-%s-%s-divrem", HOST_DEVICE_BUILD_HASH,
-            device->llvm_cpu);
+  snprintf (res, 1000, "cpu-%s-%s-%s-divrem", HOST_DEVICE_BUILD_HASH,
+            device->llvm_cpu,
+            device->kernellib_name ? device->kernellib_name : "");
   return res;
 }
 

@@ -50,3 +50,24 @@ endfunction()
 
 add_unit_test(test_fs.cc)
 add_unit_test(test_runcmds.cc)
+
+if(ENABLE_HOST_CPU_DEVICES AND ENABLE_LLVM AND KERNELLIB_HOST_DISTRO_VARIANTS)
+  add_unit_test(test_distro_cpu.c)
+  if(X86_64)
+    add_unit_test(test_distro_cpu_features.cc)
+    target_include_directories(test_distro_cpu_features PRIVATE ${LLVM_INCLUDE_DIRS})
+    if(POCL_LLVM_LINK_TARGETS)
+      target_link_libraries(test_distro_cpu_features PRIVATE ${POCL_LLVM_LINK_TARGETS} ${LLVM_SYSLIBS})
+    else()
+      target_link_libraries(test_distro_cpu_features PRIVATE ${LLVM_LINK_LIBRARIES} ${LLVM_SYSLIBS})
+    endif()
+    add_test(NAME "unit/test_distro_cpu_incompatible_compile"
+      COMMAND ${CMAKE_COMMAND} -E env POCL_LLVM_CPU_NAME=core2 POCL_KERNELLIB_NAME=avx2
+        $<TARGET_FILE:poclcc> -o distro-cpu-half.pocl
+        "${CMAKE_CURRENT_SOURCE_DIR}/../compiler_unit/distro-cpu-half.cl")
+    foreach(MODE library override both incompatible baseline znver3 znver4 unknown)
+      add_test(NAME "unit/test_distro_cpu_${MODE}"
+        COMMAND test_distro_cpu ${MODE})
+    endforeach()
+  endif()
+endif()

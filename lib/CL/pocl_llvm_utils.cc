@@ -55,12 +55,14 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Analysis/LoopAnalysisManager.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/TargetParser/Host.h>
+#include <llvm/TargetParser/X86TargetParser.h>
 
 #include "config.h"
 #include "pocl_debug.h"
 #include "pocl_file_util.h"
 #include "pocl_llvm.h"
 #include "pocl_llvm_api.h"
+#include "pocl_llvm_cpu.h"
 #include "pocl_runtime_config.h"
 
 #if LLVM_MAJOR < 22
@@ -229,6 +231,20 @@ char *pocl_get_llvm_cpu_name() {
   }
 #endif
 
+#if defined(KERNELLIB_HOST_DISTRO_VARIANTS) && \
+    (defined(__i386__) || defined(_M_IX86) || defined(__x86_64__) || defined(_M_X64))
+  if (!custom) {
+    StringMap<bool> Features;
+#if LLVM_MAJOR < 19
+    llvm::sys::getHostCPUFeatures(Features);
+#else
+    Features = llvm::sys::getHostCPUFeatures();
+#endif
+    if (!pocl_cpu_has_features(r, Features))
+      r = "generic";
+  }
+#endif
+
   assert(r.size() > 0);
   char *cpu_name = (char *)malloc(r.size() + 1);
   strncpy(cpu_name, r.data(), r.size());
@@ -294,6 +310,7 @@ const struct kernellib_features {
 /* for "distro" style kernel libs, return which kernellib to use, at runtime */
 const char *pocl_get_distro_kernellib_variant() {
   StringMap<bool> Features;
+  const char *CPU = pocl_get_string_option("POCL_LLVM_CPU_NAME", nullptr);
 
 #if defined(__i386__) || defined(_M_IX86) || \
     defined(__x86_64__) || defined(_M_X64)
@@ -307,16 +324,38 @@ const char *pocl_get_distro_kernellib_variant() {
   Features = llvm::sys::getHostCPUFeatures();
 #endif
 
+  /* Restrict library selection to target and host/OS features. */
+  StringRef TargetCPU = CPU ? StringRef(CPU) : llvm::sys::getHostCPUName();
+  if (CPU || (!pocl_is_option_set("POCL_KERNELLIB_NAME")
+              && pocl_cpu_has_features(TargetCPU, Features))) {
+    if (llvm::X86::parseArchX86(TargetCPU) == llvm::X86::CK_None)
+      return "generic";
+    SmallVector<StringRef, 64> CPUFeatures;
+    llvm::X86::getFeaturesForCPU(TargetCPU, CPUFeatures);
+    StringMap<bool> TargetFeatures;
+    for (StringRef F : CPUFeatures)
+      TargetFeatures[F] = true;
+#if HOST_DEVICE_ADDRESS_BITS == 64
+    /* Clang supplies this x86-64 baseline even when the CPU table omits it. */
+    TargetFeatures["cmov"] = true;
+#endif
+    for (auto &F : Features)
+      F.second &= TargetFeatures.lookup(F.getKey());
+  }
+
 #else
   return pocl_get_llvm_cpu_name();
 #endif
 
   const char *custom = pocl_get_string_option("POCL_KERNELLIB_NAME", NULL);
 
+  if (custom && !strcmp(custom, "generic"))
+    return "generic";
+
   const kernellib_features *best_match = NULL;
   for (const kernellib_features *kf = kernellib_feature_map; kf->kernellib_variant;
        ++kf) {
-    bool matches = true;
+    bool matches = pocl_cpu_has_features(kf->cpu_name, Features);
     for (const char *const *f = kf->features; *f; ++f)
       matches &= Features[*f];
     if (matches) {
@@ -326,10 +365,13 @@ const char *pocl_get_distro_kernellib_variant() {
     }
   }
 
+  if (custom && (!best_match || strcmp(custom, best_match->kernellib_variant)))
+    POCL_MSG_WARN("Ignoring incompatible kernellib %s for CPU %s\n", custom,
+                  CPU ? CPU : llvm::sys::getHostCPUName().data());
+
   if (!best_match) {
-    POCL_MSG_WARN("Can't find a kernellib supported by the host CPU (%s)\n",
-                  llvm::sys::getHostCPUName());
-    return NULL;
+    /* No specialized match; LLVM validates the override at compilation. */
+    return "generic";
   }
 
   return best_match->kernellib_variant;
@@ -356,7 +398,9 @@ const char *pocl_get_distro_cpu_name(const char *kernellib_variant) {
   return pocl_get_llvm_cpu_name();
 #endif
 
-  const kernellib_features *best_match = NULL;
+  if (!strcmp(kernellib_variant, "generic"))
+    return HOST_DEVICE_ADDRESS_BITS == 64 ? "x86-64" : "i386";
+
   for (const kernellib_features *kf = kernellib_feature_map; kf->kernellib_variant;
        ++kf) {
     if (!strcmp(kernellib_variant, kf->kernellib_variant))

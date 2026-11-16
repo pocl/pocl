@@ -277,7 +277,21 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
 
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
   const char* kernellib_variant = pocl_get_distro_kernellib_variant ();
-  device->llvm_cpu = pocl_get_distro_cpu_name (kernellib_variant);
+  /* Library-only overrides retain the variant's restricted ISA target. */
+  if (pocl_is_option_set ("POCL_KERNELLIB_NAME")
+      && !pocl_is_option_set ("POCL_LLVM_CPU_NAME"))
+    device->llvm_cpu = pocl_get_distro_cpu_name (kernellib_variant);
+  else
+    {
+      device->llvm_cpu = pocl_get_llvm_cpu_name ();
+      /* Fall back for unknown or feature-masked hosts. */
+      if (!pocl_is_option_set ("POCL_LLVM_CPU_NAME")
+          && strcmp (device->llvm_cpu, "generic") == 0)
+        {
+          free ((void *)device->llvm_cpu);
+          device->llvm_cpu = pocl_get_distro_cpu_name (kernellib_variant);
+        }
+    }
 #else
   device->llvm_cpu = OCL_KERNEL_TARGET_CPU;
   if (device->llvm_cpu == NULL)

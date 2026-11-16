@@ -74,6 +74,34 @@ pocl.
 
 .. highlight:: bash
 
+- **POCL_LLVM_CPU_NAME**
+
+  Override the LLVM CPU used to compile host kernels. In a distro build, the
+  default is the detected host CPU; selecting a builtin-library variant does
+  not otherwise determine the CPU cost model. If LLVM cannot name the host
+  or its CPU defaults require unavailable features, PoCL uses the CPU
+  associated with a compatible library instead.
+
+  With this override, x86 distro builds automatically select the best builtin
+  library supported by both the requested CPU and the host's detected features,
+  including OS support. For example, a ``znver3`` override on a Zen 4 host uses
+  the ``avx2`` library. The portable ``generic`` library is used if no specialized
+  variant matches or LLVM cannot identify the requested CPU. A compatible
+  explicit ``POCL_KERNELLIB_NAME`` takes precedence over automatic selection.
+
+  The requested CPU must still be supported by LLVM and compatible with the
+  machine executing the kernels: library selection does not restrict the
+  instructions LLVM may generate for that CPU.
+
+- **POCL_KERNELLIB_NAME**
+
+  Select a host-supported builtin-library variant in x86 distro builds, for
+  example ``sse2`` or ``avx2``. When used alone, this also selects the variant's
+  CPU target, preserving restricted-instruction-set testing. When combined
+  with ``POCL_LLVM_CPU_NAME``, incompatible libraries are ignored with a
+  warning and a compatible library is selected automatically.
+  Compiled-program caches distinguish both selections.
+
 - **POCL_AFFINITY**
 
   Linux-only, specific to 'cpu' driver. If set to 1, each thread of
