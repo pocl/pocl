@@ -178,6 +178,17 @@ if(ENABLE_CUDA)
   endif()
 endif()
 
+if(ENABLE_METAL)
+  add_subdirectory("metal")
+  set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
+    "$<TARGET_OBJECTS:pocl-devices-metal>")
+
+  if(NOT ENABLE_LOADABLE_DRIVERS)
+    list(APPEND POCL_DEVICES_LINK_LIST ${METAL_FRAMEWORK}
+         ${FOUNDATION_FRAMEWORK} ${LLVM_DOWNGRADE_LIBRARY})
+  endif()
+endif()
+
 
 set(POCL_DEVICES_SOURCES
   devices.h  devices.c

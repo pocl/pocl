@@ -29659,9 +29659,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_sat(half x)
 {
   x = select(x, (half)(0), (short)isnan(x));
-  char y = convert_char(x);
-  y = select(y, (char)CHAR_MIN, convert_char(x < (half)CHAR_MIN));
-  y = select(y, (char)CHAR_MAX, convert_char(x >= (half)CHAR_MAX));
+  short too_small = (short)(x < (half)CHAR_MIN);
+  short too_large = (short)(x >= (half)CHAR_MAX);
+  char y = convert_char(
+      select(x, (half)(0), (short)(too_small | too_large)));
+  y = select(y, (char)CHAR_MIN, convert_char(too_small));
+  y = select(y, (char)CHAR_MAX, convert_char(too_large));
   return y;
 }
 #endif
@@ -29671,9 +29674,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char2 convert_char2_sat(half2 x)
 {
   x = select(x, (half2)(0), (short2)isnan(x));
-  char2 y = convert_char2(x);
-  y = select(y, (char2)CHAR_MIN, convert_char2(x < (half2)CHAR_MIN));
-  y = select(y, (char2)CHAR_MAX, convert_char2(x >= (half2)CHAR_MAX));
+  short2 too_small = (short2)(x < (half2)CHAR_MIN);
+  short2 too_large = (short2)(x >= (half2)CHAR_MAX);
+  char2 y = convert_char2(
+      select(x, (half2)(0), (short2)(too_small | too_large)));
+  y = select(y, (char2)CHAR_MIN, convert_char2(too_small));
+  y = select(y, (char2)CHAR_MAX, convert_char2(too_large));
   return y;
 }
 #endif
@@ -29683,9 +29689,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char3 convert_char3_sat(half3 x)
 {
   x = select(x, (half3)(0), (short3)isnan(x));
-  char3 y = convert_char3(x);
-  y = select(y, (char3)CHAR_MIN, convert_char3(x < (half3)CHAR_MIN));
-  y = select(y, (char3)CHAR_MAX, convert_char3(x >= (half3)CHAR_MAX));
+  short3 too_small = (short3)(x < (half3)CHAR_MIN);
+  short3 too_large = (short3)(x >= (half3)CHAR_MAX);
+  char3 y = convert_char3(
+      select(x, (half3)(0), (short3)(too_small | too_large)));
+  y = select(y, (char3)CHAR_MIN, convert_char3(too_small));
+  y = select(y, (char3)CHAR_MAX, convert_char3(too_large));
   return y;
 }
 #endif
@@ -29695,9 +29704,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char4 convert_char4_sat(half4 x)
 {
   x = select(x, (half4)(0), (short4)isnan(x));
-  char4 y = convert_char4(x);
-  y = select(y, (char4)CHAR_MIN, convert_char4(x < (half4)CHAR_MIN));
-  y = select(y, (char4)CHAR_MAX, convert_char4(x >= (half4)CHAR_MAX));
+  short4 too_small = (short4)(x < (half4)CHAR_MIN);
+  short4 too_large = (short4)(x >= (half4)CHAR_MAX);
+  char4 y = convert_char4(
+      select(x, (half4)(0), (short4)(too_small | too_large)));
+  y = select(y, (char4)CHAR_MIN, convert_char4(too_small));
+  y = select(y, (char4)CHAR_MAX, convert_char4(too_large));
   return y;
 }
 #endif
@@ -29707,9 +29719,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char8 convert_char8_sat(half8 x)
 {
   x = select(x, (half8)(0), (short8)isnan(x));
-  char8 y = convert_char8(x);
-  y = select(y, (char8)CHAR_MIN, convert_char8(x < (half8)CHAR_MIN));
-  y = select(y, (char8)CHAR_MAX, convert_char8(x >= (half8)CHAR_MAX));
+  short8 too_small = (short8)(x < (half8)CHAR_MIN);
+  short8 too_large = (short8)(x >= (half8)CHAR_MAX);
+  char8 y = convert_char8(
+      select(x, (half8)(0), (short8)(too_small | too_large)));
+  y = select(y, (char8)CHAR_MIN, convert_char8(too_small));
+  y = select(y, (char8)CHAR_MAX, convert_char8(too_large));
   return y;
 }
 #endif
@@ -29719,9 +29734,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char16 convert_char16_sat(half16 x)
 {
   x = select(x, (half16)(0), (short16)isnan(x));
-  char16 y = convert_char16(x);
-  y = select(y, (char16)CHAR_MIN, convert_char16(x < (half16)CHAR_MIN));
-  y = select(y, (char16)CHAR_MAX, convert_char16(x >= (half16)CHAR_MAX));
+  short16 too_small = (short16)(x < (half16)CHAR_MIN);
+  short16 too_large = (short16)(x >= (half16)CHAR_MAX);
+  char16 y = convert_char16(
+      select(x, (half16)(0), (short16)(too_small | too_large)));
+  y = select(y, (char16)CHAR_MIN, convert_char16(too_small));
+  y = select(y, (char16)CHAR_MAX, convert_char16(too_large));
   return y;
 }
 #endif
@@ -29731,9 +29749,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_sat(half x)
 {
   x = select(x, (half)(0), (short)isnan(x));
-  uchar y = convert_uchar(x);
-  y = select(y, (uchar)0, as_uchar(convert_char(x < (half)0)));
-  y = select(y, (uchar)UCHAR_MAX, as_uchar(convert_char(x >= (half)UCHAR_MAX)));
+  short too_small = (short)(x < (half)0);
+  short too_large = (short)(x >= (half)UCHAR_MAX);
+  uchar y = convert_uchar(
+      select(x, (half)(0), (short)(too_small | too_large)));
+  y = select(y, (uchar)0, as_uchar(convert_char(too_small)));
+  y = select(y, (uchar)UCHAR_MAX, as_uchar(convert_char(too_large)));
   return y;
 }
 #endif
@@ -29743,9 +29764,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar2 convert_uchar2_sat(half2 x)
 {
   x = select(x, (half2)(0), (short2)isnan(x));
-  uchar2 y = convert_uchar2(x);
-  y = select(y, (uchar2)0, as_uchar2(convert_char2(x < (half2)0)));
-  y = select(y, (uchar2)UCHAR_MAX, as_uchar2(convert_char2(x >= (half2)UCHAR_MAX)));
+  short2 too_small = (short2)(x < (half2)0);
+  short2 too_large = (short2)(x >= (half2)UCHAR_MAX);
+  uchar2 y = convert_uchar2(
+      select(x, (half2)(0), (short2)(too_small | too_large)));
+  y = select(y, (uchar2)0, as_uchar2(convert_char2(too_small)));
+  y = select(y, (uchar2)UCHAR_MAX, as_uchar2(convert_char2(too_large)));
   return y;
 }
 #endif
@@ -29755,9 +29779,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar3 convert_uchar3_sat(half3 x)
 {
   x = select(x, (half3)(0), (short3)isnan(x));
-  uchar3 y = convert_uchar3(x);
-  y = select(y, (uchar3)0, as_uchar3(convert_char3(x < (half3)0)));
-  y = select(y, (uchar3)UCHAR_MAX, as_uchar3(convert_char3(x >= (half3)UCHAR_MAX)));
+  short3 too_small = (short3)(x < (half3)0);
+  short3 too_large = (short3)(x >= (half3)UCHAR_MAX);
+  uchar3 y = convert_uchar3(
+      select(x, (half3)(0), (short3)(too_small | too_large)));
+  y = select(y, (uchar3)0, as_uchar3(convert_char3(too_small)));
+  y = select(y, (uchar3)UCHAR_MAX, as_uchar3(convert_char3(too_large)));
   return y;
 }
 #endif
@@ -29767,9 +29794,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar4 convert_uchar4_sat(half4 x)
 {
   x = select(x, (half4)(0), (short4)isnan(x));
-  uchar4 y = convert_uchar4(x);
-  y = select(y, (uchar4)0, as_uchar4(convert_char4(x < (half4)0)));
-  y = select(y, (uchar4)UCHAR_MAX, as_uchar4(convert_char4(x >= (half4)UCHAR_MAX)));
+  short4 too_small = (short4)(x < (half4)0);
+  short4 too_large = (short4)(x >= (half4)UCHAR_MAX);
+  uchar4 y = convert_uchar4(
+      select(x, (half4)(0), (short4)(too_small | too_large)));
+  y = select(y, (uchar4)0, as_uchar4(convert_char4(too_small)));
+  y = select(y, (uchar4)UCHAR_MAX, as_uchar4(convert_char4(too_large)));
   return y;
 }
 #endif
@@ -29779,9 +29809,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar8 convert_uchar8_sat(half8 x)
 {
   x = select(x, (half8)(0), (short8)isnan(x));
-  uchar8 y = convert_uchar8(x);
-  y = select(y, (uchar8)0, as_uchar8(convert_char8(x < (half8)0)));
-  y = select(y, (uchar8)UCHAR_MAX, as_uchar8(convert_char8(x >= (half8)UCHAR_MAX)));
+  short8 too_small = (short8)(x < (half8)0);
+  short8 too_large = (short8)(x >= (half8)UCHAR_MAX);
+  uchar8 y = convert_uchar8(
+      select(x, (half8)(0), (short8)(too_small | too_large)));
+  y = select(y, (uchar8)0, as_uchar8(convert_char8(too_small)));
+  y = select(y, (uchar8)UCHAR_MAX, as_uchar8(convert_char8(too_large)));
   return y;
 }
 #endif
@@ -29791,9 +29824,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar16 convert_uchar16_sat(half16 x)
 {
   x = select(x, (half16)(0), (short16)isnan(x));
-  uchar16 y = convert_uchar16(x);
-  y = select(y, (uchar16)0, as_uchar16(convert_char16(x < (half16)0)));
-  y = select(y, (uchar16)UCHAR_MAX, as_uchar16(convert_char16(x >= (half16)UCHAR_MAX)));
+  short16 too_small = (short16)(x < (half16)0);
+  short16 too_large = (short16)(x >= (half16)UCHAR_MAX);
+  uchar16 y = convert_uchar16(
+      select(x, (half16)(0), (short16)(too_small | too_large)));
+  y = select(y, (uchar16)0, as_uchar16(convert_char16(too_small)));
+  y = select(y, (uchar16)UCHAR_MAX, as_uchar16(convert_char16(too_large)));
   return y;
 }
 #endif
@@ -29803,9 +29839,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_sat(half x)
 {
   x = select(x, (half)(0), (short)isnan(x));
-  short y = convert_short(x);
-  y = select(y, (short)SHRT_MIN, convert_short(x < (half)SHRT_MIN));
-  y = select(y, (short)SHRT_MAX, convert_short(x >= (half)SHRT_MAX));
+  short too_small = (short)(x < (half)SHRT_MIN);
+  short too_large = (short)(x >= (half)SHRT_MAX);
+  short y = convert_short(
+      select(x, (half)(0), (short)(too_small | too_large)));
+  y = select(y, (short)SHRT_MIN, convert_short(too_small));
+  y = select(y, (short)SHRT_MAX, convert_short(too_large));
   return y;
 }
 #endif
@@ -29815,9 +29854,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short2 convert_short2_sat(half2 x)
 {
   x = select(x, (half2)(0), (short2)isnan(x));
-  short2 y = convert_short2(x);
-  y = select(y, (short2)SHRT_MIN, convert_short2(x < (half2)SHRT_MIN));
-  y = select(y, (short2)SHRT_MAX, convert_short2(x >= (half2)SHRT_MAX));
+  short2 too_small = (short2)(x < (half2)SHRT_MIN);
+  short2 too_large = (short2)(x >= (half2)SHRT_MAX);
+  short2 y = convert_short2(
+      select(x, (half2)(0), (short2)(too_small | too_large)));
+  y = select(y, (short2)SHRT_MIN, convert_short2(too_small));
+  y = select(y, (short2)SHRT_MAX, convert_short2(too_large));
   return y;
 }
 #endif
@@ -29827,9 +29869,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short3 convert_short3_sat(half3 x)
 {
   x = select(x, (half3)(0), (short3)isnan(x));
-  short3 y = convert_short3(x);
-  y = select(y, (short3)SHRT_MIN, convert_short3(x < (half3)SHRT_MIN));
-  y = select(y, (short3)SHRT_MAX, convert_short3(x >= (half3)SHRT_MAX));
+  short3 too_small = (short3)(x < (half3)SHRT_MIN);
+  short3 too_large = (short3)(x >= (half3)SHRT_MAX);
+  short3 y = convert_short3(
+      select(x, (half3)(0), (short3)(too_small | too_large)));
+  y = select(y, (short3)SHRT_MIN, convert_short3(too_small));
+  y = select(y, (short3)SHRT_MAX, convert_short3(too_large));
   return y;
 }
 #endif
@@ -29839,9 +29884,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short4 convert_short4_sat(half4 x)
 {
   x = select(x, (half4)(0), (short4)isnan(x));
-  short4 y = convert_short4(x);
-  y = select(y, (short4)SHRT_MIN, convert_short4(x < (half4)SHRT_MIN));
-  y = select(y, (short4)SHRT_MAX, convert_short4(x >= (half4)SHRT_MAX));
+  short4 too_small = (short4)(x < (half4)SHRT_MIN);
+  short4 too_large = (short4)(x >= (half4)SHRT_MAX);
+  short4 y = convert_short4(
+      select(x, (half4)(0), (short4)(too_small | too_large)));
+  y = select(y, (short4)SHRT_MIN, convert_short4(too_small));
+  y = select(y, (short4)SHRT_MAX, convert_short4(too_large));
   return y;
 }
 #endif
@@ -29851,9 +29899,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short8 convert_short8_sat(half8 x)
 {
   x = select(x, (half8)(0), (short8)isnan(x));
-  short8 y = convert_short8(x);
-  y = select(y, (short8)SHRT_MIN, convert_short8(x < (half8)SHRT_MIN));
-  y = select(y, (short8)SHRT_MAX, convert_short8(x >= (half8)SHRT_MAX));
+  short8 too_small = (short8)(x < (half8)SHRT_MIN);
+  short8 too_large = (short8)(x >= (half8)SHRT_MAX);
+  short8 y = convert_short8(
+      select(x, (half8)(0), (short8)(too_small | too_large)));
+  y = select(y, (short8)SHRT_MIN, convert_short8(too_small));
+  y = select(y, (short8)SHRT_MAX, convert_short8(too_large));
   return y;
 }
 #endif
@@ -29863,9 +29914,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short16 convert_short16_sat(half16 x)
 {
   x = select(x, (half16)(0), (short16)isnan(x));
-  short16 y = convert_short16(x);
-  y = select(y, (short16)SHRT_MIN, convert_short16(x < (half16)SHRT_MIN));
-  y = select(y, (short16)SHRT_MAX, convert_short16(x >= (half16)SHRT_MAX));
+  short16 too_small = (short16)(x < (half16)SHRT_MIN);
+  short16 too_large = (short16)(x >= (half16)SHRT_MAX);
+  short16 y = convert_short16(
+      select(x, (half16)(0), (short16)(too_small | too_large)));
+  y = select(y, (short16)SHRT_MIN, convert_short16(too_small));
+  y = select(y, (short16)SHRT_MAX, convert_short16(too_large));
   return y;
 }
 #endif
@@ -29875,9 +29929,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_sat(half x)
 {
   x = select(x, (half)(0), (short)isnan(x));
-  ushort y = convert_ushort(x);
-  y = select(y, (ushort)0, as_ushort(convert_short(x < (half)0)));
-  y = select(y, (ushort)USHRT_MAX, as_ushort(convert_short(x >= (half)USHRT_MAX)));
+  short too_small = (short)(x < (half)0);
+  short too_large = (short)(x >= (half)USHRT_MAX);
+  ushort y = convert_ushort(
+      select(x, (half)(0), (short)(too_small | too_large)));
+  y = select(y, (ushort)0, as_ushort(convert_short(too_small)));
+  y = select(y, (ushort)USHRT_MAX, as_ushort(convert_short(too_large)));
   return y;
 }
 #endif
@@ -29887,9 +29944,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort2 convert_ushort2_sat(half2 x)
 {
   x = select(x, (half2)(0), (short2)isnan(x));
-  ushort2 y = convert_ushort2(x);
-  y = select(y, (ushort2)0, as_ushort2(convert_short2(x < (half2)0)));
-  y = select(y, (ushort2)USHRT_MAX, as_ushort2(convert_short2(x >= (half2)USHRT_MAX)));
+  short2 too_small = (short2)(x < (half2)0);
+  short2 too_large = (short2)(x >= (half2)USHRT_MAX);
+  ushort2 y = convert_ushort2(
+      select(x, (half2)(0), (short2)(too_small | too_large)));
+  y = select(y, (ushort2)0, as_ushort2(convert_short2(too_small)));
+  y = select(y, (ushort2)USHRT_MAX, as_ushort2(convert_short2(too_large)));
   return y;
 }
 #endif
@@ -29899,9 +29959,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort3 convert_ushort3_sat(half3 x)
 {
   x = select(x, (half3)(0), (short3)isnan(x));
-  ushort3 y = convert_ushort3(x);
-  y = select(y, (ushort3)0, as_ushort3(convert_short3(x < (half3)0)));
-  y = select(y, (ushort3)USHRT_MAX, as_ushort3(convert_short3(x >= (half3)USHRT_MAX)));
+  short3 too_small = (short3)(x < (half3)0);
+  short3 too_large = (short3)(x >= (half3)USHRT_MAX);
+  ushort3 y = convert_ushort3(
+      select(x, (half3)(0), (short3)(too_small | too_large)));
+  y = select(y, (ushort3)0, as_ushort3(convert_short3(too_small)));
+  y = select(y, (ushort3)USHRT_MAX, as_ushort3(convert_short3(too_large)));
   return y;
 }
 #endif
@@ -29911,9 +29974,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort4 convert_ushort4_sat(half4 x)
 {
   x = select(x, (half4)(0), (short4)isnan(x));
-  ushort4 y = convert_ushort4(x);
-  y = select(y, (ushort4)0, as_ushort4(convert_short4(x < (half4)0)));
-  y = select(y, (ushort4)USHRT_MAX, as_ushort4(convert_short4(x >= (half4)USHRT_MAX)));
+  short4 too_small = (short4)(x < (half4)0);
+  short4 too_large = (short4)(x >= (half4)USHRT_MAX);
+  ushort4 y = convert_ushort4(
+      select(x, (half4)(0), (short4)(too_small | too_large)));
+  y = select(y, (ushort4)0, as_ushort4(convert_short4(too_small)));
+  y = select(y, (ushort4)USHRT_MAX, as_ushort4(convert_short4(too_large)));
   return y;
 }
 #endif
@@ -29923,9 +29989,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort8 convert_ushort8_sat(half8 x)
 {
   x = select(x, (half8)(0), (short8)isnan(x));
-  ushort8 y = convert_ushort8(x);
-  y = select(y, (ushort8)0, as_ushort8(convert_short8(x < (half8)0)));
-  y = select(y, (ushort8)USHRT_MAX, as_ushort8(convert_short8(x >= (half8)USHRT_MAX)));
+  short8 too_small = (short8)(x < (half8)0);
+  short8 too_large = (short8)(x >= (half8)USHRT_MAX);
+  ushort8 y = convert_ushort8(
+      select(x, (half8)(0), (short8)(too_small | too_large)));
+  y = select(y, (ushort8)0, as_ushort8(convert_short8(too_small)));
+  y = select(y, (ushort8)USHRT_MAX, as_ushort8(convert_short8(too_large)));
   return y;
 }
 #endif
@@ -29935,9 +30004,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort16 convert_ushort16_sat(half16 x)
 {
   x = select(x, (half16)(0), (short16)isnan(x));
-  ushort16 y = convert_ushort16(x);
-  y = select(y, (ushort16)0, as_ushort16(convert_short16(x < (half16)0)));
-  y = select(y, (ushort16)USHRT_MAX, as_ushort16(convert_short16(x >= (half16)USHRT_MAX)));
+  short16 too_small = (short16)(x < (half16)0);
+  short16 too_large = (short16)(x >= (half16)USHRT_MAX);
+  ushort16 y = convert_ushort16(
+      select(x, (half16)(0), (short16)(too_small | too_large)));
+  y = select(y, (ushort16)0, as_ushort16(convert_short16(too_small)));
+  y = select(y, (ushort16)USHRT_MAX, as_ushort16(convert_short16(too_large)));
   return y;
 }
 #endif
@@ -29947,9 +30019,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_sat(half x)
 {
   x = select(x, (half)(0), (short)isnan(x));
-  int y = convert_int(x);
-  y = select(y, (int)INT_MIN, convert_int(x < (half)INT_MIN));
-  y = select(y, (int)INT_MAX, convert_int(x >= (half)INT_MAX));
+  short too_small = (short)(x < (half)INT_MIN);
+  short too_large = (short)(x >= (half)INT_MAX);
+  int y = convert_int(
+      select(x, (half)(0), (short)(too_small | too_large)));
+  y = select(y, (int)INT_MIN, convert_int(too_small));
+  y = select(y, (int)INT_MAX, convert_int(too_large));
   return y;
 }
 #endif
@@ -29959,9 +30034,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int2 convert_int2_sat(half2 x)
 {
   x = select(x, (half2)(0), (short2)isnan(x));
-  int2 y = convert_int2(x);
-  y = select(y, (int2)INT_MIN, convert_int2(x < (half2)INT_MIN));
-  y = select(y, (int2)INT_MAX, convert_int2(x >= (half2)INT_MAX));
+  short2 too_small = (short2)(x < (half2)INT_MIN);
+  short2 too_large = (short2)(x >= (half2)INT_MAX);
+  int2 y = convert_int2(
+      select(x, (half2)(0), (short2)(too_small | too_large)));
+  y = select(y, (int2)INT_MIN, convert_int2(too_small));
+  y = select(y, (int2)INT_MAX, convert_int2(too_large));
   return y;
 }
 #endif
@@ -29971,9 +30049,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int3 convert_int3_sat(half3 x)
 {
   x = select(x, (half3)(0), (short3)isnan(x));
-  int3 y = convert_int3(x);
-  y = select(y, (int3)INT_MIN, convert_int3(x < (half3)INT_MIN));
-  y = select(y, (int3)INT_MAX, convert_int3(x >= (half3)INT_MAX));
+  short3 too_small = (short3)(x < (half3)INT_MIN);
+  short3 too_large = (short3)(x >= (half3)INT_MAX);
+  int3 y = convert_int3(
+      select(x, (half3)(0), (short3)(too_small | too_large)));
+  y = select(y, (int3)INT_MIN, convert_int3(too_small));
+  y = select(y, (int3)INT_MAX, convert_int3(too_large));
   return y;
 }
 #endif
@@ -29983,9 +30064,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int4 convert_int4_sat(half4 x)
 {
   x = select(x, (half4)(0), (short4)isnan(x));
-  int4 y = convert_int4(x);
-  y = select(y, (int4)INT_MIN, convert_int4(x < (half4)INT_MIN));
-  y = select(y, (int4)INT_MAX, convert_int4(x >= (half4)INT_MAX));
+  short4 too_small = (short4)(x < (half4)INT_MIN);
+  short4 too_large = (short4)(x >= (half4)INT_MAX);
+  int4 y = convert_int4(
+      select(x, (half4)(0), (short4)(too_small | too_large)));
+  y = select(y, (int4)INT_MIN, convert_int4(too_small));
+  y = select(y, (int4)INT_MAX, convert_int4(too_large));
   return y;
 }
 #endif
@@ -29995,9 +30079,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int8 convert_int8_sat(half8 x)
 {
   x = select(x, (half8)(0), (short8)isnan(x));
-  int8 y = convert_int8(x);
-  y = select(y, (int8)INT_MIN, convert_int8(x < (half8)INT_MIN));
-  y = select(y, (int8)INT_MAX, convert_int8(x >= (half8)INT_MAX));
+  short8 too_small = (short8)(x < (half8)INT_MIN);
+  short8 too_large = (short8)(x >= (half8)INT_MAX);
+  int8 y = convert_int8(
+      select(x, (half8)(0), (short8)(too_small | too_large)));
+  y = select(y, (int8)INT_MIN, convert_int8(too_small));
+  y = select(y, (int8)INT_MAX, convert_int8(too_large));
   return y;
 }
 #endif
@@ -30007,9 +30094,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int16 convert_int16_sat(half16 x)
 {
   x = select(x, (half16)(0), (short16)isnan(x));
-  int16 y = convert_int16(x);
-  y = select(y, (int16)INT_MIN, convert_int16(x < (half16)INT_MIN));
-  y = select(y, (int16)INT_MAX, convert_int16(x >= (half16)INT_MAX));
+  short16 too_small = (short16)(x < (half16)INT_MIN);
+  short16 too_large = (short16)(x >= (half16)INT_MAX);
+  int16 y = convert_int16(
+      select(x, (half16)(0), (short16)(too_small | too_large)));
+  y = select(y, (int16)INT_MIN, convert_int16(too_small));
+  y = select(y, (int16)INT_MAX, convert_int16(too_large));
   return y;
 }
 #endif
@@ -30019,9 +30109,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_sat(half x)
 {
   x = select(x, (half)(0), (short)isnan(x));
-  uint y = convert_uint(x);
-  y = select(y, (uint)0, as_uint(convert_int(x < (half)0)));
-  y = select(y, (uint)UINT_MAX, as_uint(convert_int(x >= (half)UINT_MAX)));
+  short too_small = (short)(x < (half)0);
+  short too_large = (short)(x >= (half)UINT_MAX);
+  uint y = convert_uint(
+      select(x, (half)(0), (short)(too_small | too_large)));
+  y = select(y, (uint)0, as_uint(convert_int(too_small)));
+  y = select(y, (uint)UINT_MAX, as_uint(convert_int(too_large)));
   return y;
 }
 #endif
@@ -30031,9 +30124,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint2 convert_uint2_sat(half2 x)
 {
   x = select(x, (half2)(0), (short2)isnan(x));
-  uint2 y = convert_uint2(x);
-  y = select(y, (uint2)0, as_uint2(convert_int2(x < (half2)0)));
-  y = select(y, (uint2)UINT_MAX, as_uint2(convert_int2(x >= (half2)UINT_MAX)));
+  short2 too_small = (short2)(x < (half2)0);
+  short2 too_large = (short2)(x >= (half2)UINT_MAX);
+  uint2 y = convert_uint2(
+      select(x, (half2)(0), (short2)(too_small | too_large)));
+  y = select(y, (uint2)0, as_uint2(convert_int2(too_small)));
+  y = select(y, (uint2)UINT_MAX, as_uint2(convert_int2(too_large)));
   return y;
 }
 #endif
@@ -30043,9 +30139,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint3 convert_uint3_sat(half3 x)
 {
   x = select(x, (half3)(0), (short3)isnan(x));
-  uint3 y = convert_uint3(x);
-  y = select(y, (uint3)0, as_uint3(convert_int3(x < (half3)0)));
-  y = select(y, (uint3)UINT_MAX, as_uint3(convert_int3(x >= (half3)UINT_MAX)));
+  short3 too_small = (short3)(x < (half3)0);
+  short3 too_large = (short3)(x >= (half3)UINT_MAX);
+  uint3 y = convert_uint3(
+      select(x, (half3)(0), (short3)(too_small | too_large)));
+  y = select(y, (uint3)0, as_uint3(convert_int3(too_small)));
+  y = select(y, (uint3)UINT_MAX, as_uint3(convert_int3(too_large)));
   return y;
 }
 #endif
@@ -30055,9 +30154,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint4 convert_uint4_sat(half4 x)
 {
   x = select(x, (half4)(0), (short4)isnan(x));
-  uint4 y = convert_uint4(x);
-  y = select(y, (uint4)0, as_uint4(convert_int4(x < (half4)0)));
-  y = select(y, (uint4)UINT_MAX, as_uint4(convert_int4(x >= (half4)UINT_MAX)));
+  short4 too_small = (short4)(x < (half4)0);
+  short4 too_large = (short4)(x >= (half4)UINT_MAX);
+  uint4 y = convert_uint4(
+      select(x, (half4)(0), (short4)(too_small | too_large)));
+  y = select(y, (uint4)0, as_uint4(convert_int4(too_small)));
+  y = select(y, (uint4)UINT_MAX, as_uint4(convert_int4(too_large)));
   return y;
 }
 #endif
@@ -30067,9 +30169,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint8 convert_uint8_sat(half8 x)
 {
   x = select(x, (half8)(0), (short8)isnan(x));
-  uint8 y = convert_uint8(x);
-  y = select(y, (uint8)0, as_uint8(convert_int8(x < (half8)0)));
-  y = select(y, (uint8)UINT_MAX, as_uint8(convert_int8(x >= (half8)UINT_MAX)));
+  short8 too_small = (short8)(x < (half8)0);
+  short8 too_large = (short8)(x >= (half8)UINT_MAX);
+  uint8 y = convert_uint8(
+      select(x, (half8)(0), (short8)(too_small | too_large)));
+  y = select(y, (uint8)0, as_uint8(convert_int8(too_small)));
+  y = select(y, (uint8)UINT_MAX, as_uint8(convert_int8(too_large)));
   return y;
 }
 #endif
@@ -30079,9 +30184,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint16 convert_uint16_sat(half16 x)
 {
   x = select(x, (half16)(0), (short16)isnan(x));
-  uint16 y = convert_uint16(x);
-  y = select(y, (uint16)0, as_uint16(convert_int16(x < (half16)0)));
-  y = select(y, (uint16)UINT_MAX, as_uint16(convert_int16(x >= (half16)UINT_MAX)));
+  short16 too_small = (short16)(x < (half16)0);
+  short16 too_large = (short16)(x >= (half16)UINT_MAX);
+  uint16 y = convert_uint16(
+      select(x, (half16)(0), (short16)(too_small | too_large)));
+  y = select(y, (uint16)0, as_uint16(convert_int16(too_small)));
+  y = select(y, (uint16)UINT_MAX, as_uint16(convert_int16(too_large)));
   return y;
 }
 #endif
@@ -30091,9 +30199,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 long convert_long_sat(half x)
 {
   x = select(x, (half)(0), (short)isnan(x));
-  long y = convert_long(x);
-  y = select(y, (long)LONG_MIN, convert_long(x < (half)LONG_MIN));
-  y = select(y, (long)LONG_MAX, convert_long(x >= (half)LONG_MAX));
+  short too_small = (short)(x < (half)LONG_MIN);
+  short too_large = (short)(x >= (half)LONG_MAX);
+  long y = convert_long(
+      select(x, (half)(0), (short)(too_small | too_large)));
+  y = select(y, (long)LONG_MIN, convert_long(too_small));
+  y = select(y, (long)LONG_MAX, convert_long(too_large));
   return y;
 }
 #endif
@@ -30103,9 +30214,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 long2 convert_long2_sat(half2 x)
 {
   x = select(x, (half2)(0), (short2)isnan(x));
-  long2 y = convert_long2(x);
-  y = select(y, (long2)LONG_MIN, convert_long2(x < (half2)LONG_MIN));
-  y = select(y, (long2)LONG_MAX, convert_long2(x >= (half2)LONG_MAX));
+  short2 too_small = (short2)(x < (half2)LONG_MIN);
+  short2 too_large = (short2)(x >= (half2)LONG_MAX);
+  long2 y = convert_long2(
+      select(x, (half2)(0), (short2)(too_small | too_large)));
+  y = select(y, (long2)LONG_MIN, convert_long2(too_small));
+  y = select(y, (long2)LONG_MAX, convert_long2(too_large));
   return y;
 }
 #endif
@@ -30115,9 +30229,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 long3 convert_long3_sat(half3 x)
 {
   x = select(x, (half3)(0), (short3)isnan(x));
-  long3 y = convert_long3(x);
-  y = select(y, (long3)LONG_MIN, convert_long3(x < (half3)LONG_MIN));
-  y = select(y, (long3)LONG_MAX, convert_long3(x >= (half3)LONG_MAX));
+  short3 too_small = (short3)(x < (half3)LONG_MIN);
+  short3 too_large = (short3)(x >= (half3)LONG_MAX);
+  long3 y = convert_long3(
+      select(x, (half3)(0), (short3)(too_small | too_large)));
+  y = select(y, (long3)LONG_MIN, convert_long3(too_small));
+  y = select(y, (long3)LONG_MAX, convert_long3(too_large));
   return y;
 }
 #endif
@@ -30127,9 +30244,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 long4 convert_long4_sat(half4 x)
 {
   x = select(x, (half4)(0), (short4)isnan(x));
-  long4 y = convert_long4(x);
-  y = select(y, (long4)LONG_MIN, convert_long4(x < (half4)LONG_MIN));
-  y = select(y, (long4)LONG_MAX, convert_long4(x >= (half4)LONG_MAX));
+  short4 too_small = (short4)(x < (half4)LONG_MIN);
+  short4 too_large = (short4)(x >= (half4)LONG_MAX);
+  long4 y = convert_long4(
+      select(x, (half4)(0), (short4)(too_small | too_large)));
+  y = select(y, (long4)LONG_MIN, convert_long4(too_small));
+  y = select(y, (long4)LONG_MAX, convert_long4(too_large));
   return y;
 }
 #endif
@@ -30139,9 +30259,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 long8 convert_long8_sat(half8 x)
 {
   x = select(x, (half8)(0), (short8)isnan(x));
-  long8 y = convert_long8(x);
-  y = select(y, (long8)LONG_MIN, convert_long8(x < (half8)LONG_MIN));
-  y = select(y, (long8)LONG_MAX, convert_long8(x >= (half8)LONG_MAX));
+  short8 too_small = (short8)(x < (half8)LONG_MIN);
+  short8 too_large = (short8)(x >= (half8)LONG_MAX);
+  long8 y = convert_long8(
+      select(x, (half8)(0), (short8)(too_small | too_large)));
+  y = select(y, (long8)LONG_MIN, convert_long8(too_small));
+  y = select(y, (long8)LONG_MAX, convert_long8(too_large));
   return y;
 }
 #endif
@@ -30151,9 +30274,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 long16 convert_long16_sat(half16 x)
 {
   x = select(x, (half16)(0), (short16)isnan(x));
-  long16 y = convert_long16(x);
-  y = select(y, (long16)LONG_MIN, convert_long16(x < (half16)LONG_MIN));
-  y = select(y, (long16)LONG_MAX, convert_long16(x >= (half16)LONG_MAX));
+  short16 too_small = (short16)(x < (half16)LONG_MIN);
+  short16 too_large = (short16)(x >= (half16)LONG_MAX);
+  long16 y = convert_long16(
+      select(x, (half16)(0), (short16)(too_small | too_large)));
+  y = select(y, (long16)LONG_MIN, convert_long16(too_small));
+  y = select(y, (long16)LONG_MAX, convert_long16(too_large));
   return y;
 }
 #endif
@@ -30163,9 +30289,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ulong convert_ulong_sat(half x)
 {
   x = select(x, (half)(0), (short)isnan(x));
-  ulong y = convert_ulong(x);
-  y = select(y, (ulong)0, as_ulong(convert_long(x < (half)0)));
-  y = select(y, (ulong)ULONG_MAX, as_ulong(convert_long(x >= (half)ULONG_MAX)));
+  short too_small = (short)(x < (half)0);
+  short too_large = (short)(x >= (half)ULONG_MAX);
+  ulong y = convert_ulong(
+      select(x, (half)(0), (short)(too_small | too_large)));
+  y = select(y, (ulong)0, as_ulong(convert_long(too_small)));
+  y = select(y, (ulong)ULONG_MAX, as_ulong(convert_long(too_large)));
   return y;
 }
 #endif
@@ -30175,9 +30304,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ulong2 convert_ulong2_sat(half2 x)
 {
   x = select(x, (half2)(0), (short2)isnan(x));
-  ulong2 y = convert_ulong2(x);
-  y = select(y, (ulong2)0, as_ulong2(convert_long2(x < (half2)0)));
-  y = select(y, (ulong2)ULONG_MAX, as_ulong2(convert_long2(x >= (half2)ULONG_MAX)));
+  short2 too_small = (short2)(x < (half2)0);
+  short2 too_large = (short2)(x >= (half2)ULONG_MAX);
+  ulong2 y = convert_ulong2(
+      select(x, (half2)(0), (short2)(too_small | too_large)));
+  y = select(y, (ulong2)0, as_ulong2(convert_long2(too_small)));
+  y = select(y, (ulong2)ULONG_MAX, as_ulong2(convert_long2(too_large)));
   return y;
 }
 #endif
@@ -30187,9 +30319,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ulong3 convert_ulong3_sat(half3 x)
 {
   x = select(x, (half3)(0), (short3)isnan(x));
-  ulong3 y = convert_ulong3(x);
-  y = select(y, (ulong3)0, as_ulong3(convert_long3(x < (half3)0)));
-  y = select(y, (ulong3)ULONG_MAX, as_ulong3(convert_long3(x >= (half3)ULONG_MAX)));
+  short3 too_small = (short3)(x < (half3)0);
+  short3 too_large = (short3)(x >= (half3)ULONG_MAX);
+  ulong3 y = convert_ulong3(
+      select(x, (half3)(0), (short3)(too_small | too_large)));
+  y = select(y, (ulong3)0, as_ulong3(convert_long3(too_small)));
+  y = select(y, (ulong3)ULONG_MAX, as_ulong3(convert_long3(too_large)));
   return y;
 }
 #endif
@@ -30199,9 +30334,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ulong4 convert_ulong4_sat(half4 x)
 {
   x = select(x, (half4)(0), (short4)isnan(x));
-  ulong4 y = convert_ulong4(x);
-  y = select(y, (ulong4)0, as_ulong4(convert_long4(x < (half4)0)));
-  y = select(y, (ulong4)ULONG_MAX, as_ulong4(convert_long4(x >= (half4)ULONG_MAX)));
+  short4 too_small = (short4)(x < (half4)0);
+  short4 too_large = (short4)(x >= (half4)ULONG_MAX);
+  ulong4 y = convert_ulong4(
+      select(x, (half4)(0), (short4)(too_small | too_large)));
+  y = select(y, (ulong4)0, as_ulong4(convert_long4(too_small)));
+  y = select(y, (ulong4)ULONG_MAX, as_ulong4(convert_long4(too_large)));
   return y;
 }
 #endif
@@ -30211,9 +30349,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ulong8 convert_ulong8_sat(half8 x)
 {
   x = select(x, (half8)(0), (short8)isnan(x));
-  ulong8 y = convert_ulong8(x);
-  y = select(y, (ulong8)0, as_ulong8(convert_long8(x < (half8)0)));
-  y = select(y, (ulong8)ULONG_MAX, as_ulong8(convert_long8(x >= (half8)ULONG_MAX)));
+  short8 too_small = (short8)(x < (half8)0);
+  short8 too_large = (short8)(x >= (half8)ULONG_MAX);
+  ulong8 y = convert_ulong8(
+      select(x, (half8)(0), (short8)(too_small | too_large)));
+  y = select(y, (ulong8)0, as_ulong8(convert_long8(too_small)));
+  y = select(y, (ulong8)ULONG_MAX, as_ulong8(convert_long8(too_large)));
   return y;
 }
 #endif
@@ -30223,9 +30364,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ulong16 convert_ulong16_sat(half16 x)
 {
   x = select(x, (half16)(0), (short16)isnan(x));
-  ulong16 y = convert_ulong16(x);
-  y = select(y, (ulong16)0, as_ulong16(convert_long16(x < (half16)0)));
-  y = select(y, (ulong16)ULONG_MAX, as_ulong16(convert_long16(x >= (half16)ULONG_MAX)));
+  short16 too_small = (short16)(x < (half16)0);
+  short16 too_large = (short16)(x >= (half16)ULONG_MAX);
+  ulong16 y = convert_ulong16(
+      select(x, (half16)(0), (short16)(too_small | too_large)));
+  y = select(y, (ulong16)0, as_ulong16(convert_long16(too_small)));
+  y = select(y, (ulong16)ULONG_MAX, as_ulong16(convert_long16(too_large)));
   return y;
 }
 #endif
@@ -30234,9 +30378,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_sat(float x)
 {
   x = select(x, (float)(0), (int)isnan(x));
-  char y = convert_char(x);
-  y = select(y, (char)CHAR_MIN, convert_char(x < (float)CHAR_MIN));
-  y = select(y, (char)CHAR_MAX, convert_char(x >= (float)CHAR_MAX));
+  int too_small = (int)(x < (float)CHAR_MIN);
+  int too_large = (int)(x >= (float)CHAR_MAX);
+  char y = convert_char(
+      select(x, (float)(0), (int)(too_small | too_large)));
+  y = select(y, (char)CHAR_MIN, convert_char(too_small));
+  y = select(y, (char)CHAR_MAX, convert_char(too_large));
   return y;
 }
 
@@ -30244,9 +30391,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char2 convert_char2_sat(float2 x)
 {
   x = select(x, (float2)(0), (int2)isnan(x));
-  char2 y = convert_char2(x);
-  y = select(y, (char2)CHAR_MIN, convert_char2(x < (float2)CHAR_MIN));
-  y = select(y, (char2)CHAR_MAX, convert_char2(x >= (float2)CHAR_MAX));
+  int2 too_small = (int2)(x < (float2)CHAR_MIN);
+  int2 too_large = (int2)(x >= (float2)CHAR_MAX);
+  char2 y = convert_char2(
+      select(x, (float2)(0), (int2)(too_small | too_large)));
+  y = select(y, (char2)CHAR_MIN, convert_char2(too_small));
+  y = select(y, (char2)CHAR_MAX, convert_char2(too_large));
   return y;
 }
 
@@ -30254,9 +30404,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char3 convert_char3_sat(float3 x)
 {
   x = select(x, (float3)(0), (int3)isnan(x));
-  char3 y = convert_char3(x);
-  y = select(y, (char3)CHAR_MIN, convert_char3(x < (float3)CHAR_MIN));
-  y = select(y, (char3)CHAR_MAX, convert_char3(x >= (float3)CHAR_MAX));
+  int3 too_small = (int3)(x < (float3)CHAR_MIN);
+  int3 too_large = (int3)(x >= (float3)CHAR_MAX);
+  char3 y = convert_char3(
+      select(x, (float3)(0), (int3)(too_small | too_large)));
+  y = select(y, (char3)CHAR_MIN, convert_char3(too_small));
+  y = select(y, (char3)CHAR_MAX, convert_char3(too_large));
   return y;
 }
 
@@ -30264,9 +30417,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char4 convert_char4_sat(float4 x)
 {
   x = select(x, (float4)(0), (int4)isnan(x));
-  char4 y = convert_char4(x);
-  y = select(y, (char4)CHAR_MIN, convert_char4(x < (float4)CHAR_MIN));
-  y = select(y, (char4)CHAR_MAX, convert_char4(x >= (float4)CHAR_MAX));
+  int4 too_small = (int4)(x < (float4)CHAR_MIN);
+  int4 too_large = (int4)(x >= (float4)CHAR_MAX);
+  char4 y = convert_char4(
+      select(x, (float4)(0), (int4)(too_small | too_large)));
+  y = select(y, (char4)CHAR_MIN, convert_char4(too_small));
+  y = select(y, (char4)CHAR_MAX, convert_char4(too_large));
   return y;
 }
 
@@ -30274,9 +30430,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char8 convert_char8_sat(float8 x)
 {
   x = select(x, (float8)(0), (int8)isnan(x));
-  char8 y = convert_char8(x);
-  y = select(y, (char8)CHAR_MIN, convert_char8(x < (float8)CHAR_MIN));
-  y = select(y, (char8)CHAR_MAX, convert_char8(x >= (float8)CHAR_MAX));
+  int8 too_small = (int8)(x < (float8)CHAR_MIN);
+  int8 too_large = (int8)(x >= (float8)CHAR_MAX);
+  char8 y = convert_char8(
+      select(x, (float8)(0), (int8)(too_small | too_large)));
+  y = select(y, (char8)CHAR_MIN, convert_char8(too_small));
+  y = select(y, (char8)CHAR_MAX, convert_char8(too_large));
   return y;
 }
 
@@ -30284,9 +30443,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char16 convert_char16_sat(float16 x)
 {
   x = select(x, (float16)(0), (int16)isnan(x));
-  char16 y = convert_char16(x);
-  y = select(y, (char16)CHAR_MIN, convert_char16(x < (float16)CHAR_MIN));
-  y = select(y, (char16)CHAR_MAX, convert_char16(x >= (float16)CHAR_MAX));
+  int16 too_small = (int16)(x < (float16)CHAR_MIN);
+  int16 too_large = (int16)(x >= (float16)CHAR_MAX);
+  char16 y = convert_char16(
+      select(x, (float16)(0), (int16)(too_small | too_large)));
+  y = select(y, (char16)CHAR_MIN, convert_char16(too_small));
+  y = select(y, (char16)CHAR_MAX, convert_char16(too_large));
   return y;
 }
 
@@ -30294,9 +30456,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_sat(float x)
 {
   x = select(x, (float)(0), (int)isnan(x));
-  uchar y = convert_uchar(x);
-  y = select(y, (uchar)0, as_uchar(convert_char(x < (float)0)));
-  y = select(y, (uchar)UCHAR_MAX, as_uchar(convert_char(x >= (float)UCHAR_MAX)));
+  int too_small = (int)(x < (float)0);
+  int too_large = (int)(x >= (float)UCHAR_MAX);
+  uchar y = convert_uchar(
+      select(x, (float)(0), (int)(too_small | too_large)));
+  y = select(y, (uchar)0, as_uchar(convert_char(too_small)));
+  y = select(y, (uchar)UCHAR_MAX, as_uchar(convert_char(too_large)));
   return y;
 }
 
@@ -30304,9 +30469,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar2 convert_uchar2_sat(float2 x)
 {
   x = select(x, (float2)(0), (int2)isnan(x));
-  uchar2 y = convert_uchar2(x);
-  y = select(y, (uchar2)0, as_uchar2(convert_char2(x < (float2)0)));
-  y = select(y, (uchar2)UCHAR_MAX, as_uchar2(convert_char2(x >= (float2)UCHAR_MAX)));
+  int2 too_small = (int2)(x < (float2)0);
+  int2 too_large = (int2)(x >= (float2)UCHAR_MAX);
+  uchar2 y = convert_uchar2(
+      select(x, (float2)(0), (int2)(too_small | too_large)));
+  y = select(y, (uchar2)0, as_uchar2(convert_char2(too_small)));
+  y = select(y, (uchar2)UCHAR_MAX, as_uchar2(convert_char2(too_large)));
   return y;
 }
 
@@ -30314,9 +30482,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar3 convert_uchar3_sat(float3 x)
 {
   x = select(x, (float3)(0), (int3)isnan(x));
-  uchar3 y = convert_uchar3(x);
-  y = select(y, (uchar3)0, as_uchar3(convert_char3(x < (float3)0)));
-  y = select(y, (uchar3)UCHAR_MAX, as_uchar3(convert_char3(x >= (float3)UCHAR_MAX)));
+  int3 too_small = (int3)(x < (float3)0);
+  int3 too_large = (int3)(x >= (float3)UCHAR_MAX);
+  uchar3 y = convert_uchar3(
+      select(x, (float3)(0), (int3)(too_small | too_large)));
+  y = select(y, (uchar3)0, as_uchar3(convert_char3(too_small)));
+  y = select(y, (uchar3)UCHAR_MAX, as_uchar3(convert_char3(too_large)));
   return y;
 }
 
@@ -30324,9 +30495,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar4 convert_uchar4_sat(float4 x)
 {
   x = select(x, (float4)(0), (int4)isnan(x));
-  uchar4 y = convert_uchar4(x);
-  y = select(y, (uchar4)0, as_uchar4(convert_char4(x < (float4)0)));
-  y = select(y, (uchar4)UCHAR_MAX, as_uchar4(convert_char4(x >= (float4)UCHAR_MAX)));
+  int4 too_small = (int4)(x < (float4)0);
+  int4 too_large = (int4)(x >= (float4)UCHAR_MAX);
+  uchar4 y = convert_uchar4(
+      select(x, (float4)(0), (int4)(too_small | too_large)));
+  y = select(y, (uchar4)0, as_uchar4(convert_char4(too_small)));
+  y = select(y, (uchar4)UCHAR_MAX, as_uchar4(convert_char4(too_large)));
   return y;
 }
 
@@ -30334,9 +30508,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar8 convert_uchar8_sat(float8 x)
 {
   x = select(x, (float8)(0), (int8)isnan(x));
-  uchar8 y = convert_uchar8(x);
-  y = select(y, (uchar8)0, as_uchar8(convert_char8(x < (float8)0)));
-  y = select(y, (uchar8)UCHAR_MAX, as_uchar8(convert_char8(x >= (float8)UCHAR_MAX)));
+  int8 too_small = (int8)(x < (float8)0);
+  int8 too_large = (int8)(x >= (float8)UCHAR_MAX);
+  uchar8 y = convert_uchar8(
+      select(x, (float8)(0), (int8)(too_small | too_large)));
+  y = select(y, (uchar8)0, as_uchar8(convert_char8(too_small)));
+  y = select(y, (uchar8)UCHAR_MAX, as_uchar8(convert_char8(too_large)));
   return y;
 }
 
@@ -30344,9 +30521,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar16 convert_uchar16_sat(float16 x)
 {
   x = select(x, (float16)(0), (int16)isnan(x));
-  uchar16 y = convert_uchar16(x);
-  y = select(y, (uchar16)0, as_uchar16(convert_char16(x < (float16)0)));
-  y = select(y, (uchar16)UCHAR_MAX, as_uchar16(convert_char16(x >= (float16)UCHAR_MAX)));
+  int16 too_small = (int16)(x < (float16)0);
+  int16 too_large = (int16)(x >= (float16)UCHAR_MAX);
+  uchar16 y = convert_uchar16(
+      select(x, (float16)(0), (int16)(too_small | too_large)));
+  y = select(y, (uchar16)0, as_uchar16(convert_char16(too_small)));
+  y = select(y, (uchar16)UCHAR_MAX, as_uchar16(convert_char16(too_large)));
   return y;
 }
 
@@ -30354,9 +30534,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_sat(float x)
 {
   x = select(x, (float)(0), (int)isnan(x));
-  short y = convert_short(x);
-  y = select(y, (short)SHRT_MIN, convert_short(x < (float)SHRT_MIN));
-  y = select(y, (short)SHRT_MAX, convert_short(x >= (float)SHRT_MAX));
+  int too_small = (int)(x < (float)SHRT_MIN);
+  int too_large = (int)(x >= (float)SHRT_MAX);
+  short y = convert_short(
+      select(x, (float)(0), (int)(too_small | too_large)));
+  y = select(y, (short)SHRT_MIN, convert_short(too_small));
+  y = select(y, (short)SHRT_MAX, convert_short(too_large));
   return y;
 }
 
@@ -30364,9 +30547,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short2 convert_short2_sat(float2 x)
 {
   x = select(x, (float2)(0), (int2)isnan(x));
-  short2 y = convert_short2(x);
-  y = select(y, (short2)SHRT_MIN, convert_short2(x < (float2)SHRT_MIN));
-  y = select(y, (short2)SHRT_MAX, convert_short2(x >= (float2)SHRT_MAX));
+  int2 too_small = (int2)(x < (float2)SHRT_MIN);
+  int2 too_large = (int2)(x >= (float2)SHRT_MAX);
+  short2 y = convert_short2(
+      select(x, (float2)(0), (int2)(too_small | too_large)));
+  y = select(y, (short2)SHRT_MIN, convert_short2(too_small));
+  y = select(y, (short2)SHRT_MAX, convert_short2(too_large));
   return y;
 }
 
@@ -30374,9 +30560,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short3 convert_short3_sat(float3 x)
 {
   x = select(x, (float3)(0), (int3)isnan(x));
-  short3 y = convert_short3(x);
-  y = select(y, (short3)SHRT_MIN, convert_short3(x < (float3)SHRT_MIN));
-  y = select(y, (short3)SHRT_MAX, convert_short3(x >= (float3)SHRT_MAX));
+  int3 too_small = (int3)(x < (float3)SHRT_MIN);
+  int3 too_large = (int3)(x >= (float3)SHRT_MAX);
+  short3 y = convert_short3(
+      select(x, (float3)(0), (int3)(too_small | too_large)));
+  y = select(y, (short3)SHRT_MIN, convert_short3(too_small));
+  y = select(y, (short3)SHRT_MAX, convert_short3(too_large));
   return y;
 }
 
@@ -30384,9 +30573,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short4 convert_short4_sat(float4 x)
 {
   x = select(x, (float4)(0), (int4)isnan(x));
-  short4 y = convert_short4(x);
-  y = select(y, (short4)SHRT_MIN, convert_short4(x < (float4)SHRT_MIN));
-  y = select(y, (short4)SHRT_MAX, convert_short4(x >= (float4)SHRT_MAX));
+  int4 too_small = (int4)(x < (float4)SHRT_MIN);
+  int4 too_large = (int4)(x >= (float4)SHRT_MAX);
+  short4 y = convert_short4(
+      select(x, (float4)(0), (int4)(too_small | too_large)));
+  y = select(y, (short4)SHRT_MIN, convert_short4(too_small));
+  y = select(y, (short4)SHRT_MAX, convert_short4(too_large));
   return y;
 }
 
@@ -30394,9 +30586,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short8 convert_short8_sat(float8 x)
 {
   x = select(x, (float8)(0), (int8)isnan(x));
-  short8 y = convert_short8(x);
-  y = select(y, (short8)SHRT_MIN, convert_short8(x < (float8)SHRT_MIN));
-  y = select(y, (short8)SHRT_MAX, convert_short8(x >= (float8)SHRT_MAX));
+  int8 too_small = (int8)(x < (float8)SHRT_MIN);
+  int8 too_large = (int8)(x >= (float8)SHRT_MAX);
+  short8 y = convert_short8(
+      select(x, (float8)(0), (int8)(too_small | too_large)));
+  y = select(y, (short8)SHRT_MIN, convert_short8(too_small));
+  y = select(y, (short8)SHRT_MAX, convert_short8(too_large));
   return y;
 }
 
@@ -30404,9 +30599,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short16 convert_short16_sat(float16 x)
 {
   x = select(x, (float16)(0), (int16)isnan(x));
-  short16 y = convert_short16(x);
-  y = select(y, (short16)SHRT_MIN, convert_short16(x < (float16)SHRT_MIN));
-  y = select(y, (short16)SHRT_MAX, convert_short16(x >= (float16)SHRT_MAX));
+  int16 too_small = (int16)(x < (float16)SHRT_MIN);
+  int16 too_large = (int16)(x >= (float16)SHRT_MAX);
+  short16 y = convert_short16(
+      select(x, (float16)(0), (int16)(too_small | too_large)));
+  y = select(y, (short16)SHRT_MIN, convert_short16(too_small));
+  y = select(y, (short16)SHRT_MAX, convert_short16(too_large));
   return y;
 }
 
@@ -30414,9 +30612,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_sat(float x)
 {
   x = select(x, (float)(0), (int)isnan(x));
-  ushort y = convert_ushort(x);
-  y = select(y, (ushort)0, as_ushort(convert_short(x < (float)0)));
-  y = select(y, (ushort)USHRT_MAX, as_ushort(convert_short(x >= (float)USHRT_MAX)));
+  int too_small = (int)(x < (float)0);
+  int too_large = (int)(x >= (float)USHRT_MAX);
+  ushort y = convert_ushort(
+      select(x, (float)(0), (int)(too_small | too_large)));
+  y = select(y, (ushort)0, as_ushort(convert_short(too_small)));
+  y = select(y, (ushort)USHRT_MAX, as_ushort(convert_short(too_large)));
   return y;
 }
 
@@ -30424,9 +30625,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort2 convert_ushort2_sat(float2 x)
 {
   x = select(x, (float2)(0), (int2)isnan(x));
-  ushort2 y = convert_ushort2(x);
-  y = select(y, (ushort2)0, as_ushort2(convert_short2(x < (float2)0)));
-  y = select(y, (ushort2)USHRT_MAX, as_ushort2(convert_short2(x >= (float2)USHRT_MAX)));
+  int2 too_small = (int2)(x < (float2)0);
+  int2 too_large = (int2)(x >= (float2)USHRT_MAX);
+  ushort2 y = convert_ushort2(
+      select(x, (float2)(0), (int2)(too_small | too_large)));
+  y = select(y, (ushort2)0, as_ushort2(convert_short2(too_small)));
+  y = select(y, (ushort2)USHRT_MAX, as_ushort2(convert_short2(too_large)));
   return y;
 }
 
@@ -30434,9 +30638,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort3 convert_ushort3_sat(float3 x)
 {
   x = select(x, (float3)(0), (int3)isnan(x));
-  ushort3 y = convert_ushort3(x);
-  y = select(y, (ushort3)0, as_ushort3(convert_short3(x < (float3)0)));
-  y = select(y, (ushort3)USHRT_MAX, as_ushort3(convert_short3(x >= (float3)USHRT_MAX)));
+  int3 too_small = (int3)(x < (float3)0);
+  int3 too_large = (int3)(x >= (float3)USHRT_MAX);
+  ushort3 y = convert_ushort3(
+      select(x, (float3)(0), (int3)(too_small | too_large)));
+  y = select(y, (ushort3)0, as_ushort3(convert_short3(too_small)));
+  y = select(y, (ushort3)USHRT_MAX, as_ushort3(convert_short3(too_large)));
   return y;
 }
 
@@ -30444,9 +30651,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort4 convert_ushort4_sat(float4 x)
 {
   x = select(x, (float4)(0), (int4)isnan(x));
-  ushort4 y = convert_ushort4(x);
-  y = select(y, (ushort4)0, as_ushort4(convert_short4(x < (float4)0)));
-  y = select(y, (ushort4)USHRT_MAX, as_ushort4(convert_short4(x >= (float4)USHRT_MAX)));
+  int4 too_small = (int4)(x < (float4)0);
+  int4 too_large = (int4)(x >= (float4)USHRT_MAX);
+  ushort4 y = convert_ushort4(
+      select(x, (float4)(0), (int4)(too_small | too_large)));
+  y = select(y, (ushort4)0, as_ushort4(convert_short4(too_small)));
+  y = select(y, (ushort4)USHRT_MAX, as_ushort4(convert_short4(too_large)));
   return y;
 }
 
@@ -30454,9 +30664,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort8 convert_ushort8_sat(float8 x)
 {
   x = select(x, (float8)(0), (int8)isnan(x));
-  ushort8 y = convert_ushort8(x);
-  y = select(y, (ushort8)0, as_ushort8(convert_short8(x < (float8)0)));
-  y = select(y, (ushort8)USHRT_MAX, as_ushort8(convert_short8(x >= (float8)USHRT_MAX)));
+  int8 too_small = (int8)(x < (float8)0);
+  int8 too_large = (int8)(x >= (float8)USHRT_MAX);
+  ushort8 y = convert_ushort8(
+      select(x, (float8)(0), (int8)(too_small | too_large)));
+  y = select(y, (ushort8)0, as_ushort8(convert_short8(too_small)));
+  y = select(y, (ushort8)USHRT_MAX, as_ushort8(convert_short8(too_large)));
   return y;
 }
 
@@ -30464,9 +30677,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort16 convert_ushort16_sat(float16 x)
 {
   x = select(x, (float16)(0), (int16)isnan(x));
-  ushort16 y = convert_ushort16(x);
-  y = select(y, (ushort16)0, as_ushort16(convert_short16(x < (float16)0)));
-  y = select(y, (ushort16)USHRT_MAX, as_ushort16(convert_short16(x >= (float16)USHRT_MAX)));
+  int16 too_small = (int16)(x < (float16)0);
+  int16 too_large = (int16)(x >= (float16)USHRT_MAX);
+  ushort16 y = convert_ushort16(
+      select(x, (float16)(0), (int16)(too_small | too_large)));
+  y = select(y, (ushort16)0, as_ushort16(convert_short16(too_small)));
+  y = select(y, (ushort16)USHRT_MAX, as_ushort16(convert_short16(too_large)));
   return y;
 }
 
@@ -30474,9 +30690,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_sat(float x)
 {
   x = select(x, (float)(0), (int)isnan(x));
-  int y = convert_int(x);
-  y = select(y, (int)INT_MIN, convert_int(x < (float)INT_MIN));
-  y = select(y, (int)INT_MAX, convert_int(x >= (float)INT_MAX));
+  int too_small = (int)(x < (float)INT_MIN);
+  int too_large = (int)(x >= (float)INT_MAX);
+  int y = convert_int(
+      select(x, (float)(0), (int)(too_small | too_large)));
+  y = select(y, (int)INT_MIN, convert_int(too_small));
+  y = select(y, (int)INT_MAX, convert_int(too_large));
   return y;
 }
 
@@ -30484,9 +30703,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int2 convert_int2_sat(float2 x)
 {
   x = select(x, (float2)(0), (int2)isnan(x));
-  int2 y = convert_int2(x);
-  y = select(y, (int2)INT_MIN, convert_int2(x < (float2)INT_MIN));
-  y = select(y, (int2)INT_MAX, convert_int2(x >= (float2)INT_MAX));
+  int2 too_small = (int2)(x < (float2)INT_MIN);
+  int2 too_large = (int2)(x >= (float2)INT_MAX);
+  int2 y = convert_int2(
+      select(x, (float2)(0), (int2)(too_small | too_large)));
+  y = select(y, (int2)INT_MIN, convert_int2(too_small));
+  y = select(y, (int2)INT_MAX, convert_int2(too_large));
   return y;
 }
 
@@ -30494,9 +30716,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int3 convert_int3_sat(float3 x)
 {
   x = select(x, (float3)(0), (int3)isnan(x));
-  int3 y = convert_int3(x);
-  y = select(y, (int3)INT_MIN, convert_int3(x < (float3)INT_MIN));
-  y = select(y, (int3)INT_MAX, convert_int3(x >= (float3)INT_MAX));
+  int3 too_small = (int3)(x < (float3)INT_MIN);
+  int3 too_large = (int3)(x >= (float3)INT_MAX);
+  int3 y = convert_int3(
+      select(x, (float3)(0), (int3)(too_small | too_large)));
+  y = select(y, (int3)INT_MIN, convert_int3(too_small));
+  y = select(y, (int3)INT_MAX, convert_int3(too_large));
   return y;
 }
 
@@ -30504,9 +30729,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int4 convert_int4_sat(float4 x)
 {
   x = select(x, (float4)(0), (int4)isnan(x));
-  int4 y = convert_int4(x);
-  y = select(y, (int4)INT_MIN, convert_int4(x < (float4)INT_MIN));
-  y = select(y, (int4)INT_MAX, convert_int4(x >= (float4)INT_MAX));
+  int4 too_small = (int4)(x < (float4)INT_MIN);
+  int4 too_large = (int4)(x >= (float4)INT_MAX);
+  int4 y = convert_int4(
+      select(x, (float4)(0), (int4)(too_small | too_large)));
+  y = select(y, (int4)INT_MIN, convert_int4(too_small));
+  y = select(y, (int4)INT_MAX, convert_int4(too_large));
   return y;
 }
 
@@ -30514,9 +30742,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int8 convert_int8_sat(float8 x)
 {
   x = select(x, (float8)(0), (int8)isnan(x));
-  int8 y = convert_int8(x);
-  y = select(y, (int8)INT_MIN, convert_int8(x < (float8)INT_MIN));
-  y = select(y, (int8)INT_MAX, convert_int8(x >= (float8)INT_MAX));
+  int8 too_small = (int8)(x < (float8)INT_MIN);
+  int8 too_large = (int8)(x >= (float8)INT_MAX);
+  int8 y = convert_int8(
+      select(x, (float8)(0), (int8)(too_small | too_large)));
+  y = select(y, (int8)INT_MIN, convert_int8(too_small));
+  y = select(y, (int8)INT_MAX, convert_int8(too_large));
   return y;
 }
 
@@ -30524,9 +30755,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int16 convert_int16_sat(float16 x)
 {
   x = select(x, (float16)(0), (int16)isnan(x));
-  int16 y = convert_int16(x);
-  y = select(y, (int16)INT_MIN, convert_int16(x < (float16)INT_MIN));
-  y = select(y, (int16)INT_MAX, convert_int16(x >= (float16)INT_MAX));
+  int16 too_small = (int16)(x < (float16)INT_MIN);
+  int16 too_large = (int16)(x >= (float16)INT_MAX);
+  int16 y = convert_int16(
+      select(x, (float16)(0), (int16)(too_small | too_large)));
+  y = select(y, (int16)INT_MIN, convert_int16(too_small));
+  y = select(y, (int16)INT_MAX, convert_int16(too_large));
   return y;
 }
 
@@ -30534,9 +30768,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_sat(float x)
 {
   x = select(x, (float)(0), (int)isnan(x));
-  uint y = convert_uint(x);
-  y = select(y, (uint)0, as_uint(convert_int(x < (float)0)));
-  y = select(y, (uint)UINT_MAX, as_uint(convert_int(x >= (float)UINT_MAX)));
+  int too_small = (int)(x < (float)0);
+  int too_large = (int)(x >= (float)UINT_MAX);
+  uint y = convert_uint(
+      select(x, (float)(0), (int)(too_small | too_large)));
+  y = select(y, (uint)0, as_uint(convert_int(too_small)));
+  y = select(y, (uint)UINT_MAX, as_uint(convert_int(too_large)));
   return y;
 }
 
@@ -30544,9 +30781,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint2 convert_uint2_sat(float2 x)
 {
   x = select(x, (float2)(0), (int2)isnan(x));
-  uint2 y = convert_uint2(x);
-  y = select(y, (uint2)0, as_uint2(convert_int2(x < (float2)0)));
-  y = select(y, (uint2)UINT_MAX, as_uint2(convert_int2(x >= (float2)UINT_MAX)));
+  int2 too_small = (int2)(x < (float2)0);
+  int2 too_large = (int2)(x >= (float2)UINT_MAX);
+  uint2 y = convert_uint2(
+      select(x, (float2)(0), (int2)(too_small | too_large)));
+  y = select(y, (uint2)0, as_uint2(convert_int2(too_small)));
+  y = select(y, (uint2)UINT_MAX, as_uint2(convert_int2(too_large)));
   return y;
 }
 
@@ -30554,9 +30794,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint3 convert_uint3_sat(float3 x)
 {
   x = select(x, (float3)(0), (int3)isnan(x));
-  uint3 y = convert_uint3(x);
-  y = select(y, (uint3)0, as_uint3(convert_int3(x < (float3)0)));
-  y = select(y, (uint3)UINT_MAX, as_uint3(convert_int3(x >= (float3)UINT_MAX)));
+  int3 too_small = (int3)(x < (float3)0);
+  int3 too_large = (int3)(x >= (float3)UINT_MAX);
+  uint3 y = convert_uint3(
+      select(x, (float3)(0), (int3)(too_small | too_large)));
+  y = select(y, (uint3)0, as_uint3(convert_int3(too_small)));
+  y = select(y, (uint3)UINT_MAX, as_uint3(convert_int3(too_large)));
   return y;
 }
 
@@ -30564,9 +30807,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint4 convert_uint4_sat(float4 x)
 {
   x = select(x, (float4)(0), (int4)isnan(x));
-  uint4 y = convert_uint4(x);
-  y = select(y, (uint4)0, as_uint4(convert_int4(x < (float4)0)));
-  y = select(y, (uint4)UINT_MAX, as_uint4(convert_int4(x >= (float4)UINT_MAX)));
+  int4 too_small = (int4)(x < (float4)0);
+  int4 too_large = (int4)(x >= (float4)UINT_MAX);
+  uint4 y = convert_uint4(
+      select(x, (float4)(0), (int4)(too_small | too_large)));
+  y = select(y, (uint4)0, as_uint4(convert_int4(too_small)));
+  y = select(y, (uint4)UINT_MAX, as_uint4(convert_int4(too_large)));
   return y;
 }
 
@@ -30574,9 +30820,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint8 convert_uint8_sat(float8 x)
 {
   x = select(x, (float8)(0), (int8)isnan(x));
-  uint8 y = convert_uint8(x);
-  y = select(y, (uint8)0, as_uint8(convert_int8(x < (float8)0)));
-  y = select(y, (uint8)UINT_MAX, as_uint8(convert_int8(x >= (float8)UINT_MAX)));
+  int8 too_small = (int8)(x < (float8)0);
+  int8 too_large = (int8)(x >= (float8)UINT_MAX);
+  uint8 y = convert_uint8(
+      select(x, (float8)(0), (int8)(too_small | too_large)));
+  y = select(y, (uint8)0, as_uint8(convert_int8(too_small)));
+  y = select(y, (uint8)UINT_MAX, as_uint8(convert_int8(too_large)));
   return y;
 }
 
@@ -30584,9 +30833,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint16 convert_uint16_sat(float16 x)
 {
   x = select(x, (float16)(0), (int16)isnan(x));
-  uint16 y = convert_uint16(x);
-  y = select(y, (uint16)0, as_uint16(convert_int16(x < (float16)0)));
-  y = select(y, (uint16)UINT_MAX, as_uint16(convert_int16(x >= (float16)UINT_MAX)));
+  int16 too_small = (int16)(x < (float16)0);
+  int16 too_large = (int16)(x >= (float16)UINT_MAX);
+  uint16 y = convert_uint16(
+      select(x, (float16)(0), (int16)(too_small | too_large)));
+  y = select(y, (uint16)0, as_uint16(convert_int16(too_small)));
+  y = select(y, (uint16)UINT_MAX, as_uint16(convert_int16(too_large)));
   return y;
 }
 
@@ -30595,9 +30847,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 long convert_long_sat(float x)
 {
   x = select(x, (float)(0), (int)isnan(x));
-  long y = convert_long(x);
-  y = select(y, (long)LONG_MIN, convert_long(x < (float)LONG_MIN));
-  y = select(y, (long)LONG_MAX, convert_long(x >= (float)LONG_MAX));
+  int too_small = (int)(x < (float)LONG_MIN);
+  int too_large = (int)(x >= (float)LONG_MAX);
+  long y = convert_long(
+      select(x, (float)(0), (int)(too_small | too_large)));
+  y = select(y, (long)LONG_MIN, convert_long(too_small));
+  y = select(y, (long)LONG_MAX, convert_long(too_large));
   return y;
 }
 #endif
@@ -30607,9 +30862,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 long2 convert_long2_sat(float2 x)
 {
   x = select(x, (float2)(0), (int2)isnan(x));
-  long2 y = convert_long2(x);
-  y = select(y, (long2)LONG_MIN, convert_long2(x < (float2)LONG_MIN));
-  y = select(y, (long2)LONG_MAX, convert_long2(x >= (float2)LONG_MAX));
+  int2 too_small = (int2)(x < (float2)LONG_MIN);
+  int2 too_large = (int2)(x >= (float2)LONG_MAX);
+  long2 y = convert_long2(
+      select(x, (float2)(0), (int2)(too_small | too_large)));
+  y = select(y, (long2)LONG_MIN, convert_long2(too_small));
+  y = select(y, (long2)LONG_MAX, convert_long2(too_large));
   return y;
 }
 #endif
@@ -30619,9 +30877,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 long3 convert_long3_sat(float3 x)
 {
   x = select(x, (float3)(0), (int3)isnan(x));
-  long3 y = convert_long3(x);
-  y = select(y, (long3)LONG_MIN, convert_long3(x < (float3)LONG_MIN));
-  y = select(y, (long3)LONG_MAX, convert_long3(x >= (float3)LONG_MAX));
+  int3 too_small = (int3)(x < (float3)LONG_MIN);
+  int3 too_large = (int3)(x >= (float3)LONG_MAX);
+  long3 y = convert_long3(
+      select(x, (float3)(0), (int3)(too_small | too_large)));
+  y = select(y, (long3)LONG_MIN, convert_long3(too_small));
+  y = select(y, (long3)LONG_MAX, convert_long3(too_large));
   return y;
 }
 #endif
@@ -30631,9 +30892,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 long4 convert_long4_sat(float4 x)
 {
   x = select(x, (float4)(0), (int4)isnan(x));
-  long4 y = convert_long4(x);
-  y = select(y, (long4)LONG_MIN, convert_long4(x < (float4)LONG_MIN));
-  y = select(y, (long4)LONG_MAX, convert_long4(x >= (float4)LONG_MAX));
+  int4 too_small = (int4)(x < (float4)LONG_MIN);
+  int4 too_large = (int4)(x >= (float4)LONG_MAX);
+  long4 y = convert_long4(
+      select(x, (float4)(0), (int4)(too_small | too_large)));
+  y = select(y, (long4)LONG_MIN, convert_long4(too_small));
+  y = select(y, (long4)LONG_MAX, convert_long4(too_large));
   return y;
 }
 #endif
@@ -30643,9 +30907,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 long8 convert_long8_sat(float8 x)
 {
   x = select(x, (float8)(0), (int8)isnan(x));
-  long8 y = convert_long8(x);
-  y = select(y, (long8)LONG_MIN, convert_long8(x < (float8)LONG_MIN));
-  y = select(y, (long8)LONG_MAX, convert_long8(x >= (float8)LONG_MAX));
+  int8 too_small = (int8)(x < (float8)LONG_MIN);
+  int8 too_large = (int8)(x >= (float8)LONG_MAX);
+  long8 y = convert_long8(
+      select(x, (float8)(0), (int8)(too_small | too_large)));
+  y = select(y, (long8)LONG_MIN, convert_long8(too_small));
+  y = select(y, (long8)LONG_MAX, convert_long8(too_large));
   return y;
 }
 #endif
@@ -30655,9 +30922,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 long16 convert_long16_sat(float16 x)
 {
   x = select(x, (float16)(0), (int16)isnan(x));
-  long16 y = convert_long16(x);
-  y = select(y, (long16)LONG_MIN, convert_long16(x < (float16)LONG_MIN));
-  y = select(y, (long16)LONG_MAX, convert_long16(x >= (float16)LONG_MAX));
+  int16 too_small = (int16)(x < (float16)LONG_MIN);
+  int16 too_large = (int16)(x >= (float16)LONG_MAX);
+  long16 y = convert_long16(
+      select(x, (float16)(0), (int16)(too_small | too_large)));
+  y = select(y, (long16)LONG_MIN, convert_long16(too_small));
+  y = select(y, (long16)LONG_MAX, convert_long16(too_large));
   return y;
 }
 #endif
@@ -30667,9 +30937,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ulong convert_ulong_sat(float x)
 {
   x = select(x, (float)(0), (int)isnan(x));
-  ulong y = convert_ulong(x);
-  y = select(y, (ulong)0, as_ulong(convert_long(x < (float)0)));
-  y = select(y, (ulong)ULONG_MAX, as_ulong(convert_long(x >= (float)ULONG_MAX)));
+  int too_small = (int)(x < (float)0);
+  int too_large = (int)(x >= (float)ULONG_MAX);
+  ulong y = convert_ulong(
+      select(x, (float)(0), (int)(too_small | too_large)));
+  y = select(y, (ulong)0, as_ulong(convert_long(too_small)));
+  y = select(y, (ulong)ULONG_MAX, as_ulong(convert_long(too_large)));
   return y;
 }
 #endif
@@ -30679,9 +30952,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ulong2 convert_ulong2_sat(float2 x)
 {
   x = select(x, (float2)(0), (int2)isnan(x));
-  ulong2 y = convert_ulong2(x);
-  y = select(y, (ulong2)0, as_ulong2(convert_long2(x < (float2)0)));
-  y = select(y, (ulong2)ULONG_MAX, as_ulong2(convert_long2(x >= (float2)ULONG_MAX)));
+  int2 too_small = (int2)(x < (float2)0);
+  int2 too_large = (int2)(x >= (float2)ULONG_MAX);
+  ulong2 y = convert_ulong2(
+      select(x, (float2)(0), (int2)(too_small | too_large)));
+  y = select(y, (ulong2)0, as_ulong2(convert_long2(too_small)));
+  y = select(y, (ulong2)ULONG_MAX, as_ulong2(convert_long2(too_large)));
   return y;
 }
 #endif
@@ -30691,9 +30967,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ulong3 convert_ulong3_sat(float3 x)
 {
   x = select(x, (float3)(0), (int3)isnan(x));
-  ulong3 y = convert_ulong3(x);
-  y = select(y, (ulong3)0, as_ulong3(convert_long3(x < (float3)0)));
-  y = select(y, (ulong3)ULONG_MAX, as_ulong3(convert_long3(x >= (float3)ULONG_MAX)));
+  int3 too_small = (int3)(x < (float3)0);
+  int3 too_large = (int3)(x >= (float3)ULONG_MAX);
+  ulong3 y = convert_ulong3(
+      select(x, (float3)(0), (int3)(too_small | too_large)));
+  y = select(y, (ulong3)0, as_ulong3(convert_long3(too_small)));
+  y = select(y, (ulong3)ULONG_MAX, as_ulong3(convert_long3(too_large)));
   return y;
 }
 #endif
@@ -30703,9 +30982,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ulong4 convert_ulong4_sat(float4 x)
 {
   x = select(x, (float4)(0), (int4)isnan(x));
-  ulong4 y = convert_ulong4(x);
-  y = select(y, (ulong4)0, as_ulong4(convert_long4(x < (float4)0)));
-  y = select(y, (ulong4)ULONG_MAX, as_ulong4(convert_long4(x >= (float4)ULONG_MAX)));
+  int4 too_small = (int4)(x < (float4)0);
+  int4 too_large = (int4)(x >= (float4)ULONG_MAX);
+  ulong4 y = convert_ulong4(
+      select(x, (float4)(0), (int4)(too_small | too_large)));
+  y = select(y, (ulong4)0, as_ulong4(convert_long4(too_small)));
+  y = select(y, (ulong4)ULONG_MAX, as_ulong4(convert_long4(too_large)));
   return y;
 }
 #endif
@@ -30715,9 +30997,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ulong8 convert_ulong8_sat(float8 x)
 {
   x = select(x, (float8)(0), (int8)isnan(x));
-  ulong8 y = convert_ulong8(x);
-  y = select(y, (ulong8)0, as_ulong8(convert_long8(x < (float8)0)));
-  y = select(y, (ulong8)ULONG_MAX, as_ulong8(convert_long8(x >= (float8)ULONG_MAX)));
+  int8 too_small = (int8)(x < (float8)0);
+  int8 too_large = (int8)(x >= (float8)ULONG_MAX);
+  ulong8 y = convert_ulong8(
+      select(x, (float8)(0), (int8)(too_small | too_large)));
+  y = select(y, (ulong8)0, as_ulong8(convert_long8(too_small)));
+  y = select(y, (ulong8)ULONG_MAX, as_ulong8(convert_long8(too_large)));
   return y;
 }
 #endif
@@ -30727,9 +31012,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ulong16 convert_ulong16_sat(float16 x)
 {
   x = select(x, (float16)(0), (int16)isnan(x));
-  ulong16 y = convert_ulong16(x);
-  y = select(y, (ulong16)0, as_ulong16(convert_long16(x < (float16)0)));
-  y = select(y, (ulong16)ULONG_MAX, as_ulong16(convert_long16(x >= (float16)ULONG_MAX)));
+  int16 too_small = (int16)(x < (float16)0);
+  int16 too_large = (int16)(x >= (float16)ULONG_MAX);
+  ulong16 y = convert_ulong16(
+      select(x, (float16)(0), (int16)(too_small | too_large)));
+  y = select(y, (ulong16)0, as_ulong16(convert_long16(too_small)));
+  y = select(y, (ulong16)ULONG_MAX, as_ulong16(convert_long16(too_large)));
   return y;
 }
 #endif
@@ -30739,9 +31027,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_sat(double x)
 {
   x = select(x, (double)(0), (long)isnan(x));
-  char y = convert_char(x);
-  y = select(y, (char)CHAR_MIN, convert_char(x < (double)CHAR_MIN));
-  y = select(y, (char)CHAR_MAX, convert_char(x >= (double)CHAR_MAX));
+  long too_small = (long)(x < (double)CHAR_MIN);
+  long too_large = (long)(x >= (double)CHAR_MAX);
+  char y = convert_char(
+      select(x, (double)(0), (long)(too_small | too_large)));
+  y = select(y, (char)CHAR_MIN, convert_char(too_small));
+  y = select(y, (char)CHAR_MAX, convert_char(too_large));
   return y;
 }
 #endif
@@ -30751,9 +31042,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char2 convert_char2_sat(double2 x)
 {
   x = select(x, (double2)(0), (long2)isnan(x));
-  char2 y = convert_char2(x);
-  y = select(y, (char2)CHAR_MIN, convert_char2(x < (double2)CHAR_MIN));
-  y = select(y, (char2)CHAR_MAX, convert_char2(x >= (double2)CHAR_MAX));
+  long2 too_small = (long2)(x < (double2)CHAR_MIN);
+  long2 too_large = (long2)(x >= (double2)CHAR_MAX);
+  char2 y = convert_char2(
+      select(x, (double2)(0), (long2)(too_small | too_large)));
+  y = select(y, (char2)CHAR_MIN, convert_char2(too_small));
+  y = select(y, (char2)CHAR_MAX, convert_char2(too_large));
   return y;
 }
 #endif
@@ -30763,9 +31057,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char3 convert_char3_sat(double3 x)
 {
   x = select(x, (double3)(0), (long3)isnan(x));
-  char3 y = convert_char3(x);
-  y = select(y, (char3)CHAR_MIN, convert_char3(x < (double3)CHAR_MIN));
-  y = select(y, (char3)CHAR_MAX, convert_char3(x >= (double3)CHAR_MAX));
+  long3 too_small = (long3)(x < (double3)CHAR_MIN);
+  long3 too_large = (long3)(x >= (double3)CHAR_MAX);
+  char3 y = convert_char3(
+      select(x, (double3)(0), (long3)(too_small | too_large)));
+  y = select(y, (char3)CHAR_MIN, convert_char3(too_small));
+  y = select(y, (char3)CHAR_MAX, convert_char3(too_large));
   return y;
 }
 #endif
@@ -30775,9 +31072,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char4 convert_char4_sat(double4 x)
 {
   x = select(x, (double4)(0), (long4)isnan(x));
-  char4 y = convert_char4(x);
-  y = select(y, (char4)CHAR_MIN, convert_char4(x < (double4)CHAR_MIN));
-  y = select(y, (char4)CHAR_MAX, convert_char4(x >= (double4)CHAR_MAX));
+  long4 too_small = (long4)(x < (double4)CHAR_MIN);
+  long4 too_large = (long4)(x >= (double4)CHAR_MAX);
+  char4 y = convert_char4(
+      select(x, (double4)(0), (long4)(too_small | too_large)));
+  y = select(y, (char4)CHAR_MIN, convert_char4(too_small));
+  y = select(y, (char4)CHAR_MAX, convert_char4(too_large));
   return y;
 }
 #endif
@@ -30787,9 +31087,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char8 convert_char8_sat(double8 x)
 {
   x = select(x, (double8)(0), (long8)isnan(x));
-  char8 y = convert_char8(x);
-  y = select(y, (char8)CHAR_MIN, convert_char8(x < (double8)CHAR_MIN));
-  y = select(y, (char8)CHAR_MAX, convert_char8(x >= (double8)CHAR_MAX));
+  long8 too_small = (long8)(x < (double8)CHAR_MIN);
+  long8 too_large = (long8)(x >= (double8)CHAR_MAX);
+  char8 y = convert_char8(
+      select(x, (double8)(0), (long8)(too_small | too_large)));
+  y = select(y, (char8)CHAR_MIN, convert_char8(too_small));
+  y = select(y, (char8)CHAR_MAX, convert_char8(too_large));
   return y;
 }
 #endif
@@ -30799,9 +31102,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char16 convert_char16_sat(double16 x)
 {
   x = select(x, (double16)(0), (long16)isnan(x));
-  char16 y = convert_char16(x);
-  y = select(y, (char16)CHAR_MIN, convert_char16(x < (double16)CHAR_MIN));
-  y = select(y, (char16)CHAR_MAX, convert_char16(x >= (double16)CHAR_MAX));
+  long16 too_small = (long16)(x < (double16)CHAR_MIN);
+  long16 too_large = (long16)(x >= (double16)CHAR_MAX);
+  char16 y = convert_char16(
+      select(x, (double16)(0), (long16)(too_small | too_large)));
+  y = select(y, (char16)CHAR_MIN, convert_char16(too_small));
+  y = select(y, (char16)CHAR_MAX, convert_char16(too_large));
   return y;
 }
 #endif
@@ -30811,9 +31117,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_sat(double x)
 {
   x = select(x, (double)(0), (long)isnan(x));
-  uchar y = convert_uchar(x);
-  y = select(y, (uchar)0, as_uchar(convert_char(x < (double)0)));
-  y = select(y, (uchar)UCHAR_MAX, as_uchar(convert_char(x >= (double)UCHAR_MAX)));
+  long too_small = (long)(x < (double)0);
+  long too_large = (long)(x >= (double)UCHAR_MAX);
+  uchar y = convert_uchar(
+      select(x, (double)(0), (long)(too_small | too_large)));
+  y = select(y, (uchar)0, as_uchar(convert_char(too_small)));
+  y = select(y, (uchar)UCHAR_MAX, as_uchar(convert_char(too_large)));
   return y;
 }
 #endif
@@ -30823,9 +31132,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar2 convert_uchar2_sat(double2 x)
 {
   x = select(x, (double2)(0), (long2)isnan(x));
-  uchar2 y = convert_uchar2(x);
-  y = select(y, (uchar2)0, as_uchar2(convert_char2(x < (double2)0)));
-  y = select(y, (uchar2)UCHAR_MAX, as_uchar2(convert_char2(x >= (double2)UCHAR_MAX)));
+  long2 too_small = (long2)(x < (double2)0);
+  long2 too_large = (long2)(x >= (double2)UCHAR_MAX);
+  uchar2 y = convert_uchar2(
+      select(x, (double2)(0), (long2)(too_small | too_large)));
+  y = select(y, (uchar2)0, as_uchar2(convert_char2(too_small)));
+  y = select(y, (uchar2)UCHAR_MAX, as_uchar2(convert_char2(too_large)));
   return y;
 }
 #endif
@@ -30835,9 +31147,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar3 convert_uchar3_sat(double3 x)
 {
   x = select(x, (double3)(0), (long3)isnan(x));
-  uchar3 y = convert_uchar3(x);
-  y = select(y, (uchar3)0, as_uchar3(convert_char3(x < (double3)0)));
-  y = select(y, (uchar3)UCHAR_MAX, as_uchar3(convert_char3(x >= (double3)UCHAR_MAX)));
+  long3 too_small = (long3)(x < (double3)0);
+  long3 too_large = (long3)(x >= (double3)UCHAR_MAX);
+  uchar3 y = convert_uchar3(
+      select(x, (double3)(0), (long3)(too_small | too_large)));
+  y = select(y, (uchar3)0, as_uchar3(convert_char3(too_small)));
+  y = select(y, (uchar3)UCHAR_MAX, as_uchar3(convert_char3(too_large)));
   return y;
 }
 #endif
@@ -30847,9 +31162,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar4 convert_uchar4_sat(double4 x)
 {
   x = select(x, (double4)(0), (long4)isnan(x));
-  uchar4 y = convert_uchar4(x);
-  y = select(y, (uchar4)0, as_uchar4(convert_char4(x < (double4)0)));
-  y = select(y, (uchar4)UCHAR_MAX, as_uchar4(convert_char4(x >= (double4)UCHAR_MAX)));
+  long4 too_small = (long4)(x < (double4)0);
+  long4 too_large = (long4)(x >= (double4)UCHAR_MAX);
+  uchar4 y = convert_uchar4(
+      select(x, (double4)(0), (long4)(too_small | too_large)));
+  y = select(y, (uchar4)0, as_uchar4(convert_char4(too_small)));
+  y = select(y, (uchar4)UCHAR_MAX, as_uchar4(convert_char4(too_large)));
   return y;
 }
 #endif
@@ -30859,9 +31177,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar8 convert_uchar8_sat(double8 x)
 {
   x = select(x, (double8)(0), (long8)isnan(x));
-  uchar8 y = convert_uchar8(x);
-  y = select(y, (uchar8)0, as_uchar8(convert_char8(x < (double8)0)));
-  y = select(y, (uchar8)UCHAR_MAX, as_uchar8(convert_char8(x >= (double8)UCHAR_MAX)));
+  long8 too_small = (long8)(x < (double8)0);
+  long8 too_large = (long8)(x >= (double8)UCHAR_MAX);
+  uchar8 y = convert_uchar8(
+      select(x, (double8)(0), (long8)(too_small | too_large)));
+  y = select(y, (uchar8)0, as_uchar8(convert_char8(too_small)));
+  y = select(y, (uchar8)UCHAR_MAX, as_uchar8(convert_char8(too_large)));
   return y;
 }
 #endif
@@ -30871,9 +31192,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar16 convert_uchar16_sat(double16 x)
 {
   x = select(x, (double16)(0), (long16)isnan(x));
-  uchar16 y = convert_uchar16(x);
-  y = select(y, (uchar16)0, as_uchar16(convert_char16(x < (double16)0)));
-  y = select(y, (uchar16)UCHAR_MAX, as_uchar16(convert_char16(x >= (double16)UCHAR_MAX)));
+  long16 too_small = (long16)(x < (double16)0);
+  long16 too_large = (long16)(x >= (double16)UCHAR_MAX);
+  uchar16 y = convert_uchar16(
+      select(x, (double16)(0), (long16)(too_small | too_large)));
+  y = select(y, (uchar16)0, as_uchar16(convert_char16(too_small)));
+  y = select(y, (uchar16)UCHAR_MAX, as_uchar16(convert_char16(too_large)));
   return y;
 }
 #endif
@@ -30883,9 +31207,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_sat(double x)
 {
   x = select(x, (double)(0), (long)isnan(x));
-  short y = convert_short(x);
-  y = select(y, (short)SHRT_MIN, convert_short(x < (double)SHRT_MIN));
-  y = select(y, (short)SHRT_MAX, convert_short(x >= (double)SHRT_MAX));
+  long too_small = (long)(x < (double)SHRT_MIN);
+  long too_large = (long)(x >= (double)SHRT_MAX);
+  short y = convert_short(
+      select(x, (double)(0), (long)(too_small | too_large)));
+  y = select(y, (short)SHRT_MIN, convert_short(too_small));
+  y = select(y, (short)SHRT_MAX, convert_short(too_large));
   return y;
 }
 #endif
@@ -30895,9 +31222,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short2 convert_short2_sat(double2 x)
 {
   x = select(x, (double2)(0), (long2)isnan(x));
-  short2 y = convert_short2(x);
-  y = select(y, (short2)SHRT_MIN, convert_short2(x < (double2)SHRT_MIN));
-  y = select(y, (short2)SHRT_MAX, convert_short2(x >= (double2)SHRT_MAX));
+  long2 too_small = (long2)(x < (double2)SHRT_MIN);
+  long2 too_large = (long2)(x >= (double2)SHRT_MAX);
+  short2 y = convert_short2(
+      select(x, (double2)(0), (long2)(too_small | too_large)));
+  y = select(y, (short2)SHRT_MIN, convert_short2(too_small));
+  y = select(y, (short2)SHRT_MAX, convert_short2(too_large));
   return y;
 }
 #endif
@@ -30907,9 +31237,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short3 convert_short3_sat(double3 x)
 {
   x = select(x, (double3)(0), (long3)isnan(x));
-  short3 y = convert_short3(x);
-  y = select(y, (short3)SHRT_MIN, convert_short3(x < (double3)SHRT_MIN));
-  y = select(y, (short3)SHRT_MAX, convert_short3(x >= (double3)SHRT_MAX));
+  long3 too_small = (long3)(x < (double3)SHRT_MIN);
+  long3 too_large = (long3)(x >= (double3)SHRT_MAX);
+  short3 y = convert_short3(
+      select(x, (double3)(0), (long3)(too_small | too_large)));
+  y = select(y, (short3)SHRT_MIN, convert_short3(too_small));
+  y = select(y, (short3)SHRT_MAX, convert_short3(too_large));
   return y;
 }
 #endif
@@ -30919,9 +31252,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short4 convert_short4_sat(double4 x)
 {
   x = select(x, (double4)(0), (long4)isnan(x));
-  short4 y = convert_short4(x);
-  y = select(y, (short4)SHRT_MIN, convert_short4(x < (double4)SHRT_MIN));
-  y = select(y, (short4)SHRT_MAX, convert_short4(x >= (double4)SHRT_MAX));
+  long4 too_small = (long4)(x < (double4)SHRT_MIN);
+  long4 too_large = (long4)(x >= (double4)SHRT_MAX);
+  short4 y = convert_short4(
+      select(x, (double4)(0), (long4)(too_small | too_large)));
+  y = select(y, (short4)SHRT_MIN, convert_short4(too_small));
+  y = select(y, (short4)SHRT_MAX, convert_short4(too_large));
   return y;
 }
 #endif
@@ -30931,9 +31267,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short8 convert_short8_sat(double8 x)
 {
   x = select(x, (double8)(0), (long8)isnan(x));
-  short8 y = convert_short8(x);
-  y = select(y, (short8)SHRT_MIN, convert_short8(x < (double8)SHRT_MIN));
-  y = select(y, (short8)SHRT_MAX, convert_short8(x >= (double8)SHRT_MAX));
+  long8 too_small = (long8)(x < (double8)SHRT_MIN);
+  long8 too_large = (long8)(x >= (double8)SHRT_MAX);
+  short8 y = convert_short8(
+      select(x, (double8)(0), (long8)(too_small | too_large)));
+  y = select(y, (short8)SHRT_MIN, convert_short8(too_small));
+  y = select(y, (short8)SHRT_MAX, convert_short8(too_large));
   return y;
 }
 #endif
@@ -30943,9 +31282,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short16 convert_short16_sat(double16 x)
 {
   x = select(x, (double16)(0), (long16)isnan(x));
-  short16 y = convert_short16(x);
-  y = select(y, (short16)SHRT_MIN, convert_short16(x < (double16)SHRT_MIN));
-  y = select(y, (short16)SHRT_MAX, convert_short16(x >= (double16)SHRT_MAX));
+  long16 too_small = (long16)(x < (double16)SHRT_MIN);
+  long16 too_large = (long16)(x >= (double16)SHRT_MAX);
+  short16 y = convert_short16(
+      select(x, (double16)(0), (long16)(too_small | too_large)));
+  y = select(y, (short16)SHRT_MIN, convert_short16(too_small));
+  y = select(y, (short16)SHRT_MAX, convert_short16(too_large));
   return y;
 }
 #endif
@@ -30955,9 +31297,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_sat(double x)
 {
   x = select(x, (double)(0), (long)isnan(x));
-  ushort y = convert_ushort(x);
-  y = select(y, (ushort)0, as_ushort(convert_short(x < (double)0)));
-  y = select(y, (ushort)USHRT_MAX, as_ushort(convert_short(x >= (double)USHRT_MAX)));
+  long too_small = (long)(x < (double)0);
+  long too_large = (long)(x >= (double)USHRT_MAX);
+  ushort y = convert_ushort(
+      select(x, (double)(0), (long)(too_small | too_large)));
+  y = select(y, (ushort)0, as_ushort(convert_short(too_small)));
+  y = select(y, (ushort)USHRT_MAX, as_ushort(convert_short(too_large)));
   return y;
 }
 #endif
@@ -30967,9 +31312,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort2 convert_ushort2_sat(double2 x)
 {
   x = select(x, (double2)(0), (long2)isnan(x));
-  ushort2 y = convert_ushort2(x);
-  y = select(y, (ushort2)0, as_ushort2(convert_short2(x < (double2)0)));
-  y = select(y, (ushort2)USHRT_MAX, as_ushort2(convert_short2(x >= (double2)USHRT_MAX)));
+  long2 too_small = (long2)(x < (double2)0);
+  long2 too_large = (long2)(x >= (double2)USHRT_MAX);
+  ushort2 y = convert_ushort2(
+      select(x, (double2)(0), (long2)(too_small | too_large)));
+  y = select(y, (ushort2)0, as_ushort2(convert_short2(too_small)));
+  y = select(y, (ushort2)USHRT_MAX, as_ushort2(convert_short2(too_large)));
   return y;
 }
 #endif
@@ -30979,9 +31327,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort3 convert_ushort3_sat(double3 x)
 {
   x = select(x, (double3)(0), (long3)isnan(x));
-  ushort3 y = convert_ushort3(x);
-  y = select(y, (ushort3)0, as_ushort3(convert_short3(x < (double3)0)));
-  y = select(y, (ushort3)USHRT_MAX, as_ushort3(convert_short3(x >= (double3)USHRT_MAX)));
+  long3 too_small = (long3)(x < (double3)0);
+  long3 too_large = (long3)(x >= (double3)USHRT_MAX);
+  ushort3 y = convert_ushort3(
+      select(x, (double3)(0), (long3)(too_small | too_large)));
+  y = select(y, (ushort3)0, as_ushort3(convert_short3(too_small)));
+  y = select(y, (ushort3)USHRT_MAX, as_ushort3(convert_short3(too_large)));
   return y;
 }
 #endif
@@ -30991,9 +31342,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort4 convert_ushort4_sat(double4 x)
 {
   x = select(x, (double4)(0), (long4)isnan(x));
-  ushort4 y = convert_ushort4(x);
-  y = select(y, (ushort4)0, as_ushort4(convert_short4(x < (double4)0)));
-  y = select(y, (ushort4)USHRT_MAX, as_ushort4(convert_short4(x >= (double4)USHRT_MAX)));
+  long4 too_small = (long4)(x < (double4)0);
+  long4 too_large = (long4)(x >= (double4)USHRT_MAX);
+  ushort4 y = convert_ushort4(
+      select(x, (double4)(0), (long4)(too_small | too_large)));
+  y = select(y, (ushort4)0, as_ushort4(convert_short4(too_small)));
+  y = select(y, (ushort4)USHRT_MAX, as_ushort4(convert_short4(too_large)));
   return y;
 }
 #endif
@@ -31003,9 +31357,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort8 convert_ushort8_sat(double8 x)
 {
   x = select(x, (double8)(0), (long8)isnan(x));
-  ushort8 y = convert_ushort8(x);
-  y = select(y, (ushort8)0, as_ushort8(convert_short8(x < (double8)0)));
-  y = select(y, (ushort8)USHRT_MAX, as_ushort8(convert_short8(x >= (double8)USHRT_MAX)));
+  long8 too_small = (long8)(x < (double8)0);
+  long8 too_large = (long8)(x >= (double8)USHRT_MAX);
+  ushort8 y = convert_ushort8(
+      select(x, (double8)(0), (long8)(too_small | too_large)));
+  y = select(y, (ushort8)0, as_ushort8(convert_short8(too_small)));
+  y = select(y, (ushort8)USHRT_MAX, as_ushort8(convert_short8(too_large)));
   return y;
 }
 #endif
@@ -31015,9 +31372,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort16 convert_ushort16_sat(double16 x)
 {
   x = select(x, (double16)(0), (long16)isnan(x));
-  ushort16 y = convert_ushort16(x);
-  y = select(y, (ushort16)0, as_ushort16(convert_short16(x < (double16)0)));
-  y = select(y, (ushort16)USHRT_MAX, as_ushort16(convert_short16(x >= (double16)USHRT_MAX)));
+  long16 too_small = (long16)(x < (double16)0);
+  long16 too_large = (long16)(x >= (double16)USHRT_MAX);
+  ushort16 y = convert_ushort16(
+      select(x, (double16)(0), (long16)(too_small | too_large)));
+  y = select(y, (ushort16)0, as_ushort16(convert_short16(too_small)));
+  y = select(y, (ushort16)USHRT_MAX, as_ushort16(convert_short16(too_large)));
   return y;
 }
 #endif
@@ -31027,9 +31387,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_sat(double x)
 {
   x = select(x, (double)(0), (long)isnan(x));
-  int y = convert_int(x);
-  y = select(y, (int)INT_MIN, convert_int(x < (double)INT_MIN));
-  y = select(y, (int)INT_MAX, convert_int(x >= (double)INT_MAX));
+  long too_small = (long)(x < (double)INT_MIN);
+  long too_large = (long)(x >= (double)INT_MAX);
+  int y = convert_int(
+      select(x, (double)(0), (long)(too_small | too_large)));
+  y = select(y, (int)INT_MIN, convert_int(too_small));
+  y = select(y, (int)INT_MAX, convert_int(too_large));
   return y;
 }
 #endif
@@ -31039,9 +31402,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int2 convert_int2_sat(double2 x)
 {
   x = select(x, (double2)(0), (long2)isnan(x));
-  int2 y = convert_int2(x);
-  y = select(y, (int2)INT_MIN, convert_int2(x < (double2)INT_MIN));
-  y = select(y, (int2)INT_MAX, convert_int2(x >= (double2)INT_MAX));
+  long2 too_small = (long2)(x < (double2)INT_MIN);
+  long2 too_large = (long2)(x >= (double2)INT_MAX);
+  int2 y = convert_int2(
+      select(x, (double2)(0), (long2)(too_small | too_large)));
+  y = select(y, (int2)INT_MIN, convert_int2(too_small));
+  y = select(y, (int2)INT_MAX, convert_int2(too_large));
   return y;
 }
 #endif
@@ -31051,9 +31417,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int3 convert_int3_sat(double3 x)
 {
   x = select(x, (double3)(0), (long3)isnan(x));
-  int3 y = convert_int3(x);
-  y = select(y, (int3)INT_MIN, convert_int3(x < (double3)INT_MIN));
-  y = select(y, (int3)INT_MAX, convert_int3(x >= (double3)INT_MAX));
+  long3 too_small = (long3)(x < (double3)INT_MIN);
+  long3 too_large = (long3)(x >= (double3)INT_MAX);
+  int3 y = convert_int3(
+      select(x, (double3)(0), (long3)(too_small | too_large)));
+  y = select(y, (int3)INT_MIN, convert_int3(too_small));
+  y = select(y, (int3)INT_MAX, convert_int3(too_large));
   return y;
 }
 #endif
@@ -31063,9 +31432,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int4 convert_int4_sat(double4 x)
 {
   x = select(x, (double4)(0), (long4)isnan(x));
-  int4 y = convert_int4(x);
-  y = select(y, (int4)INT_MIN, convert_int4(x < (double4)INT_MIN));
-  y = select(y, (int4)INT_MAX, convert_int4(x >= (double4)INT_MAX));
+  long4 too_small = (long4)(x < (double4)INT_MIN);
+  long4 too_large = (long4)(x >= (double4)INT_MAX);
+  int4 y = convert_int4(
+      select(x, (double4)(0), (long4)(too_small | too_large)));
+  y = select(y, (int4)INT_MIN, convert_int4(too_small));
+  y = select(y, (int4)INT_MAX, convert_int4(too_large));
   return y;
 }
 #endif
@@ -31075,9 +31447,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int8 convert_int8_sat(double8 x)
 {
   x = select(x, (double8)(0), (long8)isnan(x));
-  int8 y = convert_int8(x);
-  y = select(y, (int8)INT_MIN, convert_int8(x < (double8)INT_MIN));
-  y = select(y, (int8)INT_MAX, convert_int8(x >= (double8)INT_MAX));
+  long8 too_small = (long8)(x < (double8)INT_MIN);
+  long8 too_large = (long8)(x >= (double8)INT_MAX);
+  int8 y = convert_int8(
+      select(x, (double8)(0), (long8)(too_small | too_large)));
+  y = select(y, (int8)INT_MIN, convert_int8(too_small));
+  y = select(y, (int8)INT_MAX, convert_int8(too_large));
   return y;
 }
 #endif
@@ -31087,9 +31462,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int16 convert_int16_sat(double16 x)
 {
   x = select(x, (double16)(0), (long16)isnan(x));
-  int16 y = convert_int16(x);
-  y = select(y, (int16)INT_MIN, convert_int16(x < (double16)INT_MIN));
-  y = select(y, (int16)INT_MAX, convert_int16(x >= (double16)INT_MAX));
+  long16 too_small = (long16)(x < (double16)INT_MIN);
+  long16 too_large = (long16)(x >= (double16)INT_MAX);
+  int16 y = convert_int16(
+      select(x, (double16)(0), (long16)(too_small | too_large)));
+  y = select(y, (int16)INT_MIN, convert_int16(too_small));
+  y = select(y, (int16)INT_MAX, convert_int16(too_large));
   return y;
 }
 #endif
@@ -31099,9 +31477,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_sat(double x)
 {
   x = select(x, (double)(0), (long)isnan(x));
-  uint y = convert_uint(x);
-  y = select(y, (uint)0, as_uint(convert_int(x < (double)0)));
-  y = select(y, (uint)UINT_MAX, as_uint(convert_int(x >= (double)UINT_MAX)));
+  long too_small = (long)(x < (double)0);
+  long too_large = (long)(x >= (double)UINT_MAX);
+  uint y = convert_uint(
+      select(x, (double)(0), (long)(too_small | too_large)));
+  y = select(y, (uint)0, as_uint(convert_int(too_small)));
+  y = select(y, (uint)UINT_MAX, as_uint(convert_int(too_large)));
   return y;
 }
 #endif
@@ -31111,9 +31492,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint2 convert_uint2_sat(double2 x)
 {
   x = select(x, (double2)(0), (long2)isnan(x));
-  uint2 y = convert_uint2(x);
-  y = select(y, (uint2)0, as_uint2(convert_int2(x < (double2)0)));
-  y = select(y, (uint2)UINT_MAX, as_uint2(convert_int2(x >= (double2)UINT_MAX)));
+  long2 too_small = (long2)(x < (double2)0);
+  long2 too_large = (long2)(x >= (double2)UINT_MAX);
+  uint2 y = convert_uint2(
+      select(x, (double2)(0), (long2)(too_small | too_large)));
+  y = select(y, (uint2)0, as_uint2(convert_int2(too_small)));
+  y = select(y, (uint2)UINT_MAX, as_uint2(convert_int2(too_large)));
   return y;
 }
 #endif
@@ -31123,9 +31507,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint3 convert_uint3_sat(double3 x)
 {
   x = select(x, (double3)(0), (long3)isnan(x));
-  uint3 y = convert_uint3(x);
-  y = select(y, (uint3)0, as_uint3(convert_int3(x < (double3)0)));
-  y = select(y, (uint3)UINT_MAX, as_uint3(convert_int3(x >= (double3)UINT_MAX)));
+  long3 too_small = (long3)(x < (double3)0);
+  long3 too_large = (long3)(x >= (double3)UINT_MAX);
+  uint3 y = convert_uint3(
+      select(x, (double3)(0), (long3)(too_small | too_large)));
+  y = select(y, (uint3)0, as_uint3(convert_int3(too_small)));
+  y = select(y, (uint3)UINT_MAX, as_uint3(convert_int3(too_large)));
   return y;
 }
 #endif
@@ -31135,9 +31522,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint4 convert_uint4_sat(double4 x)
 {
   x = select(x, (double4)(0), (long4)isnan(x));
-  uint4 y = convert_uint4(x);
-  y = select(y, (uint4)0, as_uint4(convert_int4(x < (double4)0)));
-  y = select(y, (uint4)UINT_MAX, as_uint4(convert_int4(x >= (double4)UINT_MAX)));
+  long4 too_small = (long4)(x < (double4)0);
+  long4 too_large = (long4)(x >= (double4)UINT_MAX);
+  uint4 y = convert_uint4(
+      select(x, (double4)(0), (long4)(too_small | too_large)));
+  y = select(y, (uint4)0, as_uint4(convert_int4(too_small)));
+  y = select(y, (uint4)UINT_MAX, as_uint4(convert_int4(too_large)));
   return y;
 }
 #endif
@@ -31147,9 +31537,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint8 convert_uint8_sat(double8 x)
 {
   x = select(x, (double8)(0), (long8)isnan(x));
-  uint8 y = convert_uint8(x);
-  y = select(y, (uint8)0, as_uint8(convert_int8(x < (double8)0)));
-  y = select(y, (uint8)UINT_MAX, as_uint8(convert_int8(x >= (double8)UINT_MAX)));
+  long8 too_small = (long8)(x < (double8)0);
+  long8 too_large = (long8)(x >= (double8)UINT_MAX);
+  uint8 y = convert_uint8(
+      select(x, (double8)(0), (long8)(too_small | too_large)));
+  y = select(y, (uint8)0, as_uint8(convert_int8(too_small)));
+  y = select(y, (uint8)UINT_MAX, as_uint8(convert_int8(too_large)));
   return y;
 }
 #endif
@@ -31159,9 +31552,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint16 convert_uint16_sat(double16 x)
 {
   x = select(x, (double16)(0), (long16)isnan(x));
-  uint16 y = convert_uint16(x);
-  y = select(y, (uint16)0, as_uint16(convert_int16(x < (double16)0)));
-  y = select(y, (uint16)UINT_MAX, as_uint16(convert_int16(x >= (double16)UINT_MAX)));
+  long16 too_small = (long16)(x < (double16)0);
+  long16 too_large = (long16)(x >= (double16)UINT_MAX);
+  uint16 y = convert_uint16(
+      select(x, (double16)(0), (long16)(too_small | too_large)));
+  y = select(y, (uint16)0, as_uint16(convert_int16(too_small)));
+  y = select(y, (uint16)UINT_MAX, as_uint16(convert_int16(too_large)));
   return y;
 }
 #endif
@@ -31171,9 +31567,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 long convert_long_sat(double x)
 {
   x = select(x, (double)(0), (long)isnan(x));
-  long y = convert_long(x);
-  y = select(y, (long)LONG_MIN, convert_long(x < (double)LONG_MIN));
-  y = select(y, (long)LONG_MAX, convert_long(x >= (double)LONG_MAX));
+  long too_small = (long)(x < (double)LONG_MIN);
+  long too_large = (long)(x >= (double)LONG_MAX);
+  long y = convert_long(
+      select(x, (double)(0), (long)(too_small | too_large)));
+  y = select(y, (long)LONG_MIN, convert_long(too_small));
+  y = select(y, (long)LONG_MAX, convert_long(too_large));
   return y;
 }
 #endif
@@ -31183,9 +31582,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 long2 convert_long2_sat(double2 x)
 {
   x = select(x, (double2)(0), (long2)isnan(x));
-  long2 y = convert_long2(x);
-  y = select(y, (long2)LONG_MIN, convert_long2(x < (double2)LONG_MIN));
-  y = select(y, (long2)LONG_MAX, convert_long2(x >= (double2)LONG_MAX));
+  long2 too_small = (long2)(x < (double2)LONG_MIN);
+  long2 too_large = (long2)(x >= (double2)LONG_MAX);
+  long2 y = convert_long2(
+      select(x, (double2)(0), (long2)(too_small | too_large)));
+  y = select(y, (long2)LONG_MIN, convert_long2(too_small));
+  y = select(y, (long2)LONG_MAX, convert_long2(too_large));
   return y;
 }
 #endif
@@ -31195,9 +31597,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 long3 convert_long3_sat(double3 x)
 {
   x = select(x, (double3)(0), (long3)isnan(x));
-  long3 y = convert_long3(x);
-  y = select(y, (long3)LONG_MIN, convert_long3(x < (double3)LONG_MIN));
-  y = select(y, (long3)LONG_MAX, convert_long3(x >= (double3)LONG_MAX));
+  long3 too_small = (long3)(x < (double3)LONG_MIN);
+  long3 too_large = (long3)(x >= (double3)LONG_MAX);
+  long3 y = convert_long3(
+      select(x, (double3)(0), (long3)(too_small | too_large)));
+  y = select(y, (long3)LONG_MIN, convert_long3(too_small));
+  y = select(y, (long3)LONG_MAX, convert_long3(too_large));
   return y;
 }
 #endif
@@ -31207,9 +31612,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 long4 convert_long4_sat(double4 x)
 {
   x = select(x, (double4)(0), (long4)isnan(x));
-  long4 y = convert_long4(x);
-  y = select(y, (long4)LONG_MIN, convert_long4(x < (double4)LONG_MIN));
-  y = select(y, (long4)LONG_MAX, convert_long4(x >= (double4)LONG_MAX));
+  long4 too_small = (long4)(x < (double4)LONG_MIN);
+  long4 too_large = (long4)(x >= (double4)LONG_MAX);
+  long4 y = convert_long4(
+      select(x, (double4)(0), (long4)(too_small | too_large)));
+  y = select(y, (long4)LONG_MIN, convert_long4(too_small));
+  y = select(y, (long4)LONG_MAX, convert_long4(too_large));
   return y;
 }
 #endif
@@ -31219,9 +31627,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 long8 convert_long8_sat(double8 x)
 {
   x = select(x, (double8)(0), (long8)isnan(x));
-  long8 y = convert_long8(x);
-  y = select(y, (long8)LONG_MIN, convert_long8(x < (double8)LONG_MIN));
-  y = select(y, (long8)LONG_MAX, convert_long8(x >= (double8)LONG_MAX));
+  long8 too_small = (long8)(x < (double8)LONG_MIN);
+  long8 too_large = (long8)(x >= (double8)LONG_MAX);
+  long8 y = convert_long8(
+      select(x, (double8)(0), (long8)(too_small | too_large)));
+  y = select(y, (long8)LONG_MIN, convert_long8(too_small));
+  y = select(y, (long8)LONG_MAX, convert_long8(too_large));
   return y;
 }
 #endif
@@ -31231,9 +31642,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 long16 convert_long16_sat(double16 x)
 {
   x = select(x, (double16)(0), (long16)isnan(x));
-  long16 y = convert_long16(x);
-  y = select(y, (long16)LONG_MIN, convert_long16(x < (double16)LONG_MIN));
-  y = select(y, (long16)LONG_MAX, convert_long16(x >= (double16)LONG_MAX));
+  long16 too_small = (long16)(x < (double16)LONG_MIN);
+  long16 too_large = (long16)(x >= (double16)LONG_MAX);
+  long16 y = convert_long16(
+      select(x, (double16)(0), (long16)(too_small | too_large)));
+  y = select(y, (long16)LONG_MIN, convert_long16(too_small));
+  y = select(y, (long16)LONG_MAX, convert_long16(too_large));
   return y;
 }
 #endif
@@ -31243,9 +31657,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ulong convert_ulong_sat(double x)
 {
   x = select(x, (double)(0), (long)isnan(x));
-  ulong y = convert_ulong(x);
-  y = select(y, (ulong)0, as_ulong(convert_long(x < (double)0)));
-  y = select(y, (ulong)ULONG_MAX, as_ulong(convert_long(x >= (double)ULONG_MAX)));
+  long too_small = (long)(x < (double)0);
+  long too_large = (long)(x >= (double)ULONG_MAX);
+  ulong y = convert_ulong(
+      select(x, (double)(0), (long)(too_small | too_large)));
+  y = select(y, (ulong)0, as_ulong(convert_long(too_small)));
+  y = select(y, (ulong)ULONG_MAX, as_ulong(convert_long(too_large)));
   return y;
 }
 #endif
@@ -31255,9 +31672,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ulong2 convert_ulong2_sat(double2 x)
 {
   x = select(x, (double2)(0), (long2)isnan(x));
-  ulong2 y = convert_ulong2(x);
-  y = select(y, (ulong2)0, as_ulong2(convert_long2(x < (double2)0)));
-  y = select(y, (ulong2)ULONG_MAX, as_ulong2(convert_long2(x >= (double2)ULONG_MAX)));
+  long2 too_small = (long2)(x < (double2)0);
+  long2 too_large = (long2)(x >= (double2)ULONG_MAX);
+  ulong2 y = convert_ulong2(
+      select(x, (double2)(0), (long2)(too_small | too_large)));
+  y = select(y, (ulong2)0, as_ulong2(convert_long2(too_small)));
+  y = select(y, (ulong2)ULONG_MAX, as_ulong2(convert_long2(too_large)));
   return y;
 }
 #endif
@@ -31267,9 +31687,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ulong3 convert_ulong3_sat(double3 x)
 {
   x = select(x, (double3)(0), (long3)isnan(x));
-  ulong3 y = convert_ulong3(x);
-  y = select(y, (ulong3)0, as_ulong3(convert_long3(x < (double3)0)));
-  y = select(y, (ulong3)ULONG_MAX, as_ulong3(convert_long3(x >= (double3)ULONG_MAX)));
+  long3 too_small = (long3)(x < (double3)0);
+  long3 too_large = (long3)(x >= (double3)ULONG_MAX);
+  ulong3 y = convert_ulong3(
+      select(x, (double3)(0), (long3)(too_small | too_large)));
+  y = select(y, (ulong3)0, as_ulong3(convert_long3(too_small)));
+  y = select(y, (ulong3)ULONG_MAX, as_ulong3(convert_long3(too_large)));
   return y;
 }
 #endif
@@ -31279,9 +31702,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ulong4 convert_ulong4_sat(double4 x)
 {
   x = select(x, (double4)(0), (long4)isnan(x));
-  ulong4 y = convert_ulong4(x);
-  y = select(y, (ulong4)0, as_ulong4(convert_long4(x < (double4)0)));
-  y = select(y, (ulong4)ULONG_MAX, as_ulong4(convert_long4(x >= (double4)ULONG_MAX)));
+  long4 too_small = (long4)(x < (double4)0);
+  long4 too_large = (long4)(x >= (double4)ULONG_MAX);
+  ulong4 y = convert_ulong4(
+      select(x, (double4)(0), (long4)(too_small | too_large)));
+  y = select(y, (ulong4)0, as_ulong4(convert_long4(too_small)));
+  y = select(y, (ulong4)ULONG_MAX, as_ulong4(convert_long4(too_large)));
   return y;
 }
 #endif
@@ -31291,9 +31717,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ulong8 convert_ulong8_sat(double8 x)
 {
   x = select(x, (double8)(0), (long8)isnan(x));
-  ulong8 y = convert_ulong8(x);
-  y = select(y, (ulong8)0, as_ulong8(convert_long8(x < (double8)0)));
-  y = select(y, (ulong8)ULONG_MAX, as_ulong8(convert_long8(x >= (double8)ULONG_MAX)));
+  long8 too_small = (long8)(x < (double8)0);
+  long8 too_large = (long8)(x >= (double8)ULONG_MAX);
+  ulong8 y = convert_ulong8(
+      select(x, (double8)(0), (long8)(too_small | too_large)));
+  y = select(y, (ulong8)0, as_ulong8(convert_long8(too_small)));
+  y = select(y, (ulong8)ULONG_MAX, as_ulong8(convert_long8(too_large)));
   return y;
 }
 #endif
@@ -31303,9 +31732,12 @@ _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ulong16 convert_ulong16_sat(double16 x)
 {
   x = select(x, (double16)(0), (long16)isnan(x));
-  ulong16 y = convert_ulong16(x);
-  y = select(y, (ulong16)0, as_ulong16(convert_long16(x < (double16)0)));
-  y = select(y, (ulong16)ULONG_MAX, as_ulong16(convert_long16(x >= (double16)ULONG_MAX)));
+  long16 too_small = (long16)(x < (double16)0);
+  long16 too_large = (long16)(x >= (double16)ULONG_MAX);
+  ulong16 y = convert_ulong16(
+      select(x, (double16)(0), (long16)(too_small | too_large)));
+  y = select(y, (ulong16)0, as_ulong16(convert_long16(too_small)));
+  y = select(y, (ulong16)ULONG_MAX, as_ulong16(convert_long16(too_large)));
   return y;
 }
 #endif

@@ -294,6 +294,8 @@ option(ENABLE_VULKAN "Experimental and incomplete driver that uses the Vulkan AP
 
 option(ENABLE_LEVEL0 "Experimental and incomplete driver that uses the Level Zero API for controlling the device. Please refer to the user manual for the status and open tasks" OFF)
 
+option(ENABLE_METAL "Experimental driver for Apple GPUs that uses the Metal API. Kernels are lowered by PoCL's LLVM to Apple's AIR bitcode. Requires macOS and the llvm-downgrade library (-DLLVM_DOWNGRADE_DIR=...)" OFF)
+
 option(ENABLE_NPU "Experimental support for Intel NPU (requires LevelZero driver)" OFF)
 
 option(ENABLE_TBB_DEVICE "Enable the Intel TBB device driver." OFF)
@@ -2479,6 +2481,65 @@ endif()
 
 ##########################################################
 
+if(ENABLE_METAL)
+
+  if(NOT APPLE)
+    message(FATAL_ERROR "The Metal driver is only supported on macOS")
+  endif()
+  if(NOT ENABLE_LLVM)
+    message(FATAL_ERROR "The Metal driver requires ENABLE_LLVM")
+  endif()
+
+  enable_language(OBJC)
+
+  # (PoCL sets CMAKE_FIND_FRAMEWORK to NEVER, so don't use find_library)
+  set(METAL_FRAMEWORK "-framework Metal")
+  set(FOUNDATION_FRAMEWORK "-framework Foundation")
+
+  # libllvm_downgrade (https://github.com/JuliaLLVM/llvm-downgrade) converts
+  # the AIR module emitted by PoCL's LLVM into the older bitcode format
+  # accepted by Metal's library loader.
+  find_path(LLVM_DOWNGRADE_INCLUDE_DIR NAMES llvm-downgrade.h
+            HINTS "${LLVM_DOWNGRADE_DIR}" PATH_SUFFIXES include)
+  find_library(LLVM_DOWNGRADE_LIBRARY NAMES llvm_downgrade
+               HINTS "${LLVM_DOWNGRADE_DIR}" PATH_SUFFIXES lib)
+  if(NOT LLVM_DOWNGRADE_INCLUDE_DIR OR NOT LLVM_DOWNGRADE_LIBRARY)
+    message(FATAL_ERROR "The Metal driver requires libllvm_downgrade "
+      "(https://github.com/JuliaLLVM/llvm-downgrade), built against the same "
+      "LLVM major version as PoCL. Point -DLLVM_DOWNGRADE_DIR=<prefix> to its "
+      "install prefix.")
+  endif()
+  message(STATUS "Metal: using llvm-downgrade ${LLVM_DOWNGRADE_LIBRARY}")
+
+  set(OCL_DRIVERS "${OCL_DRIVERS} metal")
+  set(OCL_TARGETS "${OCL_TARGETS} metal")
+  set(BUILD_METAL 1)
+
+  set(METAL_DEVICE_CL_VERSION_MAJOR 3)
+  set(METAL_DEVICE_CL_VERSION_MINOR 0)
+  set(METAL_DEVICE_CL_VERSION "300")
+  set(METAL_DEVICE_CL_STD "3.0")
+
+  # Metal device: list of extensions that are always enabled.
+  # NOTE: AIR has no generic address space and no fp64.
+  set(METAL_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store \
+    cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics \
+    cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics")
+
+  # Metal device: list of OpenCL 3.0 features that are always enabled
+  set(METAL_DEVICE_FEATURES_30 "__opencl_c_program_scope_global_variables")
+
+  # half is native on all Apple GPUs (the AIR math functions have f16 forms)
+  option(ENABLE_METAL_FP16 "Advertise cl_khr_fp16 on Metal devices" ON)
+  if(ENABLE_METAL_FP16)
+    set(METAL_DEVICE_EXTENSIONS "${METAL_DEVICE_EXTENSIONS} cl_khr_fp16")
+    set(METAL_DEVICE_FEATURES_30 "${METAL_DEVICE_FEATURES_30} __opencl_c_fp16")
+  endif()
+
+endif()
+
+##########################################################
+
 message(STATUS "Building the following device drivers: ${OCL_DRIVERS}")
 
 set(BUILDDIR "${CMAKE_BINARY_DIR}")
@@ -3069,6 +3130,7 @@ MESSAGE(STATUS "ENABLE_CUDNN: ${ENABLE_CUDNN}")
 MESSAGE(STATUS "ENABLE_HOST_CPU_DEVICES: ${ENABLE_HOST_CPU_DEVICES}")
 MESSAGE(STATUS "ENABLE_PRINTF_IMMEDIATE_FLUSH: ${ENABLE_PRINTF_IMMEDIATE_FLUSH}")
 MESSAGE(STATUS "ENABLE_VULKAN: ${ENABLE_VULKAN}")
+MESSAGE(STATUS "ENABLE_METAL: ${ENABLE_METAL}")
 MESSAGE(STATUS "ENABLE_ASAN (address sanitizer): ${ENABLE_ASAN}")
 MESSAGE(STATUS "ENABLE_LSAN (leak sanitizer): ${ENABLE_LSAN}")
 MESSAGE(STATUS "ENABLE_TSAN (thread sanitizer): ${ENABLE_TSAN}")

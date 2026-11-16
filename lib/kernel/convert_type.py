@@ -275,11 +275,17 @@ def generate_saturated_conversion(src, dst, size):
 
   elif src in float_types or src in float16_types:
 
-    # Conversion from float to int
+    # Conversion from float to int. Only convert values in the range of the
+    # destination type: the result of an out-of-range conversion is
+    # undefined (poison in LLVM), and select() may be implemented with
+    # bitwise operations that would propagate it to the saturated lanes.
     print("""  x = select(x, ({SRC}{N})(0), ({BOOL}{N})isnan(x));
-  {DST}{N} y = convert_{DST}{N}(x);
-  y = select(y, ({DST}{N}){DST_MIN}, {BP}(x < ({SRC}{N}){DST_MIN}){BS});
-  y = select(y, ({DST}{N}){DST_MAX}, {BP}(x >= ({SRC}{N}){DST_MAX}){BS});
+  {BOOL}{N} too_small = ({BOOL}{N})(x < ({SRC}{N}){DST_MIN});
+  {BOOL}{N} too_large = ({BOOL}{N})(x >= ({SRC}{N}){DST_MAX});
+  {DST}{N} y = convert_{DST}{N}(
+      select(x, ({SRC}{N})(0), ({BOOL}{N})(too_small | too_large)));
+  y = select(y, ({DST}{N}){DST_MIN}, {BP}(too_small){BS});
+  y = select(y, ({DST}{N}){DST_MAX}, {BP}(too_large){BS});
   return y;""".format(SRC=src, DST=dst, N=size, BOOL=bool_type[src],
       DST_MIN=limit_min[dst], DST_MAX=limit_max[dst],
       BP=bool_prefix, BS=bool_suffix))
