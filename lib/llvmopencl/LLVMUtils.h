@@ -128,6 +128,23 @@ bool isCompilerExpandableWIFunctionCall(const llvm::CallInst &Call);
 POCL_EXPORT
 bool isGVarUsedByFunction(llvm::GlobalVariable *GVar, llvm::Function *F);
 
+/// The local size and global offset that the work-group function of a module
+/// is specialized for, from the WG* module metadata.
+struct WGSpecialization {
+  /// Whether the local size is only known at run time. Otherwise, LocalSize
+  /// holds it.
+  bool DynamicLocalSize = true;
+  unsigned long LocalSize[3] = {0, 0, 0};
+  bool ZeroGlobalOffset = false;
+};
+
+WGSpecialization getWGSpecialization(const llvm::Module &M);
+
+/// Returns the sub-group size of \param F if it is known at compile time, or
+/// else 0. On the CPU devices, it is the intel_reqd_sub_group_size, or else the
+/// local size X.
+uint64_t getConstantSubgroupSize(const llvm::Function &F);
+
 // Checks if the given argument of Func is a local buffer.
 bool isLocalMemFunctionArg(llvm::Function *Func, unsigned ArgIndex);
 

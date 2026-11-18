@@ -1,0 +1,2 @@
+CHECK: @_pocl_kernel_sub_group_sum_workgroup
+CHECK-NOT: loopbarrier
