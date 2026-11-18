@@ -551,6 +551,9 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
   // NOTE: if you add a new PoCL pass here,
   // don't forget to register it in registerPassBuilderPasses
   if (!Dev->spmd) {
+    if (verifyIR())
+      addPass(Passes, "pocl-verify", PassType::Module);
+
     addPass(Passes, "simplifycfg");
     addPass(Passes, "loop-simplify");
 

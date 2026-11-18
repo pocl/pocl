@@ -58,6 +58,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "OptimizeWorkItemGVars.h"
 #include "PHIsToAllocas.h"
 #include "ParallelRegion.h"
+#include "PoCLVerifier.h"
 #include "RemoveBarrierCalls.h"
 #include "SanitizeUBofDivRem.h"
 #include "SubCFGFormation.h"
@@ -703,6 +704,7 @@ void registerPassBuilderPasses(llvm::PassBuilder &PB) {
   FixMinVecSize::registerWithPB(PB);
   OptimizeWorkItemGVars::registerWithPB(PB);
   PHIsToAllocas::registerWithPB(PB);
+  PoCLVerifier::registerWithPB(PB);
   RemoveBarrierCalls::registerWithPB(PB);
   SubCFGFormation::registerWithPB(PB);
   Workgroup::registerWithPB(PB);
@@ -930,6 +932,10 @@ void unifyLLVMFunctionAttributes(llvm::Module &M, bool TouchAlwaysInline) {
       F.addFnAttr("target-cpu", TargetCPU);
     if (!TargetFeatures.empty())
       F.addFnAttr("target-features", TargetFeatures);
+    // Tune every function for the target CPU. Clang 23 tunes the kernel
+    // library for apple-m5 on macOS by default, and AArch64 refuses to inline
+    // across functions tuned for different CPUs (llvm/llvm-project#239528).
+    F.removeFnAttr("tune-cpu");
     // Under -cl-fast-relaxed-math the x86 backend lowers vector float
     // division to rcpps plus one Newton-Raphson step. With FMA the result
     // is within 1 ulp; without it (the x86-64 baseline, and every distro
