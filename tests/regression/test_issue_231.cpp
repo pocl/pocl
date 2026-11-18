@@ -62,6 +62,8 @@ void scan_scan_intervals_lev1(
     };
     // padded in psc_WG_SIZE to avoid bank conflicts
     LOCAL_MEM struct psc_wrapped_scan_type psc_ldata[psc_WG_SIZE];
+    // keep the b-loop, which UnrollBarrierLoops would unroll
+    #pragma nounroll
     for(int i = 0; i < 10; ++i)
     {
         local_barrier();
