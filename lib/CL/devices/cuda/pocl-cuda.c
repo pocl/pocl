@@ -363,8 +363,10 @@ choose_sm_ptx_version_combo (unsigned cuda_version, cl_device_id dev,
   unsigned min_ptx = 0, max_ptx = 0;
   get_valid_ptx_version_range (cuda_version, selected_sm, &min_ptx, &max_ptx);
   /* PTX 8.0 where the SM allows it: what the driver supports at most may
-     exceed what LLVM emits (CUDA 12.7 and later), and targets that worked
-     with the CUDA 12.0 entry of the table keep what they got. */
+     exceed what LLVM emits (CUDA 12.7 to 13.0 accept PTX 8.6 to 9.0, while
+     LLVM 18, 19, 20, and 21 emit at most 8.3, 8.5, 8.7, and 8.8; LLVM 22
+     emits 9.0), and targets that worked with the CUDA 12.0 entry of the
+     table keep what they got. */
   unsigned selected_ptx = (max_ptx > 80 && min_ptx <= 80) ? 80 : max_ptx;
 
   /* If we can emit PTX within version range [6.0, 6.3] for the
