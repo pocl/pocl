@@ -127,7 +127,7 @@ jobs:
             runCMake -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_ICD=1 -DKERNELLIB_HOST_CPU_VARIANTS=distro \
                 -DPOCL_ICD_ABSOLUTE_PATH=OFF -DENABLE_POCL_BUILDING=OFF -DSTATIC_LLVM=1
           elif [ "${{ matrix.config }}" == "DBKs" ]; then
-            runCMake -DENABLE_ICD=1 -DENABLE_HOST_CPU_DEVICES=1 -DLLC_HOST_CPU=haswell
+            runCMake -DENABLE_ICD=1 -DENABLE_HOST_CPU_DEVICES=1
           else
             echo "Unknown configuration" && exit 1
           fi

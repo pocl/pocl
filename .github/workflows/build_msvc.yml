@@ -111,7 +111,7 @@ jobs:
           copy %DEPS_DIR%\lib\zstd.lib %DEPS_DIR%\lib\zstd.dll.lib
 
           if ${{ matrix.config == 'nsis' }}==false (
-            set "EXTRA_FLAGS=-DLLC_HOST_CPU=haswell"
+            set "EXTRA_FLAGS="
           ) else (
             set "EXTRA_FLAGS=-DENABLE_LOADABLE_DRIVERS=0 -DENABLE_EXAMPLES=0 -DENABLE_TESTS=0 -DENABLE_CONFORMANCE=1 -DENABLE_RELOCATION=1 -DKERNELLIB_HOST_CPU_VARIANTS=distro -DENABLE_POCL_BUILDING=0"
           )
