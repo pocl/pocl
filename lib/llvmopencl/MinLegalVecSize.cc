@@ -172,12 +172,12 @@ static uint64_t getAndFixLargestVecSize(llvm::Function *F, unsigned Justify) {
   return MinVecSize;
 }
 
-// find all kernels with SPIR_KERNEL CC and recursively fix their
-// "min-legal-vector-width" attributes to the correct value. If any
-// called function has its "min-legal-vector-width" larger than
+// find all kernels and recursively fix their "min-legal-vector-width"
+// attributes to the correct value. This can't rely on the SPIR_KERNEL CC:
+// since LLVM 23, Clang gives OpenCL C kernels for CPU targets the C CC.
+// If any called function has its "min-legal-vector-width" larger than
 // the device's native vector width size, also set the AlwaysInline
 // attribute on that function
-// the kernels htemselves are
 static bool fixMinVecSize(Module &M) {
 
   unsigned long DeviceNativeVectorWidth = 0;
@@ -194,20 +194,14 @@ static bool fixMinVecSize(Module &M) {
       continue;
 
     // AttributeSet Attrs;
-    if (pocl::isKernelToProcess(*F) &&
-        (F->getCallingConv() == llvm::CallingConv::SPIR_KERNEL)) {
+    if (pocl::isKernelToProcess(*F)) {
 #ifdef DEBUG_VEC_SIZE
       std::cerr << "processing kernel: " << F->getName().str() << "\n";
 #endif
-      llvm::Attribute Attr = F->getFnAttribute("min-legal-vector-width");
-      if (Attr.isValid()) {
-        continue;
-      }
-
       getAndFixLargestVecSize(F, 0);
 
 #ifdef DEBUG_VEC_SIZE
-      Attr = F->getFnAttribute("min-legal-vector-width");
+      llvm::Attribute Attr = F->getFnAttribute("min-legal-vector-width");
       uint64_t NewWidth = 0;
       Attr.getValueAsString().getAsInteger(0, NewWidth);
       std::cerr << "Set kernel attr min-legal-vector-width to : " << NewWidth

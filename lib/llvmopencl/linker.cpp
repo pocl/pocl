@@ -211,7 +211,6 @@ static void fixCallingConv(llvm::Module *Mod, std::string &Log) {
         // Loosen the CC to the default one. It should be always the
         // preferred one to SPIR_FUNC at this stage.
         // note: this is necessary for working SPIR-V on Apple ARM64 target
-        // note: must not change the SPIR_KERNEL CC because of MinLegalVecSize
         if (Callee->getCallingConv() == llvm::CallingConv::SPIR_FUNC ||
             CallInstr->getCallingConv() == llvm::CallingConv::SPIR_FUNC) {
           Callee->setCallingConv(llvm::CallingConv::C);
