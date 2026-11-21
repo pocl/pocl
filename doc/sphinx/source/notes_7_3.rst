@@ -60,6 +60,8 @@ CUDA driver
   threaded queue handling
 * Remove threaded queue handling and POCL_CUDA_DISABLE_QUEUE_THREADS
   environment variable
+* The SM 7.0 kernel library builds where Clang finds no CUDA installation,
+  in which case it chose PTX 4.2, which lacks the ``.sync`` warp intrinsics.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Remote driver
