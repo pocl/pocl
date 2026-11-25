@@ -244,6 +244,8 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
                                                                         : 0;
         }
 
+      /* The completion marker stands for the whole command buffer. */
+      final_ev->command_type = CL_COMMAND_COMMAND_BUFFER_KHR;
       final_ev->release_command_buffer = CL_TRUE;
       final_ev->command_buffer = command_buffer;
 

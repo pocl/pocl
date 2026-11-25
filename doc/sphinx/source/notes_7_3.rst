@@ -49,6 +49,9 @@ Runtime fixes & features
 * Command-buffer commands other than `clCommandNDRangeKernelKHR` now return
   `CL_INVALID_VALUE` when passed a non-NULL `mutable_handle`, instead of
   returning a handle to an internal command.
+* The event returned by `clEnqueueCommandBufferKHR` now reports
+  `CL_COMMAND_COMMAND_BUFFER_KHR` as its command type on all devices, instead
+  of `CL_COMMAND_MARKER` on devices without native command buffers.
 
 ===========================
 Driver-specific features
