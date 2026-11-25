@@ -587,13 +587,17 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
                                                 device->local_mem_size);
   device->final_linkage_flags = final_ld_flags;
 
-#ifndef ENABLE_CONFORMANCE
   device->cmdbuf_capabilities
-    = CL_COMMAND_BUFFER_CAPABILITY_SIMULTANEOUS_USE_KHR
-      | CL_COMMAND_BUFFER_CAPABILITY_KERNEL_PRINTF_KHR
+    = CL_COMMAND_BUFFER_CAPABILITY_KERNEL_PRINTF_KHR
       | CL_COMMAND_BUFFER_CAPABILITY_MULTIPLE_QUEUE_KHR;
   device->cmdbuf_required_properties = 0;
   device->cmdbuf_supported_properties = device->on_host_queue_props;
+
+#ifndef ENABLE_CONFORMANCE
+  /* cl_khr_command_buffer_mutable_dispatch, which simultaneous use belongs
+   * to, is not advertised in conformance builds. */
+  device->cmdbuf_capabilities
+    |= CL_COMMAND_BUFFER_CAPABILITY_SIMULTANEOUS_USE_KHR;
   /* TBD: arguments, in particular buffers, require more work
    * because of migration commands */
   device->cmdbuf_mutable_dispatch_capabilities
