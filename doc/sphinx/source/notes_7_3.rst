@@ -46,6 +46,10 @@ Runtime fixes & features
   `clEnqueueCommandBufferKHR` only need to target the same device, and
   commands recorded with an in-order queue stay ordered on any queue.
 
+* The event returned by `clEnqueueCommandBufferKHR` now reports
+  `CL_COMMAND_COMMAND_BUFFER_KHR` as its command type on all devices, instead
+  of `CL_COMMAND_MARKER` on devices without native command buffers.
+
 ===========================
 Driver-specific features
 ===========================
