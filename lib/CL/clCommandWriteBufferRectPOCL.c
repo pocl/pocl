@@ -48,7 +48,7 @@ POname (clCommandWriteBufferRectPOCL) (
     command_buffer, &command_queue, mutable_handle);
   if (errcode != CL_SUCCESS)
     return errcode;
-  SETUP_MUTABLE_HANDLE;
+  SETUP_COMMAND_HANDLE;
 
   errcode = pocl_write_buffer_rect_common (
     command_buffer, command_queue, buffer, buffer_origin, host_origin, region,

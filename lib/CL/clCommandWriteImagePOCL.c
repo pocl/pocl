@@ -45,7 +45,7 @@ POname (clCommandWriteImagePOCL) (
     command_buffer, &command_queue, mutable_handle);
   if (errcode != CL_SUCCESS)
     return errcode;
-  SETUP_MUTABLE_HANDLE;
+  SETUP_COMMAND_HANDLE;
 
   errcode = pocl_write_image_common (
     command_buffer, command_queue, image, origin, region, row_pitch,
