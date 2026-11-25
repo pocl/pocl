@@ -69,6 +69,9 @@ CUDA driver
   environment variable
 * The SM 7.0 kernel library builds where Clang finds no CUDA installation,
   in which case it chose PTX 4.2, which lacks the ``.sync`` warp intrinsics.
+* SM 10.0 and later (``POCL_CUDA_GPU_ARCH=sm_100`` and newer) get the PTX
+  version they need (8.6 to 9.0) with CUDA 12.7 and later; SM 8.x and 9.0
+  keep PTX 8.0.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Remote driver
