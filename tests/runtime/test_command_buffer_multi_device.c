@@ -176,11 +176,8 @@ main (int _argc, char **_argv)
 
   /* Adapted from test_command_buffer in order to cover a wide range of
    * commands in the remap operation */
-  cl_command_buffer_properties_khr props[]
-    = { CL_COMMAND_BUFFER_FLAGS_KHR, CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR,
-        0 };
   cl_command_buffer_khr command_buffer
-    = ext.clCreateCommandBufferKHR (num_devices, queues, props, &error);
+    = ext.clCreateCommandBufferKHR (num_devices, queues, NULL, &error);
   CHECK_CL_ERROR (error);
 
   cl_mem buffer_src1
