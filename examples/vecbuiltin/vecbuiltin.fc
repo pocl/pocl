@@ -1,22 +1,28 @@
 # test autovectorization of builtins
+#
+# With a vector math library, the loop vectorizer may call its vector
+# variants (_ZGV* for libmvec and SLEEF, __svml_* for SVML) directly
+# instead of emitting vector intrinsics; a call of either means the builtin
+# was vectorized. (Vector library declarations alone don't: they are added
+# even when the calls stay scalar.)
 
-# CHECK: llvm.sin.v
-# CHECK: llvm.cos.v
-# CHECK: llvm.log2.v
-# CHECK: llvm.pow.v
-# CHECK: llvm.exp.v
-# CHECK: llvm.exp2.v
-# CHECK: llvm.fabs.v
-# CHECK: llvm.fma.v
-# CHECK: llvm.maxnum.v
-# CHECK: llvm.minnum.v
-# CHECK: llvm.log10.v
-# CHECK: llvm.log.v
-# CHECK: llvm.rint.v
-# CHECK: llvm.round.v
-# CHECK: llvm.sqrt.v
-# CHECK: llvm.ceil.v
-# CHECK: llvm.tan.v
-# CHECK: llvm.powi.v
-# CHECK: llvm.floor.v
-# CHECK: llvm.trunc.v
+# CHECK-DAG: call {{.*}}{{@llvm\.sin\.v|@_ZGV[A-Za-z0-9]+_sinf\(|@__svml_sinf[0-9]+\(}}
+# CHECK-DAG: call {{.*}}{{@llvm\.cos\.v|@_ZGV[A-Za-z0-9]+_cosf\(|@__svml_cosf[0-9]+\(}}
+# CHECK-DAG: call {{.*}}{{@llvm\.log2\.v|@_ZGV[A-Za-z0-9]+_log2f\(|@__svml_log2f[0-9]+\(}}
+# CHECK-DAG: call {{.*}}{{@llvm\.pow\.v|@_ZGV[A-Za-z0-9]+_powf\(|@__svml_powf[0-9]+\(}}
+# CHECK-DAG: call {{.*}}{{@llvm\.exp\.v|@_ZGV[A-Za-z0-9]+_expf\(|@__svml_expf[0-9]+\(}}
+# CHECK-DAG: call {{.*}}{{@llvm\.exp2\.v|@_ZGV[A-Za-z0-9]+_exp2f\(|@__svml_exp2f[0-9]+\(}}
+# CHECK-DAG: llvm.fabs.v
+# CHECK-DAG: llvm.fma.v
+# CHECK-DAG: llvm.maxnum.v
+# CHECK-DAG: llvm.minnum.v
+# CHECK-DAG: call {{.*}}{{@llvm\.log10\.v|@_ZGV[A-Za-z0-9]+_log10f\(|@__svml_log10f[0-9]+\(}}
+# CHECK-DAG: call {{.*}}{{@llvm\.log\.v|@_ZGV[A-Za-z0-9]+_logf\(|@__svml_logf[0-9]+\(}}
+# CHECK-DAG: llvm.rint.v
+# CHECK-DAG: llvm.round.v
+# CHECK-DAG: llvm.sqrt.v
+# CHECK-DAG: llvm.ceil.v
+# CHECK-DAG: call {{.*}}{{@llvm\.tan\.v|@_ZGV[A-Za-z0-9]+_tanf\(|@__svml_tanf[0-9]+\(}}
+# CHECK-DAG: llvm.powi.v
+# CHECK-DAG: llvm.floor.v
+# CHECK-DAG: llvm.trunc.v
