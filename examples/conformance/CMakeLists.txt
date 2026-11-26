@@ -85,7 +85,7 @@ if(CUSTOM_CTS_GIT_TAG)
   set(CTS_GIT_TAG "${CUSTOM_CTS_GIT_TAG}")
 else()
   # Use PoCL's fork which has pending fixes.
-  set(CTS_GIT_TAG "v2026.11.08")
+  set(CTS_GIT_TAG "v2026.11.26")
 endif()
 
 set(TS_BUILDDIR "${TS_BUILDDIR}/test_conformance")
@@ -891,7 +891,8 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_images_micro_samplerless_reads_2Darray"
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_integer_ops_micro_1"
          COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops" ${EXTRA_ARGS} integer_clz  integer_hadd  integer_rhadd  integer_mul_hi  integer_rotate  integer_clamp  integer_mad_sat  integer_mad_hi  integer_min  integer_max  integer_addAssign  integer_subtractAssign  integer_multiplyAssign  integer_divideAssign  integer_moduloAssign)
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_integer_ops_micro_3"
-         COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops" ${EXTRA_ARGS}  quick_long_math  quick_long_logic  quick_ulong_shift  quick_ulong_compare  quick_uint_math  quick_uint_logic  quick_int_shift  quick_int_compare  quick_short_math  quick_short_logic  quick_ushort_shift  quick_ushort_compare  quick_char_math  quick_char_logic  quick_uchar_shift  quick_uchar_compare)
+         COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops" ${EXTRA_ARGS}  long_math  long_logic  ulong_shift  ulong_compare  uint_math  uint_logic  int_shift  int_compare  short_math  short_logic  ushort_shift  ushort_compare  char_math  char_logic  uchar_shift  uchar_compare)
+set_property(TEST "${TS_NAME}${TS_SUFFIX}_integer_ops_micro_3" PROPERTY ENVIRONMENT "CL_WIMPY_MODE=1")
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_thread_dimensions_micro"
          COMMAND "${TS_BUILDDIR}/thread_dimensions/test_thread_dimensions" ${EXTRA_ARGS} quick_1d_explicit_local  quick_2d_explicit_local  quick_3d_explicit_local  quick_1d_implicit_local  quick_2d_implicit_local  quick_3d_implicit_local)
@@ -1086,7 +1087,7 @@ foreach(CTSTEST IN LISTS CTS_MICRO_LIST)
     APPEND PROPERTY
     LABELS "${CTS_LABEL}")
   set_property(TEST ${CTSTEST}
-    PROPERTY
+    APPEND PROPERTY
     ENVIRONMENT "POCL_MEMORY_LIMIT=1;CL_PLATFORM_NAME=Portable")
   if(ENABLE_LEVEL0)
     if(CTSTEST IN_LIST CTS_LEVEL0_BLACKLIST)

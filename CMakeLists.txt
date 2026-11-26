@@ -1847,7 +1847,7 @@ option(HOST_CPU_ENABLE_STACK_SIZE_CHECK "enable stack size checking for CPU devi
 if(NOT ENABLE_CONFORMANCE)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} \
       cl_pocl_svm_rect cl_pocl_command_buffer_svm \
-      cl_khr_command_buffer cl_khr_command_buffer_multi_device cl_khr_command_buffer_mutable_dispatch \
+      cl_khr_command_buffer_mutable_dispatch \
       cl_pocl_command_buffer_host_buffer")
 
   if (HAVE_LIBXSMM OR HAVE_ONNXRT OR HAVE_LIBJPEG_TURBO OR HAVE_OPENCV)
@@ -1861,8 +1861,13 @@ cl_intel_subgroups cl_intel_subgroups_short cl_intel_subgroups_char cl_intel_req
   set(HOST_DEVICE_FEATURES  "${HOST_DEVICE_FEATURES} __opencl_c_subgroups")
 endif()
 set(HOST_DEVICE_FEATURES  "${HOST_DEVICE_FEATURES} __opencl_c_read_write_images")
+set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} \
+    cl_khr_command_buffer cl_khr_command_buffer_multi_device")
 
 # Extensions that are considered feature-complete (preferably CTS-tested).
+#
+# * cl_khr_command_buffer, cl_khr_command_buffer_multi_device: pass the
+# extensions/cl_khr_command_buffer CTS.
 #
 # * cl_khr_subgroups: A simple implementation where SG is always the whole local
 # X-dimension. NOTE: Independent forward progress is not yet supported, but it's
@@ -1871,6 +1876,9 @@ set(HOST_DEVICE_FEATURES  "${HOST_DEVICE_FEATURES} __opencl_c_read_write_images"
 
 # Extensions that are work-in-progress with known unfinished aspects.
 # These are not advertised with a conformant build.
+#
+# * cl_khr_command_buffer_mutable_dispatch: implements version 0.9.4; its CTS
+#   requires 0.9.5 (recording kernels before their arguments are set).
 #
 # * cl_khr_subgroup_shuffle: Passes the CTS, but only because it doesn't test
 #   non-uniform(lock-step) behavior, see:

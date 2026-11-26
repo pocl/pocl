@@ -25,8 +25,8 @@ Conformance related CMake options
     * cl_khr_subgroup_{ballot,shuffle} are disabled
     * cl_intel_subgroups, cl_intel_subgroups_short, cl_intel_subgroups_char
       and cl_intel_required_subgroup_size are disabled
-    * cl_khr_command_buffer, cl_khr_command_buffer_multi_device and
-      cl_khr_command_buffer_mutable_dispatch are disabled, as are
+    * cl_khr_command_buffer_mutable_dispatch is disabled (cl_khr_command_buffer
+      and cl_khr_command_buffer_multi_device stay enabled), as are
       cl_pocl_command_buffer_svm and cl_pocl_command_buffer_host_buffer
     * cl_pocl_svm_rect and cl_exp_tensor are disabled
     * cl_exp_defined_builtin_kernels is disabled

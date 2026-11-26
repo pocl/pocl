@@ -919,6 +919,17 @@ pocl_basic_get_device_info_ext (cl_device_id device, cl_device_info param_name,
         POCL_RETURN_GETINFO_ARRAY (size_t, sizeof (sizes) / sizeof (size_t),
                                    sizes);
       }
+    /* The driver's own scheduler resolves the dependencies between its
+       commands, so a CPU device synchronizes with itself natively. */
+    case CL_DEVICE_COMMAND_BUFFER_NUM_SYNC_DEVICES_KHR:
+      POCL_RETURN_GETINFO (cl_uint, 1);
+    case CL_DEVICE_COMMAND_BUFFER_SYNC_DEVICES_KHR:
+      {
+        cl_device_id root = device;
+        while (root->parent_device)
+          root = root->parent_device;
+        POCL_RETURN_GETINFO_ARRAY (cl_device_id, 1, &root);
+      }
     default:
       POCL_MSG_ERR ("Unknown param_name for get_device_info_ext: %u\n",
                     param_name);
