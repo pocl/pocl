@@ -59,6 +59,8 @@ Runtime fixes & features
 * `cl_khr_command_buffer` and `cl_khr_command_buffer_multi_device` are now
   advertised by the CPU devices in conformance builds (`ENABLE_CONFORMANCE=ON`);
   `cl_khr_command_buffer_mutable_dispatch` still is not.
+* The Level Zero driver now advertises `cl_khr_command_buffer` in conformance
+  builds too, and reports its supported command-buffer queue properties.
 
 ===========================
 Driver-specific features
