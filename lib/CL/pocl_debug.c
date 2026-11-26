@@ -84,6 +84,8 @@ void pocl_debug_messages_setup(const char *debug) {
       pocl_debug_messages_filter |= POCL_DEBUG_FLAG_LEVEL0;
     else if (strncmp(ptr, "vulkan", 6) == 0)
       pocl_debug_messages_filter |= POCL_DEBUG_FLAG_VULKAN;
+    else if (strncmp(ptr, "metal", 5) == 0)
+      pocl_debug_messages_filter |= POCL_DEBUG_FLAG_METAL;
     else if (strncmp(ptr, "remote", 6) == 0)
       pocl_debug_messages_filter |= POCL_DEBUG_FLAG_REMOTE;
     else if (strncmp(ptr, "event", 5) == 0)

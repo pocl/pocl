@@ -13,5 +13,6 @@ Pocl currently supports the following device drivers:
    almaif
    proxy
    vulkan
+   metal
    level0
    remote

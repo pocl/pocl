@@ -476,3 +476,5 @@ endif()
 
 add_symlink_to_built_opencl_dynlib(
   kernel test_shuffle image_query_funcs sampler_address_clamp)
+
+add_metal_label_to_directory_tests()

@@ -568,3 +568,9 @@ set_tests_properties(
 "changing the value at global_id: 6, local_id 2, group_id 1, to: 3
 value is changed at global_id: 6, local_id 2, group_id 1, to: 3
 ")
+
+add_metal_label_to_directory_tests(
+  # images
+  "regression/test_issue_2174_loopvec" "regression/test_issue_2174_cbs"
+  # USM
+  "regression/test_usm_free_realloc")

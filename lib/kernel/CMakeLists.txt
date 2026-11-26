@@ -222,6 +222,10 @@ if(OCL_TARGETS MATCHES "cuda")
   add_subdirectory("cuda")
 endif()
 
+if(OCL_TARGETS MATCHES "metal")
+  add_subdirectory("metal")
+endif()
+
 if (ENABLE_MLIR)
   add_subdirectory("mlir")
 endif()

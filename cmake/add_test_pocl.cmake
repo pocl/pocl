@@ -168,3 +168,21 @@ function(add_test_pocl)
   endforeach()
 
 endfunction()
+
+# Adds the "metal" label to all tests defined so far in the current directory,
+# except the ones listed as arguments (which need features the Metal driver
+# doesn't support, or expect CPU-specific behavior). Call it at the end of a
+# test directory's CMakeLists.txt; "ctest -L metal" then runs the tests that
+# are expected to pass on Metal devices.
+function(add_metal_label_to_directory_tests)
+  if(NOT ENABLE_METAL)
+    return()
+  endif()
+  get_property(DIR_TESTS DIRECTORY PROPERTY TESTS)
+  if(ARGN)
+    list(REMOVE_ITEM DIR_TESTS ${ARGN})
+  endif()
+  if(DIR_TESTS)
+    set_property(TEST ${DIR_TESTS} APPEND PROPERTY LABELS "metal")
+  endif()
+endfunction()

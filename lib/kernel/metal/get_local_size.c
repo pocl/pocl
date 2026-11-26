@@ -1,0 +1,33 @@
+/* OpenCL built-in library: get_local_size() for the Metal (AIR) target
+
+   Copyright (c) 2026 PoCL developers
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
+*/
+
+#include "air_workitem.h"
+
+/* threads_per_threadgroup is the size of the current (possibly partial)
+   threadgroup when dispatching a non-uniform grid, which matches the OpenCL
+   semantics of get_local_size(). */
+size_t _CL_OVERLOADABLE
+get_local_size (unsigned int dimindx)
+{
+  return dimindx < 3 ? _pocl_air_threads_per_threadgroup[dimindx] : 1;
+}

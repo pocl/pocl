@@ -232,3 +232,17 @@ set_property(TEST
   APPEND PROPERTY LABELS "mlir")
 
 add_symlink_to_built_opencl_dynlib(run_kernel)
+
+add_metal_label_to_directory_tests(
+  # sub-groups
+  "workgroup/ballot_loopvec" "workgroup/ballot_cbs"
+  # these compare printf output that assumes the work-groups run one after
+  # the other, but they run concurrently on GPUs
+  "workgroup/unconditional_barriers_loopvec"
+  "workgroup/unconditional_barriers_cbs"
+  "workgroup/conditional_barrier_cbs"
+  "workgroup/forcing_horizontal_parallelization_to_some_outer_loopvec"
+  "workgroup/b_loop_with_two_latches_loopvec"
+  "workgroup/b_loop_with_two_latches_cbs"
+  "workgroup/issue_548_convergent_propagation_loopvec"
+  "workgroup/issue_548_convergent_propagation_cbs")

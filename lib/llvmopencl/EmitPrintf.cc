@@ -293,7 +293,9 @@ callBufferedPrintfStart(IRBuilder<> &Builder, SmallVector<llvm::Value *> &Args,
         Constant *C = dyn_cast<Constant>(Args[i]);
         assert(PT);
         assert(C);
-        if (C->isNullValue()) {
+        // look through address space casts: "(void *)0" is an addrspacecast
+        // of a generic null pointer on targets with a generic address space
+        if (C->stripPointerCasts()->isNullValue()) {
           GlobalVariable *Replace = M->getNamedGlobal("__pocl_nullptr_string");
           if (Replace == nullptr) {
             Constant *C =
