@@ -252,11 +252,16 @@ list(APPEND SOURCES_WITH_SLEEF "host/addrspace_operators.ll" "host/addrspace_ope
 # if ENABLE_HOST_CPU_VECTORIZE_BUILTINS is enabled, use Clang/LLVM builtins
 # this makes vectorization of (some) OpenCL builtins possible,
 # while also making FP16 versions available (if FP16 is available)
+#
+# frexp is deliberately not swapped: no vector library provides it, so
+# llvm.frexp only ever becomes one libm call per lane, while libclc's version
+# is integer bit manipulation that vectorizes on its own. llvm.frexp on
+# vectors is also miscompiled on x86 below AVX2 by LLVM 22 and 23.1.0-23.1.2
+# (llvm/llvm-project#224127), which broke double powr and rootn there.
 if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS) # implies CONFORMANCE=OFF
   list(REMOVE_ITEM SOURCES_WITH_SLEEF
     libclc-pocl/cos.cl
     libclc-pocl/cosh.cl
-    libclc-pocl/frexp.cl
     libclc-pocl/isinf.cl
     libclc-pocl/isnan.cl
     libclc-pocl/isfinite.cl
@@ -316,7 +321,6 @@ if(ENABLE_HOST_CPU_VECTORIZE_BUILTINS) # implies CONFORMANCE=OFF
     fmax.cl
     fmin.cl
     floor.cl
-    frexp.cl
 
     isfinite.cl
     isinf.cl
