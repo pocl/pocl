@@ -52,8 +52,10 @@ jobs:
         include:
           - llvm: 22
             config: chipstar
-          - llvm: 20
-            config: openvx
+          # temporarily disabled due to large number of out-of-bound accesses by kernel
+          # causing frequent crashes of CI
+          #- llvm: 20
+          #  config: openvx
           - llvm: 20
             config: basic
           - llvm: 22
