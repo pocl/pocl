@@ -349,8 +349,10 @@ pocl_cpu_init_common (cl_device_id device, unsigned dev_i)
        */
       device->sub_group_independent_forward_progress = CL_TRUE;
 
-      /* Just an arbitrary number here based on assumption of SG size 32. */
-      device->max_num_sub_groups = device->max_work_group_size / 32;
+      /* The smallest sub-group size is 1: the default sub-group spans
+         dimension x, which can be 1, and intel_reqd_sub_group_size accepts
+         1 (see CL_DEVICE_SUB_GROUP_SIZES_INTEL). */
+      device->max_num_sub_groups = device->max_work_group_size;
     }
 
   if (device->builtin_kernel_list

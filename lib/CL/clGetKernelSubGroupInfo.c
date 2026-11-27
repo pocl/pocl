@@ -75,8 +75,15 @@ CL_API_ENTRY cl_int CL_API_ENTRY POname (clGetKernelSubGroupInfo) (
     {
       POCL_RETURN_ERROR_ON ((input_value == NULL
                              || input_value_size < sizeof (size_t)
-                             || input_value_size > sizeof (size_t) * 3),
+                             || input_value_size > sizeof (size_t) * 3
+                             || input_value_size % sizeof (size_t) != 0),
                             CL_INVALID_VALUE, "NDRange not given.");
+    }
+  if (param_name == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT)
+    {
+      POCL_RETURN_ERROR_ON (
+        (input_value == NULL || input_value_size != sizeof (size_t)),
+        CL_INVALID_VALUE, "Sub-group count not given.");
     }
 
   /************************************************************************/
@@ -88,8 +95,12 @@ CL_API_ENTRY cl_int CL_API_ENTRY POname (clGetKernelSubGroupInfo) (
     case CL_KERNEL_MAX_NUM_SUB_GROUPS:
       if (device_meta->max_subgroups > 0)
         POCL_RETURN_GETINFO (size_t, device_meta->max_subgroups);
-      else
+      /* otherwise the bound depends on how the driver forms sub-groups */
+      if (realdev->ops->get_subgroup_info_ext == NULL)
         POCL_RETURN_GETINFO (size_t, realdev->max_num_sub_groups);
+      return realdev->ops->get_subgroup_info_ext (
+        realdev, kernel, dev_i, param_name, input_value_size, input_value,
+        param_value_size, param_value, param_value_size_ret);
 
     case CL_KERNEL_COMPILE_NUM_SUB_GROUPS:
       POCL_RETURN_GETINFO (size_t, device_meta->compile_subgroups);

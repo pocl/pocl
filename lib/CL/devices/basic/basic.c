@@ -937,6 +937,17 @@ pocl_basic_get_device_info_ext (cl_device_id device, cl_device_info param_name,
     }
 }
 
+/* The work-group size limit of a kernel, which the stack size estimate can
+   lower below the device limit. */
+static size_t
+basic_kernel_max_wg (cl_device_id device,
+                     cl_kernel kernel,
+                     unsigned program_device_i)
+{
+  size_t max_wg = kernel->meta->devices[program_device_i].max_workgroup_size;
+  return max_wg > 0 ? max_wg : device->max_work_group_size;
+}
+
 cl_int
 pocl_basic_get_subgroup_info_ext (cl_device_id device,
                                   cl_kernel kernel,
@@ -972,33 +983,62 @@ pocl_basic_get_subgroup_info_ext (cl_device_id device,
                               : 1);
         /* Round up to account for a possibly smaller last SG. */
         size_t sg_count = sg_size ? (wg_size + sg_size - 1) / sg_size : 0;
-        POCL_RETURN_GETINFO (size_t,
-                             min (device->max_num_sub_groups, sg_count));
+        POCL_RETURN_GETINFO (size_t, sg_count);
+      }
+    case CL_KERNEL_MAX_NUM_SUB_GROUPS:
+      {
+        const size_t *reqd_wg = kernel->meta->reqd_wg_size;
+        size_t reqd = kernel->meta->reqd_sub_group_size;
+        size_t n;
+        if (reqd_wg[0] > 0)
+          /* the default sub-group spans the whole x dimension */
+          n = reqd > 0
+                ? (reqd_wg[0] * reqd_wg[1] * reqd_wg[2] + reqd - 1) / reqd
+                : reqd_wg[1] * reqd_wg[2];
+        else
+          {
+            size_t max_wg
+              = basic_kernel_max_wg (device, kernel, program_device_i);
+            n = reqd > 0 ? (max_wg + reqd - 1) / reqd : max_wg;
+          }
+        POCL_RETURN_GETINFO (size_t, n);
       }
     case CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT:
       {
-        POCL_RETURN_ERROR_ON ((input_value == NULL), CL_INVALID_VALUE,
-                              "SG size wish not given.");
         size_t n_wish = *(size_t *)input_value;
-        /* For now assume SG == WG_x and the simplest way of looping only at
-           y dimension. Use magic number 32 as the preferred SG size for now.
-         */
-        size_t nd[3];
-        if (n_wish > device->max_num_sub_groups
-            || (n_wish > 1 && param_value_size / sizeof (size_t) == 1))
+        size_t dims = param_value_size / sizeof (size_t);
+        POCL_RETURN_ERROR_ON ((dims > 3), CL_INVALID_VALUE,
+                              "Local size has more than 3 dimensions.");
+
+        /* The spec asks for a one-dimensional local size that yields
+           exactly n_wish full sub-groups, or zeros if there is none. */
+        const size_t *reqd_wg = kernel->meta->reqd_wg_size;
+        size_t reqd = kernel->meta->reqd_sub_group_size;
+        size_t nd[3] = { 0, 0, 0 };
+        if (reqd_wg[0] > 0)
           {
-            nd[0] = nd[1] = nd[2] = 0;
-            POCL_RETURN_GETINFO_ARRAY (size_t,
-                                       param_value_size / sizeof (size_t), nd);
+            /* the default sub-group spans the whole x dimension */
+            size_t n = reqd > 0 ? (reqd_wg[0] + reqd - 1) / reqd : 1;
+            if (reqd_wg[1] == 1 && reqd_wg[2] == 1 && n == n_wish)
+              nd[0] = reqd_wg[0];
           }
         else
           {
-            nd[0] = device->max_work_group_size / n_wish;
-            nd[1] = n_wish;
-            nd[2] = 1;
-            POCL_RETURN_GETINFO_ARRAY (size_t,
-                                       param_value_size / sizeof (size_t), nd);
+            size_t max_wg
+              = basic_kernel_max_wg (device, kernel, program_device_i);
+            if (max_wg > device->max_work_item_sizes[0])
+              max_wg = device->max_work_item_sizes[0];
+            if (reqd > 0)
+              {
+                if (n_wish > 0 && n_wish <= max_wg / reqd)
+                  nd[0] = n_wish * reqd;
+              }
+            else if (n_wish == 1)
+              nd[0] = max_wg;
           }
+        if (nd[0] > 0)
+          nd[1] = nd[2] = 1;
+        POCL_RETURN_GETINFO_ARRAY (size_t, dims, nd);
       }
     default:
       POCL_RETURN_ERROR (CL_INVALID_VALUE, "Unknown param_name: %u\n",
