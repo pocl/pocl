@@ -237,6 +237,33 @@ SUB_GROUP_SHUFFLE_XOR_VEC (int)
 SUB_GROUP_SHUFFLE_XOR_VEC (uint)
 #endif
 
+/* The result for a source outside the sub-group is undefined; like CUDA's
+   __shfl_up/down_sync, return the work-item's own value. */
+#define SUB_GROUP_SHUFFLE_RELATIVE_T(TYPE)                                    \
+  TYPE _CL_OVERLOADABLE sub_group_shuffle_up (TYPE val, uint delta)           \
+  {                                                                           \
+    uint lid = get_sub_group_local_id ();                                     \
+    return sub_group_shuffle (val, delta <= lid ? lid - delta : lid);         \
+  }                                                                           \
+  TYPE _CL_OVERLOADABLE sub_group_shuffle_down (TYPE val, uint delta)         \
+  {                                                                           \
+    uint lid = get_sub_group_local_id ();                                     \
+    return sub_group_shuffle (                                                \
+      val, delta < get_sub_group_size () - lid ? lid + delta : lid);          \
+  }
+
+SUB_GROUP_SHUFFLE_RELATIVE_T (char)
+SUB_GROUP_SHUFFLE_RELATIVE_T (uchar)
+SUB_GROUP_SHUFFLE_RELATIVE_T (short)
+SUB_GROUP_SHUFFLE_RELATIVE_T (ushort)
+SUB_GROUP_SHUFFLE_RELATIVE_T (int)
+SUB_GROUP_SHUFFLE_RELATIVE_T (uint)
+SUB_GROUP_SHUFFLE_RELATIVE_T (long)
+SUB_GROUP_SHUFFLE_RELATIVE_T (ulong)
+__IF_FP16 (SUB_GROUP_SHUFFLE_RELATIVE_T (half))
+SUB_GROUP_SHUFFLE_RELATIVE_T (float)
+__IF_FP64 (SUB_GROUP_SHUFFLE_RELATIVE_T (double))
+
 #define SUB_GROUP_BROADCAST_T(TYPE)                                           \
   TYPE _CL_OVERLOADABLE sub_group_broadcast (TYPE val, uint id)               \
   {                                                                           \

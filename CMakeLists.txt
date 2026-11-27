@@ -1856,6 +1856,7 @@ if(NOT ENABLE_CONFORMANCE)
   endif()
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} \
 cl_khr_subgroups cl_khr_subgroup_ballot cl_khr_subgroup_shuffle \
+cl_khr_subgroup_shuffle_relative \
 cl_intel_subgroups cl_intel_subgroups_short cl_intel_subgroups_char cl_intel_required_subgroup_size cl_exp_tensor")
   # program-scope variables work on OpenCL C input, but breaks with SPIR-V input (llvm-spirv bugs)
   set(HOST_DEVICE_FEATURES  "${HOST_DEVICE_FEATURES} __opencl_c_subgroups")
@@ -1883,6 +1884,10 @@ set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} \
 # * cl_khr_subgroup_shuffle: Passes the CTS, but only because it doesn't test
 #   non-uniform(lock-step) behavior, see:
 #   https://github.com/KhronosGroup/OpenCL-CTS/issues/1236
+#
+# * cl_khr_subgroup_shuffle_relative: Built on sub_group_shuffle(), so it only
+#   supports calls that are uniform across the work-group; divergent calls,
+#   which the spec allows, are not supported.
 #
 # * cl_khr_subgroup_ballot: sub_group_ballot() works for uniform calls, the rest
 #   are unimplemented.
