@@ -1,0 +1,4 @@
+CHECK-LABEL: /wide/256-1-1/parallel.bc
+CHECK-NOT: ex_phi.pocl_context
+CHECK-LABEL: /wide/4096-1-1/parallel.bc
+CHECK: ex_phi.pocl_context
