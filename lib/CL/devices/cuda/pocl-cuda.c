@@ -2917,6 +2917,10 @@ pocl_cuda_get_subgroup_info_ext (cl_device_id dev,
       {
         POCL_RETURN_GETINFO (size_t, sg_size);
       }
+    case CL_KERNEL_MAX_NUM_SUB_GROUPS:
+      {
+        POCL_RETURN_GETINFO (size_t, (size_t)dev->max_num_sub_groups);
+      }
     case CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE:
       {
         size_t a = (size_t)dev->max_num_sub_groups;
