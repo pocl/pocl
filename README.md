@@ -125,7 +125,7 @@ with a few exceptions; these are marked Unsupported in the table.
 | cl_khr_subgroups | :yellow_circle: :two: | :yellow_circle: :one: | :yellow_circle: :two: | | |
 | cl_khr_subgroup_ballot | :yellow_circle: :two: | :yellow_circle: :two: | | | |
 | cl_khr_subgroup_shuffle | :yellow_circle: :two: | :yellow_circle: :two: | | | |
-| cl_khr_subgroup_shuffle_relative | :red_circle: | :yellow_circle: :two: | | | |
+| cl_khr_subgroup_shuffle_relative | :yellow_circle: :two: | :yellow_circle: :two: | | | |
 | cl_khr_subgroup_extended_types | :red_circle: | :yellow_circle: :two: | | | |
 | cl_khr_subgroup_non_uniform_arithmetic | :red_circle: | :yellow_circle: :two: | | | |
 | cl_khr_subgroup_non_uniform_vote | :red_circle: | :yellow_circle: :two: | | | |

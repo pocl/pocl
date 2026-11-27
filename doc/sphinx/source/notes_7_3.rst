@@ -124,6 +124,12 @@ CPU driver
 * Fixed use of an uninitialised kernel-library fallback name when
   `LLC_HOST_CPU` is set.
 
+* Implemented `cl_khr_subgroup_shuffle_relative` (`sub_group_shuffle_up` and
+  `sub_group_shuffle_down`), advertised alongside `cl_khr_subgroup_shuffle`.
+  SYCL kernels using `shift_group_left` and `shift_group_right` no longer fail
+  to link. As with `cl_khr_subgroup_shuffle`, only calls that are uniform
+  across the work-group are supported.
+
 ===================================
 Deprecation/feature removal notices
 ===================================

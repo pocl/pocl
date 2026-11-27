@@ -1605,6 +1605,8 @@ for arg_type in FGENTYPES:
 	for suffix in ['', '_xor']:
 		generate_function("sub_group_shuffle"+suffix, SIG_TO_LLVM_TYPE_MAP[ret_type], signext, False, arg_type, mask_type)
 		generate_function("intel_sub_group_shuffle"+suffix, SIG_TO_LLVM_TYPE_MAP[ret_type], signext, False, arg_type, mask_type)
+	for suffix in ['_up', '_down']:
+		generate_function("sub_group_shuffle"+suffix, SIG_TO_LLVM_TYPE_MAP[ret_type], signext, False, arg_type, mask_type)
 	generate_function("sub_group_broadcast", SIG_TO_LLVM_TYPE_MAP[ret_type], signext, False, arg_type, mask_type)
 	for suffix in ['_add', '_min', '_max']:
 		generate_function("sub_group_reduce"+suffix, SIG_TO_LLVM_TYPE_MAP[ret_type], signext, False, arg_type)
