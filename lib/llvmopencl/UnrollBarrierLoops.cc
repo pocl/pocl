@@ -36,6 +36,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Dominators.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/PatternMatch.h>
+#include <llvm/Support/MathExtras.h>
 #include <llvm/Transforms/Utils/LoopUtils.h>
 #include <llvm/Transforms/Utils/UnrollLoop.h>
 
@@ -54,6 +56,7 @@ POP_COMPILER_DIAGS
 namespace pocl {
 
 using namespace llvm;
+using namespace llvm::PatternMatch;
 
 // A loop with a barrier (a b-loop) can't stay inside one work-item loop: its
 // body is split into parallel regions that each run for all work-items in
@@ -71,14 +74,122 @@ using namespace llvm;
 // local or sub-group size. This pass fully unrolls loops that have a constant
 // trip count and either carry an unroll request ('#pragma unroll',
 // opencl_unroll_hint, or SPIR-V's Unroll loop control) or would be fully
-// unrolled by LLVM if not for the barrier. '#pragma nounroll' is honored. A
-// partial request leaves the per-iteration values variable, so it is left to
-// LLVM's unroller in stage 2, which applies it once the barriers are gone.
-// Loops are only considered when innermost to begin with, so an outer loop
-// isn't unrolled after its inner loops were.
+// unrolled by LLVM if not for the barrier and their copies' stack use fits a
+// budget. '#pragma nounroll' is honored. A partial request leaves the per-
+// iteration values variable, so it is left to LLVM's unroller in stage 2, which
+// applies it once the barriers are gone. Loops are only considered when
+// innermost to begin with, so an outer loop isn't unrolled after its inner
+// loops were.
 
 // LLVM's default -pragma-unroll-threshold
 static constexpr unsigned MaxUnrolledSize = 16 * 1024;
+
+// A fraction of the 8 MiB pthread worker stack, as several loops and the rest
+// of the work-group function's frame add up.
+static constexpr uint64_t MaxUnrolledStackGrowth = 1024 * 1024;
+
+// The default CPU maximum work-group size, for generic (dynamic local size)
+// code.
+static constexpr uint64_t MaxWGSize = 4096;
+
+static bool hasBarrierBetween(const Instruction *From, const Instruction *To) {
+  for (const Instruction *I = From->getNextNode(); I != To;
+       I = I->getNextNode())
+    if (isa<Barrier>(I))
+      return true;
+  return false;
+}
+
+static bool isPoclAllocaCall(const Value *V, StringRef Name) {
+  auto *Call = dyn_cast<CallInst>(V);
+  return Call != nullptr && Call->getCalledFunction() != nullptr &&
+         Call->getCalledFunction()->getName() == Name;
+}
+
+// Whether each unrolled copy of L recomputes V rather than saving it in a
+// context array: the header phis that fold to a constant per copy (a constant
+// start and update, like i + 1 or m << 1), and what WorkitemLoops
+// rematerializes, the work-item functions and simple index arithmetic on
+// them, with its limit on the visited instructions (Nodes).
+static bool isRecomputed(const Loop &L, const Value *V, unsigned &Nodes) {
+  if (isa<Constant>(V) || isa<Argument>(V))
+    return true;
+  if (auto *PN = dyn_cast<PHINode>(V))
+    return PN->getParent() == L.getHeader() &&
+           isa<Constant>(PN->getIncomingValueForBlock(L.getLoopPreheader())) &&
+           match(PN->getIncomingValueForBlock(L.getLoopLatch()),
+                 m_c_BinOp(m_Specific(PN), m_Constant()));
+  if (++Nodes > 10)
+    return false;
+  if (auto *Call = dyn_cast<CallInst>(V))
+    return isCompilerExpandableWIFunctionCall(*Call);
+  if (!(isa<GetElementPtrInst>(V) || isa<CastInst>(V) ||
+        (isa<BinaryOperator>(V) && V->getType()->isIntegerTy())))
+    return false;
+  return all_of(cast<Instruction>(V)->operands(),
+                [&](const Value *Op) { return isRecomputed(L, Op, Nodes); });
+}
+
+// Whether the stack each unrolled copy of L adds for a work-group of WGSize
+// work-items stays within Budget. A b-loop shares one set of context arrays
+// for the values live across its barriers and one scratch allocation per call
+// across the iterations; each copy gets its own.
+static bool fitsCopyBudget(const Loop &L,
+                           const SmallPtrSetImpl<const Value *> &EphValues,
+                           uint64_t WGSize, uint64_t Budget) {
+  const DataLayout &DL = L.getHeader()->getModule()->getDataLayout();
+  uint64_t Bytes = 0;
+  for (BasicBlock *BB : L.blocks()) {
+    for (Instruction &I : *BB) {
+      // private arrays are privatized too, and their size may be dynamic
+      if (isa<AllocaInst>(I))
+        return false;
+      bool WGAlloca = isPoclAllocaCall(&I, "__pocl_work_group_alloca");
+      if (WGAlloca || isPoclAllocaCall(&I, "__pocl_local_mem_alloca")) {
+        // only the work-group scratch has an extra size
+        auto *Size = dyn_cast<ConstantInt>(I.getOperand(0));
+        auto *Extra =
+            WGAlloca ? dyn_cast<ConstantInt>(I.getOperand(2)) : nullptr;
+        if (Size == nullptr || (WGAlloca && Extra == nullptr))
+          return false;
+        Bytes = SaturatingAdd(
+            Bytes, WGAlloca
+                       ? SaturatingMultiplyAdd(Size->getZExtValue(), WGSize,
+                                               Extra->getZExtValue())
+                       : Size->getZExtValue());
+        continue;
+      }
+      unsigned Nodes = 0;
+      if (I.getType()->isVoidTy() || EphValues.contains(&I) ||
+          isRecomputed(L, &I, Nodes))
+        continue;
+      // the backedge carries the header phis
+      bool Carried = isa<PHINode>(I) && BB == L.getHeader();
+      for (Use &U : I.uses()) {
+        auto *UI = cast<Instruction>(U.getUser());
+        // the uses after the loop, LCSSA phis included, only need the value
+        // of the last copy, and the header phis are counted themselves
+        if (!L.contains(UI) ||
+            (UI->getParent() == L.getHeader() && isa<PHINode>(UI)))
+          continue;
+        if (auto *PN = dyn_cast<PHINode>(UI))
+          UI = PN->getIncomingBlock(U)->getTerminator();
+        if (UI->getParent() != BB || hasBarrierBetween(&I, UI)) {
+          Carried = true;
+          break;
+        }
+      }
+      if (!Carried)
+        continue;
+      Type *T = I.getType();
+      if (!T->isSized() || DL.getTypeAllocSize(T).isScalable())
+        return false;
+      Bytes = SaturatingMultiplyAdd(
+          uint64_t(DL.getTypeAllocSize(T).getFixedValue()), WGSize, Bytes);
+    }
+  }
+  return Bytes <= Budget;
+}
 
 // Returns the trip count of L if it should be fully unrolled, or 0.
 static unsigned getUnrollCount(Loop &L, ScalarEvolution &SE,
@@ -138,6 +249,15 @@ static unsigned getUnrollCount(Loop &L, ScalarEvolution &SE,
   UnrollCostEstimator UCE(&L, TTI, EphValues, UP.BEInsns);
   if (TripCount > UP.FullUnrollMaxCount ||
       UCE.getUnrolledLoopSize(UP, TripCount) >= UP.Threshold)
+    return 0;
+
+  WGSpecialization WGS = getWGSpecialization(*L.getHeader()->getModule());
+  uint64_t WGSize = WGS.DynamicLocalSize ? MaxWGSize
+                                         : WGS.LocalSize[0] * WGS.LocalSize[1] *
+                                               WGS.LocalSize[2];
+  uint64_t Budget =
+      TripCount == 1 ? UINT64_MAX : MaxUnrolledStackGrowth / (TripCount - 1);
+  if (!fitsCopyBudget(L, EphValues, WGSize, Budget))
     return 0;
 
   return TripCount;

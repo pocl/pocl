@@ -74,10 +74,12 @@ add_llvm_check(OPENCLC_NAME frontend-assignment-tracking ENVIRONMENT "POCL_EXTRA
 add_llvm_check(OPENCLC_NAME unroll-barrier-loop-local-size ENVIRONMENT "POCL_BINARY_SPECIALIZE_WG=16-1-1")
 add_llvm_check(OPENCLC_NAME unroll-barrier-loop-partial ENVIRONMENT "POCL_BINARY_SPECIALIZE_WG=16-1-1")
 add_llvm_check(OPENCLC_NAME unroll-barrier-loop-large)
+add_llvm_check(OPENCLC_NAME unroll-barrier-loop-stack ENVIRONMENT "POCL_BINARY_SPECIALIZE_WG=256-1-1,4096-1-1")
 # sub-groups aren't advertised by conformant builds
 if(NOT ENABLE_CONFORMANCE)
   add_llvm_check(OPENCLC_NAME unroll-barrier-loop)
   add_llvm_check(OPENCLC_NAME unroll-barrier-loop-runtime)
   add_llvm_check(OPENCLC_NAME unroll-barrier-loop-default)
   add_llvm_check(OPENCLC_NAME unroll-barrier-loop-nounroll)
+  add_llvm_check(OPENCLC_NAME unroll-barrier-loop-stack-sub-group ENVIRONMENT "POCL_BINARY_SPECIALIZE_WG=256-1-1,4096-1-1")
 endif()

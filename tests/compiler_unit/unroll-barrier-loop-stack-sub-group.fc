@@ -1,0 +1,7 @@
+CHECK-LABEL: /butterfly/4096-1-1/parallel.bc
+CHECK-NOT: ex_phi.pocl_context
+CHECK-LABEL: /scratch/0-0-0/parallel.bc
+CHECK-LABEL: /scratch/256-1-1/parallel.bc
+CHECK-NOT: ex_phi.pocl_context
+CHECK-LABEL: /scratch/4096-1-1/parallel.bc
+CHECK: ex_phi.pocl_context
